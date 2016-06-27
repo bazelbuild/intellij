@@ -1,0 +1,121 @@
+/*
+ * Copyright 2016 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.idea.blaze.base.settings;
+
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+
+import javax.annotation.Nullable;
+import javax.swing.*;
+
+/**
+ * Blaze project utilities.
+ */
+public class Blaze {
+
+  public enum BuildSystem {
+    Blaze,
+    Bazel;
+
+    /**
+     * The build system name, capitalized.
+     */
+    public String getName() {
+      return name();
+    }
+
+    /**
+     * The build system name, capitalized.
+     */
+    public String getLowerCaseName() {
+      return name().toLowerCase();
+    }
+  }
+
+  private Blaze() {
+  }
+
+  public static boolean isBlazeProjectOpen() {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      if (isBlazeProject(project)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns whether this project was imported from blaze.
+   */
+  public static boolean isBlazeProject(Project project) {
+    return BlazeImportSettingsManager.getInstance(project).getImportSettings() != null;
+  }
+
+  /**
+   * Returns the build system associated with this project,
+   * or falls back to the default blaze build system if the project is null or
+   * not a blaze project.
+   */
+  public static BuildSystem getBuildSystem(@Nullable Project project) {
+    BlazeImportSettings importSettings =
+      project == null ? null: BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    if (importSettings == null) {
+      return BuildSystemProvider.defaultBuildSystem().buildSystem();
+    }
+    return importSettings.getBuildSystem();
+  }
+
+  /**
+   * The name of the build system associated with the given project,
+   * or falls back to the default blaze build system if the project is null or
+   * not a blaze project.
+   */
+  public static String buildSystemName(@Nullable Project project) {
+    return getBuildSystem(project).getName();
+  }
+
+  /**
+   * The name of the application-wide build system default. This should
+   * only be used in situations where it doesn't make sense to use the build system
+   * associated with the current project (e.g. the import project action).
+   */
+  public static String defaultBuildSystemName() {
+    return BuildSystemProvider.defaultBuildSystem().buildSystem().getName();
+  }
+
+  /**
+   * Tries to guess the current project, and uses that to determine the build system name.<br>
+   * Should only be used in situations where the current project is not accessible.
+   */
+  public static String guessBuildSystemName() {
+    Project project = guessCurrentProject();
+    return buildSystemName(project);
+  }
+
+  private static Project guessCurrentProject() {
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    if (openProjects.length == 1) {
+      return openProjects[0];
+    }
+    if (SwingUtilities.isEventDispatchThread()) {
+      return (Project) DataManager.getInstance().getDataContext().getData("project");
+    }
+    return null;
+  }
+
+}

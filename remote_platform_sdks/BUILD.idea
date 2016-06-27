@@ -1,0 +1,35 @@
+# Description:
+#
+# Plugin source jars for IntelliJ 2016.1.3, accessed remotely.
+
+package(default_visibility = ["//visibility:public"])
+
+java_import(
+    name = "plugin_api",
+    jars = glob(["idea-IC-145.*/lib/*.jar"]),
+    tags = ["intellij-provided-by-sdk"],
+)
+
+java_import(
+    name = "devkit",
+    jars = glob(["idea-IC-145.*/plugins/devkit/lib/devkit.jar"]),
+    tags = ["intellij-provided-by-sdk"],
+)
+
+# The plugins required by IJwB. We need to include them
+# when running integration tests.
+java_import(
+    name = "bundled_plugins",
+    jars = glob([
+        "idea-IC-145.*/plugins/devkit/lib/*.jar",
+        "idea-IC-145.*/plugins/java-i18n/lib/*.jar",
+        "idea-IC-145.*/plugins/junit/lib/*.jar",
+        "idea-IC-145.*/plugins/properties/lib/*.jar",
+    ]),
+    tags = ["intellij-provided-by-sdk"],
+)
+
+filegroup(
+    name = "build_number",
+    srcs = glob(["idea-IC-145.*/build.txt"]),
+)

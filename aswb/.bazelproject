@@ -1,0 +1,19 @@
+directories:
+  .
+  -ijwb
+  -blaze-plugin-dev
+  -clwb
+  -blaze-cpp
+
+targets:
+  //aswb:aswb_bazel
+  //:aswb_tests
+
+workspace_type: intellij_plugin
+
+build_flags:
+  --define=ij_product=android-studio-latest
+
+test_sources:
+  */tests/unittests*
+  */tests/integrationtests*

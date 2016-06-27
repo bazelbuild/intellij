@@ -1,0 +1,81 @@
+/*
+ * Copyright 2016 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.idea.blaze.android.cppimpl;
+
+import com.android.tools.ndk.NdkHelper;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.sync.SyncListener;
+import com.google.idea.blaze.cpp.BlazeCWorkspace;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.jetbrains.cidr.lang.workspace.OCWorkspace;
+import org.jetbrains.annotations.NotNull;
+
+import static com.jetbrains.cidr.lang.OCLanguage.LANGUAGE_SUPPORT_DISABLED;
+
+public final class BlazeNdkSupportEnabler implements SyncListener {
+  @Override
+  public void onSyncStart(Project project) {
+  }
+
+  @Override
+  public void onSyncComplete(Project project,
+                             BlazeImportSettings importSettings,
+                             ProjectViewSet projectViewSet,
+                             BlazeProjectData blazeProjectData) {
+    boolean enabled = blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C);
+    enableCSupportInIde(project, enabled);
+  }
+
+  /**
+   * If {@code enabled} is true, this method will enable C support in the IDE if it is not already enabled. if {@code enabled} is false this
+   * method will clear out any currently stored information in the IDE about C and will disable C support in the IDE, unless support is
+   * already disabled.
+   *
+   * </p>
+   * In either case, if the value of enabled matches what the IDE currently does, this method will do nothing.
+   *
+   * @param project the project to enable or disable c support in.
+   * @param enabled if true, turn on C support in the IDE. If false, turn off C support in the IDE.
+   */
+  private static void enableCSupportInIde(Project project, boolean enabled) {
+    BlazeCWorkspace workspace = BlazeCWorkspace.getInstance(project);
+    Boolean isCurrentlyEnabled = !LANGUAGE_SUPPORT_DISABLED.get(project, false);
+    if (isCurrentlyEnabled != enabled) {
+      NdkHelper.disableCppLanguageSupport(project, !enabled);
+      rebuildSymbols(project, workspace);
+    }
+  }
+
+  private static void rebuildSymbols(@NotNull Project project, @NotNull OCWorkspace workspace) {
+    ApplicationManager.getApplication().runReadAction(() -> {
+      if (project.isDisposed()) {
+        return;
+      }
+      // Notifying BuildSettingsChangeTracker in unitTestMode will leads to a dead lock. See b/23087433 for more information.
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        workspace.getModificationTrackers().getBuildSettingsChangesTracker().incModificationCount();
+      }
+    });
+  }
+
+  @Override
+  public void afterSync(Project project, boolean successful) {
+  }
+}

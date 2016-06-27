@@ -1,0 +1,91 @@
+<!--
+  ~ Copyright 2016 The Bazel Authors. All rights reserved.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<idea-plugin>
+  <id>com.google.idea.blaze.aswb</id>
+  <vendor>Google</vendor>
+
+  <depends optional="true">com.intellij.modules.androidstudio</depends>
+  <depends>org.jetbrains.android</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <java.elementFinder implementation="com.google.idea.blaze.android.resources.AndroidResourceClassFinder"
+        order="first, before java"/>
+    <java.elementFinder implementation="com.google.idea.blaze.android.resources.AndroidResourcePackageFinder"/>
+    <stepsBeforeRunProvider implementation="com.google.idea.blaze.android.run.BlazeBeforeRunTaskProvider"/>
+    <projectService serviceImplementation="com.google.idea.blaze.android.resources.LightResourceClassService"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestClassRunConfigurationProducer"
+        order="first"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestMethodRunConfigurationProducer"
+        order="first"/>
+    <configurationType implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationType"/>
+    <configurationType implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationType"/>
+    <programRunner implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryProgramRunner" order="first"/>
+    <executor implementation="com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallRunExecutor" order="last"/>
+    <executor implementation="com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallDebugExecutor" order="last"/>
+    <applicationService serviceImplementation="com.google.idea.blaze.android.settings.AswbGlobalSettings"/>
+    <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"
+                        serviceImplementation="com.google.idea.blaze.android.plugin.AswbPlugin"/>
+    <projectService serviceImplementation="com.google.idea.blaze.android.manifest.ManifestParser"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.android.actions">
+    <newResourceCreationHandler
+        implementation="com.google.idea.blaze.android.resources.actions.BlazeNewResourceCreationHandler" />
+  </extensions>
+
+  <extensions defaultExtensionNs="com.google.idea.blaze">
+    <SyncPlugin implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncPlugin"/>
+    <SyncListener implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncListener"/>
+    <SyncListener implementation="com.google.idea.blaze.android.cppimpl.BlazeNdkSupportEnabler"/>
+    <SyncListener implementation="com.google.idea.blaze.android.manifest.ManifestParser$ClearManifestParser"/>
+    <RuleConfigurationFactory implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationType$BlazeAndroidBinaryRuleConfigurationFactory"/>
+    <RuleConfigurationFactory implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationType$BlazeAndroidTestRuleConfigurationFactory"/>
+    <java.JavaSyncAugmenter implementation="com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.android.ide">
+    <sdkEventListener implementation="com.google.idea.blaze.android.sdk.AndroidSdkListener"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.google.idea.blaze.android.InstrumentationRunnerProvider"
+                    interface="com.google.idea.blaze.android.run.test.InstrumentationRunnerProvider"/>
+  </extensionPoints>
+
+  <!-- BEGIN NDK SUPPORT -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.google.idea.blaze.android.cppapi.BlazeNativeDebuggerIdProvider"
+                        serviceImplementation="com.google.idea.blaze.android.cppimpl.debug.BlazeNativeAndroidDebuggerIdProviderImpl"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="cidr.debugger">
+    <languageSupportFactory implementation="com.google.idea.blaze.android.cppimpl.debug.BlazeAndroidNativeDebuggerLanguageSupportFactory"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.android.run">
+    <androidDebugger implementation="com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger"/>
+  </extensions>
+  <!-- END NDK SUPPORT -->
+
+  <application-components>
+    <component>
+      <implementation-class>com.google.idea.blaze.android.plugin.PluginCompatibilityEnforcer</implementation-class>
+    </component>
+  </application-components>
+
+</idea-plugin>

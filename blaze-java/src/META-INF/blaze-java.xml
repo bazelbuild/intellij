@@ -1,0 +1,91 @@
+<!--
+  ~ Copyright 2016 The Bazel Authors. All rights reserved.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~    http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<idea-plugin>
+  <depends>com.intellij.modules.java</depends>
+  <depends>JUnit</depends>
+
+  <actions>
+    <action class="com.google.idea.blaze.java.libraries.ExcludeLibraryAction"
+            id="Blaze.ExcludeLibraryAction"
+            icon="BlazeIcons.Blaze"
+            text="Exclude Library and Resync">
+      <add-to-group group-id="Blaze.ProjectViewPopupMenu"/>
+    </action>
+    <action class="com.google.idea.blaze.java.libraries.AttachSourceJarAction"
+            id="Blaze.AttachSourceJarAction"
+            icon="BlazeIcons.Blaze"
+            text="Attach Source Jar">
+      <add-to-group group-id="Blaze.ProjectViewPopupMenu"/>
+    </action>
+
+    <!-- IntelliJ specific actions -->
+
+    <action id="Blaze.ImportProject2" class="com.google.idea.blaze.java.wizard2.BlazeImportProjectAction" icon="BlazeIcons.Blaze">
+      <add-to-group group-id="WelcomeScreen.QuickStart" />
+      <add-to-group group-id="OpenProjectGroup" relative-to-action="ImportProject" anchor="after"/>
+    </action>
+
+    <action id="Blaze.ImportProject" class="com.google.idea.blaze.java.wizard.BlazeImportNewJavaProjectAction" text="Import Blaze Project (old)..." icon="BlazeIcons.Blaze">
+      <add-to-group group-id="WelcomeScreen.QuickStart" />
+      <add-to-group group-id="OpenProjectGroup" relative-to-action="ImportProject" anchor="after"/>
+    </action>
+
+    <!-- End IntelliJ specific actions -->
+
+  </actions>
+
+  <extensions defaultExtensionNs="com.google.idea.blaze">
+    <SyncPlugin implementation="com.google.idea.blaze.java.sync.BlazeJavaSyncPlugin"/>
+    <PsiFileProvider implementation="com.google.idea.blaze.java.psi.JavaPsiFileProvider" />
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer"
+        order="first"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestMethodConfigurationProducer"
+        order="first"/>
+    <projectViewNodeDecorator implementation="com.google.idea.blaze.java.syncstatus.BlazeJavaSyncStatusClassNodeDecorator"/>
+    <editorTabColorProvider implementation="com.google.idea.blaze.java.syncstatus.BlazeJavaSyncStatusEditorTabColorProvider"/>
+    <editorTabTitleProvider implementation="com.google.idea.blaze.java.syncstatus.BlazeJavaSyncStatusEditorTabTitleProvider"/>
+    <applicationService serviceInterface="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"
+                        serviceImplementation="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"/>
+    <applicationService serviceInterface="com.google.idea.blaze.java.sync.source.PackageManifestReader"
+                        serviceImplementation="com.google.idea.blaze.java.sync.source.PackageManifestReader"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.java.run.producers.AllInPackageBlazeConfigurationProducer"
+        order="first"/>
+    <configurationType implementation="com.google.idea.blaze.java.run.BlazeCommandRunConfigurationType"/>
+    <programRunner implementation="com.google.idea.blaze.java.run.BlazeCommandDebuggerRunner"/>
+    <projectService serviceInterface="com.google.idea.blaze.base.ui.BlazeProblemsView"
+                    serviceImplementation="com.google.idea.blaze.java.ui.BlazeIntelliJProblemsView"/>
+    <projectService serviceImplementation="com.google.idea.blaze.java.libraries.SourceJarManager"/>
+    <refactoring.safeDeleteProcessor id="build_file_safe_delete" order="before javaProcessor"
+                                     implementation="com.google.idea.blaze.java.lang.build.BuildFileSafeDeleteProcessor"/>
+
+    <!-- IntelliJ specific extension points -->
+    <projectImportProvider implementation="com.google.idea.blaze.java.wizard.BlazeNewProjectImportProvider"/>
+    <projectImportBuilder implementation="com.google.idea.blaze.java.wizard.BlazeNewJavaProjectImportBuilder"/>
+    <attachSourcesProvider implementation="com.google.idea.blaze.java.libraries.BlazeAttachSourceProvider"/>
+    <!-- End IntelliJ specific extension points -->
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.google.idea.blaze.java.JavaSyncAugmenter"
+                    interface="com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter"/>
+  </extensionPoints>
+</idea-plugin>

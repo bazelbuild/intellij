@@ -1,0 +1,6 @@
+bazel-buildifier
+
+This is a binary built from "https://github.com/bazelbuild/buildifier", providing
+a standardized formatting of BUILD files.
+
+To update, follow the instructions in the github repository.
