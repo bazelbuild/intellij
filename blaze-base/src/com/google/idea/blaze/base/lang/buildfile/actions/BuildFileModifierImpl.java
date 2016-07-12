@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.lang.buildfile.actions;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.buildmodifier.BuildFileModifier;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.Expression;
@@ -28,7 +29,11 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiElement;
+
+import java.io.File;
 
 /**
  * Implementation of BuildFileModifier. Modifies the PSI tree directly.
@@ -42,15 +47,21 @@ public class BuildFileModifierImpl implements BuildFileModifier {
                          BlazeContext context,
                          Label newRule,
                          Kind ruleKind) {
-    BuildFile buildFile = BuildReferenceManager.getInstance(project).resolveBlazePackage(newRule.blazePackage());
-    if (buildFile == null) {
-      LOG.error("No BUILD file found at location: " + newRule.blazePackage());
-      return false;
-    }
-    WriteCommandAction.runWriteCommandAction(project, () -> {
+    return WriteCommandAction.runWriteCommandAction(project, (Computable<Boolean>) () -> {
+      BuildReferenceManager manager = BuildReferenceManager.getInstance(project);
+      File file = manager.resolvePackage(newRule.blazePackage());
+      if (file == null) {
+        return null;
+      }
+      LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
+      BuildFile buildFile = manager.resolveBlazePackage(newRule.blazePackage());
+      if (buildFile == null) {
+        LOG.error("No BUILD file found at location: " + newRule.blazePackage());
+        return false;
+      }
       buildFile.add(createRule(project, ruleKind, newRule.ruleName().toString()));
+      return true;
     });
-    return true;
   }
 
   private PsiElement createRule(Project project, Kind ruleKind, String ruleName) {
