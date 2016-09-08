@@ -19,7 +19,7 @@ IntelliJ -> Settings -> Browse Repositories, and searching for 'IntelliJ with Ba
 To import an existing Bazel project, choose 'Import Bazel Project',
 and follow the instructions in the project import wizard.
 
-Public docs are coming.
+Detailed docs are available [here](http://ij.bazel.io).
 
 ## Building the plugin
 
