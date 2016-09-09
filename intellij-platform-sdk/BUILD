@@ -27,8 +27,8 @@ java_library(
     name = "plugin_api_internal",
     exports = select({
         ":intellij-latest": ["@intellij_latest//:plugin_api"],
-        ":clion-latest": ["@clion_latest//:plugin_api"],
-        ":android-studio-latest": ["//intellij-platform-sdk/AI-145.971.21:plugin_api"],
+        #":clion-latest": ["@clion_latest//:plugin_api"],
+        #":android-studio-latest": ["//intellij-platform-sdk/AI-145.971.21:plugin_api"],
         "//conditions:default": ["@intellij_latest//:plugin_api"],
     }),
 )
@@ -65,8 +65,8 @@ filegroup(
     name = "build_number",
     srcs = select({
         ":intellij-latest": ["@intellij_latest//:build_number"],
-        ":clion-latest": ["@clion_latest//:build_number"],
-        ":android-studio-latest": ["//intellij-platform-sdk/AI-145.971.21:build_number"],
+        #":clion-latest": ["@clion_latest//:build_number"],
+        #":android-studio-latest": ["//intellij-platform-sdk/AI-145.971.21:build_number"],
         "//conditions:default": ["@intellij_latest//:build_number"],
     }),
     visibility = ["//visibility:public"],
@@ -77,8 +77,8 @@ java_library(
     name = "bundled_plugins_internal",
     exports = select({
         ":intellij-latest": ["@intellij_latest//:bundled_plugins"],
-        ":clion-latest": ["@clion_latest//:bundled_plugins"],
-        ":android-studio-latest": ["//intellij-platform-sdk/AI-145.971.21:bundled_plugins"],
+        #":clion-latest": ["@clion_latest//:bundled_plugins"],
+        #":android-studio-latest": ["//intellij-platform-sdk/AI-145.971.21:bundled_plugins"],
         "//conditions:default": ["@intellij_latest//:bundled_plugins"],
     }),
 )
