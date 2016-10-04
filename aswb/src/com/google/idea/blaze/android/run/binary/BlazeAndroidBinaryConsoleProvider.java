@@ -26,9 +26,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Console provider for android_binary
- */
+/** Console provider for android_binary */
 public class BlazeAndroidBinaryConsoleProvider implements ConsoleProvider {
   private final Project project;
 
@@ -38,11 +36,11 @@ public class BlazeAndroidBinaryConsoleProvider implements ConsoleProvider {
 
   @NotNull
   @Override
-  public ConsoleView createAndAttach(@NotNull Disposable parent,
-                                     @NotNull ProcessHandler handler,
-                                     @NotNull Executor executor)
-    throws ExecutionException {
-    final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
+  public ConsoleView createAndAttach(
+      @NotNull Disposable parent, @NotNull ProcessHandler handler, @NotNull Executor executor)
+      throws ExecutionException {
+    final TextConsoleBuilder builder =
+        TextConsoleBuilderFactory.getInstance().createBuilder(project);
     ConsoleView console = builder.getConsole();
     console.attachToProcess(handler);
     return console;

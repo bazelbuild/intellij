@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.android.resources.LightResourceClassService;
-import com.google.idea.blaze.android.run.BlazeAndroidRunConfiguration;
+import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.android.sync.AndroidSdkPlatformSyncer;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
@@ -50,28 +50,27 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import org.jetbrains.android.facet.AndroidFacet;
-
-import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
+import org.jetbrains.android.facet.AndroidFacet;
 
-/**
- * Updates the IDE's project structure.
- */
+/** Updates the IDE's project structure. */
 public class BlazeAndroidProjectStructureSyncer {
 
-  public static void updateProjectStructure(Project project,
-                                            BlazeContext context,
-                                            WorkspaceRoot workspaceRoot,
-                                            ProjectViewSet projectViewSet,
-                                            BlazeProjectData blazeProjectData,
-                                            BlazeSyncPlugin.ModuleEditor moduleEditor,
-                                            Module workspaceModule,
-                                            ModifiableRootModel workspaceModifiableModel,
-                                            boolean isAndroidWorkspace) {
-    LightResourceClassService.Builder rClassBuilder = new LightResourceClassService.Builder(project);
+  public static void updateProjectStructure(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      BlazeSyncPlugin.ModuleEditor moduleEditor,
+      Module workspaceModule,
+      ModifiableRootModel workspaceModifiableModel,
+      boolean isAndroidWorkspace) {
+    LightResourceClassService.Builder rClassBuilder =
+        new LightResourceClassService.Builder(project);
 
     if (isAndroidWorkspace) {
       BlazeAndroidSyncData syncData = blazeProjectData.syncState.get(BlazeAndroidSyncData.class);
@@ -84,17 +83,13 @@ public class BlazeAndroidProjectStructureSyncer {
         int totalOrderEntries = 0;
 
         // Create the workspace module
-        updateWorkspaceModule(
-          project,
-          workspaceRoot,
-          workspaceModule,
-          androidSdkPlatform
-        );
+        updateWorkspaceModule(project, workspaceRoot, workspaceModule, androidSdkPlatform);
 
         // Create android resource modules
         // Because we're setting up dependencies, the modules have to exist before we configure them
         Map<Label, AndroidResourceModule> labelToAndroidResourceModule = Maps.newHashMap();
-        for (AndroidResourceModule androidResourceModule : syncData.importResult.androidResourceModules) {
+        for (AndroidResourceModule androidResourceModule :
+            syncData.importResult.androidResourceModules) {
           labelToAndroidResourceModule.put(androidResourceModule.label, androidResourceModule);
           String moduleName = moduleNameForAndroidModule(androidResourceModule.label);
           moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
@@ -112,14 +107,13 @@ public class BlazeAndroidProjectStructureSyncer {
           ModifiableRootModel modifiableRootModel = moduleEditor.editModule(module);
 
           updateAndroidRuleModule(
-            project,
-            workspaceRoot,
-            androidSdkPlatform,
-            rule,
-            module,
-            modifiableRootModel,
-            androidResourceModule
-          );
+              project,
+              workspaceRoot,
+              androidSdkPlatform,
+              rule,
+              module,
+              modifiableRootModel,
+              androidResourceModule);
 
           for (Label resourceDependency : androidResourceModule.transitiveResourceDependencies) {
             if (!labelToAndroidResourceModule.containsKey(resourceDependency)) {
@@ -147,16 +141,18 @@ public class BlazeAndroidProjectStructureSyncer {
           if (!(targetExpression instanceof Label)) {
             continue;
           }
-          Label label = (Label)targetExpression;
+          Label label = (Label) targetExpression;
           runConfigurationModuleTargets.add(label);
         }
         // Get any pre-existing targets
-        for (RunConfiguration runConfiguration : RunManager.getInstance(project).getAllConfigurationsList()) {
-          if (!(runConfiguration instanceof BlazeAndroidRunConfiguration)) {
+        for (RunConfiguration runConfiguration :
+            RunManager.getInstance(project).getAllConfigurationsList()) {
+          BlazeAndroidRunConfigurationHandler handler =
+              BlazeAndroidRunConfigurationHandler.getHandlerFrom(runConfiguration);
+          if (handler == null) {
             continue;
           }
-          BlazeAndroidRunConfiguration blazeAndroidRunConfiguration = (BlazeAndroidRunConfiguration)runConfiguration;
-          runConfigurationModuleTargets.add(blazeAndroidRunConfiguration.getTarget());
+          runConfigurationModuleTargets.add(handler.getLabel());
         }
 
         int totalRunConfigurationModules = 0;
@@ -178,23 +174,17 @@ public class BlazeAndroidProjectStructureSyncer {
           Module module = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
           ModifiableRootModel modifiableRootModel = moduleEditor.editModule(module);
           updateAndroidRuleModule(
-            project,
-            workspaceRoot,
-            androidSdkPlatform,
-            rule,
-            module,
-            modifiableRootModel,
-            null
-          );
+              project, workspaceRoot, androidSdkPlatform, rule, module, modifiableRootModel, null);
           ++totalRunConfigurationModules;
         }
 
-        context.output(new PrintOutput(String.format(
-          "Android resource module count: %d, run config modules: %d, order entries: %d",
-          syncData.importResult.androidResourceModules.size(),
-          totalRunConfigurationModules,
-          totalOrderEntries
-        )));
+        context.output(
+            PrintOutput.log(
+                String.format(
+                    "Android resource module count: %d, run config modules: %d, order entries: %d",
+                    syncData.importResult.androidResourceModules.size(),
+                    totalRunConfigurationModules,
+                    totalOrderEntries)));
       }
     } else {
       AndroidFacetModuleCustomizer.removeAndroidFacet(workspaceModule);
@@ -203,9 +193,7 @@ public class BlazeAndroidProjectStructureSyncer {
     LightResourceClassService.getInstance(project).installRClasses(rClassBuilder);
   }
 
-  /**
-   * Ensures a suitable module exists for the given android target.
-   */
+  /** Ensures a suitable module exists for the given android target. */
   @Nullable
   public static Module ensureRunConfigurationModule(Project project, Label target) {
     String moduleName = moduleNameForAndroidModule(target);
@@ -215,11 +203,13 @@ public class BlazeAndroidProjectStructureSyncer {
     }
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
       return null;
     }
-    AndroidSdkPlatform androidSdkPlatform = AndroidSdkPlatformSyncer.getAndroidSdkPlatform(blazeProjectData);
+    AndroidSdkPlatform androidSdkPlatform =
+        AndroidSdkPlatformSyncer.getAndroidSdkPlatform(blazeProjectData);
     if (androidSdkPlatform == null) {
       return null;
     }
@@ -230,118 +220,121 @@ public class BlazeAndroidProjectStructureSyncer {
     if (rule.androidRuleIdeInfo == null) {
       return null;
     }
+    // We can't run a write action outside the dispatch thread, and can't
+    // invokeAndWait it because the caller may have a read action.
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      return null;
+    }
 
-    BlazeSyncPlugin.ModuleEditor moduleEditor = BlazeProjectDataManager.getInstance(project).editModules();
+    BlazeSyncPlugin.ModuleEditor moduleEditor =
+        BlazeProjectDataManager.getInstance(project).editModules();
     Module newModule = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
     ModifiableRootModel modifiableRootModel = moduleEditor.editModule(newModule);
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      updateAndroidRuleModule(
-        project,
-        workspaceRoot,
-        androidSdkPlatform,
-        rule,
-        newModule,
-        modifiableRootModel,
-        null
-      );
-      moduleEditor.commit();
-    });
+    ApplicationManager.getApplication()
+        .runWriteAction(
+            () -> {
+              updateAndroidRuleModule(
+                  project,
+                  workspaceRoot,
+                  androidSdkPlatform,
+                  rule,
+                  newModule,
+                  modifiableRootModel,
+                  null);
+              moduleEditor.commit();
+            });
     return newModule;
   }
 
   public static String moduleNameForAndroidModule(Label label) {
-    return label.toString()
-      .substring(2) // Skip initial "//"
-      .replace('/', '.')
-      .replace(':', '.');
+    return label
+        .toString()
+        .substring(2) // Skip initial "//"
+        .replace('/', '.')
+        .replace(':', '.');
   }
 
-  /**
-   * Updates the shared workspace module with android info.
-   */
-  private static void updateWorkspaceModule(Project project,
-                                           WorkspaceRoot workspaceRoot,
-                                           Module workspaceModule,
-                                           AndroidSdkPlatform androidSdkPlatform) {
+  /** Updates the shared workspace module with android info. */
+  private static void updateWorkspaceModule(
+      Project project,
+      WorkspaceRoot workspaceRoot,
+      Module workspaceModule,
+      AndroidSdkPlatform androidSdkPlatform) {
     File moduleDirectory = workspaceRoot.directory();
     File manifest = new File(workspaceRoot.directory(), "AndroidManifest.xml");
     String resourceJavaPackage = ":workspace";
     ImmutableList<File> transitiveResources = ImmutableList.of();
 
     createAndroidModel(
-      project,
-      androidSdkPlatform,
-      workspaceModule,
-      moduleDirectory,
-      manifest,
-      resourceJavaPackage,
-      transitiveResources
-    );
+        project,
+        androidSdkPlatform,
+        workspaceModule,
+        moduleDirectory,
+        manifest,
+        resourceJavaPackage,
+        transitiveResources);
   }
 
-  /**
-   * Updates a module from an android rule.
-   */
-  private static void updateAndroidRuleModule(Project project,
-                                              WorkspaceRoot workspaceRoot,
-                                              AndroidSdkPlatform androidSdkPlatform,
-                                              RuleIdeInfo rule,
-                                              Module module,
-                                              ModifiableRootModel modifiableRootModel,
-                                              @Nullable AndroidResourceModule androidResourceModule) {
+  /** Updates a module from an android rule. */
+  private static void updateAndroidRuleModule(
+      Project project,
+      WorkspaceRoot workspaceRoot,
+      AndroidSdkPlatform androidSdkPlatform,
+      RuleIdeInfo rule,
+      Module module,
+      ModifiableRootModel modifiableRootModel,
+      @Nullable AndroidResourceModule androidResourceModule) {
 
-    ImmutableCollection<File> resources = androidResourceModule != null
-                                          ? androidResourceModule.resources
-                                          : ImmutableList.of();
-    ImmutableCollection<File> transitiveResources = androidResourceModule != null
-                                                    ? androidResourceModule.transitiveResources
-                                                    : ImmutableList.of();
+    ImmutableCollection<File> resources =
+        androidResourceModule != null ? androidResourceModule.resources : ImmutableList.of();
+    ImmutableCollection<File> transitiveResources =
+        androidResourceModule != null
+            ? androidResourceModule.transitiveResources
+            : ImmutableList.of();
 
     AndroidRuleIdeInfo androidRuleIdeInfo = rule.androidRuleIdeInfo;
     assert androidRuleIdeInfo != null;
 
     File moduleDirectory = workspaceRoot.fileForPath(rule.label.blazePackage());
     ArtifactLocation manifestArtifactLocation = androidRuleIdeInfo.manifest;
-    File manifest = manifestArtifactLocation != null
-                    ? manifestArtifactLocation.getFile()
-                    : new File(moduleDirectory, "AndroidManifest.xml");
+    File manifest =
+        manifestArtifactLocation != null
+            ? manifestArtifactLocation.getFile()
+            : new File(moduleDirectory, "AndroidManifest.xml");
     String resourceJavaPackage = androidRuleIdeInfo.resourceJavaPackage;
     ResourceModuleContentRootCustomizer.setupContentRoots(modifiableRootModel, resources);
 
     createAndroidModel(
-      project,
-      androidSdkPlatform,
-      module,
-      moduleDirectory,
-      manifest,
-      resourceJavaPackage,
-      transitiveResources
-    );
+        project,
+        androidSdkPlatform,
+        module,
+        moduleDirectory,
+        manifest,
+        resourceJavaPackage,
+        transitiveResources);
   }
 
-  private static void createAndroidModel(Project project,
-                                         AndroidSdkPlatform androidSdkPlatform,
-                                         Module module,
-                                         File moduleDirectory,
-                                         File manifest,
-                                         String resourceJavaPackage,
-                                         ImmutableCollection<File> transitiveResources) {
+  private static void createAndroidModel(
+      Project project,
+      AndroidSdkPlatform androidSdkPlatform,
+      Module module,
+      File moduleDirectory,
+      File manifest,
+      String resourceJavaPackage,
+      ImmutableCollection<File> transitiveResources) {
     AndroidFacetModuleCustomizer.createAndroidFacet(module);
-    SourceProvider sourceProvider = new SourceProviderImpl(
-      module.getName(),
-      manifest,
-      transitiveResources
-    );
-    BlazeAndroidModel androidModel = new BlazeAndroidModel(
-      project,
-      module,
-      moduleDirectory,
-      sourceProvider,
-      manifest,
-      resourceJavaPackage,
-      androidSdkPlatform.androidSdkLevel
-    );
+    SourceProvider sourceProvider =
+        new SourceProviderImpl(module.getName(), manifest, transitiveResources);
+    BlazeAndroidModel androidModel =
+        new BlazeAndroidModel(
+            project,
+            module,
+            moduleDirectory,
+            sourceProvider,
+            manifest,
+            resourceJavaPackage,
+            androidSdkPlatform.androidSdkLevel);
     AndroidFacet facet = AndroidFacet.getInstance(module);
     if (facet != null) {
       facet.setAndroidModel(androidModel);

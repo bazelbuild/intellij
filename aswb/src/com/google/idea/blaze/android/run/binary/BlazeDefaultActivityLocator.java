@@ -22,10 +22,9 @@ import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import java.io.File;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 
 /**
  * An activity launcher which extracts the default launch activity from a generated APK and starts
@@ -35,17 +34,13 @@ public class BlazeDefaultActivityLocator extends ActivityLocator {
   private final Project project;
   private final File mergedManifestFile;
 
-  public BlazeDefaultActivityLocator(
-    Project project,
-    File mergedManifestFile
-  ) {
+  public BlazeDefaultActivityLocator(Project project, File mergedManifestFile) {
     this.project = project;
     this.mergedManifestFile = mergedManifestFile;
   }
 
   @Override
-  public void validate() throws ActivityLocatorException {
-  }
+  public void validate() throws ActivityLocatorException {}
 
   @NotNull
   @Override
@@ -54,9 +49,11 @@ public class BlazeDefaultActivityLocator extends ActivityLocator {
     if (manifest == null) {
       throw new ActivityLocatorException("Could not locate merged manifest");
     }
-    String activityName = ApplicationManager.getApplication().runReadAction(
-      (Computable<String>)() -> DefaultActivityLocator.getDefaultLauncherActivityName(project, manifest)
-    );
+    String activityName =
+        ApplicationManager.getApplication()
+            .runReadAction(
+                (Computable<String>)
+                    () -> DefaultActivityLocator.getDefaultLauncherActivityName(project, manifest));
     if (activityName == null) {
       throw new ActivityLocatorException("Could not locate default activity to launch.");
     }

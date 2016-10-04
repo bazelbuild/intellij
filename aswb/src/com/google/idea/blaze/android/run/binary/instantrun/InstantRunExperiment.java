@@ -15,11 +15,10 @@
  */
 package com.google.idea.blaze.android.run.binary.instantrun;
 
-import com.google.idea.blaze.base.experiments.BoolExperiment;
+import com.google.idea.common.experiments.BoolExperiment;
 
-/**
- * Holds the instant run experiment
- */
+/** Holds the instant run experiment */
 public class InstantRunExperiment {
-  public static final BoolExperiment INSTANT_RUN_ENABLED = new BoolExperiment("instant.run.enabled", false);
+  public static final BoolExperiment INSTANT_RUN_ENABLED =
+      new BoolExperiment("instant.run.enabled", false);
 }

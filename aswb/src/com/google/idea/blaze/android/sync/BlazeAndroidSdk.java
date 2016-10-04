@@ -19,50 +19,26 @@ import com.android.SdkConstants;
 import com.android.sdklib.AndroidTargetHash;
 import com.android.sdklib.AndroidVersion;
 import com.android.sdklib.AndroidVersionHelper;
-import com.android.tools.idea.sdk.IdeSdks;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-
 import javax.annotation.Nullable;
 
-/**
- * Utility methods for handling the android sdk.
- */
+/** Utility methods for handling the android sdk. */
 public final class BlazeAndroidSdk {
   private static final Logger LOG = Logger.getInstance(BlazeAndroidSdk.class);
 
-  private BlazeAndroidSdk() {
-  }
+  private BlazeAndroidSdk() {}
 
-  /**
-   * Reads the android sdk level from your local SDK directory.
-   */
-  public static String getAndroidSdkLevelFromLocalChannel(String localSdkLocation,
-      String androidSdkPlatform) {
-    File androidSdkPlatformsDir = new File(new File(new File(localSdkLocation), "platforms"), androidSdkPlatform);
+  /** Reads the android sdk level from your local SDK directory. */
+  public static String getAndroidSdkLevelFromLocalChannel(
+      String localSdkLocation, String androidSdkPlatform) {
+    File androidSdkPlatformsDir =
+        new File(new File(new File(localSdkLocation), "platforms"), androidSdkPlatform);
     File sourcePropertiesFile = new File(androidSdkPlatformsDir, SdkConstants.FN_SOURCE_PROP);
-    return getAndroidSdkLevelFromSourceProperties(sourcePropertiesFile);
-  }
-
-  /**
-   * The user's blazerc is read to discover the --android_sdk configuration. The resulting
-   * label can be an indirection (eg. "latest" or "prerelease"), so blaze query is used to
-   * query for "android_blaze.jar", which marks the actual android sdk directory.
-   * <p/>
-   * <p>This directory should have a source.properties file. This is read to discover the
-   * platform API level (eg. "21"). This is hashed according to ADT standards to return
-   * a unique SDK key, eg "android-21".
-   */
-  @Nullable
-  public static String getAndroidSdkLevelFromBlazeRc(
-    File androidPlatformDir) {
-    File sourcePropertiesFile = new File(androidPlatformDir, SdkConstants.FN_SOURCE_PROP);
     return getAndroidSdkLevelFromSourceProperties(sourcePropertiesFile);
   }
 
@@ -73,7 +49,7 @@ public final class BlazeAndroidSdk {
     }
 
     AndroidVersion androidVersion =
-      readAndroidVersionFromSourcePropertiesFile(sourcePropertiesFile);
+        readAndroidVersionFromSourcePropertiesFile(sourcePropertiesFile);
     if (androidVersion == null) {
       LOG.warn("Could not read source.properties from: " + sourcePropertiesFile);
       return null;
@@ -82,7 +58,8 @@ public final class BlazeAndroidSdk {
   }
 
   @Nullable
-  private static AndroidVersion readAndroidVersionFromSourcePropertiesFile(File sourcePropertiesFile) {
+  private static AndroidVersion readAndroidVersionFromSourcePropertiesFile(
+      File sourcePropertiesFile) {
     Properties props = parseProperties(sourcePropertiesFile);
     if (props == null) {
       return null;
@@ -95,8 +72,8 @@ public final class BlazeAndroidSdk {
   }
 
   /**
-   * Parses the given file as properties file if it exists.
-   * Returns null if the file does not exist, cannot be parsed or has no properties.
+   * Parses the given file as properties file if it exists. Returns null if the file does not exist,
+   * cannot be parsed or has no properties.
    */
   @Nullable
   private static Properties parseProperties(File propsFile) {
@@ -116,5 +93,4 @@ public final class BlazeAndroidSdk {
     }
     return null;
   }
-
 }

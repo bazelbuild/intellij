@@ -17,54 +17,72 @@ package com.google.idea.blaze.android.run.runner;
 
 import com.android.ddmlib.IDevice;
 import com.android.sdklib.AndroidVersion;
-import com.android.tools.idea.run.*;
+import com.android.tools.idea.run.AndroidLaunchTasksProvider;
+import com.android.tools.idea.run.ApkProvisionException;
+import com.android.tools.idea.run.ApplicationIdProvider;
+import com.android.tools.idea.run.ConsolePrinter;
+import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
-import com.android.tools.idea.run.tasks.*;
+import com.android.tools.idea.run.tasks.ClearLogcatTask;
+import com.android.tools.idea.run.tasks.DebugConnectorTask;
+import com.android.tools.idea.run.tasks.DismissKeyguardTask;
+import com.android.tools.idea.run.tasks.LaunchTask;
+import com.android.tools.idea.run.tasks.LaunchTasksProvider;
+import com.android.tools.idea.run.tasks.ShowLogcatTask;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.idea.blaze.android.run.binary.UserIdHelper;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import java.util.List;
+import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Set;
-
-/**
- * Normal launch tasks provider.
- */
+/** Normal launch tasks provider. */
 public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
   private static final Logger LOG = Logger.getInstance(BlazeAndroidLaunchTasksProvider.class);
 
   private final Project project;
   private final BlazeAndroidRunContext runContext;
   private final ApplicationIdProvider applicationIdProvider;
-  private final LaunchOptions launchOptions;
+  private final LaunchOptions.Builder launchOptionsBuilder;
+  private final boolean isDebug;
   private final BlazeAndroidRunConfigurationDebuggerManager debuggerManager;
 
-  public BlazeAndroidLaunchTasksProvider(Project project,
-                                         BlazeAndroidRunContext runContext,
-                                         ApplicationIdProvider applicationIdProvider,
-                                         LaunchOptions launchOptions,
-                                         BlazeAndroidRunConfigurationDebuggerManager debuggerManager) {
+  public BlazeAndroidLaunchTasksProvider(
+      Project project,
+      BlazeAndroidRunContext runContext,
+      ApplicationIdProvider applicationIdProvider,
+      LaunchOptions.Builder launchOptionsBuilder,
+      boolean isDebug,
+      BlazeAndroidRunConfigurationDebuggerManager debuggerManager) {
     this.project = project;
     this.runContext = runContext;
     this.applicationIdProvider = applicationIdProvider;
-    this.launchOptions = launchOptions;
+    this.launchOptionsBuilder = launchOptionsBuilder;
+    this.isDebug = isDebug;
     this.debuggerManager = debuggerManager;
   }
 
   @NotNull
   @Override
-  public List<LaunchTask> getTasks(@NotNull IDevice device,
-                                   @NotNull LaunchStatus launchStatus,
-                                   @NotNull ConsolePrinter consolePrinter) {
+  public List<LaunchTask> getTasks(
+      @NotNull IDevice device,
+      @NotNull LaunchStatus launchStatus,
+      @NotNull ConsolePrinter consolePrinter)
+      throws ExecutionException {
     final List<LaunchTask> launchTasks = Lists.newArrayList();
+
+    Integer userId = runContext.getUserId(device, consolePrinter);
+    launchOptionsBuilder.setPmInstallOptions(UserIdHelper.getFlagsFromUserId(userId));
+
+    LaunchOptions launchOptions = launchOptionsBuilder.build();
 
     if (launchOptions.isClearLogcatBeforeStart()) {
       launchTasks.add(new ClearLogcatTask(project));
@@ -73,14 +91,8 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
     launchTasks.add(new DismissKeyguardTask());
 
     if (launchOptions.isDeploy()) {
-      try {
-        ImmutableList<LaunchTask> deployTasks = runContext.getDeployTasks(device, launchOptions);
-        launchTasks.addAll(deployTasks);
-      }
-      catch (ExecutionException e) {
-        launchStatus.terminateLaunch(e.getMessage());
-        return ImmutableList.of();
-      }
+      ImmutableList<LaunchTask> deployTasks = runContext.getDeployTasks(device, launchOptions);
+      launchTasks.addAll(deployTasks);
     }
     if (launchStatus.isLaunchTerminated()) {
       return launchTasks;
@@ -90,23 +102,23 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
     try {
       packageName = applicationIdProvider.getPackageName();
 
-      ProcessHandlerLaunchStatus processHandlerLaunchStatus = (ProcessHandlerLaunchStatus)launchStatus;
-      LaunchTask appLaunchTask = runContext.getApplicationLaunchTask(
-        launchOptions,
-        debuggerManager.getAndroidDebugger(),
-        debuggerManager.getAndroidDebuggerState(),
-        processHandlerLaunchStatus
-      );
+      ProcessHandlerLaunchStatus processHandlerLaunchStatus =
+          (ProcessHandlerLaunchStatus) launchStatus;
+      LaunchTask appLaunchTask =
+          runContext.getApplicationLaunchTask(
+              launchOptions,
+              userId,
+              debuggerManager.getAndroidDebugger(),
+              debuggerManager.getAndroidDebuggerState(),
+              processHandlerLaunchStatus);
       if (appLaunchTask != null) {
         launchTasks.add(appLaunchTask);
       }
-    }
-    catch (ApkProvisionException e) {
+    } catch (ApkProvisionException e) {
       LOG.error(e);
       launchStatus.terminateLaunch("Unable to determine application id: " + e);
       return ImmutableList.of();
-    }
-    catch (ExecutionException e) {
+    } catch (ExecutionException e) {
       launchStatus.terminateLaunch(e.getMessage());
       return ImmutableList.of();
     }
@@ -120,17 +132,16 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
 
   @Nullable
   @Override
-  public DebugConnectorTask getConnectDebuggerTask(@NotNull LaunchStatus launchStatus,
-                                                   @Nullable AndroidVersion version) {
-    if (!launchOptions.isDebug()) {
+  public DebugConnectorTask getConnectDebuggerTask(
+      @NotNull LaunchStatus launchStatus, @Nullable AndroidVersion version) {
+    if (!isDebug) {
       return null;
     }
     Set<String> packageIds = Sets.newHashSet();
     try {
       String packageName = applicationIdProvider.getPackageName();
       packageIds.add(packageName);
-    }
-    catch (ApkProvisionException e) {
+    } catch (ApkProvisionException e) {
       Logger.getInstance(AndroidLaunchTasksProvider.class).error(e);
     }
 
@@ -139,11 +150,12 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       if (packageName != null) {
         packageIds.add(packageName);
       }
-    }
-    catch (ApkProvisionException e) {
+    } catch (ApkProvisionException e) {
       // not as severe as failing to obtain package id for main application
       Logger.getInstance(AndroidLaunchTasksProvider.class)
-        .warn("Unable to obtain test package name, will not connect debugger if tests don't instantiate main application");
+          .warn(
+              "Unable to obtain test package name, will not connect debugger "
+                  + "if tests don't instantiate main application");
     }
 
     AndroidDebugger androidDebugger = debuggerManager.getAndroidDebugger();
@@ -154,14 +166,8 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
     }
 
     try {
-      return runContext.getDebuggerTask(
-        launchOptions,
-        androidDebugger,
-        androidDebuggerState,
-        packageIds
-      );
-    }
-    catch (ExecutionException e) {
+      return runContext.getDebuggerTask(androidDebugger, androidDebuggerState, packageIds);
+    } catch (ExecutionException e) {
       launchStatus.terminateLaunch(e.getMessage());
       return null;
     }

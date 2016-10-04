@@ -21,32 +21,32 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
-import com.google.idea.blaze.java.sync.model.BlazeLibrary;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.OrderedSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.File;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
+/** Collects class jars from the user's build. */
 public class BlazeClassJarProvider extends ClassJarProvider {
 
-  private @NotNull final Project project;
+  private final Project project;
 
-  public BlazeClassJarProvider(@NotNull final Project project){
+  public BlazeClassJarProvider(final Project project) {
     this.project = project;
   }
 
   @Override
   @Nullable
-  public VirtualFile findModuleClassFile(@NotNull String className, @NotNull Module module) {
-    BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+  public VirtualFile findModuleClassFile(String className, Module module) {
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
       return null;
     }
@@ -56,12 +56,12 @@ public class BlazeClassJarProvider extends ClassJarProvider {
     if (syncData == null) {
       return null;
     }
-    for (File runtimeJar : syncData.importResult.buildOutputJars) {
-      VirtualFile runtimeJarVF = localVfs.findFileByIoFile(runtimeJar);
-      if (runtimeJarVF == null) {
+    for (File classJar : syncData.importResult.buildOutputJars) {
+      VirtualFile classJarVF = localVfs.findFileByIoFile(classJar);
+      if (classJarVF == null) {
         continue;
       }
-      VirtualFile classFile = findClassInJar(runtimeJarVF, classNamePath);
+      VirtualFile classFile = findClassInJar(classJarVF, classNamePath);
       if (classFile != null) {
         return classFile;
       }
@@ -70,9 +70,8 @@ public class BlazeClassJarProvider extends ClassJarProvider {
   }
 
   @Nullable
-  private static VirtualFile findClassInJar(@NotNull final VirtualFile runtimeJar,
-                                            @NotNull String classNamePath) {
-    VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(runtimeJar);
+  private static VirtualFile findClassInJar(final VirtualFile classJar, String classNamePath) {
+    VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(classJar);
     if (jarRoot == null) {
       return null;
     }
@@ -80,10 +79,10 @@ public class BlazeClassJarProvider extends ClassJarProvider {
   }
 
   @Override
-  @NotNull
-  public List<VirtualFile> getModuleExternalLibraries(@NotNull Module module) {
+  public List<VirtualFile> getModuleExternalLibraries(Module module) {
     OrderedSet<VirtualFile> results = new OrderedSet<VirtualFile>();
-    BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
       return results;
     }
@@ -92,16 +91,13 @@ public class BlazeClassJarProvider extends ClassJarProvider {
       return null;
     }
     LocalFileSystem localVfs = LocalFileSystem.getInstance();
-    for (BlazeLibrary blazeLibrary : syncData.importResult.libraries.values()) {
-      LibraryArtifact libraryArtifact = blazeLibrary.getLibraryArtifact();
-      if (libraryArtifact == null) {
+    for (BlazeJarLibrary blazeLibrary : syncData.importResult.libraries.values()) {
+      LibraryArtifact libraryArtifact = blazeLibrary.libraryArtifact;
+      ArtifactLocation classJar = libraryArtifact.classJar;
+      if (classJar == null) {
         continue;
       }
-      ArtifactLocation runtimeJar = libraryArtifact.runtimeJar;
-      if (runtimeJar == null) {
-        continue;
-      }
-      VirtualFile libVF = localVfs.findFileByIoFile(runtimeJar.getFile());
+      VirtualFile libVF = localVfs.findFileByIoFile(classJar.getFile());
       if (libVF == null) {
         continue;
       }

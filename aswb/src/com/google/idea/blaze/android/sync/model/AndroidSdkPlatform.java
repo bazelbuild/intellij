@@ -15,12 +15,10 @@
  */
 package com.google.idea.blaze.android.sync.model;
 
-import javax.annotation.concurrent.Immutable;
 import java.io.Serializable;
+import javax.annotation.concurrent.Immutable;
 
-/**
- * Information about the android platform selected at sync time.
- */
+/** Information about the android platform selected at sync time. */
 @Immutable
 public class AndroidSdkPlatform implements Serializable {
   public final String androidSdk;

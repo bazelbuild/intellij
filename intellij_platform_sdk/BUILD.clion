@@ -1,0 +1,24 @@
+# Description:
+#
+# Plugin source jars for CLion, accessed remotely.
+
+package(default_visibility = ["//visibility:public"])
+
+java_import(
+    name = "plugin_api",
+    jars = glob(["clion-*/lib/*.jar"]),
+    tags = ["intellij-provided-by-sdk"],
+)
+
+# The plugins required by CLwB. Presumably there will be some, when we write
+# some integration tests.
+java_import(
+    name = "bundled_plugins",
+    jars = [],
+    tags = ["intellij-provided-by-sdk"],
+)
+
+filegroup(
+    name = "application_info_jar",
+    srcs = glob(["clion-*/lib/clion.jar"]),
+)

@@ -20,35 +20,35 @@ import com.android.tools.idea.fd.InstantRunManager;
 import com.android.tools.idea.fd.InstantRunUtils;
 import com.android.tools.idea.run.AndroidSessionInfo;
 import com.android.tools.idea.run.DeviceFutures;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDeployTargetManager;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
+import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDeployTargetManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
+import java.util.List;
+import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
-import javax.annotation.Nullable;
-import java.util.List;
-
-/**
- * Tries to reuse devices from a previous session.
- */
+/** Tries to reuse devices from a previous session. */
 public class BlazeInstantRunDeviceSelector implements BlazeAndroidDeviceSelector {
   NormalDeviceSelector normalDeviceSelector = new NormalDeviceSelector();
 
   @Override
-  public DeviceSession getDevice(Project project,
-                                 AndroidFacet facet,
-                                 BlazeAndroidRunConfigurationDeployTargetManager deployTargetManager,
-                                 Executor executor,
-                                 ExecutionEnvironment env,
-                                 AndroidSessionInfo info,
-                                 boolean debug,
-                                 int runConfigId) throws ExecutionException {
+  public DeviceSession getDevice(
+      Project project,
+      AndroidFacet facet,
+      BlazeAndroidRunConfigurationDeployTargetManager deployTargetManager,
+      Executor executor,
+      ExecutionEnvironment env,
+      AndroidSessionInfo info,
+      boolean debug,
+      int runConfigId)
+      throws ExecutionException {
     DeviceFutures deviceFutures = null;
     if (info != null) {
-      // if there is an existing previous session, then see if we can detect devices to fast deploy to
+      // if there is an existing previous session,
+      // then see if we can detect devices to fast deploy to
       deviceFutures = getFastDeployDevices(executor, info);
 
       if (InstantRunUtils.isReRun(env)) {
@@ -62,27 +62,32 @@ public class BlazeInstantRunDeviceSelector implements BlazeAndroidDeviceSelector
     }
 
     // Fall back to normal device selection
-    return normalDeviceSelector.getDevice(project, facet, deployTargetManager, executor, env, info, debug, runConfigId);
+    return normalDeviceSelector.getDevice(
+        project, facet, deployTargetManager, executor, env, info, debug, runConfigId);
   }
 
   @Nullable
-  private static DeviceFutures getFastDeployDevices(Executor executor,
-                                                    AndroidSessionInfo info) {
+  private static DeviceFutures getFastDeployDevices(Executor executor, AndroidSessionInfo info) {
     if (!info.getExecutorId().equals(executor.getId())) {
-      String msg = String.format("Cannot Instant Run since old executor (%1$s) doesn't match current executor (%2$s)", info.getExecutorId(),
-                                 executor.getId());
+      String msg =
+          String.format(
+              "Cannot Instant Run since old executor (%1$s) doesn't match current executor (%2$s)",
+              info.getExecutorId(), executor.getId());
       InstantRunManager.LOG.info(msg);
       return null;
     }
 
     List<IDevice> devices = info.getDevices();
     if (devices == null || devices.isEmpty()) {
-      InstantRunManager.LOG.info("Cannot Instant Run since we could not locate the devices from the existing launch session");
+      InstantRunManager.LOG.info(
+          "Cannot Instant Run since we could not locate "
+              + "the devices from the existing launch session");
       return null;
     }
 
     if (devices.size() > 1) {
-      InstantRunManager.LOG.info("Last run was on > 1 device, not reusing devices and prompting again");
+      InstantRunManager.LOG.info(
+          "Last run was on > 1 device, not reusing devices and prompting again");
       return null;
     }
 

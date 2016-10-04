@@ -25,17 +25,18 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import org.jetbrains.android.actions.*;
+import java.util.Collection;
+import java.util.function.Function;
+import org.jetbrains.android.actions.CreateResourceDirectoryDialogBase;
+import org.jetbrains.android.actions.CreateResourceFileDialogBase;
+import org.jetbrains.android.actions.CreateTypedResourceFileAction;
+import org.jetbrains.android.actions.CreateXmlResourcePanel;
+import org.jetbrains.android.actions.NewResourceCreationHandler;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.function.Function;
-
-/**
- * Decides which create resource dialogs to use for Blaze projects.
- */
+/** Decides which create resource dialogs to use for Blaze projects. */
 public class BlazeNewResourceCreationHandler implements NewResourceCreationHandler {
 
   @Override
@@ -46,47 +47,68 @@ public class BlazeNewResourceCreationHandler implements NewResourceCreationHandl
   @NotNull
   @Override
   public CreateResourceDirectoryDialogBase createNewResourceDirectoryDialog(
-    @NotNull Project project,
-    @Nullable Module module,
-    @Nullable ResourceFolderType resType,
-    @Nullable PsiDirectory resDirectory,
-    @Nullable DataContext dataContext,
-    @NotNull CreateResourceDirectoryDialogBase.ValidatorFactory validatorFactory) {
-    return new BlazeCreateResourceDirectoryDialog(project, module, resType, resDirectory, dataContext, validatorFactory);
+      @NotNull Project project,
+      @Nullable Module module,
+      @Nullable ResourceFolderType resType,
+      @Nullable PsiDirectory resDirectory,
+      @Nullable DataContext dataContext,
+      @NotNull CreateResourceDirectoryDialogBase.ValidatorFactory validatorFactory) {
+    return new BlazeCreateResourceDirectoryDialog(
+        project, module, resType, resDirectory, dataContext, validatorFactory);
   }
 
   @NotNull
   @Override
   public CreateResourceFileDialogBase createNewResourceFileDialog(
-    @NotNull AndroidFacet facet,
-    @NotNull Collection<CreateTypedResourceFileAction> actions,
-    @Nullable ResourceFolderType folderType,
-    @Nullable String filename,
-    @Nullable String rootElement,
-    @Nullable FolderConfiguration folderConfiguration,
-    boolean chooseFileName,
-    boolean chooseModule,
-    @Nullable PsiDirectory resDirectory,
-    @Nullable DataContext dataContext,
-    @NotNull CreateResourceFileDialogBase.ValidatorFactory validatorFactory) {
-    return new BlazeCreateResourceFileDialog(facet, actions, folderType, filename, rootElement, folderConfiguration, chooseFileName,
-                                             chooseModule, resDirectory, dataContext, validatorFactory);
+      @NotNull AndroidFacet facet,
+      @NotNull Collection<CreateTypedResourceFileAction> actions,
+      @Nullable ResourceFolderType folderType,
+      @Nullable String filename,
+      @Nullable String rootElement,
+      @Nullable FolderConfiguration folderConfiguration,
+      boolean chooseFileName,
+      boolean chooseModule,
+      @Nullable PsiDirectory resDirectory,
+      @Nullable DataContext dataContext,
+      @NotNull CreateResourceFileDialogBase.ValidatorFactory validatorFactory) {
+    return new BlazeCreateResourceFileDialog(
+        facet,
+        actions,
+        folderType,
+        filename,
+        rootElement,
+        folderConfiguration,
+        chooseFileName,
+        chooseModule,
+        resDirectory,
+        dataContext,
+        validatorFactory);
   }
 
   @Override
   public CreateXmlResourcePanel createNewResourceValuePanel(
-    @NotNull Module module,
-    @NotNull ResourceType resourceType,
-    @NotNull ResourceFolderType folderType,
-    @Nullable String resourceName,
-    @Nullable String resourceValue,
-    boolean chooseName,
-    boolean chooseValue,
-    boolean chooseFilename,
-    @Nullable VirtualFile defaultFile,
-    @Nullable VirtualFile contextFile,
-    @NotNull Function<Module, ResourceNameValidator> nameValidatorFactory) {
-    return new BlazeCreateXmlResourcePanel(module, resourceType, folderType, resourceName, resourceValue,
-                                           chooseName, chooseValue, chooseFilename, defaultFile, contextFile, nameValidatorFactory);
+      @NotNull Module module,
+      @NotNull ResourceType resourceType,
+      @NotNull ResourceFolderType folderType,
+      @Nullable String resourceName,
+      @Nullable String resourceValue,
+      boolean chooseName,
+      boolean chooseValue,
+      boolean chooseFilename,
+      @Nullable VirtualFile defaultFile,
+      @Nullable VirtualFile contextFile,
+      @NotNull Function<Module, ResourceNameValidator> nameValidatorFactory) {
+    return new BlazeCreateXmlResourcePanel(
+        module,
+        resourceType,
+        folderType,
+        resourceName,
+        resourceValue,
+        chooseName,
+        chooseValue,
+        chooseFilename,
+        defaultFile,
+        contextFile,
+        nameValidatorFactory);
   }
 }

@@ -21,15 +21,18 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.primitives.Label;
-import org.jetbrains.annotations.NotNull;
-
-import javax.annotation.concurrent.Immutable;
 import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.concurrent.Immutable;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * An android resource module. Maps from an android_library's resources to an Android Studio
+ * module/facet.
+ */
 @Immutable
 public final class AndroidResourceModule implements Serializable {
   private static final long serialVersionUID = 5L;
@@ -39,10 +42,11 @@ public final class AndroidResourceModule implements Serializable {
   public final ImmutableCollection<File> transitiveResources;
   public final ImmutableCollection<Label> transitiveResourceDependencies;
 
-  public AndroidResourceModule(Label label,
-                               ImmutableCollection<File> resources,
-                               ImmutableCollection<File> transitiveResources,
-                               ImmutableCollection<Label> transitiveResourceDependencies) {
+  public AndroidResourceModule(
+      Label label,
+      ImmutableCollection<File> resources,
+      ImmutableCollection<File> transitiveResources,
+      ImmutableCollection<Label> transitiveResourceDependencies) {
     this.label = label;
     this.resources = resources;
     this.transitiveResources = transitiveResources;
@@ -52,11 +56,12 @@ public final class AndroidResourceModule implements Serializable {
   @Override
   public boolean equals(Object o) {
     if (o instanceof AndroidResourceModule) {
-      AndroidResourceModule that = (AndroidResourceModule)o;
+      AndroidResourceModule that = (AndroidResourceModule) o;
       return Objects.equal(this.label, that.label)
-             && Objects.equal(this.resources, that.resources)
-             && Objects.equal(this.transitiveResources, that.transitiveResources)
-             && Objects.equal(this.transitiveResourceDependencies, that.transitiveResourceDependencies);
+          && Objects.equal(this.resources, that.resources)
+          && Objects.equal(this.transitiveResources, that.transitiveResources)
+          && Objects.equal(
+              this.transitiveResourceDependencies, that.transitiveResourceDependencies);
     }
     return false;
   }
@@ -64,21 +69,26 @@ public final class AndroidResourceModule implements Serializable {
   @Override
   public int hashCode() {
     return Objects.hashCode(
-      this.label,
-      this.resources,
-      this.transitiveResources,
-      this.transitiveResourceDependencies
-    );
+        this.label, this.resources, this.transitiveResources, this.transitiveResourceDependencies);
   }
 
   @Override
   public String toString() {
-    return "AndroidResourceModule{" + "\n"
-           + "  label: " + label + "\n"
-           + "  resources: " + resources + "\n"
-           + "  transitiveResources: " + transitiveResources + "\n"
-           + "  transitiveResourceDependencies: " + transitiveResourceDependencies + "\n"
-           + '}';
+    return "AndroidResourceModule{"
+        + "\n"
+        + "  label: "
+        + label
+        + "\n"
+        + "  resources: "
+        + resources
+        + "\n"
+        + "  transitiveResources: "
+        + transitiveResources
+        + "\n"
+        + "  transitiveResourceDependencies: "
+        + transitiveResourceDependencies
+        + "\n"
+        + '}';
   }
 
   public static Builder builder(Label label) {
@@ -89,6 +99,7 @@ public final class AndroidResourceModule implements Serializable {
     return resources.isEmpty() && transitiveResources.isEmpty();
   }
 
+  /** Builder for the resource module */
   public static class Builder {
     private final Label label;
     private final Set<ArtifactLocation> resources = Sets.newHashSet();
@@ -132,25 +143,21 @@ public final class AndroidResourceModule implements Serializable {
     @NotNull
     public AndroidResourceModule build() {
       return new AndroidResourceModule(
-        label,
-        ImmutableList.copyOf(
-          resources
-            .stream()
-            .map(ArtifactLocation::getFile)
-            .sorted()
-            .collect(Collectors.toList())),
-        ImmutableList.copyOf(
-          transitiveResources
-            .stream()
-            .map(ArtifactLocation::getFile)
-            .sorted()
-            .collect(Collectors.toList())),
-        ImmutableList.copyOf(
-          transitiveResourceDependencies
-            .stream()
-            .sorted()
-            .collect(Collectors.toList()))
-      );
+          label,
+          ImmutableList.copyOf(
+              resources
+                  .stream()
+                  .map(ArtifactLocation::getFile)
+                  .sorted()
+                  .collect(Collectors.toList())),
+          ImmutableList.copyOf(
+              transitiveResources
+                  .stream()
+                  .map(ArtifactLocation::getFile)
+                  .sorted()
+                  .collect(Collectors.toList())),
+          ImmutableList.copyOf(
+              transitiveResourceDependencies.stream().sorted().collect(Collectors.toList())));
     }
   }
 }

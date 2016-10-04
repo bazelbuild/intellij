@@ -18,17 +18,16 @@ package com.google.idea.blaze.android.run.binary.mobileinstall;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import icons.BlazeAndroidIcons;
+import javax.swing.Icon;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * Executor for running blaze mobile-install --incremental and then launching the current run
  * configuration. This executor adds a launch button that is only enabled for mobile-install run
  * configurations.
  */
-public class IncrementalInstallRunExecutor
-  extends DefaultRunExecutor implements IncrementalInstallExecutor {
+public class IncrementalInstallRunExecutor extends DefaultRunExecutor
+    implements IncrementalInstallExecutor {
   public static final String EXECUTOR_ID = "blaze.incremental.install.run";
 
   @NotNull

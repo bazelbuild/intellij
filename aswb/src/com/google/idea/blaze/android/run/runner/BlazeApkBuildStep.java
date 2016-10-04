@@ -17,9 +17,7 @@ package com.google.idea.blaze.android.run.runner;
 
 import com.google.idea.blaze.base.scope.BlazeContext;
 
-/**
- * Builds the APK.
- */
+/** Builds the APK. */
 public interface BlazeApkBuildStep {
   /**
    * Builds an optionally installs the APK.

@@ -19,15 +19,11 @@ import com.android.tools.idea.model.ClassJarProvider;
 import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
-/**
- * Returns no class jars. Used to disable the layout editor
- * loading jars.
- */
+/** Returns no class jars. Used to disable the layout editor loading jars. */
 public class NullClassJarProvider extends ClassJarProvider {
   @Nullable
   @Override

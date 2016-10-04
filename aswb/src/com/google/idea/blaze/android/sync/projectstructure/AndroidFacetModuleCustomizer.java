@@ -22,17 +22,14 @@ import com.intellij.openapi.module.Module;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.jps.android.model.impl.JpsAndroidModuleProperties;
 
-/**
- * Adds the Android facet to modules imported from {@link AndroidProject}s.
- */
+/** Adds the Android facet to modules imported from {@link AndroidProject}s. */
 public class AndroidFacetModuleCustomizer {
 
   public static void createAndroidFacet(Module module) {
     AndroidFacet facet = AndroidFacet.getInstance(module);
     if (facet != null) {
       configureFacet(facet);
-    }
-    else {
+    } else {
       // Module does not have Android facet. Create one and add it.
       FacetManager facetManager = FacetManager.getInstance(module);
       ModifiableFacetModel model = facetManager.createModifiableModel();
@@ -40,8 +37,7 @@ public class AndroidFacetModuleCustomizer {
         facet = facetManager.createFacet(AndroidFacet.getFacetType(), AndroidFacet.NAME, null);
         model.addFacet(facet);
         configureFacet(facet);
-      }
-      finally {
+      } finally {
         model.commit();
       }
     }

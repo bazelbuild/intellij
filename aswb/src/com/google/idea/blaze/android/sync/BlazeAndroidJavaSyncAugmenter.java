@@ -16,26 +16,59 @@
 package com.google.idea.blaze.android.sync;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
-import com.google.idea.blaze.base.experiments.BoolExperiment;
+import com.google.idea.blaze.base.ideinfo.AndroidRuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
+import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.projectview.section.Glob;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
+import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeLibrary;
-
 import java.util.Collection;
 
-/**
- * Augments the java sync process with Android support.
- */
-public class BlazeAndroidJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
-  private static final BoolExperiment EXCLUDE_ANDROID_BLAZE_JAR = new BoolExperiment("exclude.android.blaze.jar", true);
+/** Augments the java sync process with Android support. */
+public class BlazeAndroidJavaSyncAugmenter extends BlazeJavaSyncAugmenter.Adapter {
+
+  @Override
+  public boolean isActive(WorkspaceLanguageSettings workspaceLanguageSettings) {
+    return workspaceLanguageSettings.isLanguageActive(LanguageClass.ANDROID);
+  }
+
+  @Override
+  public void addJarsForSourceRule(
+      RuleIdeInfo rule, Collection<BlazeJarLibrary> jars, Collection<BlazeJarLibrary> genJars) {
+    AndroidRuleIdeInfo androidRuleIdeInfo = rule.androidRuleIdeInfo;
+    if (androidRuleIdeInfo == null) {
+      return;
+    }
+    LibraryArtifact idlJar = androidRuleIdeInfo.idlJar;
+    if (idlJar != null) {
+      genJars.add(new BlazeJarLibrary(idlJar, rule.label));
+    }
+
+    if (BlazeAndroidWorkspaceImporter.shouldGenerateResources(androidRuleIdeInfo)
+        && !BlazeAndroidWorkspaceImporter.shouldGenerateResourceModule(androidRuleIdeInfo)) {
+      // Add blaze's output unless it's a top level rule.
+      // In these cases the resource jar contains the entire
+      // transitive closure of R classes. It's unlikely this is wanted to resolve in the IDE.
+      boolean discardResourceJar = rule.kindIsOneOf(Kind.ANDROID_BINARY, Kind.ANDROID_TEST);
+      if (!discardResourceJar) {
+        LibraryArtifact resourceJar = androidRuleIdeInfo.resourceJar;
+        if (resourceJar != null) {
+          jars.add(new BlazeJarLibrary(resourceJar, rule.label));
+        }
+      }
+    }
+  }
 
   @Override
   public void addLibraryFilter(Glob.GlobSet excludedLibraries) {
-    if (EXCLUDE_ANDROID_BLAZE_JAR.getValue()) {
-      excludedLibraries.add(new Glob("*/android_blaze.jar")); // This is supplied via the SDK
-    }
+    excludedLibraries.add(new Glob("*/android_blaze.jar")); // This is supplied via the SDK
   }
 
   @Override
@@ -44,11 +77,10 @@ public class BlazeAndroidJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
     if (syncData == null) {
       return ImmutableList.of();
     }
-    return syncData.importResult.libraries;
-  }
-
-  @Override
-  public Collection<String> getExternallyAddedLibraries(BlazeProjectData blazeProjectData) {
-    return ImmutableList.of();
+    ImmutableList.Builder<BlazeLibrary> libraries = ImmutableList.builder();
+    if (syncData.importResult.resourceLibrary != null) {
+      libraries.add(syncData.importResult.resourceLibrary);
+    }
+    return libraries.build();
   }
 }

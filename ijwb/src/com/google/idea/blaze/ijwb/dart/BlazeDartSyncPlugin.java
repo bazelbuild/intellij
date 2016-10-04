@@ -31,13 +31,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
-
-import javax.annotation.Nullable;
 import java.util.Set;
+import javax.annotation.Nullable;
 
-/**
- * Supports dart.
- */
+/** Supports dart. */
 public class BlazeDartSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   static final String DART_SDK_LIBRARY_NAME = "Dart SDK";
@@ -49,36 +46,40 @@ public class BlazeDartSyncPlugin extends BlazeSyncPlugin.Adapter {
   }
 
   @Override
-  public void updateProjectStructure(Project project,
-                                     BlazeContext context,
-                                     WorkspaceRoot workspaceRoot,
-                                     ProjectViewSet projectViewSet,
-                                     BlazeProjectData blazeProjectData,
-                                     @Nullable BlazeProjectData oldBlazeProjectData,
-                                     ModuleEditor moduleEditor,
-                                     Module workspaceModule,
-                                     ModifiableRootModel workspaceModifiableModel) {
+  public void updateProjectStructure(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      @Nullable BlazeProjectData oldBlazeProjectData,
+      ModuleEditor moduleEditor,
+      Module workspaceModule,
+      ModifiableRootModel workspaceModifiableModel) {
     if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.DART)) {
       return;
     }
 
-    Library dartSdkLibrary = ApplicationLibraryTable.getApplicationTable().getLibraryByName(DART_SDK_LIBRARY_NAME);
+    Library dartSdkLibrary =
+        ApplicationLibraryTable.getApplicationTable().getLibraryByName(DART_SDK_LIBRARY_NAME);
     if (dartSdkLibrary != null) {
       if (workspaceModifiableModel.findLibraryOrderEntry(dartSdkLibrary) == null) {
         workspaceModifiableModel.addLibraryEntry(dartSdkLibrary);
       }
     } else {
-      IssueOutput
-        .error("Dart language support is requested, but the Dart SDK was not found. "
-               + "You must manually enable Dart support from File > Settings > Languages & Frameworks > Dart.")
-        .submit(context);
+      IssueOutput.error(
+              "Dart language support is requested, but the Dart SDK was not found. "
+                  + "You must manually enable Dart support from "
+                  + "File > Settings > Languages & Frameworks > Dart.")
+          .submit(context);
     }
   }
 
   @Override
-  public boolean validateProjectView(BlazeContext context,
-                                     ProjectViewSet projectViewSet,
-                                     WorkspaceLanguageSettings workspaceLanguageSettings) {
+  public boolean validateProjectView(
+      BlazeContext context,
+      ProjectViewSet projectViewSet,
+      WorkspaceLanguageSettings workspaceLanguageSettings) {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.DART)) {
       return true;
     }

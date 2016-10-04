@@ -19,9 +19,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginId;
 
-/**
- * IDE and plugin checks.
- */
+/** IDE and plugin checks. */
 public class IdeCheck {
   public static boolean isPluginEnabled(String pluginIdString) {
     PluginId pluginId = PluginId.getId(pluginIdString);

@@ -18,8 +18,6 @@ package com.google.idea.blaze.android.sync.model.idea;
 
 import com.android.builder.model.SourceProvider;
 import com.google.common.collect.ImmutableList;
-import com.intellij.openapi.diagnostic.Logger;
-
 import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
@@ -36,9 +34,7 @@ public class SourceProviderImpl implements SourceProvider, Serializable {
   private final File manifestFile;
   private final Collection<File> resDirs;
 
-  public SourceProviderImpl(String name,
-                            File manifestFile,
-                            Collection<File> resDirs) {
+  public SourceProviderImpl(String name, File manifestFile, Collection<File> resDirs) {
     this.name = name;
     this.manifestFile = manifestFile;
     this.resDirs = resDirs;

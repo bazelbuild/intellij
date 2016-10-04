@@ -3,10 +3,11 @@ directories:
   -ijwb
   -blaze-plugin-dev
   -clwb
-  -blaze-cpp
+  -blaze-cpp/src/com/google/idea/blaze/cpp/versioned/v162
 
 targets:
   //aswb:aswb_bazel
+  //aswb:aswb_blaze
   //:aswb_tests
 
 workspace_type: intellij_plugin

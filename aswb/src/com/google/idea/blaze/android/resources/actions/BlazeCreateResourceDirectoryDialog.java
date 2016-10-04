@@ -20,6 +20,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -33,6 +34,15 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Insets;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import org.jetbrains.android.actions.CreateResourceDirectoryDialogBase;
 import org.jetbrains.android.actions.ElementCreatingValidator;
 import org.jetbrains.android.uipreview.DeviceConfiguratorPanel;
@@ -40,12 +50,9 @@ import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-
 /**
- * Dialog to decide where to create a res/ subdirectory (e.g., layout/, values-foo/, etc.)
- * and how to name the subdirectory based on resource type and chosen configuration.
+ * Dialog to decide where to create a res/ subdirectory (e.g., layout/, values-foo/, etc.) and how
+ * to name the subdirectory based on resource type and chosen configuration.
  */
 public class BlazeCreateResourceDirectoryDialog extends CreateResourceDirectoryDialogBase {
 
@@ -63,36 +70,40 @@ public class BlazeCreateResourceDirectoryDialog extends CreateResourceDirectoryD
   private PsiDirectory myResDirectory;
   private DataContext myDataContext;
 
-  public BlazeCreateResourceDirectoryDialog(Project project,
-                                            @Nullable Module module,
-                                            @Nullable ResourceFolderType resType,
-                                            @Nullable PsiDirectory resDirectory,
-                                            @Nullable DataContext dataContext,
-                                            ValidatorFactory validatorFactory) {
+  public BlazeCreateResourceDirectoryDialog(
+      Project project,
+      @Nullable Module module,
+      @Nullable ResourceFolderType resType,
+      @Nullable PsiDirectory resDirectory,
+      @Nullable DataContext dataContext,
+      ValidatorFactory validatorFactory) {
     super(project);
     setupUi();
     myResDirectory = resDirectory;
     myDataContext = dataContext;
     myValidatorFactory = validatorFactory;
     myResourceTypeComboBox.setModel(new EnumComboBoxModel<>(ResourceFolderType.class));
-    myResourceTypeComboBox.setRenderer(new ListCellRendererWrapper() {
-      @Override
-      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value instanceof ResourceFolderType) {
-          setText(((ResourceFolderType)value).getName());
-        }
-      }
-    });
+    myResourceTypeComboBox.setRenderer(
+        new ListCellRendererWrapper() {
+          @Override
+          public void customize(
+              JList list, Object value, int index, boolean selected, boolean hasFocus) {
+            if (value instanceof ResourceFolderType) {
+              setText(((ResourceFolderType) value).getName());
+            }
+          }
+        });
 
-    myDeviceConfiguratorPanel = setupDeviceConfigurationPanel(myResourceTypeComboBox, myDirectoryNameTextField, myErrorLabel);
+    myDeviceConfiguratorPanel =
+        setupDeviceConfigurationPanel(
+            myResourceTypeComboBox, myDirectoryNameTextField, myErrorLabel);
     myDeviceConfiguratorWrapper.add(myDeviceConfiguratorPanel, BorderLayout.CENTER);
     myResourceTypeComboBox.addActionListener(e -> myDeviceConfiguratorPanel.applyEditors());
 
     if (resType != null) {
       myResourceTypeComboBox.setSelectedItem(resType);
       myResourceTypeComboBox.setEnabled(false);
-    }
-    else {
+    } else {
       // Select values by default if not otherwise specified
       myResourceTypeComboBox.setSelectedItem(ResourceFolderType.VALUES);
     }
@@ -100,6 +111,8 @@ public class BlazeCreateResourceDirectoryDialog extends CreateResourceDirectoryD
     // If myResDirectory is known before this, just use that.
     myResDirLabel.setVisible(false);
     myResDirCombo.setVisible(false);
+    myResDirCombo.addBrowseFolderListener(
+        project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
     if (myResDirectory == null) {
       assert dataContext != null;
       assert module != null;
@@ -107,14 +120,17 @@ public class BlazeCreateResourceDirectoryDialog extends CreateResourceDirectoryD
       VirtualFile contextFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
       if (contextFile != null) {
         PsiManager manager = PsiManager.getInstance(project);
-        VirtualFile virtualDirectory = BlazeCreateResourceUtils.getResDirFromDataContext(contextFile);
-        PsiDirectory directory = virtualDirectory != null ? manager.findDirectory(virtualDirectory) : null;
+        VirtualFile virtualDirectory =
+            BlazeCreateResourceUtils.getResDirFromDataContext(contextFile);
+        PsiDirectory directory =
+            virtualDirectory != null ? manager.findDirectory(virtualDirectory) : null;
         if (directory != null) {
           myResDirectory = directory;
-        }
-        else {
-          // As a last resort, if we have poor context, e.g., from File > New w/ a .java file open, set up the UI.
-          BlazeCreateResourceUtils.setupResDirectoryChoices(module.getProject(), contextFile, myResDirLabel, myResDirCombo);
+        } else {
+          // As a last resort, if we have poor context
+          // e.g., from File > New w/ a .java file open, set up the UI.
+          BlazeCreateResourceUtils.setupResDirectoryChoices(
+              module.getProject(), contextFile, myResDirLabel, myResDirCombo);
         }
       }
     }
@@ -131,8 +147,8 @@ public class BlazeCreateResourceDirectoryDialog extends CreateResourceDirectoryD
     PsiDirectory resourceDirectory = getResourceDirectory();
     if (resourceDirectory == null) {
       Module module = LangDataKeys.MODULE.getData(myDataContext);
-      Messages.showErrorDialog(AndroidBundle.message("check.resource.dir.error", module),
-                               CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(
+          AndroidBundle.message("check.resource.dir.error", module), CommonBundle.getErrorTitle());
       // Not much the user can do, just close the dialog.
       super.doOKAction();
       return;
@@ -152,8 +168,7 @@ public class BlazeCreateResourceDirectoryDialog extends CreateResourceDirectoryD
   public JComponent getPreferredFocusedComponent() {
     if (myResourceTypeComboBox.isEnabled()) {
       return myResourceTypeComboBox;
-    }
-    else {
+    } else {
       return myDirectoryNameTextField;
     }
   }
@@ -183,62 +198,160 @@ public class BlazeCreateResourceDirectoryDialog extends CreateResourceDirectoryD
     return myContentPanel;
   }
 
-  /**
-   * Initially generated by IntelliJ from a .form file.
-   */
+  /** Initially generated by IntelliJ from a .form file. */
   private void setupUi() {
     myContentPanel = new JPanel();
     myContentPanel.setLayout(new GridLayoutManager(5, 2, new Insets(0, 0, 0, 0), -1, -1));
     myContentPanel.setPreferredSize(new Dimension(800, 400));
     myResourceTypeComboBox = new JComboBox();
-    myContentPanel.add(myResourceTypeComboBox, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
-                                                                   GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
-                                                                   null, null, null, 0, false));
+    myContentPanel.add(
+        myResourceTypeComboBox,
+        new GridConstraints(
+            1,
+            1,
+            1,
+            1,
+            GridConstraints.ANCHOR_WEST,
+            GridConstraints.FILL_HORIZONTAL,
+            GridConstraints.SIZEPOLICY_CAN_GROW,
+            GridConstraints.SIZEPOLICY_FIXED,
+            null,
+            null,
+            null,
+            0,
+            false));
     final JBLabel jBLabel1 = new JBLabel();
     jBLabel1.setText("Resource type:");
     jBLabel1.setDisplayedMnemonic('R');
     jBLabel1.setDisplayedMnemonicIndex(0);
-    myContentPanel.add(jBLabel1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                                     GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
-                                                     0, false));
+    myContentPanel.add(
+        jBLabel1,
+        new GridConstraints(
+            1,
+            0,
+            1,
+            1,
+            GridConstraints.ANCHOR_WEST,
+            GridConstraints.FILL_NONE,
+            GridConstraints.SIZEPOLICY_FIXED,
+            GridConstraints.SIZEPOLICY_FIXED,
+            null,
+            null,
+            null,
+            0,
+            false));
     myDeviceConfiguratorWrapper = new JPanel();
     myDeviceConfiguratorWrapper.setLayout(new BorderLayout(0, 0));
-    myContentPanel.add(myDeviceConfiguratorWrapper,
-                       new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0,
-                                           false));
+    myContentPanel.add(
+        myDeviceConfiguratorWrapper,
+        new GridConstraints(
+            3,
+            0,
+            1,
+            2,
+            GridConstraints.ANCHOR_CENTER,
+            GridConstraints.FILL_BOTH,
+            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+            null,
+            null,
+            null,
+            0,
+            false));
     final JLabel label1 = new JLabel();
     label1.setText("Directory name:");
     label1.setDisplayedMnemonic('D');
     label1.setDisplayedMnemonicIndex(0);
-    myContentPanel.add(label1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                                   GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
-                                                   false));
+    myContentPanel.add(
+        label1,
+        new GridConstraints(
+            0,
+            0,
+            1,
+            1,
+            GridConstraints.ANCHOR_WEST,
+            GridConstraints.FILL_NONE,
+            GridConstraints.SIZEPOLICY_FIXED,
+            GridConstraints.SIZEPOLICY_FIXED,
+            null,
+            null,
+            null,
+            0,
+            false));
     myDirectoryNameTextField = new JTextField();
     myDirectoryNameTextField.setEnabled(true);
-    myContentPanel.add(myDirectoryNameTextField,
-                       new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
-                                           GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
-                                           new Dimension(150, -1), null, 0, false));
+    myContentPanel.add(
+        myDirectoryNameTextField,
+        new GridConstraints(
+            0,
+            1,
+            1,
+            1,
+            GridConstraints.ANCHOR_WEST,
+            GridConstraints.FILL_HORIZONTAL,
+            GridConstraints.SIZEPOLICY_WANT_GROW,
+            GridConstraints.SIZEPOLICY_FIXED,
+            null,
+            new Dimension(150, -1),
+            null,
+            0,
+            false));
     myErrorLabel = new JBLabel();
-    myContentPanel.add(myErrorLabel, new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-                                                         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null,
-                                                         null, 0, false));
+    myContentPanel.add(
+        myErrorLabel,
+        new GridConstraints(
+            4,
+            0,
+            1,
+            2,
+            GridConstraints.ANCHOR_CENTER,
+            GridConstraints.FILL_BOTH,
+            GridConstraints.SIZEPOLICY_FIXED,
+            GridConstraints.SIZEPOLICY_FIXED,
+            null,
+            null,
+            null,
+            0,
+            false));
     myResDirLabel = new JBLabel();
     myResDirLabel.setText("Base directory:");
     myResDirLabel.setDisplayedMnemonic('B');
     myResDirLabel.setDisplayedMnemonicIndex(0);
-    myContentPanel.add(myResDirLabel, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                                          GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null,
-                                                          null, 0, false));
+    myContentPanel.add(
+        myResDirLabel,
+        new GridConstraints(
+            2,
+            0,
+            1,
+            1,
+            GridConstraints.ANCHOR_WEST,
+            GridConstraints.FILL_NONE,
+            GridConstraints.SIZEPOLICY_FIXED,
+            GridConstraints.SIZEPOLICY_FIXED,
+            null,
+            null,
+            null,
+            0,
+            false));
     myResDirCombo = new ComboboxWithBrowseButton();
-    myContentPanel.add(myResDirCombo, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
-                                                          GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null,
-                                                          null, 0, false));
+    myContentPanel.add(
+        myResDirCombo,
+        new GridConstraints(
+            2,
+            1,
+            1,
+            1,
+            GridConstraints.ANCHOR_WEST,
+            GridConstraints.FILL_HORIZONTAL,
+            GridConstraints.SIZEPOLICY_CAN_GROW,
+            GridConstraints.SIZEPOLICY_FIXED,
+            null,
+            null,
+            null,
+            0,
+            false));
     jBLabel1.setLabelFor(myResourceTypeComboBox);
     label1.setLabelFor(myDirectoryNameTextField);
     myResDirLabel.setLabelFor(myResourceTypeComboBox);
   }
-
 }

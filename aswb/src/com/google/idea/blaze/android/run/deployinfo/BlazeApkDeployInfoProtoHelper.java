@@ -29,18 +29,15 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.repackaged.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
-/**
- * Reads the deploy info from a build step.
- */
+/** Reads the deploy info from a build step. */
 public class BlazeApkDeployInfoProtoHelper {
   private static final Logger LOG = Logger.getInstance(BlazeApkDeployInfoProtoHelper.class);
 
@@ -49,7 +46,7 @@ public class BlazeApkDeployInfoProtoHelper {
   private final ImmutableList<String> buildFlags;
   private final List<File> deployInfoFiles = Lists.newArrayList();
   private final LineProcessingOutputStream.LineProcessor lineProcessor =
-    new ExperimentalShowArtifactsLineProcessor(deployInfoFiles, ".deployinfo.pb");
+      new ExperimentalShowArtifactsLineProcessor(deployInfoFiles, ".deployinfo.pb");
 
   public BlazeApkDeployInfoProtoHelper(Project project, ImmutableList<String> buildFlags) {
     this.project = project;
@@ -78,7 +75,8 @@ public class BlazeApkDeployInfoProtoHelper {
     if (executionRoot == null) {
       return null;
     }
-    BlazeAndroidDeployInfo androidDeployInfo = new BlazeAndroidDeployInfo(project, new File(executionRoot), deployInfo);
+    BlazeAndroidDeployInfo androidDeployInfo =
+        new BlazeAndroidDeployInfo(project, new File(executionRoot), deployInfo);
 
     List<File> manifestFiles = androidDeployInfo.getManifestFiles();
     ManifestParser.getInstance(project).refreshManifests(manifestFiles);
@@ -88,19 +86,19 @@ public class BlazeApkDeployInfoProtoHelper {
 
   @Nullable
   private String getExecutionRoot(BlazeContext context) {
-    ListenableFuture<String> execRootFuture = BlazeInfo.getInstance().runBlazeInfo(
-      context, Blaze.getBuildSystem(project),
-      workspaceRoot,
-      buildFlags,
-      BlazeInfo.EXECUTION_ROOT_KEY
-    );
+    ListenableFuture<String> execRootFuture =
+        BlazeInfo.getInstance()
+            .runBlazeInfo(
+                context,
+                Blaze.getBuildSystem(project),
+                workspaceRoot,
+                buildFlags,
+                BlazeInfo.EXECUTION_ROOT_KEY);
     try {
       return execRootFuture.get();
-    }
-    catch (InterruptedException e) {
+    } catch (InterruptedException e) {
       context.setCancelled();
-    }
-    catch (ExecutionException e) {
+    } catch (ExecutionException e) {
       LOG.error(e);
       context.setHasError();
     }

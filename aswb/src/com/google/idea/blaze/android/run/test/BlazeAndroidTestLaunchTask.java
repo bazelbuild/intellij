@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -37,26 +38,27 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedFunction;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.PooledThreadExecutor;
-
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 /**
- * An Android application launcher that invokes `blaze test` on an android_test target, and sets
- * up process handling and debugging for the test run.
+ * An Android application launcher that invokes `blaze test` on an android_test target, and sets up
+ * process handling and debugging for the test run.
  */
 class BlazeAndroidTestLaunchTask implements LaunchTask {
   // Uses a local device/emulator attached to adb to run an android_test.
-  public static final String TEST_LOCAL_DEVICE = BlazeFlags.TEST_ARG + "--device_broker_type=LOCAL_ADB_SERVER";
+  public static final String TEST_LOCAL_DEVICE =
+      BlazeFlags.TEST_ARG + "--device_broker_type=LOCAL_ADB_SERVER";
   // Uses a local device/emulator attached to adb to run an android_test.
   public static final String TEST_DEBUG = BlazeFlags.TEST_ARG + "--enable_debug";
   // Specifies the serial number for a local test device.
@@ -75,13 +77,12 @@ class BlazeAndroidTestLaunchTask implements LaunchTask {
   private final boolean debug;
 
   public BlazeAndroidTestLaunchTask(
-    Project project,
-    Label target,
-    List<String> buildFlags,
-    BlazeAndroidTestFilter testFilter,
-    BlazeAndroidTestRunContext runContext,
-    boolean debug
-  ) {
+      Project project,
+      Label target,
+      List<String> buildFlags,
+      BlazeAndroidTestFilter testFilter,
+      BlazeAndroidTestRunContext runContext,
+      boolean debug) {
     this.project = project;
     this.target = target;
     this.buildFlags = buildFlags;
@@ -102,65 +103,83 @@ class BlazeAndroidTestLaunchTask implements LaunchTask {
   }
 
   @Override
-  public boolean perform(@NotNull IDevice device, @NotNull LaunchStatus launchStatus, @NotNull ConsolePrinter printer) {
+  public boolean perform(
+      @NotNull IDevice device,
+      @NotNull LaunchStatus launchStatus,
+      @NotNull ConsolePrinter printer) {
     BlazeExecutor executor = BlazeExecutor.getInstance();
 
-    ProcessHandlerLaunchStatus processHandlerLaunchStatus = (ProcessHandlerLaunchStatus)launchStatus;
+    ProcessHandlerLaunchStatus processHandlerLaunchStatus =
+        (ProcessHandlerLaunchStatus) launchStatus;
     final ProcessHandler processHandler = processHandlerLaunchStatus.getProcessHandler();
 
-    blazeResult = executor.submit(new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return Scope.root(new ScopedFunction<Boolean>() {
-          @Override
-          public Boolean execute(@NotNull BlazeContext context) {
-            ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-            if (projectViewSet == null) {
-              IssueOutput.error("Could not load project view. Please resync project.").submit(context);
-              return false;
-            }
+    blazeResult =
+        executor.submit(
+            new Callable<Boolean>() {
+              @Override
+              public Boolean call() throws Exception {
+                return Scope.root(
+                    new ScopedFunction<Boolean>() {
+                      @Override
+                      public Boolean execute(@NotNull BlazeContext context) {
+                        ProjectViewSet projectViewSet =
+                            ProjectViewManager.getInstance(project).getProjectViewSet();
+                        if (projectViewSet == null) {
+                          IssueOutput.error("Could not load project view. Please resync project.")
+                              .submit(context);
+                          return false;
+                        }
 
-            BlazeCommand.Builder commandBuilder = BlazeCommand.builder(Blaze.getBuildSystem(project), BlazeCommandName.TEST)
-              .addTargets(target);
-            // Build flags must match BlazeBeforeRunTask.
-            commandBuilder
-              .addBlazeFlags(buildFlags);
-            // Run the test on the selected local device/emulator.
-            commandBuilder
-              .addBlazeFlags(TEST_LOCAL_DEVICE, BlazeFlags.TEST_OUTPUT_STREAMED)
-              .addBlazeFlags(testDeviceSerialFlags(device.getSerialNumber()))
-              .addBlazeFlags(testFilter.getBlazeFlags());
-            if (debug) {
-              commandBuilder.addBlazeFlags(TEST_DEBUG, BlazeFlags.NO_CACHE_TEST_RESULTS);
-            }
-            BlazeCommand command = commandBuilder.build();
+                        BlazeCommand.Builder commandBuilder =
+                            BlazeCommand.builder(
+                                    Blaze.getBuildSystem(project), BlazeCommandName.TEST)
+                                .addTargets(target);
+                        // Build flags must match BlazeBeforeRunTask.
+                        commandBuilder.addBlazeFlags(buildFlags);
+                        // Run the test on the selected local device/emulator.
+                        commandBuilder
+                            .addBlazeFlags(TEST_LOCAL_DEVICE, BlazeFlags.TEST_OUTPUT_STREAMED)
+                            .addBlazeFlags(testDeviceSerialFlags(device.getSerialNumber()))
+                            .addBlazeFlags(testFilter.getBlazeFlags());
+                        if (debug) {
+                          commandBuilder.addBlazeFlags(
+                              TEST_DEBUG, BlazeFlags.NO_CACHE_TEST_RESULTS);
+                        }
+                        BlazeCommand command = commandBuilder.build();
 
-            printer.stdout(String.format("Starting %s test...\n", Blaze.buildSystemName(project)));
-            printer.stdout(command + "\n");
-            LineProcessingOutputStream.LineProcessor stdoutLineProcessor = line -> {
-              printer.stdout(line);
-              return true;
-            };
-            LineProcessingOutputStream.LineProcessor stderrLineProcessor = line -> {
-              printer.stderr(line);
-              return true;
-            };
-            int retVal = ExternalTask.builder(WorkspaceRoot.fromProject(project), command)
-              .context(context)
-              .stdout(LineProcessingOutputStream.of(stdoutLineProcessor))
-              .stderr(LineProcessingOutputStream.of(stderrLineProcessor))
-              .build()
-              .run();
+                        printer.stdout(
+                            String.format("Starting %s test...\n", Blaze.buildSystemName(project)));
+                        printer.stdout(command + "\n");
+                        LineProcessingOutputStream.LineProcessor stdoutLineProcessor =
+                            line -> {
+                              printer.stdout(line);
+                              return true;
+                            };
+                        LineProcessingOutputStream.LineProcessor stderrLineProcessor =
+                            line -> {
+                              printer.stderr(line);
+                              return true;
+                            };
+                        SaveUtil.saveAllFiles();
+                        int retVal =
+                            ExternalTask.builder(WorkspaceRoot.fromProject(project))
+                                .addBlazeCommand(command)
+                                .context(context)
+                                .stdout(LineProcessingOutputStream.of(stdoutLineProcessor))
+                                .stderr(LineProcessingOutputStream.of(stderrLineProcessor))
+                                .build()
+                                .run();
+                        FileCaches.refresh(project);
 
-            if (retVal != 0) {
-              context.setHasError();
-            }
+                        if (retVal != 0) {
+                          context.setHasError();
+                        }
 
-            return !context.hasErrors();
-          }
-        });
-      }
-    });
+                        return !context.hasErrors();
+                      }
+                    });
+              }
+            });
 
     blazeResult.addListener(runContext::onLaunchTaskComplete, PooledThreadExecutor.INSTANCE);
 
@@ -172,36 +191,35 @@ class BlazeAndroidTestLaunchTask implements LaunchTask {
   }
 
   /**
-   *  Hooks up the Blaze process to be killed if the user hits the 'Stop' button, then waits for
-   *  the Blaze process to stop.
-   *  In non-debug mode, we wait for test execution to finish before returning from launch()
-   *  (this matches the behavior of the stock ddmlib runner).
+   * Hooks up the Blaze process to be killed if the user hits the 'Stop' button, then waits for the
+   * Blaze process to stop. In non-debug mode, we wait for test execution to finish before returning
+   * from launch() (this matches the behavior of the stock ddmlib runner).
    */
-  private void waitAndSetUpForKillingBlazeOnStop(@NotNull final ProcessHandler processHandler, @NotNull LaunchStatus launchStatus) {
-    processHandler.addProcessListener(new ProcessAdapter() {
-      @Override
-      public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-        blazeResult.cancel(true /* mayInterruptIfRunning */);
-        launchStatus.terminateLaunch("Test run stopped.\n");
-      }
-    });
+  private void waitAndSetUpForKillingBlazeOnStop(
+      @NotNull final ProcessHandler processHandler, @NotNull LaunchStatus launchStatus) {
+    processHandler.addProcessListener(
+        new ProcessAdapter() {
+          @Override
+          public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+            blazeResult.cancel(true /* mayInterruptIfRunning */);
+            launchStatus.terminateLaunch("Test run stopped.\n");
+          }
+        });
 
     try {
       blazeResult.get();
       launchStatus.terminateLaunch("Tests ran to completion.\n");
-    }
-    catch (CancellationException e) {
+    } catch (CancellationException e) {
       // The user has canceled the test.
       launchStatus.terminateLaunch("Test run stopped.\n");
-    }
-    catch (InterruptedException e) {
+    } catch (InterruptedException e) {
       // We've been interrupted - cancel the underlying Blaze process.
       blazeResult.cancel(true /* mayInterruptIfRunning */);
       launchStatus.terminateLaunch("Test run stopped.\n");
-    }
-    catch (ExecutionException e) {
+    } catch (ExecutionException e) {
       LOG.error(e);
-      launchStatus.terminateLaunch("Test run stopped due to internal exception. Please file a bug report.\n");
+      launchStatus.terminateLaunch(
+          "Test run stopped due to internal exception. Please file a bug report.\n");
     }
   }
 

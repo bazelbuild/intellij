@@ -18,30 +18,19 @@ package com.google.idea.blaze.ijwb.dart;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.projectview.section.Glob;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
-import com.google.idea.blaze.java.sync.model.BlazeLibrary;
-
 import java.util.Collection;
 
-/**
- * Prevents garbage collection of the Dart SDK library.
- */
-public class BlazeDartJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
+/** Prevents garbage collection of the Dart SDK library. */
+public class BlazeDartJavaSyncAugmenter extends BlazeJavaSyncAugmenter.Adapter {
   @Override
-  public void addLibraryFilter(Glob.GlobSet excludedLibraries) {
-  }
-
-  @Override
-  public Collection<BlazeLibrary> getAdditionalLibraries(BlazeProjectData blazeProjectData) {
-    return ImmutableList.of();
+  public boolean isActive(WorkspaceLanguageSettings workspaceLanguageSettings) {
+    return workspaceLanguageSettings.isLanguageActive(LanguageClass.DART);
   }
 
   @Override
   public Collection<String> getExternallyAddedLibraries(BlazeProjectData blazeProjectData) {
-    if (blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.DART)) {
-      return ImmutableList.of(BlazeDartSyncPlugin.DART_SDK_LIBRARY_NAME);
-    }
-    return ImmutableList.of();
+    return ImmutableList.of(BlazeDartSyncPlugin.DART_SDK_LIBRARY_NAME);
   }
 }

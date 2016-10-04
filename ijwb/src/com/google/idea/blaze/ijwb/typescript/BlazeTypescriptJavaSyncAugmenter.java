@@ -18,30 +18,19 @@ package com.google.idea.blaze.ijwb.typescript;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.projectview.section.Glob;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
-import com.google.idea.blaze.java.sync.model.BlazeLibrary;
-
 import java.util.Collection;
 
-/**
- * Prevents garbage collection of "tsconfig$roots"
- */
-public class BlazeTypescriptJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
+/** Prevents garbage collection of "tsconfig$roots" */
+public class BlazeTypescriptJavaSyncAugmenter extends BlazeJavaSyncAugmenter.Adapter {
   @Override
-  public void addLibraryFilter(Glob.GlobSet excludedLibraries) {
-  }
-
-  @Override
-  public Collection<BlazeLibrary> getAdditionalLibraries(BlazeProjectData blazeProjectData) {
-    return ImmutableList.of();
+  public boolean isActive(WorkspaceLanguageSettings workspaceLanguageSettings) {
+    return workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT);
   }
 
   @Override
   public Collection<String> getExternallyAddedLibraries(BlazeProjectData blazeProjectData) {
-    if (blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)) {
-      return ImmutableList.of(BlazeTypescriptSyncPlugin.TSCONFIG_LIBRARY_NAME);
-    }
-    return ImmutableList.of();
+    return ImmutableList.of(BlazeTypescriptSyncPlugin.TSCONFIG_LIBRARY_NAME);
   }
 }

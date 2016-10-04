@@ -18,17 +18,16 @@ package com.google.idea.blaze.android.run.binary.mobileinstall;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import icons.BlazeAndroidIcons;
+import javax.swing.Icon;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * Executor for running blaze mobile-install --incremental and then launching the current run
  * configuration in debug mode. This executor adds a launch button that is only enabled for
  * mobile-install run configurations.
  */
-public class IncrementalInstallDebugExecutor
-  extends DefaultDebugExecutor implements IncrementalInstallExecutor {
+public class IncrementalInstallDebugExecutor extends DefaultDebugExecutor
+    implements IncrementalInstallExecutor {
   public static final String EXECUTOR_ID = "blaze.incremental.install.debug";
 
   @NotNull
@@ -56,7 +55,8 @@ public class IncrementalInstallDebugExecutor
 
   @Override
   public String getDescription() {
-    return Blaze.guessBuildSystemName().toLowerCase() + " mobile-install --incremental, launch with debugger";
+    return Blaze.guessBuildSystemName().toLowerCase()
+        + " mobile-install --incremental, launch with debugger";
   }
 
   @NotNull

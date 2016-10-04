@@ -16,41 +16,37 @@
 package com.google.idea.blaze.android.sync.importer.aggregators;
 
 import com.google.common.collect.Maps;
+import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.primitives.Label;
-import org.jetbrains.annotations.NotNull;
+import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-
-/**
- * Peforms a transitive reduction on the rule
- */
-public abstract class TransitiveAggregator<Rule, T> {
+/** Peforms a transitive reduction on the rule */
+public abstract class TransitiveAggregator<T> {
   private Map<Label, T> labelToResult;
 
-  protected TransitiveAggregator(@NotNull Map<Label, Rule> ruleMap) {
+  protected TransitiveAggregator(RuleMap ruleMap) {
     this.labelToResult = Maps.newHashMap();
-    for (Label label : ruleMap.keySet()) {
+    for (RuleIdeInfo rule : ruleMap.rules()) {
+      Label label = rule.label;
       aggregate(label, ruleMap);
     }
   }
 
-  @NotNull
-  protected T getOrDefault(@NotNull Label key, @NotNull T defaultValue) {
+  protected T getOrDefault(Label key, T defaultValue) {
     T result = labelToResult.get(key);
     return result != null ? result : defaultValue;
   }
 
   @Nullable
-  private T aggregate(
-    @NotNull Label label,
-    @NotNull Map<Label, Rule> ruleMap) {
+  private T aggregate(Label label, RuleMap ruleMap) {
     T result = labelToResult.get(label);
     if (result != null) {
       return result;
     }
 
-    Rule rule = ruleMap.get(label);
+    RuleIdeInfo rule = ruleMap.get(label);
     if (rule == null) {
       return null;
     }
@@ -68,17 +64,11 @@ public abstract class TransitiveAggregator<Rule, T> {
     return result;
   }
 
-  protected abstract Iterable<Label> getDependencies(@NotNull Rule rule);
+  protected abstract Iterable<Label> getDependencies(RuleIdeInfo rule);
 
-  /**
-   * Creates the initial value for a given rule.
-   */
-  @NotNull
-  protected abstract T createForRule(@NotNull Rule rule);
+  /** Creates the initial value for a given rule. */
+  protected abstract T createForRule(RuleIdeInfo rule);
 
-  /**
-   * Reduces two values, sum + new value. May mutate value in place.
-   */
-  @NotNull
-  protected abstract T reduce(@NotNull T value, @NotNull T dependencyValue);
+  /** Reduces two values, sum + new value. May mutate value in place. */
+  protected abstract T reduce(T value, T dependencyValue);
 }

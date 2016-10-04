@@ -27,13 +27,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.android.dom.manifest.Manifest;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.File;
 import java.util.List;
 import java.util.Set;
+import org.jetbrains.android.dom.manifest.Manifest;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Contains Android-Blaze related state necessary for configuring an IDEA project based on a
@@ -51,17 +50,15 @@ public class BlazeAndroidModel implements AndroidModel {
   private final String resourceJavaPackage;
   private final int androidSdkApiLevel;
 
-  /**
-   * Creates a new {@link BlazeAndroidModel}.
-   */
+  /** Creates a new {@link BlazeAndroidModel}. */
   public BlazeAndroidModel(
-    Project project,
-    Module module,
-    File rootDirPath,
-    SourceProvider sourceProvider,
-    File moduleManifest,
-    String resourceJavaPackage,
-    int androidSdkApiLevel) {
+      Project project,
+      Module module,
+      File rootDirPath,
+      SourceProvider sourceProvider,
+      File moduleManifest,
+      String resourceJavaPackage,
+      int androidSdkApiLevel) {
     this.project = project;
     this.module = module;
     this.rootDirPath = rootDirPath;

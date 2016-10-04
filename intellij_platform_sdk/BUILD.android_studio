@@ -1,0 +1,40 @@
+# Description:
+#
+# Plugin source jars for Android Studio, accessed remotely.
+
+package(default_visibility = ["//visibility:public"])
+
+java_import(
+    name = "plugin_api",
+    jars = glob([
+        "android-studio/lib/*.jar",
+    ]),
+    tags = ["intellij-provided-by-sdk"],
+)
+
+java_import(
+    name = "android_plugin",
+    jars = glob([
+        "android-studio/plugins/android/lib/*.jar",
+        "android-studio/plugins/android-ndk/lib/*.jar",
+    ]),
+)
+
+# The plugins required by ASwB. We need to include them
+# when running integration tests.
+java_import(
+    name = "bundled_plugins",
+    jars = glob([
+        "android-studio/plugins/gradle/lib/*.jar",
+        "android-studio/plugins/Groovy/lib/*.jar",
+        "android-studio/plugins/java-i18n/lib/*.jar",
+        "android-studio/plugins/junit/lib/*.jar",
+        "android-studio/plugins/properties/lib/*.jar",
+    ]),
+    tags = ["intellij-provided-by-sdk"],
+)
+
+filegroup(
+    name = "application_info_jar",
+    srcs = ["android-studio/lib/resources.jar"],
+)

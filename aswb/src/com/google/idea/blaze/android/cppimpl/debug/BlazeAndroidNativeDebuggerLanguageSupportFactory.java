@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.android.cppimpl.debug;
 
-import com.google.idea.blaze.android.run.BlazeAndroidRunConfiguration;
+import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -35,21 +35,19 @@ import com.jetbrains.cidr.execution.debugger.OCDebuggerTypesHelper;
 import com.jetbrains.cidr.lang.OCFileType;
 import com.jetbrains.cidr.lang.OCLanguage;
 import com.jetbrains.cidr.lang.util.OCElementFactory;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nullable;
-
-public class BlazeAndroidNativeDebuggerLanguageSupportFactory extends OCDebuggerLanguageSupportFactory {
+class BlazeAndroidNativeDebuggerLanguageSupportFactory extends OCDebuggerLanguageSupportFactory {
   @Override
   public XDebuggerEditorsProvider createEditor(RunProfile profile) {
     if (profile == null) {
       return new DebuggerEditorsProvider();
     }
-    if (profile instanceof BlazeAndroidRunConfiguration) {
-      BlazeAndroidRunConfiguration runConfig = (BlazeAndroidRunConfiguration)profile;
-      if (runConfig.getCommonState().isNativeDebuggingEnabled()) {
-        return new DebuggerEditorsProvider();
-      }
+    BlazeAndroidRunConfigurationHandler handler =
+        BlazeAndroidRunConfigurationHandler.getHandlerFrom(profile);
+    if (handler != null && handler.getCommonState().isNativeDebuggingEnabled()) {
+      return new DebuggerEditorsProvider();
     }
     return null;
   }
@@ -63,25 +61,28 @@ public class BlazeAndroidNativeDebuggerLanguageSupportFactory extends OCDebugger
 
     @NotNull
     @Override
-    public Document createDocument(final Project project,
-                                   final String text,
-                                   @Nullable XSourcePosition sourcePosition,
-                                   final EvaluationMode mode) {
+    public Document createDocument(
+        final Project project,
+        final String text,
+        @Nullable XSourcePosition sourcePosition,
+        final EvaluationMode mode) {
       final PsiElement context = OCDebuggerTypesHelper.getContextElement(sourcePosition, project);
-      if (context != null && context.getLanguage() == OCLanguage.getInstance())   {
+      if (context != null && context.getLanguage() == OCLanguage.getInstance()) {
         return new WriteAction<Document>() {
           @Override
           protected void run(Result<Document> result) throws Throwable {
-            PsiFile fragment = mode == EvaluationMode.EXPRESSION
-                               ? OCElementFactory.expressionCodeFragment(text, project, context, true, false)
-                               : OCElementFactory.expressionOrStatementsCodeFragment(text, project, context, true, false);
+            PsiFile fragment =
+                mode == EvaluationMode.EXPRESSION
+                    ? OCElementFactory.expressionCodeFragment(text, project, context, true, false)
+                    : OCElementFactory.expressionOrStatementsCodeFragment(
+                        text, project, context, true, false);
             //noinspection ConstantConditions
             result.setResult(PsiDocumentManager.getInstance(project).getDocument(fragment));
           }
         }.execute().getResultObject();
-      }
-      else {
-        final LightVirtualFile plainTextFile = new LightVirtualFile("oc-debug-editor-when-no-source-position-available.txt", text);
+      } else {
+        final LightVirtualFile plainTextFile =
+            new LightVirtualFile("oc-debug-editor-when-no-source-position-available.txt", text);
         //noinspection ConstantConditions
         return FileDocumentManager.getInstance().getDocument(plainTextFile);
       }

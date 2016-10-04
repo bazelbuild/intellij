@@ -15,17 +15,15 @@
  */
 package com.google.idea.blaze.android.settings;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Stores aswb global settings.
- */
-@State(
-  name = "AswbGlobalSettings",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/aswb.global.xml")
-)
+/** Stores aswb global settings. */
+@State(name = "AswbGlobalSettings", storages = @Storage("aswb.global.xml"))
 public class AswbGlobalSettings implements PersistentStateComponent<AswbGlobalSettings> {
 
   private String localSdkLocation;

@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.run.runner;
 
 import com.android.ddmlib.IDevice;
 import com.android.tools.idea.run.ApplicationIdProvider;
+import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.editor.AndroidDebugger;
@@ -28,13 +29,10 @@ import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.runners.ExecutionEnvironment;
-
-import javax.annotation.Nullable;
 import java.util.Set;
+import javax.annotation.Nullable;
 
-/**
- * Instantiated when the configuration wants to run.
- */
+/** Instantiated when the configuration wants to run. */
 public interface BlazeAndroidRunContext {
 
   BlazeAndroidDeviceSelector getDeviceSelector();
@@ -50,29 +48,33 @@ public interface BlazeAndroidRunContext {
   ApplicationIdProvider getApplicationIdProvider() throws ExecutionException;
 
   LaunchTasksProvider getLaunchTasksProvider(
-    LaunchOptions launchOptions,
-    BlazeAndroidRunConfigurationDebuggerManager debuggerManager) throws ExecutionException;
+      LaunchOptions.Builder launchOptionsBuilder,
+      boolean isDebug,
+      BlazeAndroidRunConfigurationDebuggerManager debuggerManager)
+      throws ExecutionException;
 
-  /**
-   * Returns the tasks to deploy the application.
-   */
-  ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions) throws ExecutionException;
+  /** Returns the tasks to deploy the application. */
+  ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
+      throws ExecutionException;
 
-  /**
-   * Returns the task to launch the application.
-   */
+  /** Returns the task to launch the application. */
   @Nullable
-  LaunchTask getApplicationLaunchTask(LaunchOptions launchOptions,
-                                      AndroidDebugger androidDebugger,
-                                      AndroidDebuggerState androidDebuggerState,
-                                      ProcessHandlerLaunchStatus processHandlerLaunchStatus) throws ExecutionException;
+  LaunchTask getApplicationLaunchTask(
+      LaunchOptions launchOptions,
+      @Nullable Integer userId,
+      AndroidDebugger androidDebugger,
+      AndroidDebuggerState androidDebuggerState,
+      ProcessHandlerLaunchStatus processHandlerLaunchStatus)
+      throws ExecutionException;
 
-  /**
-   * Returns the task to connect the debugger.
-   */
+  /** Returns the task to connect the debugger. */
   @Nullable
-  DebugConnectorTask getDebuggerTask(LaunchOptions launchOptions,
-                                     AndroidDebugger androidDebugger,
-                                     AndroidDebuggerState androidDebuggerState,
-                                     Set<String> packageIds) throws ExecutionException;
+  DebugConnectorTask getDebuggerTask(
+      AndroidDebugger androidDebugger,
+      AndroidDebuggerState androidDebuggerState,
+      Set<String> packageIds)
+      throws ExecutionException;
+
+  @Nullable
+  Integer getUserId(IDevice device, ConsolePrinter consolePrinter) throws ExecutionException;
 }

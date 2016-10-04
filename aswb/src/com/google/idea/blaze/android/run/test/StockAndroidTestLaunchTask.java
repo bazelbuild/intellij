@@ -44,7 +44,11 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
   @NotNull private final String testApplicationId;
   private final boolean waitForDebugger;
 
-  private StockAndroidTestLaunchTask(@NotNull BlazeAndroidTestRunConfigurationState configState, @Nullable String runner, @NotNull String testPackage, boolean waitForDebugger) {
+  private StockAndroidTestLaunchTask(
+      @NotNull BlazeAndroidTestRunConfigurationState configState,
+      @Nullable String runner,
+      @NotNull String testPackage,
+      boolean waitForDebugger) {
     this.configState = configState;
     this.instrumentationTestRunner = runner;
     this.waitForDebugger = waitForDebugger;
@@ -52,15 +56,15 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
   }
 
   public static LaunchTask getStockTestLaunchTask(
-    @NotNull BlazeAndroidTestRunConfigurationState configState,
-    @NotNull ApplicationIdProvider applicationIdProvider,
-    boolean waitForDebugger,
-    @NotNull AndroidFacet facet,
-    @NotNull LaunchStatus launchStatus
-  ) {
-    String runner = StringUtil.isEmpty(configState.INSTRUMENTATION_RUNNER_CLASS)
-                    ? findInstrumentationRunner(facet)
-                    : configState.INSTRUMENTATION_RUNNER_CLASS;
+      @NotNull BlazeAndroidTestRunConfigurationState configState,
+      @NotNull ApplicationIdProvider applicationIdProvider,
+      boolean waitForDebugger,
+      @NotNull AndroidFacet facet,
+      @NotNull LaunchStatus launchStatus) {
+    String runner =
+        StringUtil.isEmpty(configState.getInstrumentationRunnerClass())
+            ? findInstrumentationRunner(facet)
+            : configState.getInstrumentationRunnerClass();
     String testPackage;
     try {
       testPackage = applicationIdProvider.getTestPackageName();
@@ -68,8 +72,7 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
         launchStatus.terminateLaunch("Unable to determine test package name");
         return null;
       }
-    }
-    catch (ApkProvisionException e) {
+    } catch (ApkProvisionException e) {
       launchStatus.terminateLaunch("Unable to determine test package name");
       return null;
     }
@@ -97,12 +100,14 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
   @Nullable
   private static String getRunnerFromManifest(@NotNull final AndroidFacet facet) {
     if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          return getRunnerFromManifest(facet);
-        }
-      });
+      return ApplicationManager.getApplication()
+          .runReadAction(
+              new Computable<String>() {
+                @Override
+                public String compute() {
+                  return getRunnerFromManifest(facet);
+                }
+              });
     }
 
     Manifest manifest = facet.getManifest();
@@ -119,7 +124,6 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
     return null;
   }
 
-
   @NotNull
   @Override
   public String getDescription() {
@@ -132,39 +136,44 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
   }
 
   @Override
-  public boolean perform(@NotNull IDevice device, @NotNull final LaunchStatus launchStatus, @NotNull final ConsolePrinter printer) {
+  public boolean perform(
+      @NotNull IDevice device,
+      @NotNull final LaunchStatus launchStatus,
+      @NotNull final ConsolePrinter printer) {
     printer.stdout("Running tests\n");
 
-    final RemoteAndroidTestRunner runner = new RemoteAndroidTestRunner(testApplicationId, instrumentationTestRunner, device);
-    switch (configState.TESTING_TYPE) {
+    final RemoteAndroidTestRunner runner =
+        new RemoteAndroidTestRunner(testApplicationId, instrumentationTestRunner, device);
+    switch (configState.getTestingType()) {
       case BlazeAndroidTestRunConfigurationState.TEST_ALL_IN_PACKAGE:
-        runner.setTestPackageName(configState.PACKAGE_NAME);
+        runner.setTestPackageName(configState.getPackageName());
         break;
       case BlazeAndroidTestRunConfigurationState.TEST_CLASS:
-        runner.setClassName(configState.CLASS_NAME);
+        runner.setClassName(configState.getClassName());
         break;
       case BlazeAndroidTestRunConfigurationState.TEST_METHOD:
-        runner.setMethodName(configState.CLASS_NAME, configState.METHOD_NAME);
+        runner.setMethodName(configState.getClassName(), configState.getMethodName());
         break;
     }
     runner.setDebug(waitForDebugger);
-    runner.setRunOptions(configState.EXTRA_OPTIONS);
+    runner.setRunOptions(configState.getExtraOptions());
 
     printer.stdout("$ adb shell " + runner.getAmInstrumentCommand());
 
     // run in a separate thread as this will block until the tests complete
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          runner.run(new AndroidTestListener(launchStatus, printer));
-        }
-        catch (Exception e) {
-          LOG.info(e);
-          printer.stderr("Error: Unexpected exception while running tests: " + e);
-        }
-      }
-    });
+    ApplicationManager.getApplication()
+        .executeOnPooledThread(
+            new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  runner.run(new AndroidTestListener(launchStatus, printer));
+                } catch (Exception e) {
+                  LOG.info(e);
+                  printer.stderr("Error: Unexpected exception while running tests: " + e);
+                }
+              }
+            });
 
     return true;
   }

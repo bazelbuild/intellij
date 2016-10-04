@@ -17,7 +17,7 @@ package com.google.idea.blaze.android.resources;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import com.google.idea.blaze.base.experiments.BoolExperiment;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -25,34 +25,31 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import java.util.List;
+import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-
-/**
- * A service for storing and finding light R classes.
- */
+/** A service for storing and finding light R classes. */
 public class LightResourceClassService {
 
-  @NotNull
-  private Map<String, AndroidPackageRClass> rClasses = Maps.newHashMap();
-  @NotNull
-  private Map<String, PsiPackage> rClassPackages = Maps.newHashMap();
+  @NotNull private Map<String, AndroidPackageRClass> rClasses = Maps.newHashMap();
+  @NotNull private Map<String, PsiPackage> rClassPackages = Maps.newHashMap();
 
-  // It should be harmless to create stub resource PsiPackages which shadow any "real" PsiPackages. Based on the ordering
-  // of PsiElementFinder it would prefer the real package (PsiElementFinderImpl has 'order="first"').
+  // It should be harmless to create stub resource PsiPackages which shadow any "real" PsiPackages.
+  // Based on the ordering of PsiElementFinder it would prefer the real package
+  // (PsiElementFinderImpl has 'order="first"').
   // Put under experiment just in case we find a problem w/ other element finders.
-  private static final BoolExperiment CREATE_STUB_RESOURCE_PACKAGES = new BoolExperiment("create.stub.resource.packages", true);
+  private static final BoolExperiment CREATE_STUB_RESOURCE_PACKAGES =
+      new BoolExperiment("create.stub.resource.packages", true);
 
-  public LightResourceClassService() {
-  }
+  public LightResourceClassService() {}
 
   public static LightResourceClassService getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, LightResourceClassService.class);
   }
 
+  /** Builds light R classes */
   public static class Builder {
     Map<String, AndroidPackageRClass> rClassMap = Maps.newHashMap();
     Map<String, PsiPackage> rClassPackages = Maps.newHashMap();
@@ -64,11 +61,8 @@ public class LightResourceClassService {
     }
 
     public void addRClass(String resourceJavaPackage, Module module) {
-      AndroidPackageRClass rClass = new AndroidPackageRClass(
-        psiManager,
-        resourceJavaPackage,
-        module
-      );
+      AndroidPackageRClass rClass =
+          new AndroidPackageRClass(psiManager, resourceJavaPackage, module);
       rClassMap.put(getQualifiedRClassName(resourceJavaPackage), rClass);
       if (CREATE_STUB_RESOURCE_PACKAGES.getValue()) {
         addStubPackages(resourceJavaPackage);
@@ -85,7 +79,8 @@ public class LightResourceClassService {
         if (rClassPackages.containsKey(resourceJavaPackage)) {
           return;
         }
-        rClassPackages.put(resourceJavaPackage, new AndroidResourcePackage(psiManager, resourceJavaPackage));
+        rClassPackages.put(
+            resourceJavaPackage, new AndroidResourcePackage(psiManager, resourceJavaPackage));
         int nextIndex = resourceJavaPackage.lastIndexOf('.');
         if (nextIndex < 0) {
           return;
@@ -102,7 +97,7 @@ public class LightResourceClassService {
 
   @NotNull
   public List<PsiClass> getLightRClasses(
-    @NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+      @NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     AndroidPackageRClass rClass = this.rClasses.get(qualifiedName);
     if (rClass != null) {
       if (scope.isSearchInModuleContent(rClass.getModule())) {

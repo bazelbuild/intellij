@@ -24,13 +24,10 @@ import com.google.idea.blaze.base.projectview.section.ScalarSectionParser;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.ui.BlazeValidationError;
-
-import javax.annotation.Nullable;
 import java.util.List;
+import javax.annotation.Nullable;
 
-/**
- * Points to the ts_config rule.
- */
+/** Points to the ts_config rule. */
 public class TsConfigRuleSection {
   public static final SectionKey<Label, ScalarSection<Label>> KEY = SectionKey.of("ts_config_rule");
   public static final SectionParser PARSER = new TsConfigRuleSectionParser();

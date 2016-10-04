@@ -30,16 +30,13 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.Nullable;
 import org.jdom.Element;
 import org.jetbrains.android.facet.AndroidFacet;
 
-import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Map;
-
-/**
- * Manages deploy target state for run configurations.
- */
+/** Manages deploy target state for run configurations. */
 public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExternalizable {
   private static final String TARGET_SELECTION_MODE = TargetSelectionMode.SHOW_DIALOG.name();
 
@@ -48,8 +45,7 @@ public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExte
   private final List<DeployTargetProvider> deployTargetProviders;
   private final Map<String, DeployTargetState> deployTargetStates;
 
-  BlazeAndroidRunConfigurationDeployTargetManager(int runConfigId,
-                                                  boolean isAndroidTest) {
+  BlazeAndroidRunConfigurationDeployTargetManager(int runConfigId, boolean isAndroidTest) {
     this.runConfigId = runConfigId;
     this.isAndroidTest = isAndroidTest;
     this.deployTargetProviders = DeployTargetProvider.getProviders();
@@ -66,28 +62,26 @@ public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExte
   }
 
   @Nullable
-  DeployTarget getDeployTarget(Executor executor,
-                               ExecutionEnvironment env,
-                               AndroidFacet facet) throws ExecutionException {
+  DeployTarget getDeployTarget(Executor executor, ExecutionEnvironment env, AndroidFacet facet)
+      throws ExecutionException {
     DeployTargetProvider currentTargetProvider = getCurrentDeployTargetProvider();
 
     DeployTarget deployTarget;
     if (currentTargetProvider.requiresRuntimePrompt()) {
-      deployTarget = currentTargetProvider.showPrompt(
-        executor,
-        env,
-        facet,
-        getDeviceCount(),
-        isAndroidTest,
-        deployTargetStates,
-        runConfigId,
-        (device) -> LaunchCompatibility.YES
-      );
+      deployTarget =
+          currentTargetProvider.showPrompt(
+              executor,
+              env,
+              facet,
+              getDeviceCount(),
+              isAndroidTest,
+              deployTargetStates,
+              runConfigId,
+              (device) -> LaunchCompatibility.YES);
       if (deployTarget == null) {
         return null;
       }
-    }
-    else {
+    } else {
       deployTarget = currentTargetProvider.getDeployTarget();
     }
 
@@ -99,7 +93,8 @@ public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExte
     return deployTargetStates.get(currentTarget.getId());
   }
 
-  // TODO(salguarnieri) Currently the target selection mode is always SHOW_DIALOG. This code is here for future use.
+  // TODO(salguarnieri) Currently the target selection mode is always SHOW_DIALOG.
+  // This code is here for future use.
   // If this code still isn't used after ASwB supports native, then we should delete this logic.
   private DeployTargetProvider getCurrentDeployTargetProvider() {
     DeployTargetProvider target = getDeployTargetProvider(TARGET_SELECTION_MODE);

@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.android.resources.actions;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,11 +25,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static com.google.common.truth.Truth.assertThat;
-
-/**
- * Tests for BlazeCreateResourceUtils.
- */
+/** Tests for BlazeCreateResourceUtils. */
 @RunWith(JUnit4.class)
 public class BlazeCreateResourceUtilsTest extends BlazeTestCase {
 
@@ -78,8 +76,9 @@ public class BlazeCreateResourceUtilsTest extends BlazeTestCase {
 
   @Test
   public void getDirectoryFromContextJavaFile() {
-    // This is just the first cut, where it isn't obvious that the A.java file is associated with the
-    // neighboring res directory. We'll have a second pass that looks at the rule map for possible choices.
+    // This is just the first cut, where it isn't obvious that the A.java
+    // file is associated with the neighboring res directory.
+    // We'll have a second pass that looks at the rule map for possible choices.
     VirtualFile dir = BlazeCreateResourceUtils.getResDirFromDataContext(javaFile);
     assertThat(dir).isNull();
   }

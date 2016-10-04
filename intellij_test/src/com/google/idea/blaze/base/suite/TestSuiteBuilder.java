@@ -17,11 +17,14 @@ package com.google.idea.blaze.base.suite;
 
 import com.google.common.base.Strings;
 import com.google.idea.blaze.base.BlazeTestSystemProperties;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.junit.runner.RunWith;
+import org.junit.runners.AllTests;
 
+/** Simple JUnit3 style test suite builder. */
 @TestAggregator
+@RunWith(AllTests.class)
 public class TestSuiteBuilder {
   public static Test suite() throws Throwable {
 
@@ -34,5 +37,4 @@ public class TestSuiteBuilder {
     suite.addTest(new TestAll(packageRoot));
     return suite;
   }
-
 }

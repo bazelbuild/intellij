@@ -14,7 +14,6 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-  <id>com.google.idea.blaze.ijwb</id>
   <vendor>Google</vendor>
 
   <extensions defaultExtensionNs="com.intellij">

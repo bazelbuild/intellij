@@ -1,0 +1,34 @@
+# Description:
+#
+# Plugin source jars for IntelliJ CE, accessed remotely.
+
+package(default_visibility = ["//visibility:public"])
+
+java_import(
+    name = "plugin_api",
+    jars = glob(["idea-IC-*/lib/*.jar"]),
+    tags = ["intellij-provided-by-sdk"],
+)
+
+java_import(
+    name = "devkit",
+    jars = glob(["idea-IC-*/plugins/devkit/lib/devkit.jar"]),
+)
+
+# The plugins required by IJwB. We need to include them
+# when running integration tests.
+java_import(
+    name = "bundled_plugins",
+    jars = glob([
+        "idea-IC-*/plugins/devkit/lib/*.jar",
+        "idea-IC-*/plugins/java-i18n/lib/*.jar",
+        "idea-IC-*/plugins/junit/lib/*.jar",
+        "idea-IC-*/plugins/properties/lib/*.jar",
+    ]),
+    tags = ["intellij-provided-by-sdk"],
+)
+
+filegroup(
+    name = "application_info_jar",
+    srcs = glob(["idea-IC-*/lib/resources.jar"]),
+)

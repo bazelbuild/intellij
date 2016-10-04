@@ -16,7 +16,7 @@
 package com.google.idea.blaze.android.resources;
 
 import com.android.resources.ResourceType;
-import com.google.idea.blaze.base.experiments.BoolExperiment;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -30,6 +30,9 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import org.jetbrains.android.augment.AndroidLightClassBase;
 import org.jetbrains.android.augment.ResourceTypeClass;
 import org.jetbrains.android.dom.converters.ResourceReferenceConverter;
@@ -38,35 +41,27 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-/**
- * Represents a dynamic "class R" for resources in an Android module.
- */
+/** Represents a dynamic "class R" for resources in an Android module. */
 public class AndroidPackageRClass extends AndroidLightClassBase {
   private static final Logger LOG = Logger.getInstance(AndroidPackageRClass.class);
-  private static final BoolExperiment USE_OUT_OF_CODE_MOD_COUNT = new BoolExperiment("use.out.of.code.modcount.for.r.class.cache", true);
+  private static final BoolExperiment USE_OUT_OF_CODE_MOD_COUNT =
+      new BoolExperiment("use.out.of.code.modcount.for.r.class.cache", true);
 
-  @NotNull
-  private final PsiFile myFile;
-  @NotNull
-  private final String myFullyQualifiedName;
-  @NotNull
-  private final Module myModule;
+  @NotNull private final PsiFile myFile;
+  @NotNull private final String myFullyQualifiedName;
+  @NotNull private final Module myModule;
 
   private CachedValue<PsiClass[]> myClassCache;
 
-  public AndroidPackageRClass(@NotNull PsiManager psiManager,
-                              @NotNull String packageName,
-                              @NotNull Module module) {
+  public AndroidPackageRClass(
+      @NotNull PsiManager psiManager, @NotNull String packageName, @NotNull Module module) {
     super(psiManager);
 
     myModule = module;
     myFullyQualifiedName = packageName + AndroidResourceClassFinder.INTERNAL_R_CLASS_SHORTNAME;
-    myFile = PsiFileFactory.getInstance(myManager.getProject())
-      .createFileFromText("R.java", JavaFileType.INSTANCE, "package " + packageName + ";");
+    myFile =
+        PsiFileFactory.getInstance(myManager.getProject())
+            .createFileFromText("R.java", JavaFileType.INSTANCE, "package " + packageName + ";");
 
     this.putUserData(ModuleUtilCore.KEY_MODULE, module);
     // Some scenarios move up to the file level and then attempt to get the module from the file.
@@ -110,16 +105,19 @@ public class AndroidPackageRClass extends AndroidLightClassBase {
   @Override
   public PsiClass[] getInnerClasses() {
     if (myClassCache == null) {
-      myClassCache = CachedValuesManager.getManager(getProject())
-        .createCachedValue(new CachedValueProvider<PsiClass[]>() {
-          @Override
-          public Result<PsiClass[]> compute() {
-            return Result.create(doGetInnerClasses(),
-                                 USE_OUT_OF_CODE_MOD_COUNT.getValue() ?
-                                 PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT :
-                                 PsiModificationTracker.MODIFICATION_COUNT);
-          }
-        });
+      myClassCache =
+          CachedValuesManager.getManager(getProject())
+              .createCachedValue(
+                  new CachedValueProvider<PsiClass[]>() {
+                    @Override
+                    public Result<PsiClass[]> compute() {
+                      return Result.create(
+                          doGetInnerClasses(),
+                          USE_OUT_OF_CODE_MOD_COUNT.getValue()
+                              ? PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
+                              : PsiModificationTracker.MODIFICATION_COUNT);
+                    }
+                  });
     }
     return myClassCache.getValue();
   }
@@ -136,7 +134,8 @@ public class AndroidPackageRClass extends AndroidLightClassBase {
       return new PsiClass[0];
     }
 
-    final Set<ResourceType> types = ResourceReferenceConverter.getResourceTypesInCurrentModule(facet);
+    final Set<ResourceType> types =
+        ResourceReferenceConverter.getResourceTypesInCurrentModule(facet);
     final List<PsiClass> result = new ArrayList<PsiClass>();
 
     for (ResourceType type : types) {

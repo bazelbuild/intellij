@@ -1,0 +1,65 @@
+/*
+ * Copyright 2016 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.idea.blaze.android.sync.model;
+
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.java.sync.model.BlazeLibrary;
+import com.google.idea.blaze.java.sync.model.LibraryKey;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
+import java.io.File;
+import javax.annotation.concurrent.Immutable;
+
+/** A library that contains sources. */
+@Immutable
+public final class BlazeResourceLibrary extends BlazeLibrary {
+  private static final long serialVersionUID = 1L;
+
+  public final ImmutableList<File> sources;
+
+  public BlazeResourceLibrary(ImmutableList<File> sources) {
+    super(LibraryKey.forResourceLibrary());
+    this.sources = sources;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(super.hashCode(), sources);
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof BlazeResourceLibrary)) {
+      return false;
+    }
+
+    BlazeResourceLibrary that = (BlazeResourceLibrary) other;
+
+    return super.equals(other) && Objects.equal(sources, that.sources);
+  }
+
+  @Override
+  public void modifyLibraryModel(Project project, Library.ModifiableModel libraryModel) {
+    for (File file : sources) {
+      libraryModel.addRoot(pathToUrl(file), OrderRootType.SOURCES);
+    }
+  }
+}

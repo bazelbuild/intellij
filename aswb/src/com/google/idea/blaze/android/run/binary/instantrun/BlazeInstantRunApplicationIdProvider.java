@@ -21,21 +21,18 @@ import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import java.io.File;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
-/**
- * Application id provider for blaze instant run.
- */
+/** Application id provider for blaze instant run. */
 public class BlazeInstantRunApplicationIdProvider implements ApplicationIdProvider {
   private final Project project;
   private final BlazeApkBuildStepInstantRun.BuildResult buildResult;
 
-  public BlazeInstantRunApplicationIdProvider(Project project,
-                                              BlazeApkBuildStepInstantRun.BuildResult buildResult) {
+  public BlazeInstantRunApplicationIdProvider(
+      Project project, BlazeApkBuildStepInstantRun.BuildResult buildResult) {
     this.project = project;
     this.buildResult = buildResult;
   }
@@ -43,14 +40,17 @@ public class BlazeInstantRunApplicationIdProvider implements ApplicationIdProvid
   @NotNull
   @Override
   public String getPackageName() throws ApkProvisionException {
-    File manifestFile = new File(buildResult.executionRoot, buildResult.apkManifestProto.getAndroidManifest().getExecRootPath());
+    File manifestFile =
+        new File(
+            buildResult.executionRoot,
+            buildResult.apkManifestProto.getAndroidManifest().getExecRootPath());
     Manifest manifest = ManifestParser.getInstance(project).getManifest(manifestFile);
     if (manifest == null) {
       throw new ApkProvisionException("Could not find merged manifest: " + manifestFile);
     }
-    String applicationId = ApplicationManager.getApplication().runReadAction(
-      (Computable<String>)() -> manifest.getPackage().getValue()
-    );
+    String applicationId =
+        ApplicationManager.getApplication()
+            .runReadAction((Computable<String>) () -> manifest.getPackage().getValue());
     if (applicationId == null) {
       throw new ApkProvisionException("No application id in merged manifest: " + manifestFile);
     }
