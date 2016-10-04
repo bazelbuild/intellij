@@ -22,13 +22,15 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
+class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
   public static String ID = "BlazeAuto";
 
   @Override
   protected boolean isNativeProject(@NotNull Project project) {
-    BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    return blazeProjectData != null && blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C);
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    return blazeProjectData != null
+        && blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C);
   }
 
   @NotNull

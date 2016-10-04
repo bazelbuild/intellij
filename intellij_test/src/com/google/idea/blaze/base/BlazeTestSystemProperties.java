@@ -17,33 +17,28 @@ package com.google.idea.blaze.base;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
-
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.util.PlatformUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.List;
+import javax.annotation.Nullable;
 
-/**
- * Test utilities specific to running in a blaze/bazel environment.
- */
+/** Test utilities specific to running in a blaze/bazel environment. */
 public class BlazeTestSystemProperties {
 
-  /**
-   * The absolute path to the runfiles directory.
-   */
+  /** The absolute path to the runfiles directory. */
   private static final String RUNFILES_PATH = getUserValue("TEST_SRCDIR");
 
   public static boolean isRunThroughBlaze() {
     return System.getenv("JAVA_RUNFILES") != null;
   }
 
-  /**
-   * Sets up the necessary system properties for running IntelliJ tests via blaze/bazel.
-   */
+  /** Sets up the necessary system properties for running IntelliJ tests via blaze/bazel. */
   public static void configureSystemProperties() throws IOException {
     if (!isRunThroughBlaze()) {
       return;
@@ -56,11 +51,18 @@ public class BlazeTestSystemProperties {
     setIfEmpty(PlatformUtils.PLATFORM_PREFIX_KEY, "Idea");
     setIfEmpty("idea.classpath.index.enabled", "false");
 
+    // Tests fail if they access files outside of the project roots and other system directories.
+    // Ensure runfiles and platform api are whitelisted.
     VfsRootAccess.allowRootAccess(RUNFILES_PATH);
+    String platformApi = getPlatformApiPath();
+    if (platformApi != null) {
+      VfsRootAccess.allowRootAccess(platformApi);
+    }
 
     List<String> pluginJars = Lists.newArrayList();
     try {
-      Enumeration<URL> urls = BlazeTestSystemProperties.class.getClassLoader().getResources("META-INF/plugin.xml");
+      Enumeration<URL> urls =
+          BlazeTestSystemProperties.class.getClassLoader().getResources("META-INF/plugin.xml");
       while (urls.hasMoreElements()) {
         URL url = urls.nextElement();
         addArchiveFile(url, pluginJars);
@@ -71,6 +73,17 @@ public class BlazeTestSystemProperties {
     }
 
     setIfEmpty("idea.plugins.path", Joiner.on(File.pathSeparator).join(pluginJars));
+  }
+
+  @Nullable
+  private static String getPlatformApiPath() {
+    String platformJar = PathManager.getJarPathForClass(Application.class);
+    if (platformJar == null) {
+      return null;
+    }
+    File jarFile = new File(platformJar).getAbsoluteFile();
+    File libDir = jarFile.getParentFile();
+    return libDir != null ? libDir.getParent() : null;
   }
 
   private static void addArchiveFile(URL url, List<String> files) {
@@ -100,8 +113,8 @@ public class BlazeTestSystemProperties {
   /**
    * Gets directory that should be used for all files created during testing.
    *
-   * <p>This method will return a directory that's common to all tests run
-   * within the same <i>build target</i>.
+   * <p>This method will return a directory that's common to all tests run within the same <i>build
+   * target</i>.
    *
    * @return standard file, for example the File representing "/tmp/zogjones/foo_unittest/".
    */
@@ -134,9 +147,8 @@ public class BlazeTestSystemProperties {
   }
 
   /**
-   * Returns the value for system property <code>name</code>, or if that is
-   * not found the value of the user's environment variable <code>name</code>.
-   * If neither is found, null is returned.
+   * Returns the value for system property <code>name</code>, or if that is not found the value of
+   * the user's environment variable <code>name</code>. If neither is found, null is returned.
    *
    * @param name the name of property to get
    * @return the value of the property or null if it is not found
@@ -148,5 +160,4 @@ public class BlazeTestSystemProperties {
     }
     return propValue;
   }
-
 }

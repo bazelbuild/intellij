@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.suite;
 import com.google.common.collect.Sets;
 import com.intellij.ClassFinder;
 import com.intellij.openapi.util.text.StringUtil;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
@@ -26,18 +25,15 @@ import java.util.SortedSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-/**
- * Finds all valid test classes inside a given directory or jar.
- */
+/** Finds all valid test classes inside a given directory or jar. */
 @TestAggregator
 public class TestClassFinder {
 
   private static final String CLASS_EXTENSION = ".class";
 
-  /**
-   * Returns all top-level test classes underneath the specified classpath and package roots.
-   */
-  public static SortedSet<String> findTestClasses(File classRootFile, String packageRoot) throws IOException {
+  /** Returns all top-level test classes underneath the specified classpath and package roots. */
+  public static SortedSet<String> findTestClasses(File classRootFile, String packageRoot)
+      throws IOException {
     if (isJar(classRootFile.getPath())) {
       return findTestClassesInJar(classRootFile, packageRoot);
     }
@@ -45,7 +41,8 @@ public class TestClassFinder {
     return Sets.newTreeSet(finder.getClasses());
   }
 
-  private static SortedSet<String> findTestClassesInJar(File classPathRoot, String packageRoot) throws IOException {
+  private static SortedSet<String> findTestClassesInJar(File classPathRoot, String packageRoot)
+      throws IOException {
     packageRoot = packageRoot.replace('.', File.separatorChar);
     SortedSet<String> classNames = Sets.newTreeSet();
     ZipFile zipFile = new ZipFile(classPathRoot.getPath());
@@ -55,7 +52,9 @@ public class TestClassFinder {
     Enumeration<? extends ZipEntry> entries = zipFile.entries();
     while (entries.hasMoreElements()) {
       String entryName = entries.nextElement().getName();
-      if (entryName.endsWith(CLASS_EXTENSION) && isTopLevelClass(entryName) && entryName.startsWith(packageRoot)) {
+      if (entryName.endsWith(CLASS_EXTENSION)
+          && isTopLevelClass(entryName)
+          && entryName.startsWith(packageRoot)) {
         classNames.add(getClassName(entryName));
       }
     }
@@ -70,9 +69,7 @@ public class TestClassFinder {
     return fileName.indexOf('$') < 0;
   }
 
-  /**
-   * Given the absolute path of a class file, return the class name.
-   */
+  /** Given the absolute path of a class file, return the class name. */
   private static String getClassName(String className) {
     return StringUtil.trimEnd(className, CLASS_EXTENSION).replace(File.separatorChar, '.');
   }

@@ -16,8 +16,6 @@
 package com.google.idea.blaze.android.run.binary.mobileinstall;
 
 /**
- * A marker interface for executors that specify --incremental should be used
- * with mobile-install.
+ * A marker interface for executors that specify --incremental should be used with mobile-install.
  */
-public interface IncrementalInstallExecutor {
-}
+public interface IncrementalInstallExecutor {}

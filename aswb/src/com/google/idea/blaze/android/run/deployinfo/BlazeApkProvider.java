@@ -25,21 +25,18 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.run.runner.AaptUtil;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Apk provider from deploy info proto
- */
+/** Apk provider from deploy info proto */
 public class BlazeApkProvider implements ApkProvider {
   private final Project project;
   private final ListenableFuture<BlazeAndroidDeployInfo> deployInfoFuture;
 
-  public BlazeApkProvider(Project project,
-                          ListenableFuture<BlazeAndroidDeployInfo> deployInfoFuture) {
+  public BlazeApkProvider(
+      Project project, ListenableFuture<BlazeAndroidDeployInfo> deployInfoFuture) {
     this.project = project;
     this.deployInfoFuture = deployInfoFuture;
   }
@@ -49,7 +46,7 @@ public class BlazeApkProvider implements ApkProvider {
   public Collection<ApkInfo> getApks(@NotNull IDevice device) throws ApkProvisionException {
     BlazeAndroidDeployInfo deployInfo = Futures.get(deployInfoFuture, ApkProvisionException.class);
     ImmutableList.Builder<ApkInfo> apkInfos = ImmutableList.builder();
-    for (File apk : deployInfo.getApksToDeploy())  {
+    for (File apk : deployInfo.getApksToDeploy()) {
       apkInfos.add(new ApkInfo(apk, manifestPackageForApk(apk)));
     }
     return apkInfos.build();
@@ -59,12 +56,13 @@ public class BlazeApkProvider implements ApkProvider {
   private String manifestPackageForApk(@NotNull final File apk) throws ApkProvisionException {
     try {
       return AaptUtil.getApkManifestPackage(project, apk);
-    }
-    catch (AaptUtil.AaptUtilException e) {
+    } catch (AaptUtil.AaptUtilException e) {
       throw new ApkProvisionException(
-        "Could not determine manifest package for apk: " + apk.getPath()
-        + "\nbecause: " + e.getMessage(),
-        e);
+          "Could not determine manifest package for apk: "
+              + apk.getPath()
+              + "\nbecause: "
+              + e.getMessage(),
+          e);
     }
   }
 

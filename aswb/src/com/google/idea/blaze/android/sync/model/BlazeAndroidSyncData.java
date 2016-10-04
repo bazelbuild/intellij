@@ -15,13 +15,11 @@
  */
 package com.google.idea.blaze.android.sync.model;
 
+import java.io.Serializable;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
-import java.io.Serializable;
 
-/**
- * Sync data for the Android plugin.
- */
+/** Sync data for the Android plugin. */
 @Immutable
 public class BlazeAndroidSyncData implements Serializable {
   private static final long serialVersionUID = 1L;
@@ -29,8 +27,8 @@ public class BlazeAndroidSyncData implements Serializable {
   public final BlazeAndroidImportResult importResult;
   @Nullable public final AndroidSdkPlatform androidSdkPlatform;
 
-  public BlazeAndroidSyncData(BlazeAndroidImportResult importResult,
-                              @Nullable AndroidSdkPlatform androidSdkPlatform) {
+  public BlazeAndroidSyncData(
+      BlazeAndroidImportResult importResult, @Nullable AndroidSdkPlatform androidSdkPlatform) {
     this.importResult = importResult;
     this.androidSdkPlatform = androidSdkPlatform;
   }

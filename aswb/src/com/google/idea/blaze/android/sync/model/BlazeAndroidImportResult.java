@@ -16,25 +16,22 @@
 package com.google.idea.blaze.android.sync.model;
 
 import com.google.common.collect.ImmutableCollection;
-import com.google.idea.blaze.java.sync.model.BlazeLibrary;
-
-import javax.annotation.concurrent.Immutable;
 import java.io.Serializable;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 
-/**
- * The result of a blaze import operation.
- */
+/** The result of a blaze import operation. */
 @Immutable
 public class BlazeAndroidImportResult implements Serializable {
-  private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 3L;
 
   public final ImmutableCollection<AndroidResourceModule> androidResourceModules;
-  public final ImmutableCollection<BlazeLibrary> libraries;
+  @Nullable public final BlazeResourceLibrary resourceLibrary;
 
   public BlazeAndroidImportResult(
-    ImmutableCollection<AndroidResourceModule> androidResourceModules,
-    ImmutableCollection<BlazeLibrary> libraries) {
+      ImmutableCollection<AndroidResourceModule> androidResourceModules,
+      @Nullable BlazeResourceLibrary resourceLibrary) {
     this.androidResourceModules = androidResourceModules;
-    this.libraries = libraries;
+    this.resourceLibrary = resourceLibrary;
   }
 }

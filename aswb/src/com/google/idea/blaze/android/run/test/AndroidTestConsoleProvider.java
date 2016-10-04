@@ -29,17 +29,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Console provider for android_test
- */
+/** Console provider for android_test */
 class AndroidTestConsoleProvider implements ConsoleProvider {
   private final Project project;
   private final RunConfiguration runConfiguration;
   private final BlazeAndroidTestRunConfigurationState configState;
 
-  AndroidTestConsoleProvider(Project project,
-                             RunConfiguration runConfiguration,
-                             BlazeAndroidTestRunConfigurationState configState) {
+  AndroidTestConsoleProvider(
+      Project project,
+      RunConfiguration runConfiguration,
+      BlazeAndroidTestRunConfigurationState configState) {
     this.project = project;
     this.runConfiguration = runConfiguration;
     this.configState = configState;
@@ -47,23 +46,24 @@ class AndroidTestConsoleProvider implements ConsoleProvider {
 
   @NotNull
   @Override
-  public ConsoleView createAndAttach(@NotNull Disposable parent,
-                                     @NotNull ProcessHandler handler,
-                                     @NotNull Executor executor) throws ExecutionException {
+  public ConsoleView createAndAttach(
+      @NotNull Disposable parent, @NotNull ProcessHandler handler, @NotNull Executor executor)
+      throws ExecutionException {
     if (!configState.isRunThroughBlaze()) {
       return getStockConsoleProvider().createAndAttach(parent, handler, executor);
     }
-    ConsoleView console = TextConsoleBuilderFactory.getInstance()
-      .createBuilder(project)
-      .getConsole();
+    ConsoleView console =
+        TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
     console.attachToProcess(handler);
     return console;
   }
 
   private ConsoleProvider getStockConsoleProvider() {
     return (parent, handler, executor) -> {
-      AndroidTestConsoleProperties properties = new AndroidTestConsoleProperties(runConfiguration, executor);
-      ConsoleView consoleView = SMTestRunnerConnectionUtil.createAndAttachConsole("Android", handler, properties);
+      AndroidTestConsoleProperties properties =
+          new AndroidTestConsoleProperties(runConfiguration, executor);
+      ConsoleView consoleView =
+          SMTestRunnerConnectionUtil.createAndAttachConsole("Android", handler, properties);
       Disposer.register(parent, consoleView);
       return consoleView;
     };

@@ -19,6 +19,7 @@ import com.android.ddmlib.IDevice;
 import com.android.tools.idea.fd.InstantRunBuildAnalyzer;
 import com.android.tools.idea.fd.InstantRunUtils;
 import com.android.tools.idea.run.ApplicationIdProvider;
+import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
@@ -32,27 +33,27 @@ import com.android.tools.idea.run.tasks.UpdateSessionTasksProvider;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
-import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLaunchTaskProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryConsoleProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
-import com.google.idea.blaze.android.run.runner.*;
+import com.google.idea.blaze.android.run.binary.UserIdHelper;
+import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
+import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
+import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
+import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
+import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import java.util.Set;
+import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nullable;
-import java.util.Set;
-
-/**
- * Run context for InstantRun.
- */
+/** Run context for InstantRun. */
 public class BlazeAndroidBinaryInstantRunContext implements BlazeAndroidRunContext {
-  private static final Logger LOG = Logger.getInstance(BlazeAndroidBinaryInstantRunContext.class);
 
   private final Project project;
   private final AndroidFacet facet;
@@ -63,20 +64,21 @@ public class BlazeAndroidBinaryInstantRunContext implements BlazeAndroidRunConte
   private final BlazeAndroidBinaryConsoleProvider consoleProvider;
   private final BlazeApkBuildStepInstantRun buildStep;
 
-  public BlazeAndroidBinaryInstantRunContext(Project project,
-                                             AndroidFacet facet,
-                                             RunConfiguration runConfiguration,
-                                             ExecutionEnvironment env,
-                                             BlazeAndroidRunConfigurationCommonState commonState,
-                                             BlazeAndroidBinaryRunConfigurationState configState,
-                                             ImmutableList<String> buildFlags) {
+  public BlazeAndroidBinaryInstantRunContext(
+      Project project,
+      AndroidFacet facet,
+      RunConfiguration runConfiguration,
+      ExecutionEnvironment env,
+      BlazeAndroidBinaryRunConfigurationState configState,
+      Label label,
+      ImmutableList<String> buildFlags) {
     this.project = project;
     this.facet = facet;
     this.runConfiguration = runConfiguration;
     this.env = env;
     this.configState = configState;
     this.consoleProvider = new BlazeAndroidBinaryConsoleProvider(project);
-    this.buildStep = new BlazeApkBuildStepInstantRun(project, env, commonState, buildFlags);
+    this.buildStep = new BlazeApkBuildStepInstantRun(project, env, label, buildFlags);
   }
 
   @Override
@@ -91,10 +93,7 @@ public class BlazeAndroidBinaryInstantRunContext implements BlazeAndroidRunConte
 
   @Override
   public void augmentLaunchOptions(@NotNull LaunchOptions.Builder options) {
-    options
-      .setDeploy(true)
-      .setPmInstallOptions(configState.ACTIVITY_EXTRA_FLAGS)
-      .setOpenLogcatAutomatically(true);
+    options.setDeploy(true).setOpenLogcatAutomatically(true);
   }
 
   @NotNull
@@ -115,59 +114,77 @@ public class BlazeAndroidBinaryInstantRunContext implements BlazeAndroidRunConte
 
   @Override
   public LaunchTasksProvider getLaunchTasksProvider(
-    LaunchOptions launchOptions,
-    BlazeAndroidRunConfigurationDebuggerManager debuggerManager) throws ExecutionException {
-    InstantRunBuildAnalyzer analyzer = Futures.get(buildStep.getInstantRunBuildAnalyzer(), ExecutionException.class);
+      LaunchOptions.Builder launchOptionsBuilder,
+      boolean isDebug,
+      BlazeAndroidRunConfigurationDebuggerManager debuggerManager)
+      throws ExecutionException {
+    InstantRunBuildAnalyzer analyzer =
+        Futures.get(buildStep.getInstantRunBuildAnalyzer(), ExecutionException.class);
 
     if (analyzer.canReuseProcessHandler()) {
       return new UpdateSessionTasksProvider(analyzer);
     }
-    return new BlazeAndroidLaunchTasksProvider(project, this, getApplicationIdProvider(), launchOptions, debuggerManager);
+    return new BlazeAndroidLaunchTasksProvider(
+        project, this, getApplicationIdProvider(), launchOptionsBuilder, isDebug, debuggerManager);
   }
 
   @Override
-  public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions) throws ExecutionException {
-    InstantRunBuildAnalyzer analyzer = Futures.get(buildStep.getInstantRunBuildAnalyzer(), ExecutionException.class);
+  public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
+      throws ExecutionException {
+    InstantRunBuildAnalyzer analyzer =
+        Futures.get(buildStep.getInstantRunBuildAnalyzer(), ExecutionException.class);
     return ImmutableList.<LaunchTask>builder()
-      .addAll(analyzer.getDeployTasks(launchOptions))
-      .add(analyzer.getNotificationTask())
-      .build();
+        .addAll(analyzer.getDeployTasks(launchOptions))
+        .add(analyzer.getNotificationTask())
+        .build();
   }
 
   @Nullable
   @Override
-  public LaunchTask getApplicationLaunchTask(LaunchOptions launchOptions,
-                                             AndroidDebugger androidDebugger,
-                                             AndroidDebuggerState androidDebuggerState,
-                                             ProcessHandlerLaunchStatus processHandlerLaunchStatus) throws ExecutionException {
-    BlazeApkBuildStepInstantRun.BuildResult buildResult = Futures.get(buildStep.getBuildResult(), ExecutionException.class);
+  public LaunchTask getApplicationLaunchTask(
+      LaunchOptions launchOptions,
+      @Nullable Integer userId,
+      AndroidDebugger androidDebugger,
+      AndroidDebuggerState androidDebuggerState,
+      ProcessHandlerLaunchStatus processHandlerLaunchStatus)
+      throws ExecutionException {
+    BlazeApkBuildStepInstantRun.BuildResult buildResult =
+        Futures.get(buildStep.getBuildResult(), ExecutionException.class);
 
-    final StartActivityFlagsProvider startActivityFlagsProvider = new DefaultStartActivityFlagsProvider(
-      androidDebugger,
-      androidDebuggerState,
-      project,
-      launchOptions.isDebug(),
-      configState.ACTIVITY_EXTRA_FLAGS
-    );
+    final StartActivityFlagsProvider startActivityFlagsProvider =
+        new DefaultStartActivityFlagsProvider(
+            androidDebugger,
+            androidDebuggerState,
+            project,
+            launchOptions.isDebug(),
+            UserIdHelper.getFlagsFromUserId(userId));
 
     ApplicationIdProvider applicationIdProvider = getApplicationIdProvider();
     return BlazeAndroidBinaryApplicationLaunchTaskProvider.getApplicationLaunchTask(
-      project,
-      applicationIdProvider,
-      buildResult.mergedManifestFile,
-      configState,
-      startActivityFlagsProvider,
-      processHandlerLaunchStatus
-    );
+        project,
+        applicationIdProvider,
+        buildResult.mergedManifestFile,
+        configState,
+        startActivityFlagsProvider,
+        processHandlerLaunchStatus);
   }
 
   @Nullable
   @Override
-  public DebugConnectorTask getDebuggerTask(LaunchOptions launchOptions,
-                                            AndroidDebugger androidDebugger,
-                                            AndroidDebuggerState androidDebuggerState,
-                                            Set<String> packageIds) throws ExecutionException {
+  public DebugConnectorTask getDebuggerTask(
+      AndroidDebugger androidDebugger,
+      AndroidDebuggerState androidDebuggerState,
+      Set<String> packageIds)
+      throws ExecutionException {
     //noinspection unchecked
-    return androidDebugger.getConnectDebuggerTask(env, null, packageIds, facet, androidDebuggerState, runConfiguration.getType().getId());
+    return androidDebugger.getConnectDebuggerTask(
+        env, null, packageIds, facet, androidDebuggerState, runConfiguration.getType().getId());
+  }
+
+  @Nullable
+  @Override
+  public Integer getUserId(IDevice device, ConsolePrinter consolePrinter)
+      throws ExecutionException {
+    return UserIdHelper.getUserIdFromConfigurationState(device, consolePrinter, configState);
   }
 }

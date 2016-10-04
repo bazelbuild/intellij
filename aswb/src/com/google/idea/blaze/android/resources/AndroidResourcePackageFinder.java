@@ -23,9 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Provides dynamic Android resource packages.
- */
+/** Provides dynamic Android resource packages. */
 public class AndroidResourcePackageFinder extends PsiElementFinder {
 
   private final Project project;

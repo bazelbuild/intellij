@@ -27,15 +27,13 @@ import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Application id provider for android_binary.
- */
+/** Application id provider for android_binary. */
 public class BlazeAndroidBinaryApplicationIdProvider implements ApplicationIdProvider {
   private final Project project;
   private final ListenableFuture<BlazeAndroidDeployInfo> deployInfoFuture;
 
-  public BlazeAndroidBinaryApplicationIdProvider(Project project,
-                                                 ListenableFuture<BlazeAndroidDeployInfo> deployInfoFuture) {
+  public BlazeAndroidBinaryApplicationIdProvider(
+      Project project, ListenableFuture<BlazeAndroidDeployInfo> deployInfoFuture) {
     this.project = project;
     this.deployInfoFuture = deployInfoFuture;
   }
@@ -46,13 +44,15 @@ public class BlazeAndroidBinaryApplicationIdProvider implements ApplicationIdPro
     BlazeAndroidDeployInfo deployInfo = Futures.get(deployInfoFuture, ApkProvisionException.class);
     Manifest manifest = deployInfo.getMergedManifest();
     if (manifest == null) {
-      throw new ApkProvisionException("Could not find merged manifest: " + deployInfo.getMergedManifestFile());
+      throw new ApkProvisionException(
+          "Could not find merged manifest: " + deployInfo.getMergedManifestFile());
     }
-    String applicationId = ApplicationManager.getApplication().runReadAction(
-      (Computable<String>)() -> manifest.getPackage().getValue()
-    );
+    String applicationId =
+        ApplicationManager.getApplication()
+            .runReadAction((Computable<String>) () -> manifest.getPackage().getValue());
     if (applicationId == null) {
-      throw new ApkProvisionException("No application id in merged manifest: " + deployInfo.getMergedManifestFile());
+      throw new ApkProvisionException(
+          "No application id in merged manifest: " + deployInfo.getMergedManifestFile());
     }
     return applicationId;
   }

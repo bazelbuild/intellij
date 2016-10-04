@@ -15,34 +15,32 @@
  */
 package com.google.idea.blaze.android.sync.importer.aggregators;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.ideinfo.AndroidRuleIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.primitives.Label;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.List;
 import java.util.Set;
 
-/**
- * Computes transitive resources.
- */
-public class TransitiveResourceMap extends RuleIdeInfoTransitiveAggregator<TransitiveResourceMap.TransitiveResourceInfo> {
+/** Computes transitive resources. */
+public class TransitiveResourceMap
+    extends RuleIdeInfoTransitiveAggregator<TransitiveResourceMap.TransitiveResourceInfo> {
+  /** The transitive info computed per-rule */
   public static class TransitiveResourceInfo {
     public static final TransitiveResourceInfo NO_RESOURCES = new TransitiveResourceInfo();
     public final Set<ArtifactLocation> transitiveResources = Sets.newHashSet();
     public final Set<Label> transitiveResourceRules = Sets.newHashSet();
   }
 
-  public TransitiveResourceMap(@NotNull ImmutableMap<Label, RuleIdeInfo> ruleMap) {
+  public TransitiveResourceMap(RuleMap ruleMap) {
     super(ruleMap);
   }
 
   @Override
-  protected Iterable<Label> getDependencies(@NotNull RuleIdeInfo ruleIdeInfo) {
+  protected Iterable<Label> getDependencies(RuleIdeInfo ruleIdeInfo) {
     AndroidRuleIdeInfo androidRuleIdeInfo = ruleIdeInfo.androidRuleIdeInfo;
     if (androidRuleIdeInfo != null && androidRuleIdeInfo.legacyResources != null) {
       List<Label> result = Lists.newArrayList(super.getDependencies(ruleIdeInfo));
@@ -52,14 +50,12 @@ public class TransitiveResourceMap extends RuleIdeInfoTransitiveAggregator<Trans
     return super.getDependencies(ruleIdeInfo);
   }
 
-  @NotNull
-  public TransitiveResourceInfo get(@NotNull Label label) {
+  public TransitiveResourceInfo get(Label label) {
     return getOrDefault(label, TransitiveResourceInfo.NO_RESOURCES);
   }
 
-  @NotNull
   @Override
-  protected TransitiveResourceInfo createForRule(@NotNull RuleIdeInfo ruleIdeInfo) {
+  protected TransitiveResourceInfo createForRule(RuleIdeInfo ruleIdeInfo) {
     TransitiveResourceInfo result = new TransitiveResourceInfo();
     AndroidRuleIdeInfo androidRuleIdeInfo = ruleIdeInfo.androidRuleIdeInfo;
     if (androidRuleIdeInfo == null) {
@@ -73,9 +69,9 @@ public class TransitiveResourceMap extends RuleIdeInfoTransitiveAggregator<Trans
     return result;
   }
 
-  @NotNull
   @Override
-  protected TransitiveResourceInfo reduce(@NotNull TransitiveResourceInfo value, @NotNull TransitiveResourceInfo dependencyValue) {
+  protected TransitiveResourceInfo reduce(
+      TransitiveResourceInfo value, TransitiveResourceInfo dependencyValue) {
     value.transitiveResources.addAll(dependencyValue.transitiveResources);
     value.transitiveResourceRules.addAll(dependencyValue.transitiveResourceRules);
     return value;

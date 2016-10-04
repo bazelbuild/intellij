@@ -15,8 +15,9 @@
  */
 package com.google.idea.blaze.android.cppapi;
 
-import com.google.idea.blaze.base.experiments.BoolExperiment;
+import com.google.idea.common.experiments.BoolExperiment;
 
+/** Contains the experiment that turns on NDK support */
 public class NdkSupport {
   public static final BoolExperiment NDK_SUPPORT = new BoolExperiment("ndk.support", false);
 }

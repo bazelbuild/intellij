@@ -15,31 +15,32 @@
  */
 package com.google.idea.blaze.android.run.test;
 
-import com.google.idea.blaze.android.run.BlazeBeforeRunTaskProvider;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.run.BlazeRuleConfigurationFactory;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.intellij.execution.BeforeRunTask;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.LayeredIcon;
 import icons.AndroidIcons;
+import javax.swing.Icon;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * A type for Android test run configurations adapted specifically to run android_test targets.
+ *
+ * @deprecated See {@link com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType}. Retained
+ *     in 1.9 for legacy purposes, to allow existing BlazeAndroidTestRunConfigurations to be updated
+ *     to BlazeCommandRunConfigurations. Intended to be removed in 2.1.
  */
-public class BlazeAndroidTestRunConfigurationType implements ConfigurationType {
+// Hack: extend UnknownConfigurationType to completely hide it in the Run/Debug Configurations UI.
+@Deprecated
+public class BlazeAndroidTestRunConfigurationType extends UnknownConfigurationType {
   private static final Icon ANDROID_TEST_ICON;
 
   static {
@@ -50,31 +51,28 @@ public class BlazeAndroidTestRunConfigurationType implements ConfigurationType {
   }
 
   private final BlazeAndroidTestRunConfigurationFactory factory =
-    new BlazeAndroidTestRunConfigurationFactory(this);
+      new BlazeAndroidTestRunConfigurationFactory(this);
 
-  public static class BlazeAndroidTestRuleConfigurationFactory implements BlazeRuleConfigurationFactory {
-    @Override
-    public boolean handlesRule(WorkspaceLanguageSettings workspaceLanguageSettings, @NotNull RuleIdeInfo rule) {
-      return rule.kindIsOneOf(Kind.ANDROID_TEST);
-    }
-
-    @Override
-    @NotNull
-    public RunnerAndConfigurationSettings createForRule(@NotNull RunManager runManager, @NotNull RuleIdeInfo rule) {
-      return getInstance().factory.createForRule(runManager, rule);
-    }
-  }
-
-  public static class BlazeAndroidTestRunConfigurationFactory extends ConfigurationFactory {
+  static class BlazeAndroidTestRunConfigurationFactory extends ConfigurationFactory {
 
     protected BlazeAndroidTestRunConfigurationFactory(@NotNull ConfigurationType type) {
       super(type);
     }
 
     @Override
+    public String getName() {
+      // Used to look up this ConfigurationFactory.
+      // Preserve value so legacy configurations can be loaded.
+      return Blaze.defaultBuildSystemName() + " Android Test";
+    }
+
+    @Override
     @NotNull
-    public BlazeAndroidTestRunConfiguration createTemplateConfiguration(@NotNull Project project) {
-      return new BlazeAndroidTestRunConfiguration(project, this);
+    public BlazeCommandRunConfiguration createTemplateConfiguration(@NotNull Project project) {
+      // Create a BlazeCommandRunConfiguration instead, to update legacy configurations.
+      return BlazeCommandRunConfigurationType.getInstance()
+          .getFactory()
+          .createTemplateConfiguration(project);
     }
 
     @Override
@@ -89,18 +87,8 @@ public class BlazeAndroidTestRunConfigurationType implements ConfigurationType {
 
     @Override
     public void configureBeforeRunTaskDefaults(
-      Key<? extends BeforeRunTask> providerID, BeforeRunTask task) {
-      task.setEnabled(providerID.equals(BlazeBeforeRunTaskProvider.ID));
-    }
-
-    @NotNull
-    public RunnerAndConfigurationSettings createForRule(@NotNull RunManager runManager, @NotNull RuleIdeInfo rule) {
-      final RunnerAndConfigurationSettings settings =
-        runManager.createRunConfiguration(rule.label.toString(), this);
-      final BlazeAndroidTestRunConfiguration configuration =
-        (BlazeAndroidTestRunConfiguration) settings.getConfiguration();
-      configuration.setTarget(rule.label);
-      return settings;
+        Key<? extends BeforeRunTask> providerID, BeforeRunTask task) {
+      // Removed BlazeAndroidBeforeRunTaskProvider; this method won't be called anymore anyhow.
     }
 
     @Override
@@ -115,12 +103,13 @@ public class BlazeAndroidTestRunConfigurationType implements ConfigurationType {
 
   @Override
   public String getDisplayName() {
-    return Blaze.defaultBuildSystemName() + " Android Test";
+    return "Legacy " + Blaze.defaultBuildSystemName() + " Android Test";
   }
 
   @Override
   public String getConfigurationTypeDescription() {
-    return "Launch/debug configuration for android_test rules";
+    return "Launch/debug configuration for android_test rules "
+        + "Use Blaze Command instead; this legacy configuration type is being removed.";
   }
 
   @Override
@@ -131,11 +120,13 @@ public class BlazeAndroidTestRunConfigurationType implements ConfigurationType {
   @Override
   @NotNull
   public String getId() {
+    // Used to look up this ConfigurationType.
+    // Preserve value so legacy configurations can be loaded.
     return "BlazeAndroidTestRunConfigurationType";
   }
 
   @Override
   public BlazeAndroidTestRunConfigurationFactory[] getConfigurationFactories() {
-    return new BlazeAndroidTestRunConfigurationFactory[]{factory};
+    return new BlazeAndroidTestRunConfigurationFactory[] {factory};
   }
 }

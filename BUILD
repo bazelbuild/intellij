@@ -2,15 +2,17 @@
 # Description: Blaze plugin for various IntelliJ products.
 #
 
+licenses(["notice"])  # Apache 2.0
+
 # IJwB tests, run with an IntelliJ plugin SDK
 test_suite(
     name = "ijwb_tests",
     tests = [
-        "//blaze-base:integration_tests",
-        "//blaze-base:unit_tests",
-        "//blaze-java:integration_tests",
-        "//blaze-java:unit_tests",
-        "//blaze-plugin-dev:integration_tests",
+        "//base:integration_tests",
+        "//base:unit_tests",
+        "//java:integration_tests",
+        "//java:unit_tests",
+        "//plugin_dev:integration_tests",
     ],
 )
 
@@ -19,15 +21,29 @@ test_suite(
     name = "aswb_tests",
     tests = [
         "//aswb:unit_tests",
-        "//blaze-base:unit_tests",
-        "//blaze-java:unit_tests",
+        "//base:unit_tests",
+        "//java:unit_tests",
     ],
 )
 
-# Version file
-filegroup(
-    name = "version",
-    srcs = ["VERSION"],
-    visibility = ["//visibility:public"],
+# CLwB tests, run with a CLion plugin SDK
+test_suite(
+    name = "clwb_tests",
+    tests = [
+        "//base:unit_tests",
+    ],
 )
 
+load(
+    ":version.bzl",
+    "VERSION",
+)
+
+# Version file
+genrule(
+    name = "version",
+    srcs = [],
+    outs = ["VERSION"],
+    cmd = "echo '%s' > $@" % VERSION,
+    visibility = ["//visibility:public"],
+)

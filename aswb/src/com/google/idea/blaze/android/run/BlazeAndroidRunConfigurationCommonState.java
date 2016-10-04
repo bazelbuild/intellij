@@ -15,53 +15,28 @@
  */
 package com.google.idea.blaze.android.run;
 
-import com.android.tools.idea.run.ValidationError;
-import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.run.rulefinder.RuleFinder;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-
 import static com.google.idea.blaze.android.cppapi.NdkSupport.NDK_SUPPORT;
 
+import com.google.common.collect.ImmutableList;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
+import java.util.List;
+import org.jdom.Element;
+
 /**
- * A shared state class for run configurations targeting Blaze Android rules.
- * We implement the deprecated JDomExternalizable to fit with the other run configs.
+ * A shared state class for run configurations targeting Blaze Android rules. We implement the
+ * deprecated JDomExternalizable to fit with the other run configs.
  */
-public class BlazeAndroidRunConfigurationCommonState implements JDOMExternalizable {
-  private static final String TARGET_ATTR = "blaze-target";
+public class BlazeAndroidRunConfigurationCommonState implements BlazeAndroidRunConfigurationState {
   private static final String USER_FLAG_TAG = "blaze-user-flag";
   private static final String NATIVE_DEBUG_ATTR = "blaze-native-debug";
 
-  @Nullable private Label target;
   private List<String> userFlags;
   private boolean nativeDebuggingEnabled = false;
 
-  /**
-   * Creates a configuration state initialized with the given rule and flags.
-   */
-  public BlazeAndroidRunConfigurationCommonState(@Nullable Label target, List<String> userFlags) {
-    this.target = target;
+  /** Creates a configuration state initialized with the given flags. */
+  public BlazeAndroidRunConfigurationCommonState(List<String> userFlags) {
     this.userFlags = userFlags;
-  }
-
-  @Nullable
-  public Label getTarget() {
-    return target;
-  }
-
-  public void setTarget(@Nullable Label target) {
-    this.target = target;
   }
 
   public List<String> getUserFlags() {
@@ -80,34 +55,8 @@ public class BlazeAndroidRunConfigurationCommonState implements JDOMExternalizab
     this.nativeDebuggingEnabled = nativeDebuggingEnabled;
   }
 
-  public void checkConfiguration(Project project, Kind kind, List<ValidationError> errors) {
-    RuleIdeInfo rule = target != null ? RuleFinder.getInstance().ruleForTarget(project, target) : null;
-    if (rule == null) {
-      errors.add(ValidationError.fatal(
-        String.format("No existing %s rule selected.", Blaze.buildSystemName(project))
-      ));
-    }
-    else if (!rule.kindIsOneOf(kind)) {
-      errors.add(ValidationError.fatal(
-        String.format("Selected %s rule is not %s", Blaze.buildSystemName(project), kind.toString())
-      ));
-    }
-  }
-
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-
-    target = null;
-    String targetString = element.getAttributeValue(TARGET_ATTR);
-    if (targetString != null) {
-      try {
-        target = new Label(targetString);
-      }
-      catch (IllegalArgumentException e) {
-        throw new InvalidDataException("Bad configuration target", e);
-      }
-    }
     ImmutableList.Builder<String> flagsBuilder = ImmutableList.builder();
     for (Element e : element.getChildren(USER_FLAG_TAG)) {
       String flag = e.getTextTrim();
@@ -121,11 +70,6 @@ public class BlazeAndroidRunConfigurationCommonState implements JDOMExternalizab
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-
-    if (target != null) {
-      element.setAttribute(TARGET_ATTR, target.toString());
-    }
     for (String flag : userFlags) {
       Element child = new Element(USER_FLAG_TAG);
       child.setText(flag);

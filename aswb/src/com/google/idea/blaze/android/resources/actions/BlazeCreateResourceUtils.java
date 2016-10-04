@@ -25,36 +25,37 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.rulemaps.SourceToRuleMap;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.ide.util.DirectoryUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.components.JBLabel;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 import java.io.File;
 import java.util.Set;
+import javax.swing.JComboBox;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * Utilities for setting up create resource actions and dialogs.
- */
+/** Utilities for setting up create resource actions and dialogs. */
 class BlazeCreateResourceUtils {
 
-  private static final String PLACEHOLDER_TEXT = "choose a res/ directory with dropdown or browse button";
+  private static final String PLACEHOLDER_TEXT =
+      "choose a res/ directory with dropdown or browse button";
 
-  static void setupResDirectoryChoices(@NotNull Project project, @Nullable VirtualFile contextFile,
-                                       @NotNull JBLabel resDirLabel,
-                                       @NotNull ComboboxWithBrowseButton resDirComboAndBrowser) {
-    resDirComboAndBrowser.addBrowseFolderListener(
-      project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
-    BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+  static void setupResDirectoryChoices(
+      Project project,
+      @Nullable VirtualFile contextFile,
+      JBLabel resDirLabel,
+      ComboboxWithBrowseButton resDirComboAndBrowser) {
+    // Reset the item list before filling it back up.
+    resDirComboAndBrowser.getComboBox().removeAllItems();
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData != null) {
       BlazeAndroidSyncData syncData = blazeProjectData.syncState.get(BlazeAndroidSyncData.class);
       if (syncData != null) {
@@ -62,23 +63,30 @@ class BlazeCreateResourceUtils {
         File fileFromContext = null;
         if (contextFile != null) {
           fileFromContext = VfsUtilCore.virtualToIoFile(contextFile);
-          labelsRelatedToContext = SourceToRuleMap.getInstance(project).getTargetsForSourceFile(fileFromContext);
+          labelsRelatedToContext =
+              SourceToRuleMap.getInstance(project).getTargetsForSourceFile(fileFromContext);
           if (labelsRelatedToContext.isEmpty()) {
             labelsRelatedToContext = null;
           }
         }
         // Sort:
-        // - the "closest" thing to the contextFile at the top
-        // - the rest of the direct dirs, then transitive dirs of the context rules, then any known res dir in the project
+        // - contextFile/res if contextFile is a directory,
+        //   to optimize the right click on directory case, or the "closest" string
+        //   match to the contextFile from the res directories known to blaze
+        // - the rest of the direct dirs, then transitive dirs of the context rules,
+        //   then any known res dir in the project
         //   as a backup, in alphabetical order.
         Set<File> resourceDirs = Sets.newTreeSet();
         Set<File> transitiveDirs = Sets.newTreeSet();
         Set<File> allResDirs = Sets.newTreeSet();
-        for (AndroidResourceModule androidResourceModule : syncData.importResult.androidResourceModules) {
-          // labelsRelatedToContext should include deps, but as a first pass we only check the rules themselves
+        for (AndroidResourceModule androidResourceModule :
+            syncData.importResult.androidResourceModules) {
+          // labelsRelatedToContext should include deps,
+          // but as a first pass we only check the rules themselves
           // for resources. If we come up empty, then have anyResDir as a backup.
           allResDirs.addAll(androidResourceModule.transitiveResources);
-          if (labelsRelatedToContext != null && !labelsRelatedToContext.contains(androidResourceModule.label)) {
+          if (labelsRelatedToContext != null
+              && !labelsRelatedToContext.contains(androidResourceModule.label)) {
             continue;
           }
           for (File resDir : androidResourceModule.resources) {
@@ -90,13 +98,36 @@ class BlazeCreateResourceUtils {
         }
         // No need to show some directories twice.
         transitiveDirs.removeAll(resourceDirs);
-        File closestDirToContext = null;
-        if (fileFromContext != null) {
-          closestDirToContext = findClosestDirToContext(fileFromContext.getPath(), resourceDirs);
-          closestDirToContext = closestDirToContext != null ? closestDirToContext :
-                                findClosestDirToContext(fileFromContext.getPath(), transitiveDirs);
-        }
+
         JComboBox resDirCombo = resDirComboAndBrowser.getComboBox();
+        // Allow the user to browse and overwrite some of the entries,
+        // in case our inference is wrong.
+        resDirCombo.setEditable(true);
+        // Optimize the right-click on a non-res directory (consider res directory right under that)
+        // After the use confirms the choice, a directory will be created if it is missing.
+        if (fileFromContext != null && fileFromContext.isDirectory()) {
+          File closestDirToContext = new File(fileFromContext.getPath(), "res");
+          resDirCombo.setSelectedItem(closestDirToContext);
+        } else {
+          // If we're not completely sure, let people know there are options
+          // via the placeholder text, and put the most likely on top.
+          String placeHolder = PLACEHOLDER_TEXT;
+          resDirCombo.addItem(placeHolder);
+          resDirCombo.setSelectedItem(placeHolder);
+          if (fileFromContext != null) {
+            File closestDirToContext =
+                findClosestDirToContext(fileFromContext.getPath(), resourceDirs);
+            closestDirToContext =
+                closestDirToContext != null
+                    ? closestDirToContext
+                    : findClosestDirToContext(fileFromContext.getPath(), transitiveDirs);
+            if (closestDirToContext != null) {
+              resDirCombo.addItem(closestDirToContext);
+              resourceDirs.remove(closestDirToContext);
+              transitiveDirs.remove(closestDirToContext);
+            }
+          }
+        }
         if (!resourceDirs.isEmpty() || !transitiveDirs.isEmpty()) {
           for (File resourceDir : resourceDirs) {
             resDirCombo.addItem(resourceDir);
@@ -104,21 +135,10 @@ class BlazeCreateResourceUtils {
           for (File resourceDir : transitiveDirs) {
             resDirCombo.addItem(resourceDir);
           }
-        }
-        else {
+        } else {
           for (File resourceDir : allResDirs) {
             resDirCombo.addItem(resourceDir);
           }
-        }
-        // Allow the user to browse and overwrite some of the entries.
-        resDirCombo.setEditable(true);
-        if (closestDirToContext != null) {
-          resDirCombo.setSelectedItem(closestDirToContext);
-        }
-        else {
-          String placeHolder = PLACEHOLDER_TEXT;
-          resDirCombo.insertItemAt(placeHolder, 0);
-          resDirCombo.setSelectedItem(placeHolder);
         }
         resDirComboAndBrowser.setVisible(true);
         resDirLabel.setVisible(true);
@@ -141,24 +161,33 @@ class BlazeCreateResourceUtils {
 
   static PsiDirectory getResDirFromUI(Project project, ComboboxWithBrowseButton directoryCombo) {
     PsiManager psiManager = PsiManager.getInstance(project);
-    Object selectedItem = directoryCombo.getComboBox().getSelectedItem();
-    VirtualFile file = null;
-    if(selectedItem instanceof File) {
-      file = VfsUtil.findFileByIoFile((File)selectedItem, true);
+    Object selectedItem = directoryCombo.getComboBox().getEditor().getItem();
+    File selectedFile = null;
+    if (selectedItem instanceof File) {
+      selectedFile = (File) selectedItem;
     } else if (selectedItem instanceof String) {
-      String selectedDir = (String)selectedItem;
+      String selectedDir = (String) selectedItem;
       if (!selectedDir.equals(PLACEHOLDER_TEXT)) {
-        file = VfsUtil.findFileByIoFile(new File(selectedDir), true);
+        selectedFile = new File(selectedDir);
       }
     }
-    if (file != null) {
-      return psiManager.findDirectory(file);
+    if (selectedFile == null) {
+      return null;
     }
-    return null;
+    final File finalSelectedFile = selectedFile;
+    return ApplicationManager.getApplication()
+        .runWriteAction(
+            new Computable<PsiDirectory>() {
+              @Override
+              public PsiDirectory compute() {
+                return DirectoryUtil.mkdirs(psiManager, finalSelectedFile.getPath());
+              }
+            });
   }
 
-   static VirtualFile getResDirFromDataContext(VirtualFile contextFile) {
-    // Check if the contextFile is somewhere in the <path>/res/resType/foo.xml hierarchy and return <path>/res/.
+  static VirtualFile getResDirFromDataContext(VirtualFile contextFile) {
+    // Check if the contextFile is somewhere in
+    // the <path>/res/resType/foo.xml hierarchy and return <path>/res/.
     if (contextFile.isDirectory()) {
       if (contextFile.getName().equalsIgnoreCase(SdkConstants.FD_RES)) {
         return contextFile;
@@ -169,11 +198,11 @@ class BlazeCreateResourceUtils {
           return parent;
         }
       }
-    }
-    else {
+    } else {
       VirtualFile parent = contextFile.getParent();
       if (parent != null && ResourceFolderType.getFolderType(parent.getName()) != null) {
-        // Otherwise, the contextFile is a file w/ a parent that is plausible. Recurse one level, on the parent.
+        // Otherwise, the contextFile is a file w/ a parent that is plausible.
+        // Recurse one level, on the parent.
         return getResDirFromDataContext(parent);
       }
     }

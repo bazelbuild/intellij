@@ -15,34 +15,40 @@
  */
 package com.google.idea.blaze.ijwb.android;
 
-import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.projectview.section.Glob;
+import com.google.idea.blaze.base.ideinfo.AndroidRuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
+import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
-import com.google.idea.blaze.java.sync.model.BlazeLibrary;
-
+import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import java.util.Collection;
 
-/**
- * Augments the java sync process with Android lite support.
- */
-public class BlazeAndroidLiteJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
+/** Augments the java sync process with Android lite support. */
+public class BlazeAndroidLiteJavaSyncAugmenter extends BlazeJavaSyncAugmenter.Adapter {
 
   @Override
-  public void addLibraryFilter(Glob.GlobSet excludedLibraries) {
+  public boolean isActive(WorkspaceLanguageSettings workspaceLanguageSettings) {
+    return workspaceLanguageSettings.isLanguageActive(LanguageClass.ANDROID);
   }
 
   @Override
-  public Collection<BlazeLibrary> getAdditionalLibraries(BlazeProjectData blazeProjectData) {
-    BlazeAndroidLiteSyncData syncData = blazeProjectData.syncState.get(BlazeAndroidLiteSyncData.class);
-    if (syncData == null) {
-      return ImmutableList.of();
+  public void addJarsForSourceRule(
+      RuleIdeInfo rule, Collection<BlazeJarLibrary> jars, Collection<BlazeJarLibrary> genJars) {
+    AndroidRuleIdeInfo androidRuleIdeInfo = rule.androidRuleIdeInfo;
+    if (androidRuleIdeInfo == null) {
+      return;
     }
-    return syncData.importResult.libraries;
-  }
 
-  @Override
-  public Collection<String> getExternallyAddedLibraries(BlazeProjectData blazeProjectData) {
-    return ImmutableList.of();
+    // Add R.java jars
+    LibraryArtifact resourceJar = androidRuleIdeInfo.resourceJar;
+    if (resourceJar != null) {
+      jars.add(new BlazeJarLibrary(resourceJar, rule.label));
+    }
+
+    LibraryArtifact idlJar = androidRuleIdeInfo.idlJar;
+    if (idlJar != null) {
+      genJars.add(new BlazeJarLibrary(idlJar, rule.label));
+    }
   }
 }

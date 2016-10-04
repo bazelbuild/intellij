@@ -33,14 +33,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformUtils;
-
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Set;
+import javax.annotation.Nullable;
 
-/**
- * Allows people to use a javascript-only workspace.
- */
+/** Allows people to use a javascript-only workspace. */
 public class BlazeJavascriptSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Nullable
@@ -58,12 +55,13 @@ public class BlazeJavascriptSyncPlugin extends BlazeSyncPlugin.Adapter {
   }
 
   @Override
-  public void updateContentEntries(Project project,
-                                   BlazeContext context,
-                                   WorkspaceRoot workspaceRoot,
-                                   ProjectViewSet projectViewSet,
-                                   BlazeProjectData blazeProjectData,
-                                   Collection<ContentEntry> contentEntries) {
+  public void updateContentEntries(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      Collection<ContentEntry> contentEntries) {
     if (!blazeProjectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.JAVASCRIPT)) {
       return;
     }
@@ -84,9 +82,10 @@ public class BlazeJavascriptSyncPlugin extends BlazeSyncPlugin.Adapter {
   }
 
   @Override
-  public boolean validateProjectView(BlazeContext context,
-                                     ProjectViewSet projectViewSet,
-                                     WorkspaceLanguageSettings workspaceLanguageSettings) {
+  public boolean validateProjectView(
+      BlazeContext context,
+      ProjectViewSet projectViewSet,
+      WorkspaceLanguageSettings workspaceLanguageSettings) {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVASCRIPT)) {
       return true;
     }

@@ -19,13 +19,10 @@ import com.android.tools.idea.sdk.IdeSdks;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.openapi.project.Project;
+import java.io.File;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
-/**
- * Listens for android SDK changes, and queues up a blaze sync
- */
+/** Listens for android SDK changes, and queues up a blaze sync */
 public class AndroidSdkListener implements IdeSdks.AndroidSdkEventListener {
 
   @Override

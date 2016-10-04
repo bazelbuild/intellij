@@ -14,6 +14,5 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-  <name>Android Studio with Bazel</name>
   <description>Provides the ability to import Bazel projects in Android Studio.</description>
 </idea-plugin>

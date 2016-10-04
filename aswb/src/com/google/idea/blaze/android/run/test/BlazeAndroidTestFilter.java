@@ -21,12 +21,11 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * A test filter specification for Android tests.
- */
+/** A test filter specification for Android tests. */
 final class BlazeAndroidTestFilter {
   // Specifies that Android tests should be filtered by name.
-  private static final String TEST_FILTER_BY_NAME = BlazeFlags.TEST_ARG + "--test_filter_spec=TEST_NAME";
+  private static final String TEST_FILTER_BY_NAME =
+      BlazeFlags.TEST_ARG + "--test_filter_spec=TEST_NAME";
   // As part of a name filter spec, the packages to include.
   private static final String TEST_PACKAGE_NAMES = BlazeFlags.TEST_ARG + "--test_package_names=";
   // As part of a name filter spec, the classes to include.
@@ -35,19 +34,15 @@ final class BlazeAndroidTestFilter {
   private static final String TEST_METHOD_NAMES = BlazeFlags.TEST_ARG + "--test_method_full_names=";
 
   private final int testingType;
-  @Nullable
-  private final String className;
-  @Nullable
-  private final String methodName;
-  @Nullable
-  private final String packageName;
+  @Nullable private final String className;
+  @Nullable private final String methodName;
+  @Nullable private final String packageName;
 
   public BlazeAndroidTestFilter(
-    int testingType,
-    @Nullable String className,
-    @Nullable String methodName,
-    @Nullable String packageName
-  ) {
+      int testingType,
+      @Nullable String className,
+      @Nullable String methodName,
+      @Nullable String packageName) {
     this.testingType = testingType;
     this.className = className;
     this.methodName = methodName;

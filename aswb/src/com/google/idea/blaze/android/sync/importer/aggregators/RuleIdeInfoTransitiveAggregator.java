@@ -15,21 +15,18 @@
  */
 package com.google.idea.blaze.android.sync.importer.aggregators;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.primitives.Label;
-import org.jetbrains.annotations.NotNull;
 
-/**
- * Transitive aggregator for RuleIdeInfo.
- */
-public abstract class RuleIdeInfoTransitiveAggregator<T> extends TransitiveAggregator<RuleIdeInfo, T> {
-  protected RuleIdeInfoTransitiveAggregator(@NotNull ImmutableMap<Label, RuleIdeInfo> ruleMap) {
+/** Transitive aggregator for RuleIdeInfo. */
+public abstract class RuleIdeInfoTransitiveAggregator<T> extends TransitiveAggregator<T> {
+  protected RuleIdeInfoTransitiveAggregator(RuleMap ruleMap) {
     super(ruleMap);
   }
 
   @Override
-  protected Iterable<Label> getDependencies(@NotNull RuleIdeInfo ruleIdeInfo) {
+  protected Iterable<Label> getDependencies(RuleIdeInfo ruleIdeInfo) {
     return ruleIdeInfo.dependencies;
   }
 }

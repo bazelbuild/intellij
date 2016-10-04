@@ -25,21 +25,20 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.BuildNumber;
-import org.jetbrains.annotations.NotNull;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Checks META-INF/product-build.txt for a product build number and compares
- * them against the build. If incompatible, it informs the user.
+ * Checks META-INF/product-build.txt for a product build number and compares them against the build.
+ * If incompatible, it informs the user.
  */
 public class PluginCompatibilityEnforcer implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(PluginCompatibilityEnforcer.class);
   private static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("ASwB Plugin Version", NotificationDisplayType.BALLOON, true);
+      new NotificationGroup("ASwB Plugin Version", NotificationDisplayType.BALLOON, true);
 
   public void checkPluginCompatibility() {
     String pluginProductBuildString = readProductBuildTxt();
@@ -57,12 +56,13 @@ public class PluginCompatibilityEnforcer implements ApplicationComponent {
     }
 
     if (!isCompatible(pluginProductBuild)) {
-      String message = Joiner.on(' ').join(
-        "Invalid Android Studio version for the ASwB plugin.",
-        "Android Studio version: " + ApplicationInfo.getInstance().getBuild(),
-        "Compatible version: " + pluginProductBuild,
-        "Please update the ASwB plugin from the plugin manager."
-      );
+      String message =
+          Joiner.on(' ')
+              .join(
+                  "Invalid Android Studio version for the ASwB plugin.",
+                  "Android Studio version: " + ApplicationInfo.getInstance().getBuild(),
+                  "Compatible version: " + pluginProductBuild,
+                  "Please update the ASwB plugin from the plugin manager.");
       NOTIFICATION_GROUP.createNotification(message, MessageType.ERROR).notify(null);
       LOG.warn(message);
     }
@@ -81,7 +81,8 @@ public class PluginCompatibilityEnforcer implements ApplicationComponent {
 
   @Nullable
   private String readProductBuildTxt() {
-    try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("META-INF/product-build.txt")) {
+    try (InputStream inputStream =
+        getClass().getClassLoader().getResourceAsStream("META-INF/product-build.txt")) {
       if (inputStream == null) {
         return null;
       }
@@ -98,9 +99,7 @@ public class PluginCompatibilityEnforcer implements ApplicationComponent {
   }
 
   @Override
-  public void disposeComponent() {
-
-  }
+  public void disposeComponent() {}
 
   @NotNull
   @Override

@@ -30,21 +30,17 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.android.dom.manifest.Manifest;
-import org.jetbrains.android.util.AndroidUtils;
-
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
+import org.jetbrains.android.dom.manifest.Manifest;
+import org.jetbrains.android.util.AndroidUtils;
 
-/**
- * Parses manifests from the project.
- */
+/** Parses manifests from the project. */
 public class ManifestParser {
   private static final Logger LOG = Logger.getInstance(ManifestParser.class);
   private final Project project;
@@ -69,9 +65,9 @@ public class ManifestParser {
     }
     final VirtualFile virtualFile;
     if (ApplicationManager.getApplication().isDispatchThread()) {
-       virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     } else {
-       virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+      virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     }
     if (virtualFile == null) {
       LOG.error("Could not find manifest: " + file);
@@ -83,24 +79,29 @@ public class ManifestParser {
   }
 
   public void refreshManifests(Collection<File> manifestFiles) {
-    List<VirtualFile> manifestVirtualFiles = manifestFiles.stream()
-      .map(file -> VfsUtil.findFileByIoFile(file, false))
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+    List<VirtualFile> manifestVirtualFiles =
+        manifestFiles
+            .stream()
+            .map(file -> VfsUtil.findFileByIoFile(file, false))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
 
-    VfsUtil.markDirtyAndRefresh(false, false, false, ArrayUtil.toObjectArray(manifestVirtualFiles, VirtualFile.class));
-    ApplicationManager.getApplication().invokeAndWait(
-      () -> PsiDocumentManager.getInstance(project).commitAllDocuments(),
-      ModalityState.any()
-    );
+    VfsUtil.markDirtyAndRefresh(
+        false, false, false, ArrayUtil.toObjectArray(manifestVirtualFiles, VirtualFile.class));
+    ApplicationManager.getApplication()
+        .invokeAndWait(
+            () -> PsiDocumentManager.getInstance(project).commitAllDocuments(),
+            ModalityState.any());
   }
 
-  public static class ClearManifestParser extends SyncListener.Adapter {
+  static class ClearManifestParser extends SyncListener.Adapter {
     @Override
-    public void onSyncComplete(Project project,
-                               BlazeImportSettings importSettings,
-                               ProjectViewSet projectViewSet,
-                               BlazeProjectData blazeProjectData) {
+    public void onSyncComplete(
+        Project project,
+        BlazeImportSettings importSettings,
+        ProjectViewSet projectViewSet,
+        BlazeProjectData blazeProjectData,
+        SyncResult syncResult) {
       getInstance(project).manifestFileMap.clear();
     }
   }

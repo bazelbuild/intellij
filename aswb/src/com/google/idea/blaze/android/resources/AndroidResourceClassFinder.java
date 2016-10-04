@@ -21,14 +21,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
-/**
- * Provides dynamic Android Resource classes (class R {...} ).
- */
+/** Provides dynamic Android Resource classes (class R {...} ). */
 public class AndroidResourceClassFinder extends PsiElementFinder {
   static final String INTERNAL_R_CLASS_SHORTNAME = ".R";
   private final Project project;

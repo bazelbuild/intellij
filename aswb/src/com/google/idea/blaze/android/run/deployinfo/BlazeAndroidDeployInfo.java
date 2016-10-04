@@ -19,25 +19,23 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.repackaged.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.android.dom.manifest.Manifest;
-
-import javax.annotation.Nullable;
 import java.io.File;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import org.jetbrains.android.dom.manifest.Manifest;
 
-/**
- * Info about the android_binary/android_test to deploy.
- */
+/** Info about the android_binary/android_test to deploy. */
 public class BlazeAndroidDeployInfo {
   private final Project project;
   private final File executionRoot;
   private final AndroidDeployInfoOuterClass.AndroidDeployInfo deployInfo;
 
-  public BlazeAndroidDeployInfo(Project project,
-                                File executionRoot,
-                                AndroidDeployInfoOuterClass.AndroidDeployInfo deployInfo) {
+  public BlazeAndroidDeployInfo(
+      Project project,
+      File executionRoot,
+      AndroidDeployInfoOuterClass.AndroidDeployInfo deployInfo) {
     this.project = project;
     this.executionRoot = executionRoot;
     this.deployInfo = deployInfo;
@@ -55,16 +53,19 @@ public class BlazeAndroidDeployInfo {
   }
 
   public List<File> getAdditionalMergedManifestFiles() {
-    return deployInfo.getAdditionalMergedManifestsList().stream()
-      .map(artifact -> new File(executionRoot, artifact.getExecRootPath()))
-      .collect(Collectors.toList());
+    return deployInfo
+        .getAdditionalMergedManifestsList()
+        .stream()
+        .map(artifact -> new File(executionRoot, artifact.getExecRootPath()))
+        .collect(Collectors.toList());
   }
 
   public List<Manifest> getAdditionalMergedManifests() {
-    return getAdditionalMergedManifestFiles().stream()
-      .map(file -> ManifestParser.getInstance(project).getManifest(file))
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+    return getAdditionalMergedManifestFiles()
+        .stream()
+        .map(file -> ManifestParser.getInstance(project).getManifest(file))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
   }
 
   public List<File> getManifestFiles() {
@@ -74,12 +75,12 @@ public class BlazeAndroidDeployInfo {
     return result;
   }
 
-  /**
-   * Returns the full list of apks to deploy, if any.
-   */
+  /** Returns the full list of apks to deploy, if any. */
   public List<File> getApksToDeploy() {
-    return deployInfo.getApksToDeployList().stream()
-      .map(artifact -> new File(executionRoot, artifact.getExecRootPath()))
-      .collect(Collectors.toList());
+    return deployInfo
+        .getApksToDeployList()
+        .stream()
+        .map(artifact -> new File(executionRoot, artifact.getExecRootPath()))
+        .collect(Collectors.toList());
   }
 }

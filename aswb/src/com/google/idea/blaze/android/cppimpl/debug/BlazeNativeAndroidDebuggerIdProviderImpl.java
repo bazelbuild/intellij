@@ -17,7 +17,7 @@ package com.google.idea.blaze.android.cppimpl.debug;
 
 import com.google.idea.blaze.android.cppapi.BlazeNativeDebuggerIdProvider;
 
-public class BlazeNativeAndroidDebuggerIdProviderImpl extends BlazeNativeDebuggerIdProvider {
+class BlazeNativeAndroidDebuggerIdProviderImpl extends BlazeNativeDebuggerIdProvider {
 
   @Override
   public String getDebuggerId() {

@@ -22,9 +22,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.android.sdk.AndroidPlatform;
-
-import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -32,17 +29,18 @@ import java.io.InputStreamReader;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
+import org.jetbrains.android.sdk.AndroidPlatform;
 
-/**
- * A collection of utilities for extracting information from APKs using aapt.
- */
+/** A collection of utilities for extracting information from APKs using aapt. */
 public final class AaptUtil {
 
   private static final Pattern DEBUGGABLE_PATTERN = Pattern.compile("^application-debuggable$");
   private static final Pattern PACKAGE_PATTERN = Pattern.compile("^package: .*name='([\\w\\.]+)'");
   private static final Pattern LAUNCHABLE_PATTERN =
-    Pattern.compile("^launchable-activity: .*name='([\\w\\.]+)'");
+      Pattern.compile("^launchable-activity: .*name='([\\w\\.]+)'");
 
+  /** exception thrown by this class */
   public static class AaptUtilException extends Exception {
     public AaptUtilException(String message) {
       super(message);
@@ -53,46 +51,32 @@ public final class AaptUtil {
     }
   }
 
-  private AaptUtil() {
-  }
+  private AaptUtil() {}
 
   /**
    * Determines whether the given APK is debuggable. Trying to debug a non-debuggable APK on a
    * release-keys device will fail.
    */
-  public static boolean isApkDebuggable(
-    Project project,
-    File apk
-  ) throws AaptUtilException {
+  public static boolean isApkDebuggable(Project project, File apk) throws AaptUtilException {
     return getAaptBadging(project, apk, DEBUGGABLE_PATTERN) != null;
   }
 
-  /**
-   * Determines the manifest package name for the given APK.
-   */
-  public static String getApkManifestPackage(
-    Project project,
-    File apk
-  ) throws AaptUtilException {
+  /** Determines the manifest package name for the given APK. */
+  public static String getApkManifestPackage(Project project, File apk) throws AaptUtilException {
     MatchResult packageResult = getAaptBadging(project, apk, PACKAGE_PATTERN);
     if (packageResult == null) {
       throw new AaptUtilException(
-        "No match found in `aapt dump badging` for package manifest pattern.");
+          "No match found in `aapt dump badging` for package manifest pattern.");
     }
     return packageResult.group(1);
   }
 
-  /**
-   * Determines the default launchable activity for the given apk.
-   */
-  public static String getLaunchableActivity(
-    Project project,
-    File apk
-  ) throws AaptUtilException {
+  /** Determines the default launchable activity for the given apk. */
+  public static String getLaunchableActivity(Project project, File apk) throws AaptUtilException {
     MatchResult activityResult = getAaptBadging(project, apk, LAUNCHABLE_PATTERN);
     if (activityResult == null) {
       throw new AaptUtilException(
-        "No match found in `aapt dump badging` for launchable activity pattern.");
+          "No match found in `aapt dump badging` for launchable activity pattern.");
     }
     return activityResult.group(1);
   }
@@ -102,41 +86,34 @@ public final class AaptUtil {
    * output matching the given pattern.
    */
   @Nullable
-  private static MatchResult getAaptBadging(
-    Project project,
-    File apk,
-    Pattern pattern
-  ) throws AaptUtilException {
+  private static MatchResult getAaptBadging(Project project, File apk, Pattern pattern)
+      throws AaptUtilException {
     if (!apk.exists()) {
       throw new AaptUtilException("apk file does not exist: " + apk);
     }
     AndroidPlatform androidPlatform = SdkUtil.getAndroidPlatform(project);
     if (androidPlatform == null) {
       throw new AaptUtilException(
-        "Could not find Android platform sdk for project " + project.getName());
+          "Could not find Android platform sdk for project " + project.getName());
     }
     BuildToolInfo toolInfo = androidPlatform.getSdkData().getLatestBuildTool();
     if (toolInfo == null) {
       throw new AaptUtilException(
-        "Could not find Android sdk build-tools for project " + project.getName());
+          "Could not find Android sdk build-tools for project " + project.getName());
     }
     String aapt = toolInfo.getPath(PathId.AAPT);
-    GeneralCommandLine commandLine = new GeneralCommandLine(
-      aapt,
-      "dump",
-      "badging",
-      apk.getAbsolutePath());
+    GeneralCommandLine commandLine =
+        new GeneralCommandLine(aapt, "dump", "badging", apk.getAbsolutePath());
     OSProcessHandler handler;
     try {
       handler = new OSProcessHandler(commandLine);
-    }
-    catch (ExecutionException e) {
+    } catch (ExecutionException e) {
       throw new AaptUtilException("Could not execute aapt to extract apk information.", e);
     }
 
     // The wrapped stream is closed by the process handler.
-    BufferedReader reader = new BufferedReader(
-      new InputStreamReader(handler.getProcess().getInputStream()));
+    BufferedReader reader =
+        new BufferedReader(new InputStreamReader(handler.getProcess().getInputStream()));
     try {
       String line;
       while ((line = reader.readLine()) != null) {
@@ -145,8 +122,7 @@ public final class AaptUtil {
           return matcher.toMatchResult();
         }
       }
-    }
-    catch (IOException e) {
+    } catch (IOException e) {
       throw new AaptUtilException("Could not read aapt output.", e);
     }
     return null;

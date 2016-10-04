@@ -18,9 +18,7 @@ package com.google.idea.blaze.android.resources;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 
-/**
- * A generated stub PsiPackage for generated R classes.
- */
+/** A generated stub PsiPackage for generated R classes. */
 public class AndroidResourcePackage extends PsiPackageImpl {
   public AndroidResourcePackage(PsiManager manager, String qualifiedName) {
     super(manager, qualifiedName);

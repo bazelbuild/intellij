@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.android.cppimpl;
 
+import static com.jetbrains.cidr.lang.OCLanguage.LANGUAGE_SUPPORT_DISABLED;
+
 import com.android.tools.ndk.NdkHelper;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -27,29 +29,25 @@ import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import org.jetbrains.annotations.NotNull;
 
-import static com.jetbrains.cidr.lang.OCLanguage.LANGUAGE_SUPPORT_DISABLED;
-
-public final class BlazeNdkSupportEnabler implements SyncListener {
-  @Override
-  public void onSyncStart(Project project) {
-  }
+final class BlazeNdkSupportEnabler extends SyncListener.Adapter {
 
   @Override
-  public void onSyncComplete(Project project,
-                             BlazeImportSettings importSettings,
-                             ProjectViewSet projectViewSet,
-                             BlazeProjectData blazeProjectData) {
+  public void onSyncComplete(
+      Project project,
+      BlazeImportSettings importSettings,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      SyncResult syncResult) {
     boolean enabled = blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C);
     enableCSupportInIde(project, enabled);
   }
 
   /**
-   * If {@code enabled} is true, this method will enable C support in the IDE if it is not already enabled. if {@code enabled} is false this
-   * method will clear out any currently stored information in the IDE about C and will disable C support in the IDE, unless support is
-   * already disabled.
-   *
-   * </p>
-   * In either case, if the value of enabled matches what the IDE currently does, this method will do nothing.
+   * If {@code enabled} is true, this method will enable C support in the IDE if it is not already
+   * enabled. if {@code enabled} is false this method will clear out any currently stored
+   * information in the IDE about C and will disable C support in the IDE, unless support is already
+   * disabled. In either case, if the value of enabled matches what the IDE currently does, this
+   * method will do nothing.
    *
    * @param project the project to enable or disable c support in.
    * @param enabled if true, turn on C support in the IDE. If false, turn off C support in the IDE.
@@ -64,18 +62,20 @@ public final class BlazeNdkSupportEnabler implements SyncListener {
   }
 
   private static void rebuildSymbols(@NotNull Project project, @NotNull OCWorkspace workspace) {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      if (project.isDisposed()) {
-        return;
-      }
-      // Notifying BuildSettingsChangeTracker in unitTestMode will leads to a dead lock. See b/23087433 for more information.
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        workspace.getModificationTrackers().getBuildSettingsChangesTracker().incModificationCount();
-      }
-    });
-  }
-
-  @Override
-  public void afterSync(Project project, boolean successful) {
+    ApplicationManager.getApplication()
+        .runReadAction(
+            () -> {
+              if (project.isDisposed()) {
+                return;
+              }
+              // Notifying BuildSettingsChangeTracker in unitTestMode will leads to a dead lock.
+              // See b/23087433 for more information.
+              if (!ApplicationManager.getApplication().isUnitTestMode()) {
+                workspace
+                    .getModificationTrackers()
+                    .getBuildSettingsChangesTracker()
+                    .incModificationCount();
+              }
+            });
   }
 }

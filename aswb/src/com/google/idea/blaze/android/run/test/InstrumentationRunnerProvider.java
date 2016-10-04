@@ -16,16 +16,13 @@
 package com.google.idea.blaze.android.run.test;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-
 import javax.annotation.Nullable;
 
-/**
- * Provides a default instrumentation test runner class for android test configurations.
- */
+/** Provides a default instrumentation test runner class for android test configurations. */
 public interface InstrumentationRunnerProvider {
 
   ExtensionPointName<InstrumentationRunnerProvider> EP_NAME =
-    ExtensionPointName.create("com.google.idea.blaze.android.InstrumentationRunnerProvider");
+      ExtensionPointName.create("com.google.idea.blaze.android.InstrumentationRunnerProvider");
 
   @Nullable
   static String getDefaultInstrumentationRunnerClass() {
@@ -40,5 +37,4 @@ public interface InstrumentationRunnerProvider {
 
   @Nullable
   String getInstrumentationRunnerClass();
-
 }

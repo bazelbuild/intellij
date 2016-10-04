@@ -23,13 +23,6 @@ import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.util.ArrayUtil;
-
-import junit.framework.JUnit4TestAdapter;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestResult;
-import junit.framework.TestSuite;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -39,12 +32,14 @@ import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
 import javax.annotation.Nullable;
+import junit.framework.JUnit4TestAdapter;
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestResult;
+import junit.framework.TestSuite;
 
-/**
- * A cut-down version of {@link com.intellij.TestAll} which supports test classes inside jars.
- */
+/** A cut-down version of {@link com.intellij.TestAll} which supports test classes inside jars. */
 @TestAggregator
 public class TestAll implements Test {
 
@@ -58,7 +53,8 @@ public class TestAll implements Test {
     this(packageRoot, getClassRoots());
   }
 
-  public TestAll(String packageRoot, String... classRoots) throws IOException, ClassNotFoundException {
+  public TestAll(String packageRoot, String... classRoots)
+      throws IOException, ClassNotFoundException {
     testCaseLoader = new TestCaseLoader("");
     fillTestCases(testCaseLoader, packageRoot, classRoots);
   }
@@ -66,7 +62,7 @@ public class TestAll implements Test {
   public static String[] getClassRoots() {
     final ClassLoader loader = TestAll.class.getClassLoader();
     if (loader instanceof URLClassLoader) {
-      return getClassRoots(((URLClassLoader)loader).getURLs());
+      return getClassRoots(((URLClassLoader) loader).getURLs());
     }
     final Class<? extends ClassLoader> loaderClass = loader.getClass();
     if (loaderClass.getName().equals("com.intellij.util.lang.UrlClassLoader")) {
@@ -75,6 +71,7 @@ public class TestAll implements Test {
         final List<URL> urls = (List<URL>) declaredMethod.invoke(loader);
         return getClassRoots(urls.toArray(new URL[urls.size()]));
       } catch (Throwable ignore) {
+        // Do nothing
       }
     }
     return System.getProperty("java.class.path").split(File.pathSeparator);
@@ -82,16 +79,17 @@ public class TestAll implements Test {
 
   private static String[] getClassRoots(URL[] urls) {
     return Arrays.stream(urls)
-      .map(VfsUtilCore::convertFromUrl)
-      .map(VfsUtilCore::urlToPath)
-      .toArray(String[]::new);
+        .map(VfsUtilCore::convertFromUrl)
+        .map(VfsUtilCore::urlToPath)
+        .toArray(String[]::new);
   }
 
   private static boolean isIntellijPlatformJar(String classRoot) {
     return classRoot.contains("intellij-platform-sdk");
   }
 
-  public static void fillTestCases(TestCaseLoader testCaseLoader, String packageRoot, String... classRoots) throws IOException {
+  public static void fillTestCases(
+      TestCaseLoader testCaseLoader, String packageRoot, String... classRoots) throws IOException {
     long before = System.currentTimeMillis();
     for (String classRoot : classRoots) {
       if (isIntellijPlatformJar(classRoot)) {
@@ -103,7 +101,8 @@ public class TestAll implements Test {
       testCaseLoader.loadTestCases(classRootFile.getName(), classes);
       int newCount = testCaseLoader.getClasses().size();
       if (newCount != oldCount) {
-        System.out.println("Loaded " + (newCount - oldCount) + " tests from class root " + classRoot);
+        System.out.println(
+            "Loaded " + (newCount - oldCount) + " tests from class root " + classRoot);
       }
     }
 
@@ -112,8 +111,12 @@ public class TestAll implements Test {
     }
     long after = System.currentTimeMillis();
 
-    String message = "Number of test classes found: " + testCaseLoader.getClasses().size()
-                      + " time to load: " + (after - before) / 1000 + "s.";
+    String message =
+        "Number of test classes found: "
+            + testCaseLoader.getClasses().size()
+            + " time to load: "
+            + (after - before) / 1000
+            + "s.";
     System.out.println(message);
     log(message);
   }
@@ -122,7 +125,7 @@ public class TestAll implements Test {
   public int countTestCases() {
     int count = 0;
     for (Object aClass : testCaseLoader.getClasses()) {
-      Test test = getTest((Class)aClass);
+      Test test = getTest((Class) aClass);
       if (test != null) {
         count += test.countTestCases();
       }
@@ -175,30 +178,29 @@ public class TestAll implements Test {
       }
 
       final int[] testsCount = {0};
-      TestSuite suite = new TestSuite(testCaseClass) {
-        @Override
-        public void addTest(Test test) {
-          if (!(test instanceof TestCase)) {
-            doAddTest(test);
-          }
-          else {
-            String name = ((TestCase)test).getName();
-            if ("warning".equals(name)) {
-              return; // Mute TestSuite's "no tests found" warning
+      TestSuite suite =
+          new TestSuite(testCaseClass) {
+            @Override
+            public void addTest(Test test) {
+              if (!(test instanceof TestCase)) {
+                doAddTest(test);
+              } else {
+                String name = ((TestCase) test).getName();
+                if ("warning".equals(name)) {
+                  return; // Mute TestSuite's "no tests found" warning
+                }
+                doAddTest(test);
+              }
             }
-            doAddTest(test);
-          }
-        }
 
-        private void doAddTest(Test test) {
-          testsCount[0]++;
-          super.addTest(test);
-        }
-      };
+            private void doAddTest(Test test) {
+              testsCount[0]++;
+              super.addTest(test);
+            }
+          };
 
       return testsCount[0] > 0 ? suite : null;
-    }
-    catch (Throwable t) {
+    } catch (Throwable t) {
       System.err.println("Failed to load test: " + testCaseClass.getName());
       t.printStackTrace(System.err);
       return null;
@@ -209,8 +211,7 @@ public class TestAll implements Test {
   private static Method safeFindMethod(Class<?> klass, String name) {
     try {
       return klass.getMethod(name);
-    }
-    catch (NoSuchMethodException e) {
+    } catch (NoSuchMethodException e) {
       return null;
     }
   }
@@ -218,5 +219,4 @@ public class TestAll implements Test {
   private static void log(String message) {
     TeamCityLogger.info(message);
   }
-
 }

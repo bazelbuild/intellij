@@ -20,17 +20,15 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.io.URLUtil;
+import java.io.File;
+import java.util.Collection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
-import java.io.File;
-import java.util.Collection;
-
-public class ResourceModuleContentRootCustomizer {
+class ResourceModuleContentRootCustomizer {
 
   public static void setupContentRoots(
-    @NotNull ModifiableRootModel model,
-    @NotNull Collection<File> resources) {
+      @NotNull ModifiableRootModel model, @NotNull Collection<File> resources) {
     for (ContentEntry contentEntry : model.getContentEntries()) {
       model.removeContentEntry(contentEntry);
     }
@@ -45,14 +43,10 @@ public class ResourceModuleContentRootCustomizer {
   private static String pathToUrl(@NotNull String filePath) {
     filePath = FileUtil.toSystemIndependentName(filePath);
     if (filePath.endsWith(".srcjar") || filePath.endsWith(".jar")) {
-      return URLUtil.JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR +
-             filePath + URLUtil.JAR_SEPARATOR;
-    }
-    else if (filePath.contains("src.jar!")) {
-      return URLUtil.JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR +
-             filePath;
-    }
-    else {
+      return URLUtil.JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR + filePath + URLUtil.JAR_SEPARATOR;
+    } else if (filePath.contains("src.jar!")) {
+      return URLUtil.JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR + filePath;
+    } else {
       return VfsUtilCore.pathToUrl(filePath);
     }
   }

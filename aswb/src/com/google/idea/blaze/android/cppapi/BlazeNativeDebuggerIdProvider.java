@@ -16,9 +16,9 @@
 package com.google.idea.blaze.android.cppapi;
 
 import com.intellij.openapi.components.ServiceManager;
-
 import javax.annotation.Nullable;
 
+/** Provides the ID of the native debugger to use */
 public abstract class BlazeNativeDebuggerIdProvider {
   @Nullable
   public static BlazeNativeDebuggerIdProvider getInstance() {

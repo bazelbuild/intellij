@@ -26,17 +26,17 @@ import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * SDK utilities.
- */
+/** SDK utilities. */
 public class SdkUtil {
   @Nullable
   public static AndroidPlatform getAndroidPlatform(@NotNull Project project) {
-    BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
       return null;
     }
-    AndroidSdkPlatform androidSdkPlatform = AndroidSdkPlatformSyncer.getAndroidSdkPlatform(blazeProjectData);
+    AndroidSdkPlatform androidSdkPlatform =
+        AndroidSdkPlatformSyncer.getAndroidSdkPlatform(blazeProjectData);
     if (androidSdkPlatform == null) {
       return null;
     }

@@ -15,20 +15,19 @@
  */
 package com.google.idea.blaze.android.projectview;
 
-import com.google.common.base.CharMatcher;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.ScalarSectionParser;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Allows manual override of the android sdk.
- */
+/** Allows manual override of the android sdk. */
 public class AndroidSdkPlatformSection {
-  public static final SectionKey<String, ScalarSection<String>> KEY = SectionKey.of("android_sdk_platform");
+  public static final SectionKey<String, ScalarSection<String>> KEY =
+      SectionKey.of("android_sdk_platform");
   public static final SectionParser PARSER = new AndroidSdkPlatformParser();
 
   private static class AndroidSdkPlatformParser extends ScalarSectionParser<String> {
@@ -38,11 +37,8 @@ public class AndroidSdkPlatformSection {
 
     @Nullable
     @Override
-    protected String parseItem(
-      ProjectViewParser parser,
-      ParseContext parseContext,
-      String rest) {
-      return CharMatcher.is('\"').trimFrom(rest.trim());
+    protected String parseItem(ProjectViewParser parser, ParseContext parseContext, String rest) {
+      return StringUtil.unquoteString(rest);
     }
 
     @Override

@@ -2,25 +2,28 @@
 # Description: Builds ijwb
 #
 
+licenses(["notice"])  # Apache 2.0
+
 load(
     "//build_defs:build_defs.bzl",
+    "intellij_plugin",
     "merged_plugin_xml",
     "stamped_plugin_xml",
-    "intellij_plugin",
 )
 
 merged_plugin_xml(
     name = "merged_plugin_xml_common",
     srcs = [
         "src/META-INF/ijwb.xml",
-        "//blaze-base:plugin_xml",
-        "//blaze-java:plugin_xml",
-        "//blaze-plugin-dev:plugin_xml",
+        "//base:plugin_xml",
+        "//java:plugin_xml",
+        "//plugin_dev:plugin_xml",
     ],
+    visibility = ["//visibility:public"],
 )
 
 merged_plugin_xml(
-    name = "merged_plugin_xml_bazel",
+    name = "merged_plugin_xml",
     srcs = [
         "src/META-INF/ijwb_bazel.xml",
         ":merged_plugin_xml_common",
@@ -28,9 +31,11 @@ merged_plugin_xml(
 )
 
 stamped_plugin_xml(
-    name = "stamped_plugin_xml_bazel",
+    name = "stamped_plugin_xml",
     include_product_code_in_stamp = True,
-    plugin_xml = ":merged_plugin_xml_bazel",
+    plugin_id = "com.google.idea.bazel.ijwb",
+    plugin_name = "IntelliJ with Bazel",
+    plugin_xml = ":merged_plugin_xml",
     stamp_since_build = True,
     version_file = "//:version",
 )
@@ -38,20 +43,21 @@ stamped_plugin_xml(
 java_library(
     name = "ijwb_lib",
     srcs = glob(["src/**/*.java"]),
+    visibility = ["//visibility:public"],
     exports = [
-        "//blaze-plugin-dev",
+        "//plugin_dev",
     ],
     deps = [
-        "//blaze-base",
-        "//blaze-java",
-        "//intellij-platform-sdk:plugin_api",
-        "//third_party:jsr305",
+        "//base",
+        "//intellij_platform_sdk:plugin_api",
+        "//java",
+        "@jsr305_annotations//jar",
     ],
 )
 
 intellij_plugin(
     name = "ijwb_bazel",
-    plugin_xml = ":stamped_plugin_xml_bazel",
+    plugin_xml = ":stamped_plugin_xml",
     deps = [
         ":ijwb_lib",
     ],

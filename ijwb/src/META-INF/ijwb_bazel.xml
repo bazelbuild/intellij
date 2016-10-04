@@ -15,10 +15,25 @@
   -->
 <idea-plugin>
 
-  <name>IntelliJ with Bazel</name>
-
   <description>
-    Provides the ability to import Bazel Java projects in IntelliJ.
+    <![CDATA[
+      <a href="http://bazel.io">Bazel</a> support for IntelliJ.
+
+      Features:
+        <ul>
+        <li>Import BUILD files into the IDE.</li>
+        <li>BUILD file custom language support.</li>
+        <li>Support for blaze run configurations for certain rule classes.</li>
+        </ul>
+
+      Usage instructions at <a href="http://ij.bazel.io">ij.bazel.io</a>
+      ]]>
   </description>
+
+  <application-components>
+    <component>
+      <implementation-class>com.google.idea.blaze.ijwb.plugin.MigrateBazelPluginDependency</implementation-class>
+    </component>
+  </application-components>
 
 </idea-plugin>

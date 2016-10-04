@@ -17,13 +17,10 @@ package com.google.idea.blaze.android.run.binary.instantrun;
 
 import com.android.tools.idea.fd.InstantRunTasksProvider;
 import com.google.common.collect.ImmutableList;
+import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-/**
- * Returns blaze-specific instant run tasks.
- */
+/** Returns blaze-specific instant run tasks. */
 public class BlazeInstantRunTasksProvider implements InstantRunTasksProvider {
   @NotNull
   @Override

@@ -15,17 +15,17 @@
  */
 package com.google.idea.blaze.android.run.test;
 
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
+import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationState;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import java.util.Map;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 
-/**
- * State specific for the android test configuration.
- */
-final class BlazeAndroidTestRunConfigurationState implements JDOMExternalizable {
+/** State specific for the android test configuration. */
+final class BlazeAndroidTestRunConfigurationState implements BlazeAndroidRunConfigurationState {
 
   private static final String RUN_THROUGH_BLAZE_ATTR = "blaze-run-through-blaze";
 
@@ -34,19 +34,33 @@ final class BlazeAndroidTestRunConfigurationState implements JDOMExternalizable 
   public static final int TEST_CLASS = 2;
   public static final int TEST_METHOD = 3;
 
-  // We reinterpret Android Studio's test mode for running "all tests in a module" (all the tests in the installed test APK) as running all
+  // We reinterpret Android Studio's test mode for running "all tests in a module"
+  // (all the tests in the installed test APK) as running all
   // the tests in a rule.
   public static final int TEST_ALL_IN_TARGET = TEST_ALL_IN_MODULE;
 
-  public int TESTING_TYPE = TEST_ALL_IN_MODULE;
-  public String INSTRUMENTATION_RUNNER_CLASS = InstrumentationRunnerProvider.getDefaultInstrumentationRunnerClass();
-  public String METHOD_NAME = "";
-  public String CLASS_NAME = "";
-  public String PACKAGE_NAME = "";
-  public String EXTRA_OPTIONS = "";
+  private static final String TESTING_TYPE = "TESTING_TYPE";
+  private static final String INSTRUMENTATION_RUNNER_CLASS = "INSTRUMENTATION_RUNNER_CLASS";
+  private static final String METHOD_NAME = "METHOD_NAME";
+  private static final String CLASS_NAME = "CLASS_NAME";
+  private static final String PACKAGE_NAME = "PACKAGE_NAME";
+  private static final String EXTRA_OPTIONS = "EXTRA_OPTIONS";
+
+  private int testingType = TEST_ALL_IN_MODULE;
+  private String instrumentationRunnerClass;
+  private String methodName = "";
+  private String className = "";
+  private String packageName = "";
+  private String extraOptions = "";
 
   // Whether to delegate to 'blaze test'.
   private boolean runThroughBlaze;
+
+  public BlazeAndroidTestRunConfigurationState() {
+    String defaultInstrumentationRunnerClass =
+        InstrumentationRunnerProvider.getDefaultInstrumentationRunnerClass();
+    instrumentationRunnerClass = Strings.nullToEmpty(defaultInstrumentationRunnerClass);
+  }
 
   @Contract(pure = true)
   boolean isRunThroughBlaze() {
@@ -57,17 +71,116 @@ final class BlazeAndroidTestRunConfigurationState implements JDOMExternalizable 
     this.runThroughBlaze = runThroughBlaze;
   }
 
+  public int getTestingType() {
+    return testingType;
+  }
+
+  public void setTestingType(int testingType) {
+    this.testingType = testingType;
+  }
+
+  public String getInstrumentationRunnerClass() {
+    return instrumentationRunnerClass;
+  }
+
+  public void setInstrumentationRunnerClass(String instrumentationRunnerClass) {
+    this.instrumentationRunnerClass = instrumentationRunnerClass;
+  }
+
+  public String getMethodName() {
+    return methodName;
+  }
+
+  public void setMethodName(String methodName) {
+    this.methodName = methodName;
+  }
+
+  public String getClassName() {
+    return className;
+  }
+
+  public void setClassName(String className) {
+    this.className = className;
+  }
+
+  public String getPackageName() {
+    return packageName;
+  }
+
+  public void setPackageName(String packageName) {
+    this.packageName = packageName;
+  }
+
+  public String getExtraOptions() {
+    return extraOptions;
+  }
+
+  public void setExtraOptions(String extraOptions) {
+    this.extraOptions = extraOptions;
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-
+    String testingTypeAttribute = element.getAttributeValue(TESTING_TYPE);
+    if (!Strings.isNullOrEmpty(testingTypeAttribute)) {
+      testingType = Integer.parseInt(testingTypeAttribute);
+    }
+    instrumentationRunnerClass =
+        Strings.nullToEmpty(element.getAttributeValue(INSTRUMENTATION_RUNNER_CLASS));
+    methodName = Strings.nullToEmpty(element.getAttributeValue(METHOD_NAME));
+    className = Strings.nullToEmpty(element.getAttributeValue(CLASS_NAME));
+    packageName = Strings.nullToEmpty(element.getAttributeValue(PACKAGE_NAME));
+    extraOptions = Strings.nullToEmpty(element.getAttributeValue(EXTRA_OPTIONS));
     runThroughBlaze = Boolean.parseBoolean(element.getAttributeValue(RUN_THROUGH_BLAZE_ATTR));
+
+    for (Map.Entry<String, String> entry : getLegacyValues(element).entrySet()) {
+      String value = entry.getValue();
+      switch (entry.getKey()) {
+        case TESTING_TYPE:
+          if (!Strings.isNullOrEmpty(value)) {
+            testingType = Integer.parseInt(value);
+          }
+          break;
+        case INSTRUMENTATION_RUNNER_CLASS:
+          instrumentationRunnerClass = Strings.nullToEmpty(value);
+          break;
+        case METHOD_NAME:
+          methodName = Strings.nullToEmpty(value);
+          break;
+        case CLASS_NAME:
+          className = Strings.nullToEmpty(value);
+          break;
+        case PACKAGE_NAME:
+          packageName = Strings.nullToEmpty(value);
+          break;
+        case EXTRA_OPTIONS:
+          extraOptions = Strings.nullToEmpty(value);
+          break;
+        default:
+          break;
+      }
+    }
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-
     element.setAttribute(RUN_THROUGH_BLAZE_ATTR, Boolean.toString(runThroughBlaze));
+    element.setAttribute(TESTING_TYPE, Integer.toString(testingType));
+    element.setAttribute(INSTRUMENTATION_RUNNER_CLASS, instrumentationRunnerClass);
+    element.setAttribute(METHOD_NAME, methodName);
+    element.setAttribute(CLASS_NAME, className);
+    element.setAttribute(PACKAGE_NAME, packageName);
+    element.setAttribute(EXTRA_OPTIONS, extraOptions);
+  }
+
+  /** Imports legacy values in the old reflective JDOM externalizer manner. Can be removed ~2.0+. */
+  private static Map<String, String> getLegacyValues(Element element) {
+    Map<String, String> result = Maps.newHashMap();
+    for (Element option : element.getChildren("option")) {
+      String name = option.getAttributeValue("name");
+      String value = option.getAttributeValue("value");
+      result.put(name, value);
+    }
+    return result;
   }
 }

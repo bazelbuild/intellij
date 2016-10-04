@@ -1,21 +1,7 @@
-# Copyright 2016 The Bazel Authors. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 """Custom build macros for IntelliJ plugin handling.
 """
 
-def merged_plugin_xml_impl(name, srcs, merge_tool):
+def merged_plugin_xml_impl(name, srcs, merge_tool, **kwargs):
   """Merges N plugin.xml files together."""
   native.genrule(
       name = name,
@@ -25,43 +11,58 @@ def merged_plugin_xml_impl(name, srcs, merge_tool):
           merge_tool=merge_tool,
       ),
       tools = [merge_tool],
-  )
+      **kwargs)
 
 def _optstr(name, value):
   return ("--" + name) if value else ""
 
 def stamped_plugin_xml_impl(name,
                             plugin_xml,
-                            build_txt,
+                            application_info_jar,
+                            application_info_name,
                             stamp_tool,
+                            plugin_id = None,
+                            plugin_name = None,
                             stamp_since_build=False,
                             stamp_until_build=False,
+                            include_product_code_in_stamp=False,
                             version_file=None,
                             changelog_file=None,
-                            include_product_code_in_stamp=False):
+                            **kwargs):
   """Stamps a plugin xml file with the IJ build number.
 
   Args:
-    name: name of this rule
+    name: name of this target
     plugin_xml: target plugin_xml to stamp
-    build_txt: the file containing the build number
+    application_info_jar: the jar containing the application info
+    application_info_name: a file with the name of the application info
     stamp_tool: the tool to use to stamp the version
+    plugin_id: the plugin ID to stamp
+    plugin_name: the plugin name to stamp
     stamp_since_build: Add build number to idea-version since-build.
     stamp_until_build: Add build number to idea-version until-build.
-    version_file: A file with the version number to be included.
-    changelog_file: A file with the changelog to be included.
     include_product_code_in_stamp: Whether the product code (eg. "IC")
         is included in since-build and until-build.
+    version_file: A file with the version number to be included.
+    changelog_file: A file with the changelog to be included.
+    **kwargs: Any additional arguments to pass to the final target.
   """
   args = [
       "./$(location {stamp_tool})",
       "--plugin_xml=$(location {plugin_xml})",
-      "--build_txt=$(location {build_txt})",
+      "--application_info_jar=$(location {application_info_jar})",
+      "--application_info_name=$(location {application_info_name})",
       "{stamp_since_build}",
       "{stamp_until_build}",
       "{include_product_code_in_stamp}",
   ]
-  srcs = [plugin_xml, build_txt]
+  srcs = [plugin_xml, application_info_jar, application_info_name]
+
+  if plugin_id:
+    args.append("--plugin_id=%s" % plugin_id)
+
+  if plugin_name:
+    args.append("--plugin_name='%s'" % plugin_name)
 
   if version_file:
     args.append("--version_file=$(location {version_file})")
@@ -72,19 +73,20 @@ def stamped_plugin_xml_impl(name,
     srcs.append(changelog_file)
 
   cmd = " ".join(args).format(
-          plugin_xml=plugin_xml,
-          build_txt=build_txt,
-          stamp_tool=stamp_tool,
-          stamp_since_build=_optstr("stamp_since_build",
-                                    stamp_since_build),
-          stamp_until_build=_optstr("stamp_until_build",
-                                    stamp_until_build),
-          version_file=version_file,
-          changelog_file=changelog_file,
-          include_product_code_in_stamp=_optstr(
-              "include_product_code_in_stamp",
-              include_product_code_in_stamp)
-      ) + "> $@"
+      plugin_xml=plugin_xml,
+      application_info_jar=application_info_jar,
+      application_info_name=application_info_name,
+      stamp_tool=stamp_tool,
+      stamp_since_build=_optstr("stamp_since_build",
+                                stamp_since_build),
+      stamp_until_build=_optstr("stamp_until_build",
+                                stamp_until_build),
+      include_product_code_in_stamp=_optstr(
+          "include_product_code_in_stamp",
+          include_product_code_in_stamp),
+      version_file=version_file,
+      changelog_file=changelog_file,
+  ) + "> $@"
 
   native.genrule(
       name = name,
@@ -92,9 +94,46 @@ def stamped_plugin_xml_impl(name,
       outs = [name + ".xml"],
       cmd = cmd,
       tools = [stamp_tool],
-  )
+      **kwargs)
 
-def intellij_plugin_impl(name, plugin_xml, zip_tool, deps):
+def product_build_txt_impl(name,
+                           product_build_txt_tool,
+                           application_info_jar,
+                           application_info_name,
+                           **kwargs):
+  """Produces a product-build.txt file with the build number.
+
+  Args:
+    name: name of this target
+    product_build_txt_tool: the product build tool
+    application_info_jar: the jar containing the application info
+    application_info_name: a file with the name of the application info
+    **kwargs: Any additional arguments to pass to the final target.
+  """
+  args = [
+      "./$(location {product_build_txt_tool})",
+      "--application_info_jar=$(location {application_info_jar})",
+      "--application_info_name=$(location {application_info_name})",
+  ]
+  cmd = " ".join(args).format(
+      application_info_jar=application_info_jar,
+      application_info_name=application_info_name,
+      product_build_txt_tool=product_build_txt_tool,
+  ) + "> $@"
+  native.genrule(
+      name = name,
+      srcs = [application_info_jar, application_info_name],
+      outs = ["product-build.txt"],
+      cmd = cmd,
+      tools = [product_build_txt_tool],
+      **kwargs)
+
+def intellij_plugin_impl(name,
+                         deps,
+                         plugin_xml,
+                         zip_tool,
+                         meta_inf_files=[],
+                         **kwargs):
   """Creates an intellij plugin from the given deps and plugin.xml."""
   binary_name = name + "_binary"
   deploy_jar = binary_name + "_deploy.jar"
@@ -103,22 +142,34 @@ def intellij_plugin_impl(name, plugin_xml, zip_tool, deps):
       runtime_deps = deps,
       create_executable = 0,
   )
+  cmd = [
+      "cp $(location {deploy_jar}) $@".format(deploy_jar=deploy_jar),
+      "chmod +w $@",
+      "mkdir -p META-INF",
+      "cp $(location {plugin_xml}) META-INF/plugin.xml".format(plugin_xml=plugin_xml),
+      "$(location {zip_tool}) -u $@ META-INF/plugin.xml >/dev/null".format(zip_tool=zip_tool),
+  ]
+  srcs = [
+      plugin_xml,
+      deploy_jar,
+  ]
+
+  for meta_inf_file in meta_inf_files:
+    cmd.append("cp $(location {meta_inf_file}) META-INF/$$(basename $(location {meta_inf_file}))".format(
+        meta_inf_file=meta_inf_file,
+    ))
+    cmd.append("$(location {zip_tool}) -u $@ META-INF/$$(basename $(location {meta_inf_file})) >/dev/null".format(
+        zip_tool=zip_tool,
+        meta_inf_file=meta_inf_file,
+    ))
+    srcs.append(meta_inf_file)
+
   native.genrule(
       name = name + "_genrule",
-      srcs = [plugin_xml, deploy_jar],
+      srcs = srcs,
       tools = [zip_tool],
       outs = [name + ".jar"],
-      cmd = " ; ".join([
-          "cp $(location {deploy_jar}) $@",
-          "chmod +w $@",
-          "mkdir -p META-INF",
-          "cp $(location {plugin_xml}) META-INF/plugin.xml",
-          "$(location {zip_tool}) -u $@ META-INF/plugin.xml >/dev/null",
-      ]).format(
-          deploy_jar=deploy_jar,
-          plugin_xml=plugin_xml,
-          zip_tool=zip_tool,
-      ),
+      cmd = " ; ".join(cmd),
   )
 
   # included (with tag) as a hack so that IJwB can recognize this is an intellij plugin
@@ -126,6 +177,17 @@ def intellij_plugin_impl(name, plugin_xml, zip_tool, deps):
       name = name,
       jars = [name + ".jar"],
       tags = ["intellij-plugin"],
-      visibility = ["//visibility:public"],
-  )
+      **kwargs)
 
+def plugin_bundle_impl(name, plugins):
+  """Communicates to IJwB a set of plugins which should be loaded together in a run configuration.
+
+  Args:
+    name: the name of this target
+    plugins: the 'intellij_plugin' targets to be bundled
+  """
+  native.java_library(
+      name = name,
+      exports = plugins,
+      tags = ["intellij-plugin-bundle"],
+  )

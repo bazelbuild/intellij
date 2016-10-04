@@ -19,8 +19,10 @@ import com.android.tools.idea.run.testing.AndroidTestRunConfiguration;
 import com.google.common.base.Strings;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
+import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
 import com.google.idea.blaze.java.run.RunUtil;
-import com.google.idea.blaze.java.run.producers.BlazeTestRunConfigurationProducer;
 import com.google.idea.blaze.java.run.producers.JUnitConfigurationUtil;
 import com.google.idea.blaze.java.run.producers.ProducerUtils;
 import com.intellij.execution.Location;
@@ -33,21 +35,22 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Producer for run configurations related to Android test methods in Blaze.
- * <p/>
- * This class is based on
- * {@link org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer}.
+ *
+ * <p>This class is based on {@link
+ * org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer}.
  */
-public class BlazeAndroidTestMethodRunConfigurationProducer extends BlazeTestRunConfigurationProducer<BlazeAndroidTestRunConfiguration> {
+public class BlazeAndroidTestMethodRunConfigurationProducer
+    extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
 
   public BlazeAndroidTestMethodRunConfigurationProducer() {
-    super(BlazeAndroidTestRunConfigurationType.getInstance());
+    super(BlazeCommandRunConfigurationType.getInstance());
   }
 
   @Override
   protected boolean doSetupConfigFromContext(
-    @NotNull BlazeAndroidTestRunConfiguration configuration,
-    @NotNull ConfigurationContext context,
-    @NotNull Ref<PsiElement> sourceElement) {
+      @NotNull BlazeCommandRunConfiguration configuration,
+      @NotNull ConfigurationContext context,
+      @NotNull Ref<PsiElement> sourceElement) {
 
     if (JUnitConfigurationUtil.isMultipleElementsSelected(context)) {
       return false;
@@ -76,10 +79,15 @@ public class BlazeAndroidTestMethodRunConfigurationProducer extends BlazeTestRun
       return false;
     }
     configuration.setTarget(rule.label);
-    BlazeAndroidTestRunConfigurationState configState = configuration.getConfigState();
-    configState.TESTING_TYPE = AndroidTestRunConfiguration.TEST_METHOD;
-    configState.CLASS_NAME = containingClass.getQualifiedName();
-    configState.METHOD_NAME = psiMethod.getName();
+    BlazeAndroidTestRunConfigurationHandler handler =
+        configuration.getHandlerIfType(BlazeAndroidTestRunConfigurationHandler.class);
+    if (handler == null) {
+      return false;
+    }
+    BlazeAndroidTestRunConfigurationState configState = handler.getConfigState();
+    configState.setTestingType(AndroidTestRunConfiguration.TEST_METHOD);
+    configState.setClassName(containingClass.getQualifiedName());
+    configState.setMethodName(psiMethod.getName());
     configuration.setGeneratedName();
 
     return true;
@@ -87,8 +95,7 @@ public class BlazeAndroidTestMethodRunConfigurationProducer extends BlazeTestRun
 
   @Override
   protected boolean doIsConfigFromContext(
-    @NotNull BlazeAndroidTestRunConfiguration configuration,
-    @NotNull ConfigurationContext context) {
+      @NotNull BlazeCommandRunConfiguration configuration, @NotNull ConfigurationContext context) {
 
     if (JUnitConfigurationUtil.isMultipleElementsSelected(context)) {
       return false;
@@ -111,16 +118,21 @@ public class BlazeAndroidTestMethodRunConfigurationProducer extends BlazeTestRun
     return checkIfAttributesAreTheSame(configuration, psiMethod);
   }
 
-  private static boolean checkIfAttributesAreTheSame(BlazeAndroidTestRunConfiguration configuration,
-                                                     PsiMethod testMethod) {
-    BlazeAndroidTestRunConfigurationState configState = configuration.getConfigState();
-    if (Strings.isNullOrEmpty(configState.CLASS_NAME)
-        || Strings.isNullOrEmpty(configState.METHOD_NAME)) {
+  private static boolean checkIfAttributesAreTheSame(
+      BlazeCommandRunConfiguration configuration, PsiMethod testMethod) {
+    BlazeAndroidTestRunConfigurationHandler handler =
+        configuration.getHandlerIfType(BlazeAndroidTestRunConfigurationHandler.class);
+    if (handler == null) {
+      return false;
+    }
+    BlazeAndroidTestRunConfigurationState configState = handler.getConfigState();
+    if (Strings.isNullOrEmpty(configState.getClassName())
+        || Strings.isNullOrEmpty(configState.getMethodName())) {
       return false;
     }
 
-    return configState.TESTING_TYPE == AndroidTestRunConfiguration.TEST_METHOD
-           && configState.CLASS_NAME.equals(testMethod.getContainingClass().getQualifiedName())
-           && configState.METHOD_NAME.equals(testMethod.getName());
+    return configState.getTestingType() == AndroidTestRunConfiguration.TEST_METHOD
+        && configState.getClassName().equals(testMethod.getContainingClass().getQualifiedName())
+        && configState.getMethodName().equals(testMethod.getName());
   }
 }

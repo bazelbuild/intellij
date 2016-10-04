@@ -15,17 +15,23 @@
  */
 package com.google.idea.blaze.ijwb.plugin;
 
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.plugin.BlazePluginId;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 
-/**
- * IJwB plugin configuration information.
- */
+/** IJwB plugin configuration information. */
 public class IjwbPluginId implements BlazePluginId {
 
-  private static final String PLUGIN_ID = "com.google.idea.blaze.ijwb";  // Please keep up-to-date with plugin.xml
+  // Please keep these up-to-date with plugin xmls
+  static final String BLAZE_PLUGIN_ID = "com.google.idea.blaze.ijwb";
+  static final String BAZEL_PLUGIN_ID = "com.google.idea.bazel.ijwb";
 
   @Override
   public String getPluginId() {
-    return PLUGIN_ID;
+    BuildSystem type = BuildSystemProvider.defaultBuildSystem().buildSystem();
+    if (type == BuildSystem.Blaze) {
+      return BLAZE_PLUGIN_ID;
+    }
+    return BAZEL_PLUGIN_ID;
   }
 }

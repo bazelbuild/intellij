@@ -15,35 +15,43 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.android.tools.idea.run.util.LaunchUtils;
+import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
+import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationState;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import java.util.Map;
 import org.jdom.Element;
 
-/**
- * State specific to the android binary run configuration.
- */
-public final class BlazeAndroidBinaryRunConfigurationState implements JDOMExternalizable {
+/** State specific to the android binary run configuration. */
+public final class BlazeAndroidBinaryRunConfigurationState
+    implements BlazeAndroidRunConfigurationState {
   public static final String LAUNCH_DEFAULT_ACTIVITY = "default_activity";
   public static final String LAUNCH_SPECIFIC_ACTIVITY = "specific_activity";
   public static final String DO_NOTHING = "do_nothing";
   public static final String LAUNCH_DEEP_LINK = "launch_deep_link";
-  public String DEEP_LINK = "";
-  public String ACTIVITY_CLASS = "";
-
-  public String MODE = LAUNCH_DEFAULT_ACTIVITY;
-  // Launch options
-  public String ACTIVITY_EXTRA_FLAGS = "";
 
   private static final String MOBILE_INSTALL_ATTR = "blaze-mobile-install";
   private static final String USE_SPLIT_APKS_IF_POSSIBLE = "use-split-apks-if-possible";
   private static final String INSTANT_RUN_ATTR = "instant-run";
+  private static final String WORK_PROFILE_ATTR = "use-work-profile-if-present";
+  private static final String USER_ID_ATTR = "user-id";
   private boolean mobileInstall = false;
   private boolean useSplitApksIfPossible = true;
   private boolean instantRun = false;
+  private boolean useWorkProfileIfPresent = false;
+  private Integer userId;
 
-  boolean isMobileInstall() {
+  private static final String DEEP_LINK = "DEEP_LINK";
+  private static final String ACTIVITY_CLASS = "ACTIVITY_CLASS";
+  private static final String MODE = "MODE";
+  private static final String ACTIVITY_EXTRA_FLAGS = "ACTIVITY_EXTRA_FLAGS";
+  private String deepLink = "";
+  private String activityClass = "";
+  private String mode = LAUNCH_DEFAULT_ACTIVITY;
+
+  boolean mobileInstall() {
     return mobileInstall;
   }
 
@@ -51,7 +59,7 @@ public final class BlazeAndroidBinaryRunConfigurationState implements JDOMExtern
     this.mobileInstall = mobileInstall;
   }
 
-  public boolean isUseSplitApksIfPossible() {
+  public boolean useSplitApksIfPossible() {
     return useSplitApksIfPossible;
   }
 
@@ -59,7 +67,7 @@ public final class BlazeAndroidBinaryRunConfigurationState implements JDOMExtern
     this.useSplitApksIfPossible = useSplitApksIfPossible;
   }
 
-  boolean isInstantRun() {
+  boolean instantRun() {
     return instantRun;
   }
 
@@ -67,19 +75,108 @@ public final class BlazeAndroidBinaryRunConfigurationState implements JDOMExtern
     this.instantRun = instantRun;
   }
 
+  public boolean useWorkProfileIfPresent() {
+    return useWorkProfileIfPresent;
+  }
+
+  void setUseWorkProfileIfPresent(boolean useWorkProfileIfPresent) {
+    this.useWorkProfileIfPresent = useWorkProfileIfPresent;
+  }
+
+  Integer getUserId() {
+    return userId;
+  }
+
+  void setUserId(Integer userId) {
+    this.userId = userId;
+  }
+
+  public String getDeepLink() {
+    return deepLink;
+  }
+
+  public void setDeepLink(String deepLink) {
+    this.deepLink = deepLink;
+  }
+
+  public String getActivityClass() {
+    return activityClass;
+  }
+
+  public void setActivityClass(String activityClass) {
+    this.activityClass = activityClass;
+  }
+
+  public String getMode() {
+    return mode;
+  }
+
+  public void setMode(String mode) {
+    this.mode = mode;
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
+    setDeepLink(Strings.nullToEmpty(element.getAttributeValue(DEEP_LINK)));
+    setActivityClass(Strings.nullToEmpty(element.getAttributeValue(ACTIVITY_CLASS)));
+    setMode(Strings.nullToEmpty(element.getAttributeValue(MODE)));
     setMobileInstall(Boolean.parseBoolean(element.getAttributeValue(MOBILE_INSTALL_ATTR)));
-    setUseSplitApksIfPossible(Boolean.parseBoolean(element.getAttributeValue(USE_SPLIT_APKS_IF_POSSIBLE)));
+    setUseSplitApksIfPossible(
+        Boolean.parseBoolean(element.getAttributeValue(USE_SPLIT_APKS_IF_POSSIBLE)));
     setInstantRun(Boolean.parseBoolean(element.getAttributeValue(INSTANT_RUN_ATTR)));
+    setUseWorkProfileIfPresent(Boolean.parseBoolean(element.getAttributeValue(WORK_PROFILE_ATTR)));
+
+    String userIdString = element.getAttributeValue(USER_ID_ATTR);
+    if (userIdString != null) {
+      setUserId(Integer.parseInt(userIdString));
+    }
+
+    for (Map.Entry<String, String> entry : getLegacyValues(element).entrySet()) {
+      String value = entry.getValue();
+      switch (entry.getKey()) {
+        case DEEP_LINK:
+          deepLink = Strings.nullToEmpty(value);
+          break;
+        case ACTIVITY_CLASS:
+          activityClass = Strings.nullToEmpty(value);
+          break;
+        case MODE:
+          mode = Strings.nullToEmpty(value);
+          break;
+        case ACTIVITY_EXTRA_FLAGS:
+          if (userId == null) {
+            userId = LaunchUtils.getUserIdFromFlags(value);
+          }
+          break;
+        default:
+          break;
+      }
+    }
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    element.setAttribute(DEEP_LINK, deepLink);
+    element.setAttribute(ACTIVITY_CLASS, activityClass);
+    element.setAttribute(MODE, mode);
     element.setAttribute(MOBILE_INSTALL_ATTR, Boolean.toString(mobileInstall));
     element.setAttribute(USE_SPLIT_APKS_IF_POSSIBLE, Boolean.toString(useSplitApksIfPossible));
     element.setAttribute(INSTANT_RUN_ATTR, Boolean.toString(instantRun));
+    element.setAttribute(WORK_PROFILE_ATTR, Boolean.toString(useWorkProfileIfPresent));
+
+    if (userId != null) {
+      element.setAttribute(USER_ID_ATTR, Integer.toString(userId));
+    }
+  }
+
+  /** Imports legacy values in the old reflective JDOM externalizer manner. Can be removed ~2.0+. */
+  private static Map<String, String> getLegacyValues(Element element) {
+    Map<String, String> result = Maps.newHashMap();
+    for (Element option : element.getChildren("option")) {
+      String name = option.getAttributeValue("name");
+      String value = option.getAttributeValue("value");
+      result.put(name, value);
+    }
+    return result;
   }
 }

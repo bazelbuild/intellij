@@ -17,9 +17,11 @@ package com.google.idea.blaze.android.run.binary;
 
 import com.android.tools.idea.fd.InstantRunUtils;
 import com.android.tools.idea.run.AndroidSessionInfo;
+import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallDebugExecutor;
 import com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallRunExecutor;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -30,37 +32,51 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Program runner for {@link BlazeAndroidBinaryRunConfiguration}
- */
+/** Program runner for {@link BlazeAndroidRunConfiguration} */
 public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
   @Override
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
-    if (!(profile instanceof BlazeAndroidBinaryRunConfiguration)) {
+    BlazeAndroidRunConfigurationHandler handler =
+        BlazeAndroidRunConfigurationHandler.getHandlerFrom(profile);
+    if (handler == null) {
       return false;
     }
-    BlazeAndroidBinaryRunConfiguration runConfiguration = (BlazeAndroidBinaryRunConfiguration) profile;
-    if (runConfiguration.getConfigState().isMobileInstall()) {
-      return (IncrementalInstallDebugExecutor.EXECUTOR_ID.equals(executorId)
-              || IncrementalInstallRunExecutor.EXECUTOR_ID.equals(executorId));
+    // In practice, the stock runner will probably handle all non-incremental-install configs.
+    if (DefaultDebugExecutor.EXECUTOR_ID.equals(executorId)
+        || DefaultRunExecutor.EXECUTOR_ID.equals(executorId)) {
+      return true;
     }
-
-    return DefaultDebugExecutor.EXECUTOR_ID.equals(executorId) || DefaultRunExecutor.EXECUTOR_ID.equals(executorId);
+    // Otherwise, the configuration must be a Blaze incremental install configuration running with
+    // an incremental install executor.
+    if (!(handler instanceof BlazeAndroidBinaryRunConfigurationHandler)) {
+      return false;
+    }
+    return ((BlazeAndroidBinaryRunConfigurationHandler) handler).getConfigState().mobileInstall()
+        && (IncrementalInstallDebugExecutor.EXECUTOR_ID.equals(executorId)
+            || IncrementalInstallRunExecutor.EXECUTOR_ID.equals(executorId));
   }
 
   @Override
-  protected RunContentDescriptor doExecute(@NotNull final RunProfileState state, @NotNull final ExecutionEnvironment env)
-    throws ExecutionException {
+  protected RunContentDescriptor doExecute(
+      @NotNull final RunProfileState state, @NotNull final ExecutionEnvironment env)
+      throws ExecutionException {
     RunContentDescriptor descriptor = super.doExecute(state, env);
     if (descriptor != null) {
       ProcessHandler processHandler = descriptor.getProcessHandler();
       assert processHandler != null;
 
       RunProfile runProfile = env.getRunProfile();
-      int uniqueId = (runProfile instanceof BlazeAndroidBinaryRunConfiguration)
-                     ? ((BlazeAndroidBinaryRunConfiguration)runProfile).getUniqueID() : -1;
-      AndroidSessionInfo sessionInfo = new AndroidSessionInfo(processHandler, descriptor, uniqueId, env.getExecutor().getId(),
-                                                              InstantRunUtils.isInstantRunEnabled(env));
+      int uniqueId =
+          (runProfile instanceof RunConfigurationBase)
+              ? ((RunConfigurationBase) runProfile).getUniqueID()
+              : -1;
+      AndroidSessionInfo sessionInfo =
+          new AndroidSessionInfo(
+              processHandler,
+              descriptor,
+              uniqueId,
+              env.getExecutor().getId(),
+              InstantRunUtils.isInstantRunEnabled(env));
       processHandler.putUserData(AndroidSessionInfo.KEY, sessionInfo);
     }
 

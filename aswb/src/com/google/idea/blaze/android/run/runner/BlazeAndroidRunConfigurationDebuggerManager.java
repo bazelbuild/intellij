@@ -29,33 +29,31 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
-import org.jetbrains.android.facet.AndroidFacet;
-
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
+import org.jdom.Element;
+import org.jetbrains.android.facet.AndroidFacet;
 
-/**
- * Manages android debugger state for the run configurations.
- */
+/** Manages android debugger state for the run configurations. */
 public class BlazeAndroidRunConfigurationDebuggerManager implements JDOMExternalizable {
   private final Project project;
   private final Map<String, AndroidDebuggerState> androidDebuggerStates = Maps.newHashMap();
   private final BlazeAndroidRunConfigurationCommonState commonState;
 
-  BlazeAndroidRunConfigurationDebuggerManager(Project project,
-                                              BlazeAndroidRunConfigurationCommonState commonState) {
+  BlazeAndroidRunConfigurationDebuggerManager(
+      Project project, BlazeAndroidRunConfigurationCommonState commonState) {
     this.project = project;
     this.commonState = commonState;
-    for (AndroidDebugger androidDebugger: getAndroidDebuggers()) {
+    for (AndroidDebugger androidDebugger : getAndroidDebuggers()) {
       this.androidDebuggerStates.put(androidDebugger.getId(), androidDebugger.createState());
     }
   }
 
   List<ValidationError> validate(AndroidFacet facet) {
-    // All of the AndroidDebuggerState classes implement a validate that either does nothing or is specific to gradle so there is no point
+    // All of the AndroidDebuggerState classes implement a validate that
+    // either does nothing or is specific to gradle so there is no point
     // in calling validate on our AndroidDebuggerState.
     return ImmutableList.of();
   }
@@ -63,7 +61,7 @@ public class BlazeAndroidRunConfigurationDebuggerManager implements JDOMExternal
   @Nullable
   AndroidDebugger getAndroidDebugger() {
     String debuggerID = getDebuggerID();
-    for (AndroidDebugger androidDebugger: getAndroidDebuggers()) {
+    for (AndroidDebugger androidDebugger : getAndroidDebuggers()) {
       if (androidDebugger.getId().equals(debuggerID)) {
         return androidDebugger;
       }
@@ -76,7 +74,7 @@ public class BlazeAndroidRunConfigurationDebuggerManager implements JDOMExternal
     T androidDebuggerState = getAndroidDebuggerState(getDebuggerID());
     // Set our working directory to our workspace root for native debugging.
     if (androidDebuggerState instanceof NativeAndroidDebuggerState) {
-      NativeAndroidDebuggerState nativeState = (NativeAndroidDebuggerState)androidDebuggerState;
+      NativeAndroidDebuggerState nativeState = (NativeAndroidDebuggerState) androidDebuggerState;
       String workingDirPath = WorkspaceRoot.fromProject(project).directory().getPath();
       nativeState.setWorkingDir(workingDirPath);
     }
@@ -89,21 +87,23 @@ public class BlazeAndroidRunConfigurationDebuggerManager implements JDOMExternal
   }
 
   private String getDebuggerID() {
-    BlazeNativeDebuggerIdProvider blazeNativeDebuggerIdProvider = BlazeNativeDebuggerIdProvider.getInstance();
+    BlazeNativeDebuggerIdProvider blazeNativeDebuggerIdProvider =
+        BlazeNativeDebuggerIdProvider.getInstance();
     return (blazeNativeDebuggerIdProvider != null && commonState.isNativeDebuggingEnabled())
-           ? blazeNativeDebuggerIdProvider.getDebuggerId()
-           : AndroidJavaDebugger.ID;
+        ? blazeNativeDebuggerIdProvider.getDebuggerId()
+        : AndroidJavaDebugger.ID;
   }
 
   @Nullable
-  private final <T extends AndroidDebuggerState> T getAndroidDebuggerState(String androidDebuggerId) {
+  private final <T extends AndroidDebuggerState> T getAndroidDebuggerState(
+      String androidDebuggerId) {
     AndroidDebuggerState state = androidDebuggerStates.get(androidDebuggerId);
-    return (state != null) ? (T)state : null;
+    return (state != null) ? (T) state : null;
   }
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    for (Map.Entry<String, AndroidDebuggerState> entry: androidDebuggerStates.entrySet()) {
+    for (Map.Entry<String, AndroidDebuggerState> entry : androidDebuggerStates.entrySet()) {
       Element optionElement = element.getChild(entry.getKey());
       if (optionElement != null) {
         entry.getValue().readExternal(optionElement);
@@ -113,7 +113,7 @@ public class BlazeAndroidRunConfigurationDebuggerManager implements JDOMExternal
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    for (Map.Entry<String, AndroidDebuggerState> entry: androidDebuggerStates.entrySet()) {
+    for (Map.Entry<String, AndroidDebuggerState> entry : androidDebuggerStates.entrySet()) {
       Element optionElement = new Element(entry.getKey());
       element.addContent(optionElement);
       entry.getValue().writeExternal(optionElement);

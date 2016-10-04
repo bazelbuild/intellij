@@ -14,17 +14,15 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-  <id>com.google.idea.blaze.aswb</id>
   <vendor>Google</vendor>
 
-  <depends optional="true">com.intellij.modules.androidstudio</depends>
+  <depends>com.intellij.modules.androidstudio</depends>
   <depends>org.jetbrains.android</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <java.elementFinder implementation="com.google.idea.blaze.android.resources.AndroidResourceClassFinder"
         order="first, before java"/>
     <java.elementFinder implementation="com.google.idea.blaze.android.resources.AndroidResourcePackageFinder"/>
-    <stepsBeforeRunProvider implementation="com.google.idea.blaze.android.run.BlazeBeforeRunTaskProvider"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.resources.LightResourceClassService"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestClassRunConfigurationProducer"
@@ -53,9 +51,11 @@
     <SyncListener implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncListener"/>
     <SyncListener implementation="com.google.idea.blaze.android.cppimpl.BlazeNdkSupportEnabler"/>
     <SyncListener implementation="com.google.idea.blaze.android.manifest.ManifestParser$ClearManifestParser"/>
-    <RuleConfigurationFactory implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationType$BlazeAndroidBinaryRuleConfigurationFactory"/>
-    <RuleConfigurationFactory implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationType$BlazeAndroidTestRuleConfigurationFactory"/>
+    <RuleConfigurationFactory implementation="com.google.idea.blaze.android.run.BlazeAndroidRuleConfigurationFactory"/>
     <java.JavaSyncAugmenter implementation="com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter"/>
+    <PrefetchFileSource implementation="com.google.idea.blaze.android.sync.AndroidPrefetchFileSource"/>
+    <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandlerProvider"/>
+    <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationHandlerProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">

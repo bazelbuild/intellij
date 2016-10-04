@@ -23,18 +23,15 @@ import com.google.common.hash.HashCode;
 import com.google.repackaged.devtools.build.lib.rules.android.apkmanifest.ApkManifestOuterClass;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * Blaze implementation of instant run context.
- */
+/** Blaze implementation of instant run context. */
 public class BlazeInstantRunContext implements InstantRunContext {
   private static final Logger LOG = Logger.getInstance(BlazeInstantRunContext.class);
   private final Project project;
@@ -43,10 +40,11 @@ public class BlazeInstantRunContext implements InstantRunContext {
   private final File instantRunBuildInfoFile;
   private BuildSelection buildSelection;
 
-  BlazeInstantRunContext(Project project,
-                         ApkManifestOuterClass.ApkManifest apkManifest,
-                         String applicationId,
-                         File instantRunBuildInfoFile) {
+  BlazeInstantRunContext(
+      Project project,
+      ApkManifestOuterClass.ApkManifest apkManifest,
+      String applicationId,
+      File instantRunBuildInfoFile) {
     this.project = project;
     this.apkManifest = apkManifest;
     this.applicationId = applicationId;
@@ -83,10 +81,12 @@ public class BlazeInstantRunContext implements InstantRunContext {
   public InstantRunBuildInfo getInstantRunBuildInfo() {
     if (instantRunBuildInfoFile.exists()) {
       try {
-        String xml = new String(Files.readAllBytes(Paths.get(instantRunBuildInfoFile.getPath())), StandardCharsets.UTF_8);
+        String xml =
+            new String(
+                Files.readAllBytes(Paths.get(instantRunBuildInfoFile.getPath())),
+                StandardCharsets.UTF_8);
         return InstantRunBuildInfo.get(xml);
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
         LOG.error(e);
       }
     }

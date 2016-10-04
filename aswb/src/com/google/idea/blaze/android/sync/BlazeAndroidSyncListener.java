@@ -16,31 +16,15 @@
 package com.google.idea.blaze.android.sync;
 
 import com.android.tools.idea.res.ResourceFolderRegistry;
-import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 
-/**
- * Android-specific hooks to run after a blaze sync.
- */
-public class BlazeAndroidSyncListener implements SyncListener {
+/** Android-specific hooks to run after a blaze sync. */
+public class BlazeAndroidSyncListener extends SyncListener.Adapter {
   @Override
-  public void onSyncStart(Project project) {
-  }
-
-  @Override
-  public void onSyncComplete(Project project,
-                             BlazeImportSettings importSettings,
-                             ProjectViewSet projectViewSet,
-                             BlazeProjectData blazeProjectData) {
-  }
-
-  @Override
-  public void afterSync(Project project, boolean successful) {
-    if (successful) {
+  public void afterSync(Project project, SyncResult syncResult) {
+    if (syncResult == SyncResult.SUCCESS || syncResult == SyncResult.PARTIAL_SUCCESS) {
       DumbService dumbService = DumbService.getInstance(project);
       dumbService.queueTask(new ResourceFolderRegistry.PopulateCachesTask(project));
     }
