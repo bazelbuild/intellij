@@ -24,10 +24,15 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.Parameter;
 import com.google.idea.blaze.base.lang.buildfile.psi.ParameterList;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests that keyword references are correctly resolved. */
+@RunWith(JUnit4.class)
 public class KeywordReferenceTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testPlainKeywordReference() {
     BuildFile file =
         createBuildFile(
@@ -46,6 +51,7 @@ public class KeywordReferenceTest extends BuildFileIntegrationTestCase {
         .isEqualTo(params.findParameterByName("deps"));
   }
 
+  @Test
   public void testKwargsReference() {
     BuildFile file =
         createBuildFile(

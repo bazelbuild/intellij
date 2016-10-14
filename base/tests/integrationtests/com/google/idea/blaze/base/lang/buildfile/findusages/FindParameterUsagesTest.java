@@ -23,12 +23,17 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.ParameterList;
 import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
 import com.intellij.psi.PsiReference;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests that usages of function parameters (i.e. by named args in funcall expressions) are found
  */
+@RunWith(JUnit4.class)
 public class FindParameterUsagesTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testLocalReferences() {
     BuildFile buildFile =
         createBuildFile(
@@ -46,6 +51,7 @@ public class FindParameterUsagesTest extends BuildFileIntegrationTestCase {
     assertThat(references).hasLength(1);
   }
 
+  @Test
   public void testNonLocalReferences() {
     BuildFile foo = createBuildFile("java/com/google/build_defs.bzl", "def function(arg1, arg2)");
 

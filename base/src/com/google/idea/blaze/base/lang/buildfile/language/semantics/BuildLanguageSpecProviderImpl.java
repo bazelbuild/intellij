@@ -19,6 +19,7 @@ import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.lang.buildfile.sync.LanguageSpecResult;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.intellij.openapi.project.Project;
@@ -39,6 +40,7 @@ public class BuildLanguageSpecProviderImpl extends SyncListener.Adapter
   @Override
   public void onSyncComplete(
       Project project,
+      BlazeContext context,
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,

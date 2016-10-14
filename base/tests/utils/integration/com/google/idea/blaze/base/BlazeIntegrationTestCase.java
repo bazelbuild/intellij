@@ -30,24 +30,23 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
+import com.google.idea.testing.EdtRule;
+import com.google.idea.testing.IntellijTestSetupRule;
+import com.google.idea.testing.ServiceHelper;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
@@ -82,37 +81,25 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.picocontainer.MutablePicoContainer;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
 
-/** Base test class for blaze integration tests. */
-public abstract class BlazeIntegrationTestCase extends UsefulTestCase {
+/** Base test class for blaze integration tests. {@link UsefulTestCase} */
+public abstract class BlazeIntegrationTestCase {
 
   private static final LightProjectDescriptor projectDescriptor =
       LightCodeInsightFixtureTestCase.JAVA_8;
 
-  private static boolean isRunThroughBlaze() {
-    return System.getenv("JAVA_RUNFILES") != null;
-  }
+  @Rule public final IntellijTestSetupRule setupRule = new IntellijTestSetupRule();
+  @Rule public final TestRule testRunWrapper = runTestsOnEdt() ? new EdtRule() : null;
 
   protected CodeInsightTestFixture testFixture;
   protected WorkspaceRoot workspaceRoot;
-  private String oldPluginPathProperty;
 
-  @Override
-  protected final void setUp() throws Exception {
-    if (!isRunThroughBlaze()) {
-      // If running directly through the IDE, don't try to load plugins from the sandbox environment
-      // Instead we'll rely on the slightly more hermetic module classpath
-      oldPluginPathProperty = System.getProperty(PathManager.PROPERTY_PLUGINS_PATH);
-      System.setProperty(PathManager.PROPERTY_PLUGINS_PATH, "/dev/null");
-    }
-
-    // Some plugins have a since-build and until-build restriction, so we need
-    // to update the build number here
-    PluginManagerCore.BUILD_NUMBER = "162.1447.26";
-
-    super.setUp();
-
+  @Before
+  public final void setUp() throws Exception {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
         factory.createLightFixtureBuilder(projectDescriptor);
@@ -147,8 +134,10 @@ public abstract class BlazeIntegrationTestCase extends UsefulTestCase {
           }
           return vf.getInputStream();
         });
+  }
 
-    doSetup();
+  protected Disposable getTestRootDisposable() {
+    return setupRule.testRootDisposable;
   }
 
   /** Override to run tests with bazel specified as the project's build system. */
@@ -156,23 +145,16 @@ public abstract class BlazeIntegrationTestCase extends UsefulTestCase {
     return BuildSystem.Blaze;
   }
 
-  protected void doSetup() throws Exception {}
-
-  @Override
-  protected final void tearDown() throws Exception {
-    if (oldPluginPathProperty != null) {
-      System.setProperty(PathManager.PROPERTY_PLUGINS_PATH, oldPluginPathProperty);
-    } else {
-      System.clearProperty(PathManager.PROPERTY_PLUGINS_PATH);
-    }
-    testFixture.tearDown();
-    testFixture = null;
-    super.tearDown();
-    clearFields(this);
-    doTearDown();
+  /** Override to run tests off the EDT. */
+  protected boolean runTestsOnEdt() {
+    return true;
   }
 
-  protected void doTearDown() throws Exception {}
+  @After
+  public final void tearDown() throws Exception {
+    testFixture.tearDown();
+    testFixture = null;
+  }
 
   protected void setBlazeImportSettings(BlazeImportSettings importSettings) {
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(importSettings);
@@ -435,36 +417,16 @@ public abstract class BlazeIntegrationTestCase extends UsefulTestCase {
   }
 
   protected <T> void registerApplicationService(Class<T> key, T implementation) {
-    registerComponentInstance(
-        (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer(),
-        key,
-        implementation);
+    ServiceHelper.registerApplicationService(key, implementation, getTestRootDisposable());
   }
 
   protected <T> void registerProjectService(Class<T> key, T implementation) {
-    registerComponentInstance(
-        (MutablePicoContainer) getProject().getPicoContainer(), key, implementation);
-  }
-
-  protected <T> void registerComponentInstance(
-      MutablePicoContainer container, Class<T> key, T implementation) {
-    Object old = container.getComponentInstance(key);
-    container.unregisterComponent(key.getName());
-    container.registerComponentInstance(key.getName(), implementation);
-    Disposer.register(
-        getTestRootDisposable(),
-        () -> {
-          container.unregisterComponent(key.getName());
-          if (old != null) {
-            container.registerComponentInstance(key.getName(), old);
-          }
-        });
+    ServiceHelper.registerProjectService(
+        getProject(), key, implementation, getTestRootDisposable());
   }
 
   protected <T> void registerExtension(ExtensionPointName<T> name, T instance) {
-    ExtensionPoint<T> ep = Extensions.getRootArea().getExtensionPoint(name);
-    ep.registerExtension(instance);
-    Disposer.register(getTestRootDisposable(), () -> ep.unregisterExtension(instance));
+    ServiceHelper.registerExtension(name, instance, getTestRootDisposable());
   }
 
   /** Redirects file system checks via the TempFileSystem used for these tests. */

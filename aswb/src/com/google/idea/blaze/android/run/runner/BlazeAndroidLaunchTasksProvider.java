@@ -109,7 +109,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
               launchOptions,
               userId,
               debuggerManager.getAndroidDebugger(),
-              debuggerManager.getAndroidDebuggerState(),
+              debuggerManager.getAndroidDebuggerState(project),
               processHandlerLaunchStatus);
       if (appLaunchTask != null) {
         launchTasks.add(appLaunchTask);
@@ -159,7 +159,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
     }
 
     AndroidDebugger androidDebugger = debuggerManager.getAndroidDebugger();
-    AndroidDebuggerState androidDebuggerState = debuggerManager.getAndroidDebuggerState();
+    AndroidDebuggerState androidDebuggerState = debuggerManager.getAndroidDebuggerState(project);
 
     if (androidDebugger == null || androidDebuggerState == null) {
       return null;

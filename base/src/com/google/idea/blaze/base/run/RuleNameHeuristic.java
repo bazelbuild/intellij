@@ -26,7 +26,16 @@ public class RuleNameHeuristic implements TestRuleHeuristic {
 
   @Override
   public boolean matchesSource(RuleIdeInfo rule, File sourceFile, @Nullable TestSize testSize) {
-    String sourceName = FileUtil.getNameWithoutExtension(sourceFile);
-    return sourceName.equals(rule.label.ruleName().toString());
+    String filePathWithoutExtension = FileUtil.getNameWithoutExtension(sourceFile.getPath());
+    String ruleName = rule.label.ruleName().toString();
+    if (!filePathWithoutExtension.endsWith(ruleName)) {
+      return false;
+    }
+    int i = filePathWithoutExtension.length() - ruleName.length() - 1;
+    if (i < 0) {
+      // Equal length
+      return true;
+    }
+    return filePathWithoutExtension.charAt(i) == '/';
   }
 }

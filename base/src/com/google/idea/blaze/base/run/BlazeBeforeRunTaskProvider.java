@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
@@ -102,7 +103,8 @@ public final class BlazeBeforeRunTaskProvider
     if (!canExecuteTask(configuration, task)) {
       return false;
     }
-    BlazeCommandRunConfiguration config = (BlazeCommandRunConfiguration) configuration;
-    return config.getHandler().executeBeforeRunTask(env);
+    BlazeCommandRunConfigurationRunner runner =
+        env.getCopyableUserData(BlazeCommandRunConfigurationRunner.RUNNER_KEY);
+    return runner.executeBeforeRunTask(env);
   }
 }

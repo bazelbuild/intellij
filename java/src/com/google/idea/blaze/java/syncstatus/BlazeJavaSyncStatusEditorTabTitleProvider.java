@@ -25,7 +25,7 @@ public class BlazeJavaSyncStatusEditorTabTitleProvider implements EditorTabTitle
   @Nullable
   @Override
   public String getEditorTabTitle(Project project, VirtualFile file) {
-    if (file.getName().endsWith("java") && SyncStatusHelper.isUnsynced(project, file)) {
+    if (file.getName().endsWith("java") && SyncStatusHelper.getInstance(project).isUnsynced(file)) {
       return file.getPresentableName() + " (unsynced)";
     }
     return null;

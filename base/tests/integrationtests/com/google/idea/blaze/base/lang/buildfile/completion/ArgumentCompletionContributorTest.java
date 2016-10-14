@@ -22,67 +22,80 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests for code completion of funcall arguments. */
+@RunWith(JUnit4.class)
 public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestCase {
 
   private CompletionAutoPopupTester completionTester;
 
-  public void doSetup() {
-    super.doSetup();
+  @Before
+  public final void before() {
     completionTester = new CompletionAutoPopupTester(testFixture);
   }
 
+  /** Completion UI testing can't be run on the EDT. */
   @Override
-  protected boolean runInDispatchThread() {
+  protected boolean runTestsOnEdt() {
     return false;
   }
 
-  @Override
-  protected void invokeTestRunnable(Runnable runnable) throws Exception {
-    completionTester.runWithAutoPopupEnabled(runnable);
-  }
-
+  @Test
   public void testIncompleteFuncall() {
-    BuildFile file =
-        createBuildFile(
-            "BUILD", "def function(name, deps, srcs):", "  # empty function", "function(d");
+    completionTester.runWithAutoPopupEnabled(
+        () -> {
+          BuildFile file =
+              createBuildFile(
+                  "BUILD", "def function(name, deps, srcs):", "  # empty function", "function(d");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 2, "function(n".length());
+          Editor editor = openFileInEditor(file.getVirtualFile());
+          setCaretPosition(editor, 2, "function(n".length());
 
-    LookupElement[] completionItems = testFixture.completeBasic();
-    assertThat(completionItems).isNull();
+          LookupElement[] completionItems = testFixture.completeBasic();
+          assertThat(completionItems).isNull();
 
-    assertFileContents(
-        file, "def function(name, deps, srcs):", "  # empty function", "function(deps");
+          assertFileContents(
+              file, "def function(name, deps, srcs):", "  # empty function", "function(deps");
+        });
   }
 
+  @Test
   public void testExistingKeywordArg() {
-    BuildFile file =
-        createBuildFile(
-            "BUILD",
-            "def function(name, deps, srcs):",
-            "  # empty function",
-            "function(name = \"lib\")");
+    completionTester.runWithAutoPopupEnabled(
+        () -> {
+          BuildFile file =
+              createBuildFile(
+                  "BUILD",
+                  "def function(name, deps, srcs):",
+                  "  # empty function",
+                  "function(name = \"lib\")");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 2, "function(".length());
+          Editor editor = openFileInEditor(file.getVirtualFile());
+          setCaretPosition(editor, 2, "function(".length());
 
-    String[] completionItems = getCompletionItemsAsStrings();
-    assertThat(completionItems).hasLength(4);
-    assertThat(completionItems).asList().containsAllOf("name", "deps", "srcs", "function");
+          String[] completionItems = getCompletionItemsAsStrings();
+          assertThat(completionItems).hasLength(4);
+          assertThat(completionItems).asList().containsAllOf("name", "deps", "srcs", "function");
+        });
   }
 
+  @Test
   public void testNoArgumentCompletionInComment() {
-    BuildFile file =
-        createBuildFile(
-            "BUILD", "def function(name, deps, srcs):", "  # empty function", "function(#");
+    completionTester.runWithAutoPopupEnabled(
+        () -> {
+          BuildFile file =
+              createBuildFile(
+                  "BUILD", "def function(name, deps, srcs):", "  # empty function", "function(#");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 2, "function(#".length());
+          Editor editor = openFileInEditor(file.getVirtualFile());
+          setCaretPosition(editor, 2, "function(#".length());
 
-    completionTester.typeWithPauses("n");
-    assertNull(testFixture.getLookup());
+          completionTester.typeWithPauses("n");
+          assertThat(testFixture.getLookup()).isNull();
+        });
   }
 }

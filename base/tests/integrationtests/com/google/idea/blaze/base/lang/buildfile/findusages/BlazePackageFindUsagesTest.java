@@ -23,13 +23,18 @@ import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests that all references to a blaze package (including in the package components of labels) are
  * found by the 'Find Usages' action.
  */
+@RunWith(JUnit4.class)
 public class BlazePackageFindUsagesTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testDirectReferenceFound() {
     BuildFile foo = createBuildFile("java/com/google/foo/BUILD");
 
@@ -46,6 +51,7 @@ public class BlazePackageFindUsagesTest extends BuildFileIntegrationTestCase {
     assertThat(ref.getContainingFile()).isEqualTo(bar);
   }
 
+  @Test
   public void testLabelFragmentReferenceFound() {
     BuildFile foo = createBuildFile("java/com/google/foo/BUILD", "java_library(name = \"lib\")");
 
@@ -63,6 +69,7 @@ public class BlazePackageFindUsagesTest extends BuildFileIntegrationTestCase {
   }
 
   /** If these don't resolve, directory rename refactoring won't update all labels correctly */
+  @Test
   public void testInternalReferencesResolve() {
     BuildFile buildFile =
         createBuildFile(

@@ -58,6 +58,7 @@ public final class BlazeHelperBinaryUtil {
     try (InputStream inputStream = URLUtil.openResourceStream(url)) {
       Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
       file.setExecutable(true);
+      file.deleteOnExit();
       cachedFiles.put(binaryName, file);
       return file;
     } catch (IOException e) {

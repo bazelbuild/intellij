@@ -18,10 +18,15 @@ package com.google.idea.blaze.base.lang.buildfile.editor;
 import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests for BuildQuoteHandler. */
+@RunWith(JUnit4.class)
 public class BuildQuoteHandlerTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testClosingQuoteInserted() {
     BuildFile file = createBuildFile("BUILD", "");
 
@@ -29,6 +34,7 @@ public class BuildQuoteHandlerTest extends BuildFileIntegrationTestCase {
     assertFileContents(file, "\"\"");
   }
 
+  @Test
   public void testClosingSingleQuoteInserted() {
     BuildFile file = createBuildFile("BUILD", "");
 
@@ -36,6 +42,7 @@ public class BuildQuoteHandlerTest extends BuildFileIntegrationTestCase {
     assertFileContents(file, "''");
   }
 
+  @Test
   public void testClosingTripleQuoteInserted() {
     BuildFile file = createBuildFile("BUILD", "");
 
@@ -45,6 +52,7 @@ public class BuildQuoteHandlerTest extends BuildFileIntegrationTestCase {
     assertFileContents(file, "\"\"\"\"\"\"");
   }
 
+  @Test
   public void testClosingTripleSingleQuoteInserted() {
     BuildFile file = createBuildFile("BUILD", "");
 
@@ -54,6 +62,7 @@ public class BuildQuoteHandlerTest extends BuildFileIntegrationTestCase {
     assertFileContents(file, "''''''");
   }
 
+  @Test
   public void testOnlyCaretMovedWhenCompletingExistingClosingQuotes() {
     BuildFile file = createBuildFile("BUILD", "'text<caret>'", "laterContents");
 
@@ -64,6 +73,7 @@ public class BuildQuoteHandlerTest extends BuildFileIntegrationTestCase {
     testFixture.checkResult(Joiner.on("\n").join("'text'<caret>", "laterContents"));
   }
 
+  @Test
   public void testOnlyCaretMovedWhenCompletingExistingClosingTripleQuotes() {
     BuildFile file = createBuildFile("BUILD", "'''text<caret>'''", "laterContents");
 
@@ -82,6 +92,7 @@ public class BuildQuoteHandlerTest extends BuildFileIntegrationTestCase {
     testFixture.checkResult(Joiner.on("\n").join("'''text'''<caret>", "laterContents"));
   }
 
+  @Test
   public void testAdditionalTripleQuotesNotInsertedWhenClosingQuotes() {
     BuildFile file = createBuildFile("BUILD", "'''text''<caret>", "laterContents");
 
@@ -92,6 +103,7 @@ public class BuildQuoteHandlerTest extends BuildFileIntegrationTestCase {
     testFixture.checkResult(Joiner.on("\n").join("'''text'''<caret>", "laterContents"));
   }
 
+  @Test
   public void testAdditionalQuoteNotInsertedWhenClosingQuotes() {
     BuildFile file = createBuildFile("BUILD", "'text<caret>", "laterContents");
 

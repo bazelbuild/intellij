@@ -20,26 +20,33 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration.BlazeCommandRunConfigurationSettingsEditor;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests for {@link BlazeCommandRunConfiguration.BlazeCommandRunConfigurationSettingsEditor}. */
+@RunWith(JUnit4.class)
 public class BlazeCommandRunConfigurationSettingsEditorTest extends BlazeIntegrationTestCase {
 
   private BlazeCommandRunConfigurationType type;
   private BlazeCommandRunConfiguration configuration;
 
-  @Override
-  protected void doSetup() throws Exception {
-    super.doSetup();
+  @Before
+  public final void doSetup() throws Exception {
     // Without BlazeProjectData, the configuration editor is always disabled.
     mockBlazeProjectDataManager(getMockBlazeProjectData());
     type = BlazeCommandRunConfigurationType.getInstance();
@@ -53,18 +60,24 @@ public class BlazeCommandRunConfigurationSettingsEditorTest extends BlazeIntegra
             ImmutableList.of(workspaceRoot.directory()),
             new ExecutionRootPath("out/crosstool/bin"),
             new ExecutionRootPath("out/crosstool/gen"));
+    WorkspacePathResolver workspacePathResolver =
+        new WorkspacePathResolverImpl(workspaceRoot, fakeRoots);
+    ArtifactLocationDecoder artifactLocationDecoder =
+        new ArtifactLocationDecoderImpl(fakeRoots, workspacePathResolver);
     return new BlazeProjectData(
         0,
         new RuleMap(ImmutableMap.of()),
         fakeRoots,
         new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of()),
-        new WorkspacePathResolverImpl(workspaceRoot, fakeRoots),
+        workspacePathResolver,
+        artifactLocationDecoder,
         null,
         null,
         null,
         null);
   }
 
+  @Test
   public void testEditorApplyToAndResetFromMatches() throws ConfigurationException {
     BlazeCommandRunConfigurationSettingsEditor editor =
         new BlazeCommandRunConfigurationSettingsEditor(configuration);
@@ -81,6 +94,7 @@ public class BlazeCommandRunConfigurationSettingsEditorTest extends BlazeIntegra
     Disposer.dispose(editor);
   }
 
+  @Test
   public void testEditorApplyToAndResetFromHandlesNulls() throws ConfigurationException {
     BlazeCommandRunConfigurationSettingsEditor editor =
         new BlazeCommandRunConfigurationSettingsEditor(configuration);

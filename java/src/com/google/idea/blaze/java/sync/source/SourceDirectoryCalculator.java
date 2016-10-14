@@ -34,7 +34,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.TransientExecutor;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -85,14 +85,14 @@ public final class SourceDirectoryCalculator {
       ArtifactLocationDecoder artifactLocationDecoder,
       Collection<WorkspacePath> rootDirectories,
       Collection<SourceArtifact> sources,
-      Map<Label, ArtifactLocation> javaPackageManifests) {
+      Map<RuleKey, ArtifactLocation> javaPackageManifests) {
 
     ManifestFilePackageReader manifestFilePackageReader =
         Scope.push(
             context,
             (childContext) -> {
               childContext.push(new TimingScope("ReadPackageManifests"));
-              Map<Label, Map<String, String>> manifestMap =
+              Map<RuleKey, Map<ArtifactLocation, String>> manifestMap =
                   PackageManifestReader.getInstance()
                       .readPackageManifestFiles(
                           project,
@@ -125,8 +125,9 @@ public final class SourceDirectoryCalculator {
             ImmutableList<BlazeSourceDirectory> sourceDirectories =
                 calculateSourceDirectoriesForContentRoot(
                     context,
-                    sourceTestConfig,
                     workspaceRoot,
+                    artifactLocationDecoder,
+                    sourceTestConfig,
                     workspacePath,
                     sourcesUnderDirectoryRoot.get(workspacePath),
                     javaPackageReaders);
@@ -168,13 +169,13 @@ public final class SourceDirectoryCalculator {
       if (foundWorkspacePath != null) {
         result.put(foundWorkspacePath, sourceArtifact);
       } else if (sourceArtifact.artifactLocation.isSource()) {
-        File sourceFile = sourceArtifact.artifactLocation.getFile();
+        ArtifactLocation sourceFile = sourceArtifact.artifactLocation;
         String message =
             String.format(
                 "Did not add %s. You're probably using a java file from outside the workspace"
                     + " that has been exported using export_files. Don't do that.",
                 sourceFile);
-        IssueOutput.warn(message).inFile(sourceFile).submit(context);
+        IssueOutput.warn(message).submit(context);
       }
     }
     return result;
@@ -193,8 +194,9 @@ public final class SourceDirectoryCalculator {
   /** Calculates all source directories for a single content root. */
   private ImmutableList<BlazeSourceDirectory> calculateSourceDirectoriesForContentRoot(
       BlazeContext context,
-      SourceTestConfig sourceTestConfig,
       WorkspaceRoot workspaceRoot,
+      ArtifactLocationDecoder artifactLocationDecoder,
+      SourceTestConfig sourceTestConfig,
       WorkspacePath directoryRoot,
       Collection<SourceArtifact> sourceArtifacts,
       Collection<JavaPackageReader> javaPackageReaders) {
@@ -213,6 +215,7 @@ public final class SourceDirectoryCalculator {
     calculateJavaSourceDirectories(
         context,
         workspaceRoot,
+        artifactLocationDecoder,
         directoryRoot,
         sourceTestConfig,
         javaArtifacts,
@@ -227,6 +230,7 @@ public final class SourceDirectoryCalculator {
   private void calculateJavaSourceDirectories(
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      ArtifactLocationDecoder artifactLocationDecoder,
       WorkspacePath directoryRoot,
       SourceTestConfig sourceTestConfig,
       Collection<SourceArtifact> javaArtifacts,
@@ -240,7 +244,9 @@ public final class SourceDirectoryCalculator {
     for (final SourceArtifact sourceArtifact : javaArtifacts) {
       ListenableFuture<SourceRoot> future =
           executorService.submit(
-              () -> sourceRootForJavaSource(context, sourceArtifact, javaPackageReaders));
+              () ->
+                  sourceRootForJavaSource(
+                      context, artifactLocationDecoder, sourceArtifact, javaPackageReaders));
       sourceRootFutures.add(future);
     }
     try {
@@ -443,23 +449,25 @@ public final class SourceDirectoryCalculator {
   }
 
   @Nullable
-  private static SourceRoot sourceRootForJavaSource(
+  private SourceRoot sourceRootForJavaSource(
       BlazeContext context,
+      ArtifactLocationDecoder artifactLocationDecoder,
       SourceArtifact sourceArtifact,
       Collection<JavaPackageReader> javaPackageReaders) {
 
-    File javaFile = sourceArtifact.artifactLocation.getFile();
-
     String declaredPackage = null;
     for (JavaPackageReader reader : javaPackageReaders) {
-      declaredPackage = reader.getDeclaredPackageOfJavaFile(context, sourceArtifact);
+      declaredPackage =
+          reader.getDeclaredPackageOfJavaFile(context, artifactLocationDecoder, sourceArtifact);
       if (declaredPackage != null) {
         break;
       }
     }
     if (declaredPackage == null) {
-      IssueOutput.warn("Failed to inspect the package name of java source file: " + javaFile)
-          .inFile(javaFile)
+      IssueOutput.warn(
+              "Failed to inspect the package name of java source file: "
+                  + sourceArtifact.artifactLocation)
+          .inFile(artifactLocationDecoder.decode(sourceArtifact.artifactLocation))
           .submit(context);
       return null;
     }

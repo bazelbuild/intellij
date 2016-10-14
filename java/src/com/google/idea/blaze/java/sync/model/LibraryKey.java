@@ -15,34 +15,33 @@
  */
 package com.google.idea.blaze.java.sync.model;
 
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.io.Serializable;
 import javax.annotation.concurrent.Immutable;
-import org.jetbrains.annotations.NotNull;
 
 /** Uniquely identifies a library as imported into IntellJ. */
 @Immutable
 public final class LibraryKey implements Serializable {
   public static final long serialVersionUID = 1L;
 
-  @NotNull private final String name;
+  private final String name;
 
-  @NotNull
-  public static LibraryKey fromJarFile(@NotNull File jarFile) {
-    int parentHash = jarFile.getParent().hashCode();
+  public static LibraryKey fromJarFile(ArtifactLocation artifactLocation) {
+    File jarFile = new File(artifactLocation.getRelativePath());
+    String parent = jarFile.getParent();
+    int parentHash = parent != null ? parent.hashCode() : jarFile.hashCode();
     String name = FileUtil.getNameWithoutExtension(jarFile) + "_" + Integer.toHexString(parentHash);
     return new LibraryKey(name);
   }
 
-  @NotNull
   public static LibraryKey forResourceLibrary() {
     return new LibraryKey("external_resources_library");
   }
 
-  @NotNull
-  public static LibraryKey fromIntelliJLibrary(@NotNull Library library) {
+  public static LibraryKey fromIntelliJLibrary(Library library) {
     String name = library.getName();
     if (name == null) {
       throw new IllegalArgumentException("Null library name");
@@ -50,12 +49,11 @@ public final class LibraryKey implements Serializable {
     return fromIntelliJLibraryName(name);
   }
 
-  @NotNull
-  public static LibraryKey fromIntelliJLibraryName(@NotNull String name) {
+  public static LibraryKey fromIntelliJLibraryName(String name) {
     return new LibraryKey(name);
   }
 
-  LibraryKey(@NotNull String name) {
+  LibraryKey(String name) {
     this.name = name;
   }
 

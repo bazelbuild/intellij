@@ -18,10 +18,15 @@ package com.google.idea.blaze.base.lang.buildfile.editor;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.intellij.openapi.editor.Editor;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Test that comments are continued when creating a newline mid comment. */
+@RunWith(JUnit4.class)
 public class EnterInLineCommentTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testInternalNewlineCommented() {
     BuildFile file = createBuildFile("BUILD", "# first line comment", "# second line comment");
 
@@ -32,6 +37,7 @@ public class EnterInLineCommentTest extends BuildFileIntegrationTestCase {
     assertCaretPosition(editor, 2, 2);
   }
 
+  @Test
   public void testNewlineAtEndOfComment() {
     BuildFile file = createBuildFile("BUILD", "# first line comment", "# second line comment");
 

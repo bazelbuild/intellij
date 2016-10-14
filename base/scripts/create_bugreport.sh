@@ -46,7 +46,7 @@ output_name=intellij-bug-report-$USER
 tar_dir=$tmp_dir/$output_name
 output_file=${output_name}.tar.gz
 
-mkdir -p tar_dir
+mkdir -p "$tar_dir"
 [ $? -eq 0 ] || { exit 1; }
 
 # Attach process information

@@ -49,6 +49,29 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
   }
 
   @Test
+  public void testPredicateMatchingNameAndPath() throws Exception {
+    File source = new File("java/com/foo/FooTest.java");
+    RuleIdeInfo rule =
+        RuleIdeInfo.builder().setLabel("//foo:foo/FooTest").setKind("java_test").build();
+    assertThat(new RuleNameHeuristic().matchesSource(rule, source, null)).isTrue();
+  }
+
+  @Test
+  public void testPredicateNotMatchingForPartialOverlap() throws Exception {
+    File source = new File("java/com/foo/BarFooTest.java");
+    RuleIdeInfo rule = RuleIdeInfo.builder().setLabel("//foo:FooTest").setKind("java_test").build();
+    assertThat(new RuleNameHeuristic().matchesSource(rule, source, null)).isFalse();
+  }
+
+  @Test
+  public void testPredicateNotMatchingIncorrectPath() throws Exception {
+    File source = new File("java/com/foo/FooTest.java");
+    RuleIdeInfo rule =
+        RuleIdeInfo.builder().setLabel("//foo:bar/FooTest").setKind("java_test").build();
+    assertThat(new RuleNameHeuristic().matchesSource(rule, source, null)).isFalse();
+  }
+
+  @Test
   public void testPredicateDifferentName() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
     RuleIdeInfo rule = RuleIdeInfo.builder().setLabel("//foo:ForTest").setKind("java_test").build();

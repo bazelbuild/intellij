@@ -19,9 +19,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.actions.BlazeAction;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.ProjectViewEdit;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -78,18 +78,18 @@ class AddLibraryRuleDirectoryToProjectViewAction extends BlazeAction {
 
   @Nullable
   static WorkspacePath getDirectoryToAddForLibrary(Project project, Library library) {
-    BlazeJarLibrary blazeLibrary =
-        LibraryActionHelper.findLibraryFromIntellijLibrary(project, library);
-    if (blazeLibrary == null) {
-      return null;
-    }
-    Label originatingRule = blazeLibrary.originatingRule;
-    if (originatingRule == null) {
-      return null;
-    }
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
+      return null;
+    }
+    BlazeJarLibrary blazeLibrary =
+        LibraryActionHelper.findLibraryFromIntellijLibrary(project, blazeProjectData, library);
+    if (blazeLibrary == null) {
+      return null;
+    }
+    RuleKey originatingRule = blazeLibrary.originatingRule;
+    if (originatingRule == null) {
       return null;
     }
     RuleIdeInfo rule = blazeProjectData.ruleMap.get(originatingRule);

@@ -16,7 +16,6 @@
 package com.google.idea.blaze.java.libraries;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.model.BlazeLibrary;
@@ -37,14 +36,10 @@ import org.jetbrains.annotations.Nullable;
 
 class LibraryActionHelper {
 
-  static BlazeJarLibrary findLibraryFromIntellijLibrary(Project project, Library library) {
+  static BlazeJarLibrary findLibraryFromIntellijLibrary(
+      Project project, BlazeProjectData blazeProjectData, Library library) {
     LibraryKey libraryKey = LibraryKey.fromIntelliJLibrary(library);
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (projectData == null) {
-      return null;
-    }
-    BlazeJavaSyncData syncData = projectData.syncState.get(BlazeJavaSyncData.class);
+    BlazeJavaSyncData syncData = blazeProjectData.syncState.get(BlazeJavaSyncData.class);
     if (syncData == null) {
       Messages.showErrorDialog(project, "Project isn't synced. Please resync project.", "Error");
       return null;

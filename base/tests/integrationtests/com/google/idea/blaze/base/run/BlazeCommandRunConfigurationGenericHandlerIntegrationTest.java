@@ -21,24 +21,32 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration.BlazeCommandRunConfigurationSettingsEditor;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandler;
-import com.google.idea.blaze.base.run.confighandler.BlazeUnknownRunConfigurationHandler;
+import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
 import org.jdom.Element;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
- * Integration tests for {@link BlazeCommandRunConfiguration} with {@link
- * BlazeCommandGenericRunConfigurationHandler} and {@link BlazeUnknownRunConfigurationHandler}.
+ * Integration tests for {@link BlazeCommandRunConfiguration} with a {@link
+ * BlazeCommandGenericRunConfigurationHandler}.
  */
+@RunWith(JUnit4.class)
 public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
     extends BlazeIntegrationTestCase {
   private static final BlazeCommandName COMMAND = BlazeCommandName.fromString("command");
@@ -46,9 +54,8 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
   private BlazeCommandRunConfigurationType type;
   private BlazeCommandRunConfiguration configuration;
 
-  @Override
-  protected void doSetup() throws Exception {
-    super.doSetup();
+  @Before
+  public final void doSetup() throws Exception {
     // Without BlazeProjectData, the configuration editor is always disabled.
     mockBlazeProjectDataManager(getMockBlazeProjectData());
     type = BlazeCommandRunConfigurationType.getInstance();
@@ -62,44 +69,54 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
             ImmutableList.of(workspaceRoot.directory()),
             new ExecutionRootPath("out/crosstool/bin"),
             new ExecutionRootPath("out/crosstool/gen"));
+    WorkspacePathResolver workspacePathResolver =
+        new WorkspacePathResolverImpl(workspaceRoot, fakeRoots);
+    ArtifactLocationDecoder artifactLocationDecoder =
+        new ArtifactLocationDecoderImpl(fakeRoots, workspacePathResolver);
     return new BlazeProjectData(
         0,
         new RuleMap(ImmutableMap.of()),
         fakeRoots,
         new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of()),
-        new WorkspacePathResolverImpl(workspaceRoot, fakeRoots),
+        workspacePathResolver,
+        artifactLocationDecoder,
         null,
         null,
         null,
         null);
   }
 
-  public void testNewConfigurationHasUnknownHandler() {
-    assertThat(configuration.getHandler()).isInstanceOf(BlazeUnknownRunConfigurationHandler.class);
+  @Test
+  public void testNewConfigurationHasGenericHandler() {
+    assertThat(configuration.getHandler())
+        .isInstanceOf(BlazeCommandGenericRunConfigurationHandler.class);
   }
 
+  @Test
   public void testSetTargetNullMakesGenericHandler() {
     configuration.setTarget(null);
     assertThat(configuration.getHandler())
         .isInstanceOf(BlazeCommandGenericRunConfigurationHandler.class);
   }
 
+  @Test
   public void testTargetExpressionMakesGenericHandler() {
     configuration.setTarget(TargetExpression.fromString("//..."));
     assertThat(configuration.getHandler())
         .isInstanceOf(BlazeCommandGenericRunConfigurationHandler.class);
   }
 
+  @Test
   public void testReadAndWriteMatches() throws Exception {
     TargetExpression targetExpression = TargetExpression.fromString("//...");
     configuration.setTarget(targetExpression);
 
-    BlazeCommandGenericRunConfigurationHandler handler =
-        (BlazeCommandGenericRunConfigurationHandler) configuration.getHandler();
-    handler.setCommand(COMMAND);
-    handler.setBlazeFlags(ImmutableList.of("--flag1", "--flag2"));
-    handler.setExeFlags(ImmutableList.of("--exeFlag1"));
-    handler.setBlazeBinary("/usr/bin/blaze");
+    BlazeCommandRunConfigurationCommonState state =
+        (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
+    state.setCommand(COMMAND);
+    state.setBlazeFlags(ImmutableList.of("--flag1", "--flag2"));
+    state.setExeFlags(ImmutableList.of("--exeFlag1"));
+    state.setBlazeBinary("/usr/bin/blaze");
 
     Element element = new Element("test");
     configuration.writeExternal(element);
@@ -111,14 +128,15 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
     assertThat(readConfiguration.getHandler())
         .isInstanceOf(BlazeCommandGenericRunConfigurationHandler.class);
 
-    BlazeCommandGenericRunConfigurationHandler readHandler =
-        (BlazeCommandGenericRunConfigurationHandler) readConfiguration.getHandler();
-    assertThat(readHandler.getCommand()).isEqualTo(COMMAND);
-    assertThat(readHandler.getAllBlazeFlags()).containsExactly("--flag1", "--flag2").inOrder();
-    assertThat(readHandler.getAllExeFlags()).containsExactly("--exeFlag1");
-    assertThat(readHandler.getBlazeBinary()).isEqualTo("/usr/bin/blaze");
+    BlazeCommandRunConfigurationCommonState readState =
+        (BlazeCommandRunConfigurationCommonState) readConfiguration.getHandler().getState();
+    assertThat(readState.getCommand()).isEqualTo(COMMAND);
+    assertThat(readState.getBlazeFlags()).containsExactly("--flag1", "--flag2").inOrder();
+    assertThat(readState.getExeFlags()).containsExactly("--exeFlag1");
+    assertThat(readState.getBlazeBinary()).isEqualTo("/usr/bin/blaze");
   }
 
+  @Test
   public void testReadAndWriteHandlesNulls() throws Exception {
     Element element = new Element("test");
     configuration.writeExternal(element);
@@ -128,59 +146,22 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
 
     assertThat(readConfiguration.getTarget()).isEqualTo(configuration.getTarget());
     assertThat(readConfiguration.getHandler())
-        .isInstanceOf(BlazeUnknownRunConfigurationHandler.class);
-  }
-
-  public void testEditorWithUnknownHandlerDoesNotApplyTo() throws ConfigurationException {
-    assertThat(configuration.getTarget()).isNull();
-    assertThat(configuration.getHandler()).isInstanceOf(BlazeUnknownRunConfigurationHandler.class);
-
-    BlazeCommandRunConfigurationSettingsEditor editor =
-        new BlazeCommandRunConfigurationSettingsEditor(configuration);
-    // Because the configuration's handler is BlazeUnknownRunConfigurationHandler,
-    // resetting the editor to it will leave it in the disabled state.
-    editor.resetFrom(configuration);
-
-    BlazeCommandRunConfiguration readConfiguration =
-        type.getFactory().createTemplateConfiguration(getProject());
-    TargetExpression targetExpression = TargetExpression.fromString("//...");
-    readConfiguration.setTarget(targetExpression);
-
-    BlazeCommandGenericRunConfigurationHandler readHandler =
-        (BlazeCommandGenericRunConfigurationHandler) readConfiguration.getHandler();
-    readHandler.setCommand(COMMAND);
-    readHandler.setBlazeFlags(ImmutableList.of("--flag1", "--flag2"));
-    readHandler.setExeFlags(ImmutableList.of("--exeFlag1"));
-    readHandler.setBlazeBinary("/usr/bin/blaze");
-
-    // The editor is disabled, making applyEditorTo a no-op.
-    editor.applyEditorTo(readConfiguration);
-
-    assertThat(readConfiguration.getTarget()).isEqualTo(targetExpression);
-    assertThat(readConfiguration.getHandler())
         .isInstanceOf(BlazeCommandGenericRunConfigurationHandler.class);
-
-    readHandler = (BlazeCommandGenericRunConfigurationHandler) readConfiguration.getHandler();
-    assertThat(readHandler.getCommand()).isEqualTo(COMMAND);
-    assertThat(readHandler.getAllBlazeFlags()).containsExactly("--flag1", "--flag2").inOrder();
-    assertThat(readHandler.getAllExeFlags()).containsExactly("--exeFlag1");
-    assertThat(readHandler.getBlazeBinary()).isEqualTo("/usr/bin/blaze");
-
-    Disposer.dispose(editor);
   }
 
+  @Test
   public void testEditorApplyToAndResetFromMatches() throws ConfigurationException {
     BlazeCommandRunConfigurationSettingsEditor editor =
         new BlazeCommandRunConfigurationSettingsEditor(configuration);
     TargetExpression targetExpression = TargetExpression.fromString("//...");
     configuration.setTarget(targetExpression);
 
-    BlazeCommandGenericRunConfigurationHandler handler =
-        (BlazeCommandGenericRunConfigurationHandler) configuration.getHandler();
-    handler.setCommand(COMMAND);
-    handler.setBlazeFlags(ImmutableList.of("--flag1", "--flag2"));
-    handler.setExeFlags(ImmutableList.of("--exeFlag1"));
-    handler.setBlazeBinary("/usr/bin/blaze");
+    BlazeCommandRunConfigurationCommonState state =
+        (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
+    state.setCommand(COMMAND);
+    state.setBlazeFlags(ImmutableList.of("--flag1", "--flag2"));
+    state.setExeFlags(ImmutableList.of("--exeFlag1"));
+    state.setBlazeBinary("/usr/bin/blaze");
 
     editor.resetFrom(configuration);
     BlazeCommandRunConfiguration readConfiguration =
@@ -191,16 +172,17 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
     assertThat(readConfiguration.getHandler())
         .isInstanceOf(BlazeCommandGenericRunConfigurationHandler.class);
 
-    BlazeCommandGenericRunConfigurationHandler readHandler =
-        (BlazeCommandGenericRunConfigurationHandler) readConfiguration.getHandler();
-    assertThat(readHandler.getCommand()).isEqualTo(handler.getCommand());
-    assertThat(readHandler.getAllBlazeFlags()).isEqualTo(handler.getAllBlazeFlags());
-    assertThat(readHandler.getAllExeFlags()).isEqualTo(handler.getAllExeFlags());
-    assertThat(readHandler.getBlazeBinary()).isEqualTo(handler.getBlazeBinary());
+    BlazeCommandRunConfigurationCommonState readState =
+        (BlazeCommandRunConfigurationCommonState) readConfiguration.getHandler().getState();
+    assertThat(readState.getCommand()).isEqualTo(state.getCommand());
+    assertThat(readState.getBlazeFlags()).isEqualTo(state.getBlazeFlags());
+    assertThat(readState.getExeFlags()).isEqualTo(state.getExeFlags());
+    assertThat(readState.getBlazeBinary()).isEqualTo(state.getBlazeBinary());
 
     Disposer.dispose(editor);
   }
 
+  @Test
   public void testEditorApplyToAndResetFromHandlesNulls() throws ConfigurationException {
     BlazeCommandRunConfigurationSettingsEditor editor =
         new BlazeCommandRunConfigurationSettingsEditor(configuration);
@@ -210,8 +192,8 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
     assertThat(configuration.getTarget()).isNull();
     assertThat(configuration.getHandler())
         .isInstanceOf(BlazeCommandGenericRunConfigurationHandler.class);
-    BlazeCommandGenericRunConfigurationHandler handler =
-        (BlazeCommandGenericRunConfigurationHandler) configuration.getHandler();
+    BlazeCommandRunConfigurationCommonState state =
+        (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
 
     editor.resetFrom(configuration);
 
@@ -220,12 +202,12 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
     TargetExpression targetExpression = TargetExpression.fromString("//...");
     readConfiguration.setTarget(targetExpression);
 
-    BlazeCommandGenericRunConfigurationHandler readHandler =
-        (BlazeCommandGenericRunConfigurationHandler) readConfiguration.getHandler();
-    readHandler.setCommand(COMMAND);
-    readHandler.setBlazeFlags(ImmutableList.of("--flag1", "--flag2"));
-    readHandler.setExeFlags(ImmutableList.of("--exeFlag1"));
-    readHandler.setBlazeBinary("/usr/bin/blaze");
+    BlazeCommandRunConfigurationCommonState readState =
+        (BlazeCommandRunConfigurationCommonState) readConfiguration.getHandler().getState();
+    readState.setCommand(COMMAND);
+    readState.setBlazeFlags(ImmutableList.of("--flag1", "--flag2"));
+    readState.setExeFlags(ImmutableList.of("--exeFlag1"));
+    readState.setBlazeBinary("/usr/bin/blaze");
 
     editor.applyEditorTo(readConfiguration);
 
@@ -233,11 +215,11 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
     assertThat(configuration.getHandler())
         .isInstanceOf(BlazeCommandGenericRunConfigurationHandler.class);
 
-    readHandler = (BlazeCommandGenericRunConfigurationHandler) readConfiguration.getHandler();
-    assertThat(readHandler.getCommand()).isEqualTo(handler.getCommand());
-    assertThat(readHandler.getAllBlazeFlags()).isEqualTo(handler.getAllBlazeFlags());
-    assertThat(readHandler.getAllExeFlags()).isEqualTo(handler.getAllExeFlags());
-    assertThat(readHandler.getBlazeBinary()).isEqualTo(handler.getBlazeBinary());
+    readState = (BlazeCommandRunConfigurationCommonState) readConfiguration.getHandler().getState();
+    assertThat(readState.getCommand()).isEqualTo(state.getCommand());
+    assertThat(readState.getBlazeFlags()).isEqualTo(state.getBlazeFlags());
+    assertThat(readState.getExeFlags()).isEqualTo(state.getExeFlags());
+    assertThat(readState.getBlazeBinary()).isEqualTo(state.getBlazeBinary());
 
     Disposer.dispose(editor);
   }

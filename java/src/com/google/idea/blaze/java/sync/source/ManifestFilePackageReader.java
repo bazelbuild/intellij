@@ -15,25 +15,31 @@
  */
 package com.google.idea.blaze.java.sync.source;
 
-import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 class ManifestFilePackageReader extends JavaPackageReader {
 
-  private final Map<Label, Map<String, String>> manifestMap;
+  private final Map<RuleKey, Map<ArtifactLocation, String>> manifestMap;
 
-  public ManifestFilePackageReader(Map<Label, Map<String, String>> manifestMap) {
+  public ManifestFilePackageReader(Map<RuleKey, Map<ArtifactLocation, String>> manifestMap) {
     this.manifestMap = manifestMap;
   }
 
   @Nullable
   @Override
-  String getDeclaredPackageOfJavaFile(BlazeContext context, SourceArtifact sourceArtifact) {
-    Map<String, String> manifestMapForRule = manifestMap.get(sourceArtifact.originatingRule);
+  String getDeclaredPackageOfJavaFile(
+      BlazeContext context,
+      ArtifactLocationDecoder artifactLocationDecoder,
+      SourceArtifact sourceArtifact) {
+    Map<ArtifactLocation, String> manifestMapForRule =
+        manifestMap.get(sourceArtifact.originatingRule);
     if (manifestMapForRule != null) {
-      return manifestMapForRule.get(sourceArtifact.artifactLocation.getFile().getPath());
+      return manifestMapForRule.get(sourceArtifact.artifactLocation);
     }
     return null;
   }

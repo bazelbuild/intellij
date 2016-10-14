@@ -16,7 +16,7 @@
 package com.google.idea.blaze.android.sync.importer.aggregators;
 
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.model.RuleMap;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 
 /** Transitive aggregator for RuleIdeInfo. */

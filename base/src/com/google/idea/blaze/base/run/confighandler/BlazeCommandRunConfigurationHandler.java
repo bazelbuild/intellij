@@ -16,25 +16,29 @@
 package com.google.idea.blaze.base.run.confighandler;
 
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
-import org.jdom.Element;
 
 /**
  * Supports the run configuration flow for {@link BlazeCommandRunConfiguration}s.
  *
- * <p>Provides rule-specific configuration state, editor, name, RunProfileState, and
- * before-run-tasks.
+ * <p>Provides rule-specific configuration state, validation, presentation, and runner.
  */
 public interface BlazeCommandRunConfigurationHandler {
+  RunConfigurationState getState();
+
+
+
+  /** @return A {@link BlazeCommandRunConfigurationRunner} for running the configuration. */
+  @Nullable
+  BlazeCommandRunConfigurationRunner createRunner(
+      Executor executor, ExecutionEnvironment environment) throws ExecutionException;
 
   /**
    * Checks whether the handler settings are valid.
@@ -43,50 +47,12 @@ public interface BlazeCommandRunConfigurationHandler {
    */
   void checkConfiguration() throws RuntimeConfigurationException;
 
-  /** Loads this handler's state from the external data. */
-  void readExternal(Element element) throws InvalidDataException;
-
-  /** Writes this handler's state to the element. */
-  @SuppressWarnings("ThrowsUncheckedException")
-  void writeExternal(Element element) throws WriteExternalException;
-
-  /**
-   * Creates a clone of this handler for the specified configuration.
-   *
-   * @return A new BlazeCommandRunConfigurationHandler with the same state as this one, except its
-   *     configuration is the specified {@code configuration}.
-   */
-  BlazeCommandRunConfigurationHandler cloneFor(BlazeCommandRunConfiguration configuration);
-
-  /** @return the RunProfileState corresponding to the given environment. */
-  RunProfileState getState(Executor executor, ExecutionEnvironment environment)
-      throws ExecutionException;
-
-  /**
-   * Executes any required before run tasks.
-   *
-   * @return true if no task exists or the task was successfully completed. Otherwise returns false
-   *     if the task either failed or was cancelled.
-   */
-  boolean executeBeforeRunTask(ExecutionEnvironment environment);
-
   /**
    * @return The default name of the run configuration based on its settings and this handler's
    *     state.
    */
   @Nullable
-  String suggestedName();
-
-  /**
-   * Allows overriding the default behavior of {@link
-   * com.intellij.execution.configurations.LocatableConfiguration#isGeneratedName()}. Return {@code
-   * hasGeneratedFlag} to keep the default behavior.
-   *
-   * @param hasGeneratedFlag Whether the configuration reports its name is generated.
-   * @return Whether the run configuration's name should be treated as generated (allowing
-   *     regenerating it when settings change).
-   */
-  boolean isGeneratedName(boolean hasGeneratedFlag);
+  String suggestedName(BlazeCommandRunConfiguration configuration);
 
   /**
    * @return The name of the Blaze command associated with this handler. May be null if no command
@@ -105,7 +71,4 @@ public interface BlazeCommandRunConfigurationHandler {
    */
   @Nullable
   Icon getExecutorIcon(RunConfiguration configuration, Executor executor);
-
-  /** @return A {@link BlazeCommandRunConfigurationHandlerEditor} for this handler. */
-  BlazeCommandRunConfigurationHandlerEditor getHandlerEditor();
 }

@@ -17,22 +17,23 @@ package com.google.idea.blaze.android.sync.model;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.model.BlazeLibrary;
 import com.google.idea.blaze.java.sync.model.LibraryKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import java.io.File;
 import javax.annotation.concurrent.Immutable;
 
 /** A library that contains sources. */
 @Immutable
 public final class BlazeResourceLibrary extends BlazeLibrary {
-  private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 2L;
 
-  public final ImmutableList<File> sources;
+  public final ImmutableList<ArtifactLocation> sources;
 
-  public BlazeResourceLibrary(ImmutableList<File> sources) {
+  public BlazeResourceLibrary(ImmutableList<ArtifactLocation> sources) {
     super(LibraryKey.forResourceLibrary());
     this.sources = sources;
   }
@@ -57,9 +58,12 @@ public final class BlazeResourceLibrary extends BlazeLibrary {
   }
 
   @Override
-  public void modifyLibraryModel(Project project, Library.ModifiableModel libraryModel) {
-    for (File file : sources) {
-      libraryModel.addRoot(pathToUrl(file), OrderRootType.SOURCES);
+  public void modifyLibraryModel(
+      Project project,
+      ArtifactLocationDecoder artifactLocationDecoder,
+      Library.ModifiableModel libraryModel) {
+    for (ArtifactLocation file : sources) {
+      libraryModel.addRoot(pathToUrl(artifactLocationDecoder.decode(file)), OrderRootType.SOURCES);
     }
   }
 }

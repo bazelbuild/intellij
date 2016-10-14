@@ -16,58 +16,61 @@
 package com.google.idea.blaze.java.lang.build;
 
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
-import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests for the safe delete action which aren't covered by existing tests. */
+@RunWith(JUnit4.class)
 public class SafeDeleteTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testIndirectGlobReferencesNotIncluded() {
     PsiFile javaFile =
         createPsiFile("com/google/Test.java", "package com.google;", "public class Test {}");
 
     PsiClass javaClass = PsiUtils.findFirstChildOfClassRecursive(javaFile, PsiClass.class);
 
-    BuildFile buildFile =
-        createBuildFile(
-            "com/google/BUILD",
-            "java_library(",
-            "    name = 'lib'",
-            "    srcs = glob(['*.java'])",
-            ")");
+    createBuildFile(
+        "com/google/BUILD",
+        "java_library(",
+        "    name = 'lib'",
+        "    srcs = glob(['*.java'])",
+        ")");
 
     try {
       SafeDeleteHandler.invoke(getProject(), new PsiElement[] {javaClass}, true);
     } catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      fail("Glob reference was incorrectly included");
-      return;
+      Assert.fail("Glob reference was incorrectly included");
     }
   }
 
+  @Test
   public void testDirectGlobReferencesIncluded() {
     PsiFile javaFile =
         createPsiFile("com/google/Test.java", "package com.google;", "public class Test {}");
 
     PsiClass javaClass = PsiUtils.findFirstChildOfClassRecursive(javaFile, PsiClass.class);
 
-    BuildFile buildFile =
-        createBuildFile(
-            "com/google/BUILD",
-            "java_library(",
-            "    name = 'lib'",
-            "    srcs = glob(['Test.java'])",
-            ")");
+    createBuildFile(
+        "com/google/BUILD",
+        "java_library(",
+        "    name = 'lib'",
+        "    srcs = glob(['Test.java'])",
+        ")");
 
     try {
       SafeDeleteHandler.invoke(getProject(), new PsiElement[] {javaClass}, true);
     } catch (BaseRefactoringProcessor.ConflictsInTestsException expected) {
       return;
     }
-    fail("Expected an unsafe usage to be found");
+    Assert.fail("Expected an unsafe usage to be found");
   }
 }

@@ -19,8 +19,12 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests auto-complete of skylark bzl files in 'load' statements. */
+@RunWith(JUnit4.class)
 public class SkylarkExtensionCompletionTest extends BuildFileIntegrationTestCase {
 
   private VirtualFile createAndSetCaret(String filePath, String... fileContents) {
@@ -29,6 +33,7 @@ public class SkylarkExtensionCompletionTest extends BuildFileIntegrationTestCase
     return file;
   }
 
+  @Test
   public void testSimpleCase() {
     createFile("skylark.bzl");
     VirtualFile file = createAndSetCaret("BUILD", "load(':<caret>'");
@@ -37,13 +42,15 @@ public class SkylarkExtensionCompletionTest extends BuildFileIntegrationTestCase
     assertFileContents(file, "load(':skylark.bzl'");
   }
 
+  @Test
   public void testSelfNotInResults() {
     createFile("BUILD");
-    VirtualFile file = createAndSetCaret("self.bzl", "load(':<caret>'");
+    createAndSetCaret("self.bzl", "load(':<caret>'");
 
     assertThat(testFixture.completeBasic()).isEmpty();
   }
 
+  @Test
   public void testSelfNotInResults2() {
     createFile("skylark.bzl");
     createFile("BUILD");
@@ -53,6 +60,7 @@ public class SkylarkExtensionCompletionTest extends BuildFileIntegrationTestCase
     assertFileContents(file, "load(':skylark.bzl'");
   }
 
+  @Test
   public void testNoRulesInResults() {
     createFile("java/com/google/foo/skylark.bzl");
     createFile("java/com/google/foo/BUILD", "java_library(name = 'foo')");
@@ -69,15 +77,16 @@ public class SkylarkExtensionCompletionTest extends BuildFileIntegrationTestCase
     assertFileContents(file, "'//java/com/google/foo:foo'");
   }
 
+  @Test
   public void testNonSkylarkFilesNotInResults() {
     createFile("java/com/google/foo/text.txt");
 
-    VirtualFile file =
-        createAndSetCaret("java/com/google/bar/BUILD", "load('//java/com/google/foo:<caret>'");
+    createAndSetCaret("java/com/google/bar/BUILD", "load('//java/com/google/foo:<caret>'");
 
     assertThat(testFixture.completeBasic()).isEmpty();
   }
 
+  @Test
   public void testLabelStartsWithColon() {
     createFile("java/com/google/skylark.bzl");
     VirtualFile file = createAndSetCaret("java/com/google/BUILD", "load(':<caret>'");
@@ -86,6 +95,7 @@ public class SkylarkExtensionCompletionTest extends BuildFileIntegrationTestCase
     assertFileContents(file, "load(':skylark.bzl'");
   }
 
+  @Test
   public void testLabelStartsWithSlashes() {
     createFile("java/com/google/skylark.bzl");
     VirtualFile file =
@@ -95,6 +105,7 @@ public class SkylarkExtensionCompletionTest extends BuildFileIntegrationTestCase
     assertFileContents(file, "load('//java/com/google:skylark.bzl'");
   }
 
+  @Test
   public void testLabelStartsWithSlashesWithoutColon() {
     createFile("java/com/google/skylark.bzl");
     VirtualFile file =
@@ -104,6 +115,7 @@ public class SkylarkExtensionCompletionTest extends BuildFileIntegrationTestCase
     assertFileContents(file, "load('//java/com/google:skylark.bzl'");
   }
 
+  @Test
   public void testDirectoryCompletionInLoadStatement() {
     createFile("java/com/google/skylark.bzl");
     VirtualFile file = createAndSetCaret("java/com/google/BUILD", "load('//<caret>'");
@@ -115,11 +127,11 @@ public class SkylarkExtensionCompletionTest extends BuildFileIntegrationTestCase
     assertFileContents(file, "load('//java/com/google:skylark.bzl'");
   }
 
+  @Test
   public void testMultipleFiles() {
     createFile("java/com/google/skylark.bzl");
     createFile("java/com/google/other.bzl");
-    VirtualFile file =
-        createAndSetCaret("java/com/google/BUILD", "load('//java/com/google:<caret>'");
+    createAndSetCaret("java/com/google/BUILD", "load('//java/com/google:<caret>'");
 
     String[] strings = getCompletionItemsAsStrings();
     assertThat(strings).hasLength(2);
@@ -130,6 +142,7 @@ public class SkylarkExtensionCompletionTest extends BuildFileIntegrationTestCase
 
   // relative paths in skylark extensions which lie in subdirectories
   // are relative to the parent blaze package directory
+  @Test
   public void testRelativePathInSubdirectory() {
     createFile("java/com/google/BUILD");
     createFile("java/com/google/nonPackageSubdirectory/skylark.bzl", "def function(): return");

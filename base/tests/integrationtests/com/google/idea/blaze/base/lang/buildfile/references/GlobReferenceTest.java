@@ -28,10 +28,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests that glob references are resolved correctly. */
+@RunWith(JUnit4.class)
 public class GlobReferenceTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testSimpleGlobReferencingSingleFile() {
     PsiFile ref = createPsiFile("java/com/google/Test.java");
     BuildFile file = createBuildFile("java/com/google/BUILD", "glob(['**/*.java'])");
@@ -42,6 +47,7 @@ public class GlobReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(references).containsExactly(ref);
   }
 
+  @Test
   public void testSimpleGlobReferencingSingleFile2() {
     PsiFile ref = createPsiFile("java/com/google/Test.java");
     BuildFile file = createBuildFile("java/com/google/BUILD", "glob(['*.java'])");
@@ -52,6 +58,7 @@ public class GlobReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(references).containsExactly(ref);
   }
 
+  @Test
   public void testSimpleGlobReferencingSingleFile3() {
     PsiFile ref = createPsiFile("java/com/google/Test.java");
     BuildFile file = createBuildFile("java/com/google/BUILD", "glob(['T*t.java'])");
@@ -62,6 +69,7 @@ public class GlobReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(references).containsExactly(ref);
   }
 
+  @Test
   public void testGlobReferencingMultipleFiles() {
     PsiFile ref1 = createPsiFile("java/com/google/Test.java");
     PsiFile ref2 = createPsiFile("java/com/google/Foo.java");
@@ -73,6 +81,7 @@ public class GlobReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(references).containsExactly(ref1, ref2);
   }
 
+  @Test
   public void testFindsSubDirectories() {
     PsiFile ref1 = createPsiFile("java/com/google/test/Test.java");
     PsiFile ref2 = createPsiFile("java/com/google/Foo.java");
@@ -84,8 +93,9 @@ public class GlobReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(references).containsExactly(ref1, ref2);
   }
 
+  @Test
   public void testGlobWithExcludes() {
-    PsiFile test = createPsiFile("java/com/google/tests/Test.java");
+    createPsiFile("java/com/google/tests/Test.java");
     PsiFile foo = createPsiFile("java/com/google/Foo.java");
     BuildFile file =
         createBuildFile(
@@ -98,6 +108,7 @@ public class GlobReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(references).containsExactly(foo);
   }
 
+  @Test
   public void testIncludeDirectories() {
     createDirectory("java/com/google/tests");
     PsiFile test = createPsiFile("java/com/google/tests/Test.java");
@@ -113,6 +124,7 @@ public class GlobReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(references).containsExactly(foo, test, test.getParent());
   }
 
+  @Test
   public void testExcludeDirectories() {
     createDirectory("java/com/google/tests");
     PsiFile test = createPsiFile("java/com/google/tests/Test.java");
@@ -127,9 +139,10 @@ public class GlobReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(references).containsExactly(foo, test);
   }
 
+  @Test
   public void testFilesInSubpackagesExcluded() {
     BuildFile pkg = createBuildFile("java/com/google/BUILD", "glob(['**/*.java'])");
-    BuildFile subPkg = createBuildFile("java/com/google/other/BUILD");
+    createBuildFile("java/com/google/other/BUILD");
     createFile("java/com/google/other/Other.java");
 
     GlobExpression glob = PsiUtils.findFirstChildOfClassRecursive(pkg, GlobExpression.class);

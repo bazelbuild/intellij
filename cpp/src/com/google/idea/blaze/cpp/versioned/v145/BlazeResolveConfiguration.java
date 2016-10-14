@@ -18,8 +18,8 @@ package com.google.idea.blaze.cpp;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.execution.CidrBuildTarget;
@@ -36,7 +36,7 @@ final class BlazeResolveConfiguration extends BlazeResolveConfigurationTemporary
   public BlazeResolveConfiguration(
       Project project,
       WorkspacePathResolver workspacePathResolver,
-      Label label,
+      RuleKey ruleKey,
       ImmutableCollection<ExecutionRootPath> cSystemIncludeDirs,
       ImmutableCollection<ExecutionRootPath> cppSystemIncludeDirs,
       ImmutableCollection<ExecutionRootPath> quoteIncludeDirs,
@@ -51,7 +51,7 @@ final class BlazeResolveConfiguration extends BlazeResolveConfigurationTemporary
     super(
         project,
         workspacePathResolver,
-        label,
+        ruleKey,
         cSystemIncludeDirs,
         cppSystemIncludeDirs,
         quoteIncludeDirs,
@@ -71,7 +71,7 @@ final class BlazeResolveConfiguration extends BlazeResolveConfigurationTemporary
     return new CidrBuildTargetWithConfigurations() {
       @Override
       public String getName() {
-        return label.toString();
+        return ruleKey.toString();
       }
 
       @Override

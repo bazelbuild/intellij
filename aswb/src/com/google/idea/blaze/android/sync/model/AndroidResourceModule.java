@@ -20,8 +20,8 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 import com.google.idea.blaze.base.model.primitives.Label;
-import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
@@ -35,19 +35,19 @@ import org.jetbrains.annotations.NotNull;
  */
 @Immutable
 public final class AndroidResourceModule implements Serializable {
-  private static final long serialVersionUID = 5L;
+  private static final long serialVersionUID = 8L;
 
-  public final Label label;
-  public final ImmutableCollection<File> resources;
-  public final ImmutableCollection<File> transitiveResources;
-  public final ImmutableCollection<Label> transitiveResourceDependencies;
+  public final RuleKey ruleKey;
+  public final ImmutableCollection<ArtifactLocation> resources;
+  public final ImmutableCollection<ArtifactLocation> transitiveResources;
+  public final ImmutableCollection<RuleKey> transitiveResourceDependencies;
 
   public AndroidResourceModule(
-      Label label,
-      ImmutableCollection<File> resources,
-      ImmutableCollection<File> transitiveResources,
-      ImmutableCollection<Label> transitiveResourceDependencies) {
-    this.label = label;
+      RuleKey ruleKey,
+      ImmutableCollection<ArtifactLocation> resources,
+      ImmutableCollection<ArtifactLocation> transitiveResources,
+      ImmutableCollection<RuleKey> transitiveResourceDependencies) {
+    this.ruleKey = ruleKey;
     this.resources = resources;
     this.transitiveResources = transitiveResources;
     this.transitiveResourceDependencies = transitiveResourceDependencies;
@@ -57,7 +57,7 @@ public final class AndroidResourceModule implements Serializable {
   public boolean equals(Object o) {
     if (o instanceof AndroidResourceModule) {
       AndroidResourceModule that = (AndroidResourceModule) o;
-      return Objects.equal(this.label, that.label)
+      return Objects.equal(this.ruleKey, that.ruleKey)
           && Objects.equal(this.resources, that.resources)
           && Objects.equal(this.transitiveResources, that.transitiveResources)
           && Objects.equal(
@@ -69,15 +69,18 @@ public final class AndroidResourceModule implements Serializable {
   @Override
   public int hashCode() {
     return Objects.hashCode(
-        this.label, this.resources, this.transitiveResources, this.transitiveResourceDependencies);
+        this.ruleKey,
+        this.resources,
+        this.transitiveResources,
+        this.transitiveResourceDependencies);
   }
 
   @Override
   public String toString() {
     return "AndroidResourceModule{"
         + "\n"
-        + "  label: "
-        + label
+        + "  rule: "
+        + ruleKey
         + "\n"
         + "  resources: "
         + resources
@@ -91,8 +94,8 @@ public final class AndroidResourceModule implements Serializable {
         + '}';
   }
 
-  public static Builder builder(Label label) {
-    return new Builder(label);
+  public static Builder builder(RuleKey ruleKey) {
+    return new Builder(ruleKey);
   }
 
   public boolean isEmpty() {
@@ -101,13 +104,13 @@ public final class AndroidResourceModule implements Serializable {
 
   /** Builder for the resource module */
   public static class Builder {
-    private final Label label;
+    private final RuleKey ruleKey;
     private final Set<ArtifactLocation> resources = Sets.newHashSet();
     private final Set<ArtifactLocation> transitiveResources = Sets.newHashSet();
-    private Set<Label> transitiveResourceDependencies = Sets.newHashSet();
+    private Set<RuleKey> transitiveResourceDependencies = Sets.newHashSet();
 
-    public Builder(Label label) {
-      this.label = label;
+    public Builder(RuleKey ruleKey) {
+      this.ruleKey = ruleKey;
     }
 
     public Builder addResource(ArtifactLocation resource) {
@@ -131,8 +134,13 @@ public final class AndroidResourceModule implements Serializable {
       return this;
     }
 
-    public Builder addTransitiveResourceDependency(Label dependency) {
+    public Builder addTransitiveResourceDependency(RuleKey dependency) {
       this.transitiveResourceDependencies.add(dependency);
+      return this;
+    }
+
+    public Builder addTransitiveResourceDependency(Label dependency) {
+      this.transitiveResourceDependencies.add(RuleKey.forPlainTarget(dependency));
       return this;
     }
 
@@ -143,17 +151,15 @@ public final class AndroidResourceModule implements Serializable {
     @NotNull
     public AndroidResourceModule build() {
       return new AndroidResourceModule(
-          label,
+          ruleKey,
           ImmutableList.copyOf(
               resources
                   .stream()
-                  .map(ArtifactLocation::getFile)
                   .sorted()
                   .collect(Collectors.toList())),
           ImmutableList.copyOf(
               transitiveResources
                   .stream()
-                  .map(ArtifactLocation::getFile)
                   .sorted()
                   .collect(Collectors.toList())),
           ImmutableList.copyOf(

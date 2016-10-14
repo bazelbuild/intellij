@@ -28,16 +28,14 @@ import javax.annotation.Nullable;
  */
 public interface WorkspacePathResolver extends Serializable {
   /** Resolves a workspace path to an absolute file. */
-  @Nullable
   default File resolveToFile(WorkspacePath workspacepath) {
     return resolveToFile(workspacepath.relativePath());
   }
 
   /** Resolves a workspace relative path to an absolute file. */
-  @Nullable
   default File resolveToFile(String workspaceRelativePath) {
     File packageRoot = findPackageRoot(workspaceRelativePath);
-    return packageRoot != null ? new File(packageRoot, workspaceRelativePath) : null;
+    return new File(packageRoot, workspaceRelativePath);
   }
 
   /**
@@ -47,7 +45,6 @@ public interface WorkspacePathResolver extends Serializable {
   ImmutableList<File> resolveToIncludeDirectories(ExecutionRootPath executionRootPath);
 
   /** Finds the package root directory that a workspace relative path is in. */
-  @Nullable
   File findPackageRoot(String relativePath);
 
   /**

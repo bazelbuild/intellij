@@ -117,7 +117,8 @@ public interface BlazeAndroidDeviceSelector {
         }
       }
 
-      DeployTarget deployTarget = deployTargetManager.getDeployTarget(executor, env, facet);
+      DeployTarget deployTarget =
+          deployTargetManager.getDeployTarget(executor, env, facet, runConfigId);
       if (deployTarget == null) {
         return null;
       }
@@ -138,7 +139,8 @@ public interface BlazeAndroidDeviceSelector {
       String currentExecutor = executor.getId();
 
       if (ourKillLaunchOption.isToBeShown()) {
-        String msg, noText;
+        String msg;
+        String noText;
         if (previousExecutor.equals(currentExecutor)) {
           msg =
               String.format(

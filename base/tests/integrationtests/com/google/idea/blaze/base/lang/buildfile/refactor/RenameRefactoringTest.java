@@ -31,10 +31,15 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests that BUILD file references are correctly updated when performing rename refactors. */
+@RunWith(JUnit4.class)
 public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testRenameJavaClass() {
     PsiFile javaFile =
         createPsiFile(
@@ -70,6 +75,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
     assertThat(expectedNewStrings).containsExactlyElementsIn(newStrings);
   }
 
+  @Test
   public void testRenameRule() {
     BuildFile fooPackage =
         createBuildFile(
@@ -98,6 +104,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
         "top_level_ref = \"//com/google/foo:newTargetName\"");
   }
 
+  @Test
   public void testRenameSkylarkExtension() {
     BuildFile extFile =
         createBuildFile("java/com/google/tools/build_defs.bzl", "def function(name, deps)");
@@ -122,6 +129,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
         "function(name = \"name\", deps = []");
   }
 
+  @Test
   public void testRenameLoadedFunction() {
     BuildFile extFile =
         createBuildFile("java/com/google/tools/build_defs.bzl", "def function(name, deps)");
@@ -149,6 +157,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
         "action(name = \"name\", deps = []");
   }
 
+  @Test
   public void testRenameLocalVariable() {
     BuildFile file = createBuildFile("java/com/google/BUILD", "a = 1", "c = a");
 
@@ -161,6 +170,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
   }
 
   // all references, including path fragments in labels, should be renamed.
+  @Test
   public void testRenameDirectory() {
     createBuildFile("java/com/baz/BUILD");
     createBuildFile("java/com/google/tools/BUILD");
@@ -184,6 +194,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
         "function(name = \"name\", deps = [\"//java/alt/baz:target\"]");
   }
 
+  @Test
   public void testRenameFunctionParameter() {
     BuildFile extFile =
         createBuildFile("java/com/google/tools/build_defs.bzl", "def function(name, deps)");
@@ -212,6 +223,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
         "function(name = \"name\", exports = []");
   }
 
+  @Test
   public void testRenameSuggestionForBuildFile() {
     BuildFile buildFile = createBuildFile("java/com/google/BUILD");
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(buildFile);
@@ -220,6 +232,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
     assertThat(suggestions[0]).isEqualTo("BUILD");
   }
 
+  @Test
   public void testRenameSuggestionForSkylarkFile() {
     BuildFile buildFile = createBuildFile("java/com/google/tools/build_defs.bzl");
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(buildFile);

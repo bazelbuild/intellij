@@ -25,8 +25,6 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.AndroidStudioIdeInfo;
-import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.PackageManifestOuterClass;
 import java.io.File;
 import java.util.List;
 import java.util.Set;
@@ -39,24 +37,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ArtifactLocationDecoderTest extends BlazeTestCase {
 
-  private static final WorkspaceRoot WORKSPACE_ROOT = new WorkspaceRoot(new File("/path/to/root"));
   private static final String EXECUTION_ROOT = "/path/to/_blaze_user/1234bf129e/root";
-
-  private static final BlazeRoots BLAZE_GIT5_ROOTS =
-      new BlazeRoots(
-          new File(EXECUTION_ROOT),
-          ImmutableList.of(
-              WORKSPACE_ROOT.directory(),
-              new File(WORKSPACE_ROOT.directory().getParentFile(), "READONLY/root")),
-          new ExecutionRootPath("root/blaze-out/crosstool/bin"),
-          new ExecutionRootPath("root/blaze-out/crosstool/genfiles"));
-
-  private static final BlazeRoots BLAZE_CITC_ROOTS =
-      new BlazeRoots(
-          new File(EXECUTION_ROOT),
-          ImmutableList.of(WORKSPACE_ROOT.directory()),
-          new ExecutionRootPath("root/blaze-out/crosstool/bin"),
-          new ExecutionRootPath("root/blaze-out/crosstool/genfiles"));
 
   static class MockFileAttributeProvider extends FileAttributeProvider {
     final Set<File> files = Sets.newHashSet();
@@ -86,9 +67,9 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
   public void testManualPackagePaths() throws Exception {
     List<File> packagePaths =
         ImmutableList.of(
-            WORKSPACE_ROOT.directory(),
-            new File(WORKSPACE_ROOT.directory().getParentFile(), "READONLY/root"),
-            new File(WORKSPACE_ROOT.directory().getParentFile(), "CUSTOM/root"));
+            new File("/path/to"),
+            new File("/path/to/READONLY/root"),
+            new File("/path/to/CUSTOM/root"));
 
     BlazeRoots blazeRoots =
         new BlazeRoots(
@@ -98,117 +79,55 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
             new ExecutionRootPath("root/blaze-out/crosstool/genfiles"));
 
     fileChecker.addFiles(
-        new File(packagePaths.get(0), "com/google/Bla.java"),
-        new File(packagePaths.get(1), "com/google/Foo.java"),
-        new File(packagePaths.get(2), "com/other/Test.java"));
+        new File("/path/to/com/google/Bla.java"),
+        new File("/path/to/READONLY/root/com/google/Foo.java"),
+        new File("/path/to/CUSTOM/root/com/other/Test.java"));
 
     ArtifactLocationDecoder decoder =
-        new ArtifactLocationDecoder(
-            blazeRoots, new WorkspacePathResolverImpl(WORKSPACE_ROOT, blazeRoots));
+        new ArtifactLocationDecoderImpl(
+            blazeRoots,
+            new WorkspacePathResolverImpl(
+                new WorkspaceRoot(new File("/path/to/root")), blazeRoots));
 
-    ArtifactLocationBuilder builder =
-        new ArtifactLocationBuilder().setRelativePath("com/google/Bla.java").setIsSource(true);
+    ArtifactLocation blah =
+        ArtifactLocation.builder().setRelativePath("com/google/Bla.java").setIsSource(true).build();
+    assertThat(decoder.decode(blah).getPath()).isEqualTo("/path/to/com/google/Bla.java");
 
-    assertThat(decoder.decode(builder.buildIdeInfoArtifact()).getRootPath())
-        .isEqualTo(packagePaths.get(0).toString());
+    ArtifactLocation foo =
+        ArtifactLocation.builder().setRelativePath("com/google/Foo.java").setIsSource(true).build();
+    assertThat(decoder.decode(foo).getPath())
+        .isEqualTo("/path/to/READONLY/root/com/google/Foo.java");
 
-    builder.setRelativePath("com/google/Foo.java");
+    ArtifactLocation test =
+        ArtifactLocation.builder().setRelativePath("com/other/Test.java").setIsSource(true).build();
+    assertThat(decoder.decode(test).getPath())
+        .isEqualTo("/path/to/CUSTOM/root/com/other/Test.java");
 
-    assertThat(decoder.decode(builder.buildIdeInfoArtifact()).getRootPath())
-        .isEqualTo(packagePaths.get(1).toString());
-
-    builder.setRelativePath("com/other/Test.java");
-
-    assertThat(decoder.decode(builder.buildIdeInfoArtifact()).getRootPath())
-        .isEqualTo(packagePaths.get(2).toString());
-
-    builder.setRelativePath("third_party/other/Temp.java");
-
-    assertThat(decoder.decode(builder.buildIdeInfoArtifact())).isNull();
+    ArtifactLocation.Builder temp =
+        ArtifactLocation.builder().setRelativePath("third_party/other/Temp.java").setIsSource(true);
+    assertThat(decoder.decode(temp.build()).getPath())
+        .isEqualTo("/path/to/third_party/other/Temp.java");
   }
 
   @Test
-  public void testDerivedArtifact() throws Exception {
-    ArtifactLocationBuilder builder =
-        new ArtifactLocationBuilder()
+  public void testGeneratedArtifact() throws Exception {
+    ArtifactLocation artifactLocation =
+        ArtifactLocation.builder()
             .setRootExecutionPathFragment("/blaze-out/bin")
             .setRelativePath("com/google/Bla.java")
-            .setIsSource(false);
-
-    ArtifactLocationDecoder decoder = new ArtifactLocationDecoder(BLAZE_CITC_ROOTS, null);
-
-    ArtifactLocation parsed = decoder.decode(builder.buildIdeInfoArtifact());
-
-    assertThat(parsed).isEqualTo(decoder.decode(builder.buildManifestArtifact()));
-
-    assertThat(parsed)
-        .isEqualTo(
-            ArtifactLocation.builder()
-                .setRootPath(EXECUTION_ROOT + "/blaze-out/bin")
-                .setRootExecutionPathFragment("/blaze-out/bin")
-                .setRelativePath("com/google/Bla.java")
-                .setIsSource(false)
-                .build());
-  }
-
-  @Test
-  public void testSourceArtifactAllVersions() throws Exception {
-    ArtifactLocationBuilder builder =
-        new ArtifactLocationBuilder().setRelativePath("com/google/Bla.java").setIsSource(true);
+            .setIsSource(false)
+            .build();
 
     ArtifactLocationDecoder decoder =
-        new ArtifactLocationDecoder(
-            BLAZE_CITC_ROOTS, new WorkspacePathResolverImpl(WORKSPACE_ROOT, BLAZE_CITC_ROOTS));
+        new ArtifactLocationDecoderImpl(
+            new BlazeRoots(
+                new File(EXECUTION_ROOT),
+                ImmutableList.of(new File("/path/to/root")),
+                new ExecutionRootPath("root/blaze-out/crosstool/bin"),
+                new ExecutionRootPath("root/blaze-out/crosstool/genfiles")),
+            null);
 
-    ArtifactLocation parsed = decoder.decode(builder.buildIdeInfoArtifact());
-
-    assertThat(parsed).isEqualTo(decoder.decode(builder.buildManifestArtifact()));
-
-    assertThat(parsed)
-        .isEqualTo(
-            ArtifactLocation.builder()
-                .setRootPath(WORKSPACE_ROOT.toString())
-                .setRelativePath("com/google/Bla.java")
-                .setIsSource(true)
-                .build());
-  }
-
-  static class ArtifactLocationBuilder {
-    String rootExecutionPathFragment = "";
-    String relativePath;
-    boolean isSource;
-
-    ArtifactLocationBuilder setRootExecutionPathFragment(String rootExecutionPathFragment) {
-      this.rootExecutionPathFragment = rootExecutionPathFragment;
-      return this;
-    }
-
-    ArtifactLocationBuilder setRelativePath(String relativePath) {
-      this.relativePath = relativePath;
-      return this;
-    }
-
-    ArtifactLocationBuilder setIsSource(boolean isSource) {
-      this.isSource = isSource;
-      return this;
-    }
-
-    AndroidStudioIdeInfo.ArtifactLocation buildIdeInfoArtifact() {
-      AndroidStudioIdeInfo.ArtifactLocation.Builder builder =
-          AndroidStudioIdeInfo.ArtifactLocation.newBuilder()
-              .setIsSource(isSource)
-              .setRelativePath(relativePath);
-      builder.setRootExecutionPathFragment(rootExecutionPathFragment);
-      return builder.build();
-    }
-
-    PackageManifestOuterClass.ArtifactLocation buildManifestArtifact() {
-      PackageManifestOuterClass.ArtifactLocation.Builder builder =
-          PackageManifestOuterClass.ArtifactLocation.newBuilder()
-              .setIsSource(isSource)
-              .setRelativePath(relativePath);
-      builder.setRootExecutionPathFragment(rootExecutionPathFragment);
-      return builder.build();
-    }
+    assertThat(decoder.decode(artifactLocation).getPath())
+        .isEqualTo(EXECUTION_ROOT + "/blaze-out/bin/com/google/Bla.java");
   }
 }

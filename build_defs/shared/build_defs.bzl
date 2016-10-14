@@ -18,8 +18,7 @@ def _optstr(name, value):
 
 def stamped_plugin_xml_impl(name,
                             plugin_xml,
-                            application_info_jar,
-                            application_info_name,
+                            api_version_txt,
                             stamp_tool,
                             plugin_id = None,
                             plugin_name = None,
@@ -28,14 +27,15 @@ def stamped_plugin_xml_impl(name,
                             include_product_code_in_stamp=False,
                             version_file=None,
                             changelog_file=None,
+                            description_file=None,
+                            vendor_file=None,
                             **kwargs):
   """Stamps a plugin xml file with the IJ build number.
 
   Args:
     name: name of this target
     plugin_xml: target plugin_xml to stamp
-    application_info_jar: the jar containing the application info
-    application_info_name: a file with the name of the application info
+    api_version_txt: the file containing the api version
     stamp_tool: the tool to use to stamp the version
     plugin_id: the plugin ID to stamp
     plugin_name: the plugin name to stamp
@@ -45,18 +45,19 @@ def stamped_plugin_xml_impl(name,
         is included in since-build and until-build.
     version_file: A file with the version number to be included.
     changelog_file: A file with the changelog to be included.
+    description_file: A file containing a plugin description to be included.
+    vendor_file: A file containing the vendor info to be included.
     **kwargs: Any additional arguments to pass to the final target.
   """
   args = [
       "./$(location {stamp_tool})",
       "--plugin_xml=$(location {plugin_xml})",
-      "--application_info_jar=$(location {application_info_jar})",
-      "--application_info_name=$(location {application_info_name})",
+      "--api_version_txt=$(location {api_version_txt})",
       "{stamp_since_build}",
       "{stamp_until_build}",
       "{include_product_code_in_stamp}",
   ]
-  srcs = [plugin_xml, application_info_jar, application_info_name]
+  srcs = [plugin_xml, api_version_txt]
 
   if plugin_id:
     args.append("--plugin_id=%s" % plugin_id)
@@ -72,10 +73,17 @@ def stamped_plugin_xml_impl(name,
     args.append("--changelog_file=$(location {changelog_file})")
     srcs.append(changelog_file)
 
+  if description_file:
+    args.append("--description_file=$(location {description_file})")
+    srcs.append(description_file)
+
+  if vendor_file:
+    args.append("--vendor_file=$(location {vendor_file})")
+    srcs.append(vendor_file)
+
   cmd = " ".join(args).format(
       plugin_xml=plugin_xml,
-      application_info_jar=application_info_jar,
-      application_info_name=application_info_name,
+      api_version_txt=api_version_txt,
       stamp_tool=stamp_tool,
       stamp_since_build=_optstr("stamp_since_build",
                                 stamp_since_build),
@@ -86,6 +94,8 @@ def stamped_plugin_xml_impl(name,
           include_product_code_in_stamp),
       version_file=version_file,
       changelog_file=changelog_file,
+      description_file=description_file,
+      vendor_file=vendor_file,
   ) + "> $@"
 
   native.genrule(
@@ -126,6 +136,38 @@ def product_build_txt_impl(name,
       outs = ["product-build.txt"],
       cmd = cmd,
       tools = [product_build_txt_tool],
+      **kwargs)
+
+def api_version_txt_impl(name,
+                         api_version_txt_tool,
+                         application_info_jar,
+                         application_info_name,
+                         **kwargs):
+  """Produces an api_version.txt file with the api version, including the product code.
+
+  Args:
+    name: name of this target
+    api_version_txt_tool: the api version tool
+    application_info_jar: the jar containing the application info
+    application_info_name: a file with the name of the application info
+    **kwargs: Any additional arguments to pass to the final target.
+  """
+  args = [
+      "./$(location {api_version_txt_tool})",
+      "--application_info_jar=$(location {application_info_jar})",
+      "--application_info_name=$(location {application_info_name})",
+  ]
+  cmd = " ".join(args).format(
+      application_info_jar=application_info_jar,
+      application_info_name=application_info_name,
+      api_version_txt_tool=api_version_txt_tool,
+  ) + "> $@"
+  native.genrule(
+      name = name,
+      srcs = [application_info_jar, application_info_name],
+      outs = [name + ".txt"],
+      cmd = cmd,
+      tools = [api_version_txt_tool],
       **kwargs)
 
 def intellij_plugin_impl(name,

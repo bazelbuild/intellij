@@ -32,11 +32,11 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.ExperimentalShowArtifactsLineProcessor;
 import com.google.idea.blaze.base.filecache.FileDiffer;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
 import com.google.idea.blaze.base.metrics.Action;
-import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.SyncState;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
@@ -75,10 +75,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       new BoolExperiment("ide.info.keep.going", true);
 
   static class State implements Serializable {
-    private static final long serialVersionUID = 13L;
+    private static final long serialVersionUID = 14L;
     RuleMap ruleMap;
     ImmutableMap<File, Long> fileState = null;
-    Map<File, Label> fileToLabel = Maps.newHashMap();
+    Map<File, RuleKey> fileToRuleMapKey = Maps.newHashMap();
     WorkspaceLanguageSettings workspaceLanguageSettings;
     String aspectStrategyName;
   }
@@ -273,19 +273,19 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   state.workspaceLanguageSettings = workspaceLanguageSettings;
                   state.aspectStrategyName = aspectStrategy.getName();
 
-                  Map<Label, RuleIdeInfo> ruleMap = Maps.newHashMap();
-                  Map<Label, RuleIdeInfo> updatedRules = Maps.newHashMap();
+                  Map<RuleKey, RuleIdeInfo> ruleMap = Maps.newHashMap();
+                  Map<RuleKey, RuleIdeInfo> updatedRules = Maps.newHashMap();
                   if (prevState != null) {
                     ruleMap.putAll(prevState.ruleMap.map());
-                    state.fileToLabel.putAll(prevState.fileToLabel);
+                    state.fileToRuleMapKey.putAll(prevState.fileToRuleMapKey);
                   }
 
                   // Update removed unless we're merging with the old state
                   if (!mergeWithOldState) {
                     for (File removedFile : removedFiles) {
-                      Label label = state.fileToLabel.remove(removedFile);
-                      if (label != null) {
-                        ruleMap.remove(label);
+                      RuleKey key = state.fileToRuleMapKey.remove(removedFile);
+                      if (key != null) {
+                        ruleMap.remove(key);
                       }
                     }
                   }
@@ -306,9 +306,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                                   aspectStrategy.readAspectFile(file);
                               RuleIdeInfo ruleIdeInfo =
                                   IdeInfoFromProtobuf.makeRuleIdeInfo(
-                                      workspaceLanguageSettings,
-                                      artifactLocationDecoder,
-                                      ruleProto);
+                                      workspaceLanguageSettings, ruleProto);
                               return new RuleIdeInfoPair(file, ruleIdeInfo);
                             }));
                   }
@@ -319,11 +317,11 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                     for (RuleIdeInfoPair ruleIdeInfoOrSdkInfo : Futures.allAsList(futures).get()) {
                       if (ruleIdeInfoOrSdkInfo.ruleIdeInfo != null) {
                         File file = ruleIdeInfoOrSdkInfo.file;
-                        Label label = ruleIdeInfoOrSdkInfo.ruleIdeInfo.label;
+                        RuleKey key = ruleIdeInfoOrSdkInfo.ruleIdeInfo.key;
                         RuleIdeInfo previousRule =
-                            updatedRules.putIfAbsent(label, ruleIdeInfoOrSdkInfo.ruleIdeInfo);
+                            updatedRules.putIfAbsent(key, ruleIdeInfoOrSdkInfo.ruleIdeInfo);
                         if (previousRule == null) {
-                          state.fileToLabel.put(file, label);
+                          state.fileToRuleMapKey.put(file, key);
                         } else {
                           duplicateRuleLabels++;
                         }
