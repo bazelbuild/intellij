@@ -14,7 +14,6 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-  <depends>com.intellij.modules.java</depends>
   <depends>JUnit</depends>
 
   <actions>

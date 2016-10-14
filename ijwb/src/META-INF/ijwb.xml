@@ -15,6 +15,7 @@
   -->
 <idea-plugin>
   <vendor>Google</vendor>
+  <depends>com.intellij.modules.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"

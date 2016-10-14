@@ -17,6 +17,8 @@
   <vendor>Google</vendor>
 
   <depends>com.intellij.modules.clion</depends>
+  <depends>com.intellij.modules.cidr.lang</depends>
+  <depends>com.intellij.modules.cidr.debugger</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"
