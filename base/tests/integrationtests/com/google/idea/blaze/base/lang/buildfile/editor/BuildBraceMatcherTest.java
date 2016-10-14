@@ -18,14 +18,19 @@ package com.google.idea.blaze.base.lang.buildfile.editor;
 import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.intellij.psi.PsiFile;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Test brace matching (auto-inserting closing braces when appropriate) */
+@RunWith(JUnit4.class)
 public class BuildBraceMatcherTest extends BuildFileIntegrationTestCase {
 
   private PsiFile setInput(String... fileContents) {
     return testFixture.configureByText("BUILD", Joiner.on("\n").join(fileContents));
   }
 
+  @Test
   public void testClosingParenInserted() {
     PsiFile file = setInput("java_library<caret>");
 
@@ -34,6 +39,7 @@ public class BuildBraceMatcherTest extends BuildFileIntegrationTestCase {
     assertFileContents(file, "java_library()");
   }
 
+  @Test
   public void testClosingBraceInserted() {
     PsiFile file = setInput("<caret>");
 
@@ -42,6 +48,7 @@ public class BuildBraceMatcherTest extends BuildFileIntegrationTestCase {
     assertFileContents(file, "{}");
   }
 
+  @Test
   public void testClosingBracketInserted() {
     PsiFile file = setInput("<caret>");
 
@@ -50,6 +57,7 @@ public class BuildBraceMatcherTest extends BuildFileIntegrationTestCase {
     assertFileContents(file, "[]");
   }
 
+  @Test
   public void testNoClosingBracketInsertedIfLaterDanglingRBracket() {
     PsiFile file = setInput("java_library(", "    srcs =<caret> 'source.java']", ")");
 
@@ -58,6 +66,7 @@ public class BuildBraceMatcherTest extends BuildFileIntegrationTestCase {
     assertFileContents(file, "java_library(", "    srcs =[ 'source.java']", ")");
   }
 
+  @Test
   public void testClosingBracketInsertedIfFollowedByWhitespace() {
     PsiFile file = setInput("java_library(", "    srcs =<caret> 'source.java'", ")");
 
@@ -66,6 +75,7 @@ public class BuildBraceMatcherTest extends BuildFileIntegrationTestCase {
     assertFileContents(file, "java_library(", "    srcs =[] 'source.java'", ")");
   }
 
+  @Test
   public void testNoClosingBraceInsertedWhenFollowedByIdentifier() {
     PsiFile file = setInput("hello = <caret>test");
 

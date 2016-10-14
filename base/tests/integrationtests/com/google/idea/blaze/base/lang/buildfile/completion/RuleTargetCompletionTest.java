@@ -21,10 +21,15 @@ import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests code completion of rule target labels. */
+@RunWith(JUnit4.class)
 public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testLocalTarget() {
     BuildFile file =
         createBuildFile(
@@ -42,6 +47,7 @@ public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
     assertThat(completionItems[0].toString()).isEqualTo("':lib'");
   }
 
+  @Test
   public void testIgnoreContainingTarget() {
     BuildFile file =
         createBuildFile(
@@ -54,6 +60,7 @@ public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
     assertThat(completionItems).isEmpty();
   }
 
+  @Test
   public void testNotCodeCompletionInNameField() {
     BuildFile file =
         createBuildFile(
@@ -70,8 +77,9 @@ public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
     assertThat(completionItems).isEmpty();
   }
 
+  @Test
   public void testNonLocalTarget() {
-    BuildFile foo = createBuildFile("java/com/google/foo/BUILD", "java_library(name = 'foo_lib')");
+    createBuildFile("java/com/google/foo/BUILD", "java_library(name = 'foo_lib')");
 
     BuildFile bar =
         createBuildFile(
@@ -87,8 +95,9 @@ public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
     assertThat(completionItems).asList().containsExactly("'//java/com/google/foo:foo_lib'");
   }
 
+  @Test
   public void testNonLocalRulesNotCompletedWithoutColon() {
-    BuildFile foo = createBuildFile("java/com/google/foo/BUILD", "java_library(name = 'foo_lib')");
+    createBuildFile("java/com/google/foo/BUILD", "java_library(name = 'foo_lib')");
 
     BuildFile bar =
         createBuildFile(
@@ -104,6 +113,7 @@ public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
     assertThat(completionItems).isEmpty();
   }
 
+  @Test
   public void testPackageLocalRulesCompletedWithoutColon() {
     BuildFile file =
         createBuildFile(
@@ -125,8 +135,9 @@ public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
         "    deps = ['lib']");
   }
 
+  @Test
   public void testLocalPathIgnoredForNonLocalLabels() {
-    BuildFile rootPackage = createBuildFile("java/BUILD", "java_library(name = 'root_rule')");
+    createBuildFile("java/BUILD", "java_library(name = 'root_rule')");
 
     BuildFile otherPackage =
         createBuildFile(

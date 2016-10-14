@@ -21,7 +21,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
-import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandler;
+import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,12 +56,12 @@ public class AllInPackageBlazeConfigurationProducer
     sourceElement.set(dir);
 
     configuration.setTarget(TargetExpression.allFromPackageRecursive(packagePath));
-    BlazeCommandGenericRunConfigurationHandler handler =
-        configuration.getHandlerIfType(BlazeCommandGenericRunConfigurationHandler.class);
-    if (handler == null) {
+    BlazeCommandRunConfigurationCommonState handlerState =
+        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    if (handlerState == null) {
       return false;
     }
-    handler.setCommand(BlazeCommandName.TEST);
+    handlerState.setCommand(BlazeCommandName.TEST);
     configuration.setGeneratedName();
     return true;
   }
@@ -79,12 +79,12 @@ public class AllInPackageBlazeConfigurationProducer
     if (packagePath == null) {
       return false;
     }
-    BlazeCommandGenericRunConfigurationHandler handler =
-        configuration.getHandlerIfType(BlazeCommandGenericRunConfigurationHandler.class);
-    if (handler == null) {
+    BlazeCommandRunConfigurationCommonState handlerState =
+        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    if (handlerState == null) {
       return false;
     }
-    return Objects.equals(handler.getCommand(), BlazeCommandName.TEST)
+    return Objects.equals(handlerState.getCommand(), BlazeCommandName.TEST)
         && Objects.equals(
             configuration.getTarget(), TargetExpression.allFromPackageRecursive(packagePath));
   }

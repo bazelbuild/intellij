@@ -16,10 +16,11 @@
 package com.google.idea.blaze.android.run.binary;
 
 import com.android.tools.idea.run.activity.ActivityLocatorUtils;
-import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationState;
-import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationStateEditor;
 import com.google.idea.blaze.android.run.binary.instantrun.InstantRunExperiment;
+import com.google.idea.blaze.base.run.state.RunConfigurationState;
+import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.blaze.base.ui.IntegerTextField;
+import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -40,7 +41,6 @@ import com.intellij.ui.LanguageTextField;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -50,26 +50,25 @@ import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.border.TitledBorder;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The part of the Blaze Android Binary handler editor that allows the user to pick an activity to
  * launch. Patterned after {@link org.jetbrains.android.run.ApplicationRunParameters}.
  */
-class BlazeAndroidBinaryRunConfigurationStateEditor
-    implements BlazeAndroidRunConfigurationStateEditor {
+class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationStateEditor {
   public static final Key<BlazeAndroidBinaryRunConfigurationStateEditor>
       ACTIVITY_CLASS_TEXT_FIELD_KEY = Key.create("BlazeActivityClassTextField");
 
-  private final Project project;
+  private final RunConfigurationStateEditor commonStateEditor;
 
-  @Nullable private JPanel panel;
+  private JPanel panel;
   private ComponentWithBrowseButton<EditorTextField> activityField;
   private JRadioButton launchNothingButton;
   private JRadioButton launchDefaultButton;
@@ -81,10 +80,10 @@ class BlazeAndroidBinaryRunConfigurationStateEditor
   private JLabel userIdLabel;
   private IntegerTextField userIdField;
 
-  BlazeAndroidBinaryRunConfigurationStateEditor(Project project) {
-    this.project = project;
-
-    setupUI();
+  BlazeAndroidBinaryRunConfigurationStateEditor(
+      RunConfigurationStateEditor commonStateEditor, Project project) {
+    this.commonStateEditor = commonStateEditor;
+    setupUI(project);
     userIdField.setMinValue(0);
 
     activityField.addActionListener(
@@ -134,7 +133,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor
 
     instantRunCheckBox.setVisible(InstantRunExperiment.INSTANT_RUN_ENABLED.getValue());
 
-    /** Only one of mobile-install and instant run can be selected at any one time */
+    /* Only one of mobile-install and instant run can be selected at any one time */
     mobileInstallCheckBox.addActionListener(
         e -> {
           if (mobileInstallCheckBox.isSelected()) {
@@ -158,16 +157,13 @@ class BlazeAndroidBinaryRunConfigurationStateEditor
   }
 
   @Override
-  public void resetEditorFrom(BlazeAndroidRunConfigurationState state) {
-    BlazeAndroidBinaryRunConfigurationState configState =
-        (BlazeAndroidBinaryRunConfigurationState) state;
+  public void resetEditorFrom(RunConfigurationState genericState) {
+    BlazeAndroidBinaryRunConfigurationState state =
+        (BlazeAndroidBinaryRunConfigurationState) genericState;
+    commonStateEditor.resetEditorFrom(state.getCommonState());
     boolean launchSpecificActivity =
-        configState
-            .getMode()
-            .equals(BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY);
-    if (configState
-        .getMode()
-        .equals(BlazeAndroidBinaryRunConfigurationState.LAUNCH_DEFAULT_ACTIVITY)) {
+        state.getMode().equals(BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY);
+    if (state.getMode().equals(BlazeAndroidBinaryRunConfigurationState.LAUNCH_DEFAULT_ACTIVITY)) {
       launchDefaultButton.setSelected(true);
     } else if (launchSpecificActivity) {
       launchCustomButton.setSelected(true);
@@ -176,17 +172,17 @@ class BlazeAndroidBinaryRunConfigurationStateEditor
     }
     activityField.setEnabled(launchSpecificActivity);
     if (launchSpecificActivity) {
-      activityField.getChildComponent().setText(configState.getActivityClass());
+      activityField.getChildComponent().setText(state.getActivityClass());
     }
 
-    mobileInstallCheckBox.setSelected(configState.mobileInstall());
-    splitApksCheckBox.setSelected(configState.useSplitApksIfPossible());
-    instantRunCheckBox.setSelected(configState.instantRun());
-    useWorkProfileIfPresentCheckBox.setSelected(configState.useWorkProfileIfPresent());
+    mobileInstallCheckBox.setSelected(state.mobileInstall());
+    splitApksCheckBox.setSelected(state.useSplitApksIfPossible());
+    instantRunCheckBox.setSelected(state.instantRun());
+    useWorkProfileIfPresentCheckBox.setSelected(state.useWorkProfileIfPresent());
 
-    userIdField.setValue(configState.getUserId());
-    setUserIdEnabled(!configState.useWorkProfileIfPresent());
-    splitApksCheckBox.setVisible(configState.mobileInstall());
+    userIdField.setValue(state.getUserId());
+    setUserIdEnabled(!state.useWorkProfileIfPresent());
+    splitApksCheckBox.setVisible(state.mobileInstall());
   }
 
   private void setUserIdEnabled(boolean enabled) {
@@ -195,30 +191,32 @@ class BlazeAndroidBinaryRunConfigurationStateEditor
   }
 
   @Override
-  public Component getComponent() {
-    return panel;
+  public void applyEditorTo(RunConfigurationState genericState) {
+    BlazeAndroidBinaryRunConfigurationState state =
+        (BlazeAndroidBinaryRunConfigurationState) genericState;
+    commonStateEditor.applyEditorTo(state.getCommonState());
+
+    state.setUserId((Integer) userIdField.getValue());
+    if (launchDefaultButton.isSelected()) {
+      state.setMode(BlazeAndroidBinaryRunConfigurationState.LAUNCH_DEFAULT_ACTIVITY);
+    } else if (launchCustomButton.isSelected()) {
+      state.setMode(BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY);
+      state.setActivityClass(activityField.getChildComponent().getText());
+    } else {
+      state.setMode(BlazeAndroidBinaryRunConfigurationState.DO_NOTHING);
+    }
+    state.setMobileInstall(mobileInstallCheckBox.isSelected());
+    state.setUseSplitApksIfPossible(splitApksCheckBox.isSelected());
+    state.setInstantRun(instantRunCheckBox.isSelected());
+    state.setUseWorkProfileIfPresent(useWorkProfileIfPresentCheckBox.isSelected());
   }
 
   @Override
-  public void applyEditorTo(BlazeAndroidRunConfigurationState state) {
-    BlazeAndroidBinaryRunConfigurationState configState =
-        (BlazeAndroidBinaryRunConfigurationState) state;
-    configState.setUserId((Integer) userIdField.getValue());
-    if (launchDefaultButton.isSelected()) {
-      configState.setMode(BlazeAndroidBinaryRunConfigurationState.LAUNCH_DEFAULT_ACTIVITY);
-    } else if (launchCustomButton.isSelected()) {
-      configState.setMode(BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY);
-      configState.setActivityClass(activityField.getChildComponent().getText());
-    } else {
-      configState.setMode(BlazeAndroidBinaryRunConfigurationState.DO_NOTHING);
-    }
-    configState.setMobileInstall(mobileInstallCheckBox.isSelected());
-    configState.setUseSplitApksIfPossible(splitApksCheckBox.isSelected());
-    configState.setInstantRun(instantRunCheckBox.isSelected());
-    configState.setUseWorkProfileIfPresent(useWorkProfileIfPresentCheckBox.isSelected());
+  public JComponent createComponent() {
+    return UiUtil.createBox(commonStateEditor.createComponent(), panel);
   }
 
-  private void createUIComponents() {
+  private void createUIComponents(Project project) {
     final EditorTextField editorTextField =
         new LanguageTextField(PlainTextLanguage.INSTANCE, project, "") {
           @Override
@@ -239,8 +237,8 @@ class BlazeAndroidBinaryRunConfigurationStateEditor
   }
 
   /** Initially generated by IntelliJ from a .form file, then checked in as source. */
-  private void setupUI() {
-    createUIComponents();
+  private void setupUI(Project project) {
+    createUIComponents(project);
     panel = new JPanel();
     panel.setLayout(new GridLayoutManager(5, 2, new Insets(0, 0, 0, 0), -1, -1));
     final JPanel activityPanel = new JPanel();

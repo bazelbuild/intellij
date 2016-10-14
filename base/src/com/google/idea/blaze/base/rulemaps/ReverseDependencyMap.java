@@ -18,18 +18,20 @@ package com.google.idea.blaze.base.rulemaps;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.model.RuleMap;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 
 /** Handy class to create an reverse dep map of all rules */
 public class ReverseDependencyMap {
-  public static ImmutableMultimap<Label, Label> createRdepsMap(RuleMap ruleMap) {
-    ImmutableMultimap.Builder<Label, Label> builder = ImmutableMultimap.builder();
+  public static ImmutableMultimap<RuleKey, RuleKey> createRdepsMap(RuleMap ruleMap) {
+    ImmutableMultimap.Builder<RuleKey, RuleKey> builder = ImmutableMultimap.builder();
     for (RuleIdeInfo rule : ruleMap.rules()) {
-      Label label = rule.label;
+      RuleKey key = rule.key;
       for (Label dep : Iterables.concat(rule.dependencies, rule.runtimeDeps)) {
-        if (ruleMap.contains(dep)) {
-          builder.put(dep, label);
+        RuleKey depKey = RuleKey.forDependency(rule, dep);
+        if (ruleMap.contains(depKey)) {
+          builder.put(depKey, key);
         }
       }
     }

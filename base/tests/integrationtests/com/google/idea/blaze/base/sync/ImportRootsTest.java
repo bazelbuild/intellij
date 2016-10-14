@@ -26,10 +26,15 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import java.util.stream.Collectors;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests for ImportRoots */
+@RunWith(JUnit4.class)
 public class ImportRootsTest extends BlazeIntegrationTestCase {
 
+  @Test
   public void testBazelArtifactDirectoriesExcluded() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Bazel)
@@ -52,6 +57,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
     assertThat(artifactDirs).contains("bazel-" + workspaceRoot.directory().getName());
   }
 
+  @Test
   public void testNoAddedExclusionsWithoutWorkspaceRootInclusion() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Bazel)
@@ -62,6 +68,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
     assertThat(importRoots.excludeDirectories()).isEmpty();
   }
 
+  @Test
   public void testNoAddedExclusionsForBlaze() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
@@ -73,6 +80,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   }
 
   // if the workspace root is an included directory, all rules should be imported as sources.
+  @Test
   public void testAllLabelsIncludedUnderWorkspaceRoot() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
@@ -83,6 +91,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
     assertThat(importRoots.importAsSource(new Label("//foo/bar:target"))).isTrue();
   }
 
+  @Test
   public void testNonOverlappingDirectoriesAreNotFilteredOut() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
@@ -97,6 +106,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
             new WorkspacePath("root1"));
   }
 
+  @Test
   public void testOverlappingDirectoriesAreFilteredOut() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
@@ -107,6 +117,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
     assertThat(importRoots.rootDirectories()).containsExactly(new WorkspacePath("root"));
   }
 
+  @Test
   public void testWorkspaceRootIsOnlyDirectoryLeft() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)

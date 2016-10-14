@@ -18,9 +18,9 @@ package com.google.idea.blaze.plugin.sync;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.ideinfo.RuleMapBuilder;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
@@ -30,10 +30,15 @@ import com.google.idea.blaze.plugin.run.BlazeIntellijPluginConfiguration;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import java.util.List;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Plugin-dev specific sync integration test. */
+@RunWith(JUnit4.class)
 public class PluginDevSyncTest extends BlazeSyncIntegrationTestCase {
 
+  @Test
   public void testRunConfigurationCreatedDuringSync() throws Exception {
     setProjectView(
         "directories:",

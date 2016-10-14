@@ -28,8 +28,8 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.io.WorkspaceScanner;
-import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -64,6 +64,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.junit.After;
+import org.junit.Before;
 
 /** Sets up mocks required for integration tests of the blaze sync process. */
 public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestCase {
@@ -89,10 +91,11 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   protected ErrorCollector errorCollector;
   protected BlazeContext context;
 
-  @Override
-  protected void doSetup() throws IOException {
+  @Before
+  public void doSetup() throws Exception {
     // Set up a workspace root outside of the tracked temp file system.
     tempDirectoryHandler = new LightTempDirTestFixtureImpl();
+    tempDirectoryHandler.setUp();
     tempDirectory = tempDirectoryHandler.getFile("");
     workspaceRoot = new WorkspaceRoot(new File(tempDirectory.getPath()));
     setBlazeImportSettings(
@@ -125,7 +128,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
                 // don't commit module changes,
                 // but make sure they're properly disposed when the test is finished
                 for (ModifiableRootModel model : modifiableModels) {
-                  Disposer.register(myTestRootDisposable, model::dispose);
+                  Disposer.register(getTestRootDisposable(), model::dispose);
                 }
               }
             };
@@ -150,12 +153,11 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
             workspaceRoot.toString()));
   }
 
-  @Override
-  protected void doTearDown() throws Exception {
+  @After
+  public final void doTearDown() throws Exception {
     if (tempDirectoryHandler != null) {
       tempDirectoryHandler.tearDown();
     }
-    super.doTearDown();
   }
 
   protected VirtualFile createWorkspaceFile(String relativePath, @Nullable String... contents) {
@@ -173,7 +175,6 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
 
   protected ArtifactLocation sourceRoot(String relativePath) {
     return ArtifactLocation.builder()
-        .setRootPath(workspaceRoot.toString())
         .setRelativePath(relativePath)
         .setIsSource(true)
         .build();

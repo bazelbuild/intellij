@@ -20,7 +20,8 @@ import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.ideinfo.AndroidRuleIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.model.RuleMap;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.List;
 import java.util.Set;
@@ -32,7 +33,7 @@ public class TransitiveResourceMap
   public static class TransitiveResourceInfo {
     public static final TransitiveResourceInfo NO_RESOURCES = new TransitiveResourceInfo();
     public final Set<ArtifactLocation> transitiveResources = Sets.newHashSet();
-    public final Set<Label> transitiveResourceRules = Sets.newHashSet();
+    public final Set<RuleKey> transitiveResourceRules = Sets.newHashSet();
   }
 
   public TransitiveResourceMap(RuleMap ruleMap) {
@@ -50,8 +51,8 @@ public class TransitiveResourceMap
     return super.getDependencies(ruleIdeInfo);
   }
 
-  public TransitiveResourceInfo get(Label label) {
-    return getOrDefault(label, TransitiveResourceInfo.NO_RESOURCES);
+  public TransitiveResourceInfo get(RuleKey ruleKey) {
+    return getOrDefault(ruleKey, TransitiveResourceInfo.NO_RESOURCES);
   }
 
   @Override
@@ -65,7 +66,7 @@ public class TransitiveResourceMap
       return result;
     }
     result.transitiveResources.addAll(androidRuleIdeInfo.resources);
-    result.transitiveResourceRules.add(ruleIdeInfo.label);
+    result.transitiveResourceRules.add(ruleIdeInfo.key);
     return result;
   }
 

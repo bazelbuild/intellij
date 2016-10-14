@@ -24,10 +24,15 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.intellij.psi.PsiReference;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests that package references in string literals are correctly resolved. */
+@RunWith(JUnit4.class)
 public class PackageReferenceTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testDirectReferenceResolves() {
     BuildFile buildFile1 = createBuildFile("java/com/google/tools/BUILD", "# contents");
 
@@ -46,6 +51,7 @@ public class PackageReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(string.getReferencedElement()).isEqualTo(buildFile1);
   }
 
+  @Test
   public void testLabelFragmentResolves() {
     BuildFile buildFile1 =
         createBuildFile("java/com/google/tools/BUILD", "java_library(name = \"lib\")");

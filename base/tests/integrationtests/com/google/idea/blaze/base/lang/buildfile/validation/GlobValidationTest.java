@@ -28,22 +28,29 @@ import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.psi.PsiFile;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests glob validation. */
+@RunWith(JUnit4.class)
 public class GlobValidationTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testNormalGlob() {
     BuildFile file = createBuildFile("java/com/google/BUILD", "glob(['**/*.java'])");
 
     assertNoErrors(file);
   }
 
+  @Test
   public void testNamedIncludeArgument() {
     BuildFile file = createBuildFile("java/com/google/BUILD", "glob(include = ['**/*.java'])");
 
     assertNoErrors(file);
   }
 
+  @Test
   public void testAllArguments() {
     BuildFile file =
         createBuildFile(
@@ -53,18 +60,21 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
     assertNoErrors(file);
   }
 
+  @Test
   public void testEmptyExcludeList() {
     BuildFile file = createBuildFile("java/com/google/BUILD", "glob(['**/*.java'], exclude = [])");
 
     assertNoErrors(file);
   }
 
+  @Test
   public void testNoIncludesError() {
     BuildFile file = createBuildFile("java/com/google/BUILD", "glob(exclude = ['BUILD'])");
 
     assertHasError(file, "Glob expression must contain at least one included string");
   }
 
+  @Test
   public void testSingletonExcludeArgumentError() {
     BuildFile file =
         createBuildFile("java/com/google/BUILD", "glob(['**/*.java'], exclude = 'BUILD')");
@@ -72,12 +82,14 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
     assertHasError(file, "Glob parameter 'exclude' must be a list of strings");
   }
 
+  @Test
   public void testSingletonIncludeArgumentError() {
     BuildFile file = createBuildFile("java/com/google/BUILD", "glob(include = '**/*.java')");
 
     assertHasError(file, "Glob parameter 'include' must be a list of strings");
   }
 
+  @Test
   public void testInvalidExcludeDirectoriesValue() {
     BuildFile file =
         createBuildFile(
@@ -87,6 +99,7 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
     assertHasError(file, "exclude_directories parameter to glob must be 0 or 1");
   }
 
+  @Test
   public void testUnrecognizedArgumentError() {
     BuildFile file =
         createBuildFile(
@@ -95,12 +108,14 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
     assertHasError(file, "Unrecognized glob argument");
   }
 
+  @Test
   public void testInvalidListArgumentValue() {
     BuildFile file = createBuildFile("java/com/google/BUILD", "glob(include = foo)");
 
     assertHasError(file, "Glob parameter 'include' must be a list of strings");
   }
 
+  @Test
   public void testLocalVariableReference() {
     BuildFile file =
         createBuildFile("java/com/google/BUILD", "foo = ['*.java']", "glob(include = foo)");
@@ -108,8 +123,9 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
     assertNoErrors(file);
   }
 
+  @Test
   public void testLoadedVariableReference() {
-    BuildFile ext = createBuildFile("java/com/foo/vars.bzl", "LIST_VAR = ['*']");
+    createBuildFile("java/com/foo/vars.bzl", "LIST_VAR = ['*']");
     BuildFile file =
         createBuildFile(
             "java/com/google/BUILD",
@@ -119,8 +135,9 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
     assertNoErrors(file);
   }
 
+  @Test
   public void testInvalidLoadedVariableReference() {
-    BuildFile ext = createBuildFile("java/com/foo/vars.bzl", "LIST_VAR = ['*']", "def function()");
+    createBuildFile("java/com/foo/vars.bzl", "LIST_VAR = ['*']", "def function()");
     BuildFile file =
         createBuildFile(
             "java/com/google/BUILD",
@@ -130,18 +147,21 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
     assertHasError(file, "Glob parameter 'include' must be a list of strings");
   }
 
+  @Test
   public void testUnresolvedReferenceExpression() {
     BuildFile file = createBuildFile("java/com/google/BUILD", "glob(include = ref)");
 
     assertHasError(file, "Glob parameter 'include' must be a list of strings");
   }
 
+  @Test
   public void testPossibleListExpressionFuncallExpression() {
     BuildFile file = createBuildFile("java/com/google/BUILD", "glob(include = fn.list)");
 
     assertNoErrors(file);
   }
 
+  @Test
   public void testPossibleListExpressionParameter() {
     BuildFile file =
         createBuildFile(
@@ -150,6 +170,7 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
     assertNoErrors(file);
   }
 
+  @Test
   public void testNestedGlobs() {
     // blaze accepts nested globs
     BuildFile file = createBuildFile("java/com/google/BUILD", "glob(glob(['*.java']))");
@@ -157,6 +178,7 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
     assertNoErrors(file);
   }
 
+  @Test
   public void testKnownInvalidResolvedListExpression() {
     BuildFile file =
         createBuildFile("java/com/google/BUILD", "bool_literal = True", "glob(bool_literal)");
@@ -164,6 +186,7 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
     assertHasError(file, "Glob parameter 'include' must be a list of strings");
   }
 
+  @Test
   public void testKnownInvalidResolvedString() {
     BuildFile file =
         createBuildFile("java/com/google/BUILD", "bool_literal = True", "glob([bool_literal])");
@@ -171,6 +194,7 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
     assertHasError(file, "Glob parameter 'include' must be a list of strings");
   }
 
+  @Test
   public void testPossibleStringLiteralIfStatement() {
     BuildFile file =
         createBuildFile("java/com/google/BUILD", "glob(include = ['*.java', if test : a else b])");
@@ -179,6 +203,7 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
     assertNoErrors(file);
   }
 
+  @Test
   public void testPossibleStringLiteralParameter() {
     BuildFile file =
         createBuildFile(
@@ -206,10 +231,8 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
 
   private List<Annotation> validateFile(BuildFile file) {
     GlobErrorAnnotator annotator = createAnnotator(file);
-    for (GlobExpression glob :
-        PsiUtils.findAllChildrenOfClassRecursive(file, GlobExpression.class)) {
-      annotator.visitGlobExpression(glob);
-    }
+    PsiUtils.findAllChildrenOfClassRecursive(file, GlobExpression.class)
+        .forEach(annotator::visitGlobExpression);
     return annotationHolder;
   }
 

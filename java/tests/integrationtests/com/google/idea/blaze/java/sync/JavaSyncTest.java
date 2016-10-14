@@ -19,9 +19,9 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.ideinfo.JavaRuleIdeInfo;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.ideinfo.RuleMapBuilder;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
@@ -31,10 +31,15 @@ import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
 import java.util.List;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Java-specific sync integration tests. */
+@RunWith(JUnit4.class)
 public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
 
+  @Test
   public void testJavaClassesPresentInClassPath() throws Exception {
     setProjectView(
         "directories:",
@@ -97,6 +102,7 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
         .isEqualTo(tempDirectory.getPath() + "/java/com/google");
   }
 
+  @Test
   public void testSimpleSync() throws Exception {
     setProjectView(
         "directories:",

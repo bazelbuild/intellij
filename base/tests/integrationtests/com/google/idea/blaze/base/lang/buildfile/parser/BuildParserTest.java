@@ -35,17 +35,23 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.junit.After;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Test for the BUILD file parser (converting lexical elements into PSI elements) */
+@RunWith(JUnit4.class)
 public class BuildParserTest extends BuildFileIntegrationTestCase {
 
   private final List<String> errors = Lists.newArrayList();
 
-  @Override
-  protected void doTearDown() {
+  @After
+  public final void doTearDown() {
     errors.clear();
   }
 
+  @Test
   public void testAugmentedAssign() throws Exception {
     assertThat(parse("x += 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x -= 1")).isEqualTo("aug_assign(reference, int)");
@@ -55,11 +61,13 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testAssign() throws Exception {
     assertThat(parse("a, b = 5\n")).isEqualTo("assignment(list(reference, target), int)");
     assertNoErrors();
   }
 
+  @Test
   public void testAssign2() throws Exception {
     assertThat(parse("a = b;c = d\n"))
         .isEqualTo(
@@ -67,11 +75,13 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testInvalidAssign() throws Exception {
     parse("1 + (b = c)");
     assertContainsErrors();
   }
 
+  @Test
   public void testTupleAssign() throws Exception {
     assertThat(parse("list[0] = 5; dict['key'] = value\n"))
         .isEqualTo(
@@ -82,18 +92,21 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testPrimary() throws Exception {
     assertThat(parse("f(1 + 2)"))
         .isEqualTo("function_call(reference, arg_list(positional(binary_op(int, int))))");
     assertNoErrors();
   }
 
+  @Test
   public void testSecondary() throws Exception {
     assertThat(parse("f(1 % 2)"))
         .isEqualTo("function_call(reference, arg_list(positional(binary_op(int, int))))");
     assertNoErrors();
   }
 
+  @Test
   public void testDoesNotGetStuck() throws Exception {
     // Make sure the parser does not get stuck when trying
     // to parse an expression containing a syntax error.
@@ -103,6 +116,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     parse("f(1, [x for foo foo foo foo], 3)");
   }
 
+  @Test
   public void testInvalidFunctionStatementDoesNotGetStuck() throws Exception {
     // Make sure the parser does not get stuck when trying
     // to parse a function statement containing a syntax error.
@@ -111,6 +125,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     parse("def empty)");
   }
 
+  @Test
   public void testSubstring() throws Exception {
     assertThat(parse("'FOO.CC'[:].lower()[1:]"))
         .isEqualTo(
@@ -122,6 +137,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testFuncallExpr() throws Exception {
     assertThat(parse("foo(1, 2, bar=wiz)"))
         .isEqualTo(
@@ -134,6 +150,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testMethCallExpr() throws Exception {
     assertThat(parse("foo.foo(1, 2, bar=wiz)"))
         .isEqualTo(
@@ -144,6 +161,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testChainedMethCallExpr() throws Exception {
     assertThat(parse("foo.replace().split(1)"))
         .isEqualTo(
@@ -152,16 +170,19 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testPropRefExpr() throws Exception {
     assertThat(parse("foo.foo")).isEqualTo("dot_expr(reference, reference)");
     assertNoErrors();
   }
 
+  @Test
   public void testStringMethExpr() throws Exception {
     assertThat(parse("'foo'.foo()")).isEqualTo("function_call(string, reference, arg_list)");
     assertNoErrors();
   }
 
+  @Test
   public void testFuncallLocation() throws Exception {
     assertThat(parse("a(b);c = d\n"))
         .isEqualTo(
@@ -172,12 +193,14 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testList() throws Exception {
     assertThat(parse("[0,f(1),2]"))
         .isEqualTo("list(int, function_call(reference, arg_list(positional(int))), int)");
     assertNoErrors();
   }
 
+  @Test
   public void testDict() throws Exception {
     assertThat(parse("{1:2,2:f(1),3:4}"))
         .isEqualTo(
@@ -191,6 +214,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testArgumentList() throws Exception {
     assertThat(parse("f(0,g(1,2),2)"))
         .isEqualTo(
@@ -204,6 +228,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testForBreakContinue() throws Exception {
     String parsed =
         parse("def foo():", "  for i in [1, 2]:", "    break", "    continue", "    break");
@@ -217,37 +242,44 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testEmptyTuple() throws Exception {
     assertThat(parse("()")).isEqualTo("list");
     assertNoErrors();
   }
 
+  @Test
   public void testTupleTrailingComma() throws Exception {
     assertThat(parse("(42,)")).isEqualTo("list(int)");
     assertNoErrors();
   }
 
+  @Test
   public void testSingleton() throws Exception {
     assertThat(parse("(42)")) // not a tuple!
         .isEqualTo("list(int)");
     assertNoErrors();
   }
 
+  @Test
   public void testDictionaryLiterals() throws Exception {
     assertThat(parse("{1:42}")).isEqualTo("dict(dict_entry(int, int))");
     assertNoErrors();
   }
 
+  @Test
   public void testDictionaryLiterals1() throws Exception {
     assertThat(parse("{}")).isEqualTo("dict");
     assertNoErrors();
   }
 
+  @Test
   public void testDictionaryLiterals2() throws Exception {
     assertThat(parse("{1:42,}")).isEqualTo("dict(dict_entry(int, int))");
     assertNoErrors();
   }
 
+  @Test
   public void testDictionaryLiterals3() throws Exception {
     assertThat(parse("{1:42,2:43,3:44}"))
         .isEqualTo(
@@ -260,11 +292,13 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testInvalidListComprehensionSyntax() throws Exception {
     assertThat(parse("[x for x for y in ['a']]")).isEqualTo("list_comp(reference, reference)");
     assertContainsErrors();
   }
 
+  @Test
   public void testListComprehensionEmptyList() throws Exception {
     // At the moment, we just parse the components of comprehension suffixes.
     assertThat(parse("['foo/%s.java' % x for x in []]"))
@@ -272,6 +306,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testListComprehension() throws Exception {
     assertThat(parse("['foo/%s.java' % x for x in ['bar', 'wiz', 'quux']]"))
         .isEqualTo(
@@ -283,6 +318,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testDoesntGetStuck2() throws Exception {
     parse(
         "def foo():",
@@ -298,6 +334,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertContainsErrors();
   }
 
+  @Test
   public void testDoesntGetStuck3() throws Exception {
     parse("load(*)");
     parse("load()");
@@ -308,6 +345,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertContainsErrors();
   }
 
+  @Test
   public void testExprAsStatement() throws Exception {
     String parsed =
         parse("li = []", "li.append('a.c')", "\"\"\" string comment \"\"\"", "foo(bar)");
@@ -322,46 +360,54 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testPrecedence1() {
     assertThat(parse("'%sx' % 'foo' + 'bar'"))
         .isEqualTo("binary_op(binary_op(string, string), string)");
     assertNoErrors();
   }
 
+  @Test
   public void testPrecedence2() {
     assertThat(parse("('%sx' + 'foo') * 'bar'"))
         .isEqualTo("binary_op(list(binary_op(string, string)), string)");
     assertNoErrors();
   }
 
+  @Test
   public void testPrecedence3() {
     assertThat(parse("'%sx' % ('foo' + 'bar')"))
         .isEqualTo("binary_op(string, list(binary_op(string, string)))");
     assertNoErrors();
   }
 
+  @Test
   public void testPrecedence4() throws Exception {
     assertThat(parse("1 + - (2 - 3)"))
         .isEqualTo("binary_op(int, positional(list(binary_op(int, int))))");
     assertNoErrors();
   }
 
+  @Test
   public void testPrecedence5() throws Exception {
     assertThat(parse("2 * x | y + 1"))
         .isEqualTo("binary_op(binary_op(int, reference), binary_op(reference, int))");
     assertNoErrors();
   }
 
+  @Test
   public void testNotIsIgnored() throws Exception {
     assertThat(parse("not 'b'")).isEqualTo("string");
     assertNoErrors();
   }
 
+  @Test
   public void testNotIn() throws Exception {
     assertThat(parse("'a' not in 'b'")).isEqualTo("binary_op(string, string)");
     assertNoErrors();
   }
 
+  @Test
   public void testParseBuildFileWithSingeRule() throws Exception {
     ASTNode tree =
         createAST(
@@ -375,6 +421,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testParseBuildFileWithMultipleRules() throws Exception {
     ASTNode tree =
         createAST(
@@ -393,32 +440,38 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testMissingComma() throws Exception {
     // missing comma after name='foo'
     parse("genrule(name = 'foo'", "   srcs = ['in'])");
     assertContainsError("',' expected");
   }
 
+  @Test
   public void testDoubleSemicolon() throws Exception {
     parse("x = 1; ; x = 2;");
     assertContainsError("expected an expression");
   }
 
+  @Test
   public void testMissingBlock() throws Exception {
     parse("x = 1;", "def foo(x):", "x = 2;\n");
     assertContainsError("'indent' expected");
   }
 
+  @Test
   public void testFunCallBadSyntax() throws Exception {
     parse("f(1,\n");
     assertContainsError("')' expected");
   }
 
+  @Test
   public void testFunCallBadSyntax2() throws Exception {
     parse("f(1, 5, ,)\n");
     assertContainsError("expected an expression");
   }
 
+  @Test
   public void testLoad() throws Exception {
     ASTNode tree = createAST("load('file', 'foo', 'bar',)\n");
     List<LoadStatement> stmts = getTopLevelNodesOfType(tree, LoadStatement.class);
@@ -430,11 +483,13 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testLoadNoSymbol() throws Exception {
     parse("load('/foo/bar/file')\n");
     assertContainsError("'load' statements must include at least one loaded function");
   }
 
+  @Test
   public void testFunctionDefinition() throws Exception {
     ASTNode tree =
         createAST(
@@ -449,6 +504,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testFunctionCall() throws Exception {
     ASTNode tree = createAST("function(name = 'foo', srcs, *args, **kwargs)");
     List<BuildElement> stmts = getTopLevelNodesOfType(tree, BuildElement.class);
@@ -465,6 +521,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertNoErrors();
   }
 
+  @Test
   public void testConditionalStatement() throws Exception {
     // we don't yet bother specifying which kind of conditionals we hit
     assertThat(parse("if x : y elif a : b else c"))

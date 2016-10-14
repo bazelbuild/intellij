@@ -25,8 +25,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.rulemaps.SourceToRuleMap;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -52,11 +52,11 @@ import javax.annotation.Nullable;
 
 final class BlazeConfigurationResolver {
   private static final class MapEntry {
-    public final Label label;
+    public final RuleKey ruleKey;
     public final BlazeResolveConfiguration configuration;
 
-    public MapEntry(Label label, BlazeResolveConfiguration configuration) {
-      this.label = label;
+    public MapEntry(RuleKey ruleKey, BlazeResolveConfiguration configuration) {
+      this.ruleKey = ruleKey;
       this.configuration = configuration;
     }
   }
@@ -64,7 +64,8 @@ final class BlazeConfigurationResolver {
   private static final Logger LOG = Logger.getInstance(BlazeConfigurationResolver.class);
   private final Project project;
 
-  private ImmutableMap<Label, BlazeResolveConfiguration> resolveConfigurations = ImmutableMap.of();
+  private ImmutableMap<RuleKey, BlazeResolveConfiguration> resolveConfigurations =
+      ImmutableMap.of();
 
   public BlazeConfigurationResolver(Project project) {
     this.project = project;
@@ -72,7 +73,7 @@ final class BlazeConfigurationResolver {
 
   public void update(BlazeContext context, BlazeProjectData blazeProjectData) {
     WorkspacePathResolver workspacePathResolver = blazeProjectData.workspacePathResolver;
-    ImmutableMap<Label, CToolchainIdeInfo> toolchainLookupMap =
+    ImmutableMap<RuleKey, CToolchainIdeInfo> toolchainLookupMap =
         BlazeResolveConfiguration.buildToolchainLookupMap(
             context, blazeProjectData.ruleMap, blazeProjectData.reverseDependencies);
     resolveConfigurations =
@@ -80,15 +81,15 @@ final class BlazeConfigurationResolver {
             context, blazeProjectData, toolchainLookupMap, workspacePathResolver);
   }
 
-  private ImmutableMap<Label, BlazeResolveConfiguration> buildBlazeConfigurationMap(
+  private ImmutableMap<RuleKey, BlazeResolveConfiguration> buildBlazeConfigurationMap(
       BlazeContext parentContext,
       BlazeProjectData blazeProjectData,
-      ImmutableMap<Label, CToolchainIdeInfo> toolchainLookupMap,
+      ImmutableMap<RuleKey, CToolchainIdeInfo> toolchainLookupMap,
       WorkspacePathResolver workspacePathResolver) {
     // Type specification needed to avoid incorrect type inference during command line build.
     return Scope.push(
         parentContext,
-        (ScopedFunction<ImmutableMap<Label, BlazeResolveConfiguration>>)
+        (ScopedFunction<ImmutableMap<RuleKey, BlazeResolveConfiguration>>)
             context -> {
               context.push(new TimingScope("Build C configuration map"));
 
@@ -110,7 +111,7 @@ final class BlazeConfigurationResolver {
                 }
               }
 
-              ImmutableMap.Builder<Label, BlazeResolveConfiguration> newResolveConfigurations =
+              ImmutableMap.Builder<RuleKey, BlazeResolveConfiguration> newResolveConfigurations =
                   ImmutableMap.builder();
               List<MapEntry> mapEntries;
               try {
@@ -125,7 +126,7 @@ final class BlazeConfigurationResolver {
               for (MapEntry mapEntry : mapEntries) {
                 // Skip over labels that don't have C configuration data.
                 if (mapEntry != null) {
-                  newResolveConfigurations.put(mapEntry.label, mapEntry.configuration);
+                  newResolveConfigurations.put(mapEntry.ruleKey, mapEntry.configuration);
                 }
               }
               return newResolveConfigurations.build();
@@ -139,27 +140,28 @@ final class BlazeConfigurationResolver {
   @Nullable
   private MapEntry createResolveConfiguration(
       RuleIdeInfo rule,
-      ImmutableMap<Label, CToolchainIdeInfo> toolchainLookupMap,
+      ImmutableMap<RuleKey, CToolchainIdeInfo> toolchainLookupMap,
       ConcurrentMap<CToolchainIdeInfo, File> compilerWrapperCache,
       WorkspacePathResolver workspacePathResolver,
       BlazeProjectData blazeProjectData) {
-    Label label = rule.label;
-    LOG.info("Resolving " + label.toString());
-    CToolchainIdeInfo toolchainIdeInfo = toolchainLookupMap.get(label);
+    RuleKey ruleKey = rule.key;
+    LOG.info("Resolving " + ruleKey);
+
+    CToolchainIdeInfo toolchainIdeInfo = toolchainLookupMap.get(ruleKey);
     if (toolchainIdeInfo != null) {
       File compilerWrapper =
           findOrCreateCompilerWrapperScript(
-              compilerWrapperCache, toolchainIdeInfo, workspacePathResolver, rule.label);
+              compilerWrapperCache, toolchainIdeInfo, workspacePathResolver, ruleKey);
       if (compilerWrapper != null) {
         BlazeResolveConfiguration config =
             BlazeResolveConfiguration.createConfigurationForTarget(
                 project,
                 workspacePathResolver,
-                blazeProjectData.ruleMap.get(label),
+                blazeProjectData.ruleMap.get(ruleKey),
                 toolchainIdeInfo,
                 compilerWrapper);
         if (config != null) {
-          return new MapEntry(label, config);
+          return new MapEntry(ruleKey, config);
         }
       }
     }
@@ -171,7 +173,7 @@ final class BlazeConfigurationResolver {
       Map<CToolchainIdeInfo, File> compilerWrapperCache,
       CToolchainIdeInfo toolchainIdeInfo,
       WorkspacePathResolver workspacePathResolver,
-      Label label) {
+      RuleKey ruleKey) {
     File compilerWrapper = compilerWrapperCache.get(toolchainIdeInfo);
     if (compilerWrapper == null) {
       File cppExecutable = toolchainIdeInfo.cppExecutable.getAbsoluteOrRelativeFile();
@@ -182,7 +184,7 @@ final class BlazeConfigurationResolver {
         String errorMessage =
             String.format(
                 "Unable to find compiler executable: %s for rule %s",
-                toolchainIdeInfo.cppExecutable.toString(), label.toString());
+                toolchainIdeInfo.cppExecutable.toString(), ruleKey);
         LOG.warn(errorMessage);
         compilerWrapper = null;
       } else {
@@ -251,9 +253,9 @@ final class BlazeConfigurationResolver {
   @Nullable
   public OCResolveConfiguration getConfigurationForFile(VirtualFile sourceFile) {
     SourceToRuleMap sourceToRuleMap = SourceToRuleMap.getInstance(project);
-    List<Label> targetsForSourceFile =
+    List<RuleKey> targetsForSourceFile =
         Lists.newArrayList(
-            sourceToRuleMap.getTargetsForSourceFile(VfsUtilCore.virtualToIoFile(sourceFile)));
+            sourceToRuleMap.getRulesForSourceFile(VfsUtilCore.virtualToIoFile(sourceFile)));
     if (targetsForSourceFile.isEmpty()) {
       return null;
     }
@@ -262,10 +264,10 @@ final class BlazeConfigurationResolver {
     // we can't possibly show how it will be interpreted in both contexts at the same time
     // in the IDE, so just pick the first target after we sort.
     targetsForSourceFile.sort((o1, o2) -> o1.toString().compareTo(o2.toString()));
-    Label target = Iterables.getFirst(targetsForSourceFile, null);
-    assert (target != null);
+    RuleKey ruleKey = Iterables.getFirst(targetsForSourceFile, null);
+    assert (ruleKey != null);
 
-    return resolveConfigurations.get(target);
+    return resolveConfigurations.get(ruleKey);
   }
 
   public List<? extends OCResolveConfiguration> getAllConfigurations() {

@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.settings.BlazeJavaUserSettings;
 import com.google.idea.blaze.java.sync.BlazeLibraryCollector;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
@@ -101,15 +102,17 @@ public class JarCache {
             .map(library -> (BlazeJarLibrary) library)
             .collect(Collectors.toList());
 
+    ArtifactLocationDecoder artifactLocationDecoder = projectData.artifactLocationDecoder;
     BiMap<File, String> sourceFileToCacheKey = HashBiMap.create(jarLibraries.size());
     for (BlazeJarLibrary library : jarLibraries) {
-      File jarFile = library.libraryArtifact.jarForIntellijLibrary().getFile();
+      File jarFile =
+          artifactLocationDecoder.decode(library.libraryArtifact.jarForIntellijLibrary());
       sourceFileToCacheKey.put(jarFile, cacheKeyForJar(jarFile));
 
       boolean attachSourceJar =
           attachAllSourceJars || sourceJarManager.hasSourceJarAttached(library.key);
       if (attachSourceJar && library.libraryArtifact.sourceJar != null) {
-        File srcJarFile = library.libraryArtifact.sourceJar.getFile();
+        File srcJarFile = artifactLocationDecoder.decode(library.libraryArtifact.sourceJar);
         sourceFileToCacheKey.put(srcJarFile, cacheKeyForSourceJar(srcJarFile));
       }
     }
@@ -262,8 +265,8 @@ public class JarCache {
   }
 
   /** Gets the cached file for a jar. If it doesn't exist, we return the file from the library. */
-  public File getCachedJar(BlazeJarLibrary library) {
-    File file = library.libraryArtifact.jarForIntellijLibrary().getFile();
+  public File getCachedJar(ArtifactLocationDecoder decoder, BlazeJarLibrary library) {
+    File file = decoder.decode(library.libraryArtifact.jarForIntellijLibrary());
     if (!enabled || sourceFileToCacheKey == null) {
       return file;
     }
@@ -276,11 +279,11 @@ public class JarCache {
 
   /** Gets the cached file for a source jar. */
   @Nullable
-  public File getCachedSourceJar(BlazeJarLibrary library) {
+  public File getCachedSourceJar(ArtifactLocationDecoder decoder, BlazeJarLibrary library) {
     if (library.libraryArtifact.sourceJar == null) {
       return null;
     }
-    File file = library.libraryArtifact.sourceJar.getFile();
+    File file = decoder.decode(library.libraryArtifact.sourceJar);
     if (!enabled || sourceFileToCacheKey == null) {
       return file;
     }

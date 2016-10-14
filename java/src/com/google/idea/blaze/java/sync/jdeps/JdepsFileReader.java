@@ -26,14 +26,14 @@ import com.google.idea.blaze.base.filecache.FileDiffer;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaRuleIdeInfo;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.model.RuleMap;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 import com.google.idea.blaze.base.model.SyncState;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.repackaged.devtools.build.lib.view.proto.Deps;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -54,20 +54,20 @@ public class JdepsFileReader {
   private static final Logger LOG = Logger.getInstance(JdepsFileReader.class);
 
   static class JdepsState implements Serializable {
-    private static final long serialVersionUID = 3L;
+    private static final long serialVersionUID = 4L;
     private ImmutableMap<File, Long> fileState = null;
-    private Map<File, Label> fileToLabelMap = Maps.newHashMap();
-    private Map<Label, List<String>> labelToJdeps = Maps.newHashMap();
+    private Map<File, RuleKey> fileToRuleMap = Maps.newHashMap();
+    private Map<RuleKey, List<String>> ruleToJdeps = Maps.newHashMap();
   }
 
   private static class Result {
     File file;
-    Label label;
+    RuleKey ruleKey;
     List<String> dependencies;
 
-    public Result(File file, Label label, List<String> dependencies) {
+    public Result(File file, RuleKey ruleKey, List<String> dependencies) {
       this.file = file;
-      this.label = label;
+      this.ruleKey = ruleKey;
       this.dependencies = dependencies;
     }
   }
@@ -77,7 +77,8 @@ public class JdepsFileReader {
   public JdepsMap loadJdepsFiles(
       Project project,
       BlazeContext parentContext,
-      RuleMap ruleMap,
+      ArtifactLocationDecoder artifactLocationDecoder,
+      Iterable<RuleIdeInfo> rulesToLoad,
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState) {
     JdepsState oldState =
@@ -87,30 +88,36 @@ public class JdepsFileReader {
             parentContext,
             (context) -> {
               context.push(new TimingScope("LoadJdepsFiles"));
-              return doLoadJdepsFiles(project, context, oldState, ruleMap);
+              return doLoadJdepsFiles(
+                  project, context, artifactLocationDecoder, oldState, rulesToLoad);
             });
     if (jdepsState == null) {
       return null;
     }
     syncStateBuilder.put(JdepsState.class, jdepsState);
-    return label -> jdepsState.labelToJdeps.get(label);
+    return ruleKey -> jdepsState.ruleToJdeps.get(ruleKey);
   }
 
   private JdepsState doLoadJdepsFiles(
-      Project project, BlazeContext context, @Nullable JdepsState oldState, RuleMap ruleMap) {
+      Project project,
+      BlazeContext context,
+      ArtifactLocationDecoder artifactLocationDecoder,
+      @Nullable JdepsState oldState,
+      Iterable<RuleIdeInfo> rulesToLoad) {
     JdepsState state = new JdepsState();
     if (oldState != null) {
-      state.labelToJdeps = Maps.newHashMap(oldState.labelToJdeps);
-      state.fileToLabelMap = Maps.newHashMap(oldState.fileToLabelMap);
+      state.ruleToJdeps = Maps.newHashMap(oldState.ruleToJdeps);
+      state.fileToRuleMap = Maps.newHashMap(oldState.fileToRuleMap);
     }
 
-    List<File> files = Lists.newArrayList();
-    for (RuleIdeInfo ruleIdeInfo : ruleMap.rules()) {
+    Map<File, RuleKey> fileToRuleMap = Maps.newHashMap();
+    for (RuleIdeInfo ruleIdeInfo : rulesToLoad) {
+      assert ruleIdeInfo != null;
       JavaRuleIdeInfo javaRuleIdeInfo = ruleIdeInfo.javaRuleIdeInfo;
       if (javaRuleIdeInfo != null) {
         ArtifactLocation jdepsFile = javaRuleIdeInfo.jdepsFile;
         if (jdepsFile != null) {
-          files.add(jdepsFile.getFile());
+          fileToRuleMap.put(artifactLocationDecoder.decode(jdepsFile), ruleIdeInfo.key);
         }
       }
     }
@@ -119,7 +126,10 @@ public class JdepsFileReader {
     List<File> removedFiles = Lists.newArrayList();
     state.fileState =
         FileDiffer.updateFiles(
-            oldState != null ? oldState.fileState : null, files, updatedFiles, removedFiles);
+            oldState != null ? oldState.fileState : null,
+            fileToRuleMap.keySet(),
+            updatedFiles,
+            removedFiles);
 
     ListenableFuture<?> fetchFuture =
         PrefetchService.getInstance().prefetchFiles(project, updatedFiles);
@@ -132,9 +142,9 @@ public class JdepsFileReader {
     }
 
     for (File removedFile : removedFiles) {
-      Label label = state.fileToLabelMap.remove(removedFile);
-      if (label != null) {
-        state.labelToJdeps.remove(label);
+      RuleKey ruleKey = state.fileToRuleMap.remove(removedFile);
+      if (ruleKey != null) {
+        state.ruleToJdeps.remove(ruleKey);
       }
     }
 
@@ -149,20 +159,18 @@ public class JdepsFileReader {
                 try (InputStream inputStream = new FileInputStream(updatedFile)) {
                   Deps.Dependencies dependencies = Deps.Dependencies.parseFrom(inputStream);
                   if (dependencies != null) {
-                    if (dependencies.hasRuleLabel()) {
-                      Label label = new Label(dependencies.getRuleLabel());
-                      List<String> dependencyStringList = Lists.newArrayList();
-                      for (Deps.Dependency dependency : dependencies.getDependencyList()) {
-                        // We only want explicit or implicit deps that were
-                        // actually resolved by the compiler, not ones that are
-                        // available for use in the same package
-                        if (dependency.getKind() == Deps.Dependency.Kind.EXPLICIT
-                            || dependency.getKind() == Deps.Dependency.Kind.IMPLICIT) {
-                          dependencyStringList.add(dependency.getPath());
-                        }
+                    List<String> dependencyStringList = Lists.newArrayList();
+                    for (Deps.Dependency dependency : dependencies.getDependencyList()) {
+                      // We only want explicit or implicit deps that were
+                      // actually resolved by the compiler, not ones that are
+                      // available for use in the same package
+                      if (dependency.getKind() == Deps.Dependency.Kind.EXPLICIT
+                          || dependency.getKind() == Deps.Dependency.Kind.IMPLICIT) {
+                        dependencyStringList.add(dependency.getPath());
                       }
-                      return new Result(updatedFile, label, dependencyStringList);
                     }
+                    RuleKey ruleKey = fileToRuleMap.get(updatedFile);
+                    return new Result(updatedFile, ruleKey, dependencyStringList);
                   }
                 } catch (FileNotFoundException e) {
                   LOG.info("Could not open jdeps file: " + updatedFile);
@@ -173,8 +181,8 @@ public class JdepsFileReader {
     try {
       for (Result result : Futures.allAsList(futures).get()) {
         if (result != null) {
-          state.fileToLabelMap.put(result.file, result.label);
-          state.labelToJdeps.put(result.label, result.dependencies);
+          state.fileToRuleMap.put(result.file, result.ruleKey);
+          state.ruleToJdeps.put(result.ruleKey, result.dependencies);
         }
       }
       context.output(

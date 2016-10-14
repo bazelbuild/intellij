@@ -79,12 +79,11 @@ public class BlazeAndroidTestClassRunConfigurationProducer
       return false;
     }
     configuration.setTarget(rule.label);
-    BlazeAndroidTestRunConfigurationHandler handler =
-        configuration.getHandlerIfType(BlazeAndroidTestRunConfigurationHandler.class);
-    if (handler == null) {
+    BlazeAndroidTestRunConfigurationState configState =
+        configuration.getHandlerStateIfType(BlazeAndroidTestRunConfigurationState.class);
+    if (configState == null) {
       return false;
     }
-    BlazeAndroidTestRunConfigurationState configState = handler.getConfigState();
     configState.setTestingType(AndroidTestRunConfiguration.TEST_CLASS);
     configState.setClassName(testClass.getQualifiedName());
     configuration.setGeneratedName();
@@ -122,12 +121,11 @@ public class BlazeAndroidTestClassRunConfigurationProducer
 
   private static boolean checkIfAttributesAreTheSame(
       BlazeCommandRunConfiguration configuration, PsiClass testClass) {
-    BlazeAndroidTestRunConfigurationHandler handler =
-        configuration.getHandlerIfType(BlazeAndroidTestRunConfigurationHandler.class);
-    if (handler == null) {
+    BlazeAndroidTestRunConfigurationState configState =
+        configuration.getHandlerStateIfType(BlazeAndroidTestRunConfigurationState.class);
+    if (configState == null) {
       return false;
     }
-    BlazeAndroidTestRunConfigurationState configState = handler.getConfigState();
     if (Strings.isNullOrEmpty(configState.getClassName())) {
       return false;
     }

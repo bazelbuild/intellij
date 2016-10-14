@@ -15,17 +15,26 @@
  */
 package com.google.idea.blaze.android.run.test;
 
+import com.android.tools.idea.run.ValidationError;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationState;
+import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.run.state.RunConfigurationState;
+import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import org.jdom.Element;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.Contract;
 
 /** State specific for the android test configuration. */
-final class BlazeAndroidTestRunConfigurationState implements BlazeAndroidRunConfigurationState {
+final class BlazeAndroidTestRunConfigurationState implements RunConfigurationState {
 
   private static final String RUN_THROUGH_BLAZE_ATTR = "blaze-run-through-blaze";
 
@@ -47,7 +56,7 @@ final class BlazeAndroidTestRunConfigurationState implements BlazeAndroidRunConf
   private static final String EXTRA_OPTIONS = "EXTRA_OPTIONS";
 
   private int testingType = TEST_ALL_IN_MODULE;
-  private String instrumentationRunnerClass;
+  private String instrumentationRunnerClass = "";
   private String methodName = "";
   private String className = "";
   private String packageName = "";
@@ -56,10 +65,14 @@ final class BlazeAndroidTestRunConfigurationState implements BlazeAndroidRunConf
   // Whether to delegate to 'blaze test'.
   private boolean runThroughBlaze;
 
-  public BlazeAndroidTestRunConfigurationState() {
-    String defaultInstrumentationRunnerClass =
-        InstrumentationRunnerProvider.getDefaultInstrumentationRunnerClass();
-    instrumentationRunnerClass = Strings.nullToEmpty(defaultInstrumentationRunnerClass);
+  private final BlazeAndroidRunConfigurationCommonState commonState;
+
+  public BlazeAndroidTestRunConfigurationState(String buildSystemName) {
+    commonState = new BlazeAndroidRunConfigurationCommonState(buildSystemName, true);
+  }
+
+  public BlazeAndroidRunConfigurationCommonState getCommonState() {
+    return commonState;
   }
 
   @Contract(pure = true)
@@ -119,8 +132,22 @@ final class BlazeAndroidTestRunConfigurationState implements BlazeAndroidRunConf
     this.extraOptions = extraOptions;
   }
 
+  public ImmutableList<String> getBuildFlags(Project project, ProjectViewSet projectViewSet) {
+    return commonState.getBuildFlags(project, projectViewSet);
+  }
+
+  /**
+   * We collect errors rather than throwing to avoid missing fatal errors by exiting early for a
+   * warning.
+   */
+  public List<ValidationError> validate(@Nullable AndroidFacet facet) {
+    return commonState.validate(facet);
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
+    commonState.readExternal(element);
+
     String testingTypeAttribute = element.getAttributeValue(TESTING_TYPE);
     if (!Strings.isNullOrEmpty(testingTypeAttribute)) {
       testingType = Integer.parseInt(testingTypeAttribute);
@@ -164,6 +191,8 @@ final class BlazeAndroidTestRunConfigurationState implements BlazeAndroidRunConf
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
+    commonState.writeExternal(element);
+
     element.setAttribute(RUN_THROUGH_BLAZE_ATTR, Boolean.toString(runThroughBlaze));
     element.setAttribute(TESTING_TYPE, Integer.toString(testingType));
     element.setAttribute(INSTRUMENTATION_RUNNER_CLASS, instrumentationRunnerClass);
@@ -182,5 +211,10 @@ final class BlazeAndroidTestRunConfigurationState implements BlazeAndroidRunConf
       result.put(name, value);
     }
     return result;
+  }
+
+  @Override
+  public RunConfigurationStateEditor getEditor(Project project) {
+    return new BlazeAndroidTestRunConfigurationStateEditor(commonState.getEditor(project), project);
   }
 }

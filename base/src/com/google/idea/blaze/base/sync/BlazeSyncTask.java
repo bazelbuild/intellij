@@ -26,11 +26,11 @@ import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.metrics.Action;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.SyncState;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -69,6 +69,7 @@ import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -149,13 +150,13 @@ final class BlazeSyncTask implements Progressive {
     SyncResult syncResult = SyncResult.FAILURE;
     try {
       SaveUtil.saveAllFiles();
-      onSyncStart(project);
+      onSyncStart(project, context);
       syncResult = doSyncProject(context);
     } catch (AssertionError | Exception e) {
       LOG.error(e);
       IssueOutput.error("Internal error: " + e.getMessage()).submit(context);
     } finally {
-      afterSync(project, syncResult);
+      afterSync(project, context, syncResult);
     }
     return syncResult == SyncResult.SUCCESS || syncResult == SyncResult.PARTIAL_SUCCESS;
   }
@@ -215,6 +216,8 @@ final class BlazeSyncTask implements Progressive {
     }
     WorkspacePathResolver workspacePathResolver =
         workspacePathResolverAndProjectView.workspacePathResolver;
+    ArtifactLocationDecoder artifactLocationDecoder =
+        new ArtifactLocationDecoderImpl(blazeRoots, workspacePathResolver);
     ProjectViewSet projectViewSet = workspacePathResolverAndProjectView.projectViewSet;
 
     WorkspaceLanguageSettings workspaceLanguageSettings =
@@ -277,7 +280,7 @@ final class BlazeSyncTask implements Progressive {
               projectViewSet,
               targets,
               workspaceLanguageSettings,
-              new ArtifactLocationDecoder(blazeRoots, workspacePathResolver),
+              artifactLocationDecoder,
               syncStateBuilder,
               previousSyncState,
               mergeWithOldState);
@@ -292,7 +295,7 @@ final class BlazeSyncTask implements Progressive {
       RuleMap ruleMap = ideQueryResult.ruleMap;
       ideInfoResult = ideQueryResult.buildResult;
 
-      ListenableFuture<ImmutableMultimap<Label, Label>> reverseDependenciesFuture =
+      ListenableFuture<ImmutableMultimap<RuleKey, RuleKey>> reverseDependenciesFuture =
           BlazeExecutor.getInstance().submit(() -> ReverseDependencyMap.createRdepsMap(ruleMap));
 
       boolean doResolve = syncPluginRequiresBuild || oldBlazeProjectData == null;
@@ -322,13 +325,14 @@ final class BlazeSyncTask implements Progressive {
                   blazeRoots,
                   workingSet,
                   workspacePathResolver,
+                  artifactLocationDecoder,
                   ruleMap,
                   syncStateBuilder,
                   previousSyncState);
             }
           });
 
-      ImmutableMultimap<Label, Label> reverseDependencies =
+      ImmutableMultimap<RuleKey, RuleKey> reverseDependencies =
           FutureUtil.waitForFuture(context, reverseDependenciesFuture)
               .timed("ReverseDependencies")
               .onError("Failed to compute reverse dependency map")
@@ -345,6 +349,7 @@ final class BlazeSyncTask implements Progressive {
               blazeRoots,
               workingSet,
               workspacePathResolver,
+              artifactLocationDecoder,
               workspaceLanguageSettings,
               syncStateBuilder.build(),
               reverseDependencies,
@@ -685,17 +690,17 @@ final class BlazeSyncTask implements Progressive {
     return VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, filePath);
   }
 
-  private static void onSyncStart(Project project) {
+  private static void onSyncStart(Project project, BlazeContext context) {
     final SyncListener[] syncListeners = SyncListener.EP_NAME.getExtensions();
     for (SyncListener syncListener : syncListeners) {
-      syncListener.onSyncStart(project);
+      syncListener.onSyncStart(project, context);
     }
   }
 
-  private static void afterSync(Project project, SyncResult syncResult) {
+  private static void afterSync(Project project, BlazeContext context, SyncResult syncResult) {
     final SyncListener[] syncListeners = SyncListener.EP_NAME.getExtensions();
     for (SyncListener syncListener : syncListeners) {
-      syncListener.afterSync(project, syncResult);
+      syncListener.afterSync(project, context, syncResult);
     }
   }
 
@@ -710,7 +715,7 @@ final class BlazeSyncTask implements Progressive {
     final SyncListener[] syncListeners = SyncListener.EP_NAME.getExtensions();
     for (SyncListener syncListener : syncListeners) {
       syncListener.onSyncComplete(
-          project, importSettings, projectViewSet, blazeProjectData, syncResult);
+          project, context, importSettings, projectViewSet, blazeProjectData, syncResult);
     }
   }
 

@@ -51,7 +51,6 @@ public class WorkspacePathResolverImpl implements WorkspacePathResolver {
   }
 
   @Override
-  @Nullable
   public File findPackageRoot(String relativePath) {
     if (packagePaths.size() == 1) {
       return packagePaths.get(0);
@@ -63,7 +62,9 @@ public class WorkspacePathResolverImpl implements WorkspacePathResolver {
         return pkg;
       }
     }
-    return null;
+
+    // Return first in package path, even though it might not exist
+    return packagePaths.get(0);
   }
 
   @Nullable

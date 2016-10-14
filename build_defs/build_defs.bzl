@@ -5,6 +5,7 @@ load("//build_defs/shared:build_defs.bzl",
      "merged_plugin_xml_impl",
      "stamped_plugin_xml_impl",
      "product_build_txt_impl",
+     "api_version_txt_impl",
      "intellij_plugin_impl",
      "plugin_bundle_impl")
 
@@ -25,6 +26,8 @@ def stamped_plugin_xml(name,
                        include_product_code_in_stamp=False,
                        version_file=None,
                        changelog_file=None,
+                       description_file=None,
+                       vendor_file=None,
                        **kwargs):
   """Stamps a plugin xml file with the IJ build number.
 
@@ -39,12 +42,16 @@ def stamped_plugin_xml(name,
       is included in since-build and until-build.
     version_file: A file with the version number to be included.
     changelog_file: A file with changelog to be included.
+    description_file: A file containing a plugin description to be included.
+    vendor_file: A file containing the vendor info to be included.
     **kwargs: Any additional arguments to pass to the final target.
   """
+  api_version_txt(
+      name = name + "_api_version",
+  )
   stamped_plugin_xml_impl(
       name = name,
-      application_info_jar = "//intellij_platform_sdk:application_info_jar",
-      application_info_name = "//intellij_platform_sdk:application_info_name",
+      api_version_txt = name + "_api_version",
       plugin_id = plugin_id,
       plugin_name = plugin_name,
       stamp_tool = "//build_defs/shared:stamp_plugin_xml",
@@ -54,6 +61,8 @@ def stamped_plugin_xml(name,
       include_product_code_in_stamp = include_product_code_in_stamp,
       version_file = version_file,
       changelog_file = changelog_file,
+      description_file = description_file,
+      vendor_file = vendor_file,
       **kwargs)
 
 def product_build_txt(name, **kwargs):
@@ -65,6 +74,14 @@ def product_build_txt(name, **kwargs):
       product_build_txt_tool = "//build_defs/shared:product_build_txt",
       **kwargs)
 
+def api_version_txt(name, **kwargs):
+  """Produces an api_version.txt file with the api version, including the product code."""
+  api_version_txt_impl(
+      name = name,
+      application_info_jar = "//intellij_platform_sdk:application_info_jar",
+      application_info_name = "//intellij_platform_sdk:application_info_name",
+      api_version_txt_tool = "//build_defs/shared:api_version_txt",
+      **kwargs)
 
 def intellij_plugin(name, plugin_xml, deps, meta_inf_files=[], **kwargs):
   """Creates an intellij plugin from the given deps and plugin.xml."""

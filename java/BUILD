@@ -52,7 +52,7 @@ intellij_plugin(
 )
 
 load(
-    "//intellij_test:test_defs.bzl",
+    "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
@@ -89,5 +89,6 @@ intellij_integration_test_suite(
         "//base:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "@jsr305_annotations//jar",
+        "@junit//jar",
     ],
 )

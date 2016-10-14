@@ -21,10 +21,11 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.rulemaps.SourceToRuleMap;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -37,6 +38,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.components.JBLabel;
 import java.io.File;
+import java.util.Collection;
 import java.util.Set;
 import javax.swing.JComboBox;
 import org.jetbrains.annotations.Nullable;
@@ -59,16 +61,19 @@ class BlazeCreateResourceUtils {
     if (blazeProjectData != null) {
       BlazeAndroidSyncData syncData = blazeProjectData.syncState.get(BlazeAndroidSyncData.class);
       if (syncData != null) {
-        ImmutableCollection<Label> labelsRelatedToContext = null;
+        ImmutableCollection<RuleKey> rulesRelatedToContext = null;
         File fileFromContext = null;
         if (contextFile != null) {
           fileFromContext = VfsUtilCore.virtualToIoFile(contextFile);
-          labelsRelatedToContext =
-              SourceToRuleMap.getInstance(project).getTargetsForSourceFile(fileFromContext);
-          if (labelsRelatedToContext.isEmpty()) {
-            labelsRelatedToContext = null;
+          rulesRelatedToContext =
+              SourceToRuleMap.getInstance(project).getRulesForSourceFile(fileFromContext);
+          if (rulesRelatedToContext.isEmpty()) {
+            rulesRelatedToContext = null;
           }
         }
+
+        ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.artifactLocationDecoder;
+
         // Sort:
         // - contextFile/res if contextFile is a directory,
         //   to optimize the right click on directory case, or the "closest" string
@@ -81,20 +86,24 @@ class BlazeCreateResourceUtils {
         Set<File> allResDirs = Sets.newTreeSet();
         for (AndroidResourceModule androidResourceModule :
             syncData.importResult.androidResourceModules) {
+
+          Collection<File> resources =
+              artifactLocationDecoder.decodeAll(androidResourceModule.resources);
+
+          Collection<File> transitiveResources =
+              artifactLocationDecoder.decodeAll(androidResourceModule.transitiveResources);
+
           // labelsRelatedToContext should include deps,
           // but as a first pass we only check the rules themselves
           // for resources. If we come up empty, then have anyResDir as a backup.
-          allResDirs.addAll(androidResourceModule.transitiveResources);
-          if (labelsRelatedToContext != null
-              && !labelsRelatedToContext.contains(androidResourceModule.label)) {
+          allResDirs.addAll(transitiveResources);
+
+          if (rulesRelatedToContext != null
+              && !rulesRelatedToContext.contains(androidResourceModule.ruleKey)) {
             continue;
           }
-          for (File resDir : androidResourceModule.resources) {
-            resourceDirs.add(resDir);
-          }
-          for (File resDir : androidResourceModule.transitiveResources) {
-            transitiveDirs.add(resDir);
-          }
+          resourceDirs.addAll(resources);
+          transitiveDirs.addAll(transitiveResources);
         }
         // No need to show some directories twice.
         transitiveDirs.removeAll(resourceDirs);

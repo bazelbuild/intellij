@@ -113,6 +113,7 @@ public final class BlazeFlags {
     if (!Strings.isNullOrEmpty(methodName)) {
       output.append('#');
       output.append(methodName);
+      output.append('$');
     }
 
     return output.toString();

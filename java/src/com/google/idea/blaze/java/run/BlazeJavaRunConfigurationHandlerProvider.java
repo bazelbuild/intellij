@@ -18,15 +18,10 @@ package com.google.idea.blaze.java.run;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
-import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.runners.ExecutionEnvironment;
 
-/** Java-specific handler for {@link BlazeCommandRunConfiguration}s. */
+/** Java-specific handler provider for {@link BlazeCommandRunConfiguration}s. */
 public class BlazeJavaRunConfigurationHandlerProvider
     implements BlazeCommandRunConfigurationHandlerProvider {
 
@@ -52,31 +47,4 @@ public class BlazeJavaRunConfigurationHandlerProvider
     return "BlazeJavaRunConfigurationHandlerProvider";
   }
 
-  private static class BlazeJavaRunConfigurationHandler
-      extends BlazeCommandGenericRunConfigurationHandler {
-
-    BlazeJavaRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-      super(configuration);
-    }
-
-    private BlazeJavaRunConfigurationHandler(
-        BlazeJavaRunConfigurationHandler other, BlazeCommandRunConfiguration configuration) {
-      super(other, configuration);
-    }
-
-    @Override
-    public BlazeJavaRunConfigurationHandler cloneFor(BlazeCommandRunConfiguration configuration) {
-      return new BlazeJavaRunConfigurationHandler(this, configuration);
-    }
-
-    @Override
-    public RunProfileState getState(Executor executor, ExecutionEnvironment environment) {
-      return new BlazeJavaRunProfileState(environment, executor instanceof DefaultDebugExecutor);
-    }
-
-    @Override
-    public String getHandlerName() {
-      return "Java Handler";
-    }
-  }
 }

@@ -21,10 +21,15 @@ import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests file path code completion in BUILD file labels. */
+@RunWith(JUnit4.class)
 public class FilePathCompletionTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testUniqueDirectoryCompleted() {
     BuildFile file = createBuildFile("java/BUILD", "'//'");
 
@@ -37,6 +42,7 @@ public class FilePathCompletionTest extends BuildFileIntegrationTestCase {
     assertCaretPosition(editor, 0, "'//java".length());
   }
 
+  @Test
   public void testUniqueMultiSegmentDirectoryCompleted() {
     BuildFile file = createBuildFile("java/com/google/BUILD", "'//'");
 
@@ -50,6 +56,7 @@ public class FilePathCompletionTest extends BuildFileIntegrationTestCase {
   // expected to be a typical workflow -- complete a segment,
   // get the possibilities, then start typing
   // next segment and complete again
+  @Test
   public void testMultiStageCompletion() {
     createDirectory("foo");
     createDirectory("bar");
@@ -77,6 +84,7 @@ public class FilePathCompletionTest extends BuildFileIntegrationTestCase {
     assertCaretPosition(editor, 0, "'//other/foo".length());
   }
 
+  @Test
   public void testCompletionSuggestionString() {
     createDirectory("foo");
     createDirectory("bar");

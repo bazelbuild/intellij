@@ -17,6 +17,8 @@ package com.google.idea.blaze.java.libraries;
 
 import com.google.idea.blaze.base.actions.BlazeAction;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.projectstructure.LibraryEditor;
 import com.intellij.CommonBundle;
@@ -35,10 +37,15 @@ class AttachSourceJarAction extends BlazeAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
     assert project != null;
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (blazeProjectData == null) {
+      return;
+    }
     Library library = LibraryActionHelper.findLibraryForAction(e);
     if (library != null) {
       BlazeJarLibrary blazeLibrary =
-          LibraryActionHelper.findLibraryFromIntellijLibrary(project, library);
+          LibraryActionHelper.findLibraryFromIntellijLibrary(project, blazeProjectData, library);
       if (blazeLibrary == null) {
         Messages.showErrorDialog(
             project, "Could not find this library in the project.", CommonBundle.getErrorTitle());
@@ -58,7 +65,12 @@ class AttachSourceJarAction extends BlazeAction {
               () -> {
                 LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
                 LibraryTable.ModifiableModel libraryTableModel = libraryTable.getModifiableModel();
-                LibraryEditor.updateLibrary(project, libraryTable, libraryTableModel, blazeLibrary);
+                LibraryEditor.updateLibrary(
+                    project,
+                    blazeProjectData.artifactLocationDecoder,
+                    libraryTable,
+                    libraryTableModel,
+                    blazeLibrary);
                 libraryTableModel.commit();
               });
     }
@@ -72,16 +84,21 @@ class AttachSourceJarAction extends BlazeAction {
     boolean enabled = false;
     Project project = e.getProject();
     if (project != null) {
-      Library library = LibraryActionHelper.findLibraryForAction(e);
-      if (library != null) {
-        visible = true;
+      BlazeProjectData blazeProjectData =
+          BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+      if (blazeProjectData != null) {
+        Library library = LibraryActionHelper.findLibraryForAction(e);
+        if (library != null) {
+          visible = true;
 
-        BlazeJarLibrary blazeLibrary =
-            LibraryActionHelper.findLibraryFromIntellijLibrary(e.getProject(), library);
-        if (blazeLibrary != null && blazeLibrary.libraryArtifact.sourceJar != null) {
-          enabled = true;
-          if (SourceJarManager.getInstance(project).hasSourceJarAttached(blazeLibrary.key)) {
-            text = "Detach Source Jar";
+          BlazeJarLibrary blazeLibrary =
+              LibraryActionHelper.findLibraryFromIntellijLibrary(
+                  e.getProject(), blazeProjectData, library);
+          if (blazeLibrary != null && blazeLibrary.libraryArtifact.sourceJar != null) {
+            enabled = true;
+            if (SourceJarManager.getInstance(project).hasSourceJarAttached(blazeLibrary.key)) {
+              text = "Detach Source Jar";
+            }
           }
         }
       }

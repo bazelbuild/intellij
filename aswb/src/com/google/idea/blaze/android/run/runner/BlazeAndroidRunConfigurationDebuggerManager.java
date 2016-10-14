@@ -38,20 +38,18 @@ import org.jetbrains.android.facet.AndroidFacet;
 
 /** Manages android debugger state for the run configurations. */
 public class BlazeAndroidRunConfigurationDebuggerManager implements JDOMExternalizable {
-  private final Project project;
   private final Map<String, AndroidDebuggerState> androidDebuggerStates = Maps.newHashMap();
   private final BlazeAndroidRunConfigurationCommonState commonState;
 
-  BlazeAndroidRunConfigurationDebuggerManager(
-      Project project, BlazeAndroidRunConfigurationCommonState commonState) {
-    this.project = project;
+  public BlazeAndroidRunConfigurationDebuggerManager(
+      BlazeAndroidRunConfigurationCommonState commonState) {
     this.commonState = commonState;
     for (AndroidDebugger androidDebugger : getAndroidDebuggers()) {
       this.androidDebuggerStates.put(androidDebugger.getId(), androidDebugger.createState());
     }
   }
 
-  List<ValidationError> validate(AndroidFacet facet) {
+  public List<ValidationError> validate(AndroidFacet facet) {
     // All of the AndroidDebuggerState classes implement a validate that
     // either does nothing or is specific to gradle so there is no point
     // in calling validate on our AndroidDebuggerState.
@@ -70,7 +68,7 @@ public class BlazeAndroidRunConfigurationDebuggerManager implements JDOMExternal
   }
 
   @Nullable
-  final <T extends AndroidDebuggerState> T getAndroidDebuggerState() {
+  final <T extends AndroidDebuggerState> T getAndroidDebuggerState(Project project) {
     T androidDebuggerState = getAndroidDebuggerState(getDebuggerID());
     // Set our working directory to our workspace root for native debugging.
     if (androidDebuggerState instanceof NativeAndroidDebuggerState) {

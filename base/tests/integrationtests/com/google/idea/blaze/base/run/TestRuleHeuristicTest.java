@@ -25,10 +25,15 @@ import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.File;
 import java.util.Collection;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Integration tests for {@link TestRuleHeuristic}. */
+@RunWith(JUnit4.class)
 public class TestRuleHeuristicTest extends BlazeIntegrationTestCase {
 
+  @Test
   public void testTestSizeMatched() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
     Collection<RuleIdeInfo> rules =
@@ -47,6 +52,7 @@ public class TestRuleHeuristicTest extends BlazeIntegrationTestCase {
     assertThat(match).isEqualTo(new Label("//foo:test2"));
   }
 
+  @Test
   public void testRuleNameMatched() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
     Collection<RuleIdeInfo> rules =
@@ -57,6 +63,7 @@ public class TestRuleHeuristicTest extends BlazeIntegrationTestCase {
     assertThat(match).isEqualTo(new Label("//foo:FooTest"));
   }
 
+  @Test
   public void testNoMatchFallBackToFirstRule() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
     ImmutableList<RuleIdeInfo> rules =
@@ -75,6 +82,7 @@ public class TestRuleHeuristicTest extends BlazeIntegrationTestCase {
     assertThat(match).isEqualTo(new Label("//bar:BarTest"));
   }
 
+  @Test
   public void testRuleNameCheckedBeforeTestSize() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
     ImmutableList<RuleIdeInfo> rules =

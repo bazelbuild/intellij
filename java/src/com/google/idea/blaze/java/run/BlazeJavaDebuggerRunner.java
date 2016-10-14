@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.java.run;
 
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.ExecutionException;
@@ -43,8 +43,8 @@ public class BlazeJavaDebuggerRunner extends GenericDebuggerRunner {
     if (executorId.equals(DefaultDebugExecutor.EXECUTOR_ID)
         && profile instanceof BlazeCommandRunConfiguration) {
       BlazeCommandRunConfiguration configuration = (BlazeCommandRunConfiguration) profile;
-      RuleIdeInfo rule = configuration.getRuleForTarget();
-      return rule != null && BlazeJavaRunConfigurationHandlerProvider.supportsKind(rule.kind);
+      Kind kind = configuration.getKindForTarget();
+      return kind != null && BlazeJavaRunConfigurationHandlerProvider.supportsKind(kind);
     }
     return false;
   }

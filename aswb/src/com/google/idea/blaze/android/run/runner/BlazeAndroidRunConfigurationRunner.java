@@ -16,7 +16,6 @@
 
 package com.google.idea.blaze.android.run.runner;
 
-import static com.android.tools.idea.gradle.util.Projects.requiredAndroidModelMissing;
 import static org.jetbrains.android.actions.RunAndroidAvdManagerAction.getName;
 
 import com.android.ddmlib.IDevice;
@@ -28,22 +27,15 @@ import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.LaunchInfo;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.LaunchTaskRunner;
-import com.android.tools.idea.run.ValidationError;
 import com.android.tools.idea.run.editor.DeployTarget;
 import com.android.tools.idea.run.editor.DeployTargetState;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.LaunchUtils;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
-import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
-import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.metrics.Action;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
@@ -65,12 +57,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
-import java.util.List;
-import org.jdom.Element;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
@@ -78,128 +65,50 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Supports the entire run configuration flow. Used by both android_binary and android_test.
+ * Supports the execution. Used by both android_binary and android_test.
  *
- * <p>Does any verification necessary, builds the APK and installs it, launches and debug tasks,
- * etc.
+ * <p>Builds the APK and installs it, launches and debug tasks, etc.
  *
  * <p>Any indirection between android_binary/android_test, mobile-install, InstantRun etc. should
  * come via the strategy class.
  */
-public final class BlazeAndroidRunConfigurationRunner implements JDOMExternalizable {
+public final class BlazeAndroidRunConfigurationRunner
+    implements BlazeCommandRunConfigurationRunner {
 
   private static final Logger LOG = Logger.getInstance(BlazeAndroidRunConfigurationRunner.class);
 
-  private static final String SYNC_FAILED_ERR_MSG =
-      "Project state is invalid. Please sync and try your action again.";
-
-  public static final Key<BlazeAndroidRunContext> RUN_CONTEXT_KEY = Key.create("blaze.run.context");
-  public static final Key<BlazeAndroidDeviceSelector.DeviceSession> DEVICE_SESSION_KEY =
+  private static final Key<BlazeAndroidRunContext> RUN_CONTEXT_KEY =
+      Key.create("blaze.run.context");
+  private static final Key<BlazeAndroidDeviceSelector.DeviceSession> DEVICE_SESSION_KEY =
       Key.create("blaze.device.session");
 
-  // We need to split "-c dbg" into two flags because we pass flags
-  // as a list of strings to the command line executor and we need blaze
-  // to see -c and dbg as two separate entities, not one.
-  private static final ImmutableList<String> NATIVE_DEBUG_FLAGS =
-      ImmutableList.of("--fission=no", "-c", "dbg");
-
-  private final Project project;
-
-  private final BlazeAndroidRunConfigurationHandler runConfigurationHandler;
-
-  private final BlazeAndroidRunConfigurationCommonState commonState;
-
+  private final Module module;
+  private final BlazeAndroidRunContext runContext;
+  private final BlazeAndroidRunConfigurationDeployTargetManager deployTargetManager;
+  private final BlazeAndroidRunConfigurationDebuggerManager debuggerManager;
   private final int runConfigId;
 
-  private final BlazeAndroidRunConfigurationDeployTargetManager deployTargetManager;
-
-  private final BlazeAndroidRunConfigurationDebuggerManager debuggerManager;
-
   public BlazeAndroidRunConfigurationRunner(
-      Project project,
-      BlazeAndroidRunConfigurationHandler runConfigurationHandler,
-      BlazeAndroidRunConfigurationCommonState commonState,
-      boolean isAndroidTest,
+      Module module,
+      BlazeAndroidRunContext runContext,
+      BlazeAndroidRunConfigurationDeployTargetManager deployTargetManager,
+      BlazeAndroidRunConfigurationDebuggerManager debuggerManager,
       int runConfigId) {
-    this.project = project;
-    this.runConfigurationHandler = runConfigurationHandler;
-    this.commonState = commonState;
+    this.module = module;
+    this.runContext = runContext;
+    this.deployTargetManager = deployTargetManager;
+    this.debuggerManager = debuggerManager;
     this.runConfigId = runConfigId;
-    this.deployTargetManager =
-        new BlazeAndroidRunConfigurationDeployTargetManager(runConfigId, isAndroidTest);
-    this.debuggerManager = new BlazeAndroidRunConfigurationDebuggerManager(project, commonState);
   }
 
-  private ImmutableList<String> getBuildFlags(Project project, ProjectViewSet projectViewSet) {
-    return ImmutableList.<String>builder()
-        .addAll(BlazeFlags.buildFlags(project, projectViewSet))
-        .addAll(commonState.getUserFlags())
-        .addAll(getNativeDebuggerFlags())
-        .build();
-  }
-
-  public ImmutableList<String> getNativeDebuggerFlags() {
-    return commonState.isNativeDebuggingEnabled() ? NATIVE_DEBUG_FLAGS : ImmutableList.of();
-  }
-
-  /**
-   * We collect errors rather than throwing to avoid missing fatal errors by exiting early for a
-   * warning. We use a separate method for the collection so the compiler prevents us from
-   * accidentally throwing.
-   */
-  public List<ValidationError> validate(@Nullable Module module) {
-    List<ValidationError> errors = Lists.newArrayList();
-    if (module == null) {
-      errors.add(
-          ValidationError.fatal(
-              "No run configuration module found. Have you successfully synced your project?"));
-      return errors;
-    }
-
-    if (runConfigurationHandler.getLabel() == null) {
-      errors.add(ValidationError.fatal("No target selected"));
-      return errors;
-    }
-
-    final Project project = module.getProject();
-    if (requiredAndroidModelMissing(project)) {
-      errors.add(ValidationError.fatal(SYNC_FAILED_ERR_MSG));
-    }
-
-    AndroidFacet facet = AndroidFacet.getInstance(module);
-    if (facet == null) {
-      // Can't proceed.
-      return ImmutableList.of(
-          ValidationError.fatal(AndroidBundle.message("no.facet.error", module.getName())));
-    }
-
-    if (facet.getConfiguration().getAndroidPlatform() == null) {
-      errors.add(ValidationError.fatal(AndroidBundle.message("select.platform.error")));
-    }
-
-    errors.addAll(deployTargetManager.validate(facet));
-    errors.addAll(debuggerManager.validate(facet));
-
-    return errors;
-  }
-
+  @Override
   @Nullable
-  public final RunProfileState getState(
-      Module module, final Executor executor, ExecutionEnvironment env) throws ExecutionException {
+  public final RunProfileState getRunProfileState(final Executor executor, ExecutionEnvironment env)
+      throws ExecutionException {
 
-    assert module != null : "Enforced by fatal validation check in checkConfiguration.";
     final AndroidFacet facet = AndroidFacet.getInstance(module);
-    assert facet != null : "Enforced by fatal validation check in checkConfiguration.";
-    Project project = env.getProject();
-
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    if (projectViewSet == null) {
-      throw new ExecutionException("Could not load project view. Please resync project");
-    }
-    ImmutableList<String> buildFlags = getBuildFlags(project, projectViewSet);
-
-    BlazeAndroidRunContext runContext =
-        runConfigurationHandler.createRunContext(project, facet, env, buildFlags);
+    assert facet != null : "Enforced by fatal validation check in createRunner.";
+    final Project project = env.getProject();
 
     runContext.augmentEnvironment(env);
 
@@ -279,7 +188,9 @@ public final class BlazeAndroidRunConfigurationRunner implements JDOMExternaliza
         .setForceStopRunningApp(true);
   }
 
-  public boolean executeBuild(ExecutionEnvironment env) {
+  @Override
+  public boolean executeBeforeRunTask(ExecutionEnvironment env) {
+    final Project project = env.getProject();
     boolean suppressConsole = BlazeUserSettings.getInstance().getSuppressConsoleForRunAction();
     return Scope.root(
         context -> {
@@ -399,17 +310,5 @@ public final class BlazeAndroidRunConfigurationRunner implements JDOMExternaliza
 
       return console == null ? null : new DefaultExecutionResult(console, processHandler);
     }
-  }
-
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    deployTargetManager.readExternal(element);
-    debuggerManager.readExternal(element);
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    deployTargetManager.writeExternal(element);
-    debuggerManager.writeExternal(element);
   }
 }

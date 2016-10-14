@@ -51,7 +51,7 @@
     <SyncListener implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncListener"/>
     <SyncListener implementation="com.google.idea.blaze.android.cppimpl.BlazeNdkSupportEnabler"/>
     <SyncListener implementation="com.google.idea.blaze.android.manifest.ManifestParser$ClearManifestParser"/>
-    <RuleConfigurationFactory implementation="com.google.idea.blaze.android.run.BlazeAndroidRuleConfigurationFactory"/>
+    <RunConfigurationFactory implementation="com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationFactory"/>
     <java.JavaSyncAugmenter implementation="com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.android.sync.AndroidPrefetchFileSource"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandlerProvider"/>

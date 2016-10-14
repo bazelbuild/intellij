@@ -23,7 +23,7 @@
         <ul>
         <li>Import BUILD files into the IDE.</li>
         <li>BUILD file custom language support.</li>
-        <li>Support for blaze run configurations for certain rule classes.</li>
+        <li>Support for Bazel run configurations for certain rule classes.</li>
         </ul>
 
       Usage instructions at <a href="http://ij.bazel.io">ij.bazel.io</a>

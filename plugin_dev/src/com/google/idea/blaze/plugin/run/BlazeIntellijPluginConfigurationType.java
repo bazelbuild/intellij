@@ -16,11 +16,13 @@
 package com.google.idea.blaze.plugin.run;
 
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
-import com.google.idea.blaze.base.run.BlazeRuleConfigurationFactory;
+import com.google.idea.blaze.base.run.BlazeRunConfigurationFactory;
 import com.google.idea.blaze.base.run.rulefinder.RuleFinder;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.plugin.IntellijPluginRule;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.BeforeRunTask;
@@ -30,6 +32,8 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableLazyValue;
 import javax.annotation.Nullable;
@@ -44,12 +48,15 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
   private final BlazeIntellijPluginConfigurationFactory factory =
       new BlazeIntellijPluginConfigurationFactory(this);
 
-  static class BlazeIntellijPluginRuleConfigurationFactory extends BlazeRuleConfigurationFactory {
+  static class BlazeIntellijPluginRunConfigurationFactory extends BlazeRunConfigurationFactory {
     @Override
-    public boolean handlesRule(
-        WorkspaceLanguageSettings workspaceLanguageSettings, RuleIdeInfo rule) {
-      return workspaceLanguageSettings.isWorkspaceType(WorkspaceType.INTELLIJ_PLUGIN)
-          && IntellijPluginRule.isPluginRule(rule);
+    public boolean handlesTarget(Project project, BlazeProjectData blazeProjectData, Label target) {
+      if (!blazeProjectData.workspaceLanguageSettings.isWorkspaceType(
+          WorkspaceType.INTELLIJ_PLUGIN)) {
+        return false;
+      }
+      RuleIdeInfo rule = blazeProjectData.ruleMap.get(RuleKey.forPlainTarget(target));
+      return rule != null && IntellijPluginRule.isPluginRule(rule);
     }
 
     @Override
@@ -58,10 +65,10 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
     }
 
     @Override
-    public void setupConfiguration(RunConfiguration configuration, RuleIdeInfo rule) {
+    public void setupConfiguration(RunConfiguration configuration, Label target) {
       final BlazeIntellijPluginConfiguration pluginConfig =
           (BlazeIntellijPluginConfiguration) configuration;
-      getInstance().factory.setupConfigurationForRule(pluginConfig, rule);
+      getInstance().factory.setupConfigurationForRule(pluginConfig, target);
     }
   }
 
@@ -103,12 +110,15 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
       task.setEnabled(providerID.equals(BuildPluginBeforeRunTaskProvider.ID));
     }
 
-    void setupConfigurationForRule(
-        BlazeIntellijPluginConfiguration configuration, RuleIdeInfo rule) {
-      configuration.setTarget(rule.label);
+    void setupConfigurationForRule(BlazeIntellijPluginConfiguration configuration, Label target) {
+      configuration.setTarget(target);
       configuration.setGeneratedName();
       if (configuration.vmParameters == null) {
         configuration.vmParameters = currentVmOptions.getValue();
+      }
+      Sdk projectSdk = ProjectRootManager.getInstance(configuration.getProject()).getProjectSdk();
+      if (IdeaJdkHelper.isIdeaJdk(projectSdk)) {
+        configuration.setPluginSdk(projectSdk);
       }
     }
 

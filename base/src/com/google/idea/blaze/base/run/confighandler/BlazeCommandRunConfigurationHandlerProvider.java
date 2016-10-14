@@ -40,10 +40,8 @@ public interface BlazeCommandRunConfigurationHandlerProvider {
         return handlerProvider;
       }
     }
-    // BlazeCommandGenericRunConfigurationHandlerProvider can handle any kind,
-    // and will be returned by this point.
-    assert false;
-    return null;
+    throw new RuntimeException(
+        "No BlazeCommandRunConfigurationHandlerProvider found for Kind " + kind);
   }
 
   /** Get the BlazeCommandRunConfigurationHandlerProvider with the given ID, if one exists. */
@@ -61,7 +59,7 @@ public interface BlazeCommandRunConfigurationHandlerProvider {
   boolean canHandleKind(Kind kind);
 
   /** Returns the corresponding {@link BlazeCommandRunConfigurationHandler}. */
-  BlazeCommandRunConfigurationHandler createHandler(BlazeCommandRunConfiguration config);
+  BlazeCommandRunConfigurationHandler createHandler(BlazeCommandRunConfiguration configuration);
 
   /**
    * Returns the unique ID of this {@link BlazeCommandRunConfigurationHandlerProvider}. The ID is

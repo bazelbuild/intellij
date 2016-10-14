@@ -1,0 +1,73 @@
+<!--
+  ~ Copyright 2016 The Bazel Authors. All rights reserved.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~    http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<idea-plugin>
+  <vendor>Google</vendor>
+
+  <depends>com.intellij.modules.clion</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"
+                        serviceImplementation="com.google.idea.blaze.plugin.ClwbPluginId"/>
+    <projectService serviceInterface="com.google.idea.blaze.base.ui.BlazeProblemsView"
+                    serviceImplementation="com.google.idea.blaze.clwb.problemsview.BlazeProblemsViewConsole"/>
+    <toolWindow id="Blaze Problems View"
+                anchor="bottom"
+                secondary="true"
+                conditionClass="com.google.idea.blaze.base.settings.IsBlazeProjectCondition"
+                icon="BlazeIcons.BlazeToolWindow"
+                factoryClass="com.google.idea.blaze.clwb.problemsview.BlazeProblemsViewConsoleToolWindowFactory"/>
+    <projectService serviceInterface="com.jetbrains.cidr.lang.workspace.OCWorkspaceManager"
+                    serviceImplementation="com.google.idea.blaze.clwb.cworkspace.BlazeCWorkspaceManager"
+                    overrides="true"/>
+
+    <!-- run configurations -->
+    <programRunner implementation="com.google.idea.blaze.clwb.run.BlazeCppRunner"/>
+
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.clwb.run.producers.BlazeCidrTestConfigurationProducer"
+        order="first"/>
+    <!-- end run configurations -->
+  </extensions>
+
+  <extensions defaultExtensionNs="cidr.debugger">
+    <languageSupportFactory implementation="com.google.idea.blaze.clwb.run.BlazeCidrDebuggerSupportFactory"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.google.idea.blaze">
+    <SyncPlugin implementation="com.google.idea.blaze.clwb.sync.BlazeCLionSyncPlugin"/>
+    <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.clwb.run.BlazeCidrRunConfigurationHandlerProvider" order="first"/>
+  </extensions>
+
+  <actions>
+    <action id="Blaze.ImportProject2" class="com.google.idea.blaze.clwb.wizard2.BlazeImportProjectAction" icon="BlazeIcons.Blaze">
+      <add-to-group group-id="WelcomeScreen.QuickStart"/>
+      <add-to-group group-id="FileOpenGroup" anchor="first"/>
+    </action>
+  </actions>
+
+  <application-components>
+    <component>
+      <implementation-class>com.google.idea.blaze.plugin.ClwbSpecificInitializer</implementation-class>
+    </component>
+  </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>com.google.idea.blaze.plugin.ClwbProjectSpecificInitializer</implementation-class>
+    </component>
+  </project-components>
+
+</idea-plugin>

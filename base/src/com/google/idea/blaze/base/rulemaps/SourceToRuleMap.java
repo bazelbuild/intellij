@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.rulemaps;
 
 import com.google.common.collect.ImmutableCollection;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -28,5 +29,9 @@ public interface SourceToRuleMap {
     return ServiceManager.getService(project, SourceToRuleMap.class);
   }
 
-  ImmutableCollection<Label> getTargetsForSourceFile(File file);
+  /** Returns a set of targets that will cause the file to build */
+  ImmutableCollection<Label> getTargetsToBuildForSourceFile(File file);
+
+  /** Returns the rules that contain a given source file */
+  ImmutableCollection<RuleKey> getRulesForSourceFile(File file);
 }

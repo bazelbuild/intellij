@@ -21,10 +21,15 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.copy.CopyHandler;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests copying files */
+@RunWith(JUnit4.class)
 public class FileCopyTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testCopyingJavaFileReferencedByGlob() {
     createDirectory("java");
     PsiFile javaFile = createPsiFile("java/Test.java", "package java;", "public class Test {}");

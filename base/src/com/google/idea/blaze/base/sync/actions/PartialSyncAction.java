@@ -92,7 +92,7 @@ public class PartialSyncAction extends BlazeAction {
     } else {
       targets.addAll(
           SourceToRuleMap.getInstance(project)
-              .getTargetsForSourceFile(new File(virtualFile.getPath())));
+              .getTargetsToBuildForSourceFile(new File(virtualFile.getPath())));
 
       // If empty, try to build parent package
       if (targets.isEmpty()) {
