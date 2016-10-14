@@ -79,12 +79,11 @@ public class BlazeAndroidTestMethodRunConfigurationProducer
       return false;
     }
     configuration.setTarget(rule.label);
-    BlazeAndroidTestRunConfigurationHandler handler =
-        configuration.getHandlerIfType(BlazeAndroidTestRunConfigurationHandler.class);
-    if (handler == null) {
+    BlazeAndroidTestRunConfigurationState configState =
+        configuration.getHandlerStateIfType(BlazeAndroidTestRunConfigurationState.class);
+    if (configState == null) {
       return false;
     }
-    BlazeAndroidTestRunConfigurationState configState = handler.getConfigState();
     configState.setTestingType(AndroidTestRunConfiguration.TEST_METHOD);
     configState.setClassName(containingClass.getQualifiedName());
     configState.setMethodName(psiMethod.getName());
@@ -120,12 +119,11 @@ public class BlazeAndroidTestMethodRunConfigurationProducer
 
   private static boolean checkIfAttributesAreTheSame(
       BlazeCommandRunConfiguration configuration, PsiMethod testMethod) {
-    BlazeAndroidTestRunConfigurationHandler handler =
-        configuration.getHandlerIfType(BlazeAndroidTestRunConfigurationHandler.class);
-    if (handler == null) {
+    BlazeAndroidTestRunConfigurationState configState =
+        configuration.getHandlerStateIfType(BlazeAndroidTestRunConfigurationState.class);
+    if (configState == null) {
       return false;
     }
-    BlazeAndroidTestRunConfigurationState configState = handler.getConfigState();
     if (Strings.isNullOrEmpty(configState.getClassName())
         || Strings.isNullOrEmpty(configState.getMethodName())) {
       return false;

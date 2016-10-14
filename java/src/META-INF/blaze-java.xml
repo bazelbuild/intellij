@@ -37,6 +37,15 @@
       <add-to-group group-id="Blaze.ProjectViewPopupMenu"/>
     </action>
 
+    <group>
+      <action class="com.google.idea.blaze.java.libraries.DetachAllSourceJarsAction"
+        id="Blaze.DetachAllSourceJars"
+        text="Detach All Blaze Source Jars">
+      </action>
+      <separator/>
+      <add-to-group group-id="Blaze.MainMenuActionGroup" relative-to-action="Blaze.EditProjectView" anchor="before"/>
+    </group>
+
     <!-- IntelliJ specific actions -->
 
     <action id="Blaze.ImportProject2" class="com.google.idea.blaze.java.wizard2.BlazeImportProjectAction" icon="BlazeIcons.Blaze">
@@ -52,11 +61,12 @@
     <SyncPlugin implementation="com.google.idea.blaze.java.sync.BlazeJavaSyncPlugin"/>
     <PsiFileProvider implementation="com.google.idea.blaze.java.psi.JavaPsiFileProvider" />
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.java.run.BlazeJavaRunConfigurationHandlerProvider"/>
-    <RuleConfigurationFactory implementation="com.google.idea.blaze.java.run.BlazeJavaRuleConfigurationFactory"/>
-    <RuleConfigurationFactory implementation="com.google.idea.blaze.java.run.BlazeJavaTestRuleConfigurationFactory"/>
+    <RunConfigurationFactory implementation="com.google.idea.blaze.java.run.BlazeJavaRunConfigurationFactory"/>
+    <RunConfigurationFactory implementation="com.google.idea.blaze.java.run.BlazeJavaTestRunConfigurationFactory"/>
     <BlazeUserSettingsContributor implementation="com.google.idea.blaze.java.settings.BlazeJavaUserSettingsContributor$BlazeJavaUserSettingsProvider"/>
     <FileCache implementation="com.google.idea.blaze.java.libraries.JarCache$FileCacheAdapter"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.java.sync.JavaPrefetchFileSource"/>
+    <SyncListener implementation="com.google.idea.blaze.java.syncstatus.SyncStatusHelper$UpdateSyncStatusMap"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -87,6 +97,7 @@
     <attachSourcesProvider implementation="com.google.idea.blaze.java.libraries.AddLibraryRuleDirectoryToProjectViewAttachSourcesProvider"/>
     <attachSourcesProvider implementation="com.google.idea.blaze.java.libraries.BlazeAttachSourceProvider"/>
     <applicationService serviceImplementation="com.google.idea.blaze.java.settings.BlazeJavaUserSettings"/>
+    <projectService serviceImplementation="com.google.idea.blaze.java.syncstatus.SyncStatusHelper"/>
   </extensions>
 
   <extensionPoints>

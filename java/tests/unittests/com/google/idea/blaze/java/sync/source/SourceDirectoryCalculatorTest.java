@@ -20,12 +20,12 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
@@ -40,6 +40,7 @@ import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.projectview.SourceTestConfig;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
@@ -66,7 +67,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class SourceDirectoryCalculatorTest extends BlazeTestCase {
 
-  private static final ImmutableMap<Label, ArtifactLocation> NO_MANIFESTS = ImmutableMap.of();
+  private static final ImmutableMap<RuleKey, ArtifactLocation> NO_MANIFESTS = ImmutableMap.of();
   private static final Label LABEL = new Label("//fake:label");
 
   private MockInputStreamProvider mockInputStreamProvider;
@@ -78,13 +79,8 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
 
   private WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
   private ArtifactLocationDecoder decoder =
-      new ArtifactLocationDecoder(
-          new BlazeRoots(
-              new File("/"),
-              Lists.newArrayList(new File("/usr/local/code")),
-              new ExecutionRootPath("out/crosstool/bin"),
-              new ExecutionRootPath("out/crosstool/gen")),
-          null);
+      (ArtifactLocationDecoder)
+          artifactLocation -> new File("/root", artifactLocation.getRelativePath());
 
   static final class TestSourceImportConfig extends SourceTestConfig {
     final boolean isTest;
@@ -153,11 +149,10 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         "/root/java/com/google/Bla.java", "package com.google;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -187,11 +182,10 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         "/root/java/com/google/Bla.java", "package com.google;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -225,18 +219,16 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             "package com.google.subpackage;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/subpackage/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -274,25 +266,22 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             "package com.google.idea.blaze.plugin;\n public class Plugin {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/idea/blaze/plugin/run/Run.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/idea/blaze/plugin/sync/Sync.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/idea/blaze/plugin/Plugin.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -328,25 +317,22 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             "package com.google.idea.blaze.incorrect;\n public class Incorrect {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/idea/blaze/plugin/run/Run.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/idea/blaze/plugin/sync/Sync.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/idea/blaze/Incorrect.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -386,18 +372,16 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             "package com.google.different;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/subpackage/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -434,18 +418,16 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             "package com.google.subpackage;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/subpackage/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -482,18 +464,16 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             "package com.google.different;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/subpackage/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -527,11 +507,10 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         "/root/java/com/google/Bla.java", "package com.google;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -561,11 +540,10 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         "/root/java/com/google/Bla.java", "package com.facebook;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -595,11 +573,10 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         "/root/java/com/org/foo/Bla.java", "package com.facebook;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/org/foo/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -633,23 +610,21 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         "/root/java/com/facebook/Bla.java", "package com.facebook;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/facebook/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
-    ImmutableList<BlazeContentEntry> result =
-        sourceDirectoryCalculator.calculateContentEntries(
-            project,
-            context,
-            workspaceRoot,
-            new TestSourceImportConfig(false),
-            decoder,
-            ImmutableList.of(new WorkspacePath("java/com/google")),
-            sourceArtifacts,
-            NO_MANIFESTS);
+    sourceDirectoryCalculator.calculateContentEntries(
+        project,
+        context,
+        workspaceRoot,
+        new TestSourceImportConfig(false),
+        decoder,
+        ImmutableList.of(new WorkspacePath("java/com/google")),
+        sourceArtifacts,
+        NO_MANIFESTS);
 
     issues.assertIssueContaining("Did not add");
   }
@@ -661,23 +636,21 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         "/root/java/com/facebook/Bla.java", "package com.facebook;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/facebook/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(false))
                 .build());
-    ImmutableList<BlazeContentEntry> result =
-        sourceDirectoryCalculator.calculateContentEntries(
-            project,
-            context,
-            workspaceRoot,
-            new TestSourceImportConfig(false),
-            decoder,
-            ImmutableList.of(new WorkspacePath("java/com/google/my")),
-            sourceArtifacts,
-            NO_MANIFESTS);
+    sourceDirectoryCalculator.calculateContentEntries(
+        project,
+        context,
+        workspaceRoot,
+        new TestSourceImportConfig(false),
+        decoder,
+        ImmutableList.of(new WorkspacePath("java/com/google/my")),
+        sourceArtifacts,
+        NO_MANIFESTS);
     issues.assertNoIssues();
   }
 
@@ -686,23 +659,21 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     mockInputStreamProvider.addFile("/root/java/com/google/Bla.java", "public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
-    ImmutableList<BlazeContentEntry> result =
-        sourceDirectoryCalculator.calculateContentEntries(
-            project,
-            context,
-            workspaceRoot,
-            new TestSourceImportConfig(false),
-            decoder,
-            ImmutableList.of(new WorkspacePath("java/com/google")),
-            sourceArtifacts,
-            NO_MANIFESTS);
+    sourceDirectoryCalculator.calculateContentEntries(
+        project,
+        context,
+        workspaceRoot,
+        new TestSourceImportConfig(false),
+        decoder,
+        ImmutableList.of(new WorkspacePath("java/com/google")),
+        sourceArtifacts,
+        NO_MANIFESTS);
 
     issues.assertIssueContaining("No package name string found");
   }
@@ -717,32 +688,28 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         .addFile("/root/java/com/google/Bla3.java", "package com.google;\n public class Bla3 {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Bla2.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Bla3.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Foo.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -779,25 +746,22 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             "package com.google.subpackage.subsubpackage;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/subpackage/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/subpackage/subsubpackage/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -836,18 +800,16 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             "package com.google.packagewrong1;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/package0/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/package1/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -891,20 +853,18 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             "package com.google.android.chimera.container;\n public class FileApkUtils {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath(
                             "java/com/google/android/chimera/internal/Preconditions.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath(
                             "java/com/google/android/chimera/container/FileApkUtils.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -942,21 +902,25 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
                 .setIsSource(true)
                 .build()),
         ImmutableList.of("com.google"));
-    ImmutableMap<Label, ArtifactLocation> manifests =
-        ImmutableMap.<Label, ArtifactLocation>builder()
+    ImmutableMap<RuleKey, ArtifactLocation> manifests =
+        ImmutableMap.<RuleKey, ArtifactLocation>builder()
             .put(
-                LABEL,
+                RuleKey.forPlainTarget(LABEL),
                 ArtifactLocation.builder()
                     .setRelativePath("java/com/test.manifest")
-                    .setRootPath("/root")
                     .setIsSource(true)
                     .build())
             .build();
-    Map<Label, Map<String, String>> manifestMap =
+    Map<RuleKey, Map<ArtifactLocation, String>> manifestMap =
         readPackageManifestFiles(manifests, getDecoder("/root"));
 
-    assertThat(manifestMap.get(LABEL))
-        .containsEntry("/root/java/com/google/Bla.java", "com.google");
+    assertThat(manifestMap.get(RuleKey.forPlainTarget(LABEL)))
+        .containsEntry(
+            ArtifactLocation.builder()
+                .setRelativePath("java/com/google/Bla.java")
+                .setIsSource(true)
+                .build(),
+            "com.google");
   }
 
   @Test
@@ -965,21 +929,25 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         "/root/java/com/test.manifest",
         ImmutableList.of("java/com/google/Bla.java"),
         ImmutableList.of("com.google"));
-    ImmutableMap<Label, ArtifactLocation> manifests =
-        ImmutableMap.<Label, ArtifactLocation>builder()
+    ImmutableMap<RuleKey, ArtifactLocation> manifests =
+        ImmutableMap.<RuleKey, ArtifactLocation>builder()
             .put(
-                LABEL,
+                RuleKey.forPlainTarget(LABEL),
                 ArtifactLocation.builder()
                     .setRelativePath("java/com/test.manifest")
-                    .setRootPath("/root")
                     .setIsSource(true)
                     .build())
             .build();
-    Map<Label, Map<String, String>> manifestMap =
+    Map<RuleKey, Map<ArtifactLocation, String>> manifestMap =
         readPackageManifestFiles(manifests, getDecoder("/root"));
 
-    assertThat(manifestMap.get(LABEL))
-        .containsEntry("/root/java/com/google/Bla.java", "com.google");
+    assertThat(manifestMap.get(RuleKey.forPlainTarget(LABEL)))
+        .containsEntry(
+            ArtifactLocation.builder()
+                .setRelativePath("java/com/google/Bla.java")
+                .setIsSource(true)
+                .build(),
+            "com.google");
   }
 
   @Test
@@ -992,34 +960,47 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         "/root/java/com/test2.manifest",
         ImmutableList.of("java/com/google/Bla.java", "java/com/google/other/Temp.java"),
         ImmutableList.of("com.google", "com.google.other"));
-    ImmutableMap<Label, ArtifactLocation> manifests =
-        ImmutableMap.<Label, ArtifactLocation>builder()
+    ImmutableMap<RuleKey, ArtifactLocation> manifests =
+        ImmutableMap.<RuleKey, ArtifactLocation>builder()
             .put(
-                new Label("//a:a"),
+                RuleKey.forPlainTarget(new Label("//a:a")),
                 ArtifactLocation.builder()
                     .setRelativePath("java/com/test.manifest")
-                    .setRootPath("/root")
                     .setIsSource(true)
                     .build())
             .put(
-                new Label("//b:b"),
+                RuleKey.forPlainTarget(new Label("//b:b")),
                 ArtifactLocation.builder()
                     .setRelativePath("java/com/test2.manifest")
-                    .setRootPath("/root")
                     .setIsSource(true)
                     .build())
             .build();
-    Map<Label, Map<String, String>> manifestMap =
+    Map<RuleKey, Map<ArtifactLocation, String>> manifestMap =
         readPackageManifestFiles(manifests, getDecoder("/root"));
 
     assertThat(manifestMap).hasSize(2);
 
-    assertThat(manifestMap.get(new Label("//a:a")))
-        .containsEntry("/root/java/com/google/Bla.java", "com.google");
-    assertThat(manifestMap.get(new Label("//a:a")))
-        .containsEntry("/root/java/com/google/Foo.java", "com.google.subpackage");
-    assertThat(manifestMap.get(new Label("//b:b")))
-        .containsEntry("/root/java/com/google/other/Temp.java", "com.google.other");
+    assertThat(manifestMap.get(RuleKey.forPlainTarget(new Label("//a:a"))))
+        .containsEntry(
+            ArtifactLocation.builder()
+                .setRelativePath("java/com/google/Bla.java")
+                .setIsSource(true)
+                .build(),
+            "com.google");
+    assertThat(manifestMap.get(RuleKey.forPlainTarget(new Label("//a:a"))))
+        .containsEntry(
+            ArtifactLocation.builder()
+                .setRelativePath("java/com/google/Foo.java")
+                .setIsSource(true)
+                .build(),
+            "com.google.subpackage");
+    assertThat(manifestMap.get(RuleKey.forPlainTarget(new Label("//b:b"))))
+        .containsEntry(
+            ArtifactLocation.builder()
+                .setRelativePath("java/com/google/other/Temp.java")
+                .setIsSource(true)
+                .build(),
+            "com.google.other");
   }
 
   @Test
@@ -1033,38 +1014,34 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         "/root/java/com/google/subpackage/Bla.java",
         "package com.google.different;\n public class Bla {}");
 
-    ImmutableMap<Label, ArtifactLocation> manifests =
-        ImmutableMap.<Label, ArtifactLocation>builder()
+    ImmutableMap<RuleKey, ArtifactLocation> manifests =
+        ImmutableMap.<RuleKey, ArtifactLocation>builder()
             .put(
-                LABEL,
+                RuleKey.forPlainTarget(LABEL),
                 ArtifactLocation.builder()
                     .setRelativePath("java/com/test.manifest")
-                    .setRootPath("/root")
                     .setIsSource(true)
                     .build())
             .build();
 
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Foo.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build(),
-            SourceArtifact.builder(LABEL)
+            SourceArtifact.builder(RuleKey.forPlainTarget(LABEL))
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/subpackage/Bla.java")
-                        .setRootPath("/root")
                         .setIsSource(true))
                 .build());
 
@@ -1095,9 +1072,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   private void setPackageManifest(
-      String manifestPath,
-      List<String> sourceRelativePaths,
-      List<String> packages) {
+      String manifestPath, List<String> sourceRelativePaths, List<String> packages) {
     PackageManifest.Builder manifest = PackageManifest.newBuilder();
     for (int i = 0; i < sourceRelativePaths.size(); i++) {
       String sourceRelativePath = sourceRelativePaths.get(i);
@@ -1137,7 +1112,8 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             ImmutableList.of(root),
             new ExecutionRootPath("out/crosstool/bin"),
             new ExecutionRootPath("out/crosstool/gen"));
-    return new ArtifactLocationDecoder(roots, new WorkspacePathResolverImpl(workspaceRoot, roots));
+    return new ArtifactLocationDecoderImpl(
+        roots, new WorkspacePathResolverImpl(workspaceRoot, roots));
   }
 
   private static class MockInputStreamProvider implements InputStreamProvider {
@@ -1169,8 +1145,8 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     }
   }
 
-  private Map<Label, Map<String, String>> readPackageManifestFiles(
-      Map<Label, ArtifactLocation> manifests, ArtifactLocationDecoder decoder) {
+  private Map<RuleKey, Map<ArtifactLocation, String>> readPackageManifestFiles(
+      Map<RuleKey, ArtifactLocation> manifests, ArtifactLocationDecoder decoder) {
     return PackageManifestReader.getInstance()
         .readPackageManifestFiles(
             project, context, decoder, manifests, MoreExecutors.sameThreadExecutor());

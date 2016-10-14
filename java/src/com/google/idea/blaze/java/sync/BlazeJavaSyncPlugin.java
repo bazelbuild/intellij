@@ -19,8 +19,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -43,6 +43,7 @@ import com.google.idea.blaze.java.projectview.ExcludeLibrarySection;
 import com.google.idea.blaze.java.projectview.ExcludedLibrarySection;
 import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
 import com.google.idea.blaze.java.sync.importer.BlazeJavaWorkspaceImporter;
+import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
 import com.google.idea.blaze.java.sync.jdeps.JdepsFileReader;
 import com.google.idea.blaze.java.sync.jdeps.JdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
@@ -54,7 +55,6 @@ import com.google.idea.blaze.java.sync.projectstructure.LibraryEditor;
 import com.google.idea.blaze.java.sync.projectstructure.SourceFolderEditor;
 import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -73,7 +73,6 @@ import javax.annotation.Nullable;
 
 /** Sync support for Java. */
 public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
-  private static final Logger LOG = Logger.getInstance(BlazeJavaSyncPlugin.class);
   private final JdepsFileReader jdepsFileReader = new JdepsFileReader();
 
   @Nullable
@@ -109,6 +108,7 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
       BlazeRoots blazeRoots,
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
+      ArtifactLocationDecoder artifactLocationDecoder,
       RuleMap ruleMap,
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState) {
@@ -117,9 +117,17 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
       javaWorkingSet = new JavaWorkingSet(workspaceRoot, workingSet);
     }
 
+    JavaSourceFilter sourceFilter =
+        new JavaSourceFilter(project, workspaceRoot, projectViewSet, ruleMap);
+
     JdepsMap jdepsMap =
         jdepsFileReader.loadJdepsFiles(
-            project, context, ruleMap, syncStateBuilder, previousSyncState);
+            project,
+            context,
+            artifactLocationDecoder,
+            sourceFilter.getSourceRules(),
+            syncStateBuilder,
+            previousSyncState);
     if (context.isCancelled()) {
       return;
     }
@@ -127,14 +135,14 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
     BlazeJavaWorkspaceImporter blazeJavaWorkspaceImporter =
         new BlazeJavaWorkspaceImporter(
             project,
-            context,
             workspaceRoot,
             projectViewSet,
             workspaceLanguageSettings,
             ruleMap,
+            sourceFilter,
             jdepsMap,
             javaWorkingSet,
-            new ArtifactLocationDecoder(blazeRoots, workspacePathResolver));
+            artifactLocationDecoder);
     BlazeJavaImportResult importResult =
         Scope.push(
             context,

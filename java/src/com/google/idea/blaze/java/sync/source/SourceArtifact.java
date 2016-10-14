@@ -16,27 +16,27 @@
 package com.google.idea.blaze.java.sync.source;
 
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 
 /** Pairing of rule and source artifact. */
 public class SourceArtifact {
-  public final Label originatingRule;
+  public final RuleKey originatingRule;
   public final ArtifactLocation artifactLocation;
 
-  public SourceArtifact(Label originatingRule, ArtifactLocation artifactLocation) {
+  public SourceArtifact(RuleKey originatingRule, ArtifactLocation artifactLocation) {
     this.originatingRule = originatingRule;
     this.artifactLocation = artifactLocation;
   }
 
-  public static Builder builder(Label originatingRule) {
+  public static Builder builder(RuleKey originatingRule) {
     return new Builder(originatingRule);
   }
 
   static class Builder {
-    Label originatingRule;
+    RuleKey originatingRule;
     ArtifactLocation artifactLocation;
 
-    Builder(Label originatingRule) {
+    Builder(RuleKey originatingRule) {
       this.originatingRule = originatingRule;
     }
 

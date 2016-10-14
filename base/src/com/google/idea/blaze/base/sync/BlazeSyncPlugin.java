@@ -17,8 +17,8 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -99,6 +100,7 @@ public interface BlazeSyncPlugin {
       BlazeRoots blazeRoots,
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
+      ArtifactLocationDecoder artifactLocationDecoder,
       RuleMap ruleMap,
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState);
@@ -183,6 +185,7 @@ public interface BlazeSyncPlugin {
         BlazeRoots blazeRoots,
         @Nullable WorkingSet workingSet,
         WorkspacePathResolver workspacePathResolver,
+        ArtifactLocationDecoder artifactLocationDecoder,
         RuleMap ruleMap,
         SyncState.Builder syncStateBuilder,
         @Nullable SyncState previousSyncState) {}

@@ -26,10 +26,15 @@ import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests that usages of function declarations are found */
+@RunWith(JUnit4.class)
 public class FunctionStatementUsagesTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testLocalReferences() {
     BuildFile buildFile =
         createBuildFile(
@@ -47,6 +52,7 @@ public class FunctionStatementUsagesTest extends BuildFileIntegrationTestCase {
     assertThat(ref).isInstanceOf(FuncallExpression.class);
   }
 
+  @Test
   public void testLoadedFunctionReferences() {
     BuildFile extFile =
         createBuildFile("java/com/google/build_defs.bzl", "def function(name, deps)");
@@ -70,6 +76,7 @@ public class FunctionStatementUsagesTest extends BuildFileIntegrationTestCase {
     assertThat(ref.getParent()).isEqualTo(load);
   }
 
+  @Test
   public void testFuncallReference() {
     BuildFile extFile =
         createBuildFile("java/com/google/tools/build_defs.bzl", "def function(name, deps)");

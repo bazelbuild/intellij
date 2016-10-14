@@ -28,8 +28,8 @@ import com.google.idea.blaze.android.sync.model.BlazeResourceLibrary;
 import com.google.idea.blaze.base.ideinfo.AndroidRuleIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.model.RuleMap;
-import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -37,9 +37,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewRuleImportFilter;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -51,11 +49,8 @@ import org.jetbrains.annotations.Nullable;
 
 /** Builds a BlazeWorkspace. */
 public final class BlazeAndroidWorkspaceImporter {
-  private static final Logger LOG = Logger.getInstance(BlazeAndroidWorkspaceImporter.class);
 
-  private final Project project;
   private final BlazeContext context;
-  private final WorkspaceRoot workspaceRoot;
   private final RuleMap ruleMap;
   private final ProjectViewRuleImportFilter importFilter;
 
@@ -65,9 +60,7 @@ public final class BlazeAndroidWorkspaceImporter {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       RuleMap ruleMap) {
-    this.project = project;
     this.context = context;
-    this.workspaceRoot = workspaceRoot;
     this.ruleMap = ruleMap;
     this.importFilter = new ProjectViewRuleImportFilter(project, workspaceRoot, projectViewSet);
   }
@@ -108,7 +101,7 @@ public final class BlazeAndroidWorkspaceImporter {
     assert androidRuleIdeInfo != null;
     if (shouldGenerateResources(androidRuleIdeInfo)
         && shouldGenerateResourceModule(androidRuleIdeInfo)) {
-      AndroidResourceModule.Builder builder = new AndroidResourceModule.Builder(rule.label);
+      AndroidResourceModule.Builder builder = new AndroidResourceModule.Builder(rule.key);
       workspaceBuilder.androidResourceModules.add(builder);
 
       for (ArtifactLocation artifactLocation : androidRuleIdeInfo.resources) {
@@ -120,7 +113,7 @@ public final class BlazeAndroidWorkspaceImporter {
       }
 
       TransitiveResourceMap.TransitiveResourceInfo transitiveResourceInfo =
-          transitiveResourceMap.get(rule.label);
+          transitiveResourceMap.get(rule.key);
       for (ArtifactLocation artifactLocation : transitiveResourceInfo.transitiveResources) {
         if (artifactLocation.isSource()) {
           builder.addTransitiveResource(artifactLocation);
@@ -128,8 +121,8 @@ public final class BlazeAndroidWorkspaceImporter {
           workspaceBuilder.generatedResourceLocations.add(artifactLocation);
         }
       }
-      for (Label resourceDependency : transitiveResourceInfo.transitiveResourceRules) {
-        if (!resourceDependency.equals(rule.label)) {
+      for (RuleKey resourceDependency : transitiveResourceInfo.transitiveResourceRules) {
+        if (!resourceDependency.equals(rule.key)) {
           builder.addTransitiveResourceDependency(resourceDependency);
         }
       }
@@ -163,7 +156,7 @@ public final class BlazeAndroidWorkspaceImporter {
   @Nullable
   private BlazeResourceLibrary createResourceLibrary(
       Collection<AndroidResourceModule> androidResourceModules) {
-    Set<File> result = Sets.newHashSet();
+    Set<ArtifactLocation> result = Sets.newHashSet();
     for (AndroidResourceModule androidResourceModule : androidResourceModules) {
       result.addAll(androidResourceModule.transitiveResources);
     }
@@ -195,7 +188,7 @@ public final class BlazeAndroidWorkspaceImporter {
     Multimap<String, AndroidResourceModule> javaPackageToResourceModule =
         ArrayListMultimap.create();
     for (AndroidResourceModule androidResourceModule : androidResourceModules) {
-      RuleIdeInfo rule = ruleMap.get(androidResourceModule.label);
+      RuleIdeInfo rule = ruleMap.get(androidResourceModule.ruleKey);
       AndroidRuleIdeInfo androidRuleIdeInfo = rule.androidRuleIdeInfo;
       assert androidRuleIdeInfo != null;
       javaPackageToResourceModule.put(
@@ -217,7 +210,7 @@ public final class BlazeAndroidWorkspaceImporter {
             .append(".R: ");
         messageBuilder.append('\n');
         for (AndroidResourceModule androidResourceModule : androidResourceModulesWithJavaPackage) {
-          messageBuilder.append("  ").append(androidResourceModule.label).append('\n');
+          messageBuilder.append("  ").append(androidResourceModule.ruleKey).append('\n');
         }
         String message = messageBuilder.toString();
         context.output(new PerformanceWarning(message));
@@ -227,7 +220,7 @@ public final class BlazeAndroidWorkspaceImporter {
       }
     }
 
-    Collections.sort(result, (lhs, rhs) -> Label.COMPARATOR.compare(lhs.label, rhs.label));
+    Collections.sort(result, (lhs, rhs) -> RuleKey.COMPARATOR.compare(lhs.ruleKey, rhs.ruleKey));
     return ImmutableList.copyOf(result);
   }
 
@@ -243,8 +236,8 @@ public final class BlazeAndroidWorkspaceImporter {
                         lhs.transitiveResources.size(),
                         rhs.transitiveResources.size()) // Most transitive resources wins
                     .compare(
-                        rhs.label.toString().length(),
-                        lhs.label
+                        rhs.ruleKey.toString().length(),
+                        lhs.ruleKey
                             .toString()
                             .length()) // Shortest label wins - note lhs, rhs are flipped
                     .result())

@@ -21,10 +21,15 @@ import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests ParameterCompletionContributor. */
+@RunWith(JUnit4.class)
 public class ParameterCompletionContributorTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testArgsCompletion() {
     BuildFile file = createBuildFile("BUILD", "def function(arg1, *");
 
@@ -37,6 +42,7 @@ public class ParameterCompletionContributorTest extends BuildFileIntegrationTest
     assertFileContents(file, "def function(arg1, *args");
   }
 
+  @Test
   public void testKwargsCompletion() {
     BuildFile file = createBuildFile("BUILD", "def function(arg1, **");
 

@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.ideinfo.JavaRuleIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -34,6 +35,8 @@ import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.BlazeRunConfiguration;
 import com.google.idea.blaze.base.run.rulefinder.RuleFinder;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.google.idea.blaze.plugin.IntellijPluginRule;
 import com.intellij.execution.ExecutionException;
@@ -136,29 +139,42 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     this.target = target;
   }
 
+  public void setPluginSdk(Sdk sdk) {
+    if (IdeaJdkHelper.isIdeaJdk(sdk)) {
+      pluginSdk = sdk;
+    }
+  }
+
   private ImmutableList<File> findPluginJars() throws ExecutionException {
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
+    if (blazeProjectData == null) {
+      throw new ExecutionException("Not synced yet, please sync project");
+    }
     RuleIdeInfo rule = RuleFinder.getInstance().ruleForTarget(getProject(), getTarget());
     if (rule == null) {
       throw new ExecutionException(
           buildSystem + " rule '" + getTarget() + "' not imported during sync");
     }
     return IntellijPluginRule.isPluginBundle(rule)
-        ? findBundledJars(rule)
-        : ImmutableList.of(findPluginJar(rule));
+        ? findBundledJars(blazeProjectData.artifactLocationDecoder, rule)
+        : ImmutableList.of(findPluginJar(blazeProjectData.artifactLocationDecoder, rule));
   }
 
-  private ImmutableList<File> findBundledJars(RuleIdeInfo rule) throws ExecutionException {
+  private ImmutableList<File> findBundledJars(
+      ArtifactLocationDecoder artifactLocationDecoder, RuleIdeInfo rule) throws ExecutionException {
     ImmutableList.Builder<File> jars = ImmutableList.builder();
     for (Label dep : rule.dependencies) {
       RuleIdeInfo depRule = RuleFinder.getInstance().ruleForTarget(getProject(), dep);
       if (depRule != null && IntellijPluginRule.isSinglePluginRule(depRule)) {
-        jars.add(findPluginJar(depRule));
+        jars.add(findPluginJar(artifactLocationDecoder, depRule));
       }
     }
     return jars.build();
   }
 
-  private File findPluginJar(RuleIdeInfo rule) throws ExecutionException {
+  private File findPluginJar(ArtifactLocationDecoder artifactLocationDecoder, RuleIdeInfo rule)
+      throws ExecutionException {
     JavaRuleIdeInfo javaRuleIdeInfo = rule.javaRuleIdeInfo;
     if (!IntellijPluginRule.isSinglePluginRule(rule) || javaRuleIdeInfo == null) {
       throw new ExecutionException(
@@ -172,7 +188,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     if (artifact == null || artifact.classJar == null) {
       throw new ExecutionException("No output plugin jar found for '" + rule.label + "'");
     }
-    return artifact.classJar.getFile();
+    return artifactLocationDecoder.decode(artifact.classJar);
   }
 
   /**

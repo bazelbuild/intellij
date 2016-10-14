@@ -17,12 +17,14 @@ package com.google.idea.blaze.java.libraries;
 
 import com.google.idea.blaze.base.actions.BlazeAction;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewEdit;
 import com.google.idea.blaze.base.projectview.section.Glob;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.projectview.ExcludeLibrarySection;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.CommonBundle;
@@ -38,45 +40,51 @@ class ExcludeLibraryAction extends BlazeAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
     assert project != null;
-    Library library = LibraryActionHelper.findLibraryForAction(e);
-    if (library != null) {
-      BlazeJarLibrary blazeLibrary =
-          LibraryActionHelper.findLibraryFromIntellijLibrary(project, library);
-      if (blazeLibrary == null) {
-        Messages.showErrorDialog(
-            project, "Could not find this library in the project.", CommonBundle.getErrorTitle());
-        return;
-      }
-
-      final LibraryArtifact libraryArtifact = blazeLibrary.libraryArtifact;
-      final String path = libraryArtifact.jarForIntellijLibrary().getRelativePath();
-
-      ProjectViewEdit edit =
-          ProjectViewEdit.editLocalProjectView(
-              project,
-              builder -> {
-                ListSection<Glob> existingSection = builder.getLast(ExcludeLibrarySection.KEY);
-                builder.replace(
-                    existingSection,
-                    ListSection.update(ExcludeLibrarySection.KEY, existingSection)
-                        .add(new Glob(path)));
-                return true;
-              });
-      if (edit == null) {
-        Messages.showErrorDialog(
-            "Could not modify project view. Check for errors in your project view and try again",
-            "Error");
-        return;
-      }
-      edit.apply();
-
-      BlazeSyncManager.getInstance(project)
-          .requestProjectSync(
-              new BlazeSyncParams.Builder("Sync", BlazeSyncParams.SyncMode.INCREMENTAL)
-                  .addProjectViewTargets(true)
-                  .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
-                  .build());
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (blazeProjectData == null) {
+      return;
     }
+    Library library = LibraryActionHelper.findLibraryForAction(e);
+    if (library == null) {
+      return;
+    }
+    BlazeJarLibrary blazeLibrary =
+        LibraryActionHelper.findLibraryFromIntellijLibrary(project, blazeProjectData, library);
+    if (blazeLibrary == null) {
+      Messages.showErrorDialog(
+          project, "Could not find this library in the project.", CommonBundle.getErrorTitle());
+      return;
+    }
+
+    final LibraryArtifact libraryArtifact = blazeLibrary.libraryArtifact;
+    final String path = libraryArtifact.jarForIntellijLibrary().getRelativePath();
+
+    ProjectViewEdit edit =
+        ProjectViewEdit.editLocalProjectView(
+            project,
+            builder -> {
+              ListSection<Glob> existingSection = builder.getLast(ExcludeLibrarySection.KEY);
+              builder.replace(
+                  existingSection,
+                  ListSection.update(ExcludeLibrarySection.KEY, existingSection)
+                      .add(new Glob(path)));
+              return true;
+            });
+    if (edit == null) {
+      Messages.showErrorDialog(
+          "Could not modify project view. Check for errors in your project view and try again",
+          "Error");
+      return;
+    }
+    edit.apply();
+
+    BlazeSyncManager.getInstance(project)
+        .requestProjectSync(
+            new BlazeSyncParams.Builder("Sync", BlazeSyncParams.SyncMode.INCREMENTAL)
+                .addProjectViewTargets(true)
+                .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
+                .build());
   }
 
   @Override

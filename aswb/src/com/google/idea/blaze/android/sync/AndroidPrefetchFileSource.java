@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
@@ -36,7 +37,8 @@ public class AndroidPrefetchFileSource implements PrefetchFileSource {
     if (syncData.importResult.resourceLibrary == null) {
       return;
     }
-    files.addAll(syncData.importResult.resourceLibrary.sources);
+    ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.artifactLocationDecoder;
+    files.addAll(artifactLocationDecoder.decodeAll(syncData.importResult.resourceLibrary.sources));
   }
 
   @Override

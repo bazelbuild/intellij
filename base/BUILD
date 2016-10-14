@@ -42,7 +42,9 @@ java_library(
         "//base",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//proto_deps",
+        "//testing:lib",
         "@jsr305_annotations//jar",
+        "@junit//jar",
     ],
 )
 
@@ -69,7 +71,7 @@ intellij_plugin(
 )
 
 load(
-    "//intellij_test:test_defs.bzl",
+    "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )

@@ -37,7 +37,7 @@ public class SourceProviderImpl implements SourceProvider, Serializable {
   public SourceProviderImpl(String name, File manifestFile, Collection<File> resDirs) {
     this.name = name;
     this.manifestFile = manifestFile;
-    this.resDirs = resDirs;
+    this.resDirs = ImmutableList.copyOf(resDirs);
   }
 
   @Override

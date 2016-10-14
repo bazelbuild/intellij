@@ -51,7 +51,7 @@ public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
     if (!(handler instanceof BlazeAndroidBinaryRunConfigurationHandler)) {
       return false;
     }
-    return ((BlazeAndroidBinaryRunConfigurationHandler) handler).getConfigState().mobileInstall()
+    return ((BlazeAndroidBinaryRunConfigurationHandler) handler).getState().mobileInstall()
         && (IncrementalInstallDebugExecutor.EXECUTOR_ID.equals(executorId)
             || IncrementalInstallRunExecutor.EXECUTOR_ID.equals(executorId));
   }

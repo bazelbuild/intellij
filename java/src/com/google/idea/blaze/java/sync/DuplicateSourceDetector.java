@@ -20,7 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import java.util.Collection;
@@ -30,30 +30,30 @@ import java.util.Set;
 
 /** Detects and reports duplicate sources */
 public class DuplicateSourceDetector {
-  Multimap<ArtifactLocation, Label> artifacts = ArrayListMultimap.create();
+  Multimap<ArtifactLocation, RuleKey> artifacts = ArrayListMultimap.create();
 
-  public void add(Label label, ArtifactLocation artifactLocation) {
-    artifacts.put(artifactLocation, label);
+  public void add(RuleKey ruleKey, ArtifactLocation artifactLocation) {
+    artifacts.put(artifactLocation, ruleKey);
   }
 
   static class Duplicate {
     final ArtifactLocation artifactLocation;
-    final Collection<Label> labels;
+    final Collection<RuleKey> rules;
 
-    public Duplicate(ArtifactLocation artifactLocation, Collection<Label> labels) {
+    public Duplicate(ArtifactLocation artifactLocation, Collection<RuleKey> rules) {
       this.artifactLocation = artifactLocation;
-      this.labels = labels;
+      this.rules = rules;
     }
   }
 
   public void reportDuplicates(BlazeContext context) {
     List<Duplicate> duplicates = Lists.newArrayList();
     for (ArtifactLocation key : artifacts.keySet()) {
-      Collection<Label> labels = artifacts.get(key);
+      Collection<RuleKey> labels = artifacts.get(key);
       if (labels.size() > 1) {
 
         // Workaround for aspect bug. Can be removed after the next blaze release, as of May 27 2016
-        Set<Label> labelSet = Sets.newHashSet(labels);
+        Set<RuleKey> labelSet = Sets.newHashSet(labels);
         if (labelSet.size() > 1) {
           duplicates.add(new Duplicate(key, labelSet));
         }
@@ -76,8 +76,8 @@ public class DuplicateSourceDetector {
       ArtifactLocation artifactLocation = duplicate.artifactLocation;
       context.output(new PerformanceWarning("  Source: " + artifactLocation.getRelativePath()));
       context.output(new PerformanceWarning("  Consumed by rules:"));
-      for (Label label : duplicate.labels) {
-        context.output(new PerformanceWarning("    " + label));
+      for (RuleKey ruleKey : duplicate.rules) {
+        context.output(new PerformanceWarning("    " + ruleKey.label));
       }
       context.output(new PerformanceWarning("")); // Newline
     }

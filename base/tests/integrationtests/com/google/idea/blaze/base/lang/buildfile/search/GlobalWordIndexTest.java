@@ -22,18 +22,25 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import java.util.Arrays;
 import org.intellij.lang.annotations.MagicConstant;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Test the WordScanner indexes keywords in the way we expect.<br>
  * This is vital for navigation, refactoring, highlighting etc.
  */
+@RunWith(JUnit4.class)
 public class GlobalWordIndexTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testWordsInComments() {
     VirtualFile file = createFile("java/com/google/BUILD", "# words in comments");
     assertContainsWords(file, UsageSearchContext.IN_COMMENTS, "words", "in", "comments");
   }
 
+  @Test
   public void testWordsInStrings() {
     VirtualFile file =
         createFile(
@@ -50,6 +57,7 @@ public class GlobalWordIndexTest extends BuildFileIntegrationTestCase {
         "name_without_spaces");
   }
 
+  @Test
   public void testWordsInCode() {
     VirtualFile file =
         createFile(
@@ -73,7 +81,7 @@ public class GlobalWordIndexTest extends BuildFileIntegrationTestCase {
               .getVirtualFilesWithWord(
                   word, occurenceMask, GlobalSearchScope.fileScope(getProject(), file), true);
       if (!Arrays.asList(files).contains(file)) {
-        fail(String.format("Word '%s' not found in file '%s'", word, file));
+        Assert.fail(String.format("Word '%s' not found in file '%s'", word, file));
       }
     }
   }

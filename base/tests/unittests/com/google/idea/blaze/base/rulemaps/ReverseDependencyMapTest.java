@@ -21,8 +21,9 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.ideinfo.RuleMapBuilder;
-import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -56,9 +57,12 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
                     .setKind("java_library"))
             .build();
 
-    ImmutableMultimap<Label, Label> reverseDependencies =
+    ImmutableMultimap<RuleKey, RuleKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(ruleMap);
-    assertThat(reverseDependencies).containsEntry(new Label("//l:l2"), new Label("//l:l1"));
+    assertThat(reverseDependencies)
+        .containsEntry(
+            RuleKey.forPlainTarget(new Label("//l:l2")),
+            RuleKey.forPlainTarget(new Label("//l:l1")));
   }
 
   @Test
@@ -85,10 +89,16 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
                     .setKind("java_library"))
             .build();
 
-    ImmutableMultimap<Label, Label> reverseDependencies =
+    ImmutableMultimap<RuleKey, RuleKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(ruleMap);
-    assertThat(reverseDependencies).containsEntry(new Label("//l:l2"), new Label("//l:l1"));
-    assertThat(reverseDependencies).containsEntry(new Label("//l:l3"), new Label("//l:l1"));
+    assertThat(reverseDependencies)
+        .containsEntry(
+            RuleKey.forPlainTarget(new Label("//l:l2")),
+            RuleKey.forPlainTarget(new Label("//l:l1")));
+    assertThat(reverseDependencies)
+        .containsEntry(
+            RuleKey.forPlainTarget(new Label("//l:l3")),
+            RuleKey.forPlainTarget(new Label("//l:l1")));
   }
 
   @Test
@@ -115,10 +125,16 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
                     .setKind("java_library"))
             .build();
 
-    ImmutableMultimap<Label, Label> reverseDependencies =
+    ImmutableMultimap<RuleKey, RuleKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(ruleMap);
-    assertThat(reverseDependencies).containsEntry(new Label("//l:l3"), new Label("//l:l1"));
-    assertThat(reverseDependencies).containsEntry(new Label("//l:l3"), new Label("//l:l2"));
+    assertThat(reverseDependencies)
+        .containsEntry(
+            RuleKey.forPlainTarget(new Label("//l:l3")),
+            RuleKey.forPlainTarget(new Label("//l:l1")));
+    assertThat(reverseDependencies)
+        .containsEntry(
+            RuleKey.forPlainTarget(new Label("//l:l3")),
+            RuleKey.forPlainTarget(new Label("//l:l2")));
   }
 
   @Test
@@ -157,17 +173,28 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
                     .setKind("java_library"))
             .build();
 
-    ImmutableMultimap<Label, Label> reverseDependencies =
+    ImmutableMultimap<RuleKey, RuleKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(ruleMap);
-    assertThat(reverseDependencies).containsEntry(new Label("//l:l3"), new Label("//l:l1"));
-    assertThat(reverseDependencies).containsEntry(new Label("//l:l3"), new Label("//l:l2"));
-    assertThat(reverseDependencies).containsEntry(new Label("//l:l3"), new Label("//l:l4"));
-    assertThat(reverseDependencies).containsEntry(new Label("//l:l4"), new Label("//l:l5"));
+    assertThat(reverseDependencies)
+        .containsEntry(
+            RuleKey.forPlainTarget(new Label("//l:l3")),
+            RuleKey.forPlainTarget(new Label("//l:l1")));
+    assertThat(reverseDependencies)
+        .containsEntry(
+            RuleKey.forPlainTarget(new Label("//l:l3")),
+            RuleKey.forPlainTarget(new Label("//l:l2")));
+    assertThat(reverseDependencies)
+        .containsEntry(
+            RuleKey.forPlainTarget(new Label("//l:l3")),
+            RuleKey.forPlainTarget(new Label("//l:l4")));
+    assertThat(reverseDependencies)
+        .containsEntry(
+            RuleKey.forPlainTarget(new Label("//l:l4")),
+            RuleKey.forPlainTarget(new Label("//l:l5")));
   }
 
   private static ArtifactLocation sourceRoot(String relativePath) {
     return ArtifactLocation.builder()
-        .setRootPath("/")
         .setRelativePath(relativePath)
         .setIsSource(true)
         .build();

@@ -1,0 +1,19 @@
+directories:
+  .
+  -ijwb
+  -aswb
+  -plugin_dev
+  -cpp/src/com/google/idea/blaze/cpp/versioned/v145
+
+targets:
+  //clwb:clwb_bazel
+  //:clwb_tests
+
+workspace_type: intellij_plugin
+
+build_flags:
+  --define=ij_product=clion-latest
+
+test_sources:
+  */tests/unittests*
+  */tests/integrationtests*

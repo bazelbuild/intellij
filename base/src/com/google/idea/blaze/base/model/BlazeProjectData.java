@@ -16,8 +16,10 @@
 package com.google.idea.blaze.base.model;
 
 import com.google.common.collect.ImmutableMultimap;
-import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -28,16 +30,17 @@ import javax.annotation.concurrent.Immutable;
 /** The top-level object serialized to cache. */
 @Immutable
 public class BlazeProjectData implements Serializable {
-  private static final long serialVersionUID = 21L;
+  private static final long serialVersionUID = 23L;
 
   public final long syncTime;
   public final RuleMap ruleMap;
   public final BlazeRoots blazeRoots;
   @Nullable public final WorkingSet workingSet;
   public final WorkspacePathResolver workspacePathResolver;
+  public final ArtifactLocationDecoder artifactLocationDecoder;
   public final WorkspaceLanguageSettings workspaceLanguageSettings;
   public final SyncState syncState;
-  public final ImmutableMultimap<Label, Label> reverseDependencies;
+  public final ImmutableMultimap<RuleKey, RuleKey> reverseDependencies;
   @Nullable public final String vcsName;
 
   public BlazeProjectData(
@@ -46,15 +49,17 @@ public class BlazeProjectData implements Serializable {
       BlazeRoots blazeRoots,
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
+      ArtifactLocationDecoder artifactLocationDecoder,
       WorkspaceLanguageSettings workspaceLangaugeSettings,
       SyncState syncState,
-      ImmutableMultimap<Label, Label> reverseDependencies,
+      ImmutableMultimap<RuleKey, RuleKey> reverseDependencies,
       String vcsName) {
     this.syncTime = syncTime;
     this.ruleMap = ruleMap;
     this.blazeRoots = blazeRoots;
     this.workingSet = workingSet;
     this.workspacePathResolver = workspacePathResolver;
+    this.artifactLocationDecoder = artifactLocationDecoder;
     this.workspaceLanguageSettings = workspaceLangaugeSettings;
     this.syncState = syncState;
     this.reverseDependencies = reverseDependencies;

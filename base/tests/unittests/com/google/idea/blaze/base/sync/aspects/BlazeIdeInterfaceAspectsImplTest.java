@@ -15,23 +15,17 @@
  */
 package com.google.idea.blaze.base.sync.aspects;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.TestUtils;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
-import com.google.idea.blaze.base.model.RuleMap;
-import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.AndroidStudioIdeInfo;
@@ -46,16 +40,6 @@ import org.junit.runners.JUnit4;
 public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
 
   private static final File DUMMY_ROOT = new File("/");
-  private static final WorkspaceRoot WORKSPACE_ROOT = new WorkspaceRoot(DUMMY_ROOT);
-  private static final BlazeRoots BLAZE_ROOTS =
-      new BlazeRoots(
-          DUMMY_ROOT,
-          ImmutableList.of(DUMMY_ROOT),
-          new ExecutionRootPath("out/crosstool/bin"),
-          new ExecutionRootPath("out/crosstool/gen"));
-  private static final ArtifactLocationDecoder DUMMY_DECODER =
-      new ArtifactLocationDecoder(
-          BLAZE_ROOTS, new WorkspacePathResolverImpl(WORKSPACE_ROOT, BLAZE_ROOTS));
 
   @Override
   protected void initTest(
@@ -96,14 +80,17 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
         new WorkspaceLanguageSettings(
             WorkspaceType.ANDROID, ImmutableSet.of(LanguageClass.ANDROID));
     RuleIdeInfo ruleIdeInfo =
-        IdeInfoFromProtobuf.makeRuleIdeInfo(workspaceLanguageSettings, DUMMY_DECODER, ideProto);
+        IdeInfoFromProtobuf.makeRuleIdeInfo(workspaceLanguageSettings, ideProto);
     TestUtils.assertIsSerializable(ruleIdeInfo);
   }
 
   @Test
   public void testBlazeStateIsSerializable() {
     BlazeIdeInterfaceAspectsImpl.State state = new BlazeIdeInterfaceAspectsImpl.State();
-    state.fileToLabel = ImmutableMap.of(new File("fileName"), new Label("//java/com/test:test"));
+    state.fileToRuleMapKey =
+        ImmutableMap.of(
+            new File("fileName"),
+            RuleIdeInfo.builder().setLabel(new Label("//test:test")).build().key);
     state.fileState = ImmutableMap.of();
     state.ruleMap =
         new RuleMap(ImmutableMap.of()); // Tested separately in testRuleIdeInfoIsSerializable
@@ -117,8 +104,6 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
 
   static AndroidStudioIdeInfo.ArtifactLocation artifactLocation(
       String rootPath, String relativePath) {
-    return AndroidStudioIdeInfo.ArtifactLocation.newBuilder()
-        .setRelativePath(relativePath)
-        .build();
+    return AndroidStudioIdeInfo.ArtifactLocation.newBuilder().setRelativePath(relativePath).build();
   }
 }

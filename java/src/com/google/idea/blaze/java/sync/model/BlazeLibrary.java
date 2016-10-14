@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.sync.model;
 
 import com.google.common.base.Objects;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
@@ -61,7 +62,10 @@ public abstract class BlazeLibrary implements Serializable {
     return Objects.equal(key, that.key);
   }
 
-  public abstract void modifyLibraryModel(Project project, Library.ModifiableModel libraryModel);
+  public abstract void modifyLibraryModel(
+      Project project,
+      ArtifactLocationDecoder artifactLocationDecoder,
+      Library.ModifiableModel libraryModel);
 
   protected static String pathToUrl(File path) {
     String name = path.getName();

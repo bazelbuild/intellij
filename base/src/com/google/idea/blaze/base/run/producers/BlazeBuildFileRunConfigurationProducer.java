@@ -16,18 +16,19 @@
 package com.google.idea.blaze.base.run.producers;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
+import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
-import com.google.idea.blaze.base.run.BlazeRuleConfigurationFactory;
-import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandler;
-import com.google.idea.blaze.base.run.rulefinder.RuleFinder;
+import com.google.idea.blaze.base.run.BlazeRunConfigurationFactory;
+import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,18 +39,18 @@ import javax.annotation.Nullable;
 public class BlazeBuildFileRunConfigurationProducer
     extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
 
+  private static final Logger LOG =
+      Logger.getInstance(BlazeBuildFileRunConfigurationProducer.class);
+
   private static class BuildTarget {
     private final FuncallExpression rule;
     private final String ruleType;
     private final Label label;
-    @Nullable private final RuleIdeInfo ruleIdeInfo;
 
-    public BuildTarget(
-        FuncallExpression rule, String ruleType, Label label, @Nullable RuleIdeInfo ruleIdeInfo) {
+    BuildTarget(FuncallExpression rule, String ruleType, Label label) {
       this.rule = rule;
       this.ruleType = ruleType;
       this.label = label;
-      this.ruleIdeInfo = ruleIdeInfo;
     }
   }
 
@@ -67,14 +68,12 @@ public class BlazeBuildFileRunConfigurationProducer
     if (blazeProjectData == null) {
       return false;
     }
-    WorkspaceLanguageSettings workspaceLanguageSettings =
-        blazeProjectData.workspaceLanguageSettings;
     BuildTarget target = getBuildTarget(context);
     if (target == null) {
       return false;
     }
     sourceElement.set(target.rule);
-    setupConfiguration(configuration, workspaceLanguageSettings, target);
+    setupConfiguration(configuration.getProject(), blazeProjectData, configuration, target);
     return true;
   }
 
@@ -88,7 +87,6 @@ public class BlazeBuildFileRunConfigurationProducer
     if (!Objects.equals(configuration.getTarget(), target.label)) {
       return false;
     }
-
     // We don't know any details about how the various factories set up configurations from here.
     // Simply returning true at this point would be overly broad
     // (all configs with a matching target would be identified).
@@ -105,23 +103,21 @@ public class BlazeBuildFileRunConfigurationProducer
     if (blazeProjectData == null) {
       return false;
     }
-    WorkspaceLanguageSettings workspaceLanguageSettings =
-        blazeProjectData.workspaceLanguageSettings;
     BlazeCommandRunConfiguration generatedConfiguration =
         new BlazeCommandRunConfiguration(
             configuration.getProject(), configuration.getFactory(), configuration.getName());
-    setupConfiguration(generatedConfiguration, workspaceLanguageSettings, target);
+    setupConfiguration(
+        configuration.getProject(), blazeProjectData, generatedConfiguration, target);
 
     // TODO This check should be removed once isTestRule is in a RuleFactory and
     // test rules' suggestedName is modified to account for test filter flags.
     if (isTestRule(target.ruleType)) {
-      BlazeCommandGenericRunConfigurationHandler handler =
-          configuration.getHandlerIfType(BlazeCommandGenericRunConfigurationHandler.class);
-      if (handler != null && handler.getTestFilterFlag() != null) {
+      BlazeCommandRunConfigurationCommonState handlerState =
+          configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+      if (handlerState != null && handlerState.getTestFilterFlag() != null) {
         return false;
       }
     }
-    // End-TODO
 
     return Objects.equals(configuration.suggestedName(), generatedConfiguration.suggestedName())
         && Objects.equals(
@@ -129,10 +125,27 @@ public class BlazeBuildFileRunConfigurationProducer
             generatedConfiguration.getHandler().getCommandName());
   }
 
+  public static boolean handlesTarget(Project project, Label label) {
+    return buildTargetFromLabel(project, label) != null;
+  }
+
+  @Nullable
+  private static BuildTarget buildTargetFromLabel(Project project, Label label) {
+    PsiElement psiElement = BuildReferenceManager.getInstance(project).resolveLabel(label);
+    if (!(psiElement instanceof FuncallExpression)) {
+      return null;
+    }
+    return targetFromFuncall((FuncallExpression) psiElement);
+  }
+
   @Nullable
   private static BuildTarget getBuildTarget(ConfigurationContext context) {
-    FuncallExpression rule =
-        PsiTreeUtil.getNonStrictParentOfType(context.getPsiLocation(), FuncallExpression.class);
+    return targetFromFuncall(
+        PsiTreeUtil.getNonStrictParentOfType(context.getPsiLocation(), FuncallExpression.class));
+  }
+
+  @Nullable
+  private static BuildTarget targetFromFuncall(@Nullable FuncallExpression rule) {
     if (rule == null) {
       return null;
     }
@@ -141,40 +154,52 @@ public class BlazeBuildFileRunConfigurationProducer
     if (ruleType == null || label == null) {
       return null;
     }
-    RuleIdeInfo ruleIdeInfo = RuleFinder.getInstance().ruleForTarget(context.getProject(), label);
-    return new BuildTarget(rule, ruleType, label, ruleIdeInfo);
+    return new BuildTarget(rule, ruleType, label);
+  }
+
+  public static void setupConfiguration(RunConfiguration configuration, Label label) {
+    BuildTarget target = buildTargetFromLabel(configuration.getProject(), label);
+    if (target == null || !(configuration instanceof BlazeCommandRunConfiguration)) {
+      LOG.error("Configuration not handled by BUILD file config producer: " + configuration);
+      return;
+    }
+    setupBuildFileConfiguration((BlazeCommandRunConfiguration) configuration, target);
   }
 
   private static void setupConfiguration(
+      Project project,
+      BlazeProjectData blazeProjectData,
       BlazeCommandRunConfiguration configuration,
-      WorkspaceLanguageSettings workspaceLanguageSettings,
       BuildTarget target) {
-    // First see if a BlazeRuleConfigurationFactory can give us a specialized setup.
-    if (target.ruleIdeInfo != null) {
-      for (BlazeRuleConfigurationFactory configurationFactory :
-          BlazeRuleConfigurationFactory.EP_NAME.getExtensions()) {
-        if (configurationFactory.handlesRule(workspaceLanguageSettings, target.ruleIdeInfo)
-            && configurationFactory.handlesConfiguration(configuration)) {
-          configurationFactory.setupConfiguration(configuration, target.ruleIdeInfo);
-          return;
-        }
+    // First see if a BlazeRunConfigurationFactory can give us a specialized setup.
+    for (BlazeRunConfigurationFactory configurationFactory :
+        BlazeRunConfigurationFactory.EP_NAME.getExtensions()) {
+      if (configurationFactory.handlesTarget(project, blazeProjectData, target.label)
+          && configurationFactory.handlesConfiguration(configuration)) {
+        configurationFactory.setupConfiguration(configuration, target.label);
+        return;
       }
     }
 
     // If no factory exists, directly set up the configuration.
+    setupBuildFileConfiguration(configuration, target);
+  }
+
+  private static void setupBuildFileConfiguration(
+      BlazeCommandRunConfiguration configuration, BuildTarget target) {
     configuration.setTarget(target.label);
     // Try to make it a 'blaze build' command, if applicable.
-    BlazeCommandGenericRunConfigurationHandler handler =
-        configuration.getHandlerIfType(BlazeCommandGenericRunConfigurationHandler.class);
-    if (handler != null) {
-      // TODO move the old test rule functionality to a BlazeRuleConfigurationFactory
-      handler.setCommand(
+    BlazeCommandRunConfigurationCommonState handlerState =
+        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    if (handlerState != null) {
+      // TODO move the old test rule functionality to a BlazeRunConfigurationFactory
+      handlerState.setCommand(
           isTestRule(target.ruleType) ? BlazeCommandName.TEST : BlazeCommandName.BUILD);
     }
     configuration.setGeneratedName();
   }
 
-  // TODO this functionality should be moved to a BlazeRuleConfigurationFactory
+  // TODO this functionality should be moved to a BlazeRunConfigurationFactory
   private static boolean isTestRule(String ruleType) {
     return isTestSuite(ruleType) || ruleType.endsWith("_test");
   }

@@ -27,19 +27,24 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests BuiltInFunctionCompletionContributor */
+@RunWith(JUnit4.class)
 public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrationTestCase {
 
   private MockBuildLanguageSpecProvider specProvider;
 
-  @Override
-  protected void doSetup() {
-    super.doSetup();
+  @Before
+  public final void before() {
     specProvider = new MockBuildLanguageSpecProvider();
     registerApplicationService(BuildLanguageSpecProvider.class, specProvider);
   }
 
+  @Test
   public void testSimpleTopLevelCompletion() {
     setRules("java_library", "android_binary");
 
@@ -56,6 +61,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
     assertFileContents(file, "");
   }
 
+  @Test
   public void testUniqueTopLevelCompletion() {
     setRules("java_library", "android_binary");
 
@@ -71,6 +77,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
     assertCaretPosition(editor, 0, "java_library(".length());
   }
 
+  @Test
   public void testSkylarkNativeCompletion() {
     setRules("java_library", "android_binary");
 
@@ -86,6 +93,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
     assertCaretPosition(editor, 1, "  native.java_library(".length());
   }
 
+  @Test
   public void testNoCompletionInsideRule() {
     setRules("java_library", "android_binary");
 
@@ -101,6 +109,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
     assertFileContents(file, contents);
   }
 
+  @Test
   public void testNoCompletionInComment() {
     setRules("java_library", "android_binary");
 
@@ -109,7 +118,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
     Editor editor = openFileInEditor(file.getVirtualFile());
     setCaretPosition(editor, 0, "#java".length());
 
-    assertEmpty(getCompletionItemsAsStrings());
+    assertThat(getCompletionItemsAsStrings()).isEmpty();
   }
 
   private void setRules(String... ruleNames) {

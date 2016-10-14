@@ -27,8 +27,13 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiFile;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests auto-complete in project view files */
+@RunWith(JUnit4.class)
 public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
 
   private PsiFile setInput(String... fileContents) {
@@ -36,10 +41,11 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
   }
 
   private void assertResult(String... resultingFileContents) {
-    String s = testFixture.getFile().getText();
+    testFixture.getFile().getText();
     testFixture.checkResult(Joiner.on("\n").join(resultingFileContents));
   }
 
+  @Test
   public void testSectionTypeKeywords() {
     setInput("<caret>");
     String[] keywords = getCompletionItemsAsStrings();
@@ -53,12 +59,14 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
                 .collect(Collectors.toList()));
   }
 
+  @Test
   public void testColonAndNewLineAndIndentInsertedAfterListSection() {
     setInput("direc<caret>");
     assertThat(completeIfUnique()).isTrue();
     assertResult("directories:", "  <caret>");
   }
 
+  @Test
   public void testWhitespaceDividerInsertedAfterScalarSection() {
     setInput("impo<caret>");
 
@@ -71,32 +79,36 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
     assertResult("import <caret>");
   }
 
+  @Test
   public void testColonDividerAndSpaceInsertedAfterScalarSection() {
     setInput("works<caret>");
     assertThat(completeIfUnique()).isTrue();
     assertResult("workspace_type: <caret>");
   }
 
+  @Test
   public void testNoKeywordCompletionInListItem() {
     setInput("directories:", "  <caret>");
 
     String[] completionItems = getCompletionItemsAsStrings();
     if (completionItems == null) {
-      fail("Spurious completion. New file contents: " + testFixture.getFile().getText());
+      Assert.fail("Spurious completion. New file contents: " + testFixture.getFile().getText());
     }
     assertThat(completionItems).isEmpty();
   }
 
+  @Test
   public void testNoKeywordCompletionAfterKeyword() {
     setInput("import <caret>");
 
     String[] completionItems = getCompletionItemsAsStrings();
     if (completionItems == null) {
-      fail("Spurious completion. New file contents: " + testFixture.getFile().getText());
+      Assert.fail("Spurious completion. New file contents: " + testFixture.getFile().getText());
     }
     assertThat(completionItems).isEmpty();
   }
 
+  @Test
   public void testWorkspaceTypeCompletion() {
     setInput("workspace_type: <caret>");
 
@@ -110,6 +122,7 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
                 .collect(Collectors.toList()));
   }
 
+  @Test
   public void testAdditionalLanguagesCompletion() {
     setInput("additional_languages:", "  <caret>");
 
@@ -123,6 +136,7 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
                 .collect(Collectors.toList()));
   }
 
+  @Test
   public void testUniqueDirectoryCompleted() {
     setInput("import <caret>");
 
@@ -133,6 +147,7 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
     assertResult("import java<caret>");
   }
 
+  @Test
   public void testUniqueMultiSegmentDirectoryCompleted() {
     setInput("import <caret>");
 
@@ -143,6 +158,7 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
     assertResult("import java/com/google<caret>");
   }
 
+  @Test
   public void testNonDirectoriesIgnored() {
     setInput("import <caret>");
 
@@ -154,6 +170,7 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
     assertResult("import java/com/google<caret>");
   }
 
+  @Test
   public void testMultipleDirectoryOptions() {
     createDirectory("foo");
     createDirectory("bar");
@@ -173,6 +190,7 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
     assertResult("targets:", "  //ostrich<caret>");
   }
 
+  @Test
   public void testRuleCompletion() {
     createFile("BUILD", "java_library(name = 'lib')");
 

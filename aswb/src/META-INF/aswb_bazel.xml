@@ -14,5 +14,18 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-  <description>Provides the ability to import Bazel projects in Android Studio.</description>
+  <description>
+    <![CDATA[
+      <a href="http://bazel.io">Bazel</a> support for Android Studio.
+
+      Features:
+        <ul>
+        <li>Import BUILD files into the IDE.</li>
+        <li>BUILD file custom language support.</li>
+        <li>Support for Bazel run configurations for certain rule classes.</li>
+        </ul>
+
+      Usage instructions at <a href="http://ij.bazel.io">ij.bazel.io</a>
+      ]]>
+  </description>
 </idea-plugin>

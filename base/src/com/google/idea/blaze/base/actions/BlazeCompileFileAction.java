@@ -83,7 +83,7 @@ class BlazeCompileFileAction extends BlazeAction {
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (project != null && virtualFile != null) {
       return SourceToRuleMap.getInstance(project)
-          .getTargetsForSourceFile(new File(virtualFile.getPath()));
+          .getTargetsToBuildForSourceFile(new File(virtualFile.getPath()));
     }
     return ImmutableList.of();
   }

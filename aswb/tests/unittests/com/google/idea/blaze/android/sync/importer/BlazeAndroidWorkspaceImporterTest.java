@@ -30,8 +30,9 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaRuleIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.ideinfo.RuleMapBuilder;
-import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -62,15 +63,10 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
-  private static final String FAKE_ROOT = "/root";
-  private WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File(FAKE_ROOT));
+  private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
 
   private static final String FAKE_GEN_ROOT_EXECUTION_PATH_FRAGMENT =
       "blaze-out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
-
-  private static final String FAKE_GEN_ROOT =
-      "/abs_root/_blaze_user/8093958afcfde6c33d08b621dfaa4e09/root/"
-          + FAKE_GEN_ROOT_EXECUTION_PATH_FRAGMENT;
 
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
       new BlazeImportSettings("", "", "", "", "", BuildSystem.Blaze);
@@ -204,7 +200,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     assertThat(result.androidResourceModules)
         .containsExactly(
-            AndroidResourceModule.builder(new Label("//java/apps/example:example_debug"))
+            AndroidResourceModule.builder(
+                    RuleKey.forPlainTarget(new Label("//java/apps/example:example_debug")))
                 .addResourceAndTransitiveResource(source("java/apps/example/res"))
                 .addTransitiveResource(source("java/apps/example/lib0/res"))
                 .addTransitiveResource(source("java/apps/example/lib1/res"))
@@ -213,14 +210,16 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                 .addTransitiveResourceDependency("//java/apps/example/lib1:lib1")
                 .addTransitiveResourceDependency("//java/libraries/shared:shared")
                 .build(),
-            AndroidResourceModule.builder(new Label("//java/apps/example/lib0:lib0"))
+            AndroidResourceModule.builder(
+                    RuleKey.forPlainTarget(new Label("//java/apps/example/lib0:lib0")))
                 .addResourceAndTransitiveResource(source("java/apps/example/lib0/res"))
                 .addTransitiveResource(source("java/apps/example/lib1/res"))
                 .addTransitiveResource(source("java/libraries/shared/res"))
                 .addTransitiveResourceDependency("//java/apps/example/lib1:lib1")
                 .addTransitiveResourceDependency("//java/libraries/shared:shared")
                 .build(),
-            AndroidResourceModule.builder(new Label("//java/apps/example/lib1:lib1"))
+            AndroidResourceModule.builder(
+                    RuleKey.forPlainTarget(new Label("//java/apps/example/lib1:lib1")))
                 .addResourceAndTransitiveResource(source("java/apps/example/lib1/res"))
                 .addTransitiveResource(source("java/libraries/shared/res"))
                 .addTransitiveResourceDependency("//java/libraries/shared:shared")
@@ -366,7 +365,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     assertThat(
             jars.stream()
-                .map(library -> library.libraryArtifact.interfaceJar.getFile().getName())
+                .map(library -> library.libraryArtifact.interfaceJar)
+                .map(artifactLocation -> new File(artifactLocation.relativePath).getName())
                 .collect(Collectors.toList()))
         .containsExactly("lib0_resources.jar");
   }
@@ -414,7 +414,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     assertThat(
             genJars
                 .stream()
-                .map(library -> library.libraryArtifact.interfaceJar.getFile().getName())
+                .map(library -> library.libraryArtifact.interfaceJar)
+                .map(artifactLocation -> new File(artifactLocation.relativePath).getName())
                 .collect(Collectors.toList()))
         .containsExactly("libidl.jar");
   }
@@ -460,7 +461,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     errorCollector.assertNoIssues();
     assertThat(result.androidResourceModules)
         .containsExactly(
-            AndroidResourceModule.builder(new Label("//java/example:resources"))
+            AndroidResourceModule.builder(
+                    RuleKey.forPlainTarget(new Label("//java/example:resources")))
                 .addResourceAndTransitiveResource(source("java/example/res"))
                 .build());
   }
@@ -506,7 +508,12 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     errorCollector.assertNoIssues();
     BlazeResourceLibrary library = result.resourceLibrary;
     assertThat(library).isNotNull();
-    assertThat(library.sources).containsExactly(new File("/root/java/example2/res"));
+    assertThat(library.sources)
+        .containsExactly(
+            ArtifactLocation.builder()
+                .setRelativePath("java/example2/res")
+                .setIsSource(true)
+                .build());
   }
 
   @Test
@@ -551,7 +558,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     assertThat(result.androidResourceModules)
         .containsExactly(
-            AndroidResourceModule.builder(new Label("//java/example:lib"))
+            AndroidResourceModule.builder(RuleKey.forPlainTarget(new Label("//java/example:lib")))
                 .addResourceAndTransitiveResource(source("java/example/res"))
                 .build());
   }
@@ -586,16 +593,11 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   private ArtifactLocation source(String relativePath) {
-    return ArtifactLocation.builder()
-        .setRootPath(FAKE_ROOT)
-        .setRelativePath(relativePath)
-        .setIsSource(true)
-        .build();
+    return ArtifactLocation.builder().setRelativePath(relativePath).setIsSource(true).build();
   }
 
   private static ArtifactLocation gen(String relativePath) {
     return ArtifactLocation.builder()
-        .setRootPath(FAKE_GEN_ROOT)
         .setRootExecutionPathFragment(FAKE_GEN_ROOT_EXECUTION_PATH_FRAGMENT)
         .setRelativePath(relativePath)
         .setIsSource(false)

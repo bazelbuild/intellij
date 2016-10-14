@@ -3,8 +3,6 @@
 import argparse
 import re
 from xml.dom.minidom import parse
-from xml.dom.minidom import parseString
-import zipfile
 
 parser = argparse.ArgumentParser()
 
@@ -14,13 +12,8 @@ parser.add_argument(
     required=True,
 )
 parser.add_argument(
-    "--application_info_jar",
-    help="The jar file containing the application info xml",
-    required=True,
-)
-parser.add_argument(
-    "--application_info_name",
-    help="A .txt file containing the application info xml name",
+    "--api_version_txt",
+    help="The file containing the api version info",
     required=True,
 )
 parser.add_argument(
@@ -50,6 +43,14 @@ parser.add_argument(
     help="Changelog file to add to plugin.xml",
 )
 parser.add_argument(
+    "--description_file",
+    help="File with description element data to add to plugin.xml",
+)
+parser.add_argument(
+    "--vendor_file",
+    help="File with vendor element data to add to plugin.xml",
+)
+parser.add_argument(
     "--include_product_code_in_stamp",
     action="store_true",
     help="Include the product code in the stamp",
@@ -62,60 +63,38 @@ def _read_changelog(changelog_file):
     return "\n".join("<p>" + line + "</p>" for line in f.readlines())
 
 
-def _parse_build_number(build_number):
-  """Parses the build number.
+def _read_description(description_file):
+  """Reads the description and transforms it into trivial HTML."""
+  with open(description_file) as f:
+    return "\n".join("<p>" + line + "</p>" for line in f.readlines())
 
-  Args:
-    build_number: The build number as text.
-  Returns:
-    build_number, build_number_without_product_code.
-  Raises:
-    ValueError: if the build number is invalid.
-  """
-  match = re.match(r"^([A-Z]+-)?([0-9]+)(\.[0-9]+)?", build_number)
+
+def _read_vendor(vendor_file):
+  """Reads vendor data from an .xml file and returns the vendor element."""
+  dom = parse(vendor_file)
+  vendor_elements = dom.getElementsByTagName("vendor")
+  if len(vendor_elements) != 1:
+    raise ValueError("Ambigious or missing vendor element (%d elements)" %
+                     len(vendor_elements))
+  return vendor_elements[0]
+
+
+def _strip_product_code(api_version):
+  """Strips the product code from the api version string."""
+  match = re.match(r"^([A-Z]+-)?([0-9]+)((\.[0-9]+)*)", api_version)
   if match is None:
-    raise ValueError("Invalid build number: " + build_number)
+    raise ValueError("Invalid build number: " + api_version)
 
-  build_number = match.group(1) + match.group(2) + match.group(3)
-  build_number_without_product_code = match.group(2) + match.group(3)
-  return build_number, build_number_without_product_code
+  return match.group(2) + match.group(3)
 
 
 def main():
-
   args = parser.parse_args()
 
   dom = parse(args.plugin_xml)
 
-  with open(args.application_info_name) as f:
-    application_info_name = f.read().strip()
-
-  with zipfile.ZipFile(args.application_info_jar, "r") as zf:
-    try:
-      data = zf.read(application_info_name)
-    except:
-      raise ValueError("Could not read application info file: " +
-                       application_info_name)
-    component = parseString(data)
-
-    build_elements = component.getElementsByTagName("build")
-    if not build_elements:
-      raise ValueError("Could not find <build> element.")
-    if len(build_elements) > 1:
-      raise ValueError("Ambiguous <build> element.")
-    build_element = build_elements[0]
-
-    attrs = build_element.attributes
-    if attrs.has_key("apiVersion"):
-      api_version_attr = attrs.get("apiVersion")
-    else:
-      api_version_attr = attrs.get("number")
-
-  if not api_version_attr:
-    raise ValueError("Could not find api version in application info")
-
-  api_version, api_version_without_product_code = _parse_build_number(
-      api_version_attr.value)
+  with open(args.api_version_txt) as f:
+    api_version = f.readline().strip()
 
   new_elements = []
 
@@ -145,7 +124,7 @@ def main():
 
     idea_version_build_element = (api_version
                                   if args.include_product_code_in_stamp else
-                                  api_version_without_product_code)
+                                  _strip_product_code(api_version))
 
     idea_version_element = dom.createElement("idea-version")
     new_elements.append(idea_version_element)
@@ -181,6 +160,27 @@ def main():
     new_elements.append(name_element)
     name_text = dom.createTextNode(args.plugin_name)
     name_element.appendChild(name_text)
+
+  if args.description_file:
+    if idea_plugin.getElementsByTagName("description"):
+      raise ValueError("description element already in plugin.xml")
+    description_element = dom.createElement("description")
+    description_text = _read_description(args.description_file)
+    description_cdata = dom.createCDATASection(description_text)
+    description_element.appendChild(description_cdata)
+    new_elements.append(description_element)
+
+  if args.vendor_file:
+    if idea_plugin.getElementsByTagName("vendor"):
+      raise ValueError("vendor element already in plugin.xml")
+    vendor_element = dom.createElement("vendor")
+    vendor_src_element = _read_vendor(args.vendor_file)
+    vendor_element.setAttribute("email",
+                                vendor_src_element.getAttribute("email"))
+    vendor_element.setAttribute("url", vendor_src_element.getAttribute("url"))
+    vendor_text = dom.createTextNode(vendor_src_element.firstChild.data)
+    vendor_element.appendChild(vendor_text)
+    new_elements.append(vendor_element)
 
   for new_element in new_elements:
     idea_plugin.appendChild(new_element)

@@ -15,15 +15,10 @@
  */
 package com.google.idea.blaze.android.run;
 
-import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.Nullable;
 
 /** Common interface for Blaze Android run configuration handlers. */
@@ -39,16 +34,16 @@ public interface BlazeAndroidRunConfigurationHandler extends BlazeCommandRunConf
     if (!(profile instanceof BlazeCommandRunConfiguration)) {
       return null;
     }
-    BlazeCommandRunConfiguration blazeConfiguration = (BlazeCommandRunConfiguration) profile;
-    return blazeConfiguration.getHandlerIfType(BlazeAndroidRunConfigurationHandler.class);
+    BlazeCommandRunConfigurationHandler handler =
+        ((BlazeCommandRunConfiguration) profile).getHandler();
+    if (!(handler instanceof BlazeAndroidRunConfigurationHandler)) {
+      return null;
+    }
+    return (BlazeAndroidRunConfigurationHandler) handler;
   }
 
-  /** @return A {@link BlazeAndroidRunContext} for this handler with the given settings. */
-  BlazeAndroidRunContext createRunContext(
-      Project project,
-      AndroidFacet facet,
-      ExecutionEnvironment env,
-      ImmutableList<String> buildFlags);
+  /** @return This handler's common state. */
+  BlazeAndroidRunConfigurationCommonState getCommonState();
 
   /**
    * @return The {@link Label} this handler's configuration targets, or null if it does not target a
@@ -56,10 +51,4 @@ public interface BlazeAndroidRunConfigurationHandler extends BlazeCommandRunConf
    */
   @Nullable
   Label getLabel();
-
-  /** @return This handler's common state. */
-  BlazeAndroidRunConfigurationCommonState getCommonState();
-
-  /** @return This handler's type-specific state. */
-  BlazeAndroidRunConfigurationState getConfigState();
 }

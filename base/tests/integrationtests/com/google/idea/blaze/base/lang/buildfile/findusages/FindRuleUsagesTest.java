@@ -27,10 +27,15 @@ import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests that usages of build rules are found */
+@RunWith(JUnit4.class)
 public class FindRuleUsagesTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testLocalReferences() {
     BuildFile buildFile =
         createBuildFile(
@@ -54,6 +59,7 @@ public class FindRuleUsagesTest extends BuildFileIntegrationTestCase {
   }
 
   // test full package references, made locally
+  @Test
   public void testLocalFullReference() {
     BuildFile buildFile =
         createBuildFile(
@@ -71,6 +77,7 @@ public class FindRuleUsagesTest extends BuildFileIntegrationTestCase {
     assertThat(ref.getParent()).isInstanceOf(ListLiteral.class);
   }
 
+  @Test
   public void testNonLocalReferences() {
     BuildFile targetFile =
         createBuildFile("java/com/google/foo/BUILD", "java_library(name = \"target\")");
@@ -90,6 +97,7 @@ public class FindRuleUsagesTest extends BuildFileIntegrationTestCase {
     assertThat(ref.getContainingFile()).isEqualTo(refFile);
   }
 
+  @Test
   public void testFindUsagesWorksFromNameString() {
     BuildFile targetFile =
         createBuildFile("java/com/google/foo/BUILD", "java_library(name = \"tar<caret>get\")");
@@ -113,14 +121,14 @@ public class FindRuleUsagesTest extends BuildFileIntegrationTestCase {
     assertThat(ref.getContainingFile()).isEqualTo(refFile);
   }
 
+  @Test
   public void testInvalidReferenceDoesntResolve() {
     // reference ":target" from another build file (missing package path in label)
     BuildFile targetFile =
         createBuildFile("java/com/google/foo/BUILD", "java_library(name = \"target\")");
 
-    BuildFile refFile =
-        createBuildFile(
-            "java/com/google/bar/BUILD", "java_library(name = \"ref\", exports = [\":target\"])");
+    createBuildFile(
+        "java/com/google/bar/BUILD", "java_library(name = \"ref\", exports = [\":target\"])");
 
     FuncallExpression target = targetFile.findChildByClass(FuncallExpression.class);
     assertThat(target).isNotNull();

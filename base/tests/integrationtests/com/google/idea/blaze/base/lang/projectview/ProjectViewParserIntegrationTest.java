@@ -28,18 +28,23 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests for the project view file parser */
+@RunWith(JUnit4.class)
 public class ProjectViewParserIntegrationTest extends ProjectViewIntegrationTestCase {
 
   private final List<String> errors = Lists.newArrayList();
 
-  @Override
-  protected void doSetup() {
+  @Before
+  public final void before() {
     errors.clear();
-    super.doSetup();
   }
 
+  @Test
   public void testStandardFile() {
     assertThat(
             parse(
@@ -57,6 +62,7 @@ public class ProjectViewParserIntegrationTest extends ProjectViewIntegrationTest
     assertNoErrors();
   }
 
+  @Test
   public void testIncludeScalarSections() {
     assertThat(
             parse(
@@ -79,6 +85,7 @@ public class ProjectViewParserIntegrationTest extends ProjectViewIntegrationTest
     assertNoErrors();
   }
 
+  @Test
   public void testUnrecognizedKeyword() {
     parse("impart java/com/google/work/.blazeproject", "", "workspace_trype: intellij_plugin");
 

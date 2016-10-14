@@ -24,16 +24,23 @@ import javax.annotation.Nullable;
 /** Simple implementation of RuleDefinition, from build.proto */
 public class RuleDefinition implements Serializable {
 
-  /** This isn't included in the proto -- all other documented attributes seem to be. */
+  /**
+   * In previous versions of blaze/bazel, this wasn't included in the proto. All other documented
+   * attributes seem to be.
+   */
   private static final AttributeDefinition NAME_ATTRIBUTE =
       new AttributeDefinition("name", Build.Attribute.Discriminator.STRING, true, null, null);
 
   public static RuleDefinition fromProto(Build.RuleDefinition rule) {
+    boolean hasNameAttr = false;
     ImmutableMap.Builder<String, AttributeDefinition> map = ImmutableMap.builder();
     for (Build.AttributeDefinition attr : rule.getAttributeList()) {
       map.put(attr.getName(), AttributeDefinition.fromProto(attr));
+      hasNameAttr |= "name".equals(attr.getName());
     }
-    map.put(NAME_ATTRIBUTE.name, NAME_ATTRIBUTE);
+    if (!hasNameAttr) {
+      map.put(NAME_ATTRIBUTE.name, NAME_ATTRIBUTE);
+    }
     return new RuleDefinition(
         rule.getName(), map.build(), rule.hasDocumentation() ? rule.getDocumentation() : null);
   }

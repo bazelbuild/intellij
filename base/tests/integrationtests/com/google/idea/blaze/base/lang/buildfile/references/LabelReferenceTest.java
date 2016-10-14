@@ -28,10 +28,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import java.util.List;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests that string literal references are correctly resolved. */
+@RunWith(JUnit4.class)
 public class LabelReferenceTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testExternalFileReference() {
     BuildFile file =
         createBuildFile(
@@ -48,6 +53,7 @@ public class LabelReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(strings.get(1).getReferencedElement()).isEqualTo(xmlFile);
   }
 
+  @Test
   public void testLocalRuleReference() {
     BuildFile file =
         createBuildFile(
@@ -73,6 +79,7 @@ public class LabelReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(label.getReferencedElement()).isEqualTo(lib);
   }
 
+  @Test
   public void testTargetInAnotherPackageResolves() {
     BuildFile targetFile = createBuildFile("java/com/google/foo/BUILD", "rule(name = \"target\")");
 
@@ -89,6 +96,7 @@ public class LabelReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(depArgument.getValue().getReferencedElement()).isEqualTo(target);
   }
 
+  @Test
   public void testRuleNameDoesntCrossPackageBoundaries() {
     BuildFile targetFile =
         createBuildFile("java/com/google/pkg/subpkg/BUILD", "rule(name = \"target\")");
@@ -107,6 +115,7 @@ public class LabelReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(ref.resolve()).isEqualTo(targetFile.findRule("target"));
   }
 
+  @Test
   public void testLabelWithImplicitRuleName() {
     BuildFile targetFile = createBuildFile("java/com/google/foo/BUILD", "rule(name = \"foo\")");
 
@@ -122,6 +131,7 @@ public class LabelReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(depArgument.getValue().getReferencedElement()).isEqualTo(target);
   }
 
+  @Test
   public void testAbsoluteLabelInSkylarkExtension() {
     BuildFile targetFile = createBuildFile("java/com/google/foo/BUILD", "rule(name = \"foo\")");
 
@@ -136,6 +146,7 @@ public class LabelReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(label.getReferencedElement()).isEqualTo(target);
   }
 
+  @Test
   public void testRulePreferredOverFile() {
     BuildFile targetFile = createBuildFile("java/com/foo/BUILD", "java_library(name = 'lib')");
 

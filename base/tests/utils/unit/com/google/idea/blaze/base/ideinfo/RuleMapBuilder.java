@@ -17,8 +17,6 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.model.RuleMap;
-import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,9 +41,10 @@ public class RuleMapBuilder {
 
   @NotNull
   public RuleMap build() {
-    ImmutableMap.Builder<Label, RuleIdeInfo> ruleMap = ImmutableMap.builder();
+    ImmutableMap.Builder<RuleKey, RuleIdeInfo> ruleMap = ImmutableMap.builder();
     for (RuleIdeInfo rule : rules) {
-      ruleMap.put(rule.label, rule);
+      RuleKey key = rule.key;
+      ruleMap.put(key, rule);
     }
     return new RuleMap(ruleMap.build());
   }

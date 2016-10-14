@@ -31,7 +31,8 @@ public class BlazeJavaSyncStatusEditorTabColorProvider implements EditorTabColor
   @Nullable
   @Override
   public Color getEditorTabColor(@NotNull Project project, @NotNull VirtualFile file) {
-    if (file.getName().endsWith(".java") && SyncStatusHelper.isUnsynced(project, file)) {
+    if (file.getName().endsWith(".java")
+        && SyncStatusHelper.getInstance(project).isUnsynced(file)) {
       return UNSYNCED_COLOR;
     }
     return null;

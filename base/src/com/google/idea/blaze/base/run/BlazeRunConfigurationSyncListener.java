@@ -16,15 +16,14 @@
 package com.google.idea.blaze.base.run;
 
 import com.google.common.collect.Sets;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -39,6 +38,7 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
   @Override
   public void onSyncComplete(
       Project project,
+      BlazeContext context,
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
@@ -50,13 +50,14 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
               Set<Label> labelsWithConfigs = labelsWithConfigs(project);
               Set<TargetExpression> targetExpressions =
                   Sets.newHashSet(projectViewSet.listItems(TargetSection.KEY));
-              for (RuleIdeInfo rule : blazeProjectData.ruleMap.rules()) {
-                maybeAddRunConfiguration(
-                    project,
-                    blazeProjectData.workspaceLanguageSettings,
-                    targetExpressions,
-                    labelsWithConfigs,
-                    rule);
+              // We only auto-generate configurations for rules listed in the project view.
+              for (TargetExpression target : targetExpressions) {
+                if (!(target instanceof Label) || labelsWithConfigs.contains(target)) {
+                  continue;
+                }
+                Label label = (Label) target;
+                labelsWithConfigs.add(label);
+                maybeAddRunConfiguration(project, blazeProjectData, label);
               }
             });
   }
@@ -83,24 +84,14 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
    * for that target.
    */
   private static void maybeAddRunConfiguration(
-      Project project,
-      WorkspaceLanguageSettings workspaceLanguageSettings,
-      Set<TargetExpression> importTargets,
-      Set<Label> labelsWithConfigs,
-      RuleIdeInfo rule) {
-    Label label = rule.label;
-    // We only auto-generate configurations for rules listed in the project view.
-    if (!importTargets.contains(label) || labelsWithConfigs.contains(label)) {
-      return;
-    }
-    labelsWithConfigs.add(label);
+      Project project, BlazeProjectData blazeProjectData, Label label) {
     final RunManager runManager = RunManager.getInstance(project);
 
-    for (BlazeRuleConfigurationFactory configurationFactory :
-        BlazeRuleConfigurationFactory.EP_NAME.getExtensions()) {
-      if (configurationFactory.handlesRule(workspaceLanguageSettings, rule)) {
+    for (BlazeRunConfigurationFactory configurationFactory :
+        BlazeRunConfigurationFactory.EP_NAME.getExtensions()) {
+      if (configurationFactory.handlesTarget(project, blazeProjectData, label)) {
         final RunnerAndConfigurationSettings settings =
-            configurationFactory.createForRule(project, runManager, rule);
+            configurationFactory.createForTarget(project, runManager, label);
         runManager.addConfiguration(settings, false /* isShared */);
         if (runManager.getSelectedConfiguration() == null) {
           // TODO(joshgiles): Better strategy for picking initially selected config.

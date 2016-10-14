@@ -31,6 +31,7 @@ test_suite(
     name = "clwb_tests",
     tests = [
         "//base:unit_tests",
+        "//cpp:unit_tests",
     ],
 )
 

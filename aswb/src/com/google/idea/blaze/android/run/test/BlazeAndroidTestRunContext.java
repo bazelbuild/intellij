@@ -32,6 +32,8 @@ import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
+import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
@@ -130,6 +132,18 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
   @Override
   public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
       throws ExecutionException {
+    if (!configState.isRunThroughBlaze()) {
+      BlazeAndroidDeployInfo deployInfo =
+          Futures.get(buildStep.getDeployInfo(), ExecutionException.class);
+      if (!deployInfo.getDataToDeploy().isEmpty()) {
+        throw new ExecutionException(
+            "This test target has data dependencies (defined in the 'data' attribute).\n"
+                + "These can only be installed if the configuration is run through 'blaze test'.\n"
+                + "Check the \"Run through 'blaze test'\" checkbox on your "
+                + "run configuration and try again.");
+      }
+    }
+
     Collection<ApkInfo> apks;
     try {
       apks = apkProvider.getApks(device);
@@ -161,10 +175,13 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
           this,
           launchOptions.isDebug());
     }
+    BlazeAndroidDeployInfo deployInfo =
+        Futures.get(buildStep.getDeployInfo(), ExecutionException.class);
     return StockAndroidTestLaunchTask.getStockTestLaunchTask(
         configState,
         applicationIdProvider,
         launchOptions.isDebug(),
+        deployInfo,
         facet,
         processHandlerLaunchStatus);
   }

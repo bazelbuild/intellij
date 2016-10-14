@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import java.io.File;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import java.io.Serializable;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
@@ -27,19 +27,19 @@ import javax.annotation.concurrent.Immutable;
 /** The result of a blaze import operation. */
 @Immutable
 public class BlazeJavaImportResult implements Serializable {
-  private static final long serialVersionUID = 3L;
+  private static final long serialVersionUID = 4L;
 
   public final ImmutableList<BlazeContentEntry> contentEntries;
   public final ImmutableMap<LibraryKey, BlazeJarLibrary> libraries;
-  public final ImmutableCollection<File> buildOutputJars;
-  public final ImmutableSet<File> javaSourceFiles;
+  public final ImmutableCollection<ArtifactLocation> buildOutputJars;
+  public final ImmutableSet<ArtifactLocation> javaSourceFiles;
   @Nullable public final String sourceVersion;
 
   public BlazeJavaImportResult(
       ImmutableList<BlazeContentEntry> contentEntries,
       ImmutableMap<LibraryKey, BlazeJarLibrary> libraries,
-      ImmutableCollection<File> buildOutputJars,
-      ImmutableSet<File> javaSourceFiles,
+      ImmutableCollection<ArtifactLocation> buildOutputJars,
+      ImmutableSet<ArtifactLocation> javaSourceFiles,
       @Nullable String sourceVersion) {
     this.contentEntries = contentEntries;
     this.libraries = libraries;
