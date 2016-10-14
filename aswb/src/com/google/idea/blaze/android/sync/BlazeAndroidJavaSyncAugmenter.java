@@ -48,7 +48,7 @@ public class BlazeAndroidJavaSyncAugmenter extends BlazeJavaSyncAugmenter.Adapte
     }
     LibraryArtifact idlJar = androidRuleIdeInfo.idlJar;
     if (idlJar != null) {
-      genJars.add(new BlazeJarLibrary(idlJar, rule.label));
+      genJars.add(new BlazeJarLibrary(idlJar, rule.key));
     }
 
     if (BlazeAndroidWorkspaceImporter.shouldGenerateResources(androidRuleIdeInfo)
@@ -60,7 +60,7 @@ public class BlazeAndroidJavaSyncAugmenter extends BlazeJavaSyncAugmenter.Adapte
       if (!discardResourceJar) {
         LibraryArtifact resourceJar = androidRuleIdeInfo.resourceJar;
         if (resourceJar != null) {
-          jars.add(new BlazeJarLibrary(resourceJar, rule.label));
+          jars.add(new BlazeJarLibrary(resourceJar, rule.key));
         }
       }
     }

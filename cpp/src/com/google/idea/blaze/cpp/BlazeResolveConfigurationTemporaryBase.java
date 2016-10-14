@@ -25,9 +25,9 @@ import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.ideinfo.CRuleIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.model.RuleMap;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
@@ -72,7 +72,7 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
 
   /* project, label are protected instead of private just so v145 can access */
   protected final Project project;
-  protected final Label label;
+  protected final RuleKey ruleKey;
 
   private final ImmutableList<HeadersSearchRoot> cLibraryIncludeRoots;
   private final ImmutableList<HeadersSearchRoot> cppLibraryIncludeRoots;
@@ -120,7 +120,7 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
     return new BlazeResolveConfiguration(
         project,
         workspacePathResolver,
-        ruleIdeInfo.label,
+        ruleIdeInfo.key,
         systemIncludesBuilder.build(),
         systemIncludesBuilder.build(),
         userQuoteIncludesBuilder.build(),
@@ -134,30 +134,31 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
         cppFlagsBuilder.build());
   }
 
-  public static ImmutableMap<Label, CToolchainIdeInfo> buildToolchainLookupMap(
-      BlazeContext context, RuleMap ruleMap, ImmutableMultimap<Label, Label> reverseDependencies) {
+  public static ImmutableMap<RuleKey, CToolchainIdeInfo> buildToolchainLookupMap(
+      BlazeContext context,
+      RuleMap ruleMap,
+      ImmutableMultimap<RuleKey, RuleKey> reverseDependencies) {
     return Scope.push(
         context,
         childContext -> {
           childContext.push(new TimingScope("Build toolchain lookup map"));
 
-          List<Label> seeds = Lists.newArrayList();
+          List<RuleKey> seeds = Lists.newArrayList();
           for (RuleIdeInfo rule : ruleMap.rules()) {
-            Label label = rule.label;
             CToolchainIdeInfo cToolchainIdeInfo = rule.cToolchainIdeInfo;
             if (cToolchainIdeInfo != null) {
-              seeds.add(label);
+              seeds.add(rule.key);
             }
           }
 
-          Map<Label, CToolchainIdeInfo> lookupTable = Maps.newHashMap();
-          for (Label seed : seeds) {
+          Map<RuleKey, CToolchainIdeInfo> lookupTable = Maps.newHashMap();
+          for (RuleKey seed : seeds) {
             CToolchainIdeInfo toolchainInfo = ruleMap.get(seed).cToolchainIdeInfo;
             LOG.assertTrue(toolchainInfo != null);
-            List<Label> worklist = Lists.newArrayList(reverseDependencies.get(seed));
+            List<RuleKey> worklist = Lists.newArrayList(reverseDependencies.get(seed));
             while (!worklist.isEmpty()) {
               // We should never see a label depend on two different toolchains.
-              Label l = worklist.remove(0);
+              RuleKey l = worklist.remove(0);
               CToolchainIdeInfo previousValue = lookupTable.putIfAbsent(l, toolchainInfo);
               // Don't propagate the toolchain twice.
               if (previousValue == null) {
@@ -174,7 +175,7 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
   public BlazeResolveConfigurationTemporaryBase(
       Project project,
       WorkspacePathResolver workspacePathResolver,
-      Label label,
+      RuleKey ruleKey,
       ImmutableCollection<ExecutionRootPath> cSystemIncludeDirs,
       ImmutableCollection<ExecutionRootPath> cppSystemIncludeDirs,
       ImmutableCollection<ExecutionRootPath> quoteIncludeDirs,
@@ -188,7 +189,7 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
       ImmutableList<String> cppCompilerFlags) {
     this.workspacePathResolver = workspacePathResolver;
     this.project = project;
-    this.label = label;
+    this.ruleKey = ruleKey;
 
     ImmutableList.Builder<HeadersSearchRoot> cIncludeRootsBuilder = ImmutableList.builder();
     collectHeaderRoots(cIncludeRootsBuilder, cIncludeDirs, true /* isUserHeader */);
@@ -220,7 +221,7 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
 
   @Override
   public String getDisplayName(boolean shorten) {
-    return label.toString();
+    return ruleKey.toString();
   }
 
   @Nullable
@@ -355,8 +356,8 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
 
   @Override
   public int hashCode() {
-    // There should only be one configuration per label.
-    return Objects.hash(label);
+    // There should only be one configuration per target.
+    return Objects.hash(ruleKey);
   }
 
   @Override

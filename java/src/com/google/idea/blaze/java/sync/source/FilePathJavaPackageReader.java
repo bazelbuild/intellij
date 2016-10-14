@@ -17,12 +17,16 @@ package com.google.idea.blaze.java.sync.source;
 
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.util.PackagePrefixCalculator;
 
 /** Gets the package from a java file by its file path alone (i.e. without opening the file). */
 public final class FilePathJavaPackageReader extends JavaPackageReader {
   @Override
-  public String getDeclaredPackageOfJavaFile(BlazeContext context, SourceArtifact sourceArtifact) {
+  public String getDeclaredPackageOfJavaFile(
+      BlazeContext context,
+      ArtifactLocationDecoder artifactLocationDecoder,
+      SourceArtifact sourceArtifact) {
     String directory = sourceArtifact.artifactLocation.getRelativePath();
     int i = directory.lastIndexOf('/');
     if (i >= 0) {

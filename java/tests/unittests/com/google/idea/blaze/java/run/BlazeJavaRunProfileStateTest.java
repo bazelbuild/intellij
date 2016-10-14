@@ -29,10 +29,10 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
-import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.rulefinder.RuleFinder;
+import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -63,9 +63,6 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
-    configuration =
-        new BlazeCommandRunConfigurationType().getFactory().createTemplateConfiguration(project);
-
     ExperimentService experimentService = new MockExperimentService();
     applicationServices.register(ExperimentService.class, experimentService);
     applicationServices.register(RuleFinder.class, new MockRuleFinder());
@@ -76,15 +73,18 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
             BlazeCommandRunConfigurationHandlerProvider.EP_NAME,
             BlazeCommandRunConfigurationHandlerProvider.class);
     handlerProviderEp.registerExtension(new BlazeCommandGenericRunConfigurationHandlerProvider());
+
+    configuration =
+        new BlazeCommandRunConfigurationType().getFactory().createTemplateConfiguration(project);
   }
 
   @Test
   public void flagsShouldBeAppendedIfPresent() {
     configuration.setTarget(new Label("//label:rule"));
-    BlazeCommandGenericRunConfigurationHandler handler =
-        (BlazeCommandGenericRunConfigurationHandler) configuration.getHandler();
-    handler.setCommand(BlazeCommandName.fromString("command"));
-    handler.setBlazeFlags(ImmutableList.of("--flag1", "--flag2"));
+    BlazeCommandRunConfigurationCommonState handlerState =
+        (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
+    handlerState.setCommand(BlazeCommandName.fromString("command"));
+    handlerState.setBlazeFlags(ImmutableList.of("--flag1", "--flag2"));
     assertThat(
             BlazeJavaRunProfileState.getBlazeCommand(
                     project, configuration, ProjectViewSet.builder().build(), false /* debug */)
@@ -103,9 +103,9 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
   @Test
   public void debugFlagShouldBeIncludedForJavaTest() {
     configuration.setTarget(new Label("//label:rule"));
-    BlazeCommandGenericRunConfigurationHandler handler =
-        (BlazeCommandGenericRunConfigurationHandler) configuration.getHandler();
-    handler.setCommand(BlazeCommandName.fromString("command"));
+    BlazeCommandRunConfigurationCommonState handlerState =
+        (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
+    handlerState.setCommand(BlazeCommandName.fromString("command"));
     assertThat(
             BlazeJavaRunProfileState.getBlazeCommand(
                     project, configuration, ProjectViewSet.builder().build(), true /* debug */)
@@ -123,9 +123,9 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
   @Test
   public void debugFlagShouldBeIncludedForJavaBinary() {
     configuration.setTarget(new Label("//label:java_binary_rule"));
-    BlazeCommandGenericRunConfigurationHandler handler =
-        (BlazeCommandGenericRunConfigurationHandler) configuration.getHandler();
-    handler.setCommand(BlazeCommandName.fromString("command"));
+    BlazeCommandRunConfigurationCommonState handlerState =
+        (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
+    handlerState.setCommand(BlazeCommandName.fromString("command"));
     assertThat(
             BlazeJavaRunProfileState.getBlazeCommand(
                     project, configuration, ProjectViewSet.builder().build(), true /* debug */)

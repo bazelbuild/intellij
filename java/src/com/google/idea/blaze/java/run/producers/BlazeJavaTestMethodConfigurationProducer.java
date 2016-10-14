@@ -23,8 +23,8 @@ import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
-import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandler;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
+import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.java.run.RunUtil;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JUnitUtil;
@@ -88,19 +88,19 @@ public class BlazeJavaTestMethodConfigurationProducer
     }
 
     configuration.setTarget(rule.label);
-    BlazeCommandGenericRunConfigurationHandler handler =
-        configuration.getHandlerIfType(BlazeCommandGenericRunConfigurationHandler.class);
-    if (handler == null) {
+    BlazeCommandRunConfigurationCommonState handlerState =
+        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    if (handlerState == null) {
       return false;
     }
-    handler.setCommand(BlazeCommandName.TEST);
+    handlerState.setCommand(BlazeCommandName.TEST);
 
     ImmutableList.Builder<String> flags = ImmutableList.builder();
     flags.add(methodInfo.testFilterFlag);
     flags.add(BlazeFlags.TEST_OUTPUT_STREAMED);
-    flags.addAll(handler.getAllBlazeFlags());
+    flags.addAll(handlerState.getBlazeFlags());
 
-    handler.setBlazeFlags(flags.build());
+    handlerState.setBlazeFlags(flags.build());
 
     BlazeConfigurationNameBuilder nameBuilder = new BlazeConfigurationNameBuilder(configuration);
     nameBuilder.setTargetString(
@@ -115,12 +115,12 @@ public class BlazeJavaTestMethodConfigurationProducer
   @Override
   protected boolean doIsConfigFromContext(
       @NotNull BlazeCommandRunConfiguration configuration, @NotNull ConfigurationContext context) {
-    BlazeCommandGenericRunConfigurationHandler handler =
-        configuration.getHandlerIfType(BlazeCommandGenericRunConfigurationHandler.class);
-    if (handler == null) {
+    BlazeCommandRunConfigurationCommonState handlerState =
+        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    if (handlerState == null) {
       return false;
     }
-    if (!Objects.equals(handler.getCommand(), BlazeCommandName.TEST)) {
+    if (!Objects.equals(handlerState.getCommand(), BlazeCommandName.TEST)) {
       return false;
     }
 
@@ -129,7 +129,7 @@ public class BlazeJavaTestMethodConfigurationProducer
       return false;
     }
 
-    List<String> flags = handler.getAllBlazeFlags();
+    List<String> flags = handlerState.getBlazeFlags();
     return flags.contains(methodInfo.testFilterFlag);
   }
 

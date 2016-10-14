@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.manifest;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -98,6 +99,7 @@ public class ManifestParser {
     @Override
     public void onSyncComplete(
         Project project,
+        BlazeContext context,
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
         BlazeProjectData blazeProjectData,

@@ -24,8 +24,8 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.filecache.FileDiffer;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 import com.google.idea.blaze.base.io.InputStreamProvider;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -41,7 +41,6 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 
 /** Reads package manifests. */
 public class PackageManifestReader {
@@ -53,22 +52,22 @@ public class PackageManifestReader {
 
   private ImmutableMap<File, Long> fileDiffState;
 
-  private Map<File, Label> fileToLabelMap = Maps.newHashMap();
-  private final Map<Label, Map<String, String>> manifestMap = Maps.newConcurrentMap();
+  private Map<File, RuleKey> fileToLabelMap = Maps.newHashMap();
+  private final Map<RuleKey, Map<ArtifactLocation, String>> manifestMap = Maps.newConcurrentMap();
 
   /** @return A map from java source absolute file path to declared package string. */
-  public Map<Label, Map<String, String>> readPackageManifestFiles(
+  public Map<RuleKey, Map<ArtifactLocation, String>> readPackageManifestFiles(
       Project project,
       BlazeContext context,
       ArtifactLocationDecoder decoder,
-      Map<Label, ArtifactLocation> javaPackageManifests,
+      Map<RuleKey, ArtifactLocation> javaPackageManifests,
       ListeningExecutorService executorService) {
 
-    Map<File, Label> fileToLabelMap = Maps.newHashMap();
-    for (Map.Entry<Label, ArtifactLocation> entry : javaPackageManifests.entrySet()) {
-      Label label = entry.getKey();
-      File file = entry.getValue().getFile();
-      fileToLabelMap.put(file, label);
+    Map<File, RuleKey> fileToLabelMap = Maps.newHashMap();
+    for (Map.Entry<RuleKey, ArtifactLocation> entry : javaPackageManifests.entrySet()) {
+      RuleKey key = entry.getKey();
+      File file = decoder.decode(entry.getValue());
+      fileToLabelMap.put(file, key);
     }
     List<File> updatedFiles = Lists.newArrayList();
     List<File> removedFiles = Lists.newArrayList();
@@ -90,15 +89,15 @@ public class PackageManifestReader {
       futures.add(
           executorService.submit(
               () -> {
-                Map<String, String> manifest = parseManifestFile(decoder, file);
+                Map<ArtifactLocation, String> manifest = parseManifestFile(file);
                 manifestMap.put(fileToLabelMap.get(file), manifest);
                 return null;
               }));
     }
     for (File file : removedFiles) {
-      Label label = this.fileToLabelMap.get(file);
-      if (label != null) {
-        manifestMap.remove(label);
+      RuleKey key = this.fileToLabelMap.get(file);
+      if (key != null) {
+        manifestMap.remove(key);
       }
     }
     this.fileToLabelMap = fileToLabelMap;
@@ -112,19 +111,22 @@ public class PackageManifestReader {
     return manifestMap;
   }
 
-  protected Map<String, String> parseManifestFile(
-      ArtifactLocationDecoder decoder, File packageManifest) {
-    Map<String, String> outputMap = Maps.newHashMap();
+  protected Map<ArtifactLocation, String> parseManifestFile(File packageManifest) {
+    Map<ArtifactLocation, String> outputMap = Maps.newHashMap();
     InputStreamProvider inputStreamProvider = InputStreamProvider.getInstance();
 
     try (InputStream input = inputStreamProvider.getFile(packageManifest)) {
       try (BufferedInputStream bufferedInputStream = new BufferedInputStream(input)) {
         PackageManifest proto = PackageManifest.parseFrom(bufferedInputStream);
         for (JavaSourcePackage source : proto.getSourcesList()) {
-          String absPath = getAbsolutePath(decoder, source);
-          if (absPath != null) {
-            outputMap.put(absPath, source.getPackageString());
-          }
+          ArtifactLocation artifactLocation =
+              ArtifactLocation.builder()
+                  .setRootExecutionPathFragment(
+                      source.getArtifactLocation().getRootExecutionPathFragment())
+                  .setRelativePath(source.getArtifactLocation().getRelativePath())
+                  .setIsSource(source.getArtifactLocation().getIsSource())
+                  .build();
+          outputMap.put(artifactLocation, source.getPackageString());
         }
       }
       return outputMap;
@@ -132,18 +134,5 @@ public class PackageManifestReader {
       LOG.error(e);
       return outputMap;
     }
-  }
-
-  /**
-   * Returns null if the artifact location file can't be found, presumably because it's been removed
-   * from the file system since the blaze build.
-   */
-  @Nullable
-  private static String getAbsolutePath(ArtifactLocationDecoder decoder, JavaSourcePackage source) {
-    ArtifactLocation location = decoder.decode(source.getArtifactLocation());
-    if (location == null) {
-      return null;
-    }
-    return location.getFile().getAbsolutePath();
   }
 }

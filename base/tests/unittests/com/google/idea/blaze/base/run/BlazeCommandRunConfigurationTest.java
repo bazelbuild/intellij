@@ -58,8 +58,6 @@ public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
-    this.configuration = this.type.getFactory().createTemplateConfiguration(project);
-
     applicationServices.register(ExperimentService.class, new MockExperimentService());
     applicationServices.register(RuleFinder.class, new MockRuleFinder());
     ExtensionPointImpl<BlazeCommandRunConfigurationHandlerProvider> handlerProviderEp =
@@ -67,6 +65,8 @@ public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
             BlazeCommandRunConfigurationHandlerProvider.EP_NAME,
             BlazeCommandRunConfigurationHandlerProvider.class);
     handlerProviderEp.registerExtension(new MockBlazeCommandRunConfigurationHandlerProvider());
+
+    this.configuration = this.type.getFactory().createTemplateConfiguration(project);
   }
 
   @Test

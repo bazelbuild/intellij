@@ -26,8 +26,9 @@ import javax.annotation.Nullable;
 
 /** Simple implementation of RuleIdeInfo. */
 public final class RuleIdeInfo implements Serializable {
-  private static final long serialVersionUID = 10L;
+  private static final long serialVersionUID = 12L;
 
+  public final RuleKey key;
   public final Label label;
   public final Kind kind;
   @Nullable public final ArtifactLocation buildFile;
@@ -58,6 +59,7 @@ public final class RuleIdeInfo implements Serializable {
       @Nullable TestIdeInfo testIdeInfo,
       @Nullable ProtoLibraryLegacyInfo protoLibraryLegacyInfo,
       @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo) {
+    this.key = RuleKey.forPlainTarget(label);
     this.label = label;
     this.kind = kind;
     this.buildFile = buildFile;
@@ -90,6 +92,10 @@ public final class RuleIdeInfo implements Serializable {
       return kind.isOneOf(kinds);
     }
     return false;
+  }
+
+  public boolean isPlainTarget() {
+    return true;
   }
 
   public static Builder builder() {

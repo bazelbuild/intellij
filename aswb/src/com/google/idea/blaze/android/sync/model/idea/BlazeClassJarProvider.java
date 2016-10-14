@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.intellij.openapi.module.Module;
@@ -56,7 +57,8 @@ public class BlazeClassJarProvider extends ClassJarProvider {
     if (syncData == null) {
       return null;
     }
-    for (File classJar : syncData.importResult.buildOutputJars) {
+    ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.artifactLocationDecoder;
+    for (File classJar : artifactLocationDecoder.decodeAll(syncData.importResult.buildOutputJars)) {
       VirtualFile classJarVF = localVfs.findFileByIoFile(classJar);
       if (classJarVF == null) {
         continue;
@@ -90,6 +92,7 @@ public class BlazeClassJarProvider extends ClassJarProvider {
     if (syncData == null) {
       return null;
     }
+    ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.artifactLocationDecoder;
     LocalFileSystem localVfs = LocalFileSystem.getInstance();
     for (BlazeJarLibrary blazeLibrary : syncData.importResult.libraries.values()) {
       LibraryArtifact libraryArtifact = blazeLibrary.libraryArtifact;
@@ -97,7 +100,7 @@ public class BlazeClassJarProvider extends ClassJarProvider {
       if (classJar == null) {
         continue;
       }
-      VirtualFile libVF = localVfs.findFileByIoFile(classJar.getFile());
+      VirtualFile libVF = localVfs.findFileByIoFile(artifactLocationDecoder.decode(classJar));
       if (libVF == null) {
         continue;
       }

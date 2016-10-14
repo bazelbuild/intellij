@@ -20,21 +20,26 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Maps source files to their respective targets */
 public class SourceToRuleMapImpl implements SourceToRuleMap {
   private final Project project;
-  private ImmutableMultimap<File, Label> sourceToTargetMap;
+  private ImmutableMultimap<File, RuleKey> sourceToTargetMap;
 
   public static SourceToRuleMapImpl getImpl(Project project) {
     return (SourceToRuleMapImpl) ServiceManager.getService(project, SourceToRuleMap.class);
@@ -45,13 +50,35 @@ public class SourceToRuleMapImpl implements SourceToRuleMap {
   }
 
   @Override
-  public ImmutableCollection<Label> getTargetsForSourceFile(File file) {
-    ImmutableMultimap<File, Label> sourceToTargetMap = getSourceToTargetMap();
-    return sourceToTargetMap != null ? sourceToTargetMap.get(file) : ImmutableList.of();
+  public ImmutableCollection<Label> getTargetsToBuildForSourceFile(File sourceFile) {
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (blazeProjectData == null) {
+      return ImmutableList.of();
+    }
+    return ImmutableList.copyOf(
+        getRulesForSourceFile(sourceFile)
+            .stream()
+            .map(blazeProjectData.ruleMap::get)
+            .filter(Objects::nonNull)
+            // TODO(tomlu): For non-plain targets we need to rdep our way back to a target to build
+            // Without this, you won't be able to invoke "build" on (say) a proto_library
+            .filter(RuleIdeInfo::isPlainTarget)
+            .map(rule -> rule.label)
+            .collect(Collectors.toList()));
+  }
+
+  @Override
+  public ImmutableCollection<RuleKey> getRulesForSourceFile(File sourceFile) {
+    ImmutableMultimap<File, RuleKey> sourceToTargetMap = getSourceToTargetMap();
+    if (sourceToTargetMap == null) {
+      return ImmutableList.of();
+    }
+    return sourceToTargetMap.get(sourceFile);
   }
 
   @Nullable
-  private synchronized ImmutableMultimap<File, Label> getSourceToTargetMap() {
+  private synchronized ImmutableMultimap<File, RuleKey> getSourceToTargetMap() {
     if (this.sourceToTargetMap == null) {
       this.sourceToTargetMap = initSourceToTargetMap();
     }
@@ -63,17 +90,18 @@ public class SourceToRuleMapImpl implements SourceToRuleMap {
   }
 
   @Nullable
-  private ImmutableMultimap<File, Label> initSourceToTargetMap() {
+  private ImmutableMultimap<File, RuleKey> initSourceToTargetMap() {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
       return null;
     }
-    ImmutableMultimap.Builder<File, Label> sourceToTargetMap = ImmutableMultimap.builder();
+    ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.artifactLocationDecoder;
+    ImmutableMultimap.Builder<File, RuleKey> sourceToTargetMap = ImmutableMultimap.builder();
     for (RuleIdeInfo rule : blazeProjectData.ruleMap.rules()) {
-      Label label = rule.label;
+      RuleKey key = rule.key;
       for (ArtifactLocation sourceArtifact : rule.sources) {
-        sourceToTargetMap.put(sourceArtifact.getFile(), label);
+        sourceToTargetMap.put(artifactLocationDecoder.decode(sourceArtifact), key);
       }
     }
     return sourceToTargetMap.build();
@@ -83,6 +111,7 @@ public class SourceToRuleMapImpl implements SourceToRuleMap {
     @Override
     public void onSyncComplete(
         Project project,
+        BlazeContext context,
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
         BlazeProjectData blazeProjectData,

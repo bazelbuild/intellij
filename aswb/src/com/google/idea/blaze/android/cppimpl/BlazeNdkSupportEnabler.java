@@ -21,6 +21,7 @@ import com.android.tools.ndk.NdkHelper;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.cpp.BlazeCWorkspace;
@@ -34,6 +35,7 @@ final class BlazeNdkSupportEnabler extends SyncListener.Adapter {
   @Override
   public void onSyncComplete(
       Project project,
+      BlazeContext context,
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,

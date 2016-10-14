@@ -19,7 +19,6 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.ui.BlazeValidationError;
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
@@ -28,9 +27,6 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public final class Label extends TargetExpression {
   private static final Logger LOG = Logger.getInstance(Label.class);
-
-  public static final Comparator<Label> COMPARATOR =
-      (o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.toString(), o2.toString());
 
   public static final long serialVersionUID = 2L;
 

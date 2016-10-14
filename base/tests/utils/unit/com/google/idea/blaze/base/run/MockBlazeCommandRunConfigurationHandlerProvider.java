@@ -17,15 +17,17 @@ package com.google.idea.blaze.base.run;
 
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
-import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerEditor;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
+import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
+import com.google.idea.blaze.base.run.state.RunConfigurationState;
+import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -49,23 +51,11 @@ public class MockBlazeCommandRunConfigurationHandlerProvider
     return "MockBlazeCommandRunConfigurationHandlerProvider";
   }
 
-  /** A mock {@link BlazeCommandRunConfigurationHandler}. */
-  private static class MockBlazeCommandRunConfigurationHandler
-      implements BlazeCommandRunConfigurationHandler {
-
-    final BlazeCommandRunConfiguration configuration;
-
-    MockBlazeCommandRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-      this.configuration = configuration;
-    }
+  /** A mock {@link RunConfigurationState}. */
+  private static class MockRunConfigurationState implements RunConfigurationState {
 
     @Override
-    public void checkConfiguration() throws RuntimeConfigurationException {
-      // Don't throw anything.
-    }
-
-    @Override
-    public void readExternal(Element element) throws InvalidDataException {
+    public void readExternal(Element element) {
       // Don't read anything.
     }
 
@@ -75,13 +65,32 @@ public class MockBlazeCommandRunConfigurationHandlerProvider
     }
 
     @Override
-    public BlazeCommandRunConfigurationHandler cloneFor(
-        BlazeCommandRunConfiguration configuration) {
-      return new MockBlazeCommandRunConfigurationHandler(configuration);
+    public RunConfigurationStateEditor getEditor(Project project) {
+      return new RunConfigurationStateEditor() {
+        @Override
+        public void resetEditorFrom(RunConfigurationState state) {
+          // Do nothing.
+        }
+
+        @Override
+        public void applyEditorTo(RunConfigurationState state) {
+          // Do nothing.
+        }
+
+        @Override
+        public JComponent createComponent() {
+          return null;
+        }
+      };
     }
+  }
+
+  /** A mock {@link MockBlazeCommandRunConfigurationRunner}. */
+  private static class MockBlazeCommandRunConfigurationRunner
+      implements BlazeCommandRunConfigurationRunner {
 
     @Override
-    public RunProfileState getState(Executor executor, ExecutionEnvironment environment)
+    public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment environment)
         throws ExecutionException {
       return null;
     }
@@ -90,16 +99,40 @@ public class MockBlazeCommandRunConfigurationHandlerProvider
     public boolean executeBeforeRunTask(ExecutionEnvironment environment) {
       return true;
     }
+  }
 
-    @Nullable
-    @Override
-    public String suggestedName() {
-      return null;
+  /** A mock {@link BlazeCommandRunConfigurationHandler}. */
+  private static class MockBlazeCommandRunConfigurationHandler
+      implements BlazeCommandRunConfigurationHandler {
+
+    final BlazeCommandRunConfiguration configuration;
+    final MockRunConfigurationState state;
+
+    MockBlazeCommandRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
+      this.configuration = configuration;
+      this.state = new MockRunConfigurationState();
     }
 
     @Override
-    public boolean isGeneratedName(boolean hasGeneratedFlag) {
-      return hasGeneratedFlag;
+    public MockRunConfigurationState getState() {
+      return state;
+    }
+
+    @Override
+    public BlazeCommandRunConfigurationRunner createRunner(
+        Executor executor, ExecutionEnvironment environment) {
+      return new MockBlazeCommandRunConfigurationRunner();
+    }
+
+    @Override
+    public void checkConfiguration() throws RuntimeConfigurationException {
+      // Don't throw anything.
+    }
+
+    @Nullable
+    @Override
+    public String suggestedName(BlazeCommandRunConfiguration configuration) {
+      return null;
     }
 
     @Nullable
@@ -117,27 +150,6 @@ public class MockBlazeCommandRunConfigurationHandlerProvider
     @Nullable
     public Icon getExecutorIcon(RunConfiguration configuration, Executor executor) {
       return null;
-    }
-
-    @Override
-    public BlazeCommandRunConfigurationHandlerEditor getHandlerEditor() {
-      return new BlazeCommandRunConfigurationHandlerEditor() {
-        @Override
-        public void resetEditorFrom(BlazeCommandRunConfigurationHandler handler) {
-          // Do nothing.
-        }
-
-        @Override
-        public void applyEditorTo(BlazeCommandRunConfigurationHandler handler) {
-          // Do nothing.
-        }
-
-        @Nullable
-        @Override
-        public JComponent createEditor() {
-          return null;
-        }
-      };
     }
   }
 }

@@ -18,15 +18,15 @@ package com.google.idea.blaze.java.run.producers;
 import com.google.common.collect.ImmutableCollection;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.rulemaps.SourceToRuleMap;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
-import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandler;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
+import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.run.RunUtil;
 import com.intellij.execution.JavaExecutionUtil;
@@ -40,7 +40,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
 import java.io.File;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
 
 /** Creates run configurations for Java main classes sourced by java_binary targets. */
@@ -74,12 +76,12 @@ public class BlazeJavaMainClassRunConfigurationProducer
       return false;
     }
     configuration.setTarget(label);
-    BlazeCommandGenericRunConfigurationHandler handler =
-        configuration.getHandlerIfType(BlazeCommandGenericRunConfigurationHandler.class);
-    if (handler == null) {
+    BlazeCommandRunConfigurationCommonState handlerState =
+        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    if (handlerState == null) {
       return false;
     }
-    handler.setCommand(BlazeCommandName.RUN);
+    handlerState.setCommand(BlazeCommandName.RUN);
     configuration.setGeneratedName();
     return true;
   }
@@ -87,12 +89,12 @@ public class BlazeJavaMainClassRunConfigurationProducer
   @Override
   protected boolean doIsConfigFromContext(
       BlazeCommandRunConfiguration configuration, ConfigurationContext context) {
-    BlazeCommandGenericRunConfigurationHandler handler =
-        configuration.getHandlerIfType(BlazeCommandGenericRunConfigurationHandler.class);
-    if (handler == null) {
+    BlazeCommandRunConfigurationCommonState handlerState =
+        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    if (handlerState == null) {
       return false;
     }
-    if (!Objects.equals(handler.getCommand(), BlazeCommandName.RUN)) {
+    if (!Objects.equals(handlerState.getCommand(), BlazeCommandName.RUN)) {
       return false;
     }
     PsiClass mainClass = getMainClass(context);
@@ -126,20 +128,25 @@ public class BlazeJavaMainClassRunConfigurationProducer
   @Nullable
   private static Label getRuleLabel(Project project, PsiClass mainClass) {
     File mainClassFile = RunUtil.getFileForClass(mainClass);
-    ImmutableCollection<Label> labels =
-        SourceToRuleMap.getInstance(project).getTargetsForSourceFile(mainClassFile);
+    ImmutableCollection<RuleKey> ruleKeys =
+        SourceToRuleMap.getInstance(project).getRulesForSourceFile(mainClassFile);
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
       return null;
     }
-    RuleMap ruleMap = blazeProjectData.ruleMap;
-    for (Label label : labels) {
-      RuleIdeInfo rule = ruleMap.get(label);
+    List<RuleIdeInfo> rules =
+        ruleKeys
+            .stream()
+            .map(blazeProjectData.ruleMap::get)
+            .filter(Objects::nonNull)
+            .filter(RuleIdeInfo::isPlainTarget)
+            .collect(Collectors.toList());
+    for (RuleIdeInfo rule : rules) {
       if (rule.kind == Kind.JAVA_BINARY) {
         // Best-effort guess: the main_class attribute isn't exposed, but assume
         // mainClass is the main_class because it is sourced by the java_binary.
-        return label;
+        return rule.label;
       }
     }
     return null;

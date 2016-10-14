@@ -19,8 +19,12 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests auto-complete of symbols loaded from skylark bzl files. */
+@RunWith(JUnit4.class)
 public class SkylarkExtensionSymbolCompletionTest extends BuildFileIntegrationTestCase {
 
   private VirtualFile createAndSetCaret(String filePath, String... fileContents) {
@@ -29,6 +33,7 @@ public class SkylarkExtensionSymbolCompletionTest extends BuildFileIntegrationTe
     return file;
   }
 
+  @Test
   public void testGlobalVariable() {
     createFile("skylark.bzl", "VAR = []");
     VirtualFile file = createAndSetCaret("BUILD", "load(':skylark.bzl', '<caret>')");
@@ -37,6 +42,7 @@ public class SkylarkExtensionSymbolCompletionTest extends BuildFileIntegrationTe
     assertFileContents(file, "load(':skylark.bzl', 'VAR')");
   }
 
+  @Test
   public void testFunctionStatement() {
     createFile("skylark.bzl", "def fn(param):stmt");
     VirtualFile file = createAndSetCaret("BUILD", "load(':skylark.bzl', '<caret>')");
@@ -45,22 +51,24 @@ public class SkylarkExtensionSymbolCompletionTest extends BuildFileIntegrationTe
     assertFileContents(file, "load(':skylark.bzl', 'fn')");
   }
 
+  @Test
   public void testMultipleOptions() {
     createFile("skylark.bzl", "def fn(param):stmt", "VAR = []");
-    VirtualFile file = createAndSetCaret("BUILD", "load(':skylark.bzl', '<caret>')");
+    createAndSetCaret("BUILD", "load(':skylark.bzl', '<caret>')");
 
     String[] options = getCompletionItemsAsStrings();
     assertThat(options).asList().containsExactly("'fn'", "'VAR'");
   }
 
+  @Test
   public void testRulesNotIncluded() {
     createFile("skylark.bzl", "java_library(name = 'lib')", "native.java_library(name = 'foo'");
-
-    VirtualFile file = createAndSetCaret("BUILD", "load(':skylark.bzl', '<caret>')");
+    createAndSetCaret("BUILD", "load(':skylark.bzl', '<caret>')");
 
     assertThat(testFixture.completeBasic()).isEmpty();
   }
 
+  @Test
   public void testLoadedSymbols() {
     createFile("other.bzl", "def function()");
     createFile("skylark.bzl", "load(':other.bzl', 'function')");
@@ -70,6 +78,7 @@ public class SkylarkExtensionSymbolCompletionTest extends BuildFileIntegrationTe
     assertFileContents(file, "load(':skylark.bzl', 'function')");
   }
 
+  @Test
   public void testNotLoadedSymbolsAreNotIncluded() {
     createFile("other.bzl", "def function():stmt", "def other_function():stmt");
     createFile("skylark.bzl", "load(':other.bzl', 'function')");

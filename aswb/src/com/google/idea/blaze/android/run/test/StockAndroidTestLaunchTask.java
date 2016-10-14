@@ -25,6 +25,7 @@ import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.testing.AndroidTestListener;
 import com.android.tools.idea.run.util.LaunchStatus;
+import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
@@ -33,21 +34,20 @@ import com.intellij.psi.PsiClass;
 import org.jetbrains.android.dom.manifest.Instrumentation;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class StockAndroidTestLaunchTask implements LaunchTask {
   private static final Logger LOG = Logger.getInstance(StockAndroidTestLaunchTask.class);
 
-  @NotNull private final BlazeAndroidTestRunConfigurationState configState;
+  private final BlazeAndroidTestRunConfigurationState configState;
   @Nullable private final String instrumentationTestRunner;
-  @NotNull private final String testApplicationId;
+  private final String testApplicationId;
   private final boolean waitForDebugger;
 
   private StockAndroidTestLaunchTask(
-      @NotNull BlazeAndroidTestRunConfigurationState configState,
+      BlazeAndroidTestRunConfigurationState configState,
       @Nullable String runner,
-      @NotNull String testPackage,
+      String testPackage,
       boolean waitForDebugger) {
     this.configState = configState;
     this.instrumentationTestRunner = runner;
@@ -56,14 +56,15 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
   }
 
   public static LaunchTask getStockTestLaunchTask(
-      @NotNull BlazeAndroidTestRunConfigurationState configState,
-      @NotNull ApplicationIdProvider applicationIdProvider,
+      BlazeAndroidTestRunConfigurationState configState,
+      ApplicationIdProvider applicationIdProvider,
       boolean waitForDebugger,
-      @NotNull AndroidFacet facet,
-      @NotNull LaunchStatus launchStatus) {
+      BlazeAndroidDeployInfo deployInfo,
+      AndroidFacet facet,
+      LaunchStatus launchStatus) {
     String runner =
         StringUtil.isEmpty(configState.getInstrumentationRunnerClass())
-            ? findInstrumentationRunner(facet)
+            ? findInstrumentationRunner(deployInfo, facet)
             : configState.getInstrumentationRunnerClass();
     String testPackage;
     try {
@@ -81,8 +82,9 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
   }
 
   @Nullable
-  private static String findInstrumentationRunner(@NotNull AndroidFacet facet) {
-    String runner = getRunnerFromManifest(facet);
+  private static String findInstrumentationRunner(
+      BlazeAndroidDeployInfo deployInfo, AndroidFacet facet) {
+    String runner = getRunnerFromManifest(deployInfo);
 
     // TODO: Resolve direct AndroidGradleModel dep (b/22596984)
     AndroidGradleModel androidModel = AndroidGradleModel.get(facet);
@@ -94,23 +96,22 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
       }
     }
 
+    // Fall back to the default runner.
+    if (runner == null) {
+      runner = InstrumentationRunnerProvider.getDefaultInstrumentationRunnerClass();
+    }
+
     return runner;
   }
 
   @Nullable
-  private static String getRunnerFromManifest(@NotNull final AndroidFacet facet) {
+  private static String getRunnerFromManifest(final BlazeAndroidDeployInfo deployInfo) {
     if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
       return ApplicationManager.getApplication()
-          .runReadAction(
-              new Computable<String>() {
-                @Override
-                public String compute() {
-                  return getRunnerFromManifest(facet);
-                }
-              });
+          .runReadAction((Computable<String>) () -> getRunnerFromManifest(deployInfo));
     }
 
-    Manifest manifest = facet.getManifest();
+    Manifest manifest = deployInfo.getMergedManifest();
     if (manifest != null) {
       for (Instrumentation instrumentation : manifest.getInstrumentations()) {
         if (instrumentation != null) {
@@ -124,7 +125,6 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
     return null;
   }
 
-  @NotNull
   @Override
   public String getDescription() {
     return "Launching instrumentation runner";
@@ -137,9 +137,7 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
 
   @Override
   public boolean perform(
-      @NotNull IDevice device,
-      @NotNull final LaunchStatus launchStatus,
-      @NotNull final ConsolePrinter printer) {
+      IDevice device, final LaunchStatus launchStatus, final ConsolePrinter printer) {
     printer.stdout("Running tests\n");
 
     final RemoteAndroidTestRunner runner =

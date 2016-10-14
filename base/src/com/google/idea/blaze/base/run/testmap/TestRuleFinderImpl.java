@@ -25,15 +25,18 @@ import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.TestRuleFinder;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
@@ -55,12 +58,12 @@ public class TestRuleFinderImpl implements TestRuleFinder {
 
   static class TestMap {
     private final Project project;
-    private final Multimap<File, Label> rootsMap;
+    private final Multimap<File, RuleKey> rootsMap;
     private final RuleMap ruleMap;
 
-    TestMap(Project project, RuleMap ruleMap) {
+    TestMap(Project project, ArtifactLocationDecoder artifactLocationDecoder, RuleMap ruleMap) {
       this.project = project;
-      this.rootsMap = createRootsMap(ruleMap.rules());
+      this.rootsMap = createRootsMap(artifactLocationDecoder, ruleMap.rules());
       this.ruleMap = ruleMap;
     }
 
@@ -75,45 +78,47 @@ public class TestRuleFinderImpl implements TestRuleFinder {
 
     @VisibleForTesting
     Collection<Label> testTargetsForSourceFile(
-        ImmutableMultimap<Label, Label> rdepsMap, File sourceFile) {
+        ImmutableMultimap<RuleKey, RuleKey> rdepsMap, File sourceFile) {
       return testRulesForSourceFile(rdepsMap, sourceFile)
           .stream()
-          .map((rule) -> rule.label)
+          .filter(RuleIdeInfo::isPlainTarget)
+          .map(rule -> rule.label)
           .collect(Collectors.toList());
     }
 
     Collection<RuleIdeInfo> testRulesForSourceFile(
-        ImmutableMultimap<Label, Label> rdepsMap, File sourceFile) {
+        ImmutableMultimap<RuleKey, RuleKey> rdepsMap, File sourceFile) {
       List<RuleIdeInfo> result = Lists.newArrayList();
-      Collection<Label> roots = rootsMap.get(sourceFile);
+      Collection<RuleKey> roots = rootsMap.get(sourceFile);
 
-      Queue<Label> todo = Queues.newArrayDeque();
-      for (Label label : roots) {
+      Queue<RuleKey> todo = Queues.newArrayDeque();
+      for (RuleKey label : roots) {
         todo.add(label);
       }
-      Set<Label> seen = Sets.newHashSet();
+      Set<RuleKey> seen = Sets.newHashSet();
       while (!todo.isEmpty()) {
-        Label label = todo.remove();
-        if (!seen.add(label)) {
+        RuleKey ruleKey = todo.remove();
+        if (!seen.add(ruleKey)) {
           continue;
         }
 
-        RuleIdeInfo rule = ruleMap.get(label);
+        RuleIdeInfo rule = ruleMap.get(ruleKey);
         if (isTestRule(rule)) {
           result.add(rule);
         }
-        for (Label rdep : rdepsMap.get(label)) {
+        for (RuleKey rdep : rdepsMap.get(ruleKey)) {
           todo.add(rdep);
         }
       }
       return result;
     }
 
-    static Multimap<File, Label> createRootsMap(Collection<RuleIdeInfo> rules) {
-      Multimap<File, Label> result = ArrayListMultimap.create();
+    static Multimap<File, RuleKey> createRootsMap(
+        ArtifactLocationDecoder artifactLocationDecoder, Collection<RuleIdeInfo> rules) {
+      Multimap<File, RuleKey> result = ArrayListMultimap.create();
       for (RuleIdeInfo ruleIdeInfo : rules) {
         for (ArtifactLocation source : ruleIdeInfo.sources) {
-          result.put(source.getFile(), ruleIdeInfo.label);
+          result.put(artifactLocationDecoder.decode(source), ruleIdeInfo.key);
         }
       }
       return result;
@@ -158,7 +163,7 @@ public class TestRuleFinderImpl implements TestRuleFinder {
     if (blazeProjectData == null) {
       return null;
     }
-    return new TestMap(project, blazeProjectData.ruleMap);
+    return new TestMap(project, blazeProjectData.artifactLocationDecoder, blazeProjectData.ruleMap);
   }
 
   private synchronized void clearMapData() {
@@ -169,6 +174,7 @@ public class TestRuleFinderImpl implements TestRuleFinder {
     @Override
     public void onSyncComplete(
         Project project,
+        BlazeContext context,
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
         BlazeProjectData blazeProjectData,

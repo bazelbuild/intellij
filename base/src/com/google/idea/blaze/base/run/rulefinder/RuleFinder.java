@@ -35,7 +35,7 @@ public abstract class RuleFinder {
 
   @Nullable
   public RuleIdeInfo ruleForTarget(Project project, final Label target) {
-    return findRule(project, input -> input.label.equals(target));
+    return findRule(project, rule -> rule.label.equals(target));
   }
 
   public ImmutableList<RuleIdeInfo> rulesOfKinds(Project project, final Kind... kinds) {
@@ -43,7 +43,7 @@ public abstract class RuleFinder {
   }
 
   public ImmutableList<RuleIdeInfo> rulesOfKinds(Project project, final List<Kind> kinds) {
-    return ImmutableList.copyOf(findRules(project, input -> input.kindIsOneOf(kinds)));
+    return ImmutableList.copyOf(findRules(project, rule -> rule.kindIsOneOf(kinds)));
   }
 
   @Nullable

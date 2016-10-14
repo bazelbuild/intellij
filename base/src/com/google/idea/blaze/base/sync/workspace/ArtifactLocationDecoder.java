@@ -16,72 +16,18 @@
 package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.AndroidStudioIdeInfo;
-import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.PackageManifestOuterClass;
 import java.io.File;
-import javax.annotation.Nullable;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /** Decodes android_studio_ide_info.proto ArtifactLocation file paths */
-public class ArtifactLocationDecoder {
+public interface ArtifactLocationDecoder extends Serializable {
 
-  private final BlazeRoots blazeRoots;
-  private final WorkspacePathResolver pathResolver;
+  File decode(ArtifactLocation artifactLocation);
 
-  public ArtifactLocationDecoder(BlazeRoots blazeRoots, WorkspacePathResolver pathResolver) {
-    this.blazeRoots = blazeRoots;
-    this.pathResolver = pathResolver;
-  }
-
-  /**
-   * Decodes the ArtifactLocation proto, locates the absolute artifact file path. Returns null if
-   * the file can't be found (presumably because it was removed since the blaze build)
-   */
-  @Nullable
-  public ArtifactLocation decode(AndroidStudioIdeInfo.ArtifactLocation loc) {
-    return decode(
-        loc.getRootExecutionPathFragment(),
-        loc.getRelativePath(),
-        loc.getIsSource());
-  }
-
-  /**
-   * Decodes the ArtifactLocation proto, locates the absolute artifact file path. Returns null if
-   * the file can't be found (presumably because it was removed since the blaze build)
-   */
-  @Nullable
-  public ArtifactLocation decode(PackageManifestOuterClass.ArtifactLocation loc) {
-    return decode(
-        loc.getRootExecutionPathFragment(),
-        loc.getRelativePath(),
-        loc.getIsSource());
-  }
-
-  @Nullable
-  private ArtifactLocation decode(
-      String rootExecutionPathFragment, String relativePath, boolean isSource) {
-    File root;
-    if (isSource) {
-      root = pathResolver.findPackageRoot(relativePath);
-    } else {
-      root = new File(blazeRoots.executionRoot, rootExecutionPathFragment);
-    }
-    if (root == null) {
-      return null;
-    }
-    return ArtifactLocation.builder()
-        .setRootPath(root.toString())
-        .setRootExecutionPathFragment(rootExecutionPathFragment)
-        .setRelativePath(relativePath)
-        .setIsSource(isSource)
-        .build();
-  }
-
-  @Deprecated
-  private String deriveRootExecutionPathFragmentFromRoot(String rootPath) {
-    String execRoot = blazeRoots.executionRoot.toString();
-    if (rootPath.startsWith(execRoot)) {
-      return rootPath.substring(execRoot.length());
-    }
-    return "";
+  default List<File> decodeAll(Collection<ArtifactLocation> artifactLocations) {
+    return artifactLocations.stream().map(this::decode).collect(Collectors.toList());
   }
 }

@@ -20,23 +20,27 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RuleMap;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiFile;
+import org.junit.Before;
 
 /** BUILD file specific integration test base */
 public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestCase {
 
-  @Override
-  protected void doSetup() {
+  @Before
+  public final void doSetup() {
     mockBlazeProjectDataManager(getMockBlazeProjectData());
   }
 
@@ -67,12 +71,17 @@ public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestC
             ImmutableList.of(workspaceRoot.directory()),
             new ExecutionRootPath("out/crosstool/bin"),
             new ExecutionRootPath("out/crosstool/gen"));
+    WorkspacePathResolver workspacePathResolver =
+        new WorkspacePathResolverImpl(workspaceRoot, fakeRoots);
+    ArtifactLocationDecoder artifactLocationDecoder =
+        new ArtifactLocationDecoderImpl(fakeRoots, workspacePathResolver);
     return new BlazeProjectData(
         0,
         new RuleMap(ImmutableMap.of()),
         fakeRoots,
         new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of()),
-        new WorkspacePathResolverImpl(workspaceRoot, fakeRoots),
+        workspacePathResolver,
+        artifactLocationDecoder,
         null,
         null,
         null,

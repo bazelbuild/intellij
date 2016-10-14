@@ -40,13 +40,11 @@ import org.jetbrains.android.facet.AndroidFacet;
 public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExternalizable {
   private static final String TARGET_SELECTION_MODE = TargetSelectionMode.SHOW_DIALOG.name();
 
-  private final int runConfigId;
   private final boolean isAndroidTest;
   private final List<DeployTargetProvider> deployTargetProviders;
   private final Map<String, DeployTargetState> deployTargetStates;
 
-  BlazeAndroidRunConfigurationDeployTargetManager(int runConfigId, boolean isAndroidTest) {
-    this.runConfigId = runConfigId;
+  public BlazeAndroidRunConfigurationDeployTargetManager(boolean isAndroidTest) {
     this.isAndroidTest = isAndroidTest;
     this.deployTargetProviders = DeployTargetProvider.getProviders();
 
@@ -57,12 +55,13 @@ public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExte
     this.deployTargetStates = builder.build();
   }
 
-  List<ValidationError> validate(AndroidFacet facet) {
+  public List<ValidationError> validate(AndroidFacet facet) {
     return getCurrentDeployTargetState().validate(facet);
   }
 
   @Nullable
-  DeployTarget getDeployTarget(Executor executor, ExecutionEnvironment env, AndroidFacet facet)
+  DeployTarget getDeployTarget(
+      Executor executor, ExecutionEnvironment env, AndroidFacet facet, int runConfigId)
       throws ExecutionException {
     DeployTargetProvider currentTargetProvider = getCurrentDeployTargetProvider();
 

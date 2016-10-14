@@ -16,7 +16,6 @@
 package com.google.idea.blaze.android.resources;
 
 import com.android.resources.ResourceType;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -27,7 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import java.util.ArrayList;
@@ -44,8 +43,6 @@ import org.jetbrains.annotations.Nullable;
 /** Represents a dynamic "class R" for resources in an Android module. */
 public class AndroidPackageRClass extends AndroidLightClassBase {
   private static final Logger LOG = Logger.getInstance(AndroidPackageRClass.class);
-  private static final BoolExperiment USE_OUT_OF_CODE_MOD_COUNT =
-      new BoolExperiment("use.out.of.code.modcount.for.r.class.cache", true);
 
   @NotNull private final PsiFile myFile;
   @NotNull private final String myFullyQualifiedName;
@@ -108,16 +105,10 @@ public class AndroidPackageRClass extends AndroidLightClassBase {
       myClassCache =
           CachedValuesManager.getManager(getProject())
               .createCachedValue(
-                  new CachedValueProvider<PsiClass[]>() {
-                    @Override
-                    public Result<PsiClass[]> compute() {
-                      return Result.create(
+                  () ->
+                      Result.create(
                           doGetInnerClasses(),
-                          USE_OUT_OF_CODE_MOD_COUNT.getValue()
-                              ? PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
-                              : PsiModificationTracker.MODIFICATION_COUNT);
-                    }
-                  });
+                          PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
     }
     return myClassCache.getValue();
   }
@@ -136,7 +127,7 @@ public class AndroidPackageRClass extends AndroidLightClassBase {
 
     final Set<ResourceType> types =
         ResourceReferenceConverter.getResourceTypesInCurrentModule(facet);
-    final List<PsiClass> result = new ArrayList<PsiClass>();
+    final List<PsiClass> result = new ArrayList<>();
 
     for (ResourceType type : types) {
       result.add(new ResourceTypeClass(facet, type.getName(), this));

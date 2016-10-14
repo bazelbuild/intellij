@@ -20,10 +20,15 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.lang.projectview.ProjectViewIntegrationTestCase;
 import com.google.idea.blaze.base.lang.projectview.lexer.ProjectViewLexerBase.Token;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests for the project view file lexer */
+@RunWith(JUnit4.class)
 public class ProjectViewLexerTest extends ProjectViewIntegrationTestCase {
 
+  @Test
   public void testStandardCase() {
     String result =
         tokenize(
@@ -47,6 +52,7 @@ public class ProjectViewLexerTest extends ProjectViewIntegrationTestCase {
                     "indent identifier : identifier"));
   }
 
+  @Test
   public void testIncludeScalarSections() {
     String result =
         tokenize(
@@ -72,6 +78,7 @@ public class ProjectViewLexerTest extends ProjectViewIntegrationTestCase {
                     "indent identifier"));
   }
 
+  @Test
   public void testUnrecognizedKeyword() {
     String result =
         tokenize(

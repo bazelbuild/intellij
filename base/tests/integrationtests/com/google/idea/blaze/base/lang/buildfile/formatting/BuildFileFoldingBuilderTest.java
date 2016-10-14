@@ -22,10 +22,15 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Editor;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests for {@link BuildFileFoldingBuilder}. */
+@RunWith(JUnit4.class)
 public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testEndOfFileFunctionDelcaration() {
     // bug 28618935: test no NPE in the case where there's no
     // statement list following the func-def colon
@@ -34,6 +39,7 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
     getFoldingRegions(file);
   }
 
+  @Test
   public void testFuncDefStatementsFolded() {
     BuildFile file =
         createBuildFile(
@@ -52,6 +58,7 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
         .isEqualTo(file.findFunctionInScope("function"));
   }
 
+  @Test
   public void testRulesFolded() {
     BuildFile file =
         createBuildFile(
@@ -66,6 +73,7 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
     assertThat(foldingRegions[0].getElement().getPsi()).isEqualTo(file.findRule("lib"));
   }
 
+  @Test
   public void testLoadStatementFolded() {
     BuildFile file =
         createBuildFile(

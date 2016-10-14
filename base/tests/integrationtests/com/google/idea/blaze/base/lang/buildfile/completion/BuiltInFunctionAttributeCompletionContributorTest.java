@@ -29,20 +29,25 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests for BuiltInFunctionAttributeCompletionContributor. */
+@RunWith(JUnit4.class)
 public class BuiltInFunctionAttributeCompletionContributorTest
     extends BuildFileIntegrationTestCase {
 
   private MockBuildLanguageSpecProvider specProvider;
 
-  @Override
-  protected void doSetup() {
-    super.doSetup();
+  @Before
+  public final void before() {
     specProvider = new MockBuildLanguageSpecProvider();
     registerApplicationService(BuildLanguageSpecProvider.class, specProvider);
   }
 
+  @Test
   public void testSimpleCompletion() {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
@@ -55,6 +60,7 @@ public class BuiltInFunctionAttributeCompletionContributorTest
     assertThat(completionItems).asList().containsAllOf("name", "deps", "srcs", "data");
   }
 
+  @Test
   public void testSimpleSingleCompletion() {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
@@ -68,6 +74,7 @@ public class BuiltInFunctionAttributeCompletionContributorTest
     assertFileContents(file, "sh_binary(", "    name");
   }
 
+  @Test
   public void testNoCompletionInUnknownRule() {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
@@ -80,6 +87,7 @@ public class BuiltInFunctionAttributeCompletionContributorTest
     assertThat(completionItems).isEmpty();
   }
 
+  @Test
   public void testNoCompletionInComment() {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
@@ -87,9 +95,10 @@ public class BuiltInFunctionAttributeCompletionContributorTest
 
     Editor editor = openFileInEditor(file.getVirtualFile());
     setCaretPosition(editor, 0, "sh_binary(#".length());
-    assertEmpty(getCompletionItemsAsStrings());
+    assertThat(getCompletionItemsAsStrings()).isEmpty();
   }
 
+  @Test
   public void testCompletionInSkylarkExtension() {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 

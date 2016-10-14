@@ -18,42 +18,32 @@ package com.google.idea.blaze.android.run.test;
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Ordering;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
-import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandlerEditor;
+import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationValidationUtil;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunner;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
-import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerEditor;
-import com.google.idea.blaze.base.run.rulefinder.RuleFinder;
+import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import java.util.List;
 import javax.swing.Icon;
-import org.jdom.Element;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -62,31 +52,25 @@ import org.jetbrains.annotations.Nullable;
  */
 public class BlazeAndroidTestRunConfigurationHandler
     implements BlazeAndroidRunConfigurationHandler {
-  private static final Logger LOG =
-      Logger.getInstance(BlazeAndroidTestRunConfigurationHandler.class);
 
   private final BlazeCommandRunConfiguration configuration;
-  private final BlazeAndroidRunConfigurationCommonState commonState;
   private final BlazeAndroidTestRunConfigurationState configState;
-  private final BlazeAndroidRunConfigurationRunner runner;
 
   BlazeAndroidTestRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
     this.configuration = configuration;
-    commonState = new BlazeAndroidRunConfigurationCommonState(ImmutableList.of());
-    configState = new BlazeAndroidTestRunConfigurationState();
-    runner =
-        new BlazeAndroidRunConfigurationRunner(
-            configuration.getProject(), this, commonState, true, configuration.getUniqueID());
+    configState =
+        new BlazeAndroidTestRunConfigurationState(
+            Blaze.buildSystemName(configuration.getProject()));
   }
 
   @Override
-  public BlazeAndroidRunContext createRunContext(
-      Project project,
-      AndroidFacet facet,
-      ExecutionEnvironment env,
-      ImmutableList<String> buildFlags) {
-    return new BlazeAndroidTestRunContext(
-        project, facet, configuration, env, configState, getLabel(), buildFlags);
+  public BlazeAndroidTestRunConfigurationState getState() {
+    return configState;
+  }
+
+  @Override
+  public BlazeAndroidRunConfigurationCommonState getCommonState() {
+    return configState.getCommonState();
   }
 
   @Override
@@ -99,16 +83,6 @@ public class BlazeAndroidTestRunConfigurationHandler
     return null;
   }
 
-  @Override
-  public BlazeAndroidRunConfigurationCommonState getCommonState() {
-    return commonState;
-  }
-
-  @Override
-  public BlazeAndroidTestRunConfigurationState getConfigState() {
-    return configState;
-  }
-
   @Nullable
   private Module getModule() {
     Label target = getLabel();
@@ -119,96 +93,70 @@ public class BlazeAndroidTestRunConfigurationHandler
   }
 
   @Override
-  public final void checkConfiguration() throws RuntimeConfigurationException {
-    List<ValidationError> errors = validate();
-    if (errors.isEmpty()) {
-      return;
-    }
-    // TODO: Do something with the extra error information? Error count?
-    ValidationError topError = Ordering.natural().max(errors);
-    if (topError.isFatal()) {
-      throw new RuntimeConfigurationError(topError.getMessage(), topError.getQuickfix());
-    }
-    throw new RuntimeConfigurationWarning(topError.getMessage(), topError.getQuickfix());
+  public BlazeCommandRunConfigurationRunner createRunner(
+      Executor executor, ExecutionEnvironment environment) throws ExecutionException {
+    Project project = environment.getProject();
+
+    Module module = getModule();
+    AndroidFacet facet = module != null ? AndroidFacet.getInstance(module) : null;
+    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    BlazeAndroidRunConfigurationValidationUtil.validateExecution(module, facet, projectViewSet);
+
+    ImmutableList<String> buildFlags = configState.getBuildFlags(project, projectViewSet);
+    BlazeAndroidRunContext runContext = createRunContext(project, facet, environment, buildFlags);
+
+    return new BlazeAndroidRunConfigurationRunner(
+        module,
+        runContext,
+        getCommonState().getDeployTargetManager(),
+        getCommonState().getDebuggerManager(),
+        configuration.getUniqueID());
   }
 
+  private BlazeAndroidRunContext createRunContext(
+      Project project,
+      AndroidFacet facet,
+      ExecutionEnvironment env,
+      ImmutableList<String> buildFlags) {
+    return new BlazeAndroidTestRunContext(
+        project, facet, configuration, env, configState, getLabel(), buildFlags);
+  }
+
+  @Override
+  public final void checkConfiguration() throws RuntimeConfigurationException {
+    BlazeAndroidRunConfigurationValidationUtil.throwTopConfigurationError(validate());
+  }
+
+  /**
+   * We collect errors rather than throwing to avoid missing fatal errors by exiting early for a
+   * warning. We use a separate method for the collection so the compiler prevents us from
+   * accidentally throwing.
+   */
   private List<ValidationError> validate() {
     List<ValidationError> errors = Lists.newArrayList();
-    errors.addAll(runner.validate(getModule()));
-    validateLabel(errors);
+    Module module = getModule();
+    errors.addAll(BlazeAndroidRunConfigurationValidationUtil.validateModule(module));
+    AndroidFacet facet = null;
+    if (module != null) {
+      facet = AndroidFacet.getInstance(module);
+      errors.addAll(BlazeAndroidRunConfigurationValidationUtil.validateFacet(facet, module));
+    }
+    errors.addAll(configState.validate(facet));
+    errors.addAll(
+        BlazeAndroidRunConfigurationValidationUtil.validateLabel(
+            getLabel(), configuration.getProject(), Kind.ANDROID_TEST));
     return errors;
   }
 
-  private void validateLabel(List<ValidationError> errors) {
-    Project project = configuration.getProject();
-    Label target = getLabel();
-    Kind kind = Kind.ANDROID_TEST;
-    RuleIdeInfo rule =
-        target != null ? RuleFinder.getInstance().ruleForTarget(project, target) : null;
-    if (rule == null) {
-      errors.add(
-          ValidationError.fatal(
-              String.format("No existing %s rule selected.", Blaze.buildSystemName(project))));
-    } else if (!rule.kindIsOneOf(kind)) {
-      errors.add(
-          ValidationError.fatal(
-              String.format(
-                  "Selected %s rule is not %s", Blaze.buildSystemName(project), kind.toString())));
-    }
-  }
-
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    commonState.readExternal(element);
-    runner.readExternal(element);
-    configState.readExternal(element);
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    commonState.writeExternal(element);
-    runner.writeExternal(element);
-    configState.writeExternal(element);
-  }
-
-  @Override
-  public BlazeAndroidTestRunConfigurationHandler cloneFor(
-      BlazeCommandRunConfiguration configuration) {
-    final Element element = new Element("dummy");
-    try {
-      writeExternal(element);
-      final BlazeAndroidTestRunConfigurationHandler handler =
-          new BlazeAndroidTestRunConfigurationHandler(configuration);
-      handler.readExternal(element);
-      return handler;
-    } catch (InvalidDataException | WriteExternalException e) {
-      LOG.error(e);
-      return null;
-    }
-  }
-
   @Override
   @Nullable
-  public final RunProfileState getState(
-      @NotNull final Executor executor, @NotNull ExecutionEnvironment env)
-      throws ExecutionException {
-    final Module module = getModule();
-    return runner.getState(module, executor, env);
-  }
-
-  @Override
-  public boolean executeBeforeRunTask(ExecutionEnvironment environment) {
-    return runner.executeBuild(environment);
-  }
-
-  @Override
-  @Nullable
-  public String suggestedName() {
+  public String suggestedName(BlazeCommandRunConfiguration configuration) {
     Label target = getLabel();
     if (target == null) {
       return null;
     }
-    BlazeConfigurationNameBuilder nameBuilder = new BlazeConfigurationNameBuilder(configuration);
+    BlazeConfigurationNameBuilder nameBuilder =
+        new BlazeConfigurationNameBuilder(this.configuration);
 
     boolean isClassTest =
         configState.getTestingType() == BlazeAndroidTestRunConfigurationState.TEST_CLASS;
@@ -229,22 +177,6 @@ public class BlazeAndroidTestRunConfigurationHandler
   }
 
   @Override
-  public boolean isGeneratedName(boolean hasGeneratedFlag) {
-    final String name = configuration.getName();
-
-    if ((configState.getTestingType() == BlazeAndroidTestRunConfigurationState.TEST_CLASS
-            || configState.getTestingType() == BlazeAndroidTestRunConfigurationState.TEST_METHOD)
-        && (configState.getClassName() == null || configState.getClassName().length() == 0)) {
-      return JavaExecutionUtil.isNewName(name);
-    }
-    if (configState.getTestingType() == BlazeAndroidTestRunConfigurationState.TEST_METHOD
-        && (configState.getMethodName() == null || configState.getMethodName().length() == 0)) {
-      return JavaExecutionUtil.isNewName(name);
-    }
-    return Comparing.equal(name, suggestedName());
-  }
-
-  @Override
   @Nullable
   public String getCommandName() {
     return "test";
@@ -259,12 +191,5 @@ public class BlazeAndroidTestRunConfigurationHandler
   @Nullable
   public Icon getExecutorIcon(RunConfiguration configuration, Executor executor) {
     return null;
-  }
-
-  @Override
-  public BlazeCommandRunConfigurationHandlerEditor getHandlerEditor() {
-    Project project = configuration.getProject();
-    return new BlazeAndroidRunConfigurationHandlerEditor(
-        project, new BlazeAndroidTestRunConfigurationStateEditor(project));
   }
 }

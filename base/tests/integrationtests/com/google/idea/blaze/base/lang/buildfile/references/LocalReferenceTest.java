@@ -24,12 +24,17 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.TargetExpression;
 import com.intellij.psi.PsiElement;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests that local references (to TargetExpressions within a given file) are correctly resolved.
  */
+@RunWith(JUnit4.class)
 public class LocalReferenceTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testCreatesReference() {
     BuildFile file = createBuildFile("java/com/google/BUILD", "a = 1", "c = a");
 
@@ -41,6 +46,7 @@ public class LocalReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(ref.getReference()).isInstanceOf(LocalReference.class);
   }
 
+  @Test
   public void testReferenceResolves() {
     BuildFile file = createBuildFile("java/com/google/BUILD", "a = 1", "c = a");
 
@@ -51,6 +57,7 @@ public class LocalReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(referencedElement).isEqualTo(stmts[0].getLeftHandSideExpression());
   }
 
+  @Test
   public void testTargetInOuterScope() {
     BuildFile file = createBuildFile("java/com/google/BUILD", "a = 1", "function(c = a)");
 
@@ -62,6 +69,7 @@ public class LocalReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(ref.getReferencedElement()).isEqualTo(target);
   }
 
+  @Test
   public void testReferenceInsideFuncallExpression() {
     BuildFile file = createBuildFile("java/com/google/BUILD", "a = 1", "a.function(c)");
 

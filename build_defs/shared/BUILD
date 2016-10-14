@@ -20,3 +20,8 @@ py_binary(
     name = "product_build_txt",
     srcs = ["product_build_txt.py"],
 )
+
+py_binary(
+    name = "api_version_txt",
+    srcs = ["api_version_txt.py"],
+)

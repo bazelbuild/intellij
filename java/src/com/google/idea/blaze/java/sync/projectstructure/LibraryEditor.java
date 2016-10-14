@@ -19,6 +19,7 @@ import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.blaze.java.sync.model.BlazeLibrary;
 import com.google.idea.blaze.java.sync.model.LibraryKey;
@@ -62,7 +63,12 @@ public class LibraryEditor {
     LibraryTable.ModifiableModel libraryTableModel = libraryTable.getModifiableModel();
     try {
       for (BlazeLibrary library : libraries) {
-        updateLibrary(project, libraryTable, libraryTableModel, library);
+        updateLibrary(
+            project,
+            blazeProjectData.artifactLocationDecoder,
+            libraryTable,
+            libraryTableModel,
+            library);
       }
 
       // Garbage collect unused libraries
@@ -85,6 +91,7 @@ public class LibraryEditor {
 
   public static void updateLibrary(
       Project project,
+      ArtifactLocationDecoder artifactLocationDecoder,
       LibraryTable libraryTable,
       LibraryTable.ModifiableModel libraryTableModel,
       BlazeLibrary blazeLibrary) {
@@ -105,7 +112,7 @@ public class LibraryEditor {
       }
     }
     try {
-      blazeLibrary.modifyLibraryModel(project, libraryModel);
+      blazeLibrary.modifyLibraryModel(project, artifactLocationDecoder, libraryModel);
     } finally {
       libraryModel.commit();
     }

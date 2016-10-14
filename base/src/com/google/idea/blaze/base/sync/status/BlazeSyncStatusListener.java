@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.status;
 
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.intellij.openapi.project.Project;
 
@@ -25,12 +26,12 @@ import com.intellij.openapi.project.Project;
 public class BlazeSyncStatusListener extends SyncListener.Adapter {
 
   @Override
-  public void onSyncStart(Project project) {
+  public void onSyncStart(Project project, BlazeContext context) {
     BlazeSyncStatusImpl.getImpl(project).syncStarted();
   }
 
   @Override
-  public void afterSync(Project project, SyncResult syncResult) {
+  public void afterSync(Project project, BlazeContext context, SyncResult syncResult) {
     BlazeSyncStatusImpl.getImpl(project).syncEnded(syncResult);
   }
 }

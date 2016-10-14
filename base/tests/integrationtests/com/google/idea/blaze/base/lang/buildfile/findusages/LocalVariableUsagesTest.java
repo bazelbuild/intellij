@@ -29,13 +29,18 @@ import com.google.idea.blaze.base.lang.buildfile.references.TargetReference;
 import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests that references to local variables are found by the 'Find Usages' action TODO: Support
  * comprehension suffix, and add test for it
  */
+@RunWith(JUnit4.class)
 public class LocalVariableUsagesTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testLocalReferences() {
     BuildFile buildFile =
         createBuildFile(
@@ -66,6 +71,7 @@ public class LocalVariableUsagesTest extends BuildFileIntegrationTestCase {
   }
 
   // the case where a symbol is the target of multiple assignment statements
+  @Test
   public void testMultipleAssignments() {
     BuildFile buildFile =
         createBuildFile("java/com/google/BUILD", "var = 5", "var += 1", "var = 0");

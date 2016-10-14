@@ -17,36 +17,36 @@ package com.google.idea.blaze.android.sync.importer.aggregators;
 
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.model.RuleMap;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 
 /** Peforms a transitive reduction on the rule */
 public abstract class TransitiveAggregator<T> {
-  private Map<Label, T> labelToResult;
+  private Map<RuleKey, T> ruleKeyToResult;
 
   protected TransitiveAggregator(RuleMap ruleMap) {
-    this.labelToResult = Maps.newHashMap();
+    this.ruleKeyToResult = Maps.newHashMap();
     for (RuleIdeInfo rule : ruleMap.rules()) {
-      Label label = rule.label;
-      aggregate(label, ruleMap);
+      aggregate(rule.key, ruleMap);
     }
   }
 
-  protected T getOrDefault(Label key, T defaultValue) {
-    T result = labelToResult.get(key);
+  protected T getOrDefault(RuleKey ruleKey, T defaultValue) {
+    T result = ruleKeyToResult.get(ruleKey);
     return result != null ? result : defaultValue;
   }
 
   @Nullable
-  private T aggregate(Label label, RuleMap ruleMap) {
-    T result = labelToResult.get(label);
+  private T aggregate(RuleKey ruleKey, RuleMap ruleMap) {
+    T result = ruleKeyToResult.get(ruleKey);
     if (result != null) {
       return result;
     }
 
-    RuleIdeInfo rule = ruleMap.get(label);
+    RuleIdeInfo rule = ruleMap.get(ruleKey);
     if (rule == null) {
       return null;
     }
@@ -54,13 +54,13 @@ public abstract class TransitiveAggregator<T> {
     result = createForRule(rule);
 
     for (Label depLabel : getDependencies(rule)) {
-      T depResult = aggregate(depLabel, ruleMap);
+      T depResult = aggregate(RuleKey.forDependency(rule, depLabel), ruleMap);
       if (depResult != null) {
         result = reduce(result, depResult);
       }
     }
 
-    labelToResult.put(label, result);
+    ruleKeyToResult.put(ruleKey, result);
     return result;
   }
 

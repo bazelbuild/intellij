@@ -16,30 +16,23 @@
 package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.base.Objects;
-import java.io.File;
+import com.google.common.collect.ComparisonChain;
 import java.io.Serializable;
 import java.nio.file.Paths;
 
 /** Represents a blaze-produced artifact. */
-public final class ArtifactLocation implements Serializable {
-  private static final long serialVersionUID = 2L;
+public final class ArtifactLocation implements Serializable, Comparable<ArtifactLocation> {
+  private static final long serialVersionUID = 3L;
 
-  public final String rootPath;
   public final String rootExecutionPathFragment;
   public final String relativePath;
   public final boolean isSource;
 
   private ArtifactLocation(
-      String rootPath, String rootExecutionPathFragment, String relativePath, boolean isSource) {
-    this.rootPath = rootPath;
+      String rootExecutionPathFragment, String relativePath, boolean isSource) {
     this.rootExecutionPathFragment = rootExecutionPathFragment;
     this.relativePath = relativePath;
     this.isSource = isSource;
-  }
-
-  /** Returns the root path of the artifact, eg. blaze-out */
-  public String getRootPath() {
-    return rootPath;
   }
 
   /** Gets the path relative to the root path. */
@@ -53,10 +46,6 @@ public final class ArtifactLocation implements Serializable {
 
   public boolean isGenerated() {
     return !isSource;
-  }
-
-  public File getFile() {
-    return new File(getRootPath(), getRelativePath());
   }
 
   /**
@@ -73,15 +62,9 @@ public final class ArtifactLocation implements Serializable {
 
   /** Builder for an artifact location */
   public static class Builder {
-    String rootPath;
     String relativePath;
     String rootExecutionPathFragment = "";
     boolean isSource;
-
-    public Builder setRootPath(String rootPath) {
-      this.rootPath = rootPath;
-      return this;
-    }
 
     public Builder setRelativePath(String relativePath) {
       this.relativePath = relativePath;
@@ -99,7 +82,7 @@ public final class ArtifactLocation implements Serializable {
     }
 
     public ArtifactLocation build() {
-      return new ArtifactLocation(rootPath, rootExecutionPathFragment, relativePath, isSource);
+      return new ArtifactLocation(rootExecutionPathFragment, relativePath, isSource);
     }
   }
 
@@ -112,19 +95,27 @@ public final class ArtifactLocation implements Serializable {
       return false;
     }
     ArtifactLocation that = (ArtifactLocation) o;
-    return Objects.equal(rootPath, that.rootPath)
-        && Objects.equal(rootExecutionPathFragment, that.rootExecutionPathFragment)
+    return Objects.equal(rootExecutionPathFragment, that.rootExecutionPathFragment)
         && Objects.equal(relativePath, that.relativePath)
         && Objects.equal(isSource, that.isSource);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(rootPath, rootExecutionPathFragment, relativePath, isSource);
+    return Objects.hashCode(rootExecutionPathFragment, relativePath, isSource);
   }
 
   @Override
   public String toString() {
-    return getFile().toString();
+    return getExecutionRootRelativePath();
+  }
+
+  @Override
+  public int compareTo(ArtifactLocation o) {
+    return ComparisonChain.start()
+        .compare(rootExecutionPathFragment, o.rootExecutionPathFragment)
+        .compare(relativePath, o.relativePath)
+        .compare(isSource, o.isSource)
+        .result();
   }
 }

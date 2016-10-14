@@ -21,16 +21,16 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
-import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerEditor;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
-import com.google.idea.blaze.base.run.confighandler.BlazeUnknownRunConfigurationHandler;
+import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.rulefinder.RuleFinder;
+import com.google.idea.blaze.base.run.state.RunConfigurationState;
+import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerIconProvider;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
@@ -47,12 +47,14 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.UIUtil;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.swing.Box;
 import javax.swing.Icon;
 import javax.swing.JComponent;
+import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
 /** A run configuration which executes Blaze commands. */
 public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
@@ -63,35 +65,41 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   private static final String TARGET_TAG = "blaze-target";
   private static final String KIND_ATTR = "kind";
 
-  // Null for configurations created since restart.
-  @Nullable private Element externalElementBackup;
-  // Null when there is no target.
+  /** The last serialized state of the configuration. */
+  private Element elementState = new Element("dummy");
+
   @Nullable private TargetExpression target;
   // Null if the target is null, not a Label, or not a known rule.
   @Nullable private Kind targetKind;
+  private BlazeCommandRunConfigurationHandlerProvider handlerProvider;
   private BlazeCommandRunConfigurationHandler handler;
-  // Null if the handler is BlazeUnknownRunConfigurationHandler.
-  @Nullable private BlazeCommandRunConfigurationHandlerProvider handlerProvider;
 
   public BlazeCommandRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(project, factory, name);
-    handler = new BlazeUnknownRunConfigurationHandler(this);
+    // start with whatever fallback is present
+    handlerProvider = BlazeCommandRunConfigurationHandlerProvider.findHandlerProvider(null);
+    handler = handlerProvider.createHandler(this);
+    try {
+      handler.getState().readExternal(elementState);
+    } catch (InvalidDataException e) {
+      LOG.error(e);
+    }
   }
 
   /** @return The configuration's {@link BlazeCommandRunConfigurationHandler}. */
-  @NotNull
   public BlazeCommandRunConfigurationHandler getHandler() {
     return handler;
   }
 
   /**
-   * Gets the configuration's {@link BlazeCommandRunConfigurationHandler} if it is an instance of
-   * the given class; otherwise returns null.
+   * Gets the configuration's handler's {@link RunConfigurationState} if it is an instance of the
+   * given class; otherwise returns null.
    */
   @Nullable
-  public <T extends BlazeCommandRunConfigurationHandler> T getHandlerIfType(Class<T> type) {
-    if (type.isInstance(handler)) {
-      return type.cast(handler);
+  public <T extends RunConfigurationState> T getHandlerStateIfType(Class<T> type) {
+    RunConfigurationState handlerState = handler.getState();
+    if (type.isInstance(handlerState)) {
+      return type.cast(handlerState);
     } else {
       return null;
     }
@@ -105,32 +113,42 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
   public void setTarget(@Nullable TargetExpression target) {
     this.target = target;
-    RuleIdeInfo rule = getRuleForTarget();
-    targetKind = rule != null ? rule.kind : null;
+    targetKind = getKindForTarget();
 
     BlazeCommandRunConfigurationHandlerProvider handlerProvider =
         BlazeCommandRunConfigurationHandlerProvider.findHandlerProvider(targetKind);
-    setHandlerIfDifferentProvider(handlerProvider);
+    updateHandlerIfDifferentProvider(handlerProvider);
   }
 
-  private void setHandlerIfDifferentProvider(
+  private void updateHandlerIfDifferentProvider(
       BlazeCommandRunConfigurationHandlerProvider newProvider) {
-    // Only change the handler if the provider has changed.
-    if (handlerProvider != newProvider) {
-      handlerProvider = newProvider;
-      handler = newProvider.createHandler(this);
+    if (handlerProvider == newProvider) {
+      return;
+    }
+    try {
+      handler.getState().writeExternal(elementState);
+    } catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    handlerProvider = newProvider;
+    handler = newProvider.createHandler(this);
+    try {
+      handler.getState().readExternal(elementState);
+    } catch (InvalidDataException e) {
+      LOG.error(e);
     }
   }
 
   /**
-   * Returns the single blaze target corresponding to the configuration's target expression, if one
-   * exists. Returns null if the target expression points to multiple blaze targets, or wasn't
-   * included in the latest sync.
+   * Returns the {@link Kind} of the single blaze target corresponding to the configuration's target
+   * expression, if it can be determined. Returns null if the target expression points to multiple
+   * blaze targets.
    */
   @Nullable
-  public RuleIdeInfo getRuleForTarget() {
+  public Kind getKindForTarget() {
     if (target instanceof Label) {
-      return RuleFinder.getInstance().ruleForTarget(getProject(), (Label) target);
+      RuleIdeInfo rule = RuleFinder.getInstance().ruleForTarget(getProject(), (Label) target);
+      return rule != null ? rule.kind : null;
     }
     return null;
   }
@@ -141,9 +159,9 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
    *     known rule, and "unknown target" if there is no target.
    */
   public String getTargetKindName() {
-    RuleIdeInfo rule = getRuleForTarget();
-    if (rule != null) {
-      return rule.kind.toString();
+    Kind kind = getKindForTarget();
+    if (kind != null) {
+      return kind.toString();
     } else if (target instanceof Label) {
       return "unknown rule";
     } else if (target != null) {
@@ -153,36 +171,12 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     }
   }
 
-  // TODO This method can be private after BlazeCommandRunConfigurationUpdater is removed.
-  void loadExternalElementBackup() {
-    if (externalElementBackup != null) {
-      try {
-        handler.readExternal(externalElementBackup);
-      } catch (InvalidDataException e) {
-        // This is what IntelliJ does when getting this exception while loading a configuration.
-        LOG.error(e);
-      }
-    }
-  }
-
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    // Our handler check and its quick fix are not valid when we don't have BlazeProjectData.
+    // Our handler check is not valid when we don't have BlazeProjectData.
     if (BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData() == null) {
       throw new RuntimeConfigurationError(
-          "Configuration cannot be used or modified while project is syncing.");
-    }
-    if (isConfigurationInvalidated()) {
-      throw new RuntimeConfigurationError(
-          "A property of the target unexpectedly changed. The configuration must be updated. "
-              + "Some configuration settings may be lost.",
-          () -> {
-            BlazeCommandRunConfigurationHandler oldHandler = handler;
-            setTarget(target);
-            if (handler != oldHandler) {
-              loadExternalElementBackup();
-            }
-          });
+          "Configuration cannot be run until project has been synced.");
     }
     if (target == null) {
       throw new RuntimeConfigurationError(
@@ -196,25 +190,11 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     handler.checkConfiguration();
   }
 
-  private boolean isConfigurationInvalidated() {
-    boolean configurationInvalidated = handler instanceof BlazeUnknownRunConfigurationHandler;
-    if (!configurationInvalidated) {
-      RuleIdeInfo rule = getRuleForTarget();
-      Kind expectedKind = rule != null ? rule.kind : null;
-      configurationInvalidated = targetKind != expectedKind;
-    }
-    if (!configurationInvalidated) {
-      configurationInvalidated =
-          handlerProvider
-              != BlazeCommandRunConfigurationHandlerProvider.findHandlerProvider(targetKind);
-    }
-    return configurationInvalidated;
-  }
-
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    externalElementBackup = element.clone();
+    element = element.clone();
+
     // Target is persisted as a tag to permit multiple targets in the future.
     Element targetElement = element.getChild(TARGET_TAG);
     if (targetElement != null && !Strings.isNullOrEmpty(targetElement.getTextTrim())) {
@@ -225,16 +205,8 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       // BlazeAndroid(Binary/Test)RunConfiguration elements can be read.
       // TODO remove in 2.1 once BlazeAndroidBinaryRunConfigurationType and
       // BlazeAndroidTestRunConfigurationType have been removed.
-      String targetString =
-          element.getAttributeValue(
-              TARGET_TAG); // The attribute ID happens to be identical to the tag ID.
-      if (targetString != null) {
-        target = TargetExpression.fromString(targetString);
-        // Once the above is removed, 'target = null;' should be
-        // the only thing in the outer else clause.
-      } else {
-        target = null;
-      }
+      String targetString = element.getAttributeValue(TARGET_TAG);
+      target = targetString != null ? TargetExpression.fromString(targetString) : null;
     }
     // Because BlazeProjectData is not available when configurations are loading,
     // we can't call setTarget and have it find the appropriate handler provider.
@@ -243,21 +215,24 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     BlazeCommandRunConfigurationHandlerProvider handlerProvider =
         BlazeCommandRunConfigurationHandlerProvider.getHandlerProvider(providerId);
     if (handlerProvider != null) {
-      setHandlerIfDifferentProvider(handlerProvider);
+      updateHandlerIfDifferentProvider(handlerProvider);
     }
-    handler.readExternal(element);
+
+    element.removeAttribute(KIND_ATTR);
+    element.removeAttribute(HANDLER_ATTR);
+    element.removeChildren(TARGET_TAG);
+    // remove legacy attribute, if present
+    element.removeAttribute(TARGET_TAG);
+
+    this.elementState = element;
+    handler.getState().readExternal(elementState);
   }
 
   @Override
   @SuppressWarnings("ThrowsUncheckedException")
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    // We can't write externalElementBackup contents; doing so would cause the configuration
-    // xml to retain duplicate elements and grow across reopenings.
-    // We also can't use the approach in BlazeUnknownRunConfigurationHandler;
-    // this can revive intentionally deleted attributes/elements such as user flags.
     if (target != null) {
-      // Target is persisted as a tag to permit multiple targets in the future.
       Element targetElement = new Element(TARGET_TAG);
       targetElement.setText(target.toString());
       if (targetKind != null) {
@@ -265,95 +240,92 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       }
       element.addContent(targetElement);
     }
-    if (handlerProvider != null) {
-      element.setAttribute(HANDLER_ATTR, handlerProvider.getId());
+    element.setAttribute(HANDLER_ATTR, handlerProvider.getId());
+    handler.getState().writeExternal(elementState);
+
+    // copy our internal state to the provided Element, skipping items already present
+    Set<String> baseAttributes =
+        element.getAttributes().stream().map(Attribute::getName).collect(Collectors.toSet());
+    for (Attribute attribute : elementState.getAttributes()) {
+      if (!baseAttributes.contains(attribute.getName())) {
+        element.setAttribute(attribute.clone());
+      }
     }
-    handler.writeExternal(element);
+    Set<String> baseChildren =
+        element.getChildren().stream().map(Element::getName).collect(Collectors.toSet());
+    for (Element child : elementState.getChildren()) {
+      if (!baseChildren.contains(child.getName())) {
+        element.addContent(child.clone());
+      }
+    }
   }
 
   @Override
   public BlazeCommandRunConfiguration clone() {
     final BlazeCommandRunConfiguration configuration = (BlazeCommandRunConfiguration) super.clone();
-    if (externalElementBackup != null) {
-      configuration.externalElementBackup = externalElementBackup.clone();
-    }
+    configuration.elementState = elementState.clone();
     configuration.target = target;
     configuration.targetKind = targetKind;
-    configuration.handler = handler.cloneFor(configuration);
     configuration.handlerProvider = handlerProvider;
+    configuration.handler = handlerProvider.createHandler(this);
+    try {
+      configuration.handler.getState().readExternal(configuration.elementState);
+    } catch (InvalidDataException e) {
+      LOG.error(e);
+    }
+
     return configuration;
   }
 
   @Override
   @Nullable
-  public RunProfileState getState(
-      @NotNull Executor executor, @NotNull ExecutionEnvironment environment)
+  public RunProfileState getState(Executor executor, ExecutionEnvironment environment)
       throws ExecutionException {
-    return handler.getState(executor, environment);
+    BlazeCommandRunConfigurationRunner runner = handler.createRunner(executor, environment);
+    if (runner != null) {
+      environment.putCopyableUserData(BlazeCommandRunConfigurationRunner.RUNNER_KEY, runner);
+      return runner.getRunProfileState(executor, environment);
+    }
+    return null;
   }
 
   @Override
   @Nullable
   public String suggestedName() {
-    return handler.suggestedName();
-  }
-
-  @Override
-  public boolean isGeneratedName() {
-    return handler.isGeneratedName(super.isGeneratedName());
+    return handler.suggestedName(this);
   }
 
   @Override
   @Nullable
-  public Icon getExecutorIcon(@NotNull RunConfiguration configuration, @NotNull Executor executor) {
+  public Icon getExecutorIcon(RunConfiguration configuration, Executor executor) {
     return handler.getExecutorIcon(configuration, executor);
   }
 
   @Override
-  @NotNull
   public SettingsEditor<? extends BlazeCommandRunConfiguration> getConfigurationEditor() {
     return new BlazeCommandRunConfigurationSettingsEditor(this);
   }
 
   static class BlazeCommandRunConfigurationSettingsEditor
       extends SettingsEditor<BlazeCommandRunConfiguration> {
-    @Nullable private BlazeCommandRunConfigurationHandlerProvider handlerProvider;
-    private BlazeCommandRunConfigurationHandlerEditor handlerEditor;
-    @Nullable private JComponent handlerComponent;
+
+    private BlazeCommandRunConfigurationHandlerProvider handlerProvider;
+    private BlazeCommandRunConfigurationHandler handler;
+    private RunConfigurationStateEditor handlerStateEditor;
+    private JComponent handlerStateComponent;
+    private Element elementState;
 
     private final Box editor;
     private final JBLabel targetExpressionLabel;
     private final JBTextField targetField = new JBTextField(1);
 
-    private boolean isEditable;
-
-    public BlazeCommandRunConfigurationSettingsEditor(BlazeCommandRunConfiguration config) {
+    BlazeCommandRunConfigurationSettingsEditor(BlazeCommandRunConfiguration config) {
+      elementState = config.elementState.clone();
       targetExpressionLabel = new JBLabel(UIUtil.ComponentStyle.LARGE);
       editor = UiUtil.createBox(targetExpressionLabel, targetField);
       targetField.getEmptyText().setText("Full target expression starting with //");
       updateTargetExpressionLabel(config);
       updateHandlerEditor(config);
-      setEditable(isConfigurationEditable(config));
-    }
-
-    private static boolean isConfigurationEditable(BlazeCommandRunConfiguration config) {
-      RunConfiguration template =
-          RunManager.getInstance(config.getProject())
-              .getConfigurationTemplate(config.getFactory())
-              .getConfiguration();
-      if (config == template) {
-        return true; // The default template is always editable.
-      }
-      return BlazeProjectDataManager.getInstance(config.getProject()).getBlazeProjectData() != null
-          && !config.isConfigurationInvalidated();
-    }
-
-    private void setEditable(boolean editable) {
-      isEditable = editable;
-      targetField.setEnabled(isEditable);
-      if (handlerComponent != null) {
-        handlerComponent.setVisible(isEditable);
-      }
     }
 
     private void updateTargetExpressionLabel(BlazeCommandRunConfiguration config) {
@@ -365,56 +337,66 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
     private void updateHandlerEditor(BlazeCommandRunConfiguration config) {
       handlerProvider = config.handlerProvider;
-      handlerEditor = config.handler.getHandlerEditor();
+      handler = handlerProvider.createHandler(config);
+      try {
+        handler.getState().readExternal(config.elementState);
+      } catch (InvalidDataException e) {
+        LOG.error(e);
+      }
+      handlerStateEditor = handler.getState().getEditor(config.getProject());
 
-      if (handlerComponent != null) {
-        editor.remove(handlerComponent);
+      if (handlerStateComponent != null) {
+        editor.remove(handlerStateComponent);
       }
-      handlerComponent = handlerEditor.createEditor();
-      if (handlerComponent != null) {
-        editor.add(handlerComponent);
-      }
+      handlerStateComponent = handlerStateEditor.createComponent();
+      editor.add(handlerStateComponent);
     }
 
     @Override
-    @NotNull
     protected JComponent createEditor() {
       return editor;
     }
 
     @Override
     protected void resetEditorFrom(BlazeCommandRunConfiguration config) {
+      elementState = config.elementState.clone();
       updateTargetExpressionLabel(config);
       if (config.handlerProvider != handlerProvider) {
         updateHandlerEditor(config);
       }
-      setEditable(isConfigurationEditable(config));
       targetField.setText(config.target == null ? null : config.target.toString());
-      handlerEditor.resetEditorFrom(config.handler);
+      handlerStateEditor.resetEditorFrom(config.handler.getState());
     }
 
     @Override
     protected void applyEditorTo(BlazeCommandRunConfiguration config) {
-      if (!isEditable) {
-        return;
+      // update the editor's elementState
+      handlerStateEditor.applyEditorTo(handler.getState());
+      try {
+        handler.getState().writeExternal(elementState);
+      } catch (WriteExternalException e) {
+        LOG.error(e);
       }
-      applyTarget(config);
+
+      // now set the config's state, based on the editor's (possibly out of date) handler
+      config.updateHandlerIfDifferentProvider(handlerProvider);
+      config.elementState = elementState.clone();
+      try {
+        config.handler.getState().readExternal(config.elementState);
+      } catch (InvalidDataException e) {
+        LOG.error(e);
+      }
+
+      // finally, update the handler
+      String targetString = targetField.getText();
+      config.setTarget(
+          Strings.isNullOrEmpty(targetString) ? null : TargetExpression.fromString(targetString));
       updateTargetExpressionLabel(config);
       if (config.handlerProvider != handlerProvider) {
         updateHandlerEditor(config);
-        handlerEditor.resetEditorFrom(config.handler);
+        handlerStateEditor.resetEditorFrom(config.handler.getState());
       } else {
-        handlerEditor.applyEditorTo(config.handler);
-      }
-    }
-
-    private void applyTarget(BlazeCommandRunConfiguration config) {
-      String targetString = targetField.getText();
-      BlazeCommandRunConfigurationHandler oldHandler = config.handler;
-      config.setTarget(
-          Strings.isNullOrEmpty(targetString) ? null : TargetExpression.fromString(targetString));
-      if (config.handler != oldHandler) {
-        config.loadExternalElementBackup();
+        handlerStateEditor.applyEditorTo(config.handler.getState());
       }
     }
   }

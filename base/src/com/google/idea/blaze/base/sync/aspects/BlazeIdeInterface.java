@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.aspects;
 
-import com.google.idea.blaze.base.model.RuleMap;
+import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;

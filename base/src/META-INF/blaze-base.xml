@@ -236,7 +236,7 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.google.idea.blaze.SyncListener" interface="com.google.idea.blaze.base.sync.SyncListener"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SyncPlugin" interface="com.google.idea.blaze.base.sync.BlazeSyncPlugin"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.RuleConfigurationFactory" interface="com.google.idea.blaze.base.run.BlazeRuleConfigurationFactory"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.RunConfigurationFactory" interface="com.google.idea.blaze.base.run.BlazeRunConfigurationFactory"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.Prefetcher"
                     interface="com.google.idea.blaze.base.prefetch.Prefetcher"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.PrefetchFileSource"
@@ -265,7 +265,6 @@
     <SyncListener implementation="com.google.idea.blaze.base.run.testmap.TestRuleFinderImpl$ClearTestMap"/>
     <SyncListener implementation="com.google.idea.blaze.base.rulemaps.SourceToRuleMapImpl$ClearSourceToTargetMap"/>
     <SyncListener implementation="com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProviderImpl"/>
-    <SyncListener implementation="com.google.idea.blaze.base.run.BlazeCommandRunConfigurationUpdater"/>
     <SyncPlugin implementation="com.google.idea.blaze.base.lang.buildfile.sync.BuildLangSyncPlugin"/>
     <BlazeWizardOptionProvider implementation="com.google.idea.blaze.base.wizard2.BazelWizardOptionProvider"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.command.BuildFlagsProviderImpl"/>
@@ -276,6 +275,7 @@
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandlerProvider" order="last"/>
     <TestRuleHeuristic implementation="com.google.idea.blaze.base.run.RuleNameHeuristic" order="first"/>
     <TestRuleHeuristic implementation="com.google.idea.blaze.base.run.TestSizeHeuristic" order="last" id="TestSizeHeuristic"/>
+    <RunConfigurationFactory implementation="com.google.idea.blaze.base.run.BlazeBuildTargetRunConfigurationFactory" order="last"/>
   </extensions>
 
 </idea-plugin>

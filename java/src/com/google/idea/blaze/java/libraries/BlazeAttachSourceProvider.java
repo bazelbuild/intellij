@@ -28,7 +28,6 @@ import com.google.idea.blaze.java.sync.model.LibraryKey;
 import com.google.idea.blaze.java.sync.projectstructure.LibraryEditor;
 import com.intellij.codeInsight.AttachSourcesProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
@@ -43,8 +42,6 @@ import org.jetbrains.annotations.NotNull;
 
 /** @author Sergey Evdokimov */
 public class BlazeAttachSourceProvider implements AttachSourcesProvider {
-  private static final Logger LOG = Logger.getInstance(BlazeAttachSourceProvider.class);
-
   @NotNull
   @Override
   public Collection<AttachSourcesAction> getActions(
@@ -67,7 +64,7 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
         continue;
       }
       BlazeJarLibrary blazeLibrary =
-          LibraryActionHelper.findLibraryFromIntellijLibrary(project, library);
+          LibraryActionHelper.findLibraryFromIntellijLibrary(project, blazeProjectData, library);
       if (blazeLibrary == null) {
         continue;
       }
@@ -90,7 +87,7 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
     if (BlazeJavaUserSettings.getInstance().getAttachSourcesOnDemand()) {
       UIUtil.invokeLaterIfNeeded(
           () -> {
-            attachSources(project, librariesToAttachSourceTo);
+            attachSources(project, blazeProjectData, librariesToAttachSourceTo);
           });
       return ImmutableList.of();
     }
@@ -109,13 +106,16 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
 
           @Override
           public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
-            attachSources(project, librariesToAttachSourceTo);
+            attachSources(project, blazeProjectData, librariesToAttachSourceTo);
             return ActionCallback.DONE;
           }
         });
   }
 
-  static void attachSources(Project project, Collection<BlazeLibrary> librariesToAttachSourceTo) {
+  static void attachSources(
+      Project project,
+      BlazeProjectData blazeProjectData,
+      Collection<BlazeLibrary> librariesToAttachSourceTo) {
     ApplicationManager.getApplication()
         .runWriteAction(
             () -> {
@@ -128,7 +128,12 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
                 }
                 SourceJarManager.getInstance(project)
                     .setHasSourceJarAttached(blazeLibrary.key, true);
-                LibraryEditor.updateLibrary(project, libraryTable, libraryTableModel, blazeLibrary);
+                LibraryEditor.updateLibrary(
+                    project,
+                    blazeProjectData.artifactLocationDecoder,
+                    libraryTable,
+                    libraryTableModel,
+                    blazeLibrary);
               }
               libraryTableModel.commit();
             });

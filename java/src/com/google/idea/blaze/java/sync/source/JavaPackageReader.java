@@ -16,10 +16,14 @@
 package com.google.idea.blaze.java.sync.source;
 
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import javax.annotation.Nullable;
 
 /** Reads java packages from files. */
 public abstract class JavaPackageReader {
   @Nullable
-  abstract String getDeclaredPackageOfJavaFile(BlazeContext context, SourceArtifact sourceArtifact);
+  abstract String getDeclaredPackageOfJavaFile(
+      BlazeContext context,
+      ArtifactLocationDecoder artifactLocationDecoder,
+      SourceArtifact sourceArtifact);
 }

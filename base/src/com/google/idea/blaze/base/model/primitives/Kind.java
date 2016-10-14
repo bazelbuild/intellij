@@ -45,6 +45,7 @@ public enum Kind {
   GWT_HOST("gwt_host", LanguageClass.JAVA),
   GWT_MODULE("gwt_module", LanguageClass.JAVA),
   GWT_TEST("gwt_test", LanguageClass.JAVA),
+  TEST_SUITE("test_suite", LanguageClass.GENERIC),
   ;
 
   static final ImmutableMap<String, Kind> STRING_TO_KIND = makeStringToKindMap();

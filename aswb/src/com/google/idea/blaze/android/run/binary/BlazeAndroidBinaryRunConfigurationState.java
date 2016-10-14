@@ -15,18 +15,26 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
+import com.android.tools.idea.run.ValidationError;
 import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationState;
+import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.run.state.RunConfigurationState;
+import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import org.jdom.Element;
+import org.jetbrains.android.facet.AndroidFacet;
 
 /** State specific to the android binary run configuration. */
-public final class BlazeAndroidBinaryRunConfigurationState
-    implements BlazeAndroidRunConfigurationState {
+public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigurationState {
   public static final String LAUNCH_DEFAULT_ACTIVITY = "default_activity";
   public static final String LAUNCH_SPECIFIC_ACTIVITY = "specific_activity";
   public static final String DO_NOTHING = "do_nothing";
@@ -50,6 +58,16 @@ public final class BlazeAndroidBinaryRunConfigurationState
   private String deepLink = "";
   private String activityClass = "";
   private String mode = LAUNCH_DEFAULT_ACTIVITY;
+
+  private final BlazeAndroidRunConfigurationCommonState commonState;
+
+  BlazeAndroidBinaryRunConfigurationState(String buildSystemName) {
+    commonState = new BlazeAndroidRunConfigurationCommonState(buildSystemName, false);
+  }
+
+  public BlazeAndroidRunConfigurationCommonState getCommonState() {
+    return commonState;
+  }
 
   boolean mobileInstall() {
     return mobileInstall;
@@ -115,8 +133,22 @@ public final class BlazeAndroidBinaryRunConfigurationState
     this.mode = mode;
   }
 
+  public ImmutableList<String> getBuildFlags(Project project, ProjectViewSet projectViewSet) {
+    return commonState.getBuildFlags(project, projectViewSet);
+  }
+
+  /**
+   * We collect errors rather than throwing to avoid missing fatal errors by exiting early for a
+   * warning.
+   */
+  public List<ValidationError> validate(@Nullable AndroidFacet facet) {
+    return commonState.validate(facet);
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
+    commonState.readExternal(element);
+
     setDeepLink(Strings.nullToEmpty(element.getAttributeValue(DEEP_LINK)));
     setActivityClass(Strings.nullToEmpty(element.getAttributeValue(ACTIVITY_CLASS)));
     setMode(Strings.nullToEmpty(element.getAttributeValue(MODE)));
@@ -156,6 +188,8 @@ public final class BlazeAndroidBinaryRunConfigurationState
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
+    commonState.writeExternal(element);
+
     element.setAttribute(DEEP_LINK, deepLink);
     element.setAttribute(ACTIVITY_CLASS, activityClass);
     element.setAttribute(MODE, mode);
@@ -166,6 +200,8 @@ public final class BlazeAndroidBinaryRunConfigurationState
 
     if (userId != null) {
       element.setAttribute(USER_ID_ATTR, Integer.toString(userId));
+    } else {
+      element.removeAttribute(USER_ID_ATTR);
     }
   }
 
@@ -178,5 +214,11 @@ public final class BlazeAndroidBinaryRunConfigurationState
       result.put(name, value);
     }
     return result;
+  }
+
+  @Override
+  public RunConfigurationStateEditor getEditor(Project project) {
+    return new BlazeAndroidBinaryRunConfigurationStateEditor(
+        commonState.getEditor(project), project);
   }
 }

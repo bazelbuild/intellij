@@ -22,10 +22,15 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests that funcall references and load statement contents are correctly resolved. */
+@RunWith(JUnit4.class)
 public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testStandardLoadReference() {
     BuildFile extFile =
         createBuildFile("java/com/google/build_defs.bzl", "def function(name, deps)");
@@ -66,6 +71,7 @@ public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
   //  assertThat(load.getImportPsiElement().getReferencedElement()).isEqualTo(extFile);
   //}
 
+  @Test
   public void testPackageLocalImportLabelFormat() {
     BuildFile extFile =
         createBuildFile("java/com/google/tools/build_defs.bzl", "def function(name, deps)");
@@ -78,6 +84,7 @@ public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
     assertThat(load.getImportPsiElement().getReferencedElement()).isEqualTo(extFile);
   }
 
+  @Test
   public void testMultipleImportedFunctions() {
     BuildFile extFile =
         createBuildFile(
@@ -100,6 +107,7 @@ public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
     assertThat(load.getImportedFunctionReferences()).isEqualTo(functions);
   }
 
+  @Test
   public void testFuncallReference() {
     BuildFile extFile =
         createBuildFile("java/com/google/tools/build_defs.bzl", "def function(name, deps)");
@@ -122,6 +130,7 @@ public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
 
   // relative paths in skylark extensions which lie in subdirectories
   // are relative to the parent blaze package directory
+  @Test
   public void testRelativePathInSubdirectory() {
     createFile("java/com/google/BUILD");
     BuildFile referencedFile =

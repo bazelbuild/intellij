@@ -48,7 +48,7 @@ public class BlazeJavaSyncStatusClassNodeDecorator implements ProjectViewNodeDec
     }
 
     Project project = node.getProject();
-    if (SyncStatusHelper.isUnsynced(project, virtualFile)) {
+    if (SyncStatusHelper.getInstance(project).isUnsynced(virtualFile)) {
       data.clearText();
       data.addText(psiClass.getName(), SimpleTextAttributes.GRAY_ATTRIBUTES);
       data.addText(" (unsynced)", SimpleTextAttributes.GRAY_ATTRIBUTES);

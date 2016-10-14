@@ -38,7 +38,7 @@ filegroup(
 )
 
 load(
-    "//intellij_test:test_defs.bzl",
+    "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
 )
 

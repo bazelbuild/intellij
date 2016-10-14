@@ -15,9 +15,8 @@
  */
 package com.google.idea.blaze.java.sync.jdeps;
 
-import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
 import java.util.List;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** Map of rule -> jdeps dependencies. */
@@ -31,5 +30,5 @@ public interface JdepsMap {
    * <p>If the rule doesn't have source or otherwise wasn't instrumented, null is returned.
    */
   @Nullable
-  List<String> getDependenciesForRule(@NotNull Label label);
+  List<String> getDependenciesForRule(RuleKey ruleKey);
 }

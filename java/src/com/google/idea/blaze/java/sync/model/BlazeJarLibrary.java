@@ -17,7 +17,8 @@ package com.google.idea.blaze.java.sync.model;
 
 import com.google.common.base.Objects;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
-import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.libraries.SourceJarManager;
 import com.google.idea.blaze.java.settings.BlazeJavaUserSettings;
@@ -30,22 +31,25 @@ import javax.annotation.concurrent.Immutable;
 /** An immutable reference to a .jar required by a rule. */
 @Immutable
 public final class BlazeJarLibrary extends BlazeLibrary {
-  private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 2L;
 
   public final LibraryArtifact libraryArtifact;
 
-  public final Label originatingRule;
+  public final RuleKey originatingRule;
 
-  public BlazeJarLibrary(LibraryArtifact libraryArtifact, Label originatingRule) {
-    super(LibraryKey.fromJarFile(libraryArtifact.jarForIntellijLibrary().getFile()));
+  public BlazeJarLibrary(LibraryArtifact libraryArtifact, RuleKey originatingRule) {
+    super(LibraryKey.fromJarFile(libraryArtifact.jarForIntellijLibrary()));
     this.libraryArtifact = libraryArtifact;
     this.originatingRule = originatingRule;
   }
 
   @Override
-  public void modifyLibraryModel(Project project, Library.ModifiableModel libraryModel) {
+  public void modifyLibraryModel(
+      Project project,
+      ArtifactLocationDecoder artifactLocationDecoder,
+      Library.ModifiableModel libraryModel) {
     JarCache jarCache = JarCache.getInstance(project);
-    File jar = jarCache.getCachedJar(this);
+    File jar = jarCache.getCachedJar(artifactLocationDecoder, this);
     libraryModel.addRoot(pathToUrl(jar), OrderRootType.CLASSES);
 
     boolean attachSourcesByDefault =
@@ -53,7 +57,7 @@ public final class BlazeJarLibrary extends BlazeLibrary {
     SourceJarManager sourceJarManager = SourceJarManager.getInstance(project);
     boolean attachSourceJar = attachSourcesByDefault || sourceJarManager.hasSourceJarAttached(key);
     if (attachSourceJar && libraryArtifact.sourceJar != null) {
-      File sourceJar = jarCache.getCachedSourceJar(this);
+      File sourceJar = jarCache.getCachedSourceJar(artifactLocationDecoder, this);
       if (sourceJar != null) {
         libraryModel.addRoot(pathToUrl(sourceJar), OrderRootType.SOURCES);
       }

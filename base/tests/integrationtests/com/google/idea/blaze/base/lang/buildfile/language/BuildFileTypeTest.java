@@ -20,15 +20,21 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.intellij.psi.PsiFile;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /** Tests that BUILD files are recognized as such */
+@RunWith(JUnit4.class)
 public class BuildFileTypeTest extends BuildFileIntegrationTestCase {
 
+  @Test
   public void testSkylarkExtensionRecognized() {
     PsiFile file = createPsiFile("java/com/google/foo/build_defs.bzl");
     assertThat(file).isInstanceOf(BuildFile.class);
   }
 
+  @Test
   public void testExactNameMatch() {
     PsiFile file = createPsiFile("java/com/google/foo/BUILD");
     assertThat(file).isInstanceOf(BuildFile.class);
@@ -40,6 +46,7 @@ public class BuildFileTypeTest extends BuildFileIntegrationTestCase {
    * Currently, turned off by default because references won't resolve correctly -- they'll point
    * back to normal BUILD files.
    */
+  @Test
   public void testOtherBuildFilesNotRecognized() {
     PsiFile file = createPsiFile("java/com/google/foo/BUILD.tools");
     assertThat(file).isNotInstanceOf(BuildFile.class);

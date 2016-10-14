@@ -21,9 +21,10 @@ import static com.android.tools.idea.run.testing.AndroidTestRunConfiguration.TES
 import static com.android.tools.idea.run.testing.AndroidTestRunConfiguration.TEST_CLASS;
 import static com.android.tools.idea.run.testing.AndroidTestRunConfiguration.TEST_METHOD;
 
-import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationState;
-import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationStateEditor;
+import com.google.idea.blaze.base.run.state.RunConfigurationState;
+import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.EditorTextField;
@@ -31,7 +32,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
-import java.awt.Component;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -39,6 +39,7 @@ import java.util.ResourceBundle;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -47,8 +48,9 @@ import javax.swing.JRadioButton;
  * The part of the Blaze Android Test handler editor that allows the user to pick test filters.
  * Forked from {@link org.jetbrains.android.run.testing.TestRunParameters}.
  */
-class BlazeAndroidTestRunConfigurationStateEditor
-    implements BlazeAndroidRunConfigurationStateEditor {
+class BlazeAndroidTestRunConfigurationStateEditor implements RunConfigurationStateEditor {
+  private final RunConfigurationStateEditor commonStateEditor;
+
   private JRadioButton allInPackageButton;
   private JRadioButton classButton;
   private JRadioButton testMethodButton;
@@ -62,7 +64,9 @@ class BlazeAndroidTestRunConfigurationStateEditor
   private JCheckBox runThroughBlazeTestCheckBox;
   private final JRadioButton[] testingType2RadioButton = new JRadioButton[4];
 
-  BlazeAndroidTestRunConfigurationStateEditor(Project project) {
+  BlazeAndroidTestRunConfigurationStateEditor(
+      RunConfigurationStateEditor commonStateEditor, Project project) {
+    this.commonStateEditor = commonStateEditor;
     setupUI(project);
 
     packageComponent.setComponent(new EditorTextField());
@@ -441,33 +445,37 @@ class BlazeAndroidTestRunConfigurationStateEditor
   }
 
   @Override
-  public void applyEditorTo(BlazeAndroidRunConfigurationState state) {
-    BlazeAndroidTestRunConfigurationState configState =
-        (BlazeAndroidTestRunConfigurationState) state;
-    configState.setRunThroughBlaze(runThroughBlazeTestCheckBox.isSelected());
+  public void applyEditorTo(RunConfigurationState genericState) {
+    BlazeAndroidTestRunConfigurationState state =
+        (BlazeAndroidTestRunConfigurationState) genericState;
+    commonStateEditor.applyEditorTo(state.getCommonState());
 
-    configState.setTestingType(getTestingType());
-    configState.setClassName(classComponent.getComponent().getText());
-    configState.setMethodName(methodComponent.getComponent().getText());
-    configState.setPackageName(packageComponent.getComponent().getText());
-    configState.setInstrumentationRunnerClass(runnerComponent.getComponent().getText());
+    state.setRunThroughBlaze(runThroughBlazeTestCheckBox.isSelected());
+
+    state.setTestingType(getTestingType());
+    state.setClassName(classComponent.getComponent().getText());
+    state.setMethodName(methodComponent.getComponent().getText());
+    state.setPackageName(packageComponent.getComponent().getText());
+    state.setInstrumentationRunnerClass(runnerComponent.getComponent().getText());
   }
 
   @Override
-  public void resetEditorFrom(BlazeAndroidRunConfigurationState state) {
-    BlazeAndroidTestRunConfigurationState configState =
-        (BlazeAndroidTestRunConfigurationState) state;
-    runThroughBlazeTestCheckBox.setSelected(configState.isRunThroughBlaze());
+  public void resetEditorFrom(RunConfigurationState genericState) {
+    BlazeAndroidTestRunConfigurationState state =
+        (BlazeAndroidTestRunConfigurationState) genericState;
+    commonStateEditor.resetEditorFrom(state.getCommonState());
 
-    updateButtonsAndLabelComponents(configState.getTestingType());
-    packageComponent.getComponent().setText(configState.getPackageName());
-    classComponent.getComponent().setText(configState.getClassName());
-    methodComponent.getComponent().setText(configState.getMethodName());
-    runnerComponent.getComponent().setText(configState.getInstrumentationRunnerClass());
+    runThroughBlazeTestCheckBox.setSelected(state.isRunThroughBlaze());
+
+    updateButtonsAndLabelComponents(state.getTestingType());
+    packageComponent.getComponent().setText(state.getPackageName());
+    classComponent.getComponent().setText(state.getClassName());
+    methodComponent.getComponent().setText(state.getMethodName());
+    runnerComponent.getComponent().setText(state.getInstrumentationRunnerClass());
   }
 
   @Override
-  public Component getComponent() {
-    return panel;
+  public JComponent createComponent() {
+    return UiUtil.createBox(commonStateEditor.createComponent(), panel);
   }
 }

@@ -5,7 +5,7 @@ workspace(name = "intellij_with_bazel")
 new_http_archive(
     name = "intellij_latest",
     build_file = "intellij_platform_sdk/BUILD.idea",
-    url = "https://download.jetbrains.com/idea/ideaIC-2016.2.1.tar.gz",
+    url = "https://download.jetbrains.com/idea/ideaIC-2016.2.4.tar.gz",
 )
 
 # The plugin api for CLion 2016.1.3. This is required to build CLwB,
@@ -13,7 +13,7 @@ new_http_archive(
 new_http_archive(
     name = "clion_latest",
     build_file = "intellij_platform_sdk/BUILD.clion",
-    url = "https://download.jetbrains.com/cpp/CLion-2016.2.1.tar.gz",
+    url = "https://download.jetbrains.com/cpp/CLion-2016.2.2.tar.gz",
 )
 
 # The plugin api for Android Studio 2.2 stable. This is required to build ASwB,

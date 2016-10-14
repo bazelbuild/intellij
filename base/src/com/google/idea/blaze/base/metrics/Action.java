@@ -48,7 +48,7 @@ public enum Action {
   BLAZE_COMMAND_USAGE("ttrpbc"),
 
   OPEN_IN_CODESEARCH("oics"),
-  COPY_GOOGLE3_PATH("cg3p"),
+  COPY_DEPOT_PATH("cg3p"),
   OPEN_CORRESPONDING_BUILD_FILE("ocbf"),
 
   CREATE_BLAZE_RULE("cbr"),
