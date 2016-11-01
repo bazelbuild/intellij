@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.java.run.RunUtil;
+import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags.JUnitVersion;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -34,6 +35,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import java.util.List;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +69,9 @@ public class BlazeJavaTestClassConfigurationProducer
     if (testClass == null) {
       return false;
     }
+    if (testClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return false;
+    }
     sourceElement.set(testClass);
 
     TestIdeInfo.TestSize testSize = TestSizeAnnotationMap.getTestSize(testClass);
@@ -85,9 +90,11 @@ public class BlazeJavaTestClassConfigurationProducer
 
     ImmutableList.Builder<String> flags = ImmutableList.builder();
 
-    String qualifiedName = testClass.getQualifiedName();
+    final String qualifiedName = testClass.getQualifiedName();
     if (qualifiedName != null) {
-      flags.add(BlazeFlags.testFilterFlagForClass(qualifiedName));
+      final JUnitVersion jUnitVersion =
+          JUnitUtil.isJUnit4TestClass(testClass) ? JUnitVersion.JUNIT_4 : JUnitVersion.JUNIT_3;
+      flags.add(BlazeJUnitTestFilterFlags.testFilterFlagForClass(qualifiedName, jUnitVersion));
     }
 
     flags.add(BlazeFlags.TEST_OUTPUT_STREAMED);
@@ -142,6 +149,10 @@ public class BlazeJavaTestClassConfigurationProducer
     }
     List<String> flags = handlerState.getBlazeFlags();
 
-    return flags.contains(BlazeFlags.testFilterFlagForClass(testClass.getQualifiedName()));
+    final JUnitVersion jUnitVersion =
+        JUnitUtil.isJUnit4TestClass(testClass) ? JUnitVersion.JUNIT_4 : JUnitVersion.JUNIT_3;
+    return flags.contains(
+        BlazeJUnitTestFilterFlags.testFilterFlagForClass(
+            testClass.getQualifiedName(), jUnitVersion));
   }
 }

@@ -6,6 +6,62 @@ load(
     "api_version_txt",
 )
 
+def _generate_test_suite_impl(ctx):
+  """Generates a JUnit4 test suite pulling in all the referenced classes.
+
+  Args:
+    ctx: the rule context
+  """
+  suite_class_name = ctx.label.name
+  lines = []
+  lines.append("package %s;" % ctx.attr.test_package_root)
+  lines.append("")
+  test_srcs = _get_test_srcs(ctx.attr.srcs)
+  test_classes = [_get_test_class(test_src, ctx.attr.test_package_root) for test_src in test_srcs]
+  class_rules = ctx.attr.class_rules
+  if (class_rules):
+    lines.append("import org.junit.ClassRule;")
+  lines.append("import org.junit.runner.RunWith;")
+  lines.append("import org.junit.runners.Suite;")
+  lines.append("")
+  for test_class in test_classes:
+    lines.append("import %s;" % test_class)
+  lines.append("")
+  lines.append("@RunWith(Suite.class)")
+  lines.append("@Suite.SuiteClasses({")
+  for test_class in test_classes:
+    lines.append("    %s.class," % test_class.split(".")[-1])
+  lines.append("})")
+  lines.append("public class %s {" % suite_class_name)
+  lines.append("")
+
+  i = 1
+  for class_rule in class_rules:
+    lines.append("@ClassRule")
+    lines.append("public static %s setupRule_%d = new %s();" % (class_rule, i, class_rule))
+    i += 1
+
+  lines.append("}")
+
+  contents = "\n".join(lines)
+  ctx.file_action(
+      output = ctx.outputs.out,
+      content = contents,
+  )
+
+_generate_test_suite = rule(
+    implementation = _generate_test_suite_impl,
+    attrs = {
+        # srcs for the test classes included in the suite (only keep those ending in Test.java)
+        "srcs": attr.label_list(allow_files=True, mandatory=True),
+        # the package string of the output test suite.
+        "test_package_root": attr.string(mandatory=True),
+        # optional list of classes to instantiate as a @ClassRule in the test suite.
+        "class_rules": attr.string_list()
+    },
+    outputs={"out": "%{name}.java"},
+)
+
 def intellij_unit_test_suite(name, srcs, test_package_root, **kwargs):
   """Creates a java_test rule comprising all valid test classes in the specified srcs.
 
@@ -17,14 +73,12 @@ def intellij_unit_test_suite(name, srcs, test_package_root, **kwargs):
     test_package_root: only tests under this package root will be run.
     **kwargs: Any other args to be passed to the java_test.
   """
-  test_srcs = [test for test in srcs if test.endswith("Test.java")]
-  test_classes = [_get_test_class(test_src, test_package_root) for test_src in test_srcs]
   suite_class_name = name + "TestSuite"
   suite_class = test_package_root + "." + suite_class_name
   _generate_test_suite(
       name = suite_class_name,
+      srcs = srcs,
       test_package_root = test_package_root,
-      test_classes = test_classes,
   )
   native.java_test(
       name = name,
@@ -62,15 +116,13 @@ def intellij_integration_test_suite(
         these plugins aren't loaded at runtime.
     **kwargs: Any other args to be passed to the java_test.
   """
-  test_srcs = [test for test in srcs if test.endswith("Test.java")]
-  test_classes = [_get_test_class(test_src, test_package_root) for test_src in test_srcs]
   suite_class_name = name + "TestSuite"
   suite_class = test_package_root + "." + suite_class_name
   _generate_test_suite(
       name = suite_class_name,
+      srcs = srcs,
       test_package_root = test_package_root,
-      test_classes = test_classes,
-      class_rules = ["com.google.idea.testing.BlazeTestSystemPropertiesRule"]
+      class_rules = ["com.google.idea.testing.BlazeTestSystemPropertiesRule"],
   )
 
   api_version_txt_name = name + "_api_version"
@@ -85,7 +137,7 @@ def intellij_integration_test_suite(
   runtime_deps = list(runtime_deps)
   runtime_deps.extend([
       "//intellij_platform_sdk:bundled_plugins",
-      "//third_party:jdk8_tools",
+      "//third_party:jpda-jdi",
   ])
 
   jvm_flags = list(jvm_flags)
@@ -111,56 +163,20 @@ def intellij_integration_test_suite(
       **kwargs
   )
 
-def _generate_test_suite(name, test_package_root, test_classes, class_rules = []):
-  """Generates a JUnit4 test suite pulling in all the referenced classes.
-
-  Args:
-    name: the name of the genrule and output test suite class.
-    test_package_root: the package string of the output test suite.
-    test_classes: the test classes included in the suite.
-    class_rules: optional list of classes to instantiate as a @ClassRule in the test suite.
-  """
-  lines = []
-  lines.append("package %s;" % test_package_root)
-  lines.append("")
-  if (class_rules):
-    lines.append("import org.junit.ClassRule;")
-  lines.append("import org.junit.runner.RunWith;")
-  lines.append("import org.junit.runners.Suite;")
-  lines.append("")
-  for test_class in test_classes:
-    lines.append("import %s;" % test_class)
-  lines.append("")
-  lines.append("@RunWith(Suite.class)")
-  lines.append("@Suite.SuiteClasses({")
-  for test_class in test_classes:
-    lines.append("    %s.class," % test_class.split(".")[-1])
-  lines.append("})")
-  lines.append("public class %s {" % name)
-  lines.append("")
-
-  i = 1
-  for class_rule in class_rules:
-    lines.append("@ClassRule")
-    lines.append("public static %s setupRule_%d = new %s();" % (class_rule, i, class_rule))
-    i += 1
-
-  lines.append("}")
-
-  contents = "\\n".join(lines)
-  native.genrule(
-      name = name,
-      cmd = "printf '%s' > $@" % contents,
-      outs = [name + ".java"],
-  )
-
 def _get_test_class(test_src, test_package_root):
   """Returns the package string of the test class, beginning with the given root."""
-  full_path = PACKAGE_NAME + "/" + test_src
-  temp = full_path[:-5]
+  test_path = test_src.short_path
+  temp = test_path[:-len(".java")]
   temp = temp.replace("/", ".")
   i = temp.rfind(test_package_root)
   if i < 0:
-    fail("Test source '%s' not under package root '%s'" % (full_path, test_package_root))
+    fail("Test source '%s' not under package root '%s'" % (test_path, test_package_root))
   test_class = temp[i:]
   return test_class
+
+def _get_test_srcs(targets):
+  """Returns all files of the given targets that end with Test.java."""
+  files = set()
+  for target in targets:
+    files += target.files
+  return [f for f in files if f.basename.endswith("Test.java")]

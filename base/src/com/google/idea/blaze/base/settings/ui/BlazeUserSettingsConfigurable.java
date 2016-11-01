@@ -119,8 +119,12 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
                 suppressConsoleForRunAction.isSelected(), settings.getSuppressConsoleForRunAction())
             || !Objects.equal(resyncAutomatically.isSelected(), settings.getResyncAutomatically())
             || !Objects.equal(collapseProjectView.isSelected(), settings.getCollapseProjectView())
-            || !Objects.equal(blazeBinaryPathField.getText(), settings.getBlazeBinaryPath())
-            || !Objects.equal(bazelBinaryPathField.getText(), settings.getBazelBinaryPath());
+            || !Objects.equal(
+                Strings.nullToEmpty(blazeBinaryPathField.getText()),
+                Strings.nullToEmpty(settings.getBlazeBinaryPath()))
+            || !Objects.equal(
+                Strings.nullToEmpty(bazelBinaryPathField.getText()),
+                Strings.nullToEmpty(settings.getBazelBinaryPath()));
 
     for (BlazeUserSettingsContributor settingsContributor : settingsContributors) {
       isModified |= settingsContributor.isModified();

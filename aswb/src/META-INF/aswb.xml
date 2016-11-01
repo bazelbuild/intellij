@@ -18,6 +18,7 @@
 
   <depends>com.intellij.modules.androidstudio</depends>
   <depends>org.jetbrains.android</depends>
+  <depends>com.android.tools.idea.updater</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <java.elementFinder implementation="com.google.idea.blaze.android.resources.AndroidResourceClassFinder"
@@ -61,11 +62,6 @@
   <extensions defaultExtensionNs="com.android.ide">
     <sdkEventListener implementation="com.google.idea.blaze.android.sdk.AndroidSdkListener"/>
   </extensions>
-
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.google.idea.blaze.android.InstrumentationRunnerProvider"
-                    interface="com.google.idea.blaze.android.run.test.InstrumentationRunnerProvider"/>
-  </extensionPoints>
 
   <!-- BEGIN NDK SUPPORT -->
   <extensions defaultExtensionNs="com.intellij">

@@ -63,7 +63,7 @@ public class IntellijPluginSyncPlugin extends BlazeSyncPlugin.Adapter {
   }
 
   @Override
-  public void updateSdk(
+  public void updateProjectSdk(
       Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,

@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -114,7 +115,9 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
       @Nullable SyncState previousSyncState) {
     JavaWorkingSet javaWorkingSet = null;
     if (workingSet != null) {
-      javaWorkingSet = new JavaWorkingSet(workspaceRoot, workingSet);
+      javaWorkingSet =
+          new JavaWorkingSet(
+              workspaceRoot, workingSet, Blaze.getBuildSystemProvider(project)::isBuildFile);
     }
 
     JavaSourceFilter sourceFilter =
@@ -165,7 +168,7 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
   }
 
   @Override
-  public void updateSdk(
+  public void updateProjectSdk(
       Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
@@ -281,11 +284,6 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
         ExcludedLibrarySection.PARSER,
         ExcludeLibrarySection.PARSER,
         JavaLanguageLevelSection.PARSER);
-  }
-
-  @Override
-  public boolean requiresResolveIdeArtifacts() {
-    return true;
   }
 
   /**

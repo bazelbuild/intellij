@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Computes the working set of files of directories from source control.
@@ -41,13 +42,16 @@ public class JavaWorkingSet {
   private final Set<String> modifiedBuildFileRelativePaths;
   private final Set<String> modifiedJavaFileRelativePaths;
 
-  public JavaWorkingSet(WorkspaceRoot workspaceRoot, WorkingSet workingSet) {
+  public JavaWorkingSet(
+      WorkspaceRoot workspaceRoot,
+      WorkingSet workingSet,
+      Predicate<String> buildFileNamePredicate) {
     Set<String> modifiedBuildFileRelativePaths = Sets.newHashSet();
     Set<String> modifiedJavaFileRelativePaths = Sets.newHashSet();
 
     for (WorkspacePath workspacePath :
         Iterables.concat(workingSet.addedFiles, workingSet.modifiedFiles)) {
-      if (workspaceRoot.fileForPath(workspacePath).getName().equals("BUILD")) {
+      if (buildFileNamePredicate.test(workspaceRoot.fileForPath(workspacePath).getName())) {
         modifiedBuildFileRelativePaths.add(workspacePath.relativePath());
       } else if (workspacePath.relativePath().endsWith(".java")) {
         modifiedJavaFileRelativePaths.add(workspacePath.relativePath());

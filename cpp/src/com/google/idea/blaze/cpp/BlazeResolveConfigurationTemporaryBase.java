@@ -219,6 +219,10 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
     return project;
   }
 
+  public WorkspacePathResolver getWorkspacePathResolver() {
+    return workspacePathResolver;
+  }
+
   @Override
   public String getDisplayName(boolean shorten) {
     return ruleKey.toString();

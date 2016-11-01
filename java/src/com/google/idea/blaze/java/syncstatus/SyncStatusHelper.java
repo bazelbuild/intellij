@@ -21,39 +21,60 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.util.Set;
 
 class SyncStatusHelper {
+
   static SyncStatusHelper getInstance(Project project) {
     return ServiceManager.getService(project, SyncStatusHelper.class);
   }
 
-  private Set<File> syncedJavaFiles = ImmutableSet.of();
+  private final Project project;
+  private Set<File> syncedJavaFiles = null;
+
+  SyncStatusHelper(Project project) {
+    this.project = project;
+  }
 
   boolean isUnsynced(VirtualFile virtualFile) {
     if (!virtualFile.isInLocalFileSystem()) {
+      return false;
+    }
+    if (ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile) == null) {
+      return false;
+    }
+    if (syncedJavaFiles == null) {
+      syncedJavaFiles = refresh();
+    }
+    if (syncedJavaFiles == null) {
       return false;
     }
     File file = new File(virtualFile.getPath());
     return !syncedJavaFiles.contains(file);
   }
 
-  void refresh(BlazeProjectData blazeProjectData) {
+  Set<File> refresh() {
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (blazeProjectData == null) {
+      return null;
+    }
     BlazeJavaSyncData syncData = blazeProjectData.syncState.get(BlazeJavaSyncData.class);
     if (syncData == null) {
-      return;
+      return null;
     }
     ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.artifactLocationDecoder;
-    syncedJavaFiles =
-        ImmutableSet.<File>builder()
-            .addAll(artifactLocationDecoder.decodeAll(syncData.importResult.javaSourceFiles))
-            .build();
+    return ImmutableSet.<File>builder()
+        .addAll(artifactLocationDecoder.decodeAll(syncData.importResult.javaSourceFiles))
+        .build();
   }
 
   static class UpdateSyncStatusMap extends SyncListener.Adapter {
@@ -65,7 +86,7 @@ class SyncStatusHelper {
         ProjectViewSet projectViewSet,
         BlazeProjectData blazeProjectData,
         SyncResult syncResult) {
-      getInstance(project).refresh(blazeProjectData);
+      getInstance(project).syncedJavaFiles = null;
     }
   }
 }

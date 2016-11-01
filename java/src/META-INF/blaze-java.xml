@@ -15,6 +15,7 @@
   -->
 <idea-plugin>
   <depends>JUnit</depends>
+  <depends>com.intellij.modules.java</depends>
 
   <actions>
     <action class="com.google.idea.blaze.java.libraries.ExcludeLibraryAction"
@@ -98,6 +99,12 @@
     <applicationService serviceImplementation="com.google.idea.blaze.java.settings.BlazeJavaUserSettings"/>
     <projectService serviceImplementation="com.google.idea.blaze.java.syncstatus.SyncStatusHelper"/>
   </extensions>
+
+  <project-components>
+    <component>
+      <implementation-class>com.google.idea.blaze.java.run.producers.NonBlazeProducerSuppressor</implementation-class>
+    </component>
+  </project-components>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.google.idea.blaze.java.JavaSyncAugmenter"

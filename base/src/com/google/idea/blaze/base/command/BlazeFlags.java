@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.command;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -24,9 +23,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformUtils;
-import java.util.Collection;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /** The collection of all the Bazel flag strings we use. */
 public final class BlazeFlags {
@@ -98,41 +95,6 @@ public final class BlazeFlags {
       platformPrefix = "IDEA:ultimate";
     }
     return TOOL_TAG + platformPrefix;
-  }
-
-  public static String testFilterFlagForClass(String className) {
-    return testFilterFlagForClassAndMethod(className, null);
-  }
-
-  public static String testFilterFlagForClassAndMethod(
-      String className, @Nullable String methodName) {
-    StringBuilder output = new StringBuilder(TEST_FILTER);
-    output.append('=');
-    output.append(className);
-
-    if (!Strings.isNullOrEmpty(methodName)) {
-      output.append('#');
-      output.append(methodName);
-      output.append('$');
-    }
-
-    return output.toString();
-  }
-
-  public static String testFilterFlagForClassAndMethods(
-      String className, Collection<String> methodNames, boolean isJUnit3Class) {
-    if (methodNames.size() == 0) {
-      return testFilterFlagForClass(className);
-    } else if (methodNames.size() == 1) {
-      return testFilterFlagForClassAndMethod(className, methodNames.iterator().next());
-    }
-    String methodNamePattern;
-    if (isJUnit3Class) {
-      methodNamePattern = String.join(",", methodNames);
-    } else {
-      methodNamePattern = String.format("(%s)", String.join("|", methodNames));
-    }
-    return testFilterFlagForClassAndMethod(className, methodNamePattern);
   }
 
   private BlazeFlags() {}

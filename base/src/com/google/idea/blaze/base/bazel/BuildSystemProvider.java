@@ -21,6 +21,9 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.FileNameMatcher;
+import com.intellij.openapi.vfs.VirtualFile;
+import java.io.File;
 import javax.annotation.Nullable;
 
 /**
@@ -79,4 +82,27 @@ public interface BuildSystemProvider {
   /** The URL providing the built-in BUILD rule's documentation, if one can be found. */
   @Nullable
   String getRuleDocumentationUrl(RuleDefinition rule);
+
+  /** Check if the given filename is a valid BUILD file name. */
+  boolean isBuildFile(String fileName);
+
+  /**
+   * Check if the given directory has a child with a valid BUILD file name, and if so, returns the
+   * first such file.
+   */
+  @Nullable
+  File findBuildFileInDirectory(File directory);
+
+  /**
+   * Check if the given directory has a child with a valid BUILD file name, and if so, returns the
+   * first such file.
+   */
+  @Nullable
+  default VirtualFile findBuildFileInDirectory(VirtualFile directory) {
+    File file = new File(directory.getPath());
+    File buildFile = findBuildFileInDirectory(file);
+    return buildFile != null ? directory.getFileSystem().findFileByPath(buildFile.getPath()) : null;
+  }
+
+  FileNameMatcher buildFileMatcher();
 }

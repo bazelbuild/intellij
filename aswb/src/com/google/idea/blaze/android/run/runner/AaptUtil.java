@@ -17,7 +17,7 @@ package com.google.idea.blaze.android.run.runner;
 
 import com.android.sdklib.BuildToolInfo;
 import com.android.sdklib.BuildToolInfo.PathId;
-import com.google.idea.blaze.android.sdk.SdkUtil;
+import com.google.idea.blaze.android.sync.sdk.SdkUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;

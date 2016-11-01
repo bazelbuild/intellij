@@ -61,7 +61,9 @@ public class ManifestParser {
       return null;
     }
     Manifest manifest = manifestFileMap.get(file);
-    if (manifest != null) {
+    // Note: The manifest may be invalid if the underlying VirtualFile is invalidated.
+    // Once invalid, it cannot become valid again, and must be reloaded.
+    if (manifest != null && manifest.isValid()) {
       return manifest;
     }
     final VirtualFile virtualFile;

@@ -90,6 +90,9 @@ public interface BlazeSyncPlugin {
   /** @return The set of supported languages under this workspace type. */
   Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType);
 
+  /** Installs any global SDKs */
+  void installSdks(BlazeContext context);
+
   /** Given the rule map, update the sync state for this plugin. Should not have side effects. */
   void updateSyncState(
       Project project,
@@ -105,8 +108,8 @@ public interface BlazeSyncPlugin {
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState);
 
-  /** Updates the sdk. */
-  void updateSdk(
+  /** Updates the sdk for the project. */
+  void updateProjectSdk(
       Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
@@ -152,9 +155,6 @@ public interface BlazeSyncPlugin {
   /** Returns any custom sections that this plugin supports. */
   Collection<SectionParser> getSections();
 
-  /** Returns whether this plugin requires resolving ide artifacts to function. */
-  boolean requiresResolveIdeArtifacts();
-
   /** Convenience adapter to help stubbing out methods. */
   class Adapter implements BlazeSyncPlugin {
 
@@ -176,6 +176,9 @@ public interface BlazeSyncPlugin {
     }
 
     @Override
+    public void installSdks(BlazeContext context) {}
+
+    @Override
     public void updateSyncState(
         Project project,
         BlazeContext context,
@@ -191,7 +194,7 @@ public interface BlazeSyncPlugin {
         @Nullable SyncState previousSyncState) {}
 
     @Override
-    public void updateSdk(
+    public void updateProjectSdk(
         Project project,
         BlazeContext context,
         ProjectViewSet projectViewSet,
@@ -237,9 +240,5 @@ public interface BlazeSyncPlugin {
       return ImmutableList.of();
     }
 
-    @Override
-    public boolean requiresResolveIdeArtifacts() {
-      return false;
-    }
   }
 }

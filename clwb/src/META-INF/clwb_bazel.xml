@@ -16,7 +16,7 @@
 <idea-plugin>
   <description>
     <![CDATA[
-      <a href="http://bazel.io">Bazel</a> support for CLion.
+      <a href="https://bazel.build">Bazel</a> support for CLion.
 
       Features:
         <ul>
@@ -25,7 +25,7 @@
         <li>Support for Bazel run configurations for certain rule classes.</li>
         </ul>
 
-      Usage instructions at <a href="http://ij.bazel.io">ij.bazel.io</a>
+      Usage instructions at <a href="https://ij.bazel.build">ij.bazel.build</a>
       ]]>
   </description>
 </idea-plugin>

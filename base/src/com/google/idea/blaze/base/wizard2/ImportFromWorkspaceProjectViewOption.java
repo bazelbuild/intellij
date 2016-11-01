@@ -15,9 +15,11 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
+import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
+import com.google.idea.blaze.base.ui.BlazeValidationError;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -28,13 +30,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.TextFieldWithStoredHistory;
 import java.awt.Dimension;
 import java.io.File;
+import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JTextField;
 
 class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectViewOption {
   private static final String LAST_WORKSPACE_PATH = "import-from-workspace.last-workspace-path";
@@ -42,14 +45,15 @@ class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectViewOpti
   final BlazeNewProjectBuilder builder;
   final BlazeWizardUserSettings userSettings;
   final JComponent component;
-  final JTextField projectViewPathField;
+  final TextFieldWithStoredHistory projectViewPathField;
 
   ImportFromWorkspaceProjectViewOption(BlazeNewProjectBuilder builder) {
     this.builder = builder;
     this.userSettings = builder.getUserSettings();
 
-    String defaultWorkspacePath = userSettings.get(LAST_WORKSPACE_PATH, "");
-    this.projectViewPathField = new JTextField(defaultWorkspacePath);
+    this.projectViewPathField = new TextFieldWithStoredHistory(LAST_WORKSPACE_PATH);
+    projectViewPathField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);
+    projectViewPathField.setText(userSettings.get(LAST_WORKSPACE_PATH, ""));
 
     JButton button = new JButton("...");
     button.addActionListener(action -> chooseWorkspacePath());
@@ -83,6 +87,10 @@ class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectViewOpti
     if (getProjectViewPath().isEmpty()) {
       return BlazeValidationResult.failure("Workspace path to project view file cannot be empty.");
     }
+    List<BlazeValidationError> errors = Lists.newArrayList();
+    if (!WorkspacePath.validate(getProjectViewPath(), errors)) {
+      return BlazeValidationResult.failure(errors.get(0));
+    }
     WorkspaceRoot temporaryWorkspaceRoot = builder.getWorkspaceOption().getTemporaryWorkspaceRoot();
     File file = temporaryWorkspaceRoot.fileForPath(getSharedProjectView());
     if (!file.exists()) {
@@ -107,6 +115,7 @@ class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectViewOpti
   @Override
   public void commit() {
     userSettings.put(LAST_WORKSPACE_PATH, getProjectViewPath());
+    projectViewPathField.addCurrentTextToHistory();
   }
 
   private String getProjectViewPath() {
@@ -131,12 +140,14 @@ class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectViewOpti
     File startingLocation = temporaryWorkspaceRoot.directory();
     String projectViewPath = getProjectViewPath();
     if (!projectViewPath.isEmpty()) {
-      // Avoid exception -- workspace paths cannot end with trailing slash
+      // If the user has typed part of the path then clicked the '...', try to start from the
+      // partial state
       projectViewPath = StringUtil.trimEnd(projectViewPath, '/');
-
-      File fileLocation = temporaryWorkspaceRoot.fileForPath(new WorkspacePath(projectViewPath));
-      if (fileLocation.exists()) {
-        startingLocation = fileLocation;
+      if (WorkspacePath.validate(projectViewPath)) {
+        File fileLocation = temporaryWorkspaceRoot.fileForPath(new WorkspacePath(projectViewPath));
+        if (fileLocation.exists()) {
+          startingLocation = fileLocation;
+        }
       }
     }
     VirtualFile toSelect =

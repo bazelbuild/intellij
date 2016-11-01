@@ -40,18 +40,4 @@ public class BuildFileTypeTest extends BuildFileIntegrationTestCase {
     assertThat(file).isInstanceOf(BuildFile.class);
   }
 
-  /**
-   * We may want to support these in the future (and in the meantime the user can manually have them
-   * recognized as BUILD files, for syntax highlighting, etc.).<br>
-   * Currently, turned off by default because references won't resolve correctly -- they'll point
-   * back to normal BUILD files.
-   */
-  @Test
-  public void testOtherBuildFilesNotRecognized() {
-    PsiFile file = createPsiFile("java/com/google/foo/BUILD.tools");
-    assertThat(file).isNotInstanceOf(BuildFile.class);
-
-    file = createPsiFile("java/com/google/foo/BUILD.bazel");
-    assertThat(file).isNotInstanceOf(BuildFile.class);
-  }
 }

@@ -17,8 +17,6 @@
   <vendor>Google</vendor>
 
   <depends>com.intellij.modules.clion</depends>
-  <depends>com.intellij.modules.cidr.lang</depends>
-  <depends>com.intellij.modules.cidr.debugger</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"
@@ -69,6 +67,9 @@
   <project-components>
     <component>
       <implementation-class>com.google.idea.blaze.plugin.ClwbProjectSpecificInitializer</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.google.idea.blaze.clwb.run.producers.NonBlazeProducerSuppressor</implementation-class>
     </component>
   </project-components>
 

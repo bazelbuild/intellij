@@ -19,10 +19,15 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.actions.BlazeAction;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.rulemaps.SourceToRuleMap;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
+import com.google.idea.blaze.base.sync.BuildTargetFinder;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -80,32 +85,29 @@ public class PartialSyncAction extends BlazeAction {
       return null;
     }
 
-    String objectName = null;
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+    SourceToRuleMap.getInstance(project);
 
-    if (virtualFile.isDirectory()) {
-      if (workspaceRoot.isInWorkspace(virtualFile)) {
-        targets.add(
-            TargetExpression.allFromPackageRecursive(workspaceRoot.workspacePathFor(virtualFile)));
-      }
-      objectName = "Package";
-    } else {
+    String objectName = virtualFile.isDirectory() ? "Package" : "File";
+    if (!virtualFile.isDirectory()) {
       targets.addAll(
           SourceToRuleMap.getInstance(project)
               .getTargetsToBuildForSourceFile(new File(virtualFile.getPath())));
-
-      // If empty, try to build parent package
-      if (targets.isEmpty()) {
-        VirtualFile parent = virtualFile.getParent();
-        if (parent.isDirectory()) {
-          if (workspaceRoot.isInWorkspace(parent)) {
-            targets.add(
-                TargetExpression.allFromPackageNonRecursive(
-                    workspaceRoot.workspacePathFor(parent)));
-          }
+    }
+    if (targets.isEmpty()) {
+      ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+      if (projectViewSet != null) {
+        BuildSystem buildSystem = Blaze.getBuildSystem(project);
+        ImportRoots importRoots =
+            ImportRoots.builder(workspaceRoot, buildSystem).add(projectViewSet).build();
+        BuildTargetFinder buildTargetFinder =
+            new BuildTargetFinder(project, workspaceRoot, importRoots);
+        TargetExpression targetExpression =
+            buildTargetFinder.findTargetForFile(new File(virtualFile.getPath()));
+        if (targetExpression != null) {
+          targets.add(targetExpression);
         }
       }
-      objectName = "File";
     }
 
     return objectName;

@@ -90,6 +90,7 @@ class BlazeConsoleView implements Disposable {
     Content console =
         layoutUi.createContent(
             BlazeConsoleToolWindowFactory.ID, myConsoleView.getComponent(), "", null, null);
+    console.setCloseable(false);
     layoutUi.addContent(console, 0, PlaceInGrid.right, false);
 
     // Adding actions
@@ -110,6 +111,7 @@ class BlazeConsoleView implements Disposable {
     //noinspection ConstantConditions
     Content content =
         ContentFactory.SERVICE.getInstance().createContent(layoutComponent, null, true);
+    content.setCloseable(false);
     toolWindow.getContentManager().addContent(content);
   }
 

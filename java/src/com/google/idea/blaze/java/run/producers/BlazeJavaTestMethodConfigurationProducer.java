@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.java.run.RunUtil;
+import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags.JUnitVersion;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.util.Ref;
@@ -162,9 +163,11 @@ public class BlazeJavaTestMethodConfigurationProducer
     if (qualifiedName == null) {
       return null;
     }
-    final boolean isJUnit3Class = JUnitUtil.isJUnit3TestClass(containingClass);
+    final JUnitVersion jUnitVersion =
+        JUnitUtil.isJUnit4TestClass(containingClass) ? JUnitVersion.JUNIT_4 : JUnitVersion.JUNIT_3;
     final String testFilterFlag =
-        BlazeFlags.testFilterFlagForClassAndMethods(qualifiedName, methodNames, isJUnit3Class);
+        BlazeJUnitTestFilterFlags.testFilterFlagForClassAndMethods(
+            qualifiedName, methodNames, jUnitVersion);
 
     return new SelectedMethodInfo(firstMethod, containingClass, methodNames, testFilterFlag);
   }

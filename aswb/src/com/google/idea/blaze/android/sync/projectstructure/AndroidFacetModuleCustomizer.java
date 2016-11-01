@@ -59,5 +59,6 @@ public class AndroidFacetModuleCustomizer {
     facetState.MANIFEST_FILE_RELATIVE_PATH = "";
     facetState.RES_FOLDER_RELATIVE_PATH = "";
     facetState.ASSETS_FOLDER_RELATIVE_PATH = "";
+    facetState.ENABLE_SOURCES_AUTOGENERATION = false;
   }
 }

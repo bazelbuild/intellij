@@ -1,4 +1,4 @@
-# An IntelliJ plugin for [Bazel](http://bazel.io) projects
+# An IntelliJ plugin for [Bazel](http://bazel.build) projects
 
 This is an early-access version of our IntelliJ bazel plugin.
 
@@ -19,7 +19,7 @@ IntelliJ -> Settings -> Browse Repositories, and searching for 'IntelliJ with Ba
 To import an existing Bazel project, choose 'Import Bazel Project',
 and follow the instructions in the project import wizard.
 
-Detailed docs are available [here](http://ij.bazel.io).
+Detailed docs are available [here](http://ij.bazel.build).
 
 ## Building the plugin
 

@@ -19,9 +19,7 @@ package com.google.idea.blaze.base.ide;
 import com.google.idea.blaze.base.actions.BlazeAction;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.metrics.Action;
-import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
-import com.google.idea.blaze.base.scope.ScopedOperation;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
@@ -56,19 +54,16 @@ class NewBlazeRuleAction extends BlazeAction implements DumbAware {
     }
 
     Scope.root(
-        new ScopedOperation() {
-          @Override
-          public void execute(@NotNull BlazeContext context) {
-            context
-                .push(new ExperimentScope())
-                .push(new BlazeConsoleScope.Builder(project).build())
-                .push(new IssuesScope(project))
-                .push(new IdeaLogScope())
-                .push(new LoggedTimingScope(project, Action.CREATE_BLAZE_RULE));
-            NewBlazeRuleDialog newBlazeRuleDialog =
-                new NewBlazeRuleDialog(context, project, virtualFile);
-            newBlazeRuleDialog.show();
-          }
+        context -> {
+          context
+              .push(new ExperimentScope())
+              .push(new BlazeConsoleScope.Builder(project).build())
+              .push(new IssuesScope(project))
+              .push(new IdeaLogScope())
+              .push(new LoggedTimingScope(project, Action.CREATE_BLAZE_RULE));
+          NewBlazeRuleDialog newBlazeRuleDialog =
+              new NewBlazeRuleDialog(context, project, virtualFile);
+          newBlazeRuleDialog.show();
         });
   }
 
@@ -78,7 +73,10 @@ class NewBlazeRuleAction extends BlazeAction implements DumbAware {
     DataContext dataContext = event.getDataContext();
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    boolean enabled = (project != null && file != null && file.getName().equals("BUILD"));
+    boolean enabled =
+        (project != null
+            && file != null
+            && Blaze.getBuildSystemProvider(project).isBuildFile(file.getName()));
     presentation.setVisible(enabled || ActionPlaces.isMainMenuOrActionSearch(event.getPlace()));
     presentation.setEnabled(enabled);
     presentation.setText(getText(project));

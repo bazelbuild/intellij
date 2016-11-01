@@ -145,7 +145,6 @@ final class BlazeConfigurationResolver {
       WorkspacePathResolver workspacePathResolver,
       BlazeProjectData blazeProjectData) {
     RuleKey ruleKey = rule.key;
-    LOG.info("Resolving " + ruleKey);
 
     CToolchainIdeInfo toolchainIdeInfo = toolchainLookupMap.get(ruleKey);
     if (toolchainIdeInfo != null) {

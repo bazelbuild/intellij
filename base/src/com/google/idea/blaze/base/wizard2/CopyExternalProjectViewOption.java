@@ -24,6 +24,7 @@ import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.TextFieldWithStoredHistory;
 import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
@@ -34,20 +35,20 @@ import javax.annotation.Nullable;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JTextField;
 
 class CopyExternalProjectViewOption implements BlazeSelectProjectViewOption {
   private static final String LAST_WORKSPACE_PATH = "copy-external.last-project-view-path";
 
   final BlazeWizardUserSettings userSettings;
   final JComponent component;
-  final JTextField projectViewPathField;
+  final TextFieldWithStoredHistory projectViewPathField;
 
   CopyExternalProjectViewOption(BlazeNewProjectBuilder builder) {
     this.userSettings = builder.getUserSettings();
 
-    String defaultWorkspacePath = userSettings.get(LAST_WORKSPACE_PATH, "");
-    this.projectViewPathField = new JTextField(defaultWorkspacePath);
+    this.projectViewPathField = new TextFieldWithStoredHistory(LAST_WORKSPACE_PATH);
+    projectViewPathField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);
+    projectViewPathField.setText(userSettings.get(LAST_WORKSPACE_PATH, ""));
 
     JButton button = new JButton("...");
     button.addActionListener(action -> chooseWorkspacePath());
@@ -108,6 +109,7 @@ class CopyExternalProjectViewOption implements BlazeSelectProjectViewOption {
   @Override
   public void commit() {
     userSettings.put(LAST_WORKSPACE_PATH, getProjectViewPath());
+    projectViewPathField.addCurrentTextToHistory();
   }
 
   private String getProjectViewPath() {

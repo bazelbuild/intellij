@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.sync;
 
+import com.android.tools.idea.sdk.IdeSdks;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -26,6 +27,9 @@ import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer;
+import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
+import com.google.idea.blaze.android.sync.sdk.SdkExperiment;
+import com.google.idea.blaze.android.sync.sdklegacy.AndroidSdkPlatformSyncer;
 import com.google.idea.blaze.base.ideinfo.RuleMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.SyncState;
@@ -37,6 +41,7 @@ import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -46,6 +51,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -57,6 +63,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ui.UIUtil;
+import java.io.File;
 import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -98,6 +105,20 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
   }
 
   @Override
+  public void installSdks(BlazeContext context) {
+    File path = IdeSdks.getAndroidSdkPath();
+    if (path != null) {
+      context.output(new StatusOutput("Installing SDK platforms..."));
+      ApplicationManager.getApplication()
+          .invokeAndWait(
+              () -> {
+                IdeSdks.createAndroidSdkPerAndroidTarget(path);
+              },
+              ModalityState.defaultModalityState());
+    }
+  }
+
+  @Override
   public void updateSyncState(
       Project project,
       BlazeContext context,
@@ -115,8 +136,13 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
       return;
     }
 
-    AndroidSdkPlatform androidSdkPlatform =
-        AndroidSdkPlatformSyncer.getAndroidSdkPlatform(project, context);
+    final AndroidSdkPlatform androidSdkPlatform;
+    if (SdkExperiment.useStandardSdkManager()) {
+      androidSdkPlatform = AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
+    } else {
+      androidSdkPlatform = AndroidSdkPlatformSyncer.getAndroidSdkPlatform(project, context);
+    }
+
     BlazeAndroidWorkspaceImporter workspaceImporter =
         new BlazeAndroidWorkspaceImporter(project, context, workspaceRoot, projectViewSet, ruleMap);
     BlazeAndroidImportResult importResult =
@@ -131,7 +157,7 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
   }
 
   @Override
-  public void updateSdk(
+  public void updateProjectSdk(
       Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
@@ -216,20 +242,27 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
       return false;
     }
 
-    String androidSdkPlatform = projectViewSet.getScalarValue(AndroidSdkPlatformSection.KEY);
-    if (Strings.isNullOrEmpty(androidSdkPlatform)) {
-      String error =
-          Joiner.on('\n')
-              .join(
-                  "No android_sdk_platform set.",
-                  "You should specify the android SDK platform in your '.blazeproject' file.",
-                  "To set this add an 'android_sdk_platform' line to your .blazeproject file,",
-                  "e.g. 'android_sdk_platform: \"android-N\"', where 'android-N' is a",
-                  "platform directory name in your local SDK directory.");
-      IssueOutput.error(error)
-          .inFile(projectViewSet.getTopLevelProjectViewFile().projectViewFile)
-          .submit(context);
+    if (SdkExperiment.useStandardSdkManager()) {
+      if (AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet) == null) {
+        return false;
+      }
+    } else {
+      String androidSdkPlatform = projectViewSet.getScalarValue(AndroidSdkPlatformSection.KEY);
+      if (Strings.isNullOrEmpty(androidSdkPlatform)) {
+        String error =
+            Joiner.on('\n')
+                .join(
+                    "No android_sdk_platform set.",
+                    "You should specify the android SDK platform in your '.blazeproject' file.",
+                    "To set this add an 'android_sdk_platform' line to your .blazeproject file,",
+                    "e.g. 'android_sdk_platform: \"android-N\"', where 'android-N' is a",
+                    "platform directory name in your local SDK directory.");
+        IssueOutput.error(error)
+            .inFile(projectViewSet.getTopLevelProjectViewFile().projectViewFile)
+            .submit(context);
+      }
     }
+
     return true;
   }
 

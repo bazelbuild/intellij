@@ -19,6 +19,7 @@ import static com.google.idea.common.experiments.ExperimentsUtil.hashExperimentN
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SystemProperties;
@@ -60,7 +61,9 @@ public class ExperimentServiceImpl extends ApplicationComponent.Adapter
 
   @Override
   public void initComponent() {
-    services.forEach(ExperimentLoader::initialize);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      services.forEach(ExperimentLoader::initialize);
+    }
   }
 
   @Override

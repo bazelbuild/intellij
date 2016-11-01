@@ -15,38 +15,36 @@
  */
 package com.google.idea.blaze.android.run.test;
 
-import com.android.builder.model.Variant;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
-import com.android.tools.idea.gradle.AndroidGradleModel;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.testing.AndroidTestListener;
 import com.android.tools.idea.run.util.LaunchStatus;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import org.jetbrains.android.dom.manifest.Instrumentation;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.jetbrains.android.dom.manifest.Manifest;
-import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.annotations.Nullable;
 
 final class StockAndroidTestLaunchTask implements LaunchTask {
   private static final Logger LOG = Logger.getInstance(StockAndroidTestLaunchTask.class);
 
   private final BlazeAndroidTestRunConfigurationState configState;
-  @Nullable private final String instrumentationTestRunner;
+  private final String instrumentationTestRunner;
   private final String testApplicationId;
   private final boolean waitForDebugger;
 
   private StockAndroidTestLaunchTask(
       BlazeAndroidTestRunConfigurationState configState,
-      @Nullable String runner,
+      String runner,
       String testPackage,
       boolean waitForDebugger) {
     this.configState = configState;
@@ -60,12 +58,7 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
       ApplicationIdProvider applicationIdProvider,
       boolean waitForDebugger,
       BlazeAndroidDeployInfo deployInfo,
-      AndroidFacet facet,
       LaunchStatus launchStatus) {
-    String runner =
-        StringUtil.isEmpty(configState.getInstrumentationRunnerClass())
-            ? findInstrumentationRunner(deployInfo, facet)
-            : configState.getInstrumentationRunnerClass();
     String testPackage;
     try {
       testPackage = applicationIdProvider.getTestPackageName();
@@ -78,51 +71,80 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
       return null;
     }
 
+    List<String> availableRunners = getRunnersFromManifest(deployInfo);
+    if (availableRunners.isEmpty()) {
+      launchStatus.terminateLaunch(
+          String.format(
+              "No instrumentation test runner is defined in the manifest.\n"
+                  + "At least one instrumentation tag must be defined for the\n"
+                  + "\"%1$s\" package in the AndroidManifest.xml, e.g.:\n"
+                  + "\n"
+                  + "<manifest\n"
+                  + "    package=\"%1$s\"\n"
+                  + "    xmlns:android=\"http://schemas.android.com/apk/res/android\">\n"
+                  + "\n"
+                  + "    <instrumentation\n"
+                  + "        android:name=\"android.support.test.runner.AndroidJUnitRunner\"\n"
+                  + "        android:targetPackage=\"%1$s\">\n"
+                  + "    </instrumentation>\n"
+                  + "\n"
+                  + "</manifest>",
+              testPackage));
+      // Note: Gradle users will never see the above message, so don't mention Gradle here.
+      // Even if no runners are defined in build.gradle, Gradle will add a default to the manifest.
+      return null;
+    }
+    String runner = configState.getInstrumentationRunnerClass();
+    if (!StringUtil.isEmpty(runner)) {
+      if (!availableRunners.contains(runner)) {
+        launchStatus.terminateLaunch(
+            String.format(
+                "Instrumentation test runner \"%2$s\"\n"
+                    + "is not defined for the \"%1$s\" package in the manifest.\n"
+                    + "Clear the 'Specific instrumentation runner' field in your configuration\n"
+                    + "to default to \"%3$s\",\n"
+                    + "or add the runner to your AndroidManifest.xml:\n"
+                    + "\n"
+                    + "<manifest\n"
+                    + "    package=\"%1$s\"\n"
+                    + "    xmlns:android=\"http://schemas.android.com/apk/res/android\">\n"
+                    + "\n"
+                    + "    <instrumentation\n"
+                    + "        android:name=\"%2$s\"\n"
+                    + "        android:targetPackage=\"%1$s\">\n"
+                    + "    </instrumentation>\n"
+                    + "\n"
+                    + "</manifest>",
+                testPackage, runner, availableRunners.get(0)));
+        return null;
+      }
+    } else {
+      // Default to the first available runner.
+      runner = availableRunners.get(0);
+    }
+
     return new StockAndroidTestLaunchTask(configState, runner, testPackage, waitForDebugger);
   }
 
-  @Nullable
-  private static String findInstrumentationRunner(
-      BlazeAndroidDeployInfo deployInfo, AndroidFacet facet) {
-    String runner = getRunnerFromManifest(deployInfo);
-
-    // TODO: Resolve direct AndroidGradleModel dep (b/22596984)
-    AndroidGradleModel androidModel = AndroidGradleModel.get(facet);
-    if (runner == null && androidModel != null) {
-      Variant selectedVariant = androidModel.getSelectedVariant();
-      String testRunner = selectedVariant.getMergedFlavor().getTestInstrumentationRunner();
-      if (testRunner != null) {
-        runner = testRunner;
-      }
-    }
-
-    // Fall back to the default runner.
-    if (runner == null) {
-      runner = InstrumentationRunnerProvider.getDefaultInstrumentationRunnerClass();
-    }
-
-    return runner;
-  }
-
-  @Nullable
-  private static String getRunnerFromManifest(final BlazeAndroidDeployInfo deployInfo) {
+  private static ImmutableList<String> getRunnersFromManifest(
+      final BlazeAndroidDeployInfo deployInfo) {
     if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
       return ApplicationManager.getApplication()
-          .runReadAction((Computable<String>) () -> getRunnerFromManifest(deployInfo));
+          .runReadAction(
+              (Computable<ImmutableList<String>>) () -> getRunnersFromManifest(deployInfo));
     }
 
     Manifest manifest = deployInfo.getMergedManifest();
     if (manifest != null) {
-      for (Instrumentation instrumentation : manifest.getInstrumentations()) {
-        if (instrumentation != null) {
-          PsiClass instrumentationClass = instrumentation.getInstrumentationClass().getValue();
-          if (instrumentationClass != null) {
-            return instrumentationClass.getQualifiedName();
-          }
-        }
-      }
+      return ImmutableList.copyOf(
+          manifest
+              .getInstrumentations()
+              .stream()
+              .map(instrumentation -> instrumentation.getInstrumentationClass().getStringValue())
+              .filter(Objects::nonNull)
+              .collect(Collectors.toList()));
     }
-    return null;
+    return ImmutableList.of();
   }
 
   @Override

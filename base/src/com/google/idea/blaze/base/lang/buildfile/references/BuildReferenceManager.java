@@ -23,12 +23,14 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -128,6 +130,10 @@ public class BuildReferenceManager {
    */
   public BuildLookupElement[] resolvePackageLookupElements(FileLookupData lookupData) {
     String relativePath = lookupData.filePathFragment;
+    if (!relativePath.equals(FileUtil.toCanonicalUriPath(relativePath))) {
+      // ignore invalid labels containing './', '../', etc.
+      return BuildLookupElement.EMPTY_ARRAY;
+    }
     File file = resolveWorkspaceRelativePath(relativePath);
 
     FileAttributeProvider provider = FileAttributeProvider.getInstance();
@@ -155,7 +161,7 @@ public class BuildReferenceManager {
       List<VirtualFile> validChildren = Lists.newArrayListWithCapacity(children.length);
       for (VirtualFile child : children) {
         ProgressManager.checkCanceled();
-        if (child.getName().startsWith(pathFragment) && lookupData.acceptFile(child)) {
+        if (child.getName().startsWith(pathFragment) && lookupData.acceptFile(project, child)) {
           validChildren.add(child);
         }
       }
@@ -202,15 +208,15 @@ public class BuildReferenceManager {
     if (packageDirectory == null || !provider.isDirectory(packageDirectory)) {
       return null;
     }
-    File buildFile = new File(packageDirectory, "BUILD");
-    if (!provider.exists(buildFile)) {
-      return null;
-    }
-    VirtualFile vf = getFileSystem().findFileByPath(buildFile.getPath());
+    VirtualFile vf = getFileSystem().findFileByPath(packageDirectory.getPath());
     if (vf == null) {
       return null;
     }
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(vf);
+    VirtualFile buildFile = Blaze.getBuildSystemProvider(project).findBuildFileInDirectory(vf);
+    if (buildFile == null) {
+      return null;
+    }
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(buildFile);
     return psiFile instanceof BuildFile ? (BuildFile) psiFile : null;
   }
 

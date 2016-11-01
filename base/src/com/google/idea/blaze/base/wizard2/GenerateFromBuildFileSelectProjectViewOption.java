@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -32,29 +33,31 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.TextFieldWithStoredHistory;
 import java.awt.Dimension;
 import java.io.File;
 import javax.annotation.Nullable;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JTextField;
 
 class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelectProjectViewOption {
   private static final String LAST_WORKSPACE_PATH = "generate-from-build-file.last-workspace-path";
   private final BlazeNewProjectBuilder builder;
   private final BlazeWizardUserSettings userSettings;
-  private final JTextField buildFilePathField;
+  private final TextFieldWithStoredHistory buildFilePathField;
   private final JComponent component;
 
   public GenerateFromBuildFileSelectProjectViewOption(BlazeNewProjectBuilder builder) {
     this.builder = builder;
     this.userSettings = builder.getUserSettings();
 
-    String defaultWorkspacePath = userSettings.get(LAST_WORKSPACE_PATH, "");
-    this.buildFilePathField = new JTextField(defaultWorkspacePath);
+    this.buildFilePathField = new TextFieldWithStoredHistory(LAST_WORKSPACE_PATH);
+    buildFilePathField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);
+    buildFilePathField.setText(userSettings.get(LAST_WORKSPACE_PATH, ""));
 
     JButton button = new JButton("...");
     button.addActionListener(action -> chooseWorkspacePath());
@@ -117,6 +120,7 @@ class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelectProject
   @Override
   public void commit() {
     userSettings.put(LAST_WORKSPACE_PATH, getBuildFilePath());
+    buildFilePathField.addCurrentTextToHistory();
   }
 
   private static String guessProjectViewFromLocation(
@@ -174,13 +178,15 @@ class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelectProject
   }
 
   private void chooseWorkspacePath() {
+    BuildSystemProvider buildSystem =
+        BuildSystemProvider.getBuildSystemProvider(builder.getBuildSystem());
     FileChooserDescriptor descriptor =
         new FileChooserDescriptor(true, false, false, false, false, false)
             .withShowHiddenFiles(true) // Show root project view file
             .withHideIgnored(false)
             .withTitle("Select BUILD File")
             .withDescription("Select a BUILD file to synthesize a project view from.")
-            .withFileFilter(virtualFile -> virtualFile.getName().equals("BUILD"));
+            .withFileFilter(virtualFile -> buildSystem.isBuildFile(virtualFile.getName()));
     FileChooserDialog chooser =
         FileChooserFactory.getInstance().createFileChooser(descriptor, null, null);
 
@@ -188,10 +194,15 @@ class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelectProject
 
     File startingLocation = temporaryWorkspaceRoot.directory();
     String buildFilePath = getBuildFilePath();
-    if (!buildFilePath.isEmpty()) {
-      File fileLocation = temporaryWorkspaceRoot.fileForPath(new WorkspacePath(buildFilePath));
-      if (fileLocation.exists()) {
-        startingLocation = fileLocation;
+    if (!buildFilePath.isEmpty() && WorkspacePath.validate(buildFilePath)) {
+      // If the user has typed part of the path then clicked the '...', try to start from the
+      // partial state
+      buildFilePath = StringUtil.trimEnd(buildFilePath, '/');
+      if (WorkspacePath.validate(buildFilePath)) {
+        File fileLocation = temporaryWorkspaceRoot.fileForPath(new WorkspacePath(buildFilePath));
+        if (fileLocation.exists()) {
+          startingLocation = fileLocation;
+        }
       }
     }
     VirtualFile toSelect =
