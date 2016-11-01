@@ -15,10 +15,8 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.language;
 
-import com.google.common.collect.ImmutableList;
-import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
-import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import org.jetbrains.annotations.NotNull;
@@ -26,11 +24,11 @@ import org.jetbrains.annotations.NotNull;
 /** Factory for BuildFileType */
 public class BuildFileTypeFactory extends FileTypeFactory {
 
-  private static ImmutableList<FileNameMatcher> DEFAULT_ASSOCIATIONS =
-      ImmutableList.of(new ExactFileNameMatcher("BUILD"), new ExtensionFileNameMatcher("bzl"));
-
   @Override
   public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
-    consumer.consume(BuildFileType.INSTANCE, DEFAULT_ASSOCIATIONS.toArray(new FileNameMatcher[0]));
+    consumer.consume(
+        BuildFileType.INSTANCE,
+        BuildSystemProvider.defaultBuildSystem().buildFileMatcher(),
+        new ExtensionFileNameMatcher("bzl"));
   }
 }

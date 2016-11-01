@@ -16,9 +16,13 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
+import com.intellij.openapi.fileTypes.FileNameMatcher;
+import java.io.File;
 import javax.annotation.Nullable;
 
 /** Provides the bazel build system name string. */
@@ -44,6 +48,28 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   @Override
   public String getRuleDocumentationUrl(RuleDefinition rule) {
     // TODO: URL pointing to specific BUILD rule.
-    return "http://www.bazel.io/docs/be/overview.html";
+    return "http://www.bazel.build/docs/be/overview.html";
+  }
+
+  // TODO: Update the methods below when https://github.com/bazelbuild/bazel/issues/552 lands.
+  @Override
+  public boolean isBuildFile(String fileName) {
+    return fileName.equals("BUILD");
+  }
+
+  @Nullable
+  @Override
+  public File findBuildFileInDirectory(File directory) {
+    FileAttributeProvider provider = FileAttributeProvider.getInstance();
+    File child = new File(directory, "BUILD");
+    if (!provider.exists(child)) {
+      return null;
+    }
+    return child;
+  }
+
+  @Override
+  public FileNameMatcher buildFileMatcher() {
+    return new ExactFileNameMatcher("BUILD");
   }
 }

@@ -15,6 +15,10 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.plugin.dependency.PluginDependencyHelper;
 import com.google.idea.blaze.base.projectview.ProjectView;
@@ -30,19 +34,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 /** Contains the state to build a new project throughout the new project wizard process. */
 public final class BlazeNewProjectBuilder {
   private static final Logger LOG = Logger.getInstance(BlazeNewProjectBuilder.class);
 
+  // The import wizard should keep this many items around for fields that care about history
+  public static final int HISTORY_SIZE = 8;
+
   // Stored in user settings as the last imported workspace
   private static final String LAST_IMPORTED_BLAZE_WORKSPACE =
       "blaze-wizard.last-imported-workspace";
   private static final String LAST_IMPORTED_BAZEL_WORKSPACE =
       "blaze-wizard.last-imported-bazel-workspace";
+  private static final String HISTORY_SEPARATOR = "::";
 
-  public static String lastImportedWorkspaceKey(BuildSystem buildSystem) {
+  private static String lastImportedWorkspaceKey(BuildSystem buildSystem) {
     switch (buildSystem) {
       case Blaze:
         return LAST_IMPORTED_BLAZE_WORKSPACE;
@@ -70,6 +80,29 @@ public final class BlazeNewProjectBuilder {
 
   public BlazeWizardUserSettings getUserSettings() {
     return userSettings;
+  }
+
+  public String getLastImportedWorkspace(BuildSystem buildSystem) {
+    List<String> workspaceHistory = getWorkspaceHistory(buildSystem);
+    return workspaceHistory.isEmpty() ? "" : workspaceHistory.get(0);
+  }
+
+  public List<String> getWorkspaceHistory(BuildSystem buildSystem) {
+    String value = userSettings.get(lastImportedWorkspaceKey(buildSystem), "");
+    return Strings.isNullOrEmpty(value)
+        ? ImmutableList.of()
+        : Arrays.asList(value.split(HISTORY_SEPARATOR));
+  }
+
+  private void writeWorkspaceHistory(BuildSystem buildSystem, String newValue) {
+    List<String> history = Lists.newArrayList(getWorkspaceHistory(buildSystem));
+    history.remove(newValue);
+    history.add(0, newValue);
+    while (history.size() > HISTORY_SIZE) {
+      history.remove(history.size() - 1);
+    }
+    userSettings.put(
+        lastImportedWorkspaceKey(buildSystem), Joiner.on(HISTORY_SEPARATOR).join(history));
   }
 
   public BlazeSelectWorkspaceOption getWorkspaceOption() {
@@ -151,8 +184,8 @@ public final class BlazeNewProjectBuilder {
     workspaceOption.commit();
     projectViewOption.commit();
 
-    String workspaceKey = lastImportedWorkspaceKey(workspaceOption.getBuildSystemForWorkspace());
-    userSettings.put(workspaceKey, workspaceRoot.toString());
+    BuildSystem buildSystem = workspaceOption.getBuildSystemForWorkspace();
+    writeWorkspaceHistory(buildSystem, workspaceRoot.toString());
 
     if (!StringUtil.isEmpty(projectDataDirectory)) {
       File projectDataDir = new File(projectDataDirectory);

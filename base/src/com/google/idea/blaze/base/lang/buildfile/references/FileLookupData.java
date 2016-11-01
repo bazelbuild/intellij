@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -133,7 +134,7 @@ public class FileLookupData {
         || (containingPackage != null && containingFile != null));
   }
 
-  public boolean acceptFile(VirtualFile file) {
+  public boolean acceptFile(Project project, VirtualFile file) {
     if (fileFilter != null && !fileFilter.accept(file)) {
       return false;
     }
@@ -143,7 +144,8 @@ public class FileLookupData {
     if (file.equals(containingFile.getOriginalFile().getVirtualFile())) {
       return false;
     }
-    boolean blazePackage = file.findChild("BUILD") != null;
+    boolean blazePackage =
+        Blaze.getBuildSystemProvider(project).findBuildFileInDirectory(file) != null;
     return !blazePackage;
   }
 
@@ -188,6 +190,9 @@ public class FileLookupData {
 
   private String getItemText(String relativePath) {
     if (pathFormat == PathFormat.PackageLocal) {
+      if (containingPackage.length() > relativePath.length()) {
+        return "";
+      }
       return StringUtil.trimStart(relativePath.substring(containingPackage.length()), "/");
     }
     String parentPath = PathUtil.getParentPath(relativePath);

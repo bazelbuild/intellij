@@ -29,6 +29,7 @@ java_import(
         "android-studio/plugins/Groovy/lib/*.jar",
         "android-studio/plugins/java-i18n/lib/*.jar",
         "android-studio/plugins/junit/lib/*.jar",
+        "android-studio/plugins/ndk-workspace/lib/*.jar",
         "android-studio/plugins/properties/lib/*.jar",
     ]),
     tags = ["intellij-provided-by-sdk"],

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 @State(name = "AswbGlobalSettings", storages = @Storage("aswb.global.xml"))
 public class AswbGlobalSettings implements PersistentStateComponent<AswbGlobalSettings> {
 
-  private String localSdkLocation;
+  @Deprecated private String localSdkLocation;
 
   public static AswbGlobalSettings getInstance() {
     return ServiceManager.getService(AswbGlobalSettings.class);
@@ -43,10 +43,12 @@ public class AswbGlobalSettings implements PersistentStateComponent<AswbGlobalSe
     XmlSerializerUtil.copyBean(state, this);
   }
 
+  @Deprecated
   public void setLocalSdkLocation(String localSdkLocation) {
     this.localSdkLocation = localSdkLocation;
   }
 
+  @Deprecated
   public String getLocalSdkLocation() {
     return localSdkLocation;
   }

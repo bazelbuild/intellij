@@ -50,11 +50,13 @@ public class WorkspacePathTest extends BlazeTestCase {
     List<BlazeValidationError> errors = Lists.newArrayList();
 
     WorkspacePath.validate("/foo", errors);
-    assertThat(errors.get(0).getError()).isEqualTo("Workspace path may not start with '/': /foo");
+    assertThat(errors.get(0).getError())
+        .isEqualTo("Workspace path must be relative; cannot start with '/': /foo");
     errors.clear();
 
     WorkspacePath.validate("/", errors);
-    assertThat(errors.get(0).getError()).isEqualTo("Workspace path may not start with '/': /");
+    assertThat(errors.get(0).getError())
+        .isEqualTo("Workspace path must be relative; cannot start with '/': /");
     errors.clear();
 
     WorkspacePath.validate("foo/", errors);

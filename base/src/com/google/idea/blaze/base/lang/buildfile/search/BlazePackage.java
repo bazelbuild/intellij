@@ -38,7 +38,8 @@ public class BlazePackage {
     if (file instanceof PsiFile) {
       file = ((PsiFile) file).getOriginalFile();
     }
-    if (file instanceof BuildFile && file.getName().equals("BUILD")) {
+    if (file instanceof BuildFile
+        && Blaze.getBuildSystemProvider(file.getProject()).isBuildFile(file.getName())) {
       return new BlazePackage((BuildFile) file);
     }
     return getContainingPackage(getPsiDirectory(file));
@@ -61,9 +62,14 @@ public class BlazePackage {
   @Nullable
   public static BlazePackage getContainingPackage(@Nullable PsiDirectory dir) {
     while (dir != null) {
-      PsiFile buildFile = dir.findFile("BUILD");
+      VirtualFile buildFile =
+          Blaze.getBuildSystemProvider(dir.getProject())
+              .findBuildFileInDirectory(dir.getVirtualFile());
       if (buildFile != null) {
-        return buildFile instanceof BuildFile ? new BlazePackage((BuildFile) buildFile) : null;
+        PsiFile psiFile = dir.getManager().findFile(buildFile);
+        if (psiFile != null) {
+          return psiFile instanceof BuildFile ? new BlazePackage((BuildFile) psiFile) : null;
+        }
       }
       dir = dir.getParentDirectory();
     }
@@ -151,8 +157,10 @@ public class BlazePackage {
     }
   }
 
-  private static boolean isBlazePackage(PsiDirectory directory) {
-    return directory.findFile("BUILD") != null;
+  private static boolean isBlazePackage(PsiDirectory dir) {
+    return Blaze.getBuildSystemProvider(dir.getProject())
+            .findBuildFileInDirectory(dir.getVirtualFile())
+        != null;
   }
 
   private static void processDirectory(Processor<PsiFile> processor, PsiDirectory directory) {

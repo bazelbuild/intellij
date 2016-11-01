@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.buildmodifier;
 
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -61,6 +62,6 @@ public class FileSaveHandler extends FileDocumentManagerAdapter {
   }
 
   private static boolean isBuildFile(VirtualFile file) {
-    return file.getName().equals("BUILD");
+    return BuildSystemProvider.defaultBuildSystem().isBuildFile(file.getName());
   }
 }

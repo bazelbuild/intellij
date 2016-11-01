@@ -182,7 +182,6 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
         applicationIdProvider,
         launchOptions.isDebug(),
         deployInfo,
-        facet,
         processHandlerLaunchStatus);
   }
 

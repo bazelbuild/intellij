@@ -10,6 +10,7 @@ load(
     "merged_plugin_xml",
     "stamped_plugin_xml",
 )
+load("//:version.bzl", "VERSION")
 
 merged_plugin_xml(
     name = "merged_plugin_xml_common",
@@ -36,7 +37,7 @@ stamped_plugin_xml(
     plugin_name = "CLion with Bazel",
     plugin_xml = ":merged_plugin_xml",
     stamp_since_build = True,
-    version_file = "//:version",
+    version = VERSION,
 )
 
 java_library(

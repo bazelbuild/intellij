@@ -28,6 +28,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.TextFieldWithHistory;
 import java.awt.Dimension;
 import java.io.File;
 import java.util.Arrays;
@@ -37,24 +38,21 @@ import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JTextField;
 
 /** Option to use an existing workspace */
 public abstract class UseExistingWorkspaceOption implements BlazeSelectWorkspaceOption {
 
-  private final BlazeWizardUserSettings userSettings;
   private final JComponent component;
-  private final JTextField directoryField;
+  private final TextFieldWithHistory directoryField;
   private final BuildSystem buildSystem;
 
   protected UseExistingWorkspaceOption(BlazeNewProjectBuilder builder, BuildSystem buildSystem) {
-    this.userSettings = builder.getUserSettings();
     this.buildSystem = buildSystem;
 
-    String defaultDirectory =
-        userSettings.get(BlazeNewProjectBuilder.lastImportedWorkspaceKey(buildSystem), "");
-
-    this.directoryField = new JTextField(defaultDirectory);
+    this.directoryField = new TextFieldWithHistory();
+    directoryField.setHistory(builder.getWorkspaceHistory(buildSystem));
+    directoryField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);
+    directoryField.setText(builder.getLastImportedWorkspace(buildSystem));
 
     JButton button = new JButton("...");
     button.addActionListener(action -> chooseDirectory());

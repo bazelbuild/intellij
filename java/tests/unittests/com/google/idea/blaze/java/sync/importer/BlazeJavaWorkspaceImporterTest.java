@@ -81,6 +81,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1021,7 +1022,8 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
             new WorkingSet(
                 ImmutableList.of(new WorkspacePath("java/apps/example/Test.java")),
                 ImmutableList.of(),
-                ImmutableList.of()));
+                ImmutableList.of()),
+            Predicate.isEqual("BUILD"));
 
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, ruleMapBuilder, projectView);
     assertThat(
@@ -1047,7 +1049,8 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     workingSet =
         new JavaWorkingSet(
             workspaceRoot,
-            new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of()));
+            new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of()),
+            Predicate.isEqual("BUILD"));
 
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, ruleMapBuilder, projectView);
     assertThat(
@@ -1214,7 +1217,8 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     workingSet =
         new JavaWorkingSet(
             workspaceRoot,
-            new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of()));
+            new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of()),
+            Predicate.isEqual("BUILD"));
 
     // First test - make sure that jdeps is working
     jdepsMap.put(
@@ -1233,7 +1237,8 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
             new WorkingSet(
                 ImmutableList.of(new WorkspacePath("java/example/BUILD")),
                 ImmutableList.of(),
-                ImmutableList.of()));
+                ImmutableList.of()),
+            Predicate.isEqual("BUILD"));
 
     result = importWorkspace(workspaceRoot, ruleMapBuilder, projectView);
     errorCollector.assertNoIssues();

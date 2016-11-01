@@ -6,6 +6,7 @@ java_library(
     resources = glob(["resources/**/*"]),
     visibility = ["//visibility:public"],
     deps = [
+        "//common/binaryhelper",
         "//common/experiments",
         "//intellij_platform_sdk:plugin_api",
         "//proto_deps",

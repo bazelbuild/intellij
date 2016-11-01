@@ -257,6 +257,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazePsiDirectoryRootNodeNameModifier" interface="com.google.idea.blaze.base.treeview.BlazePsiDirectoryRootNodeNameModifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FileCache" interface="com.google.idea.blaze.base.filecache.FileCache"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.TestRuleHeuristic" interface="com.google.idea.blaze.base.run.TestRuleHeuristic"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.ProjectDataDirectoryValidator" interface="com.google.idea.blaze.base.wizard2.ProjectDataDirectoryValidator"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">

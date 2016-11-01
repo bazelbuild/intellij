@@ -46,7 +46,7 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
   private static final String WORK_PROFILE_ATTR = "use-work-profile-if-present";
   private static final String USER_ID_ATTR = "user-id";
   private boolean mobileInstall = false;
-  private boolean useSplitApksIfPossible = true;
+  private boolean useSplitApksIfPossible = false;
   private boolean instantRun = false;
   private boolean useWorkProfileIfPresent = false;
   private Integer userId;
@@ -151,7 +151,8 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
 
     setDeepLink(Strings.nullToEmpty(element.getAttributeValue(DEEP_LINK)));
     setActivityClass(Strings.nullToEmpty(element.getAttributeValue(ACTIVITY_CLASS)));
-    setMode(Strings.nullToEmpty(element.getAttributeValue(MODE)));
+    String modeValue = element.getAttributeValue(MODE);
+    setMode(Strings.isNullOrEmpty(modeValue) ? LAUNCH_DEFAULT_ACTIVITY : modeValue);
     setMobileInstall(Boolean.parseBoolean(element.getAttributeValue(MOBILE_INSTALL_ATTR)));
     setUseSplitApksIfPossible(
         Boolean.parseBoolean(element.getAttributeValue(USE_SPLIT_APKS_IF_POSSIBLE)));
@@ -173,7 +174,7 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
           activityClass = Strings.nullToEmpty(value);
           break;
         case MODE:
-          mode = Strings.nullToEmpty(value);
+          mode = Strings.isNullOrEmpty(value) ? LAUNCH_DEFAULT_ACTIVITY : value;
           break;
         case ACTIVITY_EXTRA_FLAGS:
           if (userId == null) {

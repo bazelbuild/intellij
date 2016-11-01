@@ -125,4 +125,8 @@ public class BlazeRoots implements Serializable {
     this.blazeBinExecutionRootPath = blazeBinExecutionRootPath;
     this.blazeGenfilesExecutionRootPath = blazeGenfilesExecutionRootPath;
   }
+
+  public File getGenfilesDirectory() {
+    return blazeGenfilesExecutionRootPath.getFileRootedAt(executionRoot);
+  }
 }

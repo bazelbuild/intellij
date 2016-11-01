@@ -24,11 +24,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.symbols.OCSymbol;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackers;
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -70,11 +72,14 @@ public final class BlazeCWorkspace implements OCWorkspace {
     LOG.info(String.format("Blaze OCWorkspace update took: %d ms", (end - start)));
 
     ApplicationManager.getApplication()
-        .runReadAction(
+        .runWriteAction(
             () -> {
               if (project.isDisposed()) {
                 return;
               }
+
+              File genfilesDir = blazeProjectData.blazeRoots.getGenfilesDirectory();
+              LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(genfilesDir));
 
               // TODO(salguarnieri) Avoid bumping all of these trackers; figure out what has changed
               modTrackers.getProjectFilesListTracker().incModificationCount();

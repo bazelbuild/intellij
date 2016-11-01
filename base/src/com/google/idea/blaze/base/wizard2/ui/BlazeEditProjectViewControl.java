@@ -23,22 +23,32 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
+import com.google.idea.blaze.base.projectview.ProjectViewVerifier;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.OutputSink.Propagation;
+import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
 import com.google.idea.blaze.base.settings.ui.JPanelProvidingProject;
 import com.google.idea.blaze.base.settings.ui.ProjectViewUi;
+import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.ui.BlazeValidationError;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.google.idea.blaze.base.wizard2.BlazeNewProjectBuilder;
 import com.google.idea.blaze.base.wizard2.BlazeSelectProjectViewOption;
 import com.google.idea.blaze.base.wizard2.BlazeSelectWorkspaceOption;
+import com.google.idea.blaze.base.wizard2.ProjectDataDirectoryValidator;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
@@ -55,6 +65,7 @@ import java.util.stream.Collectors;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** The UI control to collect project settings when importing a Blaze project. */
@@ -72,6 +83,7 @@ public final class BlazeEditProjectViewControl {
   private JTextField projectNameField;
   private HashCode paramsHash;
   private WorkspaceRoot workspaceRoot;
+  private WorkspaceRoot temporaryWorkspaceRoot;
 
   public BlazeEditProjectViewControl(BlazeNewProjectBuilder builder, Disposable parentDisposable) {
     this.projectViewUi = new ProjectViewUi(parentDisposable);
@@ -162,6 +174,7 @@ public final class BlazeEditProjectViewControl {
       @Nullable WorkspacePath sharedProjectView,
       @Nullable String initialProjectViewText) {
     this.workspaceRoot = workspaceRoot;
+    this.temporaryWorkspaceRoot = temporaryWorkspaceRoot;
     projectNameField.setText(workspaceName);
     String defaultDataDir = getDefaultProjectDataDirectory(workspaceName);
     projectDataDirField.setText(defaultDataDir);
@@ -252,6 +265,13 @@ public final class BlazeEditProjectViewControl {
       return BlazeValidationResult.failure(
           new BlazeValidationError("Project data directory is not valid"));
     }
+    for (ProjectDataDirectoryValidator validator :
+        ProjectDataDirectoryValidator.EP_NAME.getExtensions()) {
+      BlazeValidationResult result = validator.validateDataDirectory(projectDataDir);
+      if (!result.success) {
+        return result;
+      }
+    }
     File workspaceRootDirectory = workspaceRoot.directory();
     if (FileUtil.isAncestor(projectDataDir, workspaceRootDirectory, false)) {
       return BlazeValidationResult.failure(
@@ -268,13 +288,69 @@ public final class BlazeEditProjectViewControl {
 
     List<IssueOutput> issues = Lists.newArrayList();
 
-    projectViewUi.parseProjectView(issues);
+    ProjectViewSet projectViewSet = projectViewUi.parseProjectView(issues);
     BlazeValidationError projectViewParseError = validationErrorFromIssueList(issues);
     if (projectViewParseError != null) {
       return BlazeValidationResult.failure(projectViewParseError);
     }
 
+    ProjectViewValidator projectViewValidator =
+        new ProjectViewValidator(temporaryWorkspaceRoot, projectViewSet);
+    ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(
+            projectViewValidator, "Validating Project", false, null);
+
+    if (!projectViewValidator.success) {
+      if (!projectViewValidator.errors.isEmpty()) {
+        return BlazeValidationResult.failure(
+            validationErrorFromIssueList(projectViewValidator.errors));
+      }
+      return BlazeValidationResult.failure(
+          "Project view validation failed, but we couldn't find an error message. "
+              + "Please report a bug.");
+    }
+
     return BlazeValidationResult.success();
+  }
+
+  private static class ProjectViewValidator implements Runnable {
+    private final WorkspaceRoot workspaceRoot;
+    private final ProjectViewSet projectViewSet;
+
+    private boolean success;
+    List<IssueOutput> errors = Lists.newArrayList();
+
+    ProjectViewValidator(WorkspaceRoot workspaceRoot, ProjectViewSet projectViewSet) {
+      this.workspaceRoot = workspaceRoot;
+      this.projectViewSet = projectViewSet;
+    }
+
+    @Override
+    public void run() {
+      success = Scope.root(this::validateProjectView);
+    }
+
+    @NotNull
+    private Boolean validateProjectView(BlazeContext context) {
+      context.addOutputSink(
+          IssueOutput.class,
+          output -> {
+            if (output.getCategory() == Category.ERROR) {
+              errors.add(output);
+            }
+            return Propagation.Continue;
+          });
+      for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
+        syncPlugin.installSdks(context);
+      }
+      WorkspaceLanguageSettings workspaceLanguageSettings =
+          LanguageSupport.createWorkspaceLanguageSettings(context, projectViewSet);
+      if (workspaceLanguageSettings == null) {
+        return false;
+      }
+      return ProjectViewVerifier.verifyProjectView(
+          context, workspaceRoot, projectViewSet, workspaceLanguageSettings);
+    }
   }
 
   @Nullable

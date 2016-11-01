@@ -1,8 +1,9 @@
 package(default_visibility = ["//visibility:public"])
 
+# The JDI parts of tools.jar.
 java_import(
-    name = "jdk8_tools",
-    jars = ["jdk8/tools.jar"],
+    name = "jpda-jdi",
+    jars = ["jdk8/jpda-jdi.jar"],
 )
 
 sh_binary(

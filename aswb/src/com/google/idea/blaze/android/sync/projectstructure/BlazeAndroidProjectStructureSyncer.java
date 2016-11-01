@@ -21,12 +21,12 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.android.resources.LightResourceClassService;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
-import com.google.idea.blaze.android.sync.AndroidSdkPlatformSyncer;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
 import com.google.idea.blaze.android.sync.model.idea.SourceProviderImpl;
+import com.google.idea.blaze.android.sync.sdk.SdkUtil;
 import com.google.idea.blaze.base.ideinfo.AndroidRuleIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
@@ -220,8 +220,7 @@ public class BlazeAndroidProjectStructureSyncer {
     if (blazeProjectData == null) {
       return null;
     }
-    AndroidSdkPlatform androidSdkPlatform =
-        AndroidSdkPlatformSyncer.getAndroidSdkPlatform(blazeProjectData);
+    AndroidSdkPlatform androidSdkPlatform = SdkUtil.getAndroidSdkPlatform(blazeProjectData);
     if (androidSdkPlatform == null) {
       return null;
     }

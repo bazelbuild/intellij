@@ -77,7 +77,9 @@ public class Blaze {
    * blaze build system if the project is null or not a blaze project.
    */
   public static BuildSystemProvider getBuildSystemProvider(@Nullable Project project) {
-    return BuildSystemProvider.getBuildSystemProvider(getBuildSystem(project));
+    BuildSystemProvider provider =
+        BuildSystemProvider.getBuildSystemProvider(getBuildSystem(project));
+    return provider != null ? provider : BuildSystemProvider.defaultBuildSystem();
   }
 
   /**

@@ -70,7 +70,8 @@ public class WorkspacePath implements Serializable {
     if (relativePath.startsWith("/")) {
       BlazeValidationError.collect(
           errors,
-          new BlazeValidationError("Workspace path may not start with '/': " + relativePath));
+          new BlazeValidationError(
+              "Workspace path must be relative; cannot start with '/': " + relativePath));
       return false;
     }
 

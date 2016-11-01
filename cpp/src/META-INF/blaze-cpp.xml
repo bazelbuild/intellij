@@ -14,6 +14,9 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
+  <depends>com.intellij.modules.cidr.lang</depends>
+  <depends>com.intellij.modules.cidr.debugger</depends>
+
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.cpp.BlazeCSyncPlugin"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.cpp.CPrefetchFileSource"/>
@@ -22,6 +25,7 @@
   <extensions defaultExtensionNs="cidr.lang">
     <languageKindHelper implementation="com.google.idea.blaze.cpp.BlazeLanguageKindCalculatorHelper"/>
     <autoImportHelper implementation="com.google.idea.blaze.cpp.BlazeCppAutoImportHelper"/>
+    <customHeaderProvider implementation="com.google.idea.blaze.cpp.BlazeCustomHeaderProvider"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.google.idea.blaze.cpp.BlazeCWorkspace"/>

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.sync.status;
 
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
@@ -175,7 +176,7 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
   /**
    * Listens for changes to files which impact the sync process (BUILD files and project view files)
    */
-  private static class FileFocusListener extends FileEditorManagerAdapter {
+  private class FileFocusListener extends FileEditorManagerAdapter {
     @Override
     public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       processEvent(file);
@@ -197,12 +198,12 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
     }
   }
 
-  private static boolean isSyncSensitiveFile(@Nullable VirtualFile file) {
+  private boolean isSyncSensitiveFile(@Nullable VirtualFile file) {
     return file != null
         && (isBuildFile(file) || ProjectViewStorageManager.isProjectViewFile(file.getPath()));
   }
 
-  private static boolean isBuildFile(VirtualFile file) {
-    return file.getName().equals("BUILD");
+  private boolean isBuildFile(VirtualFile file) {
+    return Blaze.getBuildSystemProvider(project).isBuildFile(file.getName());
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.buildmodifier;
 
-import com.google.idea.blaze.base.util.BlazeHelperBinaryUtil;
+import com.google.idea.common.binaryhelper.HelperBinaryUtil;
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -29,6 +29,6 @@ public class BazelBuildifierBinaryProvider implements BuildifierBinaryProvider {
   @Nullable
   @Override
   public File getBuildifierBinary() {
-    return BlazeHelperBinaryUtil.getBlazeHelperBinary(BUILDIFIER_BINARY_PATH);
+    return HelperBinaryUtil.getHelperBinary(BUILDIFIER_BINARY_PATH);
   }
 }
