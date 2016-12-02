@@ -47,8 +47,8 @@ public final class Label extends TargetExpression {
     }
   }
 
-  public Label(WorkspacePath packageName, RuleName newRuleName) {
-    this("//" + packageName.toString() + ":" + newRuleName.toString());
+  public Label(WorkspacePath packageName, TargetName newTargetName) {
+    this("//" + packageName.toString() + ":" + newTargetName.toString());
   }
 
   public static boolean validate(String label) {
@@ -63,7 +63,7 @@ public final class Label extends TargetExpression {
         return false;
       }
       String ruleName = label.substring(colonIndex + 1);
-      if (!RuleName.validate(ruleName, errors)) {
+      if (!TargetName.validate(ruleName, errors)) {
         return false;
       }
       return true;
@@ -82,16 +82,16 @@ public final class Label extends TargetExpression {
   }
 
   /**
-   * Extract the rule name from a label. The rule name follows a colon at the end of the label.
+   * Extract the target name from a label. The target name follows a colon at the end of the label.
    *
-   * @return the rule name
+   * @return the target name
    */
-  public RuleName ruleName() {
+  public TargetName targetName() {
     String labelStr = toString();
     int colonLocation = labelStr.lastIndexOf(':');
-    int ruleNameStart = colonLocation + 1;
-    String ruleNameStr = labelStr.substring(ruleNameStart);
-    return RuleName.create(ruleNameStr);
+    int targetNameStart = colonLocation + 1;
+    String targetNameStr = labelStr.substring(targetNameStart);
+    return TargetName.create(targetNameStr);
   }
 
   /**

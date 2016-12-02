@@ -17,13 +17,16 @@ package com.google.idea.blaze.base.sync;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
+import com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguagesSection;
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
@@ -63,6 +66,11 @@ public class LanguageSupportTest extends BlazeTestCase {
           public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
             return ImmutableSet.of(LanguageClass.C);
           }
+
+          @Override
+          public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
+            return ImmutableList.of(WorkspaceType.C);
+          }
         });
 
     ProjectViewSet projectViewSet =
@@ -77,11 +85,12 @@ public class LanguageSupportTest extends BlazeTestCase {
     errorCollector.assertNoIssues();
     assertThat(workspaceLanguageSettings)
         .isEqualTo(
-            new WorkspaceLanguageSettings(WorkspaceType.C, ImmutableSet.of(LanguageClass.C)));
+            new WorkspaceLanguageSettings(
+                WorkspaceType.C, ImmutableSet.of(LanguageClass.C, LanguageClass.GENERIC)));
   }
 
   @Test
-  public void testFailWithUnsupportedLanguage() {
+  public void testFailWithUnsupportedWorkspaceType() {
     ProjectViewSet projectViewSet =
         ProjectViewSet.builder()
             .add(
@@ -90,8 +99,36 @@ public class LanguageSupportTest extends BlazeTestCase {
                     .build())
             .build();
     LanguageSupport.createWorkspaceLanguageSettings(context, projectViewSet);
-    errorCollector.assertIssues(
-        "Language 'c' is not supported for this plugin with workspace type: 'c'");
+    errorCollector.assertIssues("Workspace type 'c' is not supported by this plugin");
+  }
+
+  @Test
+  public void testFailWithUnsupportedLanguageType() {
+    syncPlugins.registerExtension(
+        new BlazeSyncPlugin.Adapter() {
+          @Override
+          public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
+            return ImmutableSet.of(LanguageClass.C);
+          }
+
+          @Override
+          public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
+            return ImmutableList.of(WorkspaceType.C);
+          }
+        });
+
+    ProjectViewSet projectViewSet =
+        ProjectViewSet.builder()
+            .add(
+                ProjectView.builder()
+                    .add(ScalarSection.builder(WorkspaceTypeSection.KEY).set(WorkspaceType.C))
+                    .add(
+                        ListSection.builder(AdditionalLanguagesSection.KEY)
+                            .add(LanguageClass.PYTHON))
+                    .build())
+            .build();
+    LanguageSupport.createWorkspaceLanguageSettings(context, projectViewSet);
+    errorCollector.assertIssues("Language 'python' is not supported by this plugin");
   }
 
   /** Tests that we ask for java and android when the workspace type is android. */
@@ -102,6 +139,11 @@ public class LanguageSupportTest extends BlazeTestCase {
           @Override
           public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
             return ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA, LanguageClass.C);
+          }
+
+          @Override
+          public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
+            return ImmutableList.of(WorkspaceType.ANDROID);
           }
         });
 
@@ -117,6 +159,7 @@ public class LanguageSupportTest extends BlazeTestCase {
     assertThat(workspaceLanguageSettings)
         .isEqualTo(
             new WorkspaceLanguageSettings(
-                WorkspaceType.ANDROID, ImmutableSet.of(LanguageClass.JAVA, LanguageClass.ANDROID)));
+                WorkspaceType.ANDROID,
+                ImmutableSet.of(LanguageClass.JAVA, LanguageClass.ANDROID, LanguageClass.GENERIC)));
   }
 }

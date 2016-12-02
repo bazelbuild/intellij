@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.plugin.sync;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -39,10 +40,9 @@ import javax.annotation.Nullable;
  */
 public class IntellijPluginSyncPlugin extends BlazeSyncPlugin.Adapter {
 
-  @Nullable
   @Override
-  public WorkspaceType getDefaultWorkspaceType() {
-    return WorkspaceType.INTELLIJ_PLUGIN;
+  public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
+    return ImmutableList.of(WorkspaceType.INTELLIJ_PLUGIN);
   }
 
   @Nullable

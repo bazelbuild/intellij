@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.sync.importer;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
@@ -25,17 +26,19 @@ import com.google.idea.blaze.android.sync.model.BlazeResourceLibrary;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
-import com.google.idea.blaze.base.ideinfo.AndroidRuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.JavaRuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
-import com.google.idea.blaze.base.ideinfo.RuleMapBuilder;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ListSection;
@@ -48,6 +51,7 @@ import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -92,13 +96,13 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   BlazeAndroidImportResult importWorkspace(
-      WorkspaceRoot workspaceRoot, RuleMapBuilder ruleMapBuilder, ProjectView projectView) {
+      WorkspaceRoot workspaceRoot, TargetMapBuilder targetMapBuilder, ProjectView projectView) {
 
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
 
     BlazeAndroidWorkspaceImporter workspaceImporter =
         new BlazeAndroidWorkspaceImporter(
-            project, context, workspaceRoot, projectViewSet, ruleMapBuilder.build());
+            project, context, workspaceRoot, projectViewSet, targetMapBuilder.build());
 
     return workspaceImporter.importWorkspace();
   }
@@ -115,54 +119,54 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
             .build();
 
     /** Deps are project -> lib0 -> lib1 -> shared project -> shared */
-    RuleMapBuilder ruleMapBuilder =
-        RuleMapBuilder.builder()
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//java/apps/example/lib0:lib0")
                     .setKind("android_library")
                     .setBuildFile(source("java/apps/example/lib0/BUILD"))
                     .addSource(source("java/apps/example/lib0/SharedActivity.java"))
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setManifestFile(source("java/apps/example/lib0/AndroidManifest.xml"))
                             .addResource(source("java/apps/example/lib0/res"))
                             .setGenerateResourceClass(true)
                             .setResourceJavaPackage("com.google.android.apps.example.lib0"))
                     .addDependency("//java/apps/example/lib1:lib1")
                     .setJavaInfo(
-                        JavaRuleIdeInfo.builder()
+                        JavaIdeInfo.builder()
                             .addJar(
                                 LibraryArtifact.builder()
                                     .setInterfaceJar(gen("java/apps/example/lib0/lib0.jar"))
                                     .setClassJar(gen("java/apps/example/lib0/lib0.jar")))))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//java/apps/example/lib1:lib1")
                     .setKind("android_library")
                     .setBuildFile(source("java/apps/example/lib1/BUILD"))
                     .addSource(source("java/apps/example/lib1/SharedActivity.java"))
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setManifestFile(source("java/apps/example/lib1/AndroidManifest.xml"))
                             .addResource(source("java/apps/example/lib1/res"))
                             .setGenerateResourceClass(true)
                             .setResourceJavaPackage("com.google.android.apps.example.lib1"))
                     .addDependency("//java/libraries/shared:shared")
                     .setJavaInfo(
-                        JavaRuleIdeInfo.builder()
+                        JavaIdeInfo.builder()
                             .addJar(
                                 LibraryArtifact.builder()
                                     .setInterfaceJar(gen("java/apps/example/lib1/lib1.jar"))
                                     .setClassJar(gen("java/apps/example/lib1/lib1.jar")))))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//java/apps/example:example_debug")
                     .setKind("android_binary")
                     .setBuildFile(source("java/apps/example/BUILD"))
                     .addSource(source("java/apps/example/MainActivity.java"))
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setManifestFile(source("java/apps/example/AndroidManifest.xml"))
                             .addResource(source("java/apps/example/res"))
                             .setGenerateResourceClass(true)
@@ -170,38 +174,38 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .addDependency("//java/apps/example/lib0:lib0")
                     .addDependency("//java/libraries/shared:shared")
                     .setJavaInfo(
-                        JavaRuleIdeInfo.builder()
+                        JavaIdeInfo.builder()
                             .addJar(
                                 LibraryArtifact.builder()
                                     .setInterfaceJar(gen("java/apps/example/example_debug.jar"))
                                     .setClassJar(gen("java/apps/example/example_debug.jar")))))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//java/libraries/shared:shared")
                     .setBuildFile(source("java/libraries/shared/BUILD"))
                     .setKind("android_library")
                     .addSource(source("java/libraries/shared/SharedActivity.java"))
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setManifestFile(source("java/libraries/shared/AndroidManifest.xml"))
                             .addResource(source("java/libraries/shared/res"))
                             .setGenerateResourceClass(true)
                             .setResourceJavaPackage("com.google.android.libraries.shared"))
                     .setBuildFile(source("java/libraries/shared/BUILD"))
                     .setJavaInfo(
-                        JavaRuleIdeInfo.builder()
+                        JavaIdeInfo.builder()
                             .addJar(
                                 LibraryArtifact.builder()
                                     .setInterfaceJar(gen("java/libraries/shared.jar"))
                                     .setClassJar(gen("java/libraries/shared.jar")))));
 
-    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, ruleMapBuilder, projectView);
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     errorCollector.assertNoIssues();
 
     assertThat(result.androidResourceModules)
         .containsExactly(
             AndroidResourceModule.builder(
-                    RuleKey.forPlainTarget(new Label("//java/apps/example:example_debug")))
+                    TargetKey.forPlainTarget(new Label("//java/apps/example:example_debug")))
                 .addResourceAndTransitiveResource(source("java/apps/example/res"))
                 .addTransitiveResource(source("java/apps/example/lib0/res"))
                 .addTransitiveResource(source("java/apps/example/lib1/res"))
@@ -211,7 +215,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                 .addTransitiveResourceDependency("//java/libraries/shared:shared")
                 .build(),
             AndroidResourceModule.builder(
-                    RuleKey.forPlainTarget(new Label("//java/apps/example/lib0:lib0")))
+                    TargetKey.forPlainTarget(new Label("//java/apps/example/lib0:lib0")))
                 .addResourceAndTransitiveResource(source("java/apps/example/lib0/res"))
                 .addTransitiveResource(source("java/apps/example/lib1/res"))
                 .addTransitiveResource(source("java/libraries/shared/res"))
@@ -219,7 +223,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                 .addTransitiveResourceDependency("//java/libraries/shared:shared")
                 .build(),
             AndroidResourceModule.builder(
-                    RuleKey.forPlainTarget(new Label("//java/apps/example/lib1:lib1")))
+                    TargetKey.forPlainTarget(new Label("//java/apps/example/lib1:lib1")))
                 .addResourceAndTransitiveResource(source("java/apps/example/lib1/res"))
                 .addTransitiveResource(source("java/libraries/shared/res"))
                 .addTransitiveResourceDependency("//java/libraries/shared:shared")
@@ -238,16 +242,16 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
             .build();
 
     /** Deps are project -> lib0 (no res) -> lib1 (has res) \ -> lib2 (has res) */
-    RuleMapBuilder response =
-        RuleMapBuilder.builder()
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMapBuilder response =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//java/apps/example/lib0:lib0")
                     .setKind("android_library")
                     .setBuildFile(source("java/apps/example/lib0/BUILD"))
                     .addSource(source("java/apps/example/lib0/SharedActivity.java"))
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setManifestFile(source("java/apps/example/lib0/AndroidManifest.xml"))
                             .setGenerateResourceClass(true)
                             .setResourceJavaPackage("com.google.android.apps.example.lib0")
@@ -259,7 +263,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .addDependency("//java/apps/example/lib1:lib1")
                     .addDependency("//java/apps/example/lib2:lib2")
                     .setJavaInfo(
-                        JavaRuleIdeInfo.builder()
+                        JavaIdeInfo.builder()
                             .addJar(
                                 LibraryArtifact.builder()
                                     .setInterfaceJar(gen("java/apps/example/lib0/lib0.jar"))
@@ -270,14 +274,14 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                                         gen("java/apps/example/lib0/lib0_resources.jar"))
                                     .setClassJar(
                                         gen("java/apps/example/lib0/lib0_resources.jar")))))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//java/apps/example/lib1:lib1")
                     .setKind("android_library")
                     .setBuildFile(source("java/apps/example/lib1/BUILD"))
                     .addSource(source("java/apps/example/lib1/SharedActivity.java"))
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setManifestFile(source("java/apps/example/lib1/AndroidManifest.xml"))
                             .addResource(source("java/apps/example/lib1/res"))
                             .setGenerateResourceClass(true)
@@ -288,7 +292,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                                         gen("java/apps/example/lib1/li11_resources.jar"))
                                     .setClassJar(gen("java/apps/example/lib1/lib1_resources.jar"))))
                     .setJavaInfo(
-                        JavaRuleIdeInfo.builder()
+                        JavaIdeInfo.builder()
                             .addJar(
                                 LibraryArtifact.builder()
                                     .setInterfaceJar(gen("java/apps/example/lib1/lib1.jar"))
@@ -299,14 +303,14 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                                         gen("java/apps/example/lib1/lib1_resources.jar"))
                                     .setClassJar(
                                         gen("java/apps/example/lib1/lib1_resources.jar")))))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//java/apps/example/lib2:lib2")
                     .setBuildFile(source("java/apps/example/lib2/BUILD"))
                     .setKind("android_library")
                     .addSource(source("java/apps/example/lib2/SharedActivity.java"))
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setManifestFile(source("java/apps/example/lib2/AndroidManifest.xml"))
                             .addResource(source("java/apps/example/lib2/res"))
                             .setGenerateResourceClass(true)
@@ -318,7 +322,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                                     .setClassJar(gen("java/apps/example/lib2/lib2_resources.jar"))))
                     .setBuildFile(source("java/apps/example/lib2/BUILD"))
                     .setJavaInfo(
-                        JavaRuleIdeInfo.builder()
+                        JavaIdeInfo.builder()
                             .addJar(
                                 LibraryArtifact.builder()
                                     .setInterfaceJar(gen("java/apps/example/lib2/lib2.jar"))
@@ -329,27 +333,27 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                                         gen("java/apps/example/lib2/lib2_resources.jar"))
                                     .setClassJar(
                                         gen("java/apps/example/lib2/lib2_resources.jar")))))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//java/apps/example:example_debug")
                     .setKind("android_binary")
                     .setBuildFile(source("java/apps/example/BUILD"))
                     .addSource(source("java/apps/example/MainActivity.java"))
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setManifestFile(source("java/apps/example/AndroidManifest.xml"))
                             .addResource(source("java/apps/example/res"))
                             .setGenerateResourceClass(true)
                             .setResourceJavaPackage("com.google.android.apps.example"))
                     .addDependency("//java/apps/example/lib0:lib0")
                     .setJavaInfo(
-                        JavaRuleIdeInfo.builder()
+                        JavaIdeInfo.builder()
                             .addJar(
                                 LibraryArtifact.builder()
                                     .setInterfaceJar(gen("java/apps/example/example_debug.jar"))
                                     .setClassJar(gen("java/apps/example/example_debug.jar")))));
 
-    RuleMap ruleMap = response.build();
+    TargetMap targetMap = response.build();
     BlazeAndroidJavaSyncAugmenter syncAugmenter = new BlazeAndroidJavaSyncAugmenter();
     List<BlazeJarLibrary> jars = Lists.newArrayList();
     List<BlazeJarLibrary> genJars = Lists.newArrayList();
@@ -357,9 +361,12 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
             .add(ProjectViewSet.builder().add(projectView).build())
             .build();
-    for (RuleIdeInfo rule : ruleMap.rules()) {
-      if (importRoots.importAsSource(rule.label)) {
-        syncAugmenter.addJarsForSourceRule(rule, jars, genJars);
+    WorkspaceLanguageSettings workspaceLanguageSettings =
+        new WorkspaceLanguageSettings(
+            WorkspaceType.ANDROID, ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA));
+    for (TargetIdeInfo target : targetMap.targets()) {
+      if (importRoots.importAsSource(target.key.label)) {
+        syncAugmenter.addJarsForSourceTarget(workspaceLanguageSettings, target, jars, genJars);
       }
     }
 
@@ -380,16 +387,16 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .add(DirectoryEntry.include(new WorkspacePath("example"))))
             .build();
 
-    RuleMapBuilder ruleMapBuilder =
-        RuleMapBuilder.builder()
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//example:lib")
                     .setBuildFile(source("example/BUILD"))
                     .setKind("android_binary")
                     .addSource(source("example/MainActivity.java"))
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setResourceJavaPackage("example")
                             .setIdlJar(
                                 LibraryArtifact.builder()
@@ -398,7 +405,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                                     .build())
                             .setHasIdlSources(true)));
 
-    RuleMap ruleMap = ruleMapBuilder.build();
+    TargetMap targetMap = targetMapBuilder.build();
     BlazeAndroidJavaSyncAugmenter syncAugmenter = new BlazeAndroidJavaSyncAugmenter();
     List<BlazeJarLibrary> jars = Lists.newArrayList();
     List<BlazeJarLibrary> genJars = Lists.newArrayList();
@@ -406,9 +413,12 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
             .add(ProjectViewSet.builder().add(projectView).build())
             .build();
-    for (RuleIdeInfo rule : ruleMap.rules()) {
-      if (importRoots.importAsSource(rule.label)) {
-        syncAugmenter.addJarsForSourceRule(rule, jars, genJars);
+    WorkspaceLanguageSettings workspaceLanguageSettings =
+        new WorkspaceLanguageSettings(
+            WorkspaceType.ANDROID, ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA));
+    for (TargetIdeInfo target : targetMap.targets()) {
+      if (importRoots.importAsSource(target.key.label)) {
+        syncAugmenter.addJarsForSourceTarget(workspaceLanguageSettings, target, jars, genJars);
       }
     }
     assertThat(
@@ -429,40 +439,40 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
             .build();
 
-    RuleMapBuilder ruleMapBuilder =
-        RuleMapBuilder.builder()
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//java/example:lib")
                     .setBuildFile(source("java/example/BUILD"))
                     .setKind("android_library")
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setLegacyResources(new Label("//java/example:resources"))
                             .setManifestFile(source("java/example/AndroidManifest.xml"))
                             .addResource(source("java/example/res"))
                             .setGenerateResourceClass(true)
                             .setResourceJavaPackage("com.google.android.example"))
                     .build())
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//java/example:resources")
                     .setBuildFile(source("java/example/BUILD"))
                     .setKind("android_resources")
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setManifestFile(source("java/example/AndroidManifest.xml"))
                             .addResource(source("java/example/res"))
                             .setGenerateResourceClass(true)
                             .setResourceJavaPackage("com.google.android.example"))
                     .build());
 
-    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, ruleMapBuilder, projectView);
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     errorCollector.assertNoIssues();
     assertThat(result.androidResourceModules)
         .containsExactly(
             AndroidResourceModule.builder(
-                    RuleKey.forPlainTarget(new Label("//java/example:resources")))
+                    TargetKey.forPlainTarget(new Label("//java/example:resources")))
                 .addResourceAndTransitiveResource(source("java/example/res"))
                 .build());
   }
@@ -476,35 +486,35 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
             .build();
 
-    RuleMapBuilder ruleMapBuilder =
-        RuleMapBuilder.builder()
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//java/example:lib")
                     .setBuildFile(source("java/example/BUILD"))
                     .setKind("android_library")
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setManifestFile(source("java/example/AndroidManifest.xml"))
                             .addResource(source("java/example/res"))
                             .setGenerateResourceClass(true)
                             .setResourceJavaPackage("com.google.android.example"))
                     .addDependency("//java/example2:resources")
                     .build())
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//java/example2:resources")
                     .setBuildFile(source("java/example2/BUILD"))
                     .setKind("android_library")
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setManifestFile(source("java/example2/AndroidManifest.xml"))
                             .addResource(source("java/example2/res"))
                             .setGenerateResourceClass(true)
                             .setResourceJavaPackage("com.google.android.example2"))
                     .build());
 
-    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, ruleMapBuilder, projectView);
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     errorCollector.assertNoIssues();
     BlazeResourceLibrary library = result.resourceLibrary;
     assertThat(library).isNotNull();
@@ -525,40 +535,40 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
             .build();
 
-    RuleMapBuilder ruleMapBuilder =
-        RuleMapBuilder.builder()
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//java/example:lib")
                     .setBuildFile(source("java/example/BUILD"))
                     .setKind("android_library")
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setManifestFile(source("java/example/AndroidManifest.xml"))
                             .addResource(source("java/example/res"))
                             .setGenerateResourceClass(true)
                             .setResourceJavaPackage("com.google.android.example"))
                     .addDependency("//java/example2:resources")
                     .build())
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//java/example:lib2")
                     .setBuildFile(source("java/example2/BUILD"))
                     .setKind("android_library")
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setManifestFile(source("java/example2/AndroidManifest.xml"))
                             .addResource(source("java/example/res2"))
                             .setGenerateResourceClass(true)
                             .setResourceJavaPackage("com.google.android.example"))
                     .build());
 
-    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, ruleMapBuilder, projectView);
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     errorCollector.assertIssueContaining("Multiple R classes generated");
 
     assertThat(result.androidResourceModules)
         .containsExactly(
-            AndroidResourceModule.builder(RuleKey.forPlainTarget(new Label("//java/example:lib")))
+            AndroidResourceModule.builder(TargetKey.forPlainTarget(new Label("//java/example:lib")))
                 .addResourceAndTransitiveResource(source("java/example/res"))
                 .build());
   }
@@ -572,15 +582,15 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
             .build();
 
-    RuleMapBuilder ruleMapBuilder =
-        RuleMapBuilder.builder()
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setLabel("//java/example:lib")
                     .setBuildFile(source("java/example/BUILD"))
                     .setKind("android_library")
                     .setAndroidInfo(
-                        AndroidRuleIdeInfo.builder()
+                        AndroidIdeInfo.builder()
                             .setManifestFile(source("java/example/AndroidManifest.xml"))
                             .addResource(source("java/example/res"))
                             .addResource(gen("java/example/res"))
@@ -588,7 +598,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                             .setResourceJavaPackage("com.google.android.example"))
                     .build());
 
-    importWorkspace(workspaceRoot, ruleMapBuilder, projectView);
+    importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     errorCollector.assertIssueContaining("Dropping generated resource");
   }
 

@@ -21,10 +21,9 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.Expression;
 import com.google.idea.blaze.base.lang.buildfile.psi.ForStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
-import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
+import com.google.idea.blaze.base.lang.buildfile.psi.LoadedSymbol;
 import com.google.idea.blaze.base.lang.buildfile.psi.Parameter;
 import com.google.idea.blaze.base.lang.buildfile.psi.StatementList;
-import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.TargetExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -81,12 +80,12 @@ public class ResolveUtil {
           if (buildElement instanceof PsiNamedElement && name.equals(buildElement.getName())) {
             resultHolder[0] = (PsiNamedElement) buildElement;
             return false;
-          } else if (buildElement instanceof StringLiteral) {
-            StringLiteral stringLiteral = (StringLiteral) buildElement;
-            if (name.equals(stringLiteral.getStringContents())) {
-              PsiElement referencedSymbol = stringLiteral.getReferencedElement();
-              if (referencedSymbol instanceof PsiNamedElement) {
-                resultHolder[0] = (PsiNamedElement) referencedSymbol;
+          } else if (buildElement instanceof LoadedSymbol) {
+            LoadedSymbol loadedSymbol = (LoadedSymbol) buildElement;
+            if (name.equals(loadedSymbol.getSymbolString())) {
+              PsiElement referencedElement = loadedSymbol.getVisibleElement();
+              if (referencedElement instanceof PsiNamedElement) {
+                resultHolder[0] = (PsiNamedElement) referencedElement;
                 return false;
               }
             }
@@ -122,18 +121,6 @@ public class ResolveUtil {
           return true;
         });
     return resultHolder[0];
-  }
-
-  /** @return false if processing was stopped */
-  public static boolean visitLoadedSymbols(BuildFile file, Processor<BuildElement> processor) {
-    for (LoadStatement loadStatement : file.findChildrenByClass(LoadStatement.class)) {
-      for (StringLiteral symbol : loadStatement.getImportedSymbolElements()) {
-        if (!processor.process(symbol)) {
-          return false;
-        }
-      }
-    }
-    return true;
   }
 
   /**

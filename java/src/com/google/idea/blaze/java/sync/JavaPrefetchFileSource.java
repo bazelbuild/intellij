@@ -16,15 +16,16 @@
 package com.google.idea.blaze.java.sync;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
+import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.libraries.SourceJarManager;
 import com.google.idea.blaze.java.settings.BlazeJavaUserSettings;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
-import com.google.idea.blaze.java.sync.model.BlazeLibrary;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;

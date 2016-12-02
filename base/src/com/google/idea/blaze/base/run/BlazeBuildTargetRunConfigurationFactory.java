@@ -29,8 +29,8 @@ import com.intellij.openapi.project.Project;
 public class BlazeBuildTargetRunConfigurationFactory extends BlazeRunConfigurationFactory {
 
   @Override
-  public boolean handlesTarget(Project project, BlazeProjectData blazeProjectData, Label target) {
-    return BlazeBuildFileRunConfigurationProducer.handlesTarget(project, target);
+  public boolean handlesTarget(Project project, BlazeProjectData blazeProjectData, Label label) {
+    return BlazeBuildFileRunConfigurationProducer.handlesTarget(project, label);
   }
 
   @Override

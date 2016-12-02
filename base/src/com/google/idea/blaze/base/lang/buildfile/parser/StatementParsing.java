@@ -20,20 +20,13 @@ import com.google.idea.blaze.base.lang.buildfile.lexer.TokenKind;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildElementTypes;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 
 /** For parsing statements in BUILD files. */
 public class StatementParsing extends Parsing {
 
-  private static final Logger LOG =
-      Logger.getInstance("com.google.idea.blaze.base.lang.buildfile.parser.StatementParsing");
-
   private static final ImmutableSet<TokenKind> STATEMENT_TERMINATOR_SET =
       ImmutableSet.of(TokenKind.EOF, TokenKind.NEWLINE, TokenKind.SEMI);
-
-  private static final ImmutableSet<TokenKind> SMALL_STMT_START =
-      ImmutableSet.of(TokenKind.IDENTIFIER, TokenKind.RETURN);
 
   public StatementParsing(ParsingContext context) {
     super(context);
@@ -107,12 +100,42 @@ public class StatementParsing extends Parsing {
       if (matches(TokenKind.RPAREN) || matchesAnyOf(STATEMENT_TERMINATOR_SET)) {
         break;
       }
-      hasSymbols |= parseStringLiteral(true);
+      hasSymbols |= parseLoadedSymbol();
     }
     if (!hasSymbols) {
       builder.error("'load' statements must include at least one loaded function");
     }
     marker.done(BuildElementTypes.LOAD_STATEMENT);
+  }
+
+  /** [IDENTIFIER '='] STRING */
+  private boolean parseLoadedSymbol() {
+    PsiBuilder.Marker marker = builder.mark();
+    if (currentToken() == TokenKind.STRING) {
+      parseStringLiteral(true);
+      marker.done(BuildElementTypes.LOADED_SYMBOL);
+      return true;
+    }
+    if (parseAlias()) {
+      marker.done(BuildElementTypes.LOADED_SYMBOL);
+      return true;
+    }
+    marker.drop();
+    builder.error("Expected a loaded symbol or alias");
+    syncPast(ExpressionParsing.EXPR_TERMINATOR_SET);
+    return false;
+  }
+
+  private boolean parseAlias() {
+    if (!atTokenSequence(TokenKind.IDENTIFIER, TokenKind.EQUALS, TokenKind.STRING)) {
+      return false;
+    }
+    PsiBuilder.Marker assignment = builder.mark();
+    buildTokenElement(BuildElementTypes.TARGET_EXPRESSION);
+    expect(TokenKind.EQUALS);
+    parseStringLiteral(true);
+    assignment.done(BuildElementTypes.ASSIGNMENT_STATEMENT);
+    return true;
   }
 
   /** if_stmt ::= IF expr ':' suite (ELIF expr ':' suite)* [ELSE ':' suite] */

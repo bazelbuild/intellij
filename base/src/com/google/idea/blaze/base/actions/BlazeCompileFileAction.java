@@ -28,7 +28,6 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.rulemaps.SourceToRuleMap;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
@@ -40,6 +39,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -82,7 +82,7 @@ class BlazeCompileFileAction extends BlazeAction {
     Project project = e.getProject();
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (project != null && virtualFile != null) {
-      return SourceToRuleMap.getInstance(project)
+      return SourceToTargetMap.getInstance(project)
           .getTargetsToBuildForSourceFile(new File(virtualFile.getPath()));
     }
     return ImmutableList.of();

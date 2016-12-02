@@ -119,9 +119,8 @@ public class StringLiteral extends BuildElementImpl implements LiteralExpression
   @Nullable
   @Override
   public PsiReference getReference() {
-    PsiElement parent = getParent();
-    if (parent instanceof LoadStatement) {
-      LoadStatement load = (LoadStatement) parent;
+    LoadStatement load = getLoadStatementParent();
+    if (load != null) {
       StringLiteral importNode = load.getImportPsiElement();
       if (importNode == null) {
         return null;
@@ -135,8 +134,18 @@ public class StringLiteral extends BuildElementImpl implements LiteralExpression
     return new LabelReference(this, true);
   }
 
-  public boolean insideLoadStatement() {
-    return getParentType() == BuildElementTypes.LOAD_STATEMENT;
+  @Nullable
+  public LoadStatement getLoadStatementParent() {
+    PsiElement parent = getParent();
+    if (parent instanceof LoadStatement) {
+      // the skylark extension label
+      return (LoadStatement) parent;
+    }
+    if (parent instanceof AssignmentStatement) {
+      // could be part of an aliased symbol
+      parent = parent.getParent();
+    }
+    return parent instanceof LoadedSymbol ? (LoadStatement) parent.getParent() : null;
   }
 
   @Override

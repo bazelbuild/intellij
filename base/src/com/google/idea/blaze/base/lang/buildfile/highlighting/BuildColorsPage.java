@@ -27,7 +27,6 @@ import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
-import com.intellij.util.PlatformUtils;
 import java.util.Map;
 import javax.swing.Icon;
 
@@ -49,6 +48,7 @@ public class BuildColorsPage
         new AttributesDescriptor("Function definition", BuildSyntaxHighlighter.BUILD_FN_DEFINITION),
         new AttributesDescriptor("Parameter", BuildSyntaxHighlighter.BUILD_PARAMETER),
         new AttributesDescriptor("Keyword argument", BuildSyntaxHighlighter.BUILD_KEYWORD_ARG),
+        new AttributesDescriptor("Built-in name", BuildSyntaxHighlighter.BUILD_BUILTIN_NAME),
       };
 
   private static final Map<String, TextAttributesKey> ourTagToDescriptorMap =
@@ -58,6 +58,8 @@ public class BuildColorsPage
           .put("kwarg", BuildSyntaxHighlighter.BUILD_KEYWORD_ARG)
           .put("comma", BuildSyntaxHighlighter.BUILD_COMMA)
           .put("number", BuildSyntaxHighlighter.BUILD_NUMBER)
+          .put("keyword", BuildSyntaxHighlighter.BUILD_KEYWORD)
+          .put("builtin", BuildSyntaxHighlighter.BUILD_BUILTIN_NAME)
           .build();
 
   @Override
@@ -92,9 +94,10 @@ public class BuildColorsPage
   public String getDemoText() {
     return "def <funcDef>function</funcDef>(<param>x</param>, <kwarg>whatever</kwarg>=1):\n"
         + "    s = (\"Test\", 2+3, {'a': 'b'}, <param>x</param>)   # Comment\n"
-        + "    print s[0].lower()\n"
+        + "    <builtin>print</builtin> s[0].lower()\n"
+        + "    <keyword>return</keyword> <builtin>True</builtin>"
         + "\n"
-        + "java_library(\n"
+        + "<builtin>java_library</builtin>(\n"
         + "    <kwarg>name</kwarg> = \"lib\",\n"
         + "    <kwarg>srcs</kwarg> = glob([\"**/*.java\"]),\n"
         + ")\n";
@@ -107,8 +110,6 @@ public class BuildColorsPage
 
   @Override
   public DisplayPriority getPriority() {
-    return PlatformUtils.isPyCharm()
-        ? DisplayPriority.KEY_LANGUAGE_SETTINGS
-        : DisplayPriority.LANGUAGE_SETTINGS;
+    return DisplayPriority.LANGUAGE_SETTINGS;
   }
 }

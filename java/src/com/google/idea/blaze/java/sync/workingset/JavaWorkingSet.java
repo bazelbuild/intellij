@@ -18,7 +18,7 @@ package com.google.idea.blaze.java.sync.workingset;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
@@ -62,15 +62,15 @@ public class JavaWorkingSet {
     this.modifiedJavaFileRelativePaths = modifiedJavaFileRelativePaths;
   }
 
-  public boolean isRuleInWorkingSet(RuleIdeInfo ruleIdeInfo) {
-    ArtifactLocation buildFile = ruleIdeInfo.buildFile;
+  public boolean isTargetInWorkingSet(TargetIdeInfo target) {
+    ArtifactLocation buildFile = target.buildFile;
     if (buildFile != null) {
       if (modifiedBuildFileRelativePaths.contains(buildFile.getRelativePath())) {
         return true;
       }
     }
 
-    for (ArtifactLocation artifactLocation : ruleIdeInfo.sources) {
+    for (ArtifactLocation artifactLocation : target.sources) {
       if (isInWorkingSet(artifactLocation)) {
         return true;
       }

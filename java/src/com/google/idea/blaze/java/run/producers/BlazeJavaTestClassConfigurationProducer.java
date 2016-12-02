@@ -18,7 +18,7 @@ package com.google.idea.blaze.java.run.producers;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
@@ -75,12 +75,12 @@ public class BlazeJavaTestClassConfigurationProducer
     sourceElement.set(testClass);
 
     TestIdeInfo.TestSize testSize = TestSizeAnnotationMap.getTestSize(testClass);
-    RuleIdeInfo rule = RunUtil.ruleForTestClass(context.getProject(), testClass, testSize);
-    if (rule == null) {
+    TargetIdeInfo target = RunUtil.targetForTestClass(context.getProject(), testClass, testSize);
+    if (target == null) {
       return false;
     }
 
-    configuration.setTarget(rule.label);
+    configuration.setTarget(target.key.label);
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {

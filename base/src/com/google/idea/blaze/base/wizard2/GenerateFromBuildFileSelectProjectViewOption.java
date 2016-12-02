@@ -15,10 +15,10 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
+import com.google.common.base.Strings;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import com.google.idea.blaze.base.projectview.section.ListSection;
@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -91,8 +92,9 @@ class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelectProject
     if (getBuildFilePath().isEmpty()) {
       return BlazeValidationResult.failure("BUILD file field cannot be empty.");
     }
-    WorkspaceRoot temporaryWorkspaceRoot = builder.getWorkspaceOption().getTemporaryWorkspaceRoot();
-    File file = temporaryWorkspaceRoot.fileForPath(new WorkspacePath(getBuildFilePath()));
+    WorkspacePathResolver workspacePathResolver =
+        builder.getWorkspaceOption().getWorkspacePathResolver();
+    File file = workspacePathResolver.resolveToFile(new WorkspacePath(getBuildFilePath()));
     if (!file.exists()) {
       return BlazeValidationResult.failure("BUILD file does not exist.");
     }
@@ -109,12 +111,11 @@ class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelectProject
   @Nullable
   @Override
   public String getInitialProjectViewText() {
-    WorkspaceRoot temporaryWorkspaceRoot = builder.getWorkspaceOption().getTemporaryWorkspaceRoot();
-    WorkspacePath workspacePath = new WorkspacePath(getBuildFilePath());
-    return guessProjectViewFromLocation(
-        temporaryWorkspaceRoot,
-        temporaryWorkspaceRoot.workspacePathFor(
-            temporaryWorkspaceRoot.fileForPath(workspacePath).getParentFile()));
+    WorkspacePathResolver workspacePathResolver =
+        builder.getWorkspaceOption().getWorkspacePathResolver();
+    WorkspacePath workspacePath =
+        new WorkspacePath(Strings.nullToEmpty(new File(getBuildFilePath()).getParent()));
+    return guessProjectViewFromLocation(workspacePathResolver, workspacePath);
   }
 
   @Override
@@ -124,11 +125,11 @@ class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelectProject
   }
 
   private static String guessProjectViewFromLocation(
-      WorkspaceRoot workspaceRoot, WorkspacePath workspacePath) {
+      WorkspacePathResolver workspacePathResolver, WorkspacePath workspacePath) {
 
     WorkspacePath mainModuleWorkspaceRelativePath = workspacePath;
     WorkspacePath testModuleWorkspaceRelativePath =
-        guessTestRelativePath(workspaceRoot, mainModuleWorkspaceRelativePath);
+        guessTestRelativePath(workspacePathResolver, mainModuleWorkspaceRelativePath);
 
     ListSection.Builder<DirectoryEntry> directorySectionBuilder =
         ListSection.builder(DirectorySection.KEY);
@@ -156,7 +157,7 @@ class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelectProject
 
   @Nullable
   private static WorkspacePath guessTestRelativePath(
-      WorkspaceRoot workspaceRoot, WorkspacePath projectWorkspacePath) {
+      WorkspacePathResolver workspacePathResolver, WorkspacePath projectWorkspacePath) {
     String projectRelativePath = projectWorkspacePath.relativePath();
     String testBuildFileRelativePath = null;
     if (projectRelativePath.startsWith("java/")) {
@@ -165,7 +166,8 @@ class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelectProject
       testBuildFileRelativePath = projectRelativePath.replaceFirst("/java/", "/javatests/");
     }
     if (testBuildFileRelativePath != null) {
-      File testBuildFile = workspaceRoot.fileForPath(new WorkspacePath(testBuildFileRelativePath));
+      File testBuildFile =
+          workspacePathResolver.resolveToFile(new WorkspacePath(testBuildFileRelativePath));
       if (testBuildFile.exists()) {
         return new WorkspacePath(testBuildFileRelativePath);
       }
@@ -190,17 +192,19 @@ class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelectProject
     FileChooserDialog chooser =
         FileChooserFactory.getInstance().createFileChooser(descriptor, null, null);
 
-    WorkspaceRoot temporaryWorkspaceRoot = builder.getWorkspaceOption().getTemporaryWorkspaceRoot();
+    WorkspacePathResolver workspacePathResolver =
+        builder.getWorkspaceOption().getWorkspacePathResolver();
 
-    File startingLocation = temporaryWorkspaceRoot.directory();
+    File fileBrowserRoot = builder.getWorkspaceOption().getFileBrowserRoot();
+    File startingLocation = fileBrowserRoot;
     String buildFilePath = getBuildFilePath();
     if (!buildFilePath.isEmpty() && WorkspacePath.validate(buildFilePath)) {
       // If the user has typed part of the path then clicked the '...', try to start from the
       // partial state
       buildFilePath = StringUtil.trimEnd(buildFilePath, '/');
       if (WorkspacePath.validate(buildFilePath)) {
-        File fileLocation = temporaryWorkspaceRoot.fileForPath(new WorkspacePath(buildFilePath));
-        if (fileLocation.exists()) {
+        File fileLocation = workspacePathResolver.resolveToFile(new WorkspacePath(buildFilePath));
+        if (fileLocation.exists() && FileUtil.isAncestor(fileBrowserRoot, fileLocation, true)) {
           startingLocation = fileLocation;
         }
       }
@@ -212,8 +216,7 @@ class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelectProject
       return;
     }
     VirtualFile file = files[0];
-    String newWorkspacePath =
-        FileUtil.getRelativePath(temporaryWorkspaceRoot.directory(), new File(file.getPath()));
+    String newWorkspacePath = FileUtil.getRelativePath(fileBrowserRoot, new File(file.getPath()));
     buildFilePathField.setText(newWorkspacePath);
   }
 }

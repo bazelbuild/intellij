@@ -16,14 +16,18 @@
 package com.google.idea.blaze.base.lang.buildfile.validation;
 
 import com.google.idea.blaze.base.lang.buildfile.psi.Argument;
+import com.google.idea.blaze.base.lang.buildfile.psi.BuildElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
+import com.google.idea.blaze.base.lang.buildfile.psi.LoadedSymbol;
 import com.google.idea.blaze.base.lang.buildfile.psi.ParameterList;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelReference;
 import com.intellij.psi.PsiElement;
+import java.util.Arrays;
+import javax.annotation.Nullable;
 
 /**
  * Additional error annotations, post parsing.
@@ -37,33 +41,50 @@ public class ErrorAnnotator extends BuildAnnotator {
 
   @Override
   public void visitLoadStatement(LoadStatement node) {
-    StringLiteral[] strings = node.getChildStrings();
-    if (strings.length == 0) {
+    BuildElement[] children = node.buildElementChildren();
+    //    StringLiteral[] strings = node..getChildStrings();
+    if (children.length == 0) {
       return;
     }
-    PsiElement skylarkRef = new LabelReference(strings[0], false).resolve();
+    PsiElement skylarkRef = getSkylarkRef(children[0]);
     if (skylarkRef == null) {
-      markError(strings[0], "Cannot find this Skylark module");
+      markError(children[0], "Cannot find this Skylark module");
       return;
     }
     if (!(skylarkRef instanceof BuildFile)) {
-      markError(strings[0], strings[0].getText() + " is not a Skylark module");
+      markError(children[0], children[0].getText() + " is not a Skylark module");
       return;
     }
-    if (strings.length == 1) {
-      markError(node, "No definitions imported from Skylark module");
+
+    LoadedSymbol[] symbols =
+        Arrays.stream(children)
+            .filter(element -> element instanceof LoadedSymbol)
+            .toArray(LoadedSymbol[]::new);
+    if (symbols.length == 1) {
+      markError(node, "No symbols imported from Skylark module");
       return;
     }
     BuildFile skylarkModule = (BuildFile) skylarkRef;
-    for (int i = 1; i < strings.length; i++) {
-      String text = strings[i].getStringContents();
+    for (int i = 0; i < symbols.length; i++) {
+      String text = symbols[i].getSymbolString();
+      if (text == null) {
+        continue;
+      }
       FunctionStatement fn = skylarkModule.findDeclaredFunction(text);
       if (fn == null) {
         markError(
-            strings[i],
+            symbols[i],
             "Function '" + text + "' not found in Skylark module " + skylarkModule.getFileName());
       }
     }
+  }
+
+  @Nullable
+  private static PsiElement getSkylarkRef(BuildElement firstChild) {
+    if (firstChild instanceof StringLiteral) {
+      return new LabelReference((StringLiteral) firstChild, false).resolve();
+    }
+    return null;
   }
 
   @Override

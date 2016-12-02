@@ -43,8 +43,8 @@ public class TestIdeInfo implements Serializable {
   }
 
   @Nullable
-  public static TestSize getTestSize(RuleIdeInfo rule) {
-    TestIdeInfo testIdeInfo = rule.testIdeInfo;
+  public static TestSize getTestSize(TargetIdeInfo target) {
+    TestIdeInfo testIdeInfo = target.testIdeInfo;
     if (testIdeInfo == null) {
       return null;
     }

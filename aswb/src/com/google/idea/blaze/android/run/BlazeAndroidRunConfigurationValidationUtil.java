@@ -19,11 +19,11 @@ import com.android.tools.idea.gradle.util.Projects;
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.run.rulefinder.RuleFinder;
+import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
@@ -98,12 +98,12 @@ public final class BlazeAndroidRunConfigurationValidationUtil {
       errors.add(ValidationError.fatal("No target selected."));
       return errors;
     }
-    RuleIdeInfo rule = RuleFinder.getInstance().ruleForTarget(project, label);
-    if (rule == null) {
+    TargetIdeInfo target = TargetFinder.getInstance().targetForLabel(project, label);
+    if (target == null) {
       errors.add(
           ValidationError.fatal(
               String.format("No existing %s rule selected.", Blaze.buildSystemName(project))));
-    } else if (!rule.kindIsOneOf(kind)) {
+    } else if (!target.kindIsOneOf(kind)) {
       errors.add(
           ValidationError.fatal(
               String.format(

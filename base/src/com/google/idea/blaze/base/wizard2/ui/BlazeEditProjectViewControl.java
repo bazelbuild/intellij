@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.settings.ui.ProjectViewUi;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.ui.BlazeValidationError;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.ui.UiUtil;
@@ -83,7 +84,6 @@ public final class BlazeEditProjectViewControl {
   private JTextField projectNameField;
   private HashCode paramsHash;
   private WorkspaceRoot workspaceRoot;
-  private WorkspaceRoot temporaryWorkspaceRoot;
 
   public BlazeEditProjectViewControl(BlazeNewProjectBuilder builder, Disposable parentDisposable) {
     this.projectViewUi = new ProjectViewUi(parentDisposable);
@@ -141,7 +141,6 @@ public final class BlazeEditProjectViewControl {
     BlazeSelectProjectViewOption projectViewOption = builder.getProjectViewOption();
     String workspaceName = workspaceOption.getWorkspaceName();
     WorkspaceRoot workspaceRoot = workspaceOption.getWorkspaceRoot();
-    WorkspaceRoot temporaryWorkspaceRoot = workspaceOption.getTemporaryWorkspaceRoot();
     WorkspacePath workspacePath = projectViewOption.getSharedProjectView();
     String initialProjectViewText = projectViewOption.getInitialProjectViewText();
 
@@ -150,7 +149,6 @@ public final class BlazeEditProjectViewControl {
             .newHasher()
             .putUnencodedChars(workspaceName)
             .putUnencodedChars(workspaceRoot.toString())
-            .putUnencodedChars(temporaryWorkspaceRoot.toString())
             .putUnencodedChars(workspacePath != null ? workspacePath.toString() : "")
             .putUnencodedChars(initialProjectViewText != null ? initialProjectViewText : "")
             .hash();
@@ -161,7 +159,7 @@ public final class BlazeEditProjectViewControl {
       init(
           workspaceName,
           workspaceRoot,
-          temporaryWorkspaceRoot,
+          workspaceOption.getWorkspacePathResolver(),
           workspacePath,
           initialProjectViewText);
     }
@@ -170,11 +168,10 @@ public final class BlazeEditProjectViewControl {
   private void init(
       String workspaceName,
       WorkspaceRoot workspaceRoot,
-      WorkspaceRoot temporaryWorkspaceRoot,
+      WorkspacePathResolver workspacePathResolver,
       @Nullable WorkspacePath sharedProjectView,
       @Nullable String initialProjectViewText) {
     this.workspaceRoot = workspaceRoot;
-    this.temporaryWorkspaceRoot = temporaryWorkspaceRoot;
     projectNameField.setText(workspaceName);
     String defaultDataDir = getDefaultProjectDataDirectory(workspaceName);
     projectDataDirField.setText(defaultDataDir);
@@ -183,7 +180,7 @@ public final class BlazeEditProjectViewControl {
     File sharedProjectViewFile = null;
 
     if (sharedProjectView != null) {
-      sharedProjectViewFile = temporaryWorkspaceRoot.fileForPath(sharedProjectView);
+      sharedProjectViewFile = workspacePathResolver.resolveToFile(sharedProjectView);
 
       try {
         projectViewText =
@@ -201,11 +198,11 @@ public final class BlazeEditProjectViewControl {
     }
 
     projectViewUi.init(
-        temporaryWorkspaceRoot,
+        workspacePathResolver,
         projectViewText,
-        sharedProjectViewFile != null ? projectViewText : null,
-        sharedProjectViewFile,
-        sharedProjectViewFile != null,
+        sharedProjectView != null ? projectViewText : null,
+        sharedProjectView,
+        sharedProjectView != null,
         false /* allowEditShared - not allowed during import */);
   }
 
@@ -294,8 +291,7 @@ public final class BlazeEditProjectViewControl {
       return BlazeValidationResult.failure(projectViewParseError);
     }
 
-    ProjectViewValidator projectViewValidator =
-        new ProjectViewValidator(temporaryWorkspaceRoot, projectViewSet);
+    ProjectViewValidator projectViewValidator = new ProjectViewValidator(projectViewSet);
     ProgressManager.getInstance()
         .runProcessWithProgressSynchronously(
             projectViewValidator, "Validating Project", false, null);
@@ -314,14 +310,12 @@ public final class BlazeEditProjectViewControl {
   }
 
   private static class ProjectViewValidator implements Runnable {
-    private final WorkspaceRoot workspaceRoot;
     private final ProjectViewSet projectViewSet;
 
     private boolean success;
     List<IssueOutput> errors = Lists.newArrayList();
 
-    ProjectViewValidator(WorkspaceRoot workspaceRoot, ProjectViewSet projectViewSet) {
-      this.workspaceRoot = workspaceRoot;
+    ProjectViewValidator(ProjectViewSet projectViewSet) {
       this.projectViewSet = projectViewSet;
     }
 
@@ -348,8 +342,8 @@ public final class BlazeEditProjectViewControl {
       if (workspaceLanguageSettings == null) {
         return false;
       }
-      return ProjectViewVerifier.verifyProjectView(
-          context, workspaceRoot, projectViewSet, workspaceLanguageSettings);
+      return ProjectViewVerifier.verifyProjectViewNoDisk(
+          context, projectViewSet, workspaceLanguageSettings);
     }
   }
 

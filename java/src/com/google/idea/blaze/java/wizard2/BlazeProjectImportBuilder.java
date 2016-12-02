@@ -18,6 +18,7 @@ package com.google.idea.blaze.java.wizard2;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.wizard2.BlazeNewProjectBuilder;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -74,6 +75,7 @@ class BlazeProjectImportBuilder extends ProjectImportBuilder<Void> {
       ModulesProvider modulesProvider,
       ModifiableArtifactModel artifactModel) {
     builder.commitToProject(project);
+    CompilerWorkspaceConfiguration.getInstance(project).MAKE_PROJECT_ON_SAVE = false;
     return ImmutableList.of();
   }
 

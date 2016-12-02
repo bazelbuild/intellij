@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Editor;
 import org.junit.Test;
@@ -34,7 +35,7 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
   public void testEndOfFileFunctionDelcaration() {
     // bug 28618935: test no NPE in the case where there's no
     // statement list following the func-def colon
-    BuildFile file = createBuildFile("java/com/google/BUILD", "def function():");
+    BuildFile file = createBuildFile(new WorkspacePath("java/com/google/BUILD"), "def function():");
 
     getFoldingRegions(file);
   }
@@ -43,7 +44,7 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
   public void testFuncDefStatementsFolded() {
     BuildFile file =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "# multi-line comment, not folded",
             "# second line of comment",
             "def function(arg1, arg2):",
@@ -62,7 +63,7 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
   public void testRulesFolded() {
     BuildFile file =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "java_library(",
             "    name = 'lib',",
             "    srcs = glob(['*.java']),",
@@ -77,7 +78,7 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
   public void testLoadStatementFolded() {
     BuildFile file =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "load(",
             "   '//java/com/foo/build_defs.bzl',",
             "   'function1',",
@@ -91,7 +92,7 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
   }
 
   private FoldingDescriptor[] getFoldingRegions(BuildFile file) {
-    Editor editor = openFileInEditor(file.getVirtualFile());
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
     return new BuildFileFoldingBuilder().buildFoldRegions(file.getNode(), editor.getDocument());
   }
 }

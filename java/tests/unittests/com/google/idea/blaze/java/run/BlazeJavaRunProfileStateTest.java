@@ -23,7 +23,7 @@ import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BuildFlagsProvider;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -31,8 +31,8 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
-import com.google.idea.blaze.base.run.rulefinder.RuleFinder;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -65,7 +65,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
     ExperimentService experimentService = new MockExperimentService();
     applicationServices.register(ExperimentService.class, experimentService);
-    applicationServices.register(RuleFinder.class, new MockRuleFinder());
+    applicationServices.register(TargetFinder.class, new MockTargetFinder());
     applicationServices.register(BlazeUserSettings.class, new BlazeUserSettings());
     registerExtensionPoint(BuildFlagsProvider.EP_NAME, BuildFlagsProvider.class);
     ExtensionPointImpl<BlazeCommandRunConfigurationHandlerProvider> handlerProviderEp =
@@ -137,19 +137,19 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                 BlazeFlags.getToolTagFlag(),
                 "--",
                 "//label:java_binary_rule",
-                "--debug"));
+                "--wrapper_script_flag=--debug"));
   }
 
-  private static class MockRuleFinder extends RuleFinder {
+  private static class MockTargetFinder extends TargetFinder {
     @Override
-    public List<RuleIdeInfo> findRules(Project project, Predicate<RuleIdeInfo> predicate) {
+    public List<TargetIdeInfo> findTargets(Project project, Predicate<TargetIdeInfo> predicate) {
       return null;
     }
 
     @Override
-    public RuleIdeInfo ruleForTarget(Project project, final Label target) {
-      RuleIdeInfo.Builder builder = RuleIdeInfo.builder().setLabel(target);
-      if (target.ruleName().toString().equals("java_binary_rule")) {
+    public TargetIdeInfo targetForLabel(Project project, final Label label) {
+      TargetIdeInfo.Builder builder = TargetIdeInfo.builder().setLabel(label);
+      if (label.targetName().toString().equals("java_binary_rule")) {
         builder.setKind(Kind.JAVA_BINARY);
       } else {
         builder.setKind(Kind.JAVA_TEST);

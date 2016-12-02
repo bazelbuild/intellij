@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.lang.build;
 
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.refactoring.rename.RenameProcessor;
 import org.junit.Test;
@@ -31,14 +32,15 @@ public class JavaClassRenameTest extends BuildFileIntegrationTestCase {
   public void testRenameJavaClass() {
     PsiJavaFile javaFile =
         (PsiJavaFile)
-            createPsiFile(
-                "com/google/foo/JavaClass.java",
+            workspace.createPsiFile(
+                new WorkspacePath("com/google/foo/JavaClass.java"),
                 "package com.google.foo;",
                 "public class JavaClass {}");
 
     BuildFile buildFile =
         createBuildFile(
-            "com/google/foo/BUILD", "java_library(name = \"ref2\", srcs = [\"JavaClass.java\"])");
+            new WorkspacePath("com/google/foo/BUILD"),
+            "java_library(name = \"ref2\", srcs = [\"JavaClass.java\"])");
 
     new RenameProcessor(getProject(), javaFile.getClasses()[0], "NewName", false, false).run();
 

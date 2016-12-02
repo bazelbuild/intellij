@@ -16,16 +16,18 @@
 package com.google.idea.blaze.base.run;
 
 import com.google.common.base.Strings;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.common.collect.Lists;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
-import com.google.idea.blaze.base.run.rulefinder.RuleFinder;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
+import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.ui.UiUtil;
@@ -44,9 +46,12 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.ui.TextFieldWithAutoCompletion;
+import com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.UIUtil;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -59,11 +64,18 @@ import org.jdom.Element;
 /** A run configuration which executes Blaze commands. */
 public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     implements BlazeRunConfiguration, RunnerIconProvider {
+
   private static final Logger LOG = Logger.getInstance(BlazeCommandRunConfiguration.class);
 
   private static final String HANDLER_ATTR = "handler-id";
   private static final String TARGET_TAG = "blaze-target";
   private static final String KIND_ATTR = "kind";
+  /**
+   * This tag is actually written by {@link com.intellij.execution.impl.RunManagerImpl}; it
+   * represents the before-run tasks of the configuration. We need to know about it to avoid writing
+   * it ourselves.
+   */
+  private static final String METHOD_TAG = "method";
 
   /** The last serialized state of the configuration. */
   private Element elementState = new Element("dummy");
@@ -147,8 +159,9 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   @Nullable
   public Kind getKindForTarget() {
     if (target instanceof Label) {
-      RuleIdeInfo rule = RuleFinder.getInstance().ruleForTarget(getProject(), (Label) target);
-      return rule != null ? rule.kind : null;
+      TargetIdeInfo target =
+          TargetFinder.getInstance().targetForLabel(getProject(), (Label) this.target);
+      return target != null ? target.kind : null;
     }
     return null;
   }
@@ -253,6 +266,10 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     }
     Set<String> baseChildren =
         element.getChildren().stream().map(Element::getName).collect(Collectors.toSet());
+    // The method tag is written by RunManagerImpl *after* this writeExternal call,
+    // so it isn't already present.
+    // We still have to avoid writing it ourselves, or we wind up duplicating it.
+    baseChildren.add(METHOD_TAG);
     for (Element child : elementState.getChildren()) {
       if (!baseChildren.contains(child.getName())) {
         element.addContent(child.clone());
@@ -317,13 +334,16 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
     private final Box editor;
     private final JBLabel targetExpressionLabel;
-    private final JBTextField targetField = new JBTextField(1);
+    private final TextFieldWithAutoCompletion<String> targetField;
 
     BlazeCommandRunConfigurationSettingsEditor(BlazeCommandRunConfiguration config) {
+      Project project = config.getProject();
+      targetField =
+          new TextFieldWithAutoCompletion<>(
+              project, new TargetCompletionProvider(project), true, null);
       elementState = config.elementState.clone();
       targetExpressionLabel = new JBLabel(UIUtil.ComponentStyle.LARGE);
       editor = UiUtil.createBox(targetExpressionLabel, targetField);
-      targetField.getEmptyText().setText("Full target expression starting with //");
       updateTargetExpressionLabel(config);
       updateHandlerEditor(config);
     }
@@ -398,6 +418,26 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       } else {
         handlerStateEditor.applyEditorTo(config.handler.getState());
       }
+    }
+  }
+
+  private static class TargetCompletionProvider extends StringsCompletionProvider {
+    TargetCompletionProvider(Project project) {
+      super(getTargets(project), null);
+    }
+
+    private static Collection<String> getTargets(Project project) {
+      List<String> result = Lists.newArrayList();
+      BlazeProjectData projectData =
+          BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+      if (projectData != null) {
+        for (TargetIdeInfo target : projectData.targetMap.targets()) {
+          if (target.isPlainTarget()) {
+            result.add(target.key.label.toString());
+          }
+        }
+      }
+      return result;
     }
   }
 }

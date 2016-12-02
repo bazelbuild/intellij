@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.sync;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -25,11 +27,13 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.AsyncUtil;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.metrics.Action;
+import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -40,7 +44,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.ProjectViewVerifier;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
-import com.google.idea.blaze.base.rulemaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -64,6 +67,8 @@ import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
+import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
+import com.google.idea.blaze.base.sync.libraries.LibraryEditor;
 import com.google.idea.blaze.base.sync.projectstructure.ContentEntryEditor;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorImpl;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
@@ -76,6 +81,7 @@ import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
 import com.intellij.openapi.diagnostic.Logger;
@@ -184,7 +190,7 @@ final class BlazeSyncTask implements Progressive {
 
     BlazeVcsHandler vcsHandler = null;
     for (BlazeVcsHandler candidate : BlazeVcsHandler.EP_NAME.getExtensions()) {
-      if (candidate.handlesProject(Blaze.getBuildSystem(project), workspaceRoot)) {
+      if (candidate.handlesProject(importSettings.getBuildSystem(), workspaceRoot)) {
         vcsHandler = candidate;
         break;
       }
@@ -194,23 +200,28 @@ final class BlazeSyncTask implements Progressive {
       return SyncResult.FAILURE;
     }
 
+    ListenableFuture<ImmutableMap<String, String>> blazeInfoFuture =
+        BlazeInfo.getInstance()
+            .runBlazeInfo(
+                context, importSettings.getBuildSystem(), workspaceRoot, ImmutableList.of());
+
     ListeningExecutorService executor = BlazeExecutor.getInstance().getExecutor();
-    ListenableFuture<BlazeRoots> blazeRootsFuture =
-        BlazeRoots.compute(project, workspaceRoot, context);
     ListenableFuture<WorkingSet> workingSetFuture =
         vcsHandler.getWorkingSet(project, context, workspaceRoot, executor);
 
-    BlazeRoots blazeRoots =
-        FutureUtil.waitForFuture(context, blazeRootsFuture)
-            .timed(Blaze.buildSystemName(project) + "Roots")
+    ImmutableMap<String, String> blazeInfo =
+        FutureUtil.waitForFuture(context, blazeInfoFuture)
+            .timed(Blaze.buildSystemName(project) + "Info")
             .withProgressMessage(
                 String.format("Running %s info...", Blaze.buildSystemName(project)))
-            .onError(String.format("Could not get %s roots", Blaze.buildSystemName(project)))
+            .onError(String.format("Could not run %s info", Blaze.buildSystemName(project)))
             .run()
             .result();
-    if (blazeRoots == null) {
+    if (blazeInfo == null) {
       return SyncResult.FAILURE;
     }
+    BlazeRoots blazeRoots =
+        BlazeRoots.build(importSettings.getBuildSystem(), workspaceRoot, blazeInfo);
 
     WorkspacePathResolverAndProjectView workspacePathResolverAndProjectView =
         computeWorkspacePathResolverAndProjectView(context, blazeRoots, vcsHandler, executor);
@@ -267,12 +278,25 @@ final class BlazeSyncTask implements Progressive {
 
       List<TargetExpression> targets = Lists.newArrayList();
       if (syncParams.addProjectViewTargets || oldBlazeProjectData == null) {
-        targets.addAll(projectViewSet.listItems(TargetSection.KEY));
+        Collection<TargetExpression> projectViewTargets =
+            projectViewSet.listItems(TargetSection.KEY);
+        if (!projectViewTargets.isEmpty()) {
+          targets.addAll(projectViewTargets);
+          printTargets(context, "project view", projectViewTargets);
+        }
       }
       if (syncParams.addWorkingSet && workingSet != null) {
-        targets.addAll(getWorkingSetTargets(projectViewSet, workingSet));
+        Collection<? extends TargetExpression> workingSetTargets =
+            getWorkingSetTargets(projectViewSet, workingSet);
+        if (!workingSetTargets.isEmpty()) {
+          targets.addAll(workingSetTargets);
+          printTargets(context, "working set", workingSetTargets);
+        }
       }
-      targets.addAll(syncParams.targetExpressions);
+      if (!syncParams.targetExpressions.isEmpty()) {
+        targets.addAll(syncParams.targetExpressions);
+        printTargets(context, syncParams.title, syncParams.targetExpressions);
+      }
 
       boolean mergeWithOldState = !syncParams.addProjectViewTargets;
       BlazeIdeInterface.IdeResult ideQueryResult =
@@ -289,16 +313,17 @@ final class BlazeSyncTask implements Progressive {
       if (context.isCancelled()) {
         return SyncResult.CANCELLED;
       }
-      if (ideQueryResult.ruleMap == null || ideQueryResult.buildResult == BuildResult.FATAL_ERROR) {
+      if (ideQueryResult.targetMap == null
+          || ideQueryResult.buildResult == BuildResult.FATAL_ERROR) {
         context.setHasError();
         return SyncResult.FAILURE;
       }
 
-      RuleMap ruleMap = ideQueryResult.ruleMap;
+      TargetMap targetMap = ideQueryResult.targetMap;
       ideInfoResult = ideQueryResult.buildResult;
 
-      ListenableFuture<ImmutableMultimap<RuleKey, RuleKey>> reverseDependenciesFuture =
-          BlazeExecutor.getInstance().submit(() -> ReverseDependencyMap.createRdepsMap(ruleMap));
+      ListenableFuture<ImmutableMultimap<TargetKey, TargetKey>> reverseDependenciesFuture =
+          BlazeExecutor.getInstance().submit(() -> ReverseDependencyMap.createRdepsMap(targetMap));
 
       ideResolveResult =
           resolveIdeArtifacts(project, context, workspaceRoot, projectViewSet, targets);
@@ -325,13 +350,13 @@ final class BlazeSyncTask implements Progressive {
                   workingSet,
                   workspacePathResolver,
                   artifactLocationDecoder,
-                  ruleMap,
+                  targetMap,
                   syncStateBuilder,
                   previousSyncState);
             }
           });
 
-      ImmutableMultimap<RuleKey, RuleKey> reverseDependencies =
+      ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
           FutureUtil.waitForFuture(context, reverseDependenciesFuture)
               .timed("ReverseDependencies")
               .onError("Failed to compute reverse dependency map")
@@ -344,7 +369,8 @@ final class BlazeSyncTask implements Progressive {
       newBlazeProjectData =
           new BlazeProjectData(
               syncStartTime,
-              ruleMap,
+              targetMap,
+              blazeInfo,
               blazeRoots,
               workingSet,
               workspacePathResolver,
@@ -491,6 +517,17 @@ final class BlazeSyncTask implements Progressive {
     if (messages.size() > maxFiles) {
       context.output(PrintOutput.log(String.format("  (and %d more)", messages.size() - maxFiles)));
     }
+    context.output(PrintOutput.output(""));
+  }
+
+  private void printTargets(
+      BlazeContext context, String owner, Collection<? extends TargetExpression> targets) {
+    StringBuilder sb = new StringBuilder("Sync targets from ");
+    sb.append(owner).append(':').append('\n');
+    for (TargetExpression targetExpression : targets) {
+      sb.append("  ").append(targetExpression).append('\n');
+    }
+    context.output(PrintOutput.log(sb.toString()));
   }
 
   private Collection<? extends TargetExpression> getWorkingSetTargets(
@@ -533,7 +570,7 @@ final class BlazeSyncTask implements Progressive {
           context.setPropagatesErrors(false);
 
           BlazeIdeInterface blazeIdeInterface = BlazeIdeInterface.getInstance();
-          return blazeIdeInterface.updateRuleMap(
+          return blazeIdeInterface.updateTargetMap(
               project,
               context,
               workspaceRoot,
@@ -654,6 +691,10 @@ final class BlazeSyncTask implements Progressive {
         projectViewSet,
         newBlazeProjectData,
         workspaceModifiableModel);
+
+    List<BlazeLibrary> libraries = BlazeLibraryCollector.getLibraries(newBlazeProjectData);
+    LibraryEditor.updateProjectLibraries(project, context, newBlazeProjectData, libraries);
+    LibraryEditor.configureDependencies(workspaceModifiableModel, libraries);
 
     for (BlazeSyncPlugin blazeSyncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
       blazeSyncPlugin.updateProjectStructure(

@@ -18,11 +18,15 @@ package com.google.idea.blaze.java.run.producers;
 
 import com.google.common.base.Strings;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.common.experiments.BoolExperiment;
 import java.util.Collection;
 import javax.annotation.Nullable;
 
 /** Utilities for building test filter flags for JUnit tests. */
 public final class BlazeJUnitTestFilterFlags {
+
+  private static final BoolExperiment enableParameterizedSupport =
+      new BoolExperiment("enable.parameterized.test.support", true);
 
   /** A version of JUnit to generate test filter flags for. */
   public enum JUnitVersion {
@@ -31,11 +35,15 @@ public final class BlazeJUnitTestFilterFlags {
   }
 
   public static String testFilterFlagForClass(String className, JUnitVersion jUnitVersion) {
-    return testFilterFlagForClassAndMethod(className, null, jUnitVersion);
+    return testFilterFlagForClassAndMethod(
+        className, null, jUnitVersion, /* parameterized doesn't matter for a class */ false);
   }
 
   public static String testFilterFlagForClassAndMethod(
-      String className, @Nullable String methodName, JUnitVersion jUnitVersion) {
+      String className,
+      @Nullable String methodName,
+      JUnitVersion jUnitVersion,
+      boolean parameterized) {
     StringBuilder output = new StringBuilder(BlazeFlags.TEST_FILTER);
     output.append('=');
     output.append(className);
@@ -46,7 +54,11 @@ public final class BlazeJUnitTestFilterFlags {
       // JUnit 4 test filters are regexes, and must be terminated to avoid matching
       // unintended classes/methods. JUnit 3 test filters do not need or support this syntax.
       if (jUnitVersion == JUnitVersion.JUNIT_4) {
-        output.append('$');
+        // parameterized tests include their parameters between brackets after the method name
+        if (parameterized && enableParameterizedSupport.getValue()) {
+          output.append("(\\[.+\\])?");
+        }
+        output.append("$");
       }
     } else if (jUnitVersion == JUnitVersion.JUNIT_4) {
       output.append('#');
@@ -56,12 +68,15 @@ public final class BlazeJUnitTestFilterFlags {
   }
 
   public static String testFilterFlagForClassAndMethods(
-      String className, Collection<String> methodNames, JUnitVersion jUnitVersion) {
+      String className,
+      Collection<String> methodNames,
+      JUnitVersion jUnitVersion,
+      boolean parameterized) {
     if (methodNames.size() == 0) {
       return testFilterFlagForClass(className, jUnitVersion);
     } else if (methodNames.size() == 1) {
       return testFilterFlagForClassAndMethod(
-          className, methodNames.iterator().next(), jUnitVersion);
+          className, methodNames.iterator().next(), jUnitVersion, parameterized);
     }
     String methodNamePattern;
     if (jUnitVersion == JUnitVersion.JUNIT_4) {
@@ -69,7 +84,8 @@ public final class BlazeJUnitTestFilterFlags {
     } else {
       methodNamePattern = String.join(",", methodNames);
     }
-    return testFilterFlagForClassAndMethod(className, methodNamePattern, jUnitVersion);
+    return testFilterFlagForClassAndMethod(
+        className, methodNamePattern, jUnitVersion, parameterized);
   }
 
   private BlazeJUnitTestFilterFlags() {}

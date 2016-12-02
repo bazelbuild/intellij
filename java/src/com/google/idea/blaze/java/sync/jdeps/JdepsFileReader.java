@@ -24,9 +24,9 @@ import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.filecache.FileDiffer;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.JavaRuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -56,18 +56,18 @@ public class JdepsFileReader {
   static class JdepsState implements Serializable {
     private static final long serialVersionUID = 4L;
     private ImmutableMap<File, Long> fileState = null;
-    private Map<File, RuleKey> fileToRuleMap = Maps.newHashMap();
-    private Map<RuleKey, List<String>> ruleToJdeps = Maps.newHashMap();
+    private Map<File, TargetKey> fileToTargetMap = Maps.newHashMap();
+    private Map<TargetKey, List<String>> targetToJdeps = Maps.newHashMap();
   }
 
   private static class Result {
     File file;
-    RuleKey ruleKey;
+    TargetKey targetKey;
     List<String> dependencies;
 
-    public Result(File file, RuleKey ruleKey, List<String> dependencies) {
+    public Result(File file, TargetKey targetKey, List<String> dependencies) {
       this.file = file;
-      this.ruleKey = ruleKey;
+      this.targetKey = targetKey;
       this.dependencies = dependencies;
     }
   }
@@ -78,7 +78,7 @@ public class JdepsFileReader {
       Project project,
       BlazeContext parentContext,
       ArtifactLocationDecoder artifactLocationDecoder,
-      Iterable<RuleIdeInfo> rulesToLoad,
+      Iterable<TargetIdeInfo> targetsToLoad,
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState) {
     JdepsState oldState =
@@ -89,13 +89,13 @@ public class JdepsFileReader {
             (context) -> {
               context.push(new TimingScope("LoadJdepsFiles"));
               return doLoadJdepsFiles(
-                  project, context, artifactLocationDecoder, oldState, rulesToLoad);
+                  project, context, artifactLocationDecoder, oldState, targetsToLoad);
             });
     if (jdepsState == null) {
       return null;
     }
     syncStateBuilder.put(JdepsState.class, jdepsState);
-    return ruleKey -> jdepsState.ruleToJdeps.get(ruleKey);
+    return targetKey -> jdepsState.targetToJdeps.get(targetKey);
   }
 
   private JdepsState doLoadJdepsFiles(
@@ -103,21 +103,21 @@ public class JdepsFileReader {
       BlazeContext context,
       ArtifactLocationDecoder artifactLocationDecoder,
       @Nullable JdepsState oldState,
-      Iterable<RuleIdeInfo> rulesToLoad) {
+      Iterable<TargetIdeInfo> targetsToLoad) {
     JdepsState state = new JdepsState();
     if (oldState != null) {
-      state.ruleToJdeps = Maps.newHashMap(oldState.ruleToJdeps);
-      state.fileToRuleMap = Maps.newHashMap(oldState.fileToRuleMap);
+      state.targetToJdeps = Maps.newHashMap(oldState.targetToJdeps);
+      state.fileToTargetMap = Maps.newHashMap(oldState.fileToTargetMap);
     }
 
-    Map<File, RuleKey> fileToRuleMap = Maps.newHashMap();
-    for (RuleIdeInfo ruleIdeInfo : rulesToLoad) {
-      assert ruleIdeInfo != null;
-      JavaRuleIdeInfo javaRuleIdeInfo = ruleIdeInfo.javaRuleIdeInfo;
-      if (javaRuleIdeInfo != null) {
-        ArtifactLocation jdepsFile = javaRuleIdeInfo.jdepsFile;
+    Map<File, TargetKey> fileToTargetMap = Maps.newHashMap();
+    for (TargetIdeInfo target : targetsToLoad) {
+      assert target != null;
+      JavaIdeInfo javaIdeInfo = target.javaIdeInfo;
+      if (javaIdeInfo != null) {
+        ArtifactLocation jdepsFile = javaIdeInfo.jdepsFile;
         if (jdepsFile != null) {
-          fileToRuleMap.put(artifactLocationDecoder.decode(jdepsFile), ruleIdeInfo.key);
+          fileToTargetMap.put(artifactLocationDecoder.decode(jdepsFile), target.key);
         }
       }
     }
@@ -127,7 +127,7 @@ public class JdepsFileReader {
     state.fileState =
         FileDiffer.updateFiles(
             oldState != null ? oldState.fileState : null,
-            fileToRuleMap.keySet(),
+            fileToTargetMap.keySet(),
             updatedFiles,
             removedFiles);
 
@@ -142,9 +142,9 @@ public class JdepsFileReader {
     }
 
     for (File removedFile : removedFiles) {
-      RuleKey ruleKey = state.fileToRuleMap.remove(removedFile);
-      if (ruleKey != null) {
-        state.ruleToJdeps.remove(ruleKey);
+      TargetKey targetKey = state.fileToTargetMap.remove(removedFile);
+      if (targetKey != null) {
+        state.targetToJdeps.remove(targetKey);
       }
     }
 
@@ -169,8 +169,8 @@ public class JdepsFileReader {
                         dependencyStringList.add(dependency.getPath());
                       }
                     }
-                    RuleKey ruleKey = fileToRuleMap.get(updatedFile);
-                    return new Result(updatedFile, ruleKey, dependencyStringList);
+                    TargetKey targetKey = fileToTargetMap.get(updatedFile);
+                    return new Result(updatedFile, targetKey, dependencyStringList);
                   }
                 } catch (FileNotFoundException e) {
                   LOG.info("Could not open jdeps file: " + updatedFile);
@@ -181,8 +181,8 @@ public class JdepsFileReader {
     try {
       for (Result result : Futures.allAsList(futures).get()) {
         if (result != null) {
-          state.fileToRuleMap.put(result.file, result.ruleKey);
-          state.ruleToJdeps.put(result.ruleKey, result.dependencies);
+          state.fileToTargetMap.put(result.file, result.targetKey);
+          state.targetToJdeps.put(result.targetKey, result.dependencies);
         }
       }
       context.output(

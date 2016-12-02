@@ -59,6 +59,17 @@ java_library(
     ],
 )
 
+java_library(
+    name = "junit",
+    neverlink = 1,
+    exports = select({
+        ":intellij-latest": ["@intellij_latest//:junit"],
+        ":android-studio-latest": ["@android_studio_latest//:junit"],
+        ":clion-latest": [],
+        "//conditions:default": ["@intellij_latest//:junit"],
+    }),
+)
+
 # The dev kit is only for IntelliJ since you only develop plugins in Java.
 java_library(
     name = "devkit",

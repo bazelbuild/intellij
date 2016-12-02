@@ -46,7 +46,8 @@ public class BlazeApkDeployInfoProtoHelper {
   private final ImmutableList<String> buildFlags;
   private final List<File> deployInfoFiles = Lists.newArrayList();
   private final LineProcessingOutputStream.LineProcessor lineProcessor =
-      new ExperimentalShowArtifactsLineProcessor(deployInfoFiles, ".deployinfo.pb");
+      new ExperimentalShowArtifactsLineProcessor(
+          deployInfoFiles, fileName -> fileName.endsWith(".deployinfo.pb"));
 
   public BlazeApkDeployInfoProtoHelper(Project project, ImmutableList<String> buildFlags) {
     this.project = project;

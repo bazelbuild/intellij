@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.sync.actions;
 import com.google.idea.blaze.base.actions.BlazeAction;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
+import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 
@@ -28,7 +29,7 @@ public class SyncWorkingSetAction extends BlazeAction {
     Project project = e.getProject();
     if (project != null) {
       BlazeSyncParams syncParams =
-          new BlazeSyncParams.Builder("Sync Working Set", BlazeSyncParams.SyncMode.INCREMENTAL)
+          new BlazeSyncParams.Builder("Sync Working Set", SyncMode.PARTIAL)
               .addWorkingSet(true)
               .build();
 

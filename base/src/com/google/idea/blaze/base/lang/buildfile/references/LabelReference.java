@@ -66,7 +66,7 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
       return null;
     }
     if (!labelString.startsWith("//") && insideSkylarkExtension(myElement)) {
-      return getReferenceManager().resolveLabel(label.blazePackage(), label.ruleName(), true);
+      return getReferenceManager().resolveLabel(label.blazePackage(), label.targetName(), true);
     }
     return getReferenceManager().resolveLabel(label);
   }
@@ -211,7 +211,7 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
     if (label == null) {
       return myElement;
     }
-    String ruleName = label.ruleName().toString();
+    String ruleName = label.targetName().toString();
     String newRuleName = newElementName;
 
     // handle subdirectories

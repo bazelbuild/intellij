@@ -38,6 +38,7 @@ import org.junit.runners.JUnit4;
 public class ArtifactLocationDecoderTest extends BlazeTestCase {
 
   private static final String EXECUTION_ROOT = "/path/to/_blaze_user/1234bf129e/root";
+  private static final String OUTPUT_BASE = "/path/to/_blaze_user/1234bf129e";
 
   static class MockFileAttributeProvider extends FileAttributeProvider {
     final Set<File> files = Sets.newHashSet();
@@ -76,7 +77,8 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
             new File(EXECUTION_ROOT),
             packagePaths,
             new ExecutionRootPath("root/blaze-out/crosstool/bin"),
-            new ExecutionRootPath("root/blaze-out/crosstool/genfiles"));
+            new ExecutionRootPath("root/blaze-out/crosstool/genfiles"),
+            new File(OUTPUT_BASE));
 
     fileChecker.addFiles(
         new File("/path/to/com/google/Bla.java"),
@@ -124,10 +126,34 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
                 new File(EXECUTION_ROOT),
                 ImmutableList.of(new File("/path/to/root")),
                 new ExecutionRootPath("root/blaze-out/crosstool/bin"),
-                new ExecutionRootPath("root/blaze-out/crosstool/genfiles")),
+                new ExecutionRootPath("root/blaze-out/crosstool/genfiles"),
+                new File(OUTPUT_BASE)),
             null);
 
     assertThat(decoder.decode(artifactLocation).getPath())
         .isEqualTo(EXECUTION_ROOT + "/blaze-out/bin/com/google/Bla.java");
+  }
+
+  @Test
+  public void testExternalArtifact() throws Exception {
+    ArtifactLocation artifactLocation =
+        ArtifactLocation.builder()
+            .setRelativePath("external/com/google/Bla.java")
+            .setIsSource(true)
+            .setIsExternal(true)
+            .build();
+
+    ArtifactLocationDecoder decoder =
+        new ArtifactLocationDecoderImpl(
+            new BlazeRoots(
+                new File(EXECUTION_ROOT),
+                ImmutableList.of(new File("/path/to/root")),
+                new ExecutionRootPath("root/blaze-out/crosstool/bin"),
+                new ExecutionRootPath("root/blaze-out/crosstool/genfiles"),
+                new File(OUTPUT_BASE)),
+            null);
+
+    assertThat(decoder.decode(artifactLocation).getPath())
+        .isEqualTo(OUTPUT_BASE + "/external/com/google/Bla.java");
   }
 }

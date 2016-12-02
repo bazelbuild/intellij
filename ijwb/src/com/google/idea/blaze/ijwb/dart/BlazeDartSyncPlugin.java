@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.ijwb.ide.IdeCheck;
 import com.intellij.openapi.module.Module;
@@ -88,5 +89,14 @@ public class BlazeDartSyncPlugin extends BlazeSyncPlugin.Adapter {
       return false;
     }
     return true;
+  }
+
+  @Nullable
+  @Override
+  public LibrarySource getLibrarySource(BlazeProjectData blazeProjectData) {
+    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.DART)) {
+      return null;
+    }
+    return new BlazeDartLibrarySource();
   }
 }

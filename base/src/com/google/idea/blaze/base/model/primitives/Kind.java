@@ -30,9 +30,7 @@ public enum Kind {
   JAVA_BINARY("java_binary", LanguageClass.JAVA),
   JAVA_IMPORT("java_import", LanguageClass.JAVA),
   JAVA_TOOLCHAIN("java_toolchain", LanguageClass.JAVA),
-  PROTO_LIBRARY(
-      "proto_library",
-      LanguageClass.JAVA), // The LanguageClass might have to change if we support other languages
+  PROTO_LIBRARY("proto_library", LanguageClass.GENERIC),
   JAVA_PLUGIN("java_plugin", LanguageClass.JAVA),
   ANDROID_RESOURCES("android_resources", LanguageClass.ANDROID),
   CC_LIBRARY("cc_library", LanguageClass.C),
@@ -46,6 +44,10 @@ public enum Kind {
   GWT_MODULE("gwt_module", LanguageClass.JAVA),
   GWT_TEST("gwt_test", LanguageClass.JAVA),
   TEST_SUITE("test_suite", LanguageClass.GENERIC),
+  PY_LIBRARY("py_library", LanguageClass.PYTHON),
+  PY_BINARY("py_binary", LanguageClass.PYTHON),
+  PY_TEST("py_test", LanguageClass.PYTHON),
+  PY_APPENGINE_BINARY("py_appengine_binary", LanguageClass.PYTHON),
   ;
 
   static final ImmutableMap<String, Kind> STRING_TO_KIND = makeStringToKindMap();
@@ -90,5 +92,14 @@ public enum Kind {
       }
     }
     return false;
+  }
+
+  /** Uses the heuristic that test rules are either 'test_suite', or end in '_test' */
+  public static boolean isTestRule(String ruleType) {
+    return isTestSuite(ruleType) || ruleType.endsWith("_test");
+  }
+
+  public static boolean isTestSuite(String ruleType) {
+    return "test_suite".equals(ruleType);
   }
 }

@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
@@ -46,10 +45,6 @@ import java.util.List;
  * workspace directory.
  */
 public class WorkspaceRootNode extends PsiDirectoryNode {
-
-  private static final BoolExperiment COLLAPSE_PROJECT_VIEW =
-      new BoolExperiment("collapse.project.view", true);
-
   private final WorkspaceRoot workspaceRoot;
 
   public WorkspaceRootNode(
@@ -60,9 +55,6 @@ public class WorkspaceRootNode extends PsiDirectoryNode {
 
   @Override
   public Collection<AbstractTreeNode> getChildrenImpl() {
-    if (!COLLAPSE_PROJECT_VIEW.getValue()) {
-      return super.getChildrenImpl();
-    }
     if (!BlazeUserSettings.getInstance().getCollapseProjectView()) {
       return super.getChildrenImpl();
     }
@@ -76,7 +68,6 @@ public class WorkspaceRootNode extends PsiDirectoryNode {
       return super.getChildrenImpl();
     }
 
-    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, Blaze.getBuildSystem(project))
             .add(projectViewSet)

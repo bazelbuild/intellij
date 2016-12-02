@@ -15,25 +15,26 @@
  */
 package com.google.idea.blaze.plugin;
 
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 
-/** Utility methods for intellij_plugin blaze rules */
+/** Utility methods for intellij_plugin blaze targets */
 public class IntellijPluginRule {
 
-  public static final String RULE_TAG_IJ_PLUGIN = "intellij-plugin";
-  public static final String RULE_TAG_IJ_PLUGIN_BUNDLE = "intellij-plugin-bundle";
+  public static final String TARGET_TAG_IJ_PLUGIN = "intellij-plugin";
+  public static final String TARGET_TAG_IJ_PLUGIN_BUNDLE = "intellij-plugin-bundle";
 
-  public static boolean isPluginRule(RuleIdeInfo rule) {
-    return isPluginBundle(rule) || isSinglePluginRule(rule);
+  public static boolean isPluginTarget(TargetIdeInfo target) {
+    return isPluginBundle(target) || isSinglePluginTarget(target);
   }
 
-  public static boolean isPluginBundle(RuleIdeInfo rule) {
-    return rule.kindIsOneOf(Kind.JAVA_LIBRARY) && rule.tags.contains(RULE_TAG_IJ_PLUGIN_BUNDLE);
+  public static boolean isPluginBundle(TargetIdeInfo target) {
+    return target.kindIsOneOf(Kind.JAVA_LIBRARY)
+        && target.tags.contains(TARGET_TAG_IJ_PLUGIN_BUNDLE);
   }
 
-  public static boolean isSinglePluginRule(RuleIdeInfo rule) {
-    return rule.kindIsOneOf(Kind.JAVA_IMPORT) && rule.tags.contains(RULE_TAG_IJ_PLUGIN);
+  public static boolean isSinglePluginTarget(TargetIdeInfo target) {
+    return target.kindIsOneOf(Kind.JAVA_IMPORT) && target.tags.contains(TARGET_TAG_IJ_PLUGIN);
   }
 
 }

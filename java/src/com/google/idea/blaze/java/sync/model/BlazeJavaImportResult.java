@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.model.LibraryKey;
 import java.io.Serializable;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;

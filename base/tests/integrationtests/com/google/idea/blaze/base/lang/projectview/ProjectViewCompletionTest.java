@@ -18,7 +18,9 @@ package com.google.idea.blaze.base.lang.projectview;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.base.Joiner;
+import com.google.idea.blaze.base.lang.projectview.completion.ProjectViewKeywordCompletionContributor;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.projectview.section.sections.Sections;
@@ -48,13 +50,14 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
   @Test
   public void testSectionTypeKeywords() {
     setInput("<caret>");
-    String[] keywords = getCompletionItemsAsStrings();
+    String[] keywords = editorTest.getCompletionItemsAsStrings();
 
     assertThat(keywords)
         .asList()
         .containsAllIn(
             Sections.getUndeprecatedParsers()
                 .stream()
+                .filter(ProjectViewKeywordCompletionContributor::handledSectionType)
                 .map(SectionParser::getName)
                 .collect(Collectors.toList()));
   }
@@ -62,7 +65,7 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
   @Test
   public void testColonAndNewLineAndIndentInsertedAfterListSection() {
     setInput("direc<caret>");
-    assertThat(completeIfUnique()).isTrue();
+    assertThat(editorTest.completeIfUnique()).isTrue();
     assertResult("directories:", "  <caret>");
   }
 
@@ -82,7 +85,7 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
   @Test
   public void testColonDividerAndSpaceInsertedAfterScalarSection() {
     setInput("works<caret>");
-    assertThat(completeIfUnique()).isTrue();
+    assertThat(editorTest.completeIfUnique()).isTrue();
     assertResult("workspace_type: <caret>");
   }
 
@@ -90,7 +93,7 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
   public void testNoKeywordCompletionInListItem() {
     setInput("directories:", "  <caret>");
 
-    String[] completionItems = getCompletionItemsAsStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
     if (completionItems == null) {
       Assert.fail("Spurious completion. New file contents: " + testFixture.getFile().getText());
     }
@@ -101,7 +104,7 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
   public void testNoKeywordCompletionAfterKeyword() {
     setInput("import <caret>");
 
-    String[] completionItems = getCompletionItemsAsStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
     if (completionItems == null) {
       Assert.fail("Spurious completion. New file contents: " + testFixture.getFile().getText());
     }
@@ -112,7 +115,7 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
   public void testWorkspaceTypeCompletion() {
     setInput("workspace_type: <caret>");
 
-    String[] types = getCompletionItemsAsStrings();
+    String[] types = editorTest.getCompletionItemsAsStrings();
 
     assertThat(types)
         .asList()
@@ -126,7 +129,7 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
   public void testAdditionalLanguagesCompletion() {
     setInput("additional_languages:", "  <caret>");
 
-    String[] types = getCompletionItemsAsStrings();
+    String[] types = editorTest.getCompletionItemsAsStrings();
 
     assertThat(types)
         .asList()
@@ -140,9 +143,9 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
   public void testUniqueDirectoryCompleted() {
     setInput("import <caret>");
 
-    createDirectory("java");
+    workspace.createDirectory(new WorkspacePath("java"));
 
-    String[] completionItems = getCompletionItemsAsStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).isNull();
     assertResult("import java<caret>");
   }
@@ -151,9 +154,9 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
   public void testUniqueMultiSegmentDirectoryCompleted() {
     setInput("import <caret>");
 
-    createDirectory("java/com/google");
+    workspace.createDirectory(new WorkspacePath("java/com/google"));
 
-    String[] completionItems = getCompletionItemsAsStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).isNull();
     assertResult("import java/com/google<caret>");
   }
@@ -162,41 +165,41 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
   public void testNonDirectoriesIgnored() {
     setInput("import <caret>");
 
-    createDirectory("java/com/google");
-    createFile("java/IgnoredFile.java");
+    workspace.createDirectory(new WorkspacePath("java/com/google"));
+    workspace.createFile(new WorkspacePath("java/IgnoredFile.java"));
 
-    String[] completionItems = getCompletionItemsAsStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).isNull();
     assertResult("import java/com/google<caret>");
   }
 
   @Test
   public void testMultipleDirectoryOptions() {
-    createDirectory("foo");
-    createDirectory("bar");
-    createDirectory("other");
-    createDirectory("ostrich/foo");
-    createDirectory("ostrich/fooz");
+    workspace.createDirectory(new WorkspacePath("foo"));
+    workspace.createDirectory(new WorkspacePath("bar"));
+    workspace.createDirectory(new WorkspacePath("other"));
+    workspace.createDirectory(new WorkspacePath("ostrich/foo"));
+    workspace.createDirectory(new WorkspacePath("ostrich/fooz"));
 
     setInput("targets:", "  //o<caret>");
 
-    String[] completionItems = getCompletionItemsAsSuggestionStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsSuggestionStrings();
     assertThat(completionItems).asList().containsExactly("other", "ostrich");
 
-    performTypingAction(testFixture.getEditor(), 's');
+    editorTest.performTypingAction(testFixture.getEditor(), 's');
 
-    completionItems = getCompletionItemsAsStrings();
+    completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).isNull();
     assertResult("targets:", "  //ostrich<caret>");
   }
 
   @Test
-  public void testRuleCompletion() {
-    createFile("BUILD", "java_library(name = 'lib')");
+  public void testTargetCompletion() {
+    workspace.createFile(new WorkspacePath("BUILD"), "java_library(name = 'lib')");
 
     setInput("targets:", "  //:<caret>");
 
-    String[] completionItems = getCompletionItemsAsSuggestionStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsSuggestionStrings();
     assertThat(completionItems).isNull();
     assertResult("targets:", "  //:lib<caret>");
   }

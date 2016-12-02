@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -41,14 +42,15 @@ public class ExternalFileUsagesTest extends BuildFileIntegrationTestCase {
   @Test
   public void testJavaClassUsagesFound() {
     PsiFile javaFile =
-        createPsiFile(
-            "com/google/foo/JavaClass.java",
+        workspace.createPsiFile(
+            new WorkspacePath("com/google/foo/JavaClass.java"),
             "package com.google.foo;",
             "public class JavaClass {}");
 
     BuildFile buildFile =
         createBuildFile(
-            "com/google/foo/BUILD", "java_library(name = \"lib\", srcs = [\"JavaClass.java\"])");
+            new WorkspacePath("com/google/foo/BUILD"),
+            "java_library(name = \"lib\", srcs = [\"JavaClass.java\"])");
 
     PsiReference[] references = FindUsages.findAllReferences(javaFile);
     assertThat(references).hasLength(1);
@@ -63,10 +65,10 @@ public class ExternalFileUsagesTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testTextFileUsagesFound() {
-    PsiFile textFile = createPsiFile("com/google/foo/data.txt");
+    PsiFile textFile = workspace.createPsiFile(new WorkspacePath("com/google/foo/data.txt"));
 
     createBuildFile(
-        "com/google/foo/BUILD",
+        new WorkspacePath("com/google/foo/BUILD"),
         "filegroup(name = \"lib\", srcs = [\"data.txt\"])",
         "filegroup(name = \"lib2\", srcs = [\"//com/google/foo:data.txt\"])");
 
@@ -76,10 +78,12 @@ public class ExternalFileUsagesTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testInvalidReferenceDoesntResolve() {
-    createBuildFile("com/google/foo/BUILD");
-    PsiFile textFileInFoo = createPsiFile("com/google/foo/data.txt");
+    createBuildFile(new WorkspacePath("com/google/foo/BUILD"));
+    PsiFile textFileInFoo = workspace.createPsiFile(new WorkspacePath("com/google/foo/data.txt"));
 
-    createBuildFile("com/google/bar/BUILD", "filegroup(name = \"lib\", srcs = [\":data.txt\"])");
+    createBuildFile(
+        new WorkspacePath("com/google/bar/BUILD"),
+        "filegroup(name = \"lib\", srcs = [\":data.txt\"])");
 
     PsiReference[] references = FindUsages.findAllReferences(textFileInFoo);
     assertThat(references).isEmpty();
@@ -87,9 +91,10 @@ public class ExternalFileUsagesTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testSkylarkExtensionUsagesFound() {
-    BuildFile ext = createBuildFile("com/google/foo/ext.bzl", "def fn(): return");
+    BuildFile ext =
+        createBuildFile(new WorkspacePath("com/google/foo/ext.bzl"), "def fn(): return");
     createBuildFile(
-        "com/google/foo/BUILD",
+        new WorkspacePath("com/google/foo/BUILD"),
         "load(':ext.bzl', 'fn')",
         "load('ext.bzl', 'fn')",
         "load('//com/google/foo:ext.bzl', 'fn')");
@@ -100,9 +105,10 @@ public class ExternalFileUsagesTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testSkylarkExtensionInSubDirectoryUsagesFound() {
-    BuildFile ext = createBuildFile("com/google/foo/subdir/ext.bzl", "def fn(): return");
+    BuildFile ext =
+        createBuildFile(new WorkspacePath("com/google/foo/subdir/ext.bzl"), "def fn(): return");
     createBuildFile(
-        "com/google/foo/BUILD",
+        new WorkspacePath("com/google/foo/BUILD"),
         "load(':subdir/ext.bzl', 'fn')",
         "load('subdir/ext.bzl', 'fn')",
         "load('//com/google/foo:subdir/ext.bzl', 'fn')");
@@ -113,10 +119,12 @@ public class ExternalFileUsagesTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testSkylarkExtensionInSubDirectoryOfDifferentPackage() {
-    createBuildFile("com/google/foo/BUILD");
-    BuildFile ext = createBuildFile("com/google/foo/subdir/ext.bzl", "def fn(): return");
+    createBuildFile(new WorkspacePath("com/google/foo/BUILD"));
+    BuildFile ext =
+        createBuildFile(new WorkspacePath("com/google/foo/subdir/ext.bzl"), "def fn(): return");
 
-    createBuildFile("com/google/bar/BUILD", "load('//com/google/foo:subdir/ext.bzl', 'fn')");
+    createBuildFile(
+        new WorkspacePath("com/google/bar/BUILD"), "load('//com/google/foo:subdir/ext.bzl', 'fn')");
 
     PsiReference[] references = FindUsages.findAllReferences(ext);
     assertThat(references).hasLength(1);
@@ -124,9 +132,11 @@ public class ExternalFileUsagesTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testSkylarkExtensionReferencedFromSubpackage() {
-    createBuildFile("com/google/foo/BUILD");
-    BuildFile ext1 = createBuildFile("com/google/foo/subdir/testing.bzl", "def fn(): return");
-    createBuildFile("com/google/foo/subdir/other.bzl", "load(':subdir/testing.bzl', 'fn')");
+    createBuildFile(new WorkspacePath("com/google/foo/BUILD"));
+    BuildFile ext1 =
+        createBuildFile(new WorkspacePath("com/google/foo/subdir/testing.bzl"), "def fn(): return");
+    createBuildFile(
+        new WorkspacePath("com/google/foo/subdir/other.bzl"), "load(':subdir/testing.bzl', 'fn')");
 
     PsiReference[] references = FindUsages.findAllReferences(ext1);
     assertThat(references).hasLength(1);

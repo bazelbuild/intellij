@@ -20,14 +20,14 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
-import com.google.idea.blaze.base.ideinfo.RuleMapBuilder;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.rulemaps.ReverseDependencyMap;
-import com.google.idea.blaze.base.run.testmap.TestRuleFinderImpl.TestMap;
+import com.google.idea.blaze.base.run.testmap.TestTargetFilterImpl.TestMap;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import java.io.File;
@@ -39,7 +39,7 @@ import org.junit.runners.JUnit4;
 /** Tests for the test map */
 @RunWith(JUnit4.class)
 public class TestMapTest extends BlazeTestCase {
-  private RuleMapBuilder ruleMapBuilder;
+  private TargetMapBuilder targetMapBuilder;
 
   private final ArtifactLocationDecoder artifactLocationDecoder =
       (ArtifactLocationDecoder)
@@ -50,117 +50,117 @@ public class TestMapTest extends BlazeTestCase {
       @NotNull Container applicationServices, @NotNull Container projectServices) {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(ExperimentService.class, new MockExperimentService());
-    ruleMapBuilder = RuleMapBuilder.builder();
+    targetMapBuilder = TargetMapBuilder.builder();
   }
 
   @Test
   public void testTrivialTestMap() throws Exception {
-    RuleMap ruleMap =
-        ruleMapBuilder
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMap targetMap =
+        targetMapBuilder
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test")
                     .setKind("java_test")
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
-    TestMap testMap = new TestMap(project, artifactLocationDecoder, ruleMap);
-    ImmutableMultimap<RuleKey, RuleKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(ruleMap);
+    TestMap testMap = new TestMap(project, artifactLocationDecoder, targetMap);
+    ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
+        ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(testMap.testTargetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
         .containsExactly(new Label("//test:test"));
   }
 
   @Test
   public void testOneStepRemovedTestMap() throws Exception {
-    RuleMap ruleMap =
-        ruleMapBuilder
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMap targetMap =
+        targetMapBuilder
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test")
                     .setKind("java_test")
                     .addDependency("//test:lib"))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib")
                     .setKind("java_library")
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
-    TestMap testMap = new TestMap(project, artifactLocationDecoder, ruleMap);
-    ImmutableMultimap<RuleKey, RuleKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(ruleMap);
+    TestMap testMap = new TestMap(project, artifactLocationDecoder, targetMap);
+    ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
+        ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(testMap.testTargetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
         .containsExactly(new Label("//test:test"));
   }
 
   @Test
   public void testTwoCandidatesTestMap() throws Exception {
-    RuleMap ruleMap =
-        ruleMapBuilder
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMap targetMap =
+        targetMapBuilder
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test")
                     .setKind("java_test")
                     .addDependency("//test:lib"))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test2")
                     .setKind("java_test")
                     .addDependency("//test:lib"))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib")
                     .setKind("java_library")
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
-    TestMap testMap = new TestMap(project, artifactLocationDecoder, ruleMap);
-    ImmutableMultimap<RuleKey, RuleKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(ruleMap);
+    TestMap testMap = new TestMap(project, artifactLocationDecoder, targetMap);
+    ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
+        ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(testMap.testTargetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
         .containsExactly(new Label("//test:test"), new Label("//test:test2"));
   }
 
   @Test
   public void testBfsPreferred() throws Exception {
-    RuleMap ruleMap =
-        ruleMapBuilder
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMap targetMap =
+        targetMapBuilder
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib")
                     .setKind("java_library")
                     .addSource(sourceRoot("test/Test.java")))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib2")
                     .setKind("java_library")
                     .addDependency("//test:lib"))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test2")
                     .setKind("java_test")
                     .addDependency("//test:lib2"))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test")
                     .setKind("java_test")
                     .addDependency("//test:lib"))
             .build();
 
-    TestMap testMap = new TestMap(project, artifactLocationDecoder, ruleMap);
-    ImmutableMultimap<RuleKey, RuleKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(ruleMap);
+    TestMap testMap = new TestMap(project, artifactLocationDecoder, targetMap);
+    ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
+        ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(testMap.testTargetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
         .containsExactly(new Label("//test:test"), new Label("//test:test2"))
         .inOrder();
@@ -168,69 +168,69 @@ public class TestMapTest extends BlazeTestCase {
 
   @Test
   public void testSourceIncludedMultipleTimesFindsAll() throws Exception {
-    RuleMap ruleMap =
-        ruleMapBuilder
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMap targetMap =
+        targetMapBuilder
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test")
                     .setKind("java_test")
                     .addDependency("//test:lib"))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test2")
                     .setKind("java_test")
                     .addDependency("//test:lib2"))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib")
                     .setKind("java_library")
                     .addSource(sourceRoot("test/Test.java")))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib2")
                     .setKind("java_library")
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
-    TestMap testMap = new TestMap(project, artifactLocationDecoder, ruleMap);
-    ImmutableMultimap<RuleKey, RuleKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(ruleMap);
+    TestMap testMap = new TestMap(project, artifactLocationDecoder, targetMap);
+    ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
+        ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(testMap.testTargetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
         .containsExactly(new Label("//test:test"), new Label("//test:test2"));
   }
 
   @Test
   public void testSourceIncludedMultipleTimesShouldOnlyGiveOneInstanceOfTest() throws Exception {
-    RuleMap ruleMap =
-        ruleMapBuilder
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMap targetMap =
+        targetMapBuilder
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test")
                     .setKind("java_test")
                     .addDependency("//test:lib")
                     .addDependency("//test:lib2"))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib")
                     .setKind("java_library")
                     .addSource(sourceRoot("test/Test.java")))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib2")
                     .setKind("java_library")
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
-    TestMap testMap = new TestMap(project, artifactLocationDecoder, ruleMap);
-    ImmutableMultimap<RuleKey, RuleKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(ruleMap);
+    TestMap testMap = new TestMap(project, artifactLocationDecoder, targetMap);
+    ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
+        ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(testMap.testTargetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
         .containsExactly(new Label("//test:test"));
   }

@@ -17,56 +17,56 @@ package com.google.idea.blaze.android.sync.importer.aggregators;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.idea.blaze.base.ideinfo.AndroidRuleIdeInfo;
+import com.google.idea.blaze.android.sync.importer.aggregators.TransitiveResourceMap.TransitiveResourceInfo;
+import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
-import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import java.util.List;
 import java.util.Set;
 
 /** Computes transitive resources. */
 public class TransitiveResourceMap
-    extends RuleIdeInfoTransitiveAggregator<TransitiveResourceMap.TransitiveResourceInfo> {
+    extends TargetIdeInfoTransitiveAggregator<TransitiveResourceInfo> {
   /** The transitive info computed per-rule */
   public static class TransitiveResourceInfo {
     public static final TransitiveResourceInfo NO_RESOURCES = new TransitiveResourceInfo();
     public final Set<ArtifactLocation> transitiveResources = Sets.newHashSet();
-    public final Set<RuleKey> transitiveResourceRules = Sets.newHashSet();
+    public final Set<TargetKey> transitiveResourceTargets = Sets.newHashSet();
   }
 
-  public TransitiveResourceMap(RuleMap ruleMap) {
-    super(ruleMap);
+  public TransitiveResourceMap(TargetMap targetMap) {
+    super(targetMap);
   }
 
   @Override
-  protected Iterable<Label> getDependencies(RuleIdeInfo ruleIdeInfo) {
-    AndroidRuleIdeInfo androidRuleIdeInfo = ruleIdeInfo.androidRuleIdeInfo;
-    if (androidRuleIdeInfo != null && androidRuleIdeInfo.legacyResources != null) {
-      List<Label> result = Lists.newArrayList(super.getDependencies(ruleIdeInfo));
-      result.add(androidRuleIdeInfo.legacyResources);
+  protected Iterable<TargetKey> getDependencies(TargetIdeInfo target) {
+    AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
+    if (androidIdeInfo != null && androidIdeInfo.legacyResources != null) {
+      List<TargetKey> result = Lists.newArrayList(super.getDependencies(target));
+      result.add(TargetKey.forPlainTarget(androidIdeInfo.legacyResources));
       return result;
     }
-    return super.getDependencies(ruleIdeInfo);
+    return super.getDependencies(target);
   }
 
-  public TransitiveResourceInfo get(RuleKey ruleKey) {
-    return getOrDefault(ruleKey, TransitiveResourceInfo.NO_RESOURCES);
+  public TransitiveResourceInfo get(TargetKey targetKey) {
+    return getOrDefault(targetKey, TransitiveResourceInfo.NO_RESOURCES);
   }
 
   @Override
-  protected TransitiveResourceInfo createForRule(RuleIdeInfo ruleIdeInfo) {
+  protected TransitiveResourceInfo createForTarget(TargetIdeInfo target) {
     TransitiveResourceInfo result = new TransitiveResourceInfo();
-    AndroidRuleIdeInfo androidRuleIdeInfo = ruleIdeInfo.androidRuleIdeInfo;
-    if (androidRuleIdeInfo == null) {
+    AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
+    if (androidIdeInfo == null) {
       return result;
     }
-    if (androidRuleIdeInfo.legacyResources != null) {
+    if (androidIdeInfo.legacyResources != null) {
       return result;
     }
-    result.transitiveResources.addAll(androidRuleIdeInfo.resources);
-    result.transitiveResourceRules.add(ruleIdeInfo.key);
+    result.transitiveResources.addAll(androidIdeInfo.resources);
+    result.transitiveResourceTargets.add(target.key);
     return result;
   }
 
@@ -74,7 +74,7 @@ public class TransitiveResourceMap
   protected TransitiveResourceInfo reduce(
       TransitiveResourceInfo value, TransitiveResourceInfo dependencyValue) {
     value.transitiveResources.addAll(dependencyValue.transitiveResources);
-    value.transitiveResourceRules.addAll(dependencyValue.transitiveResourceRules);
+    value.transitiveResourceTargets.addAll(dependencyValue.transitiveResourceTargets);
     return value;
   }
 }

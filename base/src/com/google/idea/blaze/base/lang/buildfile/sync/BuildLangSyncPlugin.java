@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.lang.buildfile.sync;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -57,7 +57,7 @@ public class BuildLangSyncPlugin extends BlazeSyncPlugin.Adapter {
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
-      RuleMap ruleMap,
+      TargetMap targetMap,
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState) {
 

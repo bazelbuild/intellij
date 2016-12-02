@@ -15,9 +15,10 @@
  */
 package com.google.idea.blaze.base.model;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
@@ -30,32 +31,35 @@ import javax.annotation.concurrent.Immutable;
 /** The top-level object serialized to cache. */
 @Immutable
 public class BlazeProjectData implements Serializable {
-  private static final long serialVersionUID = 23L;
+  private static final long serialVersionUID = 25L;
 
   public final long syncTime;
-  public final RuleMap ruleMap;
+  public final TargetMap targetMap;
+  public final ImmutableMap<String, String> blazeInfo;
   public final BlazeRoots blazeRoots;
   @Nullable public final WorkingSet workingSet;
   public final WorkspacePathResolver workspacePathResolver;
   public final ArtifactLocationDecoder artifactLocationDecoder;
   public final WorkspaceLanguageSettings workspaceLanguageSettings;
   public final SyncState syncState;
-  public final ImmutableMultimap<RuleKey, RuleKey> reverseDependencies;
+  public final ImmutableMultimap<TargetKey, TargetKey> reverseDependencies;
   @Nullable public final String vcsName;
 
   public BlazeProjectData(
       long syncTime,
-      RuleMap ruleMap,
+      TargetMap targetMap,
+      ImmutableMap<String, String> blazeInfo,
       BlazeRoots blazeRoots,
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
       WorkspaceLanguageSettings workspaceLangaugeSettings,
       SyncState syncState,
-      ImmutableMultimap<RuleKey, RuleKey> reverseDependencies,
+      ImmutableMultimap<TargetKey, TargetKey> reverseDependencies,
       String vcsName) {
     this.syncTime = syncTime;
-    this.ruleMap = ruleMap;
+    this.targetMap = targetMap;
+    this.blazeInfo = blazeInfo;
     this.blazeRoots = blazeRoots;
     this.workingSet = workingSet;
     this.workspacePathResolver = workspacePathResolver;

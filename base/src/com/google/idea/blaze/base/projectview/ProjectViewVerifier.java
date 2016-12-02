@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.projectview;
 
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.io.WorkspaceScanner;
+import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.section.ListSection;
@@ -47,9 +47,15 @@ public class ProjectViewVerifier {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings) {
-    if (!verifyIncludedPackagesExistOnDisk(context, workspaceRoot, projectViewSet)) {
-      return false;
-    }
+    return verifyProjectViewNoDisk(context, projectViewSet, workspaceLanguageSettings)
+        && verifyIncludedPackagesExistOnDisk(context, workspaceRoot, projectViewSet);
+  }
+
+  /** Verifies the project view, without hitting disk. */
+  public static boolean verifyProjectViewNoDisk(
+      BlazeContext context,
+      ProjectViewSet projectViewSet,
+      WorkspaceLanguageSettings workspaceLanguageSettings) {
     if (!verifyIncludedPackagesAreNotExcluded(context, projectViewSet)) {
       return false;
     }
@@ -116,7 +122,7 @@ public class ProjectViewVerifier {
       BlazeContext context, WorkspaceRoot workspaceRoot, ProjectViewSet projectViewSet) {
     boolean ok = true;
 
-    WorkspaceScanner workspaceScanner = WorkspaceScanner.getInstance();
+    FileAttributeProvider fileAttributeProvider = FileAttributeProvider.getInstance();
 
     for (ProjectViewSet.ProjectViewFile projectViewFile : projectViewSet.getProjectViewFiles()) {
       List<DirectoryEntry> directoryEntries = Lists.newArrayList();
@@ -129,7 +135,7 @@ public class ProjectViewVerifier {
           continue;
         }
         WorkspacePath workspacePath = entry.directory;
-        if (!workspaceScanner.exists(workspaceRoot, workspacePath)) {
+        if (!fileAttributeProvider.exists(workspaceRoot.fileForPath(workspacePath))) {
           IssueOutput.error(
                   String.format(
                       "Directory '%s' specified in import roots not found "

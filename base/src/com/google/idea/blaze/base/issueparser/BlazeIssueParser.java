@@ -135,6 +135,7 @@ public class BlazeIssueParser {
       return IssueOutput.issue(type, matcher.group(5))
           .inFile(file)
           .onLine(Integer.parseInt(matcher.group(2)))
+          .inColumn(parseOptionalInt(matcher.group(4)))
           .build();
     }
   }
@@ -170,6 +171,7 @@ public class BlazeIssueParser {
             IssueOutput.error(message.toString())
                 .inFile(new File(matcher.group(2)))
                 .onLine(Integer.parseInt(matcher.group(3)))
+                .inColumn(parseOptionalInt(matcher.group(4)))
                 .build());
       }
     }
@@ -185,7 +187,17 @@ public class BlazeIssueParser {
       return IssueOutput.error(matcher.group(5))
           .inFile(new File(matcher.group(2)))
           .onLine(Integer.parseInt(matcher.group(3)))
+          .inColumn(parseOptionalInt(matcher.group(4)))
           .build();
+    }
+  }
+
+  /** Falls back to returning -1 if no integer can be parsed. */
+  private static int parseOptionalInt(String intString) {
+    try {
+      return Integer.parseInt(intString);
+    } catch (NumberFormatException e) {
+      return -1;
     }
   }
 

@@ -16,58 +16,57 @@
 package com.google.idea.blaze.android.sync.importer.aggregators;
 
 import com.google.common.collect.Maps;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
-import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 
-/** Peforms a transitive reduction on the rule */
+/** Peforms a transitive reduction on the targets */
 public abstract class TransitiveAggregator<T> {
-  private Map<RuleKey, T> ruleKeyToResult;
+  private Map<TargetKey, T> targetKeyToResult;
 
-  protected TransitiveAggregator(RuleMap ruleMap) {
-    this.ruleKeyToResult = Maps.newHashMap();
-    for (RuleIdeInfo rule : ruleMap.rules()) {
-      aggregate(rule.key, ruleMap);
+  protected TransitiveAggregator(TargetMap targetMap) {
+    this.targetKeyToResult = Maps.newHashMap();
+    for (TargetIdeInfo rule : targetMap.targets()) {
+      aggregate(rule.key, targetMap);
     }
   }
 
-  protected T getOrDefault(RuleKey ruleKey, T defaultValue) {
-    T result = ruleKeyToResult.get(ruleKey);
+  protected T getOrDefault(TargetKey targetKey, T defaultValue) {
+    T result = targetKeyToResult.get(targetKey);
     return result != null ? result : defaultValue;
   }
 
   @Nullable
-  private T aggregate(RuleKey ruleKey, RuleMap ruleMap) {
-    T result = ruleKeyToResult.get(ruleKey);
+  private T aggregate(TargetKey targetKey, TargetMap targetMap) {
+    T result = targetKeyToResult.get(targetKey);
     if (result != null) {
       return result;
     }
 
-    RuleIdeInfo rule = ruleMap.get(ruleKey);
-    if (rule == null) {
+    TargetIdeInfo target = targetMap.get(targetKey);
+    if (target == null) {
       return null;
     }
 
-    result = createForRule(rule);
+    result = createForTarget(target);
 
-    for (Label depLabel : getDependencies(rule)) {
-      T depResult = aggregate(RuleKey.forDependency(rule, depLabel), ruleMap);
+    for (TargetKey dep : getDependencies(target)) {
+      T depResult = aggregate(dep, targetMap);
       if (depResult != null) {
         result = reduce(result, depResult);
       }
     }
 
-    ruleKeyToResult.put(ruleKey, result);
+    targetKeyToResult.put(targetKey, result);
     return result;
   }
 
-  protected abstract Iterable<Label> getDependencies(RuleIdeInfo rule);
+  protected abstract Iterable<TargetKey> getDependencies(TargetIdeInfo target);
 
-  /** Creates the initial value for a given rule. */
-  protected abstract T createForRule(RuleIdeInfo rule);
+  /** Creates the initial value for a given target. */
+  protected abstract T createForTarget(TargetIdeInfo target);
 
   /** Reduces two values, sum + new value. May mutate value in place. */
   protected abstract T reduce(T value, T dependencyValue);

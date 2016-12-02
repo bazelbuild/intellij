@@ -56,7 +56,7 @@ public class BuildFileModifierImpl implements BuildFileModifier {
                 LOG.error("No BUILD file found at location: " + newRule.blazePackage());
                 return false;
               }
-              buildFile.add(createRule(project, ruleKind, newRule.ruleName().toString()));
+              buildFile.add(createRule(project, ruleKind, newRule.targetName().toString()));
               return true;
             });
   }

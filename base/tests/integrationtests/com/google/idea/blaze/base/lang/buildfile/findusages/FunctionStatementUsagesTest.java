@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.junit.Test;
@@ -38,7 +39,7 @@ public class FunctionStatementUsagesTest extends BuildFileIntegrationTestCase {
   public void testLocalReferences() {
     BuildFile buildFile =
         createBuildFile(
-            "java/com/google/build_defs.bzl",
+            new WorkspacePath("java/com/google/build_defs.bzl"),
             "def function(name, srcs, deps):",
             "    # function body",
             "function(name = \"foo\")");
@@ -55,11 +56,12 @@ public class FunctionStatementUsagesTest extends BuildFileIntegrationTestCase {
   @Test
   public void testLoadedFunctionReferences() {
     BuildFile extFile =
-        createBuildFile("java/com/google/build_defs.bzl", "def function(name, deps)");
+        createBuildFile(
+            new WorkspacePath("java/com/google/build_defs.bzl"), "def function(name, deps)");
 
     BuildFile buildFile =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "load(",
             "\"//java/com/google:build_defs.bzl\",",
             "\"function\"",
@@ -73,17 +75,18 @@ public class FunctionStatementUsagesTest extends BuildFileIntegrationTestCase {
 
     PsiElement ref = references[0].getElement();
     assertThat(ref).isInstanceOf(StringLiteral.class);
-    assertThat(ref.getParent()).isEqualTo(load);
+    assertThat(ref.getParent().getParent()).isEqualTo(load);
   }
 
   @Test
   public void testFuncallReference() {
     BuildFile extFile =
-        createBuildFile("java/com/google/tools/build_defs.bzl", "def function(name, deps)");
+        createBuildFile(
+            new WorkspacePath("java/com/google/tools/build_defs.bzl"), "def function(name, deps)");
 
     BuildFile buildFile =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "load(",
             "\"//java/com/google/tools:build_defs.bzl\",",
             "\"function\"",

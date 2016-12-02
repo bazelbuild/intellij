@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.SyncState;
@@ -39,6 +39,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
@@ -75,7 +76,7 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
-      RuleMap ruleMap,
+      TargetMap targetMap,
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState) {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)) {
@@ -172,5 +173,14 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
   @Override
   public Collection<SectionParser> getSections() {
     return ImmutableList.of(TsConfigRuleSection.PARSER);
+  }
+
+  @Nullable
+  @Override
+  public LibrarySource getLibrarySource(BlazeProjectData blazeProjectData) {
+    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)) {
+      return null;
+    }
+    return new BlazeTypescriptLibrarySource();
   }
 }

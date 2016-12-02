@@ -37,7 +37,6 @@ public enum TokenKind {
   EQUALS("="),
   EQUALS_EQUALS("=="),
   EXCEPT("except"),
-  FALSE("False"),
   FINALLY("finally"),
   FOR("for"),
   FROM("from"),
@@ -86,7 +85,6 @@ public enum TokenKind {
   STAR("*"),
   STAR_STAR("**"),
   STRING("string"),
-  TRUE("True"),
   TRY("try"),
   WHILE("while"),
   WITH("with"),
@@ -110,13 +108,13 @@ public enum TokenKind {
     return name;
   }
 
-  public static ImmutableSet<TokenKind> KEYWORDS =
+  public static final ImmutableSet<TokenKind> KEYWORDS =
       ImmutableSet.of(
-          AND, AS, ASSERT, BREAK, CLASS, CONTINUE, DEF, DEL, ELIF, ELSE, EXCEPT, FALSE, FINALLY,
-          FOR, FROM, GLOBAL, IF, IMPORT, IN, IS, LAMBDA, LOAD, NONLOCAL, NOT, OR, PASS, RAISE,
-          RETURN, TRUE, TRY, WHILE, WITH, YIELD);
+          AND, AS, ASSERT, BREAK, CLASS, CONTINUE, DEF, DEL, ELIF, ELSE, EXCEPT, FINALLY, FOR, FROM,
+          GLOBAL, IF, IMPORT, IN, IS, LAMBDA, LOAD, NONLOCAL, NOT, OR, PASS, RAISE, RETURN, TRY,
+          WHILE, WITH, YIELD);
 
-  public static ImmutableSet<TokenKind> OPERATIONS =
+  public static final ImmutableSet<TokenKind> OPERATIONS =
       ImmutableSet.of(
           AND,
           EQUALS_EQUALS,
@@ -135,6 +133,6 @@ public enum TokenKind {
           PIPE,
           STAR);
 
-  public static ImmutableSet<TokenKind> AUGMENTED_ASSIGNMENT_OPS =
+  public static final ImmutableSet<TokenKind> AUGMENTED_ASSIGNMENT_OPS =
       ImmutableSet.of(PLUS_EQUALS, MINUS_EQUALS, STAR_EQUALS, SLASH_EQUALS, PERCENT_EQUALS);
 }

@@ -27,10 +27,10 @@ import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
 import com.google.idea.blaze.android.sync.model.idea.SourceProviderImpl;
 import com.google.idea.blaze.android.sync.sdk.SdkUtil;
-import com.google.idea.blaze.base.ideinfo.AndroidRuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -89,37 +89,38 @@ public class BlazeAndroidProjectStructureSyncer {
 
         // Create android resource modules
         // Because we're setting up dependencies, the modules have to exist before we configure them
-        Map<RuleKey, AndroidResourceModule> ruleToAndroidResourceModule = Maps.newHashMap();
+        Map<TargetKey, AndroidResourceModule> targetToAndroidResourceModule = Maps.newHashMap();
         for (AndroidResourceModule androidResourceModule :
             syncData.importResult.androidResourceModules) {
-          ruleToAndroidResourceModule.put(androidResourceModule.ruleKey, androidResourceModule);
-          String moduleName = moduleNameForAndroidModule(androidResourceModule.ruleKey);
+          targetToAndroidResourceModule.put(androidResourceModule.targetKey, androidResourceModule);
+          String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
           moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
         }
 
         // Configure android resource modules
-        for (AndroidResourceModule androidResourceModule : ruleToAndroidResourceModule.values()) {
-          RuleIdeInfo rule = blazeProjectData.ruleMap.get(androidResourceModule.ruleKey);
-          AndroidRuleIdeInfo androidRuleIdeInfo = rule.androidRuleIdeInfo;
-          assert androidRuleIdeInfo != null;
+        for (AndroidResourceModule androidResourceModule : targetToAndroidResourceModule.values()) {
+          TargetIdeInfo target = blazeProjectData.targetMap.get(androidResourceModule.targetKey);
+          AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
+          assert androidIdeInfo != null;
 
-          String moduleName = moduleNameForAndroidModule(rule.key);
+          String moduleName = moduleNameForAndroidModule(target.key);
           Module module = moduleEditor.findModule(moduleName);
           assert module != null;
           ModifiableRootModel modifiableRootModel = moduleEditor.editModule(module);
 
-          updateAndroidRuleModule(
+          updateAndroidTargetModule(
               project,
               workspaceRoot,
               blazeProjectData.artifactLocationDecoder,
               androidSdkPlatform,
-              rule,
+              target,
               module,
               modifiableRootModel,
               androidResourceModule);
 
-          for (RuleKey resourceDependency : androidResourceModule.transitiveResourceDependencies) {
-            if (!ruleToAndroidResourceModule.containsKey(resourceDependency)) {
+          for (TargetKey resourceDependency :
+              androidResourceModule.transitiveResourceDependencies) {
+            if (!targetToAndroidResourceModule.containsKey(resourceDependency)) {
               continue;
             }
             String dependencyModuleName = moduleNameForAndroidModule(resourceDependency);
@@ -130,7 +131,7 @@ public class BlazeAndroidProjectStructureSyncer {
             modifiableRootModel.addModuleOrderEntry(dependency);
             ++totalOrderEntries;
           }
-          rClassBuilder.addRClass(androidRuleIdeInfo.resourceJavaPackage, module);
+          rClassBuilder.addRClass(androidIdeInfo.resourceJavaPackage, module);
           // Add a dependency from the workspace to the resource module
           workspaceModifiableModel.addModuleOrderEntry(module);
         }
@@ -160,29 +161,29 @@ public class BlazeAndroidProjectStructureSyncer {
 
         int totalRunConfigurationModules = 0;
         for (Label label : runConfigurationModuleTargets) {
-          RuleKey ruleKey = RuleKey.forPlainTarget(label);
+          TargetKey targetKey = TargetKey.forPlainTarget(label);
           // If it's a resource module, it will already have been created
-          if (ruleToAndroidResourceModule.containsKey(ruleKey)) {
+          if (targetToAndroidResourceModule.containsKey(targetKey)) {
             continue;
           }
           // Ensure the label is a supported android rule that exists
-          RuleIdeInfo rule = blazeProjectData.ruleMap.get(ruleKey);
-          if (rule == null) {
+          TargetIdeInfo target = blazeProjectData.targetMap.get(targetKey);
+          if (target == null) {
             continue;
           }
-          if (!rule.kindIsOneOf(Kind.ANDROID_BINARY, Kind.ANDROID_TEST)) {
+          if (!target.kindIsOneOf(Kind.ANDROID_BINARY, Kind.ANDROID_TEST)) {
             continue;
           }
 
-          String moduleName = moduleNameForAndroidModule(ruleKey);
+          String moduleName = moduleNameForAndroidModule(targetKey);
           Module module = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
           ModifiableRootModel modifiableRootModel = moduleEditor.editModule(module);
-          updateAndroidRuleModule(
+          updateAndroidTargetModule(
               project,
               workspaceRoot,
               blazeProjectData.artifactLocationDecoder,
               androidSdkPlatform,
-              rule,
+              target,
               module,
               modifiableRootModel,
               null);
@@ -206,9 +207,9 @@ public class BlazeAndroidProjectStructureSyncer {
 
   /** Ensures a suitable module exists for the given android target. */
   @Nullable
-  public static Module ensureRunConfigurationModule(Project project, Label target) {
-    RuleKey ruleKey = RuleKey.forPlainTarget(target);
-    String moduleName = moduleNameForAndroidModule(ruleKey);
+  public static Module ensureRunConfigurationModule(Project project, Label label) {
+    TargetKey targetKey = TargetKey.forPlainTarget(label);
+    String moduleName = moduleNameForAndroidModule(targetKey);
     Module module = ModuleManager.getInstance(project).findModuleByName(moduleName);
     if (module != null) {
       return module;
@@ -224,11 +225,11 @@ public class BlazeAndroidProjectStructureSyncer {
     if (androidSdkPlatform == null) {
       return null;
     }
-    RuleIdeInfo rule = blazeProjectData.ruleMap.get(ruleKey);
-    if (rule == null) {
+    TargetIdeInfo target = blazeProjectData.targetMap.get(targetKey);
+    if (target == null) {
       return null;
     }
-    if (rule.androidRuleIdeInfo == null) {
+    if (target.androidIdeInfo == null) {
       return null;
     }
     // We can't run a write action outside the dispatch thread, and can't
@@ -245,12 +246,12 @@ public class BlazeAndroidProjectStructureSyncer {
     ApplicationManager.getApplication()
         .runWriteAction(
             () -> {
-              updateAndroidRuleModule(
+              updateAndroidTargetModule(
                   project,
                   workspaceRoot,
                   blazeProjectData.artifactLocationDecoder,
                   androidSdkPlatform,
-                  rule,
+                  target,
                   newModule,
                   modifiableRootModel,
                   null);
@@ -259,8 +260,8 @@ public class BlazeAndroidProjectStructureSyncer {
     return newModule;
   }
 
-  public static String moduleNameForAndroidModule(RuleKey ruleKey) {
-    return ruleKey
+  public static String moduleNameForAndroidModule(TargetKey targetKey) {
+    return targetKey
         .toString()
         .substring(2) // Skip initial "//"
         .replace('/', '.')
@@ -289,12 +290,12 @@ public class BlazeAndroidProjectStructureSyncer {
   }
 
   /** Updates a module from an android rule. */
-  private static void updateAndroidRuleModule(
+  private static void updateAndroidTargetModule(
       Project project,
       WorkspaceRoot workspaceRoot,
       ArtifactLocationDecoder artifactLocationDecoder,
       AndroidSdkPlatform androidSdkPlatform,
-      RuleIdeInfo rule,
+      TargetIdeInfo target,
       Module module,
       ModifiableRootModel modifiableRootModel,
       @Nullable AndroidResourceModule androidResourceModule) {
@@ -308,16 +309,16 @@ public class BlazeAndroidProjectStructureSyncer {
             ? artifactLocationDecoder.decodeAll(androidResourceModule.transitiveResources)
             : ImmutableList.of();
 
-    AndroidRuleIdeInfo androidRuleIdeInfo = rule.androidRuleIdeInfo;
-    assert androidRuleIdeInfo != null;
+    AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
+    assert androidIdeInfo != null;
 
-    File moduleDirectory = workspaceRoot.fileForPath(rule.label.blazePackage());
-    ArtifactLocation manifestArtifactLocation = androidRuleIdeInfo.manifest;
+    File moduleDirectory = workspaceRoot.fileForPath(target.key.label.blazePackage());
+    ArtifactLocation manifestArtifactLocation = androidIdeInfo.manifest;
     File manifest =
         manifestArtifactLocation != null
             ? artifactLocationDecoder.decode(manifestArtifactLocation)
             : new File(moduleDirectory, "AndroidManifest.xml");
-    String resourceJavaPackage = androidRuleIdeInfo.resourceJavaPackage;
+    String resourceJavaPackage = androidIdeInfo.resourceJavaPackage;
     ResourceModuleContentRootCustomizer.setupContentRoots(modifiableRootModel, resources);
 
     createAndroidModel(

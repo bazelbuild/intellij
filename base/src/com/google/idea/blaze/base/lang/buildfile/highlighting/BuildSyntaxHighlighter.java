@@ -26,6 +26,7 @@ import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.NUMBE
 import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.OPERATION_SIGN;
 import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARAMETER;
 import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARENTHESES;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL;
 import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.SEMICOLON;
 import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.STRING;
 
@@ -62,6 +63,8 @@ public class BuildSyntaxHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey BUILD_KEYWORD_ARG = key("BUILD.KEYWORD.ARG", PARAMETER);
   public static final TextAttributesKey BUILD_FN_DEFINITION =
       key("BUILD.FN.DEFINITION", FUNCTION_DECLARATION);
+  public static final TextAttributesKey BUILD_BUILTIN_NAME =
+      TextAttributesKey.createTextAttributesKey("BUILD.BUILTIN_NAME", PREDEFINED_SYMBOL);
 
   private static TextAttributesKey key(String name, TextAttributesKey fallbackKey) {
     return TextAttributesKey.createTextAttributesKey(name, fallbackKey);

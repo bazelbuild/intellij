@@ -18,16 +18,16 @@ package com.google.idea.blaze.base.ideinfo;
 /** Tag constants used by our rules. */
 public class Tags {
   /** Forces import of the target output. */
-  public static final String RULE_TAG_IMPORT_TARGET_OUTPUT = "intellij-import-target-output";
+  public static final String TARGET_TAG_IMPORT_TARGET_OUTPUT = "intellij-import-target-output";
 
-  public static final String RULE_TAG_IMPORT_AS_LIBRARY_LEGACY = "aswb-import-as-library";
+  public static final String TARGET_TAG_IMPORT_AS_LIBRARY_LEGACY = "aswb-import-as-library";
 
   /**
    * Signals to the import process that the output of this rule will be provided by the IntelliJ
    * SDK.
    */
-  public static final String RULE_TAG_PROVIDED_BY_SDK = "intellij-provided-by-sdk";
+  public static final String TARGET_TAG_PROVIDED_BY_SDK = "intellij-provided-by-sdk";
 
   /** Ignores the target. */
-  public static final String RULE_TAG_EXCLUDE_TARGET = "intellij-exclude-target";
+  public static final String TARGET_TAG_EXCLUDE_TARGET = "intellij-exclude-target";
 }

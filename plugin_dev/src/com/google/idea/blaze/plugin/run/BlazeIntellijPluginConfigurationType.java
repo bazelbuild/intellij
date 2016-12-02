@@ -15,13 +15,13 @@
  */
 package com.google.idea.blaze.plugin.run;
 
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.run.BlazeRunConfigurationFactory;
-import com.google.idea.blaze.base.run.rulefinder.RuleFinder;
+import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.plugin.IntellijPluginRule;
 import com.intellij.diagnostic.VMOptions;
@@ -50,13 +50,13 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
 
   static class BlazeIntellijPluginRunConfigurationFactory extends BlazeRunConfigurationFactory {
     @Override
-    public boolean handlesTarget(Project project, BlazeProjectData blazeProjectData, Label target) {
+    public boolean handlesTarget(Project project, BlazeProjectData blazeProjectData, Label label) {
       if (!blazeProjectData.workspaceLanguageSettings.isWorkspaceType(
           WorkspaceType.INTELLIJ_PLUGIN)) {
         return false;
       }
-      RuleIdeInfo rule = blazeProjectData.ruleMap.get(RuleKey.forPlainTarget(target));
-      return rule != null && IntellijPluginRule.isPluginRule(rule);
+      TargetIdeInfo target = blazeProjectData.targetMap.get(TargetKey.forPlainTarget(label));
+      return target != null && IntellijPluginRule.isPluginTarget(target);
     }
 
     @Override
@@ -99,7 +99,8 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
               project,
               this,
               "Unnamed",
-              RuleFinder.getInstance().findFirstRule(project, IntellijPluginRule::isPluginRule));
+              TargetFinder.getInstance()
+                  .findFirstTarget(project, IntellijPluginRule::isPluginTarget));
       config.vmParameters = currentVmOptions.getValue();
       return config;
     }

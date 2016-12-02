@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguag
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.repackaged.devtools.build.lib.query2.proto.proto2api.Build;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
@@ -51,12 +52,12 @@ public class BuiltInFunctionAttributeCompletionContributorTest
   public void testSimpleCompletion() {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
-    BuildFile file = createBuildFile("BUILD", "sh_binary(");
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "sh_binary(");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 0, "sh_binary(".length());
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, "sh_binary(".length());
 
-    String[] completionItems = getCompletionItemsAsStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).asList().containsAllOf("name", "deps", "srcs", "data");
   }
 
@@ -64,12 +65,12 @@ public class BuiltInFunctionAttributeCompletionContributorTest
   public void testSimpleSingleCompletion() {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
-    BuildFile file = createBuildFile("BUILD", "sh_binary(", "    n");
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "sh_binary(", "    n");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 1, "    n".length());
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 1, "    n".length());
 
-    String[] completionItems = getCompletionItemsAsStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).isNull();
     assertFileContents(file, "sh_binary(", "    name");
   }
@@ -78,10 +79,10 @@ public class BuiltInFunctionAttributeCompletionContributorTest
   public void testNoCompletionInUnknownRule() {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
-    BuildFile file = createBuildFile("BUILD", "java_binary(");
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "java_binary(");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 0, "java_binary(".length());
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, "java_binary(".length());
 
     LookupElement[] completionItems = testFixture.completeBasic();
     assertThat(completionItems).isEmpty();
@@ -91,23 +92,23 @@ public class BuiltInFunctionAttributeCompletionContributorTest
   public void testNoCompletionInComment() {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
-    BuildFile file = createBuildFile("BUILD", "sh_binary(#");
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "sh_binary(#");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 0, "sh_binary(#".length());
-    assertThat(getCompletionItemsAsStrings()).isEmpty();
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, "sh_binary(#".length());
+    assertThat(editorTest.getCompletionItemsAsStrings()).isEmpty();
   }
 
   @Test
   public void testCompletionInSkylarkExtension() {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
-    BuildFile file = createBuildFile("skylark.bzl", "native.sh_binary(");
+    BuildFile file = createBuildFile(new WorkspacePath("skylark.bzl"), "native.sh_binary(");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 0, "native.sh_binary(".length());
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, "native.sh_binary(".length());
 
-    String[] completionItems = getCompletionItemsAsStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).asList().containsAllOf("name", "deps", "srcs", "data");
   }
 

@@ -18,14 +18,13 @@ package com.google.idea.blaze.java.sync.importer;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.sync.projectview.ProjectViewRuleImportFilter;
-import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
 import java.util.List;
@@ -34,79 +33,70 @@ import java.util.stream.Collectors;
 
 /** Segments java rules into source/libraries */
 public class JavaSourceFilter {
-  private static final BoolExperiment NO_EMPTY_SOURCE_RULES =
-      new BoolExperiment("no.empty.source.rules", true);
-
-  final List<RuleIdeInfo> sourceRules;
-  final List<RuleIdeInfo> libraryRules;
-  final List<RuleIdeInfo> protoLibraries;
-  final Map<RuleKey, Collection<ArtifactLocation>> ruleToJavaSources;
+  final List<TargetIdeInfo> sourceTargets;
+  final List<TargetIdeInfo> libraryTargets;
+  final List<TargetIdeInfo> protoLibraries;
+  final Map<TargetKey, Collection<ArtifactLocation>> targetToJavaSources;
 
   public JavaSourceFilter(
       Project project,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
-      RuleMap ruleMap) {
-    ProjectViewRuleImportFilter importFilter =
-        new ProjectViewRuleImportFilter(project, workspaceRoot, projectViewSet);
-    List<RuleIdeInfo> includedRules =
-        ruleMap
-            .rules()
+      TargetMap targetMap) {
+    ProjectViewTargetImportFilter importFilter =
+        new ProjectViewTargetImportFilter(project, workspaceRoot, projectViewSet);
+    List<TargetIdeInfo> includedTargets =
+        targetMap
+            .targets()
             .stream()
-            .filter(rule -> !importFilter.excludeTarget(rule))
+            .filter(target -> !importFilter.excludeTarget(target))
             .collect(Collectors.toList());
 
-    List<RuleIdeInfo> javaRules =
-        includedRules
+    List<TargetIdeInfo> javaTargets =
+        includedTargets
             .stream()
-            .filter(rule -> rule.javaRuleIdeInfo != null)
+            .filter(target -> target.javaIdeInfo != null)
             .collect(Collectors.toList());
 
-    ruleToJavaSources = Maps.newHashMap();
-    for (RuleIdeInfo rule : javaRules) {
+    targetToJavaSources = Maps.newHashMap();
+    for (TargetIdeInfo target : javaTargets) {
       List<ArtifactLocation> javaSources =
-          rule.sources
+          target
+              .sources
               .stream()
               .filter(source -> source.getRelativePath().endsWith(".java"))
               .collect(Collectors.toList());
-      ruleToJavaSources.put(rule.key, javaSources);
+      targetToJavaSources.put(target.key, javaSources);
     }
 
-    boolean noEmptySourceRules = NO_EMPTY_SOURCE_RULES.getValue();
-    sourceRules = Lists.newArrayList();
-    libraryRules = Lists.newArrayList();
-    for (RuleIdeInfo rule : javaRules) {
+    sourceTargets = Lists.newArrayList();
+    libraryTargets = Lists.newArrayList();
+    for (TargetIdeInfo target : javaTargets) {
       boolean importAsSource =
-          importFilter.isSourceRule(rule)
-              && canImportAsSource(rule)
-              && (noEmptySourceRules
-                  ? anyNonGeneratedSources(ruleToJavaSources.get(rule.key))
-                  : !allSourcesGenerated(ruleToJavaSources.get(rule.key)));
+          importFilter.isSourceTarget(target)
+              && canImportAsSource(target)
+              && (anyNonGeneratedSources(targetToJavaSources.get(target.key)));
 
       if (importAsSource) {
-        sourceRules.add(rule);
+        sourceTargets.add(target);
       } else {
-        libraryRules.add(rule);
+        libraryTargets.add(target);
       }
     }
 
     protoLibraries =
-        includedRules
+        includedTargets
             .stream()
-            .filter(rule -> rule.kind == Kind.PROTO_LIBRARY)
+            .filter(target -> target.kind == Kind.PROTO_LIBRARY)
             .collect(Collectors.toList());
   }
 
-  public Iterable<RuleIdeInfo> getSourceRules() {
-    return sourceRules;
+  public Iterable<TargetIdeInfo> getSourceTargets() {
+    return sourceTargets;
   }
 
-  private boolean canImportAsSource(RuleIdeInfo rule) {
-    return !rule.kindIsOneOf(Kind.JAVA_WRAP_CC, Kind.JAVA_IMPORT);
-  }
-
-  private boolean allSourcesGenerated(Collection<ArtifactLocation> sources) {
-    return !sources.isEmpty() && sources.stream().allMatch(ArtifactLocation::isGenerated);
+  private boolean canImportAsSource(TargetIdeInfo target) {
+    return !target.kindIsOneOf(Kind.JAVA_WRAP_CC, Kind.JAVA_IMPORT);
   }
 
   private boolean anyNonGeneratedSources(Collection<ArtifactLocation> sources) {

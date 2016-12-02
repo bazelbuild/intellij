@@ -61,8 +61,23 @@ java_library(
     ],
 )
 
+java_library(
+    name = "integration_test_utils",
+    testonly = 1,
+    srcs = glob(["tests/utils/integration/**/*.java"]),
+    deps = [
+        "//base",
+        "//base:integration_test_utils",
+        "//base:unit_test_utils",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "@jsr305_annotations//jar",
+        "@junit//jar",
+    ],
+)
+
 load(
     "//testing:test_defs.bzl",
+    "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
 
@@ -73,6 +88,31 @@ intellij_unit_test_suite(
     deps = [
         ":aswb_lib",
         "//base",
+        "//base:unit_test_utils",
+        "//common/experiments",
+        "//common/experiments:unit_test_utils",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//java",
+        "//proto_deps",
+        "@jsr305_annotations//jar",
+        "@junit//jar",
+    ],
+)
+
+intellij_integration_test_suite(
+    name = "integration_tests",
+    srcs = glob(["tests/integrationtests/**/*.java"]),
+    platform_prefix = "AndroidStudio",
+    required_plugins = "com.google.idea.bazel.aswb",
+    test_package_root = "com.google.idea.blaze.android",
+    runtime_deps = [
+        ":aswb_bazel",
+    ],
+    deps = [
+        ":aswb_lib",
+        ":integration_test_utils",
+        "//base",
+        "//base:integration_test_utils",
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",

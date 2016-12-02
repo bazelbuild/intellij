@@ -143,6 +143,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     GeneralCommandLine commandLine = new GeneralCommandLine(runner.executableToDebug.getPath());
     File workingDir = workspaceRoot.directory();
     commandLine.setWorkDirectory(workingDir);
+    commandLine.addParameters(handlerState.getExeFlags());
 
     TrivialInstaller installer = new TrivialInstaller(commandLine);
     ImmutableList<String> startupCommands = getGdbStartupCommands(workingDir);
@@ -184,6 +185,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
   private final class GoogleTestConsoleBuilder extends CidrConsoleBuilder {
     private GoogleTestConsoleBuilder(Project project) {
       super(project);
+      addFilter(new BlazeCidrTestOutputFilter(project));
     }
 
     @Override

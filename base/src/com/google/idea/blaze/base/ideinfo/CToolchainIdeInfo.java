@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import java.io.Serializable;
 
-/** Sister class to {@link JavaRuleIdeInfo} */
+/** Sister class to {@link JavaIdeInfo} */
 public class CToolchainIdeInfo implements Serializable {
   private static final long serialVersionUID = 3L;
 

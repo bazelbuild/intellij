@@ -63,3 +63,24 @@ intellij_plugin(
         ":ijwb_lib",
     ],
 )
+
+load(
+    "//testing:test_defs.bzl",
+    "intellij_unit_test_suite",
+)
+
+intellij_unit_test_suite(
+    name = "unit_tests",
+    srcs = glob(["tests/unittests/**/*.java"]),
+    test_package_root = "com.google.idea.blaze.ijwb",
+    deps = [
+        ":ijwb_lib",
+        "//base",
+        "//base:unit_test_utils",
+        "//common/experiments",
+        "//common/experiments:unit_test_utils",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "@jsr305_annotations//jar",
+        "@junit//jar",
+    ],
+)

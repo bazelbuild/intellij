@@ -22,7 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/** Decodes android_studio_ide_info.proto ArtifactLocation file paths */
+/** Decodes intellij_ide_info.proto ArtifactLocation file paths */
 public interface ArtifactLocationDecoder extends Serializable {
 
   File decode(ArtifactLocation artifactLocation);

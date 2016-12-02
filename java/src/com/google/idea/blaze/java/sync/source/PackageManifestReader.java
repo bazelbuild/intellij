@@ -24,7 +24,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.filecache.FileDiffer;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -52,20 +52,20 @@ public class PackageManifestReader {
 
   private ImmutableMap<File, Long> fileDiffState;
 
-  private Map<File, RuleKey> fileToLabelMap = Maps.newHashMap();
-  private final Map<RuleKey, Map<ArtifactLocation, String>> manifestMap = Maps.newConcurrentMap();
+  private Map<File, TargetKey> fileToLabelMap = Maps.newHashMap();
+  private final Map<TargetKey, Map<ArtifactLocation, String>> manifestMap = Maps.newConcurrentMap();
 
   /** @return A map from java source absolute file path to declared package string. */
-  public Map<RuleKey, Map<ArtifactLocation, String>> readPackageManifestFiles(
+  public Map<TargetKey, Map<ArtifactLocation, String>> readPackageManifestFiles(
       Project project,
       BlazeContext context,
       ArtifactLocationDecoder decoder,
-      Map<RuleKey, ArtifactLocation> javaPackageManifests,
+      Map<TargetKey, ArtifactLocation> javaPackageManifests,
       ListeningExecutorService executorService) {
 
-    Map<File, RuleKey> fileToLabelMap = Maps.newHashMap();
-    for (Map.Entry<RuleKey, ArtifactLocation> entry : javaPackageManifests.entrySet()) {
-      RuleKey key = entry.getKey();
+    Map<File, TargetKey> fileToLabelMap = Maps.newHashMap();
+    for (Map.Entry<TargetKey, ArtifactLocation> entry : javaPackageManifests.entrySet()) {
+      TargetKey key = entry.getKey();
       File file = decoder.decode(entry.getValue());
       fileToLabelMap.put(file, key);
     }
@@ -95,7 +95,7 @@ public class PackageManifestReader {
               }));
     }
     for (File file : removedFiles) {
-      RuleKey key = this.fileToLabelMap.get(file);
+      TargetKey key = this.fileToLabelMap.get(file);
       if (key != null) {
         manifestMap.remove(key);
       }

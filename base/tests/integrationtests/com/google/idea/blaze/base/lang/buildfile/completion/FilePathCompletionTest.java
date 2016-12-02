@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
@@ -31,25 +32,25 @@ public class FilePathCompletionTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testUniqueDirectoryCompleted() {
-    BuildFile file = createBuildFile("java/BUILD", "'//'");
+    BuildFile file = createBuildFile(new WorkspacePath("java/BUILD"), "'//'");
 
-    Editor editor = openFileInEditor(file);
-    setCaretPosition(editor, 0, "'//".length());
+    Editor editor = editorTest.openFileInEditor(file);
+    editorTest.setCaretPosition(editor, 0, "'//".length());
 
-    assertThat(completeIfUnique()).isTrue();
+    assertThat(editorTest.completeIfUnique()).isTrue();
     assertFileContents(file, "'//java'");
     // check caret remains inside closing quote
-    assertCaretPosition(editor, 0, "'//java".length());
+    editorTest.assertCaretPosition(editor, 0, "'//java".length());
   }
 
   @Test
   public void testUniqueMultiSegmentDirectoryCompleted() {
-    BuildFile file = createBuildFile("java/com/google/BUILD", "'//'");
+    BuildFile file = createBuildFile(new WorkspacePath("java/com/google/BUILD"), "'//'");
 
-    Editor editor = openFileInEditor(file);
-    setCaretPosition(editor, 0, "'//".length());
+    Editor editor = editorTest.openFileInEditor(file);
+    editorTest.setCaretPosition(editor, 0, "'//".length());
 
-    assertThat(completeIfUnique()).isTrue();
+    assertThat(editorTest.completeIfUnique()).isTrue();
     assertFileContents(file, "'//java/com/google'");
   }
 
@@ -58,66 +59,66 @@ public class FilePathCompletionTest extends BuildFileIntegrationTestCase {
   // next segment and complete again
   @Test
   public void testMultiStageCompletion() {
-    createDirectory("foo");
-    createDirectory("bar");
-    createDirectory("other");
-    createDirectory("other/foo");
-    createDirectory("other/bar");
+    workspace.createDirectory(new WorkspacePath("foo"));
+    workspace.createDirectory(new WorkspacePath("bar"));
+    workspace.createDirectory(new WorkspacePath("other"));
+    workspace.createDirectory(new WorkspacePath("other/foo"));
+    workspace.createDirectory(new WorkspacePath("other/bar"));
 
-    BuildFile file = createBuildFile("BUILD", "'//'");
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "'//'");
 
-    Editor editor = openFileInEditor(file);
-    setCaretPosition(editor, 0, "'//".length());
+    Editor editor = editorTest.openFileInEditor(file);
+    editorTest.setCaretPosition(editor, 0, "'//".length());
 
-    String[] completionItems = getCompletionItemsAsStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).hasLength(3);
 
-    performTypingAction(editor, 'o');
-    assertThat(completeIfUnique()).isTrue();
+    editorTest.performTypingAction(editor, 'o');
+    assertThat(editorTest.completeIfUnique()).isTrue();
     assertFileContents(file, "'//other'");
-    assertCaretPosition(editor, 0, "'//other".length());
+    editorTest.assertCaretPosition(editor, 0, "'//other".length());
 
-    performTypingAction(editor, '/');
-    performTypingAction(editor, 'f');
-    assertThat(completeIfUnique()).isTrue();
+    editorTest.performTypingAction(editor, '/');
+    editorTest.performTypingAction(editor, 'f');
+    assertThat(editorTest.completeIfUnique()).isTrue();
     assertFileContents(file, "'//other/foo'");
-    assertCaretPosition(editor, 0, "'//other/foo".length());
+    editorTest.assertCaretPosition(editor, 0, "'//other/foo".length());
   }
 
   @Test
   public void testCompletionSuggestionString() {
-    createDirectory("foo");
-    createDirectory("bar");
-    createDirectory("other");
-    createDirectory("ostrich/foo");
-    createDirectory("ostrich/fooz");
+    workspace.createDirectory(new WorkspacePath("foo"));
+    workspace.createDirectory(new WorkspacePath("bar"));
+    workspace.createDirectory(new WorkspacePath("other"));
+    workspace.createDirectory(new WorkspacePath("ostrich/foo"));
+    workspace.createDirectory(new WorkspacePath("ostrich/fooz"));
 
-    VirtualFile file = createAndSetCaret("BUILD", "'//o<caret>'");
+    VirtualFile file = createAndSetCaret(new WorkspacePath("BUILD"), "'//o<caret>'");
 
-    String[] completionItems = getCompletionItemsAsSuggestionStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsSuggestionStrings();
     assertThat(completionItems).asList().containsExactly("other", "ostrich");
 
-    performTypingAction(testFixture.getEditor(), 's');
+    editorTest.performTypingAction(testFixture.getEditor(), 's');
 
-    assertThat(completeIfUnique()).isTrue();
+    assertThat(editorTest.completeIfUnique()).isTrue();
     assertFileContents(file, "'//ostrich'");
 
-    completionItems = getCompletionItemsAsSuggestionStrings();
+    completionItems = editorTest.getCompletionItemsAsSuggestionStrings();
     assertThat(completionItems).asList().containsExactly("/foo", "/fooz");
 
-    performTypingAction(testFixture.getEditor(), '/');
+    editorTest.performTypingAction(testFixture.getEditor(), '/');
 
-    completionItems = getCompletionItemsAsSuggestionStrings();
+    completionItems = editorTest.getCompletionItemsAsSuggestionStrings();
     assertThat(completionItems).asList().containsExactly("foo", "fooz");
 
-    performTypingAction(testFixture.getEditor(), 'f');
+    editorTest.performTypingAction(testFixture.getEditor(), 'f');
 
-    completionItems = getCompletionItemsAsSuggestionStrings();
+    completionItems = editorTest.getCompletionItemsAsSuggestionStrings();
     assertThat(completionItems).asList().containsExactly("foo", "fooz");
   }
 
-  private VirtualFile createAndSetCaret(String filePath, String... fileContents) {
-    VirtualFile file = createFile(filePath, fileContents);
+  private VirtualFile createAndSetCaret(WorkspacePath workspacePath, String... fileContents) {
+    VirtualFile file = workspace.createFile(workspacePath, fileContents);
     testFixture.configureFromExistingVirtualFile(file);
     return file;
   }

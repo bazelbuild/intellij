@@ -15,9 +15,9 @@
  */
 package com.google.idea.blaze.ijwb.android;
 
-import com.google.idea.blaze.base.ideinfo.AndroidRuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
@@ -25,30 +25,32 @@ import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import java.util.Collection;
 
 /** Augments the java sync process with Android lite support. */
-public class BlazeAndroidLiteJavaSyncAugmenter extends BlazeJavaSyncAugmenter.Adapter {
+public class BlazeAndroidLiteJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
 
   @Override
-  public boolean isActive(WorkspaceLanguageSettings workspaceLanguageSettings) {
-    return workspaceLanguageSettings.isLanguageActive(LanguageClass.ANDROID);
-  }
+  public void addJarsForSourceTarget(
+      WorkspaceLanguageSettings workspaceLanguageSettings,
+      TargetIdeInfo target,
+      Collection<BlazeJarLibrary> jars,
+      Collection<BlazeJarLibrary> genJars) {
+    if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.ANDROID)) {
+      return;
+    }
 
-  @Override
-  public void addJarsForSourceRule(
-      RuleIdeInfo rule, Collection<BlazeJarLibrary> jars, Collection<BlazeJarLibrary> genJars) {
-    AndroidRuleIdeInfo androidRuleIdeInfo = rule.androidRuleIdeInfo;
-    if (androidRuleIdeInfo == null) {
+    AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
+    if (androidIdeInfo == null) {
       return;
     }
 
     // Add R.java jars
-    LibraryArtifact resourceJar = androidRuleIdeInfo.resourceJar;
+    LibraryArtifact resourceJar = androidIdeInfo.resourceJar;
     if (resourceJar != null) {
-      jars.add(new BlazeJarLibrary(resourceJar, rule.key));
+      jars.add(new BlazeJarLibrary(resourceJar, target.key));
     }
 
-    LibraryArtifact idlJar = androidRuleIdeInfo.idlJar;
+    LibraryArtifact idlJar = androidIdeInfo.idlJar;
     if (idlJar != null) {
-      genJars.add(new BlazeJarLibrary(idlJar, rule.key));
+      genJars.add(new BlazeJarLibrary(idlJar, target.key));
     }
   }
 }

@@ -33,7 +33,6 @@ import java.awt.Dimension;
 import java.io.File;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -102,10 +101,9 @@ public abstract class UseExistingWorkspaceOption implements BlazeSelectWorkspace
     return new WorkspaceRoot(new File(getDirectory()));
   }
 
-  @Nullable
   @Override
-  public WorkspaceRoot getTemporaryWorkspaceRoot() {
-    return getWorkspaceRoot();
+  public File getFileBrowserRoot() {
+    return new File(getDirectory());
   }
 
   @Override

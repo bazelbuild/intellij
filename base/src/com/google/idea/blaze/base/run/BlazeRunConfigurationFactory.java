@@ -31,7 +31,7 @@ public abstract class BlazeRunConfigurationFactory {
 
   /** Returns whether this factory can handle a target. */
   public abstract boolean handlesTarget(
-      Project project, BlazeProjectData blazeProjectData, Label target);
+      Project project, BlazeProjectData blazeProjectData, Label label);
 
   /**
    * Returns whether this factory can initialize a configuration. <br>

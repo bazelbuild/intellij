@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester;
@@ -50,10 +51,13 @@ public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestC
         () -> {
           BuildFile file =
               createBuildFile(
-                  "BUILD", "def function(name, deps, srcs):", "  # empty function", "function(d");
+                  new WorkspacePath("BUILD"),
+                  "def function(name, deps, srcs):",
+                  "  # empty function",
+                  "function(d");
 
-          Editor editor = openFileInEditor(file.getVirtualFile());
-          setCaretPosition(editor, 2, "function(n".length());
+          Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+          editorTest.setCaretPosition(editor, 2, "function(n".length());
 
           LookupElement[] completionItems = testFixture.completeBasic();
           assertThat(completionItems).isNull();
@@ -69,15 +73,15 @@ public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestC
         () -> {
           BuildFile file =
               createBuildFile(
-                  "BUILD",
+                  new WorkspacePath("BUILD"),
                   "def function(name, deps, srcs):",
                   "  # empty function",
                   "function(name = \"lib\")");
 
-          Editor editor = openFileInEditor(file.getVirtualFile());
-          setCaretPosition(editor, 2, "function(".length());
+          Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+          editorTest.setCaretPosition(editor, 2, "function(".length());
 
-          String[] completionItems = getCompletionItemsAsStrings();
+          String[] completionItems = editorTest.getCompletionItemsAsStrings();
           assertThat(completionItems).hasLength(4);
           assertThat(completionItems).asList().containsAllOf("name", "deps", "srcs", "function");
         });
@@ -89,10 +93,13 @@ public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestC
         () -> {
           BuildFile file =
               createBuildFile(
-                  "BUILD", "def function(name, deps, srcs):", "  # empty function", "function(#");
+                  new WorkspacePath("BUILD"),
+                  "def function(name, deps, srcs):",
+                  "  # empty function",
+                  "function(#");
 
-          Editor editor = openFileInEditor(file.getVirtualFile());
-          setCaretPosition(editor, 2, "function(#".length());
+          Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+          editorTest.setCaretPosition(editor, 2, "function(#".length());
 
           completionTester.typeWithPauses("n");
           assertThat(testFixture.getLookup()).isNull();

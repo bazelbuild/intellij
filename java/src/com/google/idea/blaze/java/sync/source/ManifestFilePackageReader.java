@@ -16,7 +16,7 @@
 package com.google.idea.blaze.java.sync.source;
 
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import java.util.Map;
@@ -24,9 +24,9 @@ import javax.annotation.Nullable;
 
 class ManifestFilePackageReader extends JavaPackageReader {
 
-  private final Map<RuleKey, Map<ArtifactLocation, String>> manifestMap;
+  private final Map<TargetKey, Map<ArtifactLocation, String>> manifestMap;
 
-  public ManifestFilePackageReader(Map<RuleKey, Map<ArtifactLocation, String>> manifestMap) {
+  public ManifestFilePackageReader(Map<TargetKey, Map<ArtifactLocation, String>> manifestMap) {
     this.manifestMap = manifestMap;
   }
 
@@ -36,10 +36,10 @@ class ManifestFilePackageReader extends JavaPackageReader {
       BlazeContext context,
       ArtifactLocationDecoder artifactLocationDecoder,
       SourceArtifact sourceArtifact) {
-    Map<ArtifactLocation, String> manifestMapForRule =
-        manifestMap.get(sourceArtifact.originatingRule);
-    if (manifestMapForRule != null) {
-      return manifestMapForRule.get(sourceArtifact.artifactLocation);
+    Map<ArtifactLocation, String> manifestMapForTarget =
+        manifestMap.get(sourceArtifact.originatingTarget);
+    if (manifestMapForTarget != null) {
+      return manifestMapForTarget.get(sourceArtifact.artifactLocation);
     }
     return null;
   }

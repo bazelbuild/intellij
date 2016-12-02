@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.filecache.FileDiffer;
 import com.google.idea.blaze.base.io.FileSizeScanner;
+import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -33,13 +34,12 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
+import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
+import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.settings.BlazeJavaUserSettings;
-import com.google.idea.blaze.java.sync.BlazeLibraryCollector;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
-import com.google.idea.blaze.java.sync.model.BlazeLibrary;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,8 +60,6 @@ import javax.annotation.Nullable;
 /** Local cache of the jars referenced by the project. */
 public class JarCache {
   private static final Logger LOG = Logger.getInstance(JarCache.class);
-  public static final BoolExperiment ENABLE_JAR_CACHE =
-      new BoolExperiment("enable.jar.cache", true);
 
   private final Project project;
   private final BlazeImportSettings importSettings;
@@ -82,7 +80,8 @@ public class JarCache {
   public void onSync(
       BlazeContext context, BlazeProjectData projectData, BlazeSyncParams.SyncMode syncMode) {
     Collection<BlazeLibrary> libraries = BlazeLibraryCollector.getLibraries(projectData);
-    boolean fullRefresh = syncMode == BlazeSyncParams.SyncMode.FULL;
+    boolean fullRefresh = syncMode == SyncMode.FULL;
+    boolean removeMissingFiles = syncMode == SyncMode.INCREMENTAL;
     boolean enabled = updateEnabled();
 
     if (!enabled || fullRefresh) {
@@ -118,7 +117,7 @@ public class JarCache {
     }
 
     this.sourceFileToCacheKey = sourceFileToCacheKey;
-    refresh(context, true);
+    refresh(context, removeMissingFiles);
   }
 
   public boolean isEnabled() {
@@ -128,7 +127,6 @@ public class JarCache {
   private boolean updateEnabled() {
     this.enabled =
         BlazeJavaUserSettings.getInstance().getUseJarCache()
-            && ENABLE_JAR_CACHE.getValue()
             && !ApplicationManager.getApplication().isUnitTestMode();
     return enabled;
   }

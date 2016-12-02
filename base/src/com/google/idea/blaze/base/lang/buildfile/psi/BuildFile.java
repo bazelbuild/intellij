@@ -202,9 +202,9 @@ public class BuildFile extends PsiFileBase implements BuildElement, DocStringOwn
   @Nullable
   public FunctionStatement findLoadedFunction(String name) {
     for (LoadStatement loadStatement : findChildrenByClass(LoadStatement.class)) {
-      for (StringLiteral importedFunctionNode : loadStatement.getImportedSymbolElements()) {
-        if (name.equals(importedFunctionNode.getStringContents())) {
-          PsiElement element = importedFunctionNode.getReferencedElement();
+      for (LoadedSymbol loadedSymbol : loadStatement.getImportedSymbolElements()) {
+        if (name.equals(loadedSymbol.getSymbolString())) {
+          PsiElement element = loadedSymbol.getLoadedElement();
           return element instanceof FunctionStatement ? (FunctionStatement) element : null;
         }
       }
@@ -216,8 +216,9 @@ public class BuildFile extends PsiFileBase implements BuildElement, DocStringOwn
     BuildElement[] resultHolder = new BuildElement[1];
     Processor<BuildElement> processor =
         buildElement -> {
-          if (buildElement instanceof StringLiteral) {
-            buildElement = BuildElement.asBuildElement(buildElement.getReferencedElement());
+          if (buildElement instanceof LoadedSymbol) {
+            buildElement =
+                BuildElement.asBuildElement(((LoadedSymbol) buildElement).getVisibleElement());
           }
           if (buildElement instanceof PsiNamedElement && name.equals(buildElement.getName())) {
             resultHolder[0] = buildElement;
@@ -257,7 +258,7 @@ public class BuildFile extends PsiFileBase implements BuildElement, DocStringOwn
         break;
       }
       if (child instanceof LoadStatement) {
-        for (StringLiteral importedSymbol : ((LoadStatement) child).getImportedSymbolElements()) {
+        for (LoadedSymbol importedSymbol : ((LoadStatement) child).getImportedSymbolElements()) {
           if (!processor.process(importedSymbol)) {
             return false;
           }

@@ -42,7 +42,7 @@ import com.intellij.psi.tree.TokenSet;
 /** Defines the BUILD file parser */
 public class BuildParserDefinition implements ParserDefinition {
 
-  private static final DeveloperFlag DEBUG = new DeveloperFlag("build.file.debug.mode");
+  private static final DeveloperFlag debug = new DeveloperFlag("build.file.debug.mode");
 
   @Override
   public Lexer createLexer(Project project) {
@@ -104,7 +104,7 @@ public class BuildParserDefinition implements ParserDefinition {
   private static class BuildParser implements PsiParser {
     @Override
     public ASTNode parse(IElementType root, PsiBuilder builder) {
-      if (DEBUG.getValue()) {
+      if (debug.getValue()) {
         System.err.println(builder.getUserDataUnprotected(FileContextUtil.CONTAINING_FILE_KEY));
       }
       PsiBuilder.Marker rootMarker = builder.mark();

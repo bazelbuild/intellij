@@ -50,43 +50,33 @@ public class LoadStatement extends BuildElementImpl implements Statement {
     return firstString != null ? StringLiteral.stripQuotes(firstString.getText()) : null;
   }
 
+  /** The symbols as they appear in the loaded extension (i.e. ignoring aliases). */
+  public StringLiteral[] getLoadedSymbols() {
+    return Arrays.stream(getImportedSymbolElements())
+        .map(LoadedSymbol::getImport)
+        .toArray(StringLiteral[]::new);
+  }
+
   /** The string nodes referencing imported functions. */
   public FunctionStatement[] getImportedFunctionReferences() {
-    return Arrays.stream(getChildStrings())
-        .skip(1)
+    return Arrays.stream(getLoadedSymbols())
         .map(BuildElement::getReferencedElement)
         .filter(e -> e instanceof FunctionStatement)
         .toArray(FunctionStatement[]::new);
   }
 
-  /** The string nodes referencing imported functions. */
-  public StringLiteral[] getImportedSymbolElements() {
-    StringLiteral[] childStrings = getChildStrings();
-    return childStrings.length < 2
-        ? new StringLiteral[0]
-        : Arrays.copyOfRange(childStrings, 1, childStrings.length);
-  }
-
-  public String[] getImportedSymbolNames() {
-    return Arrays.stream(getImportedSymbolElements())
-        .map(StringLiteral::getStringContents)
-        .toArray(String[]::new);
-  }
-
-  @Nullable
-  public StringLiteral findImportedSymbolElement(String name) {
-    for (StringLiteral string : getImportedSymbolElements()) {
-      if (name.equals(string.getStringContents())) {
-        return string;
-      }
-    }
-    return null;
-  }
-
-  public StringLiteral[] getChildStrings() {
-    return Arrays.stream(getNode().getChildren(BuildElementTypes.STRINGS))
+  public LoadedSymbol[] getImportedSymbolElements() {
+    return Arrays.stream(getNode().getChildren(null))
         .map(ASTNode::getPsi)
-        .toArray(StringLiteral[]::new);
+        .filter(psiElement -> psiElement instanceof LoadedSymbol)
+        .toArray(LoadedSymbol[]::new);
+  }
+
+  /** Aliased symbol name, if alias is present. */
+  public String[] getVisibleSymbolNames() {
+    return Arrays.stream(getImportedSymbolElements())
+        .map(LoadedSymbol::getSymbolString)
+        .toArray(String[]::new);
   }
 
   @Override

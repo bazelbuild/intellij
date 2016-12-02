@@ -16,18 +16,19 @@
 package com.google.idea.blaze.java.run.producers;
 
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.rulemaps.SourceToRuleMap;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.java.run.RunUtil;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
@@ -40,9 +41,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
 import java.io.File;
-import java.util.List;
+import java.util.ArrayDeque;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Queue;
+import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
 /** Creates run configurations for Java main classes sourced by java_binary targets. */
@@ -71,7 +73,7 @@ public class BlazeJavaMainClassRunConfigurationProducer
       sourceElement.set(mainMethod);
     }
 
-    Label label = getRuleLabel(context.getProject(), mainClass);
+    Label label = getTargetLabel(context.getProject(), mainClass);
     if (label == null) {
       return false;
     }
@@ -101,7 +103,7 @@ public class BlazeJavaMainClassRunConfigurationProducer
     if (mainClass == null) {
       return false;
     }
-    Label label = getRuleLabel(context.getProject(), mainClass);
+    Label label = getTargetLabel(context.getProject(), mainClass);
     if (label == null) {
       return false;
     }
@@ -126,28 +128,34 @@ public class BlazeJavaMainClassRunConfigurationProducer
   }
 
   @Nullable
-  private static Label getRuleLabel(Project project, PsiClass mainClass) {
+  private static Label getTargetLabel(Project project, PsiClass mainClass) {
     File mainClassFile = RunUtil.getFileForClass(mainClass);
-    ImmutableCollection<RuleKey> ruleKeys =
-        SourceToRuleMap.getInstance(project).getRulesForSourceFile(mainClassFile);
+    ImmutableCollection<TargetKey> targetKeys =
+        SourceToTargetMap.getInstance(project).getRulesForSourceFile(mainClassFile);
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
       return null;
     }
-    List<RuleIdeInfo> rules =
-        ruleKeys
-            .stream()
-            .map(blazeProjectData.ruleMap::get)
-            .filter(Objects::nonNull)
-            .filter(RuleIdeInfo::isPlainTarget)
-            .collect(Collectors.toList());
-    for (RuleIdeInfo rule : rules) {
-      if (rule.kind == Kind.JAVA_BINARY) {
+    // Find the first java_binary, BFS
+    Queue<TargetKey> todo = new ArrayDeque<>();
+    todo.addAll(targetKeys);
+    Set<TargetKey> seen = Sets.newHashSet();
+    while (!todo.isEmpty()) {
+      TargetKey targetKey = todo.remove();
+      if (!seen.add(targetKey)) {
+        continue;
+      }
+      TargetIdeInfo target = blazeProjectData.targetMap.get(targetKey);
+      if (target == null) {
+        continue;
+      }
+      if (target.kind == Kind.JAVA_BINARY && target.isPlainTarget()) {
         // Best-effort guess: the main_class attribute isn't exposed, but assume
         // mainClass is the main_class because it is sourced by the java_binary.
-        return rule.label;
+        return target.key.label;
       }
+      todo.addAll(blazeProjectData.reverseDependencies.get(targetKey));
     }
     return null;
   }

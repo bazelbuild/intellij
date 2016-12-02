@@ -41,7 +41,7 @@ public class LocalSymbolCompletionTest extends BuildFileIntegrationTestCase {
   public void testLocalVariable() {
     setInput("var = [a, b]", "def function(name, deps, srcs):", "  v<caret>");
 
-    completeIfUnique();
+    editorTest.completeIfUnique();
 
     assertResult("var = [a, b]", "def function(name, deps, srcs):", "  var<caret>");
   }
@@ -50,7 +50,7 @@ public class LocalSymbolCompletionTest extends BuildFileIntegrationTestCase {
   public void testLocalFunction() {
     setInput("def fnName():return True", "def function(name, deps, srcs):", "  fnN<caret>");
 
-    completeIfUnique();
+    editorTest.completeIfUnique();
 
     assertResult("def fnName():return True", "def function(name, deps, srcs):", "  fnName<caret>");
   }
@@ -59,7 +59,7 @@ public class LocalSymbolCompletionTest extends BuildFileIntegrationTestCase {
   public void testNoCompletionAfterDot() {
     setInput("var = [a, b]", "def function(name, deps, srcs):", "  ext.v<caret>");
 
-    String[] completionItems = getCompletionItemsAsStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).isEmpty();
   }
 
@@ -67,7 +67,7 @@ public class LocalSymbolCompletionTest extends BuildFileIntegrationTestCase {
   public void testFunctionParam() {
     setInput("def test(var):", "  v<caret>");
 
-    completeIfUnique();
+    editorTest.completeIfUnique();
 
     assertResult("def test(var):", "  var<caret>");
   }
@@ -78,7 +78,7 @@ public class LocalSymbolCompletionTest extends BuildFileIntegrationTestCase {
   public void testSymbolAssignedMultipleTimes() {
     setInput("var = 1", "var = 2", "var = 3", "<caret>");
 
-    completeIfUnique();
+    editorTest.completeIfUnique();
 
     assertResult("var = 1", "var = 2", "var = 3", "var<caret>");
   }
@@ -87,7 +87,7 @@ public class LocalSymbolCompletionTest extends BuildFileIntegrationTestCase {
   public void testSymbolDefinedOutsideScope() {
     setInput("<caret>", "var = 1");
 
-    assertThat(getCompletionItemsAsStrings()).isEmpty();
+    assertThat(editorTest.getCompletionItemsAsStrings()).isEmpty();
   }
 
   @Test

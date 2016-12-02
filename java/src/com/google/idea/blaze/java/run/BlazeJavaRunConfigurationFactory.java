@@ -16,8 +16,8 @@
 package com.google.idea.blaze.java.run;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -32,9 +32,9 @@ import com.intellij.openapi.project.Project;
 /** Creates run configurations for java_binary. */
 public class BlazeJavaRunConfigurationFactory extends BlazeRunConfigurationFactory {
   @Override
-  public boolean handlesTarget(Project project, BlazeProjectData blazeProjectData, Label target) {
-    RuleIdeInfo rule = blazeProjectData.ruleMap.get(RuleKey.forPlainTarget(target));
-    return rule != null && rule.kind == Kind.JAVA_BINARY;
+  public boolean handlesTarget(Project project, BlazeProjectData blazeProjectData, Label label) {
+    TargetIdeInfo target = blazeProjectData.targetMap.get(TargetKey.forPlainTarget(label));
+    return target != null && target.kind == Kind.JAVA_BINARY;
   }
 
   @Override

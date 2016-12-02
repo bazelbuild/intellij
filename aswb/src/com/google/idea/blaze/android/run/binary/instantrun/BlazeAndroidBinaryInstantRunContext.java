@@ -125,7 +125,13 @@ public class BlazeAndroidBinaryInstantRunContext implements BlazeAndroidRunConte
       return new UpdateSessionTasksProvider(analyzer);
     }
     return new BlazeAndroidLaunchTasksProvider(
-        project, this, getApplicationIdProvider(), launchOptionsBuilder, isDebug, debuggerManager);
+        project,
+        this,
+        getApplicationIdProvider(),
+        launchOptionsBuilder,
+        isDebug,
+        true,
+        debuggerManager);
   }
 
   @Override

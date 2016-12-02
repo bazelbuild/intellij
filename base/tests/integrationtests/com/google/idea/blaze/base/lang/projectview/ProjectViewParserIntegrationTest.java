@@ -21,6 +21,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.projectview.psi.ProjectViewPsiElement;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -93,7 +94,7 @@ public class ProjectViewParserIntegrationTest extends ProjectViewIntegrationTest
   }
 
   private String parse(String... lines) {
-    PsiFile file = createPsiFile(".blazeproject", lines);
+    PsiFile file = workspace.createPsiFile(new WorkspacePath(".blazeproject"), lines);
     collectErrors(file);
     return treeToString(file);
   }

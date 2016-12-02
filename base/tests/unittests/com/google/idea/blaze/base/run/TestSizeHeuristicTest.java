@@ -19,7 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -37,119 +37,119 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
 
-    ExtensionPointImpl<TestRuleHeuristic> ep =
-        registerExtensionPoint(TestRuleHeuristic.EP_NAME, TestRuleHeuristic.class);
+    ExtensionPointImpl<TestTargetHeuristic> ep =
+        registerExtensionPoint(TestTargetHeuristic.EP_NAME, TestTargetHeuristic.class);
     ep.registerExtension(new TestSizeHeuristic());
   }
 
   @Test
   public void testPredicateMatchingSize() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
-    RuleIdeInfo rule =
-        RuleIdeInfo.builder()
+    TargetIdeInfo target =
+        TargetIdeInfo.builder()
             .setLabel("//foo:test")
             .setKind("java_test")
             .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
             .build();
-    assertThat(new TestSizeHeuristic().matchesSource(rule, source, TestSize.MEDIUM)).isTrue();
+    assertThat(new TestSizeHeuristic().matchesSource(target, source, TestSize.MEDIUM)).isTrue();
   }
 
   @Test
   public void testPredicateDifferentSize() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
-    RuleIdeInfo rule =
-        RuleIdeInfo.builder()
+    TargetIdeInfo target =
+        TargetIdeInfo.builder()
             .setLabel("//foo:test")
             .setKind("java_test")
             .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
             .build();
-    assertThat(new TestSizeHeuristic().matchesSource(rule, source, TestSize.SMALL)).isFalse();
+    assertThat(new TestSizeHeuristic().matchesSource(target, source, TestSize.SMALL)).isFalse();
   }
 
   @Test
   public void testPredicateDefaultToSmallSize() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
-    RuleIdeInfo rule =
-        RuleIdeInfo.builder()
+    TargetIdeInfo target =
+        TargetIdeInfo.builder()
             .setLabel("//foo:test")
             .setKind("java_test")
             .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
             .build();
-    assertThat(new TestSizeHeuristic().matchesSource(rule, source, null)).isTrue();
+    assertThat(new TestSizeHeuristic().matchesSource(target, source, null)).isTrue();
 
-    rule =
-        RuleIdeInfo.builder()
+    target =
+        TargetIdeInfo.builder()
             .setLabel("//foo:test")
             .setKind("java_test")
             .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
             .build();
-    assertThat(new TestSizeHeuristic().matchesSource(rule, source, null)).isFalse();
+    assertThat(new TestSizeHeuristic().matchesSource(target, source, null)).isFalse();
   }
 
   @Test
   public void testFilterNoMatchesFallBackToFirstRule() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
-    ImmutableList<RuleIdeInfo> rules =
+    ImmutableList<TargetIdeInfo> rules =
         ImmutableList.of(
-            RuleIdeInfo.builder()
+            TargetIdeInfo.builder()
                 .setLabel("//foo:test1")
                 .setKind("java_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
                 .build(),
-            RuleIdeInfo.builder()
+            TargetIdeInfo.builder()
                 .setLabel("//foo:test2")
                 .setKind("java_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.LARGE))
                 .build(),
-            RuleIdeInfo.builder()
+            TargetIdeInfo.builder()
                 .setLabel("//foo:test3")
                 .setKind("java_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.ENORMOUS))
                 .build());
-    Label match = TestRuleHeuristic.chooseTestTargetForSourceFile(source, rules, TestSize.SMALL);
+    Label match = TestTargetHeuristic.chooseTestTargetForSourceFile(source, rules, TestSize.SMALL);
     assertThat(match).isEqualTo(new Label("//foo:test1"));
   }
 
   @Test
   public void testFilterOneMatch() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
-    ImmutableList<RuleIdeInfo> rules =
+    ImmutableList<TargetIdeInfo> rules =
         ImmutableList.of(
-            RuleIdeInfo.builder()
+            TargetIdeInfo.builder()
                 .setLabel("//foo:test1")
                 .setKind("java_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
                 .build(),
-            RuleIdeInfo.builder()
+            TargetIdeInfo.builder()
                 .setLabel("//foo:test2")
                 .setKind("java_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .build());
-    Label match = TestRuleHeuristic.chooseTestTargetForSourceFile(source, rules, TestSize.SMALL);
+    Label match = TestTargetHeuristic.chooseTestTargetForSourceFile(source, rules, TestSize.SMALL);
     assertThat(match).isEqualTo(new Label("//foo:test2"));
   }
 
   @Test
   public void testFilterChoosesFirstMatch() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
-    ImmutableList<RuleIdeInfo> rules =
+    ImmutableList<TargetIdeInfo> rules =
         ImmutableList.of(
-            RuleIdeInfo.builder()
+            TargetIdeInfo.builder()
                 .setLabel("//foo:test1")
                 .setKind("java_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
                 .build(),
-            RuleIdeInfo.builder()
+            TargetIdeInfo.builder()
                 .setLabel("//foo:test2")
                 .setKind("java_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .build(),
-            RuleIdeInfo.builder()
+            TargetIdeInfo.builder()
                 .setLabel("//foo:test3")
                 .setKind("java_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .build());
-    Label match = TestRuleHeuristic.chooseTestTargetForSourceFile(source, rules, TestSize.SMALL);
+    Label match = TestTargetHeuristic.chooseTestTargetForSourceFile(source, rules, TestSize.SMALL);
     assertThat(match).isEqualTo(new Label("//foo:test2"));
   }
 }

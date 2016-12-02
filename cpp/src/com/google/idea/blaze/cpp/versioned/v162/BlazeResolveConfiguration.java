@@ -18,10 +18,11 @@ package com.google.idea.blaze.cpp;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 
 final class BlazeResolveConfiguration extends BlazeResolveConfigurationTemporaryBase {
@@ -29,7 +30,8 @@ final class BlazeResolveConfiguration extends BlazeResolveConfigurationTemporary
   public BlazeResolveConfiguration(
       Project project,
       WorkspacePathResolver workspacePathResolver,
-      RuleKey ruleKey,
+      ImmutableMap<File, VirtualFile> headerRoots,
+      TargetKey targetKey,
       ImmutableCollection<ExecutionRootPath> cSystemIncludeDirs,
       ImmutableCollection<ExecutionRootPath> cppSystemIncludeDirs,
       ImmutableCollection<ExecutionRootPath> quoteIncludeDirs,
@@ -44,7 +46,8 @@ final class BlazeResolveConfiguration extends BlazeResolveConfigurationTemporary
     super(
         project,
         workspacePathResolver,
-        ruleKey,
+        headerRoots,
+        targetKey,
         cSystemIncludeDirs,
         cppSystemIncludeDirs,
         quoteIncludeDirs,

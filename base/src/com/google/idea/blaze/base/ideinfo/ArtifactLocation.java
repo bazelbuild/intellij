@@ -22,17 +22,19 @@ import java.nio.file.Paths;
 
 /** Represents a blaze-produced artifact. */
 public final class ArtifactLocation implements Serializable, Comparable<ArtifactLocation> {
-  private static final long serialVersionUID = 3L;
+  private static final long serialVersionUID = 4L;
 
   public final String rootExecutionPathFragment;
   public final String relativePath;
   public final boolean isSource;
+  public final boolean isExternal;
 
   private ArtifactLocation(
-      String rootExecutionPathFragment, String relativePath, boolean isSource) {
+      String rootExecutionPathFragment, String relativePath, boolean isSource, boolean isExternal) {
     this.rootExecutionPathFragment = rootExecutionPathFragment;
     this.relativePath = relativePath;
     this.isSource = isSource;
+    this.isExternal = isExternal;
   }
 
   /** Gets the path relative to the root path. */
@@ -65,6 +67,7 @@ public final class ArtifactLocation implements Serializable, Comparable<Artifact
     String relativePath;
     String rootExecutionPathFragment = "";
     boolean isSource;
+    boolean isExternal;
 
     public Builder setRelativePath(String relativePath) {
       this.relativePath = relativePath;
@@ -81,8 +84,13 @@ public final class ArtifactLocation implements Serializable, Comparable<Artifact
       return this;
     }
 
+    public Builder setIsExternal(boolean isExternal) {
+      this.isExternal = isExternal;
+      return this;
+    }
+
     public ArtifactLocation build() {
-      return new ArtifactLocation(rootExecutionPathFragment, relativePath, isSource);
+      return new ArtifactLocation(rootExecutionPathFragment, relativePath, isSource, isExternal);
     }
   }
 
@@ -97,12 +105,13 @@ public final class ArtifactLocation implements Serializable, Comparable<Artifact
     ArtifactLocation that = (ArtifactLocation) o;
     return Objects.equal(rootExecutionPathFragment, that.rootExecutionPathFragment)
         && Objects.equal(relativePath, that.relativePath)
-        && Objects.equal(isSource, that.isSource);
+        && Objects.equal(isSource, that.isSource)
+        && Objects.equal(isExternal, that.isExternal);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(rootExecutionPathFragment, relativePath, isSource);
+    return Objects.hashCode(rootExecutionPathFragment, relativePath, isSource, isExternal);
   }
 
   @Override
@@ -116,6 +125,7 @@ public final class ArtifactLocation implements Serializable, Comparable<Artifact
         .compare(rootExecutionPathFragment, o.rootExecutionPathFragment)
         .compare(relativePath, o.relativePath)
         .compare(isSource, o.isSource)
+        .compare(isExternal, o.isExternal)
         .result();
   }
 }

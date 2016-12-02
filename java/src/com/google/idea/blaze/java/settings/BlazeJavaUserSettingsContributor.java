@@ -19,7 +19,6 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsContributor;
-import com.google.idea.blaze.java.libraries.JarCache;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.core.GridConstraints;
 import javax.swing.JCheckBox;
@@ -67,12 +66,7 @@ public class BlazeJavaUserSettingsContributor implements BlazeUserSettingsContri
     attachSourcesOnDemand.setSelected(false);
     attachSourcesOnDemand.setText("Automatically attach sources when you open decompiled source");
 
-    ImmutableList.Builder<JComponent> builder = ImmutableList.builder();
-    if (JarCache.ENABLE_JAR_CACHE.getValue()) {
-      builder.add(useJarCache);
-    }
-    builder.add(attachSourcesOnDemand).add(attachSourcesByDefault);
-    components = builder.build();
+    components = ImmutableList.of(useJarCache, attachSourcesOnDemand, attachSourcesByDefault);
   }
 
   @Override

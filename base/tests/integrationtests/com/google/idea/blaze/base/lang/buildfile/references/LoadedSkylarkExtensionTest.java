@@ -22,6 +22,9 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
+import com.google.idea.blaze.base.lang.buildfile.psi.LoadedSymbol;
+import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -33,11 +36,12 @@ public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
   @Test
   public void testStandardLoadReference() {
     BuildFile extFile =
-        createBuildFile("java/com/google/build_defs.bzl", "def function(name, deps)");
+        createBuildFile(
+            new WorkspacePath("java/com/google/build_defs.bzl"), "def function(name, deps)");
 
     BuildFile buildFile =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "load(",
             "\"//java/com/google:build_defs.bzl\",",
             "\"function\"",
@@ -50,7 +54,7 @@ public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
     assertThat(function).isNotNull();
 
     assertThat(load.getImportedSymbolElements()).hasLength(1);
-    assertThat(load.getImportedSymbolElements()[0].getReferencedElement()).isEqualTo(function);
+    assertThat(load.getImportedSymbolElements()[0].getLoadedElement()).isEqualTo(function);
   }
 
   // TODO: If we want to support this deprecated format,
@@ -74,11 +78,16 @@ public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
   @Test
   public void testPackageLocalImportLabelFormat() {
     BuildFile extFile =
-        createBuildFile("java/com/google/tools/build_defs.bzl", "def function(name, deps)");
+        createBuildFile(
+            new WorkspacePath("java/com/google/tools/build_defs.bzl"), "def function(name, deps)");
 
     BuildFile buildFile =
         createBuildFile(
-            "java/com/google/tools/BUILD", "load(", "\":build_defs.bzl\",", "\"function\"", ")");
+            new WorkspacePath("java/com/google/tools/BUILD"),
+            "load(",
+            "\":build_defs.bzl\",",
+            "\"function\"",
+            ")");
 
     LoadStatement load = buildFile.firstChildOfClass(LoadStatement.class);
     assertThat(load.getImportPsiElement().getReferencedElement()).isEqualTo(extFile);
@@ -88,11 +97,13 @@ public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
   public void testMultipleImportedFunctions() {
     BuildFile extFile =
         createBuildFile(
-            "java/com/google/build_defs.bzl", "def fn1(name, deps)", "def fn2(name, deps)");
+            new WorkspacePath("java/com/google/build_defs.bzl"),
+            "def fn1(name, deps)",
+            "def fn2(name, deps)");
 
     BuildFile buildFile =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "load(",
             "\"//java/com/google:build_defs.bzl\",",
             "\"fn1\"",
@@ -110,11 +121,12 @@ public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
   @Test
   public void testFuncallReference() {
     BuildFile extFile =
-        createBuildFile("java/com/google/tools/build_defs.bzl", "def function(name, deps)");
+        createBuildFile(
+            new WorkspacePath("java/com/google/tools/build_defs.bzl"), "def function(name, deps)");
 
     BuildFile buildFile =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "load(",
             "\"//java/com/google/tools:build_defs.bzl\",",
             "\"function\"",
@@ -128,17 +140,36 @@ public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
     assertThat(funcall.getReferencedElement()).isEqualTo(function);
   }
 
+  @Test
+  public void testAliasedFuncallReference() {
+    createBuildFile(
+        new WorkspacePath("java/com/google/tools/build_defs.bzl"), "def function(name, deps)");
+
+    BuildFile buildFile =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "load('//java/com/google/tools:build_defs.bzl', newName = 'function'),",
+            "newName(name = \"name\", deps = []");
+
+    LoadedSymbol loadedSymbol =
+        PsiUtils.findFirstChildOfClassRecursive(buildFile, LoadedSymbol.class);
+    FuncallExpression funcall = buildFile.firstChildOfClass(FuncallExpression.class);
+
+    assertThat(funcall.getReferencedElement()).isEqualTo(loadedSymbol.getVisibleElement());
+  }
+
   // relative paths in skylark extensions which lie in subdirectories
   // are relative to the parent blaze package directory
   @Test
   public void testRelativePathInSubdirectory() {
-    createFile("java/com/google/BUILD");
+    workspace.createFile(new WorkspacePath("java/com/google/BUILD"));
     BuildFile referencedFile =
         createBuildFile(
-            "java/com/google/nonPackageSubdirectory/skylark.bzl", "def function(): return");
+            new WorkspacePath("java/com/google/nonPackageSubdirectory/skylark.bzl"),
+            "def function(): return");
     BuildFile file =
         createBuildFile(
-            "java/com/google/nonPackageSubdirectory/other.bzl",
+            new WorkspacePath("java/com/google/nonPackageSubdirectory/other.bzl"),
             "load(" + "    ':nonPackageSubdirectory/skylark.bzl',",
             "    'function',",
             ")",

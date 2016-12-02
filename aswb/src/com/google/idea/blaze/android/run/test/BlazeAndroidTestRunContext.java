@@ -126,7 +126,13 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
       BlazeAndroidRunConfigurationDebuggerManager debuggerManager)
       throws ExecutionException {
     return new BlazeAndroidLaunchTasksProvider(
-        project, this, applicationIdProvider, launchOptionsBuilder, isDebug, debuggerManager);
+        project,
+        this,
+        applicationIdProvider,
+        launchOptionsBuilder,
+        isDebug,
+        false,
+        debuggerManager);
   }
 
   @Override

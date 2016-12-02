@@ -26,6 +26,8 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.intellij.ide.ui.UISettings;
 import org.jdom.Element;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -99,6 +101,24 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
 
     assertThat(readState.getBlazeFlags()).containsExactly("hi", "I'm", "Josh").inOrder();
     assertThat(readState.getExeFlags()).containsExactly("hi", "I'm", "Josh").inOrder();
+  }
+
+  @Test
+  public void repeatedWriteShouldNotChangeElement() throws Exception {
+    final XMLOutputter xmlOutputter = new XMLOutputter(Format.getCompactFormat());
+
+    state.setCommand(COMMAND);
+    state.setBlazeFlags(ImmutableList.of("--flag1", "--flag2"));
+    state.setExeFlags(ImmutableList.of("--exeFlag1"));
+    state.setBlazeBinary("/usr/bin/blaze");
+
+    Element firstWrite = new Element("test");
+    state.writeExternal(firstWrite);
+    Element secondWrite = firstWrite.clone();
+    state.writeExternal(secondWrite);
+
+    assertThat(xmlOutputter.outputString(secondWrite))
+        .isEqualTo(xmlOutputter.outputString(firstWrite));
   }
 
   @Test

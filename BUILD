@@ -10,6 +10,7 @@ test_suite(
     tests = [
         "//base:integration_tests",
         "//base:unit_tests",
+        "//ijwb:unit_tests",
         "//java:integration_tests",
         "//java:unit_tests",
         "//plugin_dev:integration_tests",
@@ -20,6 +21,7 @@ test_suite(
 test_suite(
     name = "aswb_tests",
     tests = [
+        "//aswb:integration_tests",
         "//aswb:unit_tests",
         "//base:integration_tests",
         "//base:unit_tests",

@@ -17,7 +17,7 @@ package com.google.idea.blaze.android.run.test;
 
 import com.android.tools.idea.run.testing.AndroidTestRunConfiguration;
 import com.google.common.base.Strings;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
@@ -71,14 +71,14 @@ public class BlazeAndroidTestClassRunConfigurationProducer
     }
     sourceElement.set(testClass);
 
-    RuleIdeInfo rule = RunUtil.ruleForTestClass(context.getProject(), testClass, null);
-    if (rule == null) {
+    TargetIdeInfo target = RunUtil.targetForTestClass(context.getProject(), testClass, null);
+    if (target == null) {
       return false;
     }
-    if (!rule.kindIsOneOf(Kind.ANDROID_TEST)) {
+    if (!target.kindIsOneOf(Kind.ANDROID_TEST)) {
       return false;
     }
-    configuration.setTarget(rule.label);
+    configuration.setTarget(target.key.label);
     BlazeAndroidTestRunConfigurationState configState =
         configuration.getHandlerStateIfType(BlazeAndroidTestRunConfigurationState.class);
     if (configState == null) {

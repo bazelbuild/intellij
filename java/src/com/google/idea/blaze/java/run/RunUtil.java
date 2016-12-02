@@ -15,12 +15,12 @@
  */
 package com.google.idea.blaze.java.run;
 
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.run.TestRuleFinder;
-import com.google.idea.blaze.base.run.TestRuleHeuristic;
-import com.google.idea.blaze.base.run.rulefinder.RuleFinder;
+import com.google.idea.blaze.base.run.TestTargetFinder;
+import com.google.idea.blaze.base.run.TestTargetHeuristic;
+import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -40,7 +40,7 @@ public final class RunUtil {
    *     containing rules, the first rule sorted alphabetically by label.
    */
   @Nullable
-  public static RuleIdeInfo ruleForTestClass(
+  public static TargetIdeInfo targetForTestClass(
       @NotNull Project project,
       @NotNull PsiClass testClass,
       @Nullable TestIdeInfo.TestSize testSize) {
@@ -48,13 +48,14 @@ public final class RunUtil {
     if (testFile == null) {
       return null;
     }
-    Collection<RuleIdeInfo> rules =
-        TestRuleFinder.getInstance(project).testTargetsForSourceFile(testFile);
-    Label testLabel = TestRuleHeuristic.chooseTestTargetForSourceFile(testFile, rules, testSize);
+    Collection<TargetIdeInfo> targets =
+        TestTargetFinder.getInstance(project).testTargetsForSourceFile(testFile);
+    Label testLabel =
+        TestTargetHeuristic.chooseTestTargetForSourceFile(testFile, targets, testSize);
     if (testLabel == null) {
       return null;
     }
-    return RuleFinder.getInstance().ruleForTarget(project, testLabel);
+    return TargetFinder.getInstance().targetForLabel(project, testLabel);
   }
 
   /**

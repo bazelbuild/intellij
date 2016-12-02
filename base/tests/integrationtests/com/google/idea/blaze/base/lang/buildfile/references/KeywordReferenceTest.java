@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.Parameter;
 import com.google.idea.blaze.base.lang.buildfile.psi.ParameterList;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -36,7 +37,7 @@ public class KeywordReferenceTest extends BuildFileIntegrationTestCase {
   public void testPlainKeywordReference() {
     BuildFile file =
         createBuildFile(
-            "java/com/google/build_defs.bzl",
+            new WorkspacePath("java/com/google/build_defs.bzl"),
             "def function(name, deps)",
             "function(name = \"name\", deps = [])");
 
@@ -55,7 +56,7 @@ public class KeywordReferenceTest extends BuildFileIntegrationTestCase {
   public void testKwargsReference() {
     BuildFile file =
         createBuildFile(
-            "java/com/google/build_defs.bzl",
+            new WorkspacePath("java/com/google/build_defs.bzl"),
             "def function(name, **kwargs)",
             "function(name = \"name\", deps = [])");
 

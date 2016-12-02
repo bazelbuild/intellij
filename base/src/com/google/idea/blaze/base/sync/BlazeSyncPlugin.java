@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
@@ -79,6 +80,12 @@ public interface BlazeSyncPlugin {
     void commit();
   }
 
+  /**
+   * The {@link WorkspaceType}s supported by this plugin. Not used to choose the project's
+   * WorkspaceType.
+   */
+  ImmutableList<WorkspaceType> getSupportedWorkspaceTypes();
+
   /** @return The default workspace type recommended by this plugin. */
   @Nullable
   WorkspaceType getDefaultWorkspaceType();
@@ -104,7 +111,7 @@ public interface BlazeSyncPlugin {
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
-      RuleMap ruleMap,
+      TargetMap targetMap,
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState);
 
@@ -155,8 +162,16 @@ public interface BlazeSyncPlugin {
   /** Returns any custom sections that this plugin supports. */
   Collection<SectionParser> getSections();
 
+  @Nullable
+  LibrarySource getLibrarySource(BlazeProjectData blazeProjectData);
+
   /** Convenience adapter to help stubbing out methods. */
   class Adapter implements BlazeSyncPlugin {
+
+    @Override
+    public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
+      return ImmutableList.of();
+    }
 
     @Nullable
     @Override
@@ -189,7 +204,7 @@ public interface BlazeSyncPlugin {
         @Nullable WorkingSet workingSet,
         WorkspacePathResolver workspacePathResolver,
         ArtifactLocationDecoder artifactLocationDecoder,
-        RuleMap ruleMap,
+        TargetMap targetMap,
         SyncState.Builder syncStateBuilder,
         @Nullable SyncState previousSyncState) {}
 
@@ -240,5 +255,10 @@ public interface BlazeSyncPlugin {
       return ImmutableList.of();
     }
 
+    @Nullable
+    @Override
+    public LibrarySource getLibrarySource(BlazeProjectData blazeProjectData) {
+      return null;
+    }
   }
 }

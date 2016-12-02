@@ -25,13 +25,15 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.JavaRuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.Dependency;
+import com.google.idea.blaze.base.ideinfo.Dependency.DependencyType;
+import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.ProtoLibraryLegacyInfo;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
-import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -47,11 +49,11 @@ import com.google.idea.blaze.java.sync.jdeps.JdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
-import com.google.idea.blaze.java.sync.model.LibraryKey;
 import com.google.idea.blaze.java.sync.source.SourceArtifact;
 import com.google.idea.blaze.java.sync.source.SourceDirectoryCalculator;
 import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
 import com.intellij.openapi.project.Project;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -64,21 +66,22 @@ public final class BlazeJavaWorkspaceImporter {
   private final Project project;
   private final WorkspaceRoot workspaceRoot;
   private final ImportRoots importRoots;
-  private final RuleMap ruleMap;
+  private final TargetMap targetMap;
   private final SourceTestConfig sourceTestConfig;
   private final JdepsMap jdepsMap;
   @Nullable private final JavaWorkingSet workingSet;
   private final ArtifactLocationDecoder artifactLocationDecoder;
   private final DuplicateSourceDetector duplicateSourceDetector = new DuplicateSourceDetector();
-  private final Collection<BlazeJavaSyncAugmenter> augmenters;
   private final JavaSourceFilter sourceFilter;
+  private final WorkspaceLanguageSettings workspaceLanguageSettings;
+  private final List<BlazeJavaSyncAugmenter> augmenters;
 
   public BlazeJavaWorkspaceImporter(
       Project project,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings,
-      RuleMap ruleMap,
+      TargetMap targetMap,
       JavaSourceFilter sourceFilter,
       JdepsMap jdepsMap,
       @Nullable JavaWorkingSet workingSet,
@@ -89,19 +92,20 @@ public final class BlazeJavaWorkspaceImporter {
         ImportRoots.builder(workspaceRoot, Blaze.getBuildSystem(project))
             .add(projectViewSet)
             .build();
-    this.ruleMap = ruleMap;
+    this.targetMap = targetMap;
     this.sourceFilter = sourceFilter;
     this.jdepsMap = jdepsMap;
     this.workingSet = workingSet;
     this.artifactLocationDecoder = artifactLocationDecoder;
     this.sourceTestConfig = new SourceTestConfig(projectViewSet);
-    this.augmenters = BlazeJavaSyncAugmenter.getActiveSyncAgumenters(workspaceLanguageSettings);
+    this.workspaceLanguageSettings = workspaceLanguageSettings;
+    this.augmenters = Arrays.asList(BlazeJavaSyncAugmenter.EP_NAME.getExtensions());
   }
 
   public BlazeJavaImportResult importWorkspace(BlazeContext context) {
     WorkspaceBuilder workspaceBuilder = new WorkspaceBuilder();
-    for (RuleIdeInfo rule : sourceFilter.sourceRules) {
-      addRuleAsSource(workspaceBuilder, rule, sourceFilter.ruleToJavaSources.get(rule.key));
+    for (TargetIdeInfo target : sourceFilter.sourceTargets) {
+      addTargetAsSource(workspaceBuilder, target, sourceFilter.targetToJavaSources.get(target.key));
     }
 
     SourceDirectoryCalculator sourceDirectoryCalculator = new SourceDirectoryCalculator();
@@ -124,11 +128,11 @@ public final class BlazeJavaWorkspaceImporter {
 
     ImmutableMap<LibraryKey, BlazeJarLibrary> libraries =
         buildLibraries(
-            workspaceBuilder, ruleMap, sourceFilter.libraryRules, sourceFilter.protoLibraries);
+            workspaceBuilder, targetMap, sourceFilter.libraryTargets, sourceFilter.protoLibraries);
 
     duplicateSourceDetector.reportDuplicates(context);
 
-    String sourceVersion = findSourceVersion(ruleMap);
+    String sourceVersion = findSourceVersion(targetMap);
 
     return new BlazeJavaImportResult(
         contentEntries,
@@ -141,44 +145,44 @@ public final class BlazeJavaWorkspaceImporter {
 
   private ImmutableMap<LibraryKey, BlazeJarLibrary> buildLibraries(
       WorkspaceBuilder workspaceBuilder,
-      RuleMap ruleMap,
-      List<RuleIdeInfo> libraryRules,
-      List<RuleIdeInfo> protoLibraries) {
+      TargetMap targetMap,
+      List<TargetIdeInfo> libraryTargets,
+      List<TargetIdeInfo> protoLibraries) {
     // Build library maps
-    Multimap<RuleKey, BlazeJarLibrary> ruleKeyToLibrary = ArrayListMultimap.create();
+    Multimap<TargetKey, BlazeJarLibrary> targetKeyToLibrary = ArrayListMultimap.create();
     Map<String, BlazeJarLibrary> jdepsPathToLibrary = Maps.newHashMap();
 
     // Add any output jars from source rules
-    for (RuleKey key : workspaceBuilder.outputJarsFromSourceRules.keySet()) {
-      Collection<BlazeJarLibrary> jars = workspaceBuilder.outputJarsFromSourceRules.get(key);
-      ruleKeyToLibrary.putAll(key, jars);
+    for (TargetKey key : workspaceBuilder.outputJarsFromSourceTargets.keySet()) {
+      Collection<BlazeJarLibrary> jars = workspaceBuilder.outputJarsFromSourceTargets.get(key);
+      targetKeyToLibrary.putAll(key, jars);
       for (BlazeJarLibrary library : jars) {
         addLibraryToJdeps(jdepsPathToLibrary, library);
       }
     }
 
-    for (RuleIdeInfo rule : libraryRules) {
-      JavaRuleIdeInfo javaRuleIdeInfo = rule.javaRuleIdeInfo;
-      if (javaRuleIdeInfo == null) {
+    for (TargetIdeInfo target : libraryTargets) {
+      JavaIdeInfo javaIdeInfo = target.javaIdeInfo;
+      if (javaIdeInfo == null) {
         continue;
       }
       List<LibraryArtifact> allJars = Lists.newArrayList();
-      allJars.addAll(javaRuleIdeInfo.jars);
+      allJars.addAll(javaIdeInfo.jars);
       Collection<BlazeJarLibrary> libraries =
           allJars
               .stream()
-              .map(library -> new BlazeJarLibrary(library, rule.key))
+              .map(library -> new BlazeJarLibrary(library, target.key))
               .collect(Collectors.toList());
 
-      ruleKeyToLibrary.putAll(rule.key, libraries);
+      targetKeyToLibrary.putAll(target.key, libraries);
       for (BlazeJarLibrary library : libraries) {
         addLibraryToJdeps(jdepsPathToLibrary, library);
       }
     }
 
     // proto legacy jdeps support
-    for (RuleIdeInfo rule : protoLibraries) {
-      ProtoLibraryLegacyInfo protoLibraryLegacyInfo = rule.protoLibraryLegacyInfo;
+    for (TargetIdeInfo target : protoLibraries) {
+      ProtoLibraryLegacyInfo protoLibraryLegacyInfo = target.protoLibraryLegacyInfo;
       if (protoLibraryLegacyInfo == null) {
         continue;
       }
@@ -187,7 +191,7 @@ public final class BlazeJavaWorkspaceImporter {
               protoLibraryLegacyInfo.jarsV1,
               protoLibraryLegacyInfo.jarsMutable,
               protoLibraryLegacyInfo.jarsImmutable)) {
-        addLibraryToJdeps(jdepsPathToLibrary, new BlazeJarLibrary(libraryArtifact, rule.key));
+        addLibraryToJdeps(jdepsPathToLibrary, new BlazeJarLibrary(libraryArtifact, target.key));
       }
     }
 
@@ -202,17 +206,17 @@ public final class BlazeJavaWorkspaceImporter {
     }
 
     // Collect jars referenced by direct deps from your working set
-    for (RuleKey deps : workspaceBuilder.directDeps) {
-      for (BlazeJarLibrary library : ruleKeyToLibrary.get(deps)) {
+    for (TargetKey deps : workspaceBuilder.directDeps) {
+      for (BlazeJarLibrary library : targetKeyToLibrary.get(deps)) {
         result.put(library.key, library);
       }
     }
 
     // Collect legacy proto libraries from direct deps
-    addProtoLegacyLibrariesFromDirectDeps(workspaceBuilder, ruleMap, result);
+    addProtoLegacyLibrariesFromDirectDeps(workspaceBuilder, targetMap, result);
 
     // Collect generated jars from source rules
-    for (BlazeJarLibrary library : workspaceBuilder.generatedJarsFromSourceRules) {
+    for (BlazeJarLibrary library : workspaceBuilder.generatedJarsFromSourceTargets) {
       result.put(library.key, library);
     }
 
@@ -220,32 +224,34 @@ public final class BlazeJavaWorkspaceImporter {
   }
 
   private void addProtoLegacyLibrariesFromDirectDeps(
-      WorkspaceBuilder workspaceBuilder, RuleMap ruleMap, Map<LibraryKey, BlazeJarLibrary> result) {
-    List<RuleKey> version1Roots = Lists.newArrayList();
-    List<RuleKey> immutableRoots = Lists.newArrayList();
-    List<RuleKey> mutableRoots = Lists.newArrayList();
-    for (RuleKey ruleKey : workspaceBuilder.directDeps) {
-      RuleIdeInfo rule = ruleMap.get(ruleKey);
-      if (rule == null) {
+      WorkspaceBuilder workspaceBuilder,
+      TargetMap targetMap,
+      Map<LibraryKey, BlazeJarLibrary> result) {
+    List<TargetKey> version1Roots = Lists.newArrayList();
+    List<TargetKey> immutableRoots = Lists.newArrayList();
+    List<TargetKey> mutableRoots = Lists.newArrayList();
+    for (TargetKey targetKey : workspaceBuilder.directDeps) {
+      TargetIdeInfo target = targetMap.get(targetKey);
+      if (target == null) {
         continue;
       }
-      ProtoLibraryLegacyInfo protoLibraryLegacyInfo = rule.protoLibraryLegacyInfo;
+      ProtoLibraryLegacyInfo protoLibraryLegacyInfo = target.protoLibraryLegacyInfo;
       if (protoLibraryLegacyInfo == null) {
         continue;
       }
       switch (protoLibraryLegacyInfo.apiFlavor) {
         case VERSION_1:
-          version1Roots.add(ruleKey);
+          version1Roots.add(targetKey);
           break;
         case IMMUTABLE:
-          immutableRoots.add(ruleKey);
+          immutableRoots.add(targetKey);
           break;
         case MUTABLE:
-          mutableRoots.add(ruleKey);
+          mutableRoots.add(targetKey);
           break;
         case BOTH:
-          mutableRoots.add(ruleKey);
-          immutableRoots.add(ruleKey);
+          mutableRoots.add(targetKey);
+          immutableRoots.add(targetKey);
           break;
         default:
           // Can't happen
@@ -254,29 +260,29 @@ public final class BlazeJavaWorkspaceImporter {
     }
 
     addProtoLegacyLibrariesFromDirectDepsForFlavor(
-        ruleMap, ProtoLibraryLegacyInfo.ApiFlavor.VERSION_1, version1Roots, result);
+        targetMap, ProtoLibraryLegacyInfo.ApiFlavor.VERSION_1, version1Roots, result);
     addProtoLegacyLibrariesFromDirectDepsForFlavor(
-        ruleMap, ProtoLibraryLegacyInfo.ApiFlavor.IMMUTABLE, immutableRoots, result);
+        targetMap, ProtoLibraryLegacyInfo.ApiFlavor.IMMUTABLE, immutableRoots, result);
     addProtoLegacyLibrariesFromDirectDepsForFlavor(
-        ruleMap, ProtoLibraryLegacyInfo.ApiFlavor.MUTABLE, mutableRoots, result);
+        targetMap, ProtoLibraryLegacyInfo.ApiFlavor.MUTABLE, mutableRoots, result);
   }
 
   private void addProtoLegacyLibrariesFromDirectDepsForFlavor(
-      RuleMap ruleMap,
+      TargetMap targetMap,
       ProtoLibraryLegacyInfo.ApiFlavor apiFlavor,
-      List<RuleKey> roots,
+      List<TargetKey> roots,
       Map<LibraryKey, BlazeJarLibrary> result) {
-    Set<RuleKey> seen = Sets.newHashSet();
+    Set<TargetKey> seen = Sets.newHashSet();
     while (!roots.isEmpty()) {
-      RuleKey ruleKey = roots.remove(roots.size() - 1);
-      if (!seen.add(ruleKey)) {
+      TargetKey targetKey = roots.remove(roots.size() - 1);
+      if (!seen.add(targetKey)) {
         continue;
       }
-      RuleIdeInfo rule = ruleMap.get(ruleKey);
-      if (rule == null) {
+      TargetIdeInfo target = targetMap.get(targetKey);
+      if (target == null) {
         continue;
       }
-      ProtoLibraryLegacyInfo protoLibraryLegacyInfo = rule.protoLibraryLegacyInfo;
+      ProtoLibraryLegacyInfo protoLibraryLegacyInfo = target.protoLibraryLegacyInfo;
       if (protoLibraryLegacyInfo == null) {
         continue;
       }
@@ -299,13 +305,15 @@ public final class BlazeJavaWorkspaceImporter {
 
       if (libraries != null) {
         for (LibraryArtifact libraryArtifact : libraries) {
-          BlazeJarLibrary library = new BlazeJarLibrary(libraryArtifact, ruleKey);
+          BlazeJarLibrary library = new BlazeJarLibrary(libraryArtifact, targetKey);
           result.put(library.key, library);
         }
       }
 
-      for (Label dep : rule.dependencies) {
-        roots.add(RuleKey.forDependency(rule, dep));
+      for (Dependency dep : target.dependencies) {
+        if (dep.dependencyType == DependencyType.COMPILE_TIME) {
+          roots.add(dep.targetKey);
+        }
       }
     }
   }
@@ -323,72 +331,75 @@ public final class BlazeJavaWorkspaceImporter {
     }
   }
 
-  private void addRuleAsSource(
+  private void addTargetAsSource(
       WorkspaceBuilder workspaceBuilder,
-      RuleIdeInfo rule,
+      TargetIdeInfo target,
       Collection<ArtifactLocation> javaSources) {
-    JavaRuleIdeInfo javaRuleIdeInfo = rule.javaRuleIdeInfo;
-    if (javaRuleIdeInfo == null) {
+    JavaIdeInfo javaIdeInfo = target.javaIdeInfo;
+    if (javaIdeInfo == null) {
       return;
     }
 
-    RuleKey ruleKey = rule.key;
-    Collection<String> jars = jdepsMap.getDependenciesForRule(ruleKey);
+    TargetKey targetKey = target.key;
+    Collection<String> jars = jdepsMap.getDependenciesForTarget(targetKey);
     if (jars != null) {
       workspaceBuilder.jdeps.addAll(jars);
     }
 
     // Add all deps if this rule is in the current working set
-    if (workingSet == null || workingSet.isRuleInWorkingSet(rule)) {
+    if (workingSet == null || workingSet.isTargetInWorkingSet(target)) {
       // Add self, so we pick up our own gen jars if in working set
-      workspaceBuilder.directDeps.add(ruleKey);
-      for (Label dep : rule.dependencies) {
-        workspaceBuilder.directDeps.add(RuleKey.forDependency(rule, dep));
+      workspaceBuilder.directDeps.add(targetKey);
+      for (Dependency dep : target.dependencies) {
+        if (dep.dependencyType == DependencyType.COMPILE_TIME) {
+          workspaceBuilder.directDeps.add(dep.targetKey);
+        }
       }
     }
 
     for (ArtifactLocation artifactLocation : javaSources) {
       if (artifactLocation.isSource()) {
-        duplicateSourceDetector.add(ruleKey, artifactLocation);
-        workspaceBuilder.sourceArtifacts.add(new SourceArtifact(ruleKey, artifactLocation));
+        duplicateSourceDetector.add(targetKey, artifactLocation);
+        workspaceBuilder.sourceArtifacts.add(new SourceArtifact(targetKey, artifactLocation));
         workspaceBuilder.addedSourceFiles.add(artifactLocation);
       }
     }
 
-    ArtifactLocation manifest = javaRuleIdeInfo.packageManifest;
+    ArtifactLocation manifest = javaIdeInfo.packageManifest;
     if (manifest != null) {
-      workspaceBuilder.javaPackageManifests.put(ruleKey, manifest);
+      workspaceBuilder.javaPackageManifests.put(targetKey, manifest);
     }
-    for (LibraryArtifact libraryArtifact : javaRuleIdeInfo.jars) {
+    for (LibraryArtifact libraryArtifact : javaIdeInfo.jars) {
       ArtifactLocation classJar = libraryArtifact.classJar;
       if (classJar != null) {
         workspaceBuilder.buildOutputJars.add(classJar);
       }
     }
-    workspaceBuilder.generatedJarsFromSourceRules.addAll(
-        javaRuleIdeInfo
+    workspaceBuilder.generatedJarsFromSourceTargets.addAll(
+        javaIdeInfo
             .generatedJars
             .stream()
-            .map(libraryArtifact -> new BlazeJarLibrary(libraryArtifact, ruleKey))
+            .map(libraryArtifact -> new BlazeJarLibrary(libraryArtifact, targetKey))
             .collect(Collectors.toList()));
-    if (javaRuleIdeInfo.filteredGenJar != null) {
-      workspaceBuilder.generatedJarsFromSourceRules.add(
-          new BlazeJarLibrary(javaRuleIdeInfo.filteredGenJar, ruleKey));
+    if (javaIdeInfo.filteredGenJar != null) {
+      workspaceBuilder.generatedJarsFromSourceTargets.add(
+          new BlazeJarLibrary(javaIdeInfo.filteredGenJar, targetKey));
     }
 
     for (BlazeJavaSyncAugmenter augmenter : augmenters) {
-      augmenter.addJarsForSourceRule(
-          rule,
-          workspaceBuilder.outputJarsFromSourceRules.get(ruleKey),
-          workspaceBuilder.generatedJarsFromSourceRules);
+      augmenter.addJarsForSourceTarget(
+          workspaceLanguageSettings,
+          target,
+          workspaceBuilder.outputJarsFromSourceTargets.get(targetKey),
+          workspaceBuilder.generatedJarsFromSourceTargets);
     }
   }
 
   @Nullable
-  private String findSourceVersion(RuleMap ruleMap) {
-    for (RuleIdeInfo rule : ruleMap.rules()) {
-      if (rule.javaToolchainIdeInfo != null) {
-        return rule.javaToolchainIdeInfo.sourceVersion;
+  private String findSourceVersion(TargetMap targetMap) {
+    for (TargetIdeInfo target : targetMap.targets()) {
+      if (target.javaToolchainIdeInfo != null) {
+        return target.javaToolchainIdeInfo.sourceVersion;
       }
     }
     return null;
@@ -396,12 +407,12 @@ public final class BlazeJavaWorkspaceImporter {
 
   private static class WorkspaceBuilder {
     Set<String> jdeps = Sets.newHashSet();
-    Set<RuleKey> directDeps = Sets.newHashSet();
+    Set<TargetKey> directDeps = Sets.newHashSet();
     Set<ArtifactLocation> addedSourceFiles = Sets.newHashSet();
-    Multimap<RuleKey, BlazeJarLibrary> outputJarsFromSourceRules = ArrayListMultimap.create();
-    List<BlazeJarLibrary> generatedJarsFromSourceRules = Lists.newArrayList();
+    Multimap<TargetKey, BlazeJarLibrary> outputJarsFromSourceTargets = ArrayListMultimap.create();
+    List<BlazeJarLibrary> generatedJarsFromSourceTargets = Lists.newArrayList();
     List<ArtifactLocation> buildOutputJars = Lists.newArrayList();
     List<SourceArtifact> sourceArtifacts = Lists.newArrayList();
-    Map<RuleKey, ArtifactLocation> javaPackageManifests = Maps.newHashMap();
+    Map<TargetKey, ArtifactLocation> javaPackageManifests = Maps.newHashMap();
   }
 }

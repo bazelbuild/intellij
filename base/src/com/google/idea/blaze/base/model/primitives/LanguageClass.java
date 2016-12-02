@@ -23,7 +23,8 @@ public enum LanguageClass {
   ANDROID("android"),
   JAVASCRIPT("javascript"),
   TYPESCRIPT("typescript"),
-  DART("dart");
+  DART("dart"),
+  PYTHON("python");
 
   private final String name;
 

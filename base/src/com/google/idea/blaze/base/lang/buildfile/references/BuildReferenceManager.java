@@ -21,7 +21,7 @@ import com.google.idea.blaze.base.lang.buildfile.completion.BuildLookupElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.RuleName;
+import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -61,27 +61,31 @@ public class BuildReferenceManager {
   /** Finds the PSI element associated with the given label. */
   @Nullable
   public PsiElement resolveLabel(Label label) {
-    return resolveLabel(label.blazePackage(), label.ruleName(), false);
+    return resolveLabel(label.blazePackage(), label.targetName(), false);
   }
 
   /** Finds the PSI element associated with the given label. */
   @Nullable
   public PsiElement resolveLabel(
-      WorkspacePath packagePath, RuleName ruleName, boolean excludeRules) {
+      WorkspacePath packagePath, TargetName targetName, boolean excludeRules) {
     File packageDir = resolvePackage(packagePath);
     if (packageDir == null) {
       return null;
     }
 
+    if (targetName.toString().equals("__pkg__")) {
+      return findBuildFile(packageDir);
+    }
+
     if (!excludeRules) {
-      FuncallExpression target = findRule(packageDir, ruleName);
+      FuncallExpression target = findRule(packageDir, targetName);
       if (target != null) {
         return target;
       }
     }
 
     // try a direct file reference (e.g. ":a.java")
-    File fullFile = new File(packageDir, ruleName.toString());
+    File fullFile = new File(packageDir, targetName.toString());
     if (FileAttributeProvider.getInstance().exists(fullFile)) {
       return resolveFile(fullFile);
     }
@@ -89,9 +93,9 @@ public class BuildReferenceManager {
     return null;
   }
 
-  private FuncallExpression findRule(File packageDir, RuleName ruleName) {
+  private FuncallExpression findRule(File packageDir, TargetName targetName) {
     BuildFile psiFile = findBuildFile(packageDir);
-    return psiFile != null ? psiFile.findRule(ruleName.toString()) : null;
+    return psiFile != null ? psiFile.findRule(targetName.toString()) : null;
   }
 
   @Nullable
@@ -203,7 +207,7 @@ public class BuildReferenceManager {
   }
 
   @Nullable
-  private BuildFile findBuildFile(@Nullable File packageDirectory) {
+  public BuildFile findBuildFile(@Nullable File packageDirectory) {
     FileAttributeProvider provider = FileAttributeProvider.getInstance();
     if (packageDirectory == null || !provider.isDirectory(packageDirectory)) {
       return null;
@@ -226,16 +230,16 @@ public class BuildReferenceManager {
    */
   @Nullable
   public File resolveParentDirectory(@Nullable Label label) {
-    return label != null ? resolveParentDirectory(label.blazePackage(), label.ruleName()) : null;
+    return label != null ? resolveParentDirectory(label.blazePackage(), label.targetName()) : null;
   }
 
   @Nullable
-  private File resolveParentDirectory(WorkspacePath packagePath, RuleName ruleName) {
+  private File resolveParentDirectory(WorkspacePath packagePath, TargetName targetName) {
     File packageFile = resolvePackage(packagePath);
     if (packageFile == null) {
       return null;
     }
-    String rulePathParent = PathUtil.getParentPath(ruleName.toString());
+    String rulePathParent = PathUtil.getParentPath(targetName.toString());
     return new File(packageFile, rulePathParent);
   }
 

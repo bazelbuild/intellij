@@ -18,7 +18,7 @@ package com.google.idea.blaze.java.run.producers;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
@@ -29,6 +29,7 @@ import com.google.idea.blaze.java.run.RunUtil;
 import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags.JUnitVersion;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -82,13 +83,13 @@ public class BlazeJavaTestMethodConfigurationProducer
     sourceElement.set(methodInfo.firstMethod);
 
     TestIdeInfo.TestSize testSize = TestSizeAnnotationMap.getTestSize(methodInfo.firstMethod);
-    RuleIdeInfo rule =
-        RunUtil.ruleForTestClass(context.getProject(), methodInfo.containingClass, testSize);
-    if (rule == null) {
+    TargetIdeInfo target =
+        RunUtil.targetForTestClass(context.getProject(), methodInfo.containingClass, testSize);
+    if (target == null) {
       return false;
     }
 
-    configuration.setTarget(rule.label);
+    configuration.setTarget(target.key.label);
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {
@@ -165,10 +166,15 @@ public class BlazeJavaTestMethodConfigurationProducer
     }
     final JUnitVersion jUnitVersion =
         JUnitUtil.isJUnit4TestClass(containingClass) ? JUnitVersion.JUNIT_4 : JUnitVersion.JUNIT_3;
+    boolean parameterized = isParameterized(containingClass);
     final String testFilterFlag =
         BlazeJUnitTestFilterFlags.testFilterFlagForClassAndMethods(
-            qualifiedName, methodNames, jUnitVersion);
+            qualifiedName, methodNames, jUnitVersion, parameterized);
 
     return new SelectedMethodInfo(firstMethod, containingClass, methodNames, testFilterFlag);
+  }
+
+  private static boolean isParameterized(PsiClass testClass) {
+    return PsiMemberParameterizedLocation.getParameterizedLocation(testClass, null) != null;
   }
 }

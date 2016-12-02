@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.lang.build;
 
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -34,12 +35,15 @@ public class SafeDeleteTest extends BuildFileIntegrationTestCase {
   @Test
   public void testIndirectGlobReferencesNotIncluded() {
     PsiFile javaFile =
-        createPsiFile("com/google/Test.java", "package com.google;", "public class Test {}");
+        workspace.createPsiFile(
+            new WorkspacePath("com/google/Test.java"),
+            "package com.google;",
+            "public class Test {}");
 
     PsiClass javaClass = PsiUtils.findFirstChildOfClassRecursive(javaFile, PsiClass.class);
 
     createBuildFile(
-        "com/google/BUILD",
+        new WorkspacePath("com/google/BUILD"),
         "java_library(",
         "    name = 'lib'",
         "    srcs = glob(['*.java'])",
@@ -55,12 +59,15 @@ public class SafeDeleteTest extends BuildFileIntegrationTestCase {
   @Test
   public void testDirectGlobReferencesIncluded() {
     PsiFile javaFile =
-        createPsiFile("com/google/Test.java", "package com.google;", "public class Test {}");
+        workspace.createPsiFile(
+            new WorkspacePath("com/google/Test.java"),
+            "package com.google;",
+            "public class Test {}");
 
     PsiClass javaClass = PsiUtils.findFirstChildOfClassRecursive(javaFile, PsiClass.class);
 
     createBuildFile(
-        "com/google/BUILD",
+        new WorkspacePath("com/google/BUILD"),
         "java_library(",
         "    name = 'lib'",
         "    srcs = glob(['Test.java'])",

@@ -71,7 +71,6 @@ public interface BuildElementTypes {
   BuildElementType DOT_EXPRESSION = new BuildElementType("dot_expr", DotExpression.class);
   BuildElementType STRING_LITERAL = new BuildElementType("string", StringLiteral.class);
   BuildElementType INTEGER_LITERAL = new BuildElementType("int", IntegerLiteral.class);
-  BuildElementType BOOLEAN_LITERAL = new BuildElementType("bool", BooleanLiteral.class);
   BuildElementType LIST_LITERAL = new BuildElementType("list", ListLiteral.class);
   BuildElementType GLOB_EXPRESSION = new BuildElementType("glob", GlobExpression.class);
   BuildElementType REFERENCE_EXPRESSION =
@@ -79,6 +78,7 @@ public interface BuildElementTypes {
   BuildElementType TARGET_EXPRESSION = new BuildElementType("target", TargetExpression.class);
   BuildElementType LIST_COMPREHENSION_EXPR =
       new BuildElementType("list_comp", ListComprehensionExpression.class);
+  BuildElementType LOADED_SYMBOL = new BuildElementType("loaded_symbol", LoadedSymbol.class);
 
   TokenSet EXPRESSIONS =
       TokenSet.create(
@@ -89,12 +89,12 @@ public interface BuildElementTypes {
           DOT_EXPRESSION,
           STRING_LITERAL,
           INTEGER_LITERAL,
-          BOOLEAN_LITERAL,
           LIST_LITERAL,
           REFERENCE_EXPRESSION,
           TARGET_EXPRESSION,
           LIST_COMPREHENSION_EXPR,
-          GLOB_EXPRESSION);
+          GLOB_EXPRESSION,
+          LOADED_SYMBOL);
 
   TokenSet STATEMENTS =
       TokenSet.create(

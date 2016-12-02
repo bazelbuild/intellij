@@ -27,8 +27,6 @@
     <SyncPlugin implementation="com.google.idea.blaze.ijwb.typescript.BlazeTypescriptSyncPlugin"/>
     <SyncPlugin implementation="com.google.idea.blaze.ijwb.dart.BlazeDartSyncPlugin"/>
     <java.JavaSyncAugmenter implementation="com.google.idea.blaze.ijwb.android.BlazeAndroidLiteJavaSyncAugmenter"/>
-    <java.JavaSyncAugmenter implementation="com.google.idea.blaze.ijwb.typescript.BlazeTypescriptJavaSyncAugmenter"/>
-    <java.JavaSyncAugmenter implementation="com.google.idea.blaze.ijwb.dart.BlazeDartJavaSyncAugmenter"/>
   </extensions>
 
 </idea-plugin>

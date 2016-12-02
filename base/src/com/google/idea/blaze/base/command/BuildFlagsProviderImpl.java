@@ -26,18 +26,18 @@ import java.util.List;
 /** Flags added to blaze/bazel build commands. */
 public class BuildFlagsProviderImpl implements BuildFlagsProvider {
 
-  private static final BoolExperiment EXPERIMENT_USE_VERSION_WINDOW_FOR_DIRTY_NODE_GC =
+  private static final BoolExperiment experimentUseVersionWindowForDirtyNodeGc =
       new BoolExperiment("ide_build_info.use_version_window_for_dirty_node_gc", false);
-  private static final BoolExperiment EXPERIMENT_NO_EXPERIMENTAL_CHECK_OUTPUT_FILES =
+  private static final BoolExperiment experimentNoExperimentalCheckOutputFiles =
       new BoolExperiment("build.noexperimental_check_output_files", false);
 
   @Override
   public void addBuildFlags(
       BuildSystem buildSystem, ProjectViewSet projectViewSet, List<String> flags) {
-    if (EXPERIMENT_USE_VERSION_WINDOW_FOR_DIRTY_NODE_GC.getValue()) {
+    if (experimentUseVersionWindowForDirtyNodeGc.getValue()) {
       flags.add(VERSION_WINDOW_FOR_DIRTY_NODE_GC);
     }
-    if (EXPERIMENT_NO_EXPERIMENTAL_CHECK_OUTPUT_FILES.getValue()) {
+    if (experimentNoExperimentalCheckOutputFiles.getValue()) {
       flags.add(NO_CHECK_OUTPUTS);
     }
     flags.add("--curses=no");
