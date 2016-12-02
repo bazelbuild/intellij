@@ -479,7 +479,19 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
 
     LoadStatement stmt = stmts.get(0);
     assertThat(stmt.getImportedPath()).isEqualTo("file");
-    assertThat(stmt.getImportedSymbolNames()).isEqualTo(new String[] {"foo", "bar"});
+    assertThat(stmt.getVisibleSymbolNames()).isEqualTo(new String[] {"foo", "bar"});
+    assertNoErrors();
+  }
+
+  @Test
+  public void testLoadWithAlias() throws Exception {
+    ASTNode tree = createAST("load('file', 'foo', baz = 'bar',)\n");
+    List<LoadStatement> stmts = getTopLevelNodesOfType(tree, LoadStatement.class);
+    assertThat(stmts).hasSize(1);
+
+    LoadStatement stmt = stmts.get(0);
+    assertThat(stmt.getImportedPath()).isEqualTo("file");
+    assertThat(stmt.getVisibleSymbolNames()).isEqualTo(new String[] {"foo", "baz"});
     assertNoErrors();
   }
 

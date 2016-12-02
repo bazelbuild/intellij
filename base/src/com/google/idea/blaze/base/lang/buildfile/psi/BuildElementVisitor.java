@@ -104,10 +104,6 @@ public class BuildElementVisitor extends PsiElementVisitor {
     visitElement(node);
   }
 
-  public void visitBooleanLiteral(BooleanLiteral node) {
-    visitElement(node);
-  }
-
   public void visitListLiteral(ListLiteral node) {
     visitElement(node);
   }
@@ -141,6 +137,10 @@ public class BuildElementVisitor extends PsiElementVisitor {
   }
 
   public void visitPassStatement(PassStatement node) {
+    visitElement(node);
+  }
+
+  public void visitLoadedSymbol(LoadedSymbol node) {
     visitElement(node);
   }
 }

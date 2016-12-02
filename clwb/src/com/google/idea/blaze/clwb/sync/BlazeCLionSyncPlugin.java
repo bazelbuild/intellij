@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.clwb.sync;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -30,6 +31,11 @@ import java.util.Collection;
 import javax.annotation.Nullable;
 
 class BlazeCLionSyncPlugin extends BlazeSyncPlugin.Adapter {
+
+  @Override
+  public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
+    return ImmutableList.of(WorkspaceType.C);
+  }
 
   @Nullable
   @Override

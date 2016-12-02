@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.ide;
 
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.model.primitives.RuleName;
+import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.ui.BlazeValidationError;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.ide.IdeBundle;
@@ -57,8 +57,8 @@ final class NewRuleUI {
   }
 
   @NotNull
-  public RuleName getRuleName() {
-    return RuleName.create(ruleNameField.getText());
+  public TargetName getRuleName() {
+    return TargetName.create(ruleNameField.getText());
   }
 
   @Nullable
@@ -80,6 +80,6 @@ final class NewRuleUI {
       return false;
     }
 
-    return RuleName.validate(inputString, errors);
+    return TargetName.validate(inputString, errors);
   }
 }

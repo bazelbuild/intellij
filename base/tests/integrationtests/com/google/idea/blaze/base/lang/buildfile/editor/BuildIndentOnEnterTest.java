@@ -31,7 +31,7 @@ public class BuildIndentOnEnterTest extends BuildFileIntegrationTestCase {
   }
 
   private void pressEnterAndAssertResult(String... resultingFileContents) {
-    pressButton(IdeActions.ACTION_EDITOR_ENTER);
+    editorTest.pressButton(IdeActions.ACTION_EDITOR_ENTER);
     testFixture.getFile().getText();
     testFixture.checkResult(Joiner.on("\n").join(resultingFileContents));
   }

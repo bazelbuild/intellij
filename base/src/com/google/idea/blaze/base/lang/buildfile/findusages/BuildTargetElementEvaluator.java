@@ -30,10 +30,10 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * StringLiterals can reference multiple targets (e.g. "package:target" references both the package
- * and the target). IntelliJ defaults to highlighting / navigating to the innermost reference, but
- * in this case, we want the opposite behavior (the target reference should trump the package
- * reference).
+ * StringLiterals can reference multiple targets (e.g. "//package:target" references both the
+ * package and the target). IntelliJ defaults to highlighting / navigating to the innermost
+ * reference, but in this case, we want the opposite behavior (the target reference should trump the
+ * package reference).
  */
 public class BuildTargetElementEvaluator extends TargetElementEvaluatorEx2 {
 

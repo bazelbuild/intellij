@@ -18,7 +18,8 @@ package com.google.idea.blaze.base.lang.projectview;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
+import com.google.idea.blaze.base.EditorTestHelper;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -31,10 +32,12 @@ import org.junit.Before;
 
 /** Project view file specific integration test base */
 public abstract class ProjectViewIntegrationTestCase extends BlazeIntegrationTestCase {
+  protected EditorTestHelper editorTest;
 
   @Before
   public final void doSetup() {
     mockBlazeProjectDataManager(getMockBlazeProjectData());
+    editorTest = new EditorTestHelper(getProject(), testFixture);
   }
 
   private BlazeProjectData getMockBlazeProjectData() {
@@ -43,14 +46,16 @@ public abstract class ProjectViewIntegrationTestCase extends BlazeIntegrationTes
             null,
             ImmutableList.of(workspaceRoot.directory()),
             new ExecutionRootPath("out/crosstool/bin"),
-            new ExecutionRootPath("out/crosstool/gen"));
+            new ExecutionRootPath("out/crosstool/gen"),
+            null);
     WorkspacePathResolver workspacePathResolver =
         new WorkspacePathResolverImpl(workspaceRoot, fakeRoots);
     ArtifactLocationDecoder artifactLocationDecoder =
         new ArtifactLocationDecoderImpl(fakeRoots, workspacePathResolver);
     return new BlazeProjectData(
         0,
-        new RuleMap(ImmutableMap.of()),
+        new TargetMap(ImmutableMap.of()),
+        ImmutableMap.of(),
         fakeRoots,
         new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of()),
         workspacePathResolver,

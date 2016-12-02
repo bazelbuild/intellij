@@ -78,7 +78,7 @@ public class BlazeConfigurationNameBuilder {
    */
   public BlazeConfigurationNameBuilder setTargetString(Label label) {
     this.targetString =
-        String.format("%s:%s", getImmediatePackage(label), label.ruleName().toString());
+        String.format("%s:%s", getImmediatePackage(label), label.targetName().toString());
     return this;
   }
 

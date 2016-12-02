@@ -21,11 +21,11 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.rulemaps.SourceToRuleMap;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -61,12 +61,12 @@ class BlazeCreateResourceUtils {
     if (blazeProjectData != null) {
       BlazeAndroidSyncData syncData = blazeProjectData.syncState.get(BlazeAndroidSyncData.class);
       if (syncData != null) {
-        ImmutableCollection<RuleKey> rulesRelatedToContext = null;
+        ImmutableCollection<TargetKey> rulesRelatedToContext = null;
         File fileFromContext = null;
         if (contextFile != null) {
           fileFromContext = VfsUtilCore.virtualToIoFile(contextFile);
           rulesRelatedToContext =
-              SourceToRuleMap.getInstance(project).getRulesForSourceFile(fileFromContext);
+              SourceToTargetMap.getInstance(project).getRulesForSourceFile(fileFromContext);
           if (rulesRelatedToContext.isEmpty()) {
             rulesRelatedToContext = null;
           }
@@ -99,7 +99,7 @@ class BlazeCreateResourceUtils {
           allResDirs.addAll(transitiveResources);
 
           if (rulesRelatedToContext != null
-              && !rulesRelatedToContext.contains(androidResourceModule.ruleKey)) {
+              && !rulesRelatedToContext.contains(androidResourceModule.targetKey)) {
             continue;
           }
           resourceDirs.addAll(resources);

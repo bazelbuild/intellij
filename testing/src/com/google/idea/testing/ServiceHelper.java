@@ -16,7 +16,9 @@
 package com.google.idea.testing;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -43,6 +45,21 @@ public class ServiceHelper {
         parentDisposable);
   }
 
+  public static <T> void registerApplicationComponent(
+      Class<T> key, T implementation, Disposable parentDisposable) {
+    Application application = ApplicationManager.getApplication();
+    if (application instanceof ComponentManagerImpl) {
+      replaceComponentInstance(
+          (ComponentManagerImpl) application, key, implementation, parentDisposable);
+    } else {
+      registerComponentInstance(
+          (MutablePicoContainer) application.getPicoContainer(),
+          key,
+          implementation,
+          parentDisposable);
+    }
+  }
+
   public static <T> void registerProjectService(
       Project project, Class<T> key, T implementation, Disposable parentDisposable) {
     registerComponentInstance(
@@ -62,5 +79,14 @@ public class ServiceHelper {
             container.registerComponentInstance(key.getName(), old);
           }
         });
+  }
+
+  private static <T> void replaceComponentInstance(
+      ComponentManagerImpl componentManager,
+      Class<T> key,
+      T implementation,
+      Disposable parentDisposable) {
+    T old = componentManager.registerComponentInstance(key, implementation);
+    Disposer.register(parentDisposable, () -> componentManager.registerComponentInstance(key, old));
   }
 }

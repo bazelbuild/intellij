@@ -29,6 +29,8 @@ public abstract class BlazeInfo {
   public static final String EXECUTION_ROOT_KEY = "execution_root";
   public static final String PACKAGE_PATH_KEY = "package_path";
   public static final String BUILD_LANGUAGE = "build-language";
+  public static final String OUTPUT_BASE_KEY = "output_base";
+  public static final String MASTER_LOG = "master-log";
 
   public static String blazeBinKey(BuildSystem buildSystem) {
     switch (buildSystem) {

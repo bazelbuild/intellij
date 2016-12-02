@@ -21,8 +21,12 @@ import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.AssignmentStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
+import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
+import com.google.idea.blaze.base.lang.buildfile.psi.Parameter;
 import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.TargetExpression;
+import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiElement;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,7 +40,7 @@ public class LocalReferenceTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testCreatesReference() {
-    BuildFile file = createBuildFile("java/com/google/BUILD", "a = 1", "c = a");
+    BuildFile file = createBuildFile(new WorkspacePath("java/com/google/BUILD"), "a = 1", "c = a");
 
     AssignmentStatement[] stmts = file.childrenOfClass(AssignmentStatement.class);
     assertThat(stmts).hasLength(2);
@@ -48,7 +52,7 @@ public class LocalReferenceTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testReferenceResolves() {
-    BuildFile file = createBuildFile("java/com/google/BUILD", "a = 1", "c = a");
+    BuildFile file = createBuildFile(new WorkspacePath("java/com/google/BUILD"), "a = 1", "c = a");
 
     AssignmentStatement[] stmts = file.childrenOfClass(AssignmentStatement.class);
     ReferenceExpression ref = (ReferenceExpression) stmts[1].getAssignedValue();
@@ -59,7 +63,8 @@ public class LocalReferenceTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testTargetInOuterScope() {
-    BuildFile file = createBuildFile("java/com/google/BUILD", "a = 1", "function(c = a)");
+    BuildFile file =
+        createBuildFile(new WorkspacePath("java/com/google/BUILD"), "a = 1", "function(c = a)");
 
     TargetExpression target =
         file.findChildByClass(AssignmentStatement.class).getLeftHandSideExpression();
@@ -71,12 +76,28 @@ public class LocalReferenceTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testReferenceInsideFuncallExpression() {
-    BuildFile file = createBuildFile("java/com/google/BUILD", "a = 1", "a.function(c)");
+    BuildFile file =
+        createBuildFile(new WorkspacePath("java/com/google/BUILD"), "a = 1", "a.function(c)");
 
     TargetExpression target =
         file.findChildByClass(AssignmentStatement.class).getLeftHandSideExpression();
     FuncallExpression funcall = file.findChildByClass(FuncallExpression.class);
     ReferenceExpression ref = funcall.firstChildOfClass(ReferenceExpression.class);
     assertThat(ref.getReferencedElement()).isEqualTo(target);
+  }
+
+  @Test
+  public void testReferenceToFunctionArg() {
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/google/defs.bzl"),
+            "def function(arg1, arg2):",
+            "  arg1(arg2)");
+
+    FunctionStatement def = file.findFunctionInScope("function");
+    FuncallExpression call = PsiUtils.findFirstChildOfClassRecursive(file, FuncallExpression.class);
+    Parameter fnParam = def.getParameterList().findParameterByName("arg1");
+    assertThat(fnParam).isNotNull();
+    assertThat(call.getReference().resolve()).isEqualTo(fnParam);
   }
 }

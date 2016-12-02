@@ -15,7 +15,9 @@
  */
 package com.google.idea.blaze.ijwb.javascript;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -25,15 +27,21 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.SourceTestConfig;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.WebModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformUtils;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -47,6 +55,11 @@ public class BlazeJavascriptSyncPlugin extends BlazeSyncPlugin.Adapter {
       return WebModuleType.getInstance();
     }
     return null;
+  }
+
+  @Override
+  public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
+    return ImmutableList.of(WorkspaceType.JAVASCRIPT);
   }
 
   @Override
@@ -79,6 +92,53 @@ public class BlazeJavascriptSyncPlugin extends BlazeSyncPlugin.Adapter {
       boolean isTestSource = testConfig.isTestSource(workspacePath.relativePath());
       contentEntry.addSourceFolder(virtualFile, isTestSource);
     }
+  }
+
+  @Override
+  public void updateProjectStructure(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      @Nullable BlazeProjectData oldBlazeProjectData,
+      ModuleEditor moduleEditor,
+      Module workspaceModule,
+      ModifiableRootModel workspaceModifiableModel) {
+    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVASCRIPT)
+        || BlazeJavascriptLibrarySource.JS_LIBRARY_KIND == null) {
+      return;
+    }
+    for (Library lib : getJavascriptLibraries(project)) {
+      if (workspaceModifiableModel.findLibraryOrderEntry(lib) == null) {
+        workspaceModifiableModel.addLibraryEntry(lib);
+      }
+    }
+  }
+
+  private static List<Library> getJavascriptLibraries(Project project) {
+    List<Library> libraries = Lists.newArrayList();
+    LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
+    for (Library lib : registrar.getLibraryTable().getLibraries()) {
+      if (BlazeJavascriptLibrarySource.isJavascriptLibrary(lib)) {
+        libraries.add(lib);
+      }
+    }
+    for (Library lib : registrar.getLibraryTable(project).getLibraries()) {
+      if (BlazeJavascriptLibrarySource.isJavascriptLibrary(lib)) {
+        libraries.add(lib);
+      }
+    }
+    return libraries;
+  }
+
+  @Nullable
+  @Override
+  public LibrarySource getLibrarySource(BlazeProjectData blazeProjectData) {
+    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVASCRIPT)) {
+      return null;
+    }
+    return new BlazeJavascriptLibrarySource();
   }
 
   @Override

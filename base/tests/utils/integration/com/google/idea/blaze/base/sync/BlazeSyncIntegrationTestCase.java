@@ -28,8 +28,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
-import com.google.idea.blaze.base.io.WorkspaceScanner;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -56,32 +55,21 @@ import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
-import org.junit.After;
 import org.junit.Before;
 
 /** Sets up mocks required for integration tests of the blaze sync process. */
 public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestCase {
 
-  // root directory for all files outside the project directory.
-  protected TempDirTestFixture tempDirectoryHandler;
-  protected VirtualFile tempDirectory;
-
   // blaze-info data
+  private static final String OUTPUT_BASE = "/output_base";
   private static final String EXECUTION_ROOT = "/execroot/root";
   private static final String BLAZE_BIN =
       EXECUTION_ROOT + "/blaze-out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
   private static final String BLAZE_GENFILES =
       EXECUTION_ROOT + "/blaze-out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/genfiles";
-
-  private static final String PROJECT_DATA_DIR = "project-data-dir";
 
   private MockProjectViewManager projectViewManager;
   private MockBlazeVcsHandler vcsHandler;
@@ -93,27 +81,12 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
 
   @Before
   public void doSetup() throws Exception {
-    // Set up a workspace root outside of the tracked temp file system.
-    tempDirectoryHandler = new LightTempDirTestFixtureImpl();
-    tempDirectoryHandler.setUp();
-    tempDirectory = tempDirectoryHandler.getFile("");
-    workspaceRoot = new WorkspaceRoot(new File(tempDirectory.getPath()));
-    setBlazeImportSettings(
-        new BlazeImportSettings(
-            workspaceRoot.toString(),
-            "test-project",
-            workspaceRoot + "/" + PROJECT_DATA_DIR,
-            "location-hash",
-            workspaceRoot + "/project-view-file",
-            BuildSystem.Blaze));
-
     projectViewManager = new MockProjectViewManager();
     vcsHandler = new MockBlazeVcsHandler();
     blazeInfoData = new MockBlazeInfo();
     blazeIdeInterface = new MockBlazeIdeInterface();
     registerProjectService(ProjectViewManager.class, projectViewManager);
     registerExtension(BlazeVcsHandler.EP_NAME, vcsHandler);
-    registerApplicationService(WorkspaceScanner.class, (workspaceRoot, workspacePath) -> true);
     registerApplicationService(BlazeInfo.class, blazeInfoData);
     registerApplicationService(BlazeIdeInterface.class, blazeIdeInterface);
     registerApplicationService(
@@ -139,9 +112,9 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     context = new BlazeContext();
     context.addOutputSink(IssueOutput.class, errorCollector);
 
-    tempDirectoryHandler.findOrCreateDir(PROJECT_DATA_DIR + "/.blaze/modules");
+    fileSystem.createDirectory(projectDataDirectory.getPath() + "/.blaze/modules");
 
-    setBlazeInfoResults(
+    blazeInfoData.setResults(
         ImmutableMap.of(
             BlazeInfo.blazeBinKey(Blaze.getBuildSystem(getProject())),
             BLAZE_BIN,
@@ -149,35 +122,14 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
             BLAZE_GENFILES,
             BlazeInfo.EXECUTION_ROOT_KEY,
             EXECUTION_ROOT,
+            BlazeInfo.OUTPUT_BASE_KEY,
+            OUTPUT_BASE,
             BlazeInfo.PACKAGE_PATH_KEY,
             workspaceRoot.toString()));
   }
 
-  @After
-  public final void doTearDown() throws Exception {
-    if (tempDirectoryHandler != null) {
-      tempDirectoryHandler.tearDown();
-    }
-  }
-
-  protected VirtualFile createWorkspaceFile(String relativePath, @Nullable String... contents) {
-    try {
-      String content = contents != null ? Joiner.on("\n").join(contents) : "";
-      return tempDirectoryHandler.createFile(relativePath, content);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  protected void assertNoErrors() {
-    errorCollector.assertNoIssues();
-  }
-
-  protected ArtifactLocation sourceRoot(String relativePath) {
-    return ArtifactLocation.builder()
-        .setRelativePath(relativePath)
-        .setIsSource(true)
-        .build();
+  protected static ArtifactLocation sourceRoot(String relativePath) {
+    return ArtifactLocation.builder().setRelativePath(relativePath).setIsSource(true).build();
   }
 
   protected void setProjectView(String... contents) {
@@ -187,7 +139,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
 
     ProjectViewSet result = projectViewParser.getResult();
     assertThat(result.getProjectViewFiles()).isNotEmpty();
-    assertNoErrors();
+    errorCollector.assertNoIssues();
     setProjectViewSet(result);
   }
 
@@ -195,12 +147,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     projectViewManager.projectViewSet = projectViewSet;
   }
 
-  protected void setRuleMap(RuleMap ruleMap) {
-    blazeIdeInterface.ruleMap = ruleMap;
-  }
-
-  protected void setBlazeInfoResults(Map<String, String> blazeInfoResults) {
-    blazeInfoData.setResults(blazeInfoResults);
+  protected void setTargetMap(TargetMap targetMap) {
+    blazeIdeInterface.targetMap = targetMap;
   }
 
   protected void runBlazeSync(BlazeSyncParams syncParams) {
@@ -302,10 +250,10 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   }
 
   private static class MockBlazeIdeInterface implements BlazeIdeInterface {
-    private RuleMap ruleMap = new RuleMap(ImmutableMap.of());
+    private TargetMap targetMap = new TargetMap(ImmutableMap.of());
 
     @Override
-    public IdeResult updateRuleMap(
+    public IdeResult updateTargetMap(
         Project project,
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
@@ -316,7 +264,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         SyncState.Builder syncStateBuilder,
         @Nullable SyncState previousSyncState,
         boolean mergeWithOldState) {
-      return new IdeResult(ruleMap, BuildResult.SUCCESS);
+      return new IdeResult(targetMap, BuildResult.SUCCESS);
     }
 
     @Override

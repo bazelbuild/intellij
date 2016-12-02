@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.lang.buildfile.refactor;
 
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -31,15 +32,23 @@ public class FileCopyTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testCopyingJavaFileReferencedByGlob() {
-    createDirectory("java");
-    PsiFile javaFile = createPsiFile("java/Test.java", "package java;", "public class Test {}");
+    workspace.createDirectory(new WorkspacePath("java"));
+    PsiFile javaFile =
+        workspace.createPsiFile(
+            new WorkspacePath("java/Test.java"), "package java;", "public class Test {}");
 
-    PsiFile javaFile2 = createPsiFile("java/Test2.java", "package java;", "public class Test2 {}");
+    PsiFile javaFile2 =
+        workspace.createPsiFile(
+            new WorkspacePath("java/Test2.java"), "package java;", "public class Test2 {}");
 
     createBuildFile(
-        "java/BUILD", "java_library(", "    name = 'lib',", "    srcs = glob(['**/*.java']),", ")");
+        new WorkspacePath("java/BUILD"),
+        "java_library(",
+        "    name = 'lib',",
+        "    srcs = glob(['**/*.java']),",
+        ")");
 
-    PsiDirectory otherDir = createPsiDirectory("java/other");
+    PsiDirectory otherDir = workspace.createPsiDirectory(new WorkspacePath("java/other"));
 
     WriteCommandAction.runWriteCommandAction(
         null,

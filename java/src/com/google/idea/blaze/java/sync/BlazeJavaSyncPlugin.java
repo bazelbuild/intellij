@@ -19,7 +19,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -35,6 +36,7 @@ import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
@@ -50,31 +52,31 @@ import com.google.idea.blaze.java.sync.jdeps.JdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
-import com.google.idea.blaze.java.sync.model.BlazeLibrary;
 import com.google.idea.blaze.java.sync.projectstructure.Jdks;
-import com.google.idea.blaze.java.sync.projectstructure.LibraryEditor;
 import com.google.idea.blaze.java.sync.projectstructure.SourceFolderEditor;
 import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ui.UIUtil;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Sync support for Java. */
 public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
   private final JdepsFileReader jdepsFileReader = new JdepsFileReader();
+
+  @Override
+  public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
+    return ImmutableList.of(WorkspaceType.JAVA);
+  }
 
   @Nullable
   @Override
@@ -110,7 +112,7 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
-      RuleMap ruleMap,
+      TargetMap targetMap,
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState) {
     JavaWorkingSet javaWorkingSet = null;
@@ -121,14 +123,14 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
     }
 
     JavaSourceFilter sourceFilter =
-        new JavaSourceFilter(project, workspaceRoot, projectViewSet, ruleMap);
+        new JavaSourceFilter(project, workspaceRoot, projectViewSet, targetMap);
 
     JdepsMap jdepsMap =
         jdepsFileReader.loadJdepsFiles(
             project,
             context,
             artifactLocationDecoder,
-            sourceFilter.getSourceRules(),
+            sourceFilter.getSourceTargets(),
             syncStateBuilder,
             previousSyncState);
     if (context.isCancelled()) {
@@ -141,7 +143,7 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
             workspaceRoot,
             projectViewSet,
             workspaceLanguageSettings,
-            ruleMap,
+            targetMap,
             sourceFilter,
             jdepsMap,
             javaWorkingSet,
@@ -159,10 +161,6 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
                 .addAll(projectViewSet.listItems(ExcludeLibrarySection.KEY))
                 .addAll(projectViewSet.listItems(ExcludedLibrarySection.KEY))
                 .build());
-    for (BlazeJavaSyncAugmenter augmenter :
-        BlazeJavaSyncAugmenter.getActiveSyncAgumenters(workspaceLanguageSettings)) {
-      augmenter.addLibraryFilter(excludedLibraries);
-    }
     BlazeJavaSyncData syncData = new BlazeJavaSyncData(importResult, excludedLibraries);
     syncStateBuilder.put(BlazeJavaSyncData.class, syncData);
   }
@@ -196,34 +194,6 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
     }
 
     SourceFolderEditor.modifyContentEntries(syncData.importResult, contentEntries);
-  }
-
-  @Override
-  public void updateProjectStructure(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData,
-      @Nullable BlazeProjectData oldBlazeProjectData,
-      ModuleEditor moduleEditor,
-      Module workspaceModule,
-      ModifiableRootModel workspaceModifiableModel) {
-    BlazeJavaSyncData syncData = blazeProjectData.syncState.get(BlazeJavaSyncData.class);
-    if (syncData == null) {
-      return;
-    }
-
-    List<BlazeLibrary> libraries = BlazeLibraryCollector.getLibraries(blazeProjectData);
-
-    Scope.push(
-        context,
-        childContext -> {
-          childContext.push(new TimingScope("UpdateLibraries"));
-          LibraryEditor.updateProjectLibraries(project, context, blazeProjectData, libraries);
-        });
-
-    LibraryEditor.configureDependencies(workspaceModifiableModel, libraries);
   }
 
   private static void updateJdk(
@@ -284,6 +254,15 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
         ExcludedLibrarySection.PARSER,
         ExcludeLibrarySection.PARSER,
         JavaLanguageLevelSection.PARSER);
+  }
+
+  @Nullable
+  @Override
+  public LibrarySource getLibrarySource(BlazeProjectData blazeProjectData) {
+    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVA)) {
+      return null;
+    }
+    return new BlazeJavaLibrarySource(blazeProjectData);
   }
 
   /**

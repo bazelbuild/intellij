@@ -18,18 +18,20 @@ package com.google.idea.blaze.base.model.primitives;
 /**
  * Workspace types.
  *
- * <p>If the user doesn't specify a workspace, she gets the highest supported workspace type by enum
- * ordinal.
+ * <p>If the user doesn't specify a workspace, she gets the supported workspace type with lowest
+ * enum ordinal.
  */
 public enum WorkspaceType {
-  INTELLIJ_PLUGIN("intellij_plugin", LanguageClass.JAVA),
-  C("c", LanguageClass.C),
-  JAVA("java", LanguageClass.JAVA),
   ANDROID_NDK("android_ndk", LanguageClass.ANDROID, LanguageClass.JAVA, LanguageClass.C),
   ANDROID("android", LanguageClass.ANDROID, LanguageClass.JAVA),
-  JAVASCRIPT("javascript");
+  C("c", LanguageClass.C),
+  JAVA("java", LanguageClass.JAVA),
+  PYTHON("python", LanguageClass.PYTHON),
+  JAVASCRIPT("javascript", LanguageClass.JAVASCRIPT),
+  INTELLIJ_PLUGIN("intellij_plugin", LanguageClass.JAVA);
 
   private final String name;
+  // the languages active by default for this WorkspaceType
   private final LanguageClass[] languages;
 
   WorkspaceType(String name, LanguageClass... languages) {

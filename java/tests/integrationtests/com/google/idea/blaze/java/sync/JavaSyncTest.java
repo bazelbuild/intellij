@@ -17,11 +17,12 @@ package com.google.idea.blaze.java.sync;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.idea.blaze.base.ideinfo.JavaRuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
-import com.google.idea.blaze.base.ideinfo.RuleMapBuilder;
+import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
@@ -48,29 +49,29 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
         "  //java/com/google:lib",
         "workspace_type: java");
 
-    createWorkspaceFile(
-        "java/com/google/ClassWithUniqueName1.java",
+    workspace.createFile(
+        new WorkspacePath("java/com/google/ClassWithUniqueName1.java"),
         "package com.google;",
         "public class ClassWithUniqueName1 {}");
 
-    createWorkspaceFile(
-        "java/com/google/ClassWithUniqueName2.java",
+    workspace.createFile(
+        new WorkspacePath("java/com/google/ClassWithUniqueName2.java"),
         "package com.google;",
         "public class ClassWithUniqueName2 {}");
 
-    RuleMap ruleMap =
-        RuleMapBuilder.builder()
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("java/com/google/BUILD"))
                     .setLabel("//java/com/google:lib")
                     .setKind("java_library")
                     .addSource(sourceRoot("java/com/google/ClassWithUniqueName1.java"))
                     .addSource(sourceRoot("java/com/google/ClassWithUniqueName2.java"))
-                    .setJavaInfo(JavaRuleIdeInfo.builder()))
+                    .setJavaInfo(JavaIdeInfo.builder()))
             .build();
 
-    setRuleMap(ruleMap);
+    setTargetMap(targetMap);
 
     BlazeSyncParams syncParams =
         new BlazeSyncParams.Builder("Full Sync", BlazeSyncParams.SyncMode.FULL)
@@ -78,12 +79,12 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
             .build();
     runBlazeSync(syncParams);
 
-    assertNoErrors();
+    errorCollector.assertNoIssues();
 
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
     assertThat(blazeProjectData).isNotNull();
-    assertThat(blazeProjectData.ruleMap).isEqualTo(ruleMap);
+    assertThat(blazeProjectData.targetMap).isEqualTo(targetMap);
     assertThat(blazeProjectData.workspaceLanguageSettings.getWorkspaceType())
         .isEqualTo(WorkspaceType.JAVA);
 
@@ -93,13 +94,13 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
 
     BlazeContentEntry contentEntry = contentEntries.get(0);
     assertThat(contentEntry.contentRoot.getPath())
-        .isEqualTo(tempDirectory.getPath() + "/java/com/google");
+        .isEqualTo(workspaceRoot.fileForPath(new WorkspacePath("java/com/google")).getPath());
     assertThat(contentEntry.sources).hasSize(1);
 
     BlazeSourceDirectory sourceDir = contentEntry.sources.get(0);
     assertThat(sourceDir.getPackagePrefix()).isEqualTo("com.google");
     assertThat(sourceDir.getDirectory().getPath())
-        .isEqualTo(tempDirectory.getPath() + "/java/com/google");
+        .isEqualTo(workspaceRoot.fileForPath(new WorkspacePath("java/com/google")).getPath());
   }
 
   @Test
@@ -111,14 +112,20 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
         "  //java/com/google:lib",
         "workspace_type: java");
 
-    createFile("java/com/google/Source.java", "package com.google;", "public class Source {}");
+    workspace.createFile(
+        new WorkspacePath("java/com/google/Source.java"),
+        "package com.google;",
+        "public class Source {}");
 
-    createFile("java/com/google/Other.java", "package com.google;", "public class Other {}");
+    workspace.createFile(
+        new WorkspacePath("java/com/google/Other.java"),
+        "package com.google;",
+        "public class Other {}");
 
-    RuleMap ruleMap =
-        RuleMapBuilder.builder()
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("java/com/google/BUILD"))
                     .setLabel("//java/com/google:lib")
                     .setKind("java_library")
@@ -126,19 +133,19 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
                     .addSource(sourceRoot("java/com/google/Other.java")))
             .build();
 
-    setRuleMap(ruleMap);
+    setTargetMap(targetMap);
 
     runBlazeSync(
         new BlazeSyncParams.Builder("Sync", SyncMode.INCREMENTAL)
             .addProjectViewTargets(true)
             .build());
 
-    assertNoErrors();
+    errorCollector.assertNoIssues();
 
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
     assertThat(blazeProjectData).isNotNull();
-    assertThat(blazeProjectData.ruleMap).isEqualTo(ruleMap);
+    assertThat(blazeProjectData.targetMap).isEqualTo(targetMap);
     assertThat(blazeProjectData.workspaceLanguageSettings.getWorkspaceType())
         .isEqualTo(WorkspaceType.JAVA);
   }

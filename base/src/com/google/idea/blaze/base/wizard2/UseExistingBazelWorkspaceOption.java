@@ -17,6 +17,8 @@ package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import icons.BlazeIcons;
 import java.io.File;
@@ -26,6 +28,11 @@ class UseExistingBazelWorkspaceOption extends UseExistingWorkspaceOption {
 
   UseExistingBazelWorkspaceOption(BlazeNewProjectBuilder builder) {
     super(builder, BuildSystem.Bazel);
+  }
+
+  @Override
+  public WorkspacePathResolver getWorkspacePathResolver() {
+    return new WorkspacePathResolverImpl(getWorkspaceRoot());
   }
 
   @Override

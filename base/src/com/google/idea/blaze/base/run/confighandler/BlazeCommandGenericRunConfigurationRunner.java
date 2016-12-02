@@ -65,11 +65,11 @@ public final class BlazeCommandGenericRunConfigurationRunner
   }
 
   /** {@link RunProfileState} for generic blaze commands. */
-  private static class BlazeCommandRunProfileState extends CommandLineState {
+  public static class BlazeCommandRunProfileState extends CommandLineState {
     private final BlazeCommandRunConfiguration configuration;
     private final BlazeCommandRunConfigurationCommonState handlerState;
 
-    BlazeCommandRunProfileState(ExecutionEnvironment environment) {
+    public BlazeCommandRunProfileState(ExecutionEnvironment environment) {
       super(environment);
       RunProfile runProfile = environment.getRunProfile();
       configuration = (BlazeCommandRunConfiguration) runProfile;

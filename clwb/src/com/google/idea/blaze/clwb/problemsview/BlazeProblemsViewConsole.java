@@ -49,7 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-/** @author Eugene Zhuravlev Date: 9/18/12 */
+/** CLion has no built-in 'Problems' view, so we mostly duplicate the IntelliJ code here. */
 public class BlazeProblemsViewConsole implements BlazeProblemsView {
   private static final Logger LOG = Logger.getInstance(BlazeProblemsViewConsole.class);
 
@@ -76,6 +76,7 @@ public class BlazeProblemsViewConsole implements BlazeProblemsView {
     myProject = project;
     myPanel = new ProblemsViewPanel(project);
     Disposer.register(project, () -> Disposer.dispose(myPanel));
+    updateIcon();
   }
 
   public void createToolWindowContent(ToolWindow toolWindow) {
@@ -93,7 +94,9 @@ public class BlazeProblemsViewConsole implements BlazeProblemsView {
             : null;
     Navigatable navigatable = issue.getNavigatable();
     if (navigatable == null && file != null) {
-      navigatable = new OpenFileDescriptor(myProject, file, -1, -1);
+      // convert 1-indexed line/column numbers to 0-indexed
+      navigatable =
+          new OpenFileDescriptor(myProject, file, issue.getLine() - 1, issue.getColumn() - 1);
     }
     final IssueOutput.Category category = issue.getCategory();
     final int type = translateCategory(category);
@@ -196,44 +199,40 @@ public class BlazeProblemsViewConsole implements BlazeProblemsView {
       @Nullable final UUID sessionId) {
 
     myViewUpdater.execute(
-        new Runnable() {
-          @Override
-          public void run() {
-            final ErrorViewStructure structure = myPanel.getErrorViewStructure();
-            final GroupingElement group = structure.lookupGroupingElement(groupName);
-            if (group != null && sessionId != null && !sessionId.equals(group.getData())) {
-              structure.removeElement(group);
-            }
-            if (navigatable != null) {
-              myPanel.addMessage(
-                  type,
-                  text,
-                  groupName,
-                  navigatable,
-                  exportTextPrefix,
-                  rendererTextPrefix,
-                  sessionId);
-            } else {
-              myPanel.addMessage(type, text, null, -1, -1, sessionId);
-            }
-            updateIcon();
+        () -> {
+          final ErrorViewStructure structure = myPanel.getErrorViewStructure();
+          final GroupingElement group = structure.lookupGroupingElement(groupName);
+          if (group != null && sessionId != null && !sessionId.equals(group.getData())) {
+            structure.removeElement(group);
           }
+          if (navigatable != null) {
+            myPanel.addMessage(
+                type,
+                text,
+                groupName,
+                navigatable,
+                exportTextPrefix,
+                rendererTextPrefix,
+                sessionId);
+          } else {
+            myPanel.addMessage(type, text, null, -1, -1, sessionId);
+          }
+          updateIcon();
         });
   }
 
   private void updateIcon() {
     UIUtil.invokeLaterIfNeeded(
-        new Runnable() {
-          @Override
-          public void run() {
-            if (!myProject.isDisposed()) {
-              final ToolWindow tw =
-                  ToolWindowManager.getInstance(myProject)
-                      .getToolWindow(BLAZE_PROBLEMS_TOOLWINDOW_ID);
-              if (tw != null) {
-                final boolean active =
-                    myPanel.getErrorViewStructure().hasMessages(ALL_MESSAGE_KINDS);
-                tw.setIcon(active ? myActiveIcon : myPassiveIcon);
+        () -> {
+          if (!myProject.isDisposed()) {
+            final ToolWindow tw =
+                ToolWindowManager.getInstance(myProject)
+                    .getToolWindow(BLAZE_PROBLEMS_TOOLWINDOW_ID);
+            if (tw != null) {
+              final boolean active = myPanel.getErrorViewStructure().hasMessages(ALL_MESSAGE_KINDS);
+              tw.setIcon(active ? myActiveIcon : myPassiveIcon);
+              if (active) {
+                tw.show(null);
               }
             }
           }

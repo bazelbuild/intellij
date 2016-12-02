@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.command;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import java.io.File;
 import java.util.List;
+import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 
 /** Collects the output of --experimental_show_artifacts */
@@ -26,13 +27,17 @@ public class ExperimentalShowArtifactsLineProcessor
   private static final String OUTPUT_START = "Build artifacts:";
   private static final String OUTPUT_MARKER = ">>>";
 
-  final List<File> fileList;
-  private final String fileType;
+  private final List<File> fileList;
+  private final Predicate<String> filter;
   boolean insideBuildResult = false;
 
-  public ExperimentalShowArtifactsLineProcessor(List<File> fileList, String fileType) {
+  public ExperimentalShowArtifactsLineProcessor(List<File> fileList) {
+    this(fileList, (value) -> true);
+  }
+
+  public ExperimentalShowArtifactsLineProcessor(List<File> fileList, Predicate<String> filter) {
     this.fileList = fileList;
-    this.fileType = fileType;
+    this.filter = filter;
   }
 
   @Override
@@ -46,7 +51,7 @@ public class ExperimentalShowArtifactsLineProcessor
       insideBuildResult = line.startsWith(OUTPUT_MARKER);
       if (insideBuildResult) {
         String fileName = line.substring(OUTPUT_MARKER.length());
-        if (fileName.endsWith(fileType)) {
+        if (filter.test(fileName)) {
           fileList.add(new File(fileName));
         }
       }

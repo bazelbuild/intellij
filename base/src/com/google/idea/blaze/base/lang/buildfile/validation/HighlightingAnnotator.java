@@ -16,18 +16,17 @@
 package com.google.idea.blaze.base.lang.buildfile.validation;
 
 import com.google.idea.blaze.base.lang.buildfile.highlighting.BuildSyntaxHighlighter;
+import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuiltInNamesProvider;
 import com.google.idea.blaze.base.lang.buildfile.psi.Argument;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.Parameter;
+import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 
-/**
- * Additional syntax highlighting, based on parsed PSI elements TODO: Special highlighting for blaze
- * built-in names? (e.g. android_library) -- see PyBuiltInAnnotator
- */
+/** Additional syntax highlighting, based on parsed PSI elements. */
 public class HighlightingAnnotator extends BuildAnnotator {
 
   @Override
@@ -56,5 +55,16 @@ public class HighlightingAnnotator extends BuildAnnotator {
       Annotation annotation = getHolder().createInfoAnnotation(nameNode, null);
       annotation.setTextAttributes(BuildSyntaxHighlighter.BUILD_FN_DEFINITION);
     }
+  }
+
+  @Override
+  public void visitReferenceExpression(ReferenceExpression node) {
+    ASTNode nameNode = node.getNameElement();
+    if (nameNode != null
+        && BuiltInNamesProvider.getBuiltInNames(node.getProject()).contains(nameNode.getText())) {
+      Annotation annotation = getHolder().createInfoAnnotation(nameNode, null);
+      annotation.setTextAttributes(BuildSyntaxHighlighter.BUILD_BUILTIN_NAME);
+    }
+    super.visitReferenceExpression(node);
   }
 }

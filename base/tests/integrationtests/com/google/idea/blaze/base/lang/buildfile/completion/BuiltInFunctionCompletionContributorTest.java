@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguag
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -48,10 +49,10 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
   public void testSimpleTopLevelCompletion() {
     setRules("java_library", "android_binary");
 
-    BuildFile file = createBuildFile("BUILD", "");
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 0, 0);
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, 0);
 
     LookupElement[] completionItems = testFixture.completeBasic();
     assertThat(completionItems).hasLength(2);
@@ -65,32 +66,33 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
   public void testUniqueTopLevelCompletion() {
     setRules("java_library", "android_binary");
 
-    BuildFile file = createBuildFile("BUILD", "ja");
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "ja");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 0, 2);
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, 2);
 
     LookupElement[] completionItems = testFixture.completeBasic();
     assertThat(completionItems).isNull();
 
     assertFileContents(file, "java_library()");
-    assertCaretPosition(editor, 0, "java_library(".length());
+    editorTest.assertCaretPosition(editor, 0, "java_library(".length());
   }
 
   @Test
   public void testSkylarkNativeCompletion() {
     setRules("java_library", "android_binary");
 
-    BuildFile file = createBuildFile("build_defs.bzl", "def function():", "  native.j");
+    BuildFile file =
+        createBuildFile(new WorkspacePath("build_defs.bzl"), "def function():", "  native.j");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 1, "  native.j".length());
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 1, "  native.j".length());
 
     LookupElement[] completionItems = testFixture.completeBasic();
     assertThat(completionItems).isNull();
 
     assertFileContents(file, "def function():", "  native.java_library()");
-    assertCaretPosition(editor, 1, "  native.java_library(".length());
+    editorTest.assertCaretPosition(editor, 1, "  native.java_library(".length());
   }
 
   @Test
@@ -99,10 +101,10 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
 
     String[] contents = {"java_library(", "    name = \"lib\"", ""};
 
-    BuildFile file = createBuildFile("BUILD", contents);
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), contents);
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 2, 0);
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 2, 0);
 
     LookupElement[] completionItems = testFixture.completeBasic();
     assertThat(completionItems).isEmpty();
@@ -113,12 +115,12 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
   public void testNoCompletionInComment() {
     setRules("java_library", "android_binary");
 
-    BuildFile file = createBuildFile("BUILD", "#java");
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "#java");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 0, "#java".length());
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, "#java".length());
 
-    assertThat(getCompletionItemsAsStrings()).isEmpty();
+    assertThat(editorTest.getCompletionItemsAsStrings()).isEmpty();
   }
 
   private void setRules(String... ruleNames) {

@@ -16,25 +16,30 @@
 
 package com.google.idea.blaze.base.sync.aspects;
 
+import static java.util.stream.Collectors.toList;
+
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.ideinfo.AndroidRuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.CRuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.CIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
-import com.google.idea.blaze.base.ideinfo.JavaRuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.Dependency;
+import com.google.idea.blaze.base.ideinfo.Dependency.DependencyType;
+import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.JavaToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.ProtoLibraryLegacyInfo;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.PyIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
-import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.AndroidStudioIdeInfo;
-import com.google.repackaged.protobuf.ProtocolStringList;
+import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -43,9 +48,8 @@ import javax.annotation.Nullable;
 public class IdeInfoFromProtobuf {
 
   @Nullable
-  public static RuleIdeInfo makeRuleIdeInfo(
-      WorkspaceLanguageSettings workspaceLanguageSettings,
-      AndroidStudioIdeInfo.RuleIdeInfo message) {
+  public static TargetIdeInfo makeTargetIdeInfo(
+      WorkspaceLanguageSettings workspaceLanguageSettings, IntellijIdeInfo.TargetIdeInfo message) {
     Kind kind = getKind(message);
     if (kind == null) {
       return null;
@@ -54,33 +58,57 @@ public class IdeInfoFromProtobuf {
       return null;
     }
 
-    Label label = new Label(message.getLabel());
+    final TargetKey key;
+    if (message.hasKey()) {
+      key = makeTargetKey(message.getKey());
+    } else {
+      key = TargetKey.forPlainTarget(new Label(message.getLabel()));
+    }
+
     ArtifactLocation buildFile = getBuildFile(message);
 
-    Collection<Label> dependencies = makeLabelListFromProtobuf(message.getDependenciesList());
-    Collection<Label> runtimeDeps = makeLabelListFromProtobuf(message.getRuntimeDepsList());
+    final Collection<Dependency> dependencies;
+    if (message.getDepsCount() > 0) {
+      dependencies =
+          message.getDepsList().stream().map(IdeInfoFromProtobuf::makeDependency).collect(toList());
+    } else {
+      dependencies =
+          Lists.newArrayListWithCapacity(
+              message.getDependenciesCount() + message.getRuntimeDepsCount());
+      dependencies.addAll(
+          makeDependencyListFromLabelList(
+              message.getDependenciesList(), DependencyType.COMPILE_TIME));
+      dependencies.addAll(
+          makeDependencyListFromLabelList(message.getRuntimeDepsList(), DependencyType.RUNTIME));
+    }
+
     Collection<String> tags = ImmutableList.copyOf(message.getTagsList());
 
     Collection<ArtifactLocation> sources = Lists.newArrayList();
-    CRuleIdeInfo cRuleIdeInfo = null;
-    if (message.hasCRuleIdeInfo()) {
-      cRuleIdeInfo = makeCRuleIdeInfo(message.getCRuleIdeInfo());
-      sources.addAll(cRuleIdeInfo.sources);
+    CIdeInfo cIdeInfo = null;
+    if (message.hasCIdeInfo()) {
+      cIdeInfo = makeCIdeInfo(message.getCIdeInfo());
+      sources.addAll(cIdeInfo.sources);
     }
     CToolchainIdeInfo cToolchainIdeInfo = null;
     if (message.hasCToolchainIdeInfo()) {
       cToolchainIdeInfo = makeCToolchainIdeInfo(message.getCToolchainIdeInfo());
     }
-    JavaRuleIdeInfo javaRuleIdeInfo = null;
-    if (message.hasJavaRuleIdeInfo()) {
-      javaRuleIdeInfo = makeJavaRuleIdeInfo(message.getJavaRuleIdeInfo());
+    JavaIdeInfo javaIdeInfo = null;
+    if (message.hasJavaIdeInfo()) {
+      javaIdeInfo = makeJavaIdeInfo(message.getJavaIdeInfo());
       Collection<ArtifactLocation> javaSources =
-          makeArtifactLocationList(message.getJavaRuleIdeInfo().getSourcesList());
+          makeArtifactLocationList(message.getJavaIdeInfo().getSourcesList());
       sources.addAll(javaSources);
     }
-    AndroidRuleIdeInfo androidRuleIdeInfo = null;
-    if (message.hasAndroidRuleIdeInfo()) {
-      androidRuleIdeInfo = makeAndroidRuleIdeInfo(message.getAndroidRuleIdeInfo());
+    AndroidIdeInfo androidIdeInfo = null;
+    if (message.hasAndroidIdeInfo()) {
+      androidIdeInfo = makeAndroidIdeInfo(message.getAndroidIdeInfo());
+    }
+    PyIdeInfo pyIdeInfo = null;
+    if (message.hasPyIdeInfo()) {
+      pyIdeInfo = makePyIdeInfo(message.getPyIdeInfo());
+      sources.addAll(pyIdeInfo.sources);
     }
     TestIdeInfo testIdeInfo = null;
     if (message.hasTestInfo()) {
@@ -96,46 +124,76 @@ public class IdeInfoFromProtobuf {
       javaToolchainIdeInfo = makeJavaToolchainIdeInfo(message.getJavaToolchainIdeInfo());
     }
 
-    return new RuleIdeInfo(
-        label,
+    return new TargetIdeInfo(
+        key,
         kind,
         buildFile,
         dependencies,
-        runtimeDeps,
         tags,
         sources,
-        cRuleIdeInfo,
+        cIdeInfo,
         cToolchainIdeInfo,
-        javaRuleIdeInfo,
-        androidRuleIdeInfo,
+        javaIdeInfo,
+        androidIdeInfo,
+        pyIdeInfo,
         testIdeInfo,
         protoLibraryLegacyInfo,
         javaToolchainIdeInfo);
   }
 
+  private static Collection<Dependency> makeDependencyListFromLabelList(
+      List<String> dependencyList, Dependency.DependencyType dependencyType) {
+    return dependencyList
+        .stream()
+        .map(dep -> new Dependency(TargetKey.forPlainTarget(new Label(dep)), dependencyType))
+        .collect(toList());
+  }
+
+  private static TargetKey makeTargetKey(IntellijIdeInfo.TargetKey key) {
+    return TargetKey.forGeneralTarget(
+        new Label(key.getLabel()), Strings.emptyToNull(key.getAspectId()));
+  }
+
+  private static Dependency makeDependency(IntellijIdeInfo.Dependency dep) {
+    return new Dependency(
+        makeTargetKey(dep.getTarget()), makeDependencyType(dep.getDependencyType()));
+  }
+
+  private static Dependency.DependencyType makeDependencyType(
+      IntellijIdeInfo.Dependency.DependencyType dependencyType) {
+    switch (dependencyType) {
+      case COMPILE_TIME:
+        return DependencyType.COMPILE_TIME;
+      case RUNTIME:
+        return DependencyType.RUNTIME;
+      default:
+        return DependencyType.COMPILE_TIME;
+    }
+  }
+
   @Nullable
-  private static ArtifactLocation getBuildFile(AndroidStudioIdeInfo.RuleIdeInfo message) {
+  private static ArtifactLocation getBuildFile(IntellijIdeInfo.TargetIdeInfo message) {
     if (message.hasBuildFileArtifactLocation()) {
       return makeArtifactLocation(message.getBuildFileArtifactLocation());
     }
     return null;
   }
 
-  private static CRuleIdeInfo makeCRuleIdeInfo(AndroidStudioIdeInfo.CRuleIdeInfo cRuleIdeInfo) {
-    List<ArtifactLocation> sources = makeArtifactLocationList(cRuleIdeInfo.getSourceList());
+  private static CIdeInfo makeCIdeInfo(IntellijIdeInfo.CIdeInfo cIdeInfo) {
+    List<ArtifactLocation> sources = makeArtifactLocationList(cIdeInfo.getSourceList());
     List<ExecutionRootPath> transitiveIncludeDirectories =
-        makeExecutionRootPathList(cRuleIdeInfo.getTransitiveIncludeDirectoryList());
+        makeExecutionRootPathList(cIdeInfo.getTransitiveIncludeDirectoryList());
     List<ExecutionRootPath> transitiveQuoteIncludeDirectories =
-        makeExecutionRootPathList(cRuleIdeInfo.getTransitiveQuoteIncludeDirectoryList());
+        makeExecutionRootPathList(cIdeInfo.getTransitiveQuoteIncludeDirectoryList());
     List<ExecutionRootPath> transitiveSystemIncludeDirectories =
-        makeExecutionRootPathList(cRuleIdeInfo.getTransitiveSystemIncludeDirectoryList());
+        makeExecutionRootPathList(cIdeInfo.getTransitiveSystemIncludeDirectoryList());
 
-    CRuleIdeInfo.Builder builder =
-        CRuleIdeInfo.builder()
+    CIdeInfo.Builder builder =
+        CIdeInfo.builder()
             .addSources(sources)
             .addTransitiveIncludeDirectories(transitiveIncludeDirectories)
             .addTransitiveQuoteIncludeDirectories(transitiveQuoteIncludeDirectories)
-            .addTransitiveDefines(cRuleIdeInfo.getTransitiveDefineList())
+            .addTransitiveDefines(cIdeInfo.getTransitiveDefineList())
             .addTransitiveSystemIncludeDirectories(transitiveSystemIncludeDirectories);
 
     return builder.build();
@@ -150,7 +208,7 @@ public class IdeInfoFromProtobuf {
   }
 
   private static CToolchainIdeInfo makeCToolchainIdeInfo(
-      AndroidStudioIdeInfo.CToolchainIdeInfo cToolchainIdeInfo) {
+      IntellijIdeInfo.CToolchainIdeInfo cToolchainIdeInfo) {
     Collection<ExecutionRootPath> builtInIncludeDirectories =
         makeExecutionRootPathList(cToolchainIdeInfo.getBuiltInIncludeDirectoryList());
     ExecutionRootPath cppExecutable = new ExecutionRootPath(cToolchainIdeInfo.getCppExecutable());
@@ -177,40 +235,40 @@ public class IdeInfoFromProtobuf {
     return builder.build();
   }
 
-  private static JavaRuleIdeInfo makeJavaRuleIdeInfo(
-      AndroidStudioIdeInfo.JavaRuleIdeInfo javaRuleIdeInfo) {
-    return new JavaRuleIdeInfo(
-        makeLibraryArtifactList(javaRuleIdeInfo.getJarsList()),
-        makeLibraryArtifactList(javaRuleIdeInfo.getGeneratedJarsList()),
-        javaRuleIdeInfo.hasFilteredGenJar()
-            ? makeLibraryArtifact(javaRuleIdeInfo.getFilteredGenJar())
+  private static JavaIdeInfo makeJavaIdeInfo(IntellijIdeInfo.JavaIdeInfo javaIdeInfo) {
+    return new JavaIdeInfo(
+        makeLibraryArtifactList(javaIdeInfo.getJarsList()),
+        makeLibraryArtifactList(javaIdeInfo.getGeneratedJarsList()),
+        javaIdeInfo.hasFilteredGenJar()
+            ? makeLibraryArtifact(javaIdeInfo.getFilteredGenJar())
             : null,
-        javaRuleIdeInfo.hasPackageManifest()
-            ? makeArtifactLocation(javaRuleIdeInfo.getPackageManifest())
+        javaIdeInfo.hasPackageManifest()
+            ? makeArtifactLocation(javaIdeInfo.getPackageManifest())
             : null,
-        javaRuleIdeInfo.hasJdeps() ? makeArtifactLocation(javaRuleIdeInfo.getJdeps()) : null);
+        javaIdeInfo.hasJdeps() ? makeArtifactLocation(javaIdeInfo.getJdeps()) : null);
   }
 
-  private static AndroidRuleIdeInfo makeAndroidRuleIdeInfo(
-      AndroidStudioIdeInfo.AndroidRuleIdeInfo androidRuleIdeInfo) {
-    return new AndroidRuleIdeInfo(
-        makeArtifactLocationList(androidRuleIdeInfo.getResourcesList()),
-        androidRuleIdeInfo.getJavaPackage(),
-        androidRuleIdeInfo.getGenerateResourceClass(),
-        androidRuleIdeInfo.hasManifest()
-            ? makeArtifactLocation(androidRuleIdeInfo.getManifest())
+  private static AndroidIdeInfo makeAndroidIdeInfo(IntellijIdeInfo.AndroidIdeInfo androidIdeInfo) {
+    return new AndroidIdeInfo(
+        makeArtifactLocationList(androidIdeInfo.getResourcesList()),
+        androidIdeInfo.getJavaPackage(),
+        androidIdeInfo.getGenerateResourceClass(),
+        androidIdeInfo.hasManifest() ? makeArtifactLocation(androidIdeInfo.getManifest()) : null,
+        androidIdeInfo.hasIdlJar() ? makeLibraryArtifact(androidIdeInfo.getIdlJar()) : null,
+        androidIdeInfo.hasResourceJar()
+            ? makeLibraryArtifact(androidIdeInfo.getResourceJar())
             : null,
-        androidRuleIdeInfo.hasIdlJar() ? makeLibraryArtifact(androidRuleIdeInfo.getIdlJar()) : null,
-        androidRuleIdeInfo.hasResourceJar()
-            ? makeLibraryArtifact(androidRuleIdeInfo.getResourceJar())
-            : null,
-        androidRuleIdeInfo.getHasIdlSources(),
-        !Strings.isNullOrEmpty(androidRuleIdeInfo.getLegacyResources())
-            ? new Label(androidRuleIdeInfo.getLegacyResources())
+        androidIdeInfo.getHasIdlSources(),
+        !Strings.isNullOrEmpty(androidIdeInfo.getLegacyResources())
+            ? new Label(androidIdeInfo.getLegacyResources())
             : null);
   }
 
-  private static TestIdeInfo makeTestIdeInfo(AndroidStudioIdeInfo.TestInfo testInfo) {
+  private static PyIdeInfo makePyIdeInfo(IntellijIdeInfo.PyIdeInfo info) {
+    return PyIdeInfo.builder().addSources(makeArtifactLocationList(info.getSourcesList())).build();
+  }
+
+  private static TestIdeInfo makeTestIdeInfo(IntellijIdeInfo.TestInfo testInfo) {
     String size = testInfo.getSize();
     TestIdeInfo.TestSize testSize = TestIdeInfo.DEFAULT_RULE_TEST_SIZE;
     if (!Strings.isNullOrEmpty(size)) {
@@ -235,7 +293,7 @@ public class IdeInfoFromProtobuf {
   }
 
   private static ProtoLibraryLegacyInfo makeProtoLibraryLegacyInfo(
-      AndroidStudioIdeInfo.ProtoLibraryLegacyJavaIdeInfo protoLibraryLegacyJavaIdeInfo) {
+      IntellijIdeInfo.ProtoLibraryLegacyJavaIdeInfo protoLibraryLegacyJavaIdeInfo) {
     final ProtoLibraryLegacyInfo.ApiFlavor apiFlavor;
     if (protoLibraryLegacyJavaIdeInfo.getApiVersion() == 1) {
       apiFlavor = ProtoLibraryLegacyInfo.ApiFlavor.VERSION_1;
@@ -263,15 +321,15 @@ public class IdeInfoFromProtobuf {
   }
 
   private static JavaToolchainIdeInfo makeJavaToolchainIdeInfo(
-      AndroidStudioIdeInfo.JavaToolchainIdeInfo javaToolchainIdeInfo) {
+      IntellijIdeInfo.JavaToolchainIdeInfo javaToolchainIdeInfo) {
     return new JavaToolchainIdeInfo(
         javaToolchainIdeInfo.getSourceVersion(), javaToolchainIdeInfo.getTargetVersion());
   }
 
   private static Collection<LibraryArtifact> makeLibraryArtifactList(
-      List<AndroidStudioIdeInfo.LibraryArtifact> jarsList) {
+      List<IntellijIdeInfo.LibraryArtifact> jarsList) {
     ImmutableList.Builder<LibraryArtifact> builder = ImmutableList.builder();
-    for (AndroidStudioIdeInfo.LibraryArtifact libraryArtifact : jarsList) {
+    for (IntellijIdeInfo.LibraryArtifact libraryArtifact : jarsList) {
       LibraryArtifact lib = makeLibraryArtifact(libraryArtifact);
       if (lib != null) {
         builder.add(lib);
@@ -282,7 +340,7 @@ public class IdeInfoFromProtobuf {
 
   @Nullable
   private static LibraryArtifact makeLibraryArtifact(
-      AndroidStudioIdeInfo.LibraryArtifact libraryArtifact) {
+      IntellijIdeInfo.LibraryArtifact libraryArtifact) {
     ArtifactLocation classJar =
         libraryArtifact.hasJar() ? makeArtifactLocation(libraryArtifact.getJar()) : null;
     ArtifactLocation iJar =
@@ -302,9 +360,9 @@ public class IdeInfoFromProtobuf {
   }
 
   private static List<ArtifactLocation> makeArtifactLocationList(
-      List<AndroidStudioIdeInfo.ArtifactLocation> sourcesList) {
+      List<IntellijIdeInfo.ArtifactLocation> sourcesList) {
     ImmutableList.Builder<ArtifactLocation> builder = ImmutableList.builder();
-    for (AndroidStudioIdeInfo.ArtifactLocation pbArtifactLocation : sourcesList) {
+    for (IntellijIdeInfo.ArtifactLocation pbArtifactLocation : sourcesList) {
       ArtifactLocation loc = makeArtifactLocation(pbArtifactLocation);
       if (loc != null) {
         builder.add(loc);
@@ -315,7 +373,7 @@ public class IdeInfoFromProtobuf {
 
   @Nullable
   private static ArtifactLocation makeArtifactLocation(
-      AndroidStudioIdeInfo.ArtifactLocation pbArtifactLocation) {
+      IntellijIdeInfo.ArtifactLocation pbArtifactLocation) {
     if (pbArtifactLocation == null) {
       return null;
     }
@@ -323,20 +381,13 @@ public class IdeInfoFromProtobuf {
         .setRootExecutionPathFragment(pbArtifactLocation.getRootExecutionPathFragment())
         .setRelativePath(pbArtifactLocation.getRelativePath())
         .setIsSource(pbArtifactLocation.getIsSource())
+        .setIsExternal(pbArtifactLocation.getIsExternal())
         .build();
   }
 
-  private static Collection<Label> makeLabelListFromProtobuf(ProtocolStringList dependenciesList) {
-    ImmutableList.Builder<Label> dependenciesBuilder = ImmutableList.builder();
-    for (String dependencyLabel : dependenciesList) {
-      dependenciesBuilder.add(new Label(dependencyLabel));
-    }
-    return dependenciesBuilder.build();
-  }
-
   @Nullable
-  private static Kind getKind(AndroidStudioIdeInfo.RuleIdeInfo rule) {
-    String kindString = rule.getKindString();
+  private static Kind getKind(IntellijIdeInfo.TargetIdeInfo target) {
+    String kindString = target.getKindString();
     if (!Strings.isNullOrEmpty(kindString)) {
       return Kind.fromString(kindString);
     }

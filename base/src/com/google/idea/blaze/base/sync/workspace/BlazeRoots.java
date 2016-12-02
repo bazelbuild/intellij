@@ -16,56 +16,58 @@
 package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.Serializable;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /** The data output by BlazeInfo. */
 public class BlazeRoots implements Serializable {
   public static final long serialVersionUID = 3L;
   private static final Logger LOG = Logger.getInstance(BlazeRoots.class);
 
-  public static ListenableFuture<BlazeRoots> compute(
-      Project project, WorkspaceRoot workspaceRoot, BlazeContext context) {
-    BuildSystem buildSystem = Blaze.getBuildSystem(project);
-    ListenableFuture<ImmutableMap<String, String>> blazeInfoDataFuture =
-        BlazeInfo.getInstance()
-            .runBlazeInfo(context, buildSystem, workspaceRoot, ImmutableList.of());
-    return Futures.transform(
-        blazeInfoDataFuture,
-        new Function<ImmutableMap<String, String>, BlazeRoots>() {
-          @Nullable
-          @Override
-          public BlazeRoots apply(@Nullable ImmutableMap<String, String> blazeInfoData) {
-            // This method is supposed to throw if the input is null
-            // but the input is not allowed to be null.
-            if (blazeInfoData == null) {
-              throw new NullPointerException("blazeInfoData is not allowed to be null");
-            }
-            return build(
-                workspaceRoot,
-                getOrThrow(buildSystem, blazeInfoData, BlazeInfo.EXECUTION_ROOT_KEY),
-                getOrThrow(buildSystem, blazeInfoData, BlazeInfo.PACKAGE_PATH_KEY),
-                getOrThrow(buildSystem, blazeInfoData, BlazeInfo.blazeBinKey(buildSystem)),
-                getOrThrow(buildSystem, blazeInfoData, BlazeInfo.blazeGenfilesKey(buildSystem)));
-          }
-        });
+  public static BlazeRoots build(
+      BuildSystem buildSystem,
+      WorkspaceRoot workspaceRoot,
+      ImmutableMap<String, String> blazeInfo) {
+    return build(
+        workspaceRoot,
+        getOrThrow(buildSystem, blazeInfo, BlazeInfo.EXECUTION_ROOT_KEY),
+        getOrThrow(buildSystem, blazeInfo, BlazeInfo.PACKAGE_PATH_KEY),
+        getOrThrow(buildSystem, blazeInfo, BlazeInfo.blazeBinKey(buildSystem)),
+        getOrThrow(buildSystem, blazeInfo, BlazeInfo.blazeGenfilesKey(buildSystem)),
+        getOrThrow(buildSystem, blazeInfo, BlazeInfo.OUTPUT_BASE_KEY));
+  }
+
+  private static BlazeRoots build(
+      WorkspaceRoot workspaceRoot,
+      String execRootString,
+      String packagePathString,
+      String blazeBinRoot,
+      String blazeGenfilesRoot,
+      String externalSourceRoot) {
+    List<File> packagePaths = parsePackagePaths(workspaceRoot.toString(), packagePathString.trim());
+    File executionRoot = new File(execRootString.trim());
+    ExecutionRootPath blazeBinExecutionRootPath =
+        ExecutionRootPath.createAncestorRelativePath(executionRoot, new File(blazeBinRoot));
+    ExecutionRootPath blazeGenfilesExecutionRootPath =
+        ExecutionRootPath.createAncestorRelativePath(executionRoot, new File(blazeGenfilesRoot));
+    File externalSourceRootFile = new File(externalSourceRoot.trim());
+    LOG.assertTrue(blazeBinExecutionRootPath != null);
+    LOG.assertTrue(blazeGenfilesExecutionRootPath != null);
+    return new BlazeRoots(
+        executionRoot,
+        packagePaths,
+        blazeBinExecutionRootPath,
+        blazeGenfilesExecutionRootPath,
+        externalSourceRootFile);
   }
 
   private static String getOrThrow(
@@ -76,24 +78,6 @@ public class BlazeRoots implements Serializable {
           String.format("Could not locate %s in %s info", key, buildSystem.getLowerCaseName()));
     }
     return value;
-  }
-
-  private static BlazeRoots build(
-      WorkspaceRoot workspaceRoot,
-      String execRootString,
-      String packagePathString,
-      String blazeBinRoot,
-      String blazeGenfilesRoot) {
-    List<File> packagePaths = parsePackagePaths(workspaceRoot.toString(), packagePathString.trim());
-    File executionRoot = new File(execRootString.trim());
-    ExecutionRootPath blazeBinExecutionRootPath =
-        ExecutionRootPath.createAncestorRelativePath(executionRoot, new File(blazeBinRoot));
-    ExecutionRootPath blazeGenfilesExecutionRootPath =
-        ExecutionRootPath.createAncestorRelativePath(executionRoot, new File(blazeGenfilesRoot));
-    LOG.assertTrue(blazeBinExecutionRootPath != null);
-    LOG.assertTrue(blazeGenfilesExecutionRootPath != null);
-    return new BlazeRoots(
-        executionRoot, packagePaths, blazeBinExecutionRootPath, blazeGenfilesExecutionRootPath);
   }
 
   private static List<File> parsePackagePaths(String workspaceRoot, String packagePathString) {
@@ -113,20 +97,32 @@ public class BlazeRoots implements Serializable {
   public final List<File> packagePaths;
   public final ExecutionRootPath blazeBinExecutionRootPath;
   public final ExecutionRootPath blazeGenfilesExecutionRootPath;
+  public final File externalSourceRoot;
 
   @VisibleForTesting
   public BlazeRoots(
       File executionRoot,
       List<File> packagePaths,
       ExecutionRootPath blazeBinExecutionRootPath,
-      ExecutionRootPath blazeGenfilesExecutionRootPath) {
+      ExecutionRootPath blazeGenfilesExecutionRootPath,
+      File externalSourceRoot) {
     this.executionRoot = executionRoot;
     this.packagePaths = packagePaths;
     this.blazeBinExecutionRootPath = blazeBinExecutionRootPath;
     this.blazeGenfilesExecutionRootPath = blazeGenfilesExecutionRootPath;
+    this.externalSourceRoot = externalSourceRoot;
   }
 
   public File getGenfilesDirectory() {
     return blazeGenfilesExecutionRootPath.getFileRootedAt(executionRoot);
+  }
+
+  public File getBlazeBinDirectory() {
+    return blazeBinExecutionRootPath.getFileRootedAt(executionRoot);
+  }
+
+  public boolean isOutputArtifact(ExecutionRootPath path) {
+    return ExecutionRootPath.isAncestor(blazeGenfilesExecutionRootPath, path, false)
+        || ExecutionRootPath.isAncestor(blazeBinExecutionRootPath, path, false);
   }
 }

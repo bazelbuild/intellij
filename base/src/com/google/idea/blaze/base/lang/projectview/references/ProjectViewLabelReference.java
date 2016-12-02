@@ -26,13 +26,23 @@ import com.google.idea.blaze.base.lang.buildfile.references.QuoteType;
 import com.google.idea.blaze.base.lang.projectview.psi.ProjectViewPsiSectionItem;
 import com.google.idea.blaze.base.lang.projectview.psi.util.ProjectViewElementGenerator;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import java.io.File;
 import javax.annotation.Nullable;
 
 /** A blaze label reference. */
@@ -48,16 +58,41 @@ public class ProjectViewLabelReference extends PsiReferenceBase<ProjectViewPsiSe
   @Nullable
   @Override
   public PsiElement resolve() {
+    if (pathFormat == PathFormat.NonLocalWithoutInitialBackslashes) {
+      return resolveFile(myElement.getText());
+    }
     Label label = getLabel(myElement.getText());
     if (label == null) {
       return null;
     }
-    return BuildReferenceManager.getInstance(myElement.getProject()).resolveLabel(label);
+    return BuildReferenceManager.getInstance(getProject()).resolveLabel(label);
   }
 
   @Nullable
-  private static Label getLabel(@Nullable String labelString) {
-    if (labelString == null || !labelString.startsWith("//") || labelString.indexOf('*') != -1) {
+  private PsiFileSystemItem resolveFile(String path) {
+    if (path.startsWith("/") || path.contains(":")) {
+      return null;
+    }
+    BuildReferenceManager manager = BuildReferenceManager.getInstance(getProject());
+    path = StringUtil.trimStart(path, "-");
+    File file = manager.resolvePackage(WorkspacePath.createIfValid(path));
+    if (file == null) {
+      return null;
+    }
+    VirtualFile vf = getFileSystem().findFileByPath(file.getPath());
+    if (vf == null) {
+      return null;
+    }
+    PsiManager psiManager = PsiManager.getInstance(getProject());
+    return vf.isDirectory() ? psiManager.findDirectory(vf) : psiManager.findFile(vf);
+  }
+
+  @Nullable
+  private Label getLabel(@Nullable String labelString) {
+    if (labelString == null
+        || !labelString.startsWith("//")
+        || labelString.contains("...")
+        || labelString.indexOf('*') != -1) {
       return null;
     }
     return LabelUtils.createLabelFromString(null, labelString);
@@ -75,8 +110,7 @@ public class ProjectViewLabelReference extends PsiReferenceBase<ProjectViewPsiSe
     }
     String packagePrefix = LabelUtils.getPackagePathComponent(labelString);
     BuildFile referencedBuildFile =
-        BuildReferenceManager.getInstance(myElement.getProject())
-            .resolveBlazePackage(packagePrefix);
+        BuildReferenceManager.getInstance(getProject()).resolveBlazePackage(packagePrefix);
     if (referencedBuildFile == null) {
       return BuildLookupElement.EMPTY_ARRAY;
     }
@@ -93,8 +127,7 @@ public class ProjectViewLabelReference extends PsiReferenceBase<ProjectViewPsiSe
     if (lookupData == null) {
       return BuildLookupElement.EMPTY_ARRAY;
     }
-    return BuildReferenceManager.getInstance(myElement.getProject())
-        .resolvePackageLookupElements(lookupData);
+    return BuildReferenceManager.getInstance(getProject()).resolvePackageLookupElements(lookupData);
   }
 
   @Override
@@ -109,7 +142,7 @@ public class ProjectViewLabelReference extends PsiReferenceBase<ProjectViewPsiSe
     if (label == null) {
       return myElement;
     }
-    String ruleName = label.ruleName().toString();
+    String ruleName = label.targetName().toString();
     String newRuleName = newElementName;
 
     // handle subdirectories
@@ -132,5 +165,16 @@ public class ProjectViewLabelReference extends PsiReferenceBase<ProjectViewPsiSe
       myElement.getNode().replaceAllChildrenToChildrenOf(replacement);
     }
     return myElement;
+  }
+
+  private Project getProject() {
+    return myElement.getProject();
+  }
+
+  private static VirtualFileSystem getFileSystem() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return TempFileSystem.getInstance();
+    }
+    return LocalFileSystem.getInstance();
   }
 }

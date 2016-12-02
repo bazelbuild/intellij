@@ -23,9 +23,9 @@
                         serviceImplementation="com.google.idea.blaze.plugin.ClwbPluginId"/>
     <projectService serviceInterface="com.google.idea.blaze.base.ui.BlazeProblemsView"
                     serviceImplementation="com.google.idea.blaze.clwb.problemsview.BlazeProblemsViewConsole"/>
-    <toolWindow id="Blaze Problems View"
+    <toolWindow id="Blaze Problems"
                 anchor="bottom"
-                secondary="true"
+                secondary="false"
                 conditionClass="com.google.idea.blaze.base.settings.IsBlazeProjectCondition"
                 icon="BlazeIcons.BlazeToolWindow"
                 factoryClass="com.google.idea.blaze.clwb.problemsview.BlazeProblemsViewConsoleToolWindowFactory"/>
@@ -49,6 +49,7 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.clwb.sync.BlazeCLionSyncPlugin"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.clwb.run.BlazeCidrRunConfigurationHandlerProvider" order="first"/>
+    <RunConfigurationFactory implementation="com.google.idea.blaze.clwb.run.BlazeCidrDebuggableConfigurationFactory"/>
   </extensions>
 
   <actions>

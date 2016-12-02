@@ -17,8 +17,8 @@ package com.google.idea.blaze.base.wizard2;
 
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.ui.BlazeValidationError;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.ui.UiUtil;
@@ -91,8 +91,9 @@ class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectViewOpti
     if (!WorkspacePath.validate(getProjectViewPath(), errors)) {
       return BlazeValidationResult.failure(errors.get(0));
     }
-    WorkspaceRoot temporaryWorkspaceRoot = builder.getWorkspaceOption().getTemporaryWorkspaceRoot();
-    File file = temporaryWorkspaceRoot.fileForPath(getSharedProjectView());
+    WorkspacePathResolver workspacePathResolver =
+        builder.getWorkspaceOption().getWorkspacePathResolver();
+    File file = workspacePathResolver.resolveToFile(getSharedProjectView());
     if (!file.exists()) {
       return BlazeValidationResult.failure("Project view file does not exist.");
     }
@@ -135,17 +136,18 @@ class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectViewOpti
     FileChooserDialog chooser =
         FileChooserFactory.getInstance().createFileChooser(descriptor, null, null);
 
-    WorkspaceRoot temporaryWorkspaceRoot = builder.getWorkspaceOption().getTemporaryWorkspaceRoot();
-
-    File startingLocation = temporaryWorkspaceRoot.directory();
+    WorkspacePathResolver workspacePathResolver =
+        builder.getWorkspaceOption().getWorkspacePathResolver();
+    File fileBrowserRoot = builder.getWorkspaceOption().getFileBrowserRoot();
+    File startingLocation = fileBrowserRoot;
     String projectViewPath = getProjectViewPath();
     if (!projectViewPath.isEmpty()) {
       // If the user has typed part of the path then clicked the '...', try to start from the
       // partial state
       projectViewPath = StringUtil.trimEnd(projectViewPath, '/');
       if (WorkspacePath.validate(projectViewPath)) {
-        File fileLocation = temporaryWorkspaceRoot.fileForPath(new WorkspacePath(projectViewPath));
-        if (fileLocation.exists()) {
+        File fileLocation = workspacePathResolver.resolveToFile(new WorkspacePath(projectViewPath));
+        if (fileLocation.exists() && FileUtil.isAncestor(fileBrowserRoot, fileLocation, true)) {
           startingLocation = fileLocation;
         }
       }
@@ -158,18 +160,17 @@ class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectViewOpti
     }
     VirtualFile file = files[0];
 
-    if (!FileUtil.isAncestor(temporaryWorkspaceRoot.directory().getPath(), file.getPath(), true)) {
+    if (!FileUtil.isAncestor(fileBrowserRoot.getPath(), file.getPath(), true)) {
       Messages.showErrorDialog(
           String.format(
               "You must choose a project view file under %s. "
                   + "To use an external project view, please use the 'Copy external' option.",
-              temporaryWorkspaceRoot.directory().getPath()),
+              fileBrowserRoot.getPath()),
           "Cannot Use Project View File");
       return;
     }
 
-    String newWorkspacePath =
-        FileUtil.getRelativePath(temporaryWorkspaceRoot.directory(), new File(file.getPath()));
+    String newWorkspacePath = FileUtil.getRelativePath(fileBrowserRoot, new File(file.getPath()));
     projectViewPathField.setText(newWorkspacePath);
   }
 }

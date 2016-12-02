@@ -25,9 +25,19 @@ import com.google.idea.blaze.base.lang.buildfile.psi.Parameter;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.TargetExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
 import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,13 +52,13 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
   @Test
   public void testRenameJavaClass() {
     PsiFile javaFile =
-        createPsiFile(
-            "com/google/foo/JavaClass.java",
+        workspace.createPsiFile(
+            new WorkspacePath("com/google/foo/JavaClass.java"),
             "package com.google.foo;",
             "public class JavaClass {}");
 
     createBuildFile(
-        "com/google/foo/BUILD",
+        new WorkspacePath("com/google/foo/BUILD"),
         "java_library(name = \"ref1\", srcs = [\"//com/google/foo:JavaClass.java\"])",
         "java_library(name = \"ref2\", srcs = [\"JavaClass.java\"])",
         "java_library(name = \"ref3\", srcs = [\":JavaClass.java\"])");
@@ -61,7 +71,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
 
     assertThat(references).hasSize(3);
 
-    renamePsiElement(javaFile, "NewName.java");
+    testFixture.renameElement(javaFile, "NewName.java");
 
     Set<String> newStrings =
         references.stream().map(StringLiteral::getStringContents).collect(Collectors.toSet());
@@ -79,19 +89,19 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
   public void testRenameRule() {
     BuildFile fooPackage =
         createBuildFile(
-            "com/google/foo/BUILD",
+            new WorkspacePath("com/google/foo/BUILD"),
             "rule_type(name = \"target\")",
             "java_library(name = \"local_ref\", srcs = [\":target\"])");
 
     BuildFile barPackage =
         createBuildFile(
-            "com/google/test/bar/BUILD",
+            new WorkspacePath("com/google/test/bar/BUILD"),
             "rule_type(name = \"ref\", arg = \"//com/google/foo:target\")",
             "top_level_ref = \"//com/google/foo:target\"");
 
     FuncallExpression targetRule =
         PsiUtils.findFirstChildOfClassRecursive(fooPackage, FuncallExpression.class);
-    renamePsiElement(targetRule, "newTargetName");
+    testFixture.renameElement(targetRule, "newTargetName");
 
     assertFileContents(
         fooPackage,
@@ -107,18 +117,19 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
   @Test
   public void testRenameSkylarkExtension() {
     BuildFile extFile =
-        createBuildFile("java/com/google/tools/build_defs.bzl", "def function(name, deps)");
+        createBuildFile(
+            new WorkspacePath("java/com/google/tools/build_defs.bzl"), "def function(name, deps)");
 
     BuildFile buildFile =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "load(",
             "\"//java/com/google:tools/build_defs.bzl\",",
             "\"function\"",
             ")",
             "function(name = \"name\", deps = []");
 
-    renamePsiElement(extFile, "skylark.bzl");
+    testFixture.renameElement(extFile, "skylark.bzl");
 
     assertFileContents(
         buildFile,
@@ -132,11 +143,12 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
   @Test
   public void testRenameLoadedFunction() {
     BuildFile extFile =
-        createBuildFile("java/com/google/tools/build_defs.bzl", "def function(name, deps)");
+        createBuildFile(
+            new WorkspacePath("java/com/google/tools/build_defs.bzl"), "def function(name, deps)");
 
     BuildFile buildFile =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "load(",
             "\"//java/com/google/tools:build_defs.bzl\",",
             "\"function\"",
@@ -144,7 +156,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
             "function(name = \"name\", deps = []");
 
     FunctionStatement fn = extFile.findChildByClass(FunctionStatement.class);
-    renamePsiElement(fn, "action");
+    testFixture.renameElement(fn, "action");
 
     assertFileContents(extFile, "def action(name, deps)");
 
@@ -159,12 +171,12 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testRenameLocalVariable() {
-    BuildFile file = createBuildFile("java/com/google/BUILD", "a = 1", "c = a");
+    BuildFile file = createBuildFile(new WorkspacePath("java/com/google/BUILD"), "a = 1", "c = a");
 
     TargetExpression target = PsiUtils.findFirstChildOfClassRecursive(file, TargetExpression.class);
     assertThat(target.getText()).isEqualTo("a");
 
-    renamePsiElement(target, "b");
+    testFixture.renameElement(target, "b");
 
     assertFileContents(file, "b = 1", "c = b");
   }
@@ -172,18 +184,18 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
   // all references, including path fragments in labels, should be renamed.
   @Test
   public void testRenameDirectory() {
-    createBuildFile("java/com/baz/BUILD");
-    createBuildFile("java/com/google/tools/BUILD");
+    createBuildFile(new WorkspacePath("java/com/baz/BUILD"));
+    createBuildFile(new WorkspacePath("java/com/google/tools/BUILD"));
     BuildFile buildFile =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "load(",
             "\"//java/com/google/tools:build_defs.bzl\",",
             "\"function\"",
             ")",
             "function(name = \"name\", deps = [\"//java/com/baz:target\"]");
 
-    renameDirectory("java/com", "java/alt");
+    renameDirectory(new WorkspacePath("java/com"), new WorkspacePath("java/alt"));
 
     assertFileContents(
         buildFile,
@@ -197,11 +209,12 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
   @Test
   public void testRenameFunctionParameter() {
     BuildFile extFile =
-        createBuildFile("java/com/google/tools/build_defs.bzl", "def function(name, deps)");
+        createBuildFile(
+            new WorkspacePath("java/com/google/tools/build_defs.bzl"), "def function(name, deps)");
 
     BuildFile buildFile =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "load(",
             "\"//java/com/google/tools:build_defs.bzl\",",
             "\"function\"",
@@ -210,7 +223,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
 
     FunctionStatement fn = extFile.findChildByClass(FunctionStatement.class);
     Parameter param = fn.getParameterList().findParameterByName("deps");
-    renamePsiElement(param, "exports");
+    testFixture.renameElement(param, "exports");
 
     assertFileContents(extFile, "def function(name, exports)");
 
@@ -225,7 +238,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testRenameSuggestionForBuildFile() {
-    BuildFile buildFile = createBuildFile("java/com/google/BUILD");
+    BuildFile buildFile = createBuildFile(new WorkspacePath("java/com/google/BUILD"));
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(buildFile);
     RenameDialog dialog = processor.createRenameDialog(getProject(), buildFile, buildFile, null);
     String[] suggestions = dialog.getSuggestedNames();
@@ -234,11 +247,41 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testRenameSuggestionForSkylarkFile() {
-    BuildFile buildFile = createBuildFile("java/com/google/tools/build_defs.bzl");
+    BuildFile buildFile =
+        createBuildFile(new WorkspacePath("java/com/google/tools/build_defs.bzl"));
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(buildFile);
     RenameDialog dialog = processor.createRenameDialog(getProject(), buildFile, buildFile, null);
     String[] suggestions = dialog.getSuggestedNames();
     assertThat(suggestions[0]).isEqualTo("build_defs.bzl");
   }
 
+  private static <T> List<T> findAllReferencingElementsOfType(
+      PsiElement target, Class<T> referenceType) {
+    return Arrays.stream(FindUsages.findAllReferences(target))
+        .map(PsiReference::getElement)
+        .filter(referenceType::isInstance)
+        .map(e -> (T) e)
+        .collect(Collectors.toList());
+  }
+
+  private PsiDirectory renameDirectory(WorkspacePath oldPath, WorkspacePath newPath) {
+    try {
+      VirtualFile original = fileSystem.findFile(workspaceRoot.fileForPath(oldPath).getPath());
+      PsiDirectory originalPsi = PsiManager.getInstance(getProject()).findDirectory(original);
+      assertThat(originalPsi).isNotNull();
+
+      VirtualFile destination =
+          fileSystem.findOrCreateDirectory(workspaceRoot.fileForPath(newPath).getPath());
+      PsiDirectory destPsi = PsiManager.getInstance(getProject()).findDirectory(destination);
+      assertThat(destPsi).isNotNull();
+
+      new MoveDirectoryWithClassesProcessor(
+              getProject(), new PsiDirectory[] {originalPsi}, destPsi, true, true, false, null)
+          .run();
+      return destPsi;
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 }

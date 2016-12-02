@@ -34,7 +34,7 @@ public class BuildBraceMatcherTest extends BuildFileIntegrationTestCase {
   public void testClosingParenInserted() {
     PsiFile file = setInput("java_library<caret>");
 
-    performTypingAction(testFixture.getEditor(), '(');
+    editorTest.performTypingAction(testFixture.getEditor(), '(');
 
     assertFileContents(file, "java_library()");
   }
@@ -43,7 +43,7 @@ public class BuildBraceMatcherTest extends BuildFileIntegrationTestCase {
   public void testClosingBraceInserted() {
     PsiFile file = setInput("<caret>");
 
-    performTypingAction(testFixture.getEditor(), '{');
+    editorTest.performTypingAction(testFixture.getEditor(), '{');
 
     assertFileContents(file, "{}");
   }
@@ -52,7 +52,7 @@ public class BuildBraceMatcherTest extends BuildFileIntegrationTestCase {
   public void testClosingBracketInserted() {
     PsiFile file = setInput("<caret>");
 
-    performTypingAction(testFixture.getEditor(), '[');
+    editorTest.performTypingAction(testFixture.getEditor(), '[');
 
     assertFileContents(file, "[]");
   }
@@ -61,7 +61,7 @@ public class BuildBraceMatcherTest extends BuildFileIntegrationTestCase {
   public void testNoClosingBracketInsertedIfLaterDanglingRBracket() {
     PsiFile file = setInput("java_library(", "    srcs =<caret> 'source.java']", ")");
 
-    performTypingAction(testFixture.getEditor(), '[');
+    editorTest.performTypingAction(testFixture.getEditor(), '[');
 
     assertFileContents(file, "java_library(", "    srcs =[ 'source.java']", ")");
   }
@@ -70,7 +70,7 @@ public class BuildBraceMatcherTest extends BuildFileIntegrationTestCase {
   public void testClosingBracketInsertedIfFollowedByWhitespace() {
     PsiFile file = setInput("java_library(", "    srcs =<caret> 'source.java'", ")");
 
-    performTypingAction(testFixture.getEditor(), '[');
+    editorTest.performTypingAction(testFixture.getEditor(), '[');
 
     assertFileContents(file, "java_library(", "    srcs =[] 'source.java'", ")");
   }
@@ -79,19 +79,19 @@ public class BuildBraceMatcherTest extends BuildFileIntegrationTestCase {
   public void testNoClosingBraceInsertedWhenFollowedByIdentifier() {
     PsiFile file = setInput("hello = <caret>test");
 
-    performTypingAction(testFixture.getEditor(), '(');
+    editorTest.performTypingAction(testFixture.getEditor(), '(');
 
     assertFileContents(file, "hello = (test");
 
     file = setInput("hello = <caret>test");
 
-    performTypingAction(testFixture.getEditor(), '[');
+    editorTest.performTypingAction(testFixture.getEditor(), '[');
 
     assertFileContents(file, "hello = [test");
 
     file = setInput("hello = <caret>test");
 
-    performTypingAction(testFixture.getEditor(), '{');
+    editorTest.performTypingAction(testFixture.getEditor(), '{');
 
     assertFileContents(file, "hello = {test");
   }

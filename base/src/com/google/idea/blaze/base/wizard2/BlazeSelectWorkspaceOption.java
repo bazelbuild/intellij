@@ -17,14 +17,19 @@ package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import java.io.File;
 
 /** Provides an option on the "Select workspace" screen */
 public interface BlazeSelectWorkspaceOption extends BlazeWizardOption {
   /** @return The workspace root that will be created after commit. */
   WorkspaceRoot getWorkspaceRoot();
 
-  /** @return a location to use when browsing for workspace paths. */
-  WorkspaceRoot getTemporaryWorkspaceRoot();
+  /** @return A workspace path resolver to use during wizard validation. */
+  WorkspacePathResolver getWorkspacePathResolver();
+
+  /** @return A root directory to use for browsing workspace paths. */
+  File getFileBrowserRoot();
 
   /** @return the name of the workspace. Used to generate default project names. */
   String getWorkspaceName();

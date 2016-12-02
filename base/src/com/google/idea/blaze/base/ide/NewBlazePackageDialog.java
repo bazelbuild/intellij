@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.ide;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.RuleName;
+import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.ui.BlazeValidationError;
@@ -111,8 +111,8 @@ class NewBlazePackageDialog extends DialogWrapper {
     File newPackageDirectory = new File(parentDirectoryFile, newPackageName);
     WorkspacePath newPackagePath = workspaceRoot.workspacePathFor(newPackageDirectory);
 
-    RuleName newRuleName = newRuleUI.getRuleName();
-    Label newRule = new Label(newPackagePath, newRuleName);
+    TargetName newTargetName = newRuleUI.getRuleName();
+    Label newRule = new Label(newPackagePath, newTargetName);
     Kind ruleKind = newRuleUI.getSelectedRuleKind();
     try {
       parentDirectory.checkCreateSubdirectory(newPackageName);

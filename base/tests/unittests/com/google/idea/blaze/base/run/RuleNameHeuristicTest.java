@@ -19,7 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.io.File;
@@ -28,7 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Tests for {@link RuleNameHeuristic}. */
+/** Tests for {@link TargetNameHeuristic}. */
 @RunWith(JUnit4.class)
 public class RuleNameHeuristicTest extends BlazeTestCase {
 
@@ -36,79 +36,82 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
 
-    ExtensionPointImpl<TestRuleHeuristic> ep =
-        registerExtensionPoint(TestRuleHeuristic.EP_NAME, TestRuleHeuristic.class);
-    ep.registerExtension(new RuleNameHeuristic());
+    ExtensionPointImpl<TestTargetHeuristic> ep =
+        registerExtensionPoint(TestTargetHeuristic.EP_NAME, TestTargetHeuristic.class);
+    ep.registerExtension(new TargetNameHeuristic());
   }
 
   @Test
   public void testPredicateMatchingName() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
-    RuleIdeInfo rule = RuleIdeInfo.builder().setLabel("//foo:FooTest").setKind("java_test").build();
-    assertThat(new RuleNameHeuristic().matchesSource(rule, source, null)).isTrue();
+    TargetIdeInfo target =
+        TargetIdeInfo.builder().setLabel("//foo:FooTest").setKind("java_test").build();
+    assertThat(new TargetNameHeuristic().matchesSource(target, source, null)).isTrue();
   }
 
   @Test
   public void testPredicateMatchingNameAndPath() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
-    RuleIdeInfo rule =
-        RuleIdeInfo.builder().setLabel("//foo:foo/FooTest").setKind("java_test").build();
-    assertThat(new RuleNameHeuristic().matchesSource(rule, source, null)).isTrue();
+    TargetIdeInfo target =
+        TargetIdeInfo.builder().setLabel("//foo:foo/FooTest").setKind("java_test").build();
+    assertThat(new TargetNameHeuristic().matchesSource(target, source, null)).isTrue();
   }
 
   @Test
   public void testPredicateNotMatchingForPartialOverlap() throws Exception {
     File source = new File("java/com/foo/BarFooTest.java");
-    RuleIdeInfo rule = RuleIdeInfo.builder().setLabel("//foo:FooTest").setKind("java_test").build();
-    assertThat(new RuleNameHeuristic().matchesSource(rule, source, null)).isFalse();
+    TargetIdeInfo target =
+        TargetIdeInfo.builder().setLabel("//foo:FooTest").setKind("java_test").build();
+    assertThat(new TargetNameHeuristic().matchesSource(target, source, null)).isFalse();
   }
 
   @Test
   public void testPredicateNotMatchingIncorrectPath() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
-    RuleIdeInfo rule =
-        RuleIdeInfo.builder().setLabel("//foo:bar/FooTest").setKind("java_test").build();
-    assertThat(new RuleNameHeuristic().matchesSource(rule, source, null)).isFalse();
+    TargetIdeInfo target =
+        TargetIdeInfo.builder().setLabel("//foo:bar/FooTest").setKind("java_test").build();
+    assertThat(new TargetNameHeuristic().matchesSource(target, source, null)).isFalse();
   }
 
   @Test
   public void testPredicateDifferentName() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
-    RuleIdeInfo rule = RuleIdeInfo.builder().setLabel("//foo:ForTest").setKind("java_test").build();
-    assertThat(new RuleNameHeuristic().matchesSource(rule, source, null)).isFalse();
+    TargetIdeInfo target =
+        TargetIdeInfo.builder().setLabel("//foo:ForTest").setKind("java_test").build();
+    assertThat(new TargetNameHeuristic().matchesSource(target, source, null)).isFalse();
   }
 
   @Test
   public void testFilterNoMatchesFallBackToFirstRule() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
-    Collection<RuleIdeInfo> rules =
+    Collection<TargetIdeInfo> targets =
         ImmutableList.of(
-            RuleIdeInfo.builder().setLabel("//foo:FirstTest").setKind("java_test").build(),
-            RuleIdeInfo.builder().setLabel("//bar:OtherTest").setKind("java_test").build());
-    Label match = TestRuleHeuristic.chooseTestTargetForSourceFile(source, rules, null);
+            TargetIdeInfo.builder().setLabel("//foo:FirstTest").setKind("java_test").build(),
+            TargetIdeInfo.builder().setLabel("//bar:OtherTest").setKind("java_test").build());
+    Label match = TestTargetHeuristic.chooseTestTargetForSourceFile(source, targets, null);
     assertThat(match).isEqualTo(new Label("//foo:FirstTest"));
   }
 
   @Test
   public void testFilterOneMatch() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
-    Collection<RuleIdeInfo> rules =
+    Collection<TargetIdeInfo> targets =
         ImmutableList.of(
-            RuleIdeInfo.builder().setLabel("//bar:FirstTest").setKind("java_test").build(),
-            RuleIdeInfo.builder().setLabel("//foo:FooTest").setKind("java_test").build());
-    Label match = TestRuleHeuristic.chooseTestTargetForSourceFile(source, rules, null);
+            TargetIdeInfo.builder().setLabel("//bar:FirstTest").setKind("java_test").build(),
+            TargetIdeInfo.builder().setLabel("//foo:FooTest").setKind("java_test").build());
+    Label match = TestTargetHeuristic.chooseTestTargetForSourceFile(source, targets, null);
     assertThat(match).isEqualTo(new Label("//foo:FooTest"));
   }
 
   @Test
   public void testFilterChoosesFirstMatch() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
-    Collection<RuleIdeInfo> rules =
+    Collection<TargetIdeInfo> targets =
         ImmutableList.of(
-            RuleIdeInfo.builder().setLabel("//bar:OtherTest").setKind("java_test").build(),
-            RuleIdeInfo.builder().setLabel("//foo:FooTest").setKind("java_test").build(),
-            RuleIdeInfo.builder().setLabel("//bar/foo:FooTest").setKind("java_test").build());
-    Label match = TestRuleHeuristic.chooseTestTargetForSourceFile(source, rules, null);
+            TargetIdeInfo.builder().setLabel("//bar:OtherTest").setKind("java_test").build(),
+            TargetIdeInfo.builder().setLabel("//foo:FooTest").setKind("java_test").build(),
+            TargetIdeInfo.builder().setLabel("//bar/foo:FooTest").setKind("java_test").build());
+    Label match = TestTargetHeuristic.chooseTestTargetForSourceFile(source, targets, null);
     assertThat(match).isEqualTo(new Label("//foo:FooTest"));
   }
 }

@@ -17,11 +17,12 @@ package com.google.idea.blaze.base.lang.buildfile.references;
 
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
-import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.lang.buildfile.search.ResolveUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.IncorrectOperationException;
 import javax.annotation.Nullable;
@@ -35,9 +36,14 @@ public class FuncallReference extends PsiReferenceBase<FuncallExpression> {
 
   @Nullable
   @Override
-  public FunctionStatement resolve() {
+  public PsiNamedElement resolve() {
     String functionName = myElement.getFunctionName();
-    BuildFile file = (BuildFile) myElement.getContainingFile();
+    // first search in local scope (e.g. function passed in as an arg).
+    PsiNamedElement element = ResolveUtil.findInScope(myElement, functionName);
+    if (element != null) {
+      return element;
+    }
+    BuildFile file = myElement.getContainingFile();
     if (functionName == null || file == null) {
       return null;
     }

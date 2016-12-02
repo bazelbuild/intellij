@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.lang.buildfile.completion;
 
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildElement;
-import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
+import com.google.idea.blaze.base.lang.buildfile.psi.LoadedSymbol;
 import com.google.idea.blaze.base.lang.buildfile.references.QuoteType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
@@ -43,11 +43,10 @@ public class CompletionResultsProcessor implements Processor<BuildElement> {
     if (buildElement == originalElement) {
       return true;
     }
-    if (buildElement instanceof StringLiteral) {
-      StringLiteral literal = (StringLiteral) buildElement;
-      results.put(
-          literal.getStringContents(),
-          new StringLiteralReferenceLookupElement((StringLiteral) buildElement, quoteType));
+    if (buildElement instanceof LoadedSymbol) {
+      LoadedSymbol loadedSymbol = (LoadedSymbol) buildElement;
+      String string = loadedSymbol.getSymbolString();
+      results.put(string, new LoadedSymbolReferenceLookupElement(loadedSymbol, string, quoteType));
     } else if (buildElement instanceof PsiNamedElement) {
       PsiNamedElement namedElement = (PsiNamedElement) buildElement;
       results.put(

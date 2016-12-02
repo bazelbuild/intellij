@@ -20,10 +20,10 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
-import com.google.idea.blaze.base.run.rulefinder.RuleFinder;
+import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -59,7 +59,7 @@ public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
     applicationServices.register(ExperimentService.class, new MockExperimentService());
-    applicationServices.register(RuleFinder.class, new MockRuleFinder());
+    applicationServices.register(TargetFinder.class, new MockTargetFinder());
     ExtensionPointImpl<BlazeCommandRunConfigurationHandlerProvider> handlerProviderEp =
         registerExtensionPoint(
             BlazeCommandRunConfigurationHandlerProvider.EP_NAME,
@@ -94,9 +94,9 @@ public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
     assertThat(readConfiguration.getTarget()).isEqualTo(configuration.getTarget());
   }
 
-  private static class MockRuleFinder extends RuleFinder {
+  private static class MockTargetFinder extends TargetFinder {
     @Override
-    public List<RuleIdeInfo> findRules(Project project, Predicate<RuleIdeInfo> predicate) {
+    public List<TargetIdeInfo> findTargets(Project project, Predicate<TargetIdeInfo> predicate) {
       return ImmutableList.of();
     }
   }

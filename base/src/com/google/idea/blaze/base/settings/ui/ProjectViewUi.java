@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.settings.ui;
 import com.google.idea.blaze.base.lang.projectview.language.ProjectViewFileType;
 import com.google.idea.blaze.base.lang.projectview.language.ProjectViewLanguage;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import com.google.idea.blaze.base.scope.OutputSink;
@@ -26,7 +25,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.ide.DataManager;
@@ -53,7 +52,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.components.JBLabel;
 import java.awt.Dimension;
 import java.awt.KeyboardFocusManager;
-import java.io.File;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.JCheckBox;
@@ -71,7 +69,7 @@ public class ProjectViewUi {
   private EditorEx projectViewEditor;
   private JCheckBox useShared;
 
-  private WorkspaceRoot workspaceRoot;
+  private WorkspacePathResolver workspacePathResolver;
   private boolean useSharedProjectView;
   private boolean allowEditShared;
   private String sharedProjectViewText;
@@ -168,22 +166,22 @@ public class ProjectViewUi {
   }
 
   public void init(
-      WorkspaceRoot workspaceRoot,
+      WorkspacePathResolver workspacePathResolver,
       String projectViewText,
       @Nullable String sharedProjectViewText,
-      @Nullable File sharedProjectViewFile,
+      @Nullable WorkspacePath sharedProjectViewWorkspacePath,
       boolean useSharedProjectView,
       boolean allowEditShared) {
-    this.workspaceRoot = workspaceRoot;
+    this.workspacePathResolver = workspacePathResolver;
     this.useSharedProjectView = useSharedProjectView;
     this.allowEditShared = allowEditShared;
     this.sharedProjectViewText = sharedProjectViewText;
 
     assert !(useSharedProjectView && sharedProjectViewText == null);
 
-    if (sharedProjectViewFile != null) {
-      WorkspacePath workspacePath = workspaceRoot.workspacePathFor(sharedProjectViewFile);
-      useShared.setText(USE_SHARED_PROJECT_VIEW + ": " + workspacePath.relativePath());
+    if (sharedProjectViewWorkspacePath != null) {
+      useShared.setText(
+          USE_SHARED_PROJECT_VIEW + ": " + sharedProjectViewWorkspacePath.relativePath());
     }
 
     useShared.setSelected(useSharedProjectView);
@@ -192,19 +190,18 @@ public class ProjectViewUi {
       useShared.setEnabled(false);
     }
 
-    setDummyWorkspacePathResolverProvider(workspaceRoot);
+    setDummyWorkspacePathResolverProvider(this.workspacePathResolver);
     setProjectViewText(projectViewText);
     settingsInitialized = true;
   }
 
-  private void setDummyWorkspacePathResolverProvider(WorkspaceRoot workspaceRoot) {
+  private void setDummyWorkspacePathResolverProvider(WorkspacePathResolver workspacePathResolver) {
     MutablePicoContainer container = (MutablePicoContainer) getProject().getPicoContainer();
     Class<WorkspacePathResolverProvider> key = WorkspacePathResolverProvider.class;
     Object oldProvider = container.getComponentInstance(key);
     container.unregisterComponent(key.getName());
     container.registerComponentInstance(
-        key.getName(),
-        (WorkspacePathResolverProvider) () -> new WorkspacePathResolverImpl(workspaceRoot));
+        key.getName(), (WorkspacePathResolverProvider) () -> workspacePathResolver);
     if (!settingsInitialized) {
       Disposer.register(
           parentDisposable,
@@ -246,7 +243,7 @@ public class ProjectViewUi {
         context -> {
           context.addOutputSink(IssueOutput.class, issueCollector);
           ProjectViewParser projectViewParser =
-              new ProjectViewParser(context, new WorkspacePathResolverImpl(workspaceRoot));
+              new ProjectViewParser(context, workspacePathResolver);
           projectViewParser.parseProjectView(projectViewText);
           return projectViewParser.getResult();
         });

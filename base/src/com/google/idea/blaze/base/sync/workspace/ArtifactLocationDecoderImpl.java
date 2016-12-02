@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.sync.workspace;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import java.io.File;
 
-/** Decodes android_studio_ide_info.proto ArtifactLocation file paths */
+/** Decodes intellij_ide_info.proto ArtifactLocation file paths */
 public class ArtifactLocationDecoderImpl implements ArtifactLocationDecoder {
   private static final long serialVersionUID = 1L;
 
@@ -33,10 +33,12 @@ public class ArtifactLocationDecoderImpl implements ArtifactLocationDecoder {
   @Override
   public File decode(ArtifactLocation artifactLocation) {
     if (artifactLocation.isSource) {
-      File root = pathResolver.findPackageRoot(artifactLocation.getRelativePath());
-      return new File(root, artifactLocation.getRelativePath());
-    } else {
-      return new File(blazeRoots.executionRoot, artifactLocation.getExecutionRootRelativePath());
+      if (artifactLocation.isExternal) {
+        return new File(blazeRoots.externalSourceRoot, artifactLocation.relativePath);
+      }
+      File root = pathResolver.findPackageRoot(artifactLocation.relativePath);
+      return new File(root, artifactLocation.relativePath);
     }
+    return new File(blazeRoots.executionRoot, artifactLocation.getExecutionRootRelativePath());
   }
 }

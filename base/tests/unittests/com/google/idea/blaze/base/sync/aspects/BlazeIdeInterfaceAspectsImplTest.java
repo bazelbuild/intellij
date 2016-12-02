@@ -19,8 +19,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.TestUtils;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -28,7 +28,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
-import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.AndroidStudioIdeInfo;
+import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
 import java.io.File;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -39,8 +39,6 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
 
-  private static final File DUMMY_ROOT = new File("/");
-
   @Override
   protected void initTest(
       @NotNull Container applicationServices, @NotNull Container projectServices) {
@@ -50,26 +48,26 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
   }
 
   @Test
-  public void testRuleIdeInfoIsSerializable() {
-    AndroidStudioIdeInfo.RuleIdeInfo ideProto =
-        AndroidStudioIdeInfo.RuleIdeInfo.newBuilder()
+  public void testTargetIdeInfoIsSerializable() {
+    IntellijIdeInfo.TargetIdeInfo ideProto =
+        IntellijIdeInfo.TargetIdeInfo.newBuilder()
             .setLabel("//test:test")
             .setKindString("android_binary")
             .addDependencies("//test:dep")
             .addTags("tag")
-            .setJavaRuleIdeInfo(
-                AndroidStudioIdeInfo.JavaRuleIdeInfo.newBuilder()
+            .setJavaIdeInfo(
+                IntellijIdeInfo.JavaIdeInfo.newBuilder()
                     .addJars(
-                        AndroidStudioIdeInfo.LibraryArtifact.newBuilder()
+                        IntellijIdeInfo.LibraryArtifact.newBuilder()
                             .setJar(artifactLocation("jar.jar"))
                             .build())
                     .addGeneratedJars(
-                        AndroidStudioIdeInfo.LibraryArtifact.newBuilder()
+                        IntellijIdeInfo.LibraryArtifact.newBuilder()
                             .setJar(artifactLocation("jar.jar"))
                             .build())
                     .addSources(artifactLocation("source.java")))
-            .setAndroidRuleIdeInfo(
-                AndroidStudioIdeInfo.AndroidRuleIdeInfo.newBuilder()
+            .setAndroidIdeInfo(
+                IntellijIdeInfo.AndroidIdeInfo.newBuilder()
                     .addResources(artifactLocation("res"))
                     .setApk(artifactLocation("apk"))
                     .addDependencyApk(artifactLocation("apk"))
@@ -79,31 +77,26 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
     WorkspaceLanguageSettings workspaceLanguageSettings =
         new WorkspaceLanguageSettings(
             WorkspaceType.ANDROID, ImmutableSet.of(LanguageClass.ANDROID));
-    RuleIdeInfo ruleIdeInfo =
-        IdeInfoFromProtobuf.makeRuleIdeInfo(workspaceLanguageSettings, ideProto);
-    TestUtils.assertIsSerializable(ruleIdeInfo);
+    TargetIdeInfo target =
+        IdeInfoFromProtobuf.makeTargetIdeInfo(workspaceLanguageSettings, ideProto);
+    TestUtils.assertIsSerializable(target);
   }
 
   @Test
   public void testBlazeStateIsSerializable() {
     BlazeIdeInterfaceAspectsImpl.State state = new BlazeIdeInterfaceAspectsImpl.State();
-    state.fileToRuleMapKey =
+    state.fileToTargetMapKey =
         ImmutableMap.of(
             new File("fileName"),
-            RuleIdeInfo.builder().setLabel(new Label("//test:test")).build().key);
+            TargetIdeInfo.builder().setLabel(new Label("//test:test")).build().key);
     state.fileState = ImmutableMap.of();
-    state.ruleMap =
-        new RuleMap(ImmutableMap.of()); // Tested separately in testRuleIdeInfoIsSerializable
+    state.targetMap =
+        new TargetMap(ImmutableMap.of()); // Tested separately in testRuleIdeInfoIsSerializable
 
     TestUtils.assertIsSerializable(state);
   }
 
-  static AndroidStudioIdeInfo.ArtifactLocation artifactLocation(String relativePath) {
-    return artifactLocation(DUMMY_ROOT.toString(), relativePath);
-  }
-
-  static AndroidStudioIdeInfo.ArtifactLocation artifactLocation(
-      String rootPath, String relativePath) {
-    return AndroidStudioIdeInfo.ArtifactLocation.newBuilder().setRelativePath(relativePath).build();
+  static IntellijIdeInfo.ArtifactLocation artifactLocation(String relativePath) {
+    return IntellijIdeInfo.ArtifactLocation.newBuilder().setRelativePath(relativePath).build();
   }
 }

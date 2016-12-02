@@ -53,6 +53,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
   private final ApplicationIdProvider applicationIdProvider;
   private final LaunchOptions.Builder launchOptionsBuilder;
   private final boolean isDebug;
+  private final boolean monitorRemoteProcess;
   private final BlazeAndroidRunConfigurationDebuggerManager debuggerManager;
 
   public BlazeAndroidLaunchTasksProvider(
@@ -61,12 +62,14 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       ApplicationIdProvider applicationIdProvider,
       LaunchOptions.Builder launchOptionsBuilder,
       boolean isDebug,
+      boolean monitorRemoteProcess,
       BlazeAndroidRunConfigurationDebuggerManager debuggerManager) {
     this.project = project;
     this.runContext = runContext;
     this.applicationIdProvider = applicationIdProvider;
     this.launchOptionsBuilder = launchOptionsBuilder;
     this.isDebug = isDebug;
+    this.monitorRemoteProcess = monitorRemoteProcess;
     this.debuggerManager = debuggerManager;
   }
 
@@ -180,6 +183,6 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
 
   @Override
   public boolean monitorRemoteProcess() {
-    return true;
+    return monitorRemoteProcess;
   }
 }

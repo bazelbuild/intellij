@@ -97,8 +97,8 @@
     <projectService serviceImplementation="com.google.idea.blaze.base.console.BlazeConsoleView"/>
     <fileTypeFactory implementation="com.google.idea.blaze.base.plugin.BlazeFileTypeFactory" />
 
-    <projectConfigurable instance="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable"
-                         id ="blaze.view" displayName="Blaze Settings"/>
+    <applicationConfigurable instance="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable"
+                         id ="blaze.view" />
 
     <projectService serviceInterface="com.google.idea.blaze.base.sync.data.BlazeProjectDataManager"
                     serviceImplementation="com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl"/>
@@ -113,14 +113,12 @@
                         serviceImplementation="com.google.idea.blaze.base.io.InputStreamProviderImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.io.FileAttributeProvider"
                         serviceImplementation="com.google.idea.blaze.base.io.FileAttributeProvider"/>
-    <applicationService serviceInterface="com.google.idea.blaze.base.io.WorkspaceScanner"
-                        serviceImplementation="com.google.idea.blaze.base.io.VfsWorkspaceScanner"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.buildmodifier.BuildFileModifier"
                         serviceImplementation="com.google.idea.blaze.base.lang.buildfile.actions.BuildFileModifierImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.buildmodifier.FileSystemModifier"
                     serviceImplementation="com.google.idea.blaze.base.buildmodifier.FileSystemModifierImpl"/>
-    <applicationService serviceInterface="com.google.idea.blaze.base.run.rulefinder.RuleFinder"
-                        serviceImplementation="com.google.idea.blaze.base.run.rulefinder.RuleFinderImpl"/>
+    <applicationService serviceInterface="com.google.idea.blaze.base.run.targetfinder.TargetFinder"
+                        serviceImplementation="com.google.idea.blaze.base.run.targetfinder.TargetFinderImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.command.info.BlazeInfo"
                         serviceImplementation="com.google.idea.blaze.base.command.info.BlazeInfoImpl"/>
 
@@ -132,13 +130,13 @@
                     serviceImplementation="com.google.idea.blaze.base.projectview.ProjectViewManagerImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface"
                         serviceImplementation="com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceAspectsImpl"/>
-    <projectService serviceInterface="com.google.idea.blaze.base.run.TestRuleFinder"
-                        serviceImplementation="com.google.idea.blaze.base.run.testmap.TestRuleFinderImpl"/>
+    <projectService serviceInterface="com.google.idea.blaze.base.run.TestTargetFinder"
+                        serviceImplementation="com.google.idea.blaze.base.run.testmap.TestTargetFilterImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.console.BlazeConsoleService"
                     serviceImplementation="com.google.idea.blaze.base.console.BlazeConsoleServiceImpl"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.buildmap.FileToBuildMap"/>
-    <projectService serviceInterface="com.google.idea.blaze.base.rulemaps.SourceToRuleMap"
-                    serviceImplementation="com.google.idea.blaze.base.rulemaps.SourceToRuleMapImpl"/>
+    <projectService serviceInterface="com.google.idea.blaze.base.targetmaps.SourceToTargetMap"
+                    serviceImplementation="com.google.idea.blaze.base.targetmaps.SourceToTargetMapImpl"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.settings.BlazeImportSettingsManager"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.settings.BlazeImportSettingsManagerLegacy"/>
     <applicationService serviceImplementation="com.google.idea.blaze.base.settings.BlazeUserSettings"/>
@@ -161,6 +159,8 @@
     <stepsBeforeRunProvider implementation="com.google.idea.blaze.base.run.BlazeBeforeRunTaskProvider"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.help.BlazeHelpHandler"
                         serviceImplementation="com.google.idea.blaze.base.help.BlazeHelpHandlerImpl"/>
+
+    <additionalTextAttributes scheme="Default" file="base/resources/colorSchemes/BuildDefault.xml"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -256,15 +256,16 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeUserSettingsContributor" interface="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsContributor$Provider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazePsiDirectoryRootNodeNameModifier" interface="com.google.idea.blaze.base.treeview.BlazePsiDirectoryRootNodeNameModifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FileCache" interface="com.google.idea.blaze.base.filecache.FileCache"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.TestRuleHeuristic" interface="com.google.idea.blaze.base.run.TestRuleHeuristic"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.TestTargetHeuristic" interface="com.google.idea.blaze.base.run.TestTargetHeuristic"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ProjectDataDirectoryValidator" interface="com.google.idea.blaze.base.wizard2.ProjectDataDirectoryValidator"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.AspectStrategyProvider" interface="com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncListener implementation="com.google.idea.blaze.base.run.BlazeRunConfigurationSyncListener"/>
     <SyncListener implementation="com.google.idea.blaze.base.sync.status.BlazeSyncStatusListener"/>
-    <SyncListener implementation="com.google.idea.blaze.base.run.testmap.TestRuleFinderImpl$ClearTestMap"/>
-    <SyncListener implementation="com.google.idea.blaze.base.rulemaps.SourceToRuleMapImpl$ClearSourceToTargetMap"/>
+    <SyncListener implementation="com.google.idea.blaze.base.run.testmap.TestTargetFilterImpl$ClearTestMap"/>
+    <SyncListener implementation="com.google.idea.blaze.base.targetmaps.SourceToTargetMapImpl$ClearSourceToTargetMap"/>
     <SyncListener implementation="com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProviderImpl"/>
     <SyncPlugin implementation="com.google.idea.blaze.base.lang.buildfile.sync.BuildLangSyncPlugin"/>
     <BlazeWizardOptionProvider implementation="com.google.idea.blaze.base.wizard2.BazelWizardOptionProvider"/>
@@ -274,9 +275,10 @@
     <BuildSystemProvider implementation="com.google.idea.blaze.base.bazel.BazelBuildSystemProvider" order="last"/>
     <BuildifierBinaryProvider implementation="com.google.idea.blaze.base.buildmodifier.BazelBuildifierBinaryProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandlerProvider" order="last"/>
-    <TestRuleHeuristic implementation="com.google.idea.blaze.base.run.RuleNameHeuristic" order="first"/>
-    <TestRuleHeuristic implementation="com.google.idea.blaze.base.run.TestSizeHeuristic" order="last" id="TestSizeHeuristic"/>
+    <TestTargetHeuristic implementation="com.google.idea.blaze.base.run.TargetNameHeuristic" order="first"/>
+    <TestTargetHeuristic implementation="com.google.idea.blaze.base.run.TestSizeHeuristic" order="last" id="TestSizeHeuristic"/>
     <RunConfigurationFactory implementation="com.google.idea.blaze.base.run.BlazeBuildTargetRunConfigurationFactory" order="last"/>
+    <AspectStrategyProvider implementation="com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProviderBazel" order="last"/>
   </extensions>
 
 </idea-plugin>

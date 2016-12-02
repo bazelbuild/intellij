@@ -37,7 +37,8 @@ public class WorkspacePathResolverImplTest extends BlazeTestCase {
           new File(EXECUTION_ROOT),
           ImmutableList.of(WORKSPACE_ROOT.directory()),
           new ExecutionRootPath("blaze-out/crosstool/bin"),
-          new ExecutionRootPath("blaze-out/crosstool/genfiles"));
+          new ExecutionRootPath("blaze-out/crosstool/genfiles"),
+          null);
 
   @Test
   public void testResolveToIncludeDirectories() {

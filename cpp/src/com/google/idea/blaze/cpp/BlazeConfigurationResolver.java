@@ -15,28 +15,36 @@
  */
 package com.google.idea.blaze.cpp;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.rulemaps.SourceToRuleMap;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedFunction;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
@@ -45,6 +53,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -52,11 +61,11 @@ import javax.annotation.Nullable;
 
 final class BlazeConfigurationResolver {
   private static final class MapEntry {
-    public final RuleKey ruleKey;
+    public final TargetKey targetKey;
     public final BlazeResolveConfiguration configuration;
 
-    public MapEntry(RuleKey ruleKey, BlazeResolveConfiguration configuration) {
-      this.ruleKey = ruleKey;
+    public MapEntry(TargetKey targetKey, BlazeResolveConfiguration configuration) {
+      this.targetKey = targetKey;
       this.configuration = configuration;
     }
   }
@@ -64,7 +73,7 @@ final class BlazeConfigurationResolver {
   private static final Logger LOG = Logger.getInstance(BlazeConfigurationResolver.class);
   private final Project project;
 
-  private ImmutableMap<RuleKey, BlazeResolveConfiguration> resolveConfigurations =
+  private ImmutableMap<TargetKey, BlazeResolveConfiguration> resolveConfigurations =
       ImmutableMap.of();
 
   public BlazeConfigurationResolver(Project project) {
@@ -72,95 +81,181 @@ final class BlazeConfigurationResolver {
   }
 
   public void update(BlazeContext context, BlazeProjectData blazeProjectData) {
-    WorkspacePathResolver workspacePathResolver = blazeProjectData.workspacePathResolver;
-    ImmutableMap<RuleKey, CToolchainIdeInfo> toolchainLookupMap =
+    ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap =
         BlazeResolveConfiguration.buildToolchainLookupMap(
-            context, blazeProjectData.ruleMap, blazeProjectData.reverseDependencies);
+            context, blazeProjectData.targetMap, blazeProjectData.reverseDependencies);
+    ImmutableMap<File, VirtualFile> headerRoots =
+        collectHeaderRoots(context, blazeProjectData, toolchainLookupMap);
     resolveConfigurations =
-        buildBlazeConfigurationMap(
-            context, blazeProjectData, toolchainLookupMap, workspacePathResolver);
+        buildBlazeConfigurationMap(context, blazeProjectData, toolchainLookupMap, headerRoots);
   }
 
-  private ImmutableMap<RuleKey, BlazeResolveConfiguration> buildBlazeConfigurationMap(
+  private static ImmutableMap<File, VirtualFile> collectHeaderRoots(
       BlazeContext parentContext,
       BlazeProjectData blazeProjectData,
-      ImmutableMap<RuleKey, CToolchainIdeInfo> toolchainLookupMap,
-      WorkspacePathResolver workspacePathResolver) {
+      ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap) {
     // Type specification needed to avoid incorrect type inference during command line build.
     return Scope.push(
         parentContext,
-        (ScopedFunction<ImmutableMap<RuleKey, BlazeResolveConfiguration>>)
+        (ScopedFunction<ImmutableMap<File, VirtualFile>>)
+            context -> {
+              context.push(new TimingScope("Resolve header include roots"));
+              Set<ExecutionRootPath> paths =
+                  collectExecutionRootPaths(blazeProjectData.targetMap, toolchainLookupMap);
+              return doCollectHeaderRoots(context, blazeProjectData, paths);
+            });
+  }
+
+  private static ImmutableMap<File, VirtualFile> doCollectHeaderRoots(
+      BlazeContext context, BlazeProjectData projectData, Set<ExecutionRootPath> rootPaths) {
+    ConcurrentMap<File, VirtualFile> rootsMap = Maps.newConcurrentMap();
+    List<ListenableFuture<Void>> futures = Lists.newArrayListWithCapacity(rootPaths.size());
+    for (ExecutionRootPath path : rootPaths) {
+      futures.add(
+          submit(
+              () -> {
+                ImmutableList<File> possibleDirectories =
+                    projectData.workspacePathResolver.resolveToIncludeDirectories(path);
+                for (File file : possibleDirectories) {
+                  VirtualFile vf = getVirtualFile(file);
+                  if (vf != null) {
+                    rootsMap.put(file, vf);
+                  } else if (!projectData.blazeRoots.isOutputArtifact(path)
+                      && FileAttributeProvider.getInstance().exists(file)) {
+                    // If it's not a blaze output file, we expect it to always resolve.
+                    LOG.info(String.format("Unresolved header root %s", file.getAbsolutePath()));
+                  }
+                }
+                return null;
+              }));
+    }
+    try {
+      Futures.allAsList(futures).get();
+      return ImmutableMap.copyOf(rootsMap);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      context.setCancelled();
+    } catch (ExecutionException e) {
+      IssueOutput.error("Error resolving header include roots: " + e).submit(context);
+      LOG.error("Error resolving header include roots", e);
+    }
+    return ImmutableMap.of();
+  }
+
+  private static Set<ExecutionRootPath> collectExecutionRootPaths(
+      TargetMap targetMap, ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap) {
+    Set<ExecutionRootPath> paths = Sets.newHashSet();
+    for (TargetIdeInfo target : targetMap.targets()) {
+      if (target.cIdeInfo != null) {
+        paths.addAll(target.cIdeInfo.transitiveSystemIncludeDirectories);
+        paths.addAll(target.cIdeInfo.transitiveIncludeDirectories);
+        paths.addAll(target.cIdeInfo.transitiveQuoteIncludeDirectories);
+      }
+    }
+    for (CToolchainIdeInfo toolchain : toolchainLookupMap.values()) {
+      paths.addAll(toolchain.builtInIncludeDirectories);
+      paths.addAll(toolchain.unfilteredToolchainSystemIncludes);
+    }
+    return paths;
+  }
+
+  @Nullable
+  private static VirtualFile getVirtualFile(File file) {
+    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    VirtualFile vf = fileSystem.findFileByPathIfCached(file.getPath());
+    if (vf == null) {
+      vf = fileSystem.findFileByIoFile(file);
+    }
+    return vf;
+  }
+
+  private ImmutableMap<TargetKey, BlazeResolveConfiguration> buildBlazeConfigurationMap(
+      BlazeContext parentContext,
+      BlazeProjectData blazeProjectData,
+      ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
+      ImmutableMap<File, VirtualFile> headerRoots) {
+    // Type specification needed to avoid incorrect type inference during command line build.
+    return Scope.push(
+        parentContext,
+        (ScopedFunction<ImmutableMap<TargetKey, BlazeResolveConfiguration>>)
             context -> {
               context.push(new TimingScope("Build C configuration map"));
 
               ConcurrentMap<CToolchainIdeInfo, File> compilerWrapperCache = Maps.newConcurrentMap();
               List<ListenableFuture<MapEntry>> mapEntryFutures = Lists.newArrayList();
 
-              for (RuleIdeInfo rule : blazeProjectData.ruleMap.rules()) {
-                if (rule.kind.getLanguageClass() == LanguageClass.C) {
+              for (TargetIdeInfo target : blazeProjectData.targetMap.targets()) {
+                if (target.kind.getLanguageClass() == LanguageClass.C) {
                   ListenableFuture<MapEntry> future =
                       submit(
                           () ->
                               createResolveConfiguration(
-                                  rule,
+                                  target,
                                   toolchainLookupMap,
+                                  headerRoots,
                                   compilerWrapperCache,
-                                  workspacePathResolver,
                                   blazeProjectData));
                   mapEntryFutures.add(future);
                 }
               }
 
-              ImmutableMap.Builder<RuleKey, BlazeResolveConfiguration> newResolveConfigurations =
+              ImmutableMap.Builder<TargetKey, BlazeResolveConfiguration> newResolveConfigurations =
                   ImmutableMap.builder();
               List<MapEntry> mapEntries;
               try {
                 mapEntries = Futures.allAsList(mapEntryFutures).get();
-              } catch (InterruptedException | ExecutionException e) {
+              } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                LOG.warn("Could not build C resolve configurations", e);
                 context.setCancelled();
+                return ImmutableMap.of();
+              } catch (ExecutionException e) {
+                IssueOutput.error("Could not build C resolve configurations: " + e).submit(context);
+                LOG.error("Could not build C resolve configurations", e);
                 return ImmutableMap.of();
               }
 
               for (MapEntry mapEntry : mapEntries) {
                 // Skip over labels that don't have C configuration data.
                 if (mapEntry != null) {
-                  newResolveConfigurations.put(mapEntry.ruleKey, mapEntry.configuration);
+                  newResolveConfigurations.put(mapEntry.targetKey, mapEntry.configuration);
                 }
               }
               return newResolveConfigurations.build();
             });
   }
 
-  private static ListenableFuture<MapEntry> submit(Callable<MapEntry> callable) {
+  private static <T> ListenableFuture<T> submit(Callable<T> callable) {
     return BlazeExecutor.getInstance().submit(callable);
   }
 
   @Nullable
   private MapEntry createResolveConfiguration(
-      RuleIdeInfo rule,
-      ImmutableMap<RuleKey, CToolchainIdeInfo> toolchainLookupMap,
+      TargetIdeInfo target,
+      ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
+      ImmutableMap<File, VirtualFile> headerRoots,
       ConcurrentMap<CToolchainIdeInfo, File> compilerWrapperCache,
-      WorkspacePathResolver workspacePathResolver,
       BlazeProjectData blazeProjectData) {
-    RuleKey ruleKey = rule.key;
+    TargetKey targetKey = target.key;
 
-    CToolchainIdeInfo toolchainIdeInfo = toolchainLookupMap.get(ruleKey);
+    CToolchainIdeInfo toolchainIdeInfo = toolchainLookupMap.get(targetKey);
     if (toolchainIdeInfo != null) {
       File compilerWrapper =
           findOrCreateCompilerWrapperScript(
-              compilerWrapperCache, toolchainIdeInfo, workspacePathResolver, ruleKey);
+              compilerWrapperCache,
+              toolchainIdeInfo,
+              blazeProjectData.workspacePathResolver,
+              targetKey);
       if (compilerWrapper != null) {
         BlazeResolveConfiguration config =
             BlazeResolveConfiguration.createConfigurationForTarget(
                 project,
-                workspacePathResolver,
-                blazeProjectData.ruleMap.get(ruleKey),
+                blazeProjectData.workspacePathResolver,
+                headerRoots,
+                blazeProjectData.targetMap.get(targetKey),
                 toolchainIdeInfo,
                 compilerWrapper);
         if (config != null) {
-          return new MapEntry(ruleKey, config);
+          return new MapEntry(targetKey, config);
         }
       }
     }
@@ -172,7 +267,7 @@ final class BlazeConfigurationResolver {
       Map<CToolchainIdeInfo, File> compilerWrapperCache,
       CToolchainIdeInfo toolchainIdeInfo,
       WorkspacePathResolver workspacePathResolver,
-      RuleKey ruleKey) {
+      TargetKey targetKey) {
     File compilerWrapper = compilerWrapperCache.get(toolchainIdeInfo);
     if (compilerWrapper == null) {
       File cppExecutable = toolchainIdeInfo.cppExecutable.getAbsoluteOrRelativeFile();
@@ -183,7 +278,7 @@ final class BlazeConfigurationResolver {
         String errorMessage =
             String.format(
                 "Unable to find compiler executable: %s for rule %s",
-                toolchainIdeInfo.cppExecutable.toString(), ruleKey);
+                toolchainIdeInfo.cppExecutable.toString(), targetKey);
         LOG.warn(errorMessage);
         compilerWrapper = null;
       } else {
@@ -240,7 +335,7 @@ final class BlazeConfigurationResolver {
               "ARGS=`cat $ARG_FILE`",
               "$EXE $ARGS $2");
 
-      try (PrintWriter pw = new PrintWriter(blazeCompilerWrapper)) {
+      try (PrintWriter pw = new PrintWriter(blazeCompilerWrapper, UTF_8.name())) {
         compilerWrapperScriptLines.forEach(pw::println);
       }
       return blazeCompilerWrapper;
@@ -251,10 +346,10 @@ final class BlazeConfigurationResolver {
 
   @Nullable
   public OCResolveConfiguration getConfigurationForFile(VirtualFile sourceFile) {
-    SourceToRuleMap sourceToRuleMap = SourceToRuleMap.getInstance(project);
-    List<RuleKey> targetsForSourceFile =
+    SourceToTargetMap sourceToTargetMap = SourceToTargetMap.getInstance(project);
+    List<TargetKey> targetsForSourceFile =
         Lists.newArrayList(
-            sourceToRuleMap.getRulesForSourceFile(VfsUtilCore.virtualToIoFile(sourceFile)));
+            sourceToTargetMap.getRulesForSourceFile(VfsUtilCore.virtualToIoFile(sourceFile)));
     if (targetsForSourceFile.isEmpty()) {
       return null;
     }
@@ -263,10 +358,10 @@ final class BlazeConfigurationResolver {
     // we can't possibly show how it will be interpreted in both contexts at the same time
     // in the IDE, so just pick the first target after we sort.
     targetsForSourceFile.sort((o1, o2) -> o1.toString().compareTo(o2.toString()));
-    RuleKey ruleKey = Iterables.getFirst(targetsForSourceFile, null);
-    assert (ruleKey != null);
+    TargetKey targetKey = Iterables.getFirst(targetsForSourceFile, null);
+    assert (targetKey != null);
 
-    return resolveConfigurations.get(ruleKey);
+    return resolveConfigurations.get(targetKey);
   }
 
   public List<? extends OCResolveConfiguration> getAllConfigurations() {

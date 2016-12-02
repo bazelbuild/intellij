@@ -31,9 +31,9 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.ExperimentalShowArtifactsLineProcessor;
 import com.google.idea.blaze.base.filecache.FileDiffer;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
 import com.google.idea.blaze.base.metrics.Action;
 import com.google.idea.blaze.base.model.SyncState;
@@ -51,40 +51,42 @@ import com.google.idea.blaze.base.scope.scopes.LoggedTimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProvider;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.common.experiments.BoolExperiment;
-import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.AndroidStudioIdeInfo;
+import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
+import java.util.zip.GZIPInputStream;
 import javax.annotation.Nullable;
 
 /** Implementation of BlazeIdeInterface based on aspects. */
 public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
   private static final Logger LOG = Logger.getInstance(BlazeIdeInterfaceAspectsImpl.class);
-  private static final BoolExperiment USE_SKYLARK_ASPECT =
-      new BoolExperiment("use.skylark.aspect", false);
-  private static final BoolExperiment IDE_INFO_KEEP_GOING =
-      new BoolExperiment("ide.info.keep.going", true);
 
   static class State implements Serializable {
     private static final long serialVersionUID = 14L;
-    RuleMap ruleMap;
+    TargetMap targetMap;
     ImmutableMap<File, Long> fileState = null;
-    Map<File, RuleKey> fileToRuleMapKey = Maps.newHashMap();
+    Map<File, TargetKey> fileToTargetMapKey = Maps.newHashMap();
     WorkspaceLanguageSettings workspaceLanguageSettings;
     String aspectStrategyName;
   }
 
   @Override
-  public IdeResult updateRuleMap(
+  public IdeResult updateTargetMap(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
@@ -113,7 +115,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     IdeInfoResult ideInfoResult =
         getIdeInfo(project, context, workspaceRoot, projectViewSet, targets, aspectStrategy);
     if (ideInfoResult.buildResult == BuildResult.FATAL_ERROR) {
-      return new IdeResult(prevState != null ? prevState.ruleMap : null, BuildResult.FATAL_ERROR);
+      return new IdeResult(prevState != null ? prevState.targetMap : null, BuildResult.FATAL_ERROR);
     }
     // If there was a partial error, make a best-effort attempt to sync. Retain
     // any old state that we have in an attempt not to lose too much code.
@@ -128,7 +130,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         FileDiffer.updateFiles(
             prevState != null ? prevState.fileState : null, fileList, updatedFiles, removedFiles);
     if (fileState == null) {
-      return new IdeResult(prevState != null ? prevState.ruleMap : null, BuildResult.FATAL_ERROR);
+      return new IdeResult(prevState != null ? prevState.targetMap : null, BuildResult.FATAL_ERROR);
     }
 
     context.output(
@@ -144,7 +146,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         .withProgressMessage("Reading IDE info result...")
         .run()
         .success()) {
-      return new IdeResult(prevState != null ? prevState.ruleMap : null, BuildResult.FATAL_ERROR);
+      return new IdeResult(prevState != null ? prevState.targetMap : null, BuildResult.FATAL_ERROR);
     }
 
     State state =
@@ -159,10 +161,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             removedFiles,
             mergeWithOldState);
     if (state == null) {
-      return new IdeResult(prevState != null ? prevState.ruleMap : null, BuildResult.FATAL_ERROR);
+      return new IdeResult(prevState != null ? prevState.targetMap : null, BuildResult.FATAL_ERROR);
     }
     syncStateBuilder.put(State.class, state);
-    return new IdeResult(state.ruleMap, ideInfoResult.buildResult);
+    return new IdeResult(state.targetMap, ideInfoResult.buildResult);
   }
 
   private static class IdeInfoResult {
@@ -194,14 +196,17 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
           BlazeCommand.Builder blazeCommandBuilder =
               BlazeCommand.builder(buildSystem, BlazeCommandName.BUILD);
           blazeCommandBuilder.addTargets(targets);
-          if (IDE_INFO_KEEP_GOING.getValue()) {
-            blazeCommandBuilder.addBlazeFlags(BlazeFlags.KEEP_GOING);
-          }
+          blazeCommandBuilder.addBlazeFlags(BlazeFlags.KEEP_GOING);
           blazeCommandBuilder
               .addBlazeFlags(BlazeFlags.EXPERIMENTAL_SHOW_ARTIFACTS)
               .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet));
 
           aspectStrategy.modifyIdeInfoCommand(blazeCommandBuilder);
+
+          String fileExtension = aspectStrategy.getAspectOutputFileExtension();
+          String gzFileExtension = fileExtension + ".gz";
+          Predicate<String> fileFilter =
+              fileName -> fileName.endsWith(fileExtension) || fileName.endsWith(gzFileExtension);
 
           int retVal =
               ExternalTask.builder(workspaceRoot)
@@ -209,30 +214,23 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   .context(context)
                   .stderr(
                       LineProcessingOutputStream.of(
-                          new ExperimentalShowArtifactsLineProcessor(
-                              result, aspectStrategy.getAspectOutputFileExtension()),
+                          new ExperimentalShowArtifactsLineProcessor(result, fileFilter),
                           new IssueOutputLineProcessor(project, context, workspaceRoot)))
                   .build()
                   .run(new LoggedTimingScope(project, Action.BLAZE_BUILD));
 
           BuildResult buildResult = BuildResult.fromExitCode(retVal);
-
-          // If the experiment is turned off, upgrade any build errors to fatal errors
-          if (buildResult == BuildResult.BUILD_ERROR && !IDE_INFO_KEEP_GOING.getValue()) {
-            buildResult = BuildResult.FATAL_ERROR;
-          }
-
           return new IdeInfoResult(result, buildResult);
         });
   }
 
-  private static class RuleIdeInfoPair {
+  private static class TargetFilePair {
     private final File file;
-    private final RuleIdeInfo ruleIdeInfo;
+    private final TargetIdeInfo target;
 
-    RuleIdeInfoPair(File file, RuleIdeInfo ruleIdeInfo) {
+    TargetFilePair(File file, TargetIdeInfo target) {
       this.file = file;
-      this.ruleIdeInfo = ruleIdeInfo;
+      this.target = target;
     }
   }
 
@@ -252,7 +250,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             parentContext,
             (ScopedFunction<Result<State>>)
                 context -> {
-                  context.push(new TimingScope("UpdateRuleMap"));
+                  context.push(new TimingScope("UpdateTargetMap"));
 
                   // If we're not removing we have to merge the old state
                   // into the new one or we'll miss file removes next time
@@ -273,19 +271,19 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   state.workspaceLanguageSettings = workspaceLanguageSettings;
                   state.aspectStrategyName = aspectStrategy.getName();
 
-                  Map<RuleKey, RuleIdeInfo> ruleMap = Maps.newHashMap();
-                  Map<RuleKey, RuleIdeInfo> updatedRules = Maps.newHashMap();
+                  Map<TargetKey, TargetIdeInfo> targetMap = Maps.newHashMap();
+                  Map<TargetKey, TargetIdeInfo> updatedTargets = Maps.newHashMap();
                   if (prevState != null) {
-                    ruleMap.putAll(prevState.ruleMap.map());
-                    state.fileToRuleMapKey.putAll(prevState.fileToRuleMapKey);
+                    targetMap.putAll(prevState.targetMap.map());
+                    state.fileToTargetMapKey.putAll(prevState.fileToTargetMapKey);
                   }
 
                   // Update removed unless we're merging with the old state
                   if (!mergeWithOldState) {
                     for (File removedFile : removedFiles) {
-                      RuleKey key = state.fileToRuleMapKey.remove(removedFile);
+                      TargetKey key = state.fileToTargetMapKey.remove(removedFile);
                       if (key != null) {
-                        ruleMap.remove(key);
+                        targetMap.remove(key);
                       }
                     }
                   }
@@ -295,35 +293,36 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   ListeningExecutorService executor = BlazeExecutor.getInstance().getExecutor();
 
                   // Read protos from any new files
-                  List<ListenableFuture<RuleIdeInfoPair>> futures = Lists.newArrayList();
+                  List<ListenableFuture<TargetFilePair>> futures = Lists.newArrayList();
                   for (File file : newFiles) {
                     futures.add(
                         executor.submit(
                             () -> {
                               totalSizeLoaded.addAndGet(file.length());
-
-                              AndroidStudioIdeInfo.RuleIdeInfo ruleProto =
-                                  aspectStrategy.readAspectFile(file);
-                              RuleIdeInfo ruleIdeInfo =
-                                  IdeInfoFromProtobuf.makeRuleIdeInfo(
-                                      workspaceLanguageSettings, ruleProto);
-                              return new RuleIdeInfoPair(file, ruleIdeInfo);
+                              try (InputStream inputStream = getAspectInputStream(file)) {
+                                IntellijIdeInfo.TargetIdeInfo ruleProto =
+                                    aspectStrategy.readAspectFile(inputStream);
+                                TargetIdeInfo target =
+                                    IdeInfoFromProtobuf.makeTargetIdeInfo(
+                                        workspaceLanguageSettings, ruleProto);
+                                return new TargetFilePair(file, target);
+                              }
                             }));
                   }
 
                   // Update state with result from proto files
-                  int duplicateRuleLabels = 0;
+                  int duplicateTargetLabels = 0;
                   try {
-                    for (RuleIdeInfoPair ruleIdeInfoOrSdkInfo : Futures.allAsList(futures).get()) {
-                      if (ruleIdeInfoOrSdkInfo.ruleIdeInfo != null) {
-                        File file = ruleIdeInfoOrSdkInfo.file;
-                        RuleKey key = ruleIdeInfoOrSdkInfo.ruleIdeInfo.key;
-                        RuleIdeInfo previousRule =
-                            updatedRules.putIfAbsent(key, ruleIdeInfoOrSdkInfo.ruleIdeInfo);
-                        if (previousRule == null) {
-                          state.fileToRuleMapKey.put(file, key);
+                    for (TargetFilePair targetFilePairs : Futures.allAsList(futures).get()) {
+                      if (targetFilePairs.target != null) {
+                        File file = targetFilePairs.file;
+                        TargetKey key = targetFilePairs.target.key;
+                        TargetIdeInfo previousTarget =
+                            updatedTargets.putIfAbsent(key, targetFilePairs.target);
+                        if (previousTarget == null) {
+                          state.fileToTargetMapKey.put(file, key);
                         } else {
-                          duplicateRuleLabels++;
+                          duplicateTargetLabels++;
                         }
                       }
                     }
@@ -333,25 +332,25 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   } catch (ExecutionException e) {
                     return Result.error(e);
                   }
-                  ruleMap.putAll(updatedRules);
+                  targetMap.putAll(updatedTargets);
 
                   context.output(
                       PrintOutput.log(
                           String.format(
                               "Loaded %d aspect files, total size %dkB",
                               newFiles.size(), totalSizeLoaded.get() / 1024)));
-                  if (duplicateRuleLabels > 0) {
+                  if (duplicateTargetLabels > 0) {
                     context.output(
                         new PerformanceWarning(
                             String.format(
                                 "There were %d duplicate rules. "
                                     + "You may be including multiple configurations in your build. "
                                     + "Your IDE sync is slowed down by ~%d%%.",
-                                duplicateRuleLabels,
-                                (100 * duplicateRuleLabels / ruleMap.size()))));
+                                duplicateTargetLabels,
+                                (100 * duplicateTargetLabels / targetMap.size()))));
                   }
 
-                  state.ruleMap = new RuleMap(ImmutableMap.copyOf(ruleMap));
+                  state.targetMap = new TargetMap(ImmutableMap.copyOf(targetMap));
                   return Result.of(state);
                 });
 
@@ -360,6 +359,14 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       return null;
     }
     return result.result;
+  }
+
+  private static InputStream getAspectInputStream(File file) throws IOException {
+    InputStream inputStream = new FileInputStream(file);
+    if (file.getName().endsWith(".gz")) {
+      inputStream = new GZIPInputStream(inputStream);
+    }
+    return inputStream;
   }
 
   @Override
@@ -396,12 +403,13 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   }
 
   private AspectStrategy getAspectStrategy(Project project) {
-    BuildSystem buildSystem = Blaze.getBuildSystem(project);
-    if (buildSystem == BuildSystem.Bazel) {
-      return AspectStrategy.NATIVE_ASPECT;
+    for (AspectStrategyProvider provider : AspectStrategyProvider.EP_NAME.getExtensions()) {
+      AspectStrategy aspectStrategy = provider.getAspectStrategy(project);
+      if (aspectStrategy != null) {
+        return aspectStrategy;
+      }
     }
-    return USE_SKYLARK_ASPECT.getValue()
-        ? AspectStrategy.SKYLARK_ASPECT
-        : AspectStrategy.NATIVE_ASPECT;
+    // Should never get here
+    throw new IllegalStateException("No aspect strategy found.");
   }
 }

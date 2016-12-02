@@ -21,15 +21,11 @@ import com.google.idea.blaze.base.lang.buildfile.lexer.TokenKind;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildElementType;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildElementTypes;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.openapi.diagnostic.Logger;
 import java.util.EnumSet;
 import java.util.List;
 
 /** For parsing expressions in BUILD files. */
 public class ExpressionParsing extends Parsing {
-
-  private static final Logger LOG =
-      Logger.getInstance("com.google.idea.blaze.base.lang.buildfile.parser.ExpressionParsing");
 
   private static final ImmutableSet<TokenKind> LIST_TERMINATOR_SET =
       ImmutableSet.of(TokenKind.EOF, TokenKind.RBRACKET, TokenKind.SEMI);
@@ -47,7 +43,7 @@ public class ExpressionParsing extends Parsing {
           TokenKind.RPAREN,
           TokenKind.SEMI);
 
-  private static final ImmutableSet<TokenKind> EXPR_TERMINATOR_SET =
+  protected static final ImmutableSet<TokenKind> EXPR_TERMINATOR_SET =
       ImmutableSet.of(
           TokenKind.EOF,
           TokenKind.COLON,
@@ -59,25 +55,6 @@ public class ExpressionParsing extends Parsing {
           TokenKind.RBRACKET,
           TokenKind.RPAREN,
           TokenKind.SLASH);
-
-  private static final ImmutableSet<TokenKind> BINARY_OPERATORS =
-      ImmutableSet.of(
-          TokenKind.AND,
-          TokenKind.EQUALS_EQUALS,
-          TokenKind.GREATER,
-          TokenKind.GREATER_EQUALS,
-          TokenKind.IN,
-          TokenKind.LESS,
-          TokenKind.LESS_EQUALS,
-          TokenKind.MINUS,
-          TokenKind.NOT_EQUALS,
-          TokenKind.NOT_IN,
-          TokenKind.OR,
-          TokenKind.PERCENT,
-          TokenKind.SLASH,
-          TokenKind.PLUS,
-          TokenKind.PIPE,
-          TokenKind.STAR);
 
   private static final ImmutableSet<TokenKind> FUNCALL_TERMINATOR_SET =
       ImmutableSet.of(TokenKind.EOF, TokenKind.RPAREN, TokenKind.SEMI, TokenKind.NEWLINE);
@@ -282,10 +259,6 @@ public class ExpressionParsing extends Parsing {
         } else {
           marker.drop();
         }
-        return;
-      case TRUE: // intentional fall-through -- both treated as vanilla identifiers
-      case FALSE:
-        buildTokenElement(BuildElementTypes.BOOLEAN_LITERAL);
         return;
       case LBRACKET:
         parseListMaker();

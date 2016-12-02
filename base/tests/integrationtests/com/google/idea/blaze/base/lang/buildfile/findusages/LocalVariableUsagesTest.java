@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.LocalReference;
 import com.google.idea.blaze.base.lang.buildfile.references.TargetReference;
 import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.junit.Test;
@@ -44,7 +45,7 @@ public class LocalVariableUsagesTest extends BuildFileIntegrationTestCase {
   public void testLocalReferences() {
     BuildFile buildFile =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "localVar = 5",
             "funcall(localVar)",
             "def function(name):",
@@ -74,7 +75,8 @@ public class LocalVariableUsagesTest extends BuildFileIntegrationTestCase {
   @Test
   public void testMultipleAssignments() {
     BuildFile buildFile =
-        createBuildFile("java/com/google/BUILD", "var = 5", "var += 1", "var = 0");
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"), "var = 5", "var += 1", "var = 0");
 
     TargetExpression target =
         buildFile.findChildByClass(AssignmentStatement.class).getLeftHandSideExpression();

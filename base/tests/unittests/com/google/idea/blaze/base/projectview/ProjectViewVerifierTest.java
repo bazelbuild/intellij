@@ -16,9 +16,9 @@
 package com.google.idea.blaze.base.projectview;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.io.MockWorkspaceScanner;
-import com.google.idea.blaze.base.io.WorkspaceScanner;
+import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -29,9 +29,12 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import java.io.File;
+import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +46,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
 
   private static final String FAKE_ROOT = "/root";
   private WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File(FAKE_ROOT));
-  private MockWorkspaceScanner workspaceScanner;
+  private MockFileAttributeProvider fileAttributeProvider;
   private ErrorCollector errorCollector = new ErrorCollector();
   private BlazeContext context;
   private WorkspaceLanguageSettings workspaceLanguageSettings =
@@ -55,8 +58,8 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
     super.initTest(applicationServices, projectServices);
     registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
 
-    workspaceScanner = new MockWorkspaceScanner();
-    applicationServices.register(WorkspaceScanner.class, workspaceScanner);
+    fileAttributeProvider = new MockFileAttributeProvider(workspaceRoot);
+    applicationServices.register(FileAttributeProvider.class, fileAttributeProvider);
     context = new BlazeContext();
     context.addOutputSink(IssueOutput.class, errorCollector);
   }
@@ -77,7 +80,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
                                     new WorkspacePath("java/com/google/android/apps/example2"))))
                     .build())
             .build();
-    workspaceScanner.addProjectView(workspaceRoot, projectViewSet);
+    fileAttributeProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
         context, workspaceRoot, projectViewSet, workspaceLanguageSettings);
     errorCollector.assertNoIssues();
@@ -99,7 +102,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
                                     new WorkspacePath("java/com/google/android/apps/example"))))
                     .build())
             .build();
-    workspaceScanner.addProjectView(workspaceRoot, projectViewSet);
+    fileAttributeProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
         context, workspaceRoot, projectViewSet, workspaceLanguageSettings);
     errorCollector.assertIssues(
@@ -123,7 +126,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
                                     new WorkspacePath("java/com/google/android/apps"))))
                     .build())
             .build();
-    workspaceScanner.addProjectView(workspaceRoot, projectViewSet);
+    fileAttributeProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
         context, workspaceRoot, projectViewSet, workspaceLanguageSettings);
     errorCollector.assertIssues(
@@ -148,7 +151,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
                                         "java/com/google/android/apps/example/subdir"))))
                     .build())
             .build();
-    workspaceScanner.addProjectView(workspaceRoot, projectViewSet);
+    fileAttributeProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
         context, workspaceRoot, projectViewSet, workspaceLanguageSettings);
     errorCollector.assertNoIssues();
@@ -173,5 +176,57 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
         String.format(
             "Directory '%s' specified in import roots not found under workspace root '%s'",
             "java/com/google/android/apps/example", "/root"));
+  }
+
+  static class MockFileAttributeProvider extends FileAttributeProvider {
+
+    private final WorkspaceRoot workspaceRoot;
+    private final Set<File> files = Sets.newHashSet();
+    private final Set<File> directories = Sets.newHashSet();
+
+    MockFileAttributeProvider(WorkspaceRoot workspaceRoot) {
+      this.workspaceRoot = workspaceRoot;
+    }
+
+    MockFileAttributeProvider addFile(WorkspacePath file) {
+      files.add(workspaceRoot.fileForPath(file));
+      return this;
+    }
+
+    MockFileAttributeProvider addDirectory(WorkspacePath file) {
+      addFile(file);
+      directories.add(workspaceRoot.fileForPath(file));
+      return this;
+    }
+
+    MockFileAttributeProvider addPackage(WorkspacePath file) {
+      addFile(new WorkspacePath(file + "/BUILD"));
+      addDirectory(file);
+      return this;
+    }
+
+    MockFileAttributeProvider addPackages(Iterable<WorkspacePath> files) {
+      for (WorkspacePath workspacePath : files) {
+        addPackage(workspacePath);
+      }
+      return this;
+    }
+
+    MockFileAttributeProvider addImportRoots(ImportRoots importRoots) {
+      addPackages(importRoots.rootDirectories());
+      addPackages(importRoots.excludeDirectories());
+      return this;
+    }
+
+    MockFileAttributeProvider addProjectView(ProjectViewSet projectViewSet) {
+      ImportRoots importRoots =
+          ImportRoots.builder(workspaceRoot, BuildSystem.Blaze).add(projectViewSet).build();
+      return addImportRoots(importRoots);
+    }
+
+    @Override
+    public boolean exists(File file) {
+      return files.contains(file);
+    }
   }
 }

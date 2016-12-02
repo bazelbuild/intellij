@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import org.junit.Test;
@@ -33,14 +34,14 @@ public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
   public void testLocalTarget() {
     BuildFile file =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "java_library(name = 'lib')",
             "java_library(",
             "    name = 'test',",
             "    deps = [':']");
 
-    Editor editor = openFileInEditor(file);
-    setCaretPosition(editor, 3, "    deps = [':".length());
+    Editor editor = editorTest.openFileInEditor(file);
+    editorTest.setCaretPosition(editor, 3, "    deps = [':".length());
 
     LookupElement[] completionItems = testFixture.completeBasic();
     assertThat(completionItems).hasLength(1);
@@ -51,10 +52,13 @@ public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
   public void testIgnoreContainingTarget() {
     BuildFile file =
         createBuildFile(
-            "java/com/google/BUILD", "java_library(", "    name = 'lib',", "    deps = [':']");
+            new WorkspacePath("java/com/google/BUILD"),
+            "java_library(",
+            "    name = 'lib',",
+            "    deps = [':']");
 
-    Editor editor = openFileInEditor(file);
-    setCaretPosition(editor, 2, "    deps = [':".length());
+    Editor editor = editorTest.openFileInEditor(file);
+    editorTest.setCaretPosition(editor, 2, "    deps = [':".length());
 
     LookupElement[] completionItems = testFixture.completeBasic();
     assertThat(completionItems).isEmpty();
@@ -64,52 +68,54 @@ public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
   public void testNotCodeCompletionInNameField() {
     BuildFile file =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "java_library(name = 'lib')",
             "java_library(",
             "    name = 'l'",
             ")");
 
-    Editor editor = openFileInEditor(file);
-    setCaretPosition(editor, 2, "    name = 'l".length());
+    Editor editor = editorTest.openFileInEditor(file);
+    editorTest.setCaretPosition(editor, 2, "    name = 'l".length());
 
-    String[] completionItems = getCompletionItemsAsStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).isEmpty();
   }
 
   @Test
   public void testNonLocalTarget() {
-    createBuildFile("java/com/google/foo/BUILD", "java_library(name = 'foo_lib')");
+    createBuildFile(
+        new WorkspacePath("java/com/google/foo/BUILD"), "java_library(name = 'foo_lib')");
 
     BuildFile bar =
         createBuildFile(
-            "java/com/google/bar/BUILD",
+            new WorkspacePath("java/com/google/bar/BUILD"),
             "java_library(",
             "    name = 'bar_lib',",
             "    deps = '//java/com/google/foo:')");
 
-    Editor editor = openFileInEditor(bar);
-    setCaretPosition(editor, 2, "    deps = '//java/com/google/foo:".length());
+    Editor editor = editorTest.openFileInEditor(bar);
+    editorTest.setCaretPosition(editor, 2, "    deps = '//java/com/google/foo:".length());
 
-    String[] completionItems = getCompletionItemsAsStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).asList().containsExactly("'//java/com/google/foo:foo_lib'");
   }
 
   @Test
   public void testNonLocalRulesNotCompletedWithoutColon() {
-    createBuildFile("java/com/google/foo/BUILD", "java_library(name = 'foo_lib')");
+    createBuildFile(
+        new WorkspacePath("java/com/google/foo/BUILD"), "java_library(name = 'foo_lib')");
 
     BuildFile bar =
         createBuildFile(
-            "java/com/google/bar/BUILD",
+            new WorkspacePath("java/com/google/bar/BUILD"),
             "java_library(",
             "    name = 'bar_lib',",
             "    deps = '//java/com/google/foo')");
 
-    Editor editor = openFileInEditor(bar);
-    setCaretPosition(editor, 2, "    deps = '//java/com/google/foo".length());
+    Editor editor = editorTest.openFileInEditor(bar);
+    editorTest.setCaretPosition(editor, 2, "    deps = '//java/com/google/foo".length());
 
-    String[] completionItems = getCompletionItemsAsStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).isEmpty();
   }
 
@@ -117,16 +123,16 @@ public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
   public void testPackageLocalRulesCompletedWithoutColon() {
     BuildFile file =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "java_library(name = 'lib')",
             "java_library(",
             "    name = 'test',",
             "    deps = ['']");
 
-    Editor editor = openFileInEditor(file);
-    setCaretPosition(editor, 3, "    deps = ['".length());
+    Editor editor = editorTest.openFileInEditor(file);
+    editorTest.setCaretPosition(editor, 3, "    deps = ['".length());
 
-    assertThat(completeIfUnique()).isTrue();
+    assertThat(editorTest.completeIfUnique()).isTrue();
     assertFileContents(
         file,
         "java_library(name = 'lib')",
@@ -137,20 +143,20 @@ public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testLocalPathIgnoredForNonLocalLabels() {
-    createBuildFile("java/BUILD", "java_library(name = 'root_rule')");
+    createBuildFile(new WorkspacePath("java/BUILD"), "java_library(name = 'root_rule')");
 
     BuildFile otherPackage =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "java_library(",
             "java_library(name = 'other_rule')",
             "    name = 'lib',",
             "    deps = ['//java:']");
 
-    Editor editor = openFileInEditor(otherPackage);
-    setCaretPosition(editor, 3, "    deps = ['//java:".length());
+    Editor editor = editorTest.openFileInEditor(otherPackage);
+    editorTest.setCaretPosition(editor, 3, "    deps = ['//java:".length());
 
-    String[] completionItems = getCompletionItemsAsStrings();
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).asList().contains("'//java:root_rule'");
     assertThat(completionItems).asList().doesNotContain("'//java/com/google:other_rule'");
   }

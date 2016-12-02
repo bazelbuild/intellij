@@ -15,11 +15,11 @@
  */
 package com.google.idea.blaze.java.libraries;
 
+import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
-import com.google.idea.blaze.java.sync.model.BlazeLibrary;
-import com.google.idea.blaze.java.sync.model.LibraryKey;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;

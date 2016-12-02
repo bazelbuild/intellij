@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiFile;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,13 +31,13 @@ public class BuildFileTypeTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testSkylarkExtensionRecognized() {
-    PsiFile file = createPsiFile("java/com/google/foo/build_defs.bzl");
+    PsiFile file = workspace.createPsiFile(new WorkspacePath("java/com/google/foo/build_defs.bzl"));
     assertThat(file).isInstanceOf(BuildFile.class);
   }
 
   @Test
   public void testExactNameMatch() {
-    PsiFile file = createPsiFile("java/com/google/foo/BUILD");
+    PsiFile file = workspace.createPsiFile(new WorkspacePath("java/com/google/foo/BUILD"));
     assertThat(file).isInstanceOf(BuildFile.class);
   }
 

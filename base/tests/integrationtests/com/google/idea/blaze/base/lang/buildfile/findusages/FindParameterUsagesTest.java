@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.ParameterList;
 import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiReference;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,7 +38,7 @@ public class FindParameterUsagesTest extends BuildFileIntegrationTestCase {
   public void testLocalReferences() {
     BuildFile buildFile =
         createBuildFile(
-            "java/com/google/build_defs.bzl",
+            new WorkspacePath("java/com/google/build_defs.bzl"),
             "def function(arg1, arg2)",
             "function(arg1 = 1, arg2 = \"name\")");
 
@@ -53,11 +54,13 @@ public class FindParameterUsagesTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testNonLocalReferences() {
-    BuildFile foo = createBuildFile("java/com/google/build_defs.bzl", "def function(arg1, arg2)");
+    BuildFile foo =
+        createBuildFile(
+            new WorkspacePath("java/com/google/build_defs.bzl"), "def function(arg1, arg2)");
 
     BuildFile bar =
         createBuildFile(
-            "java/com/google/other/BUILD",
+            new WorkspacePath("java/com/google/other/BUILD"),
             "load(\"//java/com/google:build_defs.bzl\", \"function\")",
             "function(arg1 = 1, arg2 = \"name\", extra = x)");
 

@@ -24,16 +24,18 @@ import com.google.common.collect.Ordering;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.ideinfo.JavaRuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.Dependency;
+import com.google.idea.blaze.base.ideinfo.Dependency.DependencyType;
+import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.BlazeRunConfiguration;
-import com.google.idea.blaze.base.run.rulefinder.RuleFinder;
+import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -117,15 +119,15 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
       Project project,
       ConfigurationFactory factory,
       String name,
-      @Nullable RuleIdeInfo initialRule) {
+      @Nullable TargetIdeInfo initialTarget) {
     super(project, factory, name);
     this.buildSystem = Blaze.buildSystemName(project);
     Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (IdeaJdkHelper.isIdeaJdk(projectSdk)) {
       pluginSdk = projectSdk;
     }
-    if (initialRule != null) {
-      target = initialRule.label;
+    if (initialTarget != null) {
+      target = initialTarget.key.label;
     }
   }
 
@@ -151,42 +153,46 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     if (blazeProjectData == null) {
       throw new ExecutionException("Not synced yet, please sync project");
     }
-    RuleIdeInfo rule = RuleFinder.getInstance().ruleForTarget(getProject(), getTarget());
-    if (rule == null) {
+    TargetIdeInfo target = TargetFinder.getInstance().targetForLabel(getProject(), getTarget());
+    if (target == null) {
       throw new ExecutionException(
-          buildSystem + " rule '" + getTarget() + "' not imported during sync");
+          buildSystem + " target '" + getTarget() + "' not imported during sync");
     }
-    return IntellijPluginRule.isPluginBundle(rule)
-        ? findBundledJars(blazeProjectData.artifactLocationDecoder, rule)
-        : ImmutableList.of(findPluginJar(blazeProjectData.artifactLocationDecoder, rule));
+    return IntellijPluginRule.isPluginBundle(target)
+        ? findBundledJars(blazeProjectData.artifactLocationDecoder, target)
+        : ImmutableList.of(findPluginJar(blazeProjectData.artifactLocationDecoder, target));
   }
 
   private ImmutableList<File> findBundledJars(
-      ArtifactLocationDecoder artifactLocationDecoder, RuleIdeInfo rule) throws ExecutionException {
+      ArtifactLocationDecoder artifactLocationDecoder, TargetIdeInfo target)
+      throws ExecutionException {
     ImmutableList.Builder<File> jars = ImmutableList.builder();
-    for (Label dep : rule.dependencies) {
-      RuleIdeInfo depRule = RuleFinder.getInstance().ruleForTarget(getProject(), dep);
-      if (depRule != null && IntellijPluginRule.isSinglePluginRule(depRule)) {
-        jars.add(findPluginJar(artifactLocationDecoder, depRule));
+    for (Dependency dep : target.dependencies) {
+      if (dep.dependencyType == DependencyType.COMPILE_TIME && dep.targetKey.isPlainTarget()) {
+        TargetIdeInfo depTarget =
+            TargetFinder.getInstance().targetForLabel(getProject(), dep.targetKey.label);
+        if (depTarget != null && IntellijPluginRule.isSinglePluginTarget(depTarget)) {
+          jars.add(findPluginJar(artifactLocationDecoder, depTarget));
+        }
       }
     }
     return jars.build();
   }
 
-  private File findPluginJar(ArtifactLocationDecoder artifactLocationDecoder, RuleIdeInfo rule)
+  private File findPluginJar(ArtifactLocationDecoder artifactLocationDecoder, TargetIdeInfo target)
       throws ExecutionException {
-    JavaRuleIdeInfo javaRuleIdeInfo = rule.javaRuleIdeInfo;
-    if (!IntellijPluginRule.isSinglePluginRule(rule) || javaRuleIdeInfo == null) {
+    JavaIdeInfo javaIdeInfo = target.javaIdeInfo;
+    if (!IntellijPluginRule.isSinglePluginTarget(target) || javaIdeInfo == null) {
       throw new ExecutionException(
-          buildSystem + " rule '" + rule.label + "' is not a valid intellij_plugin rule");
+          buildSystem + " target '" + target + "' is not a valid intellij_plugin target");
     }
-    Collection<LibraryArtifact> jars = javaRuleIdeInfo.jars;
-    if (javaRuleIdeInfo.jars.size() > 1) {
-      throw new ExecutionException("Invalid IntelliJ plugin rule: it has multiple output jars");
+    Collection<LibraryArtifact> jars = javaIdeInfo.jars;
+    if (javaIdeInfo.jars.size() > 1) {
+      throw new ExecutionException("Invalid IntelliJ plugin target: it has multiple output jars");
     }
     LibraryArtifact artifact = jars.isEmpty() ? null : jars.iterator().next();
     if (artifact == null || artifact.classJar == null) {
-      throw new ExecutionException("No output plugin jar found for '" + rule.label + "'");
+      throw new ExecutionException("No output plugin jar found for '" + target + "'");
     }
     return artifactLocationDecoder.decode(artifact.classJar);
   }
@@ -321,15 +327,15 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
 
-    Label target = getTarget();
-    if (target == null) {
+    Label label = getTarget();
+    if (label == null) {
       throw new RuntimeConfigurationError("Select a target to run");
     }
-    RuleIdeInfo rule = RuleFinder.getInstance().ruleForTarget(getProject(), target);
-    if (rule == null) {
+    TargetIdeInfo target = TargetFinder.getInstance().targetForLabel(getProject(), label);
+    if (target == null) {
       throw new RuntimeConfigurationError("The selected target does not exist.");
     }
-    if (!IntellijPluginRule.isPluginRule(rule)) {
+    if (!IntellijPluginRule.isPluginTarget(target)) {
       throw new RuntimeConfigurationError("The selected target is not an intellij_plugin");
     }
     if (!IdeaJdkHelper.isIdeaJdk(pluginSdk)) {
@@ -424,11 +430,11 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
 
   @Override
   public BlazeIntellijPluginConfigurationSettingsEditor getConfigurationEditor() {
-    List<RuleIdeInfo> javaRules =
-        RuleFinder.getInstance().findRules(getProject(), IntellijPluginRule::isPluginRule);
+    List<TargetIdeInfo> javaTargets =
+        TargetFinder.getInstance().findTargets(getProject(), IntellijPluginRule::isPluginTarget);
     List<Label> javaLabels = Lists.newArrayList();
-    for (RuleIdeInfo rule : javaRules) {
-      javaLabels.add(rule.label);
+    for (TargetIdeInfo target : javaTargets) {
+      javaLabels.add(target.key.label);
     }
     return new BlazeIntellijPluginConfigurationSettingsEditor(buildSystem, javaLabels);
   }

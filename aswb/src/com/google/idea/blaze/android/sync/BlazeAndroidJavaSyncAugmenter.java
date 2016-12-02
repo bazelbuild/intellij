@@ -15,72 +15,49 @@
  */
 package com.google.idea.blaze.android.sync;
 
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter;
-import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
-import com.google.idea.blaze.base.ideinfo.AndroidRuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.projectview.section.Glob;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
-import com.google.idea.blaze.java.sync.model.BlazeLibrary;
 import java.util.Collection;
 
 /** Augments the java sync process with Android support. */
-public class BlazeAndroidJavaSyncAugmenter extends BlazeJavaSyncAugmenter.Adapter {
-
+public class BlazeAndroidJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
   @Override
-  public boolean isActive(WorkspaceLanguageSettings workspaceLanguageSettings) {
-    return workspaceLanguageSettings.isLanguageActive(LanguageClass.ANDROID);
-  }
-
-  @Override
-  public void addJarsForSourceRule(
-      RuleIdeInfo rule, Collection<BlazeJarLibrary> jars, Collection<BlazeJarLibrary> genJars) {
-    AndroidRuleIdeInfo androidRuleIdeInfo = rule.androidRuleIdeInfo;
-    if (androidRuleIdeInfo == null) {
+  public void addJarsForSourceTarget(
+      WorkspaceLanguageSettings workspaceLanguageSettings,
+      TargetIdeInfo target,
+      Collection<BlazeJarLibrary> jars,
+      Collection<BlazeJarLibrary> genJars) {
+    if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.ANDROID)) {
       return;
     }
-    LibraryArtifact idlJar = androidRuleIdeInfo.idlJar;
+    AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
+    if (androidIdeInfo == null) {
+      return;
+    }
+    LibraryArtifact idlJar = androidIdeInfo.idlJar;
     if (idlJar != null) {
-      genJars.add(new BlazeJarLibrary(idlJar, rule.key));
+      genJars.add(new BlazeJarLibrary(idlJar, target.key));
     }
 
-    if (BlazeAndroidWorkspaceImporter.shouldGenerateResources(androidRuleIdeInfo)
-        && !BlazeAndroidWorkspaceImporter.shouldGenerateResourceModule(androidRuleIdeInfo)) {
+    if (BlazeAndroidWorkspaceImporter.shouldGenerateResources(androidIdeInfo)
+        && !BlazeAndroidWorkspaceImporter.shouldGenerateResourceModule(androidIdeInfo)) {
       // Add blaze's output unless it's a top level rule.
       // In these cases the resource jar contains the entire
       // transitive closure of R classes. It's unlikely this is wanted to resolve in the IDE.
-      boolean discardResourceJar = rule.kindIsOneOf(Kind.ANDROID_BINARY, Kind.ANDROID_TEST);
+      boolean discardResourceJar = target.kindIsOneOf(Kind.ANDROID_BINARY, Kind.ANDROID_TEST);
       if (!discardResourceJar) {
-        LibraryArtifact resourceJar = androidRuleIdeInfo.resourceJar;
+        LibraryArtifact resourceJar = androidIdeInfo.resourceJar;
         if (resourceJar != null) {
-          jars.add(new BlazeJarLibrary(resourceJar, rule.key));
+          jars.add(new BlazeJarLibrary(resourceJar, target.key));
         }
       }
     }
-  }
-
-  @Override
-  public void addLibraryFilter(Glob.GlobSet excludedLibraries) {
-    excludedLibraries.add(new Glob("*/android_blaze.jar")); // This is supplied via the SDK
-  }
-
-  @Override
-  public Collection<BlazeLibrary> getAdditionalLibraries(BlazeProjectData blazeProjectData) {
-    BlazeAndroidSyncData syncData = blazeProjectData.syncState.get(BlazeAndroidSyncData.class);
-    if (syncData == null) {
-      return ImmutableList.of();
-    }
-    ImmutableList.Builder<BlazeLibrary> libraries = ImmutableList.builder();
-    if (syncData.importResult.resourceLibrary != null) {
-      libraries.add(syncData.importResult.resourceLibrary);
-    }
-    return libraries.build();
   }
 }

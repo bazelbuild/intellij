@@ -17,7 +17,9 @@ package com.google.idea.blaze.java.sync.model;
 
 import com.google.common.base.Objects;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.model.BlazeLibrary;
+import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.libraries.SourceJarManager;
@@ -35,12 +37,12 @@ public final class BlazeJarLibrary extends BlazeLibrary {
 
   public final LibraryArtifact libraryArtifact;
 
-  public final RuleKey originatingRule;
+  public final TargetKey originatingTarget;
 
-  public BlazeJarLibrary(LibraryArtifact libraryArtifact, RuleKey originatingRule) {
+  public BlazeJarLibrary(LibraryArtifact libraryArtifact, TargetKey originatingTarget) {
     super(LibraryKey.fromJarFile(libraryArtifact.jarForIntellijLibrary()));
     this.libraryArtifact = libraryArtifact;
-    this.originatingRule = originatingRule;
+    this.originatingTarget = originatingTarget;
   }
 
   @Override
@@ -66,7 +68,7 @@ public final class BlazeJarLibrary extends BlazeLibrary {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), libraryArtifact, originatingRule);
+    return Objects.hashCode(super.hashCode(), libraryArtifact, originatingTarget);
   }
 
   @Override
@@ -82,6 +84,6 @@ public final class BlazeJarLibrary extends BlazeLibrary {
 
     return super.equals(other)
         && Objects.equal(libraryArtifact, that.libraryArtifact)
-        && Objects.equal(originatingRule, that.originatingRule);
+        && Objects.equal(originatingTarget, that.originatingTarget);
   }
 }

@@ -25,18 +25,18 @@ import com.google.idea.blaze.android.sync.importer.aggregators.TransitiveResourc
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
 import com.google.idea.blaze.android.sync.model.BlazeResourceLibrary;
-import com.google.idea.blaze.base.ideinfo.AndroidRuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
-import com.google.idea.blaze.base.sync.projectview.ProjectViewRuleImportFilter;
+import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,37 +51,37 @@ import org.jetbrains.annotations.Nullable;
 public final class BlazeAndroidWorkspaceImporter {
 
   private final BlazeContext context;
-  private final RuleMap ruleMap;
-  private final ProjectViewRuleImportFilter importFilter;
+  private final TargetMap targetMap;
+  private final ProjectViewTargetImportFilter importFilter;
 
   public BlazeAndroidWorkspaceImporter(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
-      RuleMap ruleMap) {
+      TargetMap targetMap) {
     this.context = context;
-    this.ruleMap = ruleMap;
-    this.importFilter = new ProjectViewRuleImportFilter(project, workspaceRoot, projectViewSet);
+    this.targetMap = targetMap;
+    this.importFilter = new ProjectViewTargetImportFilter(project, workspaceRoot, projectViewSet);
   }
 
   public BlazeAndroidImportResult importWorkspace() {
-    List<RuleIdeInfo> rules =
-        ruleMap
-            .rules()
+    List<TargetIdeInfo> targets =
+        targetMap
+            .targets()
             .stream()
-            .filter(rule -> rule.kind.getLanguageClass() == LanguageClass.ANDROID)
-            .filter(rule -> rule.androidRuleIdeInfo != null)
-            .filter(importFilter::isSourceRule)
-            .filter(rule -> !importFilter.excludeTarget(rule))
+            .filter(target -> target.kind.getLanguageClass() == LanguageClass.ANDROID)
+            .filter(target -> target.androidIdeInfo != null)
+            .filter(importFilter::isSourceTarget)
+            .filter(target -> !importFilter.excludeTarget(target))
             .collect(Collectors.toList());
 
-    TransitiveResourceMap transitiveResourceMap = new TransitiveResourceMap(ruleMap);
+    TransitiveResourceMap transitiveResourceMap = new TransitiveResourceMap(targetMap);
 
     WorkspaceBuilder workspaceBuilder = new WorkspaceBuilder();
 
-    for (RuleIdeInfo rule : rules) {
-      addSourceRule(workspaceBuilder, transitiveResourceMap, rule);
+    for (TargetIdeInfo target : targets) {
+      addSourceTarget(workspaceBuilder, transitiveResourceMap, target);
     }
 
     warnAboutGeneratedResources(workspaceBuilder.generatedResourceLocations);
@@ -93,18 +93,17 @@ public final class BlazeAndroidWorkspaceImporter {
     return new BlazeAndroidImportResult(androidResourceModules, resourceLibrary);
   }
 
-  private void addSourceRule(
+  private void addSourceTarget(
       WorkspaceBuilder workspaceBuilder,
       TransitiveResourceMap transitiveResourceMap,
-      RuleIdeInfo rule) {
-    AndroidRuleIdeInfo androidRuleIdeInfo = rule.androidRuleIdeInfo;
-    assert androidRuleIdeInfo != null;
-    if (shouldGenerateResources(androidRuleIdeInfo)
-        && shouldGenerateResourceModule(androidRuleIdeInfo)) {
-      AndroidResourceModule.Builder builder = new AndroidResourceModule.Builder(rule.key);
+      TargetIdeInfo target) {
+    AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
+    assert androidIdeInfo != null;
+    if (shouldGenerateResources(androidIdeInfo) && shouldGenerateResourceModule(androidIdeInfo)) {
+      AndroidResourceModule.Builder builder = new AndroidResourceModule.Builder(target.key);
       workspaceBuilder.androidResourceModules.add(builder);
 
-      for (ArtifactLocation artifactLocation : androidRuleIdeInfo.resources) {
+      for (ArtifactLocation artifactLocation : androidIdeInfo.resources) {
         if (artifactLocation.isSource()) {
           builder.addResource(artifactLocation);
         } else {
@@ -113,7 +112,7 @@ public final class BlazeAndroidWorkspaceImporter {
       }
 
       TransitiveResourceMap.TransitiveResourceInfo transitiveResourceInfo =
-          transitiveResourceMap.get(rule.key);
+          transitiveResourceMap.get(target.key);
       for (ArtifactLocation artifactLocation : transitiveResourceInfo.transitiveResources) {
         if (artifactLocation.isSource()) {
           builder.addTransitiveResource(artifactLocation);
@@ -121,25 +120,25 @@ public final class BlazeAndroidWorkspaceImporter {
           workspaceBuilder.generatedResourceLocations.add(artifactLocation);
         }
       }
-      for (RuleKey resourceDependency : transitiveResourceInfo.transitiveResourceRules) {
-        if (!resourceDependency.equals(rule.key)) {
+      for (TargetKey resourceDependency : transitiveResourceInfo.transitiveResourceTargets) {
+        if (!resourceDependency.equals(target.key)) {
           builder.addTransitiveResourceDependency(resourceDependency);
         }
       }
     }
   }
 
-  public static boolean shouldGenerateResources(AndroidRuleIdeInfo androidRuleIdeInfo) {
+  public static boolean shouldGenerateResources(AndroidIdeInfo androidIdeInfo) {
     // Generate an android resource module if this rule defines resources
     // We don't want to generate one if this depends on a legacy resource rule through :resources
     // In this case, the resource information is redundantly forwarded to this class for
     // backwards compatibility, but the android_resource rule itself is already generating
     // the android resource module
-    return androidRuleIdeInfo.generateResourceClass && androidRuleIdeInfo.legacyResources == null;
+    return androidIdeInfo.generateResourceClass && androidIdeInfo.legacyResources == null;
   }
 
-  public static boolean shouldGenerateResourceModule(AndroidRuleIdeInfo androidRuleIdeInfo) {
-    return androidRuleIdeInfo.resources.stream().anyMatch(ArtifactLocation::isSource);
+  public static boolean shouldGenerateResourceModule(AndroidIdeInfo androidIdeInfo) {
+    return androidIdeInfo.resources.stream().anyMatch(ArtifactLocation::isSource);
   }
 
   private void warnAboutGeneratedResources(Set<ArtifactLocation> generatedResourceLocations) {
@@ -188,11 +187,10 @@ public final class BlazeAndroidWorkspaceImporter {
     Multimap<String, AndroidResourceModule> javaPackageToResourceModule =
         ArrayListMultimap.create();
     for (AndroidResourceModule androidResourceModule : androidResourceModules) {
-      RuleIdeInfo rule = ruleMap.get(androidResourceModule.ruleKey);
-      AndroidRuleIdeInfo androidRuleIdeInfo = rule.androidRuleIdeInfo;
-      assert androidRuleIdeInfo != null;
-      javaPackageToResourceModule.put(
-          androidRuleIdeInfo.resourceJavaPackage, androidResourceModule);
+      TargetIdeInfo target = targetMap.get(androidResourceModule.targetKey);
+      AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
+      assert androidIdeInfo != null;
+      javaPackageToResourceModule.put(androidIdeInfo.resourceJavaPackage, androidResourceModule);
     }
 
     List<AndroidResourceModule> result = Lists.newArrayList();
@@ -210,7 +208,7 @@ public final class BlazeAndroidWorkspaceImporter {
             .append(".R: ");
         messageBuilder.append('\n');
         for (AndroidResourceModule androidResourceModule : androidResourceModulesWithJavaPackage) {
-          messageBuilder.append("  ").append(androidResourceModule.ruleKey).append('\n');
+          messageBuilder.append("  ").append(androidResourceModule.targetKey).append('\n');
         }
         String message = messageBuilder.toString();
         context.output(new PerformanceWarning(message));
@@ -220,7 +218,7 @@ public final class BlazeAndroidWorkspaceImporter {
       }
     }
 
-    Collections.sort(result, (lhs, rhs) -> RuleKey.COMPARATOR.compare(lhs.ruleKey, rhs.ruleKey));
+    Collections.sort(result, (lhs, rhs) -> lhs.targetKey.compareTo(rhs.targetKey));
     return ImmutableList.copyOf(result);
   }
 
@@ -236,8 +234,8 @@ public final class BlazeAndroidWorkspaceImporter {
                         lhs.transitiveResources.size(),
                         rhs.transitiveResources.size()) // Most transitive resources wins
                     .compare(
-                        rhs.ruleKey.toString().length(),
-                        lhs.ruleKey
+                        rhs.targetKey.toString().length(),
+                        lhs.targetKey
                             .toString()
                             .length()) // Shortest label wins - note lhs, rhs are flipped
                     .result())

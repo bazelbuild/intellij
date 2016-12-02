@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.lang.projectview.completion;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.projectview.language.ProjectViewLanguage;
 import com.google.idea.blaze.base.lang.projectview.lexer.ProjectViewTokenType;
@@ -80,9 +81,16 @@ public class ProjectViewKeywordCompletionContributor extends CompletionContribut
   private static List<LookupElement> getLookups() {
     ImmutableList.Builder<LookupElement> list = ImmutableList.builder();
     for (SectionParser parser : Sections.getUndeprecatedParsers()) {
-      list.add(forSectionParser(parser));
+      if (handledSectionType(parser)) {
+        list.add(forSectionParser(parser));
+      }
     }
     return list.build();
+  }
+
+  @VisibleForTesting
+  public static boolean handledSectionType(SectionParser parser) {
+    return parser instanceof ListSectionParser || parser instanceof ScalarSectionParser;
   }
 
   private static LookupElement forSectionParser(SectionParser parser) {
@@ -96,7 +104,7 @@ public class ProjectViewKeywordCompletionContributor extends CompletionContribut
       context.commitDocument();
 
       String nextTokenText = findNextTokenText(context);
-      if (nextTokenText == null || nextTokenText == "\n") {
+      if (nextTokenText == null || nextTokenText.equals("\n")) {
         document.insertString(context.getTailOffset(), getDivider(parser));
         editor.getCaretModel().moveToOffset(context.getTailOffset());
       }
@@ -112,7 +120,7 @@ public class ProjectViewKeywordCompletionContributor extends CompletionContribut
   }
 
   @Nullable
-  protected static String findNextTokenText(final InsertionContext context) {
+  private static String findNextTokenText(final InsertionContext context) {
     final PsiFile file = context.getFile();
     PsiElement element = file.findElementAt(context.getTailOffset());
     while (element != null && element.getTextLength() == 0) {

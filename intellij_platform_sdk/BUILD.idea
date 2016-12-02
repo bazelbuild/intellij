@@ -15,6 +15,11 @@ java_import(
     jars = glob(["idea-IC-*/plugins/devkit/lib/devkit.jar"]),
 )
 
+java_import(
+    name = "junit",
+    jars = glob(["idea-IC-*/plugins/junit/lib/*.jar"]),
+)
+
 # The plugins required by IJwB. We need to include them
 # when running integration tests.
 java_import(

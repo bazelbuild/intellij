@@ -213,7 +213,7 @@ class BlazeApkBuildStepInstantRun implements BlazeApkBuildStep {
                     .stderr(
                         LineProcessingOutputStream.of(
                             new ExperimentalShowArtifactsLineProcessor(
-                                apkManifestFiles, "apk_manifest"),
+                                apkManifestFiles, fileName -> fileName.endsWith("apk_manifest")),
                             new IssueOutputLineProcessor(project, context, workspaceRoot)))
                     .build()
                     .run(new LoggedTimingScope(project, Action.BLAZE_BUILD));

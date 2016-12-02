@@ -21,13 +21,13 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.rulemaps.SourceToRuleMap;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.BuildTargetFinder;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -47,7 +47,7 @@ public class PartialSyncAction extends BlazeAction {
       getTargets(e, targetExpressions);
 
       BlazeSyncParams syncParams =
-          new BlazeSyncParams.Builder("Partial Sync", BlazeSyncParams.SyncMode.INCREMENTAL)
+          new BlazeSyncParams.Builder("Partial Sync", BlazeSyncParams.SyncMode.PARTIAL)
               .addTargetExpressions(targetExpressions)
               .build();
 
@@ -86,12 +86,12 @@ public class PartialSyncAction extends BlazeAction {
     }
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    SourceToRuleMap.getInstance(project);
+    SourceToTargetMap.getInstance(project);
 
     String objectName = virtualFile.isDirectory() ? "Package" : "File";
     if (!virtualFile.isDirectory()) {
       targets.addAll(
-          SourceToRuleMap.getInstance(project)
+          SourceToTargetMap.getInstance(project)
               .getTargetsToBuildForSourceFile(new File(virtualFile.getPath())));
     }
     if (targets.isEmpty()) {

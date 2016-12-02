@@ -34,7 +34,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.TransientExecutor;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -85,14 +85,14 @@ public final class SourceDirectoryCalculator {
       ArtifactLocationDecoder artifactLocationDecoder,
       Collection<WorkspacePath> rootDirectories,
       Collection<SourceArtifact> sources,
-      Map<RuleKey, ArtifactLocation> javaPackageManifests) {
+      Map<TargetKey, ArtifactLocation> javaPackageManifests) {
 
     ManifestFilePackageReader manifestFilePackageReader =
         Scope.push(
             context,
             (childContext) -> {
               childContext.push(new TimingScope("ReadPackageManifests"));
-              Map<RuleKey, Map<ArtifactLocation, String>> manifestMap =
+              Map<TargetKey, Map<ArtifactLocation, String>> manifestMap =
                   PackageManifestReader.getInstance()
                       .readPackageManifestFiles(
                           project,

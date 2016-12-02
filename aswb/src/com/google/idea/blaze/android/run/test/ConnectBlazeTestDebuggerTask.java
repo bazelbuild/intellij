@@ -164,23 +164,26 @@ class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTask {
     // reference to the launch status and printers, and those should
     // be updated to point to the new process handlers,
     // otherwise test results will not be forwarded appropriately
+    ProcessHandler oldProcessHandler = launchStatus.getProcessHandler();
     launchStatus.setProcessHandler(debugProcessHandler);
     printer.setProcessHandler(debugProcessHandler);
 
-    // detach old process handler
-    RunContentDescriptor descriptor = currentLaunchInfo.env.getContentToReuse();
-    assert descriptor != null;
-
-    final ProcessHandler processHandler = descriptor.getProcessHandler();
-
-    // detach after the launch status has been updated to point to the new process handler
-    if (processHandler != null) {
-      processHandler.detachProcess();
-    }
+    // Detach old process handler after the launch status
+    // has been updated to point to the new process handler.
+    oldProcessHandler.detachProcess();
 
     AndroidDebugState debugState =
         new AndroidDebugState(
             project, debugProcessHandler, connection, currentLaunchInfo.consoleProvider);
+
+    RunContentDescriptor oldDescriptor;
+    AndroidSessionInfo oldSession = oldProcessHandler.getUserData(AndroidSessionInfo.KEY);
+    if (oldSession != null) {
+      oldDescriptor = oldSession.getDescriptor();
+    } else {
+      // This is the first time we are attaching the debugger; get it from the environment instead.
+      oldDescriptor = currentLaunchInfo.env.getContentToReuse();
+    }
 
     RunContentDescriptor debugDescriptor;
     try {
@@ -189,7 +192,7 @@ class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTask {
           new ExecutionEnvironmentBuilder(currentLaunchInfo.env)
               .executor(currentLaunchInfo.executor)
               .runner(currentLaunchInfo.runner)
-              .contentToReuse(processHandler == null ? null : descriptor)
+              .contentToReuse(oldDescriptor)
               .build();
       debugDescriptor =
           DebuggerPanelsManager.getInstance(project)
@@ -206,11 +209,9 @@ class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTask {
     // re-run the collected text from the old process handler to the new
     // TODO: is there a race between messages received once the debugger has been connected,
     // and these messages that are printed out?
-    if (processHandler != null) {
-      final AndroidProcessText oldText = AndroidProcessText.get(processHandler);
-      if (oldText != null) {
-        oldText.printTo(debugProcessHandler);
-      }
+    final AndroidProcessText oldText = AndroidProcessText.get(oldProcessHandler);
+    if (oldText != null) {
+      oldText.printTo(debugProcessHandler);
     }
 
     RunProfile runProfile = currentLaunchInfo.env.getRunProfile();

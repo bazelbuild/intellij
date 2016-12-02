@@ -18,12 +18,10 @@ package com.google.idea.blaze.clwb.run.producers;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
-import com.google.idea.blaze.base.run.TestRuleFinder;
-import com.google.idea.blaze.base.run.TestRuleHeuristic;
+import com.google.idea.blaze.base.run.TestTargetHeuristic;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -31,9 +29,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.cidr.execution.testing.CidrTestUtil;
 import com.jetbrains.cidr.lang.psi.OCFile;
@@ -45,7 +41,6 @@ import com.jetbrains.cidr.lang.symbols.OCSymbol;
 import com.jetbrains.cidr.lang.symbols.cpp.OCFunctionSymbol;
 import com.jetbrains.cidr.lang.symbols.cpp.OCStructSymbol;
 import com.jetbrains.cidr.lang.symbols.cpp.OCSymbolWithQualifiedName;
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -69,7 +64,7 @@ public class BlazeCidrTestConfigurationProducer
     @Nullable
     private static TestTarget createFromClassAndMethod(
         @Nullable PsiElement element, String classOrSuiteName, @Nullable String testName) {
-      Label label = getCcTestTarget(element);
+      Label label = TestTargetHeuristic.testTargetForPsiElement(element);
       if (label == null) {
         return null;
       }
@@ -246,28 +241,5 @@ public class BlazeCidrTestConfigurationProducer
       return arguments.size() > 0 && arguments.get(0).equals(element);
     }
     return false;
-  }
-
-  @Nullable
-  private static Label getCcTestTarget(@Nullable PsiElement element) {
-    if (element == null) {
-      return null;
-    }
-    File file = getContainingFile(element);
-    if (file == null) {
-      return null;
-    }
-    Collection<RuleIdeInfo> rules =
-        TestRuleFinder.getInstance(element.getProject()).testTargetsForSourceFile(file);
-    return TestRuleHeuristic.chooseTestTargetForSourceFile(file, rules, null);
-  }
-
-  private static File getContainingFile(PsiElement element) {
-    PsiFile psiFile = element.getContainingFile();
-    if (psiFile == null) {
-      return null;
-    }
-    VirtualFile vf = psiFile.getVirtualFile();
-    return vf != null ? new File(vf.getPath()) : null;
   }
 }

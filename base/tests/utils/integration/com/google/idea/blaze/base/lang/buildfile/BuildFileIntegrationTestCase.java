@@ -17,51 +17,53 @@ package com.google.idea.blaze.base.lang.buildfile;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
+import com.google.idea.blaze.base.EditorTestHelper;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
-import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
-import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
-import com.intellij.lang.ASTNode;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.junit.Before;
 
 /** BUILD file specific integration test base */
 public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestCase {
+  protected EditorTestHelper editorTest;
 
   @Before
   public final void doSetup() {
     mockBlazeProjectDataManager(getMockBlazeProjectData());
+    editorTest = new EditorTestHelper(getProject(), testFixture);
   }
 
   /**
    * Creates a file with the specified contents and file path in the test project, and asserts that
    * it's parsed as a BuildFile
    */
-  protected BuildFile createBuildFile(String filePath, String... contentLines) {
-    PsiFile file = createPsiFile(filePath, contentLines);
+  protected BuildFile createBuildFile(WorkspacePath workspacePath, String... contentLines) {
+    PsiFile file = workspace.createPsiFile(workspacePath, contentLines);
     assertThat(file).isInstanceOf(BuildFile.class);
     return (BuildFile) file;
   }
 
-  protected void replaceStringContents(StringLiteral string, String newStringContents) {
-    doRenameOperation(
-        () -> {
-          ASTNode node = string.getNode();
-          node.replaceChild(
-              node.getFirstChildNode(),
-              PsiUtils.createNewLabel(string.getProject(), newStringContents));
-        });
+  protected void assertFileContents(VirtualFile file, String... contentLines) {
+    assertFileContents(fileSystem.getPsiFile(file), contentLines);
+  }
+
+  protected void assertFileContents(PsiFile file, String... contentLines) {
+    String contents = Joiner.on("\n").join(contentLines);
+    assertThat(file.getText()).isEqualTo(contents);
   }
 
   private BlazeProjectData getMockBlazeProjectData() {
@@ -70,14 +72,16 @@ public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestC
             null,
             ImmutableList.of(workspaceRoot.directory()),
             new ExecutionRootPath("out/crosstool/bin"),
-            new ExecutionRootPath("out/crosstool/gen"));
+            new ExecutionRootPath("out/crosstool/gen"),
+            null);
     WorkspacePathResolver workspacePathResolver =
         new WorkspacePathResolverImpl(workspaceRoot, fakeRoots);
     ArtifactLocationDecoder artifactLocationDecoder =
         new ArtifactLocationDecoderImpl(fakeRoots, workspacePathResolver);
     return new BlazeProjectData(
         0,
-        new RuleMap(ImmutableMap.of()),
+        new TargetMap(ImmutableMap.of()),
+        ImmutableMap.of(),
         fakeRoots,
         new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of()),
         workspacePathResolver,

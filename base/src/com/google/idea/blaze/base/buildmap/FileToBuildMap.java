@@ -17,8 +17,8 @@ package com.google.idea.blaze.base.buildmap;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.rulemaps.SourceToRuleMap;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -44,10 +44,10 @@ public class FileToBuildMap {
     if (blazeProjectData == null) {
       return ImmutableList.of();
     }
-    return SourceToRuleMap.getInstance(project)
+    return SourceToTargetMap.getInstance(project)
         .getRulesForSourceFile(file)
         .stream()
-        .map(blazeProjectData.ruleMap::get)
+        .map(blazeProjectData.targetMap::get)
         .filter(Objects::nonNull)
         .map((ruleIdeInfo) -> ruleIdeInfo.buildFile)
         .filter(Objects::nonNull)

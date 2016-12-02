@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.ide;
 import com.google.idea.blaze.base.buildmodifier.BuildFileModifier;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.RuleName;
+import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -88,13 +88,13 @@ class NewBlazeRuleDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    RuleName ruleName = newRuleUI.getRuleName();
+    TargetName targetName = newRuleUI.getRuleName();
     Kind ruleKind = newRuleUI.getSelectedRuleKind();
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     WorkspacePath workspacePath =
         workspaceRoot.workspacePathFor(new File(buildFile.getParent().getPath()));
-    Label newRule = new Label(workspacePath, ruleName);
+    Label newRule = new Label(workspacePath, targetName);
     BuildFileModifier buildFileModifier = BuildFileModifier.getInstance();
     boolean success = buildFileModifier.addRule(project, context, newRule, ruleKind);
 

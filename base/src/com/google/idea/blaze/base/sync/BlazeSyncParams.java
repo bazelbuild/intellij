@@ -26,8 +26,13 @@ public final class BlazeSyncParams {
 
   /** The kind of sync. */
   public enum SyncMode {
+    /** Happens on startup, restores in-memory state */
     RESTORE_EPHEMERAL_STATE,
+    /** Partial / working set sync */
+    PARTIAL,
+    /** This is the standard incremental sync */
     INCREMENTAL,
+    /** Full sync, can invalidate/redo work that an incremental sync does not */
     FULL
   }
 

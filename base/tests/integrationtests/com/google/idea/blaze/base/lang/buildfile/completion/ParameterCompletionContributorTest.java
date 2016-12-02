@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import org.junit.Test;
@@ -31,10 +32,10 @@ public class ParameterCompletionContributorTest extends BuildFileIntegrationTest
 
   @Test
   public void testArgsCompletion() {
-    BuildFile file = createBuildFile("BUILD", "def function(arg1, *");
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "def function(arg1, *");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 0, "def function(arg1, *".length());
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, "def function(arg1, *".length());
 
     LookupElement[] completionItems = testFixture.completeBasic();
     assertThat(completionItems).isNull();
@@ -44,10 +45,10 @@ public class ParameterCompletionContributorTest extends BuildFileIntegrationTest
 
   @Test
   public void testKwargsCompletion() {
-    BuildFile file = createBuildFile("BUILD", "def function(arg1, **");
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "def function(arg1, **");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 0, "def function(arg1, **".length());
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, "def function(arg1, **".length());
 
     LookupElement[] completionItems = testFixture.completeBasic();
     assertThat(completionItems).isNull();

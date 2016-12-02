@@ -22,11 +22,11 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.idea.blaze.base.ideinfo.CRuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.CIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
@@ -35,7 +35,6 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.OCFileTypeHelpers;
 import com.jetbrains.cidr.lang.OCLanguageKind;
@@ -72,7 +71,7 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
 
   /* project, label are protected instead of private just so v145 can access */
   protected final Project project;
-  protected final RuleKey ruleKey;
+  protected final TargetKey targetKey;
 
   private final ImmutableList<HeadersSearchRoot> cLibraryIncludeRoots;
   private final ImmutableList<HeadersSearchRoot> cppLibraryIncludeRoots;
@@ -86,24 +85,25 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
   public static BlazeResolveConfiguration createConfigurationForTarget(
       Project project,
       WorkspacePathResolver workspacePathResolver,
-      RuleIdeInfo ruleIdeInfo,
+      ImmutableMap<File, VirtualFile> headerRoots,
+      TargetIdeInfo target,
       CToolchainIdeInfo toolchainIdeInfo,
       File compilerWrapper) {
-    CRuleIdeInfo cRuleIdeInfo = ruleIdeInfo.cRuleIdeInfo;
-    if (cRuleIdeInfo == null) {
+    CIdeInfo cIdeInfo = target.cIdeInfo;
+    if (cIdeInfo == null) {
       return null;
     }
 
     ImmutableSet.Builder<ExecutionRootPath> systemIncludesBuilder = ImmutableSet.builder();
-    systemIncludesBuilder.addAll(cRuleIdeInfo.transitiveSystemIncludeDirectories);
+    systemIncludesBuilder.addAll(cIdeInfo.transitiveSystemIncludeDirectories);
     systemIncludesBuilder.addAll(toolchainIdeInfo.builtInIncludeDirectories);
     systemIncludesBuilder.addAll(toolchainIdeInfo.unfilteredToolchainSystemIncludes);
 
     ImmutableSet.Builder<ExecutionRootPath> userIncludesBuilder = ImmutableSet.builder();
-    userIncludesBuilder.addAll(cRuleIdeInfo.transitiveIncludeDirectories);
+    userIncludesBuilder.addAll(cIdeInfo.transitiveIncludeDirectories);
 
     ImmutableSet.Builder<ExecutionRootPath> userQuoteIncludesBuilder = ImmutableSet.builder();
-    userQuoteIncludesBuilder.addAll(cRuleIdeInfo.transitiveQuoteIncludeDirectories);
+    userQuoteIncludesBuilder.addAll(cIdeInfo.transitiveQuoteIncludeDirectories);
 
     ImmutableList.Builder<String> cFlagsBuilder = ImmutableList.builder();
     cFlagsBuilder.addAll(toolchainIdeInfo.baseCompilerOptions);
@@ -120,13 +120,14 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
     return new BlazeResolveConfiguration(
         project,
         workspacePathResolver,
-        ruleIdeInfo.key,
+        headerRoots,
+        target.key,
         systemIncludesBuilder.build(),
         systemIncludesBuilder.build(),
         userQuoteIncludesBuilder.build(),
         userIncludesBuilder.build(),
         userIncludesBuilder.build(),
-        cRuleIdeInfo.transitiveDefines,
+        cIdeInfo.transitiveDefines,
         features,
         compilerWrapper,
         compilerWrapper,
@@ -134,31 +135,31 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
         cppFlagsBuilder.build());
   }
 
-  public static ImmutableMap<RuleKey, CToolchainIdeInfo> buildToolchainLookupMap(
+  public static ImmutableMap<TargetKey, CToolchainIdeInfo> buildToolchainLookupMap(
       BlazeContext context,
-      RuleMap ruleMap,
-      ImmutableMultimap<RuleKey, RuleKey> reverseDependencies) {
+      TargetMap targetMap,
+      ImmutableMultimap<TargetKey, TargetKey> reverseDependencies) {
     return Scope.push(
         context,
         childContext -> {
           childContext.push(new TimingScope("Build toolchain lookup map"));
 
-          List<RuleKey> seeds = Lists.newArrayList();
-          for (RuleIdeInfo rule : ruleMap.rules()) {
-            CToolchainIdeInfo cToolchainIdeInfo = rule.cToolchainIdeInfo;
+          List<TargetKey> seeds = Lists.newArrayList();
+          for (TargetIdeInfo target : targetMap.targets()) {
+            CToolchainIdeInfo cToolchainIdeInfo = target.cToolchainIdeInfo;
             if (cToolchainIdeInfo != null) {
-              seeds.add(rule.key);
+              seeds.add(target.key);
             }
           }
 
-          Map<RuleKey, CToolchainIdeInfo> lookupTable = Maps.newHashMap();
-          for (RuleKey seed : seeds) {
-            CToolchainIdeInfo toolchainInfo = ruleMap.get(seed).cToolchainIdeInfo;
+          Map<TargetKey, CToolchainIdeInfo> lookupTable = Maps.newHashMap();
+          for (TargetKey seed : seeds) {
+            CToolchainIdeInfo toolchainInfo = targetMap.get(seed).cToolchainIdeInfo;
             LOG.assertTrue(toolchainInfo != null);
-            List<RuleKey> worklist = Lists.newArrayList(reverseDependencies.get(seed));
+            List<TargetKey> worklist = Lists.newArrayList(reverseDependencies.get(seed));
             while (!worklist.isEmpty()) {
               // We should never see a label depend on two different toolchains.
-              RuleKey l = worklist.remove(0);
+              TargetKey l = worklist.remove(0);
               CToolchainIdeInfo previousValue = lookupTable.putIfAbsent(l, toolchainInfo);
               // Don't propagate the toolchain twice.
               if (previousValue == null) {
@@ -175,7 +176,8 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
   public BlazeResolveConfigurationTemporaryBase(
       Project project,
       WorkspacePathResolver workspacePathResolver,
-      RuleKey ruleKey,
+      ImmutableMap<File, VirtualFile> headerRoots,
+      TargetKey targetKey,
       ImmutableCollection<ExecutionRootPath> cSystemIncludeDirs,
       ImmutableCollection<ExecutionRootPath> cppSystemIncludeDirs,
       ImmutableCollection<ExecutionRootPath> quoteIncludeDirs,
@@ -189,20 +191,24 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
       ImmutableList<String> cppCompilerFlags) {
     this.workspacePathResolver = workspacePathResolver;
     this.project = project;
-    this.ruleKey = ruleKey;
+    this.targetKey = targetKey;
 
     ImmutableList.Builder<HeadersSearchRoot> cIncludeRootsBuilder = ImmutableList.builder();
-    collectHeaderRoots(cIncludeRootsBuilder, cIncludeDirs, true /* isUserHeader */);
-    collectHeaderRoots(cIncludeRootsBuilder, cSystemIncludeDirs, false /* isUserHeader */);
+    collectHeaderRoots(headerRoots, cIncludeRootsBuilder, cIncludeDirs, true /* isUserHeader */);
+    collectHeaderRoots(
+        headerRoots, cIncludeRootsBuilder, cSystemIncludeDirs, false /* isUserHeader */);
     this.cLibraryIncludeRoots = cIncludeRootsBuilder.build();
 
     ImmutableList.Builder<HeadersSearchRoot> cppIncludeRootsBuilder = ImmutableList.builder();
-    collectHeaderRoots(cppIncludeRootsBuilder, cppIncludeDirs, true /* isUserHeader */);
-    collectHeaderRoots(cppIncludeRootsBuilder, cppSystemIncludeDirs, false /* isUserHeader */);
+    collectHeaderRoots(
+        headerRoots, cppIncludeRootsBuilder, cppIncludeDirs, true /* isUserHeader */);
+    collectHeaderRoots(
+        headerRoots, cppIncludeRootsBuilder, cppSystemIncludeDirs, false /* isUserHeader */);
     this.cppLibraryIncludeRoots = cppIncludeRootsBuilder.build();
 
     ImmutableList.Builder<HeadersSearchRoot> quoteIncludeRootsBuilder = ImmutableList.builder();
-    collectHeaderRoots(quoteIncludeRootsBuilder, quoteIncludeDirs, true /* isUserHeader */);
+    collectHeaderRoots(
+        headerRoots, quoteIncludeRootsBuilder, quoteIncludeDirs, true /* isUserHeader */);
     this.projectIncludeRoots = new HeaderRoots(quoteIncludeRootsBuilder.build());
 
     this.compilerSettings =
@@ -225,7 +231,7 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
 
   @Override
   public String getDisplayName(boolean shorten) {
-    return ruleKey.toString();
+    return targetKey.toString();
   }
 
   @Nullable
@@ -308,6 +314,7 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
   }
 
   private void collectHeaderRoots(
+      ImmutableMap<File, VirtualFile> virtualFileCache,
       ImmutableList.Builder<HeadersSearchRoot> roots,
       ImmutableCollection<ExecutionRootPath> paths,
       boolean isUserHeader) {
@@ -315,26 +322,12 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
       ImmutableList<File> possibleDirectories =
           workspacePathResolver.resolveToIncludeDirectories(executionRootPath);
       for (File f : possibleDirectories) {
-        VirtualFile vf = getVirtualFile(f);
-        if (vf == null) {
-          LOG.debug(
-              String.format(
-                  "Header root %s could not be converted to a virtual file", f.getAbsolutePath()));
-        } else {
+        VirtualFile vf = virtualFileCache.get(f);
+        if (vf != null) {
           roots.add(new IncludedHeadersRoot(project, vf, false /* recursive */, isUserHeader));
         }
       }
     }
-  }
-
-  @Nullable
-  private static VirtualFile getVirtualFile(File file) {
-    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-    VirtualFile vf = fileSystem.findFileByPathIfCached(file.getPath());
-    if (vf == null) {
-      vf = fileSystem.findFileByIoFile(file);
-    }
-    return vf;
   }
 
   @Override
@@ -361,7 +354,7 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
   @Override
   public int hashCode() {
     // There should only be one configuration per target.
-    return Objects.hash(ruleKey);
+    return Objects.hash(targetKey);
   }
 
   @Override

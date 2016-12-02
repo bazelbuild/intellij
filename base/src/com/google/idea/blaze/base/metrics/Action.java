@@ -58,7 +58,9 @@ public enum Action {
 
   C_RESOLVE_FILE("crf"),
   BLAZE_CLION_TEST_RUN("ctr"),
-  BLAZE_CLION_TEST_DEBUG("ctd");
+  BLAZE_CLION_TEST_DEBUG("ctd"),
+
+  PYTHON_ACTIVE("pysync");
 
   @NotNull @NonNls private final String name;
 

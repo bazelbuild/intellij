@@ -16,28 +16,28 @@
 package com.google.idea.blaze.java.sync.source;
 
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.RuleKey;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 
 /** Pairing of rule and source artifact. */
 public class SourceArtifact {
-  public final RuleKey originatingRule;
+  public final TargetKey originatingTarget;
   public final ArtifactLocation artifactLocation;
 
-  public SourceArtifact(RuleKey originatingRule, ArtifactLocation artifactLocation) {
-    this.originatingRule = originatingRule;
+  public SourceArtifact(TargetKey originatingTarget, ArtifactLocation artifactLocation) {
+    this.originatingTarget = originatingTarget;
     this.artifactLocation = artifactLocation;
   }
 
-  public static Builder builder(RuleKey originatingRule) {
-    return new Builder(originatingRule);
+  public static Builder builder(TargetKey originatingTarget) {
+    return new Builder(originatingTarget);
   }
 
   static class Builder {
-    RuleKey originatingRule;
+    TargetKey originatingTarget;
     ArtifactLocation artifactLocation;
 
-    Builder(RuleKey originatingRule) {
-      this.originatingRule = originatingRule;
+    Builder(TargetKey originatingTarget) {
+      this.originatingTarget = originatingTarget;
     }
 
     public Builder setArtifactLocation(ArtifactLocation artifactLocation) {
@@ -50,7 +50,7 @@ public class SourceArtifact {
     }
 
     public SourceArtifact build() {
-      return new SourceArtifact(originatingRule, artifactLocation);
+      return new SourceArtifact(originatingTarget, artifactLocation);
     }
   }
 }

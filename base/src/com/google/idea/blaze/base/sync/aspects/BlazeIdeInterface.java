@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.aspects;
 
-import com.google.idea.blaze.base.ideinfo.RuleMap;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -53,11 +53,11 @@ public interface BlazeIdeInterface {
 
   /** The result of the ide operation */
   class IdeResult {
-    @Nullable public final RuleMap ruleMap;
+    @Nullable public final TargetMap targetMap;
     public final BuildResult buildResult;
 
-    public IdeResult(@Nullable RuleMap ruleMap, BuildResult buildResult) {
-      this.ruleMap = ruleMap;
+    public IdeResult(@Nullable TargetMap targetMap, BuildResult buildResult) {
+      this.targetMap = targetMap;
       this.buildResult = buildResult;
     }
   }
@@ -68,7 +68,7 @@ public interface BlazeIdeInterface {
    * @param mergeWithOldState If true, we overlay the given targets to the current rule map.
    * @return A tuple of the latest updated rule map and the result of the operation.
    */
-  IdeResult updateRuleMap(
+  IdeResult updateTargetMap(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,

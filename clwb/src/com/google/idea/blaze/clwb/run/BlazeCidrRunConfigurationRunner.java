@@ -122,7 +122,6 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
                     .push(new LoggedTimingScope(project, Action.BLAZE_COMMAND_USAGE))
                     .push(new IssuesScope(project))
                     .push(new BlazeConsoleScope.Builder(project).build());
-                ;
 
                 context.output(new StatusOutput("Building debug binary"));
 
@@ -130,8 +129,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
                     BlazeCommand.builder(Blaze.getBuildSystem(project), BlazeCommandName.BUILD)
                         .addTargets(configuration.getTarget())
                         .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
-                        .addBlazeFlags(handlerState.getBlazeFlags())
-                        .addExeFlags(handlerState.getExeFlags());
+                        .addBlazeFlags(handlerState.getBlazeFlags());
 
                 command.addBlazeFlags("--experimental_show_artifacts");
 
@@ -146,7 +144,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
                     .context(context)
                     .stderr(
                         LineProcessingOutputStream.of(
-                            new ExperimentalShowArtifactsLineProcessor(outputArtifacts, ""),
+                            new ExperimentalShowArtifactsLineProcessor(outputArtifacts),
                             new IssueOutputLineProcessor(project, context, workspaceRoot)))
                     .build()
                     .run();

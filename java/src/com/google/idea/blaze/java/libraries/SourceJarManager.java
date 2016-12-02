@@ -16,7 +16,7 @@
 package com.google.idea.blaze.java.libraries;
 
 import com.google.common.collect.Sets;
-import com.google.idea.blaze.java.sync.model.LibraryKey;
+import com.google.idea.blaze.base.model.LibraryKey;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;

@@ -19,7 +19,7 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.RuleName;
+import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.util.PathUtil;
@@ -52,7 +52,7 @@ public class LabelUtils {
       return null;
     }
     WorkspacePath packagePath = blazePackage.buildFile.getPackageWorkspacePath();
-    RuleName name = RuleName.createIfValid(ruleName);
+    TargetName name = TargetName.createIfValid(ruleName);
     if (packagePath == null || name == null) {
       return null;
     }
@@ -148,7 +148,7 @@ public class LabelUtils {
     if (packagePath.isEmpty()) {
       return strings;
     }
-    String ruleName = label.ruleName().toString();
+    String ruleName = label.targetName().toString();
     if (PathUtil.getFileName(packagePath).equals(ruleName)) {
       strings.add("//" + packagePath); // implicit rule name equal to package name
     }

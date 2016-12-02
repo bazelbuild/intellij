@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.lang.buildfile.editor;
 
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.editor.Editor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,23 +29,27 @@ public class EnterInLineCommentTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testInternalNewlineCommented() {
-    BuildFile file = createBuildFile("BUILD", "# first line comment", "# second line comment");
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("BUILD"), "# first line comment", "# second line comment");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 1, "# second ".length());
-    performTypingAction(editor, '\n');
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 1, "# second ".length());
+    editorTest.performTypingAction(editor, '\n');
     assertFileContents(file, "# first line comment", "# second ", "# line comment");
-    assertCaretPosition(editor, 2, 2);
+    editorTest.assertCaretPosition(editor, 2, 2);
   }
 
   @Test
   public void testNewlineAtEndOfComment() {
-    BuildFile file = createBuildFile("BUILD", "# first line comment", "# second line comment");
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("BUILD"), "# first line comment", "# second line comment");
 
-    Editor editor = openFileInEditor(file.getVirtualFile());
-    setCaretPosition(editor, 1, "# second line comment".length());
-    performTypingAction(editor, '\n');
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 1, "# second line comment".length());
+    editorTest.performTypingAction(editor, '\n');
     assertFileContents(file, "# first line comment", "# second line comment", "");
-    assertCaretPosition(editor, 2, 0);
+    editorTest.assertCaretPosition(editor, 2, 0);
   }
 }

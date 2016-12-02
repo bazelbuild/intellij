@@ -30,7 +30,6 @@ import com.jetbrains.cidr.lang.symbols.OCSymbol;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackers;
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -65,6 +64,15 @@ public final class BlazeCWorkspace implements OCWorkspace {
     LOG.assertTrue(configurationResolver != null);
 
     long start = System.currentTimeMillis();
+
+    // non-recursive refresh of the blaze-out directory. This essentially invalidates the cache for
+    // all files below this directory.
+    ApplicationManager.getApplication()
+        .runWriteAction(
+            () ->
+                LocalFileSystem.getInstance()
+                    .refreshIoFiles(ImmutableList.of(blazeProjectData.blazeRoots.executionRoot)));
+
     // Non-incremental update to our c configurations.
     configurationResolver.update(context, blazeProjectData);
     long end = System.currentTimeMillis();
@@ -77,10 +85,6 @@ public final class BlazeCWorkspace implements OCWorkspace {
               if (project.isDisposed()) {
                 return;
               }
-
-              File genfilesDir = blazeProjectData.blazeRoots.getGenfilesDirectory();
-              LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(genfilesDir));
-
               // TODO(salguarnieri) Avoid bumping all of these trackers; figure out what has changed
               modTrackers.getProjectFilesListTracker().incModificationCount();
               modTrackers.getSourceFilesListTracker().incModificationCount();

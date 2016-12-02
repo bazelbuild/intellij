@@ -38,6 +38,6 @@ public class RunConfigurationUtils {
     return kind != null
         && command != null
         && ((kind == Kind.CC_TEST && command.equals(BlazeCommandName.TEST))
-            || (kind == Kind.CC_BINARY && command.equals(BlazeCommandName.BUILD)));
+            || (kind == Kind.CC_BINARY && command.equals(BlazeCommandName.RUN)));
   }
 }

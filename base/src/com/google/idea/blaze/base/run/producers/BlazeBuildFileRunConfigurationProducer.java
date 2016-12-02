@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
@@ -43,6 +44,7 @@ public class BlazeBuildFileRunConfigurationProducer
       Logger.getInstance(BlazeBuildFileRunConfigurationProducer.class);
 
   private static class BuildTarget {
+
     private final FuncallExpression rule;
     private final String ruleType;
     private final Label label;
@@ -111,7 +113,7 @@ public class BlazeBuildFileRunConfigurationProducer
 
     // TODO This check should be removed once isTestRule is in a RuleFactory and
     // test rules' suggestedName is modified to account for test filter flags.
-    if (isTestRule(target.ruleType)) {
+    if (Kind.isTestRule(target.ruleType)) {
       BlazeCommandRunConfigurationCommonState handlerState =
           configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
       if (handlerState != null && handlerState.getTestFilterFlag() != null) {
@@ -194,17 +196,8 @@ public class BlazeBuildFileRunConfigurationProducer
     if (handlerState != null) {
       // TODO move the old test rule functionality to a BlazeRunConfigurationFactory
       handlerState.setCommand(
-          isTestRule(target.ruleType) ? BlazeCommandName.TEST : BlazeCommandName.BUILD);
+          Kind.isTestRule(target.ruleType) ? BlazeCommandName.TEST : BlazeCommandName.BUILD);
     }
     configuration.setGeneratedName();
-  }
-
-  // TODO this functionality should be moved to a BlazeRunConfigurationFactory
-  private static boolean isTestRule(String ruleType) {
-    return isTestSuite(ruleType) || ruleType.endsWith("_test");
-  }
-
-  private static boolean isTestSuite(String ruleType) {
-    return "test_suite".equals(ruleType);
   }
 }

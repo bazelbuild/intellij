@@ -17,10 +17,11 @@ package com.google.idea.blaze.plugin.sync;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
-import com.google.idea.blaze.base.ideinfo.RuleMap;
-import com.google.idea.blaze.base.ideinfo.RuleMapBuilder;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
@@ -48,46 +49,46 @@ public class PluginDevSyncTest extends BlazeSyncIntegrationTestCase {
         "  //java/com/google:plugin",
         "workspace_type: intellij_plugin");
 
-    createFile(
-        "java/com/google/ClassWithUniqueName1.java",
+    workspace.createFile(
+        new WorkspacePath("java/com/google/ClassWithUniqueName1.java"),
         "package com.google;",
         "public class ClassWithUniqueName1 {}");
 
-    createFile(
-        "java/com/google/ClassWithUniqueName2.java",
+    workspace.createFile(
+        new WorkspacePath("java/com/google/ClassWithUniqueName2.java"),
         "package com.google;",
         "public class ClassWithUniqueName2 {}");
 
-    RuleMap ruleMap =
-        RuleMapBuilder.builder()
-            .addRule(
-                RuleIdeInfo.builder()
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("java/com/google/BUILD"))
                     .setLabel("//java/com/google:lib")
                     .setKind("java_library")
                     .addSource(sourceRoot("java/com/google/ClassWithUniqueName1.java"))
                     .addSource(sourceRoot("java/com/google/ClassWithUniqueName2.java")))
-            .addRule(
-                RuleIdeInfo.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("java/com/google/BUILD"))
                     .setLabel("//java/com/google:plugin")
                     .setKind("java_import")
                     .addTag("intellij-plugin"))
             .build();
 
-    setRuleMap(ruleMap);
+    setTargetMap(targetMap);
 
     runBlazeSync(
         new BlazeSyncParams.Builder("Sync", SyncMode.INCREMENTAL)
             .addProjectViewTargets(true)
             .build());
 
-    assertNoErrors();
+    errorCollector.assertNoIssues();
 
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
     assertThat(blazeProjectData).isNotNull();
-    assertThat(blazeProjectData.ruleMap).isEqualTo(ruleMap);
+    assertThat(blazeProjectData.targetMap).isEqualTo(targetMap);
     assertThat(blazeProjectData.workspaceLanguageSettings.getWorkspaceType())
         .isEqualTo(WorkspaceType.INTELLIJ_PLUGIN);
 

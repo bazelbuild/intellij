@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiReference;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,11 +35,12 @@ public class PackageReferenceTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testDirectReferenceResolves() {
-    BuildFile buildFile1 = createBuildFile("java/com/google/tools/BUILD", "# contents");
+    BuildFile buildFile1 =
+        createBuildFile(new WorkspacePath("java/com/google/tools/BUILD"), "# contents");
 
     BuildFile buildFile2 =
         createBuildFile(
-            "java/com/google/other/BUILD",
+            new WorkspacePath("java/com/google/other/BUILD"),
             "package_group(name = \"grp\", packages = [\"//java/com/google/tools\"])");
 
     Argument.Keyword packagesArg =
@@ -54,11 +56,12 @@ public class PackageReferenceTest extends BuildFileIntegrationTestCase {
   @Test
   public void testLabelFragmentResolves() {
     BuildFile buildFile1 =
-        createBuildFile("java/com/google/tools/BUILD", "java_library(name = \"lib\")");
+        createBuildFile(
+            new WorkspacePath("java/com/google/tools/BUILD"), "java_library(name = \"lib\")");
 
     BuildFile buildFile2 =
         createBuildFile(
-            "java/com/google/other/BUILD",
+            new WorkspacePath("java/com/google/other/BUILD"),
             "java_library(name = \"lib2\", exports = [\"//java/com/google/tools:lib\"])");
 
     FuncallExpression libTarget = buildFile1.firstChildOfClass(FuncallExpression.class);

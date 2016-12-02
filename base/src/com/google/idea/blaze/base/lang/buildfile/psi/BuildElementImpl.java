@@ -66,7 +66,7 @@ public abstract class BuildElementImpl extends ASTWrapperPsiElement implements B
     return children.length <= index ? null : children[index];
   }
 
-  protected BuildElement[] buildElementChildren() {
+  public BuildElement[] buildElementChildren() {
     return Arrays.stream(getNode().getChildren(null))
         .map(ASTNode::getPsi)
         .filter(psiElement -> psiElement instanceof BuildElement)

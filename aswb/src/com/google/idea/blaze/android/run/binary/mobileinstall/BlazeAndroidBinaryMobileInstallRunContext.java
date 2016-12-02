@@ -120,7 +120,7 @@ public class BlazeAndroidBinaryMobileInstallRunContext implements BlazeAndroidRu
       BlazeAndroidRunConfigurationDebuggerManager debuggerManager)
       throws ExecutionException {
     return new BlazeAndroidLaunchTasksProvider(
-        project, this, applicationIdProvider, launchOptionsBuilder, isDebug, debuggerManager);
+        project, this, applicationIdProvider, launchOptionsBuilder, isDebug, true, debuggerManager);
   }
 
   @Override

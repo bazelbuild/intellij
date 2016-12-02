@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.junit.Test;
@@ -36,11 +37,11 @@ public class BlazePackageFindUsagesTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testDirectReferenceFound() {
-    BuildFile foo = createBuildFile("java/com/google/foo/BUILD");
+    BuildFile foo = createBuildFile(new WorkspacePath("java/com/google/foo/BUILD"));
 
     BuildFile bar =
         createBuildFile(
-            "java/com/google/bar/BUILD",
+            new WorkspacePath("java/com/google/bar/BUILD"),
             "package_group(name = \"grp\", packages = [\"//java/com/google/foo\"])");
 
     PsiReference[] references = FindUsages.findAllReferences(foo);
@@ -53,11 +54,13 @@ public class BlazePackageFindUsagesTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testLabelFragmentReferenceFound() {
-    BuildFile foo = createBuildFile("java/com/google/foo/BUILD", "java_library(name = \"lib\")");
+    BuildFile foo =
+        createBuildFile(
+            new WorkspacePath("java/com/google/foo/BUILD"), "java_library(name = \"lib\")");
 
     BuildFile bar =
         createBuildFile(
-            "java/com/google/bar/BUILD",
+            new WorkspacePath("java/com/google/bar/BUILD"),
             "java_library(name = \"lib2\", exports = [\"//java/com/google/foo:lib\"])");
 
     PsiReference[] references = FindUsages.findAllReferences(foo);
@@ -73,7 +76,7 @@ public class BlazePackageFindUsagesTest extends BuildFileIntegrationTestCase {
   public void testInternalReferencesResolve() {
     BuildFile buildFile =
         createBuildFile(
-            "java/com/google/BUILD",
+            new WorkspacePath("java/com/google/BUILD"),
             "java_library(name = \"lib\")",
             "java_library(name = \"other\", deps = [\"//java/com/google:lib\"])");
 

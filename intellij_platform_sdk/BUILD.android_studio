@@ -17,7 +17,13 @@ java_import(
     jars = glob([
         "android-studio/plugins/android/lib/*.jar",
         "android-studio/plugins/android-ndk/lib/*.jar",
+        "android-studio/plugins/sdk-updates/lib/*.jar",
     ]),
+)
+
+java_import(
+    name = "junit",
+    jars = glob(["android-studio/plugins/junit/lib/*.jar"]),
 )
 
 # The plugins required by ASwB. We need to include them

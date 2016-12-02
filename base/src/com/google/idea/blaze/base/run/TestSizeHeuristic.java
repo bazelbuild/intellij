@@ -15,20 +15,20 @@
  */
 package com.google.idea.blaze.base.run;
 
-import com.google.idea.blaze.base.ideinfo.RuleIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
 import java.io.File;
 import javax.annotation.Nullable;
 
 /** Matches source files to test rules based on size annotations/tags. */
-public class TestSizeHeuristic implements TestRuleHeuristic {
+public class TestSizeHeuristic implements TestTargetHeuristic {
 
   @Override
-  public boolean matchesSource(RuleIdeInfo rule, File sourceFile, @Nullable TestSize testSize) {
+  public boolean matchesSource(TargetIdeInfo target, File sourceFile, @Nullable TestSize testSize) {
     // If testSize == null then prefer small
     // Some test runners will assume no size annotation == small and filter on that, others will not
     TestSize size = testSize != null ? testSize : TestIdeInfo.DEFAULT_NON_ANNOTATED_TEST_SIZE;
-    return TestIdeInfo.getTestSize(rule) == size;
+    return TestIdeInfo.getTestSize(target) == size;
   }
 }
