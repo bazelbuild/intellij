@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.projectview.section.sections;
 
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import com.google.idea.blaze.base.projectview.section.ListSection;
@@ -65,6 +66,19 @@ public class DirectorySection {
     @Override
     public ItemType getItemType() {
       return ItemType.FileSystemItem;
+    }
+
+    @Override
+    public ProjectView addProjectViewDefaultValue(ProjectView projectView) {
+      if (!projectView.getSectionsOfType(KEY).isEmpty()) {
+        return projectView;
+      }
+      return ProjectView.builder(projectView)
+          .add(
+              ListSection.builder(KEY)
+                  .add(TextBlock.of("  # Add the directories you want added as source here"))
+                  .add(TextBlock.newLine()))
+          .build();
     }
   }
 }

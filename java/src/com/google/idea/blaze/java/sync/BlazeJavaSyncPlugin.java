@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -52,15 +53,14 @@ import com.google.idea.blaze.java.sync.jdeps.JdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
+import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider;
 import com.google.idea.blaze.java.sync.projectstructure.Jdks;
-import com.google.idea.blaze.java.sync.projectstructure.SourceFolderEditor;
 import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.pom.java.LanguageLevel;
@@ -177,23 +177,13 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
     updateJdk(project, context, projectViewSet, blazeProjectData);
   }
 
+  @Nullable
   @Override
-  public void updateContentEntries(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData,
-      Collection<ContentEntry> contentEntries) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVA)) {
-      return;
+  public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
+    if (!projectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.JAVA)) {
+      return null;
     }
-    BlazeJavaSyncData syncData = blazeProjectData.syncState.get(BlazeJavaSyncData.class);
-    if (syncData == null) {
-      return;
-    }
-
-    SourceFolderEditor.modifyContentEntries(syncData.importResult, contentEntries);
+    return new JavaSourceFolderProvider(projectData.syncState.get(BlazeJavaSyncData.class));
   }
 
   private static void updateJdk(

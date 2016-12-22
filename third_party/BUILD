@@ -8,5 +8,5 @@ java_import(
 
 sh_binary(
     name = "zip",
-    srcs = ["zip/zip.sh"],
+    srcs = ["zip-wrap/zip.sh"],
 )

@@ -19,5 +19,5 @@ import com.google.idea.common.experiments.BoolExperiment;
 
 /** Contains the experiment that turns on NDK support */
 public class NdkSupport {
-  public static final BoolExperiment NDK_SUPPORT = new BoolExperiment("ndk.support", false);
+  public static final BoolExperiment NDK_SUPPORT = new BoolExperiment("ndk.support", true);
 }

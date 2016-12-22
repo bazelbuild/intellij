@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 public class BuiltInNamesProvider {
 
   // https://www.bazel.io/versions/master/docs/skylark/lib/globals.html
-  private static final ImmutableSet<String> GLOBALS =
+  public static final ImmutableSet<String> GLOBALS =
       ImmutableSet.of(
           "Actions",
           "DATA_CFG",
@@ -66,11 +66,36 @@ public class BuiltInNamesProvider {
           "type",
           "zip");
 
+  // https://www.bazel.io/versions/master/docs/be/functions.html
+  private static final ImmutableSet<String> FUNCTIONS =
+      ImmutableSet.of(
+          "load",
+          "package",
+          "pacakge_group",
+          "licenses",
+          "exports_files",
+          "glob",
+          "select",
+          "workspace");
+
+  /** Returns all built-in global symbols and function names. */
   public static ImmutableSet<String> getBuiltInNames(Project project) {
+    ImmutableSet.Builder<String> builder =
+        ImmutableSet.<String>builder().addAll(GLOBALS).addAll(FUNCTIONS);
     BuildLanguageSpec spec = BuildLanguageSpecProvider.getInstance().getLanguageSpec(project);
-    if (spec == null) {
-      return GLOBALS;
+    if (spec != null) {
+      builder = builder.addAll(spec.getKnownRuleNames());
     }
-    return ImmutableSet.<String>builder().addAll(GLOBALS).addAll(spec.getKnownRuleNames()).build();
+    return builder.build();
+  }
+
+  /** Returns all built-in rules and function names. */
+  public static ImmutableSet<String> getBuiltInFunctionNames(Project project) {
+    ImmutableSet.Builder<String> builder = ImmutableSet.<String>builder().addAll(FUNCTIONS);
+    BuildLanguageSpec spec = BuildLanguageSpecProvider.getInstance().getLanguageSpec(project);
+    if (spec != null) {
+      builder = builder.addAll(spec.getKnownRuleNames());
+    }
+    return builder.build();
   }
 }

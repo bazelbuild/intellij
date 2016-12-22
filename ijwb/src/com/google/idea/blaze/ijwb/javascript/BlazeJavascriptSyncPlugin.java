@@ -20,27 +20,25 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
+import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
-import com.google.idea.blaze.base.sync.projectview.SourceTestConfig;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.WebModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformUtils;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -67,31 +65,13 @@ public class BlazeJavascriptSyncPlugin extends BlazeSyncPlugin.Adapter {
     return ImmutableSet.of(LanguageClass.JAVASCRIPT);
   }
 
+  @Nullable
   @Override
-  public void updateContentEntries(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData,
-      Collection<ContentEntry> contentEntries) {
-    if (!blazeProjectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.JAVASCRIPT)) {
-      return;
+  public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
+    if (!projectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.JAVASCRIPT)) {
+      return null;
     }
-
-    SourceTestConfig testConfig = new SourceTestConfig(projectViewSet);
-    for (ContentEntry contentEntry : contentEntries) {
-      VirtualFile virtualFile = contentEntry.getFile();
-      if (virtualFile == null) {
-        continue;
-      }
-      if (!workspaceRoot.isInWorkspace(virtualFile)) {
-        continue;
-      }
-      WorkspacePath workspacePath = workspaceRoot.workspacePathFor(virtualFile);
-      boolean isTestSource = testConfig.isTestSource(workspacePath.relativePath());
-      contentEntry.addSourceFolder(virtualFile, isTestSource);
-    }
+    return GenericSourceFolderProvider.INSTANCE;
   }
 
   @Override
@@ -149,7 +129,7 @@ public class BlazeJavascriptSyncPlugin extends BlazeSyncPlugin.Adapter {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVASCRIPT)) {
       return true;
     }
-    if (!PlatformUtils.isIdeaUltimate()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !PlatformUtils.isIdeaUltimate()) {
       IssueOutput.error("IntelliJ Ultimate needed for Javascript support.").submit(context);
       return false;
     }

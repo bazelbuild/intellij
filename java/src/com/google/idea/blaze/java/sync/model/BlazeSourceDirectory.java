@@ -20,43 +20,35 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Comparator;
 import javax.annotation.concurrent.Immutable;
-import org.jetbrains.annotations.NotNull;
 
 /** A source directory. */
 @Immutable
 public final class BlazeSourceDirectory implements Serializable {
-  private static final long serialVersionUID = 2L;
+  private static final long serialVersionUID = 3L;
 
   public static final Comparator<BlazeSourceDirectory> COMPARATOR =
       (o1, o2) ->
           String.CASE_INSENSITIVE_ORDER.compare(
               o1.getDirectory().getPath(), o2.getDirectory().getPath());
 
-  @NotNull private final File directory;
-  private final boolean isTest;
+  private final File directory;
   private final boolean isGenerated;
   private final boolean isResource;
-  @NotNull private final String packagePrefix;
+  private final String packagePrefix;
 
   /** Bulider for source directory */
   public static class Builder {
-    @NotNull private final File directory;
-    @NotNull private String packagePrefix = "";
-    private boolean isTest;
+    private final File directory;
+    private String packagePrefix = "";
     private boolean isResource;
     private boolean isGenerated;
 
-    private Builder(@NotNull File directory) {
+    private Builder(File directory) {
       this.directory = directory;
     }
 
-    public Builder setPackagePrefix(@NotNull String packagePrefix) {
+    public Builder setPackagePrefix(String packagePrefix) {
       this.packagePrefix = packagePrefix;
-      return this;
-    }
-
-    public Builder setTest(boolean isTest) {
-      this.isTest = isTest;
       return this;
     }
 
@@ -71,42 +63,29 @@ public final class BlazeSourceDirectory implements Serializable {
     }
 
     public BlazeSourceDirectory build() {
-      return new BlazeSourceDirectory(directory, isTest, isResource, isGenerated, packagePrefix);
+      return new BlazeSourceDirectory(directory, isResource, isGenerated, packagePrefix);
     }
   }
 
-  @NotNull
-  public static Builder builder(@NotNull String directory) {
+  public static Builder builder(String directory) {
     return new Builder(new File(directory));
   }
 
-  @NotNull
-  public static Builder builder(@NotNull File directory) {
+  public static Builder builder(File directory) {
     return new Builder(directory);
   }
 
   private BlazeSourceDirectory(
-      @NotNull File directory,
-      boolean isTest,
-      boolean isResource,
-      boolean isGenerated,
-      @NotNull String packagePrefix) {
+      File directory, boolean isResource, boolean isGenerated, String packagePrefix) {
     this.directory = directory;
-    this.isTest = isTest;
     this.isResource = isResource;
     this.isGenerated = isGenerated;
     this.packagePrefix = packagePrefix;
   }
 
   /** Returns the full path name of the root of a source directory. */
-  @NotNull
   public File getDirectory() {
     return directory;
-  }
-
-  /** Returns {@code true} if the directory contains test sources. */
-  public boolean getIsTest() {
-    return isTest;
   }
 
   /** Returns {@code true} if the directory contains resources. */
@@ -123,14 +102,13 @@ public final class BlazeSourceDirectory implements Serializable {
    * Returns the package prefix for the directory. If the directory is a source root, such as a
    * "src" directory, then this returns an empty string.
    */
-  @NotNull
   public String getPackagePrefix() {
     return packagePrefix;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(directory, isTest, isResource, packagePrefix, isGenerated);
+    return Objects.hashCode(directory, isResource, packagePrefix, isGenerated);
   }
 
   @Override
@@ -145,7 +123,6 @@ public final class BlazeSourceDirectory implements Serializable {
     return directory.equals(that.directory)
         && packagePrefix.equals(that.packagePrefix)
         && isResource == that.isResource
-        && isTest == that.isTest
         && isGenerated == that.isGenerated;
   }
 
@@ -154,9 +131,6 @@ public final class BlazeSourceDirectory implements Serializable {
     return "BlazeSourceDirectory {\n"
         + "  directory: "
         + directory
-        + "\n"
-        + "  isTest: "
-        + isTest
         + "\n"
         + "  isGenerated: "
         + isGenerated

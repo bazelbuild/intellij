@@ -44,6 +44,7 @@ import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorImpl;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -53,8 +54,10 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -79,6 +82,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   protected ErrorCollector errorCollector;
   protected BlazeContext context;
 
+  private ImmutableList<ContentEntry> workspaceContentEntries = ImmutableList.of();
+
   @Before
   public void doSetup() throws Exception {
     projectViewManager = new MockProjectViewManager();
@@ -99,9 +104,12 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
               @Override
               public void commit() {
                 // don't commit module changes,
-                // but make sure they're properly disposed when the test is finished
+                // and make sure they're properly disposed when the test is finished
                 for (ModifiableRootModel model : modifiableModels) {
                   Disposer.register(getTestRootDisposable(), model::dispose);
+                  if (model.getModule().getName().equals(BlazeDataStorage.WORKSPACE_MODULE_NAME)) {
+                    workspaceContentEntries = ImmutableList.copyOf(model.getContentEntries());
+                  }
                 }
               }
             };
@@ -126,6 +134,22 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
             OUTPUT_BASE,
             BlazeInfo.PACKAGE_PATH_KEY,
             workspaceRoot.toString()));
+  }
+
+  /** The workspace content entries created during sync */
+  protected ImmutableList<ContentEntry> getWorkspaceContentEntries() {
+    return workspaceContentEntries;
+  }
+
+  /** Search the workspace module's {@link ContentEntry}s for one with the given file. */
+  @Nullable
+  protected ContentEntry findContentEntry(VirtualFile root) {
+    for (ContentEntry entry : workspaceContentEntries) {
+      if (root.equals(entry.getFile())) {
+        return entry;
+      }
+    }
+    return null;
   }
 
   protected static ArtifactLocation sourceRoot(String relativePath) {

@@ -19,6 +19,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
+import com.google.idea.blaze.android.projectview.GenfilesPath;
 import com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
@@ -34,6 +36,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
+import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -52,6 +55,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -72,6 +76,10 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   private static final String FAKE_GEN_ROOT_EXECUTION_PATH_FRAGMENT =
       "blaze-out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
 
+  private static final ArtifactLocationDecoder FAKE_ARTIFACT_DECODER =
+      (ArtifactLocationDecoder)
+          artifactLocation -> new File("/", artifactLocation.getRelativePath());
+
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
       new BlazeImportSettings("", "", "", "", "", BuildSystem.Blaze);
 
@@ -91,6 +99,9 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
+    MockFileAttributeProvider mockFileAttributeProvider = new MockFileAttributeProvider();
+    applicationServices.register(FileAttributeProvider.class, mockFileAttributeProvider);
+
     context = new BlazeContext();
     context.addOutputSink(IssueOutput.class, errorCollector);
   }
@@ -102,7 +113,12 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeAndroidWorkspaceImporter workspaceImporter =
         new BlazeAndroidWorkspaceImporter(
-            project, context, workspaceRoot, projectViewSet, targetMapBuilder.build());
+            project,
+            context,
+            workspaceRoot,
+            projectViewSet,
+            targetMapBuilder.build(),
+            FAKE_ARTIFACT_DECODER);
 
     return workspaceImporter.importWorkspace();
   }
@@ -364,9 +380,11 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     WorkspaceLanguageSettings workspaceLanguageSettings =
         new WorkspaceLanguageSettings(
             WorkspaceType.ANDROID, ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA));
+    ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
     for (TargetIdeInfo target : targetMap.targets()) {
       if (importRoots.importAsSource(target.key.label)) {
-        syncAugmenter.addJarsForSourceTarget(workspaceLanguageSettings, target, jars, genJars);
+        syncAugmenter.addJarsForSourceTarget(
+            workspaceLanguageSettings, projectViewSet, target, jars, genJars);
       }
     }
 
@@ -416,9 +434,11 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     WorkspaceLanguageSettings workspaceLanguageSettings =
         new WorkspaceLanguageSettings(
             WorkspaceType.ANDROID, ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA));
+    ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
     for (TargetIdeInfo target : targetMap.targets()) {
       if (importRoots.importAsSource(target.key.label)) {
-        syncAugmenter.addJarsForSourceTarget(workspaceLanguageSettings, target, jars, genJars);
+        syncAugmenter.addJarsForSourceTarget(
+            workspaceLanguageSettings, projectViewSet, target, jars, genJars);
       }
     }
     assertThat(
@@ -599,7 +619,182 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .build());
 
     importWorkspace(workspaceRoot, targetMapBuilder, projectView);
-    errorCollector.assertIssueContaining("Dropping generated resource");
+    errorCollector.assertIssueContaining("Dropping 1 generated resource");
+  }
+
+  @Test
+  public void testMixingGeneratedAndNonGeneratedSourcesWhitelisted() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
+            .add(
+                ListSection.builder(GeneratedAndroidResourcesSection.KEY)
+                    .add(new GenfilesPath("java/example/res")))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example:lib")
+                    .setBuildFile(source("java/example/BUILD"))
+                    .setKind("android_library")
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/example/AndroidManifest.xml"))
+                            .addResource(source("java/example/res"))
+                            .addResource(gen("java/example/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("com.google.android.example"))
+                    .build());
+
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    errorCollector.assertNoIssues();
+    assertThat(result.androidResourceModules)
+        .containsExactly(
+            AndroidResourceModule.builder(TargetKey.forPlainTarget(new Label("//java/example:lib")))
+                .addResourceAndTransitiveResource(source("java/example/res"))
+                .addResourceAndTransitiveResource(gen("java/example/res"))
+                .build());
+  }
+
+  @Test
+  public void testMixingGeneratedAndNonGeneratedSourcesPartlyWhitelisted() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/example")))
+                    .add(DirectoryEntry.include(new WorkspacePath("java/example2")))
+                    .add(DirectoryEntry.include(new WorkspacePath("java/uninterestingdir"))))
+            .add(
+                ListSection.builder(GeneratedAndroidResourcesSection.KEY)
+                    .add(new GenfilesPath("java/example/res"))
+                    .add(new GenfilesPath("unused/whitelisted/path/res")))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example:lib")
+                    .setBuildFile(source("java/example/BUILD"))
+                    .setKind("android_library")
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/example/AndroidManifest.xml"))
+                            .addResource(source("java/example/res"))
+                            .addResource(gen("java/example/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("com.google.android.example"))
+                    .build())
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example2:lib")
+                    .setBuildFile(source("java/example2/BUILD"))
+                    .setKind("android_library")
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/example2/AndroidManifest.xml"))
+                            .addResource(source("java/example2/res"))
+                            .addResource(gen("java/example2/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("com.google.android.example2"))
+                    .build())
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/uninterestingdir:lib")
+                    .setBuildFile(source("java/uninterestingdir/BUILD"))
+                    .setKind("android_library")
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/uninterestingdir/AndroidManifest.xml"))
+                            .addResource(source("java/uninterestingdir/res"))
+                            .addResource(gen("java/uninterestingdir/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("com.google.android.uninterestingdir"))
+                    .build());
+
+    importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    errorCollector.assertIssues(
+        "Dropping 1 generated resource directories.\n"
+            + "R classes will not contain resources from these directories.\n"
+            + "Double-click to add to project view if needed to resolve references.",
+        "Dropping generated resource directory "
+            + String.format("'%s/java/example2/res'", FAKE_GEN_ROOT_EXECUTION_PATH_FRAGMENT)
+            + " w/ 2 subdirs",
+        "1 unused entries in project view section \"generated_android_resource_directories\":\n"
+            + "unused/whitelisted/path/res");
+  }
+
+  @Test
+  public void testMixingGeneratedAndNonGeneratedSourcesNoInterestingDirectories() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/uninterestingdir"))))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/uninterestingdir:lib")
+                    .setBuildFile(source("java/uninterestingdir/BUILD"))
+                    .setKind("android_library")
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/uninterestingdir/AndroidManifest.xml"))
+                            .addResource(source("java/uninterestingdir/res"))
+                            .addResource(gen("java/uninterestingdir/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("com.google.android.uninterestingdir"))
+                    .build());
+
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    errorCollector.assertNoIssues();
+    assertThat(result.androidResourceModules)
+        .containsExactly(
+            AndroidResourceModule.builder(
+                    TargetKey.forPlainTarget(new Label("//java/uninterestingdir:lib")))
+                .addResourceAndTransitiveResource(source("java/uninterestingdir/res"))
+                .build());
+  }
+
+  /**
+   * Mock provider to satisfy directory listing queries from {@link
+   * com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceClassifier}.
+   */
+  private static class MockFileAttributeProvider extends FileAttributeProvider {
+
+    // Return a few non-translation directories so that directories are considered interesting,
+    // or return only-translation directories so that it's considered uninteresting.
+    @Override
+    public File[] listFiles(File directory) {
+      File interestingResDir1 = FAKE_ARTIFACT_DECODER.decode(gen("java/example/res"));
+      if (directory.equals(interestingResDir1)) {
+        return new File[] {
+          new File("java/example/res/raw"), new File("java/example/res/values-es"),
+        };
+      }
+      File interestingResDir2 = FAKE_ARTIFACT_DECODER.decode(gen("java/example2/res"));
+      if (directory.equals(interestingResDir2)) {
+        return new File[] {
+          new File("java/example2/res/layout"), new File("java/example2/res/values-ar"),
+        };
+      }
+      File uninterestingResDir = FAKE_ARTIFACT_DECODER.decode(gen("java/uninterestingdir/res"));
+      if (directory.equals(uninterestingResDir)) {
+        return new File[] {
+          new File("java/uninterestingdir/res/values-ar"),
+          new File("java/uninterestingdir/res/values-es"),
+        };
+      }
+      return new File[0];
+    }
   }
 
   private ArtifactLocation source(String relativePath) {

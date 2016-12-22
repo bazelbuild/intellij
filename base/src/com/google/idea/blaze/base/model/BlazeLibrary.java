@@ -17,12 +17,16 @@ package com.google.idea.blaze.base.model;
 
 import com.google.common.base.Objects;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.util.io.URLUtil;
 import java.io.File;
 import java.io.Serializable;
@@ -73,12 +77,19 @@ public abstract class BlazeLibrary implements Serializable {
         FileUtilRt.extensionEquals(name, "jar") || FileUtilRt.extensionEquals(name, "zip");
     // .jar files require an URL with "jar" protocol.
     String protocol =
-        isJarFile ? StandardFileSystems.JAR_PROTOCOL : StandardFileSystems.FILE_PROTOCOL;
+        isJarFile ? StandardFileSystems.JAR_PROTOCOL : defaultFileSystem().getProtocol();
     String filePath = FileUtil.toSystemIndependentName(path.getPath());
     String url = VirtualFileManager.constructUrl(protocol, filePath);
     if (isJarFile) {
       url += URLUtil.JAR_SEPARATOR;
     }
     return url;
+  }
+
+  private static VirtualFileSystem defaultFileSystem() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return TempFileSystem.getInstance();
+    }
+    return LocalFileSystem.getInstance();
   }
 }

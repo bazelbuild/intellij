@@ -16,20 +16,17 @@
 package com.google.idea.blaze.android.sync;
 
 import com.android.tools.idea.sdk.IdeSdks;
-import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.cppapi.NdkSupport;
 import com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection;
+import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer;
 import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
-import com.google.idea.blaze.android.sync.sdk.SdkExperiment;
-import com.google.idea.blaze.android.sync.sdklegacy.AndroidSdkPlatformSyncer;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.SyncState;
@@ -43,9 +40,8 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -53,6 +49,8 @@ import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
+import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
+import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
@@ -78,7 +76,7 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Override
   public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
-    return ImmutableList.of(WorkspaceType.ANDROID, WorkspaceType.ANDROID_NDK);
+    return ImmutableList.of(WorkspaceType.ANDROID);
   }
 
   @Nullable
@@ -90,7 +88,7 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
   @Nullable
   @Override
   public ModuleType getWorkspaceModuleType(WorkspaceType workspaceType) {
-    if (workspaceType == WorkspaceType.ANDROID || workspaceType == WorkspaceType.ANDROID_NDK) {
+    if (workspaceType == WorkspaceType.ANDROID) {
       return StdModuleTypes.JAVA;
     }
     return null;
@@ -98,17 +96,13 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
-    switch (workspaceType) {
-      case ANDROID:
-        return ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA);
-      case ANDROID_NDK:
-        if (NdkSupport.NDK_SUPPORT.getValue()) {
-          return ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA, LanguageClass.C);
-        } else {
-          return ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA);
-        }
-      default:
-        return ImmutableSet.of();
+    if (workspaceType != WorkspaceType.ANDROID) {
+      return ImmutableSet.of();
+    }
+    if (NdkSupport.NDK_SUPPORT.getValue()) {
+      return ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA, LanguageClass.C);
+    } else {
+      return ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA);
     }
   }
 
@@ -144,16 +138,12 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
       return;
     }
 
-    final AndroidSdkPlatform androidSdkPlatform;
-    if (SdkExperiment.useStandardSdkManager()) {
-      androidSdkPlatform = AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
-    } else {
-      androidSdkPlatform = AndroidSdkPlatformSyncer.getAndroidSdkPlatform(project, context);
-    }
+    AndroidSdkPlatform androidSdkPlatform =
+        AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
 
     BlazeAndroidWorkspaceImporter workspaceImporter =
         new BlazeAndroidWorkspaceImporter(
-            project, context, workspaceRoot, projectViewSet, targetMap);
+            project, context, workspaceRoot, projectViewSet, targetMap, artifactLocationDecoder);
     BlazeAndroidImportResult importResult =
         Scope.push(
             context,
@@ -190,10 +180,7 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
       return;
     }
 
-    LanguageLevel defaultLanguageLevel =
-        Blaze.getBuildSystem(project) == BuildSystem.Blaze
-            ? LanguageLevel.JDK_1_8
-            : LanguageLevel.JDK_1_7;
+    LanguageLevel defaultLanguageLevel = BuildSystemAndroidJdkProvider.languageLevel(project);
     LanguageLevel javaLanguageLevel =
         JavaLanguageLevelSection.getLanguageLevel(projectViewSet, defaultLanguageLevel);
     setProjectSdkAndLanguageLevel(project, sdk, javaLanguageLevel);
@@ -220,6 +207,15 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
         workspaceModule,
         workspaceModifiableModel,
         isAndroidWorkspace(blazeProjectData.workspaceLanguageSettings));
+  }
+
+  @Nullable
+  @Override
+  public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
+    if (!projectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.ANDROID)) {
+      return null;
+    }
+    return new JavaSourceFolderProvider(projectData.syncState.get(BlazeJavaSyncData.class));
   }
 
   @Override
@@ -249,33 +245,15 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
       return true;
     }
 
-    if (workspaceLanguageSettings.isWorkspaceType(WorkspaceType.ANDROID_NDK)
+    if (workspaceLanguageSettings.isLanguageActive(LanguageClass.C)
         && !NdkSupport.NDK_SUPPORT.getValue()) {
       IssueOutput.error("Android NDK is not supported yet.").submit(context);
       return false;
     }
 
-    if (SdkExperiment.useStandardSdkManager()) {
-      if (AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet) == null) {
-        return false;
-      }
-    } else {
-      String androidSdkPlatform = projectViewSet.getScalarValue(AndroidSdkPlatformSection.KEY);
-      if (Strings.isNullOrEmpty(androidSdkPlatform)) {
-        String error =
-            Joiner.on('\n')
-                .join(
-                    "No android_sdk_platform set.",
-                    "You should specify the android SDK platform in your '.blazeproject' file.",
-                    "To set this add an 'android_sdk_platform' line to your .blazeproject file,",
-                    "e.g. 'android_sdk_platform: \"android-N\"', where 'android-N' is a",
-                    "platform directory name in your local SDK directory.");
-        IssueOutput.error(error)
-            .inFile(projectViewSet.getTopLevelProjectViewFile().projectViewFile)
-            .submit(context);
-      }
+    if (AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet) == null) {
+      return false;
     }
-
     return true;
   }
 
@@ -298,7 +276,8 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Override
   public Collection<SectionParser> getSections() {
-    return ImmutableList.of(AndroidSdkPlatformSection.PARSER);
+    return ImmutableList.of(
+        AndroidSdkPlatformSection.PARSER, GeneratedAndroidResourcesSection.PARSER);
   }
 
   @Nullable
@@ -311,7 +290,6 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
   }
 
   private static boolean isAndroidWorkspace(WorkspaceLanguageSettings workspaceLanguageSettings) {
-    return workspaceLanguageSettings.isWorkspaceType(
-        WorkspaceType.ANDROID, WorkspaceType.ANDROID_NDK);
+    return workspaceLanguageSettings.isWorkspaceType(WorkspaceType.ANDROID);
   }
 }

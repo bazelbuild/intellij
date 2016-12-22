@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.sync;
 
 import com.android.tools.idea.res.ResourceFolderRegistry;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -24,7 +25,8 @@ import com.intellij.openapi.project.Project;
 /** Android-specific hooks to run after a blaze sync. */
 public class BlazeAndroidSyncListener extends SyncListener.Adapter {
   @Override
-  public void afterSync(Project project, BlazeContext context, SyncResult syncResult) {
+  public void afterSync(
+      Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {
     if (syncResult == SyncResult.SUCCESS || syncResult == SyncResult.PARTIAL_SUCCESS) {
       DumbService dumbService = DumbService.getInstance(project);
       dumbService.queueTask(new ResourceFolderRegistry.PopulateCachesTask(project));

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.projectview.section.sections;
 
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import com.google.idea.blaze.base.projectview.section.ListSection;
@@ -48,6 +49,22 @@ public class TargetSection {
     @Override
     public ItemType getItemType() {
       return ItemType.Label;
+    }
+
+    @Override
+    public ProjectView addProjectViewDefaultValue(ProjectView projectView) {
+      if (!projectView.getSectionsOfType(KEY).isEmpty()) {
+        return projectView;
+      }
+      return ProjectView.builder(projectView)
+          .add(
+              ListSection.builder(KEY)
+                  .add(
+                      TextBlock.of(
+                          "  # Add targets that reach the source code "
+                              + "that you want to resolve here"))
+                  .add(TextBlock.newLine()))
+          .build();
     }
   }
 }

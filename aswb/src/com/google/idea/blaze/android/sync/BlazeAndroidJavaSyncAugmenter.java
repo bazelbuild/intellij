@@ -15,22 +15,27 @@
  */
 package com.google.idea.blaze.android.sync;
 
+import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import java.util.Collection;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /** Augments the java sync process with Android support. */
 public class BlazeAndroidJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
   @Override
   public void addJarsForSourceTarget(
       WorkspaceLanguageSettings workspaceLanguageSettings,
+      ProjectViewSet projectViewSet,
       TargetIdeInfo target,
       Collection<BlazeJarLibrary> jars,
       Collection<BlazeJarLibrary> genJars) {
@@ -45,9 +50,15 @@ public class BlazeAndroidJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
     if (idlJar != null) {
       genJars.add(new BlazeJarLibrary(idlJar, target.key));
     }
-
+    Set<String> whitelistedGenResourcePaths =
+        projectViewSet
+            .listItems(GeneratedAndroidResourcesSection.KEY)
+            .stream()
+            .map(genfilesPath -> genfilesPath.relativePath)
+            .collect(Collectors.toSet());
     if (BlazeAndroidWorkspaceImporter.shouldGenerateResources(androidIdeInfo)
-        && !BlazeAndroidWorkspaceImporter.shouldGenerateResourceModule(androidIdeInfo)) {
+        && !BlazeAndroidWorkspaceImporter.shouldGenerateResourceModule(
+            androidIdeInfo, whitelistedGenResourcePaths)) {
       // Add blaze's output unless it's a top level rule.
       // In these cases the resource jar contains the entire
       // transitive closure of R classes. It's unlikely this is wanted to resolve in the IDE.

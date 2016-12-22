@@ -57,6 +57,7 @@ public class ExternalFileUsagesTest extends BuildFileIntegrationTestCase {
 
     Argument.Keyword arg =
         buildFile.findChildByClass(FuncallExpression.class).getKeywordArgument("srcs");
+    assertThat(arg).isNotNull();
 
     PsiElement ref = references[0].getElement();
     assertThat(ref).isInstanceOf(StringLiteral.class);

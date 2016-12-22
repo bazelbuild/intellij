@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.sync.projectstructure;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -24,20 +25,26 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.base.sync.projectview.SourceTestConfig;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.util.io.URLUtil;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nullable;
 
 /** Modifies content entries based on project data. */
 public class ContentEntryEditor {
@@ -58,6 +65,9 @@ public class ContentEntryEditor {
     Multimap<WorkspacePath, WorkspacePath> excludesByRootDirectory =
         sortExcludesByRootDirectory(rootDirectories, excludeDirectories);
 
+    SourceTestConfig testConfig = new SourceTestConfig(projectViewSet);
+    SourceFolderProvider provider = SourceFolderProvider.getSourceFolderProvider(blazeProjectData);
+
     List<ContentEntry> contentEntries = Lists.newArrayList();
     for (WorkspacePath rootDirectory : rootDirectories) {
       File root = workspaceRoot.fileForPath(rootDirectory);
@@ -68,12 +78,78 @@ public class ContentEntryEditor {
         File excludeFolder = workspaceRoot.fileForPath(exclude);
         contentEntry.addExcludeFolder(pathToIdeaUrl(excludeFolder));
       }
-    }
 
-    for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-      syncPlugin.updateContentEntries(
-          project, context, workspaceRoot, projectViewSet, blazeProjectData, contentEntries);
+      ImmutableMap<VirtualFile, SourceFolder> sourceFolders =
+          provider.initializeSourceFolders(contentEntry);
+      VirtualFile rootFile = getVirtualFile(root);
+      SourceFolder rootSource = sourceFolders.get(rootFile);
+      walkFileSystem(
+          workspaceRoot,
+          testConfig,
+          excludesByRootDirectory.get(rootDirectory),
+          contentEntry,
+          provider,
+          sourceFolders,
+          rootSource,
+          rootFile);
     }
+  }
+
+  private static void walkFileSystem(
+      WorkspaceRoot workspaceRoot,
+      SourceTestConfig testConfig,
+      Collection<WorkspacePath> excludedDirectories,
+      ContentEntry contentEntry,
+      SourceFolderProvider provider,
+      ImmutableMap<VirtualFile, SourceFolder> sourceFolders,
+      SourceFolder parent,
+      VirtualFile file) {
+    if (!file.isDirectory()) {
+      return;
+    }
+    WorkspacePath workspacePath;
+    try {
+      workspacePath = workspaceRoot.workspacePathFor(file);
+    } catch (IllegalArgumentException e) {
+      // stop at directories with unhandled characters.
+      return;
+    }
+    if (excludedDirectories.contains(workspacePath)) {
+      return;
+    }
+    boolean isTest = testConfig.isTestSource(workspacePath.relativePath());
+    SourceFolder current = sourceFolders.get(file);
+    SourceFolder currentOrParent = current != null ? current : parent;
+    if (isTest != currentOrParent.isTestSource()) {
+      if (current != null) {
+        contentEntry.removeSourceFolder(current);
+      }
+      currentOrParent =
+          provider.setSourceFolderForLocation(contentEntry, currentOrParent, file, isTest);
+    }
+    for (VirtualFile child : file.getChildren()) {
+      walkFileSystem(
+          workspaceRoot,
+          testConfig,
+          excludedDirectories,
+          contentEntry,
+          provider,
+          sourceFolders,
+          currentOrParent,
+          child);
+    }
+  }
+
+  @Nullable
+  private static VirtualFile getVirtualFile(File file) {
+    return getFileSystem().findFileByPath(file.getPath());
+  }
+
+  private static VirtualFileSystem getFileSystem() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return TempFileSystem.getInstance();
+    }
+    return LocalFileSystem.getInstance();
   }
 
   private static Multimap<WorkspacePath, WorkspacePath> sortExcludesByRootDirectory(
@@ -104,25 +180,29 @@ public class ContentEntryEditor {
             || (relativePath.charAt(rootDirectoryString.length()) == '/'));
   }
 
-  @NotNull
-  private static String pathToUrl(@NotNull String filePath) {
+  private static String pathToUrl(String filePath) {
     filePath = FileUtil.toSystemIndependentName(filePath);
     if (filePath.endsWith(".srcjar") || filePath.endsWith(".jar")) {
       return URLUtil.JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR + filePath + URLUtil.JAR_SEPARATOR;
     } else if (filePath.contains("src.jar!")) {
       return URLUtil.JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR + filePath;
     } else {
-      return VfsUtilCore.pathToUrl(filePath);
+      return VirtualFileManager.constructUrl(defaultFileSystem().getProtocol(), filePath);
     }
   }
 
-  @NotNull
-  private static String pathToIdeaUrl(@NotNull File path) {
+  private static VirtualFileSystem defaultFileSystem() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return TempFileSystem.getInstance();
+    }
+    return LocalFileSystem.getInstance();
+  }
+
+  private static String pathToIdeaUrl(File path) {
     return pathToUrl(toSystemIndependentName(path.getPath()));
   }
 
-  @NotNull
-  private static String toSystemIndependentName(@NonNls @NotNull String aFileName) {
+  private static String toSystemIndependentName(String aFileName) {
     return FileUtilRt.toSystemIndependentName(aFileName);
   }
 }

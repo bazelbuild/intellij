@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguag
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.testing.ServiceHelper;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -33,7 +34,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Tests BuiltInFunctionCompletionContributor */
+/** Tests {@link BuiltInFunctionCompletionContributor} */
 @RunWith(JUnit4.class)
 public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrationTestCase {
 
@@ -54,11 +55,8 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
     editorTest.setCaretPosition(editor, 0, 0);
 
-    LookupElement[] completionItems = testFixture.completeBasic();
-    assertThat(completionItems).hasLength(2);
-    assertThat(completionItems[0].getLookupString()).isEqualTo("android_binary");
-    assertThat(completionItems[1].getLookupString()).isEqualTo("java_library");
-
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
+    assertThat(completionItems).asList().containsAllOf("android_binary", "java_library");
     assertFileContents(file, "");
   }
 
@@ -66,10 +64,10 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
   public void testUniqueTopLevelCompletion() {
     setRules("java_library", "android_binary");
 
-    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "ja");
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "java_libra");
 
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-    editorTest.setCaretPosition(editor, 0, 2);
+    editorTest.setCaretPosition(editor, 0, "java_libra".length());
 
     LookupElement[] completionItems = testFixture.completeBasic();
     assertThat(completionItems).isNull();
@@ -83,10 +81,11 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
     setRules("java_library", "android_binary");
 
     BuildFile file =
-        createBuildFile(new WorkspacePath("build_defs.bzl"), "def function():", "  native.j");
+        createBuildFile(
+            new WorkspacePath("build_defs.bzl"), "def function():", "  native.java_libra");
 
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-    editorTest.setCaretPosition(editor, 1, "  native.j".length());
+    editorTest.setCaretPosition(editor, 1, "  native.java_libra".length());
 
     LookupElement[] completionItems = testFixture.completeBasic();
     assertThat(completionItems).isNull();
@@ -97,6 +96,11 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
 
   @Test
   public void testNoCompletionInsideRule() {
+    ServiceHelper.unregisterLanguageExtensionPoint(
+        "com.intellij.completion.contributor",
+        BuiltInSymbolCompletionContributor.class,
+        getTestRootDisposable());
+
     setRules("java_library", "android_binary");
 
     String[] contents = {"java_library(", "    name = \"lib\"", ""};
@@ -123,6 +127,20 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
     assertThat(editorTest.getCompletionItemsAsStrings()).isEmpty();
   }
 
+  @Test
+  public void testGlobalFunctions() {
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "licen");
+
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, 5);
+
+    LookupElement[] completionItems = testFixture.completeBasic();
+    assertThat(completionItems).isNull();
+
+    assertFileContents(file, "licenses()");
+    editorTest.assertCaretPosition(editor, 0, "licenses(".length());
+  }
+
   private void setRules(String... ruleNames) {
     ImmutableMap.Builder<String, RuleDefinition> rules = ImmutableMap.builder();
     for (String name : ruleNames) {
@@ -133,7 +151,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
 
   private static class MockBuildLanguageSpecProvider implements BuildLanguageSpecProvider {
 
-    BuildLanguageSpec languageSpec;
+    BuildLanguageSpec languageSpec = new BuildLanguageSpec(ImmutableMap.of());
 
     void setRules(ImmutableMap<String, RuleDefinition> rules) {
       languageSpec = new BuildLanguageSpec(rules);

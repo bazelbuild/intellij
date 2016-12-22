@@ -36,7 +36,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import java.util.Collection;
 import java.util.Set;
@@ -122,17 +121,8 @@ public interface BlazeSyncPlugin {
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData);
 
-  /**
-   * Modify the project content entries. There will be one content entry per project directory from
-   * the project view set.
-   */
-  void updateContentEntries(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData,
-      Collection<ContentEntry> contentEntries);
+  @Nullable
+  SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData);
 
   /** Modifies the IDE project structure in accordance with the sync data. */
   void updateProjectStructure(
@@ -215,14 +205,11 @@ public interface BlazeSyncPlugin {
         ProjectViewSet projectViewSet,
         BlazeProjectData blazeProjectData) {}
 
+    @Nullable
     @Override
-    public void updateContentEntries(
-        Project project,
-        BlazeContext context,
-        WorkspaceRoot workspaceRoot,
-        ProjectViewSet projectViewSet,
-        BlazeProjectData blazeProjectData,
-        Collection<ContentEntry> contentEntries) {}
+    public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
+      return null;
+    }
 
     @Override
     public void updateProjectStructure(

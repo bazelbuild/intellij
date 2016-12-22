@@ -15,16 +15,46 @@
  */
 package com.google.idea.blaze.base.sync.projectview;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.Glob;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
+import com.intellij.openapi.util.text.StringUtil;
+import java.io.File;
+import java.util.stream.Collectors;
 
 /** Affects the way sources are imported. */
 public class SourceTestConfig {
   private final Glob.GlobSet testSources;
 
   public SourceTestConfig(ProjectViewSet projectViewSet) {
-    this.testSources = new Glob.GlobSet(projectViewSet.listItems(TestSourceSection.KEY));
+    this.testSources =
+        new Glob.GlobSet(
+            projectViewSet
+                .listItems(TestSourceSection.KEY)
+                .stream()
+                .map(SourceTestConfig::modifyGlob)
+                .collect(Collectors.toList()));
+  }
+
+  private static Glob modifyGlob(Glob glob) {
+    return new Glob(modifyPattern(glob.toString()));
+  }
+
+  /**
+   * We modify the glob patterns provided by the user, so that their behavior more closely matches
+   * what is expected.
+   *
+   * <p>Rules:
+   * <li>path/ => path*
+   * <li>path/* => path*
+   * <li>path => path*
+   */
+  @VisibleForTesting
+  static String modifyPattern(String pattern) {
+    pattern = StringUtil.trimEnd(pattern, '*');
+    pattern = StringUtil.trimEnd(pattern, File.separatorChar);
+    return pattern + "*";
   }
 
   /** Returns true if this artifact is a test artifact. */

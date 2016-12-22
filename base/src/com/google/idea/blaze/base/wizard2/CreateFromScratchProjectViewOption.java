@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
@@ -38,14 +37,13 @@ class CreateFromScratchProjectViewOption implements BlazeSelectProjectViewOption
 
   @Nullable
   @Override
-  public WorkspacePath getSharedProjectView() {
-    return null;
-  }
-
-  @Nullable
-  @Override
   public String getInitialProjectViewText() {
     return "";
+  }
+
+  @Override
+  public boolean allowAddDefaultProjectViewValues() {
+    return true;
   }
 
   @Override

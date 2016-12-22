@@ -22,10 +22,14 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.ProjectViewSet.ProjectViewFile;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
 import com.google.idea.blaze.base.projectview.ProjectViewVerifier;
+import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
+import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
+import com.google.idea.blaze.base.projectview.section.sections.Sections;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.OutputSink.Propagation;
 import com.google.idea.blaze.base.scope.Scope;
@@ -44,6 +48,7 @@ import com.google.idea.blaze.base.wizard2.BlazeNewProjectBuilder;
 import com.google.idea.blaze.base.wizard2.BlazeSelectProjectViewOption;
 import com.google.idea.blaze.base.wizard2.BlazeSelectWorkspaceOption;
 import com.google.idea.blaze.base.wizard2.ProjectDataDirectoryValidator;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -75,6 +80,9 @@ public final class BlazeEditProjectViewControl {
   private static final FileChooserDescriptor PROJECT_FOLDER_DESCRIPTOR =
       new FileChooserDescriptor(false, true, false, false, false, false);
   private static final Logger LOG = Logger.getInstance(BlazeEditProjectViewControl.class);
+
+  private static final BoolExperiment allowAddprojectViewDefaultValues =
+      new BoolExperiment("allow.add.project.view.default.values", true);
 
   private final JPanel component;
   private final String buildSystemName;
@@ -143,6 +151,10 @@ public final class BlazeEditProjectViewControl {
     WorkspaceRoot workspaceRoot = workspaceOption.getWorkspaceRoot();
     WorkspacePath workspacePath = projectViewOption.getSharedProjectView();
     String initialProjectViewText = projectViewOption.getInitialProjectViewText();
+    boolean allowAddDefaultValues =
+        projectViewOption.allowAddDefaultProjectViewValues()
+            && allowAddprojectViewDefaultValues.getValue();
+    WorkspacePathResolver workspacePathResolver = workspaceOption.getWorkspacePathResolver();
 
     HashCode hashCode =
         Hashing.md5()
@@ -151,6 +163,7 @@ public final class BlazeEditProjectViewControl {
             .putUnencodedChars(workspaceRoot.toString())
             .putUnencodedChars(workspacePath != null ? workspacePath.toString() : "")
             .putUnencodedChars(initialProjectViewText != null ? initialProjectViewText : "")
+            .putBoolean(allowAddDefaultValues)
             .hash();
 
     // If any params have changed, reinit the control
@@ -159,10 +172,28 @@ public final class BlazeEditProjectViewControl {
       init(
           workspaceName,
           workspaceRoot,
-          workspaceOption.getWorkspacePathResolver(),
+          workspacePathResolver,
           workspacePath,
-          initialProjectViewText);
+          initialProjectViewText,
+          allowAddDefaultValues);
     }
+  }
+
+  private static String modifyInitialProjectView(
+      String initialProjectViewText, WorkspacePathResolver workspacePathResolver) {
+    BlazeContext context = new BlazeContext();
+    ProjectViewParser projectViewParser = new ProjectViewParser(context, workspacePathResolver);
+    projectViewParser.parseProjectView(initialProjectViewText);
+    ProjectViewSet projectViewSet = projectViewParser.getResult();
+    ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
+    if (projectViewFile == null) {
+      return initialProjectViewText;
+    }
+    ProjectView projectView = projectViewFile.projectView;
+    for (SectionParser sectionParser : Sections.getParsers()) {
+      projectView = sectionParser.addProjectViewDefaultValue(projectView);
+    }
+    return ProjectViewParser.projectViewToString(projectView);
   }
 
   private void init(
@@ -170,7 +201,13 @@ public final class BlazeEditProjectViewControl {
       WorkspaceRoot workspaceRoot,
       WorkspacePathResolver workspacePathResolver,
       @Nullable WorkspacePath sharedProjectView,
-      @Nullable String initialProjectViewText) {
+      @Nullable String initialProjectViewText,
+      boolean allowAddDefaultValues) {
+    if (allowAddDefaultValues && initialProjectViewText != null) {
+      initialProjectViewText =
+          modifyInitialProjectView(initialProjectViewText, workspacePathResolver);
+    }
+
     this.workspaceRoot = workspaceRoot;
     projectNameField.setText(workspaceName);
     String defaultDataDir = getDefaultProjectDataDirectory(workspaceName);

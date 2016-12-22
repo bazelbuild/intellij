@@ -15,6 +15,8 @@
  */
 package com.google.idea.testing;
 
+
+import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,6 +36,20 @@ public class ServiceHelper {
     ExtensionPoint<T> ep = Extensions.getRootArea().getExtensionPoint(name);
     ep.registerExtension(instance);
     Disposer.register(parentDisposable, () -> ep.unregisterExtension(instance));
+  }
+
+  /** Unregister all extensions of the given class, for the given extension point. */
+  public static <T> void unregisterLanguageExtensionPoint(
+      String extensionPointKey, Class<T> clazz, Disposable parentDisposable) {
+    ExtensionPoint<LanguageExtensionPoint<T>> ep =
+        Extensions.getRootArea().getExtensionPoint(extensionPointKey);
+    LanguageExtensionPoint<T>[] existingExtensions = ep.getExtensions();
+    for (LanguageExtensionPoint<T> ext : existingExtensions) {
+      if (clazz.getName().equals(ext.implementationClass)) {
+        ep.unregisterExtension(ext);
+        Disposer.register(parentDisposable, () -> ep.registerExtension(ext));
+      }
+    }
   }
 
   public static <T> void registerApplicationService(

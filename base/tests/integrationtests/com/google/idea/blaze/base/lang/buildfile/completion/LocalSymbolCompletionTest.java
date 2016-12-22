@@ -39,11 +39,11 @@ public class LocalSymbolCompletionTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testLocalVariable() {
-    setInput("var = [a, b]", "def function(name, deps, srcs):", "  v<caret>");
+    setInput("var_name = [a, b]", "def function(name, deps, srcs):", "  var_n<caret>");
 
     editorTest.completeIfUnique();
 
-    assertResult("var = [a, b]", "def function(name, deps, srcs):", "  var<caret>");
+    assertResult("var_name = [a, b]", "def function(name, deps, srcs):", "  var_name<caret>");
   }
 
   @Test
@@ -57,7 +57,7 @@ public class LocalSymbolCompletionTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testNoCompletionAfterDot() {
-    setInput("var = [a, b]", "def function(name, deps, srcs):", "  ext.v<caret>");
+    setInput("var_name = [a, b]", "def function(name, deps, srcs):", "  ext.var_na<caret>");
 
     String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).isEmpty();
@@ -65,41 +65,41 @@ public class LocalSymbolCompletionTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testFunctionParam() {
-    setInput("def test(var):", "  v<caret>");
+    setInput("def test(var_name):", "  var_na<caret>");
 
     editorTest.completeIfUnique();
 
-    assertResult("def test(var):", "  var<caret>");
+    assertResult("def test(var_name):", "  var_name<caret>");
   }
 
   // b/28912523: when symbol is present in multiple assignment statements, should only be
   // included once in the code-completion dialog
   @Test
   public void testSymbolAssignedMultipleTimes() {
-    setInput("var = 1", "var = 2", "var = 3", "<caret>");
+    setInput("var_name = 1", "var_name = 2", "var_name = 3", "var_na<caret>");
 
     editorTest.completeIfUnique();
 
-    assertResult("var = 1", "var = 2", "var = 3", "var<caret>");
+    assertResult("var_name = 1", "var_name = 2", "var_name = 3", "var_name<caret>");
   }
 
   @Test
   public void testSymbolDefinedOutsideScope() {
-    setInput("<caret>", "var = 1");
+    setInput("var_na<caret>", "var_name = 1");
 
     assertThat(editorTest.getCompletionItemsAsStrings()).isEmpty();
   }
 
   @Test
   public void testSymbolDefinedOutsideScope2() {
-    setInput("def fn():", "  var = 1", "v<caret>");
+    setInput("def fn():", "  var_name = 1", "var_na<caret>");
 
     assertThat(testFixture.completeBasic()).isEmpty();
   }
 
   @Test
   public void testSymbolDefinedOutsideScope3() {
-    setInput("for var in (1, 2, 3): print var", "v<caret>");
+    setInput("for var_name in (1, 2, 3): print var_name", "var_na<caret>");
 
     assertThat(testFixture.completeBasic()).isEmpty();
   }

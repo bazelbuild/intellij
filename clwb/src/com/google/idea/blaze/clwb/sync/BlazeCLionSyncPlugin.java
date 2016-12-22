@@ -17,17 +17,12 @@ package com.google.idea.blaze.clwb.sync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
+import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.cpp.CPPModuleType;
-import java.util.Collection;
 import javax.annotation.Nullable;
 
 class BlazeCLionSyncPlugin extends BlazeSyncPlugin.Adapter {
@@ -52,20 +47,13 @@ class BlazeCLionSyncPlugin extends BlazeSyncPlugin.Adapter {
     return null;
   }
 
+  @Nullable
   @Override
-  public void updateContentEntries(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData,
-      Collection<ContentEntry> contentEntries) {
-
-    for (ContentEntry entry : contentEntries) {
-      VirtualFile file = entry.getFile();
-      if (file != null) {
-        entry.addSourceFolder(file, false);
-      }
+  public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
+    if (!projectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.C)) {
+      return null;
     }
+    return GenericSourceFolderProvider.INSTANCE;
   }
+
 }

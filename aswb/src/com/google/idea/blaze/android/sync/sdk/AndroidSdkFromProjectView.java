@@ -94,7 +94,7 @@ public class AndroidSdkFromProjectView {
     return new AndroidSdkPlatform(androidSdk, androidSdkApiLevel);
   }
 
-  private static String getAvailableSdkPlatforms(Collection<Sdk> sdks) {
+  public static String getAvailableSdkPlatforms(Collection<Sdk> sdks) {
     List<String> names = Lists.newArrayList();
     for (Sdk sdk : sdks) {
       AndroidSdkAdditionalData additionalData = AndroidSdkUtils.getAndroidSdkAdditionalData(sdk);

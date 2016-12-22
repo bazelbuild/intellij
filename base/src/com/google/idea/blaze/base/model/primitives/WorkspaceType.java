@@ -22,7 +22,6 @@ package com.google.idea.blaze.base.model.primitives;
  * enum ordinal.
  */
 public enum WorkspaceType {
-  ANDROID_NDK("android_ndk", LanguageClass.ANDROID, LanguageClass.JAVA, LanguageClass.C),
   ANDROID("android", LanguageClass.ANDROID, LanguageClass.JAVA),
   C("c", LanguageClass.C),
   JAVA("java", LanguageClass.JAVA),

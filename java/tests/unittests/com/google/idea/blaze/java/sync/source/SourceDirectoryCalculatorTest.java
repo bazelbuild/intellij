@@ -34,11 +34,9 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.MockPrefetchService;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.sync.projectview.SourceTestConfig;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
@@ -82,20 +80,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
       (ArtifactLocationDecoder)
           artifactLocation -> new File("/root", artifactLocation.getRelativePath());
 
-  static final class TestSourceImportConfig extends SourceTestConfig {
-    final boolean isTest;
-
-    public TestSourceImportConfig(boolean isTest) {
-      super(ProjectViewSet.builder().build());
-      this.isTest = isTest;
-    }
-
-    @Override
-    public boolean isTestSource(String relativePath) {
-      return isTest;
-    }
-  }
-
   @Override
   protected void initTest(
       @NotNull Container applicationServices, @NotNull Container projectServices) {
@@ -127,7 +111,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false /* isTest */),
             decoder,
             ImmutableList.of(new WorkspacePath("java/com/google/app")),
             sourceArtifacts,
@@ -160,7 +143,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false),
             decoder,
             ImmutableList.of(new WorkspacePath("java/com/google")),
             sourceArtifacts,
@@ -193,7 +175,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(true),
             decoder,
             ImmutableList.of(new WorkspacePath("java/com/google")),
             sourceArtifacts,
@@ -205,7 +186,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
                 .addSource(
                     BlazeSourceDirectory.builder("/root/java/com/google")
                         .setPackagePrefix("com.google")
-                        .setTest(true)
                         .build())
                 .build());
   }
@@ -236,7 +216,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false),
             decoder,
             ImmutableList.of(new WorkspacePath("java/com/google")),
             sourceArtifacts,
@@ -289,7 +268,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false),
             decoder,
             ImmutableList.of(new WorkspacePath("")),
             sourceArtifacts,
@@ -340,7 +318,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false),
             decoder,
             ImmutableList.of(new WorkspacePath("")),
             sourceArtifacts,
@@ -389,7 +366,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false),
             decoder,
             ImmutableList.of(new WorkspacePath("java/com/google")),
             sourceArtifacts,
@@ -435,7 +411,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false),
             decoder,
             ImmutableList.of(new WorkspacePath("java/com/google")),
             sourceArtifacts,
@@ -481,7 +456,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false),
             decoder,
             ImmutableList.of(new WorkspacePath("java/com/google")),
             sourceArtifacts,
@@ -518,7 +492,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false),
             decoder,
             ImmutableList.of(new WorkspacePath("java/com/google")),
             sourceArtifacts,
@@ -551,7 +524,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false),
             decoder,
             ImmutableList.of(new WorkspacePath("java/com/google")),
             sourceArtifacts,
@@ -584,7 +556,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false),
             decoder,
             ImmutableList.of(new WorkspacePath("java/com/org")),
             sourceArtifacts,
@@ -620,7 +591,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         project,
         context,
         workspaceRoot,
-        new TestSourceImportConfig(false),
         decoder,
         ImmutableList.of(new WorkspacePath("java/com/google")),
         sourceArtifacts,
@@ -646,7 +616,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         project,
         context,
         workspaceRoot,
-        new TestSourceImportConfig(false),
         decoder,
         ImmutableList.of(new WorkspacePath("java/com/google/my")),
         sourceArtifacts,
@@ -669,7 +638,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         project,
         context,
         workspaceRoot,
-        new TestSourceImportConfig(false),
         decoder,
         ImmutableList.of(new WorkspacePath("java/com/google")),
         sourceArtifacts,
@@ -717,7 +685,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false),
             decoder,
             ImmutableList.of(new WorkspacePath("java/com/google")),
             sourceArtifacts,
@@ -769,7 +736,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false),
             decoder,
             ImmutableList.of(new WorkspacePath("java/com/google")),
             sourceArtifacts,
@@ -817,7 +783,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false),
             decoder,
             ImmutableList.of(new WorkspacePath("java/com/google")),
             sourceArtifacts,
@@ -872,7 +837,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false),
             decoder,
             ImmutableList.of(new WorkspacePath("java/com/google/android")),
             sourceArtifacts,
@@ -1050,7 +1014,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            new TestSourceImportConfig(false),
             getDecoder("/root"),
             ImmutableList.of(new WorkspacePath("java/com/google")),
             sourceArtifacts,

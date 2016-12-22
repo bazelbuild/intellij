@@ -101,7 +101,7 @@ public class LanguageSupport {
   }
 
   /** @return The set of {@link LanguageClass}'s supported for this {@link WorkspaceType}s. */
-  private static Set<LanguageClass> supportedLanguagesForWorkspaceType(WorkspaceType type) {
+  public static Set<LanguageClass> supportedLanguagesForWorkspaceType(WorkspaceType type) {
     Set<LanguageClass> supportedLanguages = EnumSet.noneOf(LanguageClass.class);
     for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
       supportedLanguages.addAll(syncPlugin.getSupportedLanguagesInWorkspace(type));

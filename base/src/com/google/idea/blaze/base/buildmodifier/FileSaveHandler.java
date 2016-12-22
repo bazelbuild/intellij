@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.buildmodifier;
 
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -29,7 +30,7 @@ public class FileSaveHandler extends FileDocumentManagerAdapter {
 
   @Override
   public void beforeDocumentSaving(final Document document) {
-    if (!document.isWritable()) {
+    if (!BlazeUserSettings.getInstance().getFormatBuildFilesOnSave() || !document.isWritable()) {
       return;
     }
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();

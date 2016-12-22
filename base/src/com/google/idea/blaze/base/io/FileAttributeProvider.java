@@ -44,4 +44,8 @@ public class FileAttributeProvider {
   public long getFileSize(File file) {
     return file.length();
   }
+
+  public File[] listFiles(File file) {
+    return file.listFiles();
+  }
 }
