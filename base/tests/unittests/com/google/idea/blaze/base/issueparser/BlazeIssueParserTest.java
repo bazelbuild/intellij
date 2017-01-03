@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -30,10 +31,11 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import java.io.File;
-import org.jetbrains.annotations.NotNull;
+import java.util.regex.Matcher;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -44,10 +46,10 @@ public class BlazeIssueParserTest extends BlazeTestCase {
 
   private ProjectViewManager projectViewManager;
   private WorkspaceRoot workspaceRoot;
+  private ImmutableList<BlazeIssueParser.Parser> parsers;
 
   @Override
-  protected void initTest(
-      @NotNull Container applicationServices, @NotNull Container projectServices) {
+  protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
 
     applicationServices.register(ExperimentService.class, new MockExperimentService());
@@ -55,12 +57,40 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     projectViewManager = mock(ProjectViewManager.class);
     projectServices.register(ProjectViewManager.class, projectViewManager);
 
+    ProjectViewSet projectViewSet =
+        ProjectViewSet.builder()
+            .add(
+                new File(".blazeproject"),
+                ProjectView.builder()
+                    .add(
+                        ListSection.builder(TargetSection.KEY)
+                            .add(TargetExpression.fromString("//tests/com/google/a/b/c/d/baz:baz"))
+                            .add(TargetExpression.fromString("//package/path:hello4")))
+                    .build())
+            .build();
+    when(projectViewManager.getProjectViewSet()).thenReturn(projectViewSet);
+
     workspaceRoot = new WorkspaceRoot(new File("/root"));
+
+    parsers =
+        ImmutableList.of(
+            new BlazeIssueParser.CompileParser(workspaceRoot),
+            new BlazeIssueParser.TracebackParser(),
+            new BlazeIssueParser.BuildParser(),
+            new BlazeIssueParser.LinelessBuildParser(),
+            new BlazeIssueParser.ProjectViewLabelParser(projectViewSet),
+            new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                projectViewSet, "no such package '(.*)': BUILD file not found on package path"),
+            new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                projectViewSet, "no targets found beneath '(.*)'"),
+            new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                projectViewSet, "ERROR: invalid target format '(.*)'"),
+            new BlazeIssueParser.FileNotFoundBuildParser(workspaceRoot));
   }
 
   @Test
   public void testParseTargetError() {
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(project, workspaceRoot);
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     IssueOutput issue =
         blazeIssueParser.parseIssue(
             "ERROR: invalid target format "
@@ -74,7 +104,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
 
   @Test
   public void testParseCompileError() {
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(project, workspaceRoot);
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     IssueOutput issue =
         blazeIssueParser.parseIssue(
             "java/com/google/android/samples/helloroot/math/DivideMath.java:17: error: "
@@ -83,6 +113,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getFile().getPath())
         .isEqualTo("/root/java/com/google/android/samples/helloroot/math/DivideMath.java");
     assertThat(issue.getLine()).isEqualTo(17);
+    assertThat(issue.getColumn()).isEqualTo(-1);
     assertThat(issue.getMessage())
         .isEqualTo("non-static variable this cannot be referenced from a static context");
     assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
@@ -90,50 +121,29 @@ public class BlazeIssueParserTest extends BlazeTestCase {
 
   @Test
   public void testParseCompileErrorWithColumn() {
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(project, workspaceRoot);
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     IssueOutput issue =
         blazeIssueParser.parseIssue(
             "java/com/google/devtools/aswb/pluginrepo/googleplex/PluginsEndpoint.java:33:26: "
                 + "error: '|' is not preceded with whitespace.");
     assertNotNull(issue);
     assertThat(issue.getLine()).isEqualTo(33);
+    assertThat(issue.getColumn()).isEqualTo(26);
     assertThat(issue.getMessage()).isEqualTo("'|' is not preceded with whitespace.");
     assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
   }
 
   @Test
-  public void testParseCompileErrorWithAbsolutePath() {
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(project, workspaceRoot);
-    IssueOutput issue =
-        blazeIssueParser.parseIssue(
-            "/root/java/com/google/android/samples/helloroot/math/DivideMath.java:17: error: "
-                + "non-static variable this cannot be referenced from a static context");
-    assertNotNull(issue);
-    assertThat(issue.getFile().getPath())
-        .isEqualTo("/root/java/com/google/android/samples/helloroot/math/DivideMath.java");
-  }
-
-  @Test
-  public void testParseCompileErrorWithDepotPath() {
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(project, workspaceRoot);
-    IssueOutput issue =
-        blazeIssueParser.parseIssue(
-            "//depot/google3/package_path/DivideMath.java:17: error: "
-                + "non-static variable this cannot be referenced from a static context");
-    assertNotNull(issue);
-    assertThat(issue.getFile().getPath()).isEqualTo("/root/package_path/DivideMath.java");
-  }
-
-  @Test
   public void testParseBuildError() {
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(project, workspaceRoot);
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     IssueOutput issue =
         blazeIssueParser.parseIssue(
-            "ERROR: /path/to/root/javatests/package_path/BUILD:42:12: "
+            "ERROR: /root/javatests/package_path/BUILD:42:12: "
                 + "Target '//java/package_path:helloroot_visibility' failed");
     assertNotNull(issue);
-    assertThat(issue.getFile().getPath()).isEqualTo("/path/to/root/javatests/package_path/BUILD");
+    assertThat(issue.getFile().getPath()).isEqualTo("/root/javatests/package_path/BUILD");
     assertThat(issue.getLine()).isEqualTo(42);
+    assertThat(issue.getColumn()).isEqualTo(12);
     assertThat(issue.getMessage())
         .isEqualTo("Target '//java/package_path:helloroot_visibility' failed");
     assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
@@ -141,7 +151,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
 
   @Test
   public void testParseLinelessBuildError() {
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(project, workspaceRoot);
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     IssueOutput issue =
         blazeIssueParser.parseIssue(
             "ERROR: /path/to/root/java/package_path/BUILD:char offsets 1222--1229: "
@@ -153,20 +163,37 @@ public class BlazeIssueParserTest extends BlazeTestCase {
   }
 
   @Test
-  public void testLabelProjectViewParser() {
-    ProjectViewSet projectViewSet =
-        ProjectViewSet.builder()
-            .add(
-                new File(".blazeproject"),
-                ProjectView.builder()
-                    .add(
-                        ListSection.builder(TargetSection.KEY)
-                            .add(TargetExpression.fromString("//package/path:hello4")))
-                    .build())
-            .build();
-    when(projectViewManager.getProjectViewSet()).thenReturn(projectViewSet);
+  public void testParseFileNotFoundError() {
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    IssueOutput issue =
+        blazeIssueParser.parseIssue(
+            "ERROR: Extension file not found. Unable to load file '//third_party/bazel:tools/ide/"
+                + "intellij_info.bzl': file doesn't exist or isn't a file");
+    assertNotNull(issue);
+    assertThat(issue.getFile().getPath())
+        .isEqualTo("/root/third_party/bazel/tools/ide/intellij_info.bzl");
+    assertThat(issue.getMessage()).isEqualTo("file doesn't exist or isn't a file");
+    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+  }
 
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(project, workspaceRoot);
+  @Test
+  public void testParseFileNotFoundErrorWithPackage() {
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    IssueOutput issue =
+        blazeIssueParser.parseIssue(
+            "ERROR: error loading package 'path/to/package': Extension file not found. Unable to"
+                + " load file '//third_party/bazel:tools/ide/intellij_info.bzl': file doesn't exist"
+                + " or isn't a file");
+    assertNotNull(issue);
+    assertThat(issue.getFile().getPath())
+        .isEqualTo("/root/third_party/bazel/tools/ide/intellij_info.bzl");
+    assertThat(issue.getMessage()).isEqualTo("file doesn't exist or isn't a file");
+    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+  }
+
+  @Test
+  public void testLabelProjectViewParser() {
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     IssueOutput issue =
         blazeIssueParser.parseIssue(
             "no such target '//package/path:hello4': "
@@ -179,19 +206,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
 
   @Test
   public void testPackageProjectViewParser() {
-    ProjectViewSet projectViewSet =
-        ProjectViewSet.builder()
-            .add(
-                new File(".blazeproject"),
-                ProjectView.builder()
-                    .add(
-                        ListSection.builder(TargetSection.KEY)
-                            .add(TargetExpression.fromString("//package/path:hello4")))
-                    .build())
-            .build();
-    when(projectViewManager.getProjectViewSet()).thenReturn(projectViewSet);
-
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(project, workspaceRoot);
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     IssueOutput issue =
         blazeIssueParser.parseIssue(
             "no such package 'package/path': BUILD file not found on package path");
@@ -202,19 +217,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
 
   @Test
   public void testDeletedBUILDFileButLeftPackageInLocalTargets() {
-    ProjectViewSet projectViewSet =
-        ProjectViewSet.builder()
-            .add(
-                new File(".blazeproject"),
-                ProjectView.builder()
-                    .add(
-                        ListSection.builder(TargetSection.KEY)
-                            .add(TargetExpression.fromString("//tests/com/google/a/b/c/d/baz:baz")))
-                    .build())
-            .build();
-    when(projectViewManager.getProjectViewSet()).thenReturn(projectViewSet);
-
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(project, workspaceRoot);
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     IssueOutput issue =
         blazeIssueParser.parseIssue(
             "Error:com.google.a.b.Exception exception in Bar: no targets found beneath "
@@ -240,7 +243,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
           "name 'BAD_FUNCTION' is not defined."
         };
 
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(project, workspaceRoot);
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     for (int i = 0; i < lines.length - 1; ++i) {
       IssueOutput issue = blazeIssueParser.parseIssue(lines[i]);
       assertNull(issue);
@@ -266,7 +269,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
           "name 'BAD_FUNCTION' is not defined."
         };
 
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(project, workspaceRoot);
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     for (int i = 0; i < lines.length; ++i) {
       blazeIssueParser.parseIssue(lines[i]);
     }
@@ -282,7 +285,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
 
   @Test
   public void testMultipleIssues() {
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(project, workspaceRoot);
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     IssueOutput issue =
         blazeIssueParser.parseIssue(
             "ERROR: /home/plumpy/whatever:char offsets 1222--1229: name 'grubber' is not defined");
@@ -295,5 +298,32 @@ public class BlazeIssueParserTest extends BlazeTestCase {
         blazeIssueParser.parseIssue(
             "ERROR: /home/plumpy/whatever:char offsets 1222--1229: name 'grubber' is not defined");
     assertNotNull(issue);
+
+  }
+
+  @Test
+  public void testExtraParserMatch() {
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(ImmutableList.of(new TestParser()));
+    IssueOutput issue =
+        blazeIssueParser.parseIssue("TEST This is a test message for our test parser.");
+    assertNotNull(issue);
+    assertThat(issue.getMessage()).isEqualTo("This is a test message for our test parser.");
+    assertThat(issue.getLine()).isEqualTo(-1);
+    assertThat(issue.getColumn()).isEqualTo(-1);
+    assertThat(issue.getCategory()).isEqualTo(Category.WARNING);
+    assertNull(issue.getFile());
+  }
+
+  /** Simple Parser for testing */
+  private static class TestParser extends BlazeIssueParser.SingleLineParser {
+
+    public TestParser() {
+      super("^TEST (.*)$");
+    }
+
+    @Override
+    protected IssueOutput createIssue(Matcher matcher) {
+      return IssueOutput.warn(matcher.group(1)).build();
+    }
   }
 }

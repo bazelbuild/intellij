@@ -84,6 +84,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -94,8 +95,10 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
@@ -157,36 +160,33 @@ final class BlazeSyncTask implements Progressive {
   @VisibleForTesting
   boolean syncProject(BlazeContext context) {
     SyncResult syncResult = SyncResult.FAILURE;
+    SyncMode syncMode = syncParams.syncMode;
     try {
       SaveUtil.saveAllFiles();
-      onSyncStart(project, context);
-      syncResult = doSyncProject(context);
+      BlazeProjectData oldBlazeProjectData =
+          syncMode != SyncMode.FULL
+              ? BlazeProjectDataManagerImpl.getImpl(project)
+                  .loadProjectRoot(context, importSettings)
+              : null;
+      if (oldBlazeProjectData == null) {
+        syncMode = SyncMode.FULL;
+      }
+
+      onSyncStart(project, context, syncMode);
+      syncResult = doSyncProject(context, syncMode, oldBlazeProjectData);
     } catch (AssertionError | Exception e) {
       LOG.error(e);
       IssueOutput.error("Internal error: " + e.getMessage()).submit(context);
     } finally {
-      afterSync(project, context, syncResult);
+      afterSync(project, context, syncMode, syncResult);
     }
     return syncResult == SyncResult.SUCCESS || syncResult == SyncResult.PARTIAL_SUCCESS;
   }
 
   /** @return true if sync successfully completed */
-  private SyncResult doSyncProject(final BlazeContext context) {
+  private SyncResult doSyncProject(
+      BlazeContext context, SyncMode syncMode, @Nullable BlazeProjectData oldBlazeProjectData) {
     this.syncStartTime = System.currentTimeMillis();
-
-    if (importSettings.getProjectViewFile() == null) {
-      IssueOutput.error(
-              "This project looks like it's been opened from an old version of ASwB. "
-                  + "That is unfortunately not supported. Please reimport your project.")
-          .submit(context);
-      return SyncResult.FAILURE;
-    }
-
-    @Nullable BlazeProjectData oldBlazeProjectData = null;
-    if (syncParams.syncMode != SyncMode.FULL) {
-      oldBlazeProjectData =
-          BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(context, importSettings);
-    }
 
     BlazeVcsHandler vcsHandler = null;
     for (BlazeVcsHandler candidate : BlazeVcsHandler.EP_NAME.getExtensions()) {
@@ -271,7 +271,7 @@ final class BlazeSyncTask implements Progressive {
 
     BuildResult ideInfoResult = BuildResult.SUCCESS;
     BuildResult ideResolveResult = BuildResult.SUCCESS;
-    if (syncParams.syncMode != SyncMode.RESTORE_EPHEMERAL_STATE || oldBlazeProjectData == null) {
+    if (syncMode != SyncMode.RESTORE_EPHEMERAL_STATE || oldBlazeProjectData == null) {
       SyncState.Builder syncStateBuilder = new SyncState.Builder();
       SyncState previousSyncState =
           oldBlazeProjectData != null ? oldBlazeProjectData.syncState : null;
@@ -384,7 +384,7 @@ final class BlazeSyncTask implements Progressive {
       newBlazeProjectData = oldBlazeProjectData;
     }
 
-    FileCaches.onSync(project, context, projectViewSet, newBlazeProjectData, syncParams.syncMode);
+    FileCaches.onSync(project, context, projectViewSet, newBlazeProjectData, syncMode);
     ListenableFuture<?> prefetch =
         PrefetchService.getInstance().prefetchProjectFiles(project, newBlazeProjectData);
     FutureUtil.waitForFuture(context, prefetch)
@@ -417,7 +417,7 @@ final class BlazeSyncTask implements Progressive {
       syncResult = SyncResult.PARTIAL_SUCCESS;
     }
 
-    onSyncComplete(project, context, projectViewSet, newBlazeProjectData, syncResult);
+    onSyncComplete(project, context, projectViewSet, newBlazeProjectData, syncMode, syncResult);
     return syncResult;
   }
 
@@ -681,7 +681,8 @@ final class BlazeSyncTask implements Progressive {
       IssueOutput.warn("Could not set module type for workspace module.").submit(context);
     }
 
-    Module workspaceModule = moduleEditor.createModule(".workspace", workspaceModuleType);
+    Module workspaceModule =
+        moduleEditor.createModule(BlazeDataStorage.WORKSPACE_MODULE_NAME, workspaceModuleType);
     ModifiableRootModel workspaceModifiableModel = moduleEditor.editModule(workspaceModule);
 
     ContentEntryEditor.createContentEntries(
@@ -734,20 +735,28 @@ final class BlazeSyncTask implements Progressive {
 
   private static String pathToUrl(File path) {
     String filePath = FileUtil.toSystemIndependentName(path.getPath());
-    return VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, filePath);
+    return VirtualFileManager.constructUrl(defaultFileSystem().getProtocol(), filePath);
   }
 
-  private static void onSyncStart(Project project, BlazeContext context) {
+  private static VirtualFileSystem defaultFileSystem() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return TempFileSystem.getInstance();
+    }
+    return LocalFileSystem.getInstance();
+  }
+
+  private static void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {
     final SyncListener[] syncListeners = SyncListener.EP_NAME.getExtensions();
     for (SyncListener syncListener : syncListeners) {
-      syncListener.onSyncStart(project, context);
+      syncListener.onSyncStart(project, context, syncMode);
     }
   }
 
-  private static void afterSync(Project project, BlazeContext context, SyncResult syncResult) {
+  private static void afterSync(
+      Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {
     final SyncListener[] syncListeners = SyncListener.EP_NAME.getExtensions();
     for (SyncListener syncListener : syncListeners) {
-      syncListener.afterSync(project, context, syncResult);
+      syncListener.afterSync(project, context, syncMode, syncResult);
     }
   }
 
@@ -756,13 +765,14 @@ final class BlazeSyncTask implements Progressive {
       BlazeContext context,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
+      SyncMode syncMode,
       SyncResult syncResult) {
     validate(project, context, blazeProjectData);
 
     final SyncListener[] syncListeners = SyncListener.EP_NAME.getExtensions();
     for (SyncListener syncListener : syncListeners) {
       syncListener.onSyncComplete(
-          project, context, importSettings, projectViewSet, blazeProjectData, syncResult);
+          project, context, importSettings, projectViewSet, blazeProjectData, syncMode, syncResult);
     }
   }
 

@@ -18,9 +18,9 @@ package com.google.idea.blaze.base.lang.buildfile.completion;
 import static com.intellij.patterns.PlatformPatterns.psiComment;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileLanguage;
-import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
-import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProvider;
+import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuiltInNamesProvider;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
@@ -77,13 +77,9 @@ public class BuiltInFunctionCompletionContributor extends CompletionContributor 
               CompletionParameters parameters,
               ProcessingContext context,
               CompletionResultSet result) {
-            BuildLanguageSpec spec =
-                BuildLanguageSpecProvider.getInstance()
-                    .getLanguageSpec(parameters.getPosition().getProject());
-            if (spec == null) {
-              return;
-            }
-            for (String ruleName : spec.getKnownRuleNames()) {
+            ImmutableSet<String> builtInNames =
+                BuiltInNamesProvider.getBuiltInFunctionNames(parameters.getPosition().getProject());
+            for (String ruleName : builtInNames) {
               result.addElement(
                   LookupElementBuilder.create(ruleName)
                       .withIcon(BlazeIcons.BuildRule)

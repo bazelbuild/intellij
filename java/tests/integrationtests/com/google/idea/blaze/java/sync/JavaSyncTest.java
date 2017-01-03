@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.sync;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -31,7 +32,11 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.vfs.VirtualFile;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -42,12 +47,7 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
 
   @Test
   public void testJavaClassesPresentInClassPath() throws Exception {
-    setProjectView(
-        "directories:",
-        "  java/com/google",
-        "targets:",
-        "  //java/com/google:lib",
-        "workspace_type: java");
+    setProjectView("directories:", "  java/com/google", "targets:", "  //java/com/google:lib");
 
     workspace.createFile(
         new WorkspacePath("java/com/google/ClassWithUniqueName1.java"),
@@ -105,12 +105,7 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
 
   @Test
   public void testSimpleSync() throws Exception {
-    setProjectView(
-        "directories:",
-        "  java/com/google",
-        "targets:",
-        "  //java/com/google:lib",
-        "workspace_type: java");
+    setProjectView("directories:", "  java/com/google", "targets:", "  //java/com/google:lib");
 
     workspace.createFile(
         new WorkspacePath("java/com/google/Source.java"),
@@ -148,5 +143,196 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
     assertThat(blazeProjectData.targetMap).isEqualTo(targetMap);
     assertThat(blazeProjectData.workspaceLanguageSettings.getWorkspaceType())
         .isEqualTo(WorkspaceType.JAVA);
+  }
+
+  @Test
+  public void testSimpleTestSourcesIdentified() {
+    setProjectView(
+        "directories:",
+        "  java/com/google",
+        "  javatests/com/google",
+        "targets:",
+        "  //java/com/google:lib",
+        "test_sources:",
+        "  javatests/*");
+
+    VirtualFile javaRoot = workspace.createDirectory(new WorkspacePath("java/com/google"));
+    VirtualFile javatestsRoot =
+        workspace.createDirectory(new WorkspacePath("javatests/com/google"));
+
+    BlazeSyncParams syncParams =
+        new BlazeSyncParams.Builder("Full Sync", BlazeSyncParams.SyncMode.FULL)
+            .addProjectViewTargets(true)
+            .build();
+    runBlazeSync(syncParams);
+
+    errorCollector.assertNoIssues();
+
+    ImmutableList<ContentEntry> contentEntries = getWorkspaceContentEntries();
+    assertThat(contentEntries).hasSize(2);
+
+    assertThat(findContentEntry(javaRoot)).isNotNull();
+    assertThat(findContentEntry(javaRoot).getSourceFolders()).hasLength(1);
+    assertThat(findContentEntry(javaRoot).getSourceFolders()[0].isTestSource()).isFalse();
+
+    assertThat(findContentEntry(javatestsRoot)).isNotNull();
+    assertThat(findContentEntry(javatestsRoot).getSourceFolders()).hasLength(1);
+    assertThat(findContentEntry(javatestsRoot).getSourceFolders()[0].isTestSource()).isTrue();
+  }
+
+  @Test
+  public void testNestedTestSourcesAreAdded() {
+    setProjectView(
+        "directories:",
+        "  java/com/google",
+        "targets:",
+        "  //java/com/google:lib",
+        "test_sources:",
+        "  java/com/google/tests/*",
+        "  java/com/google/moretests");
+
+    workspace.createDirectory(new WorkspacePath("java/com/google"));
+
+    VirtualFile testFile =
+        workspace.createFile(new WorkspacePath("java/com/google/tests/ExampleTest.java"));
+    VirtualFile moreTestsFile =
+        workspace.createFile(
+            new WorkspacePath("java/com/google/moretests/AnotherExampleTest.java"));
+
+    BlazeSyncParams syncParams =
+        new BlazeSyncParams.Builder("Full Sync", BlazeSyncParams.SyncMode.FULL)
+            .addProjectViewTargets(true)
+            .build();
+    runBlazeSync(syncParams);
+
+    errorCollector.assertNoIssues();
+
+    ImmutableList<ContentEntry> contentEntries = getWorkspaceContentEntries();
+    assertThat(contentEntries).hasSize(1);
+
+    SourceFolder testRoot = findSourceFolder(contentEntries.get(0), testFile.getParent());
+    SourceFolder moreTestsRoot = findSourceFolder(contentEntries.get(0), moreTestsFile.getParent());
+
+    assertThat(testRoot).isNotNull();
+    assertThat(testRoot.isTestSource()).isTrue();
+    assertThat(testRoot.getPackagePrefix()).isEqualTo("com.google.tests");
+
+    assertThat(moreTestsRoot).isNotNull();
+    assertThat(moreTestsRoot.isTestSource()).isTrue();
+    assertThat(moreTestsRoot.getPackagePrefix()).isEqualTo("com.google.moretests");
+  }
+
+  @Test
+  public void testTestSourcesUpdateCorrectlyOnSubsequentSync() {
+    setProjectView(
+        "directories:",
+        "  java/com/google",
+        "targets:",
+        "  //java/com/google:lib",
+        "test_sources:",
+        "  java/com/google/tests/*");
+
+    VirtualFile root = workspace.createDirectory(new WorkspacePath("java/com/google"));
+
+    VirtualFile testsDir = workspace.createDirectory(new WorkspacePath("java/com/google/tests"));
+    VirtualFile moreTestsDir =
+        workspace.createDirectory(new WorkspacePath("java/com/google/moretests"));
+
+    BlazeSyncParams syncParams =
+        new BlazeSyncParams.Builder("Full Sync", BlazeSyncParams.SyncMode.FULL)
+            .addProjectViewTargets(true)
+            .build();
+    runBlazeSync(syncParams);
+
+    errorCollector.assertNoIssues();
+
+    ContentEntry contentEntry = findContentEntry(root);
+    assertThat(findSourceFolder(contentEntry, testsDir).isTestSource()).isTrue();
+    assertThat(findSourceFolder(contentEntry, moreTestsDir)).isNull();
+
+    // unmark one test source, mark another.
+    setProjectView(
+        "directories:",
+        "  java/com/google",
+        "targets:",
+        "  //java/com/google:lib",
+        "test_sources:",
+        "  java/com/google/moretests/*");
+
+    runBlazeSync(syncParams);
+
+    contentEntry = findContentEntry(root);
+    assertThat(findSourceFolder(contentEntry, testsDir)).isNull();
+    assertThat(findSourceFolder(contentEntry, moreTestsDir).isTestSource()).isTrue();
+  }
+
+  @Test
+  public void testExistingPackagePrefixRetainedForTestSources() {
+    setProjectView(
+        "directories:",
+        "  java/com/google",
+        "  javatests/com/google",
+        "targets:",
+        "  //java/com/google:lib",
+        "test_sources:",
+        "  javatests/*");
+
+    workspace.createDirectory(new WorkspacePath("java/com/google"));
+    VirtualFile javatestsRoot =
+        workspace.createDirectory(new WorkspacePath("javatests/com/google"));
+
+    BlazeSyncParams syncParams =
+        new BlazeSyncParams.Builder("Full Sync", BlazeSyncParams.SyncMode.FULL)
+            .addProjectViewTargets(true)
+            .build();
+    runBlazeSync(syncParams);
+
+    errorCollector.assertNoIssues();
+
+    ContentEntry testRoot = findContentEntry(javatestsRoot);
+    SourceFolder testRootSource = findSourceFolder(testRoot, javatestsRoot);
+    assertThat(testRootSource.isTestSource()).isTrue();
+    assertThat(testRootSource.getPackagePrefix()).isEqualTo("com.google");
+  }
+
+  @Test
+  public void testTestSourceRelativePackagePrefixCalculation() {
+    setProjectView(
+        "directories:",
+        "  java/com/google",
+        "targets:",
+        "  //java/com/google:lib",
+        "test_sources:",
+        "  java/com/google/tests/*");
+
+    VirtualFile javatestsRoot =
+        workspace.createDirectory(new WorkspacePath("java/com/google/tests"));
+
+    BlazeSyncParams syncParams =
+        new BlazeSyncParams.Builder("Full Sync", BlazeSyncParams.SyncMode.FULL)
+            .addProjectViewTargets(true)
+            .build();
+    runBlazeSync(syncParams);
+
+    errorCollector.assertNoIssues();
+
+    ContentEntry root = findContentEntry(javatestsRoot.getParent());
+    SourceFolder rootSource = findSourceFolder(root, javatestsRoot.getParent());
+    assertThat(rootSource.isTestSource()).isFalse();
+    assertThat(rootSource.getPackagePrefix()).isEqualTo("com.google");
+
+    SourceFolder childTestSource = findSourceFolder(root, javatestsRoot);
+    assertThat(childTestSource.isTestSource()).isTrue();
+    assertThat(childTestSource.getPackagePrefix()).isEqualTo("com.google.tests");
+  }
+
+  @Nullable
+  private static SourceFolder findSourceFolder(ContentEntry entry, VirtualFile file) {
+    for (SourceFolder sourceFolder : entry.getSourceFolders()) {
+      if (file.equals(sourceFolder.getFile())) {
+        return sourceFolder;
+      }
+    }
+    return null;
   }
 }

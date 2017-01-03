@@ -1,3 +1,3 @@
 """Version of the blaze plugin."""
 
-VERSION = "1.12.6"
+VERSION = "2016.12.05.6"

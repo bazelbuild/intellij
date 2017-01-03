@@ -15,21 +15,40 @@
  */
 package com.google.idea.blaze.base.model.primitives;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import javax.annotation.Nullable;
+
 /** Language classes. */
 public enum LanguageClass {
-  GENERIC("generic"),
-  C("c"),
-  JAVA("java"),
-  ANDROID("android"),
-  JAVASCRIPT("javascript"),
-  TYPESCRIPT("typescript"),
-  DART("dart"),
-  PYTHON("python");
+  GENERIC("generic", ImmutableSet.of()),
+  C("c", ImmutableSet.of("c", "cc", "cpp", "h", "hh", "hpp")),
+  JAVA("java", ImmutableSet.of("java")),
+  ANDROID("android", ImmutableSet.of("aidl")),
+  JAVASCRIPT("javascript", ImmutableSet.of("js", "applejs")),
+  TYPESCRIPT("typescript", ImmutableSet.of("ts", "ats")),
+  DART("dart", ImmutableSet.of("dart")),
+  PYTHON("python", ImmutableSet.of("py", "pyw"));
+
+  private static final ImmutableMap<String, LanguageClass> RECOGNIZED_EXTENSIONS =
+      extensionToClassMap();
+
+  private static ImmutableMap<String, LanguageClass> extensionToClassMap() {
+    ImmutableMap.Builder<String, LanguageClass> result = ImmutableMap.builder();
+    for (LanguageClass lang : LanguageClass.values()) {
+      for (String ext : lang.recognizedFilenameExtensions) {
+        result.put(ext, lang);
+      }
+    }
+    return result.build();
+  }
 
   private final String name;
+  private final ImmutableSet<String> recognizedFilenameExtensions;
 
-  LanguageClass(String name) {
+  LanguageClass(String name, ImmutableSet<String> recognizedFilenameExtensions) {
     this.name = name;
+    this.recognizedFilenameExtensions = recognizedFilenameExtensions;
   }
 
   public String getName() {
@@ -43,5 +62,11 @@ public enum LanguageClass {
       }
     }
     return null;
+  }
+
+  /** Returns the LanguageClass associated with the given filename extension, if it's recognized. */
+  @Nullable
+  public static LanguageClass fromExtension(String filenameExtension) {
+    return RECOGNIZED_EXTENSIONS.get(filenameExtension);
   }
 }

@@ -41,7 +41,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
-import com.google.idea.blaze.base.sync.projectview.SourceTestConfig;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.util.PackagePrefixCalculator;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
@@ -81,7 +80,6 @@ public final class SourceDirectoryCalculator {
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
-      SourceTestConfig sourceTestConfig,
       ArtifactLocationDecoder artifactLocationDecoder,
       Collection<WorkspacePath> rootDirectories,
       Collection<SourceArtifact> sources,
@@ -127,7 +125,6 @@ public final class SourceDirectoryCalculator {
                     context,
                     workspaceRoot,
                     artifactLocationDecoder,
-                    sourceTestConfig,
                     workspacePath,
                     sourcesUnderDirectoryRoot.get(workspacePath),
                     javaPackageReaders);
@@ -196,7 +193,6 @@ public final class SourceDirectoryCalculator {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ArtifactLocationDecoder artifactLocationDecoder,
-      SourceTestConfig sourceTestConfig,
       WorkspacePath directoryRoot,
       Collection<SourceArtifact> sourceArtifacts,
       Collection<JavaPackageReader> javaPackageReaders) {
@@ -217,7 +213,6 @@ public final class SourceDirectoryCalculator {
         workspaceRoot,
         artifactLocationDecoder,
         directoryRoot,
-        sourceTestConfig,
         javaArtifacts,
         javaPackageReaders,
         result);
@@ -232,7 +227,6 @@ public final class SourceDirectoryCalculator {
       WorkspaceRoot workspaceRoot,
       ArtifactLocationDecoder artifactLocationDecoder,
       WorkspacePath directoryRoot,
-      SourceTestConfig sourceTestConfig,
       Collection<SourceArtifact> javaArtifacts,
       Collection<JavaPackageReader> javaPackageReaders,
       Collection<BlazeSourceDirectory> result) {
@@ -368,7 +362,6 @@ public final class SourceDirectoryCalculator {
       result.add(
           BlazeSourceDirectory.builder(workspaceRoot.fileForPath(sourceRoot.workspacePath))
               .setPackagePrefix(sourceRoot.packagePrefix)
-              .setTest(sourceTestConfig.isTestSource(sourceRoot.workspacePath.relativePath()))
               .setGenerated(false)
               .build());
     }

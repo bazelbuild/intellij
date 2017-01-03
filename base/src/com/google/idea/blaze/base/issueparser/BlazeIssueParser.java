@@ -17,27 +17,25 @@ package com.google.idea.blaze.base.issueparser;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.Section;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
+
 
 /** Parses blaze output for compile errors. */
 public class BlazeIssueParser {
@@ -69,27 +67,27 @@ public class BlazeIssueParser {
     }
   }
 
-  interface Parser {
-    @NotNull
-    ParseResult parse(@NotNull String currentLine, @NotNull List<String> previousLines);
+  /** Used by BlazeIssueParser. Generally implemented by subclassing SingleLineParser */
+  public interface Parser {
+    ParseResult parse(String currentLine, List<String> previousLines);
   }
 
-  abstract static class SingleLineParser implements Parser {
-    @NotNull Pattern pattern;
+  /** Base for a Parser that consumes a single contextless line at a time, matched via regex */
+  public abstract static class SingleLineParser implements Parser {
+    Pattern pattern;
 
-    SingleLineParser(@NotNull String regex) {
+    public SingleLineParser(String regex) {
       pattern = Pattern.compile(regex);
     }
 
     @Override
-    public ParseResult parse(
-        @NotNull String currentLine, @NotNull List<String> multilineMatchResult) {
+    public ParseResult parse(String currentLine, List<String> multilineMatchResult) {
       checkState(
           multilineMatchResult.isEmpty(), "SingleLineParser recieved multiple lines of input");
       return parse(currentLine);
     }
 
-    ParseResult parse(@NotNull String line) {
+    ParseResult parse(String line) {
       Matcher matcher = pattern.matcher(line);
       if (matcher.find()) {
         return ParseResult.output(createIssue(matcher));
@@ -98,36 +96,61 @@ public class BlazeIssueParser {
     }
 
     @Nullable
-    protected abstract IssueOutput createIssue(@NotNull Matcher matcher);
+    protected abstract IssueOutput createIssue(Matcher matcher);
+  }
+
+  @Nullable
+  public static File fileFromAbsolutePath(String absolutePath) {
+    return new File(absolutePath);
+  }
+
+  @Nullable
+  public static File fileFromRelativePath(WorkspaceRoot workspaceRoot, String relativePath) {
+    try {
+      final WorkspacePath workspacePath = new WorkspacePath(relativePath);
+      return workspaceRoot.fileForPath(workspacePath);
+    } catch (IllegalArgumentException e) {
+      // Ignore -- malformed error message
+      return null;
+    }
+  }
+
+  /** Returns the file referenced by the target */
+  @Nullable
+  public static File fileFromTarget(WorkspaceRoot workspaceRoot, String targetString) {
+    Label label = Label.createIfValid(targetString);
+    if (label == null) {
+      return null;
+    }
+    try {
+      final WorkspacePath combined =
+          new WorkspacePath(label.blazePackage(), label.targetName().toString());
+      return workspaceRoot.fileForPath(combined);
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
+  }
+
+  /** Falls back to returning -1 if no integer can be parsed. */
+  public static int parseOptionalInt(String intString) {
+    try {
+      return Integer.parseInt(intString);
+    } catch (NumberFormatException e) {
+      return -1;
+    }
   }
 
   static class CompileParser extends SingleLineParser {
-    @NotNull private final WorkspaceRoot workspaceRoot;
+    private final WorkspaceRoot workspaceRoot;
 
-    public CompileParser(@NotNull WorkspaceRoot workspaceRoot) {
-      super("(.*?):([0-9]+):([0-9]+:)? (error|warning): (.*)");
+    CompileParser(WorkspaceRoot workspaceRoot) {
+      super("^([^/].*?):([0-9]+):(?:([0-9]+):)? (error|warning): (.*)$");
       this.workspaceRoot = workspaceRoot;
     }
 
     @Override
-    protected IssueOutput createIssue(@NotNull Matcher matcher) {
-      final File file;
-      try {
-        String fileName = matcher.group(1);
-        final WorkspacePath workspacePath;
-        if (fileName.startsWith("//depot/google3/")) {
-          workspacePath = new WorkspacePath(fileName.substring("//depot/google3/".length()));
-        } else if (fileName.startsWith("/")) {
-          workspacePath = workspaceRoot.workspacePathFor(new File(fileName));
-        } else {
-          workspacePath = new WorkspacePath(fileName);
-        }
-        file = workspaceRoot.fileForPath(workspacePath);
-      } catch (IllegalArgumentException e) {
-        // Ignore -- malformed error message
-        return null;
-      }
-
+    protected IssueOutput createIssue(Matcher matcher) {
+      final File file = fileFromRelativePath(workspaceRoot, matcher.group(1));
       IssueOutput.Category type =
           matcher.group(4).equals("error")
               ? IssueOutput.Category.ERROR
@@ -135,7 +158,7 @@ public class BlazeIssueParser {
       return IssueOutput.issue(type, matcher.group(5))
           .inFile(file)
           .onLine(Integer.parseInt(matcher.group(2)))
-          .inColumn(parseOptionalInt(matcher.group(4)))
+          .inColumn(parseOptionalInt(matcher.group(3)))
           .build();
     }
   }
@@ -145,9 +168,8 @@ public class BlazeIssueParser {
         Pattern.compile(
             "(ERROR): (.*?):([0-9]+):([0-9]+): (Traceback \\(most recent call last\\):)");
 
-    @NotNull
     @Override
-    public ParseResult parse(@NotNull String currentLine, @NotNull List<String> previousLines) {
+    public ParseResult parse(String currentLine, List<String> previousLines) {
       if (previousLines.isEmpty()) {
         if (PATTERN.matcher(currentLine).find()) {
           return ParseResult.needsMoreInput();
@@ -179,36 +201,43 @@ public class BlazeIssueParser {
 
   static class BuildParser extends SingleLineParser {
     BuildParser() {
-      super("(ERROR): (.*?):([0-9]+):([0-9]+): (.*)");
+      super("^ERROR: (/.*?BUILD):([0-9]+):([0-9]+): (.*)$");
     }
 
     @Override
-    protected IssueOutput createIssue(@NotNull Matcher matcher) {
-      return IssueOutput.error(matcher.group(5))
-          .inFile(new File(matcher.group(2)))
-          .onLine(Integer.parseInt(matcher.group(3)))
-          .inColumn(parseOptionalInt(matcher.group(4)))
+    protected IssueOutput createIssue(Matcher matcher) {
+      File file = fileFromAbsolutePath(matcher.group(1));
+      return IssueOutput.error(matcher.group(4))
+          .inFile(file)
+          .onLine(Integer.parseInt(matcher.group(2)))
+          .inColumn(parseOptionalInt(matcher.group(3)))
           .build();
-    }
-  }
-
-  /** Falls back to returning -1 if no integer can be parsed. */
-  private static int parseOptionalInt(String intString) {
-    try {
-      return Integer.parseInt(intString);
-    } catch (NumberFormatException e) {
-      return -1;
     }
   }
 
   static class LinelessBuildParser extends SingleLineParser {
     LinelessBuildParser() {
-      super("(ERROR): (.*?):char offsets [0-9]+--[0-9]+: (.*)");
+      super("^ERROR: (.*?):char offsets [0-9]+--[0-9]+: (.*)$");
     }
 
     @Override
-    protected IssueOutput createIssue(@NotNull Matcher matcher) {
-      return IssueOutput.error(matcher.group(3)).inFile(new File(matcher.group(2))).build();
+    protected IssueOutput createIssue(Matcher matcher) {
+      return IssueOutput.error(matcher.group(2)).inFile(new File(matcher.group(1))).build();
+    }
+  }
+
+  static class FileNotFoundBuildParser extends SingleLineParser {
+    private final WorkspaceRoot workspaceRoot;
+
+    FileNotFoundBuildParser(WorkspaceRoot workspaceRoot) {
+      super("^ERROR: .*? Unable to load file '(.*?)': (.*)$");
+      this.workspaceRoot = workspaceRoot;
+    }
+
+    @Override
+    protected IssueOutput createIssue(Matcher matcher) {
+      File file = fileFromTarget(workspaceRoot, matcher.group(1));
+      return IssueOutput.error(matcher.group(2)).inFile(file).build();
     }
   }
 
@@ -222,7 +251,7 @@ public class BlazeIssueParser {
     }
 
     @Override
-    protected IssueOutput createIssue(@NotNull Matcher matcher) {
+    protected IssueOutput createIssue(Matcher matcher) {
       File file = null;
       if (projectViewSet != null) {
         String targetString = matcher.group(1);
@@ -231,12 +260,7 @@ public class BlazeIssueParser {
             projectViewFileWithSection(
                 projectViewSet,
                 TargetSection.KEY,
-                new Predicate<ListSection<TargetExpression>>() {
-                  @Override
-                  public boolean apply(@NotNull ListSection<TargetExpression> targetSection) {
-                    return targetSection.items().contains(targetExpression);
-                  }
-                });
+                targetSection -> targetSection.items().contains(targetExpression));
       }
 
       return IssueOutput.error(matcher.group(0)).inFile(file).build();
@@ -252,7 +276,7 @@ public class BlazeIssueParser {
     }
 
     @Override
-    protected IssueOutput createIssue(@NotNull Matcher matcher) {
+    protected IssueOutput createIssue(Matcher matcher) {
       File file = null;
       if (projectViewSet != null) {
         final String packageString = matcher.group(1);
@@ -276,13 +300,13 @@ public class BlazeIssueParser {
 
   @Nullable
   private static <T, SectionType extends Section<T>> File projectViewFileWithSection(
-      @NotNull ProjectViewSet projectViewSet,
-      @NotNull SectionKey<T, SectionType> key,
-      @NotNull Predicate<SectionType> predicate) {
+      ProjectViewSet projectViewSet,
+      SectionKey<T, SectionType> key,
+      Predicate<SectionType> predicate) {
     for (ProjectViewSet.ProjectViewFile projectViewFile : projectViewSet.getProjectViewFiles()) {
       ImmutableList<SectionType> sections = projectViewFile.projectView.getSectionsOfType(key);
       for (SectionType section : sections) {
-        if (predicate.apply(section)) {
+        if (predicate.test(section)) {
           return projectViewFile.projectViewFile;
         }
       }
@@ -290,34 +314,17 @@ public class BlazeIssueParser {
     return null;
   }
 
-  @NotNull private List<Parser> parsers = Lists.newArrayList();
+  private ImmutableList<Parser> parsers;
   /**
    * The parser that requested more lines of input during the last call to {@link
    * #parseIssue(String)}.
    */
   @Nullable private Parser multilineMatchingParser;
 
-  @NotNull private List<String> multilineMatchResult = new ArrayList<>();
+  private List<String> multilineMatchResult = new ArrayList<>();
 
-  public BlazeIssueParser(@Nullable Project project, @NotNull WorkspaceRoot workspaceRoot) {
-
-    ProjectViewSet projectViewSet =
-        project != null ? ProjectViewManager.getInstance(project).getProjectViewSet() : null;
-
-    parsers.add(new CompileParser(workspaceRoot));
-    parsers.add(new TracebackParser());
-    parsers.add(new BuildParser());
-    parsers.add(new LinelessBuildParser());
-    parsers.add(new ProjectViewLabelParser(projectViewSet));
-    parsers.add(
-        new InvalidTargetProjectViewPackageParser(
-            projectViewSet, "no such package '(.*)': BUILD file not found on package path"));
-    parsers.add(
-        new InvalidTargetProjectViewPackageParser(
-            projectViewSet, "no targets found beneath '(.*)'"));
-    parsers.add(
-        new InvalidTargetProjectViewPackageParser(
-            projectViewSet, "ERROR: invalid target format '(.*)'"));
+  public BlazeIssueParser(ImmutableList<Parser> parsers) {
+    this.parsers = parsers;
   }
 
   @Nullable

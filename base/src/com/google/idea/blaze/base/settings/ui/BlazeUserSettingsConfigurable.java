@@ -52,6 +52,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
   private JCheckBox suppressConsoleForRunAction;
   private JCheckBox resyncAutomatically;
   private JCheckBox collapseProjectView;
+  private JCheckBox formatBuildFilesOnSave;
   private FileSelectorWithStoredHistory blazeBinaryPathField;
   private FileSelectorWithStoredHistory bazelBinaryPathField;
 
@@ -83,6 +84,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     settings.setSuppressConsoleForRunAction(suppressConsoleForRunAction.isSelected());
     settings.setResyncAutomatically(resyncAutomatically.isSelected());
     settings.setCollapseProjectView(collapseProjectView.isSelected());
+    settings.setFormatBuildFilesOnSave(formatBuildFilesOnSave.isSelected());
     settings.setBlazeBinaryPath(Strings.nullToEmpty(blazeBinaryPathField.getText()));
     settings.setBazelBinaryPath(Strings.nullToEmpty(bazelBinaryPathField.getText()));
 
@@ -97,6 +99,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     suppressConsoleForRunAction.setSelected(settings.getSuppressConsoleForRunAction());
     resyncAutomatically.setSelected(settings.getResyncAutomatically());
     collapseProjectView.setSelected(settings.getCollapseProjectView());
+    formatBuildFilesOnSave.setSelected(settings.getFormatBuildFilesOnSave());
     blazeBinaryPathField.setTextWithHistory(settings.getBlazeBinaryPath());
     bazelBinaryPathField.setTextWithHistory(settings.getBazelBinaryPath());
 
@@ -115,10 +118,10 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
   public boolean isModified() {
     BlazeUserSettings settings = BlazeUserSettings.getInstance();
     boolean isModified =
-        !Objects.equal(
-                suppressConsoleForRunAction.isSelected(), settings.getSuppressConsoleForRunAction())
-            || !Objects.equal(resyncAutomatically.isSelected(), settings.getResyncAutomatically())
-            || !Objects.equal(collapseProjectView.isSelected(), settings.getCollapseProjectView())
+        suppressConsoleForRunAction.isSelected() != settings.getSuppressConsoleForRunAction()
+            || resyncAutomatically.isSelected() != settings.getResyncAutomatically()
+            || collapseProjectView.isSelected() != settings.getCollapseProjectView()
+            || formatBuildFilesOnSave.isSelected() != settings.getFormatBuildFilesOnSave()
             || !Objects.equal(
                 Strings.nullToEmpty(blazeBinaryPathField.getText()),
                 Strings.nullToEmpty(settings.getBlazeBinaryPath()))
@@ -153,7 +156,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
       contributorRowCount += contributor.getRowCount();
     }
 
-    final int totalRowSize = 6 + contributorRowCount;
+    final int totalRowSize = 7 + contributorRowCount;
     int rowi = 0;
 
     myMainPanel = new JPanel();
@@ -202,6 +205,25 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     collapseProjectView.setText("Collapse project view directory roots");
     myMainPanel.add(
         collapseProjectView,
+        new GridConstraints(
+            rowi++,
+            0,
+            1,
+            2,
+            GridConstraints.ANCHOR_NORTHWEST,
+            GridConstraints.FILL_NONE,
+            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+            GridConstraints.SIZEPOLICY_FIXED,
+            null,
+            null,
+            null,
+            0,
+            false));
+    formatBuildFilesOnSave = new JCheckBox();
+    formatBuildFilesOnSave.setSelected(false);
+    formatBuildFilesOnSave.setText("Automatically format BUILD files on file save");
+    myMainPanel.add(
+        formatBuildFilesOnSave,
         new GridConstraints(
             rowi++,
             0,

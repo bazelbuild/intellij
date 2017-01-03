@@ -20,11 +20,22 @@ import javax.annotation.Nullable;
 
 /** Provides an option on the "Select .blazeproject" screen */
 public interface BlazeSelectProjectViewOption extends BlazeWizardOption {
+  /** Returns a shared project view to use */
   @Nullable
-  WorkspacePath getSharedProjectView();
+  default WorkspacePath getSharedProjectView() {
+    return null;
+  }
 
+  /** Returns an initial local project view to use */
   @Nullable
-  String getInitialProjectViewText();
+  default String getInitialProjectViewText() {
+    return null;
+  }
+
+  /** Whether to allow the sections to add default values for the project view */
+  default boolean allowAddDefaultProjectViewValues() {
+    return false;
+  }
 
   void commit();
 }

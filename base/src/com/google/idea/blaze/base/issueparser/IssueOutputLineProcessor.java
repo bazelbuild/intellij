@@ -15,15 +15,17 @@
  */
 package com.google.idea.blaze.base.issueparser;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /**
  * Forwards output to PrintOutputs, colored by whether or not an issue is found per-line.
@@ -32,20 +34,41 @@ import org.jetbrains.annotations.Nullable;
  */
 public class IssueOutputLineProcessor implements LineProcessingOutputStream.LineProcessor {
 
-  @NotNull private final BlazeContext context;
+  private final BlazeContext context;
 
-  @NotNull private final BlazeIssueParser blazeIssueParser;
+  private final BlazeIssueParser blazeIssueParser;
 
   public IssueOutputLineProcessor(
-      @Nullable Project project,
-      @NotNull BlazeContext context,
-      @NotNull WorkspaceRoot workspaceRoot) {
+      @Nullable Project project, BlazeContext context, WorkspaceRoot workspaceRoot) {
     this.context = context;
-    this.blazeIssueParser = new BlazeIssueParser(project, workspaceRoot);
+    ProjectViewSet projectViewSet =
+        project != null ? ProjectViewManager.getInstance(project).getProjectViewSet() : null;
+
+    ImmutableList<BlazeIssueParser.Parser> parsers =
+        ImmutableList.of(
+            new BlazeIssueParser.CompileParser(workspaceRoot),
+            new BlazeIssueParser.TracebackParser(),
+            new BlazeIssueParser.BuildParser(),
+            new BlazeIssueParser.LinelessBuildParser(),
+            new BlazeIssueParser.ProjectViewLabelParser(projectViewSet),
+            new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                projectViewSet, "no such package '(.*)': BUILD file not found on package path"),
+            new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                projectViewSet, "no targets found beneath '(.*)'"),
+            new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                projectViewSet, "ERROR: invalid target format '(.*)'"),
+            new BlazeIssueParser.FileNotFoundBuildParser(workspaceRoot));
+    this.blazeIssueParser = new BlazeIssueParser(parsers);
+  }
+
+  public IssueOutputLineProcessor(
+      BlazeContext context, ImmutableList<BlazeIssueParser.Parser> parsers) {
+    this.context = context;
+    this.blazeIssueParser = new BlazeIssueParser(parsers);
   }
 
   @Override
-  public boolean processLine(@NotNull String line) {
+  public boolean processLine(String line) {
     IssueOutput issue = blazeIssueParser.parseIssue(line);
     if (issue != null) {
       if (issue.getCategory() == IssueOutput.Category.ERROR) {

@@ -20,12 +20,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.jetbrains.cidr.lang.symbols.OCSymbol;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
@@ -37,6 +40,9 @@ import javax.annotation.Nullable;
 /** Main entry point for C/CPP configuration data. */
 public final class BlazeCWorkspace implements OCWorkspace {
   private static final Logger LOG = Logger.getInstance(BlazeCWorkspace.class);
+
+  private static final BoolExperiment refreshExecRoot =
+      new BoolExperiment("refresh.exec.root.cpp", true);
 
   @Nullable private final Project project;
   @Nullable private final OCWorkspaceModificationTrackers modTrackers;
@@ -65,13 +71,9 @@ public final class BlazeCWorkspace implements OCWorkspace {
 
     long start = System.currentTimeMillis();
 
-    // non-recursive refresh of the blaze-out directory. This essentially invalidates the cache for
-    // all files below this directory.
-    ApplicationManager.getApplication()
-        .runWriteAction(
-            () ->
-                LocalFileSystem.getInstance()
-                    .refreshIoFiles(ImmutableList.of(blazeProjectData.blazeRoots.executionRoot)));
+    if (refreshExecRoot.getValue()) {
+      refreshExecRoot(blazeProjectData);
+    }
 
     // Non-incremental update to our c configurations.
     configurationResolver.update(context, blazeProjectData);
@@ -91,6 +93,19 @@ public final class BlazeCWorkspace implements OCWorkspace {
               modTrackers.getBuildConfigurationChangesTracker().incModificationCount();
               modTrackers.getBuildSettingsChangesTracker().incModificationCount();
             });
+  }
+
+  private static void refreshExecRoot(BlazeProjectData blazeProjectData) {
+    // recursive refresh of the blaze execution root. This is required because:
+    // <li>Our blaze aspect can't tell us exactly which genfiles are required to resolve the project
+    // <li>Cidr caches the directory contents as part of symbol building, so we need to do this work
+    // up front.
+    VirtualFile execRoot =
+        getFileSystem().findFileByIoFile(blazeProjectData.blazeRoots.executionRoot);
+    if (execRoot != null) {
+      ApplicationManager.getApplication()
+          .runWriteAction(() -> VfsUtil.markDirtyAndRefresh(false, true, true, execRoot));
+    }
   }
 
   @Override
@@ -147,5 +162,12 @@ public final class BlazeCWorkspace implements OCWorkspace {
     }
     OCResolveConfiguration config = configurationResolver.getConfigurationForFile(sourceFile);
     return config == null ? ImmutableList.of() : ImmutableList.of(config);
+  }
+
+  private static LocalFileSystem getFileSystem() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return TempFileSystem.getInstance();
+    }
+    return LocalFileSystem.getInstance();
   }
 }

@@ -402,7 +402,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     return BuildResult.fromExitCode(retVal);
   }
 
-  private AspectStrategy getAspectStrategy(Project project) {
+  private static AspectStrategy getAspectStrategy(Project project) {
     for (AspectStrategyProvider provider : AspectStrategyProvider.EP_NAME.getExtensions()) {
       AspectStrategy aspectStrategy = provider.getAspectStrategy(project);
       if (aspectStrategy != null) {

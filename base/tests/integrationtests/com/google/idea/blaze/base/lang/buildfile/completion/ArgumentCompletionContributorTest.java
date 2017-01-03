@@ -54,10 +54,10 @@ public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestC
                   new WorkspacePath("BUILD"),
                   "def function(name, deps, srcs):",
                   "  # empty function",
-                  "function(d");
+                  "function(dep");
 
           Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-          editorTest.setCaretPosition(editor, 2, "function(n".length());
+          editorTest.setCaretPosition(editor, 2, "function(dep".length());
 
           LookupElement[] completionItems = testFixture.completeBasic();
           assertThat(completionItems).isNull();
@@ -82,7 +82,6 @@ public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestC
           editorTest.setCaretPosition(editor, 2, "function(".length());
 
           String[] completionItems = editorTest.getCompletionItemsAsStrings();
-          assertThat(completionItems).hasLength(4);
           assertThat(completionItems).asList().containsAllOf("name", "deps", "srcs", "function");
         });
   }

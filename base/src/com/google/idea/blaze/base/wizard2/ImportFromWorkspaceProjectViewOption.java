@@ -107,12 +107,6 @@ class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectViewOpti
     return new WorkspacePath(getProjectViewPath());
   }
 
-  @Nullable
-  @Override
-  public String getInitialProjectViewText() {
-    return null;
-  }
-
   @Override
   public void commit() {
     userSettings.put(LAST_WORKSPACE_PATH, getProjectViewPath());

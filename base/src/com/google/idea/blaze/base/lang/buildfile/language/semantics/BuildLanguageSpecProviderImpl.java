@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.intellij.openapi.project.Project;
 import java.util.Map;
@@ -44,6 +45,7 @@ public class BuildLanguageSpecProviderImpl extends SyncListener.Adapter
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
+      SyncMode syncMode,
       SyncResult syncResult) {
     LanguageSpecResult spec = blazeProjectData.syncState.get(LanguageSpecResult.class);
     if (spec != null) {

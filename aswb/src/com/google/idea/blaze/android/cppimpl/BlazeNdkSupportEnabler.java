@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.cpp.BlazeCWorkspace;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,6 +40,7 @@ final class BlazeNdkSupportEnabler extends SyncListener.Adapter {
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
+      SyncMode syncMode,
       SyncResult syncResult) {
     boolean enabled = blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C);
     enableCSupportInIde(project, enabled);

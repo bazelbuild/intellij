@@ -36,7 +36,7 @@ import javax.annotation.Nullable;
 )
 public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSettings> {
 
-  public boolean suppressConsoleForRunAction = false;
+  private boolean suppressConsoleForRunAction = false;
   private boolean resyncAutomatically = false;
   private boolean syncStatusPopupShown = false;
   private boolean expandSyncToWorkingSet = true;
@@ -44,6 +44,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private boolean attachSourcesByDefault = false;
   private boolean attachSourcesOnDemand = false;
   private boolean collapseProjectView = true;
+  private boolean formatBuildFilesOnSave = true;
   private String blazeBinaryPath = "/usr/bin/blaze";
   @Nullable private String bazelBinaryPath;
 
@@ -139,6 +140,14 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
 
   public void setCollapseProjectView(boolean collapseProjectView) {
     this.collapseProjectView = collapseProjectView;
+  }
+
+  public boolean getFormatBuildFilesOnSave() {
+    return formatBuildFilesOnSave;
+  }
+
+  public void setFormatBuildFilesOnSave(boolean formatBuildFilesOnSave) {
+    this.formatBuildFilesOnSave = formatBuildFilesOnSave;
   }
 
   // Deprecated -- use BlazeJavaUserSettings

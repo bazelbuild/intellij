@@ -16,38 +16,56 @@
 package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
+import com.google.idea.blaze.base.ui.UiUtil;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.TextFieldWithHistory;
 import icons.BlazeIcons;
+import java.awt.Dimension;
 import java.io.File;
-import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 
-class UseExistingBazelWorkspaceOption extends UseExistingWorkspaceOption {
+class UseExistingBazelWorkspaceOption implements BlazeSelectWorkspaceOption {
+
+  private final JComponent component;
+  private final TextFieldWithHistory directoryField;
 
   UseExistingBazelWorkspaceOption(BlazeNewProjectBuilder builder) {
-    super(builder, BuildSystem.Bazel);
+    this.directoryField = new TextFieldWithHistory();
+    this.directoryField.setHistory(builder.getWorkspaceHistory(BuildSystem.Bazel));
+    this.directoryField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);
+    this.directoryField.setText(builder.getLastImportedWorkspace(BuildSystem.Bazel));
+
+    JButton button = new JButton("...");
+    button.addActionListener(action -> this.chooseDirectory());
+    int buttonSize = this.directoryField.getPreferredSize().height;
+    button.setPreferredSize(new Dimension(buttonSize, buttonSize));
+
+    JComponent box =
+        UiUtil.createHorizontalBox(
+            HORIZONTAL_LAYOUT_GAP,
+            getIconComponent(),
+            new JLabel("Workspace:"),
+            this.directoryField,
+            button);
+    UiUtil.setPreferredWidth(box, PREFERRED_COMPONENT_WIDTH);
+    this.component = box;
   }
 
   @Override
   public WorkspacePathResolver getWorkspacePathResolver() {
     return new WorkspacePathResolverImpl(getWorkspaceRoot());
-  }
-
-  @Override
-  protected boolean isWorkspaceRoot(File file) {
-    return BuildSystemProvider.getWorkspaceRootProvider(BuildSystem.Bazel).isWorkspaceRoot(file);
-  }
-
-  @Override
-  protected BlazeValidationResult validateWorkspaceRoot(File workspaceRoot) {
-    if (!isWorkspaceRoot(workspaceRoot)) {
-      return BlazeValidationResult.failure(
-          "Invalid workspace root: choose a bazel workspace directory "
-              + "(containing a WORKSPACE file)");
-    }
-    return BlazeValidationResult.success();
   }
 
   @Override
@@ -60,18 +78,105 @@ class UseExistingBazelWorkspaceOption extends UseExistingWorkspaceOption {
     return "Use existing bazel workspace";
   }
 
+  private static boolean isWorkspaceRoot(File file) {
+    return BuildSystemProvider.getWorkspaceRootProvider(BuildSystem.Bazel).isWorkspaceRoot(file);
+  }
+
+  private static boolean isWorkspaceRoot(VirtualFile file) {
+    return isWorkspaceRoot(new File(file.getPath()));
+  }
+
   @Override
-  protected String getWorkspaceName(File workspaceRoot) {
+  public BuildSystem getBuildSystemForWorkspace() {
+    return BuildSystem.Bazel;
+  }
+
+  @Override
+  public JComponent getUiComponent() {
+    return component;
+  }
+
+  @Override
+  public void commit() throws BlazeProjectCommitException {}
+
+  @Override
+  public WorkspaceRoot getWorkspaceRoot() {
+    return new WorkspaceRoot(new File(getDirectory()));
+  }
+
+  @Override
+  public File getFileBrowserRoot() {
+    return new File(getDirectory());
+  }
+
+  @Override
+  public String getWorkspaceName() {
+    File workspaceRoot = new File(getDirectory());
     return workspaceRoot.getName();
   }
 
   @Override
-  protected String fileChooserDescription() {
-    return "Select the directory of the workspace you want to use.";
+  public BlazeValidationResult validate() {
+    if (getDirectory().isEmpty()) {
+      return BlazeValidationResult.failure("Please select a workspace");
+    }
+    File workspaceRootFile = new File(getDirectory());
+    if (!workspaceRootFile.exists()) {
+      return BlazeValidationResult.failure("Workspace does not exist");
+    }
+    if (!isWorkspaceRoot(workspaceRootFile)) {
+      return BlazeValidationResult.failure(
+          "Invalid workspace root: choose a bazel workspace directory "
+              + "(containing a WORKSPACE file)");
+    }
+    return BlazeValidationResult.success();
   }
 
-  @Override
-  protected Icon getBuildSystemIcon() {
-    return BlazeIcons.BazelLeaf;
+  private String getDirectory() {
+    return directoryField.getText().trim();
+  }
+
+  private void chooseDirectory() {
+    FileChooserDescriptor descriptor =
+        new FileChooserDescriptor(false, true, false, false, false, false) {
+          @Override
+          public boolean isFileSelectable(VirtualFile file) {
+            // Default implementation doesn't filter directories,
+            // we want to make sure only workspace roots are selectable
+            return super.isFileSelectable(file) && isWorkspaceRoot(file);
+          }
+        }.withHideIgnored(false)
+            .withTitle("Select Workspace Root")
+            .withDescription("Select the directory of the workspace you want to use.")
+            .withFileFilter(UseExistingBazelWorkspaceOption::isWorkspaceRoot);
+    FileChooserDialog chooser =
+        FileChooserFactory.getInstance().createFileChooser(descriptor, null, null);
+
+    final VirtualFile[] files;
+    File existingLocation = new File(getDirectory());
+    if (existingLocation.exists()) {
+      VirtualFile toSelect =
+          LocalFileSystem.getInstance().refreshAndFindFileByPath(existingLocation.getPath());
+      files = chooser.choose(null, toSelect);
+    } else {
+      files = chooser.choose(null);
+    }
+    if (files.length == 0) {
+      return;
+    }
+    VirtualFile file = files[0];
+    directoryField.setText(file.getPath());
+  }
+
+  private static JComponent getIconComponent() {
+    JLabel iconPanel =
+        new JLabel(IconLoader.getIconSnapshot(BlazeIcons.BazelLeaf)) {
+          @Override
+          public boolean isEnabled() {
+            return true;
+          }
+        };
+    UiUtil.setPreferredWidth(iconPanel, 16);
+    return iconPanel;
   }
 }

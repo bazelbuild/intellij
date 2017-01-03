@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguag
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.testing.ServiceHelper;
 import com.google.repackaged.devtools.build.lib.query2.proto.proto2api.Build;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
@@ -35,7 +36,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Tests for BuiltInFunctionAttributeCompletionContributor. */
+/** Tests for {@link BuiltInFunctionAttributeCompletionContributor}. */
 @RunWith(JUnit4.class)
 public class BuiltInFunctionAttributeCompletionContributorTest
     extends BuildFileIntegrationTestCase {
@@ -65,10 +66,10 @@ public class BuiltInFunctionAttributeCompletionContributorTest
   public void testSimpleSingleCompletion() {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
-    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "sh_binary(", "    n");
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "sh_binary(", "    nam");
 
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-    editorTest.setCaretPosition(editor, 1, "    n".length());
+    editorTest.setCaretPosition(editor, 1, "    nam".length());
 
     String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).isNull();
@@ -77,6 +78,15 @@ public class BuiltInFunctionAttributeCompletionContributorTest
 
   @Test
   public void testNoCompletionInUnknownRule() {
+    ServiceHelper.unregisterLanguageExtensionPoint(
+        "com.intellij.completion.contributor",
+        BuiltInSymbolCompletionContributor.class,
+        getTestRootDisposable());
+    ServiceHelper.unregisterLanguageExtensionPoint(
+        "com.intellij.completion.contributor",
+        BuiltInFunctionCompletionContributor.class,
+        getTestRootDisposable());
+
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "java_binary(");

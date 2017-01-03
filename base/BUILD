@@ -8,6 +8,7 @@ java_library(
     deps = [
         "//common/binaryhelper",
         "//common/experiments",
+        "//common/formatter",
         "//intellij_platform_sdk:plugin_api",
         "//proto_deps",
         "@jsr305_annotations//jar",

@@ -48,6 +48,7 @@ public enum Kind {
   PY_BINARY("py_binary", LanguageClass.PYTHON),
   PY_TEST("py_test", LanguageClass.PYTHON),
   PY_APPENGINE_BINARY("py_appengine_binary", LanguageClass.PYTHON),
+  PY_WRAP_CC("py_wrap_cc", LanguageClass.PYTHON),
   ;
 
   static final ImmutableMap<String, Kind> STRING_TO_KIND = makeStringToKindMap();

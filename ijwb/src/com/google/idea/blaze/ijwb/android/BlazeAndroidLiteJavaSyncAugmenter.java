@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
@@ -30,6 +31,7 @@ public class BlazeAndroidLiteJavaSyncAugmenter implements BlazeJavaSyncAugmenter
   @Override
   public void addJarsForSourceTarget(
       WorkspaceLanguageSettings workspaceLanguageSettings,
+      ProjectViewSet projectViewSet,
       TargetIdeInfo target,
       Collection<BlazeJarLibrary> jars,
       Collection<BlazeJarLibrary> genJars) {

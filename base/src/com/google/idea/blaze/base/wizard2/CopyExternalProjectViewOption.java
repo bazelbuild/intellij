@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.ui.UiUtil;
@@ -87,12 +86,6 @@ class CopyExternalProjectViewOption implements BlazeSelectProjectViewOption {
       return BlazeValidationResult.failure("Project view file does not exist.");
     }
     return BlazeValidationResult.success();
-  }
-
-  @Nullable
-  @Override
-  public WorkspacePath getSharedProjectView() {
-    return null;
   }
 
   @Nullable

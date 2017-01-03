@@ -441,7 +441,6 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
                 .addSource(
                     BlazeSourceDirectory.builder("/root/javatests/apps/example")
                         .setPackagePrefix("apps.example")
-                        .setTest(true)
                         .build())
                 .build());
   }
@@ -562,7 +561,6 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
                 .addSource(
                     BlazeSourceDirectory.builder("/root/javatests/apps/example")
                         .setPackagePrefix("apps.example")
-                        .setTest(true)
                         .build())
                 .build());
   }
@@ -1330,6 +1328,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
           @Override
           public void addJarsForSourceTarget(
               WorkspaceLanguageSettings workspaceLanguageSettings,
+              ProjectViewSet projectViewSet,
               TargetIdeInfo target,
               Collection<BlazeJarLibrary> jars,
               Collection<BlazeJarLibrary> genJars) {

@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.TestTargetFinder;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -180,6 +181,7 @@ public class TestTargetFilterImpl implements TestTargetFinder {
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
         BlazeProjectData blazeProjectData,
+        SyncMode syncMode,
         SyncResult syncResult) {
       TestTargetFinder testTargetFinder = TestTargetFinder.getInstance(project);
       ((TestTargetFilterImpl) testTargetFinder).clearMapData();

@@ -15,13 +15,20 @@
  */
 package com.google.idea.blaze.android.projectview;
 
+import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
+import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.ScalarSectionParser;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
+import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
+import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
+import java.util.Collection;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.annotations.Nullable;
 
 /** Allows manual override of the android sdk. */
@@ -49,6 +56,26 @@ public class AndroidSdkPlatformSection {
     @Override
     public ItemType getItemType() {
       return ItemType.Other;
+    }
+
+    @Override
+    public ProjectView addProjectViewDefaultValue(ProjectView projectView) {
+      if (!projectView.getSectionsOfType(KEY).isEmpty()) {
+        return projectView;
+      }
+      Collection<Sdk> sdks = AndroidSdkUtils.getAllAndroidSdks();
+      return ProjectView.builder(projectView)
+          .add(TextBlockSection.of(TextBlock.newLine()))
+          .add(TextBlockSection.of(TextBlock.of("# Please set to an android SDK platform")))
+          .add(
+              TextBlockSection.of(
+                  TextBlock.of(
+                      sdks.isEmpty()
+                          ? "# You currently have no SDKs. Please use the SDK manager first."
+                          : "# Available SDKs are: "
+                              + AndroidSdkFromProjectView.getAvailableSdkPlatforms(sdks))))
+          .add(ScalarSection.builder(KEY).set("<android sdk platform>"))
+          .build();
     }
   }
 }

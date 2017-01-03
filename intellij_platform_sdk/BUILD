@@ -1,6 +1,11 @@
+# Copyright 2011 Google Inc.  All rights reserved.
 #
-# Description: IntelliJ plugin SDKs required to build the plugin jars.
-#
+# Description:
+#   Defines a package group that restricts access to the JetBrains
+#   plugin apis to known packages that build plugins. Only packages
+#   listed here may depend on these libraries.
+
+licenses(["notice"])  # Apache2
 
 package(default_visibility = ["//visibility:public"])
 
@@ -11,10 +16,19 @@ config_setting(
     },
 )
 
+# IntelliJ CE 2016.3.1
 config_setting(
-    name = "clion-latest",
+    name = "intellij-2016.3.1",
     values = {
-        "define": "ij_product=clion-latest",
+        "define": "ij_product=intellij-2016.3.1",
+    },
+)
+
+# IntelliJ CE 2016.2.4
+config_setting(
+    name = "intellij-162.2032.8",
+    values = {
+        "define": "ij_product=intellij-162.2032.8",
     },
 )
 
@@ -25,18 +39,67 @@ config_setting(
     },
 )
 
+# Android Studio 2.2.0.7
+config_setting(
+    name = "android-studio-145.1617.8",
+    values = {
+        "define": "ij_product=android-studio-145.1617.8",
+    },
+)
+
+config_setting(
+    name = "android-studio-beta",
+    values = {
+        "define": "ij_product=android-studio-beta",
+    },
+)
+
+# Android Studio 2.3.0.3
+config_setting(
+    name = "android-studio-2.3.0.3",
+    values = {
+        "define": "ij_product=android-studio-2.3.0.3",
+    },
+)
+
+config_setting(
+    name = "clion-latest",
+    values = {
+        "define": "ij_product=clion-latest",
+    },
+)
+
+# CLion 2016.2.2
+config_setting(
+    name = "clion-162.1967.7",
+    values = {
+        "define": "ij_product=clion-162.1967.7",
+    },
+)
+
+# CLion 16 (2016.2.1)
+config_setting(
+    name = "clion-162.1628.20",
+    values = {
+        "define": "ij_product=clion-162.1628.20",
+    },
+)
+
+load(":build_defs.bzl", "select_from_plugin_api_directory", "select_for_ide")
+
+# The purpose of this rule is to hide the versioning
+# complexity from users of this api.
+# There will be additional versions added in the future
 java_library(
     name = "plugin_api_internal",
-    visibility = ["//visibility:private"],
-    exports = select({
-        ":intellij-latest": ["@intellij_latest//:plugin_api"],
-        ":clion-latest": ["@clion_latest//:plugin_api"],
-        ":android-studio-latest": [
-            "@android_studio_latest//:plugin_api",
-            "@android_studio_latest//:android_plugin",
+    exports = select_from_plugin_api_directory(
+        android_studio = [
+            ":sdk",
+            ":android_plugin",
         ],
-        "//conditions:default": ["@intellij_latest//:plugin_api"],
-    }),
+        clion = [":sdk"],
+        intellij = [":sdk"],
+    ),
 )
 
 # The outward facing plugin api
@@ -59,57 +122,73 @@ java_library(
     ],
 )
 
+# For the grammar-kit binary only (a build time tool). It needs the IJ API for runtime.
+# The clion.jar doesn't work (missing MockEditorFactory, MockProjectEx), so just use
+# an idea.jar. It doesn't affect the generated code.
 java_library(
-    name = "junit",
-    neverlink = 1,
-    exports = select({
-        ":intellij-latest": ["@intellij_latest//:junit"],
-        ":android-studio-latest": ["@android_studio_latest//:junit"],
-        ":clion-latest": [],
-        "//conditions:default": ["@intellij_latest//:junit"],
-    }),
+    name = "plugin_api_for_grammar_kit",
+    visibility = ["//third_party/java/jetbrains/grammar_kit:__pkg__"],
+    exports = ["//intellij_platform_sdk/IC_162_2032_8:sdk"],
 )
 
-# The dev kit is only for IntelliJ since you only develop plugins in Java.
+# Used to support IntelliJ plugin development in our plugin
 java_library(
     name = "devkit",
     neverlink = 1,
-    exports = select({
-        ":intellij-latest": ["@intellij_latest//:devkit"],
-        ":android-studio-latest": [],
-        ":clion-latest": [],
-        "//conditions:default": ["@intellij_latest//:devkit"],
-    }),
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":devkit"],
+    ),
+)
+
+# IntelliJ Mercurial plugin
+java_library(
+    name = "hg4idea",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [":hg4idea"],
+        clion = [":hg4idea"],
+        intellij = [":hg4idea"],
+    ),
+)
+
+# IntelliJ JUnit plugin
+java_library(
+    name = "junit",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [":junit"],
+        clion = [],
+        intellij = [":junit"],
+    ),
 )
 
 # Bundled plugins required by integration tests
 java_library(
     name = "bundled_plugins",
     testonly = 1,
-    runtime_deps = select({
-        ":intellij-latest": ["@intellij_latest//:bundled_plugins"],
-        ":clion-latest": ["@clion_latest//:bundled_plugins"],
-        ":android-studio-latest": ["@android_studio_latest//:bundled_plugins"],
-        "//conditions:default": ["@intellij_latest//:bundled_plugins"],
-    }),
+    runtime_deps = select_from_plugin_api_directory(
+        android_studio = [":bundled_plugins"],
+        clion = [":bundled_plugins"],
+        intellij = [":bundled_plugins"],
+    ),
 )
 
 filegroup(
     name = "application_info_jar",
-    srcs = select({
-        ":intellij-latest": ["@intellij_latest//:application_info_jar"],
-        ":clion-latest": ["@clion_latest//:application_info_jar"],
-        ":android-studio-latest": ["@android_studio_latest//:application_info_jar"],
-        "//conditions:default": ["@intellij_latest//:application_info_jar"],
-    }),
+    srcs = select_from_plugin_api_directory(
+        android_studio = [":application_info_jar"],
+        clion = [":application_info_jar"],
+        intellij = [":application_info_jar"],
+    ),
 )
 
 filegroup(
     name = "application_info_name",
-    srcs = select({
-        ":intellij-latest": ["intellij_application_info_name.txt"],
-        ":clion-latest": ["clion_application_info_name.txt"],
-        ":android-studio-latest": ["android_studio_application_info_name.txt"],
-        "//conditions:default": ["intellij_application_info_name.txt"],
-    }),
+    srcs = select_for_ide(
+        android_studio = ["android_studio_application_info_name.txt"],
+        clion = ["clion_application_info_name.txt"],
+        intellij = ["intellij_application_info_name.txt"],
+    ),
 )

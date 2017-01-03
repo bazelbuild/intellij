@@ -129,6 +129,7 @@ public class FuncallExpression extends BuildElementImpl
     return getKeywordArgument("name");
   }
 
+  @Nullable
   public Argument.Keyword getKeywordArgument(String name) {
     ArgumentList argList = getArgList();
     return argList != null ? argList.getKeywordArgument(name) : null;

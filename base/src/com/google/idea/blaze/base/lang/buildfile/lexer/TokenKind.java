@@ -111,8 +111,8 @@ public enum TokenKind {
   public static final ImmutableSet<TokenKind> KEYWORDS =
       ImmutableSet.of(
           AND, AS, ASSERT, BREAK, CLASS, CONTINUE, DEF, DEL, ELIF, ELSE, EXCEPT, FINALLY, FOR, FROM,
-          GLOBAL, IF, IMPORT, IN, IS, LAMBDA, LOAD, NONLOCAL, NOT, OR, PASS, RAISE, RETURN, TRY,
-          WHILE, WITH, YIELD);
+          GLOBAL, IF, IMPORT, IN, IS, LAMBDA, NONLOCAL, NOT, OR, PASS, RAISE, RETURN, TRY, WHILE,
+          WITH, YIELD);
 
   public static final ImmutableSet<TokenKind> OPERATIONS =
       ImmutableSet.of(

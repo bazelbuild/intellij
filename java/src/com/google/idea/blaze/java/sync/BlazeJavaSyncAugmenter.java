@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.sync;
 
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -34,6 +35,7 @@ public interface BlazeJavaSyncAugmenter {
    */
   void addJarsForSourceTarget(
       WorkspaceLanguageSettings workspaceLanguageSettings,
+      ProjectViewSet projectViewSet,
       TargetIdeInfo target,
       Collection<BlazeJarLibrary> jars,
       Collection<BlazeJarLibrary> genJars);

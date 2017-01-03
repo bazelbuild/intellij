@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.projectview.section;
 
+import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import javax.annotation.Nullable;
@@ -44,6 +45,11 @@ public abstract class SectionParser {
 
   public boolean isDeprecated() {
     return false;
+  }
+
+  /** Allows the section to add a default value. Used during the wizard. */
+  public ProjectView addProjectViewDefaultValue(ProjectView projectView) {
+    return projectView;
   }
 
   /** The type of item(s) in this section. */

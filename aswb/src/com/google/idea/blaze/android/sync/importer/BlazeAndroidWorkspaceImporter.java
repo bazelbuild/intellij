@@ -18,10 +18,13 @@ package com.google.idea.blaze.android.sync.importer;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.android.sync.importer.aggregators.TransitiveResourceMap;
+import com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceWarnings;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
 import com.google.idea.blaze.android.sync.model.BlazeResourceLibrary;
@@ -37,6 +40,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,25 +48,39 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** Builds a BlazeWorkspace. */
 public final class BlazeAndroidWorkspaceImporter {
 
+  private final Project project;
   private final BlazeContext context;
   private final TargetMap targetMap;
   private final ProjectViewTargetImportFilter importFilter;
+  private final ProjectViewSet projectViewSet;
+  private final ArtifactLocationDecoder artifactLocationDecoder;
+  private final ImmutableSet<String> whitelistedGenResourcePaths;
 
   public BlazeAndroidWorkspaceImporter(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
-      TargetMap targetMap) {
+      TargetMap targetMap,
+      ArtifactLocationDecoder artifactLocationDecoder) {
     this.context = context;
     this.targetMap = targetMap;
     this.importFilter = new ProjectViewTargetImportFilter(project, workspaceRoot, projectViewSet);
+    this.projectViewSet = projectViewSet;
+    this.artifactLocationDecoder = artifactLocationDecoder;
+    this.project = project;
+    this.whitelistedGenResourcePaths =
+        ImmutableSet.copyOf(
+            projectViewSet
+                .listItems(GeneratedAndroidResourcesSection.KEY)
+                .stream()
+                .map(genfilesPath -> genfilesPath.relativePath)
+                .collect(Collectors.toSet()));
   }
 
   public BlazeAndroidImportResult importWorkspace() {
@@ -84,7 +102,13 @@ public final class BlazeAndroidWorkspaceImporter {
       addSourceTarget(workspaceBuilder, transitiveResourceMap, target);
     }
 
-    warnAboutGeneratedResources(workspaceBuilder.generatedResourceLocations);
+    GeneratedResourceWarnings.submit(
+        project,
+        context,
+        projectViewSet,
+        artifactLocationDecoder,
+        workspaceBuilder.generatedResourceLocations,
+        whitelistedGenResourcePaths);
 
     ImmutableList<AndroidResourceModule> androidResourceModules =
         buildAndroidResourceModules(workspaceBuilder);
@@ -99,7 +123,8 @@ public final class BlazeAndroidWorkspaceImporter {
       TargetIdeInfo target) {
     AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
     assert androidIdeInfo != null;
-    if (shouldGenerateResources(androidIdeInfo) && shouldGenerateResourceModule(androidIdeInfo)) {
+    if (shouldGenerateResources(androidIdeInfo)
+        && shouldGenerateResourceModule(androidIdeInfo, whitelistedGenResourcePaths)) {
       AndroidResourceModule.Builder builder = new AndroidResourceModule.Builder(target.key);
       workspaceBuilder.androidResourceModules.add(builder);
 
@@ -108,6 +133,11 @@ public final class BlazeAndroidWorkspaceImporter {
           builder.addResource(artifactLocation);
         } else {
           workspaceBuilder.generatedResourceLocations.add(artifactLocation);
+          if (whitelistedGenResourcePaths.contains(artifactLocation.relativePath)) {
+            // Still track location in generatedResourceLocations, so that we can warn if a
+            // whitelist entry goes unused and can be removed.
+            builder.addResource(artifactLocation);
+          }
         }
       }
 
@@ -118,6 +148,9 @@ public final class BlazeAndroidWorkspaceImporter {
           builder.addTransitiveResource(artifactLocation);
         } else {
           workspaceBuilder.generatedResourceLocations.add(artifactLocation);
+          if (whitelistedGenResourcePaths.contains(artifactLocation.relativePath)) {
+            builder.addTransitiveResource(artifactLocation);
+          }
         }
       }
       for (TargetKey resourceDependency : transitiveResourceInfo.transitiveResourceTargets) {
@@ -137,19 +170,18 @@ public final class BlazeAndroidWorkspaceImporter {
     return androidIdeInfo.generateResourceClass && androidIdeInfo.legacyResources == null;
   }
 
-  public static boolean shouldGenerateResourceModule(AndroidIdeInfo androidIdeInfo) {
-    return androidIdeInfo.resources.stream().anyMatch(ArtifactLocation::isSource);
+  public static boolean shouldGenerateResourceModule(
+      AndroidIdeInfo androidIdeInfo, Set<String> whitelistedGenResourcePaths) {
+    return androidIdeInfo
+        .resources
+        .stream()
+        .anyMatch(location -> isSourceOrWhitelistedGenPath(location, whitelistedGenResourcePaths));
   }
 
-  private void warnAboutGeneratedResources(Set<ArtifactLocation> generatedResourceLocations) {
-    for (ArtifactLocation artifactLocation : generatedResourceLocations) {
-      IssueOutput.warn(
-              String.format(
-                  "Dropping generated resource directory '%s', "
-                      + "R classes will not contain resources from this directory",
-                  artifactLocation.getExecutionRootRelativePath()))
-          .submit(context);
-    }
+  private static boolean isSourceOrWhitelistedGenPath(
+      ArtifactLocation artifactLocation, Set<String> whitelistedGenResourcePaths) {
+    return artifactLocation.isSource()
+        || whitelistedGenResourcePaths.contains(artifactLocation.getRelativePath());
   }
 
   @Nullable
@@ -169,7 +201,6 @@ public final class BlazeAndroidWorkspaceImporter {
     return null;
   }
 
-  @NotNull
   private ImmutableList<AndroidResourceModule> buildAndroidResourceModules(
       WorkspaceBuilder workspaceBuilder) {
     // Filter empty resource modules

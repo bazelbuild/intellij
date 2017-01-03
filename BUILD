@@ -10,6 +10,7 @@ test_suite(
     tests = [
         "//base:integration_tests",
         "//base:unit_tests",
+        "//ijwb:integration_tests",
         "//ijwb:unit_tests",
         "//java:integration_tests",
         "//java:unit_tests",

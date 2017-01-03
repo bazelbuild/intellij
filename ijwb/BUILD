@@ -66,6 +66,7 @@ intellij_plugin(
 
 load(
     "//testing:test_defs.bzl",
+    "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
 
@@ -79,6 +80,25 @@ intellij_unit_test_suite(
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "@jsr305_annotations//jar",
+        "@junit//jar",
+    ],
+)
+
+intellij_integration_test_suite(
+    name = "integration_tests",
+    srcs = glob(["tests/integrationtests/**/*.java"]),
+    required_plugins = "com.google.idea.blaze.ijwb",
+    test_package_root = "com.google.idea.blaze.ijwb",
+    runtime_deps = [
+        ":ijwb_bazel",
+    ],
+    deps = [
+        ":ijwb_lib",
+        "//base",
+        "//base:integration_test_utils",
+        "//base:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "@jsr305_annotations//jar",
         "@junit//jar",

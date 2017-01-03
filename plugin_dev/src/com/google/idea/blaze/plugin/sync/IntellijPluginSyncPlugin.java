@@ -23,7 +23,10 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
+import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
+import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -60,6 +63,15 @@ public class IntellijPluginSyncPlugin extends BlazeSyncPlugin.Adapter {
       return ImmutableSet.of(LanguageClass.JAVA);
     }
     return ImmutableSet.of();
+  }
+
+  @Nullable
+  @Override
+  public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
+    if (!projectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.INTELLIJ_PLUGIN)) {
+      return null;
+    }
+    return new JavaSourceFolderProvider(projectData.syncState.get(BlazeJavaSyncData.class));
   }
 
   @Override

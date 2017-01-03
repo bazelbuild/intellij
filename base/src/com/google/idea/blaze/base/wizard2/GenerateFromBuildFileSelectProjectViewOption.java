@@ -104,18 +104,17 @@ class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelectProject
 
   @Nullable
   @Override
-  public WorkspacePath getSharedProjectView() {
-    return null;
-  }
-
-  @Nullable
-  @Override
   public String getInitialProjectViewText() {
     WorkspacePathResolver workspacePathResolver =
         builder.getWorkspaceOption().getWorkspacePathResolver();
     WorkspacePath workspacePath =
         new WorkspacePath(Strings.nullToEmpty(new File(getBuildFilePath()).getParent()));
     return guessProjectViewFromLocation(workspacePathResolver, workspacePath);
+  }
+
+  @Override
+  public boolean allowAddDefaultProjectViewValues() {
+    return true;
   }
 
   @Override

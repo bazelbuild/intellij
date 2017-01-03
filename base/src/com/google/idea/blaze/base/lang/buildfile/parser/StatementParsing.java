@@ -45,7 +45,7 @@ public class StatementParsing extends Parsing {
 
   // Unlike in Python grammar, 'load' and 'def' are only allowed as a top-level statement
   public void parseTopLevelStatement() {
-    if (currentToken() == TokenKind.LOAD) {
+    if (currentToken() == TokenKind.IDENTIFIER && "load".equals(builder.getTokenText())) {
       parseLoadStatement();
     } else if (currentToken() == TokenKind.DEF) {
       parseFunctionDefStatement();
@@ -89,7 +89,7 @@ public class StatementParsing extends Parsing {
   // load '(' STRING (',' [IDENTIFIER '='] STRING)* [','] ')'
   private void parseLoadStatement() {
     PsiBuilder.Marker marker = builder.mark();
-    expect(TokenKind.LOAD);
+    expect(TokenKind.IDENTIFIER);
     expect(TokenKind.LPAREN);
     parseStringLiteral(false);
     // Not implementing [IDENTIFIER EQUALS] option -- not a documented feature,

@@ -17,11 +17,13 @@ package com.google.idea.blaze.base.sync.aspects.strategy;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import javax.annotation.Nullable;
 
 /** Extension point for providing an aspect strategy */
 public interface AspectStrategyProvider {
   ExtensionPointName<AspectStrategyProvider> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.AspectStrategyProvider");
 
+  @Nullable
   AspectStrategy getAspectStrategy(Project project);
 }

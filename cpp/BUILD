@@ -1,5 +1,7 @@
 licenses(["notice"])  # Apache 2.0
 
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
+
 java_library(
     name = "cpp",
     srcs = glob(
@@ -7,13 +9,14 @@ java_library(
         exclude = [
             "src/com/google/idea/blaze/cpp/versioned/**",
         ],
-    ) + select({
-        "//intellij_platform_sdk:android-studio-latest": [":api_v145_sources"],
-        "//conditions:default": [":api_v162_sources"],
+    ) + select_for_plugin_api({
+        "android-studio-145.1617.8": [":api_v145_sources"],
+        "default": [":api_v162_sources"],
     }),
     visibility = ["//visibility:public"],
     deps = [
         "//base",
+        "//common/experiments",
         "//intellij_platform_sdk:plugin_api",
         "@jsr305_annotations//jar",
     ],

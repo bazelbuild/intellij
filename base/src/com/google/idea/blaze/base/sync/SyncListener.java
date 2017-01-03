@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 
@@ -40,7 +41,7 @@ public interface SyncListener {
   }
 
   /** Called after open documents have been saved, prior to starting the blaze sync. */
-  void onSyncStart(Project project, BlazeContext context);
+  void onSyncStart(Project project, BlazeContext context, SyncMode syncMode);
 
   /** Called on successful (or partially successful) completion of a sync */
   void onSyncComplete(
@@ -49,16 +50,17 @@ public interface SyncListener {
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
+      SyncMode syncMode,
       SyncResult syncResult);
 
   /** Guaranteed to be called once per sync, regardless of whether it successfully completed */
-  void afterSync(Project project, BlazeContext context, SyncResult syncResult);
+  void afterSync(Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult);
 
   /** Convenience adapter class. */
   abstract class Adapter implements SyncListener {
 
     @Override
-    public void onSyncStart(Project project, BlazeContext context) {}
+    public void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {}
 
     @Override
     public void onSyncComplete(
@@ -67,9 +69,11 @@ public interface SyncListener {
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
         BlazeProjectData blazeProjectData,
+        SyncMode syncMode,
         SyncResult syncResult) {}
 
     @Override
-    public void afterSync(Project project, BlazeContext context, SyncResult syncResult) {}
+    public void afterSync(
+        Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {}
   }
 }

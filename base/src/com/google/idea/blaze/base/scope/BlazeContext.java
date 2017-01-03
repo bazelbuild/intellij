@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.scope;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ public class BlazeContext {
   @NotNull private final List<BlazeScope> scopes = Lists.newArrayList();
 
   @NotNull
-  private final ArrayListMultimap<Class<? extends Output>, OutputSink<?>> outputSinks =
+  private final ListMultimap<Class<? extends Output>, OutputSink<?>> outputSinks =
       ArrayListMultimap.create();
 
   boolean isEnding;

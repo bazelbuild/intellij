@@ -36,7 +36,6 @@
     <programRunner implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryProgramRunner" order="first"/>
     <executor implementation="com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallRunExecutor" order="last"/>
     <executor implementation="com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallDebugExecutor" order="last"/>
-    <applicationService serviceImplementation="com.google.idea.blaze.android.settings.AswbGlobalSettings"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"
                         serviceImplementation="com.google.idea.blaze.android.plugin.AswbPlugin"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.manifest.ManifestParser"/>
@@ -46,6 +45,10 @@
     <newResourceCreationHandler
         implementation="com.google.idea.blaze.android.resources.actions.BlazeNewResourceCreationHandler" />
   </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.google.idea.blaze.BuildSystemAndroidJdkProvider" interface="com.google.idea.blaze.android.sync.BuildSystemAndroidJdkProvider"/>
+  </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncPlugin"/>
@@ -57,6 +60,7 @@
     <PrefetchFileSource implementation="com.google.idea.blaze.android.sync.AndroidPrefetchFileSource"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandlerProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationHandlerProvider"/>
+    <BuildSystemAndroidJdkProvider implementation="com.google.idea.blaze.android.sync.BazelAndroidJdkProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">

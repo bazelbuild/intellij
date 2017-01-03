@@ -40,7 +40,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
-import com.google.idea.blaze.base.sync.projectview.SourceTestConfig;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
@@ -67,7 +66,6 @@ public final class BlazeJavaWorkspaceImporter {
   private final WorkspaceRoot workspaceRoot;
   private final ImportRoots importRoots;
   private final TargetMap targetMap;
-  private final SourceTestConfig sourceTestConfig;
   private final JdepsMap jdepsMap;
   @Nullable private final JavaWorkingSet workingSet;
   private final ArtifactLocationDecoder artifactLocationDecoder;
@@ -75,6 +73,7 @@ public final class BlazeJavaWorkspaceImporter {
   private final JavaSourceFilter sourceFilter;
   private final WorkspaceLanguageSettings workspaceLanguageSettings;
   private final List<BlazeJavaSyncAugmenter> augmenters;
+  private final ProjectViewSet projectViewSet;
 
   public BlazeJavaWorkspaceImporter(
       Project project,
@@ -97,9 +96,9 @@ public final class BlazeJavaWorkspaceImporter {
     this.jdepsMap = jdepsMap;
     this.workingSet = workingSet;
     this.artifactLocationDecoder = artifactLocationDecoder;
-    this.sourceTestConfig = new SourceTestConfig(projectViewSet);
     this.workspaceLanguageSettings = workspaceLanguageSettings;
     this.augmenters = Arrays.asList(BlazeJavaSyncAugmenter.EP_NAME.getExtensions());
+    this.projectViewSet = projectViewSet;
   }
 
   public BlazeJavaImportResult importWorkspace(BlazeContext context) {
@@ -114,7 +113,6 @@ public final class BlazeJavaWorkspaceImporter {
             project,
             context,
             workspaceRoot,
-            sourceTestConfig,
             artifactLocationDecoder,
             importRoots.rootDirectories(),
             workspaceBuilder.sourceArtifacts,
@@ -389,6 +387,7 @@ public final class BlazeJavaWorkspaceImporter {
     for (BlazeJavaSyncAugmenter augmenter : augmenters) {
       augmenter.addJarsForSourceTarget(
           workspaceLanguageSettings,
+          projectViewSet,
           target,
           workspaceBuilder.outputJarsFromSourceTargets.get(targetKey),
           workspaceBuilder.generatedJarsFromSourceTargets);

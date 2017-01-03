@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -42,6 +43,7 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
+      SyncMode syncMode,
       SyncResult syncResult) {
 
     UIUtil.invokeAndWaitIfNeeded(

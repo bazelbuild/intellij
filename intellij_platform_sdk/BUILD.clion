@@ -5,9 +5,14 @@
 package(default_visibility = ["//visibility:public"])
 
 java_import(
-    name = "plugin_api",
+    name = "sdk",
     jars = glob(["clion-*/lib/*.jar"]),
     tags = ["intellij-provided-by-sdk"],
+)
+
+java_import(
+    name = "hg4idea",
+    jars = glob(["clion-*/plugins/hg4idea/lib/hg4idea.jar"]),
 )
 
 # The plugins required by CLwB. Presumably there will be some, when we write

@@ -161,6 +161,7 @@
                         serviceImplementation="com.google.idea.blaze.base.help.BlazeHelpHandlerImpl"/>
 
     <additionalTextAttributes scheme="Default" file="base/resources/colorSchemes/BuildDefault.xml"/>
+    <typedHandler implementation="com.google.idea.blaze.base.lang.buildfile.completion.BuildCompletionAutoPopupHandler"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -194,12 +195,14 @@
     <enterHandlerDelegate implementation="com.google.idea.blaze.base.lang.buildfile.editor.BuildEnterHandler" order="after EnterBetweenBracesHandler"/>
     <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.ParameterCompletionContributor"/>
     <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.BuiltInFunctionCompletionContributor"/>
+    <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.BuiltInSymbolCompletionContributor"/>
     <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.BuiltInFunctionAttributeCompletionContributor"/>
     <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.ArgumentCompletionContributor"/>
     <langCodeStyleSettingsProvider implementation="com.google.idea.blaze.base.lang.buildfile.formatting.BuildLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.google.idea.blaze.base.lang.buildfile.formatting.BuildCodeStyleSettingsProvider"/>
     <editor.backspaceModeOverride language="BUILD" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
     <filetype.stubBuilder filetype="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.stubs.BuildFileStubBuilder"/>
+    <editorNotificationProvider implementation="com.google.idea.blaze.base.lang.AdditionalLanguagesHelper"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.lang">
@@ -232,6 +235,13 @@
       <implementation-class>com.google.idea.blaze.base.experiments.BlazeExperimentService</implementation-class>
     </component>
   </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>com.google.idea.blaze.base.buildmodifier.BuildifierFormatter</implementation-class>
+      <loadForDefaultProject/>
+    </component>
+  </project-components>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.google.idea.blaze.SyncListener" interface="com.google.idea.blaze.base.sync.SyncListener"/>

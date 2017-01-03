@@ -19,6 +19,7 @@ import com.android.builder.model.SourceProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.android.resources.LightResourceClassService;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
@@ -190,13 +191,17 @@ public class BlazeAndroidProjectStructureSyncer {
           ++totalRunConfigurationModules;
         }
 
+        int whitelistedGenResources =
+            projectViewSet.listItems(GeneratedAndroidResourcesSection.KEY).size();
         context.output(
             PrintOutput.log(
                 String.format(
-                    "Android resource module count: %d, run config modules: %d, order entries: %d",
+                    "Android resource module count: %d, run config modules: %d, order entries: %d, "
+                        + "generated resources: %d",
                     syncData.importResult.androidResourceModules.size(),
                     totalRunConfigurationModules,
-                    totalOrderEntries)));
+                    totalOrderEntries,
+                    whitelistedGenResources)));
       }
     } else {
       AndroidFacetModuleCustomizer.removeAndroidFacet(workspaceModule);
