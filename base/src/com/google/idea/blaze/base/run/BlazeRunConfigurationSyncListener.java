@@ -28,6 +28,8 @@ import com.google.idea.blaze.base.sync.SyncListener;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import java.util.List;
@@ -46,22 +48,22 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
       SyncMode syncMode,
       SyncResult syncResult) {
 
-    UIUtil.invokeAndWaitIfNeeded(
-        (Runnable)
-            () -> {
-              Set<Label> labelsWithConfigs = labelsWithConfigs(project);
-              Set<TargetExpression> targetExpressions =
-                  Sets.newHashSet(projectViewSet.listItems(TargetSection.KEY));
-              // We only auto-generate configurations for rules listed in the project view.
-              for (TargetExpression target : targetExpressions) {
-                if (!(target instanceof Label) || labelsWithConfigs.contains(target)) {
-                  continue;
-                }
-                Label label = (Label) target;
-                labelsWithConfigs.add(label);
-                maybeAddRunConfiguration(project, blazeProjectData, label);
-              }
-            });
+    ApplicationManager.getApplication().invokeAndWait(
+            (Runnable)
+                    () -> {
+                      Set<Label> labelsWithConfigs = labelsWithConfigs(project);
+                      Set<TargetExpression> targetExpressions =
+                              Sets.newHashSet(projectViewSet.listItems(TargetSection.KEY));
+                      // We only auto-generate configurations for rules listed in the project view.
+                      for (TargetExpression target : targetExpressions) {
+                        if (!(target instanceof Label) || labelsWithConfigs.contains(target)) {
+                          continue;
+                        }
+                        Label label = (Label) target;
+                        labelsWithConfigs.add(label);
+                        maybeAddRunConfiguration(project, blazeProjectData, label);
+                      }
+                    }, ModalityState.NON_MODAL);
   }
 
   /** Collects a set of all the Blaze labels that have an associated run configuration. */

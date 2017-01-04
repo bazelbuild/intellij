@@ -58,7 +58,7 @@ class BlazeCProjectCreator {
     try {
       return doCreate();
     } catch (final IOException e) {
-      UIUtil.invokeLaterIfNeeded(
+      ApplicationManager.getApplication().invokeLater(
           () -> Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed"));
       return null;
     }

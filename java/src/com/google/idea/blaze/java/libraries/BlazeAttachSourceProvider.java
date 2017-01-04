@@ -85,7 +85,7 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
      * corresponding user setting is active.
      */
     if (BlazeJavaUserSettings.getInstance().getAttachSourcesOnDemand()) {
-      UIUtil.invokeLaterIfNeeded(
+      ApplicationManager.getApplication().invokeLater(
           () -> {
             attachSources(project, blazeProjectData, librariesToAttachSourceTo);
           });
