@@ -15,18 +15,19 @@
  */
 package com.google.idea.blaze.base.util;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.util.ui.UIUtil;
 
 /** Utility for saving all files. */
 public class SaveUtil {
   public static void saveAllFiles() {
-    UIUtil.invokeAndWaitIfNeeded(
-        new Runnable() {
-          @Override
-          public void run() {
-            FileDocumentManager.getInstance().saveAllDocuments();
-          }
-        });
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+    }, ModalityState.NON_MODAL);
   }
 }

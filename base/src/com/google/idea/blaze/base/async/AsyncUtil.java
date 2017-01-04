@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.async;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +53,7 @@ public class AsyncUtil {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       task.run();
     } else {
-      UIUtil.invokeAndWaitIfNeeded(task);
+      ApplicationManager.getApplication().invokeAndWait(task, ModalityState.NON_MODAL);
     }
   }
 }

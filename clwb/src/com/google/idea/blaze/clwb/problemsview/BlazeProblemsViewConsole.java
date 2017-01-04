@@ -22,6 +22,7 @@ import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.GroupingElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -222,7 +223,7 @@ public class BlazeProblemsViewConsole implements BlazeProblemsView {
   }
 
   private void updateIcon() {
-    UIUtil.invokeLaterIfNeeded(
+    ApplicationManager.getApplication().invokeLater(
         () -> {
           if (!myProject.isDisposed()) {
             final ToolWindow tw =
