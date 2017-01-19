@@ -17,6 +17,7 @@ merged_plugin_xml(
     srcs = [
         "src/META-INF/ijwb.xml",
         "//base:plugin_xml",
+        "//golang:plugin_xml",
         "//java:plugin_xml",
         "//plugin_dev:plugin_xml",
     ],
@@ -50,6 +51,7 @@ java_library(
     ],
     deps = [
         "//base",
+        "//golang",
         "//intellij_platform_sdk:plugin_api",
         "//java",
         "@jsr305_annotations//jar",

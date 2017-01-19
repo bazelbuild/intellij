@@ -41,13 +41,6 @@ public final class BlazeFlags {
   public static final String TEST_OUTPUT_STREAMED = "--test_output=streamed";
   // Filters the unit tests that are run (used with regexp for Java/Robolectric tests).
   public static final String TEST_FILTER = "--test_filter";
-  // Skips checking for output file modifications (reduced statting -> faster).
-  public static final String NO_CHECK_OUTPUTS = "--noexperimental_check_output_files";
-  // Ignores implicit dependencies (e.g. java_library rules depending implicitly on
-  // "//transconsole/tools:aggregate_messages" in order to support translations).
-  public static final String NO_IMPLICIT_DEPS = "--noimplicit_deps";
-  // Ignores host dependencies.
-  public static final String NO_HOST_DEPS = "--nohost_deps";
   // When used with mobile-install, deploys the an app incrementally.
   public static final String INCREMENTAL = "--incremental";
   // When used with mobile-install, deploys the an app incrementally

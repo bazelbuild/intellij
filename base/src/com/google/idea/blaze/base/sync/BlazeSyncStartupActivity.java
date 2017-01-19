@@ -43,8 +43,7 @@ public class BlazeSyncStartupActivity implements StartupActivity {
           .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
           .build();
     }
-    return new BlazeSyncParams.Builder(
-            "Sync Project", BlazeSyncParams.SyncMode.RESTORE_EPHEMERAL_STATE)
+    return new BlazeSyncParams.Builder("Sync Project", BlazeSyncParams.SyncMode.STARTUP)
         .addProjectViewTargets(true)
         .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
         .build();

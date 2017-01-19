@@ -22,13 +22,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration.BlazeCommandRunConfigurationSettingsEditor;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
-import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.openapi.options.ConfigurationException;
@@ -70,10 +70,9 @@ public class BlazeCommandRunConfigurationSettingsEditorTest extends BlazeIntegra
         new TargetMap(ImmutableMap.of()),
         ImmutableMap.of(),
         fakeRoots,
-        new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of()),
+        new BlazeVersionData(),
         workspacePathResolver,
         artifactLocationDecoder,
-        null,
         null,
         null,
         null);

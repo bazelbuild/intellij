@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.wizard2.ui;
 
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.wizard2.BlazeNewProjectBuilder;
@@ -30,11 +29,8 @@ public class BlazeSelectProjectViewControl {
   private BlazeSelectOptionControl<BlazeSelectProjectViewOption> selectOptionControl;
 
   public BlazeSelectProjectViewControl(BlazeNewProjectBuilder builder) {
-    Collection<BlazeSelectProjectViewOption> options = Lists.newArrayList();
-    for (BlazeWizardOptionProvider optionProvider :
-        BlazeWizardOptionProvider.EP_NAME.getExtensions()) {
-      options.addAll(optionProvider.getSelectProjectViewOptions(builder));
-    }
+    Collection<BlazeSelectProjectViewOption> options =
+        BlazeWizardOptionProvider.getInstance().getSelectProjectViewOptions(builder);
 
     this.selectOptionControl =
         new BlazeSelectOptionControl<BlazeSelectProjectViewOption>(builder, options) {

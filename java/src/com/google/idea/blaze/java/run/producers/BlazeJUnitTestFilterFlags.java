@@ -16,17 +16,22 @@
 
 package com.google.idea.blaze.java.run.producers;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.common.experiments.BoolExperiment;
+import com.google.common.collect.ImmutableList;
+import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.util.containers.MultiMap;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Utilities for building test filter flags for JUnit tests. */
 public final class BlazeJUnitTestFilterFlags {
-
-  private static final BoolExperiment enableParameterizedSupport =
-      new BoolExperiment("enable.parameterized.test.support", true);
 
   /** A version of JUnit to generate test filter flags for. */
   public enum JUnitVersion {
@@ -34,58 +39,124 @@ public final class BlazeJUnitTestFilterFlags {
     JUNIT_4
   }
 
-  public static String testFilterFlagForClass(String className, JUnitVersion jUnitVersion) {
-    return testFilterFlagForClassAndMethod(
-        className, null, jUnitVersion, /* parameterized doesn't matter for a class */ false);
+  /**
+   * Builds the JUnit test filter corresponding to the given class.<br>
+   * Returns null if no class name can be found.
+   */
+  @Nullable
+  public static String testFilterForClass(PsiClass psiClass) {
+    return testFilterForClassAndMethods(psiClass, ImmutableList.of());
   }
 
-  public static String testFilterFlagForClassAndMethod(
+  /**
+   * Builds the JUnit test filter corresponding to the given class and methods.<br>
+   * Returns null if no class name can be found.
+   */
+  @Nullable
+  public static String testFilterForClassAndMethods(
+      PsiClass psiClass, Collection<PsiMethod> methods) {
+    JUnitVersion version =
+        JUnitUtil.isJUnit4TestClass(psiClass) ? JUnitVersion.JUNIT_4 : JUnitVersion.JUNIT_3;
+    return testFilterForClassAndMethods(psiClass, version, methods);
+  }
+
+  @Nullable
+  public static String testFilterForClassesAndMethods(
+      MultiMap<PsiClass, PsiMethod> methodsPerClass) {
+    // Note: this could be incorrect if there are no JUnit4 classes in this sample, but some in the
+    // java_test target they're run from.
+    JUnitVersion version =
+        hasJUnit4Test(methodsPerClass.keySet()) ? JUnitVersion.JUNIT_4 : JUnitVersion.JUNIT_3;
+    return testFilterForClassesAndMethods(methodsPerClass, version);
+  }
+
+  @Nullable
+  public static String testFilterForClassesAndMethods(
+      MultiMap<PsiClass, PsiMethod> methodsPerClass, JUnitVersion version) {
+    StringBuilder output = new StringBuilder();
+    for (Entry<PsiClass, Collection<PsiMethod>> entry : methodsPerClass.entrySet()) {
+      String filter = testFilterForClassAndMethods(entry.getKey(), version, entry.getValue());
+      if (filter != null) {
+        output.append(filter);
+      }
+    }
+    return Strings.emptyToNull(output.toString());
+  }
+
+  private static boolean hasJUnit4Test(Collection<PsiClass> classes) {
+    for (PsiClass psiClass : classes) {
+      if (JUnitUtil.isJUnit4TestClass(psiClass)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Builds the JUnit test filter corresponding to the given class and methods.<br>
+   * Returns null if no class name can be found.
+   */
+  @Nullable
+  private static String testFilterForClassAndMethods(
+      PsiClass psiClass, JUnitVersion version, Collection<PsiMethod> methods) {
+    String className = psiClass.getQualifiedName();
+    if (className == null) {
+      return null;
+    }
+    // Sort so multiple configurations created with different selection orders are the same.
+    List<String> methodNames =
+        methods.stream().map(PsiMethod::getName).sorted().collect(Collectors.toList());
+    return testFilterForClassAndMethods(className, methodNames, version, isParameterized(psiClass));
+  }
+
+  private static boolean isParameterized(PsiClass testClass) {
+    return PsiMemberParameterizedLocation.getParameterizedLocation(testClass, null) != null;
+  }
+
+  /**
+   * Builds the blaze test_filter flag for JUnit tests. Excludes the "--test_filter" component of
+   * the flag, so that multiple test classes can be combined.
+   */
+  @VisibleForTesting
+  static String testFilterForClassAndMethods(
       String className,
-      @Nullable String methodName,
+      List<String> methodNames,
       JUnitVersion jUnitVersion,
       boolean parameterized) {
-    StringBuilder output = new StringBuilder(BlazeFlags.TEST_FILTER);
-    output.append('=');
-    output.append(className);
-
-    if (!Strings.isNullOrEmpty(methodName)) {
-      output.append('#');
-      output.append(methodName);
-      // JUnit 4 test filters are regexes, and must be terminated to avoid matching
-      // unintended classes/methods. JUnit 3 test filters do not need or support this syntax.
+    StringBuilder output = new StringBuilder(className);
+    String methodNamePattern = concatenateMethodNames(methodNames, jUnitVersion);
+    if (Strings.isNullOrEmpty(methodNamePattern)) {
       if (jUnitVersion == JUnitVersion.JUNIT_4) {
-        // parameterized tests include their parameters between brackets after the method name
-        if (parameterized && enableParameterizedSupport.getValue()) {
-          output.append("(\\[.+\\])?");
-        }
-        output.append("$");
+        output.append('#');
       }
-    } else if (jUnitVersion == JUnitVersion.JUNIT_4) {
-      output.append('#');
+      return output.toString();
     }
-
+    output.append('#').append(methodNamePattern);
+    // JUnit 4 test filters are regexes, and must be terminated to avoid matching
+    // unintended classes/methods. JUnit 3 test filters do not need or support this syntax.
+    if (jUnitVersion == JUnitVersion.JUNIT_3) {
+      return output.toString();
+    }
+    // parameterized tests include their parameters between brackets after the method name
+    if (parameterized) {
+      output.append("(\\[.+\\])?");
+    }
+    output.append('$');
     return output.toString();
   }
 
-  public static String testFilterFlagForClassAndMethods(
-      String className,
-      Collection<String> methodNames,
-      JUnitVersion jUnitVersion,
-      boolean parameterized) {
-    if (methodNames.size() == 0) {
-      return testFilterFlagForClass(className, jUnitVersion);
-    } else if (methodNames.size() == 1) {
-      return testFilterFlagForClassAndMethod(
-          className, methodNames.iterator().next(), jUnitVersion, parameterized);
+  @Nullable
+  private static String concatenateMethodNames(
+      List<String> methodNames, JUnitVersion jUnitVersion) {
+    if (methodNames.isEmpty()) {
+      return null;
     }
-    String methodNamePattern;
-    if (jUnitVersion == JUnitVersion.JUNIT_4) {
-      methodNamePattern = String.format("(%s)", String.join("|", methodNames));
-    } else {
-      methodNamePattern = String.join(",", methodNames);
+    if (methodNames.size() == 1) {
+      return methodNames.get(0);
     }
-    return testFilterFlagForClassAndMethod(
-        className, methodNamePattern, jUnitVersion, parameterized);
+    return jUnitVersion == JUnitVersion.JUNIT_4
+        ? String.format("(%s)", String.join("|", methodNames))
+        : String.join(",", methodNames);
   }
 
   private BlazeJUnitTestFilterFlags() {}

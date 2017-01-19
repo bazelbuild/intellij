@@ -15,8 +15,9 @@
  */
 package com.google.idea.blaze.android.sync;
 
+import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import javax.annotation.Nullable;
 
@@ -28,9 +29,9 @@ public interface BuildSystemAndroidJdkProvider {
 
   LanguageLevel DEFAULT_LANGUAGE_LEVEL = LanguageLevel.JDK_1_7;
 
-  static LanguageLevel languageLevel(Project project) {
+  static LanguageLevel languageLevel(BuildSystem buildSystem, BlazeVersionData blazeVersionData) {
     for (BuildSystemAndroidJdkProvider provider : EP_NAME.getExtensions()) {
-      LanguageLevel level = provider.getLanguageLevel(project);
+      LanguageLevel level = provider.getLanguageLevel(buildSystem, blazeVersionData);
       if (level != null) {
         return level;
       }
@@ -43,5 +44,5 @@ public interface BuildSystemAndroidJdkProvider {
    * unable to determine it.
    */
   @Nullable
-  LanguageLevel getLanguageLevel(Project project);
+  LanguageLevel getLanguageLevel(BuildSystem buildSystem, BlazeVersionData blazeVersionData);
 }

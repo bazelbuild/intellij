@@ -36,18 +36,21 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerIconProvider;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
+import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import java.util.Collection;
@@ -63,13 +66,15 @@ import org.jdom.Element;
 
 /** A run configuration which executes Blaze commands. */
 public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
-    implements BlazeRunConfiguration, RunnerIconProvider {
+    implements BlazeRunConfiguration, RunnerIconProvider, ModuleRunProfile {
 
   private static final Logger LOG = Logger.getInstance(BlazeCommandRunConfiguration.class);
 
   private static final String HANDLER_ATTR = "handler-id";
   private static final String TARGET_TAG = "blaze-target";
   private static final String KIND_ATTR = "kind";
+  private static final String KEEP_IN_SYNC_TAG = "keep-in-sync";
+
   /**
    * This tag is actually written by {@link com.intellij.execution.impl.RunManagerImpl}; it
    * represents the before-run tasks of the configuration. We need to know about it to avoid writing
@@ -83,6 +88,10 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   @Nullable private TargetExpression target;
   // Null if the target is null, not a Label, or not a known rule.
   @Nullable private Kind targetKind;
+
+  // for keeping imported configurations in sync with their source XML
+  @Nullable private Boolean keepInSync = null;
+
   private BlazeCommandRunConfigurationHandlerProvider handlerProvider;
   private BlazeCommandRunConfigurationHandler handler;
 
@@ -118,6 +127,17 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   }
 
   @Override
+  public void setKeepInSync(@Nullable Boolean keepInSync) {
+    this.keepInSync = keepInSync;
+  }
+
+  @Override
+  @Nullable
+  public Boolean getKeepInSync() {
+    return keepInSync;
+  }
+
+  @Override
   @Nullable
   public TargetExpression getTarget() {
     return target;
@@ -125,6 +145,10 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
   public void setTarget(@Nullable TargetExpression target) {
     this.target = target;
+    updateHandler();
+  }
+
+  private void updateHandler() {
     targetKind = getKindForTarget();
 
     BlazeCommandRunConfigurationHandlerProvider handlerProvider =
@@ -208,6 +232,9 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     super.readExternal(element);
     element = element.clone();
 
+    String keepInSyncString = element.getAttributeValue(KEEP_IN_SYNC_TAG);
+    keepInSync = keepInSyncString != null ? Boolean.parseBoolean(keepInSyncString) : null;
+
     // Target is persisted as a tag to permit multiple targets in the future.
     Element targetElement = element.getChild(TARGET_TAG);
     if (targetElement != null && !Strings.isNullOrEmpty(targetElement.getTextTrim())) {
@@ -234,6 +261,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     element.removeAttribute(KIND_ATTR);
     element.removeAttribute(HANDLER_ATTR);
     element.removeChildren(TARGET_TAG);
+    element.removeAttribute(KEEP_IN_SYNC_TAG);
     // remove legacy attribute, if present
     element.removeAttribute(TARGET_TAG);
 
@@ -253,7 +281,11 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       }
       element.addContent(targetElement);
     }
+    if (keepInSync != null) {
+      element.setAttribute(KEEP_IN_SYNC_TAG, Boolean.toString(keepInSync));
+    }
     element.setAttribute(HANDLER_ATTR, handlerProvider.getId());
+
     handler.getState().writeExternal(elementState);
 
     // copy our internal state to the provided Element, skipping items already present
@@ -283,6 +315,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     configuration.elementState = elementState.clone();
     configuration.target = target;
     configuration.targetKind = targetKind;
+    configuration.keepInSync = keepInSync;
     configuration.handlerProvider = handlerProvider;
     configuration.handler = handlerProvider.createHandler(this);
     try {
@@ -298,6 +331,11 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   @Nullable
   public RunProfileState getState(Executor executor, ExecutionEnvironment environment)
       throws ExecutionException {
+    if (target != null) {
+      // We need to update the handler manually because it might otherwise be out of date (e.g.
+      // because the target map has changed since the last update).
+      updateHandler();
+    }
     BlazeCommandRunConfigurationRunner runner = handler.createRunner(executor, environment);
     if (runner != null) {
       environment.putCopyableUserData(BlazeCommandRunConfigurationRunner.RUNNER_KEY, runner);
@@ -323,6 +361,11 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     return new BlazeCommandRunConfigurationSettingsEditor(this);
   }
 
+  @Override
+  public Module[] getModules() {
+    return new Module[0];
+  }
+
   static class BlazeCommandRunConfigurationSettingsEditor
       extends SettingsEditor<BlazeCommandRunConfiguration> {
 
@@ -332,7 +375,9 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     private JComponent handlerStateComponent;
     private Element elementState;
 
+    private final Box editorWithoutSyncCheckBox;
     private final Box editor;
+    private final JBCheckBox keepInSyncCheckBox;
     private final JBLabel targetExpressionLabel;
     private final TextFieldWithAutoCompletion<String> targetField;
 
@@ -343,16 +388,35 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
               project, new TargetCompletionProvider(project), true, null);
       elementState = config.elementState.clone();
       targetExpressionLabel = new JBLabel(UIUtil.ComponentStyle.LARGE);
-      editor = UiUtil.createBox(targetExpressionLabel, targetField);
-      updateTargetExpressionLabel(config);
+      keepInSyncCheckBox = new JBCheckBox("Keep in sync with source XML");
+      editorWithoutSyncCheckBox = UiUtil.createBox(targetExpressionLabel, targetField);
+      editor = UiUtil.createBox(editorWithoutSyncCheckBox, keepInSyncCheckBox);
+      updateEditor(config);
       updateHandlerEditor(config);
+      keepInSyncCheckBox.addItemListener(e -> updateEnabledStatus());
     }
 
-    private void updateTargetExpressionLabel(BlazeCommandRunConfiguration config) {
+    private void updateEditor(BlazeCommandRunConfiguration config) {
       targetExpressionLabel.setText(
           String.format(
               "Target expression (%s handled by %s):",
               config.getTargetKindName(), config.handler.getHandlerName()));
+      keepInSyncCheckBox.setVisible(config.keepInSync != null);
+      if (config.keepInSync != null) {
+        keepInSyncCheckBox.setSelected(config.keepInSync);
+      }
+      updateEnabledStatus();
+    }
+
+    private void updateEnabledStatus() {
+      setEnabled(!keepInSyncCheckBox.isVisible() || !keepInSyncCheckBox.isSelected());
+    }
+
+    private void setEnabled(boolean enabled) {
+      if (handlerStateEditor != null) {
+        handlerStateEditor.setComponentEnabled(enabled);
+      }
+      targetField.setEnabled(enabled);
     }
 
     private void updateHandlerEditor(BlazeCommandRunConfiguration config) {
@@ -366,10 +430,10 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       handlerStateEditor = handler.getState().getEditor(config.getProject());
 
       if (handlerStateComponent != null) {
-        editor.remove(handlerStateComponent);
+        editorWithoutSyncCheckBox.remove(handlerStateComponent);
       }
       handlerStateComponent = handlerStateEditor.createComponent();
-      editor.add(handlerStateComponent);
+      editorWithoutSyncCheckBox.add(handlerStateComponent);
     }
 
     @Override
@@ -380,7 +444,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     @Override
     protected void resetEditorFrom(BlazeCommandRunConfiguration config) {
       elementState = config.elementState.clone();
-      updateTargetExpressionLabel(config);
+      updateEditor(config);
       if (config.handlerProvider != handlerProvider) {
         updateHandlerEditor(config);
       }
@@ -397,6 +461,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       } catch (WriteExternalException e) {
         LOG.error(e);
       }
+      config.keepInSync = keepInSyncCheckBox.isVisible() ? keepInSyncCheckBox.isSelected() : null;
 
       // now set the config's state, based on the editor's (possibly out of date) handler
       config.updateHandlerIfDifferentProvider(handlerProvider);
@@ -411,7 +476,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       String targetString = targetField.getText();
       config.setTarget(
           Strings.isNullOrEmpty(targetString) ? null : TargetExpression.fromString(targetString));
-      updateTargetExpressionLabel(config);
+      updateEditor(config);
       if (config.handlerProvider != handlerProvider) {
         updateHandlerEditor(config);
         handlerStateEditor.resetEditorFrom(config.handler.getState());

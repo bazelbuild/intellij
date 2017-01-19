@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.java.libraries;
 
-import com.google.idea.blaze.base.actions.BlazeAction;
+import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -30,13 +30,11 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
-import org.jetbrains.annotations.NotNull;
 
-class AttachSourceJarAction extends BlazeAction {
+class AttachSourceJarAction extends BlazeProjectAction {
+
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getProject();
-    assert project != null;
+  protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
@@ -77,28 +75,25 @@ class AttachSourceJarAction extends BlazeAction {
   }
 
   @Override
-  protected void doUpdate(@NotNull AnActionEvent e) {
+  protected void updateForBlazeProject(Project project, AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     String text = "Attach Source Jar";
     boolean visible = false;
     boolean enabled = false;
-    Project project = e.getProject();
-    if (project != null) {
-      BlazeProjectData blazeProjectData =
-          BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-      if (blazeProjectData != null) {
-        Library library = LibraryActionHelper.findLibraryForAction(e);
-        if (library != null) {
-          visible = true;
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (blazeProjectData != null) {
+      Library library = LibraryActionHelper.findLibraryForAction(e);
+      if (library != null) {
+        visible = true;
 
-          BlazeJarLibrary blazeLibrary =
-              LibraryActionHelper.findLibraryFromIntellijLibrary(
-                  e.getProject(), blazeProjectData, library);
-          if (blazeLibrary != null && blazeLibrary.libraryArtifact.sourceJar != null) {
-            enabled = true;
-            if (SourceJarManager.getInstance(project).hasSourceJarAttached(blazeLibrary.key)) {
-              text = "Detach Source Jar";
-            }
+        BlazeJarLibrary blazeLibrary =
+            LibraryActionHelper.findLibraryFromIntellijLibrary(
+                e.getProject(), blazeProjectData, library);
+        if (blazeLibrary != null && blazeLibrary.libraryArtifact.sourceJar != null) {
+          enabled = true;
+          if (SourceJarManager.getInstance(project).hasSourceJarAttached(blazeLibrary.key)) {
+            text = "Detach Source Jar";
           }
         }
       }

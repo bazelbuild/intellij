@@ -15,12 +15,12 @@
  */
 package com.google.idea.blaze.base.sync.actions;
 
-import com.google.idea.blaze.base.actions.BlazeToggleAction;
+import com.google.idea.blaze.base.actions.BlazeProjectToggleAction;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 /** Manages a tick box of whether to expand the sync targets to the working set. */
-public class ExpandSyncToWorkingSetAction extends BlazeToggleAction {
+public class ExpandSyncToWorkingSetAction extends BlazeProjectToggleAction {
   @Override
   public boolean isSelected(AnActionEvent e) {
     return BlazeUserSettings.getInstance().getExpandSyncToWorkingSet();

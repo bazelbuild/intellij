@@ -17,7 +17,7 @@ package com.google.idea.blaze.java.run;
 
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.intellij.debugger.impl.GenericDebuggerRunner;
+import com.google.idea.sdkcompat.debugger.GenericDebuggerRunnerSdkCompatAdapter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RemoteConnection;
@@ -27,19 +27,21 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** A runner that adapts the GenericDebuggerRunner to work with Blaze run configurations. */
-public class BlazeJavaDebuggerRunner extends GenericDebuggerRunner {
+public class BlazeJavaDebuggerRunner extends GenericDebuggerRunnerSdkCompatAdapter {
+
+  // wait 10 minutes for the blaze build to complete before connecting
+  private static final long POLL_TIMEOUT_MILLIS = 10 * 60 * 1000;
+
   @Override
-  @NotNull
   public String getRunnerId() {
     return "Blaze-Debug";
   }
 
   @Override
-  public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
+  public boolean canRun(final String executorId, final RunProfile profile) {
     if (executorId.equals(DefaultDebugExecutor.EXECUTOR_ID)
         && profile instanceof BlazeCommandRunConfiguration) {
       BlazeCommandRunConfiguration configuration = (BlazeCommandRunConfiguration) profile;
@@ -61,13 +63,12 @@ public class BlazeJavaDebuggerRunner extends GenericDebuggerRunner {
   @Override
   @Nullable
   public RunContentDescriptor createContentDescriptor(
-      @NotNull RunProfileState state, @NotNull ExecutionEnvironment environment)
-      throws ExecutionException {
+      RunProfileState state, ExecutionEnvironment environment) throws ExecutionException {
     if (!(state instanceof BlazeJavaRunProfileState)) {
       return null;
     }
     BlazeJavaRunProfileState blazeState = (BlazeJavaRunProfileState) state;
     RemoteConnection connection = blazeState.getRemoteConnection();
-    return attachVirtualMachine(state, environment, connection, true /* pollConnection */);
+    return attachVirtualMachine(state, environment, connection, POLL_TIMEOUT_MILLIS);
   }
 }

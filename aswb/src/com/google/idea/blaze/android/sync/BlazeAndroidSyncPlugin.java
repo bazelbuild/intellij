@@ -15,9 +15,10 @@
  */
 package com.google.idea.blaze.android.sync;
 
-import com.android.tools.idea.sdk.IdeSdks;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
+import com.google.idea.blaze.android.compatibility.Compatibility.IdeSdks;
 import com.google.idea.blaze.android.cppapi.NdkSupport;
 import com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
@@ -29,6 +30,7 @@ import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectSt
 import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -40,6 +42,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
@@ -69,7 +72,6 @@ import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 
 /** ASwB sync plugin. */
 public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
@@ -160,6 +162,7 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
       Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
+      BlazeVersionData blazeVersionData,
       BlazeProjectData blazeProjectData) {
     if (!isAndroidWorkspace(blazeProjectData.workspaceLanguageSettings)) {
       return;
@@ -180,7 +183,9 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
       return;
     }
 
-    LanguageLevel defaultLanguageLevel = BuildSystemAndroidJdkProvider.languageLevel(project);
+    LanguageLevel defaultLanguageLevel =
+        BuildSystemAndroidJdkProvider.languageLevel(
+            Blaze.getBuildSystem(project), blazeVersionData);
     LanguageLevel javaLanguageLevel =
         JavaLanguageLevelSection.getLanguageLevel(projectViewSet, defaultLanguageLevel);
     setProjectSdkAndLanguageLevel(project, sdk, javaLanguageLevel);
@@ -200,12 +205,28 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
     BlazeAndroidProjectStructureSyncer.updateProjectStructure(
         project,
         context,
-        workspaceRoot,
         projectViewSet,
         blazeProjectData,
         moduleEditor,
         workspaceModule,
         workspaceModifiableModel,
+        isAndroidWorkspace(blazeProjectData.workspaceLanguageSettings));
+  }
+
+  @Override
+  public void updateInMemoryState(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      Module workspaceModule) {
+    BlazeAndroidProjectStructureSyncer.updateInMemoryState(
+        project,
+        workspaceRoot,
+        projectViewSet,
+        blazeProjectData,
+        workspaceModule,
         isAndroidWorkspace(blazeProjectData.workspaceLanguageSettings));
   }
 

@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.sync.aspects.strategy;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.idea.blaze.base.command.BlazeCommand;
+import com.google.idea.blaze.base.command.BlazeCommand.Builder;
 import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.repackaged.protobuf.TextFormat;
 import java.io.IOException;
@@ -33,7 +34,7 @@ public class AspectStrategySkylark implements AspectStrategy {
   }
 
   protected String getAspectFlag() {
-    return "--aspects=@bazel_tools://tools/ide/intellij_info.bzl%intellij_info_aspect";
+    return "--aspects=@bazel_tools//tools/ide:intellij_info.bzl%intellij_info_aspect";
   }
 
   @Override
@@ -48,6 +49,13 @@ public class AspectStrategySkylark implements AspectStrategy {
     blazeCommandBuilder
         .addBlazeFlags(getAspectFlag())
         .addBlazeFlags("--output_groups=intellij-resolve");
+  }
+
+  @Override
+  public void modifyIdeCompileCommand(Builder blazeCommandBuilder) {
+    blazeCommandBuilder
+        .addBlazeFlags(getAspectFlag())
+        .addBlazeFlags("--output_groups=intellij-compile");
   }
 
   @Override

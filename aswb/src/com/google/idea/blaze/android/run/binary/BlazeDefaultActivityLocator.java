@@ -45,7 +45,13 @@ public class BlazeDefaultActivityLocator extends ActivityLocator {
   @NotNull
   @Override
   public String getQualifiedActivityName(@NotNull IDevice device) throws ActivityLocatorException {
-    Manifest manifest = ManifestParser.getInstance(project).getManifest(mergedManifestFile);
+    // Run in a read action since otherwise, it might throw a read access exception.
+    Manifest manifest =
+        ApplicationManager.getApplication()
+            .runReadAction(
+                (Computable<Manifest>)
+                    () -> ManifestParser.getInstance(project).getManifest(mergedManifestFile));
+
     if (manifest == null) {
       throw new ActivityLocatorException("Could not locate merged manifest");
     }

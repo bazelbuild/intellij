@@ -79,6 +79,11 @@ public final class BlazeCommandState implements RunConfigurationState {
     }
 
     @Override
+    public void setComponentEnabled(boolean enabled) {
+      commandCombo.setEnabled(enabled);
+    }
+
+    @Override
     public void resetEditorFrom(RunConfigurationState genericState) {
       BlazeCommandState state = (BlazeCommandState) genericState;
       commandCombo.setSelectedItem(state.getCommand());

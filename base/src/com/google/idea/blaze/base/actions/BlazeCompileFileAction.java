@@ -17,65 +17,29 @@ package com.google.idea.blaze.base.actions;
 
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
-import com.google.idea.blaze.base.experiments.ExperimentScope;
-import com.google.idea.blaze.base.filecache.FileCaches;
-import com.google.idea.blaze.base.metrics.Action;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.ScopedTask;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
-import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
-import com.google.idea.blaze.base.scope.scopes.IssuesScope;
-import com.google.idea.blaze.base.scope.scopes.LoggedTimingScope;
-import com.google.idea.blaze.base.scope.scopes.NotificationScope;
-import com.google.idea.blaze.base.scope.scopes.TimingScope;
-import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
-import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface.BuildResult;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
-import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.common.actionhelper.ActionPresentationHelper;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
-import java.util.List;
-import org.jetbrains.annotations.NotNull;
 
-class BlazeCompileFileAction extends BlazeAction {
-  private static final Logger LOG = Logger.getInstance(BlazeCompileFileAction.class);
+class BlazeCompileFileAction extends BlazeProjectAction {
 
-  public BlazeCompileFileAction() {
-    super("Compile file");
+  @Override
+  protected void updateForBlazeProject(Project project, AnActionEvent e) {
+    ActionPresentationHelper.of(e)
+        .disableIf(getTargets(e).isEmpty())
+        .setTextWithSubject("Compile File", "Compile %s", e.getData(CommonDataKeys.VIRTUAL_FILE))
+        .disableWithoutSubject()
+        .commit();
   }
 
   @Override
-  protected void doUpdate(@NotNull AnActionEvent e) {
-    // IntelliJ uses different logic for 1 vs many module selection. When many modules are selected
-    // modules with more than 1 content root are ignored
-    // (ProjectViewImpl#moduleBySingleContentRoot).
-    if (getTargets(e).isEmpty()) {
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(false);
-    }
-  }
-
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getProject();
-    if (project != null) {
-      ImmutableCollection<Label> targets = getTargets(e);
-      buildSourceFile(project, targets);
-    }
+  protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
+    BlazeBuildService.getInstance().buildFile(project, getFileName(e), getTargets(e));
   }
 
   private ImmutableCollection<Label> getTargets(AnActionEvent e) {
@@ -88,53 +52,8 @@ class BlazeCompileFileAction extends BlazeAction {
     return ImmutableList.of();
   }
 
-  private static void buildSourceFile(
-      @NotNull Project project, @NotNull ImmutableCollection<Label> targets) {
-    BlazeProjectData blazeProjectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (blazeProjectData == null || targets.isEmpty()) {
-      return;
-    }
-    final ProjectViewSet projectViewSet =
-        ProjectViewManager.getInstance(project).getProjectViewSet();
-    if (projectViewSet == null) {
-      return;
-    }
-    BlazeExecutor.submitTask(
-        project,
-        new ScopedTask() {
-          @Override
-          public void execute(@NotNull BlazeContext context) {
-            context
-                .push(new ExperimentScope())
-                .push(new BlazeConsoleScope.Builder(project).build())
-                .push(new IssuesScope(project))
-                .push(new IdeaLogScope())
-                .push(new TimingScope("Make"))
-                .push(new LoggedTimingScope(project, Action.MAKE_MODULE_TOTAL_TIME))
-                .push(
-                    new NotificationScope(
-                        project,
-                        "Make",
-                        "Make module",
-                        "Make module completed successfully",
-                        "Make module failed"));
-
-            WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-
-            BlazeIdeInterface blazeIdeInterface = BlazeIdeInterface.getInstance();
-            List<TargetExpression> targetExpressions = Lists.newArrayList(targets);
-
-            SaveUtil.saveAllFiles();
-            BuildResult buildResult =
-                blazeIdeInterface.resolveIdeArtifacts(
-                    project, context, workspaceRoot, projectViewSet, targetExpressions);
-            FileCaches.refresh(project);
-
-            if (buildResult != BuildResult.SUCCESS) {
-              context.setHasError();
-            }
-          }
-        });
+  private static String getFileName(AnActionEvent e) {
+    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    return virtualFile == null ? null : virtualFile.getName();
   }
 }

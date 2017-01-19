@@ -16,7 +16,9 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.openapi.components.ServiceManager;
@@ -105,4 +107,11 @@ public interface BuildSystemProvider {
   }
 
   FileNameMatcher buildFileMatcher();
+
+  /** Populates the passed builder with version data. */
+  void populateBlazeVersionData(
+      BuildSystem buildSystem,
+      WorkspaceRoot workspaceRoot,
+      ImmutableMap<String, String> blazeInfo,
+      BlazeVersionData.Builder builder);
 }

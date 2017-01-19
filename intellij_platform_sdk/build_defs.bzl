@@ -2,7 +2,7 @@
 
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
-    "intellij-latest": "intellij-162.2032.8",
+    "intellij-latest": "intellij-2016.3.1",
     "android-studio-latest": "android-studio-145.1617.8",
     "android-studio-beta": "android-studio-2.3.0.3",
     "clion-latest": "clion-162.1967.7",
@@ -25,13 +25,17 @@ DIRECT_IJ_PRODUCTS = {
         ide="android-studio",
         directory="android_studio_2_3_0_3",
     ),
-    "clion-162.1628.20": struct(
-        ide="clion",
-        directory="CL_162_1628_20",
+    "android-studio-2.3.0.4": struct(
+        ide="android-studio",
+        directory="android_studio_2_3_0_4",
     ),
     "clion-162.1967.7": struct(
         ide="clion",
         directory="CL_162_1967_7",
+    ),
+    "clion-2016.3.2": struct(
+        ide="clion",
+        directory="clion_2016_3_2",
     ),
 }
 
@@ -50,11 +54,8 @@ def select_for_plugin_api(params):
               You may only include direct ij_products here,
               not indirects (eg. intellij-latest).
   Returns:
-      A select statement on all plugin_apis. Unless you include a "default"
-      clause any other matched plugin_api will return "None".
-
-      A build without an ij_product is considered equivalent to building with
-      "intellij-latest".
+      A select statement on all plugin_apis. Unless you include a "default",
+      a non-matched plugin_api will result in an error.
 
   Example:
     java_library(
@@ -65,6 +66,9 @@ def select_for_plugin_api(params):
       }),
     )
   """
+  if not params:
+    fail("Empty select_for_plugin_api")
+
   for indirect_ij_product in INDIRECT_IJ_PRODUCTS:
     if indirect_ij_product in params:
       error_message = "".join([
@@ -72,43 +76,27 @@ def select_for_plugin_api(params):
           "Instead, select on an exact ij_product."])
       fail(error_message)
 
-  # To make the select work with "intellij-latest" and friends,
-  # we find if the user is currently selecting on what intellij-latest
-  # is resolving to, and copy that. Example:
+  expanded_params = dict(**params)
+
+  # Expand all indirect plugin_apis to point to their
+  # corresponding direct plugin_api.
   #
-  # {"intellij-2016.3.1": "stuff"} ->
-  # {"intellij-2016.3.1": "stuff", "intellij-latest": "stuff"}
-  params = dict(**params)
+  # {"intellij-2016.3.1": "foo"} ->
+  # {"intellij-2016.3.1": "foo", "intellij-latest": "foo"}
   for indirect_ij_product, resolved_plugin_api in INDIRECT_IJ_PRODUCTS.items():
     if resolved_plugin_api in params:
-      params[indirect_ij_product] = params[resolved_plugin_api]
+      expanded_params[indirect_ij_product] = params[resolved_plugin_api]
 
-  if "default" not in params:
-    # If "intellij-latest" is supported, we set "default" to that
-    # This supports building with an empty command line. Example:
-    #
-    # {"intellij-2016.3.1": "stuff", "intellij-latest": "stuff"} ->
-    # {"intellij-2016.3.1": "stuff", "intellij-latest": "stuff", "default": "stuff"}
-    if "intellij-latest" in params:
-      params["default"] = params["intellij-latest"]
-
-    # Add the other indirect ij_products returning None rather than default
-    for ij_product in INDIRECT_IJ_PRODUCTS:
-      if ij_product not in params:
-        params[ij_product] = None
-    for ij_product in DIRECT_IJ_PRODUCTS:
-      if ij_product not in params:
-        params[ij_product] = None
-
-  # Map to the actual targets
+  # Map the shorthand ij_products to full config_setting targets.
   # This makes it more convenient so the user doesn't have to
   # fully specify the path to the plugin_apis
   select_params = dict()
-  for ij_product, value in params.items():
+  for ij_product, value in expanded_params.items():
     if ij_product == "default":
       select_params["//conditions:default"] = value
     else:
       select_params["//intellij_platform_sdk:" + ij_product] = value
+
   return select(select_params)
 
 def select_for_ide(intellij=None, android_studio=None, clion=None, default=None):
@@ -134,7 +122,6 @@ def select_for_ide(intellij=None, android_studio=None, clion=None, default=None)
   intellij = intellij or default
   android_studio = android_studio or default
   clion = clion or default
-  default = default or intellij
 
   ide_to_value = {
       "intellij" : intellij,
@@ -166,4 +153,8 @@ def select_from_plugin_api_directory(intellij, android_studio, clion):
   params = dict()
   for ij_product, value in DIRECT_IJ_PRODUCTS.items():
     params[ij_product] = [_plugin_api_directory(value) + item for item in ide_to_value[value.ide]]
+
+  # No ij_product == intellij-latest
+  params["default"] = params[INDIRECT_IJ_PRODUCTS["intellij-latest"]]
+
   return select_for_plugin_api(params)

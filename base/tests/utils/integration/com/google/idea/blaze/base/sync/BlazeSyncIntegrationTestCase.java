@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -53,6 +54,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -60,6 +62,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 import org.junit.Before;
 
@@ -182,7 +186,20 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
             project,
             BlazeImportSettingsManager.getInstance(project).getImportSettings(),
             syncParams);
-    syncTask.syncProject(context);
+
+    // We need to run sync off EDT to keep IntelliJ's transaction system happy
+    // Because the sync task itself wants to run occasional EDT tasks, we'll have
+    // to keep flushing the event queue.
+    Future<?> future =
+        Executors.newSingleThreadExecutor().submit(() -> syncTask.syncProject(context));
+    while (!future.isDone()) {
+      IdeEventQueue.getInstance().flushQueue();
+      try {
+        Thread.sleep(50);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
   }
 
   private static class MockProjectViewManager extends ProjectViewManager {
@@ -282,6 +299,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
         ProjectViewSet projectViewSet,
+        BlazeVersionData blazeVersionData,
         List<TargetExpression> targets,
         WorkspaceLanguageSettings workspaceLanguageSettings,
         ArtifactLocationDecoder artifactLocationDecoder,
@@ -297,6 +315,18 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
         ProjectViewSet projectViewSet,
+        BlazeVersionData blazeVersionData,
+        List<TargetExpression> targets) {
+      return BuildResult.SUCCESS;
+    }
+
+    @Override
+    public BuildResult compileIdeArtifacts(
+        Project project,
+        BlazeContext context,
+        WorkspaceRoot workspaceRoot,
+        ProjectViewSet projectViewSet,
+        BlazeVersionData blazeVersionData,
         List<TargetExpression> targets) {
       return BuildResult.SUCCESS;
     }

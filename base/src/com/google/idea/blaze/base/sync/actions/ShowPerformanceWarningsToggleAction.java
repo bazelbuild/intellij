@@ -15,12 +15,12 @@
  */
 package com.google.idea.blaze.base.sync.actions;
 
-import com.google.idea.blaze.base.actions.BlazeToggleAction;
+import com.google.idea.blaze.base.actions.BlazeProjectToggleAction;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 /** Manages a tick box of whether to show performance warnings. */
-public class ShowPerformanceWarningsToggleAction extends BlazeToggleAction {
+public class ShowPerformanceWarningsToggleAction extends BlazeProjectToggleAction {
   @Override
   public boolean isSelected(AnActionEvent e) {
     return BlazeUserSettings.getInstance().getShowPerformanceWarnings();

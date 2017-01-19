@@ -36,6 +36,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.metrics.Action;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
+import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
@@ -79,7 +80,7 @@ public final class BlazeAndroidRunConfigurationRunner
 
   private static final Key<BlazeAndroidRunContext> RUN_CONTEXT_KEY =
       Key.create("blaze.run.context");
-  private static final Key<BlazeAndroidDeviceSelector.DeviceSession> DEVICE_SESSION_KEY =
+  public static final Key<BlazeAndroidDeviceSelector.DeviceSession> DEVICE_SESSION_KEY =
       Key.create("blaze.device.session");
 
   private final Module module;
@@ -251,7 +252,17 @@ public final class BlazeAndroidRunConfigurationRunner
 
     @Nullable
     @Override
-    public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner)
+    public ExecutionResult execute(Executor executor, ProgramRunner runner)
+        throws ExecutionException {
+      DefaultExecutionResult result = executeInner(executor, runner);
+      if (result == null) {
+        return null;
+      }
+      return SmRunnerUtils.attachRerunFailedTestsAction(result);
+    }
+
+    @Nullable
+    private DefaultExecutionResult executeInner(Executor executor, @NotNull ProgramRunner<?> runner)
         throws ExecutionException {
       ProcessHandler processHandler;
       ConsoleView console;

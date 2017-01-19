@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run.state;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.project.Project;
@@ -30,16 +31,16 @@ import org.jdom.Element;
 public class RunConfigurationCompositeState implements RunConfigurationState {
   private final List<RunConfigurationState> states;
 
-  public RunConfigurationCompositeState(List<RunConfigurationState> states) {
-    this.states = states;
-  }
-
   protected RunConfigurationCompositeState() {
     this.states = Lists.newArrayList();
   }
 
   protected void addStates(RunConfigurationState... states) {
     Collections.addAll(this.states, states);
+  }
+
+  protected ImmutableList<RunConfigurationState> getStates() {
+    return ImmutableList.copyOf(states);
   }
 
   @Override
@@ -60,11 +61,11 @@ public class RunConfigurationCompositeState implements RunConfigurationState {
 
   /** @return A {@link RunConfigurationStateEditor} for this state. */
   @Override
-  public final RunConfigurationStateEditor getEditor(Project project) {
+  public RunConfigurationStateEditor getEditor(Project project) {
     return new RunConfigurationCompositeStateEditor(project, states);
   }
 
-  private static class RunConfigurationCompositeStateEditor implements RunConfigurationStateEditor {
+  static class RunConfigurationCompositeStateEditor implements RunConfigurationStateEditor {
     List<RunConfigurationStateEditor> editors;
 
     public RunConfigurationCompositeStateEditor(
@@ -95,6 +96,11 @@ public class RunConfigurationCompositeState implements RunConfigurationState {
               .stream()
               .map(RunConfigurationStateEditor::createComponent)
               .collect(Collectors.toList()));
+    }
+
+    @Override
+    public void setComponentEnabled(boolean enabled) {
+      editors.forEach(editor -> editor.setComponentEnabled(enabled));
     }
   }
 }

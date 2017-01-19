@@ -22,16 +22,16 @@ import com.android.tools.idea.model.ClassJarProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.android.manifest.ManifestParser;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.util.List;
 import java.util.Set;
 import org.jetbrains.android.dom.manifest.Manifest;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -39,10 +39,7 @@ import org.jetbrains.annotations.Nullable;
  * user-selected build variant.
  */
 public class BlazeAndroidModel implements AndroidModel {
-  private static final Logger LOG = Logger.getInstance(BlazeAndroidModel.class);
-
   private Project project;
-  private Module module;
   private final File rootDirPath;
   private final SourceProvider sourceProvider;
   private final List<SourceProvider> sourceProviders; // Singleton list of sourceProvider
@@ -60,7 +57,6 @@ public class BlazeAndroidModel implements AndroidModel {
       String resourceJavaPackage,
       int androidSdkApiLevel) {
     this.project = project;
-    this.module = module;
     this.rootDirPath = rootDirPath;
     this.sourceProvider = sourceProvider;
     this.sourceProviders = ImmutableList.of(sourceProvider);
@@ -69,45 +65,43 @@ public class BlazeAndroidModel implements AndroidModel {
     this.androidSdkApiLevel = androidSdkApiLevel;
   }
 
-  @NotNull
   @Override
   public SourceProvider getDefaultSourceProvider() {
     return sourceProvider;
   }
 
-  @NotNull
   @Override
   public List<SourceProvider> getActiveSourceProviders() {
     return sourceProviders;
   }
 
-  @NotNull
   @Override
   public List<SourceProvider> getTestSourceProviders() {
     return sourceProviders;
   }
 
-  @NotNull
   @Override
   public List<SourceProvider> getAllSourceProviders() {
     return sourceProviders;
   }
 
   @Override
-  @NotNull
   public String getApplicationId() {
-    String result = null;
-    Manifest manifest = ManifestParser.getInstance(project).getManifest(moduleManifest);
-    if (manifest != null) {
-      result = manifest.getPackage().getValue();
-    }
-    if (result == null) {
-      result = resourceJavaPackage;
-    }
-    return result;
+    // Run in a read action since otherwise, it might throw a read access exception.
+    return ApplicationManager.getApplication()
+        .runReadAction(
+            (Computable<String>)
+                () -> {
+                  Manifest manifest =
+                      ManifestParser.getInstance(project).getManifest(moduleManifest);
+                  if (manifest == null) {
+                    return resourceJavaPackage;
+                  }
+                  String packageName = manifest.getPackage().getValue();
+                  return packageName == null ? resourceJavaPackage : packageName;
+                });
   }
 
-  @NotNull
   @Override
   public Set<String> getAllApplicationIds() {
     Set<String> applicationIds = Sets.newHashSet();
@@ -149,18 +143,16 @@ public class BlazeAndroidModel implements AndroidModel {
     return null;
   }
 
-  @NotNull
   @Override
   public File getRootDirPath() {
     return rootDirPath;
   }
 
   @Override
-  public boolean isGenerated(@NotNull VirtualFile file) {
+  public boolean isGenerated(VirtualFile file) {
     return false;
   }
 
-  @NotNull
   @Override
   public VirtualFile getRootDir() {
     File rootDirPath = getRootDirPath();
@@ -175,14 +167,13 @@ public class BlazeAndroidModel implements AndroidModel {
   }
 
   @Override
-  @NotNull
   public ClassJarProvider getClassJarProvider() {
-    return new NullClassJarProvider();
+    return new BlazeClassJarProvider(project);
   }
 
   @Override
   @Nullable
-  public Long getLastBuildTimestamp(@NotNull Project project) {
+  public Long getLastBuildTimestamp(Project project) {
     // TODO(jvoung): Coordinate with blaze build actions to be able determine last build time.
     return null;
   }

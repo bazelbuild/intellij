@@ -28,6 +28,7 @@ public enum LanguageClass {
   JAVASCRIPT("javascript", ImmutableSet.of("js", "applejs")),
   TYPESCRIPT("typescript", ImmutableSet.of("ts", "ats")),
   DART("dart", ImmutableSet.of("dart")),
+  GO("go", ImmutableSet.of("go")),
   PYTHON("python", ImmutableSet.of("py", "pyw"));
 
   private static final ImmutableMap<String, LanguageClass> RECOGNIZED_EXTENSIONS =

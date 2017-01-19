@@ -25,12 +25,13 @@ import com.google.idea.blaze.base.EditorTestHelper;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
-import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -83,12 +84,11 @@ public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestC
         new TargetMap(ImmutableMap.of()),
         ImmutableMap.of(),
         fakeRoots,
-        new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of()),
+        new BlazeVersionData(),
         workspacePathResolver,
         artifactLocationDecoder,
         null,
-        null,
-        null,
+        new SyncState.Builder().build(),
         null);
   }
 }

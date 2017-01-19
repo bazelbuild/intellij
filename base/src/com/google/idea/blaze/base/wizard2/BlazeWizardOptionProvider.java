@@ -15,16 +15,17 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.components.ServiceManager;
 import java.util.Collection;
 
 /** Provides options during the import process. */
 public interface BlazeWizardOptionProvider {
-  ExtensionPointName<BlazeWizardOptionProvider> EP_NAME =
-      ExtensionPointName.create("com.google.idea.blaze.BlazeWizardOptionProvider");
-
   Collection<BlazeSelectWorkspaceOption> getSelectWorkspaceOptions(BlazeNewProjectBuilder builder);
 
   Collection<BlazeSelectProjectViewOption> getSelectProjectViewOptions(
       BlazeNewProjectBuilder builder);
+
+  static BlazeWizardOptionProvider getInstance() {
+    return ServiceManager.getService(BlazeWizardOptionProvider.class);
+  }
 }

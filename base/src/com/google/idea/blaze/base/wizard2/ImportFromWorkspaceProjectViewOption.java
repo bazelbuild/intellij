@@ -39,7 +39,8 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectViewOption {
+/** Imports a project view from source control */
+public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectViewOption {
   private static final String LAST_WORKSPACE_PATH = "import-from-workspace.last-workspace-path";
 
   final BlazeNewProjectBuilder builder;
@@ -47,7 +48,7 @@ class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectViewOpti
   final JComponent component;
   final TextFieldWithStoredHistory projectViewPathField;
 
-  ImportFromWorkspaceProjectViewOption(BlazeNewProjectBuilder builder) {
+  public ImportFromWorkspaceProjectViewOption(BlazeNewProjectBuilder builder) {
     this.builder = builder;
     this.userSettings = builder.getUserSettings();
 

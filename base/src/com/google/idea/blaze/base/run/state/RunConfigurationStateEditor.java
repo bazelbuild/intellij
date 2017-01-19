@@ -28,4 +28,6 @@ public interface RunConfigurationStateEditor {
 
   /** @return A component to display for the editor. */
   JComponent createComponent();
+
+  void setComponentEnabled(boolean enabled);
 }

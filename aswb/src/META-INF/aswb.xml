@@ -18,7 +18,8 @@
 
   <depends>com.intellij.modules.androidstudio</depends>
   <depends>org.jetbrains.android</depends>
-  <depends>com.android.tools.idea.updater</depends>
+  <!-- TODO(chaorenl): remove when 2.2 is obsolete -->
+  <depends optional="true">com.android.tools.idea.updater</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <java.elementFinder implementation="com.google.idea.blaze.android.resources.AndroidResourceClassFinder"
@@ -31,14 +32,14 @@
     <runConfigurationProducer
         implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestMethodRunConfigurationProducer"
         order="first"/>
-    <configurationType implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationType"/>
-    <configurationType implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationType"/>
     <programRunner implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryProgramRunner" order="first"/>
     <executor implementation="com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallRunExecutor" order="last"/>
     <executor implementation="com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallDebugExecutor" order="last"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"
                         serviceImplementation="com.google.idea.blaze.android.plugin.AswbPlugin"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.manifest.ManifestParser"/>
+    <projectService serviceImplementation="com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry"/>
+    <applicationService serviceImplementation="com.google.idea.blaze.android.settings.BlazeAndroidUserSettings"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.android.actions">

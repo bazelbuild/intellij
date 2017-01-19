@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.ide;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.actions.BlazeAction;
+import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.buildmodifier.BuildFileModifier;
 import com.google.idea.blaze.base.buildmodifier.FileSystemModifier;
 import com.google.idea.blaze.base.metrics.Action;
@@ -41,7 +41,6 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,7 +59,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-class NewBlazePackageAction extends BlazeAction implements DumbAware {
+class NewBlazePackageAction extends BlazeProjectAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(NewBlazePackageAction.class);
 
   private static final String BUILD_FILE_NAME = "BUILD";
@@ -70,9 +69,8 @@ class NewBlazePackageAction extends BlazeAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  protected void actionPerformedInBlazeProject(Project project, AnActionEvent event) {
     final IdeView view = event.getData(LangDataKeys.IDE_VIEW);
-    final Project project = event.getData(CommonDataKeys.PROJECT);
     Scope.root(
         new ScopedOperation() {
           @Override
@@ -160,10 +158,10 @@ class NewBlazePackageAction extends BlazeAction implements DumbAware {
   }
 
   @Override
-  protected void doUpdate(@NotNull AnActionEvent event) {
+  protected void updateForBlazeProject(Project project, @NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     if (isEnabled(event)) {
-      String text = String.format("New %s Package", Blaze.buildSystemName(event.getProject()));
+      String text = String.format("New %s Package", Blaze.buildSystemName(project));
       presentation.setEnabledAndVisible(true);
       presentation.setText(text);
       presentation.setDescription(text);

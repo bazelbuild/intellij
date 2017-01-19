@@ -134,7 +134,8 @@ public class TestTargetFilterImpl implements TestTargetFinder {
               Kind.JAVA_TEST,
               Kind.GWT_TEST,
               Kind.CC_TEST,
-              Kind.PY_TEST);
+              Kind.PY_TEST,
+              Kind.GO_TEST);
     }
   }
 

@@ -15,36 +15,42 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Ordering;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.Serializable;
-import javax.annotation.Nullable;
+import java.util.List;
 
 /** A key that uniquely idenfifies a target in the target map */
 public class TargetKey implements Serializable, Comparable<TargetKey> {
-  private static final long serialVersionUID = 2L;
+  private static final long serialVersionUID = 3L;
 
   public final Label label;
-  @Nullable private final String aspectId;
+  private final ImmutableList<String> aspectIds;
 
-  private TargetKey(Label label, @Nullable String aspectId) {
+  private TargetKey(Label label, ImmutableList<String> aspectIds) {
     this.label = label;
-    this.aspectId = aspectId;
+    this.aspectIds = aspectIds;
   }
 
   /** Returns a key identifying a plain target */
   public static TargetKey forPlainTarget(Label label) {
-    return new TargetKey(label, null);
+    return new TargetKey(label, ImmutableList.of());
   }
 
   /** Returns a key identifying a general target */
-  public static TargetKey forGeneralTarget(Label label, @Nullable String aspectId) {
-    return new TargetKey(label, aspectId);
+  public static TargetKey forGeneralTarget(Label label, List<String> aspectIds) {
+    if (aspectIds.isEmpty()) {
+      return forPlainTarget(label);
+    }
+    return new TargetKey(label, ImmutableList.copyOf(aspectIds));
   }
 
   public boolean isPlainTarget() {
-    return aspectId == null;
+    return aspectIds.isEmpty();
   }
 
   @Override
@@ -56,24 +62,27 @@ public class TargetKey implements Serializable, Comparable<TargetKey> {
       return false;
     }
     TargetKey key = (TargetKey) o;
-    return Objects.equal(label, key.label) && Objects.equal(aspectId, key.aspectId);
+    return Objects.equal(label, key.label) && Objects.equal(aspectIds, key.aspectIds);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(label, aspectId);
+    return Objects.hashCode(label, aspectIds);
   }
 
   @Override
   public String toString() {
-    if (aspectId == null) {
+    if (aspectIds.isEmpty()) {
       return label.toString();
     }
-    return label.toString() + "#" + aspectId;
+    return label.toString() + "#" + Joiner.on('#').join(aspectIds);
   }
 
   @Override
   public int compareTo(TargetKey o) {
-    return ComparisonChain.start().compare(label, o.label).compare(aspectId, o.aspectId).result();
+    return ComparisonChain.start()
+        .compare(label, o.label)
+        .compare(aspectIds, o.aspectIds, Ordering.natural().lexicographical())
+        .result();
   }
 }

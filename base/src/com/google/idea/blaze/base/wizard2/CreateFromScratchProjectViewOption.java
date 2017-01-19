@@ -19,7 +19,8 @@ import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
 
-class CreateFromScratchProjectViewOption implements BlazeSelectProjectViewOption {
+/** Creates an empty project view */
+public class CreateFromScratchProjectViewOption implements BlazeSelectProjectViewOption {
   @Override
   public String getOptionName() {
     return "create-from-scratch";

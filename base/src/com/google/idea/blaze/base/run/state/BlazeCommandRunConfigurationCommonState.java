@@ -17,8 +17,11 @@ package com.google.idea.blaze.base.run.state;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.run.state.BlazeRunOnDistributedExecutorState.RunOnExecutorStateEditor;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -35,13 +38,15 @@ public final class BlazeCommandRunConfigurationCommonState extends RunConfigurat
   private final RunConfigurationFlagsState blazeFlags;
   private final RunConfigurationFlagsState exeFlags;
   private final BlazeBinaryState blazeBinary;
+  private final BlazeRunOnDistributedExecutorState runOnDistributedExecutor;
 
-  public BlazeCommandRunConfigurationCommonState(String buildSystemName) {
+  public BlazeCommandRunConfigurationCommonState(BuildSystem buildSystem) {
     command = new BlazeCommandState();
-    blazeFlags = new RunConfigurationFlagsState(USER_BLAZE_FLAG_TAG, buildSystemName + " flags:");
+    blazeFlags = new RunConfigurationFlagsState(USER_BLAZE_FLAG_TAG, buildSystem + " flags:");
     exeFlags = new RunConfigurationFlagsState(USER_EXE_FLAG_TAG, "Executable flags:");
     blazeBinary = new BlazeBinaryState();
-    addStates(command, blazeFlags, exeFlags, blazeBinary);
+    runOnDistributedExecutor = new BlazeRunOnDistributedExecutorState(buildSystem);
+    addStates(command, blazeFlags, exeFlags, blazeBinary, runOnDistributedExecutor);
   }
 
   @Nullable
@@ -91,6 +96,14 @@ public final class BlazeCommandRunConfigurationCommonState extends RunConfigurat
     return null;
   }
 
+  public Boolean getRunOnDistributedExecutor() {
+    return runOnDistributedExecutor.runOnDistributedExecutor;
+  }
+
+  public void setRunOnDistributedExecutor(Boolean runOnDistributedExecutor) {
+    this.runOnDistributedExecutor.runOnDistributedExecutor = runOnDistributedExecutor;
+  }
+
   public void validate(String buildSystemName) throws RuntimeConfigurationException {
     if (getCommand() == null) {
       throw new RuntimeConfigurationError("You must specify a command.");
@@ -99,5 +112,33 @@ public final class BlazeCommandRunConfigurationCommonState extends RunConfigurat
     if (blazeBinaryString != null && !(new File(blazeBinaryString).exists())) {
       throw new RuntimeConfigurationError(buildSystemName + " binary does not exist");
     }
+  }
+
+  @Override
+  public RunConfigurationStateEditor getEditor(Project project) {
+    return new RunConfigurationCompositeStateEditor(project, getStates()) {
+
+      @Nullable
+      private final RunOnExecutorStateEditor runOnExecutorEditor =
+          (RunOnExecutorStateEditor)
+              editors
+                  .stream()
+                  .filter(editor -> editor instanceof RunOnExecutorStateEditor)
+                  .findFirst()
+                  .orElse(null);
+
+      @Override
+      public void applyEditorTo(RunConfigurationState genericState) {
+        BlazeCommandRunConfigurationCommonState state =
+            (BlazeCommandRunConfigurationCommonState) genericState;
+        super.applyEditorTo(genericState);
+
+        // this editor needs to update based on state provided by other children.
+        if (runOnExecutorEditor != null) {
+          boolean isTest = BlazeCommandName.TEST.equals(state.getCommand());
+          runOnExecutorEditor.updateVisibility(isTest);
+        }
+      }
+    };
   }
 }

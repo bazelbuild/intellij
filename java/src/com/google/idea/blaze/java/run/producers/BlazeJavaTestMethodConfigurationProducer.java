@@ -26,18 +26,14 @@ import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.java.run.RunUtil;
-import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags.JUnitVersion;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
 /** Producer for run configurations related to Java test methods in Blaze. */
@@ -152,29 +148,15 @@ public class BlazeJavaTestMethodConfigurationProducer
         return null;
       }
     }
-
-    final List<String> methodNames = new ArrayList<>();
-    for (PsiMethod method : selectedMethods) {
-      methodNames.add(method.getName());
-    }
-    // Sort so multiple configurations created with different selection orders are the same.
-    Collections.sort(methodNames);
-
-    final String qualifiedName = containingClass.getQualifiedName();
-    if (qualifiedName == null) {
+    String testFilter =
+        BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(containingClass, selectedMethods);
+    if (testFilter == null) {
       return null;
     }
-    final JUnitVersion jUnitVersion =
-        JUnitUtil.isJUnit4TestClass(containingClass) ? JUnitVersion.JUNIT_4 : JUnitVersion.JUNIT_3;
-    boolean parameterized = isParameterized(containingClass);
-    final String testFilterFlag =
-        BlazeJUnitTestFilterFlags.testFilterFlagForClassAndMethods(
-            qualifiedName, methodNames, jUnitVersion, parameterized);
-
+    // Sort so multiple configurations created with different selection orders are the same.
+    List<String> methodNames =
+        selectedMethods.stream().map(PsiMethod::getName).sorted().collect(Collectors.toList());
+    final String testFilterFlag = BlazeFlags.TEST_FILTER + "=" + testFilter;
     return new SelectedMethodInfo(firstMethod, containingClass, methodNames, testFilterFlag);
-  }
-
-  private static boolean isParameterized(PsiClass testClass) {
-    return PsiMemberParameterizedLocation.getParameterizedLocation(testClass, null) != null;
   }
 }

@@ -15,18 +15,13 @@
  */
 package com.google.idea.blaze.base.util;
 
+import com.google.idea.sdkcompat.transactions.Transactions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.util.ui.UIUtil;
 
 /** Utility for saving all files. */
 public class SaveUtil {
   public static void saveAllFiles() {
-    UIUtil.invokeAndWaitIfNeeded(
-        new Runnable() {
-          @Override
-          public void run() {
-            FileDocumentManager.getInstance().saveAllDocuments();
-          }
-        });
+    Transactions.submitTransactionAndWait(
+        () -> FileDocumentManager.getInstance().saveAllDocuments());
   }
 }

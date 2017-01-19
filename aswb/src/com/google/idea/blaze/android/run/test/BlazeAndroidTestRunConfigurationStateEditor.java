@@ -16,10 +16,10 @@
 
 package com.google.idea.blaze.android.run.test;
 
-import static com.android.tools.idea.run.testing.AndroidTestRunConfiguration.TEST_ALL_IN_MODULE;
-import static com.android.tools.idea.run.testing.AndroidTestRunConfiguration.TEST_ALL_IN_PACKAGE;
-import static com.android.tools.idea.run.testing.AndroidTestRunConfiguration.TEST_CLASS;
-import static com.android.tools.idea.run.testing.AndroidTestRunConfiguration.TEST_METHOD;
+import static com.google.idea.blaze.android.compatibility.Compatibility.AndroidTestRunConfiguration.TEST_ALL_IN_MODULE;
+import static com.google.idea.blaze.android.compatibility.Compatibility.AndroidTestRunConfiguration.TEST_ALL_IN_PACKAGE;
+import static com.google.idea.blaze.android.compatibility.Compatibility.AndroidTestRunConfiguration.TEST_CLASS;
+import static com.google.idea.blaze.android.compatibility.Compatibility.AndroidTestRunConfiguration.TEST_METHOD;
 
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
@@ -63,6 +63,8 @@ class BlazeAndroidTestRunConfigurationStateEditor implements RunConfigurationSta
   private JBLabel labelTest;
   private JCheckBox runThroughBlazeTestCheckBox;
   private final JRadioButton[] testingType2RadioButton = new JRadioButton[4];
+
+  private boolean componentEnabled = true;
 
   BlazeAndroidTestRunConfigurationStateEditor(
       RunConfigurationStateEditor commonStateEditor, Project project) {
@@ -477,5 +479,30 @@ class BlazeAndroidTestRunConfigurationStateEditor implements RunConfigurationSta
   @Override
   public JComponent createComponent() {
     return UiUtil.createBox(commonStateEditor.createComponent(), panel);
+  }
+
+  @Override
+  public void setComponentEnabled(boolean enabled) {
+    componentEnabled = enabled;
+    updateEnabledState();
+  }
+
+  private void updateEnabledState() {
+    commonStateEditor.setComponentEnabled(componentEnabled);
+    allInPackageButton.setEnabled(componentEnabled);
+    classButton.setEnabled(componentEnabled);
+    testMethodButton.setEnabled(componentEnabled);
+    allInTargetButton.setEnabled(componentEnabled);
+    packageComponent.setEnabled(componentEnabled);
+    classComponent.setEnabled(componentEnabled);
+    methodComponent.setEnabled(componentEnabled);
+    runnerComponent.setEnabled(componentEnabled);
+    labelTest.setEnabled(componentEnabled);
+    runThroughBlazeTestCheckBox.setEnabled(componentEnabled);
+    for (JComponent button : testingType2RadioButton) {
+      if (button != null) {
+        button.setEnabled(componentEnabled);
+      }
+    }
   }
 }

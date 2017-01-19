@@ -36,6 +36,7 @@ import com.intellij.testFramework.EditorTestUtil.CaretAndSelectionState;
 import com.intellij.testFramework.EditorTestUtil.CaretInfo;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.util.ThrowableRunnable;
 import java.util.Arrays;
 import javax.annotation.Nullable;
 
@@ -54,7 +55,8 @@ public class EditorTestHelper {
   }
 
   public Editor openFileInEditor(VirtualFile file) {
-    EdtTestUtil.runInEdtAndWait((Runnable) () -> testFixture.openFileInEditor(file));
+    EdtTestUtil.runInEdtAndWait(
+        (ThrowableRunnable<Throwable>) () -> testFixture.openFileInEditor(file));
     return testFixture.getEditor();
   }
 
@@ -125,7 +127,7 @@ public class EditorTestHelper {
   public void setCaretPosition(Editor editor, int lineNumber, int columnNumber) {
     final CaretInfo info = new CaretInfo(new LogicalPosition(lineNumber, columnNumber), null);
     EdtTestUtil.runInEdtAndWait(
-        (Runnable)
+        (ThrowableRunnable<Throwable>)
             () ->
                 EditorTestUtil.setCaretsAndSelection(
                     editor, new CaretAndSelectionState(ImmutableList.of(info), null)));

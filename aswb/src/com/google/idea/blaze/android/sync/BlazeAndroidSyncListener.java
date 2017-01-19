@@ -27,7 +27,7 @@ public class BlazeAndroidSyncListener extends SyncListener.Adapter {
   @Override
   public void afterSync(
       Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {
-    if (syncResult == SyncResult.SUCCESS || syncResult == SyncResult.PARTIAL_SUCCESS) {
+    if (syncResult.successful()) {
       DumbService dumbService = DumbService.getInstance(project);
       dumbService.queueTask(new ResourceFolderRegistry.PopulateCachesTask(project));
     }

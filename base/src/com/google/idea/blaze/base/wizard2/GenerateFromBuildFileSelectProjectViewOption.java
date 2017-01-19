@@ -45,7 +45,8 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelectProjectViewOption {
+/** Generates a project view given a BUILD file */
+public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelectProjectViewOption {
   private static final String LAST_WORKSPACE_PATH = "generate-from-build-file.last-workspace-path";
   private final BlazeNewProjectBuilder builder;
   private final BlazeWizardUserSettings userSettings;

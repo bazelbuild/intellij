@@ -28,9 +28,9 @@ import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.LaunchInfo;
 import com.android.tools.idea.run.ProcessHandlerConsolePrinter;
 import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.ConnectJavaDebuggerTask;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
+import com.google.idea.blaze.android.compatibility.Compatibility.ConnectDebuggerTask;
 import com.intellij.debugger.engine.RemoteDebugProcessHandler;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.execution.ExecutionException;
@@ -62,7 +62,7 @@ class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTask {
       Set<String> applicationIds,
       ApplicationIdProvider applicationIdProvider,
       BlazeAndroidTestRunContext runContext) {
-    super(applicationIds, debugger, project);
+    super(applicationIds, debugger, project, true);
     this.project = project;
     this.applicationIdProvider = applicationIdProvider;
     this.runContext = runContext;

@@ -16,29 +16,31 @@
 package com.google.idea.blaze.base.sync;
 
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import org.jetbrains.annotations.NotNull;
+import java.util.List;
 
 /** Manages syncing and its listeners. */
 public class BlazeSyncManager {
 
-  @NotNull private final Project project;
+  private final Project project;
 
-  public BlazeSyncManager(@NotNull Project project) {
+  public BlazeSyncManager(Project project) {
     this.project = project;
   }
 
-  public static BlazeSyncManager getInstance(@NotNull Project project) {
+  public static BlazeSyncManager getInstance(Project project) {
     return ServiceManager.getService(project, BlazeSyncManager.class);
   }
 
   /** Requests a project sync with Blaze. */
-  public void requestProjectSync(@NotNull final BlazeSyncParams syncParams) {
+  public void requestProjectSync(final BlazeSyncParams syncParams) {
     StartupManager.getInstance(project)
         .runWhenProjectIsInitialized(
             new Runnable() {
@@ -58,5 +60,39 @@ public class BlazeSyncManager {
                 BlazeExecutor.submitTask(project, syncTask);
               }
             });
+  }
+
+  public void fullProjectSync() {
+    BlazeSyncParams syncParams =
+        new BlazeSyncParams.Builder("Full Sync", BlazeSyncParams.SyncMode.FULL)
+            .addProjectViewTargets(true)
+            .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
+            .build();
+    requestProjectSync(syncParams);
+  }
+
+  public void incrementalProjectSync() {
+    BlazeSyncParams syncParams =
+        new BlazeSyncParams.Builder("Sync", BlazeSyncParams.SyncMode.INCREMENTAL)
+            .addProjectViewTargets(true)
+            .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
+            .build();
+    requestProjectSync(syncParams);
+  }
+
+  public void partialSync(List<TargetExpression> targetExpressions) {
+    BlazeSyncParams syncParams =
+        new BlazeSyncParams.Builder("Partial Sync", BlazeSyncParams.SyncMode.PARTIAL)
+            .addTargetExpressions(targetExpressions)
+            .build();
+    requestProjectSync(syncParams);
+  }
+
+  public void workingSetSync() {
+    BlazeSyncParams syncParams =
+        new BlazeSyncParams.Builder("Sync Working Set", BlazeSyncParams.SyncMode.PARTIAL)
+            .addWorkingSet(true)
+            .build();
+    requestProjectSync(syncParams);
   }
 }

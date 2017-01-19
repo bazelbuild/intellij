@@ -27,11 +27,9 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceManager;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 final class BlazeCSyncPlugin extends BlazeSyncPlugin.Adapter {
   @Override
@@ -43,16 +41,13 @@ final class BlazeCSyncPlugin extends BlazeSyncPlugin.Adapter {
   }
 
   @Override
-  public void updateProjectStructure(
+  public void updateInMemoryState(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
-      @Nullable BlazeProjectData oldBlazeProjectData,
-      ModuleEditor moduleEditor,
-      Module workspaceModule,
-      ModifiableRootModel workspaceModifiableModel) {
+      Module workspaceModule) {
     if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C)) {
       return;
     }

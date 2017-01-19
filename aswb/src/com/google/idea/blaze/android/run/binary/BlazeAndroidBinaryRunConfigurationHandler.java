@@ -15,16 +15,13 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
-import com.android.sdklib.AndroidVersion;
-import com.android.tools.idea.fd.InstantRunManager;
-import com.android.tools.idea.run.AndroidSessionInfo;
+import com.android.annotations.VisibleForTesting;
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationValidationUtil;
-import com.google.idea.blaze.android.run.binary.instantrun.BlazeAndroidBinaryInstantRunContext;
 import com.google.idea.blaze.android.run.binary.mobileinstall.BlazeAndroidBinaryMobileInstallRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunner;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
@@ -42,15 +39,12 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import icons.AndroidIcons;
 import java.util.List;
 import javax.swing.Icon;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -63,7 +57,8 @@ public class BlazeAndroidBinaryRunConfigurationHandler
   private final BlazeCommandRunConfiguration configuration;
   private final BlazeAndroidBinaryRunConfigurationState configState;
 
-  BlazeAndroidBinaryRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
+  @VisibleForTesting
+  protected BlazeAndroidBinaryRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
     this.configuration = configuration;
     configState =
         new BlazeAndroidBinaryRunConfigurationState(
@@ -91,7 +86,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
   }
 
   @Nullable
-  private Module getModule() {
+  public Module getModule() {
     Label target = getLabel();
     return target != null
         ? BlazeAndroidProjectStructureSyncer.ensureRunConfigurationModule(
@@ -125,10 +120,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
       AndroidFacet facet,
       ExecutionEnvironment env,
       ImmutableList<String> buildFlags) {
-    if (configState.instantRun()) {
-      return new BlazeAndroidBinaryInstantRunContext(
-          project, facet, configuration, env, configState, getLabel(), buildFlags);
-    } else if (configState.mobileInstall()) {
+    if (configState.mobileInstall()) {
       return new BlazeAndroidBinaryMobileInstallRunContext(
           project, facet, configuration, env, configState, getLabel(), buildFlags);
     } else {
@@ -187,27 +179,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
 
   @Override
   @Nullable
-  public Icon getExecutorIcon(@NotNull RunConfiguration configuration, @NotNull Executor executor) {
-    if (!configState.instantRun()) {
-      return null;
-    }
-
-    AndroidSessionInfo info =
-        AndroidSessionInfo.findOldSession(
-            this.configuration.getProject(), null, this.configuration.getUniqueID());
-    if (info == null || !info.isInstantRun() || !info.getExecutorId().equals(executor.getId())) {
-      return null;
-    }
-
-    // Make sure instant run is supported on the relevant device, if found.
-    AndroidVersion androidVersion =
-        InstantRunManager.getMinDeviceApiLevel(info.getProcessHandler());
-    if (!InstantRunManager.isInstantRunCapableDeviceVersion(androidVersion)) {
-      return null;
-    }
-
-    return executor instanceof DefaultRunExecutor
-        ? AndroidIcons.RunIcons.Replay
-        : AndroidIcons.RunIcons.DebugReattach;
+  public Icon getExecutorIcon(RunConfiguration configuration, Executor executor) {
+    return null;
   }
 }

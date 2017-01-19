@@ -15,41 +15,25 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.language.semantics;
 
-import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.lang.buildfile.sync.LanguageSpecResult;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
-import com.google.idea.blaze.base.sync.SyncListener;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
-import java.util.Map;
 
 /** Calls 'blaze info build-language', to retrieve the language spec. */
-public class BuildLanguageSpecProviderImpl extends SyncListener.Adapter
-    implements BuildLanguageSpecProvider {
-
-  private static final Map<Project, LanguageSpecResult> calculatedSpecs = Maps.newHashMap();
+public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider {
 
   @Override
   public BuildLanguageSpec getLanguageSpec(Project project) {
-    LanguageSpecResult result = calculatedSpecs.get(project);
-    return result != null ? result.spec : null;
-  }
-
-  @Override
-  public void onSyncComplete(
-      Project project,
-      BlazeContext context,
-      BlazeImportSettings importSettings,
-      ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData,
-      SyncMode syncMode,
-      SyncResult syncResult) {
-    LanguageSpecResult spec = blazeProjectData.syncState.get(LanguageSpecResult.class);
-    if (spec != null) {
-      calculatedSpecs.put(project, spec);
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (blazeProjectData == null) {
+      return null;
     }
+    LanguageSpecResult spec = blazeProjectData.syncState.get(LanguageSpecResult.class);
+    if (spec == null) {
+      return null;
+    }
+    return spec.spec;
   }
 }

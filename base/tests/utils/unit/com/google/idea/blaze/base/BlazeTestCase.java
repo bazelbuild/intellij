@@ -19,17 +19,22 @@ import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -40,6 +45,27 @@ import org.picocontainer.MutablePicoContainer;
  * <p>Provides a mock application and a mock project.
  */
 public class BlazeTestCase {
+  /** Test rule that ensures tests do not run on Windows (see http://b.android.com/222904) */
+  public static class IgnoreOnWindowsRule implements TestRule {
+    @NotNull
+    @Override
+    public Statement apply(Statement base, Description description) {
+      if (SystemInfo.isWindows) {
+        return new Statement() {
+          @Override
+          public void evaluate() throws Throwable {
+            System.out.println(
+                "Test \""
+                    + description.getDisplayName()
+                    + "\" does not run on Windows (see http://b.android.com/222904)");
+          }
+        };
+      }
+      return base;
+    }
+  }
+
+  @Rule public IgnoreOnWindowsRule rule = new IgnoreOnWindowsRule();
 
   protected Project project;
   private ExtensionsAreaImpl extensionsArea;
@@ -94,16 +120,9 @@ public class BlazeTestCase {
 
   protected <T> ExtensionPointImpl<T> registerExtensionPoint(
       @NotNull ExtensionPointName<T> name, @NotNull Class<T> type) {
-    ExtensionPointImpl<T> extensionPoint =
-        new ExtensionPointImpl<T>(
-            name.getName(),
-            type.getName(),
-            ExtensionPoint.Kind.INTERFACE,
-            extensionsArea,
-            null,
-            new Extensions.SimpleLogProvider(),
-            new DefaultPluginDescriptor(PluginId.getId(type.getName()), type.getClassLoader()));
-    extensionsArea.registerExtensionPoint(extensionPoint);
-    return extensionPoint;
+    PluginDescriptor pluginDescriptor =
+        new DefaultPluginDescriptor(PluginId.getId(type.getName()), type.getClassLoader());
+    extensionsArea.registerExtensionPoint(name.getName(), type.getName(), pluginDescriptor);
+    return extensionsArea.getExtensionPoint(name.getName());
   }
 }

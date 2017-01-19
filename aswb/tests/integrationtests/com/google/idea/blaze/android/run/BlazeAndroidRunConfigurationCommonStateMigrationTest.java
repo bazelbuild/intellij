@@ -90,58 +90,6 @@ public class BlazeAndroidRunConfigurationCommonStateMigrationTest
   }
 
   @Test
-  public void readAndWriteShouldMigrate() throws Exception {
-    String oldXml =
-        "<?xml version=\"1.0\"?>"
-            + "<configuration blaze-native-debug=\"true\">"
-            + "  <blaze-user-flag>--flag1</blaze-user-flag>"
-            + "  <blaze-user-flag>--flag2</blaze-user-flag>"
-            + "  <option name=\"USE_LAST_SELECTED_DEVICE\" value=\"true\" />"
-            + "  <option name=\"PREFERRED_AVD\" value=\"some avd\" />"
-            + DEBUGGER_STATE_AUTO_RAW_XML
-            + DEBUGGER_STATE_NATIVE_RAW_XML
-            + DEBUGGER_STATE_JAVA_RAW_XML
-            + DEBUGGER_STATE_HYBRID_RAW_XML
-            + DEBUGGER_STATE_BLAZE_AUTO_RAW_XML
-            + "</configuration>";
-    Element oldElement = saxBuilder.build(new StringReader(oldXml)).getRootElement();
-
-    state.readExternal(oldElement);
-    Element migratedElement = new Element("configuration");
-    state.writeExternal(migratedElement);
-
-    assertThat(migratedElement.getChildren()).hasSize(4);
-    assertThat(migratedElement.getAttribute("blaze-native-debug").getValue()).isEqualTo("true");
-
-    List<Element> flagElements = migratedElement.getChildren("blaze-user-flag");
-    assertThat(flagElements).hasSize(2);
-    assertThat(flagElements.get(0).getText()).isEqualTo("--flag1");
-    assertThat(flagElements.get(1).getText()).isEqualTo("--flag2");
-
-    Element deployTargetStatesElement = migratedElement.getChild("android-deploy-target-states");
-    assertThat(xmlOutputter.outputString(deployTargetStatesElement))
-        .isEqualTo(formatRawXml(DEPLOY_TARGET_STATES_RAW_XML));
-
-    Element debuggerStatesElement = migratedElement.getChild("android-debugger-states");
-    assertThat(debuggerStatesElement.getChildren()).hasSize(5);
-    Element debuggerStateElement = debuggerStatesElement.getChild("Auto");
-    assertThat(xmlOutputter.outputString(debuggerStateElement))
-        .isEqualTo(formatRawXml(DEBUGGER_STATE_AUTO_RAW_XML));
-    debuggerStateElement = debuggerStatesElement.getChild("Native");
-    assertThat(xmlOutputter.outputString(debuggerStateElement))
-        .isEqualTo(formatRawXml(DEBUGGER_STATE_NATIVE_RAW_XML));
-    debuggerStateElement = debuggerStatesElement.getChild("Java");
-    assertThat(xmlOutputter.outputString(debuggerStateElement))
-        .isEqualTo(formatRawXml(DEBUGGER_STATE_JAVA_RAW_XML));
-    debuggerStateElement = debuggerStatesElement.getChild("Hybrid");
-    assertThat(xmlOutputter.outputString(debuggerStateElement))
-        .isEqualTo(formatRawXml(DEBUGGER_STATE_HYBRID_RAW_XML));
-    debuggerStateElement = debuggerStatesElement.getChild("BlazeAuto");
-    assertThat(xmlOutputter.outputString(debuggerStateElement))
-        .isEqualTo(formatRawXml(DEBUGGER_STATE_BLAZE_AUTO_RAW_XML));
-  }
-
-  @Test
   public void readAndWriteShouldRemoveExtraElements() throws Exception {
     String oldXml =
         "<?xml version=\"1.0\"?>"

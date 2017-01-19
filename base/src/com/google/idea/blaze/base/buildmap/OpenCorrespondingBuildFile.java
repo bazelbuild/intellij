@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.buildmap;
 
 import com.google.common.collect.Iterables;
-import com.google.idea.blaze.base.actions.BlazeAction;
+import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.metrics.Action;
 import com.google.idea.blaze.base.metrics.LoggingService;
 import com.intellij.ide.actions.OpenFileAction;
@@ -29,16 +29,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.util.Collection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
-class OpenCorrespondingBuildFile extends BlazeAction {
+class OpenCorrespondingBuildFile extends BlazeProjectAction {
+
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) {
-      return;
-    }
+  protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     File file = getBuildFile(project, virtualFile);
     if (file == null) {
@@ -49,10 +45,7 @@ class OpenCorrespondingBuildFile extends BlazeAction {
   }
 
   @Nullable
-  private File getBuildFile(@Nullable Project project, @Nullable VirtualFile virtualFile) {
-    if (project == null) {
-      return null;
-    }
+  private File getBuildFile(Project project, @Nullable VirtualFile virtualFile) {
     if (virtualFile == null) {
       return null;
     }
@@ -62,12 +55,11 @@ class OpenCorrespondingBuildFile extends BlazeAction {
   }
 
   @Override
-  protected void doUpdate(@NotNull AnActionEvent e) {
+  protected void updateForBlazeProject(Project project, AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
     VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    boolean visible = (project != null && virtualFile != null);
+    boolean visible = virtualFile != null;
     boolean enabled = getBuildFile(project, virtualFile) != null;
     presentation.setVisible(visible || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));
     presentation.setEnabled(enabled);

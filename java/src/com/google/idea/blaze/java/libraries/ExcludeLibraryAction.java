@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.java.libraries;
 
-import com.google.idea.blaze.base.actions.BlazeAction;
+import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewEdit;
@@ -33,13 +33,11 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
-import org.jetbrains.annotations.NotNull;
 
-class ExcludeLibraryAction extends BlazeAction {
+class ExcludeLibraryAction extends BlazeProjectAction {
+
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getProject();
-    assert project != null;
+  protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
@@ -88,7 +86,7 @@ class ExcludeLibraryAction extends BlazeAction {
   }
 
   @Override
-  protected void doUpdate(@NotNull AnActionEvent e) {
+  protected void updateForBlazeProject(Project project, AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     boolean enabled = LibraryActionHelper.findLibraryForAction(e) != null;
     presentation.setVisible(enabled);

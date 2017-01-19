@@ -72,7 +72,8 @@ public interface BlazeAndroidRunContext {
   DebugConnectorTask getDebuggerTask(
       AndroidDebugger androidDebugger,
       AndroidDebuggerState androidDebuggerState,
-      Set<String> packageIds)
+      Set<String> packageIds,
+      boolean monitorRemoteProcess)
       throws ExecutionException;
 
   @Nullable

@@ -36,12 +36,13 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-class UseExistingBazelWorkspaceOption implements BlazeSelectWorkspaceOption {
+/** Allows importing an existing bazel workspace */
+public class UseExistingBazelWorkspaceOption implements BlazeSelectWorkspaceOption {
 
   private final JComponent component;
   private final TextFieldWithHistory directoryField;
 
-  UseExistingBazelWorkspaceOption(BlazeNewProjectBuilder builder) {
+  public UseExistingBazelWorkspaceOption(BlazeNewProjectBuilder builder) {
     this.directoryField = new TextFieldWithHistory();
     this.directoryField.setHistory(builder.getWorkspaceHistory(BuildSystem.Bazel));
     this.directoryField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);

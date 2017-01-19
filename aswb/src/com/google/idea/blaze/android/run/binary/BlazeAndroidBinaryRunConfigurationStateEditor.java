@@ -16,7 +16,6 @@
 package com.google.idea.blaze.android.run.binary;
 
 import com.android.tools.idea.run.activity.ActivityLocatorUtils;
-import com.google.idea.blaze.android.run.binary.instantrun.InstantRunExperiment;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.blaze.base.ui.IntegerTextField;
@@ -75,10 +74,11 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
   private JRadioButton launchCustomButton;
   private JCheckBox mobileInstallCheckBox;
   private JCheckBox splitApksCheckBox;
-  private JCheckBox instantRunCheckBox;
   private JCheckBox useWorkProfileIfPresentCheckBox;
   private JLabel userIdLabel;
   private IntegerTextField userIdField;
+
+  private boolean componentEnabled = true;
 
   BlazeAndroidBinaryRunConfigurationStateEditor(
       RunConfigurationStateEditor commonStateEditor, Project project) {
@@ -126,34 +126,15 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
             }
           }
         });
-    ActionListener listener = e -> activityField.setEnabled(launchCustomButton.isSelected());
+    ActionListener listener = e -> updateEnabledState();
     launchCustomButton.addActionListener(listener);
     launchDefaultButton.addActionListener(listener);
     launchNothingButton.addActionListener(listener);
 
-    instantRunCheckBox.setVisible(InstantRunExperiment.INSTANT_RUN_ENABLED.getValue());
-
-    /* Only one of mobile-install and instant run can be selected at any one time */
-    mobileInstallCheckBox.addActionListener(
-        e -> {
-          if (mobileInstallCheckBox.isSelected()) {
-            instantRunCheckBox.setSelected(false);
-          }
-        });
-    instantRunCheckBox.addActionListener(
-        e -> {
-          if (instantRunCheckBox.isSelected()) {
-            mobileInstallCheckBox.setSelected(false);
-          }
-        });
-
     mobileInstallCheckBox.addActionListener(
         e -> splitApksCheckBox.setVisible(mobileInstallCheckBox.isSelected()));
 
-    useWorkProfileIfPresentCheckBox.addActionListener(
-        e -> {
-          setUserIdEnabled(!useWorkProfileIfPresentCheckBox.isSelected());
-        });
+    useWorkProfileIfPresentCheckBox.addActionListener(e -> updateEnabledState());
   }
 
   @Override
@@ -170,24 +151,18 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     } else {
       launchNothingButton.setSelected(true);
     }
-    activityField.setEnabled(launchSpecificActivity);
     if (launchSpecificActivity) {
       activityField.getChildComponent().setText(state.getActivityClass());
     }
 
     mobileInstallCheckBox.setSelected(state.mobileInstall());
     splitApksCheckBox.setSelected(state.useSplitApksIfPossible());
-    instantRunCheckBox.setSelected(state.instantRun());
     useWorkProfileIfPresentCheckBox.setSelected(state.useWorkProfileIfPresent());
 
     userIdField.setValue(state.getUserId());
-    setUserIdEnabled(!state.useWorkProfileIfPresent());
     splitApksCheckBox.setVisible(state.mobileInstall());
-  }
 
-  private void setUserIdEnabled(boolean enabled) {
-    userIdLabel.setEnabled(enabled);
-    userIdField.setEnabled(enabled);
+    updateEnabledState();
   }
 
   @Override
@@ -207,13 +182,32 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     }
     state.setMobileInstall(mobileInstallCheckBox.isSelected());
     state.setUseSplitApksIfPossible(splitApksCheckBox.isSelected());
-    state.setInstantRun(instantRunCheckBox.isSelected());
     state.setUseWorkProfileIfPresent(useWorkProfileIfPresentCheckBox.isSelected());
   }
 
   @Override
   public JComponent createComponent() {
     return UiUtil.createBox(commonStateEditor.createComponent(), panel);
+  }
+
+  private void updateEnabledState() {
+    boolean useWorkProfile = useWorkProfileIfPresentCheckBox.isSelected();
+    userIdLabel.setEnabled(componentEnabled && !useWorkProfile);
+    userIdField.setEnabled(componentEnabled && !useWorkProfile);
+    commonStateEditor.setComponentEnabled(componentEnabled);
+    activityField.setEnabled(componentEnabled && launchCustomButton.isSelected());
+    launchNothingButton.setEnabled(componentEnabled);
+    launchDefaultButton.setEnabled(componentEnabled);
+    launchCustomButton.setEnabled(componentEnabled);
+    mobileInstallCheckBox.setEnabled(componentEnabled);
+    splitApksCheckBox.setEnabled(componentEnabled);
+    useWorkProfileIfPresentCheckBox.setEnabled(componentEnabled);
+  }
+
+  @Override
+  public void setComponentEnabled(boolean enabled) {
+    componentEnabled = enabled;
+    updateEnabledState();
   }
 
   private void createUIComponents(Project project) {
@@ -453,24 +447,6 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
         splitApksCheckBox,
         new GridConstraints(
             1,
-            0,
-            1,
-            2,
-            GridConstraints.ANCHOR_WEST,
-            GridConstraints.FILL_NONE,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED,
-            null,
-            null,
-            null,
-            0,
-            false));
-    instantRunCheckBox = new JCheckBox();
-    instantRunCheckBox.setText(" Use InstantRun");
-    panel.add(
-        instantRunCheckBox,
-        new GridConstraints(
-            2,
             0,
             1,
             2,

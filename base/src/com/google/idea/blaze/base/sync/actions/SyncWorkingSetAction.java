@@ -15,25 +15,29 @@
  */
 package com.google.idea.blaze.base.sync.actions;
 
-import com.google.idea.blaze.base.actions.BlazeAction;
+import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
-import com.google.idea.blaze.base.sync.BlazeSyncParams;
-import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
+import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 
-/** Allows a partial sync of the project depending on what's been selected. */
-public class SyncWorkingSetAction extends BlazeAction {
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getProject();
-    if (project != null) {
-      BlazeSyncParams syncParams =
-          new BlazeSyncParams.Builder("Sync Working Set", SyncMode.PARTIAL)
-              .addWorkingSet(true)
-              .build();
+/** Allows a partial sync of the working set. */
+public class SyncWorkingSetAction extends BlazeProjectAction {
 
-      BlazeSyncManager.getInstance(project).requestProjectSync(syncParams);
-    }
+  @Override
+  protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
+    BlazeSyncManager.getInstance(project).workingSetSync();
+    updateStatus(project, e);
+  }
+
+  @Override
+  protected void updateForBlazeProject(Project project, AnActionEvent e) {
+    updateStatus(project, e);
+  }
+
+  private static void updateStatus(Project project, AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabled(!BlazeSyncStatus.getInstance(project).syncInProgress());
   }
 }

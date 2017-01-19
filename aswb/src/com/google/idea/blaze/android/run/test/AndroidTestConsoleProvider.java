@@ -16,10 +16,13 @@
 package com.google.idea.blaze.android.run.test;
 
 import com.android.tools.idea.run.ConsoleProvider;
-import com.android.tools.idea.run.testing.AndroidTestConsoleProperties;
+import com.google.idea.blaze.android.compatibility.Compatibility.AndroidTestConsoleProperties;
+import com.google.idea.blaze.android.run.test.smrunner.BlazeAndroidTestEventsHandler;
+import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
@@ -27,35 +30,48 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nullable;
 
 /** Console provider for android_test */
 class AndroidTestConsoleProvider implements ConsoleProvider {
   private final Project project;
   private final RunConfiguration runConfiguration;
   private final BlazeAndroidTestRunConfigurationState configState;
+  @Nullable private final BlazeAndroidTestEventsHandler testEventsHandler;
 
   AndroidTestConsoleProvider(
       Project project,
       RunConfiguration runConfiguration,
-      BlazeAndroidTestRunConfigurationState configState) {
+      BlazeAndroidTestRunConfigurationState configState,
+      @Nullable BlazeAndroidTestEventsHandler testEventsHandler) {
     this.project = project;
     this.runConfiguration = runConfiguration;
     this.configState = configState;
+    this.testEventsHandler = testEventsHandler;
   }
 
-  @NotNull
   @Override
-  public ConsoleView createAndAttach(
-      @NotNull Disposable parent, @NotNull ProcessHandler handler, @NotNull Executor executor)
+  public ConsoleView createAndAttach(Disposable parent, ProcessHandler handler, Executor executor)
       throws ExecutionException {
     if (!configState.isRunThroughBlaze()) {
       return getStockConsoleProvider().createAndAttach(parent, handler, executor);
     }
-    ConsoleView console =
-        TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    ConsoleView console = createBlazeTestConsole(executor);
     console.attachToProcess(handler);
     return console;
+  }
+
+  private ConsoleView createBlazeTestConsole(Executor executor) {
+    if (testEventsHandler == null || isDebugging(executor)) {
+      // SM runner console not yet supported when debugging, because we're calling this once per
+      // test case (see ConnectBlazeTestDebuggerTask::setUpForReattachingDebugger)
+      return TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    }
+    return SmRunnerUtils.getConsoleView(project, runConfiguration, executor, testEventsHandler);
+  }
+
+  private static boolean isDebugging(Executor executor) {
+    return executor instanceof DefaultDebugExecutor;
   }
 
   private ConsoleProvider getStockConsoleProvider() {

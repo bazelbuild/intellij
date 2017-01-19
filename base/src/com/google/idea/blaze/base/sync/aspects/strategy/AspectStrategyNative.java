@@ -22,6 +22,7 @@ import java.io.InputStream;
 
 /** Aspect strategy for native. */
 public class AspectStrategyNative implements AspectStrategy {
+
   @Override
   public String getName() {
     return "NativeAspect";
@@ -39,6 +40,13 @@ public class AspectStrategyNative implements AspectStrategy {
     blazeCommandBuilder
         .addBlazeFlags("--aspects=AndroidStudioInfoAspect")
         .addBlazeFlags("--output_groups=ide-resolve");
+  }
+
+  @Override
+  public void modifyIdeCompileCommand(BlazeCommand.Builder blazeCommandBuilder) {
+    blazeCommandBuilder
+        .addBlazeFlags("--aspects=AndroidStudioInfoAspect")
+        .addBlazeFlags("--output_groups=ide-compile");
   }
 
   @Override

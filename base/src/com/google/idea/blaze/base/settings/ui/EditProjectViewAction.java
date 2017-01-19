@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.settings.ui;
 
-import com.google.idea.blaze.base.actions.BlazeAction;
+import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -27,14 +27,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 
 /** Opens all the user's project views. */
-public class EditProjectViewAction extends BlazeAction {
+public class EditProjectViewAction extends BlazeProjectAction {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) {
-      return;
-    }
+  protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
     if (projectViewSet == null) {
       return;

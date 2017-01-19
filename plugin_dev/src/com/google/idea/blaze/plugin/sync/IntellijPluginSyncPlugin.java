@@ -18,6 +18,7 @@ package com.google.idea.blaze.plugin.sync;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -27,13 +28,13 @@ import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider;
+import com.google.idea.sdkcompat.transactions.Transactions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.ui.UIUtil;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -79,6 +80,7 @@ public class IntellijPluginSyncPlugin extends BlazeSyncPlugin.Adapter {
       Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
+      BlazeVersionData blazeVersionData,
       BlazeProjectData blazeProjectData) {
     if (!blazeProjectData.workspaceLanguageSettings.isWorkspaceType(
         WorkspaceType.INTELLIJ_PLUGIN)) {
@@ -90,15 +92,14 @@ public class IntellijPluginSyncPlugin extends BlazeSyncPlugin.Adapter {
             projectViewSet, blazeProjectData, LanguageLevel.JDK_1_7);
 
     // Leave the SDK, but set the language level
-    UIUtil.invokeAndWaitIfNeeded(
-        (Runnable)
-            () ->
-                ApplicationManager.getApplication()
-                    .runWriteAction(
-                        () -> {
-                          LanguageLevelProjectExtension ext =
-                              LanguageLevelProjectExtension.getInstance(project);
-                          ext.setLanguageLevel(javaLanguageLevel);
-                        }));
+    Transactions.submitTransactionAndWait(
+        () ->
+            ApplicationManager.getApplication()
+                .runWriteAction(
+                    () -> {
+                      LanguageLevelProjectExtension ext =
+                          LanguageLevelProjectExtension.getInstance(project);
+                      ext.setLanguageLevel(javaLanguageLevel);
+                    }));
   }
 }

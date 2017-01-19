@@ -22,51 +22,46 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
-import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import java.io.Serializable;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /** The top-level object serialized to cache. */
 @Immutable
 public class BlazeProjectData implements Serializable {
-  private static final long serialVersionUID = 25L;
+  private static final long serialVersionUID = 27L;
 
   public final long syncTime;
   public final TargetMap targetMap;
   public final ImmutableMap<String, String> blazeInfo;
   public final BlazeRoots blazeRoots;
-  @Nullable public final WorkingSet workingSet;
+  public final BlazeVersionData blazeVersionData;
   public final WorkspacePathResolver workspacePathResolver;
   public final ArtifactLocationDecoder artifactLocationDecoder;
   public final WorkspaceLanguageSettings workspaceLanguageSettings;
   public final SyncState syncState;
   public final ImmutableMultimap<TargetKey, TargetKey> reverseDependencies;
-  @Nullable public final String vcsName;
 
   public BlazeProjectData(
       long syncTime,
       TargetMap targetMap,
       ImmutableMap<String, String> blazeInfo,
       BlazeRoots blazeRoots,
-      @Nullable WorkingSet workingSet,
+      BlazeVersionData blazeVersionData,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
-      WorkspaceLanguageSettings workspaceLangaugeSettings,
+      WorkspaceLanguageSettings workspaceLanguageSettings,
       SyncState syncState,
-      ImmutableMultimap<TargetKey, TargetKey> reverseDependencies,
-      String vcsName) {
+      ImmutableMultimap<TargetKey, TargetKey> reverseDependencies) {
     this.syncTime = syncTime;
     this.targetMap = targetMap;
     this.blazeInfo = blazeInfo;
     this.blazeRoots = blazeRoots;
-    this.workingSet = workingSet;
+    this.blazeVersionData = blazeVersionData;
     this.workspacePathResolver = workspacePathResolver;
     this.artifactLocationDecoder = artifactLocationDecoder;
-    this.workspaceLanguageSettings = workspaceLangaugeSettings;
+    this.workspaceLanguageSettings = workspaceLanguageSettings;
     this.syncState = syncState;
     this.reverseDependencies = reverseDependencies;
-    this.vcsName = vcsName;
   }
 }

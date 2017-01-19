@@ -42,12 +42,10 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
 
   private static final String MOBILE_INSTALL_ATTR = "blaze-mobile-install";
   private static final String USE_SPLIT_APKS_IF_POSSIBLE = "use-split-apks-if-possible";
-  private static final String INSTANT_RUN_ATTR = "instant-run";
   private static final String WORK_PROFILE_ATTR = "use-work-profile-if-present";
   private static final String USER_ID_ATTR = "user-id";
   private boolean mobileInstall = false;
   private boolean useSplitApksIfPossible = false;
-  private boolean instantRun = false;
   private boolean useWorkProfileIfPresent = false;
   private Integer userId;
 
@@ -83,14 +81,6 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
 
   void setUseSplitApksIfPossible(boolean useSplitApksIfPossible) {
     this.useSplitApksIfPossible = useSplitApksIfPossible;
-  }
-
-  boolean instantRun() {
-    return instantRun;
-  }
-
-  void setInstantRun(boolean instantRun) {
-    this.instantRun = instantRun;
   }
 
   public boolean useWorkProfileIfPresent() {
@@ -156,7 +146,6 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
     setMobileInstall(Boolean.parseBoolean(element.getAttributeValue(MOBILE_INSTALL_ATTR)));
     setUseSplitApksIfPossible(
         Boolean.parseBoolean(element.getAttributeValue(USE_SPLIT_APKS_IF_POSSIBLE)));
-    setInstantRun(Boolean.parseBoolean(element.getAttributeValue(INSTANT_RUN_ATTR)));
     setUseWorkProfileIfPresent(Boolean.parseBoolean(element.getAttributeValue(WORK_PROFILE_ATTR)));
 
     String userIdString = element.getAttributeValue(USER_ID_ATTR);
@@ -196,7 +185,6 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
     element.setAttribute(MODE, mode);
     element.setAttribute(MOBILE_INSTALL_ATTR, Boolean.toString(mobileInstall));
     element.setAttribute(USE_SPLIT_APKS_IF_POSSIBLE, Boolean.toString(useSplitApksIfPossible));
-    element.setAttribute(INSTANT_RUN_ATTR, Boolean.toString(instantRun));
     element.setAttribute(WORK_PROFILE_ATTR, Boolean.toString(useWorkProfileIfPresent));
 
     if (userId != null) {
