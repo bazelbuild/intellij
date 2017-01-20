@@ -21,9 +21,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
-import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
 import com.google.idea.blaze.base.util.SerializationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -69,13 +67,6 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
   @Nullable
   public BlazeProjectData getBlazeProjectData() {
     return blazeProjectData;
-  }
-
-  @Override
-  public BlazeSyncPlugin.ModuleEditor editModules() {
-    return ModuleEditorProvider.getInstance()
-        .getModuleEditor(
-            project, BlazeImportSettingsManager.getInstance(project).getImportSettings());
   }
 
   @Nullable

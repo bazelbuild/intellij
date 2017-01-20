@@ -52,7 +52,8 @@ public class BlazeProjectData implements Serializable {
       ArtifactLocationDecoder artifactLocationDecoder,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       SyncState syncState,
-      ImmutableMultimap<TargetKey, TargetKey> reverseDependencies) {
+      ImmutableMultimap<TargetKey, TargetKey> reverseDependencies,
+      Object dummy) {
     this.syncTime = syncTime;
     this.targetMap = targetMap;
     this.blazeInfo = blazeInfo;

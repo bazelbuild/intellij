@@ -38,12 +38,13 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManagerLegacy;
-import com.google.idea.blaze.base.sync.BlazeSyncPlugin.ModuleEditor;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
@@ -86,6 +87,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
   private static final String NON_STANDARD_MANIFEST_NAME_ERROR = "Non-standard manifest name";
   private static final String MISSING_CLASS_DEPENDENCIES_ERROR = "Missing class dependencies";
 
+  private static final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/"));
   private Module module;
   private MockBlazeProjectDataManager projectDataManager;
   private BlazeRenderErrorContributor.BlazeProvider provider;
@@ -687,18 +689,16 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
       ArtifactLocationDecoder decoder =
           (location) -> new File("/src", location.getExecutionRootRelativePath());
       this.blazeProjectData =
-          new BlazeProjectData(0L, targetMap, null, null, null, null, decoder, null, null, null);
+          MockBlazeProjectDataBuilder.builder(workspaceRoot)
+              .setTargetMap(targetMap)
+              .setArtifactLocationDecoder(decoder)
+              .build();
     }
 
     @Nullable
     @Override
     public BlazeProjectData getBlazeProjectData() {
       return blazeProjectData;
-    }
-
-    @Override
-    public ModuleEditor editModules() {
-      return null;
     }
   }
 

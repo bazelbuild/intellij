@@ -33,8 +33,11 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
@@ -66,9 +69,13 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
     ArtifactLocationDecoder decoder =
         (location) -> new File("/src", location.getExecutionRootRelativePath());
 
-    mockBlazeProjectDataManager(
-        new BlazeProjectData(
-            0L, buildTargetMap(), null, null, null, null, decoder, null, null, null));
+    BlazeProjectData blazeProjectData =
+        MockBlazeProjectDataBuilder.builder(workspaceRoot)
+            .setTargetMap(buildTargetMap())
+            .setArtifactLocationDecoder(decoder)
+            .build();
+    registerProjectService(
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(blazeProjectData));
     classJarProvider = new BlazeClassJarProvider(getProject());
   }
 

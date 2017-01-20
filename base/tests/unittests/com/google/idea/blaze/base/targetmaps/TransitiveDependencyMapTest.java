@@ -22,11 +22,12 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
-import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.sync.BlazeSyncPlugin.ModuleEditor;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import javax.annotation.Nullable;
+import java.io.File;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -35,6 +36,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class TransitiveDependencyMapTest extends BlazeTestCase {
   private TransitiveDependencyMap transitiveDependencyMap;
+  private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/"));
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -42,8 +44,9 @@ public class TransitiveDependencyMapTest extends BlazeTestCase {
     projectServices.register(
         BlazeProjectDataManager.class,
         new MockBlazeProjectDataManager(
-            new BlazeProjectData(
-                0L, buildTargetMap(), null, null, null, null, null, null, null, null)));
+            MockBlazeProjectDataBuilder.builder(workspaceRoot)
+                .setTargetMap(buildTargetMap())
+                .build()));
     projectServices.register(TransitiveDependencyMap.class, new TransitiveDependencyMap(project));
     transitiveDependencyMap = TransitiveDependencyMap.getInstance(project);
   }
@@ -144,24 +147,5 @@ public class TransitiveDependencyMapTest extends BlazeTestCase {
         .addTarget(TargetIdeInfo.builder().setLabel(diamondCC))
         .addTarget(TargetIdeInfo.builder().setLabel(diamondCCC))
         .build();
-  }
-
-  private static class MockBlazeProjectDataManager implements BlazeProjectDataManager {
-    private final BlazeProjectData blazeProjectData;
-
-    public MockBlazeProjectDataManager(BlazeProjectData blazeProjectData) {
-      this.blazeProjectData = blazeProjectData;
-    }
-
-    @Nullable
-    @Override
-    public BlazeProjectData getBlazeProjectData() {
-      return blazeProjectData;
-    }
-
-    @Override
-    public ModuleEditor editModules() {
-      return null;
-    }
   }
 }
