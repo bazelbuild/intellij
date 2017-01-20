@@ -34,6 +34,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -44,6 +45,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.intellij.util.ThrowableRunnable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import javax.annotation.Nullable;
@@ -51,10 +53,32 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 /** Base test class for blaze integration tests. {@link UsefulTestCase} */
 public abstract class BlazeIntegrationTestCase {
 
+  /** Test rule that ensures tests do not run on Windows (see http://b.android.com/222904) */
+  public static class IgnoreOnWindowsRule implements TestRule {
+    @Override
+    public Statement apply(Statement base, Description description) {
+      if (SystemInfo.isWindows) {
+        return new Statement() {
+          @Override
+          public void evaluate() throws Throwable {
+            System.out.println(
+                "Test \""
+                    + description.getDisplayName()
+                    + "\" does not run on Windows (see http://b.android.com/222904)");
+          }
+        };
+      }
+      return base;
+    }
+  }
+
+  @Rule public final IgnoreOnWindowsRule rule = new IgnoreOnWindowsRule();
   @Rule public final IntellijTestSetupRule setupRule = new IntellijTestSetupRule();
   @Rule public final TestRule testRunWrapper = runTestsOnEdt() ? new EdtRule() : null;
 
@@ -74,20 +98,20 @@ public abstract class BlazeIntegrationTestCase {
     testFixture.setUp();
     fileSystem = new TestFileSystem(getProject(), testFixture.getTempDirFixture());
 
-    Runnable writeAction =
-        () ->
-            ApplicationManager.getApplication()
-                .runWriteAction(
-                    () -> {
-                      ProjectJdkTable.getInstance().addJdk(IdeaTestUtil.getMockJdk18());
-                      VirtualFile workspaceRootVirtualFile =
-                          fileSystem.createDirectory("workspace");
-                      workspaceRoot =
-                          new WorkspaceRoot(new File(workspaceRootVirtualFile.getPath()));
-                      projectDataDirectory = fileSystem.createDirectory("project-data-dir");
-                      workspace = new WorkspaceFileSystem(workspaceRoot, fileSystem);
-                    });
-    EdtTestUtil.runInEdtAndWait(writeAction);
+    EdtTestUtil.runInEdtAndWait(
+        (ThrowableRunnable<Throwable>)
+            () ->
+                ApplicationManager.getApplication()
+                    .runWriteAction(
+                        () -> {
+                          ProjectJdkTable.getInstance().addJdk(IdeaTestUtil.getMockJdk18());
+                          VirtualFile workspaceRootVirtualFile =
+                              fileSystem.createDirectory("workspace");
+                          workspaceRoot =
+                              new WorkspaceRoot(new File(workspaceRootVirtualFile.getPath()));
+                          projectDataDirectory = fileSystem.createDirectory("project-data-dir");
+                          workspace = new WorkspaceFileSystem(workspaceRoot, fileSystem);
+                        }));
 
     BlazeImportSettingsManager.getInstance(getProject())
         .setImportSettings(

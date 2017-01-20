@@ -9,6 +9,7 @@ java_library(
         "//intellij_platform_sdk:devkit",
         "//intellij_platform_sdk:plugin_api",
         "//java",
+        "//sdkcompat",
         "@jsr305_annotations//jar",
     ],
 )

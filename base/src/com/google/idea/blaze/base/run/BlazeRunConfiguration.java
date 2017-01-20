@@ -22,4 +22,9 @@ import org.jetbrains.annotations.Nullable;
 public interface BlazeRunConfiguration {
   @Nullable
   TargetExpression getTarget();
+
+  /** Keep in sync with source XML */
+  void setKeepInSync(@Nullable Boolean keepInSync);
+
+  Boolean getKeepInSync();
 }

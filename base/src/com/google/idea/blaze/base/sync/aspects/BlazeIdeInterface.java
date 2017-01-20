@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.sync.aspects;
 
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -73,6 +74,7 @@ public interface BlazeIdeInterface {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
+      BlazeVersionData blazeVersionData,
       List<TargetExpression> targets,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       ArtifactLocationDecoder artifactLocationDecoder,
@@ -90,5 +92,19 @@ public interface BlazeIdeInterface {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
+      BlazeVersionData blazeVersionData,
+      List<TargetExpression> targets);
+
+  /**
+   * Attempts to compile the requested ide artifacts.
+   *
+   * <p>Amounts to a build of the ide-compile output group.
+   */
+  BuildResult compileIdeArtifacts(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeVersionData blazeVersionData,
       List<TargetExpression> targets);
 }

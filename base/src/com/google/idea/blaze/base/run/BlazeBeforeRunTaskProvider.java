@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.Key;
@@ -91,6 +92,9 @@ public final class BlazeBeforeRunTaskProvider
 
   @Override
   public boolean canExecuteTask(RunConfiguration configuration, Task task) {
+    if (configuration instanceof WrappingRunConfiguration) {
+      configuration = ((WrappingRunConfiguration) configuration).getPeer();
+    }
     return configuration instanceof BlazeCommandRunConfiguration;
   }
 

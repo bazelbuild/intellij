@@ -1,0 +1,167 @@
+/*
+ * Copyright 2016 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.idea.blaze.base.targetmaps;
+
+import static com.google.common.truth.Truth.assertThat;
+
+import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.sync.BlazeSyncPlugin.ModuleEditor;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import javax.annotation.Nullable;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+/** Unit tests for {@link TransitiveDependencyMap}. */
+@RunWith(JUnit4.class)
+public class TransitiveDependencyMapTest extends BlazeTestCase {
+  private TransitiveDependencyMap transitiveDependencyMap;
+
+  @Override
+  protected void initTest(Container applicationServices, Container projectServices) {
+    super.initTest(applicationServices, projectServices);
+    projectServices.register(
+        BlazeProjectDataManager.class,
+        new MockBlazeProjectDataManager(
+            new BlazeProjectData(
+                0L, buildTargetMap(), null, null, null, null, null, null, null, null)));
+    projectServices.register(TransitiveDependencyMap.class, new TransitiveDependencyMap(project));
+    transitiveDependencyMap = TransitiveDependencyMap.getInstance(project);
+  }
+
+  @Test
+  public void testGetSimpleDependency() {
+    TargetKey simpleA = TargetKey.forPlainTarget(new Label("//com/google/example/simple:a"));
+    TargetKey simpleB = TargetKey.forPlainTarget(new Label("//com/google/example/simple:b"));
+
+    assertThat(transitiveDependencyMap.getTransitiveDependencies(simpleA)).containsExactly(simpleB);
+    assertThat(transitiveDependencyMap.getTransitiveDependencies(simpleB)).isEmpty();
+  }
+
+  @Test
+  public void testGetChainDependencies() {
+    TargetKey chainA = TargetKey.forPlainTarget(new Label("//com/google/example/chain:a"));
+    TargetKey chainB = TargetKey.forPlainTarget(new Label("//com/google/example/chain:b"));
+    TargetKey chainC = TargetKey.forPlainTarget(new Label("//com/google/example/chain:c"));
+    TargetKey chainD = TargetKey.forPlainTarget(new Label("//com/google/example/chain:d"));
+
+    assertThat(transitiveDependencyMap.getTransitiveDependencies(chainA))
+        .containsExactly(chainB, chainC, chainD);
+    assertThat(transitiveDependencyMap.getTransitiveDependencies(chainB))
+        .containsExactly(chainC, chainD);
+    assertThat(transitiveDependencyMap.getTransitiveDependencies(chainC)).containsExactly(chainD);
+    assertThat(transitiveDependencyMap.getTransitiveDependencies(chainD)).isEmpty();
+  }
+
+  @Test
+  public void testGetDiamondDependencies() {
+    TargetKey diamondA = TargetKey.forPlainTarget(new Label("//com/google/example/diamond:a"));
+    TargetKey diamondB = TargetKey.forPlainTarget(new Label("//com/google/example/diamond:b"));
+    TargetKey diamondBB = TargetKey.forPlainTarget(new Label("//com/google/example/diamond:bb"));
+    TargetKey diamondBBB = TargetKey.forPlainTarget(new Label("//com/google/example/diamond:bbb"));
+    TargetKey diamondC = TargetKey.forPlainTarget(new Label("//com/google/example/diamond:c"));
+    TargetKey diamondCC = TargetKey.forPlainTarget(new Label("//com/google/example/diamond:cc"));
+    TargetKey diamondCCC = TargetKey.forPlainTarget(new Label("//com/google/example/diamond:ccc"));
+
+    assertThat(transitiveDependencyMap.getTransitiveDependencies(diamondA))
+        .containsExactly(diamondB, diamondBB, diamondBBB, diamondC, diamondCC, diamondCCC);
+    assertThat(transitiveDependencyMap.getTransitiveDependencies(diamondB))
+        .containsExactly(diamondC);
+    assertThat(transitiveDependencyMap.getTransitiveDependencies(diamondBB))
+        .containsExactly(diamondC, diamondCC);
+    assertThat(transitiveDependencyMap.getTransitiveDependencies(diamondBBB))
+        .containsExactly(diamondC, diamondCC, diamondCCC);
+    assertThat(transitiveDependencyMap.getTransitiveDependencies(diamondC)).isEmpty();
+    assertThat(transitiveDependencyMap.getTransitiveDependencies(diamondCC)).isEmpty();
+    assertThat(transitiveDependencyMap.getTransitiveDependencies(diamondCCC)).isEmpty();
+  }
+
+  @Test
+  public void testGetDependencyForNonExistentTarget() {
+    TargetKey bogus = TargetKey.forPlainTarget(new Label("//com/google/fake:target"));
+    assertThat(transitiveDependencyMap.getTransitiveDependencies(bogus)).isEmpty();
+  }
+
+  private static TargetMap buildTargetMap() {
+    Label simpleA = new Label("//com/google/example/simple:a");
+    Label simpleB = new Label("//com/google/example/simple:b");
+    Label chainA = new Label("//com/google/example/chain:a");
+    Label chainB = new Label("//com/google/example/chain:b");
+    Label chainC = new Label("//com/google/example/chain:c");
+    Label chainD = new Label("//com/google/example/chain:d");
+    Label diamondA = new Label("//com/google/example/diamond:a");
+    Label diamondB = new Label("//com/google/example/diamond:b");
+    Label diamondBB = new Label("//com/google/example/diamond:bb");
+    Label diamondBBB = new Label("//com/google/example/diamond:bbb");
+    Label diamondC = new Label("//com/google/example/diamond:c");
+    Label diamondCC = new Label("//com/google/example/diamond:cc");
+    Label diamondCCC = new Label("//com/google/example/diamond:ccc");
+    return TargetMapBuilder.builder()
+        .addTarget(TargetIdeInfo.builder().setLabel(simpleA).addDependency(simpleB))
+        .addTarget(TargetIdeInfo.builder().setLabel(simpleB))
+        .addTarget(TargetIdeInfo.builder().setLabel(chainA).addDependency(chainB))
+        .addTarget(TargetIdeInfo.builder().setLabel(chainB).addDependency(chainC))
+        .addTarget(TargetIdeInfo.builder().setLabel(chainC).addDependency(chainD))
+        .addTarget(TargetIdeInfo.builder().setLabel(chainD))
+        .addTarget(
+            TargetIdeInfo.builder()
+                .setLabel(diamondA)
+                .addDependency(diamondB)
+                .addDependency(diamondBB)
+                .addDependency(diamondBBB))
+        .addTarget(TargetIdeInfo.builder().setLabel(diamondB).addDependency(diamondC))
+        .addTarget(
+            TargetIdeInfo.builder()
+                .setLabel(diamondBB)
+                .addDependency(diamondC)
+                .addDependency(diamondCC))
+        .addTarget(
+            TargetIdeInfo.builder()
+                .setLabel(diamondBBB)
+                .addDependency(diamondC)
+                .addDependency(diamondCC)
+                .addDependency(diamondCCC))
+        .addTarget(TargetIdeInfo.builder().setLabel(diamondC))
+        .addTarget(TargetIdeInfo.builder().setLabel(diamondCC))
+        .addTarget(TargetIdeInfo.builder().setLabel(diamondCCC))
+        .build();
+  }
+
+  private static class MockBlazeProjectDataManager implements BlazeProjectDataManager {
+    private final BlazeProjectData blazeProjectData;
+
+    public MockBlazeProjectDataManager(BlazeProjectData blazeProjectData) {
+      this.blazeProjectData = blazeProjectData;
+    }
+
+    @Nullable
+    @Override
+    public BlazeProjectData getBlazeProjectData() {
+      return blazeProjectData;
+    }
+
+    @Override
+    public ModuleEditor editModules() {
+      return null;
+    }
+  }
+}

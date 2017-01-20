@@ -1,0 +1,207 @@
+/*
+ * Copyright 2016 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.idea.blaze.base.run.smrunner;
+
+import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.ErrorOrFailureOrSkipped;
+import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestCase;
+import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
+import com.google.idea.sdkcompat.smrunner.SmRunnerCompatUtils;
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor;
+import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
+import com.intellij.execution.testframework.sm.runner.events.TestFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestIgnoredEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
+import com.intellij.openapi.util.Key;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.text.ParseException;
+import javax.annotation.Nullable;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor;
+import jetbrains.buildServer.messages.serviceMessages.TestSuiteStarted;
+
+/** Converts blaze test runner xml logs to smRunner events. */
+public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConverter {
+
+  private static final ErrorOrFailureOrSkipped NO_ERROR = new ErrorOrFailureOrSkipped();
+
+  private final BlazeTestEventsHandler eventsHandler;
+
+  public BlazeXmlToTestEventsConverter(
+      String testFrameworkName,
+      TestConsoleProperties testConsoleProperties,
+      BlazeTestEventsHandler eventsHandler) {
+    super(testFrameworkName, testConsoleProperties);
+    this.eventsHandler = eventsHandler;
+  }
+
+  @Override
+  protected boolean processServiceMessages(
+      String s, Key key, ServiceMessageVisitor serviceMessageVisitor) throws ParseException {
+    return super.processServiceMessages(s, key, serviceMessageVisitor);
+  }
+
+  @Override
+  public void process(String text, Key outputType) {
+    super.process(text, outputType);
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+  }
+
+  @Override
+  public void flushBufferBeforeTerminating() {
+    super.flushBufferBeforeTerminating();
+    onStartTesting();
+    try (InputStream input = new FileInputStream(eventsHandler.testOutputXml)) {
+      parseXmlInput(getProcessor(), input);
+    } catch (Exception e) {
+      // ignore parsing errors -- most common cause is user cancellation, which we can't easily
+      // recognize.
+    }
+  }
+
+  private void parseXmlInput(GeneralTestEventsProcessor processor, InputStream input) {
+    TestSuite testResult = BlazeXmlSchema.parse(input);
+    processor.onTestsReporterAttached();
+    processTestSuite(processor, testResult);
+  }
+
+  private void processTestSuite(GeneralTestEventsProcessor processor, TestSuite suite) {
+    if (!hasRunChild(suite)) {
+      return;
+    }
+    // don't include the outermost 'testsuites' element.
+    boolean logSuite = suite.testSuites.isEmpty();
+    if (suite.name != null && logSuite) {
+      TestSuiteStarted suiteStarted =
+          new TestSuiteStarted(eventsHandler.suiteDisplayName(suite.name));
+      String locationUrl = eventsHandler.suiteLocationUrl(suite.name);
+      processor.onSuiteStarted(new TestSuiteStartedEvent(suiteStarted, locationUrl));
+    }
+
+    for (TestSuite child : suite.testSuites) {
+      processTestSuite(processor, child);
+    }
+    for (TestSuite decorator : suite.testDecorators) {
+      processTestSuite(processor, decorator);
+    }
+    for (TestCase test : suite.testCases) {
+      processTestCase(processor, test);
+    }
+
+    if (suite.sysOut != null) {
+      processor.onUncapturedOutput(suite.sysOut, ProcessOutputTypes.STDOUT);
+    }
+    if (suite.sysErr != null) {
+      processor.onUncapturedOutput(suite.sysErr, ProcessOutputTypes.STDERR);
+    }
+
+    if (suite.name != null && logSuite) {
+      processor.onSuiteFinished(
+          new TestSuiteFinishedEvent(eventsHandler.suiteDisplayName(suite.name)));
+    }
+  }
+
+  /**
+   * Does the test suite have at least one child which wasn't skipped? <br>
+   * This prevents spurious warnings from entirely filtered test classes.
+   */
+  private static boolean hasRunChild(TestSuite suite) {
+    for (TestSuite child : suite.testSuites) {
+      if (hasRunChild(child)) {
+        return true;
+      }
+    }
+    for (TestSuite child : suite.testDecorators) {
+      if (hasRunChild(child)) {
+        return true;
+      }
+    }
+    for (TestCase test : suite.testCases) {
+      if ("run".equals(test.status)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isCancelled(TestCase test) {
+    return "interrupted".equalsIgnoreCase(test.result) || "cancelled".equalsIgnoreCase(test.result);
+  }
+
+  private static boolean isIgnored(TestCase test) {
+    if (test.skipped != null) {
+      return true;
+    }
+    return "suppressed".equalsIgnoreCase(test.result)
+        || "skipped".equalsIgnoreCase(test.result)
+        || "filtered".equalsIgnoreCase(test.result);
+  }
+
+  private static boolean isFailed(TestCase test) {
+    return test.failure != null || test.error != null;
+  }
+
+  private void processTestCase(GeneralTestEventsProcessor processor, TestCase test) {
+    if (test.name == null || "notrun".equals(test.status) || isCancelled(test)) {
+      return;
+    }
+    String displayName = eventsHandler.testDisplayName(test.name);
+    String locationUrl = eventsHandler.testLocationUrl(test.name, test.classname);
+    processor.onTestStarted(new TestStartedEvent(displayName, locationUrl));
+
+    if (test.sysOut != null) {
+      processor.onTestOutput(new TestOutputEvent(displayName, test.sysOut, true));
+    }
+    if (test.sysErr != null) {
+      processor.onTestOutput(new TestOutputEvent(displayName, test.sysErr, true));
+    }
+
+    if (isIgnored(test)) {
+      ErrorOrFailureOrSkipped err = test.skipped != null ? test.skipped : NO_ERROR;
+      processor.onTestIgnored(new TestIgnoredEvent(displayName, err.message, err.content));
+    } else if (isFailed(test)) {
+      ErrorOrFailureOrSkipped err =
+          test.failure != null ? test.failure : test.error != null ? test.error : NO_ERROR;
+      processor.onTestFailure(
+          SmRunnerCompatUtils.getTestFailedEvent(
+              displayName, err.message, err.content, parseTimeMillis(test.time)));
+    }
+    processor.onTestFinished(new TestFinishedEvent(displayName, parseTimeMillis(test.time)));
+  }
+
+  private static long parseTimeMillis(@Nullable String time) {
+    if (time == null) {
+      return -1;
+    }
+    // if the number contains a decimal point, it's a value in seconds. Otherwise in milliseconds.
+    try {
+      if (time.contains(".")) {
+        return Math.round(Float.parseFloat(time) * 1000);
+      }
+      return Long.parseLong(time);
+    } catch (NumberFormatException e) {
+      return -1;
+    }
+  }
+}

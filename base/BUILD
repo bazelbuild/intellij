@@ -6,11 +6,13 @@ java_library(
     resources = glob(["resources/**/*"]),
     visibility = ["//visibility:public"],
     deps = [
+        "//common/actionhelper",
         "//common/binaryhelper",
         "//common/experiments",
         "//common/formatter",
         "//intellij_platform_sdk:plugin_api",
         "//proto_deps",
+        "//sdkcompat",
         "@jsr305_annotations//jar",
     ],
 )
@@ -29,6 +31,7 @@ java_library(
     deps = [
         "//base",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "//sdkcompat",
         "@jsr305_annotations//jar",
         "@junit//jar",
     ],

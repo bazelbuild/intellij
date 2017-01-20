@@ -191,22 +191,16 @@ def intellij_plugin(name, deps, plugin_xml, meta_inf_files=[], **kwargs):
       "chmod +w $@",
       "mkdir -p META-INF",
       "cp $(location {plugin_xml}) META-INF/plugin.xml".format(plugin_xml=plugin_xml),
-      "$(location {zip_tool}) -u $@ META-INF/plugin.xml >/dev/null".format(zip_tool=zip_tool),
   ]
-  srcs = [
+  srcs = meta_inf_files + [
       plugin_xml,
       deploy_jar,
   ]
 
   for meta_inf_file in meta_inf_files:
-    cmd.append("cp $(location {meta_inf_file}) META-INF/$$(basename $(location {meta_inf_file}))".format(
-        meta_inf_file=meta_inf_file,
-    ))
-    cmd.append("$(location {zip_tool}) -u $@ META-INF/$$(basename $(location {meta_inf_file})) >/dev/null".format(
-        zip_tool=zip_tool,
-        meta_inf_file=meta_inf_file,
-    ))
-    srcs.append(meta_inf_file)
+    cmd.append("meta_inf_files='$(locations {meta_inf_file})'".format(meta_inf_file=meta_inf_file))
+    cmd.append("for f in $$meta_inf_files; do cp $$f META-INF/; done")
+  cmd.append("$(location {zip_tool}) -u $@ META-INF/* >/dev/null".format(zip_tool=zip_tool))
 
   native.genrule(
       name = name + "_genrule",
@@ -236,28 +230,38 @@ def plugin_bundle(name, plugins):
       tags = ["intellij-plugin-bundle"],
   )
 
-def repackage_jar(name, src_rule, out,
-                  rules = [
-                      "com.google.common.** com.google.repackaged.common.@1",
-                      "com.google.gson.** com.google.repackaged.gson.@1",
-                      "com.google.protobuf.** com.google.repackaged.protobuf.@1",
-                      "com.google.thirdparty.** com.google.repackaged.thirdparty.@1",
-                  ], **kwargs):
+def repackaged_jar(name, deps, rules, launcher=None, **kwargs):
   """Repackages classes in a jar, to avoid collisions in the classpath.
 
   Args:
     name: the name of this target
-    src_rule: a java_binary label with the create_executable attribute set to 0
-    out: the output jarfile
+    deps: The dependencies repackage
     rules: the rules to apply in the repackaging
-        Only repackage some of com.google.** from proto_deps.jar.
-        We do not repackage:
+        Do not repackage:
         - com.google.net.** because that has JNI files which use
           FindClass(JNIEnv *, const char *) with hard-coded native string
           literals that jarjar doesn't rewrite.
         - com.google.errorprone packages (rewriting will throw off blaze build).
+    launcher: The launcher arg to pass to java_binary
     **kwargs: Any additional arguments to pass to the final target.
   """
+  java_binary_name = name + "_deploy_jar"
+  out = name + ".jar"
+  native.java_binary(
+      name = java_binary_name,
+      create_executable = 0,
+      stamp = 0,
+      launcher = launcher,
+      runtime_deps = deps,
+  )
+  _repackage_jar(name, java_binary_name, out, rules, **kwargs)
+
+def repackage_jar(name, src_rule, out, rules, **kwargs):
+  print("repackage_jar is deprecated. Please switch to repackaged_jar.")
+  _repackage_jar(name,  src_rule, out, rules, **kwargs)
+
+def _repackage_jar(name, src_rule, out, rules, **kwargs):
+  """Repackages classes in a jar, to avoid collisions in the classpath."""
   repackage_tool = "@jarjar//jar"
   deploy_jar = "{src_rule}_deploy.jar".format(src_rule=src_rule)
   script_lines = []

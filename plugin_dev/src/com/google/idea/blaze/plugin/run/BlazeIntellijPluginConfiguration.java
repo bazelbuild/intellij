@@ -35,6 +35,8 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.BlazeRunConfiguration;
+import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState;
+import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -47,6 +49,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaCommandLineState;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
+import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.ModuleRunConfiguration;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RunProfileState;
@@ -75,13 +78,15 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.execution.ParametersListUtil;
 import java.awt.BorderLayout;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -89,7 +94,6 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.JTextArea;
 import org.jdom.Element;
 
 /**
@@ -105,15 +109,19 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
   private static final String SDK_ATTR = "blaze-plugin-sdk";
   private static final String VM_PARAMS_ATTR = "blaze-vm-params";
   private static final String PROGRAM_PARAMS_ATTR = "blaze-program-params";
+  private static final String KEEP_IN_SYNC_TAG = "keep-in-sync";
 
   private final String buildSystem;
 
   @Nullable private Label target;
-  private ImmutableList<String> blazeFlags = ImmutableList.of();
-  private ImmutableList<String> exeFlags = ImmutableList.of();
+  private final RunConfigurationFlagsState blazeFlags;
+  private final RunConfigurationFlagsState exeFlags;
   @Nullable private Sdk pluginSdk;
   @Nullable String vmParameters;
   @Nullable private String programParameters;
+
+  // for keeping imported configurations in sync with their source XML
+  @Nullable private Boolean keepInSync = null;
 
   public BlazeIntellijPluginConfiguration(
       Project project,
@@ -129,6 +137,19 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     if (initialTarget != null) {
       target = initialTarget.key.label;
     }
+    blazeFlags = new RunConfigurationFlagsState(USER_BLAZE_FLAG_TAG, buildSystem + " flags:");
+    exeFlags = new RunConfigurationFlagsState(USER_EXE_FLAG_TAG, "Executable flags:");
+  }
+
+  @Override
+  public void setKeepInSync(@Nullable Boolean keepInSync) {
+    this.keepInSync = keepInSync;
+  }
+
+  @Override
+  @Nullable
+  public Boolean getKeepInSync() {
+    return keepInSync;
   }
 
   @Override
@@ -145,6 +166,19 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     if (IdeaJdkHelper.isIdeaJdk(sdk)) {
       pluginSdk = sdk;
     }
+  }
+
+  @Override
+  public ArrayList<LogFileOptions> getAllLogFiles() {
+    ArrayList<LogFileOptions> result = new ArrayList<>();
+    if (pluginSdk == null) {
+      return result;
+    }
+    String sandboxHome = IdeaJdkHelper.getSandboxHome(pluginSdk);
+    String logFile = Paths.get(sandboxHome, "system", "log", "idea.log").toString();
+    LogFileOptions logFileOptions = new LogFileOptions("idea.log", logFile, true, true, true);
+    result.add(logFileOptions);
+    return result;
   }
 
   private ImmutableList<File> findPluginJars() throws ExecutionException {
@@ -353,8 +387,8 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     } else {
       target = null;
     }
-    blazeFlags = loadUserFlags(element, USER_BLAZE_FLAG_TAG);
-    exeFlags = loadUserFlags(element, USER_EXE_FLAG_TAG);
+    blazeFlags.readExternal(element);
+    exeFlags.readExternal(element);
 
     String sdkName = element.getAttributeValue(SDK_ATTR);
     if (!Strings.isNullOrEmpty(sdkName)) {
@@ -362,25 +396,9 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     }
     vmParameters = Strings.emptyToNull(element.getAttributeValue(VM_PARAMS_ATTR));
     programParameters = Strings.emptyToNull(element.getAttributeValue(PROGRAM_PARAMS_ATTR));
-  }
 
-  private static ImmutableList<String> loadUserFlags(Element root, String tag) {
-    ImmutableList.Builder<String> flagsBuilder = ImmutableList.builder();
-    for (Element e : root.getChildren(tag)) {
-      String flag = e.getTextTrim();
-      if (flag != null && !flag.isEmpty()) {
-        flagsBuilder.add(flag);
-      }
-    }
-    return flagsBuilder.build();
-  }
-
-  private static void saveUserFlags(Element root, List<String> flags, String tag) {
-    for (String flag : flags) {
-      Element child = new Element(tag);
-      child.setText(flag);
-      root.addContent(child);
-    }
+    String keepInSyncString = element.getAttributeValue(KEEP_IN_SYNC_TAG);
+    keepInSync = keepInSyncString != null ? Boolean.parseBoolean(keepInSyncString) : null;
   }
 
   @Override
@@ -392,8 +410,8 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
       targetElement.setText(target.toString());
       element.addContent(targetElement);
     }
-    saveUserFlags(element, blazeFlags, USER_BLAZE_FLAG_TAG);
-    saveUserFlags(element, exeFlags, USER_EXE_FLAG_TAG);
+    blazeFlags.writeExternal(element);
+    exeFlags.writeExternal(element);
     if (pluginSdk != null) {
       element.setAttribute(SDK_ATTR, pluginSdk.getName());
     }
@@ -403,6 +421,9 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     if (programParameters != null) {
       element.setAttribute(PROGRAM_PARAMS_ATTR, programParameters);
     }
+    if (keepInSync != null) {
+      element.setAttribute(KEEP_IN_SYNC_TAG, Boolean.toString(keepInSync));
+    }
   }
 
   @Override
@@ -410,11 +431,12 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     final BlazeIntellijPluginConfiguration configuration =
         (BlazeIntellijPluginConfiguration) super.clone();
     configuration.target = target;
-    configuration.blazeFlags = blazeFlags;
-    configuration.exeFlags = exeFlags;
+    configuration.blazeFlags.setFlags(blazeFlags.getFlags());
+    configuration.exeFlags.setFlags(exeFlags.getFlags());
     configuration.pluginSdk = pluginSdk;
     configuration.vmParameters = vmParameters;
     configuration.programParameters = programParameters;
+    configuration.keepInSync = keepInSync;
     return configuration;
   }
 
@@ -423,8 +445,8 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
         BlazeCommand.builder(Blaze.getBuildSystem(getProject()), BlazeCommandName.BUILD)
             .addTargets(getTarget())
             .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
-            .addBlazeFlags(blazeFlags)
-            .addExeFlags(exeFlags);
+            .addBlazeFlags(blazeFlags.getFlags())
+            .addExeFlags(exeFlags.getFlags());
     return command.build();
   }
 
@@ -436,7 +458,8 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     for (TargetIdeInfo target : javaTargets) {
       javaLabels.add(target.key.label);
     }
-    return new BlazeIntellijPluginConfigurationSettingsEditor(buildSystem, javaLabels);
+    return new BlazeIntellijPluginConfigurationSettingsEditor(
+        javaLabels, blazeFlags.getEditor(getProject()), exeFlags.getEditor(getProject()));
   }
 
   @Override
@@ -456,21 +479,23 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
   @VisibleForTesting
   static class BlazeIntellijPluginConfigurationSettingsEditor
       extends SettingsEditor<BlazeIntellijPluginConfiguration> {
-    private final String buildSystemName;
-    private final ComboBox targetCombo;
-    private final JTextArea blazeFlagsField = new JTextArea(5, 0);
-    private final JTextArea exeFlagsField = new JTextArea(5, 0);
+    private final ComboBox<Label> targetCombo;
+    private final RunConfigurationStateEditor blazeFlagsEditor;
+    private final RunConfigurationStateEditor exeFlagsEditor;
     private final JdkComboBox sdkCombo;
     private final LabeledComponent<RawCommandLineEditor> vmParameters = new LabeledComponent<>();
     private final LabeledComponent<RawCommandLineEditor> programParameters =
         new LabeledComponent<>();
+    private final JBCheckBox keepInSyncCheckBox;
 
     public BlazeIntellijPluginConfigurationSettingsEditor(
-        String buildSystemName, List<Label> javaLabels) {
-      this.buildSystemName = buildSystemName;
+        List<Label> javaLabels,
+        RunConfigurationStateEditor blazeFlagsEditor,
+        RunConfigurationStateEditor exeFlagsEditor) {
       targetCombo =
-          new ComboBox(
-              new DefaultComboBoxModel(Ordering.usingToString().sortedCopy(javaLabels).toArray()));
+          new ComboBox<>(
+              new DefaultComboBoxModel<>(
+                  Ordering.usingToString().sortedCopy(javaLabels).toArray(new Label[0])));
       targetCombo.setRenderer(
           new ListCellRendererWrapper<Label>() {
             @Override
@@ -479,18 +504,35 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
               setText(value == null ? null : value.toString());
             }
           });
-
+      this.blazeFlagsEditor = blazeFlagsEditor;
+      this.exeFlagsEditor = exeFlagsEditor;
       ProjectSdksModel sdksModel = new ProjectSdksModel();
       sdksModel.reset(null);
       sdkCombo = new JdkComboBox(sdksModel, IdeaJdkHelper::isIdeaJdkType);
+
+      keepInSyncCheckBox = new JBCheckBox("Keep in sync with source XML");
+      keepInSyncCheckBox.addItemListener(e -> updateEnabledStatus());
+    }
+
+    private void updateEnabledStatus() {
+      setEnabled(!keepInSyncCheckBox.isVisible() || !keepInSyncCheckBox.isSelected());
+    }
+
+    private void setEnabled(boolean enabled) {
+      targetCombo.setEnabled(enabled);
+      sdkCombo.setEnabled(enabled);
+      vmParameters.getComponent().setEnabled(enabled);
+      programParameters.getComponent().setEnabled(enabled);
+      blazeFlagsEditor.setComponentEnabled(enabled);
+      exeFlagsEditor.setComponentEnabled(enabled);
     }
 
     @VisibleForTesting
     @Override
     public void resetEditorFrom(BlazeIntellijPluginConfiguration s) {
       targetCombo.setSelectedItem(s.getTarget());
-      blazeFlagsField.setText(ParametersListUtil.join(s.blazeFlags));
-      exeFlagsField.setText(ParametersListUtil.join(s.exeFlags));
+      blazeFlagsEditor.resetEditorFrom(s.blazeFlags);
+      exeFlagsEditor.resetEditorFrom(s.exeFlags);
       if (s.pluginSdk != null) {
         sdkCombo.setSelectedJdk(s.pluginSdk);
       } else {
@@ -502,6 +544,10 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
       if (s.programParameters != null) {
         programParameters.getComponent().setText(s.programParameters);
       }
+      keepInSyncCheckBox.setVisible(s.keepInSync != null);
+      if (s.keepInSync != null) {
+        keepInSyncCheckBox.setSelected(s.keepInSync);
+      }
     }
 
     @VisibleForTesting
@@ -512,15 +558,12 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
       } catch (ClassCastException e) {
         throw new ConfigurationException("Invalid label specified.");
       }
-      s.blazeFlags =
-          ImmutableList.copyOf(
-              ParametersListUtil.parse(Strings.nullToEmpty(blazeFlagsField.getText())));
-      s.exeFlags =
-          ImmutableList.copyOf(
-              ParametersListUtil.parse(Strings.nullToEmpty(exeFlagsField.getText())));
+      blazeFlagsEditor.applyEditorTo(s.blazeFlags);
+      exeFlagsEditor.applyEditorTo(s.exeFlags);
       s.pluginSdk = sdkCombo.getSelectedJdk();
       s.vmParameters = vmParameters.getComponent().getText();
       s.programParameters = programParameters.getComponent().getText();
+      s.keepInSync = keepInSyncCheckBox.isVisible() ? keepInSyncCheckBox.isSelected() : null;
     }
 
     @Override
@@ -544,10 +587,9 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
           vmParameters.getComponent(),
           programParameters.getLabel(),
           programParameters.getComponent(),
-          new JLabel(buildSystemName + " flags:"),
-          blazeFlagsField,
-          new JLabel("Executable flags:"),
-          exeFlagsField);
+          blazeFlagsEditor.createComponent(),
+          exeFlagsEditor.createComponent(),
+          keepInSyncCheckBox);
     }
   }
 }

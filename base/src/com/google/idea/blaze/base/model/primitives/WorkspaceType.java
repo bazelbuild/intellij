@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.model.primitives;
 
+import com.google.common.collect.ImmutableSet;
+
 /**
  * Workspace types.
  *
@@ -27,22 +29,23 @@ public enum WorkspaceType {
   JAVA("java", LanguageClass.JAVA),
   PYTHON("python", LanguageClass.PYTHON),
   JAVASCRIPT("javascript", LanguageClass.JAVASCRIPT),
+  GO("go", LanguageClass.GO),
   INTELLIJ_PLUGIN("intellij_plugin", LanguageClass.JAVA);
 
   private final String name;
   // the languages active by default for this WorkspaceType
-  private final LanguageClass[] languages;
+  private final ImmutableSet<LanguageClass> languages;
 
   WorkspaceType(String name, LanguageClass... languages) {
     this.name = name;
-    this.languages = languages;
+    this.languages = ImmutableSet.copyOf(languages);
   }
 
   public String getName() {
     return name;
   }
 
-  public LanguageClass[] getLanguages() {
+  public ImmutableSet<LanguageClass> getLanguages() {
     return languages;
   }
 

@@ -18,7 +18,7 @@ package com.google.idea.blaze.java.libraries;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
-import com.google.idea.blaze.base.actions.BlazeAction;
+import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -44,14 +44,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.util.List;
 import java.util.Set;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
-class AddLibraryTargetDirectoryToProjectViewAction extends BlazeAction {
+class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
+
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getProject();
-    assert project != null;
+  protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     Library library = LibraryActionHelper.findLibraryForAction(e);
     if (library != null) {
       addDirectoriesToProjectView(project, ImmutableList.of(library));
@@ -59,18 +57,15 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeAction {
   }
 
   @Override
-  protected void doUpdate(@NotNull AnActionEvent e) {
+  protected void updateForBlazeProject(Project project, AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     boolean visible = false;
     boolean enabled = false;
-    Project project = e.getProject();
-    if (project != null) {
-      Library library = LibraryActionHelper.findLibraryForAction(e);
-      if (library != null) {
-        visible = true;
-        if (getDirectoryToAddForLibrary(project, library) != null) {
-          enabled = true;
-        }
+    Library library = LibraryActionHelper.findLibraryForAction(e);
+    if (library != null) {
+      visible = true;
+      if (getDirectoryToAddForLibrary(project, library) != null) {
+        enabled = true;
       }
     }
     presentation.setVisible(visible);

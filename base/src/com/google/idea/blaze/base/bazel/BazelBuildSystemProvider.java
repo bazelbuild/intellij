@@ -16,8 +16,10 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
@@ -27,6 +29,7 @@ import javax.annotation.Nullable;
 
 /** Provides the bazel build system name string. */
 public class BazelBuildSystemProvider implements BuildSystemProvider {
+
   @Override
   public BuildSystem buildSystem() {
     return BuildSystem.Bazel;
@@ -71,5 +74,17 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   @Override
   public FileNameMatcher buildFileMatcher() {
     return new ExactFileNameMatcher("BUILD");
+  }
+
+  @Override
+  public void populateBlazeVersionData(
+      BuildSystem buildSystem,
+      WorkspaceRoot workspaceRoot,
+      ImmutableMap<String, String> blazeInfo,
+      BlazeVersionData.Builder builder) {
+    if (buildSystem != BuildSystem.Bazel) {
+      return;
+    }
+    builder.setBazelVersion(BazelVersion.parseVersion(blazeInfo));
   }
 }

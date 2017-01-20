@@ -150,8 +150,7 @@ public class IdeInfoFromProtobuf {
   }
 
   private static TargetKey makeTargetKey(IntellijIdeInfo.TargetKey key) {
-    return TargetKey.forGeneralTarget(
-        new Label(key.getLabel()), Strings.emptyToNull(key.getAspectId()));
+    return TargetKey.forGeneralTarget(new Label(key.getLabel()), key.getAspectIdsList());
   }
 
   private static Dependency makeDependency(IntellijIdeInfo.Dependency dep) {

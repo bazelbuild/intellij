@@ -19,6 +19,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import java.util.List;
 import javax.swing.JComponent;
@@ -85,27 +86,38 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
       this.fieldLabel = fieldLabel;
     }
 
+    /** Identical to {@link ParametersListUtil#join}, except args are newline-delimited. */
     private static String makeFlagString(List<String> flags) {
-      StringBuilder flagString = new StringBuilder();
+      StringBuilder builder = new StringBuilder();
       for (String flag : flags) {
-        if (flagString.length() > 0) {
-          flagString.append('\n');
+        if (builder.length() > 0) {
+          builder.append('\n');
         }
-        if (flag.isEmpty() || flag.contains(" ") || flag.contains("|")) {
-          flagString.append('"');
-          flagString.append(flag);
-          flagString.append('"');
-        } else {
-          flagString.append(flag);
-        }
+        builder.append(encode(flag));
       }
-      return flagString.toString();
+      return builder.toString();
+    }
+
+    private static String encode(String flag) {
+      StringBuilder builder = new StringBuilder();
+      builder.append(flag);
+      StringUtil.escapeQuotes(builder);
+      if (builder.length() == 0
+          || StringUtil.indexOf(builder, ' ') >= 0
+          || StringUtil.indexOf(builder, '|') >= 0) {
+        StringUtil.quote(builder);
+      }
+      return builder.toString();
+    }
+
+    @Override
+    public void setComponentEnabled(boolean enabled) {
+      flagsField.setEnabled(enabled);
     }
 
     @Override
     public void resetEditorFrom(RunConfigurationState genericState) {
       RunConfigurationFlagsState state = (RunConfigurationFlagsState) genericState;
-      // Normally we could just use ParametersListUtils.join, but that will only space-delimit args.
       flagsField.setText(makeFlagString(state.getFlags()));
     }
 

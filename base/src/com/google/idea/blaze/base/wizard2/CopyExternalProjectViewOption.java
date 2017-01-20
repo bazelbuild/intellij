@@ -35,14 +35,15 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-class CopyExternalProjectViewOption implements BlazeSelectProjectViewOption {
+/** Copies an external project view from anywhere on the user's file system */
+public class CopyExternalProjectViewOption implements BlazeSelectProjectViewOption {
   private static final String LAST_WORKSPACE_PATH = "copy-external.last-project-view-path";
 
   final BlazeWizardUserSettings userSettings;
   final JComponent component;
   final TextFieldWithStoredHistory projectViewPathField;
 
-  CopyExternalProjectViewOption(BlazeNewProjectBuilder builder) {
+  public CopyExternalProjectViewOption(BlazeNewProjectBuilder builder) {
     this.userSettings = builder.getUserSettings();
 
     this.projectViewPathField = new TextFieldWithStoredHistory(LAST_WORKSPACE_PATH);

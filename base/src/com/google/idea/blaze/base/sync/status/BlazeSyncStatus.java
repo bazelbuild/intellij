@@ -30,9 +30,12 @@ public interface BlazeSyncStatus {
 
   SyncStatus getStatus();
 
+
   static BlazeSyncStatus getInstance(Project project) {
     return ServiceManager.getService(project, BlazeSyncStatus.class);
   }
+
+  boolean syncInProgress();
 
   void setDirty();
 

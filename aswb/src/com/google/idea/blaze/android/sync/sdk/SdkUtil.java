@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.sync.sdk;
 
 import com.android.tools.idea.updater.configure.SdkUpdaterConfigurableProvider;
+import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -26,7 +27,6 @@ import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

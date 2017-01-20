@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.command;
 
-import static com.google.idea.blaze.base.command.BlazeFlags.NO_CHECK_OUTPUTS;
 import static com.google.idea.blaze.base.command.BlazeFlags.VERSION_WINDOW_FOR_DIRTY_NODE_GC;
 
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -28,17 +27,12 @@ public class BuildFlagsProviderImpl implements BuildFlagsProvider {
 
   private static final BoolExperiment experimentUseVersionWindowForDirtyNodeGc =
       new BoolExperiment("ide_build_info.use_version_window_for_dirty_node_gc", false);
-  private static final BoolExperiment experimentNoExperimentalCheckOutputFiles =
-      new BoolExperiment("build.noexperimental_check_output_files", false);
 
   @Override
   public void addBuildFlags(
       BuildSystem buildSystem, ProjectViewSet projectViewSet, List<String> flags) {
     if (experimentUseVersionWindowForDirtyNodeGc.getValue()) {
       flags.add(VERSION_WINDOW_FOR_DIRTY_NODE_GC);
-    }
-    if (experimentNoExperimentalCheckOutputFiles.getValue()) {
-      flags.add(NO_CHECK_OUTPUTS);
     }
     flags.add("--curses=no");
     flags.add("--color=no");

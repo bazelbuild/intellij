@@ -20,20 +20,28 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.section.sections.RunConfigurationsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
+import com.google.idea.blaze.base.run.exporter.RunConfigurationSerializer;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.sdkcompat.transactions.Transactions;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.UIUtil;
+import java.io.File;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-/** Creates run configurations for project view targets, where appropriate. */
+/**
+ * Imports run configurations specified in the project view, and creates run configurations for
+ * project view targets, where appropriate.
+ */
 public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
 
   @Override
@@ -45,23 +53,40 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
       BlazeProjectData blazeProjectData,
       SyncMode syncMode,
       SyncResult syncResult) {
+    if (syncMode == SyncMode.STARTUP) {
+      return;
+    }
 
-    UIUtil.invokeAndWaitIfNeeded(
-        (Runnable)
-            () -> {
-              Set<Label> labelsWithConfigs = labelsWithConfigs(project);
-              Set<TargetExpression> targetExpressions =
-                  Sets.newHashSet(projectViewSet.listItems(TargetSection.KEY));
-              // We only auto-generate configurations for rules listed in the project view.
-              for (TargetExpression target : targetExpressions) {
-                if (!(target instanceof Label) || labelsWithConfigs.contains(target)) {
-                  continue;
-                }
-                Label label = (Label) target;
-                labelsWithConfigs.add(label);
-                maybeAddRunConfiguration(project, blazeProjectData, label);
-              }
-            });
+    Set<File> xmlFiles =
+        getImportedRunConfigurations(projectViewSet, blazeProjectData.workspacePathResolver);
+    Transactions.submitTransactionAndWait(
+        () -> {
+          // First, import from specified XML files. Then auto-generate from targets.
+          xmlFiles.forEach(
+              (file) -> RunConfigurationSerializer.loadFromXmlIgnoreExisting(project, file));
+
+          Set<Label> labelsWithConfigs = labelsWithConfigs(project);
+          Set<TargetExpression> targetExpressions =
+              Sets.newHashSet(projectViewSet.listItems(TargetSection.KEY));
+          // We only auto-generate configurations for rules listed in the project view.
+          for (TargetExpression target : targetExpressions) {
+            if (!(target instanceof Label) || labelsWithConfigs.contains(target)) {
+              continue;
+            }
+            Label label = (Label) target;
+            labelsWithConfigs.add(label);
+            maybeAddRunConfiguration(project, blazeProjectData, label);
+          }
+        });
+  }
+
+  private static Set<File> getImportedRunConfigurations(
+      ProjectViewSet projectViewSet, WorkspacePathResolver pathResolver) {
+    return projectViewSet
+        .listItems(RunConfigurationsSection.KEY)
+        .stream()
+        .map(pathResolver::resolveToFile)
+        .collect(Collectors.toSet());
   }
 
   /** Collects a set of all the Blaze labels that have an associated run configuration. */

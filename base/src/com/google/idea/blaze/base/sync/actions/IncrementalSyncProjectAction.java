@@ -15,14 +15,11 @@
  */
 package com.google.idea.blaze.base.sync.actions;
 
-import com.google.idea.blaze.base.actions.BlazeAction;
+import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
-import com.google.idea.blaze.base.sync.BlazeSyncParams;
-import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
-import com.google.idea.blaze.base.sync.status.BlazeSyncStatusImpl;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -34,45 +31,27 @@ import com.intellij.openapi.project.Project;
 import icons.BlazeIcons;
 import javax.swing.Icon;
 
-/** Re-imports (syncs) an Android-Blaze project, without showing the "Import Project" wizard. */
-public class IncrementalSyncProjectAction extends BlazeAction {
+/** Syncs the project with BUILD files. */
+public class IncrementalSyncProjectAction extends BlazeProjectAction {
 
-  public IncrementalSyncProjectAction() {
-    super("Sync Project with BUILD Files");
+  @Override
+  protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
+    BlazeSyncManager.getInstance(project).incrementalProjectSync();
+    updateIcon(e);
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
-    Project project = e.getProject();
-    if (project != null) {
-      BlazeSyncManager.getInstance(project)
-          .requestProjectSync(
-              new BlazeSyncParams.Builder("Sync", SyncMode.INCREMENTAL)
-                  .addProjectViewTargets(true)
-                  .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
-                  .build());
-      updateIcon(e);
-    }
-  }
-
-  @Override
-  protected void doUpdate(AnActionEvent e) {
-    super.doUpdate(e);
+  protected void updateForBlazeProject(Project project, AnActionEvent e) {
     updateIcon(e);
   }
 
   private static void updateIcon(AnActionEvent e) {
     Project project = e.getProject();
     Presentation presentation = e.getPresentation();
-    if (project == null) {
-      presentation.setIcon(BlazeIcons.Blaze);
-      presentation.setEnabled(true);
-      return;
-    }
-    BlazeSyncStatusImpl statusHelper = BlazeSyncStatusImpl.getImpl(project);
+    BlazeSyncStatus statusHelper = BlazeSyncStatus.getInstance(project);
     BlazeSyncStatus.SyncStatus status = statusHelper.getStatus();
     presentation.setIcon(getIcon(status));
-    presentation.setEnabled(!statusHelper.syncInProgress.get());
+    presentation.setEnabled(!statusHelper.syncInProgress());
 
     if (status == BlazeSyncStatus.SyncStatus.DIRTY
         && !BlazeUserSettings.getInstance().getSyncStatusPopupShown()) {

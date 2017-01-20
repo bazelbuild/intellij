@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -119,6 +120,7 @@ public interface BlazeSyncPlugin {
       Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
+      BlazeVersionData blazeVersionData,
       BlazeProjectData blazeProjectData);
 
   @Nullable
@@ -135,6 +137,19 @@ public interface BlazeSyncPlugin {
       ModuleEditor moduleEditor,
       Module workspaceModule,
       ModifiableRootModel workspaceModifiableModel);
+
+  /**
+   * Updates in-memory state that isn't serialized by IntelliJ.
+   *
+   * <p>Called on sync and on startup, after updateProjectStructure. May not do any write actions.
+   */
+  void updateInMemoryState(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      Module workspaceModule);
 
   /** Validates the project. */
   boolean validate(Project project, BlazeContext context, BlazeProjectData blazeProjectData);
@@ -203,6 +218,7 @@ public interface BlazeSyncPlugin {
         Project project,
         BlazeContext context,
         ProjectViewSet projectViewSet,
+        BlazeVersionData blazeVersionData,
         BlazeProjectData blazeProjectData) {}
 
     @Nullable
@@ -222,6 +238,15 @@ public interface BlazeSyncPlugin {
         ModuleEditor moduleEditor,
         Module workspaceModule,
         ModifiableRootModel workspaceModifiableModel) {}
+
+    @Override
+    public void updateInMemoryState(
+        Project project,
+        BlazeContext context,
+        WorkspaceRoot workspaceRoot,
+        ProjectViewSet projectViewSet,
+        BlazeProjectData blazeProjectData,
+        Module workspaceModule) {}
 
     @Override
     public boolean validate(

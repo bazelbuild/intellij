@@ -215,5 +215,11 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
       }
       return UiUtil.createBox(result);
     }
+
+    @Override
+    public void setComponentEnabled(boolean enabled) {
+      userFlagsEditor.setComponentEnabled(enabled);
+      enableNativeDebuggingCheckBox.setEnabled(enabled);
+    }
   }
 }

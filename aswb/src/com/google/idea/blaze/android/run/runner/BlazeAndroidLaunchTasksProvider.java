@@ -169,7 +169,8 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
     }
 
     try {
-      return runContext.getDebuggerTask(androidDebugger, androidDebuggerState, packageIds);
+      return runContext.getDebuggerTask(
+          androidDebugger, androidDebuggerState, packageIds, monitorRemoteProcess());
     } catch (ExecutionException e) {
       launchStatus.terminateLaunch(e.getMessage());
       return null;

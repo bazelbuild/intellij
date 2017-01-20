@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.aspects.strategy;
 
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
@@ -25,5 +26,5 @@ public interface AspectStrategyProvider {
       ExtensionPointName.create("com.google.idea.blaze.AspectStrategyProvider");
 
   @Nullable
-  AspectStrategy getAspectStrategy(Project project);
+  AspectStrategy getAspectStrategy(Project project, BlazeVersionData blazeVersionData);
 }

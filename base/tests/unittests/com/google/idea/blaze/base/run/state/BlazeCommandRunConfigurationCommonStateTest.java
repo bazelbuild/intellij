@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.run.DistributedExecutorSupport;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -28,7 +29,6 @@ import com.intellij.ide.ui.UISettings;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -43,8 +43,7 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
   private BlazeCommandRunConfigurationCommonState state;
 
   @Override
-  protected void initTest(
-      @NotNull Container applicationServices, @NotNull Container projectServices) {
+  protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
 
     applicationServices.register(UISettings.class, new UISettings());
@@ -52,7 +51,9 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
-    state = new BlazeCommandRunConfigurationCommonState(Blaze.buildSystemName(project));
+    registerExtensionPoint(DistributedExecutorSupport.EP_NAME, DistributedExecutorSupport.class);
+
+    state = new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystem(project));
   }
 
   @Test
@@ -65,7 +66,7 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
     Element element = new Element("test");
     state.writeExternal(element);
     BlazeCommandRunConfigurationCommonState readState =
-        new BlazeCommandRunConfigurationCommonState(Blaze.buildSystemName(project));
+        new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystem(project));
     readState.readExternal(element);
 
     assertThat(readState.getCommand()).isEqualTo(COMMAND);
@@ -79,7 +80,7 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
     Element element = new Element("test");
     state.writeExternal(element);
     BlazeCommandRunConfigurationCommonState readState =
-        new BlazeCommandRunConfigurationCommonState(Blaze.buildSystemName(project));
+        new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystem(project));
     readState.readExternal(element);
 
     assertThat(readState.getCommand()).isEqualTo(state.getCommand());
@@ -96,7 +97,7 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
     Element element = new Element("test");
     state.writeExternal(element);
     BlazeCommandRunConfigurationCommonState readState =
-        new BlazeCommandRunConfigurationCommonState(Blaze.buildSystemName(project));
+        new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystem(project));
     readState.readExternal(element);
 
     assertThat(readState.getBlazeFlags()).containsExactly("hi", "I'm", "Josh").inOrder();
@@ -132,7 +133,7 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
 
     editor.resetEditorFrom(state);
     BlazeCommandRunConfigurationCommonState readState =
-        new BlazeCommandRunConfigurationCommonState(Blaze.buildSystemName(project));
+        new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystem(project));
     editor.applyEditorTo(readState);
 
     assertThat(readState.getCommand()).isEqualTo(state.getCommand());
@@ -147,7 +148,7 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
 
     editor.resetEditorFrom(state);
     BlazeCommandRunConfigurationCommonState readState =
-        new BlazeCommandRunConfigurationCommonState(Blaze.buildSystemName(project));
+        new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystem(project));
     editor.applyEditorTo(readState);
 
     assertThat(readState.getCommand()).isEqualTo(state.getCommand());

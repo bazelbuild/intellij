@@ -15,6 +15,7 @@
  */
 package com.google.idea.common.formatter;
 
+import com.google.idea.sdkcompat.codestyle.CodeStyleManagerSdkCompatAdapter;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -31,7 +32,7 @@ import java.util.Collection;
 import javax.annotation.Nullable;
 
 /** A delegating {@link CodeStyleManager}. */
-public abstract class DelegatingCodeStyleManager extends CodeStyleManager {
+public abstract class DelegatingCodeStyleManager extends CodeStyleManagerSdkCompatAdapter {
 
   private final CodeStyleManager delegate;
 

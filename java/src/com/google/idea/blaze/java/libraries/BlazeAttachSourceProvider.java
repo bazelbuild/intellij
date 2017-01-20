@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibraryEditor;
 import com.google.idea.blaze.java.settings.BlazeJavaUserSettings;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
+import com.google.idea.sdkcompat.transactions.Transactions;
 import com.intellij.codeInsight.AttachSourcesProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ui.UIUtil;
 import java.util.Collection;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +85,8 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
      * corresponding user setting is active.
      */
     if (BlazeJavaUserSettings.getInstance().getAttachSourcesOnDemand()) {
-      UIUtil.invokeLaterIfNeeded(
+      Transactions.submitTransaction(
+          project,
           () -> {
             attachSources(project, blazeProjectData, librariesToAttachSourceTo);
           });

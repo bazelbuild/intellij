@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
 import com.google.idea.blaze.base.metrics.Action;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -91,6 +92,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
+      BlazeVersionData blazeVersionData,
       List<TargetExpression> targets,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       ArtifactLocationDecoder artifactLocationDecoder,
@@ -106,7 +108,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     }
 
     // If the aspect strategy has changed, redo everything from scratch
-    final AspectStrategy aspectStrategy = getAspectStrategy(project);
+    final AspectStrategy aspectStrategy = getAspectStrategy(project, blazeVersionData);
     if (prevState != null
         && !Objects.equal(prevState.aspectStrategyName, aspectStrategy.getName())) {
       prevState = null;
@@ -375,8 +377,38 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
+      BlazeVersionData blazeVersionData,
       List<TargetExpression> targets) {
-    AspectStrategy aspectStrategy = getAspectStrategy(project);
+    return resolveIdeArtifacts(
+        project, context, workspaceRoot, projectViewSet, blazeVersionData, targets, false);
+  }
+
+  @Override
+  public BuildResult compileIdeArtifacts(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeVersionData blazeVersionData,
+      List<TargetExpression> targets) {
+    boolean ideCompile = hasIdeCompileOutputGroup(blazeVersionData);
+    return resolveIdeArtifacts(
+        project, context, workspaceRoot, projectViewSet, blazeVersionData, targets, ideCompile);
+  }
+
+  private static boolean hasIdeCompileOutputGroup(BlazeVersionData blazeVersionData) {
+    return blazeVersionData.bazelIsAtLeastVersion(0, 4, 3);
+  }
+
+  private static BuildResult resolveIdeArtifacts(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeVersionData blazeVersionData,
+      List<TargetExpression> targets,
+      boolean useIdeCompileOutputGroup) {
+    AspectStrategy aspectStrategy = getAspectStrategy(project, blazeVersionData);
 
     BlazeCommand.Builder blazeCommandBuilder =
         BlazeCommand.builder(Blaze.getBuildSystem(project), BlazeCommandName.BUILD)
@@ -385,7 +417,11 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .addBlazeFlags(BlazeFlags.KEEP_GOING)
             .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet));
 
-    aspectStrategy.modifyIdeResolveCommand(blazeCommandBuilder);
+    if (useIdeCompileOutputGroup) {
+      aspectStrategy.modifyIdeCompileCommand(blazeCommandBuilder);
+    } else {
+      aspectStrategy.modifyIdeResolveCommand(blazeCommandBuilder);
+    }
 
     BlazeCommand blazeCommand = blazeCommandBuilder.build();
 
@@ -402,9 +438,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     return BuildResult.fromExitCode(retVal);
   }
 
-  private static AspectStrategy getAspectStrategy(Project project) {
+  private static AspectStrategy getAspectStrategy(
+      Project project, BlazeVersionData blazeVersionData) {
     for (AspectStrategyProvider provider : AspectStrategyProvider.EP_NAME.getExtensions()) {
-      AspectStrategy aspectStrategy = provider.getAspectStrategy(project);
+      AspectStrategy aspectStrategy = provider.getAspectStrategy(project, blazeVersionData);
       if (aspectStrategy != null) {
         return aspectStrategy;
       }

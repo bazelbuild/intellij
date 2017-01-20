@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
@@ -32,6 +33,18 @@ import javax.annotation.Nullable;
 public interface BlazeVcsHandler {
   ExtensionPointName<BlazeVcsHandler> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.VcsHandler");
+
+  @Nullable
+  static BlazeVcsHandler vcsHandlerForProject(Project project) {
+    BuildSystem buildSystem = Blaze.getBuildSystem(project);
+    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+    for (BlazeVcsHandler candidate : BlazeVcsHandler.EP_NAME.getExtensions()) {
+      if (candidate.handlesProject(buildSystem, workspaceRoot)) {
+        return candidate;
+      }
+    }
+    return null;
+  }
 
   /** Returns the name of this VCS, eg. "git" or "hg" */
   String getVcsName();

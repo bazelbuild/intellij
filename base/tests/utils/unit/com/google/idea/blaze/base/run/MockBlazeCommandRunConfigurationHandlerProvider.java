@@ -81,6 +81,9 @@ public class MockBlazeCommandRunConfigurationHandlerProvider
         public JComponent createComponent() {
           return null;
         }
+
+        @Override
+        public void setComponentEnabled(boolean enabled) {}
       };
     }
   }

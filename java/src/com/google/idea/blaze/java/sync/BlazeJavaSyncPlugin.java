@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -56,6 +57,7 @@ import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider;
 import com.google.idea.blaze.java.sync.projectstructure.Jdks;
 import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
+import com.google.idea.sdkcompat.transactions.Transactions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -64,7 +66,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.ui.UIUtil;
 import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -170,6 +171,7 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
       Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
+      BlazeVersionData blazeVersionData,
       BlazeProjectData blazeProjectData) {
     if (!blazeProjectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.JAVA)) {
       return;
@@ -212,19 +214,18 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   private static void setProjectSdkAndLanguageLevel(
       final Project project, final Sdk sdk, final LanguageLevel javaLanguageLevel) {
-    UIUtil.invokeAndWaitIfNeeded(
-        (Runnable)
-            () ->
-                ApplicationManager.getApplication()
-                    .runWriteAction(
-                        () -> {
-                          ProjectRootManagerEx rootManager =
-                              ProjectRootManagerEx.getInstanceEx(project);
-                          rootManager.setProjectSdk(sdk);
-                          LanguageLevelProjectExtension ext =
-                              LanguageLevelProjectExtension.getInstance(project);
-                          ext.setLanguageLevel(javaLanguageLevel);
-                        }));
+    Transactions.submitTransactionAndWait(
+        () ->
+            ApplicationManager.getApplication()
+                .runWriteAction(
+                    () -> {
+                      ProjectRootManagerEx rootManager =
+                          ProjectRootManagerEx.getInstanceEx(project);
+                      rootManager.setProjectSdk(sdk);
+                      LanguageLevelProjectExtension ext =
+                          LanguageLevelProjectExtension.getInstance(project);
+                      ext.setLanguageLevel(javaLanguageLevel);
+                    }));
   }
 
   @Override

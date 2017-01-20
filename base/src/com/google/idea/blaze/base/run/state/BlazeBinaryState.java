@@ -72,6 +72,11 @@ public final class BlazeBinaryState implements RunConfigurationState {
     }
 
     @Override
+    public void setComponentEnabled(boolean enabled) {
+      blazeBinaryField.setEnabled(enabled);
+    }
+
+    @Override
     public void resetEditorFrom(RunConfigurationState genericState) {
       BlazeBinaryState state = (BlazeBinaryState) genericState;
       blazeBinaryField.setText(Strings.nullToEmpty(state.getBlazeBinary()));

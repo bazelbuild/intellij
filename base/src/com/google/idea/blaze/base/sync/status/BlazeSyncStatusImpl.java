@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener.SyncResult;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
@@ -54,7 +53,7 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
 
   private final Project project;
 
-  public final AtomicBoolean syncInProgress = new AtomicBoolean(false);
+  private final AtomicBoolean syncInProgress = new AtomicBoolean(false);
   private final AtomicBoolean syncPending = new AtomicBoolean(false);
 
   /** has a BUILD file changed since the last sync started */
@@ -84,6 +83,11 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
       return SyncStatus.FAILED;
     }
     return dirty ? SyncStatus.DIRTY : SyncStatus.CLEAN;
+  }
+
+  @Override
+  public boolean syncInProgress() {
+    return syncInProgress.get();
   }
 
   public void syncStarted() {
@@ -189,10 +193,9 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
 
     private void processEvent(@Nullable VirtualFile file) {
       if (isSyncSensitiveFile(file)) {
-        FileDocumentManager manager = FileDocumentManager.getInstance();
-        Document doc = manager.getCachedDocument(file);
-        if (doc != null) {
-          manager.saveDocument(doc);
+        FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+        if (fileDocumentManager.isFileModified(file)) {
+          setDirty();
         }
       }
     }

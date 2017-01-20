@@ -16,7 +16,7 @@
 package com.google.idea.blaze.java.libraries;
 
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.actions.BlazeAction;
+import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -30,12 +30,10 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import java.util.List;
 
-class DetachAllSourceJarsAction extends BlazeAction {
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getProject();
-    assert project != null;
+class DetachAllSourceJarsAction extends BlazeProjectAction {
 
+  @Override
+  protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {

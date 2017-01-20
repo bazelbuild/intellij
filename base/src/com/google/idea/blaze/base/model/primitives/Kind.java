@@ -49,6 +49,13 @@ public enum Kind {
   PY_TEST("py_test", LanguageClass.PYTHON),
   PY_APPENGINE_BINARY("py_appengine_binary", LanguageClass.PYTHON),
   PY_WRAP_CC("py_wrap_cc", LanguageClass.PYTHON),
+  GO_TEST("go_test", LanguageClass.GO),
+  GO_APPENGINE_TEST("go_appengine_test", LanguageClass.GO),
+  GO_BINARY("go_binary", LanguageClass.GO),
+  GO_APPENGINE_BINARY("go_appengine_binary", LanguageClass.GO),
+  GO_LIBRARY("go_library", LanguageClass.GO),
+  GO_APPENGINE_LIBRARY("go_appengine_library", LanguageClass.GO),
+  GO_WRAP_CC("go_wrap_cc", LanguageClass.GO),
   ;
 
   static final ImmutableMap<String, Kind> STRING_TO_KIND = makeStringToKindMap();

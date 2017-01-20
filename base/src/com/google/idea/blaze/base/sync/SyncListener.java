@@ -31,13 +31,23 @@ public interface SyncListener {
   /** Result of the sync operation */
   enum SyncResult {
     /** Full success */
-    SUCCESS,
+    SUCCESS(true),
     /** The user has errors in their BUILD files or compilation errors */
-    PARTIAL_SUCCESS,
+    PARTIAL_SUCCESS(true),
     /** The user cancelled */
-    CANCELLED,
+    CANCELLED(false),
     /** Failure -- sync could not complete */
-    FAILURE,
+    FAILURE(false);
+
+    private final boolean success;
+
+    SyncResult(boolean success) {
+      this.success = success;
+    }
+
+    public boolean successful() {
+      return success;
+    }
   }
 
   /** Called after open documents have been saved, prior to starting the blaze sync. */

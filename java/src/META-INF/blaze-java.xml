@@ -19,31 +19,34 @@
 
   <actions>
     <action class="com.google.idea.blaze.java.libraries.ExcludeLibraryAction"
-            id="Blaze.ExcludeLibraryAction"
-            icon="BlazeIcons.Blaze"
-            text="Exclude Library and Resync">
-      <add-to-group group-id="Blaze.ProjectViewPopupMenu"/>
+      id="Blaze.ExcludeLibraryAction"
+      text="Exclude Library and Resync">
     </action>
     <action class="com.google.idea.blaze.java.libraries.AttachSourceJarAction"
-            id="Blaze.AttachSourceJarAction"
-            icon="BlazeIcons.Blaze"
-            text="Attach Source Jar">
-      <add-to-group group-id="Blaze.ProjectViewPopupMenu"/>
+      id="Blaze.AttachSourceJarAction"
+      text="Attach Source Jar">
     </action>
     <action class="com.google.idea.blaze.java.libraries.AddLibraryTargetDirectoryToProjectViewAction"
-            id="Blaze.AddLibraryTargetDirectoryToProjectView"
-            icon="BlazeIcons.Blaze"
-            text="Add Library Target Directory To Project View">
-      <add-to-group group-id="Blaze.ProjectViewPopupMenu"/>
+      id="Blaze.AddLibraryTargetDirectoryToProjectView"
+      text="Add Library Target Directory to Project View">
+    </action>
+    <action class="com.google.idea.blaze.java.libraries.DetachAllSourceJarsAction"
+      id="Blaze.DetachAllSourceJars"
+      text="Detach All Blaze Source Jars">
     </action>
 
-    <group>
-      <action class="com.google.idea.blaze.java.libraries.DetachAllSourceJarsAction"
-        id="Blaze.DetachAllSourceJars"
-        text="Detach All Blaze Source Jars">
-      </action>
-      <separator/>
-      <add-to-group group-id="Blaze.MainMenuActionGroup" relative-to-action="Blaze.EditProjectView" anchor="before"/>
+    <group id="Blaze.Java.ProjectViewPopupMenu">
+      <add-to-group group-id="Blaze.ProjectViewPopupMenu"/>
+      <reference id="Blaze.ExcludeLibraryAction"/>
+      <reference id="Blaze.AttachSourceJarAction"/>
+      <reference id="Blaze.AddLibraryTargetDirectoryToProjectView"/>
+    </group>
+
+    <group id="Blaze.JavaMenuGroup.Outer">
+      <add-to-group group-id="Blaze.MainMenuActionGroup" relative-to-action="Blaze.MenuFooter" anchor="after"/>
+      <group id="Blaze.JavaMenuGroup" text="Java">
+        <reference id="Blaze.DetachAllSourceJars"/>
+      </group>
     </group>
 
     <!-- IntelliJ specific actions -->
@@ -91,6 +94,9 @@
                     serviceImplementation="com.google.idea.blaze.java.ui.BlazeIntelliJProblemsView"/>
     <projectService serviceImplementation="com.google.idea.blaze.java.libraries.SourceJarManager"/>
     <refactoring.safeDeleteProcessor id="build_file_safe_delete" order="before javaProcessor"
+                                     implementation="com.google.idea.blaze.java.lang.build.BuildFileSafeDeleteProcessor"/>
+    <!--duplicated here in case the Kotlin plugin is present, as it also tries to replace javaProcessor-->
+    <refactoring.safeDeleteProcessor id="build_file_safe_delete_copy" order="before kotlinProcessor"
                                      implementation="com.google.idea.blaze.java.lang.build.BuildFileSafeDeleteProcessor"/>
     <projectService serviceImplementation="com.google.idea.blaze.java.libraries.JarCache"/>
 

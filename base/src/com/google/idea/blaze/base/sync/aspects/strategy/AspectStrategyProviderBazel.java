@@ -15,14 +15,19 @@
  */
 package com.google.idea.blaze.base.sync.aspects.strategy;
 
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 
 class AspectStrategyProviderBazel implements AspectStrategyProvider {
-  BoolExperiment useSkylarkAspect = new BoolExperiment("use.skylark.aspect.bazel", false);
+  private static final BoolExperiment useSkylarkAspect =
+      new BoolExperiment("use.skylark.aspect.bazel", true);
 
   @Override
-  public AspectStrategy getAspectStrategy(Project project) {
-    return useSkylarkAspect.getValue() ? new AspectStrategySkylark() : new AspectStrategyNative();
+  public AspectStrategy getAspectStrategy(Project project, BlazeVersionData blazeVersionData) {
+    boolean canUseSkylark =
+        useSkylarkAspect.getValue() && blazeVersionData.bazelIsAtLeastVersion(0, 4, 3);
+
+    return canUseSkylark ? new AspectStrategySkylark() : new AspectStrategyNative();
   }
 }

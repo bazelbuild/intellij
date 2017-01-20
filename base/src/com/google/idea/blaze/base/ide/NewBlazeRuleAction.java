@@ -16,7 +16,7 @@
 
 package com.google.idea.blaze.base.ide;
 
-import com.google.idea.blaze.base.actions.BlazeAction;
+import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.metrics.Action;
 import com.google.idea.blaze.base.scope.Scope;
@@ -34,20 +34,15 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
-class NewBlazeRuleAction extends BlazeAction implements DumbAware {
+class NewBlazeRuleAction extends BlazeProjectAction implements DumbAware {
 
   public NewBlazeRuleAction() {
     super();
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
-    final Project project = event.getData(CommonDataKeys.PROJECT);
-    if (project == null) {
-      return;
-    }
+  protected void actionPerformedInBlazeProject(Project project, AnActionEvent event) {
     final VirtualFile virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE);
     if (virtualFile == null) {
       return;
@@ -68,15 +63,12 @@ class NewBlazeRuleAction extends BlazeAction implements DumbAware {
   }
 
   @Override
-  protected void doUpdate(@NotNull AnActionEvent event) {
+  protected void updateForBlazeProject(Project project, AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     boolean enabled =
-        (project != null
-            && file != null
-            && Blaze.getBuildSystemProvider(project).isBuildFile(file.getName()));
+        file != null && Blaze.getBuildSystemProvider(project).isBuildFile(file.getName());
     presentation.setVisible(enabled || ActionPlaces.isMainMenuOrActionSearch(event.getPlace()));
     presentation.setEnabled(enabled);
     presentation.setText(getText(project));

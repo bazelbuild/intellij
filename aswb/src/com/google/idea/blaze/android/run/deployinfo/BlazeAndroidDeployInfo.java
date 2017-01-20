@@ -18,7 +18,9 @@ package com.google.idea.blaze.android.run.deployinfo;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.repackaged.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import java.io.File;
 import java.util.List;
 import java.util.Objects;
@@ -49,7 +51,11 @@ public class BlazeAndroidDeployInfo {
   @Nullable
   public Manifest getMergedManifest() {
     File manifestFile = getMergedManifestFile();
-    return ManifestParser.getInstance(project).getManifest(manifestFile);
+    // Run in a read action since otherwise, it might throw a read access exception.
+    return ApplicationManager.getApplication()
+        .runReadAction(
+            (Computable<Manifest>)
+                () -> ManifestParser.getInstance(project).getManifest(manifestFile));
   }
 
   public List<File> getAdditionalMergedManifestFiles() {

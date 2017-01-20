@@ -28,6 +28,8 @@ public interface AspectStrategy {
 
   void modifyIdeResolveCommand(BlazeCommand.Builder blazeCommandBuilder);
 
+  void modifyIdeCompileCommand(BlazeCommand.Builder blazeCommandBuilder);
+
   String getAspectOutputFileExtension();
 
   IntellijIdeInfo.TargetIdeInfo readAspectFile(InputStream inputStream) throws IOException;

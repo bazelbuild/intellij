@@ -33,6 +33,7 @@ import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
+import com.google.idea.blaze.android.compatibility.Compatibility;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
@@ -41,9 +42,13 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebu
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStepNormalBuild;
+import com.google.idea.blaze.android.run.test.smrunner.BlazeAndroidTestEventsHandler;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
@@ -55,6 +60,10 @@ import org.jetbrains.annotations.NotNull;
 
 /** Run context for android_test. */
 class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
+
+  static final BoolExperiment smRunnerUiEnabled =
+      new BoolExperiment("use.smrunner.ui.android", true);
+
   private final Project project;
   private final AndroidFacet facet;
   private final RunConfiguration runConfiguration;
@@ -82,12 +91,28 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
     this.env = env;
     this.label = label;
     this.configState = configState;
-    this.buildFlags = buildFlags;
-    this.consoleProvider = new AndroidTestConsoleProvider(project, runConfiguration, configState);
     this.buildStep = new BlazeApkBuildStepNormalBuild(project, label, buildFlags);
     this.applicationIdProvider =
         new BlazeAndroidTestApplicationIdProvider(project, buildStep.getDeployInfo());
     this.apkProvider = new BlazeApkProvider(project, buildStep.getDeployInfo());
+
+    BlazeAndroidTestEventsHandler testEventsHandler = null;
+    if (smRunnerUiEnabled.getValue() && !isDebugging(env.getExecutor())) {
+      testEventsHandler = new BlazeAndroidTestEventsHandler();
+      this.buildFlags =
+          ImmutableList.<String>builder()
+              .addAll(testEventsHandler.getBlazeFlags())
+              .addAll(buildFlags)
+              .build();
+    } else {
+      this.buildFlags = buildFlags;
+    }
+    this.consoleProvider =
+        new AndroidTestConsoleProvider(project, runConfiguration, configState, testEventsHandler);
+  }
+
+  private static boolean isDebugging(Executor executor) {
+    return executor instanceof DefaultDebugExecutor;
   }
 
   @Override
@@ -192,18 +217,26 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public DebugConnectorTask getDebuggerTask(
       AndroidDebugger androidDebugger,
       AndroidDebuggerState androidDebuggerState,
-      @NotNull Set<String> packageIds)
+      @NotNull Set<String> packageIds,
+      boolean monitorRemoteProcess)
       throws ExecutionException {
     if (configState.isRunThroughBlaze()) {
       return new ConnectBlazeTestDebuggerTask(
           env.getProject(), androidDebugger, packageIds, applicationIdProvider, this);
     }
-    //noinspection unchecked
-    return androidDebugger.getConnectDebuggerTask(
-        env, null, packageIds, facet, androidDebuggerState, runConfiguration.getType().getId());
+    return Compatibility.getConnectDebuggerTask(
+        androidDebugger,
+        env,
+        null,
+        packageIds,
+        facet,
+        androidDebuggerState,
+        runConfiguration.getType().getId(),
+        monitorRemoteProcess);
   }
 
   void onLaunchTaskComplete() {

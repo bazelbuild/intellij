@@ -15,9 +15,8 @@
  */
 package com.google.idea.blaze.android.sync;
 
-import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
-import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import javax.annotation.Nullable;
 
@@ -26,8 +25,11 @@ public class BazelAndroidJdkProvider implements BuildSystemAndroidJdkProvider {
 
   @Nullable
   @Override
-  public LanguageLevel getLanguageLevel(Project project) {
-    BuildSystem buildSystem = Blaze.getBuildSystem(project);
-    return buildSystem == BuildSystem.Bazel ? LanguageLevel.JDK_1_7 : null;
+  public LanguageLevel getLanguageLevel(
+      BuildSystem buildSystem, BlazeVersionData blazeVersionData) {
+    if (buildSystem != BuildSystem.Bazel) {
+      return null;
+    }
+    return LanguageLevel.JDK_1_7;
   }
 }

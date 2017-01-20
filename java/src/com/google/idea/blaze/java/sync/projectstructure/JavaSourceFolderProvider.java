@@ -23,6 +23,7 @@ import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
@@ -42,6 +43,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 
 /** Edits source folders in IntelliJ content entries */
 public class JavaSourceFolderProvider implements SourceFolderProvider {
+  private static final Logger logger = Logger.getInstance(JavaSourceFolderProvider.class);
 
   private final ImmutableMap<File, BlazeContentEntry> blazeContentEntries;
 
@@ -106,6 +108,7 @@ public class JavaSourceFolderProvider implements SourceFolderProvider {
 
   private static String derivePackagePrefix(VirtualFile file, SourceFolder parentFolder) {
     String parentPackagePrefix = parentFolder.getPackagePrefix();
+    logger.assertTrue(parentFolder.getFile() != null);
     String relativePath = VfsUtilCore.getRelativePath(file, parentFolder.getFile(), '.');
     if (Strings.isNullOrEmpty(relativePath)) {
       return parentPackagePrefix;

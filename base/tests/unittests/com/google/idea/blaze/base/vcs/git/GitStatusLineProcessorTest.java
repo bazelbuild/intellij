@@ -18,9 +18,11 @@ package com.google.idea.blaze.base.vcs.git;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import java.io.File;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -28,6 +30,7 @@ import org.junit.runners.JUnit4;
 /** Tests for {@link GitStatusLineProcessor} */
 @RunWith(JUnit4.class)
 public class GitStatusLineProcessorTest {
+  @Rule public BlazeTestCase.IgnoreOnWindowsRule rule = new BlazeTestCase.IgnoreOnWindowsRule();
 
   @Test
   public void testGitStatusParser() {

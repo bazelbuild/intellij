@@ -31,6 +31,7 @@ public abstract class BlazeInfo {
   public static final String BUILD_LANGUAGE = "build-language";
   public static final String OUTPUT_BASE_KEY = "output_base";
   public static final String MASTER_LOG = "master-log";
+  public static final String RELEASE = "release";
 
   public static String blazeBinKey(BuildSystem buildSystem) {
     switch (buildSystem) {

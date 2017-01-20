@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.android.run.test;
 
-import com.android.tools.idea.run.testing.AndroidTestRunConfiguration;
 import com.google.common.base.Strings;
+import com.google.idea.blaze.android.compatibility.Compatibility.AndroidTestRunConfiguration;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;

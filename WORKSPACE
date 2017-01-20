@@ -2,6 +2,14 @@ workspace(name = "intellij_with_bazel")
 
 # Long-lived download links available at: https://www.jetbrains.com/intellij-repository/releases
 
+# The plugin api for IntelliJ 2016.3.1. This is required to build IJwB,
+# and run integration tests.
+new_http_archive(
+    name = "intellij_ce_2016_3_1",
+    build_file = "intellij_platform_sdk/BUILD.idea",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2016.3.1/ideaIC-2016.3.1.zip",
+)
+
 # The plugin api for IntelliJ 2016.2.4. This is required to build IJwB,
 # and run integration tests.
 new_http_archive(
@@ -16,6 +24,30 @@ new_http_archive(
     name = "CL_162_1967_7",
     build_file = "intellij_platform_sdk/BUILD.clion",
     url = "https://download.jetbrains.com/cpp/CLion-2016.2.2.tar.gz",
+)
+
+# The plugin api for CLion 2016.3.2. This is required to build CLwB,
+# and run integration tests.
+new_http_archive(
+    name = "clion_2016_3_2",
+    build_file = "intellij_platform_sdk/BUILD.clion",
+    url = "https://download.jetbrains.com/cpp/CLion-2016.3.2.tar.gz",
+)
+
+# The plugin api for Android Studio 2.3 Beta 1. This is required to build ASwB,
+# and run integration tests.
+new_http_archive(
+    name = "android_studio_2_3_0_3",
+    build_file = "intellij_platform_sdk/BUILD.android_studio",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2.3.0.3/android-studio-ide-162.3573574-linux.zip",
+)
+
+# The plugin api for Android Studio 2.3 Beta 2. This is required to build ASwB,
+# and run integration tests.
+new_http_archive(
+    name = "android_studio_2_3_0_4",
+    build_file = "intellij_platform_sdk/BUILD.android_studio",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2.3.0.4/android-studio-ide-162.3616766-linux.zip",
 )
 
 # The plugin api for Android Studio 2.2 stable. This is required to build ASwB,

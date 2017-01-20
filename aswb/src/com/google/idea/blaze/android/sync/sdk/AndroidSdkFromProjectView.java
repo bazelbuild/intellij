@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.sync.sdk;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
 import com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -29,7 +30,6 @@ import java.util.List;
 import javax.annotation.Nullable;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 
 /** Calculates AndroidSdkPlatform. */
 public class AndroidSdkFromProjectView {

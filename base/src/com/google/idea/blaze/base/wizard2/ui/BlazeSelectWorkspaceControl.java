@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.wizard2.ui;
 
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.wizard2.BlazeNewProjectBuilder;
 import com.google.idea.blaze.base.wizard2.BlazeSelectWorkspaceOption;
@@ -28,11 +27,8 @@ public class BlazeSelectWorkspaceControl {
   BlazeSelectOptionControl<BlazeSelectWorkspaceOption> selectOptionControl;
 
   public BlazeSelectWorkspaceControl(BlazeNewProjectBuilder builder) {
-    Collection<BlazeSelectWorkspaceOption> options = Lists.newArrayList();
-    for (BlazeWizardOptionProvider optionProvider :
-        BlazeWizardOptionProvider.EP_NAME.getExtensions()) {
-      options.addAll(optionProvider.getSelectWorkspaceOptions(builder));
-    }
+    Collection<BlazeSelectWorkspaceOption> options =
+        BlazeWizardOptionProvider.getInstance().getSelectWorkspaceOptions(builder);
 
     this.selectOptionControl =
         new BlazeSelectOptionControl<BlazeSelectWorkspaceOption>(builder, options) {

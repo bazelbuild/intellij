@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.projectview;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
@@ -27,7 +26,9 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.util.io.FileUtil;
+import java.io.File;
 import java.util.List;
 
 /** Verifies project views. */
@@ -44,16 +45,7 @@ public class ProjectViewVerifier {
   /** Verifies the project view. Any errors are output to the context as issues. */
   public static boolean verifyProjectView(
       BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ProjectViewSet projectViewSet,
-      WorkspaceLanguageSettings workspaceLanguageSettings) {
-    return verifyProjectViewNoDisk(context, projectViewSet, workspaceLanguageSettings)
-        && verifyIncludedPackagesExistOnDisk(context, workspaceRoot, projectViewSet);
-  }
-
-  /** Verifies the project view, without hitting disk. */
-  public static boolean verifyProjectViewNoDisk(
-      BlazeContext context,
+      WorkspacePathResolver workspacePathResolver,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings) {
     if (!verifyIncludedPackagesAreNotExcluded(context, projectViewSet)) {
@@ -68,6 +60,9 @@ public class ProjectViewVerifier {
       IssueOutput.warn("excluded_sources is deprecated and has no effect.")
           .inFile(projectViewSet.getTopLevelProjectViewFile().projectViewFile)
           .submit(context);
+    }
+    if (!verifyIncludedPackagesExistOnDisk(context, workspacePathResolver, projectViewSet)) {
+      return false;
     }
     return true;
   }
@@ -119,7 +114,9 @@ public class ProjectViewVerifier {
   }
 
   private static boolean verifyIncludedPackagesExistOnDisk(
-      BlazeContext context, WorkspaceRoot workspaceRoot, ProjectViewSet projectViewSet) {
+      BlazeContext context,
+      WorkspacePathResolver workspacePathResolver,
+      ProjectViewSet projectViewSet) {
     boolean ok = true;
 
     FileAttributeProvider fileAttributeProvider = FileAttributeProvider.getInstance();
@@ -135,12 +132,19 @@ public class ProjectViewVerifier {
           continue;
         }
         WorkspacePath workspacePath = entry.directory;
-        if (!fileAttributeProvider.exists(workspaceRoot.fileForPath(workspacePath))) {
+        File file = workspacePathResolver.resolveToFile(workspacePath);
+        if (!fileAttributeProvider.exists(file)) {
           IssueOutput.error(
                   String.format(
-                      "Directory '%s' specified in import roots not found "
-                          + "under workspace root '%s'",
-                      workspacePath, workspaceRoot))
+                      "Directory '%s' specified in project view not found.", workspacePath))
+              .inFile(projectViewFile.projectViewFile)
+              .withData(new MissingDirectoryIssueData(workspacePath))
+              .submit(context);
+          ok = false;
+        } else if (!fileAttributeProvider.isDirectory(file)) {
+          IssueOutput.error(
+                  String.format(
+                      "Directory '%s' specified in project view is a file.", workspacePath))
               .inFile(projectViewFile.projectViewFile)
               .withData(new MissingDirectoryIssueData(workspacePath))
               .submit(context);

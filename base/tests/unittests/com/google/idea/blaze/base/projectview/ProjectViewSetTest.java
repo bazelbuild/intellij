@@ -39,6 +39,7 @@ import com.google.idea.blaze.base.projectview.section.sections.ExcludedSourceSec
 import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
 import com.google.idea.blaze.base.projectview.section.sections.ImportTargetOutputSection;
 import com.google.idea.blaze.base.projectview.section.sections.MetricsProjectSection;
+import com.google.idea.blaze.base.projectview.section.sections.RunConfigurationsSection;
 import com.google.idea.blaze.base.projectview.section.sections.Sections;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
@@ -91,6 +92,9 @@ public class ProjectViewSetTest extends BlazeTestCase {
                         ListSection.builder(AdditionalLanguagesSection.KEY).add(LanguageClass.JAVA))
                     .add(ScalarSection.builder(MetricsProjectSection.KEY).set("my project"))
                     .add(TextBlockSection.of(TextBlock.newLine()))
+                    .add(
+                        ListSection.builder(RunConfigurationsSection.KEY)
+                            .add(new WorkspacePath("test")))
                     .build())
             .build();
 

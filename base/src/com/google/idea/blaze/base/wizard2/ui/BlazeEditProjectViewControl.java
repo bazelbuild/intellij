@@ -92,6 +92,7 @@ public final class BlazeEditProjectViewControl {
   private JTextField projectNameField;
   private HashCode paramsHash;
   private WorkspaceRoot workspaceRoot;
+  private WorkspacePathResolver workspacePathResolver;
 
   public BlazeEditProjectViewControl(BlazeNewProjectBuilder builder, Disposable parentDisposable) {
     this.projectViewUi = new ProjectViewUi(parentDisposable);
@@ -209,6 +210,7 @@ public final class BlazeEditProjectViewControl {
     }
 
     this.workspaceRoot = workspaceRoot;
+    this.workspacePathResolver = workspacePathResolver;
     projectNameField.setText(workspaceName);
     String defaultDataDir = getDefaultProjectDataDirectory(workspaceName);
     projectDataDirField.setText(defaultDataDir);
@@ -328,7 +330,8 @@ public final class BlazeEditProjectViewControl {
       return BlazeValidationResult.failure(projectViewParseError);
     }
 
-    ProjectViewValidator projectViewValidator = new ProjectViewValidator(projectViewSet);
+    ProjectViewValidator projectViewValidator =
+        new ProjectViewValidator(workspacePathResolver, projectViewSet);
     ProgressManager.getInstance()
         .runProcessWithProgressSynchronously(
             projectViewValidator, "Validating Project", false, null);
@@ -347,12 +350,15 @@ public final class BlazeEditProjectViewControl {
   }
 
   private static class ProjectViewValidator implements Runnable {
+    private final WorkspacePathResolver workspacePathResolver;
     private final ProjectViewSet projectViewSet;
 
     private boolean success;
     List<IssueOutput> errors = Lists.newArrayList();
 
-    ProjectViewValidator(ProjectViewSet projectViewSet) {
+    ProjectViewValidator(
+        WorkspacePathResolver workspacePathResolver, ProjectViewSet projectViewSet) {
+      this.workspacePathResolver = workspacePathResolver;
       this.projectViewSet = projectViewSet;
     }
 
@@ -379,8 +385,8 @@ public final class BlazeEditProjectViewControl {
       if (workspaceLanguageSettings == null) {
         return false;
       }
-      return ProjectViewVerifier.verifyProjectViewNoDisk(
-          context, projectViewSet, workspaceLanguageSettings);
+      return ProjectViewVerifier.verifyProjectView(
+          context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
     }
   }
 

@@ -62,10 +62,26 @@ config_setting(
     },
 )
 
+# Android Studio 2.3.0.4
+config_setting(
+    name = "android-studio-2.3.0.4",
+    values = {
+        "define": "ij_product=android-studio-2.3.0.4",
+    },
+)
+
 config_setting(
     name = "clion-latest",
     values = {
         "define": "ij_product=clion-latest",
+    },
+)
+
+# CLion 2016.3.2
+config_setting(
+    name = "clion-2016.3.2",
+    values = {
+        "define": "ij_product=clion-2016.3.2",
     },
 )
 
@@ -77,15 +93,12 @@ config_setting(
     },
 )
 
-# CLion 16 (2016.2.1)
-config_setting(
-    name = "clion-162.1628.20",
-    values = {
-        "define": "ij_product=clion-162.1628.20",
-    },
+load(
+    ":build_defs.bzl",
+    "select_for_ide",
+    "select_for_plugin_api",
+    "select_from_plugin_api_directory",
 )
-
-load(":build_defs.bzl", "select_from_plugin_api_directory", "select_for_ide")
 
 # The purpose of this rule is to hide the versioning
 # complexity from users of this api.
@@ -96,6 +109,7 @@ java_library(
         android_studio = [
             ":sdk",
             ":android_plugin",
+            ":test_recorder",
         ],
         clion = [":sdk"],
         intellij = [":sdk"],
@@ -128,7 +142,7 @@ java_library(
 java_library(
     name = "plugin_api_for_grammar_kit",
     visibility = ["//third_party/java/jetbrains/grammar_kit:__pkg__"],
-    exports = ["//intellij_platform_sdk/IC_162_2032_8:sdk"],
+    exports = ["//intellij_platform_sdk/intellij_ce_2016_3_1:sdk"],
 )
 
 # Used to support IntelliJ plugin development in our plugin
@@ -172,7 +186,25 @@ java_library(
         android_studio = [":bundled_plugins"],
         clion = [":bundled_plugins"],
         intellij = [":bundled_plugins"],
-    ),
+    ) + [":missing_test_classes"],
+)
+
+# Certain plugin API releases don't contain test classes, so any testServiceImplemention
+# in an upstream plugin will cause an error when the plugin is loaded for integration tests.
+# Here we have dummy versions of these missing classes.
+java_library(
+    name = "missing_test_classes",
+    srcs = select_for_plugin_api({
+        "android-studio-2.3.0.3": [
+            "missing/tests/com/jetbrains/cidr/modulemap/resolve/MockModuleMapManagerImpl.java",
+        ],
+        "android-studio-2.3.0.4": [
+            "missing/tests/com/jetbrains/cidr/modulemap/resolve/MockModuleMapManagerImpl.java",
+        ],
+        "default": [],
+    }) + ["missing/src/dummy/pkg/DummyClassToAvoidAnEmptyJavaLibrary.java"],
+    tags = ["intellij-missing-test-classes"],
+    deps = [":plugin_api"],
 )
 
 filegroup(
@@ -189,6 +221,7 @@ filegroup(
     srcs = select_for_ide(
         android_studio = ["android_studio_application_info_name.txt"],
         clion = ["clion_application_info_name.txt"],
+        default = ["intellij_application_info_name.txt"],
         intellij = ["intellij_application_info_name.txt"],
     ),
 )

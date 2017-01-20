@@ -15,38 +15,29 @@
  */
 package com.google.idea.blaze.base.sync.actions;
 
-import com.google.idea.blaze.base.actions.BlazeAction;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
-import com.google.idea.blaze.base.sync.BlazeSyncParams;
-import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
+import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 
-/** Re-imports (syncs) an Android-Blaze project, without showing the "Import Project" wizard. */
-public class FullSyncProjectAction extends BlazeAction {
+/** Performs a full sync. This is like an incremental sync with some additional invalidation. */
+public class FullSyncProjectAction extends BlazeProjectAction {
 
-  public FullSyncProjectAction() {
-    super("Non-Incrementally Sync Project with BUILD Files");
+  @Override
+  protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
+    BlazeSyncManager.getInstance(project).fullProjectSync();
+    updateStatus(project, e);
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
-    Project project = e.getProject();
-    if (project != null) {
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(false);
-      try {
-        BlazeSyncParams syncParams =
-            new BlazeSyncParams.Builder("Full Sync", SyncMode.FULL)
-                .addProjectViewTargets(true)
-                .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
-                .build();
-        BlazeSyncManager.getInstance(project).requestProjectSync(syncParams);
-      } finally {
-        presentation.setEnabled(true);
-      }
-    }
+  protected void updateForBlazeProject(Project project, AnActionEvent e) {
+    updateStatus(project, e);
+  }
+
+  private static void updateStatus(Project project, AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabled(!BlazeSyncStatus.getInstance(project).syncInProgress());
   }
 }

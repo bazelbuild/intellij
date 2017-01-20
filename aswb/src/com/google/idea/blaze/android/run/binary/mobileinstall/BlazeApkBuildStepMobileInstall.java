@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
+import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
@@ -56,8 +57,6 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.concurrent.CancellationException;
 import javax.annotation.Nullable;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
-import org.jetbrains.annotations.NotNull;
 
 /** Builds and installs the APK using mobile-install. */
 public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
@@ -89,7 +88,7 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
     final ScopedTask buildTask =
         new ScopedTask(context) {
           @Override
-          protected void execute(@NotNull BlazeContext context) {
+          protected void execute(BlazeContext context) {
             boolean incrementalInstall = env.getExecutor() instanceof IncrementalInstallExecutor;
 
             DeviceFutures deviceFutures = deviceSession.deviceFutures;
@@ -203,8 +202,7 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
   }
 
   @Nullable
-  private static IDevice resolveDevice(
-      @NotNull BlazeContext context, @NotNull DeviceFutures deviceFutures) {
+  private static IDevice resolveDevice(BlazeContext context, DeviceFutures deviceFutures) {
     if (deviceFutures.get().size() != 1) {
       IssueOutput.error("Only one device can be used with mobile-install.").submit(context);
       return null;

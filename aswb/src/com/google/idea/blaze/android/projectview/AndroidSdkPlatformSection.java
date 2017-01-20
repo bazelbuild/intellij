@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.projectview;
 
+import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
 import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
@@ -28,7 +29,6 @@ import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import java.util.Collection;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.annotations.Nullable;
 
 /** Allows manual override of the android sdk. */

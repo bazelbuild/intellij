@@ -15,46 +15,86 @@
   -->
 <idea-plugin>
   <actions>
-    <action id="MakeBlazeProject" class="com.google.idea.blaze.base.actions.BlazeMakeProjectAction" use-shortcut-of="CompileDirty" icon="AllIcons.Actions.Compile">
+    <action id="MakeBlazeProject"
+      class="com.google.idea.blaze.base.actions.BlazeMakeProjectAction"
+      text="Compile Project"
+      use-shortcut-of="CompileDirty"
+      icon="AllIcons.Actions.Compile">
     </action>
-    <action id="MakeBlazeModule" class="com.google.idea.blaze.base.actions.BlazeCompileFileAction">
+    <action id="MakeBlazeModule"
+      class="com.google.idea.blaze.base.actions.BlazeCompileFileAction"
+      text="Compile File">
     </action>
-    <action id="Blaze.IncrementalSyncProject" class="com.google.idea.blaze.base.sync.actions.IncrementalSyncProjectAction" icon="BlazeIcons.Blaze">
+    <action id="Blaze.IncrementalSyncProject"
+      class="com.google.idea.blaze.base.sync.actions.IncrementalSyncProjectAction"
+      text="Sync Project with BUILD Files"
+      icon="BlazeIcons.Blaze">
     </action>
-    <action id="Blaze.FullSyncProject" class="com.google.idea.blaze.base.sync.actions.FullSyncProjectAction" icon="BlazeIcons.BlazeSlow">
+    <action id="Blaze.FullSyncProject"
+      class="com.google.idea.blaze.base.sync.actions.FullSyncProjectAction"
+      text="Non-Incrementally Sync Project with BUILD Files"
+      icon="BlazeIcons.BlazeSlow">
     </action>
-    <action id="Blaze.SyncWorkingSet" class="com.google.idea.blaze.base.sync.actions.SyncWorkingSetAction" icon="BlazeIcons.Blaze" text="Sync Working Set">
+    <action id="Blaze.SyncWorkingSet"
+      class="com.google.idea.blaze.base.sync.actions.SyncWorkingSetAction"
+      text="Sync Working Set"
+      icon="BlazeIcons.Blaze">
     </action>
-    <action id="Blaze.ExpandSyncToWorkingSet" class="com.google.idea.blaze.base.sync.actions.ExpandSyncToWorkingSetAction" text="Expand Sync to Working Set">
+    <action id="Blaze.ExpandSyncToWorkingSet"
+      class="com.google.idea.blaze.base.sync.actions.ExpandSyncToWorkingSetAction"
+      text="Expand Sync to Working Set">
     </action>
-    <action id="Blaze.ShowPerformanceWarnings" class="com.google.idea.blaze.base.sync.actions.ShowPerformanceWarningsToggleAction" text="Show Performance Warnings">
+    <action id="Blaze.ShowPerformanceWarnings"
+      class="com.google.idea.blaze.base.sync.actions.ShowPerformanceWarningsToggleAction"
+      text="Show Performance Warnings">
     </action>
-    <action id="Blaze.EditProjectView" class="com.google.idea.blaze.base.settings.ui.EditProjectViewAction" text="Edit Project View..." icon="BlazeIcons.Blaze">
+    <action id="Blaze.EditProjectView"
+      class="com.google.idea.blaze.base.settings.ui.EditProjectViewAction"
+      text="Open Project View Files">
     </action>
-
     <action class="com.google.idea.blaze.base.buildmap.OpenCorrespondingBuildFile"
-            id="Blaze.OpenCorrespondingBuildFile"
-            icon="BlazeIcons.Blaze"
-            text="Open Corresponding BUILD File">
+      id="Blaze.OpenCorrespondingBuildFile"
+      text="Open Corresponding BUILD File">
     </action>
     <action class="com.google.idea.blaze.base.sync.actions.PartialSyncAction"
-            id="Blaze.PartialSync"
-            icon="BlazeIcons.Blaze">
+      id="Blaze.PartialSync"
+      text="Partially Sync File"
+      icon="BlazeIcons.Blaze">
     </action>
+    <action id="Blaze.ExportRunConfigurations"
+      class="com.google.idea.blaze.base.run.exporter.ExportRunConfigurationAction"
+      text="Export Run Configurations"
+      icon="AllIcons.Actions.Export">
+    </action>
+    <action id="Blaze.NewPackageAction"
+      class="com.google.idea.blaze.base.ide.NewBlazePackageAction"
+      text="New Package"/>
+    <action id="Blaze.NewRuleAction"
+      class="com.google.idea.blaze.base.ide.NewBlazeRuleAction"
+      text="New Rule"
+      popup="true"/>
 
     <group id="Blaze.MainMenuActionGroup" class="com.google.idea.blaze.base.actions.BlazeMenuGroup">
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="HelpMenu"/>
-      <reference id="MakeBlazeProject"/>
-      <reference id="MakeBlazeModule"/>
-      <separator/>
       <reference id="Blaze.EditProjectView"/>
+      <group id ="Blaze.SyncMenuGroup" text="Sync" popup="true">
+        <reference id="Blaze.IncrementalSyncProject"/>
+        <reference id="Blaze.FullSyncProject"/>
+        <reference id="Blaze.SyncWorkingSet"/>
+        <reference id="Blaze.PartialSync"/>
+        <reference id="Blaze.ExpandSyncToWorkingSet"/>
+        <reference id="Blaze.ShowPerformanceWarnings"/>
+      </group>
+      <group id="Blaze.BuildMenuGroup" text="Build" popup="true">
+        <reference id="MakeBlazeProject"/>
+        <reference id="MakeBlazeModule"/>
+      </group>
+      <!--Add popup groups anchored after this bookmark-->
+      <group id="Blaze.MenuGroupsBookmark"/>
       <separator/>
-      <reference id="Blaze.IncrementalSyncProject"/>
-      <reference id="Blaze.FullSyncProject"/>
-      <reference id="Blaze.SyncWorkingSet"/>
-      <reference id="Blaze.PartialSync"/>
-      <reference id="Blaze.ExpandSyncToWorkingSet"/>
-      <reference id="Blaze.ShowPerformanceWarnings"/>
+      <reference id="Blaze.ExportRunConfigurations"/>
+      <!--Add single menu items anchored after this bookmark-->
+      <group id="Blaze.MenuFooter"/>
     </group>
 
     <group id="Blaze.MainToolBarActionGroup">
@@ -65,8 +105,8 @@
 
     <group id="Blaze.NewActions" text="Edit Blaze structure" description="Create new Blaze packages, rules, etc.">
       <add-to-group group-id="NewGroup" anchor="first"/>
-      <action id="Blaze.NewPackageAction" class="com.google.idea.blaze.base.ide.NewBlazePackageAction" popup="true"/>
-      <action id="Blaze.NewRuleAction" class="com.google.idea.blaze.base.ide.NewBlazeRuleAction" popup="true"/>
+      <reference id="Blaze.NewPackageAction"/>
+      <reference id="Blaze.NewRuleAction"/>
       <separator/>
     </group>
 
@@ -137,6 +177,8 @@
     <projectService serviceImplementation="com.google.idea.blaze.base.buildmap.FileToBuildMap"/>
     <projectService serviceInterface="com.google.idea.blaze.base.targetmaps.SourceToTargetMap"
                     serviceImplementation="com.google.idea.blaze.base.targetmaps.SourceToTargetMapImpl"/>
+    <projectService serviceInterface="com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap"
+                    serviceImplementation="com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.settings.BlazeImportSettingsManager"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.settings.BlazeImportSettingsManagerLegacy"/>
     <applicationService serviceImplementation="com.google.idea.blaze.base.settings.BlazeUserSettings"/>
@@ -147,6 +189,8 @@
     <applicationService serviceInterface="com.google.idea.blaze.base.prefetch.PrefetchService"
                         serviceImplementation="com.google.idea.blaze.base.prefetch.PrefetchServiceImpl"/>
     <applicationService serviceImplementation="com.google.idea.blaze.base.wizard2.BlazeWizardUserSettingsStorage"/>
+    <applicationService serviceInterface="com.google.idea.blaze.base.wizard2.BlazeWizardOptionProvider"
+                        serviceImplementation="com.google.idea.blaze.base.wizard2.BazelWizardOptionProvider"/>
     <projectService serviceInterface="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider"
                     serviceImplementation="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProviderImpl"/>
     <configurationType implementation="com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType"/>
@@ -159,6 +203,7 @@
     <stepsBeforeRunProvider implementation="com.google.idea.blaze.base.run.BlazeBeforeRunTaskProvider"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.help.BlazeHelpHandler"
                         serviceImplementation="com.google.idea.blaze.base.help.BlazeHelpHandlerImpl"/>
+    <applicationService serviceImplementation="com.google.idea.blaze.base.actions.BlazeBuildService"/>
 
     <additionalTextAttributes scheme="Default" file="base/resources/colorSchemes/BuildDefault.xml"/>
     <typedHandler implementation="com.google.idea.blaze.base.lang.buildfile.completion.BuildCompletionAutoPopupHandler"/>
@@ -254,8 +299,6 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.PsiFileProvider" interface="com.google.idea.blaze.base.lang.buildfile.search.PsiFileProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.VcsHandler"
                     interface="com.google.idea.blaze.base.vcs.BlazeVcsHandler"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.BlazeWizardOptionProvider"
-                    interface="com.google.idea.blaze.base.wizard2.BlazeWizardOptionProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.DefaultSdkProvider"
                     interface="com.google.idea.blaze.base.sync.sdk.DefaultSdkProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildFlagsProvider" interface="com.google.idea.blaze.base.command.BuildFlagsProvider"/>
@@ -269,6 +312,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.TestTargetHeuristic" interface="com.google.idea.blaze.base.run.TestTargetHeuristic"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ProjectDataDirectoryValidator" interface="com.google.idea.blaze.base.wizard2.ProjectDataDirectoryValidator"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AspectStrategyProvider" interface="com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.DistributedExecutorSupport" interface="com.google.idea.blaze.base.run.DistributedExecutorSupport"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -276,9 +320,7 @@
     <SyncListener implementation="com.google.idea.blaze.base.sync.status.BlazeSyncStatusListener"/>
     <SyncListener implementation="com.google.idea.blaze.base.run.testmap.TestTargetFilterImpl$ClearTestMap"/>
     <SyncListener implementation="com.google.idea.blaze.base.targetmaps.SourceToTargetMapImpl$ClearSourceToTargetMap"/>
-    <SyncListener implementation="com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProviderImpl"/>
     <SyncPlugin implementation="com.google.idea.blaze.base.lang.buildfile.sync.BuildLangSyncPlugin"/>
-    <BlazeWizardOptionProvider implementation="com.google.idea.blaze.base.wizard2.BazelWizardOptionProvider"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.command.BuildFlagsProviderImpl"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.git.GitBlazeVcsHandler"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.FallbackBlazeVcsHandler" order="last" id="fallback"/>

@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
@@ -82,6 +83,15 @@ public class ContentEntryEditor {
       ImmutableMap<VirtualFile, SourceFolder> sourceFolders =
           provider.initializeSourceFolders(contentEntry);
       VirtualFile rootFile = getVirtualFile(root);
+      if (rootFile == null) {
+        IssueOutput.warn(
+                String.format(
+                    "Could not find directory %s. Your 'test_sources' project view "
+                        + "attribute will not have any effect. Please resync.",
+                    workspaceRoot))
+            .submit(context);
+        continue;
+      }
       SourceFolder rootSource = sourceFolders.get(rootFile);
       walkFileSystem(
           workspaceRoot,
@@ -121,11 +131,11 @@ public class ContentEntryEditor {
     SourceFolder current = sourceFolders.get(file);
     SourceFolder currentOrParent = current != null ? current : parent;
     if (isTest != currentOrParent.isTestSource()) {
+      currentOrParent =
+          provider.setSourceFolderForLocation(contentEntry, currentOrParent, file, isTest);
       if (current != null) {
         contentEntry.removeSourceFolder(current);
       }
-      currentOrParent =
-          provider.setSourceFolderForLocation(contentEntry, currentOrParent, file, isTest);
     }
     for (VirtualFile child : file.getChildren()) {
       walkFileSystem(
