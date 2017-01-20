@@ -35,7 +35,10 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -43,7 +46,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
-import com.google.idea.blaze.base.sync.BlazeSyncPlugin.ModuleEditor;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -71,6 +73,7 @@ import org.mockito.ArgumentCaptor;
 /** Test cases for {@link BlazeBuildSystemService}. */
 @RunWith(JUnit4.class)
 public class BlazeBuildSystemServiceTest extends BlazeTestCase {
+  WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/"));
   Module module;
   BuildSystemService service;
 
@@ -164,18 +167,20 @@ public class BlazeBuildSystemServiceTest extends BlazeTestCase {
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
   }
 
-  private static void createMocksForBuildProject(Container applicationServices) {
+  private void createMocksForBuildProject(Container applicationServices) {
     applicationServices.register(BlazeBuildService.class, mock(BlazeBuildService.class));
   }
 
-  private static void createMocksForSyncProject(Container projectServices) {
+  private void createMocksForSyncProject(Container projectServices) {
     projectServices.register(ProjectViewManager.class, new MockProjectViewManager());
     projectServices.register(BlazeSyncManager.class, mock(BlazeSyncManager.class));
   }
 
   private void createMocksForAddDependency(
       Container applicationServices, Container projectServices) {
-    projectServices.register(BlazeProjectDataManager.class, new MockProjectDataManager());
+    projectServices.register(
+        BlazeProjectDataManager.class,
+        new MockBlazeProjectDataManager(createMockBlazeProjectData()));
     projectServices.register(FileEditorManager.class, mock(FileEditorManager.class));
     projectServices.register(BuildReferenceManager.class, mock(BuildReferenceManager.class));
     projectServices.register(LazyRangeMarkerFactory.class, mock(LazyRangeMarkerFactoryImpl.class));
@@ -187,6 +192,22 @@ public class BlazeBuildSystemServiceTest extends BlazeTestCase {
         module,
         AndroidResourceModule.builder(TargetKey.forPlainTarget(new Label("//foo:bar"))).build());
     projectServices.register(AndroidResourceModuleRegistry.class, moduleRegistry);
+  }
+
+  private BlazeProjectData createMockBlazeProjectData() {
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel(new Label("//foo:bar"))
+                    .setBuildFile(ArtifactLocation.builder().setRelativePath("foo/BUILD").build())
+                    .build())
+            .build();
+    ArtifactLocationDecoder decoder = (location) -> new File("/", location.getRelativePath());
+    return MockBlazeProjectDataBuilder.builder(workspaceRoot)
+        .setTargetMap(targetMap)
+        .setArtifactLocationDecoder(decoder)
+        .build();
   }
 
   private static class MockProjectViewManager extends ProjectViewManager {
@@ -207,36 +228,6 @@ public class BlazeBuildSystemServiceTest extends BlazeTestCase {
     public ProjectViewSet reloadProjectView(
         BlazeContext context, WorkspacePathResolver workspacePathResolver) {
       return viewSet;
-    }
-  }
-
-  private static class MockProjectDataManager implements BlazeProjectDataManager {
-    private BlazeProjectData projectData;
-
-    public MockProjectDataManager() {
-      TargetMap targetMap =
-          TargetMapBuilder.builder()
-              .addTarget(
-                  TargetIdeInfo.builder()
-                      .setLabel(new Label("//foo:bar"))
-                      .setBuildFile(ArtifactLocation.builder().setRelativePath("foo/BUILD").build())
-                      .build())
-              .build();
-      ArtifactLocationDecoder decoder = (location) -> new File("/", location.getRelativePath());
-
-      projectData =
-          new BlazeProjectData(0L, targetMap, null, null, null, null, decoder, null, null, null);
-    }
-
-    @Nullable
-    @Override
-    public BlazeProjectData getBlazeProjectData() {
-      return projectData;
-    }
-
-    @Override
-    public ModuleEditor editModules() {
-      return null;
     }
   }
 

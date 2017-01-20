@@ -392,7 +392,8 @@ final class BlazeSyncTask implements Progressive {
             artifactLocationDecoder,
             workspaceLanguageSettings,
             syncStateBuilder.build(),
-            reverseDependencies);
+            reverseDependencies,
+            null);
 
     FileCaches.onSync(project, context, projectViewSet, newBlazeProjectData, syncMode);
     ListenableFuture<?> prefetch =

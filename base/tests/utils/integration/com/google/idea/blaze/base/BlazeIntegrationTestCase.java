@@ -17,15 +17,11 @@ package com.google.idea.blaze.base;
 
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.io.InputStreamProvider;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
 import com.google.idea.testing.EdtRule;
 import com.google.idea.testing.IntellijTestSetupRule;
 import com.google.idea.testing.ServiceHelper;
@@ -48,7 +44,6 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.util.ThrowableRunnable;
 import java.io.File;
 import java.io.FileNotFoundException;
-import javax.annotation.Nullable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -175,25 +170,5 @@ public abstract class BlazeIntegrationTestCase {
 
   protected <T> void registerExtension(ExtensionPointName<T> name, T instance) {
     ServiceHelper.registerExtension(name, instance, getTestRootDisposable());
-  }
-
-  protected void mockBlazeProjectDataManager(BlazeProjectData data) {
-    BlazeProjectDataManager mockProjectDataManager =
-        new BlazeProjectDataManager() {
-          @Nullable
-          @Override
-          public BlazeProjectData getBlazeProjectData() {
-            return data;
-          }
-
-          @Override
-          public BlazeSyncPlugin.ModuleEditor editModules() {
-            return ModuleEditorProvider.getInstance()
-                .getModuleEditor(
-                    getProject(),
-                    BlazeImportSettingsManager.getInstance(getProject()).getImportSettings());
-          }
-        };
-    registerProjectService(BlazeProjectDataManager.class, mockProjectDataManager);
   }
 }

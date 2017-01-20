@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.sync.data;
+package com.google.idea.blaze.base.model;
 
-import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import javax.annotation.Nullable;
 
-/** Stores a cache of blaze project data. */
-public interface BlazeProjectDataManager {
-  static BlazeProjectDataManager getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeProjectDataManager.class);
+/** Mocks the blaze project data manager. */
+public class MockBlazeProjectDataManager implements BlazeProjectDataManager {
+  private final BlazeProjectData blazeProjectData;
+
+  public MockBlazeProjectDataManager(BlazeProjectData blazeProjectData) {
+    this.blazeProjectData = blazeProjectData;
   }
 
   @Nullable
-  BlazeProjectData getBlazeProjectData();
+  @Override
+  public BlazeProjectData getBlazeProjectData() {
+    return blazeProjectData;
+  }
 }

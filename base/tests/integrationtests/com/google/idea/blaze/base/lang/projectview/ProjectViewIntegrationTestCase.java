@@ -15,20 +15,11 @@
  */
 package com.google.idea.blaze.base.lang.projectview;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.EditorTestHelper;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.BlazeVersionData;
-import com.google.idea.blaze.base.model.SyncState;
-import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
-import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import org.junit.Before;
 
 /** Project view file specific integration test base */
@@ -37,32 +28,9 @@ public abstract class ProjectViewIntegrationTestCase extends BlazeIntegrationTes
 
   @Before
   public final void doSetup() {
-    mockBlazeProjectDataManager(getMockBlazeProjectData());
+    BlazeProjectDataManager mockProjectDataManager =
+        new MockBlazeProjectDataManager(MockBlazeProjectDataBuilder.builder(workspaceRoot).build());
+    registerProjectService(BlazeProjectDataManager.class, mockProjectDataManager);
     editorTest = new EditorTestHelper(getProject(), testFixture);
-  }
-
-  private BlazeProjectData getMockBlazeProjectData() {
-    BlazeRoots fakeRoots =
-        new BlazeRoots(
-            null,
-            ImmutableList.of(workspaceRoot.directory()),
-            new ExecutionRootPath("out/crosstool/bin"),
-            new ExecutionRootPath("out/crosstool/gen"),
-            null);
-    WorkspacePathResolver workspacePathResolver =
-        new WorkspacePathResolverImpl(workspaceRoot, fakeRoots);
-    ArtifactLocationDecoder artifactLocationDecoder =
-        new ArtifactLocationDecoderImpl(fakeRoots, workspacePathResolver);
-    return new BlazeProjectData(
-        0,
-        new TargetMap(ImmutableMap.of()),
-        ImmutableMap.of(),
-        fakeRoots,
-        new BlazeVersionData(),
-        workspacePathResolver,
-        artifactLocationDecoder,
-        null,
-        new SyncState.Builder().build(),
-        null);
   }
 }

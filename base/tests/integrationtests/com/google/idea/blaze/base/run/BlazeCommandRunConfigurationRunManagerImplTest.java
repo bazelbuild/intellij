@@ -18,20 +18,12 @@ package com.google.idea.blaze.base.run;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.BlazeVersionData;
-import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration.BlazeCommandRunConfigurationSettingsEditor;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
-import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -62,7 +54,9 @@ public class BlazeCommandRunConfigurationRunManagerImplTest extends BlazeIntegra
   public final void doSetup() {
     runManager = RunManagerImpl.getInstanceImpl(getProject());
     // Without BlazeProjectData, the configuration editor is always disabled.
-    mockBlazeProjectDataManager(getMockBlazeProjectData());
+    BlazeProjectDataManager mockProjectDataManager =
+        new MockBlazeProjectDataManager(MockBlazeProjectDataBuilder.builder(workspaceRoot).build());
+    registerProjectService(BlazeProjectDataManager.class, mockProjectDataManager);
     type = BlazeCommandRunConfigurationType.getInstance();
 
     RunnerAndConfigurationSettings runnerAndConfigurationSettings =
@@ -70,31 +64,6 @@ public class BlazeCommandRunConfigurationRunManagerImplTest extends BlazeIntegra
     runManager.addConfiguration(runnerAndConfigurationSettings, false);
     configuration =
         (BlazeCommandRunConfiguration) runnerAndConfigurationSettings.getConfiguration();
-  }
-
-  private BlazeProjectData getMockBlazeProjectData() {
-    BlazeRoots fakeRoots =
-        new BlazeRoots(
-            null,
-            ImmutableList.of(workspaceRoot.directory()),
-            new ExecutionRootPath("out/crosstool/bin"),
-            new ExecutionRootPath("out/crosstool/gen"),
-            null);
-    WorkspacePathResolver workspacePathResolver =
-        new WorkspacePathResolverImpl(workspaceRoot, fakeRoots);
-    ArtifactLocationDecoder artifactLocationDecoder =
-        new ArtifactLocationDecoderImpl(fakeRoots, workspacePathResolver);
-    return new BlazeProjectData(
-        0,
-        new TargetMap(ImmutableMap.of()),
-        ImmutableMap.of(),
-        fakeRoots,
-        new BlazeVersionData(),
-        workspacePathResolver,
-        artifactLocationDecoder,
-        null,
-        null,
-        null);
   }
 
   @After

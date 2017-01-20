@@ -22,6 +22,13 @@ java_import(
 )
 
 java_import(
+    name = "test_recorder",
+    jars = glob([
+        "android-studio/plugins/test-recorder/lib/*.jar",
+    ]),
+)
+
+java_import(
     name = "junit",
     jars = glob(["android-studio/plugins/junit/lib/*.jar"]),
 )
@@ -30,14 +37,20 @@ java_import(
 # when running integration tests.
 java_import(
     name = "bundled_plugins",
-    jars = glob([
-        "android-studio/plugins/gradle/lib/*.jar",
-        "android-studio/plugins/Groovy/lib/*.jar",
-        "android-studio/plugins/java-i18n/lib/*.jar",
-        "android-studio/plugins/junit/lib/*.jar",
-        "android-studio/plugins/ndk-workspace/lib/*.jar",
-        "android-studio/plugins/properties/lib/*.jar",
-    ]),
+    jars = glob(
+        [
+            "android-studio/plugins/gradle/lib/*.jar",
+            "android-studio/plugins/Groovy/lib/*.jar",
+            "android-studio/plugins/java-i18n/lib/*.jar",
+            "android-studio/plugins/junit/lib/*.jar",
+            "android-studio/plugins/ndk-workspace/lib/*.jar",
+            "android-studio/plugins/properties/lib/*.jar",
+        ],
+        exclude = [
+            # Conflict with lib/guava-*.jar
+            "android-studio/plugins/gradle/lib/guava-*.jar",
+        ],
+    ),
     tags = ["intellij-provided-by-sdk"],
 )
 

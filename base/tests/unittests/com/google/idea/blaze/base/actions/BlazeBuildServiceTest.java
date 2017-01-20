@@ -27,8 +27,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -38,7 +41,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.sync.BlazeSyncPlugin.ModuleEditor;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import java.io.File;
@@ -51,8 +53,9 @@ import org.junit.runners.JUnit4;
 /** Test cases for {@link BlazeBuildService}. */
 @RunWith(JUnit4.class)
 public class BlazeBuildServiceTest extends BlazeTestCase {
-  BlazeBuildService service;
-  ProjectViewSet viewSet;
+  private BlazeBuildService service;
+  private ProjectViewSet viewSet;
+  private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/"));
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -72,7 +75,9 @@ public class BlazeBuildServiceTest extends BlazeTestCase {
     ProjectViewManager viewManager = new MockProjectViewManager(viewSet);
     projectServices.register(ProjectViewManager.class, viewManager);
 
-    projectServices.register(BlazeProjectDataManager.class, new MockProjectDataManager());
+    BlazeProjectData blazeProjectData = MockBlazeProjectDataBuilder.builder(workspaceRoot).build();
+    projectServices.register(
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(blazeProjectData));
 
     applicationServices.register(BlazeBuildService.class, spy(new BlazeBuildService()));
 
@@ -120,26 +125,6 @@ public class BlazeBuildServiceTest extends BlazeTestCase {
     public ProjectViewSet reloadProjectView(
         BlazeContext context, WorkspacePathResolver workspacePathResolver) {
       return viewSet;
-    }
-  }
-
-  private static class MockProjectDataManager implements BlazeProjectDataManager {
-    private final BlazeProjectData projectData;
-
-    public MockProjectDataManager() {
-      this.projectData =
-          new BlazeProjectData(0L, null, null, null, null, null, null, null, null, null);
-    }
-
-    @Nullable
-    @Override
-    public BlazeProjectData getBlazeProjectData() {
-      return projectData;
-    }
-
-    @Override
-    public ModuleEditor editModules() {
-      return null;
     }
   }
 }

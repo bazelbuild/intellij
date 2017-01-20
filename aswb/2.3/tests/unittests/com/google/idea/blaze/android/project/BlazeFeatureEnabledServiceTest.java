@@ -28,7 +28,6 @@ import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManagerLegacy;
-import com.google.idea.blaze.base.sync.BlazeSyncPlugin.ModuleEditor;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.common.experiments.ExperimentService;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -115,11 +114,6 @@ public class BlazeFeatureEnabledServiceTest extends BlazeTestCase {
     @Override
     public BlazeProjectData getBlazeProjectData() {
       return blazeProjectData;
-    }
-
-    @Override
-    public ModuleEditor editModules() {
-      return null;
     }
   }
 

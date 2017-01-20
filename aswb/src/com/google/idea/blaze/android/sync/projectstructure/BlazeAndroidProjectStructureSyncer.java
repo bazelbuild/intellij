@@ -45,8 +45,10 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -240,7 +242,9 @@ public class BlazeAndroidProjectStructureSyncer {
     }
 
     BlazeSyncPlugin.ModuleEditor moduleEditor =
-        BlazeProjectDataManager.getInstance(project).editModules();
+        ModuleEditorProvider.getInstance()
+            .getModuleEditor(
+                project, BlazeImportSettingsManager.getInstance(project).getImportSettings());
     Module newModule = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
     ApplicationManager.getApplication()
         .runWriteAction(
