@@ -71,7 +71,7 @@ public class BuiltInNamesProvider {
       ImmutableSet.of(
           "load",
           "package",
-          "pacakge_group",
+          "package_group",
           "licenses",
           "exports_files",
           "glob",
