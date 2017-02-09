@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 /** Helper methods to run scoped functions and operations in a scoped context. */
 public final class Scope {
-  private static final Logger LOG = Logger.getInstance(Scope.class);
+  private static final Logger logger = Logger.getInstance(Scope.class);
 
   /** Runs a scoped function in a new root scope. */
   public static <T> T root(@NotNull ScopedFunction<T> scopedFunction) {
@@ -36,7 +36,7 @@ public final class Scope {
       return scopedFunction.execute(context);
     } catch (RuntimeException e) {
       context.setHasError();
-      LOG.error(e);
+      logger.error(e);
       throw e;
     } finally {
       context.endScope();
@@ -56,7 +56,7 @@ public final class Scope {
       scopedOperation.execute(context);
     } catch (RuntimeException e) {
       context.setHasError();
-      LOG.error(e);
+      logger.error(e);
       throw e;
     } finally {
       context.endScope();

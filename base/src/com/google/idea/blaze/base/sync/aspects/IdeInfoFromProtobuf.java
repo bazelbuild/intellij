@@ -27,6 +27,8 @@ import com.google.idea.blaze.base.ideinfo.CIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.Dependency.DependencyType;
+import com.google.idea.blaze.base.ideinfo.IntellijPluginDeployInfo;
+import com.google.idea.blaze.base.ideinfo.IntellijPluginDeployInfo.IntellijPluginDeployFile;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.JavaToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
@@ -123,6 +125,11 @@ public class IdeInfoFromProtobuf {
     if (message.hasJavaToolchainIdeInfo()) {
       javaToolchainIdeInfo = makeJavaToolchainIdeInfo(message.getJavaToolchainIdeInfo());
     }
+    IntellijPluginDeployInfo intellijPluginDeployInfo = null;
+    if (message.hasIntellijPluginDeployInfo()) {
+      intellijPluginDeployInfo =
+          makeIntellijPluginDeployInfo(message.getIntellijPluginDeployInfo());
+    }
 
     return new TargetIdeInfo(
         key,
@@ -138,7 +145,8 @@ public class IdeInfoFromProtobuf {
         pyIdeInfo,
         testIdeInfo,
         protoLibraryLegacyInfo,
-        javaToolchainIdeInfo);
+        javaToolchainIdeInfo,
+        intellijPluginDeployInfo);
   }
 
   private static Collection<Dependency> makeDependencyListFromLabelList(
@@ -244,7 +252,8 @@ public class IdeInfoFromProtobuf {
         javaIdeInfo.hasPackageManifest()
             ? makeArtifactLocation(javaIdeInfo.getPackageManifest())
             : null,
-        javaIdeInfo.hasJdeps() ? makeArtifactLocation(javaIdeInfo.getJdeps()) : null);
+        javaIdeInfo.hasJdeps() ? makeArtifactLocation(javaIdeInfo.getJdeps()) : null,
+        Strings.emptyToNull(javaIdeInfo.getMainClass()));
   }
 
   private static AndroidIdeInfo makeAndroidIdeInfo(IntellijIdeInfo.AndroidIdeInfo androidIdeInfo) {
@@ -323,6 +332,21 @@ public class IdeInfoFromProtobuf {
       IntellijIdeInfo.JavaToolchainIdeInfo javaToolchainIdeInfo) {
     return new JavaToolchainIdeInfo(
         javaToolchainIdeInfo.getSourceVersion(), javaToolchainIdeInfo.getTargetVersion());
+  }
+
+  private static IntellijPluginDeployInfo makeIntellijPluginDeployInfo(
+      IntellijIdeInfo.IntellijPluginDeployInfo intellijPluginDeployInfo) {
+    return new IntellijPluginDeployInfo(
+        ImmutableList.copyOf(
+            intellijPluginDeployInfo
+                .getDeployFilesList()
+                .stream()
+                .map(
+                    deployFile ->
+                        new IntellijPluginDeployFile(
+                            makeArtifactLocation(deployFile.getSrc()),
+                            deployFile.getDeployLocation()))
+                .collect(toList())));
   }
 
   private static Collection<LibraryArtifact> makeLibraryArtifactList(

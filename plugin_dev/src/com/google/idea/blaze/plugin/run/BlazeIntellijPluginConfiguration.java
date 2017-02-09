@@ -18,18 +18,12 @@ package com.google.idea.blaze.plugin.run;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.ideinfo.Dependency;
-import com.google.idea.blaze.base.ideinfo.Dependency.DependencyType;
-import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
-import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -39,8 +33,6 @@ import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.google.idea.blaze.plugin.IntellijPluginRule;
 import com.intellij.execution.ExecutionException;
@@ -59,8 +51,6 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -73,7 +63,6 @@ import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.ListCellRendererWrapper;
@@ -83,11 +72,8 @@ import com.intellij.util.PlatformUtils;
 import java.awt.BorderLayout;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.DefaultComboBoxModel;
@@ -181,56 +167,6 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     return result;
   }
 
-  private ImmutableList<File> findPluginJars() throws ExecutionException {
-    BlazeProjectData blazeProjectData =
-        BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
-    if (blazeProjectData == null) {
-      throw new ExecutionException("Not synced yet, please sync project");
-    }
-    TargetIdeInfo target = TargetFinder.getInstance().targetForLabel(getProject(), getTarget());
-    if (target == null) {
-      throw new ExecutionException(
-          buildSystem + " target '" + getTarget() + "' not imported during sync");
-    }
-    return IntellijPluginRule.isPluginBundle(target)
-        ? findBundledJars(blazeProjectData.artifactLocationDecoder, target)
-        : ImmutableList.of(findPluginJar(blazeProjectData.artifactLocationDecoder, target));
-  }
-
-  private ImmutableList<File> findBundledJars(
-      ArtifactLocationDecoder artifactLocationDecoder, TargetIdeInfo target)
-      throws ExecutionException {
-    ImmutableList.Builder<File> jars = ImmutableList.builder();
-    for (Dependency dep : target.dependencies) {
-      if (dep.dependencyType == DependencyType.COMPILE_TIME && dep.targetKey.isPlainTarget()) {
-        TargetIdeInfo depTarget =
-            TargetFinder.getInstance().targetForLabel(getProject(), dep.targetKey.label);
-        if (depTarget != null && IntellijPluginRule.isSinglePluginTarget(depTarget)) {
-          jars.add(findPluginJar(artifactLocationDecoder, depTarget));
-        }
-      }
-    }
-    return jars.build();
-  }
-
-  private File findPluginJar(ArtifactLocationDecoder artifactLocationDecoder, TargetIdeInfo target)
-      throws ExecutionException {
-    JavaIdeInfo javaIdeInfo = target.javaIdeInfo;
-    if (!IntellijPluginRule.isSinglePluginTarget(target) || javaIdeInfo == null) {
-      throw new ExecutionException(
-          buildSystem + " target '" + target + "' is not a valid intellij_plugin target");
-    }
-    Collection<LibraryArtifact> jars = javaIdeInfo.jars;
-    if (javaIdeInfo.jars.size() > 1) {
-      throw new ExecutionException("Invalid IntelliJ plugin target: it has multiple output jars");
-    }
-    LibraryArtifact artifact = jars.isEmpty() ? null : jars.iterator().next();
-    if (artifact == null || artifact.classJar == null) {
-      throw new ExecutionException("No output plugin jar found for '" + target + "'");
-    }
-    return artifactLocationDecoder.decode(artifact.classJar);
-  }
-
   /**
    * Plugin jar has been previously created via blaze build. This method: - copies jar to sandbox
    * environment - cracks open jar and finds plugin.xml (with ID, etc., needed for JVM args) - sets
@@ -254,15 +190,11 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     } catch (IOException e) {
       throw new ExecutionException("No sandbox specified for IntelliJ Platform Plugin SDK");
     }
-    final String canonicalSandbox = sandboxHome;
-    final ImmutableList<File> pluginJars = findPluginJars();
-    for (File file : pluginJars) {
-      if (!file.exists()) {
-        throw new ExecutionException(
-            String.format(
-                "Plugin jar '%s' not found. Did the %s build fail?", file.getName(), buildSystem));
-      }
-    }
+    String buildNumber = IdeaJdkHelper.getBuildNumber(ideaJdk);
+    final BlazeIntellijPluginDeployer deployer =
+        new BlazeIntellijPluginDeployer(getProject(), sandboxHome, buildNumber);
+    deployer.addTarget(getTarget());
+
     // copy license from running instance of idea
     IdeaJdkHelper.copyIDEALicense(sandboxHome);
 
@@ -270,11 +202,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
         new JavaCommandLineState(env) {
           @Override
           protected JavaParameters createJavaParameters() throws ExecutionException {
-            String buildNumber = IdeaJdkHelper.getBuildNumber(ideaJdk);
-            List<String> pluginIds = Lists.newArrayList();
-            for (File jar : pluginJars) {
-              pluginIds.add(copyPluginJarToSandbox(jar, buildNumber, canonicalSandbox));
-            }
+            List<String> pluginIds = deployer.deploy();
 
             final JavaParameters params = new JavaParameters();
 
@@ -304,40 +232,13 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
                 new ProcessAdapter() {
                   @Override
                   public void processTerminated(ProcessEvent event) {
-                    for (File jar : pluginJars) {
-                      pluginDestination(jar, canonicalSandbox).delete();
-                    }
+                    deployer.deleteDeployment();
                   }
                 });
             return handler;
           }
         };
     return state;
-  }
-
-  private static File pluginDestination(File jar, String sandboxPath) {
-    return new File(sandboxPath, "plugins/" + jar.getName());
-  }
-
-  /** Copies the plugin jar to the sandbox, and returns the plugin ID. */
-  private static String copyPluginJarToSandbox(File jar, String buildNumber, String sandboxPath)
-      throws ExecutionException {
-    IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.loadDescriptor(jar, "plugin.xml");
-    if (PluginManagerCore.isIncompatible(pluginDescriptor, BuildNumber.fromString(buildNumber))) {
-      throw new ExecutionException(
-          String.format(
-              "Plugin SDK version '%s' is incompatible with this plugin "
-                  + "(since: '%s', until: '%s')",
-              buildNumber, pluginDescriptor.getSinceBuild(), pluginDescriptor.getUntilBuild()));
-    }
-    File pluginJarDestination = pluginDestination(jar, sandboxPath);
-    try {
-      pluginJarDestination.getParentFile().mkdirs();
-      Files.copy(jar.toPath(), pluginJarDestination.toPath(), StandardCopyOption.REPLACE_EXISTING);
-    } catch (IOException e) {
-      throw new ExecutionException("Error copying plugin jar to sandbox", e);
-    }
-    return pluginDescriptor.getPluginId().getIdString();
   }
 
   private static void fillParameterList(ParametersList list, @Nullable String value) {

@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
+import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.java.run.RunUtil;
 import com.google.idea.blaze.java.run.producers.JUnitConfigurationUtil;
 import com.google.idea.blaze.java.run.producers.ProducerUtils;
@@ -31,7 +32,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Producer for run configurations related to Android test methods in Blaze.
@@ -48,10 +48,13 @@ public class BlazeAndroidTestMethodRunConfigurationProducer
 
   @Override
   protected boolean doSetupConfigFromContext(
-      @NotNull BlazeCommandRunConfiguration configuration,
-      @NotNull ConfigurationContext context,
-      @NotNull Ref<PsiElement> sourceElement) {
-
+      BlazeCommandRunConfiguration configuration,
+      ConfigurationContext context,
+      Ref<PsiElement> sourceElement) {
+    if (!SmRunnerUtils.getSelectedSmRunnerTreeElements(context).isEmpty()) {
+      // handled by a different producer
+      return false;
+    }
     if (JUnitConfigurationUtil.isMultipleElementsSelected(context)) {
       return false;
     }
@@ -94,8 +97,11 @@ public class BlazeAndroidTestMethodRunConfigurationProducer
 
   @Override
   protected boolean doIsConfigFromContext(
-      @NotNull BlazeCommandRunConfiguration configuration, @NotNull ConfigurationContext context) {
-
+      BlazeCommandRunConfiguration configuration, ConfigurationContext context) {
+    if (!SmRunnerUtils.getSelectedSmRunnerTreeElements(context).isEmpty()) {
+      // handled by a different producer
+      return false;
+    }
     if (JUnitConfigurationUtil.isMultipleElementsSelected(context)) {
       return false;
     }

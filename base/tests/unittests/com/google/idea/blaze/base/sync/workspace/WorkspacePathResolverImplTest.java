@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import java.io.File;
 import org.junit.Test;
@@ -45,7 +46,7 @@ public class WorkspacePathResolverImplTest extends BlazeTestCase {
     WorkspacePathResolver workspacePathResolver =
         new WorkspacePathResolverImpl(WORKSPACE_ROOT, BLAZE_CITC_ROOTS);
     ImmutableList<File> files =
-        workspacePathResolver.resolveToIncludeDirectories(new ExecutionRootPath("tools/fast"));
+        workspacePathResolver.resolveToIncludeDirectories(new WorkspacePath("tools/fast"));
     assertThat(files).containsExactly(new File("/path/to/root/tools/fast"));
   }
 
@@ -55,7 +56,7 @@ public class WorkspacePathResolverImplTest extends BlazeTestCase {
         new WorkspacePathResolverImpl(WORKSPACE_ROOT, BLAZE_CITC_ROOTS);
     ImmutableList<File> files =
         workspacePathResolver.resolveToIncludeDirectories(
-            new ExecutionRootPath("blaze-out/crosstool/bin/tools/fast"));
+            new WorkspacePath("blaze-out/crosstool/bin/tools/fast"));
     assertThat(files).containsExactly(new File("/path/to/root/blaze-out/crosstool/bin/tools/fast"));
   }
 }

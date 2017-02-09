@@ -15,13 +15,17 @@
  */
 package com.google.idea.blaze.base.projectview;
 
+import static java.util.stream.Collectors.toList;
+
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.projectview.ProjectViewSet.ProjectViewFile;
 import com.google.idea.blaze.base.projectview.section.ListSection;
+import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
-import com.google.idea.blaze.base.projectview.section.sections.ExcludedSourceSection;
+import com.google.idea.blaze.base.projectview.section.sections.Sections;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
@@ -56,22 +60,47 @@ public class ProjectViewVerifier {
         return false;
       }
     }
-    if (!projectViewSet.listItems(ExcludedSourceSection.KEY).isEmpty()) {
-      IssueOutput.warn("excluded_sources is deprecated and has no effect.")
-          .inFile(projectViewSet.getTopLevelProjectViewFile().projectViewFile)
-          .submit(context);
-    }
+    warnAboutDeprecatedSections(context, projectViewSet);
     if (!verifyIncludedPackagesExistOnDisk(context, workspacePathResolver, projectViewSet)) {
       return false;
     }
     return true;
   }
 
+  private static void warnAboutDeprecatedSections(
+      BlazeContext context, ProjectViewSet projectViewSet) {
+    List<SectionParser> deprecatedParsers =
+        Sections.getParsers().stream().filter(SectionParser::isDeprecated).collect(toList());
+    for (SectionParser sectionParser : deprecatedParsers) {
+      for (ProjectViewFile projectViewFile : projectViewSet.getProjectViewFiles()) {
+        ProjectView projectView = projectViewFile.projectView;
+        if (projectView
+            .getSections()
+            .stream()
+            .anyMatch(section -> section.isSectionType(sectionParser.getSectionKey()))) {
+          String deprecationMessage = sectionParser.getDeprecationMessage();
+          if (deprecationMessage == null) {
+            deprecationMessage = String.format("%s is deprecated", sectionParser.getName());
+          }
+          IssueOutput.warn(deprecationMessage)
+              .inFile(projectViewFile.projectViewFile)
+              .submit(context);
+        }
+      }
+    }
+  }
+
   private static boolean verifyIncludedPackagesAreNotExcluded(
       BlazeContext context, ProjectViewSet projectViewSet) {
     boolean ok = true;
 
-    List<WorkspacePath> includedDirectories = getIncludedDirectories(projectViewSet);
+    List<WorkspacePath> includedDirectories =
+        projectViewSet
+            .listItems(DirectorySection.KEY)
+            .stream()
+            .filter(entry -> entry.included)
+            .map(entry -> entry.directory)
+            .collect(toList());
 
     for (WorkspacePath includedDirectory : includedDirectories) {
       for (ProjectViewSet.ProjectViewFile projectViewFile : projectViewSet.getProjectViewFiles()) {
@@ -101,16 +130,6 @@ public class ProjectViewVerifier {
       }
     }
     return ok;
-  }
-
-  private static List<WorkspacePath> getIncludedDirectories(ProjectViewSet projectViewSet) {
-    List<WorkspacePath> includedDirectories = Lists.newArrayList();
-    for (DirectoryEntry entry : projectViewSet.listItems(DirectorySection.KEY)) {
-      if (entry.included) {
-        includedDirectories.add(entry.directory);
-      }
-    }
-    return includedDirectories;
   }
 
   private static boolean verifyIncludedPackagesExistOnDisk(

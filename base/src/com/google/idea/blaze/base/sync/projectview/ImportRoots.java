@@ -27,7 +27,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
-import com.intellij.openapi.util.io.FileUtil;
+import com.google.idea.blaze.base.util.WorkspacePathUtil;
 import java.util.Collection;
 import java.util.Set;
 
@@ -66,30 +66,20 @@ public final class ImportRoots {
     }
 
     public ImportRoots build() {
-      ImmutableCollection<WorkspacePath> rootDirectories = rootDirectoriesBuilder.build();
-
       // Remove any duplicates and any overlapping directories
-      ImmutableSet.Builder<WorkspacePath> minimalRootDirectories = ImmutableSet.builder();
-      for (WorkspacePath directory : rootDirectories) {
-        boolean ok = true;
-        for (WorkspacePath otherDirectory : rootDirectories) {
-          if (directory == otherDirectory) {
-            continue;
-          }
-          ok = ok && !isAncestor(otherDirectory.relativePath(), directory.relativePath());
-        }
-        if (ok) {
-          minimalRootDirectories.add(directory);
-        }
-      }
+      ImmutableSet<WorkspacePath> minimalRootDirectories =
+          WorkspacePathUtil.calculateMinimalWorkspacePaths(rootDirectoriesBuilder.build());
 
       // for bazel projects, if we're including the workspace root,
       // we force-exclude the bazel artifact directories
       // (e.g. bazel-bin, bazel-genfiles).
-      if (buildSystem == BuildSystem.Bazel && hasWorkspaceRoot(rootDirectories)) {
+      if (buildSystem == BuildSystem.Bazel && hasWorkspaceRoot(minimalRootDirectories)) {
         excludeBuildSystemArtifacts();
       }
-      return new ImportRoots(minimalRootDirectories.build(), excludeDirectoriesBuilder.build());
+      ImmutableSet<WorkspacePath> minimalExcludes =
+          WorkspacePathUtil.calculateMinimalWorkspacePaths(excludeDirectoriesBuilder.build());
+
+      return new ImportRoots(minimalRootDirectories, minimalExcludes);
     }
 
     private void excludeBuildSystemArtifacts() {
@@ -157,15 +147,5 @@ public final class ImportRoots {
       return c == '/' || c == ':';
     }
     return false;
-  }
-
-  /** Returns true if 'path' is a strict child of 'ancestorPath'. */
-  private static boolean isAncestor(String ancestorPath, String path) {
-    // FileUtil.isAncestor has a bug in its handling of equal,
-    // empty paths (it ignores the 'strict' flag in this case).
-    if (ancestorPath.equals(path)) {
-      return false;
-    }
-    return FileUtil.isAncestor(ancestorPath, path, true);
   }
 }

@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.ExperimentalShowArtifactsLineProcessor;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
-import com.google.idea.blaze.base.metrics.Action;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -38,7 +37,6 @@ import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
-import com.google.idea.blaze.base.scope.scopes.LoggedTimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.common.experiments.BoolExperiment;
@@ -119,7 +117,6 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
               @Override
               protected void execute(BlazeContext context) {
                 context
-                    .push(new LoggedTimingScope(project, Action.BLAZE_COMMAND_USAGE))
                     .push(new IssuesScope(project))
                     .push(new BlazeConsoleScope.Builder(project).build());
 

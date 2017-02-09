@@ -33,9 +33,7 @@ import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.lang.buildfile.validation.GlobPatternValidator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import java.io.File;
 import java.io.IOException;
@@ -736,13 +734,6 @@ public final class UnixGlob {
           }
         }
       }
-    }
-
-    private static VirtualFileSystem getFileSystem() {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        return TempFileSystem.getInstance();
-      }
-      return LocalFileSystem.getInstance();
     }
 
     @Nullable

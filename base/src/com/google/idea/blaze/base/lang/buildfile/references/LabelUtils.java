@@ -15,7 +15,9 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.references;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -23,6 +25,7 @@ import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.util.PathUtil;
+import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -52,6 +55,14 @@ public class LabelUtils {
       return null;
     }
     WorkspacePath packagePath = blazePackage.buildFile.getPackageWorkspacePath();
+    return createLabelFromRuleName(packagePath, ruleName);
+  }
+
+  public static Label createLabelFromRuleName(
+      @Nullable WorkspacePath packagePath, @Nullable String ruleName) {
+    if (ruleName == null) {
+      return null;
+    }
     TargetName name = TargetName.createIfValid(ruleName);
     if (packagePath == null || name == null) {
       return null;
@@ -157,6 +168,36 @@ public class LabelUtils {
       strings.add(ruleName);
     }
     return strings;
+  }
+
+  /**
+   * Return a map from a base label string -> variants of the label string that share the common
+   * base.
+   */
+  public static Multimap<String, String> getAllValidLabelStringsPartitioned(
+      Label label, boolean includePackageLocalLabels) {
+    Multimap<String, String> stringToVariant = ArrayListMultimap.create();
+    String fullLabelString = label.toString();
+    List<String> fullVariants = new ArrayList<>();
+    fullVariants.add(fullLabelString);
+    String packagePath = label.blazePackage().relativePath();
+    String ruleName = label.targetName().toString();
+    if (!packagePath.isEmpty()) {
+      if (PathUtil.getFileName(packagePath).equals(ruleName)) {
+        String implicitRuleName = "//" + packagePath;
+        fullVariants.add(implicitRuleName);
+        fullLabelString = implicitRuleName;
+      }
+    }
+    stringToVariant.putAll(fullLabelString, fullVariants);
+    if (!includePackageLocalLabels) {
+      return stringToVariant;
+    }
+    List<String> localVariants = new ArrayList<>();
+    localVariants.add(":" + ruleName);
+    localVariants.add(ruleName);
+    stringToVariant.putAll(ruleName, localVariants);
+    return stringToVariant;
   }
 
   /**

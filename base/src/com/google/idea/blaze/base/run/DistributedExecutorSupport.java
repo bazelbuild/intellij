@@ -44,21 +44,18 @@ public interface DistributedExecutorSupport {
   }
 
   /** Returns the blaze/bazel flags required to specify whether to run on a distributed executor. */
-  static List<String> getBlazeFlags(Project project, @Nullable Boolean runDistributed) {
-    if (runDistributed == null) {
-      return ImmutableList.of();
-    }
+  static List<String> getBlazeFlags(Project project, boolean runDistributed) {
     DistributedExecutorSupport executorInfo = getAvailableExecutor(Blaze.getBuildSystem(project));
     if (executorInfo == null) {
       return ImmutableList.of();
     }
-    return ImmutableList.of(executorInfo.getBlazeFlag(runDistributed));
+    return executorInfo.getBlazeFlags(runDistributed);
   }
 
   String executorName();
 
   boolean isAvailable(BuildSystem buildSystem);
 
-  /** Get blaze/bazel flag specifying whether to run on this distributed executor */
-  String getBlazeFlag(boolean runDistributed);
+  /** Get blaze/bazel flags specifying whether to run on this distributed executor */
+  ImmutableList<String> getBlazeFlags(boolean runDistributed);
 }

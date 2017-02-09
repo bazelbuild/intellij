@@ -31,7 +31,7 @@ import java.util.Set;
 /** Reads the user's language preferences from the project view. */
 public class LanguageSupport {
 
-  private static final Logger LOG = Logger.getInstance(LanguageSupport.class);
+  private static final Logger logger = Logger.getInstance(LanguageSupport.class);
 
   public static WorkspaceLanguageSettings createWorkspaceLanguageSettings(
       BlazeContext context, ProjectViewSet projectViewSet) {
@@ -56,7 +56,7 @@ public class LanguageSupport {
     }
 
     if (workspaceType == null) {
-      LOG.error("Could not find workspace type."); // Should never happen
+      logger.error("Could not find workspace type."); // Should never happen
       return null;
     }
 

@@ -37,5 +37,10 @@ public interface BlazeSelectProjectViewOption extends BlazeWizardOption {
     return false;
   }
 
+  /** Returns the default project name */
+  default String getDefaultProjectName(String workspaceName) {
+    return workspaceName;
+  }
+
   void commit();
 }

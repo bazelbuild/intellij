@@ -15,11 +15,15 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.psi;
 
+import com.google.idea.blaze.base.lang.buildfile.psi.Argument.Keyword;
+import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.lang.buildfile.references.AttributeSpecificStringLiteralReferenceProvider;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelReference;
 import com.google.idea.blaze.base.lang.buildfile.references.LoadedSymbolReference;
 import com.google.idea.blaze.base.lang.buildfile.references.PackageReferenceFragment;
 import com.google.idea.blaze.base.lang.buildfile.references.QuoteType;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import javax.annotation.Nullable;
@@ -32,21 +36,30 @@ public class StringLiteral extends BuildElementImpl implements LiteralExpression
    * (in which case escaped characters, raw strings, etc. are unlikely).
    */
   public static String stripQuotes(String string) {
+    return textRangeInElement(string).substring(string);
+  }
+
+  /** The range of text characters, excluding leading and trailing quotes. */
+  public static TextRange textRangeInElement(String string) {
     // TODO: Handle escaped characters, etc. here?
     // (extract logic from BuildLexerBase.addStringLiteral)
     if (string.startsWith("\"\"\"")) {
-      return string.length() <= 3 ? "" : string.substring(3, endTrimIndex(string, '"', 3));
+      return string.length() <= 3
+          ? TextRange.EMPTY_RANGE
+          : TextRange.create(3, endTrimIndex(string, '"', 3));
     }
     if (string.startsWith("'''")) {
-      return string.length() <= 3 ? "" : string.substring(3, endTrimIndex(string, '\'', 3));
+      return string.length() <= 3
+          ? TextRange.EMPTY_RANGE
+          : TextRange.create(3, endTrimIndex(string, '\'', 3));
     }
     if (string.startsWith("\"")) {
-      return string.substring(1, endTrimIndex(string, '"', 1));
+      return TextRange.create(1, endTrimIndex(string, '"', 1));
     }
     if (string.startsWith("'")) {
-      return string.substring(1, endTrimIndex(string, '\'', 1));
+      return TextRange.create(1, endTrimIndex(string, '\'', 1));
     }
-    return string;
+    return TextRange.allOf(string);
   }
 
   private static int endTrimIndex(String string, char quoteChar, int numberQuoteChars) {
@@ -104,6 +117,15 @@ public class StringLiteral extends BuildElementImpl implements LiteralExpression
    */
   @Override
   public PsiReference[] getReferences() {
+    // first look for attribute-specific references
+    String attributeName = getParentAttributeName();
+    if (attributeName != null) {
+      PsiReference[] refs =
+          AttributeSpecificStringLiteralReferenceProvider.findReferences(attributeName, this);
+      if (refs.length != 0) {
+        return refs;
+      }
+    }
     PsiReference primaryReference = getReference();
     if (primaryReference instanceof LabelReference) {
       return new PsiReference[] {
@@ -132,6 +154,13 @@ public class StringLiteral extends BuildElementImpl implements LiteralExpression
       return new LoadedSymbolReference(this, importReference);
     }
     return new LabelReference(this, true);
+  }
+
+  /** If this string is an attribute value within a BUILD rule, return the attribute type. */
+  @Nullable
+  private String getParentAttributeName() {
+    Keyword parentKeyword = PsiUtils.getParentOfType(this, Keyword.class);
+    return parentKeyword != null ? parentKeyword.getName() : null;
   }
 
   @Nullable

@@ -38,6 +38,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationWithSuppressedDefaultDebugAction;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -66,9 +67,12 @@ import org.jdom.Element;
 
 /** A run configuration which executes Blaze commands. */
 public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
-    implements BlazeRunConfiguration, RunnerIconProvider, ModuleRunProfile {
+    implements BlazeRunConfiguration,
+        RunnerIconProvider,
+        ModuleRunProfile,
+        RunConfigurationWithSuppressedDefaultDebugAction {
 
-  private static final Logger LOG = Logger.getInstance(BlazeCommandRunConfiguration.class);
+  private static final Logger logger = Logger.getInstance(BlazeCommandRunConfiguration.class);
 
   private static final String HANDLER_ATTR = "handler-id";
   private static final String TARGET_TAG = "blaze-target";
@@ -103,7 +107,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     try {
       handler.getState().readExternal(elementState);
     } catch (InvalidDataException e) {
-      LOG.error(e);
+      logger.error(e);
     }
   }
 
@@ -164,14 +168,14 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     try {
       handler.getState().writeExternal(elementState);
     } catch (WriteExternalException e) {
-      LOG.error(e);
+      logger.error(e);
     }
     handlerProvider = newProvider;
     handler = newProvider.createHandler(this);
     try {
       handler.getState().readExternal(elementState);
     } catch (InvalidDataException e) {
-      LOG.error(e);
+      logger.error(e);
     }
   }
 
@@ -321,7 +325,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     try {
       configuration.handler.getState().readExternal(configuration.elementState);
     } catch (InvalidDataException e) {
-      LOG.error(e);
+      logger.error(e);
     }
 
     return configuration;
@@ -425,7 +429,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       try {
         handler.getState().readExternal(config.elementState);
       } catch (InvalidDataException e) {
-        LOG.error(e);
+        logger.error(e);
       }
       handlerStateEditor = handler.getState().getEditor(config.getProject());
 
@@ -459,7 +463,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       try {
         handler.getState().writeExternal(elementState);
       } catch (WriteExternalException e) {
-        LOG.error(e);
+        logger.error(e);
       }
       config.keepInSync = keepInSyncCheckBox.isVisible() ? keepInSyncCheckBox.isSelected() : null;
 
@@ -469,7 +473,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       try {
         config.handler.getState().readExternal(config.elementState);
       } catch (InvalidDataException e) {
-        LOG.error(e);
+        logger.error(e);
       }
 
       // finally, update the handler

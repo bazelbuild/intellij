@@ -21,14 +21,20 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
+import com.intellij.psi.search.GlobalSearchScope;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Re-run failed tests. */
@@ -77,10 +83,25 @@ public class BlazeRerunFailedTestsAction extends AbstractRerunFailedTestsAction 
       if (handlerState == null || !BlazeCommandName.TEST.equals(handlerState.getCommand())) {
         return null;
       }
-      String testFilter = eventsHandler.getTestFilter(getProject(), getFailedTests(getProject()));
+      Project project = getProject();
+      List<Location<?>> locations =
+          getFailedTests(project)
+              .stream()
+              .map((test) -> toLocation(project, test))
+              .filter(Objects::nonNull)
+              .collect(Collectors.toList());
+      String testFilter = eventsHandler.getTestFilter(getProject(), locations);
+      if (testFilter == null) {
+        return null;
+      }
       List<String> blazeFlags = setTestFilter(handlerState.getBlazeFlags(), testFilter);
       handlerState.setBlazeFlags(blazeFlags);
       return configuration.getState(executor, environment);
+    }
+
+    @Nullable
+    private Location<?> toLocation(Project project, AbstractTestProxy test) {
+      return test.getLocation(project, GlobalSearchScope.allScope(project));
     }
 
     /** Replaces existing test_filter flag, or appends if none exists. */

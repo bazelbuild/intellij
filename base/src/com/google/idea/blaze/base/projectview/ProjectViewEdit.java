@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 /** Represents a modification to one or more project view files. */
 public class ProjectViewEdit {
 
-  private static final Logger LOG = Logger.getInstance(ProjectViewEdit.class);
+  private static final Logger logger = Logger.getInstance(ProjectViewEdit.class);
   private final Project project;
   private final List<Modification> modifications;
 
@@ -100,7 +100,7 @@ public class ProjectViewEdit {
         ProjectViewStorageManager.getInstance()
             .writeProjectView(projectViewText, modification.projectViewFile);
       } catch (IOException e) {
-        LOG.error(e);
+        logger.error(e);
         Messages.showErrorDialog(
             project,
             "Could not write updated project view. Is the file write protected?",

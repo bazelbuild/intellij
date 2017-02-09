@@ -29,13 +29,11 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
-import com.google.idea.blaze.base.metrics.Action;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.scopes.LoggedTimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.execution.ExecutionException;
@@ -87,7 +85,7 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
                             deployInfoHelper.getLineProcessor(),
                             new IssueOutputLineProcessor(project, context, workspaceRoot)))
                     .build()
-                    .run(new LoggedTimingScope(project, Action.BLAZE_BUILD));
+                    .run();
             FileCaches.refresh(project);
 
             if (retVal != 0) {

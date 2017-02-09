@@ -25,7 +25,13 @@ public class IntellijPluginRule {
   public static final String TARGET_TAG_IJ_PLUGIN_BUNDLE = "intellij-plugin-bundle";
 
   public static boolean isPluginTarget(TargetIdeInfo target) {
-    return isPluginBundle(target) || isSinglePluginTarget(target);
+    return isIntellijPluginDebugTarget(target)
+        || isPluginBundle(target)
+        || isSinglePluginTarget(target);
+  }
+
+  public static boolean isIntellijPluginDebugTarget(TargetIdeInfo target) {
+    return target.intellijPluginDeployInfo != null;
   }
 
   public static boolean isPluginBundle(TargetIdeInfo target) {
@@ -36,5 +42,4 @@ public class IntellijPluginRule {
   public static boolean isSinglePluginTarget(TargetIdeInfo target) {
     return target.kindIsOneOf(Kind.JAVA_IMPORT) && target.tags.contains(TARGET_TAG_IJ_PLUGIN);
   }
-
 }

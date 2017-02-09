@@ -41,7 +41,7 @@ import java.util.function.Predicate;
 /** References from a glob to a list of files contained in the same blaze package. */
 public class GlobReference extends PsiPolyVariantCachingReference {
 
-  private static final Logger LOG = Logger.getInstance(GlobReference.class);
+  private static final Logger logger = Logger.getInstance(GlobReference.class);
 
   private final GlobExpression element;
 
@@ -203,7 +203,7 @@ public class GlobReference extends PsiPolyVariantCachingReference {
     try {
       return range.substring(text);
     } catch (StringIndexOutOfBoundsException e) {
-      LOG.error(
+      logger.error(
           "Wrong range in reference " + this + ": " + range + ". Reference text: '" + text + "'",
           e);
       return text;

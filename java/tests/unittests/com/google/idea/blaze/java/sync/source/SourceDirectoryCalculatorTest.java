@@ -159,6 +159,33 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
+  public void testHandlesSourceAtProjectRoot() throws Exception {
+    mockInputStreamProvider.addFile("/root/Bla.java", "package com.google;\n public class Bla {}");
+    List<SourceArtifact> sourceArtifacts =
+        ImmutableList.of(
+            SourceArtifact.builder(TargetKey.forPlainTarget(LABEL))
+                .setArtifactLocation(
+                    ArtifactLocation.builder().setRelativePath("Bla.java").setIsSource(true))
+                .build());
+    ImmutableList<BlazeContentEntry> result =
+        sourceDirectoryCalculator.calculateContentEntries(
+            project,
+            context,
+            workspaceRoot,
+            decoder,
+            ImmutableList.of(new WorkspacePath("")),
+            sourceArtifacts,
+            NO_MANIFESTS);
+    assertThat(result)
+        .containsExactly(
+            BlazeContentEntry.builder("/root")
+                .addSource(
+                    BlazeSourceDirectory.builder("/root").setPackagePrefix("com.google").build())
+                .build());
+    issues.assertNoIssues();
+  }
+
+  @Test
   public void testSourcesToSourceDirectories_testReturnsTest() throws Exception {
     mockInputStreamProvider.addFile(
         "/root/java/com/google/Bla.java", "package com.google;\n public class Bla {}");

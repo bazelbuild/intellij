@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 /** Utils for serialization. */
 public class SerializationUtil {
-  private static final Logger LOG = Logger.getInstance(SerializationUtil.class.getName());
+  private static final Logger logger = Logger.getInstance(SerializationUtil.class.getName());
 
   public static void saveToDisk(@NotNull File file, @NotNull Serializable serializable)
       throws IOException {

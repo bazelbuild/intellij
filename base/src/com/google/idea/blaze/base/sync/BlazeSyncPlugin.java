@@ -65,13 +65,6 @@ public interface BlazeSyncPlugin {
      */
     ModifiableRootModel editModule(Module module);
 
-    /**
-     * Registers a module. This prevents garbage collection of the module upon commit.
-     *
-     * @return True if the module exists and was registered.
-     */
-    boolean registerModule(String moduleName);
-
     /** Finds a module by name. This doesn't register the module. */
     @Nullable
     Module findModule(String moduleName);
@@ -114,6 +107,13 @@ public interface BlazeSyncPlugin {
       TargetMap targetMap,
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState);
+
+  /**
+   * Refresh any VFS files which may have changed during sync, and aren't covered by file watchers.
+   *
+   * <p>Called prior to updateProjectSdk and updateProjectStructure, from inside a write action.
+   */
+  void refreshVirtualFileSystem(BlazeProjectData blazeProjectData);
 
   /** Updates the sdk for the project. */
   void updateProjectSdk(
@@ -238,6 +238,9 @@ public interface BlazeSyncPlugin {
         ModuleEditor moduleEditor,
         Module workspaceModule,
         ModifiableRootModel workspaceModifiableModel) {}
+
+    @Override
+    public void refreshVirtualFileSystem(BlazeProjectData blazeProjectData) {}
 
     @Override
     public void updateInMemoryState(

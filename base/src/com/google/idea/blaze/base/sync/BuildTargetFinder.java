@@ -41,7 +41,7 @@ public class BuildTargetFinder {
   }
 
   @Nullable
-  public TargetExpression findTargetForFile(File file) {
+  public File findBuildFileForFile(File file) {
     if (fileAttributeProvider.isFile(file)) {
       file = file.getParentFile();
       if (file == null) {
@@ -66,12 +66,21 @@ public class BuildTargetFinder {
     do {
       File buildFile = buildSystemProvider.findBuildFileInDirectory(currentDirectory);
       if (buildFile != null) {
-        return TargetExpression.allFromPackageNonRecursive(
-            workspaceRoot.workspacePathFor(currentDirectory));
+        return buildFile;
       }
       currentDirectory = currentDirectory.getParentFile();
     } while (currentDirectory != null && FileUtil.isAncestor(root, currentDirectory, false));
 
+    return null;
+  }
+
+  @Nullable
+  public TargetExpression findTargetForFile(File file) {
+    File buildFile = findBuildFileForFile(file);
+    if (buildFile != null) {
+      return TargetExpression.allFromPackageNonRecursive(
+          workspaceRoot.workspacePathFor(buildFile.getParentFile()));
+    }
     return null;
   }
 }

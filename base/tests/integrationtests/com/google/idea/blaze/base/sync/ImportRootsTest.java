@@ -127,4 +127,15 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
             .build();
     assertThat(importRoots.rootDirectories()).containsExactly(new WorkspacePath("."));
   }
+
+  @Test
+  public void testOverlappingExcludesAreFiltered() {
+    ImportRoots importRoots =
+        ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
+            .add(new DirectoryEntry(new WorkspacePath("root"), false))
+            .add(new DirectoryEntry(new WorkspacePath("root"), false))
+            .add(new DirectoryEntry(new WorkspacePath("root/subdir"), false))
+            .build();
+    assertThat(importRoots.excludeDirectories()).containsExactly(new WorkspacePath("root"));
+  }
 }

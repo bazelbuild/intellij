@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 
 /** Simple implementation of TargetIdeInfo. */
 public final class TargetIdeInfo implements Serializable {
-  private static final long serialVersionUID = 14L;
+  private static final long serialVersionUID = 15L;
 
   public final TargetKey key;
   public final Kind kind;
@@ -43,6 +43,7 @@ public final class TargetIdeInfo implements Serializable {
   @Nullable public final TestIdeInfo testIdeInfo;
   @Nullable public final ProtoLibraryLegacyInfo protoLibraryLegacyInfo;
   @Nullable public final JavaToolchainIdeInfo javaToolchainIdeInfo;
+  @Nullable public final IntellijPluginDeployInfo intellijPluginDeployInfo;
 
   public TargetIdeInfo(
       TargetKey key,
@@ -58,7 +59,8 @@ public final class TargetIdeInfo implements Serializable {
       @Nullable PyIdeInfo pyIdeInfo,
       @Nullable TestIdeInfo testIdeInfo,
       @Nullable ProtoLibraryLegacyInfo protoLibraryLegacyInfo,
-      @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo) {
+      @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo,
+      @Nullable IntellijPluginDeployInfo intellijPluginDeployInfo) {
     this.key = key;
     this.kind = kind;
     this.buildFile = buildFile;
@@ -73,6 +75,7 @@ public final class TargetIdeInfo implements Serializable {
     this.testIdeInfo = testIdeInfo;
     this.protoLibraryLegacyInfo = protoLibraryLegacyInfo;
     this.javaToolchainIdeInfo = javaToolchainIdeInfo;
+    this.intellijPluginDeployInfo = intellijPluginDeployInfo;
   }
 
   @Override
@@ -243,7 +246,8 @@ public final class TargetIdeInfo implements Serializable {
           pyIdeInfo,
           testIdeInfo,
           protoLibraryLegacyInfo,
-          javaToolchainIdeInfo);
+          javaToolchainIdeInfo,
+          null);
     }
   }
 }

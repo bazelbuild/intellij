@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.java.run.producers;
 
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -24,6 +23,7 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
+import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.java.run.RunUtil;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -31,10 +31,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nullable;
 
 /** Producer for run configurations related to Java test methods in Blaze. */
 public class BlazeJavaTestMethodConfigurationProducer
@@ -64,9 +65,9 @@ public class BlazeJavaTestMethodConfigurationProducer
 
   @Override
   protected boolean doSetupConfigFromContext(
-      @NotNull BlazeCommandRunConfiguration configuration,
-      @NotNull ConfigurationContext context,
-      @NotNull Ref<PsiElement> sourceElement) {
+      BlazeCommandRunConfiguration configuration,
+      ConfigurationContext context,
+      Ref<PsiElement> sourceElement) {
 
     SelectedMethodInfo methodInfo = getSelectedMethodInfo(context);
     if (methodInfo == null) {
@@ -93,12 +94,11 @@ public class BlazeJavaTestMethodConfigurationProducer
     }
     handlerState.setCommand(BlazeCommandName.TEST);
 
-    ImmutableList.Builder<String> flags = ImmutableList.builder();
+    // remove old test filter flag if present
+    List<String> flags = new ArrayList<>(handlerState.getBlazeFlags());
+    flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
     flags.add(methodInfo.testFilterFlag);
-    flags.add(BlazeFlags.TEST_OUTPUT_STREAMED);
-    flags.addAll(handlerState.getBlazeFlags());
-
-    handlerState.setBlazeFlags(flags.build());
+    handlerState.setBlazeFlags(flags);
 
     BlazeConfigurationNameBuilder nameBuilder = new BlazeConfigurationNameBuilder(configuration);
     nameBuilder.setTargetString(
@@ -106,13 +106,13 @@ public class BlazeJavaTestMethodConfigurationProducer
             "%s.%s",
             methodInfo.containingClass.getName(), String.join(",", methodInfo.methodNames)));
     configuration.setName(nameBuilder.build());
-
+    configuration.setNameChangedByUser(true); // don't revert to generated name
     return true;
   }
 
   @Override
   protected boolean doIsConfigFromContext(
-      @NotNull BlazeCommandRunConfiguration configuration, @NotNull ConfigurationContext context) {
+      BlazeCommandRunConfiguration configuration, ConfigurationContext context) {
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {
@@ -131,7 +131,12 @@ public class BlazeJavaTestMethodConfigurationProducer
     return flags.contains(methodInfo.testFilterFlag);
   }
 
+  @Nullable
   private static SelectedMethodInfo getSelectedMethodInfo(ConfigurationContext context) {
+    if (!SmRunnerUtils.getSelectedSmRunnerTreeElements(context).isEmpty()) {
+      // handled by a different producer
+      return null;
+    }
     final List<PsiMethod> selectedMethods = TestMethodSelectionUtil.getSelectedMethods(context);
     if (selectedMethods == null) {
       return null;

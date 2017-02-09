@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.lang.buildfile.views;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
-import com.google.idea.blaze.base.lang.buildfile.psi.ListLiteral;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import java.util.Collection;
@@ -38,8 +37,6 @@ public class BuildStructureViewElement extends PsiTreeElementBase<BuildElement> 
   @NotNull
   @Override
   public Collection<StructureViewTreeElement> getChildrenBase() {
-    if (element instanceof ListLiteral) {}
-
     if (!(element instanceof BuildFile)) {
       // TODO: show inner build rules in Skylark .bzl extensions
       return ImmutableList.of();

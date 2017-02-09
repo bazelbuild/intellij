@@ -44,7 +44,7 @@ import java.util.concurrent.ExecutionException;
 
 /** Reads package manifests. */
 public class PackageManifestReader {
-  private static final Logger LOG = Logger.getInstance(SourceDirectoryCalculator.class);
+  private static final Logger logger = Logger.getInstance(SourceDirectoryCalculator.class);
 
   public static PackageManifestReader getInstance() {
     return ServiceManager.getService(PackageManifestReader.class);
@@ -105,7 +105,7 @@ public class PackageManifestReader {
     try {
       Futures.allAsList(futures).get();
     } catch (ExecutionException | InterruptedException e) {
-      LOG.error(e);
+      logger.error(e);
       throw new IllegalStateException("Could not read sources");
     }
     return manifestMap;
@@ -131,7 +131,7 @@ public class PackageManifestReader {
       }
       return outputMap;
     } catch (IOException e) {
-      LOG.error(e);
+      logger.error(e);
       return outputMap;
     }
   }

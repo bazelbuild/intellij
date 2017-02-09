@@ -45,7 +45,7 @@ public class BlazeAndroidModel implements AndroidModel {
   private final List<SourceProvider> sourceProviders; // Singleton list of sourceProvider
   private final File moduleManifest;
   private final String resourceJavaPackage;
-  private final int androidSdkApiLevel;
+  private final int minSdkVersion;
 
   /** Creates a new {@link BlazeAndroidModel}. */
   public BlazeAndroidModel(
@@ -55,14 +55,14 @@ public class BlazeAndroidModel implements AndroidModel {
       SourceProvider sourceProvider,
       File moduleManifest,
       String resourceJavaPackage,
-      int androidSdkApiLevel) {
+      int minSdkVersion) {
     this.project = project;
     this.rootDirPath = rootDirPath;
     this.sourceProvider = sourceProvider;
     this.sourceProviders = ImmutableList.of(sourceProvider);
     this.moduleManifest = moduleManifest;
     this.resourceJavaPackage = resourceJavaPackage;
-    this.androidSdkApiLevel = androidSdkApiLevel;
+    this.minSdkVersion = minSdkVersion;
   }
 
   @Override
@@ -122,7 +122,7 @@ public class BlazeAndroidModel implements AndroidModel {
   @Override
   @Nullable
   public AndroidVersion getMinSdkVersion() {
-    return new AndroidVersion(androidSdkApiLevel, null);
+    return new AndroidVersion(minSdkVersion, null);
   }
 
   @Nullable

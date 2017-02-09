@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
 /** Updates the language specification during the blaze sync process */
 public class BuildLangSyncPlugin extends BlazeSyncPlugin.Adapter {
 
-  private static final Logger LOG = Logger.getInstance(BuildLangSyncPlugin.class);
+  private static final Logger logger = Logger.getInstance(BuildLangSyncPlugin.class);
 
   @Override
   public void updateSyncState(
@@ -115,11 +115,11 @@ public class BuildLangSyncPlugin extends BlazeSyncPlugin.Adapter {
       return null;
     } catch (ExecutionException | InvalidProtocolBufferException | NullPointerException e) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.error(e);
+        logger.error(e);
       }
       return null;
     } catch (Throwable e) {
-      LOG.error(e);
+      logger.error(e);
       return null;
     }
   }

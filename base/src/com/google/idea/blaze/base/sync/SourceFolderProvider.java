@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.vfs.VirtualFile;
+import java.io.File;
 
 /** Provides source folders for each content entry during sync. */
 public interface SourceFolderProvider {
@@ -42,11 +42,11 @@ public interface SourceFolderProvider {
    * 'initial' because the 'is test' property (and potentially additional test source folders) are
    * added later.
    */
-  ImmutableMap<VirtualFile, SourceFolder> initializeSourceFolders(ContentEntry contentEntry);
+  ImmutableMap<File, SourceFolder> initializeSourceFolders(ContentEntry contentEntry);
 
   /**
    * Sets the source folder for the given file, incorporating the test information as appropriate.
    */
   SourceFolder setSourceFolderForLocation(
-      ContentEntry contentEntry, SourceFolder parentFolder, VirtualFile file, boolean isTestSource);
+      ContentEntry contentEntry, SourceFolder parentFolder, File file, boolean isTestSource);
 }

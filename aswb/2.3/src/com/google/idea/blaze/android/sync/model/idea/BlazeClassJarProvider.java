@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -89,7 +90,8 @@ public class BlazeClassJarProvider extends ClassJarProvider {
         continue;
       }
       File classJarFile = decoder.decode(jar.classJar);
-      VirtualFile classJarVF = findFileByIoFile(classJarFile);
+      VirtualFile classJarVF =
+          VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(classJarFile);
       if (classJarVF == null) {
         if (classJarFile.exists()) {
           missingClassJars.add(classJarFile);
@@ -161,7 +163,8 @@ public class BlazeClassJarProvider extends ClassJarProvider {
           // TODO: benchmark to see if optimization is worthwhile.
           if (jar.classJar != null) {
             File classJarFile = decoder.decode(jar.classJar);
-            VirtualFile classJar = findFileByIoFile(classJarFile);
+            VirtualFile classJar =
+                VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(classJarFile);
             if (classJar != null) {
               results.add(classJar);
             } else if (classJarFile.exists()) {
@@ -190,12 +193,6 @@ public class BlazeClassJarProvider extends ClassJarProvider {
 
     maybeRefreshJars(missingClassJars, pendingDependencyJarsRefresh);
     return results;
-  }
-
-  private static VirtualFile findFileByIoFile(File file) {
-    return ApplicationManager.getApplication().isUnitTestMode()
-        ? TempFileSystem.getInstance().findFileByIoFile(file)
-        : LocalFileSystem.getInstance().findFileByIoFile(file);
   }
 
   private static void maybeRefreshJars(Collection<File> missingJars, AtomicBoolean pendingRefresh) {

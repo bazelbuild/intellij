@@ -34,7 +34,7 @@ public class BlazeTestConsoleProperties extends SMTRunnerConsoleProperties
 
   public BlazeTestConsoleProperties(
       RunConfiguration runConfiguration, Executor executor, BlazeTestEventsHandler eventsHandler) {
-    super(runConfiguration, eventsHandler.frameworkName, executor);
+    super(runConfiguration, SmRunnerUtils.BLAZE_FRAMEWORK, executor);
     this.eventsHandler = eventsHandler;
   }
 

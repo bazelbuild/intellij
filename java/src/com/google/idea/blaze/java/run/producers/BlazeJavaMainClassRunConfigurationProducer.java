@@ -15,20 +15,18 @@
  */
 package com.google.idea.blaze.java.run.producers;
 
-import com.google.common.collect.ImmutableCollection;
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
+import com.google.idea.blaze.base.run.testmap.FilteredTargetMap;
+import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.java.run.RunUtil;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
@@ -41,15 +39,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
 import java.io.File;
-import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Objects;
-import java.util.Queue;
-import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
 /** Creates run configurations for Java main classes sourced by java_binary targets. */
 public class BlazeJavaMainClassRunConfigurationProducer
     extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
+
+  private static final String JAVA_BINARY_MAP_KEY = "BlazeJavaBinaryMap";
 
   public BlazeJavaMainClassRunConfigurationProducer() {
     super(BlazeCommandRunConfigurationType.getInstance());
@@ -73,11 +71,11 @@ public class BlazeJavaMainClassRunConfigurationProducer
       sourceElement.set(mainMethod);
     }
 
-    Label label = getTargetLabel(context.getProject(), mainClass);
-    if (label == null) {
+    TargetIdeInfo target = getTarget(context.getProject(), mainClass);
+    if (target == null) {
       return false;
     }
-    configuration.setTarget(label);
+    configuration.setTarget(target.key.label);
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {
@@ -103,11 +101,11 @@ public class BlazeJavaMainClassRunConfigurationProducer
     if (mainClass == null) {
       return false;
     }
-    Label label = getTargetLabel(context.getProject(), mainClass);
-    if (label == null) {
+    TargetIdeInfo target = getTarget(context.getProject(), mainClass);
+    if (target == null) {
       return false;
     }
-    return Objects.equals(configuration.getTarget(), label);
+    return Objects.equals(configuration.getTarget(), target.key.label);
   }
 
   @Nullable
@@ -128,35 +126,60 @@ public class BlazeJavaMainClassRunConfigurationProducer
   }
 
   @Nullable
-  private static Label getTargetLabel(Project project, PsiClass mainClass) {
+  private static TargetIdeInfo getTarget(Project project, PsiClass mainClass) {
     File mainClassFile = RunUtil.getFileForClass(mainClass);
-    ImmutableCollection<TargetKey> targetKeys =
-        SourceToTargetMap.getInstance(project).getRulesForSourceFile(mainClassFile);
-    BlazeProjectData blazeProjectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (blazeProjectData == null) {
+    if (mainClassFile == null) {
       return null;
     }
-    // Find the first java_binary, BFS
-    Queue<TargetKey> todo = new ArrayDeque<>();
-    todo.addAll(targetKeys);
-    Set<TargetKey> seen = Sets.newHashSet();
-    while (!todo.isEmpty()) {
-      TargetKey targetKey = todo.remove();
-      if (!seen.add(targetKey)) {
-        continue;
-      }
-      TargetIdeInfo target = blazeProjectData.targetMap.get(targetKey);
-      if (target == null) {
-        continue;
-      }
-      if (target.kind == Kind.JAVA_BINARY && target.isPlainTarget()) {
-        // Best-effort guess: the main_class attribute isn't exposed, but assume
-        // mainClass is the main_class because it is sourced by the java_binary.
-        return target.key.label;
-      }
-      todo.addAll(blazeProjectData.reverseDependencies.get(targetKey));
+    Collection<TargetIdeInfo> javaBinaryTargets = findJavaBinaryTargets(project, mainClassFile);
+
+    String qualifiedName = mainClass.getQualifiedName();
+    String className = mainClass.getName();
+    if (qualifiedName == null || className == null) {
+      // out of date psi element; just take the first match
+      return Iterables.getFirst(javaBinaryTargets, null);
     }
-    return null;
+
+    // first look for a matching main_class
+    TargetIdeInfo match =
+        javaBinaryTargets
+            .stream()
+            .filter(
+                target ->
+                    target.javaIdeInfo != null
+                        && qualifiedName.equals(target.javaIdeInfo.javaBinaryMainClass))
+            .findFirst()
+            .orElse(null);
+    if (match != null) {
+      return match;
+    }
+
+    match =
+        javaBinaryTargets
+            .stream()
+            .filter(target -> className.equals(target.key.label.targetName().toString()))
+            .findFirst()
+            .orElse(null);
+    if (match != null) {
+      return match;
+    }
+    return Iterables.getFirst(javaBinaryTargets, null);
+  }
+
+  /** Returns all java_binary targets reachable from the given source file. */
+  private static Collection<TargetIdeInfo> findJavaBinaryTargets(
+      Project project, File mainClassFile) {
+    FilteredTargetMap map =
+        SyncCache.getInstance(project)
+            .get(JAVA_BINARY_MAP_KEY, BlazeJavaMainClassRunConfigurationProducer::computeTargetMap);
+    return map != null ? map.targetsForSourceFile(mainClassFile) : ImmutableList.of();
+  }
+
+  private static FilteredTargetMap computeTargetMap(Project project, BlazeProjectData projectData) {
+    return new FilteredTargetMap(
+        project,
+        projectData.artifactLocationDecoder,
+        projectData.targetMap,
+        (targetIdeInfo) -> targetIdeInfo.kind == Kind.JAVA_BINARY && targetIdeInfo.isPlainTarget());
   }
 }

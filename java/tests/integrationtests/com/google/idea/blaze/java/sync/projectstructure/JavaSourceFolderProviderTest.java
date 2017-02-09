@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import java.io.File;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -77,21 +78,21 @@ public class JavaSourceFolderProviderTest extends BlazeIntegrationTestCase {
     VirtualFile gen = workspace.createDirectory(new WorkspacePath("java/apps/gen"));
     VirtualFile res = workspace.createDirectory(new WorkspacePath("java/apps/resources"));
 
-    ImmutableMap<VirtualFile, SourceFolder> sourceFolders =
+    ImmutableMap<File, SourceFolder> sourceFolders =
         provider.initializeSourceFolders(getContentEntry(root));
     assertThat(sourceFolders).hasSize(3);
 
-    SourceFolder rootSource = sourceFolders.get(root);
+    SourceFolder rootSource = sourceFolders.get(new File(root.getPath()));
     assertThat(rootSource.getPackagePrefix()).isEqualTo("apps");
     assertThat(JavaSourceFolderProvider.isGenerated(rootSource)).isFalse();
     assertThat(JavaSourceFolderProvider.isResource(rootSource)).isFalse();
 
-    SourceFolder genSource = sourceFolders.get(gen);
+    SourceFolder genSource = sourceFolders.get(new File(gen.getPath()));
     assertThat(genSource.getPackagePrefix()).isEqualTo("apps.gen");
     assertThat(JavaSourceFolderProvider.isGenerated(genSource)).isTrue();
     assertThat(JavaSourceFolderProvider.isResource(genSource)).isFalse();
 
-    SourceFolder resSource = sourceFolders.get(res);
+    SourceFolder resSource = sourceFolders.get(new File(res.getPath()));
     assertThat(JavaSourceFolderProvider.isGenerated(resSource)).isFalse();
     assertThat(JavaSourceFolderProvider.isResource(resSource)).isTrue();
 
@@ -99,7 +100,8 @@ public class JavaSourceFolderProviderTest extends BlazeIntegrationTestCase {
     sourceFolders = provider.initializeSourceFolders(getContentEntry(testRoot));
 
     assertThat(sourceFolders).hasSize(1);
-    assertThat(sourceFolders.get(testRoot).getPackagePrefix()).isEqualTo("apps.example");
+    assertThat(sourceFolders.get(new File(testRoot.getPath())).getPackagePrefix())
+        .isEqualTo("apps.example");
   }
 
   @Test
@@ -123,16 +125,19 @@ public class JavaSourceFolderProviderTest extends BlazeIntegrationTestCase {
     VirtualFile root = workspace.createDirectory(new WorkspacePath("java/apps"));
     ContentEntry contentEntry = getContentEntry(root);
 
-    ImmutableMap<VirtualFile, SourceFolder> sourceFolders =
-        provider.initializeSourceFolders(contentEntry);
+    ImmutableMap<File, SourceFolder> sourceFolders = provider.initializeSourceFolders(contentEntry);
     assertThat(sourceFolders).hasSize(1);
 
-    VirtualFile testRoot = workspace.createDirectory(new WorkspacePath("java/apps/tests"));
+    VirtualFile testRoot = workspace.createDirectory(new WorkspacePath("java/apps/tests/model"));
 
     SourceFolder testSourceChild =
-        provider.setSourceFolderForLocation(contentEntry, sourceFolders.get(root), testRoot, true);
+        provider.setSourceFolderForLocation(
+            contentEntry,
+            sourceFolders.get(new File(root.getPath())),
+            new File(testRoot.getPath()),
+            true);
     assertThat(testSourceChild.isTestSource()).isTrue();
-    assertThat(testSourceChild.getPackagePrefix()).isEqualTo("apps.tests");
+    assertThat(testSourceChild.getPackagePrefix()).isEqualTo("apps.tests.model");
   }
 
   private ContentEntry getContentEntry(VirtualFile root) {

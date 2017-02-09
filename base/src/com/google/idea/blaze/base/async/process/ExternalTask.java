@@ -41,7 +41,7 @@ import javax.annotation.Nullable;
 
 /** Invokes an external process */
 public class ExternalTask {
-  private static final Logger LOG = Logger.getInstance(ExternalTask.class);
+  private static final Logger logger = Logger.getInstance(ExternalTask.class);
 
   static final OutputStream NULL_STREAM = ByteStreams.nullOutputStream();
 
@@ -222,6 +222,8 @@ public class ExternalTask {
         Thread shutdownHook = new Thread(process::destroy);
         try {
           Runtime.getRuntime().addShutdownHook(shutdownHook);
+          // These tasks are non-interactive, so close the stream connected to the process's input.
+          process.getOutputStream().close();
           Thread stdoutThread = ProcessUtil.forwardAsync(process.getInputStream(), stdout);
           Thread stderrThread = null;
           if (!redirectErrorStream) {
@@ -248,7 +250,7 @@ public class ExternalTask {
           }
         }
       } catch (IOException e) {
-        LOG.warn(e);
+        logger.warn(e);
         IssueOutput.error(e.getMessage()).submit(context);
       }
     } finally {

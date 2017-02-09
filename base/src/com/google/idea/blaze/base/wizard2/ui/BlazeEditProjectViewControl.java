@@ -79,7 +79,7 @@ public final class BlazeEditProjectViewControl {
 
   private static final FileChooserDescriptor PROJECT_FOLDER_DESCRIPTOR =
       new FileChooserDescriptor(false, true, false, false, false, false);
-  private static final Logger LOG = Logger.getInstance(BlazeEditProjectViewControl.class);
+  private static final Logger logger = Logger.getInstance(BlazeEditProjectViewControl.class);
 
   private static final BoolExperiment allowAddprojectViewDefaultValues =
       new BoolExperiment("allow.add.project.view.default.values", true);
@@ -148,7 +148,8 @@ public final class BlazeEditProjectViewControl {
   public void update(BlazeNewProjectBuilder builder) {
     BlazeSelectWorkspaceOption workspaceOption = builder.getWorkspaceOption();
     BlazeSelectProjectViewOption projectViewOption = builder.getProjectViewOption();
-    String workspaceName = workspaceOption.getWorkspaceName();
+    String defaultProjectName =
+        projectViewOption.getDefaultProjectName(workspaceOption.getWorkspaceName());
     WorkspaceRoot workspaceRoot = workspaceOption.getWorkspaceRoot();
     WorkspacePath workspacePath = projectViewOption.getSharedProjectView();
     String initialProjectViewText = projectViewOption.getInitialProjectViewText();
@@ -160,7 +161,7 @@ public final class BlazeEditProjectViewControl {
     HashCode hashCode =
         Hashing.md5()
             .newHasher()
-            .putUnencodedChars(workspaceName)
+            .putUnencodedChars(defaultProjectName)
             .putUnencodedChars(workspaceRoot.toString())
             .putUnencodedChars(workspacePath != null ? workspacePath.toString() : "")
             .putUnencodedChars(initialProjectViewText != null ? initialProjectViewText : "")
@@ -171,7 +172,7 @@ public final class BlazeEditProjectViewControl {
     if (!hashCode.equals(paramsHash)) {
       this.paramsHash = hashCode;
       init(
-          workspaceName,
+          defaultProjectName,
           workspaceRoot,
           workspacePathResolver,
           workspacePath,
@@ -198,7 +199,7 @@ public final class BlazeEditProjectViewControl {
   }
 
   private void init(
-      String workspaceName,
+      String defaultProjectName,
       WorkspaceRoot workspaceRoot,
       WorkspacePathResolver workspacePathResolver,
       @Nullable WorkspacePath sharedProjectView,
@@ -211,8 +212,8 @@ public final class BlazeEditProjectViewControl {
 
     this.workspaceRoot = workspaceRoot;
     this.workspacePathResolver = workspacePathResolver;
-    projectNameField.setText(workspaceName);
-    String defaultDataDir = getDefaultProjectDataDirectory(workspaceName);
+    projectNameField.setText(defaultProjectName);
+    String defaultDataDir = getDefaultProjectDataDirectory(defaultProjectName);
     projectDataDirField.setText(defaultDataDir);
 
     String projectViewText = "";
@@ -225,15 +226,15 @@ public final class BlazeEditProjectViewControl {
         projectViewText =
             ProjectViewStorageManager.getInstance().loadProjectView(sharedProjectViewFile);
         if (projectViewText == null) {
-          LOG.error("Could not load project view: " + sharedProjectViewFile);
+          logger.error("Could not load project view: " + sharedProjectViewFile);
           projectViewText = "";
         }
       } catch (IOException e) {
-        LOG.error(e);
+        logger.error(e);
       }
     } else {
       projectViewText = initialProjectViewText;
-      LOG.assertTrue(projectViewText != null);
+      logger.assertTrue(projectViewText != null);
     }
 
     projectViewUi.init(

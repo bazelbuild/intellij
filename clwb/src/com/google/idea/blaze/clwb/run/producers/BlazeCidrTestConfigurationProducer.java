@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -100,13 +101,28 @@ public class BlazeCidrTestConfigurationProducer
     super(BlazeCommandRunConfigurationType.getInstance());
   }
 
+  /** The single selected {@link PsiElement}. Returns null if multiple elements are selected. */
+  @Nullable
+  private static PsiElement selectedPsiElement(ConfigurationContext context) {
+    PsiElement[] psi = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext());
+    if (psi != null && psi.length > 1) {
+      return null; // multiple elements selected.
+    }
+    Location<?> location = context.getLocation();
+    return location != null ? location.getPsiElement() : null;
+  }
+
   @Override
   protected boolean doSetupConfigFromContext(
       BlazeCommandRunConfiguration configuration,
       ConfigurationContext context,
       Ref<PsiElement> sourceElement) {
 
-    TestTarget testObject = findTestObject(context.getLocation());
+    PsiElement element = selectedPsiElement(context);
+    if (element == null) {
+      return false;
+    }
+    TestTarget testObject = findTestObject(element);
     if (testObject == null) {
       return false;
     }
@@ -144,7 +160,11 @@ public class BlazeCidrTestConfigurationProducer
     if (!Objects.equals(handlerState.getCommand(), BlazeCommandName.TEST)) {
       return false;
     }
-    TestTarget testObject = findTestObject(context.getLocation());
+    PsiElement element = selectedPsiElement(context);
+    if (element == null) {
+      return false;
+    }
+    TestTarget testObject = findTestObject(element);
     if (testObject == null) {
       return false;
     }
@@ -154,11 +174,9 @@ public class BlazeCidrTestConfigurationProducer
   }
 
   @Nullable
-  private static TestTarget findTestObject(Location<?> location) {
+  private static TestTarget findTestObject(PsiElement element) {
     // Copied from on CidrGoogleTestRunConfigurationProducer::findTestObject.
-
     // Precedence order (decreasing): class/function, macro, file
-    PsiElement element = location.getPsiElement();
     PsiElement parent =
         PsiTreeUtil.getNonStrictParentOfType(element, OCFunctionDefinition.class, OCStruct.class);
 

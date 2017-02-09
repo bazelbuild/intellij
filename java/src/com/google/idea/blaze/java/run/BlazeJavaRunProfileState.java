@@ -22,21 +22,21 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
-import com.google.idea.blaze.base.metrics.Action;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.DistributedExecutorSupport;
+import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
 import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
+import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
-import com.google.idea.blaze.base.scope.scopes.LoggedTimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -102,10 +102,16 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
 
     BlazeCommand blazeCommand;
     if (useTestUi()) {
-      BlazeJavaTestEventsHandler eventsHandler = new BlazeJavaTestEventsHandler();
+      BlazeTestEventsHandler eventsHandler =
+          BlazeTestEventsHandler.getHandlerForTarget(project, configuration.getTarget());
+      assert (eventsHandler != null);
       blazeCommand =
           getBlazeCommand(
-              project, configuration, projectViewSet, eventsHandler.getBlazeFlags(), debug);
+              project,
+              configuration,
+              projectViewSet,
+              BlazeTestEventsHandler.getBlazeFlags(project),
+              debug);
       setConsoleBuilder(
           new TextConsoleBuilderImpl(project) {
             @Override
@@ -118,6 +124,7 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
       blazeCommand =
           getBlazeCommand(project, configuration, projectViewSet, ImmutableList.of(), debug);
     }
+    addConsoleFilters(new BlazeTargetFilter(project));
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
     return new ScopedBlazeProcessHandler(
@@ -127,10 +134,7 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
         new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
           @Override
           public void onBlazeContextStart(BlazeContext context) {
-            context
-                .push(new LoggedTimingScope(project, Action.BLAZE_COMMAND_USAGE))
-                .push(new IssuesScope(project))
-                .push(new IdeaLogScope());
+            context.push(new IssuesScope(project)).push(new IdeaLogScope());
           }
 
           @Override
@@ -158,7 +162,7 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     return state != null
         && BlazeCommandName.TEST.equals(state.getCommand())
-        && !Boolean.TRUE.equals(state.getRunOnDistributedExecutor());
+        && !state.getRunOnDistributedExecutor();
   }
 
   @Override
@@ -204,9 +208,11 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
         command.addBlazeFlags(BlazeFlags.JAVA_TEST_DEBUG);
       }
     } else {
-      command.addBlazeFlags(
-          DistributedExecutorSupport.getBlazeFlags(
-              project, handlerState.getRunOnDistributedExecutor()));
+      boolean runDistributed = handlerState.getRunOnDistributedExecutor();
+      command.addBlazeFlags(DistributedExecutorSupport.getBlazeFlags(project, runDistributed));
+      if (!runDistributed) {
+        command.addBlazeFlags(BlazeFlags.TEST_OUTPUT_STREAMED);
+      }
     }
 
     command.addExeFlags(handlerState.getExeFlags());

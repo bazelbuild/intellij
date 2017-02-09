@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.lang.buildfile.psi.util;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.lang.buildfile.psi.AssignmentStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.Expression;
+import com.google.idea.blaze.base.lang.buildfile.psi.ParenthesizedExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.TargetExpression;
 import com.intellij.lang.ASTNode;
@@ -154,18 +155,29 @@ public class PsiUtils {
 
   /**
    * For ReferenceExpressions, follows the chain of references until it hits a
-   * non-ReferenceExpression. For other types, returns the input expression.
+   * non-ReferenceExpression.<br>
+   * Unwraps ParenthesizedExpression.<br>
+   * For other types, returns the input expression.
    */
   public static PsiElement getReferencedTarget(Expression expr) {
     PsiElement element = expr;
-    while (element instanceof ReferenceExpression) {
-      PsiElement referencedElement = ((ReferenceExpression) element).getReferencedElement();
-      if (referencedElement == null) {
+    while (true) {
+      PsiElement unwrapped = unwrap(element);
+      if (unwrapped == null || unwrapped == element) {
         return element;
       }
-      element = referencedElement;
+      element = unwrapped;
     }
-    return element;
+  }
+
+  private static PsiElement unwrap(PsiElement expr) {
+    if (expr instanceof ParenthesizedExpression) {
+      return ((ParenthesizedExpression) expr).getContainedExpression();
+    }
+    if (expr instanceof ReferenceExpression) {
+      return ((ReferenceExpression) expr).getReferencedElement();
+    }
+    return expr;
   }
 
   /**

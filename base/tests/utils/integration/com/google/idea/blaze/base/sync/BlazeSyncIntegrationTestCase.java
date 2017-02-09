@@ -109,7 +109,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
               public void commit() {
                 // don't commit module changes,
                 // and make sure they're properly disposed when the test is finished
-                for (ModifiableRootModel model : modifiableModels) {
+                for (ModifiableRootModel model : modules.values()) {
                   Disposer.register(getTestRootDisposable(), model::dispose);
                   if (model.getModule().getName().equals(BlazeDataStorage.WORKSPACE_MODULE_NAME)) {
                     workspaceContentEntries = ImmutableList.copyOf(model.getContentEntries());
@@ -243,6 +243,16 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
       WorkingSet workingSet =
           new WorkingSet(ImmutableList.copyOf(addedFiles), ImmutableList.of(), ImmutableList.of());
       return Futures.immediateFuture(workingSet);
+    }
+
+    @Override
+    public ListenableFuture<String> getUpstreamContent(
+        Project project,
+        BlazeContext context,
+        WorkspaceRoot workspaceRoot,
+        WorkspacePath path,
+        ListeningExecutorService executor) {
+      return Futures.immediateFuture("");
     }
 
     @Nullable

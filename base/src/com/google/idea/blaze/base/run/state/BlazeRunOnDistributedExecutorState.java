@@ -29,8 +29,8 @@ import javax.swing.JLabel;
 import org.jdom.Element;
 
 /**
- * Provides an option to run blaze/bazel on a distributed executor, if available, rather than
- * locally.
+ * Provides an option to run blaze/bazel on a distributed executor, if available. If unchecked, we
+ * fall back to whatever the default is.
  */
 public class BlazeRunOnDistributedExecutorState implements RunConfigurationState {
 
@@ -39,10 +39,10 @@ public class BlazeRunOnDistributedExecutorState implements RunConfigurationState
 
   @Nullable private final DistributedExecutorSupport executorInfo;
 
-  public Boolean runOnDistributedExecutor = null;
+  public boolean runOnDistributedExecutor;
 
   BlazeRunOnDistributedExecutorState(BuildSystem buildSystem) {
-    this.executorInfo = DistributedExecutorSupport.getAvailableExecutor(buildSystem);
+    executorInfo = DistributedExecutorSupport.getAvailableExecutor(buildSystem);
   }
 
   @Override
@@ -55,7 +55,7 @@ public class BlazeRunOnDistributedExecutorState implements RunConfigurationState
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    if (executorInfo != null && runOnDistributedExecutor != null) {
+    if (executorInfo != null && runOnDistributedExecutor) {
       element.setAttribute(
           RUN_ON_DISTRIBUTED_EXECUTOR_ATTR, Boolean.toString(runOnDistributedExecutor));
     } else {
@@ -71,12 +71,11 @@ public class BlazeRunOnDistributedExecutorState implements RunConfigurationState
   /** Editor for {@link BlazeRunOnDistributedExecutorState} */
   class RunOnExecutorStateEditor implements RunConfigurationStateEditor {
 
-    private final JBCheckBox checkBox =
-        new JBCheckBox("Run on " + (executorInfo != null ? executorInfo.executorName() : null));
+    private final String executorName =
+        executorInfo != null ? executorInfo.executorName() : "distributed executor";
+    private final JBCheckBox checkBox = new JBCheckBox("Run on " + executorName);
     private final JLabel warning =
-        new JLabel(
-            "Warning: test UI integration is not available when running on distributed "
-                + "executor");
+        new JLabel("Warning: test UI integration is not available when running on " + executorName);
 
     private boolean componentVisible = executorInfo != null;
     private boolean isTest = false;
@@ -90,9 +89,7 @@ public class BlazeRunOnDistributedExecutorState implements RunConfigurationState
     @Override
     public void resetEditorFrom(RunConfigurationState genericState) {
       BlazeRunOnDistributedExecutorState state = (BlazeRunOnDistributedExecutorState) genericState;
-      if (state.runOnDistributedExecutor != null) {
-        checkBox.setSelected(state.runOnDistributedExecutor);
-      }
+      checkBox.setSelected(state.runOnDistributedExecutor);
     }
 
     @Override

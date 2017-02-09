@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import java.io.File;
 import java.io.Serializable;
@@ -40,9 +39,9 @@ public interface WorkspacePathResolver extends Serializable {
 
   /**
    * This method should be used for directories. Returns all workspace files corresponding to the
-   * given execution-root-relative path.
+   * given workspace path.
    */
-  ImmutableList<File> resolveToIncludeDirectories(ExecutionRootPath executionRootPath);
+  ImmutableList<File> resolveToIncludeDirectories(WorkspacePath relativePath);
 
   /** Finds the package root directory that a workspace relative path is in. */
   File findPackageRoot(String relativePath);

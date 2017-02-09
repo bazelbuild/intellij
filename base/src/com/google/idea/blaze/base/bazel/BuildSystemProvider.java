@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefiniti
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,10 +62,6 @@ public interface BuildSystemProvider {
           String.format("Build system '%s' not supported by this plugin", buildSystem));
     }
     return provider.getWorkspaceRootProvider();
-  }
-
-  static BuildSystemProvider getInstance() {
-    return ServiceManager.getService(BuildSystemProvider.class);
   }
 
   /**

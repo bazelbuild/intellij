@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -25,13 +26,20 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceManager;
 import java.util.Set;
 
 final class BlazeCSyncPlugin extends BlazeSyncPlugin.Adapter {
+
+  private static final BoolExperiment refreshExecRoot =
+      new BoolExperiment("refresh.exec.root.cpp", true);
+
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
     if (workspaceType == WorkspaceType.C) {
@@ -63,5 +71,27 @@ final class BlazeCSyncPlugin extends BlazeSyncPlugin.Adapter {
             blazeCWorkspace.update(childContext, blazeProjectData);
           }
         });
+  }
+
+  @Override
+  public void refreshVirtualFileSystem(BlazeProjectData blazeProjectData) {
+    if (!refreshExecRoot.getValue()) {
+      return;
+    }
+    refreshExecRoot(blazeProjectData);
+  }
+
+  private static void refreshExecRoot(BlazeProjectData blazeProjectData) {
+    // recursive refresh of the blaze execution root. This is required because:
+    // <li>Our blaze aspect can't tell us exactly which genfiles are required to resolve the project
+    // <li>Cidr caches the directory contents as part of symbol building, so we need to do this work
+    // up front.
+    VirtualFile execRoot =
+        VirtualFileSystemProvider.getInstance()
+            .getSystem()
+            .refreshAndFindFileByIoFile(blazeProjectData.blazeRoots.executionRoot);
+    if (execRoot != null) {
+      VfsUtil.markDirtyAndRefresh(false, true, true, execRoot);
+    }
   }
 }

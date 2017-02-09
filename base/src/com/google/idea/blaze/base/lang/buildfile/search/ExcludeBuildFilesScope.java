@@ -28,11 +28,12 @@ import javax.annotation.Nullable;
  * <br>
  * BUILD file / BUILD package references are handled by a separate reference searcher.
  *
- * <p>This is a hack, but greatly improves efficiency. The reasoning behind this: - BUILD files have
- * very strict file reference patterns, and very narrow direct reference scopes (a package can't
- * directly reference files in another package). - IJ *constantly* performs global searches on
- * strings when manipulating files (e.g. searching for file uses for highlighting, rename, move
- * operations). This causes us to re-parse every BUILD file in the project, multiple times.
+ * <p>This is a hack, but greatly improves efficiency. The reasoning behind this:
+ * <li>BUILD files have very strict file reference patterns, and very narrow direct reference scopes
+ *     (a package can't directly reference files in another package).
+ * <li>IJ *constantly* performs global searches on strings when manipulating files (e.g. searching
+ *     for file uses for highlighting, rename, move operations). This causes us to re-parse every
+ *     BUILD file in the project, multiple times.
  */
 public class ExcludeBuildFilesScope extends UseScopeOptimizer {
 

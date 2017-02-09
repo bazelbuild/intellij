@@ -34,7 +34,6 @@ import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
-import com.google.idea.blaze.base.metrics.Action;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.scope.Scope;
@@ -42,7 +41,6 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
-import com.google.idea.blaze.base.scope.scopes.LoggedTimingScope;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
@@ -202,8 +200,7 @@ public final class BlazeAndroidRunConfigurationRunner
                   new BlazeConsoleScope.Builder(project)
                       .setSuppressConsole(suppressConsole)
                       .build())
-              .push(new IdeaLogScope())
-              .push(new LoggedTimingScope(project, Action.APK_BUILD_AND_INSTALL));
+              .push(new IdeaLogScope());
 
           BlazeAndroidRunContext runContext = env.getCopyableUserData(RUN_CONTEXT_KEY);
           if (runContext == null) {

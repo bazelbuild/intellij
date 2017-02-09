@@ -30,14 +30,14 @@ import java.util.Arrays;
 import javax.annotation.Nullable;
 
 /**
- * Additional error annotations, post parsing.
+ * Error annotations for load statements, post parsing.
  *
  * <p>This has been turned off because it's unusable. BuildFile is re-parsed *every* time it's
  * touched, and is never cached. Until this is fixed, we can't run any annotators touching the file.
  *
  * <p>One option: try moving all expensive checks to 'visitFile', so they're not run in parallel
  */
-public class ErrorAnnotator extends BuildAnnotator {
+public class LoadErrorAnnotator extends BuildAnnotator {
 
   @Override
   public void visitLoadStatement(LoadStatement node) {
@@ -91,7 +91,7 @@ public class ErrorAnnotator extends BuildAnnotator {
   public void visitFuncallExpression(FuncallExpression node) {
     FunctionStatement function = (FunctionStatement) node.getReferencedElement();
     if (function == null) {
-      // likely a built-in rule. We don't yet recognize these.
+      // likely a built-in rule.
       return;
     }
     // check keyword args match function parameters

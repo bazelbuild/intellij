@@ -17,7 +17,7 @@ package com.google.idea.blaze.android.run.test;
 
 import com.android.tools.idea.run.ConsoleProvider;
 import com.google.idea.blaze.android.compatibility.Compatibility.AndroidTestConsoleProperties;
-import com.google.idea.blaze.android.run.test.smrunner.BlazeAndroidTestEventsHandler;
+import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -37,13 +37,13 @@ class AndroidTestConsoleProvider implements ConsoleProvider {
   private final Project project;
   private final RunConfiguration runConfiguration;
   private final BlazeAndroidTestRunConfigurationState configState;
-  @Nullable private final BlazeAndroidTestEventsHandler testEventsHandler;
+  @Nullable private final BlazeTestEventsHandler testEventsHandler;
 
   AndroidTestConsoleProvider(
       Project project,
       RunConfiguration runConfiguration,
       BlazeAndroidTestRunConfigurationState configState,
-      @Nullable BlazeAndroidTestEventsHandler testEventsHandler) {
+      @Nullable BlazeTestEventsHandler testEventsHandler) {
     this.project = project;
     this.runConfiguration = runConfiguration;
     this.configState = configState;

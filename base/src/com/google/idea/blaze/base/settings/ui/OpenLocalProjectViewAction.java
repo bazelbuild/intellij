@@ -19,15 +19,10 @@ import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import java.io.File;
 
-/** Opens all the user's project views. */
-public class EditProjectViewAction extends BlazeProjectAction {
+/** Opens the user's local project view file. */
+public class OpenLocalProjectViewAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
@@ -35,15 +30,6 @@ public class EditProjectViewAction extends BlazeProjectAction {
     if (projectViewSet == null) {
       return;
     }
-    for (ProjectViewSet.ProjectViewFile projectViewFile : projectViewSet.getProjectViewFiles()) {
-      File file = projectViewFile.projectViewFile;
-      if (file != null) {
-        VirtualFile virtualFile = VfsUtil.findFileByIoFile(file, true);
-        if (virtualFile != null) {
-          OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile);
-          FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-        }
-      }
-    }
+    ProjectViewHelper.openProjectViewFile(project, projectViewSet.getTopLevelProjectViewFile());
   }
 }

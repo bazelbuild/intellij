@@ -19,19 +19,17 @@ import com.android.tools.idea.project.BuildSystemService;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.base.actions.BlazeBuildService;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiElement;
 import java.io.File;
 
@@ -84,16 +82,11 @@ public class BlazeBuildSystemService extends BuildSystemService {
     } else {
       // If not, just the build file is good enough.
       File buildIoFile = blazeProjectData.artifactLocationDecoder.decode(targetIdeInfo.buildFile);
-      VirtualFile buildVirtualFile = findFileByIoFile(buildIoFile);
+      VirtualFile buildVirtualFile =
+          VirtualFileSystemProvider.findFileByIoFileRefreshIfNeeded(buildIoFile);
       if (buildVirtualFile != null) {
         fileEditorManager.openFile(buildVirtualFile, true);
       }
     }
-  }
-
-  private static VirtualFile findFileByIoFile(File file) {
-    return ApplicationManager.getApplication().isUnitTestMode()
-        ? TempFileSystem.getInstance().findFileByIoFile(file)
-        : VfsUtil.findFileByIoFile(file, true);
   }
 }

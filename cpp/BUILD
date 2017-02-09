@@ -18,6 +18,7 @@ java_library(
         "//base",
         "//common/experiments",
         "//intellij_platform_sdk:plugin_api",
+        "//sdkcompat",
         "@jsr305_annotations//jar",
     ],
 )

@@ -62,6 +62,7 @@
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandlerProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationHandlerProvider"/>
     <BuildSystemAndroidJdkProvider implementation="com.google.idea.blaze.android.sync.BazelAndroidJdkProvider"/>
+    <BlazeTestEventsHandler implementation="com.google.idea.blaze.android.run.test.smrunner.BlazeAndroidTestEventsHandler"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">

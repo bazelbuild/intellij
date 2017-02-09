@@ -15,11 +15,9 @@
  */
 package com.google.idea.blaze.cpp;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.jetbrains.cidr.lang.CustomHeaderProvider;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCResolveRootAndConfiguration;
@@ -58,7 +56,7 @@ public class BlazeCustomHeaderProvider extends CustomHeaderProvider {
         ((BlazeResolveConfiguration) configuration)
             .getWorkspacePathResolver()
             .resolveToFile(includeString);
-    return getFileSystem().findFileByIoFile(file);
+    return VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(file);
   }
 
   @Nullable
@@ -72,12 +70,5 @@ public class BlazeCustomHeaderProvider extends CustomHeaderProvider {
   public VirtualFile getCustomSerializedHeaderFile(
       String serializationPath, Project project, VirtualFile currentFile) {
     return null;
-  }
-
-  private static LocalFileSystem getFileSystem() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return TempFileSystem.getInstance();
-    }
-    return LocalFileSystem.getInstance();
   }
 }

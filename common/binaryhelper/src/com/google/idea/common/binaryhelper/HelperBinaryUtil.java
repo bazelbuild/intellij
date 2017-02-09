@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
 /** Binaries provided to IntelliJ at runtime */
 public final class HelperBinaryUtil {
 
-  private static final Logger LOG = Logger.getInstance(HelperBinaryUtil.class);
+  private static final Logger logger = Logger.getInstance(HelperBinaryUtil.class);
 
   private static File tempDirectory;
   private static final Map<String, File> cachedFiles = new HashMap<>();
@@ -53,7 +53,7 @@ public final class HelperBinaryUtil {
 
     URL url = HelperBinaryUtil.class.getResource(binaryFilePath);
     if (url == null) {
-      LOG.error(String.format("Helper binary '%s' was not found", binaryFilePath));
+      logger.error(String.format("Helper binary '%s' was not found", binaryFilePath));
       return null;
     }
     try (InputStream inputStream = URLUtil.openResourceStream(url)) {
@@ -63,7 +63,7 @@ public final class HelperBinaryUtil {
       cachedFiles.put(binaryName, file);
       return file;
     } catch (IOException e) {
-      LOG.error(String.format("Error loading helper binary '%s'", binaryFilePath));
+      logger.error(String.format("Error loading helper binary '%s'", binaryFilePath));
       return null;
     }
   }

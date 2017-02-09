@@ -16,9 +16,10 @@
 package com.google.idea.blaze.base.sync;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.util.UrlUtil;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.vfs.VirtualFile;
+import java.io.File;
 
 /** An implementation of {@link SourceFolderProvider} with no language-specific settings. */
 public class GenericSourceFolderProvider implements SourceFolderProvider {
@@ -28,22 +29,14 @@ public class GenericSourceFolderProvider implements SourceFolderProvider {
   private GenericSourceFolderProvider() {}
 
   @Override
-  public ImmutableMap<VirtualFile, SourceFolder> initializeSourceFolders(
-      ContentEntry contentEntry) {
-    ImmutableMap.Builder<VirtualFile, SourceFolder> output = ImmutableMap.builder();
-    VirtualFile file = contentEntry.getFile();
-    if (file != null) {
-      output.put(file, contentEntry.addSourceFolder(file, false));
-    }
-    return output.build();
+  public ImmutableMap<File, SourceFolder> initializeSourceFolders(ContentEntry contentEntry) {
+    String url = contentEntry.getUrl();
+    return ImmutableMap.of(UrlUtil.urlToFile(url), contentEntry.addSourceFolder(url, false));
   }
 
   @Override
   public SourceFolder setSourceFolderForLocation(
-      ContentEntry contentEntry,
-      SourceFolder parentFolder,
-      VirtualFile file,
-      boolean isTestSource) {
-    return contentEntry.addSourceFolder(file, isTestSource);
+      ContentEntry contentEntry, SourceFolder parentFolder, File file, boolean isTestSource) {
+    return contentEntry.addSourceFolder(UrlUtil.fileToIdeaUrl(file), isTestSource);
   }
 }

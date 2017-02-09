@@ -37,7 +37,7 @@ import javax.swing.border.EmptyBorder;
 
 /** UI for selecting a client during the import process. */
 public abstract class BlazeSelectOptionControl<T extends BlazeWizardOption> {
-  private static final Logger LOG = Logger.getInstance(BlazeSelectOptionControl.class);
+  private static final Logger logger = Logger.getInstance(BlazeSelectOptionControl.class);
 
   private final BlazeWizardUserSettings userSettings;
   private final JPanel canvas;
@@ -56,7 +56,7 @@ public abstract class BlazeSelectOptionControl<T extends BlazeWizardOption> {
 
   BlazeSelectOptionControl(BlazeNewProjectBuilder builder, Collection<T> options) {
     if (options == null) {
-      LOG.error("No options on select screen '" + getTitle() + "'");
+      logger.error("No options on select screen '" + getTitle() + "'");
     }
 
     this.userSettings = builder.getUserSettings();

@@ -40,7 +40,7 @@ import javax.annotation.Nullable;
 public class BlazeBuildFileRunConfigurationProducer
     extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
 
-  private static final Logger LOG =
+  private static final Logger logger =
       Logger.getInstance(BlazeBuildFileRunConfigurationProducer.class);
 
   private static class BuildTarget {
@@ -162,7 +162,7 @@ public class BlazeBuildFileRunConfigurationProducer
   public static void setupConfiguration(RunConfiguration configuration, Label label) {
     BuildTarget target = buildTargetFromLabel(configuration.getProject(), label);
     if (target == null || !(configuration instanceof BlazeCommandRunConfiguration)) {
-      LOG.error("Configuration not handled by BUILD file config producer: " + configuration);
+      logger.error("Configuration not handled by BUILD file config producer: " + configuration);
       return;
     }
     setupBuildFileConfiguration((BlazeCommandRunConfiguration) configuration, target);

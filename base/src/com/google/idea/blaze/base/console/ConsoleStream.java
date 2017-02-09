@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2017 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.run.smrunner;
+package com.google.idea.blaze.base.console;
 
-/** Provides a {@link BlazeTestEventsHandler}. */
-public interface BlazeTestEventsHandlerProvider {
+import com.intellij.execution.ui.ConsoleViewContentType;
 
-  BlazeTestEventsHandler getHandler();
+/** Stream that outputs strings with a {@link ConsoleViewContentType}. */
+public interface ConsoleStream {
+
+  void print(String text, ConsoleViewContentType contentType);
 }

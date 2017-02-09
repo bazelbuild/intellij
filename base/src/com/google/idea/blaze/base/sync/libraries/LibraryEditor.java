@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 
 /** Edits IntelliJ libraries */
 public class LibraryEditor {
-  private static final Logger LOG = Logger.getInstance(LibraryEditor.class);
+  private static final Logger logger = Logger.getInstance(LibraryEditor.class);
 
   public static void updateProjectLibraries(
       Project project,
@@ -142,7 +142,7 @@ public class LibraryEditor {
     LibraryTable libraryTable = ProjectLibraryTable.getInstance(model.getProject());
     Library library = libraryTable.getLibraryByName(libraryKey.getIntelliJLibraryName());
     if (library == null) {
-      LOG.error(
+      logger.error(
           "Library missing: "
               + libraryKey.getIntelliJLibraryName()
               + ". Please resync project to resolve.");

@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -119,6 +120,12 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
   }
 
   @Override
+  public String getDefaultProjectName(String workspaceName) {
+    File buildFileParent = new File(getBuildFilePath()).getParentFile();
+    return buildFileParent != null ? buildFileParent.getName() : workspaceName;
+  }
+
+  @Override
   public void commit() {
     userSettings.put(LAST_WORKSPACE_PATH, getBuildFilePath());
     buildFilePathField.addCurrentTextToHistory();
@@ -182,6 +189,7 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
   private void chooseWorkspacePath() {
     BuildSystemProvider buildSystem =
         BuildSystemProvider.getBuildSystemProvider(builder.getBuildSystem());
+    assert buildSystem != null;
     FileChooserDescriptor descriptor =
         new FileChooserDescriptor(true, false, false, false, false, false)
             .withShowHiddenFiles(true) // Show root project view file
@@ -216,6 +224,14 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
       return;
     }
     VirtualFile file = files[0];
+
+    if (!FileUtil.isAncestor(fileBrowserRoot.getPath(), file.getPath(), true)) {
+      Messages.showErrorDialog(
+          String.format("You must choose a BUILD file under %s.", fileBrowserRoot.getPath()),
+          "Cannot Use BUILD File");
+      return;
+    }
+
     String newWorkspacePath = FileUtil.getRelativePath(fileBrowserRoot, new File(file.getPath()));
     buildFilePathField.setText(newWorkspacePath);
   }

@@ -169,7 +169,7 @@ public class ActionPresentationHelper {
 
     String text = enabled && hasSubject ? subjectText : this.text;
     if (text != null) {
-      presentation.setText(text);
+      presentation.setText(text, false);
     }
   }
 }

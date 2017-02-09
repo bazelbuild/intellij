@@ -15,9 +15,15 @@
  */
 package com.google.idea.blaze.base.run.smrunner;
 
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.ErrorOrFailureOrSkipped;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestCase;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
+import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
+import com.google.idea.blaze.base.run.testlogs.BlazeTestXmlFinderStrategy;
+import com.google.idea.blaze.base.run.testlogs.CompletedTestTarget;
 import com.google.idea.sdkcompat.smrunner.SmRunnerCompatUtils;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -29,6 +35,7 @@ import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -42,6 +49,11 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
 
   private static final ErrorOrFailureOrSkipped NO_ERROR = new ErrorOrFailureOrSkipped();
 
+  {
+    NO_ERROR.message = "No message"; // cannot be null
+  }
+
+  private final Project project;
   private final BlazeTestEventsHandler eventsHandler;
 
   public BlazeXmlToTestEventsConverter(
@@ -49,6 +61,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
       TestConsoleProperties testConsoleProperties,
       BlazeTestEventsHandler eventsHandler) {
     super(testFrameworkName, testConsoleProperties);
+    this.project = testConsoleProperties.getProject();
     this.eventsHandler = eventsHandler;
   }
 
@@ -72,41 +85,52 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   public void flushBufferBeforeTerminating() {
     super.flushBufferBeforeTerminating();
     onStartTesting();
-    try (InputStream input = new FileInputStream(eventsHandler.testOutputXml)) {
-      parseXmlInput(getProcessor(), input);
-    } catch (Exception e) {
-      // ignore parsing errors -- most common cause is user cancellation, which we can't easily
-      // recognize.
+    getProcessor().onTestsReporterAttached();
+
+    for (CompletedTestTarget testTarget : BlazeTestXmlFinderStrategy.locateTestXmlFiles(project)) {
+      try (InputStream input = new FileInputStream(testTarget.testResultXml)) {
+        parseXmlInput(getProcessor(), getKind(project, testTarget.label), input);
+      } catch (Exception e) {
+        // ignore parsing errors -- most common cause is user cancellation, which we can't easily
+        // recognize.
+      }
     }
   }
 
-  private void parseXmlInput(GeneralTestEventsProcessor processor, InputStream input) {
-    TestSuite testResult = BlazeXmlSchema.parse(input);
-    processor.onTestsReporterAttached();
-    processTestSuite(processor, testResult);
+  @Nullable
+  private static Kind getKind(Project project, Label label) {
+    TargetIdeInfo target = TargetFinder.getInstance().targetForLabel(project, label);
+    return target != null ? target.kind : null;
   }
 
-  private void processTestSuite(GeneralTestEventsProcessor processor, TestSuite suite) {
+  private void parseXmlInput(
+      GeneralTestEventsProcessor processor, @Nullable Kind kind, InputStream input) {
+    TestSuite testResult = BlazeXmlSchema.parse(input);
+    processTestSuite(processor, kind, testResult);
+  }
+
+  private void processTestSuite(
+      GeneralTestEventsProcessor processor, @Nullable Kind kind, TestSuite suite) {
     if (!hasRunChild(suite)) {
       return;
     }
-    // don't include the outermost 'testsuites' element.
-    boolean logSuite = suite.testSuites.isEmpty();
+    // only include the innermost 'testsuite' element
+    boolean logSuite = !eventsHandler.ignoreSuite(suite);
     if (suite.name != null && logSuite) {
       TestSuiteStarted suiteStarted =
-          new TestSuiteStarted(eventsHandler.suiteDisplayName(suite.name));
-      String locationUrl = eventsHandler.suiteLocationUrl(suite.name);
+          new TestSuiteStarted(eventsHandler.suiteDisplayName(kind, suite.name));
+      String locationUrl = eventsHandler.suiteLocationUrl(kind, suite.name);
       processor.onSuiteStarted(new TestSuiteStartedEvent(suiteStarted, locationUrl));
     }
 
     for (TestSuite child : suite.testSuites) {
-      processTestSuite(processor, child);
+      processTestSuite(processor, kind, child);
     }
     for (TestSuite decorator : suite.testDecorators) {
-      processTestSuite(processor, decorator);
+      processTestSuite(processor, kind, decorator);
     }
     for (TestCase test : suite.testCases) {
-      processTestCase(processor, test);
+      processTestCase(processor, kind, suite, test);
     }
 
     if (suite.sysOut != null) {
@@ -118,7 +142,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
 
     if (suite.name != null && logSuite) {
       processor.onSuiteFinished(
-          new TestSuiteFinishedEvent(eventsHandler.suiteDisplayName(suite.name)));
+          new TestSuiteFinishedEvent(eventsHandler.suiteDisplayName(kind, suite.name)));
     }
   }
 
@@ -138,7 +162,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
       }
     }
     for (TestCase test : suite.testCases) {
-      if ("run".equals(test.status)) {
+      if (wasRun(test) && !isIgnored(test)) {
         return true;
       }
     }
@@ -147,6 +171,14 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
 
   private static boolean isCancelled(TestCase test) {
     return "interrupted".equalsIgnoreCase(test.result) || "cancelled".equalsIgnoreCase(test.result);
+  }
+
+  private static boolean wasRun(TestCase test) {
+    // 'status' is not always set. In cases where it's not, tests which aren't run have a 0 runtime.
+    if (test.status != null) {
+      return test.status.equals("run");
+    }
+    return parseTimeMillis(test.time) != 0;
   }
 
   private static boolean isIgnored(TestCase test) {
@@ -162,12 +194,14 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
     return test.failure != null || test.error != null;
   }
 
-  private void processTestCase(GeneralTestEventsProcessor processor, TestCase test) {
-    if (test.name == null || "notrun".equals(test.status) || isCancelled(test)) {
+  private void processTestCase(
+      GeneralTestEventsProcessor processor, @Nullable Kind kind, TestSuite parent, TestCase test) {
+    if (test.name == null || !wasRun(test) || isCancelled(test)) {
       return;
     }
-    String displayName = eventsHandler.testDisplayName(test.name);
-    String locationUrl = eventsHandler.testLocationUrl(test.name, test.classname);
+    String displayName = eventsHandler.testDisplayName(kind, test.name);
+    String locationUrl =
+        eventsHandler.testLocationUrl(kind, parent.name, test.name, test.classname);
     processor.onTestStarted(new TestStartedEvent(displayName, locationUrl));
 
     if (test.sysOut != null) {

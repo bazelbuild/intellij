@@ -22,10 +22,10 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public class AndroidSdkPlatform implements Serializable {
   public final String androidSdk;
-  public final int androidSdkLevel;
+  public final int androidMinSdkLevel;
 
-  public AndroidSdkPlatform(String androidSdk, int androidSdkLevel) {
+  public AndroidSdkPlatform(String androidSdk, int androidMinSdkLevel) {
     this.androidSdk = androidSdk;
-    this.androidSdkLevel = androidSdkLevel;
+    this.androidMinSdkLevel = androidMinSdkLevel;
   }
 }

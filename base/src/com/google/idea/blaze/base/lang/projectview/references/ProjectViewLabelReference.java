@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.lang.projectview.references;
 
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.completion.BuildLookupElement;
 import com.google.idea.blaze.base.lang.buildfile.completion.LabelRuleLookupElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
@@ -28,14 +29,10 @@ import com.google.idea.blaze.base.lang.projectview.psi.util.ProjectViewElementGe
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
@@ -79,7 +76,8 @@ public class ProjectViewLabelReference extends PsiReferenceBase<ProjectViewPsiSe
     if (file == null) {
       return null;
     }
-    VirtualFile vf = getFileSystem().findFileByPath(file.getPath());
+    VirtualFile vf =
+        VirtualFileSystemProvider.getInstance().getSystem().findFileByPath(file.getPath());
     if (vf == null) {
       return null;
     }
@@ -169,12 +167,5 @@ public class ProjectViewLabelReference extends PsiReferenceBase<ProjectViewPsiSe
 
   private Project getProject() {
     return myElement.getProject();
-  }
-
-  private static VirtualFileSystem getFileSystem() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return TempFileSystem.getInstance();
-    }
-    return LocalFileSystem.getInstance();
   }
 }

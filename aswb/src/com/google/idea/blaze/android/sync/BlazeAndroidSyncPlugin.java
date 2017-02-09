@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
 import com.google.idea.blaze.android.compatibility.Compatibility.IdeSdks;
 import com.google.idea.blaze.android.cppapi.NdkSupport;
+import com.google.idea.blaze.android.projectview.AndroidMinSdkSection;
 import com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter;
@@ -298,7 +299,9 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
   @Override
   public Collection<SectionParser> getSections() {
     return ImmutableList.of(
-        AndroidSdkPlatformSection.PARSER, GeneratedAndroidResourcesSection.PARSER);
+        AndroidMinSdkSection.PARSER,
+        AndroidSdkPlatformSection.PARSER,
+        GeneratedAndroidResourcesSection.PARSER);
   }
 
   @Nullable

@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.projectview.section.GlobSectionParser;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
+import javax.annotation.Nullable;
 
 /** Section for excluding libraries. */
 @Deprecated
@@ -30,6 +31,12 @@ public class ExcludedLibrarySection {
         @Override
         public boolean isDeprecated() {
           return true;
+        }
+
+        @Nullable
+        @Override
+        public String getDeprecationMessage() {
+          return "excluded_libraries has been deprecated. Please use 'exclude_library' instead.";
         }
       };
 }
