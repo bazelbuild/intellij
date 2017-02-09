@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -67,6 +68,7 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
 
   public static final Logger LOG = Logger.getInstance(BlazeResolveConfiguration.class);
 
+  private final ExecutionRootPathResolver executionRootPathResolver;
   private final WorkspacePathResolver workspacePathResolver;
 
   /* project, label are protected instead of private just so v145 can access */
@@ -84,6 +86,7 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
   @Nullable
   public static BlazeResolveConfiguration createConfigurationForTarget(
       Project project,
+      ExecutionRootPathResolver executionRootPathResolver,
       WorkspacePathResolver workspacePathResolver,
       ImmutableMap<File, VirtualFile> headerRoots,
       TargetIdeInfo target,
@@ -119,6 +122,7 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
 
     return new BlazeResolveConfiguration(
         project,
+        executionRootPathResolver,
         workspacePathResolver,
         headerRoots,
         target.key,
@@ -175,6 +179,7 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
 
   public BlazeResolveConfigurationTemporaryBase(
       Project project,
+      ExecutionRootPathResolver executionRootPathResolver,
       WorkspacePathResolver workspacePathResolver,
       ImmutableMap<File, VirtualFile> headerRoots,
       TargetKey targetKey,
@@ -189,6 +194,7 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
       File cppCompilerExecutable,
       ImmutableList<String> cCompilerFlags,
       ImmutableList<String> cppCompilerFlags) {
+    this.executionRootPathResolver = executionRootPathResolver;
     this.workspacePathResolver = workspacePathResolver;
     this.project = project;
     this.targetKey = targetKey;
@@ -320,7 +326,7 @@ abstract class BlazeResolveConfigurationTemporaryBase extends UserDataHolderBase
       boolean isUserHeader) {
     for (ExecutionRootPath executionRootPath : paths) {
       ImmutableList<File> possibleDirectories =
-          workspacePathResolver.resolveToIncludeDirectories(executionRootPath);
+          executionRootPathResolver.resolveToIncludeDirectories(executionRootPath);
       for (File f : possibleDirectories) {
         VirtualFile vf = virtualFileCache.get(f);
         if (vf != null) {

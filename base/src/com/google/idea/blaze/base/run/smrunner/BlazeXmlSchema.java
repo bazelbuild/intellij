@@ -32,7 +32,7 @@ public class BlazeXmlSchema {
 
   static {
     try {
-      CONTEXT = JAXBContext.newInstance(TestSuite.class);
+      CONTEXT = JAXBContext.newInstance(TestSuite.class, TestSuites.class);
     } catch (JAXBException e) {
       throw new RuntimeException(e);
     }
@@ -40,15 +40,33 @@ public class BlazeXmlSchema {
 
   static TestSuite parse(InputStream input) {
     try {
-      return (TestSuite) CONTEXT.createUnmarshaller().unmarshal(input);
+      Object parsed = CONTEXT.createUnmarshaller().unmarshal(input);
+      return parsed instanceof TestSuites
+          ? ((TestSuites) parsed).convertToTestSuite()
+          : (TestSuite) parsed;
+
     } catch (JAXBException e) {
       throw new RuntimeException("Failed to parse test XML", e);
     }
   }
 
+  // optional wrapping XML element. Some test runners don't include it.
   @XmlRootElement(name = "testsuites")
-  static class TestSuite {
-    @XmlAttribute String name;
+  static class TestSuites {
+    @XmlElement(name = "testsuite")
+    List<TestSuite> testSuites = Lists.newArrayList();
+
+    TestSuite convertToTestSuite() {
+      TestSuite suite = new TestSuite();
+      suite.testSuites.addAll(testSuites);
+      return suite;
+    }
+  }
+
+  /** XML output by blaze test runners. */
+  @XmlRootElement(name = "testsuite")
+  public static class TestSuite {
+    public @XmlAttribute String name;
     @XmlAttribute String classname;
     @XmlAttribute int tests;
     @XmlAttribute int failures;
@@ -70,7 +88,7 @@ public class BlazeXmlSchema {
     ErrorOrFailureOrSkipped failure;
 
     @XmlElement(name = "testsuite")
-    List<TestSuite> testSuites = Lists.newArrayList();
+    public List<TestSuite> testSuites = Lists.newArrayList();
 
     @XmlElement(name = "testdecorator")
     List<TestSuite> testDecorators = Lists.newArrayList();

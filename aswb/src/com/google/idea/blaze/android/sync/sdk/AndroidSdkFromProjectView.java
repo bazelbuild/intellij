@@ -17,16 +17,20 @@ package com.google.idea.blaze.android.sync.sdk;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
+import com.google.idea.blaze.android.projectview.AndroidMinSdkSection;
 import com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.ProjectViewSet.ProjectViewFile;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.Navigatable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
@@ -59,52 +63,71 @@ public class AndroidSdkFromProjectView {
           .submit(context);
       return null;
     }
-    String androidSdk = null;
-    if (projectViewSet != null) {
-      androidSdk = projectViewSet.getScalarValue(AndroidSdkPlatformSection.KEY);
+    if (projectViewSet == null) {
+      return null;
     }
 
+    String androidSdk = projectViewSet.getScalarValue(AndroidSdkPlatformSection.KEY);
+    Integer androidMinSdk = projectViewSet.getScalarValue(AndroidMinSdkSection.KEY);
+
     if (androidSdk == null) {
+      ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
       IssueOutput.error(
               ("No android_sdk_platform set. Please set to an android platform. "
                   + "Available android_sdk_platforms are: "
-                  + getAvailableSdkPlatforms(sdks)))
-          .inFile(projectViewSet.getTopLevelProjectViewFile().projectViewFile)
+                  + getAvailableTargetHashesAsList(sdks)))
+          .inFile(projectViewFile != null ? projectViewFile.projectViewFile : null)
           .submit(context);
       return null;
     }
 
     Sdk sdk = AndroidSdkUtils.findSuitableAndroidSdk(androidSdk);
     if (sdk == null) {
+      ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
       IssueOutput.error(
               ("No such android_sdk_platform: '"
                   + androidSdk
                   + "'. "
                   + "Available android_sdk_platforms are: "
-                  + getAvailableSdkPlatforms(sdks)
+                  + getAvailableTargetHashesAsList(sdks)
                   + ". "
                   + "Please change android_sdk_platform or run SDK manager "
                   + "to download missing SDK platforms."))
-          .inFile(projectViewSet.getTopLevelProjectViewFile().projectViewFile)
+          .inFile(projectViewFile != null ? projectViewFile.projectViewFile : null)
           .submit(context);
       return null;
     }
 
-    int androidSdkApiLevel = getAndroidSdkApiLevel(sdk);
-    return new AndroidSdkPlatform(androidSdk, androidSdkApiLevel);
+    if (androidMinSdk == null) {
+      androidMinSdk = getAndroidSdkApiLevel(sdk);
+    }
+    return new AndroidSdkPlatform(androidSdk, androidMinSdk);
   }
 
-  public static String getAvailableSdkPlatforms(Collection<Sdk> sdks) {
-    List<String> names = Lists.newArrayList();
-    for (Sdk sdk : sdks) {
-      AndroidSdkAdditionalData additionalData = AndroidSdkUtils.getAndroidSdkAdditionalData(sdk);
-      if (additionalData == null) {
-        continue;
-      }
-      String targetHash = additionalData.getBuildTargetHashString();
-      names.add(targetHash);
+  @Nullable
+  public static String getSdkTargetHash(Sdk sdk) {
+    AndroidSdkAdditionalData additionalData = AndroidSdkUtils.getAndroidSdkAdditionalData(sdk);
+    if (additionalData == null) {
+      return null;
     }
-    return "{" + Joiner.on(", ").join(names) + "}";
+    return additionalData.getBuildTargetHashString();
+  }
+
+  public static List<String> getAvailableSdkTargetHashes(Collection<Sdk> sdks) {
+    Set<String> names = Sets.newHashSet();
+    for (Sdk sdk : sdks) {
+      String targetHash = getSdkTargetHash(sdk);
+      if (targetHash != null) {
+        names.add(targetHash);
+      }
+    }
+    List<String> result = Lists.newArrayList(names);
+    result.sort(String::compareTo);
+    return result;
+  }
+
+  private static String getAvailableTargetHashesAsList(Collection<Sdk> sdks) {
+    return Joiner.on(", ").join(getAvailableSdkTargetHashes(sdks));
   }
 
   private static int getAndroidSdkApiLevel(Sdk sdk) {

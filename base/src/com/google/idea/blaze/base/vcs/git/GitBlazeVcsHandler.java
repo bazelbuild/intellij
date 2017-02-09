@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
@@ -34,7 +35,7 @@ import javax.annotation.Nullable;
 /** Vcs diff provider for git */
 public class GitBlazeVcsHandler implements BlazeVcsHandler {
 
-  private static final Logger LOG = Logger.getInstance(GitBlazeVcsHandler.class);
+  private static final Logger logger = Logger.getInstance(GitBlazeVcsHandler.class);
 
   @Override
   public String getVcsName() {
@@ -70,6 +71,36 @@ public class GitBlazeVcsHandler implements BlazeVcsHandler {
     return null;
   }
 
+  @Override
+  public ListenableFuture<String> getUpstreamContent(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      WorkspacePath path,
+      ListeningExecutorService executor) {
+    return executor.submit(() -> getGitUpstreamContent(workspaceRoot, path));
+  }
+
+  private static String getGitUpstreamContent(WorkspaceRoot workspaceRoot, WorkspacePath path) {
+    String upstreamSha = getUpstreamSha(workspaceRoot, false);
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    ExternalTask.builder(workspaceRoot)
+        .args(
+            "git",
+            "show",
+            // Normally "For plain blobs, it shows the plain contents.", but let's add some
+            // options to be a bit more paranoid.
+            "--no-color",
+            "--no-expand-tabs",
+            "--no-notes",
+            "--no-textconv",
+            String.format("%s:./%s", upstreamSha, path.relativePath()))
+        .stdout(outputStream)
+        .build()
+        .run();
+    return outputStream.toString();
+  }
+
   private static boolean isGitRepository(WorkspaceRoot workspaceRoot) {
     // TODO: What if the git repo root is a parent directory of the workspace root?
     // Just call 'git rev-parse --is-inside-work-tree' or similar instead?
@@ -102,7 +133,7 @@ public class GitBlazeVcsHandler implements BlazeVcsHandler {
             .run();
     if (retVal != 0) {
       if (!suppressErrors) {
-        LOG.error(stderr);
+        logger.error(stderr);
       }
       return null;
     }

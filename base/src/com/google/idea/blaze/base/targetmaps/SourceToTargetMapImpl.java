@@ -23,14 +23,9 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
-import com.google.idea.blaze.base.sync.SyncListener;
+import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Objects;
@@ -40,11 +35,6 @@ import javax.annotation.Nullable;
 /** Maps source files to their respective targets */
 public class SourceToTargetMapImpl implements SourceToTargetMap {
   private final Project project;
-  private ImmutableMultimap<File, TargetKey> sourceToTargetMap;
-
-  public static SourceToTargetMapImpl getImpl(Project project) {
-    return (SourceToTargetMapImpl) ServiceManager.getService(project, SourceToTargetMap.class);
-  }
 
   public SourceToTargetMapImpl(Project project) {
     this.project = project;
@@ -80,23 +70,13 @@ public class SourceToTargetMapImpl implements SourceToTargetMap {
 
   @Nullable
   private synchronized ImmutableMultimap<File, TargetKey> getSourceToTargetMap() {
-    if (this.sourceToTargetMap == null) {
-      this.sourceToTargetMap = initSourceToTargetMap();
-    }
-    return this.sourceToTargetMap;
-  }
-
-  private synchronized void clearSourceToTargetMap() {
-    this.sourceToTargetMap = null;
+    return SyncCache.getInstance(project)
+        .get(SourceToTargetMapImpl.class, SourceToTargetMapImpl::computeSourceToTargetMap);
   }
 
   @Nullable
-  private ImmutableMultimap<File, TargetKey> initSourceToTargetMap() {
-    BlazeProjectData blazeProjectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (blazeProjectData == null) {
-      return null;
-    }
+  private static ImmutableMultimap<File, TargetKey> computeSourceToTargetMap(
+      Project project, BlazeProjectData blazeProjectData) {
     ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.artifactLocationDecoder;
     ImmutableMultimap.Builder<File, TargetKey> sourceToTargetMap = ImmutableMultimap.builder();
     for (TargetIdeInfo target : blazeProjectData.targetMap.targets()) {
@@ -106,19 +86,5 @@ public class SourceToTargetMapImpl implements SourceToTargetMap {
       }
     }
     return sourceToTargetMap.build();
-  }
-
-  static class ClearSourceToTargetMap extends SyncListener.Adapter {
-    @Override
-    public void onSyncComplete(
-        Project project,
-        BlazeContext context,
-        BlazeImportSettings importSettings,
-        ProjectViewSet projectViewSet,
-        BlazeProjectData blazeProjectData,
-        SyncMode syncMode,
-        SyncResult syncResult) {
-      getImpl(project).clearSourceToTargetMap();
-    }
   }
 }

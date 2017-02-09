@@ -19,10 +19,12 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiDirectory;
@@ -32,6 +34,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 /** Creates temp files for integration tests. */
 public class TestFileSystem {
@@ -165,8 +168,32 @@ public class TestFileSystem {
       return vf != null && vf.exists() && !vf.isDirectory();
     }
 
+    @Override
+    public File[] listFiles(File file) {
+      VirtualFile vf = getVirtualFile(file);
+      if (vf == null) {
+        return null;
+      }
+      VirtualFile[] children = vf.getChildren();
+      if (children == null) {
+        return null;
+      }
+      return Arrays.stream(vf.getChildren()).map((f) -> new File(f.getPath())).toArray(File[]::new);
+    }
+
     private VirtualFile getVirtualFile(File file) {
       return fileSystem.findFileByPath(file.getPath());
+    }
+  }
+
+  /** Redirects VirtualFileSystem operations to the TempFileSystem used for these tests. */
+  public static class TempVirtualFileSystemProvider implements VirtualFileSystemProvider {
+
+    final TempFileSystem fileSystem = TempFileSystem.getInstance();
+
+    @Override
+    public LocalFileSystem getSystem() {
+      return fileSystem;
     }
   }
 }

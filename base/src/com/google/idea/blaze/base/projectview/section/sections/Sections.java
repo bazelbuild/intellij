@@ -36,7 +36,6 @@ public class Sections {
           ImportTargetOutputSection.PARSER,
           ExcludeTargetSection.PARSER,
           ExcludedSourceSection.PARSER,
-          MetricsProjectSection.PARSER,
           RunConfigurationsSection.PARSER);
 
   public static List<SectionParser> getParsers() {

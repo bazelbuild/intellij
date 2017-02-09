@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
+import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,6 +30,7 @@ final class BlazeResolveConfiguration extends BlazeResolveConfigurationTemporary
 
   public BlazeResolveConfiguration(
       Project project,
+      ExecutionRootPathResolver executionRootPathResolver,
       WorkspacePathResolver workspacePathResolver,
       ImmutableMap<File, VirtualFile> headerRoots,
       TargetKey targetKey,
@@ -45,6 +47,7 @@ final class BlazeResolveConfiguration extends BlazeResolveConfigurationTemporary
       ImmutableList<String> cppCompilerFlags) {
     super(
         project,
+        executionRootPathResolver,
         workspacePathResolver,
         headerRoots,
         targetKey,

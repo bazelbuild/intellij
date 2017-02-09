@@ -21,8 +21,6 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
-import com.google.idea.blaze.base.metrics.Action;
-import com.google.idea.blaze.base.metrics.LoggingService;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -33,7 +31,6 @@ import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
-import com.google.idea.blaze.base.scope.scopes.LoggedTimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -111,8 +108,6 @@ public final class BlazeCidrLauncher extends CidrLauncher {
           @Override
           public void onBlazeContextStart(BlazeContext context) {
             context
-                .push(new LoggedTimingScope(project, Action.BLAZE_COMMAND_USAGE))
-                .push(new LoggedTimingScope(project, Action.BLAZE_CLION_TEST_RUN))
                 .push(new IssuesScope(project));
           }
 
@@ -153,7 +148,6 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     CidrDebugProcess result =
         new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder());
 
-    LoggingService.reportEvent(project, Action.BLAZE_CLION_TEST_DEBUG);
     return result;
   }
 

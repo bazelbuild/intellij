@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.java.run.producers;
 
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -24,6 +23,7 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
+import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.java.run.RunUtil;
 import com.intellij.execution.JavaExecutionUtil;
@@ -35,6 +35,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,6 +61,10 @@ public class BlazeJavaTestClassConfigurationProducer
       return false;
     }
 
+    if (!SmRunnerUtils.getSelectedSmRunnerTreeElements(context).isEmpty()) {
+      // handled by a different producer
+      return false;
+    }
     if (JUnitConfigurationUtil.isMultipleElementsSelected(context)) {
       return false;
     }
@@ -84,23 +90,22 @@ public class BlazeJavaTestClassConfigurationProducer
     if (handlerState == null) {
       return false;
     }
+    String testFilter = BlazeJUnitTestFilterFlags.testFilterForClass(testClass);
+    if (testFilter == null) {
+      return false;
+    }
     handlerState.setCommand(BlazeCommandName.TEST);
 
-    ImmutableList.Builder<String> flags = ImmutableList.builder();
-
-    String testFilter = BlazeJUnitTestFilterFlags.testFilterForClass(testClass);
-    if (testFilter != null) {
-      flags.add(BlazeFlags.TEST_FILTER + "=" + testFilter);
-    }
-    flags.add(BlazeFlags.TEST_OUTPUT_STREAMED);
-    flags.addAll(handlerState.getBlazeFlags());
-
-    handlerState.setBlazeFlags(flags.build());
+    // remove old test filter flag if present
+    List<String> flags = new ArrayList<>(handlerState.getBlazeFlags());
+    flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
+    flags.add(BlazeFlags.TEST_FILTER + "=" + testFilter);
+    handlerState.setBlazeFlags(flags);
 
     BlazeConfigurationNameBuilder nameBuilder = new BlazeConfigurationNameBuilder(configuration);
     nameBuilder.setTargetString(testClass.getName());
     configuration.setName(nameBuilder.build());
-
+    configuration.setNameChangedByUser(true); // don't revert to generated name
     return true;
   }
 
@@ -115,6 +120,10 @@ public class BlazeJavaTestClassConfigurationProducer
       return false;
     }
 
+    if (!SmRunnerUtils.getSelectedSmRunnerTreeElements(context).isEmpty()) {
+      // handled by a different producer
+      return false;
+    }
     if (JUnitConfigurationUtil.isMultipleElementsSelected(context)) {
       return false;
     }
@@ -143,6 +152,9 @@ public class BlazeJavaTestClassConfigurationProducer
       return false;
     }
     String filter = BlazeJUnitTestFilterFlags.testFilterForClass(testClass);
-    return Objects.equals(filter, handlerState.getTestFilterFlag());
+    if (filter == null) {
+      return false;
+    }
+    return Objects.equals(BlazeFlags.TEST_FILTER + "=" + filter, handlerState.getTestFilterFlag());
   }
 }

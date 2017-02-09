@@ -19,21 +19,14 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
+import com.google.idea.blaze.base.util.UrlUtil;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.util.io.URLUtil;
 import java.io.File;
 import javax.annotation.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -43,7 +36,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 
 /** Edits source folders in IntelliJ content entries */
 public class JavaSourceFolderProvider implements SourceFolderProvider {
-  private static final Logger logger = Logger.getInstance(JavaSourceFolderProvider.class);
 
   private final ImmutableMap<File, BlazeContentEntry> blazeContentEntries;
 
@@ -64,20 +56,14 @@ public class JavaSourceFolderProvider implements SourceFolderProvider {
   }
 
   @Override
-  public ImmutableMap<VirtualFile, SourceFolder> initializeSourceFolders(
-      ContentEntry contentEntry) {
-    ImmutableMap.Builder<VirtualFile, SourceFolder> output = ImmutableMap.builder();
-    VirtualFile virtualFile = contentEntry.getFile();
-    if (virtualFile == null) {
-      return output.build();
-    }
-
-    File contentRoot = new File(virtualFile.getPath());
-    BlazeContentEntry javaContentEntry = blazeContentEntries.get(contentRoot);
+  public ImmutableMap<File, SourceFolder> initializeSourceFolders(ContentEntry contentEntry) {
+    ImmutableMap.Builder<File, SourceFolder> output = ImmutableMap.builder();
+    BlazeContentEntry javaContentEntry =
+        blazeContentEntries.get(UrlUtil.urlToFile(contentEntry.getUrl()));
     if (javaContentEntry != null) {
       for (BlazeSourceDirectory sourceDirectory : javaContentEntry.sources) {
         SourceFolder sourceFolder = addSourceFolderToContentEntry(contentEntry, sourceDirectory);
-        output.put(sourceFolder.getFile(), sourceFolder);
+        output.put(UrlUtil.urlToFile(sourceFolder.getUrl()), sourceFolder);
       }
     }
     return output.build();
@@ -85,17 +71,15 @@ public class JavaSourceFolderProvider implements SourceFolderProvider {
 
   @Override
   public SourceFolder setSourceFolderForLocation(
-      ContentEntry contentEntry,
-      SourceFolder parentFolder,
-      VirtualFile file,
-      boolean isTestSource) {
+      ContentEntry contentEntry, SourceFolder parentFolder, File file, boolean isTestSource) {
     SourceFolder sourceFolder;
     if (isResource(parentFolder)) {
       JavaResourceRootType resourceRootType =
           isTestSource ? JavaResourceRootType.TEST_RESOURCE : JavaResourceRootType.RESOURCE;
-      sourceFolder = contentEntry.addSourceFolder(pathToUrl(file.getPath()), resourceRootType);
+      sourceFolder =
+          contentEntry.addSourceFolder(UrlUtil.pathToUrl(file.getPath()), resourceRootType);
     } else {
-      sourceFolder = contentEntry.addSourceFolder(pathToUrl(file.getPath()), isTestSource);
+      sourceFolder = contentEntry.addSourceFolder(UrlUtil.pathToUrl(file.getPath()), isTestSource);
     }
     sourceFolder.setPackagePrefix(derivePackagePrefix(file, parentFolder));
     JpsModuleSourceRoot sourceRoot = sourceFolder.getJpsElement();
@@ -106,14 +90,17 @@ public class JavaSourceFolderProvider implements SourceFolderProvider {
     return sourceFolder;
   }
 
-  private static String derivePackagePrefix(VirtualFile file, SourceFolder parentFolder) {
+  private static String derivePackagePrefix(File file, SourceFolder parentFolder) {
     String parentPackagePrefix = parentFolder.getPackagePrefix();
-    logger.assertTrue(parentFolder.getFile() != null);
-    String relativePath = VfsUtilCore.getRelativePath(file, parentFolder.getFile(), '.');
+    String parentPath = VirtualFileManager.extractPath(parentFolder.getUrl());
+    String relativePath =
+        FileUtil.toCanonicalPath(
+            FileUtil.getRelativePath(parentPath, file.getPath(), File.separatorChar));
     if (Strings.isNullOrEmpty(relativePath)) {
       return parentPackagePrefix;
     }
-    return parentPackagePrefix + "." + relativePath;
+
+    return parentPackagePrefix + "." + relativePath.replaceAll(File.separator, ".");
   }
 
   @VisibleForTesting
@@ -137,9 +124,9 @@ public class JavaSourceFolderProvider implements SourceFolderProvider {
     if (sourceDirectory.getIsResource()) {
       sourceFolder =
           contentEntry.addSourceFolder(
-              pathToUrl(sourceDir.getPath()), JavaResourceRootType.RESOURCE);
+              UrlUtil.pathToUrl(sourceDir.getPath()), JavaResourceRootType.RESOURCE);
     } else {
-      sourceFolder = contentEntry.addSourceFolder(pathToUrl(sourceDir.getPath()), false);
+      sourceFolder = contentEntry.addSourceFolder(UrlUtil.pathToUrl(sourceDir.getPath()), false);
     }
     JpsModuleSourceRoot sourceRoot = sourceFolder.getJpsElement();
     JpsElement properties = sourceRoot.getProperties();
@@ -154,23 +141,5 @@ public class JavaSourceFolderProvider implements SourceFolderProvider {
       sourceFolder.setPackagePrefix(packagePrefix);
     }
     return sourceFolder;
-  }
-
-  private static String pathToUrl(String filePath) {
-    filePath = FileUtil.toSystemIndependentName(filePath);
-    if (filePath.endsWith(".srcjar") || filePath.endsWith(".jar")) {
-      return URLUtil.JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR + filePath + URLUtil.JAR_SEPARATOR;
-    } else if (filePath.contains("src.jar!")) {
-      return URLUtil.JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR + filePath;
-    } else {
-      return VirtualFileManager.constructUrl(defaultFileSystem().getProtocol(), filePath);
-    }
-  }
-
-  private static VirtualFileSystem defaultFileSystem() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return TempFileSystem.getInstance();
-    }
-    return LocalFileSystem.getInstance();
   }
 }

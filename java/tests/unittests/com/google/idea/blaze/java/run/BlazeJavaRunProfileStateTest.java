@@ -102,6 +102,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                 BlazeFlags.getToolTagFlag(),
                 "--flag1",
                 "--flag2",
+                "--test_output=streamed",
                 "--",
                 "//label:rule"));
   }

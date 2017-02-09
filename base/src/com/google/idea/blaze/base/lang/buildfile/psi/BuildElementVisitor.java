@@ -143,4 +143,12 @@ public class BuildElementVisitor extends PsiElementVisitor {
   public void visitLoadedSymbol(LoadedSymbol node) {
     visitElement(node);
   }
+
+  public void visitParenthesizedExpression(ParenthesizedExpression node) {
+    visitElement(node);
+  }
+
+  public void visitTupleExpression(TupleExpression node) {
+    visitElement(node);
+  }
 }

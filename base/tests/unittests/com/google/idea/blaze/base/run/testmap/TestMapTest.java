@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.run.testmap.TestTargetFilterImpl.TestMap;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.common.experiments.ExperimentService;
@@ -65,10 +64,11 @@ public class TestMapTest extends BlazeTestCase {
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
-    TestMap testMap = new TestMap(project, artifactLocationDecoder, targetMap);
+    FilteredTargetMap testMap =
+        TestTargetFilterImpl.computeTestMap(project, artifactLocationDecoder, targetMap);
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(targetMap);
-    assertThat(testMap.testTargetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
+    assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
         .containsExactly(new Label("//test:test"));
   }
 
@@ -90,10 +90,11 @@ public class TestMapTest extends BlazeTestCase {
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
-    TestMap testMap = new TestMap(project, artifactLocationDecoder, targetMap);
+    FilteredTargetMap testMap =
+        TestTargetFilterImpl.computeTestMap(project, artifactLocationDecoder, targetMap);
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(targetMap);
-    assertThat(testMap.testTargetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
+    assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
         .containsExactly(new Label("//test:test"));
   }
 
@@ -121,10 +122,11 @@ public class TestMapTest extends BlazeTestCase {
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
-    TestMap testMap = new TestMap(project, artifactLocationDecoder, targetMap);
+    FilteredTargetMap testMap =
+        TestTargetFilterImpl.computeTestMap(project, artifactLocationDecoder, targetMap);
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(targetMap);
-    assertThat(testMap.testTargetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
+    assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
         .containsExactly(new Label("//test:test"), new Label("//test:test2"));
   }
 
@@ -158,10 +160,11 @@ public class TestMapTest extends BlazeTestCase {
                     .addDependency("//test:lib"))
             .build();
 
-    TestMap testMap = new TestMap(project, artifactLocationDecoder, targetMap);
+    FilteredTargetMap testMap =
+        TestTargetFilterImpl.computeTestMap(project, artifactLocationDecoder, targetMap);
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(targetMap);
-    assertThat(testMap.testTargetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
+    assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
         .containsExactly(new Label("//test:test"), new Label("//test:test2"))
         .inOrder();
   }
@@ -196,10 +199,11 @@ public class TestMapTest extends BlazeTestCase {
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
-    TestMap testMap = new TestMap(project, artifactLocationDecoder, targetMap);
+    FilteredTargetMap testMap =
+        TestTargetFilterImpl.computeTestMap(project, artifactLocationDecoder, targetMap);
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(targetMap);
-    assertThat(testMap.testTargetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
+    assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
         .containsExactly(new Label("//test:test"), new Label("//test:test2"));
   }
 
@@ -228,17 +232,15 @@ public class TestMapTest extends BlazeTestCase {
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
-    TestMap testMap = new TestMap(project, artifactLocationDecoder, targetMap);
+    FilteredTargetMap testMap =
+        TestTargetFilterImpl.computeTestMap(project, artifactLocationDecoder, targetMap);
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(targetMap);
-    assertThat(testMap.testTargetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
+    assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
         .containsExactly(new Label("//test:test"));
   }
 
   private ArtifactLocation sourceRoot(String relativePath) {
-    return ArtifactLocation.builder()
-        .setRelativePath(relativePath)
-        .setIsSource(true)
-        .build();
+    return ArtifactLocation.builder().setRelativePath(relativePath).setIsSource(true).build();
   }
 }

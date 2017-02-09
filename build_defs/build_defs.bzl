@@ -1,6 +1,8 @@
 """Custom build macros for IntelliJ plugin handling.
 """
 
+load(":intellij_plugin_debug_target.bzl", "intellij_plugin_debug_target")
+
 def merged_plugin_xml(name, srcs, **kwargs):
   """Merges N plugin.xml files together."""
   merge_tool = "//build_defs:merge_xml"
@@ -176,8 +178,17 @@ def api_version_txt(name, **kwargs):
       tools = [api_version_txt_tool],
       **kwargs)
 
-def intellij_plugin(name, deps, plugin_xml, meta_inf_files=[], **kwargs):
-  """Creates an intellij plugin from the given deps and plugin.xml."""
+def intellij_plugin(name, deps, plugin_xml, meta_inf_files=[], jar_name=None, **kwargs):
+  """Creates an intellij plugin from the given deps and plugin.xml.
+
+  Args:
+    name: The name of the target
+    deps: Any java dependencies rolled up into the plugin jar.
+    plugin_xml: An xml file to be placed in META-INF/plugin.jar
+    meta_inf_files: Any further files to be placed in META-INF/plugin.jar
+    jar_name: The name of the final plugin jar, or <name>.jar if None
+    **kwargs: Any further arguments to be passed to the final target
+  """
   zip_tool = "//third_party:zip"
   binary_name = name + "_binary"
   deploy_jar = binary_name + "_deploy.jar"
@@ -201,12 +212,14 @@ def intellij_plugin(name, deps, plugin_xml, meta_inf_files=[], **kwargs):
     cmd.append("meta_inf_files='$(locations {meta_inf_file})'".format(meta_inf_file=meta_inf_file))
     cmd.append("for f in $$meta_inf_files; do cp $$f META-INF/; done")
   cmd.append("$(location {zip_tool}) -u $@ META-INF/* >/dev/null".format(zip_tool=zip_tool))
+  cmd.append("rm -rf META-INF")
 
+  jar_name = jar_name or (name + ".jar")
   native.genrule(
       name = name + "_genrule",
       srcs = srcs,
       tools = [zip_tool],
-      outs = [name + ".jar"],
+      outs = [jar_name],
       cmd = " ; ".join(cmd),
   )
 

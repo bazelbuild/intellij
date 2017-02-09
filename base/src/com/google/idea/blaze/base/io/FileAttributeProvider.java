@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.io;
 
 import com.intellij.openapi.components.ServiceManager;
 import java.io.File;
+import javax.annotation.Nullable;
 
 /** Simple file system checks (existence, isDirectory) */
 public class FileAttributeProvider {
@@ -45,6 +46,7 @@ public class FileAttributeProvider {
     return file.length();
   }
 
+  @Nullable
   public File[] listFiles(File file) {
     return file.listFiles();
   }

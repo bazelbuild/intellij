@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.android.projectview;
 
+import static java.util.stream.Collectors.toList;
+
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
 import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
 import com.google.idea.blaze.base.projectview.ProjectView;
@@ -28,7 +31,7 @@ import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.Collection;
+import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
 /** Allows manual override of the android sdk. */
@@ -63,19 +66,34 @@ public class AndroidSdkPlatformSection {
       if (!projectView.getSectionsOfType(KEY).isEmpty()) {
         return projectView;
       }
-      Collection<Sdk> sdks = AndroidSdkUtils.getAllAndroidSdks();
-      return ProjectView.builder(projectView)
-          .add(TextBlockSection.of(TextBlock.newLine()))
-          .add(TextBlockSection.of(TextBlock.of("# Please set to an android SDK platform")))
-          .add(
-              TextBlockSection.of(
-                  TextBlock.of(
-                      sdks.isEmpty()
-                          ? "# You currently have no SDKs. Please use the SDK manager first."
-                          : "# Available SDKs are: "
-                              + AndroidSdkFromProjectView.getAvailableSdkPlatforms(sdks))))
-          .add(ScalarSection.builder(KEY).set("<android sdk platform>"))
-          .build();
+      List<Sdk> sdks = AndroidSdkUtils.getAllAndroidSdks();
+      ProjectView.Builder builder =
+          ProjectView.builder(projectView).add(TextBlockSection.of(TextBlock.newLine()));
+
+      if (sdks.isEmpty()) {
+        builder
+            .add(TextBlockSection.of(TextBlock.of("# Please set to an android SDK platform")))
+            .add(
+                TextBlockSection.of(
+                    TextBlock.of(
+                        "# You currently have no SDKs. Please use the SDK manager first.")))
+            .add(ScalarSection.builder(KEY).set("(android sdk goes here)"));
+      } else if (sdks.size() == 1) {
+        builder.add(
+            ScalarSection.builder(KEY)
+                .set(AndroidSdkFromProjectView.getSdkTargetHash(sdks.get(0))));
+      } else {
+        builder.add(
+            TextBlockSection.of(
+                TextBlock.of("# Please uncomment an android-SDK platform. Available SDKs are:")));
+        List<String> sdkOptions =
+            AndroidSdkFromProjectView.getAvailableSdkTargetHashes(sdks)
+                .stream()
+                .map(androidSdk -> "# android_sdk_platform: " + androidSdk)
+                .collect(toList());
+        builder.add(TextBlockSection.of(new TextBlock(ImmutableList.copyOf(sdkOptions))));
+      }
+      return builder.build();
     }
   }
 }

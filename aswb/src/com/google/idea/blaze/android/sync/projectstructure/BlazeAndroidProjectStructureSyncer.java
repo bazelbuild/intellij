@@ -415,7 +415,7 @@ public class BlazeAndroidProjectStructureSyncer {
             sourceProvider,
             manifest,
             resourceJavaPackage,
-            androidSdkPlatform.androidSdkLevel);
+            androidSdkPlatform.androidMinSdkLevel);
     AndroidFacet facet = AndroidFacet.getInstance(module);
     if (facet != null) {
       facet.setAndroidModel(androidModel);

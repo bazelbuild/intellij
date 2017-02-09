@@ -39,6 +39,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedFunction;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.openapi.diagnostic.Logger;
@@ -108,6 +109,8 @@ final class BlazeConfigurationResolver {
 
   private static ImmutableMap<File, VirtualFile> doCollectHeaderRoots(
       BlazeContext context, BlazeProjectData projectData, Set<ExecutionRootPath> rootPaths) {
+    ExecutionRootPathResolver pathResolver =
+        new ExecutionRootPathResolver(projectData.blazeRoots, projectData.workspacePathResolver);
     ConcurrentMap<File, VirtualFile> rootsMap = Maps.newConcurrentMap();
     List<ListenableFuture<Void>> futures = Lists.newArrayListWithCapacity(rootPaths.size());
     for (ExecutionRootPath path : rootPaths) {
@@ -115,7 +118,7 @@ final class BlazeConfigurationResolver {
           submit(
               () -> {
                 ImmutableList<File> possibleDirectories =
-                    projectData.workspacePathResolver.resolveToIncludeDirectories(path);
+                    pathResolver.resolveToIncludeDirectories(path);
                 for (File file : possibleDirectories) {
                   VirtualFile vf = getVirtualFile(file);
                   if (vf != null) {
@@ -249,6 +252,8 @@ final class BlazeConfigurationResolver {
         BlazeResolveConfiguration config =
             BlazeResolveConfiguration.createConfigurationForTarget(
                 project,
+                new ExecutionRootPathResolver(
+                    blazeProjectData.blazeRoots, blazeProjectData.workspacePathResolver),
                 blazeProjectData.workspacePathResolver,
                 headerRoots,
                 blazeProjectData.targetMap.get(targetKey),

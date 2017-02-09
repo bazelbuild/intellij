@@ -45,7 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class NewBlazePackageDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance(NewBlazePackageDialog.class);
+  private static final Logger logger = Logger.getInstance(NewBlazePackageDialog.class);
 
   @NotNull private final Project project;
   @NotNull private final PsiDirectory parentDirectory;
@@ -105,7 +105,7 @@ class NewBlazePackageDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    LOG.assertTrue(parentDirectory.getVirtualFile().isInLocalFileSystem());
+    logger.assertTrue(parentDirectory.getVirtualFile().isInLocalFileSystem());
     File parentDirectoryFile = new File(parentDirectory.getVirtualFile().getPath());
     String newPackageName = packageNameField.getText();
     File newPackageDirectory = new File(parentDirectoryFile, newPackageName);

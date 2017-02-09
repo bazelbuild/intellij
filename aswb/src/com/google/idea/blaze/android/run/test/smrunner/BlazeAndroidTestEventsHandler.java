@@ -16,29 +16,33 @@
 package com.google.idea.blaze.android.run.test.smrunner;
 
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags;
 import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags.JUnitVersion;
 import com.intellij.execution.Location;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /** Provides java-specific methods needed by the SM-runner test UI. */
 public class BlazeAndroidTestEventsHandler extends BlazeTestEventsHandler {
 
-  public BlazeAndroidTestEventsHandler() {
-    super("Blaze Android Test");
+  @Override
+  protected EnumSet<Kind> handledKinds() {
+    return EnumSet.of(Kind.ANDROID_TEST);
   }
 
   @Override
@@ -47,12 +51,13 @@ public class BlazeAndroidTestEventsHandler extends BlazeTestEventsHandler {
   }
 
   @Override
-  public String suiteLocationUrl(String name) {
+  public String suiteLocationUrl(@Nullable Kind kind, String name) {
     return SmRunnerUtils.GENERIC_SUITE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + name;
   }
 
   @Override
-  public String testLocationUrl(String name, @Nullable String className) {
+  public String testLocationUrl(
+      @Nullable Kind kind, String parentSuite, String name, @Nullable String className) {
     // ignore initial value of className -- it's the test runner class.
     name = StringUtil.trimTrailing(name, '-');
     if (!name.contains("-")) {
@@ -69,7 +74,7 @@ public class BlazeAndroidTestEventsHandler extends BlazeTestEventsHandler {
   }
 
   @Override
-  public String testDisplayName(String rawName) {
+  public String testDisplayName(@Nullable Kind kind, String rawName) {
     String name = StringUtil.trimTrailing(rawName, '-');
     if (name.contains("-")) {
       int ix = name.lastIndexOf('-');
@@ -80,31 +85,31 @@ public class BlazeAndroidTestEventsHandler extends BlazeTestEventsHandler {
 
   @Nullable
   @Override
-  public String getTestFilter(Project project, List<AbstractTestProxy> failedTests) {
-    GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
-    MultiMap<PsiClass, PsiMethod> failedMethodsPerClass = new MultiMap<>();
-    for (AbstractTestProxy test : failedTests) {
-      appendTest(failedMethodsPerClass, test.getLocation(project, projectScope));
+  public String getTestFilter(Project project, List<Location<?>> testLocations) {
+    Map<PsiClass, Collection<Location<?>>> failedClassesAndMethods = new HashMap<>();
+    for (Location<?> location : testLocations) {
+      appendTest(failedClassesAndMethods, location);
     }
     // the android test runner always runs with JUnit4
     String filter =
         BlazeJUnitTestFilterFlags.testFilterForClassesAndMethods(
-            failedMethodsPerClass, JUnitVersion.JUNIT_4);
+            failedClassesAndMethods, JUnitVersion.JUNIT_4);
     return filter != null ? BlazeFlags.TEST_FILTER + "=" + filter : null;
   }
 
-  private void appendTest(
-      MultiMap<PsiClass, PsiMethod> testMap, @Nullable Location<?> testLocation) {
-    if (testLocation == null) {
+  private static void appendTest(Map<PsiClass, Collection<Location<?>>> map, Location<?> location) {
+    PsiElement psi = location.getPsiElement();
+    if (psi instanceof PsiClass) {
+      map.computeIfAbsent((PsiClass) psi, k -> new HashSet<>());
       return;
     }
-    PsiElement method = testLocation.getPsiElement();
-    if (!(method instanceof PsiMethod)) {
+    if (!(psi instanceof PsiMethod)) {
       return;
     }
-    PsiClass psiClass = ((PsiMethod) method).getContainingClass();
-    if (psiClass != null) {
-      testMap.putValue(psiClass, (PsiMethod) method);
+    PsiClass psiClass = ((PsiMethod) psi).getContainingClass();
+    if (psiClass == null) {
+      return;
     }
+    map.computeIfAbsent(psiClass, k -> new HashSet<>()).add(location);
   }
 }

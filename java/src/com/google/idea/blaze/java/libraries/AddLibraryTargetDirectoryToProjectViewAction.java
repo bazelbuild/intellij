@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.java.libraries;
 
+import static java.util.stream.Collectors.toList;
+
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
@@ -34,13 +36,13 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.util.WorkspacePathUtil;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.util.List;
 import java.util.Set;
@@ -107,13 +109,14 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
       return null;
     }
     boolean exists =
-        projectViewSet
-            .listItems(DirectorySection.KEY)
-            .stream()
-            .anyMatch(
-                entry ->
-                    FileUtil.isAncestor(
-                        entry.directory.relativePath(), workspacePath.relativePath(), false));
+        WorkspacePathUtil.isUnderAnyWorkspacePath(
+            projectViewSet
+                .listItems(DirectorySection.KEY)
+                .stream()
+                .filter(entry -> entry.included)
+                .map(entry -> entry.directory)
+                .collect(toList()),
+            workspacePath);
     if (exists) {
       return null;
     }

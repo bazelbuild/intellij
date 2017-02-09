@@ -37,7 +37,7 @@ import java.io.File;
 /** Implementation of BuildFileModifier. Modifies the PSI tree directly. */
 public class BuildFileModifierImpl implements BuildFileModifier {
 
-  private static final Logger LOG = Logger.getInstance(BuildFileModifierImpl.class);
+  private static final Logger logger = Logger.getInstance(BuildFileModifierImpl.class);
 
   @Override
   public boolean addRule(Project project, BlazeContext context, Label newRule, Kind ruleKind) {
@@ -53,7 +53,7 @@ public class BuildFileModifierImpl implements BuildFileModifier {
               LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
               BuildFile buildFile = manager.resolveBlazePackage(newRule.blazePackage());
               if (buildFile == null) {
-                LOG.error("No BUILD file found at location: " + newRule.blazePackage());
+                logger.error("No BUILD file found at location: " + newRule.blazePackage());
                 return false;
               }
               buildFile.add(createRule(project, ruleKind, newRule.targetName().toString()));

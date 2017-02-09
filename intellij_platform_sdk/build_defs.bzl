@@ -4,7 +4,7 @@
 INDIRECT_IJ_PRODUCTS = {
     "intellij-latest": "intellij-2016.3.1",
     "android-studio-latest": "android-studio-145.1617.8",
-    "android-studio-beta": "android-studio-2.3.0.3",
+    "android-studio-beta": "android-studio-2.3.0.4",
     "clion-latest": "clion-162.1967.7",
 }
 

@@ -20,6 +20,7 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.cpp.BlazeCSyncPlugin"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.cpp.CPrefetchFileSource"/>
+    <SyncListener implementation="com.google.idea.blaze.cpp.BlazeCppSymbolRebuildSyncListener"/>
   </extensions>
 
   <extensions defaultExtensionNs="cidr.lang">

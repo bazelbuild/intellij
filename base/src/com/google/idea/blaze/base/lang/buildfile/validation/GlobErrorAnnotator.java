@@ -17,11 +17,8 @@ package com.google.idea.blaze.base.lang.buildfile.validation;
 
 import com.google.idea.blaze.base.lang.buildfile.psi.Argument;
 import com.google.idea.blaze.base.lang.buildfile.psi.Expression;
-import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.GlobExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.ListLiteral;
-import com.google.idea.blaze.base.lang.buildfile.psi.LiteralExpression;
-import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
@@ -76,7 +73,8 @@ public class GlobErrorAnnotator extends BuildAnnotator {
     if (rootElement instanceof ListLiteral) {
       return validatePatternList(keyword, ((ListLiteral) rootElement).getChildExpressions());
     }
-    if (rootElement instanceof ReferenceExpression || !possiblyValidListLiteral(rootElement)) {
+    if (rootElement instanceof ReferenceExpression
+        || !BuildElementValidation.possiblyValidListLiteral(rootElement)) {
       markError(expr, "Glob parameter '" + keyword + "' must be a list of strings");
       return false;
     }
@@ -89,7 +87,8 @@ public class GlobErrorAnnotator extends BuildAnnotator {
     boolean possiblyHasString = false;
     for (Expression expr : expressions) {
       PsiElement rootElement = PsiUtils.getReferencedTargetValue(expr);
-      if (rootElement instanceof ReferenceExpression || !possiblyValidStringLiteral(rootElement)) {
+      if (rootElement instanceof ReferenceExpression
+          || !BuildElementValidation.possiblyValidStringLiteral(rootElement)) {
         markError(expr, "Glob parameter '" + keyword + "' must be a list of strings");
       } else {
         possiblyHasString = true;
@@ -106,39 +105,5 @@ public class GlobErrorAnnotator extends BuildAnnotator {
     if (error != null) {
       markError(pattern, error);
     }
-  }
-
-  /** Returns false iff we know with certainty that the element cannot resolve to a list literal. */
-  private static boolean possiblyValidListLiteral(PsiElement element) {
-    if (element instanceof ListLiteral || element instanceof GlobExpression) {
-      return true; // these evaluate directly to list literals
-    }
-    if (element instanceof LiteralExpression) {
-      return false; // all other literals cannot evaluate to a ListLiteral
-    }
-    if (element instanceof LoadStatement || element instanceof FunctionStatement) {
-      return false;
-    }
-    // everything else treated as possibly evaluating to a list
-    return true;
-  }
-
-  /**
-   * Returns false iff we know with certainty that the element cannot resolve to a string literal.
-   */
-  private static boolean possiblyValidStringLiteral(PsiElement element) {
-    if (element instanceof StringLiteral) {
-      return true;
-    }
-    if (element instanceof LiteralExpression) {
-      return false; // all other literals cannot evaluate to a StringLiteral
-    }
-    if (element instanceof LoadStatement
-        || element instanceof FunctionStatement
-        || element instanceof GlobExpression) {
-      return false;
-    }
-    // everything else treated as possibly evaluating to a string
-    return true;
   }
 }

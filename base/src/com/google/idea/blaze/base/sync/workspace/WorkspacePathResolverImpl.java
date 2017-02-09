@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
-import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import java.io.File;
@@ -45,9 +44,8 @@ public class WorkspacePathResolverImpl implements WorkspacePathResolver {
   }
 
   @Override
-  public ImmutableList<File> resolveToIncludeDirectories(ExecutionRootPath executionRootPath) {
-    File trackedLocation = executionRootPath.getFileRootedAt(workspaceRoot.directory());
-    return ImmutableList.of(trackedLocation);
+  public ImmutableList<File> resolveToIncludeDirectories(WorkspacePath relativePath) {
+    return ImmutableList.of(workspaceRoot.fileForPath(relativePath));
   }
 
   @Override

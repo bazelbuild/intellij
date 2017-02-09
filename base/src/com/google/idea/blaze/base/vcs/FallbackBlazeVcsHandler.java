@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.vcs;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
@@ -48,6 +49,16 @@ public class FallbackBlazeVcsHandler implements BlazeVcsHandler {
       WorkspaceRoot workspaceRoot,
       ListeningExecutorService executor) {
     return Futures.immediateFuture(null);
+  }
+
+  @Override
+  public ListenableFuture<String> getUpstreamContent(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      WorkspacePath path,
+      ListeningExecutorService executor) {
+    return Futures.immediateFuture("");
   }
 
   @Nullable

@@ -51,7 +51,7 @@ import javax.annotation.Nullable;
 
 /** Reads jdeps from the ide info result. */
 public class JdepsFileReader {
-  private static final Logger LOG = Logger.getInstance(JdepsFileReader.class);
+  private static final Logger logger = Logger.getInstance(JdepsFileReader.class);
 
   static class JdepsState implements Serializable {
     private static final long serialVersionUID = 4L;
@@ -173,7 +173,7 @@ public class JdepsFileReader {
                     return new Result(updatedFile, targetKey, dependencyStringList);
                   }
                 } catch (FileNotFoundException e) {
-                  LOG.info("Could not open jdeps file: " + updatedFile);
+                  logger.info("Could not open jdeps file: " + updatedFile);
                 }
                 return null;
               }));
@@ -191,7 +191,7 @@ public class JdepsFileReader {
                   "Loaded %d jdeps files, total size %dkB",
                   updatedFiles.size(), totalSizeLoaded.get() / 1024)));
     } catch (InterruptedException | ExecutionException e) {
-      LOG.error(e);
+      logger.error(e);
       return null;
     }
     return state;

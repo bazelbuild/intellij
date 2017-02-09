@@ -63,7 +63,7 @@ import javax.annotation.Nullable;
  */
 public final class SourceDirectoryCalculator {
 
-  private static final Logger LOG = Logger.getInstance(SourceDirectoryCalculator.class);
+  private static final Logger logger = Logger.getInstance(SourceDirectoryCalculator.class);
 
   private static final Splitter PACKAGE_SPLITTER = Splitter.on('.');
   private static final Splitter PATH_SPLITTER = Splitter.on('/');
@@ -250,7 +250,7 @@ public final class SourceDirectoryCalculator {
         }
       }
     } catch (ExecutionException | InterruptedException e) {
-      LOG.error(e);
+      logger.error(e);
       throw new IllegalStateException("Could not read sources");
     }
 
@@ -464,9 +464,8 @@ public final class SourceDirectoryCalculator {
           .submit(context);
       return null;
     }
-    return new SourceRoot(
-        new WorkspacePath(new File(sourceArtifact.artifactLocation.getRelativePath()).getParent()),
-        declaredPackage);
+    String parentPath = new File(sourceArtifact.artifactLocation.relativePath).getParent();
+    return new SourceRoot(new WorkspacePath(Strings.nullToEmpty(parentPath)), declaredPackage);
   }
 
   static class SourceRoot {

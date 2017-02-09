@@ -85,7 +85,7 @@ public class BlazeBuildServiceTest extends BlazeTestCase {
     assertThat(service).isNotNull();
 
     // Can't mock BlazeExecutor.submitTask.
-    doNothing().when(service).buildTargetExpressions(any(), any(), any(), any(), any());
+    doNothing().when(service).buildTargetExpressions(any(), any(), any(), any());
   }
 
   @Test
@@ -94,7 +94,7 @@ public class BlazeBuildServiceTest extends BlazeTestCase {
         ImmutableList.of(new Label("//foo:bar"), new Label("//foo:baz"));
     List<TargetExpression> targets = Lists.newArrayList(labels);
     service.buildFile(project, "Foo.java", labels);
-    verify(service).buildTargetExpressions(eq(project), eq(targets), eq(viewSet), any(), any());
+    verify(service).buildTargetExpressions(eq(project), eq(targets), eq(viewSet), any());
   }
 
   @Test
@@ -104,7 +104,7 @@ public class BlazeBuildServiceTest extends BlazeTestCase {
         Lists.newArrayList(
             TargetExpression.fromString("//view/target:one"),
             TargetExpression.fromString("//view/target:two"));
-    verify(service).buildTargetExpressions(eq(project), eq(targets), eq(viewSet), any(), any());
+    verify(service).buildTargetExpressions(eq(project), eq(targets), eq(viewSet), any());
   }
 
   private static class MockProjectViewManager extends ProjectViewManager {

@@ -27,11 +27,11 @@ import org.jetbrains.annotations.NotNull;
 /** Scope that captures relevant output to the IntelliJ log file. */
 public class IdeaLogScope implements BlazeScope {
 
-  private static final Logger LOG = Logger.getInstance(IdeaLogScope.class);
+  private static final Logger logger = Logger.getInstance(IdeaLogScope.class);
 
   private static final OutputSink<IssueOutput> issueSink =
       (output) -> {
-        LOG.warn(output.toString());
+        logger.warn(output.toString());
         return OutputSink.Propagation.Continue;
       };
 
@@ -41,10 +41,10 @@ public class IdeaLogScope implements BlazeScope {
           case NORMAL:
             break;
           case LOGGED:
-            LOG.info(output.getText());
+            logger.info(output.getText());
             break;
           case ERROR:
-            LOG.warn(output.getText());
+            logger.warn(output.getText());
             break;
         }
         return OutputSink.Propagation.Continue;
@@ -52,7 +52,7 @@ public class IdeaLogScope implements BlazeScope {
 
   private static final OutputSink<StatusOutput> statusSink =
       (output) -> {
-        LOG.info(output.getStatus());
+        logger.info(output.getStatus());
         return OutputSink.Propagation.Continue;
       };
 

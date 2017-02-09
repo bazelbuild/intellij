@@ -30,7 +30,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 class BlazeInfoImpl extends BlazeInfo {
-  private static final Logger LOG = Logger.getInstance(BlazeInfoImpl.class);
+  private static final Logger logger = Logger.getInstance(BlazeInfoImpl.class);
 
   @Override
   public ListenableFuture<String> runBlazeInfo(
@@ -110,7 +110,7 @@ class BlazeInfoImpl extends BlazeInfo {
     for (String blazeInfoLine : blazeInfoLines) {
       // Just split on the first ":".
       String[] keyValue = blazeInfoLine.split(":", 2);
-      LOG.assertTrue(keyValue.length == 2, blazeInfoLine);
+      logger.assertTrue(keyValue.length == 2, blazeInfoLine);
       String key = keyValue[0].trim();
       String value = keyValue[1].trim();
       blazeInfoMapBuilder.put(key, value);

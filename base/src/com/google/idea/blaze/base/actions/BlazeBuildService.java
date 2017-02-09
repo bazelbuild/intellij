@@ -21,7 +21,6 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
-import com.google.idea.blaze.base.metrics.Action;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -34,7 +33,6 @@ import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
-import com.google.idea.blaze.base.scope.scopes.LoggedTimingScope;
 import com.google.idea.blaze.base.scope.scopes.NotificationScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -59,7 +57,6 @@ public class BlazeBuildService {
         project,
         Lists.newArrayList(targets),
         ProjectViewManager.getInstance(project).getProjectViewSet(),
-        new LoggedTimingScope(project, Action.MAKE_MODULE_TOTAL_TIME),
         new NotificationScope(
             project,
             "Make",
@@ -80,7 +77,6 @@ public class BlazeBuildService {
         project,
         projectViewSet.listItems(TargetSection.KEY),
         projectViewSet,
-        new LoggedTimingScope(project, Action.MAKE_PROJECT_TOTAL_TIME),
         new NotificationScope(
             project,
             "Make",
@@ -94,7 +90,6 @@ public class BlazeBuildService {
       Project project,
       List<TargetExpression> targets,
       ProjectViewSet projectViewSet,
-      LoggedTimingScope loggedTimingScope,
       NotificationScope notificationScope) {
     if (targets.isEmpty() || projectViewSet == null) {
       return;
@@ -115,7 +110,6 @@ public class BlazeBuildService {
                 .push(new IssuesScope(project))
                 .push(new IdeaLogScope())
                 .push(new TimingScope("Make"))
-                .push(loggedTimingScope)
                 .push(notificationScope);
 
             WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);

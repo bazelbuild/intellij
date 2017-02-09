@@ -42,6 +42,10 @@ public final class ExecutionRootPath implements Serializable {
     return path;
   }
 
+  public boolean isAbsolute() {
+    return path.isAbsolute();
+  }
+
   public File getFileRootedAt(File absoluteRoot) {
     if (path.isAbsolute()) {
       return path;

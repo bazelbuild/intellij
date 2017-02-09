@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 /** Stores mutable per-project user settings. */
 final class ProjectViewManagerImpl extends ProjectViewManager {
 
-  private static final Logger LOG = Logger.getInstance(ProjectViewManagerImpl.class);
+  private static final Logger logger = Logger.getInstance(ProjectViewManagerImpl.class);
   private static final String CACHE_FILE_NAME = "project.view.dat";
 
   private final Project project;
@@ -64,7 +64,7 @@ final class ProjectViewManagerImpl extends ProjectViewManager {
         classLoaders.add(Thread.currentThread().getContextClassLoader());
         loadedProjectViewSet = (ProjectViewSet) SerializationUtil.loadFromDisk(file, classLoaders);
       } catch (IOException e) {
-        LOG.info(e);
+        logger.info(e);
       }
       this.projectViewSet = loadedProjectViewSet;
       this.projectViewSetLoaded = true;
@@ -90,7 +90,7 @@ final class ProjectViewManagerImpl extends ProjectViewManager {
       try {
         SerializationUtil.saveToDisk(file, projectViewSet);
       } catch (IOException e) {
-        LOG.error(e);
+        logger.error(e);
       }
       this.projectViewSet = projectViewSet;
     }

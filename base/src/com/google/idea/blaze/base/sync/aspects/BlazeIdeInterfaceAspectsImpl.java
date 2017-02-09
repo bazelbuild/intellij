@@ -35,7 +35,6 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
-import com.google.idea.blaze.base.metrics.Action;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -48,7 +47,6 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedFunction;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
-import com.google.idea.blaze.base.scope.scopes.LoggedTimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
@@ -75,7 +73,7 @@ import javax.annotation.Nullable;
 /** Implementation of BlazeIdeInterface based on aspects. */
 public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
-  private static final Logger LOG = Logger.getInstance(BlazeIdeInterfaceAspectsImpl.class);
+  private static final Logger logger = Logger.getInstance(BlazeIdeInterfaceAspectsImpl.class);
 
   static class State implements Serializable {
     private static final long serialVersionUID = 14L;
@@ -219,7 +217,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                           new ExperimentalShowArtifactsLineProcessor(result, fileFilter),
                           new IssueOutputLineProcessor(project, context, workspaceRoot)))
                   .build()
-                  .run(new LoggedTimingScope(project, Action.BLAZE_BUILD));
+                  .run();
 
           BuildResult buildResult = BuildResult.fromExitCode(retVal);
           return new IdeInfoResult(result, buildResult);
@@ -357,7 +355,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 });
 
     if (result.error != null) {
-      LOG.error(result.error);
+      logger.error(result.error);
       return null;
     }
     return result.result;
@@ -397,7 +395,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   }
 
   private static boolean hasIdeCompileOutputGroup(BlazeVersionData blazeVersionData) {
-    return blazeVersionData.bazelIsAtLeastVersion(0, 4, 3);
+    return blazeVersionData.bazelIsAtLeastVersion(0, 4, 4);
   }
 
   private static BuildResult resolveIdeArtifacts(
@@ -433,7 +431,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 LineProcessingOutputStream.of(
                     new IssueOutputLineProcessor(project, context, workspaceRoot)))
             .build()
-            .run(new LoggedTimingScope(project, Action.BLAZE_BUILD));
+            .run();
 
     return BuildResult.fromExitCode(retVal);
   }

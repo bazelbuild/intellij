@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2017 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,36 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.projectview.section.sections;
+package com.google.idea.blaze.android.projectview;
 
+import com.google.common.primitives.Ints;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.ScalarSectionParser;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
-import com.intellij.openapi.util.text.StringUtil;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
-/** Sets the metrics project to allow monitoring of individual projects */
-public class MetricsProjectSection {
-  public static final SectionKey<String, ScalarSection<String>> KEY =
-      SectionKey.of("metrics_project");
-  public static final SectionParser PARSER = new MetricsProjectSectionParser();
+/** Allows project wide min sdk. */
+public class AndroidMinSdkSection {
+  public static final SectionKey<Integer, ScalarSection<Integer>> KEY =
+      SectionKey.of("android_min_sdk");
+  public static final SectionParser PARSER = new AndroidMinSdkParser();
 
-  private static class MetricsProjectSectionParser extends ScalarSectionParser<String> {
-    public MetricsProjectSectionParser() {
+  private static class AndroidMinSdkParser extends ScalarSectionParser<Integer> {
+    AndroidMinSdkParser() {
       super(KEY, ':');
     }
 
     @Nullable
     @Override
-    protected String parseItem(ProjectViewParser parser, ParseContext parseContext, String rest) {
-      return StringUtil.unquoteString(rest);
+    protected Integer parseItem(ProjectViewParser parser, ParseContext parseContext, String rest) {
+      return Ints.tryParse(rest);
     }
 
     @Override
-    protected void printItem(StringBuilder sb, String value) {
+    protected void printItem(StringBuilder sb, Integer value) {
       sb.append(value);
     }
 

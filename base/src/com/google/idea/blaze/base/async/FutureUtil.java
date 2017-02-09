@@ -52,7 +52,7 @@ public class FutureUtil {
 
   /** Builder for the future */
   public static class Builder<T> {
-    private static final Logger LOG = Logger.getInstance(FutureUtil.class);
+    private static final Logger logger = Logger.getInstance(FutureUtil.class);
     private final BlazeContext context;
     private final ListenableFuture<T> future;
     private String timingCategory;
@@ -95,7 +95,7 @@ public class FutureUtil {
               Thread.currentThread().interrupt();
               context.setCancelled();
             } catch (ExecutionException e) {
-              LOG.error(e);
+              logger.error(e);
               if (errorMessage != null) {
                 IssueOutput.error(errorMessage).submit(childContext);
               }

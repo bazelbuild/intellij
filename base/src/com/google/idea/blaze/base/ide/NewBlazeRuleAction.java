@@ -18,12 +18,10 @@ package com.google.idea.blaze.base.ide;
 
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
-import com.google.idea.blaze.base.metrics.Action;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
-import com.google.idea.blaze.base.scope.scopes.LoggedTimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -54,8 +52,7 @@ class NewBlazeRuleAction extends BlazeProjectAction implements DumbAware {
               .push(new ExperimentScope())
               .push(new BlazeConsoleScope.Builder(project).build())
               .push(new IssuesScope(project))
-              .push(new IdeaLogScope())
-              .push(new LoggedTimingScope(project, Action.CREATE_BLAZE_RULE));
+              .push(new IdeaLogScope());
           NewBlazeRuleDialog newBlazeRuleDialog =
               new NewBlazeRuleDialog(context, project, virtualFile);
           newBlazeRuleDialog.show();

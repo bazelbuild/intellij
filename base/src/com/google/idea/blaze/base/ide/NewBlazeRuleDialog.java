@@ -37,7 +37,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 class NewBlazeRuleDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance(NewBlazeRuleDialog.class);
+  private static final Logger logger = Logger.getInstance(NewBlazeRuleDialog.class);
 
   private static final int UI_INDENT = 0;
   private static final int TEXT_BOX_WIDTH = 40;

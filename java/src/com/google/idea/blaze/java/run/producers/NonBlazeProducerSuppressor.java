@@ -19,9 +19,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
 public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
@@ -33,7 +39,42 @@ public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
               com.intellij.execution.junit.AllInDirectoryConfigurationProducer.class,
               com.intellij.execution.junit.AllInPackageConfigurationProducer.class,
               com.intellij.execution.junit.TestClassConfigurationProducer.class,
-              com.intellij.execution.junit.TestMethodConfigurationProducer.class);
+              com.intellij.execution.junit.TestMethodConfigurationProducer.class,
+              com.intellij.execution.junit.PatternConfigurationProducer.class);
+
+  private static final ImmutableList<String> KOTLIN_JUNIT_PRODUCERS =
+      ImmutableList.of(
+          "org.jetbrains.kotlin.idea.run.KotlinJUnitRunConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinPatternConfigurationProducer");
+
+  private static Collection<Class<? extends RunConfigurationProducer<?>>> getKotlinProducers() {
+    // rather than compiling against the Kotlin plugin, and including a switch in the our
+    // plugin.xml, just get the classes manually via the plugin class loader.
+    IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginId.getId("org.jetbrains.kotlin"));
+    if (plugin == null || !plugin.isEnabled()) {
+      return ImmutableList.of();
+    }
+    ClassLoader loader = plugin.getPluginClassLoader();
+    return KOTLIN_JUNIT_PRODUCERS
+        .stream()
+        .map((qualifiedName) -> loadClass(loader, qualifiedName))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+  }
+
+  @Nullable
+  private static Class<RunConfigurationProducer<?>> loadClass(
+      ClassLoader loader, String qualifiedName) {
+    try {
+      Class<?> clazz = loader.loadClass(qualifiedName);
+      if (RunConfigurationProducer.class.isAssignableFrom(clazz)) {
+        return (Class<RunConfigurationProducer<?>>) clazz;
+      }
+      return null;
+    } catch (ClassNotFoundException ignored) {
+      return null;
+    }
+  }
 
   public NonBlazeProducerSuppressor(Project project) {
     super(project);
@@ -49,6 +90,10 @@ public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
   private static void suppressProducers(Project project) {
     RunConfigurationProducerService producerService =
         RunConfigurationProducerService.getInstance(project);
-    PRODUCERS_TO_SUPPRESS.forEach(producerService::addIgnoredProducer);
+    ImmutableList.<Class<? extends RunConfigurationProducer<?>>>builder()
+        .addAll(PRODUCERS_TO_SUPPRESS)
+        .addAll(getKotlinProducers())
+        .build()
+        .forEach(producerService::addIgnoredProducer);
   }
 }

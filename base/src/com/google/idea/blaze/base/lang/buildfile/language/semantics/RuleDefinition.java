@@ -24,6 +24,8 @@ import javax.annotation.Nullable;
 /** Simple implementation of RuleDefinition, from build.proto */
 public class RuleDefinition implements Serializable {
 
+  private static final long serialVersionUID = 2L;
+
   /**
    * In previous versions of blaze/bazel, this wasn't included in the proto. All other documented
    * attributes seem to be.
@@ -48,6 +50,7 @@ public class RuleDefinition implements Serializable {
   public final String name;
   /** This map is not exhaustive; it only contains documented attributes. */
   public final ImmutableMap<String, AttributeDefinition> attributes;
+  public final ImmutableMap<String, AttributeDefinition> mandatoryAttributes;
 
   @Nullable public final String documentation;
 
@@ -58,6 +61,14 @@ public class RuleDefinition implements Serializable {
     this.name = name;
     this.attributes = attributes;
     this.documentation = documentation;
+
+    ImmutableMap.Builder<String, AttributeDefinition> builder = ImmutableMap.builder();
+    for (AttributeDefinition attr : attributes.values()) {
+      if (attr.mandatory) {
+        builder.put(attr.name, attr);
+      }
+    }
+    mandatoryAttributes = builder.build();
   }
 
   public ImmutableSet<String> getKnownAttributeNames() {

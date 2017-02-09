@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.scope.scopes;
 
 import com.google.idea.blaze.base.console.BlazeConsoleService;
+import com.google.idea.blaze.base.console.ColoredConsoleStream;
+import com.google.idea.blaze.base.console.ConsoleStream;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.OutputSink;
@@ -37,6 +39,7 @@ public class BlazeConsoleScope implements BlazeScope {
     private Project project;
     private ProgressIndicator progressIndicator;
     private boolean suppressConsole = false;
+    private boolean escapeAnsiColorCodes = false;
 
     public Builder(@NotNull Project project) {
       this(project, null);
@@ -52,12 +55,16 @@ public class BlazeConsoleScope implements BlazeScope {
       return this;
     }
 
+    public Builder escapeAnsiColorcodes(boolean escapeAnsiColorCodes) {
+      this.escapeAnsiColorCodes = escapeAnsiColorCodes;
+      return this;
+    }
+
     public BlazeConsoleScope build() {
-      return new BlazeConsoleScope(project, progressIndicator, suppressConsole);
+      return new BlazeConsoleScope(
+          project, progressIndicator, suppressConsole, escapeAnsiColorCodes);
     }
   }
-
-  @NotNull private final Project project;
 
   @NotNull private final BlazeConsoleService blazeConsoleService;
 
@@ -65,6 +72,8 @@ public class BlazeConsoleScope implements BlazeScope {
 
   private final boolean showDialogOnChange;
   private boolean activated;
+
+  private final ConsoleStream consoleStream;
 
   private OutputSink<PrintOutput> printSink =
       (output) -> {
@@ -89,20 +98,23 @@ public class BlazeConsoleScope implements BlazeScope {
   private BlazeConsoleScope(
       @NotNull Project project,
       @Nullable ProgressIndicator progressIndicator,
-      boolean suppressConsole) {
-    this.project = project;
+      boolean suppressConsole,
+      boolean escapeAnsiColorCodes) {
     this.blazeConsoleService = BlazeConsoleService.getInstance(project);
     this.progressIndicator = progressIndicator;
     this.showDialogOnChange = !suppressConsole;
+    ConsoleStream sinkConsoleStream = blazeConsoleService::print;
+    this.consoleStream =
+        escapeAnsiColorCodes ? new ColoredConsoleStream(sinkConsoleStream) : sinkConsoleStream;
   }
 
   private void print(String text, ConsoleViewContentType contentType) {
-    blazeConsoleService.print(text + "\n", contentType);
+    consoleStream.print(text, contentType);
+    consoleStream.print("\n", contentType);
 
     if (showDialogOnChange && !activated) {
       activated = true;
-      ApplicationManager.getApplication()
-          .invokeLater(() -> blazeConsoleService.activateConsoleWindow());
+      ApplicationManager.getApplication().invokeLater(blazeConsoleService::activateConsoleWindow);
     }
   }
 

@@ -47,6 +47,11 @@ public abstract class SectionParser {
     return false;
   }
 
+  @Nullable
+  public String getDeprecationMessage() {
+    return null;
+  }
+
   /** Allows the section to add a default value. Used during the wizard. */
   public ProjectView addProjectViewDefaultValue(ProjectView projectView) {
     return projectView;

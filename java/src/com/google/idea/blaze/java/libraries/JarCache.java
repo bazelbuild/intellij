@@ -59,7 +59,7 @@ import javax.annotation.Nullable;
 
 /** Local cache of the jars referenced by the project. */
 public class JarCache {
-  private static final Logger LOG = Logger.getInstance(JarCache.class);
+  private static final Logger logger = Logger.getInstance(JarCache.class);
 
   private final Project project;
   private final BlazeImportSettings importSettings;
@@ -144,7 +144,7 @@ public class JarCache {
     // Ensure the cache dir exists
     if (!cacheDir.exists()) {
       if (!cacheDir.mkdirs()) {
-        LOG.error("Could not create jar cache directory");
+        logger.error("Could not create jar cache directory");
         return;
       }
     }
@@ -199,7 +199,7 @@ public class JarCache {
                       StandardCopyOption.REPLACE_EXISTING,
                       StandardCopyOption.COPY_ATTRIBUTES);
                 } catch (IOException e) {
-                  LOG.warn(e);
+                  logger.warn(e);
                 }
               }));
     }
@@ -213,7 +213,7 @@ public class JarCache {
                   try {
                     Files.deleteIfExists(Paths.get(cacheFile.getPath()));
                   } catch (IOException e) {
-                    LOG.warn(e);
+                    logger.warn(e);
                   }
                 }));
       }
@@ -223,9 +223,9 @@ public class JarCache {
       Futures.allAsList(futures).get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      LOG.warn(e);
+      logger.warn(e);
     } catch (ExecutionException e) {
-      LOG.error(e);
+      logger.error(e);
     }
     if (context != null && updatedFiles.size() > 0) {
       context.output(PrintOutput.log(String.format("Copied %d jars", updatedFiles.size())));
@@ -247,7 +247,7 @@ public class JarCache {
                     "Total Jar Cache size: %d kB (%d files)",
                     total / 1024, finalCacheFiles.length)));
       } catch (Exception e) {
-        LOG.warn("Could not determine cache size", e);
+        logger.warn("Could not determine cache size", e);
       }
     }
   }

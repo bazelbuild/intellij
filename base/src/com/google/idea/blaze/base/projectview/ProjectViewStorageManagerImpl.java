@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 /** Project view storage implementation. */
 final class ProjectViewStorageManagerImpl extends ProjectViewStorageManager {
-  private static final Logger LOG = Logger.getInstance(ProjectViewManagerImpl.class);
+  private static final Logger logger = Logger.getInstance(ProjectViewManagerImpl.class);
 
   @Nullable
   @Override

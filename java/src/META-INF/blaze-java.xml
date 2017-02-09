@@ -36,7 +36,7 @@
     </action>
 
     <group id="Blaze.Java.ProjectViewPopupMenu">
-      <add-to-group group-id="Blaze.ProjectViewPopupMenu"/>
+      <add-to-group group-id="Blaze.PerFileContextMenu"/>
       <reference id="Blaze.ExcludeLibraryAction"/>
       <reference id="Blaze.AttachSourceJarAction"/>
       <reference id="Blaze.AddLibraryTargetDirectoryToProjectView"/>
@@ -70,6 +70,8 @@
     <FileCache implementation="com.google.idea.blaze.java.libraries.JarCache$FileCacheAdapter"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.java.sync.JavaPrefetchFileSource"/>
     <SyncListener implementation="com.google.idea.blaze.java.syncstatus.SyncStatusHelper$UpdateSyncStatusMap"/>
+    <BlazeTestEventsHandler implementation="com.google.idea.blaze.java.run.BlazeJavaTestEventsHandler"/>
+    <AttributeSpecificStringLiteralReferenceProvider implementation="com.google.idea.blaze.java.lang.build.references.JavaClassQualifiedNameReference"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -104,6 +106,7 @@
     <attachSourcesProvider implementation="com.google.idea.blaze.java.libraries.BlazeAttachSourceProvider"/>
     <applicationService serviceImplementation="com.google.idea.blaze.java.settings.BlazeJavaUserSettings"/>
     <projectService serviceImplementation="com.google.idea.blaze.java.syncstatus.SyncStatusHelper"/>
+    <psi.referenceContributor language="BUILD" implementation="com.google.idea.blaze.java.lang.build.references.JavaClassReferenceContributor"/>
   </extensions>
 
   <project-components>

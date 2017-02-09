@@ -17,6 +17,7 @@ package com.google.idea.blaze.base;
 
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.io.InputStreamProvider;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
@@ -129,6 +130,8 @@ public abstract class BlazeIntegrationTestCase {
           }
           return vf.getInputStream();
         });
+    registerApplicationService(
+        VirtualFileSystemProvider.class, new TestFileSystem.TempVirtualFileSystemProvider());
   }
 
   @After

@@ -40,7 +40,7 @@ import java.util.UUID;
 
 /** Contains the state to build a new project throughout the new project wizard process. */
 public final class BlazeNewProjectBuilder {
-  private static final Logger LOG = Logger.getInstance(BlazeNewProjectBuilder.class);
+  private static final Logger logger = Logger.getInstance(BlazeNewProjectBuilder.class);
 
   // The import wizard should keep this many items around for fields that care about history
   public static final int HISTORY_SIZE = 8;
@@ -198,7 +198,7 @@ public final class BlazeNewProjectBuilder {
     }
 
     try {
-      LOG.assertTrue(projectViewFile != null);
+      logger.assertTrue(projectViewFile != null);
       ProjectViewStorageManager.getInstance()
           .writeProjectView(ProjectViewParser.projectViewToString(projectView), projectViewFile);
     } catch (IOException e) {

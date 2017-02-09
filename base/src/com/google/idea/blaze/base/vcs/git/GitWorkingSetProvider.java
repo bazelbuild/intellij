@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
 /** Vcs diff provider for git. */
 public class GitWorkingSetProvider {
 
-  private static final Logger LOG = Logger.getInstance(GitWorkingSetProvider.class);
+  private static final Logger logger = Logger.getInstance(GitWorkingSetProvider.class);
 
   /**
    * Finds all changes between HEAD and the git commit specified by the provided SHA.<br>
@@ -58,7 +58,7 @@ public class GitWorkingSetProvider {
             .build()
             .run();
     if (retVal != 0) {
-      LOG.error(stderr);
+      logger.error(stderr);
       return null;
     }
 
@@ -100,7 +100,7 @@ public class GitWorkingSetProvider {
             .build()
             .run();
     if (retVal != 0) {
-      LOG.error(stderr);
+      logger.error(stderr);
       return null;
     }
     return StringUtil.trimEnd(stdout.toString(), "\n");

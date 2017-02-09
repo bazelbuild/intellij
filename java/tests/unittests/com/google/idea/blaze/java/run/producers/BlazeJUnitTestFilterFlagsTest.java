@@ -42,7 +42,7 @@ public class BlazeJUnitTestFilterFlagsTest extends BlazeTestCase {
   public void testSingleJUnit4ClassFilter() {
     assertThat(
             BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(
-                "com.google.idea.ClassName", ImmutableList.of(), JUnitVersion.JUNIT_4, false))
+                "com.google.idea.ClassName", JUnitVersion.JUNIT_4, ImmutableList.of()))
         .isEqualTo("com.google.idea.ClassName#");
   }
 
@@ -50,7 +50,7 @@ public class BlazeJUnitTestFilterFlagsTest extends BlazeTestCase {
   public void testSingleJUnit3ClassFilter() {
     assertThat(
             BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(
-                "com.google.idea.ClassName", ImmutableList.of(), JUnitVersion.JUNIT_3, false))
+                "com.google.idea.ClassName", JUnitVersion.JUNIT_3, ImmutableList.of()))
         .isEqualTo("com.google.idea.ClassName");
   }
 
@@ -58,7 +58,7 @@ public class BlazeJUnitTestFilterFlagsTest extends BlazeTestCase {
   public void testParameterizedIgnoredForSingleClass() {
     assertThat(
             BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(
-                "com.google.idea.ClassName", ImmutableList.of(), JUnitVersion.JUNIT_4, true))
+                "com.google.idea.ClassName", JUnitVersion.JUNIT_4, ImmutableList.of()))
         .isEqualTo("com.google.idea.ClassName#");
   }
 
@@ -66,10 +66,7 @@ public class BlazeJUnitTestFilterFlagsTest extends BlazeTestCase {
   public void testJUnit4ClassAndSingleMethod() {
     assertThat(
             BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(
-                "com.google.idea.ClassName",
-                ImmutableList.of("testMethod1"),
-                JUnitVersion.JUNIT_4,
-                false))
+                "com.google.idea.ClassName", JUnitVersion.JUNIT_4, ImmutableList.of("testMethod1")))
         .isEqualTo("com.google.idea.ClassName#testMethod1$");
   }
 
@@ -77,10 +74,7 @@ public class BlazeJUnitTestFilterFlagsTest extends BlazeTestCase {
   public void testJUnit3ClassAndSingleMethod() {
     assertThat(
             BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(
-                "com.google.idea.ClassName",
-                ImmutableList.of("testMethod1"),
-                JUnitVersion.JUNIT_3,
-                false))
+                "com.google.idea.ClassName", JUnitVersion.JUNIT_3, ImmutableList.of("testMethod1")))
         .isEqualTo("com.google.idea.ClassName#testMethod1");
   }
 
@@ -89,9 +83,8 @@ public class BlazeJUnitTestFilterFlagsTest extends BlazeTestCase {
     assertThat(
             BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(
                 "com.google.idea.ClassName",
-                ImmutableList.of("testMethod1", "testMethod2"),
                 JUnitVersion.JUNIT_4,
-                false))
+                ImmutableList.of("testMethod1", "testMethod2")))
         .isEqualTo("com.google.idea.ClassName#(testMethod1|testMethod2)$");
   }
 
@@ -100,10 +93,9 @@ public class BlazeJUnitTestFilterFlagsTest extends BlazeTestCase {
     assertThat(
             BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(
                 "com.google.idea.ClassName",
-                ImmutableList.of("testMethod1", "testMethod2"),
                 JUnitVersion.JUNIT_4,
-                true))
-        .isEqualTo("com.google.idea.ClassName#(testMethod1|testMethod2)(\\[.+\\])?$");
+                ImmutableList.of("testMethod1(\\[.+\\])?", "testMethod2(\\[.+\\])?")))
+        .isEqualTo("com.google.idea.ClassName#(testMethod1(\\[.+\\])?|testMethod2(\\[.+\\])?)$");
   }
 
   @Test
@@ -111,20 +103,8 @@ public class BlazeJUnitTestFilterFlagsTest extends BlazeTestCase {
     assertThat(
             BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(
                 "com.google.idea.ClassName",
-                ImmutableList.of("testMethod1", "testMethod2"),
                 JUnitVersion.JUNIT_3,
-                false))
-        .isEqualTo("com.google.idea.ClassName#testMethod1,testMethod2");
-  }
-
-  @Test
-  public void testParameterizedIgnoredForJUnit3() {
-    assertThat(
-            BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(
-                "com.google.idea.ClassName",
-                ImmutableList.of("testMethod1", "testMethod2"),
-                JUnitVersion.JUNIT_3,
-                true))
+                ImmutableList.of("testMethod1", "testMethod2")))
         .isEqualTo("com.google.idea.ClassName#testMethod1,testMethod2");
   }
 }

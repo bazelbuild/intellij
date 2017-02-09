@@ -17,41 +17,74 @@ package com.google.idea.blaze.base.run.smrunner;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.intellij.execution.testframework.AbstractTestProxy;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
+import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.intellij.execution.Location;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.io.URLUtil;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
+import java.util.EnumSet;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /** Language-specific handling of SM runner test protocol */
 public abstract class BlazeTestEventsHandler {
 
-  public final String frameworkName;
-  public final File testOutputXml;
-
-  protected BlazeTestEventsHandler(String frameworkName) {
-    this.frameworkName = frameworkName;
-    this.testOutputXml = generateTempTestXmlFile();
-  }
+  static final ExtensionPointName<BlazeTestEventsHandler> EP_NAME =
+      ExtensionPointName.create("com.google.idea.blaze.BlazeTestEventsHandler");
 
   /**
    * Blaze/Bazel flags required for test UI.<br>
-   * Forces local test execution, without sharding, and sets the output test xml path.
+   * Forces local test execution, without sharding.
    */
-  public ImmutableList<String> getBlazeFlags() {
-    return ImmutableList.of(
-        "--test_env=XML_OUTPUT_FILE=" + testOutputXml,
-        "--test_sharding_strategy=disabled",
-        "--runs_per_test=1",
-        "--flaky_test_attempts=1",
-        "--test_strategy=local");
+  public static ImmutableList<String> getBlazeFlags(Project project) {
+    ImmutableList.Builder<String> flags =
+        ImmutableList.<String>builder()
+            .add(
+                "--test_sharding_strategy=disabled",
+                "--runs_per_test=1",
+                "--flaky_test_attempts=1");
+    if (Blaze.getBuildSystem(project) == BuildSystem.Blaze) {
+      flags.add("--test_strategy=local");
+    }
+    return flags.build();
   }
+
+  @Nullable
+  public static BlazeTestEventsHandler getHandlerForTarget(
+      Project project, TargetExpression target) {
+    Kind kind = getKindForTarget(project, target);
+    for (BlazeTestEventsHandler handler : EP_NAME.getExtensions()) {
+      if (handler.handlesTargetKind(kind)) {
+        return handler;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Kind getKindForTarget(Project project, TargetExpression target) {
+    if (!(target instanceof Label)) {
+      return null;
+    }
+    TargetIdeInfo targetInfo = TargetFinder.getInstance().targetForLabel(project, (Label) target);
+    return targetInfo != null ? targetInfo.kind : null;
+  }
+
+  public boolean handlesTargetKind(@Nullable Kind kind) {
+    return handledKinds().contains(kind);
+  }
+
+  protected abstract EnumSet<Kind> handledKinds();
 
   public abstract SMTestLocator getTestLocator();
 
@@ -61,7 +94,7 @@ public abstract class BlazeTestEventsHandler {
    * @return null if no filter can be constructed for these tests.
    */
   @Nullable
-  public abstract String getTestFilter(Project project, List<AbstractTestProxy> failedTests);
+  public abstract String getTestFilter(Project project, List<Location<?>> testLocations);
 
   @Nullable
   public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
@@ -69,20 +102,21 @@ public abstract class BlazeTestEventsHandler {
   }
 
   /** Converts the testsuite name in the blaze test XML to a user-friendly format */
-  public String suiteDisplayName(String rawName) {
+  public String suiteDisplayName(@Nullable Kind kind, String rawName) {
     return rawName;
   }
 
   /** Converts the testcase name in the blaze test XML to a user-friendly format */
-  public String testDisplayName(String rawName) {
+  public String testDisplayName(@Nullable Kind kind, String rawName) {
     return rawName;
   }
 
-  public String suiteLocationUrl(String name) {
+  public String suiteLocationUrl(@Nullable Kind kind, String name) {
     return SmRunnerUtils.GENERIC_SUITE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + name;
   }
 
-  public String testLocationUrl(String name, @Nullable String className) {
+  public String testLocationUrl(
+      @Nullable Kind kind, String parentSuite, String name, @Nullable String className) {
     String base = SmRunnerUtils.GENERIC_TEST_PROTOCOL + URLUtil.SCHEME_SEPARATOR + name;
     if (Strings.isNullOrEmpty(className)) {
       return base;
@@ -90,14 +124,9 @@ public abstract class BlazeTestEventsHandler {
     return base + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER + className;
   }
 
-  private static File generateTempTestXmlFile() {
-    try {
-      File file = Files.createTempFile("blazeTest", ".xml").toFile();
-      file.deleteOnExit();
-      return file;
-
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  /** Whether to skip logging a {@link TestSuite}. */
+  public boolean ignoreSuite(TestSuite suite) {
+    // by default only include innermost 'testsuite' elements
+    return suite.testSuites.isEmpty();
   }
 }

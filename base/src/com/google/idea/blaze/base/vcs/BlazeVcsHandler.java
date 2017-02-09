@@ -17,12 +17,12 @@ package com.google.idea.blaze.base.vcs;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
-import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -59,6 +59,14 @@ public interface BlazeVcsHandler {
       WorkspaceRoot workspaceRoot,
       ListeningExecutorService executor);
 
+  /** Returns the original file content of a file path from "upstream". */
+  ListenableFuture<String> getUpstreamContent(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      WorkspacePath path,
+      ListeningExecutorService executor);
+
   /** Optionally creates a sync handler to perform vcs-specific computation during sync. */
   @Nullable
   BlazeVcsSyncHandler createSyncHandler(Project project, WorkspaceRoot workspaceRoot);
@@ -76,7 +84,7 @@ public interface BlazeVcsHandler {
      *
      * @return True for OK, false to abort the sync process.
      */
-    boolean update(BlazeContext context, BlazeRoots blazeRoots, ListeningExecutorService executor);
+    boolean update(BlazeContext context, ListeningExecutorService executor);
 
     /** Returns a custom workspace path resolver for this vcs. */
     @Nullable

@@ -26,7 +26,7 @@ import javax.annotation.concurrent.Immutable;
 /** Wrapper around a string for a blaze label (//package:rule). */
 @Immutable
 public final class Label extends TargetExpression {
-  private static final Logger LOG = Logger.getInstance(Label.class);
+  private static final Logger logger = Logger.getInstance(Label.class);
 
   public static final long serialVersionUID = 2L;
 
@@ -102,7 +102,7 @@ public final class Label extends TargetExpression {
     String labelStr = toString();
     int startIndex = labelStr.indexOf("//") + "//".length();
     int colonIndex = labelStr.lastIndexOf(':');
-    LOG.assertTrue(colonIndex >= 0);
+    logger.assertTrue(colonIndex >= 0);
     return new WorkspacePath(labelStr.substring(startIndex, colonIndex));
   }
 

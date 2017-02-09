@@ -42,12 +42,12 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebu
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStepNormalBuild;
-import com.google.idea.blaze.android.run.test.smrunner.BlazeAndroidTestEventsHandler;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
@@ -61,12 +61,12 @@ import org.jetbrains.annotations.NotNull;
 /** Run context for android_test. */
 class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
 
-  static final BoolExperiment smRunnerUiEnabled =
+  private static final BoolExperiment smRunnerUiEnabled =
       new BoolExperiment("use.smrunner.ui.android", true);
 
   private final Project project;
   private final AndroidFacet facet;
-  private final RunConfiguration runConfiguration;
+  private final BlazeCommandRunConfiguration runConfiguration;
   private final ExecutionEnvironment env;
   private final BlazeAndroidTestRunConfigurationState configState;
   private final Label label;
@@ -80,7 +80,7 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
   public BlazeAndroidTestRunContext(
       Project project,
       AndroidFacet facet,
-      RunConfiguration runConfiguration,
+      BlazeCommandRunConfiguration runConfiguration,
       ExecutionEnvironment env,
       BlazeAndroidTestRunConfigurationState configState,
       Label label,
@@ -96,12 +96,14 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
         new BlazeAndroidTestApplicationIdProvider(project, buildStep.getDeployInfo());
     this.apkProvider = new BlazeApkProvider(project, buildStep.getDeployInfo());
 
-    BlazeAndroidTestEventsHandler testEventsHandler = null;
+    BlazeTestEventsHandler testEventsHandler = null;
     if (smRunnerUiEnabled.getValue() && !isDebugging(env.getExecutor())) {
-      testEventsHandler = new BlazeAndroidTestEventsHandler();
+      testEventsHandler =
+          BlazeTestEventsHandler.getHandlerForTarget(project, runConfiguration.getTarget());
+      assert (testEventsHandler != null);
       this.buildFlags =
           ImmutableList.<String>builder()
-              .addAll(testEventsHandler.getBlazeFlags())
+              .addAll(BlazeTestEventsHandler.getBlazeFlags(project))
               .addAll(buildFlags)
               .build();
     } else {

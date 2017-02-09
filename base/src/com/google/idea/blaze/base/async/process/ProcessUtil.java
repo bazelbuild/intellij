@@ -21,7 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 class ProcessUtil {
-  private static final Logger LOG = Logger.getInstance(ProcessUtil.class);
+  private static final Logger logger = Logger.getInstance(ProcessUtil.class);
 
   public static Thread forwardAsync(final InputStream input, final OutputStream output) {
     Thread thread =
@@ -40,7 +40,7 @@ class ProcessUtil {
                     read = input.read(buffer);
                   }
                 } catch (IOException e) {
-                  LOG.warn("Error redirecting output", e);
+                  logger.warn("Error redirecting output", e);
                 }
               }
             });

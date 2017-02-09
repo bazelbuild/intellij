@@ -40,7 +40,7 @@ public class JavaSourcePackageReader extends JavaPackageReader {
     return ServiceManager.getService(JavaSourcePackageReader.class);
   }
 
-  private static final Logger LOG = Logger.getInstance(SourceDirectoryCalculator.class);
+  private static final Logger logger = Logger.getInstance(SourceDirectoryCalculator.class);
 
   private static final Pattern JAVA_PACKAGE_PATTERN =
       Pattern.compile("^\\s*package\\s+([\\w\\.]+);");
@@ -76,7 +76,7 @@ public class JavaSourcePackageReader extends JavaPackageReader {
           .submit(context);
       return null;
     } catch (IOException e) {
-      LOG.error(e);
+      logger.error(e);
       return null;
     }
   }

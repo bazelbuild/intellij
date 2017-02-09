@@ -79,6 +79,9 @@ public interface BuildElementTypes {
   BuildElementType LIST_COMPREHENSION_EXPR =
       new BuildElementType("list_comp", ListComprehensionExpression.class);
   BuildElementType LOADED_SYMBOL = new BuildElementType("loaded_symbol", LoadedSymbol.class);
+  BuildElementType PARENTHESIZED_EXPRESSION =
+      new BuildElementType("parens", ParenthesizedExpression.class);
+  BuildElementType TUPLE_EXPRESSION = new BuildElementType("tuple", TupleExpression.class);
 
   TokenSet EXPRESSIONS =
       TokenSet.create(
@@ -90,6 +93,8 @@ public interface BuildElementTypes {
           STRING_LITERAL,
           INTEGER_LITERAL,
           LIST_LITERAL,
+          PARENTHESIZED_EXPRESSION,
+          TUPLE_EXPRESSION,
           REFERENCE_EXPRESSION,
           TARGET_EXPRESSION,
           LIST_COMPREHENSION_EXPR,

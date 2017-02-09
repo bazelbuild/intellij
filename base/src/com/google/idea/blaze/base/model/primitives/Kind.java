@@ -56,6 +56,7 @@ public enum Kind {
   GO_LIBRARY("go_library", LanguageClass.GO),
   GO_APPENGINE_LIBRARY("go_appengine_library", LanguageClass.GO),
   GO_WRAP_CC("go_wrap_cc", LanguageClass.GO),
+  INTELLIJ_PLUGIN_DEBUG_TARGET("intellij_plugin_debug_target", LanguageClass.JAVA),
   ;
 
   static final ImmutableMap<String, Kind> STRING_TO_KIND = makeStringToKindMap();

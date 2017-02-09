@@ -31,7 +31,7 @@ import java.util.List;
 /** The data output by BlazeInfo. */
 public class BlazeRoots implements Serializable {
   public static final long serialVersionUID = 3L;
-  private static final Logger LOG = Logger.getInstance(BlazeRoots.class);
+  private static final Logger logger = Logger.getInstance(BlazeRoots.class);
 
   public static BlazeRoots build(
       BuildSystem buildSystem,
@@ -60,8 +60,8 @@ public class BlazeRoots implements Serializable {
     ExecutionRootPath blazeGenfilesExecutionRootPath =
         ExecutionRootPath.createAncestorRelativePath(executionRoot, new File(blazeGenfilesRoot));
     File externalSourceRootFile = new File(externalSourceRoot.trim());
-    LOG.assertTrue(blazeBinExecutionRootPath != null);
-    LOG.assertTrue(blazeGenfilesExecutionRootPath != null);
+    logger.assertTrue(blazeBinExecutionRootPath != null);
+    logger.assertTrue(blazeGenfilesExecutionRootPath != null);
     return new BlazeRoots(
         executionRoot,
         packagePaths,

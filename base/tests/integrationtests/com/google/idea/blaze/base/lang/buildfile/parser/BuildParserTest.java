@@ -63,7 +63,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testAssign() throws Exception {
-    assertThat(parse("a, b = 5\n")).isEqualTo("assignment(list(reference, target), int)");
+    assertThat(parse("a, b = 5\n")).isEqualTo("assignment(tuple(reference, target), int)");
     assertNoErrors();
   }
 
@@ -244,21 +244,40 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testEmptyTuple() throws Exception {
-    assertThat(parse("()")).isEqualTo("list");
-    assertNoErrors();
-  }
-
-  @Test
-  public void testTupleTrailingComma() throws Exception {
-    assertThat(parse("(42,)")).isEqualTo("list(int)");
+    assertThat(parse("()")).isEqualTo("tuple");
     assertNoErrors();
   }
 
   @Test
   public void testSingleton() throws Exception {
-    assertThat(parse("(42)")) // not a tuple!
-        .isEqualTo("list(int)");
+    assertThat(parse("(42)")).isEqualTo("parens(int)");
     assertNoErrors();
+  }
+
+  @Test
+  public void testTupleWithoutParens() throws Exception {
+    assertThat(parse("a,b = 1")).isEqualTo("assignment(tuple(reference, target), int)");
+    assertNoErrors();
+  }
+
+  @Test
+  public void testTupleWithParens() throws Exception {
+    assertThat(parse("(a,b) = 1"))
+        .isEqualTo("assignment(parens(tuple(reference, reference)), int)");
+    assertNoErrors();
+  }
+
+  @Test
+  public void testTupleTrailingComma() throws Exception {
+    assertThat(parse("(42,)")).isEqualTo("parens(tuple(int))");
+    assertNoErrors();
+  }
+
+  @Test
+  public void testTupleTrailingCommaWithoutParens() throws Exception {
+    // valid python, but not valid skylark
+    assertThat(parse("42,1,")).isEqualTo("tuple(int, int)");
+    assertContainsError("Trailing commas are allowed only in parenthesized tuples.");
   }
 
   @Test
@@ -370,21 +389,21 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
   @Test
   public void testPrecedence2() {
     assertThat(parse("('%sx' + 'foo') * 'bar'"))
-        .isEqualTo("binary_op(list(binary_op(string, string)), string)");
+        .isEqualTo("binary_op(parens(binary_op(string, string)), string)");
     assertNoErrors();
   }
 
   @Test
   public void testPrecedence3() {
     assertThat(parse("'%sx' % ('foo' + 'bar')"))
-        .isEqualTo("binary_op(string, list(binary_op(string, string)))");
+        .isEqualTo("binary_op(string, parens(binary_op(string, string)))");
     assertNoErrors();
   }
 
   @Test
   public void testPrecedence4() throws Exception {
     assertThat(parse("1 + - (2 - 3)"))
-        .isEqualTo("binary_op(int, positional(list(binary_op(int, int))))");
+        .isEqualTo("binary_op(int, positional(parens(binary_op(int, int))))");
     assertNoErrors();
   }
 

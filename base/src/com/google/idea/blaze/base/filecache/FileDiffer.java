@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 /** Provides a diffing service for a collection of files. */
 public final class FileDiffer {
-  private static Logger LOG = Logger.getInstance(FileDiffer.class);
+  private static Logger logger = Logger.getInstance(FileDiffer.class);
 
   private FileDiffer() {}
 
@@ -50,7 +50,7 @@ public final class FileDiffer {
     try {
       return ModifiedTimeScanner.readTimestamps(files);
     } catch (Exception e) {
-      LOG.error(e);
+      logger.error(e);
       return null;
     }
   }

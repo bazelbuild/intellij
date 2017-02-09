@@ -96,11 +96,11 @@ public final class BlazeCommandRunConfigurationCommonState extends RunConfigurat
     return null;
   }
 
-  public Boolean getRunOnDistributedExecutor() {
+  public boolean getRunOnDistributedExecutor() {
     return runOnDistributedExecutor.runOnDistributedExecutor;
   }
 
-  public void setRunOnDistributedExecutor(Boolean runOnDistributedExecutor) {
+  public void setRunOnDistributedExecutor(boolean runOnDistributedExecutor) {
     this.runOnDistributedExecutor.runOnDistributedExecutor = runOnDistributedExecutor;
   }
 

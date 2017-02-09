@@ -86,23 +86,27 @@ public class ExpressionParsing extends Parsing {
   }
 
   public void parseExpression(boolean insideParens) {
-    // handle lists without parens (e.g. 'a,b,c = 1')
-    PsiBuilder.Marker marker = insideParens ? null : builder.mark();
+    PsiBuilder.Marker tupleMarker = builder.mark();
     parseNonTupleExpression();
     if (currentToken() == TokenKind.COMMA) {
-      parseExpressionList();
-      if (marker != null) {
-        marker.done(BuildElementTypes.LIST_LITERAL);
-      }
-    } else if (marker != null) {
-      marker.drop();
+      parseExpressionList(insideParens);
+      tupleMarker.done(BuildElementTypes.TUPLE_EXPRESSION);
+    } else {
+      tupleMarker.drop();
     }
   }
 
-  // expr_list ::= ( ',' expr )* ','?
-  private void parseExpressionList() {
+  /**
+   * Parses a comma-separated list of expressions. It assumes that the first expression was already
+   * parsed, so it starts with a comma. It is used to parse tuples and list elements.<br>
+   * expr_list ::= ( ',' expr )* ','?
+   */
+  private void parseExpressionList(boolean trailingColonAllowed) {
     while (matches(TokenKind.COMMA)) {
       if (atAnyOfTokens(EXPR_LIST_TERMINATOR_SET)) {
+        if (!trailingColonAllowed) {
+          builder.error("Trailing commas are allowed only in parenthesized tuples.");
+        }
         break;
       }
       parseNonTupleExpression();
@@ -270,12 +274,12 @@ public class ExpressionParsing extends Parsing {
         marker = builder.mark();
         builder.advanceLexer();
         if (matches(TokenKind.RPAREN)) {
-          marker.done(BuildElementTypes.LIST_LITERAL);
+          marker.done(BuildElementTypes.TUPLE_EXPRESSION);
           return;
         }
         parseExpression(true);
         expect(TokenKind.RPAREN, true);
-        marker.done(BuildElementTypes.LIST_LITERAL);
+        marker.done(BuildElementTypes.PARENTHESIZED_EXPRESSION);
         return;
       case MINUS:
         marker = builder.mark();
@@ -405,7 +409,7 @@ public class ExpressionParsing extends Parsing {
         marker.done(BuildElementTypes.LIST_COMPREHENSION_EXPR);
         return;
       case COMMA:
-        parseExpressionList();
+        parseExpressionList(true);
         if (!matches(TokenKind.RBRACKET)) {
           builder.error("expected 'for' or ']'");
           syncPast(LIST_TERMINATOR_SET);
@@ -475,7 +479,7 @@ public class ExpressionParsing extends Parsing {
         expect(TokenKind.IN);
         parseNonTupleExpression(0);
       } else if (matches(TokenKind.IF)) {
-        parseExpression(true);
+        parseExpression(false);
       } else if (matches(closingBracket)) {
         return;
       } else {

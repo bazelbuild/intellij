@@ -46,17 +46,22 @@ public final class JavaIdeInfo implements Serializable {
   /** File containing dependencies. */
   @Nullable public final ArtifactLocation jdepsFile;
 
+  /** main_class attribute value for java_binary targets */
+  @Nullable public String javaBinaryMainClass;
+
   public JavaIdeInfo(
       Collection<LibraryArtifact> jars,
       Collection<LibraryArtifact> generatedJars,
       @Nullable LibraryArtifact filteredGenJar,
       @Nullable ArtifactLocation packageManifest,
-      @Nullable ArtifactLocation jdepsFile) {
+      @Nullable ArtifactLocation jdepsFile,
+      @Nullable String javaBinaryMainClass) {
     this.jars = jars;
     this.generatedJars = generatedJars;
     this.packageManifest = packageManifest;
     this.jdepsFile = jdepsFile;
     this.filteredGenJar = filteredGenJar;
+    this.javaBinaryMainClass = javaBinaryMainClass;
   }
 
   public static Builder builder() {
@@ -67,7 +72,8 @@ public final class JavaIdeInfo implements Serializable {
   public static class Builder {
     ImmutableList.Builder<LibraryArtifact> jars = ImmutableList.builder();
     ImmutableList.Builder<LibraryArtifact> generatedJars = ImmutableList.builder();
-    LibraryArtifact filteredGenJar;
+    @Nullable LibraryArtifact filteredGenJar;
+    @Nullable String mainClass;
 
     public Builder addJar(LibraryArtifact.Builder jar) {
       jars.add(jar.build());
@@ -84,8 +90,14 @@ public final class JavaIdeInfo implements Serializable {
       return this;
     }
 
+    public Builder setMainClass(@Nullable String mainClass) {
+      this.mainClass = mainClass;
+      return this;
+    }
+
     public JavaIdeInfo build() {
-      return new JavaIdeInfo(jars.build(), generatedJars.build(), filteredGenJar, null, null);
+      return new JavaIdeInfo(
+          jars.build(), generatedJars.build(), filteredGenJar, null, null, mainClass);
     }
   }
 }

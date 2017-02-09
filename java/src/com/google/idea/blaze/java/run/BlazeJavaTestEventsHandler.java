@@ -16,10 +16,11 @@
 package com.google.idea.blaze.java.run;
 
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
+import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
 import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags;
 import com.intellij.execution.Location;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
@@ -27,17 +28,36 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /** Provides java-specific methods needed by the SM-runner test UI. */
 public class BlazeJavaTestEventsHandler extends BlazeTestEventsHandler {
 
-  public BlazeJavaTestEventsHandler() {
-    super("Blaze Java Test");
+  @Override
+  protected EnumSet<Kind> handledKinds() {
+    return EnumSet.of(Kind.JAVA_TEST, Kind.ANDROID_ROBOLECTRIC_TEST, Kind.GWT_TEST);
+  }
+
+  /** Overridden to support parameterized tests, which use nested test_suite XML elements. */
+  @Override
+  public boolean ignoreSuite(TestSuite suite) {
+    if (suite.testSuites.isEmpty()) {
+      return false;
+    }
+    for (TestSuite child : suite.testSuites) {
+      // target/class names are fully-qualified; unqualified names denote parameterized methods
+      if (!child.name.contains(".")) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
@@ -46,20 +66,34 @@ public class BlazeJavaTestEventsHandler extends BlazeTestEventsHandler {
   }
 
   @Override
-  public String suiteLocationUrl(String name) {
+  public String suiteLocationUrl(@Nullable Kind kind, String name) {
     return JavaTestLocator.SUITE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + name;
   }
 
   @Override
-  public String testLocationUrl(String name, @Nullable String classname) {
+  public String testLocationUrl(
+      @Nullable Kind kind, String parentSuite, String name, @Nullable String classname) {
     if (classname == null) {
       return null;
     }
-    return JavaTestLocator.TEST_PROTOCOL + URLUtil.SCHEME_SEPARATOR + classname + "." + name;
+    String classComponent = JavaTestLocator.TEST_PROTOCOL + URLUtil.SCHEME_SEPARATOR + classname;
+    String parameterComponent = extractParameterComponent(name);
+    if (parameterComponent != null) {
+      return classComponent + "." + parentSuite + parameterComponent;
+    }
+    return classComponent + "." + name;
+  }
+
+  @Nullable
+  private static String extractParameterComponent(String name) {
+    if (name.startsWith("[") && name.contains("]")) {
+      return name.substring(0, name.indexOf(']') + 1);
+    }
+    return null;
   }
 
   @Override
-  public String suiteDisplayName(String rawName) {
+  public String suiteDisplayName(@Nullable Kind kind, String rawName) {
     String name = StringUtil.trimEnd(rawName, '.');
     int lastPointIx = name.lastIndexOf('.');
     return lastPointIx != -1 ? name.substring(lastPointIx + 1, name.length()) : name;
@@ -67,28 +101,29 @@ public class BlazeJavaTestEventsHandler extends BlazeTestEventsHandler {
 
   @Nullable
   @Override
-  public String getTestFilter(Project project, List<AbstractTestProxy> failedTests) {
-    GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
-    MultiMap<PsiClass, PsiMethod> failedMethodsPerClass = new MultiMap<>();
-    for (AbstractTestProxy test : failedTests) {
-      appendTest(failedMethodsPerClass, test.getLocation(project, projectScope));
+  public String getTestFilter(Project project, List<Location<?>> testLocations) {
+    Map<PsiClass, Collection<Location<?>>> failedClassesAndMethods = new HashMap<>();
+    for (Location<?> location : testLocations) {
+      appendTest(failedClassesAndMethods, location);
     }
-    String filter = BlazeJUnitTestFilterFlags.testFilterForClassesAndMethods(failedMethodsPerClass);
+    String filter =
+        BlazeJUnitTestFilterFlags.testFilterForClassesAndMethods(failedClassesAndMethods);
     return filter != null ? BlazeFlags.TEST_FILTER + "=" + filter : null;
   }
 
-  private static void appendTest(
-      MultiMap<PsiClass, PsiMethod> testMap, @Nullable Location<?> testLocation) {
-    if (testLocation == null) {
+  private static void appendTest(Map<PsiClass, Collection<Location<?>>> map, Location<?> location) {
+    PsiElement psi = location.getPsiElement();
+    if (psi instanceof PsiClass) {
+      map.computeIfAbsent((PsiClass) psi, k -> new HashSet<>());
       return;
     }
-    PsiElement method = testLocation.getPsiElement();
-    if (!(method instanceof PsiMethod)) {
+    if (!(psi instanceof PsiMethod)) {
       return;
     }
-    PsiClass psiClass = ((PsiMethod) method).getContainingClass();
-    if (psiClass != null) {
-      testMap.putValue(psiClass, (PsiMethod) method);
+    PsiClass psiClass = ((PsiMethod) psi).getContainingClass();
+    if (psiClass == null) {
+      return;
     }
+    map.computeIfAbsent(psiClass, k -> new HashSet<>()).add(location);
   }
 }

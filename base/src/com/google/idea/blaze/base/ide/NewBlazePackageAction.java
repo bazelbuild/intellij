@@ -21,7 +21,6 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.buildmodifier.BuildFileModifier;
 import com.google.idea.blaze.base.buildmodifier.FileSystemModifier;
-import com.google.idea.blaze.base.metrics.Action;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -33,9 +32,9 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedOperation;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
-import com.google.idea.blaze.base.scope.scopes.LoggedTimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.base.util.WorkspacePathUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.IdeView;
@@ -46,7 +45,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -60,7 +58,7 @@ import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 class NewBlazePackageAction extends BlazeProjectAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance(NewBlazePackageAction.class);
+  private static final Logger logger = Logger.getInstance(NewBlazePackageAction.class);
 
   private static final String BUILD_FILE_NAME = "BUILD";
 
@@ -75,8 +73,6 @@ class NewBlazePackageAction extends BlazeProjectAction implements DumbAware {
         new ScopedOperation() {
           @Override
           public void execute(@NotNull final BlazeContext context) {
-            context.push(new LoggedTimingScope(project, Action.CREATE_BLAZE_PACKAGE));
-
             if (view == null || project == null) {
               return;
             }
@@ -96,8 +92,8 @@ class NewBlazePackageAction extends BlazeProjectAction implements DumbAware {
             final Label newRule = newBlazePackageDialog.getNewRule();
             final Kind newRuleKind = newBlazePackageDialog.getNewRuleKind();
             // If we returned OK, we should have a non null result
-            LOG.assertTrue(newRule != null);
-            LOG.assertTrue(newRuleKind != null);
+            logger.assertTrue(newRule != null);
+            logger.assertTrue(newRuleKind != null);
 
             context.output(
                 new StatusOutput(
@@ -113,7 +109,7 @@ class NewBlazePackageAction extends BlazeProjectAction implements DumbAware {
                 WorkspaceRoot.fromProject(project).fileForPath(newRule.blazePackage());
             VirtualFile virtualFile = VfsUtil.findFileByIoFile(newDirectory, true);
             // We just created this file, it should exist
-            LOG.assertTrue(virtualFile != null);
+            logger.assertTrue(virtualFile != null);
             PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
             view.selectElement(psiFile);
           }
@@ -217,13 +213,7 @@ class NewBlazePackageAction extends BlazeProjectAction implements DumbAware {
       return false;
     }
     WorkspacePath workspacePath = workspaceRoot.workspacePathFor(virtualFile);
-    return importRoots
-        .rootDirectories()
-        .stream()
-        .anyMatch(
-            importRoot ->
-                FileUtil.isAncestor(
-                    importRoot.relativePath(), workspacePath.relativePath(), false));
+    return WorkspacePathUtil.isUnderAnyWorkspacePath(importRoots.rootDirectories(), workspacePath);
   }
 
   @Nullable

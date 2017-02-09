@@ -34,7 +34,8 @@ import javax.annotation.Nullable;
 /** Stores a cache of blaze project data and issues any side effects when that data is updated. */
 public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
 
-  private static final Logger LOG = Logger.getInstance(BlazeProjectDataManagerImpl.class.getName());
+  private static final Logger logger =
+      Logger.getInstance(BlazeProjectDataManagerImpl.class.getName());
 
   private final Project project;
 
@@ -89,7 +90,7 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
       context.output(
           new StatusOutput(
               String.format("Stale %s project cache, sync will be needed", buildSystemName)));
-      LOG.info(e);
+      logger.info(e);
     }
 
     this.blazeProjectData = blazeProjectData;
@@ -110,7 +111,7 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
               File file = getCacheFile(project, importSettings);
               SerializationUtil.saveToDisk(file, blazeProjectData);
             } catch (IOException e) {
-              LOG.error(
+              logger.error(
                   "Could not save cache data file to disk. Please resync project. Error: "
                       + e.getMessage());
             }

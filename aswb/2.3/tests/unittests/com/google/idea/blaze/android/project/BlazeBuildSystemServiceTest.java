@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
@@ -58,6 +59,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiElement;
@@ -124,7 +126,8 @@ public class BlazeBuildSystemServiceTest extends BlazeTestCase {
     when(buildTargetPsi.getContainingFile()).thenReturn(psiFile);
     when(buildTargetPsi.getTextOffset()).thenReturn(1337);
 
-    VirtualFile buildFile = TempFileSystem.getInstance().findFileByPath("/foo/BUILD");
+    VirtualFile buildFile =
+        VirtualFileSystemProvider.getInstance().getSystem().findFileByPath("/foo/BUILD");
     assertThat(buildFile).isNotNull();
     when(psiFile.getVirtualFile()).thenReturn(buildFile);
 
@@ -149,7 +152,8 @@ public class BlazeBuildSystemServiceTest extends BlazeTestCase {
     when(BuildReferenceManager.getInstance(project).resolveLabel(new Label("//foo:bar")))
         .thenReturn(null);
 
-    VirtualFile buildFile = TempFileSystem.getInstance().findFileByPath("/foo/BUILD");
+    VirtualFile buildFile =
+        VirtualFileSystemProvider.getInstance().getSystem().findFileByPath("/foo/BUILD");
     assertThat(buildFile).isNotNull();
 
     String dependency = "com.android.foo:bar"; // Doesn't matter.
@@ -185,7 +189,8 @@ public class BlazeBuildSystemServiceTest extends BlazeTestCase {
     projectServices.register(BuildReferenceManager.class, mock(BuildReferenceManager.class));
     projectServices.register(LazyRangeMarkerFactory.class, mock(LazyRangeMarkerFactoryImpl.class));
 
-    applicationServices.register(TempFileSystem.class, new MockFileSystem("/foo/BUILD"));
+    applicationServices.register(
+        VirtualFileSystemProvider.class, new MockVirtualFileSystemProvider("/foo/BUILD"));
 
     AndroidResourceModuleRegistry moduleRegistry = new AndroidResourceModuleRegistry();
     moduleRegistry.put(
@@ -249,6 +254,20 @@ public class BlazeBuildSystemServiceTest extends BlazeTestCase {
     @Override
     public VirtualFile findFileByIoFile(File file) {
       return findFileByPath(file.getPath());
+    }
+  }
+
+  private static class MockVirtualFileSystemProvider implements VirtualFileSystemProvider {
+
+    private final LocalFileSystem fileSystem;
+
+    MockVirtualFileSystemProvider(String... paths) {
+      fileSystem = new MockFileSystem(paths);
+    }
+
+    @Override
+    public LocalFileSystem getSystem() {
+      return fileSystem;
     }
   }
 }

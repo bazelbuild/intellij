@@ -109,6 +109,16 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
   }
 
   @Override
+  public String getDefaultProjectName(String workspaceName) {
+    File projectViewFile = new File(getProjectViewPath());
+    File projectViewDirectory = projectViewFile.getParentFile();
+    if (projectViewDirectory == null) {
+      return workspaceName;
+    }
+    return projectViewDirectory.getName();
+  }
+
+  @Override
   public void commit() {
     userSettings.put(LAST_WORKSPACE_PATH, getProjectViewPath());
     projectViewPathField.addCurrentTextToHistory();

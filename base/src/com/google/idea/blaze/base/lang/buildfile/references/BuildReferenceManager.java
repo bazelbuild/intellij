@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.lang.buildfile.references;
 
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.completion.BuildLookupElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
@@ -26,16 +27,12 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -100,7 +97,8 @@ public class BuildReferenceManager {
 
   @Nullable
   public PsiFileSystemItem resolveFile(File file) {
-    VirtualFile vf = getFileSystem().findFileByPath(file.getPath());
+    VirtualFile vf =
+        VirtualFileSystemProvider.getInstance().getSystem().findFileByPath(file.getPath());
     if (vf == null) {
       return null;
     }
@@ -152,7 +150,8 @@ public class BuildReferenceManager {
     if (file == null || !provider.isDirectory(file)) {
       return BuildLookupElement.EMPTY_ARRAY;
     }
-    VirtualFile vf = getFileSystem().findFileByPath(file.getPath());
+    VirtualFile vf =
+        VirtualFileSystemProvider.getInstance().getSystem().findFileByPath(file.getPath());
     if (vf == null || !vf.isDirectory()) {
       return BuildLookupElement.EMPTY_ARRAY;
     }
@@ -212,7 +211,10 @@ public class BuildReferenceManager {
     if (packageDirectory == null || !provider.isDirectory(packageDirectory)) {
       return null;
     }
-    VirtualFile vf = getFileSystem().findFileByPath(packageDirectory.getPath());
+    VirtualFile vf =
+        VirtualFileSystemProvider.getInstance()
+            .getSystem()
+            .findFileByPath(packageDirectory.getPath());
     if (vf == null) {
       return null;
     }
@@ -247,12 +249,5 @@ public class BuildReferenceManager {
   public WorkspacePath getWorkspaceRelativePath(String absolutePath) {
     WorkspacePathResolver pathResolver = getWorkspacePathResolver();
     return pathResolver != null ? pathResolver.getWorkspacePath(new File(absolutePath)) : null;
-  }
-
-  private static VirtualFileSystem getFileSystem() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return TempFileSystem.getInstance();
-    }
-    return LocalFileSystem.getInstance();
   }
 }

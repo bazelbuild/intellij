@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.sync.projectstructure;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
@@ -40,22 +40,20 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /** Module editor implementation. */
 public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
-  private static final Logger LOG = Logger.getInstance(ModuleEditorImpl.class.getName());
+  private static final Logger logger = Logger.getInstance(ModuleEditorImpl.class.getName());
   private static final String EXTERNAL_SYSTEM_ID_KEY = "external.system.id";
   private static final String EXTERNAL_SYSTEM_ID_VALUE = "Blaze";
 
   private final Project project;
   private final ModifiableModuleModel moduleModel;
   private final File imlDirectory;
-  private final Set<String> moduleNames = Sets.newHashSet();
-  @VisibleForTesting public Collection<ModifiableRootModel> modifiableModels = Lists.newArrayList();
+  @VisibleForTesting public Map<String, ModifiableRootModel> modules = Maps.newHashMap();
 
   public ModuleEditorImpl(Project project, BlazeImportSettings importSettings) {
     this.project = project;
@@ -64,18 +62,9 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
     this.imlDirectory = getImlDirectory(importSettings);
     if (!FileAttributeProvider.getInstance().exists(imlDirectory)) {
       if (!imlDirectory.mkdirs()) {
-        LOG.error("Could not make directory: " + imlDirectory.getPath());
+        logger.error("Could not make directory: " + imlDirectory.getPath());
       }
     }
-  }
-
-  @Override
-  public boolean registerModule(String moduleName) {
-    boolean hasModule = moduleModel.findModuleByName(moduleName) != null;
-    if (hasModule) {
-      moduleNames.add(moduleName);
-    }
-    return hasModule;
   }
 
   @Override
@@ -88,16 +77,10 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
       module.setOption(EXTERNAL_SYSTEM_ID_KEY, EXTERNAL_SYSTEM_ID_VALUE);
     }
     module.setOption(Module.ELEMENT_TYPE, moduleType.getId());
-    moduleNames.add(moduleName);
-    return module;
-  }
 
-  @Override
-  public ModifiableRootModel editModule(Module module) {
     ModifiableRootModel modifiableModel =
         ModuleRootManager.getInstance(module).getModifiableModel();
-    modifiableModels.add(modifiableModel);
-
+    modules.put(module.getName(), modifiableModel);
     modifiableModel.clear();
     modifiableModel.inheritSdk();
     CompilerModuleExtension compilerSettings =
@@ -106,7 +89,12 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
       compilerSettings.inheritCompilerOutputPath(false);
     }
 
-    return modifiableModel;
+    return module;
+  }
+
+  @Override
+  public ModifiableRootModel editModule(Module module) {
+    return modules.get(module.getName());
   }
 
   @Override
@@ -118,7 +106,7 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
   public void commitWithGc(BlazeContext context) {
     List<Module> orphanModules = Lists.newArrayList();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (!moduleNames.contains(module.getName())) {
+      if (!modules.containsKey(module.getName())) {
         orphanModules.add(module);
       }
     }
@@ -135,15 +123,14 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
       }
     }
 
-    context.output(
-        PrintOutput.log(String.format("Workspace has %s modules", modifiableModels.size())));
+    context.output(PrintOutput.log(String.format("Workspace has %s modules", modules.size())));
 
     commit();
   }
 
   @Override
   public void commit() {
-    ModifiableModelCommitter.multiCommit(modifiableModels, moduleModel);
+    ModifiableModelCommitter.multiCommit(modules.values(), moduleModel);
   }
 
   private File getImlDirectory(BlazeImportSettings importSettings) {
@@ -165,7 +152,7 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
                   try {
                     imlVirtualFile.delete(this);
                   } catch (IOException e) {
-                    LOG.warn(
+                    logger.warn(
                         String.format(
                             "Could not delete file: %s, will try to continue anyway.",
                             imlVirtualFile.getPath()),

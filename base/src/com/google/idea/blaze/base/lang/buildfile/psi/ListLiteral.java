@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.lang.buildfile.psi;
 import com.google.common.collect.ImmutableList;
 import com.intellij.lang.ASTNode;
 
-/** PSI element for list and tuple literals */
+/** PSI element for list literals */
 public class ListLiteral extends BuildListType<Expression> implements LiteralExpression {
 
   public ListLiteral(ASTNode astNode) {
@@ -51,6 +51,6 @@ public class ListLiteral extends BuildListType<Expression> implements LiteralExp
 
   @Override
   public ImmutableList<Character> getEndChars() {
-    return ImmutableList.of(')', ']');
+    return ImmutableList.of(']');
   }
 }
