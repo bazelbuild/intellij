@@ -19,7 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.util.indexing.FileContent;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Empty stub builder to suppress errors when IntelliJ is looking for stubs. */
 public class BuildFileStubBuilder implements BinaryFileStubBuilder {

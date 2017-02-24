@@ -75,7 +75,7 @@ public class BlazeAndroidTestClassRunConfigurationProducer
     }
     sourceElement.set(testClass);
 
-    TargetIdeInfo target = RunUtil.targetForTestClass(context.getProject(), testClass, null);
+    TargetIdeInfo target = RunUtil.targetForTestClass(testClass, null);
     if (target == null) {
       return false;
     }

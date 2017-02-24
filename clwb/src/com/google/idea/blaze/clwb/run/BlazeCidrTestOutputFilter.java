@@ -22,7 +22,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.openapi.project.Project;
 import java.io.File;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Identifies file paths in CLion test output which aren't found by CidrPathConsoleFilter. */
 public class BlazeCidrTestOutputFilter extends RegexpFilter {

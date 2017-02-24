@@ -16,7 +16,7 @@
 package com.google.idea.blaze.android.sync.sdk;
 
 import com.android.tools.idea.updater.configure.SdkUpdaterConfigurableProvider;
-import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
+import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -49,7 +49,7 @@ public class SdkUtil {
     if (androidSdkPlatform == null) {
       return null;
     }
-    Sdk sdk = AndroidSdkUtils.findSuitableAndroidSdk(androidSdkPlatform.androidSdk);
+    Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdkPlatform.androidSdk);
     if (sdk == null) {
       return null;
     }

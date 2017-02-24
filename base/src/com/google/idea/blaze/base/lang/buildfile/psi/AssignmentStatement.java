@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.lang.buildfile.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
@@ -36,7 +37,8 @@ public class AssignmentStatement extends BuildElementImpl implements Statement {
   /** Returns the RHS of the assignment */
   @Nullable
   public Expression getAssignedValue() {
-    return childToPsi(BuildElementTypes.EXPRESSIONS, 1);
+    PsiElement psi = childToPsi(BuildElementTypes.EXPRESSIONS, 1);
+    return psi instanceof Expression ? (Expression) psi : null;
   }
 
   @Override

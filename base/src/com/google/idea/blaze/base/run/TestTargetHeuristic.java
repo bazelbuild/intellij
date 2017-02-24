@@ -16,9 +16,10 @@
 package com.google.idea.blaze.base.run;
 
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -44,7 +45,7 @@ public interface TestTargetHeuristic {
     }
     Collection<TargetIdeInfo> rules =
         TestTargetFinder.getInstance(element.getProject()).testTargetsForSourceFile(file);
-    return chooseTestTargetForSourceFile(file, rules, null);
+    return chooseTestTargetForSourceFile(element.getProject(), file, rules, null);
   }
 
   static File getContainingFile(PsiElement element) {
@@ -62,13 +63,16 @@ public interface TestTargetHeuristic {
    */
   @Nullable
   static Label chooseTestTargetForSourceFile(
-      File sourceFile, Collection<TargetIdeInfo> targets, @Nullable TestIdeInfo.TestSize testSize) {
+      Project project,
+      File sourceFile,
+      Collection<TargetIdeInfo> targets,
+      @Nullable TestSize testSize) {
 
     for (TestTargetHeuristic filter : EP_NAME.getExtensions()) {
       TargetIdeInfo match =
           targets
               .stream()
-              .filter(target -> filter.matchesSource(target, sourceFile, testSize))
+              .filter(target -> filter.matchesSource(project, target, sourceFile, testSize))
               .findFirst()
               .orElse(null);
 
@@ -81,5 +85,5 @@ public interface TestTargetHeuristic {
 
   /** Returns true if the rule and source file match, according to this heuristic. */
   boolean matchesSource(
-      TargetIdeInfo target, File sourceFile, @Nullable TestIdeInfo.TestSize testSize);
+      Project project, TargetIdeInfo target, File sourceFile, @Nullable TestSize testSize);
 }

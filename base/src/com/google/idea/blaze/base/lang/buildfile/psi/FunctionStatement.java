@@ -19,8 +19,8 @@ import com.google.idea.blaze.base.lang.buildfile.references.QuoteType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
+import javax.annotation.Nullable;
 import javax.swing.Icon;
-import org.jetbrains.annotations.Nullable;
 
 /** PSI element for a function definition statement. */
 public class FunctionStatement extends NamedBuildElement

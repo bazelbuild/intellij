@@ -18,7 +18,9 @@ package com.google.idea.blaze.android.run.test.smrunner;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.Iterables;
-import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
+import com.google.idea.blaze.android.AndroidIntegrationTestCleanupHelper;
+import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
+import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.execution.Location;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -28,15 +30,20 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import javax.annotation.Nullable;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Integration tests for {@link BlazeAndroidTestEventsHandler}. */
 @RunWith(JUnit4.class)
-public class BlazeAndroidTestEventsHandlerTest extends BlazeAndroidIntegrationTestCase {
+public class BlazeAndroidTestEventsHandlerTest extends BlazeIntegrationTestCase {
 
+  @Rule
+  public final AndroidIntegrationTestSetupRule androidSetupRule =
+      new AndroidIntegrationTestSetupRule();
   private final BlazeAndroidTestEventsHandler handler = new BlazeAndroidTestEventsHandler();
 
   @Before
@@ -54,6 +61,11 @@ public class BlazeAndroidTestEventsHandlerTest extends BlazeAndroidIntegrationTe
         new WorkspacePath("org/junit/runners/JUnit4"),
         "package org.junit.runners;",
         "public class JUnit4 {}");
+  }
+
+  @After
+  public final void doTeardown() {
+    AndroidIntegrationTestCleanupHelper.cleanUp(getProject());
   }
 
   @Test

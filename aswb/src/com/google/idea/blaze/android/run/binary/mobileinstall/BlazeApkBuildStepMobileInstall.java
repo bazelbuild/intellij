@@ -23,11 +23,11 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
+import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
@@ -99,7 +99,8 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
             }
             BlazeCommand.Builder command =
                 BlazeCommand.builder(
-                    Blaze.getBuildSystem(project), BlazeCommandName.MOBILE_INSTALL);
+                    Blaze.getBuildSystemProvider(project).getBinaryPath(),
+                    BlazeCommandName.MOBILE_INSTALL);
             command.addBlazeFlags(BlazeFlags.adbSerialFlags(device.getSerialNumber()));
 
             if (USE_SDK_ADB.getValue()) {
@@ -186,7 +187,7 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
     if (androidSdkPlatform == null) {
       return null;
     }
-    Sdk sdk = AndroidSdkUtils.findSuitableAndroidSdk(androidSdkPlatform.androidSdk);
+    Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdkPlatform.androidSdk);
     if (sdk == null) {
       return null;
     }

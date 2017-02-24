@@ -19,7 +19,6 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -36,6 +35,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /** Modifies content entries based on project data. */
 public class ContentEntryEditor {
@@ -45,6 +45,7 @@ public class ContentEntryEditor {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
+      DirectoryStructure rootDirectoryStructure,
       ModifiableRootModel modifiableRootModel) {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, Blaze.getBuildSystem(project))
@@ -60,9 +61,9 @@ public class ContentEntryEditor {
 
     List<ContentEntry> contentEntries = Lists.newArrayList();
     for (WorkspacePath rootDirectory : rootDirectories) {
-      File root = workspaceRoot.fileForPath(rootDirectory);
+      File rootFile = workspaceRoot.fileForPath(rootDirectory);
       ContentEntry contentEntry =
-          modifiableRootModel.addContentEntry(UrlUtil.pathToUrl(root.getPath()));
+          modifiableRootModel.addContentEntry(UrlUtil.pathToUrl(rootFile.getPath()));
       contentEntries.add(contentEntry);
 
       for (WorkspacePath exclude : excludesByRootDirectory.get(rootDirectory)) {
@@ -72,7 +73,7 @@ public class ContentEntryEditor {
 
       ImmutableMap<File, SourceFolder> sourceFolders =
           provider.initializeSourceFolders(contentEntry);
-      SourceFolder rootSource = sourceFolders.get(root);
+      SourceFolder rootSource = sourceFolders.get(rootFile);
       walkFileSystem(
           workspaceRoot,
           testConfig,
@@ -81,7 +82,8 @@ public class ContentEntryEditor {
           provider,
           sourceFolders,
           rootSource,
-          root);
+          rootDirectory,
+          rootDirectoryStructure.directories.get(rootDirectory));
     }
   }
 
@@ -93,20 +95,12 @@ public class ContentEntryEditor {
       SourceFolderProvider provider,
       ImmutableMap<File, SourceFolder> sourceFolders,
       SourceFolder parent,
-      File file) {
-    if (!FileAttributeProvider.getInstance().isDirectory(file)) {
-      return;
-    }
-    WorkspacePath workspacePath;
-    try {
-      workspacePath = workspaceRoot.workspacePathFor(file);
-    } catch (IllegalArgumentException e) {
-      // stop at directories with unhandled characters.
-      return;
-    }
+      WorkspacePath workspacePath,
+      DirectoryStructure directoryStructure) {
     if (excludedDirectories.contains(workspacePath)) {
       return;
     }
+    File file = workspaceRoot.fileForPath(workspacePath);
     boolean isTest = testConfig.isTestSource(workspacePath.relativePath());
     SourceFolder current = sourceFolders.get(new File(file.getPath()));
     SourceFolder currentOrParent = current != null ? current : parent;
@@ -117,11 +111,8 @@ public class ContentEntryEditor {
         contentEntry.removeSourceFolder(current);
       }
     }
-    File[] children = FileAttributeProvider.getInstance().listFiles(file);
-    if (children == null) {
-      return;
-    }
-    for (File child : children) {
+    for (Map.Entry<WorkspacePath, DirectoryStructure> child :
+        directoryStructure.directories.entrySet()) {
       walkFileSystem(
           workspaceRoot,
           testConfig,
@@ -130,7 +121,8 @@ public class ContentEntryEditor {
           provider,
           sourceFolders,
           currentOrParent,
-          child);
+          child.getKey(),
+          child.getValue());
     }
   }
 

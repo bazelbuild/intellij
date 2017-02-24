@@ -68,11 +68,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** The UI control to collect project settings when importing a Blaze project. */
 public final class BlazeEditProjectViewControl {

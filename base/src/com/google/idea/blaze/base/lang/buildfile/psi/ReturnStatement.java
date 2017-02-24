@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.lang.buildfile.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import javax.annotation.Nullable;
 
 /** A wrapper Statement class for return expressions. */
@@ -27,7 +28,8 @@ public class ReturnStatement extends BuildElementImpl implements Statement {
 
   @Nullable
   public Expression getReturnExpression() {
-    return childToPsi(BuildElementTypes.EXPRESSIONS, 0);
+    PsiElement psi = childToPsi(BuildElementTypes.EXPRESSIONS, 0);
+    return psi instanceof Expression ? (Expression) psi : null;
   }
 
   @Override

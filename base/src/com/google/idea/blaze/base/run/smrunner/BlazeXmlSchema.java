@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.run.smrunner;
 import com.google.common.collect.Lists;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Objects;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -95,6 +96,40 @@ public class BlazeXmlSchema {
 
     @XmlElement(name = "testcase")
     List<TestCase> testCases = Lists.newArrayList();
+
+    /** Used to merge test suites from a single target, split across multiple shards */
+    private void addSuite(TestSuite suite) {
+      for (TestSuite existing : testSuites) {
+        if (Objects.equals(existing.name, suite.name)) {
+          existing.mergeWithSuite(suite);
+          return;
+        }
+      }
+      testSuites.add(suite);
+    }
+
+    private void mergeWithSuite(TestSuite suite) {
+      for (TestSuite child : suite.testSuites) {
+        addSuite(child);
+      }
+      testDecorators.addAll(suite.testDecorators);
+      testCases.addAll(suite.testCases);
+      tests += suite.tests;
+      failures += suite.failures;
+      errors += suite.errors;
+      skipped += suite.skipped;
+      disabled += suite.disabled;
+      time += suite.time;
+    }
+  }
+
+  /** Used to merge test suites from a single target, split across multiple shards */
+  static TestSuite mergeSuites(List<TestSuite> suites) {
+    TestSuite outer = new TestSuite();
+    for (TestSuite suite : suites) {
+      outer.addSuite(suite);
+    }
+    return outer;
   }
 
   static class TestCase {

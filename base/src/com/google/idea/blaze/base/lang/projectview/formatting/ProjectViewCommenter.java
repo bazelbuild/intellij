@@ -19,7 +19,7 @@ import com.google.idea.blaze.base.lang.projectview.lexer.ProjectViewTokenType;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Supports (un)commenting lines via IntelliJ */
 public class ProjectViewCommenter implements CodeDocumentationAwareCommenter {

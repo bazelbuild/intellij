@@ -16,10 +16,13 @@
 package com.google.idea.blaze.java.run;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BuildFlagsProvider;
@@ -60,8 +63,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
   @Override
   protected void initTest(
       @NotNull Container applicationServices, @NotNull Container projectServices) {
-    projectServices.register(
-        BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
+    projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
     ExperimentService experimentService = new MockExperimentService();
@@ -75,6 +77,11 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
             BlazeCommandRunConfigurationHandlerProvider.EP_NAME,
             BlazeCommandRunConfigurationHandlerProvider.class);
     handlerProviderEp.registerExtension(new BlazeCommandGenericRunConfigurationHandlerProvider());
+    ExtensionPointImpl<BuildSystemProvider> buildSystemProviderExtensionPoint =
+        registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
+    BuildSystemProvider buildSystemProvider = mock(BuildSystemProvider.class);
+    when(buildSystemProvider.getBinaryPath()).thenReturn("/usr/bin/blaze");
+    buildSystemProviderExtensionPoint.registerExtension(buildSystemProvider);
 
     configuration =
         new BlazeCommandRunConfigurationType().getFactory().createTemplateConfiguration(project);
@@ -93,7 +100,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                     configuration,
                     ProjectViewSet.builder().build(),
                     ImmutableList.of(),
-                    false /* debug */)
+                    /* debug */ false)
                 .toList())
         .isEqualTo(
             ImmutableList.of(
@@ -102,7 +109,6 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                 BlazeFlags.getToolTagFlag(),
                 "--flag1",
                 "--flag2",
-                "--test_output=streamed",
                 "--",
                 "//label:rule"));
   }
@@ -119,7 +125,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                     configuration,
                     ProjectViewSet.builder().build(),
                     ImmutableList.of(),
-                    true /* debug */)
+                    /* debug */ true)
                 .toList())
         .isEqualTo(
             ImmutableList.of(
@@ -143,7 +149,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                     configuration,
                     ProjectViewSet.builder().build(),
                     ImmutableList.of(),
-                    true /* debug */)
+                    /* debug */ true)
                 .toList())
         .isEqualTo(
             ImmutableList.of(

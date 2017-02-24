@@ -19,9 +19,13 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import java.io.File;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,19 +36,23 @@ import org.junit.runners.JUnit4;
 public class ExecutionRootPathResolverTest extends BlazeTestCase {
 
   private static final WorkspaceRoot WORKSPACE_ROOT = new WorkspaceRoot(new File("/path/to/root"));
-  private static final String EXECUTION_ROOT = "/path/to/_blaze_user/1234bf129e/root";
+  private static final String EXECUTION_ROOT = "/path/to/_bazel_user/1234bf129e/root";
 
-  private static final BlazeRoots BLAZE_ROOTS =
-      new BlazeRoots(
-          new File(EXECUTION_ROOT),
-          ImmutableList.of(WORKSPACE_ROOT.directory()),
-          new ExecutionRootPath("blaze-out/crosstool/bin"),
-          new ExecutionRootPath("blaze-out/crosstool/genfiles"),
-          null);
+  private ExecutionRootPathResolver pathResolver;
 
-  private final ExecutionRootPathResolver pathResolver =
-      new ExecutionRootPathResolver(
-          BLAZE_ROOTS, new WorkspacePathResolverImpl(WORKSPACE_ROOT, BLAZE_ROOTS));
+  @Override
+  protected void initTest(Container applicationServices, Container projectServices) {
+    ExtensionPoint<BuildSystemProvider> extensionPoint =
+        registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
+    extensionPoint.registerExtension(new BazelBuildSystemProvider());
+
+    pathResolver =
+        new ExecutionRootPathResolver(
+            BuildSystem.Bazel,
+            WORKSPACE_ROOT,
+            new File(EXECUTION_ROOT),
+            new WorkspacePathResolverImpl(WORKSPACE_ROOT));
+  }
 
   @Test
   public void testExternalWorkspacePathRelativeToExecRoot() {
@@ -57,9 +65,9 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
   public void testGenfilesPathRelativeToExecRoot() {
     ImmutableList<File> files =
         pathResolver.resolveToIncludeDirectories(
-            new ExecutionRootPath("blaze-out/crosstool/genfiles/res/normal"));
+            new ExecutionRootPath("bazel-out/crosstool/genfiles/res/normal"));
     assertThat(files)
-        .containsExactly(new File(EXECUTION_ROOT, "blaze-out/crosstool/genfiles/res/normal"));
+        .containsExactly(new File(EXECUTION_ROOT, "bazel-out/crosstool/genfiles/res/normal"));
   }
 
   @Test
@@ -67,5 +75,15 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
     ImmutableList<File> files =
         pathResolver.resolveToIncludeDirectories(new ExecutionRootPath("tools/fast"));
     assertThat(files).containsExactly(WORKSPACE_ROOT.fileForPath(new WorkspacePath("tools/fast")));
+  }
+
+  @Test
+  public void testGenfilesPathWithDifferentConfigSettingStillResolves() {
+    ImmutableList<File> files =
+        pathResolver.resolveToIncludeDirectories(
+            new ExecutionRootPath("bazel-out/arm-linux-fastbuild/genfiles/res/normal"));
+    assertThat(files)
+        .containsExactly(
+            new File(EXECUTION_ROOT, "bazel-out/arm-linux-fastbuild/genfiles/res/normal"));
   }
 }

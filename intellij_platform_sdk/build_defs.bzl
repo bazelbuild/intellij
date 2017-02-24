@@ -29,6 +29,10 @@ DIRECT_IJ_PRODUCTS = {
         ide="android-studio",
         directory="android_studio_2_3_0_4",
     ),
+    "android-studio-2.3.0.6": struct(
+        ide="android-studio",
+        directory="android_studio_2_3_0_6",
+    ),
     "clion-162.1967.7": struct(
         ide="clion",
         directory="CL_162_1967_7",
@@ -119,9 +123,9 @@ def select_for_ide(intellij=None, android_studio=None, clion=None, default=None)
       ),
     )
   """
-  intellij = intellij or default
-  android_studio = android_studio or default
-  clion = clion or default
+  intellij = intellij if intellij != None else default
+  android_studio = android_studio if android_studio != None else default
+  clion = clion if clion != None else default
 
   ide_to_value = {
       "intellij" : intellij,

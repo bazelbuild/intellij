@@ -19,7 +19,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import java.io.File;
@@ -31,20 +30,10 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class WorkspacePathResolverImplTest extends BlazeTestCase {
   private static final WorkspaceRoot WORKSPACE_ROOT = new WorkspaceRoot(new File("/path/to/root"));
-  private static final String EXECUTION_ROOT = "/path/to/_blaze_user/1234bf129e/root";
-
-  private static final BlazeRoots BLAZE_CITC_ROOTS =
-      new BlazeRoots(
-          new File(EXECUTION_ROOT),
-          ImmutableList.of(WORKSPACE_ROOT.directory()),
-          new ExecutionRootPath("blaze-out/crosstool/bin"),
-          new ExecutionRootPath("blaze-out/crosstool/genfiles"),
-          null);
 
   @Test
   public void testResolveToIncludeDirectories() {
-    WorkspacePathResolver workspacePathResolver =
-        new WorkspacePathResolverImpl(WORKSPACE_ROOT, BLAZE_CITC_ROOTS);
+    WorkspacePathResolver workspacePathResolver = new WorkspacePathResolverImpl(WORKSPACE_ROOT);
     ImmutableList<File> files =
         workspacePathResolver.resolveToIncludeDirectories(new WorkspacePath("tools/fast"));
     assertThat(files).containsExactly(new File("/path/to/root/tools/fast"));
@@ -52,11 +41,18 @@ public class WorkspacePathResolverImplTest extends BlazeTestCase {
 
   @Test
   public void testResolveToIncludeDirectoriesForExecRootPath() {
-    WorkspacePathResolver workspacePathResolver =
-        new WorkspacePathResolverImpl(WORKSPACE_ROOT, BLAZE_CITC_ROOTS);
+    WorkspacePathResolver workspacePathResolver = new WorkspacePathResolverImpl(WORKSPACE_ROOT);
     ImmutableList<File> files =
         workspacePathResolver.resolveToIncludeDirectories(
             new WorkspacePath("blaze-out/crosstool/bin/tools/fast"));
     assertThat(files).containsExactly(new File("/path/to/root/blaze-out/crosstool/bin/tools/fast"));
+  }
+
+  @Test
+  public void testResolveToFile() {
+    WorkspacePathResolver workspacePathResolver = new WorkspacePathResolverImpl(WORKSPACE_ROOT);
+    WorkspacePath relativePath = new WorkspacePath("third_party/tools");
+    assertThat(workspacePathResolver.resolveToFile(relativePath))
+        .isEqualTo(WORKSPACE_ROOT.fileForPath(relativePath));
   }
 }

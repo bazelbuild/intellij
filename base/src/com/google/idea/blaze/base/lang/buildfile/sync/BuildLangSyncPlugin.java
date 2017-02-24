@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.sync;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
@@ -62,7 +62,7 @@ public class BuildLangSyncPlugin extends BlazeSyncPlugin.Adapter {
       @Nullable SyncState previousSyncState) {
 
     LanguageSpecResult spec =
-        getBuildLanguageSpec(project, workspaceRoot, previousSyncState, context);
+        getBuildLanguageSpec(project, workspaceRoot, projectViewSet, previousSyncState, context);
     if (spec != null) {
       syncStateBuilder.put(LanguageSpecResult.class, spec);
     }
@@ -72,6 +72,7 @@ public class BuildLangSyncPlugin extends BlazeSyncPlugin.Adapter {
   private static LanguageSpecResult getBuildLanguageSpec(
       Project project,
       WorkspaceRoot workspace,
+      ProjectViewSet projectViewSet,
       @Nullable SyncState previousSyncState,
       BlazeContext parentContext) {
     LanguageSpecResult oldResult =
@@ -84,7 +85,8 @@ public class BuildLangSyncPlugin extends BlazeSyncPlugin.Adapter {
             parentContext,
             (context) -> {
               context.push(new TimingScope("BUILD language spec"));
-              BuildLanguageSpec spec = parseLanguageSpec(project, workspace, context);
+              BuildLanguageSpec spec =
+                  parseLanguageSpec(project, workspace, projectViewSet, context);
               if (spec != null) {
                 return new LanguageSpecResult(spec, System.currentTimeMillis());
               }
@@ -95,7 +97,10 @@ public class BuildLangSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Nullable
   private static BuildLanguageSpec parseLanguageSpec(
-      Project project, WorkspaceRoot workspace, BlazeContext context) {
+      Project project,
+      WorkspaceRoot workspace,
+      ProjectViewSet projectViewSet,
+      BlazeContext context) {
     try {
       // it's wasteful converting to a string and back, but uses existing code,
       // and has a very minor cost (this is only run once per workspace)
@@ -103,9 +108,9 @@ public class BuildLangSyncPlugin extends BlazeSyncPlugin.Adapter {
           BlazeInfo.getInstance()
               .runBlazeInfoGetBytes(
                   context,
-                  Blaze.getBuildSystem(project),
+                  Blaze.getBuildSystemProvider(project).getSyncBinaryPath(),
                   workspace,
-                  ImmutableList.of(),
+                  BlazeFlags.buildFlags(project, projectViewSet),
                   BlazeInfo.BUILD_LANGUAGE);
 
       return BuildLanguageSpec.fromProto(Build.BuildLanguage.parseFrom(future.get()));

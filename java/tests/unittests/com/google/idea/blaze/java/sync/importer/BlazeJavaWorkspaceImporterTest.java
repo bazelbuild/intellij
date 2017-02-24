@@ -16,9 +16,7 @@
 package com.google.idea.blaze.java.sync.importer;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -83,8 +81,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -94,7 +92,7 @@ import org.junit.runners.JUnit4;
 public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
   private static final String FAKE_WORKSPACE_ROOT = "/root";
-  private WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File(FAKE_WORKSPACE_ROOT));
+  private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File(FAKE_WORKSPACE_ROOT));
 
   private static final String FAKE_GEN_ROOT_EXECUTION_PATH_FRAGMENT =
       "blaze-out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
@@ -124,7 +122,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
   }
 
   private BlazeContext context;
-  private ErrorCollector errorCollector = new ErrorCollector();
+  private final ErrorCollector errorCollector = new ErrorCollector();
   private final JdepsMock jdepsMap = new JdepsMock();
   private JavaWorkingSet workingSet = null;
   private final WorkspaceLanguageSettings workspaceLanguageSettings =
@@ -139,8 +137,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeExecutor blazeExecutor = new MockBlazeExecutor();
     applicationServices.register(BlazeExecutor.class, blazeExecutor);
-    projectServices.register(
-        BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
+    projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
     // will silently fall back to FilePathJavaPackageReader
@@ -195,7 +192,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     BlazeJavaImportResult result =
         importWorkspace(workspaceRoot, TargetMapBuilder.builder(), ProjectView.builder().build());
     errorCollector.assertNoIssues();
-    assertTrue(result.contentEntries.isEmpty());
+    assertThat(result.contentEntries).isEmpty();
   }
 
   @Test
@@ -233,10 +230,10 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     errorCollector.assertNoIssues();
 
-    assertEquals(1, result.buildOutputJars.size());
+    assertThat(result.buildOutputJars).hasSize(1);
     ArtifactLocation compilerOutputLib = result.buildOutputJars.iterator().next();
     assertNotNull(compilerOutputLib);
-    assertTrue(compilerOutputLib.relativePath.endsWith("example_debug.jar"));
+    assertThat(compilerOutputLib.relativePath).endsWith("example_debug.jar");
 
     assertThat(result.contentEntries)
         .containsExactly(
@@ -668,7 +665,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, response, projectView);
     errorCollector.assertNoIssues();
-    assertEquals(1, result.libraries.size());
+    assertThat(result.libraries).hasSize(1);
   }
 
   @Test
@@ -713,7 +710,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, response, projectView);
     errorCollector.assertNoIssues();
 
-    assertEquals(1, result.libraries.size());
+    assertThat(result.libraries).hasSize(1);
   }
 
   @Test
@@ -761,7 +758,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, response, projectView);
     errorCollector.assertNoIssues();
-    assertEquals(1, result.libraries.size()); // The libraries were merged
+    assertThat(result.libraries).hasSize(1); // The libraries were merged
   }
 
   @Test
@@ -1394,7 +1391,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     return null;
   }
 
-  private ArtifactLocation source(String relativePath) {
+  private static ArtifactLocation source(String relativePath) {
     return ArtifactLocation.builder()
         .setRelativePath(relativePath)
         .setIsSource(true)

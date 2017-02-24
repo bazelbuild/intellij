@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.ui.BlazeValidationError;
 import java.io.File;
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Context for the project view parser. */
 public class ParseContext {

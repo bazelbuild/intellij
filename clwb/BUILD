@@ -49,6 +49,7 @@ java_library(
         "//common/experiments",
         "//cpp",
         "//intellij_platform_sdk:plugin_api",
+        "//sdkcompat",
         "@jsr305_annotations//jar",
     ],
 )

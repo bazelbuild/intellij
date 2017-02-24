@@ -18,9 +18,9 @@ package com.google.idea.blaze.android.sync.sdk;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
 import com.google.idea.blaze.android.projectview.AndroidMinSdkSection;
 import com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection;
+import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.ProjectViewSet.ProjectViewFile;
@@ -40,7 +40,7 @@ public class AndroidSdkFromProjectView {
   @Nullable
   public static AndroidSdkPlatform getAndroidSdkPlatform(
       BlazeContext context, ProjectViewSet projectViewSet) {
-    Collection<Sdk> sdks = AndroidSdkUtils.getAllAndroidSdks();
+    List<Sdk> sdks = BlazeSdkProvider.getInstance().getAllAndroidSdks();
     if (sdks.isEmpty()) {
       IssueOutput.error("No Android SDK configured. Please use the SDK manager to configure.")
           .navigatable(
@@ -81,7 +81,7 @@ public class AndroidSdkFromProjectView {
       return null;
     }
 
-    Sdk sdk = AndroidSdkUtils.findSuitableAndroidSdk(androidSdk);
+    Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdk);
     if (sdk == null) {
       ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
       IssueOutput.error(
@@ -104,19 +104,10 @@ public class AndroidSdkFromProjectView {
     return new AndroidSdkPlatform(androidSdk, androidMinSdk);
   }
 
-  @Nullable
-  public static String getSdkTargetHash(Sdk sdk) {
-    AndroidSdkAdditionalData additionalData = AndroidSdkUtils.getAndroidSdkAdditionalData(sdk);
-    if (additionalData == null) {
-      return null;
-    }
-    return additionalData.getBuildTargetHashString();
-  }
-
   public static List<String> getAvailableSdkTargetHashes(Collection<Sdk> sdks) {
     Set<String> names = Sets.newHashSet();
     for (Sdk sdk : sdks) {
-      String targetHash = getSdkTargetHash(sdk);
+      String targetHash = BlazeSdkProvider.getInstance().getSdkTargetHash(sdk);
       if (targetHash != null) {
         names.add(targetHash);
       }

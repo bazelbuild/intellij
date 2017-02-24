@@ -84,6 +84,12 @@
     <runConfigurationProducer
         implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestMethodConfigurationProducer"
         order="first"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.java.run.producers.BlazeJavaAbstractTestCaseConfigurationProducer"
+        order="first"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.java.run.producers.MultipleJavaClassesTestConfigurationProducer"
+        order="first"/>
     <projectViewNodeDecorator implementation="com.google.idea.blaze.java.syncstatus.BlazeJavaSyncStatusClassNodeDecorator"/>
     <editorTabColorProvider implementation="com.google.idea.blaze.java.syncstatus.BlazeJavaSyncStatusEditorTabColorProvider"/>
     <editorTabTitleProvider implementation="com.google.idea.blaze.java.syncstatus.BlazeJavaSyncStatusEditorTabTitleProvider"/>

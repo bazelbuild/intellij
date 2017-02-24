@@ -50,6 +50,14 @@ new_http_archive(
     url = "https://dl.google.com/dl/android/studio/ide-zips/2.3.0.4/android-studio-ide-162.3616766-linux.zip",
 )
 
+# The plugin api for Android Studio 2.3 Beta 4. This is required to build ASwB,
+# and run integration tests.
+new_http_archive(
+    name = "android_studio_2_3_0_6",
+    build_file = "intellij_platform_sdk/BUILD.android_studio",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2.3.0.6/android-studio-ide-162.3715353-linux.zip",
+)
+
 # The plugin api for Android Studio 2.2 stable. This is required to build ASwB,
 # and run integration tests.
 new_http_archive(

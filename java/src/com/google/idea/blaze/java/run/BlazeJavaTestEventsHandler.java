@@ -47,13 +47,13 @@ public class BlazeJavaTestEventsHandler extends BlazeTestEventsHandler {
 
   /** Overridden to support parameterized tests, which use nested test_suite XML elements. */
   @Override
-  public boolean ignoreSuite(TestSuite suite) {
+  public boolean ignoreSuite(@Nullable Kind kind, TestSuite suite) {
     if (suite.testSuites.isEmpty()) {
       return false;
     }
     for (TestSuite child : suite.testSuites) {
       // target/class names are fully-qualified; unqualified names denote parameterized methods
-      if (!child.name.contains(".")) {
+      if (child.name != null && !child.name.contains(".")) {
         return false;
       }
     }

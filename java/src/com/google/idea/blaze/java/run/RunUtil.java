@@ -16,7 +16,7 @@
 package com.google.idea.blaze.java.run;
 
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.TestTargetFinder;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
@@ -27,8 +27,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import java.io.File;
 import java.util.Collection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Utility methods for finding rules and Android facets. */
 public final class RunUtil {
@@ -40,18 +39,16 @@ public final class RunUtil {
    *     containing rules, the first rule sorted alphabetically by label.
    */
   @Nullable
-  public static TargetIdeInfo targetForTestClass(
-      @NotNull Project project,
-      @NotNull PsiClass testClass,
-      @Nullable TestIdeInfo.TestSize testSize) {
+  public static TargetIdeInfo targetForTestClass(PsiClass testClass, @Nullable TestSize testSize) {
     File testFile = getFileForClass(testClass);
     if (testFile == null) {
       return null;
     }
+    Project project = testClass.getProject();
     Collection<TargetIdeInfo> targets =
         TestTargetFinder.getInstance(project).testTargetsForSourceFile(testFile);
     Label testLabel =
-        TestTargetHeuristic.chooseTestTargetForSourceFile(testFile, targets, testSize);
+        TestTargetHeuristic.chooseTestTargetForSourceFile(project, testFile, targets, testSize);
     if (testLabel == null) {
       return null;
     }
@@ -64,7 +61,7 @@ public final class RunUtil {
    * memory.
    */
   @Nullable
-  public static File getFileForClass(@NotNull PsiClass aClass) {
+  public static File getFileForClass(PsiClass aClass) {
     PsiFile containingFile = aClass.getContainingFile();
     if (containingFile == null) {
       return null;

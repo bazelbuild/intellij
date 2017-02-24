@@ -15,10 +15,12 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.search;
 
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.history.core.Paths;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PackagePrefixFileSystemItem;
 import com.intellij.psi.PsiDirectory;
@@ -191,5 +193,28 @@ public class BlazePackage {
     return String.format(
         "%s package: %s",
         Blaze.buildSystemName(buildFile.getProject()), buildFile.getPackageWorkspacePath());
+  }
+
+  public static boolean hasBlazePackageChild(PsiDirectory directory) {
+    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(directory.getProject());
+    BuildSystemProvider buildSystemProvider = Blaze.getBuildSystemProvider(directory.getProject());
+    return hasBlazePackageChild(index, buildSystemProvider, directory);
+  }
+
+  private static boolean hasBlazePackageChild(
+      ProjectFileIndex index, BuildSystemProvider buildSystemProvider, PsiDirectory directory) {
+    if (!index.isInSourceContent(directory.getVirtualFile())) {
+      // only search project files
+      return false;
+    }
+    if (buildSystemProvider.findBuildFileInDirectory(directory.getVirtualFile()) != null) {
+      return true;
+    }
+    for (PsiDirectory child : directory.getSubdirectories()) {
+      if (hasBlazePackageChild(index, buildSystemProvider, child)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

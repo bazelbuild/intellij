@@ -123,7 +123,9 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
                 context.output(new StatusOutput("Building debug binary"));
 
                 BlazeCommand.Builder command =
-                    BlazeCommand.builder(Blaze.getBuildSystem(project), BlazeCommandName.BUILD)
+                    BlazeCommand.builder(
+                            Blaze.getBuildSystemProvider(project).getBinaryPath(),
+                            BlazeCommandName.BUILD)
                         .addTargets(configuration.getTarget())
                         .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
                         .addBlazeFlags(handlerState.getBlazeFlags());

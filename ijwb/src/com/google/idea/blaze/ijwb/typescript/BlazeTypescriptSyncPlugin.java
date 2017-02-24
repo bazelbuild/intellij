@@ -96,7 +96,9 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
           childContext.output(new StatusOutput("Updating tsconfig..."));
 
           BlazeCommand command =
-              BlazeCommand.builder(Blaze.getBuildSystem(project), BlazeCommandName.RUN)
+              BlazeCommand.builder(
+                      Blaze.getBuildSystemProvider(project).getSyncBinaryPath(),
+                      BlazeCommandName.RUN)
                   .addTargets(tsConfig)
                   .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
                   .build();

@@ -25,6 +25,7 @@ merged_plugin_xml(
         "android-studio-145.1617.8": [],
         "android-studio-2.3.0.3": ["2.3/src/META-INF/aswb_beta.xml"],
         "android-studio-2.3.0.4": ["2.3/src/META-INF/aswb_beta.xml"],
+        "android-studio-2.3.0.6": ["2.3/src/META-INF/aswb_beta.xml"],
     }),
     visibility = [
         "//visibility:public",
@@ -56,6 +57,7 @@ java_library(
         "android-studio-145.1617.8": glob(["2.2/src/**/*.java"]),
         "android-studio-2.3.0.3": glob(["2.3/src/**/*.java"]),
         "android-studio-2.3.0.4": glob(["2.3/src/**/*.java"]),
+        "android-studio-2.3.0.6": glob(["2.3/src/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     visibility = [
@@ -67,7 +69,7 @@ java_library(
         "//cpp",
         "//intellij_platform_sdk:plugin_api",
         "//java",
-        "//proto_deps",
+        "//proto:proto_deps",
         "@jsr305_annotations//jar",
     ],
 )
@@ -80,6 +82,7 @@ java_library(
         "android-studio-145.1617.8": glob(["2.2/tests/utils/integration/**/*.java"]),
         "android-studio-2.3.0.3": glob(["2.3/tests/utils/integration/**/*.java"]),
         "android-studio-2.3.0.4": glob(["2.3/tests/utils/integration/**/*.java"]),
+        "android-studio-2.3.0.6": glob(["2.3/tests/utils/integration/**/*.java"]),
     }),
     deps = [
         "//base",
@@ -104,6 +107,7 @@ intellij_unit_test_suite(
         "android-studio-145.1617.8": [],
         "android-studio-2.3.0.3": glob(["2.3/tests/unittests/**/*.java"]),
         "android-studio-2.3.0.4": glob(["2.3/tests/unittests/**/*.java"]),
+        "android-studio-2.3.0.6": glob(["2.3/tests/unittests/**/*.java"]),
     }),
     test_package_root = "com.google.idea.blaze.android",
     deps = [
@@ -114,7 +118,7 @@ intellij_unit_test_suite(
         "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//java",
-        "//proto_deps",
+        "//proto:proto_deps",
         "@jsr305_annotations//jar",
         "@junit//jar",
     ],
@@ -127,6 +131,7 @@ intellij_integration_test_suite(
         "android-studio-145.1617.8": [],
         "android-studio-2.3.0.3": glob(["2.3/tests/integrationtests/**/*.java"]),
         "android-studio-2.3.0.4": glob(["2.3/tests/integrationtests/**/*.java"]),
+        "android-studio-2.3.0.6": glob(["2.3/tests/integrationtests/**/*.java"]),
     }),
     platform_prefix = "AndroidStudio",
     required_plugins = "com.google.idea.bazel.aswb",
@@ -144,7 +149,7 @@ intellij_integration_test_suite(
         "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//java",
-        "//proto_deps",
+        "//proto:proto_deps",
         "@jsr305_annotations//jar",
         "@junit//jar",
     ],

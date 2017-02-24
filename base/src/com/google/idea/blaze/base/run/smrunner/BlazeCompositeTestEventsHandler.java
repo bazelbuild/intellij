@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
@@ -93,6 +94,12 @@ public class BlazeCompositeTestEventsHandler extends BlazeTestEventsHandler {
   @Override
   public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
     return null;
+  }
+
+  @Override
+  public boolean ignoreSuite(@Nullable Kind kind, TestSuite suite) {
+    BlazeTestEventsHandler handler = kind != null ? getHandlers().get(kind) : null;
+    return handler != null ? handler.ignoreSuite(kind, suite) : super.ignoreSuite(kind, suite);
   }
 
   /** Converts the testsuite name in the blaze test XML to a user-friendly format */

@@ -29,7 +29,7 @@ public class ExperimentalShowArtifactsLineProcessor
 
   private final List<File> fileList;
   private final Predicate<String> filter;
-  boolean insideBuildResult = false;
+  private boolean afterBuildResult = false;
 
   public ExperimentalShowArtifactsLineProcessor(List<File> fileList) {
     this(fileList, (value) -> true);
@@ -42,23 +42,17 @@ public class ExperimentalShowArtifactsLineProcessor
 
   @Override
   public boolean processLine(@NotNull String line) {
-    if (insideBuildResult) {
-      // Workaround for --experimental_ui: Extra newlines are inserted
-      if (line.isEmpty()) {
-        return false;
-      }
-
-      insideBuildResult = line.startsWith(OUTPUT_MARKER);
-      if (insideBuildResult) {
-        String fileName = line.substring(OUTPUT_MARKER.length());
-        if (filter.test(fileName)) {
-          fileList.add(new File(fileName));
-        }
-      }
+    if (!afterBuildResult) {
+      afterBuildResult = line.equals(OUTPUT_START);
+      return !afterBuildResult;
     }
-    if (!insideBuildResult) {
-      insideBuildResult = line.equals(OUTPUT_START);
+    if (!line.startsWith(OUTPUT_MARKER)) {
+      return true;
     }
-    return !insideBuildResult;
+    String fileName = line.substring(OUTPUT_MARKER.length());
+    if (filter.test(fileName)) {
+      fileList.add(new File(fileName));
+    }
+    return false;
   }
 }

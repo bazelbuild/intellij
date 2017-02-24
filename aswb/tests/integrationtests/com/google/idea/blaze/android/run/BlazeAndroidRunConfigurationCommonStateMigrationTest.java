@@ -18,14 +18,18 @@ package com.google.idea.blaze.android.run;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
+import com.google.idea.blaze.android.AndroidIntegrationTestCleanupHelper;
+import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
+import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import java.io.StringReader;
 import java.util.List;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -36,8 +40,7 @@ import org.junit.runners.JUnit4;
  * migration code in BlazeAndroidRunConfigurationCommonState is removed.
  */
 @RunWith(JUnit4.class)
-public class BlazeAndroidRunConfigurationCommonStateMigrationTest
-    extends BlazeAndroidIntegrationTestCase {
+public class BlazeAndroidRunConfigurationCommonStateMigrationTest extends BlazeIntegrationTestCase {
 
   private static final String DEPLOY_TARGET_STATES_RAW_XML =
       "<android-deploy-target-states>"
@@ -71,6 +74,9 @@ public class BlazeAndroidRunConfigurationCommonStateMigrationTest
           + "  <option name=\"WORKING_DIR\" value=\"/some/other/directory\" />"
           + "  <option name=\"TARGET_LOGGING_CHANNELS\" value=\"some other channels\" />"
           + "</BlazeAuto>";
+  @Rule
+  public final AndroidIntegrationTestSetupRule androidSetupRule =
+      new AndroidIntegrationTestSetupRule();
 
   private BlazeAndroidRunConfigurationCommonState state;
   private SAXBuilder saxBuilder;
@@ -81,6 +87,11 @@ public class BlazeAndroidRunConfigurationCommonStateMigrationTest
     state = new BlazeAndroidRunConfigurationCommonState(buildSystem().getName(), false);
     saxBuilder = new SAXBuilder();
     xmlOutputter = new XMLOutputter(Format.getCompactFormat());
+  }
+
+  @After
+  public final void doTeardown() {
+    AndroidIntegrationTestCleanupHelper.cleanUp(getProject());
   }
 
   private String formatRawXml(String rawXml) throws Exception {

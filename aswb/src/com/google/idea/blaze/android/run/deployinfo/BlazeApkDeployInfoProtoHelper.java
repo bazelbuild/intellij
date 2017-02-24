@@ -91,7 +91,7 @@ public class BlazeApkDeployInfoProtoHelper {
         BlazeInfo.getInstance()
             .runBlazeInfo(
                 context,
-                Blaze.getBuildSystem(project),
+                Blaze.getBuildSystemProvider(project).getBinaryPath(),
                 workspaceRoot,
                 buildFlags,
                 BlazeInfo.EXECUTION_ROOT_KEY);

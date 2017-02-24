@@ -164,7 +164,7 @@ public class BlazeConfigurationsTest extends BlazeTestCase {
   }
 
   private void mockBlazeImportSettings(Container projectServices) {
-    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
+    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager();
     importSettingsManager.setImportSettings(
         new BlazeImportSettings("", "", "", "", "", Blaze.BuildSystem.Blaze));
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
@@ -251,6 +251,11 @@ public class BlazeConfigurationsTest extends BlazeTestCase {
     }
 
     @Override
+    public String getBinaryPath() {
+      return "/usr/bin/blaze";
+    }
+
+    @Override
     public WorkspaceRootProvider getWorkspaceRootProvider() {
       return null;
     }
@@ -278,8 +283,8 @@ public class BlazeConfigurationsTest extends BlazeTestCase {
     }
 
     @Override
-    public FileNameMatcher buildFileMatcher() {
-      return null;
+    public ImmutableList<FileNameMatcher> buildFileMatchers() {
+      return ImmutableList.of();
     }
 
     @Override

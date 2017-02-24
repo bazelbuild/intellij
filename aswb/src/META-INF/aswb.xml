@@ -40,6 +40,9 @@
     <projectService serviceImplementation="com.google.idea.blaze.android.manifest.ManifestParser"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry"/>
     <applicationService serviceImplementation="com.google.idea.blaze.android.settings.BlazeAndroidUserSettings"/>
+    <applicationService serviceInterface="com.google.idea.blaze.android.sdk.BlazeSdkProvider"
+      serviceImplementation="com.google.idea.blaze.android.sdk.BlazeSdkProviderImpl"
+      testServiceImplementation="com.google.idea.blaze.android.sdk.MockBlazeSdkProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.android.actions">

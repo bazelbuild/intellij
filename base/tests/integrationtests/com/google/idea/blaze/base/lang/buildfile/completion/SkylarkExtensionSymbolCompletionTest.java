@@ -96,4 +96,18 @@ public class SkylarkExtensionSymbolCompletionTest extends BuildFileIntegrationTe
     assertThat(editorTest.completeIfUnique()).isTrue();
     assertFileContents(file, "load(':skylark.bzl', 'function')");
   }
+
+  @Test
+  public void testPrivateSymbolsNotAutocompleted() {
+    workspace.createFile(
+        new WorkspacePath("skylark.bzl"),
+        "_local = 1",
+        "GLOBAL_VAR = 2",
+        "def _local_fn():stmt",
+        "def global_fn():stmt");
+    createAndSetCaret(new WorkspacePath("BUILD"), "load(':skylark.bzl', '<caret>')");
+
+    String[] options = editorTest.getCompletionItemsAsStrings();
+    assertThat(options).asList().containsExactly("'GLOBAL_VAR'", "'global_fn'");
+  }
 }

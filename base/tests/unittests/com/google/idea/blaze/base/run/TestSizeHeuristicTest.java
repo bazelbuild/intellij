@@ -51,7 +51,8 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
             .setKind("java_test")
             .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
             .build();
-    assertThat(new TestSizeHeuristic().matchesSource(target, source, TestSize.MEDIUM)).isTrue();
+    assertThat(new TestSizeHeuristic().matchesSource(project, target, source, TestSize.MEDIUM))
+        .isTrue();
   }
 
   @Test
@@ -63,7 +64,8 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
             .setKind("java_test")
             .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
             .build();
-    assertThat(new TestSizeHeuristic().matchesSource(target, source, TestSize.SMALL)).isFalse();
+    assertThat(new TestSizeHeuristic().matchesSource(project, target, source, TestSize.SMALL))
+        .isFalse();
   }
 
   @Test
@@ -75,7 +77,7 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
             .setKind("java_test")
             .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
             .build();
-    assertThat(new TestSizeHeuristic().matchesSource(target, source, null)).isTrue();
+    assertThat(new TestSizeHeuristic().matchesSource(project, target, source, null)).isTrue();
 
     target =
         TargetIdeInfo.builder()
@@ -83,7 +85,7 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
             .setKind("java_test")
             .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
             .build();
-    assertThat(new TestSizeHeuristic().matchesSource(target, source, null)).isFalse();
+    assertThat(new TestSizeHeuristic().matchesSource(project, target, source, null)).isFalse();
   }
 
   @Test
@@ -106,7 +108,8 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
                 .setKind("java_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.ENORMOUS))
                 .build());
-    Label match = TestTargetHeuristic.chooseTestTargetForSourceFile(source, rules, TestSize.SMALL);
+    Label match =
+        TestTargetHeuristic.chooseTestTargetForSourceFile(project, source, rules, TestSize.SMALL);
     assertThat(match).isEqualTo(new Label("//foo:test1"));
   }
 
@@ -125,7 +128,8 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
                 .setKind("java_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .build());
-    Label match = TestTargetHeuristic.chooseTestTargetForSourceFile(source, rules, TestSize.SMALL);
+    Label match =
+        TestTargetHeuristic.chooseTestTargetForSourceFile(project, source, rules, TestSize.SMALL);
     assertThat(match).isEqualTo(new Label("//foo:test2"));
   }
 
@@ -149,7 +153,8 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
                 .setKind("java_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .build());
-    Label match = TestTargetHeuristic.chooseTestTargetForSourceFile(source, rules, TestSize.SMALL);
+    Label match =
+        TestTargetHeuristic.chooseTestTargetForSourceFile(project, source, rules, TestSize.SMALL);
     assertThat(match).isEqualTo(new Label("//foo:test2"));
   }
 }

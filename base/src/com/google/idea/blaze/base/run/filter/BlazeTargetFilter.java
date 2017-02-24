@@ -25,7 +25,7 @@ import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Parse blaze targets in streamed output. */
 public class BlazeTargetFilter implements Filter {

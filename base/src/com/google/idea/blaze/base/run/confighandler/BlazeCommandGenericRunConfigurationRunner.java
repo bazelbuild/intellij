@@ -38,7 +38,6 @@ import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -64,9 +63,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class BlazeCommandGenericRunConfigurationRunner
     implements BlazeCommandRunConfigurationRunner {
-
-  private static final BoolExperiment smRunnerUiEnabled =
-      new BoolExperiment("use.smrunner.ui.general", true);
 
   @Override
   public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment environment) {
@@ -152,9 +148,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
           new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
             @Override
             public void onBlazeContextStart(BlazeContext context) {
-              context
-                  .push(new IssuesScope(project))
-                  .push(new IdeaLogScope());
+              context.push(new IssuesScope(project)).push(new IdeaLogScope());
             }
 
             @Override
@@ -171,28 +165,27 @@ public final class BlazeCommandGenericRunConfigurationRunner
       ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       assert projectViewSet != null;
 
+      String binaryPath =
+          handlerState.getBlazeBinary() != null
+              ? handlerState.getBlazeBinary()
+              : Blaze.getBuildSystemProvider(project).getBinaryPath();
+
       BlazeCommand.Builder command =
-          BlazeCommand.builder(Blaze.getBuildSystem(project), handlerState.getCommand())
-              .setBlazeBinary(handlerState.getBlazeBinary())
+          BlazeCommand.builder(binaryPath, handlerState.getCommand())
               .addTargets(configuration.getTarget())
               .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
               .addBlazeFlags(testHandlerFlags)
               .addBlazeFlags(handlerState.getBlazeFlags())
               .addExeFlags(handlerState.getExeFlags());
 
-      boolean runDistributed = handlerState.getRunOnDistributedExecutor();
       command.addBlazeFlags(
           DistributedExecutorSupport.getBlazeFlags(
               project, handlerState.getRunOnDistributedExecutor()));
-      if (!runDistributed) {
-        command.addBlazeFlags(BlazeFlags.TEST_OUTPUT_STREAMED);
-      }
       return command.build();
     }
 
     private boolean canUseTestUi() {
-      return smRunnerUiEnabled.getValue()
-          && BlazeCommandName.TEST.equals(handlerState.getCommand())
+      return BlazeCommandName.TEST.equals(handlerState.getCommand())
           && !handlerState.getRunOnDistributedExecutor();
     }
   }

@@ -54,8 +54,7 @@ public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
     super.initTest(applicationServices, projectServices);
 
     applicationServices.register(UISettings.class, new UISettings());
-    projectServices.register(
-        BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
+    projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
     applicationServices.register(ExperimentService.class, new MockExperimentService());

@@ -40,7 +40,6 @@ import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -64,9 +63,6 @@ import com.intellij.openapi.project.Project;
  * when using a debug executor.
  */
 final class BlazeJavaRunProfileState extends CommandLineState implements RemoteState {
-
-  private static final BoolExperiment smRunnerUiEnabled =
-      new BoolExperiment("use.smrunner.ui.java", true);
 
   // Blaze seems to always use this port for --java_debug.
   // TODO(joshgiles): Look at manually identifying and setting port.
@@ -155,9 +151,6 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
   }
 
   private boolean useTestUi() {
-    if (!smRunnerUiEnabled.getValue()) {
-      return false;
-    }
     BlazeCommandRunConfigurationCommonState state =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     return state != null
@@ -171,10 +164,10 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
       return null;
     }
     return new RemoteConnection(
-        true /* useSockets */,
+        /* useSockets */ true,
         DEBUG_HOST_NAME,
         Integer.toString(DEBUG_PORT),
-        false /* serverMode */);
+        /* serverMode */ false);
   }
 
   @VisibleForTesting
@@ -189,11 +182,15 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     assert handlerState != null;
 
+    String binaryPath =
+        handlerState.getBlazeBinary() != null
+            ? handlerState.getBlazeBinary()
+            : Blaze.getBuildSystemProvider(project).getBinaryPath();
+
     BlazeCommandName blazeCommand = handlerState.getCommand();
     assert blazeCommand != null;
     BlazeCommand.Builder command =
-        BlazeCommand.builder(Blaze.getBuildSystem(project), blazeCommand)
-            .setBlazeBinary(handlerState.getBlazeBinary())
+        BlazeCommand.builder(binaryPath, blazeCommand)
             .addTargets(configuration.getTarget())
             .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
             .addBlazeFlags(extraBlazeFlags)
@@ -210,9 +207,6 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
     } else {
       boolean runDistributed = handlerState.getRunOnDistributedExecutor();
       command.addBlazeFlags(DistributedExecutorSupport.getBlazeFlags(project, runDistributed));
-      if (!runDistributed) {
-        command.addBlazeFlags(BlazeFlags.TEST_OUTPUT_STREAMED);
-      }
     }
 
     command.addExeFlags(handlerState.getExeFlags());

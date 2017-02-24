@@ -30,8 +30,8 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Removes glob references which don't refer directly to the item(s) being deleted (b/28979434)

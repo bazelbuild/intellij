@@ -15,11 +15,13 @@
  */
 package com.google.idea.blaze.base.run.testlogs;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import java.io.File;
 
 /** A strategy for locating output test XML files. */
 public interface BlazeTestXmlFinderStrategy {
@@ -28,25 +30,25 @@ public interface BlazeTestXmlFinderStrategy {
       ExtensionPointName.create("com.google.idea.blaze.BlazeTestXmlFinderStrategy");
 
   /**
-   * Attempt to find all output test XML files associated with the given run configuration. Called
-   * after the 'blaze test' process completes.
+   * Attempt to find all output test XML files produced by the most recent blaze invocation, grouped
+   * by target label.
    */
-  static ImmutableList<CompletedTestTarget> locateTestXmlFiles(Project project) {
+  static ImmutableMultimap<Label, File> locateTestXmlFiles(Project project) {
     BuildSystem buildSystem = Blaze.getBuildSystem(project);
-    ImmutableList.Builder<CompletedTestTarget> output = ImmutableList.builder();
+    ImmutableMultimap.Builder<Label, File> output = ImmutableMultimap.builder();
     for (BlazeTestXmlFinderStrategy strategy : EP_NAME.getExtensions()) {
       if (strategy.handlesBuildSystem(buildSystem)) {
-        output.addAll(strategy.findTestXmlFiles(project));
+        output.putAll(strategy.findTestXmlFiles(project));
       }
     }
     return output.build();
   }
 
   /**
-   * Attempt to find all output test XML files associated with the given run configuration using a
-   * particular strategy. Called after the 'blaze test' process completes.
+   * Attempt to find all output test XML files produced by the most recent blaze invocation, grouped
+   * by target label. Called after the 'blaze test' process completes.
    */
-  ImmutableList<CompletedTestTarget> findTestXmlFiles(Project project);
+  ImmutableMultimap<Label, File> findTestXmlFiles(Project project);
 
   boolean handlesBuildSystem(BuildSystem buildSystem);
 }

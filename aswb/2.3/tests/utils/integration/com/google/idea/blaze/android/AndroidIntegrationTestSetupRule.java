@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.google.idea.blaze.android;
 
-import com.google.idea.blaze.base.BlazeIntegrationTestCase;
-import org.junit.After;
-import org.junit.Rule;
+import org.junit.rules.ExternalResource;
 
-/** Base test class for Blaze Android integration tests. */
-public abstract class BlazeAndroidIntegrationTestCase extends BlazeIntegrationTestCase {
+/** Runs before Android Studio integration tests. */
+public class AndroidIntegrationTestSetupRule extends ExternalResource {
 
-  @Rule public final AndroidTestSetupRule androidSetupRule = new AndroidTestSetupRule();
-
-  @After
-  public final void doTeardown() {
-    AndroidTestCleanupHelper.cleanUp(getProject());
+  @Override
+  protected void before() throws Throwable {
+    System.setProperty("android.studio.sdk.manager.disabled", "true");
   }
 }

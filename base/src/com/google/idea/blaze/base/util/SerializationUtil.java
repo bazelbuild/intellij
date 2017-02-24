@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.util;
 
 import com.google.common.io.Closeables;
 import com.intellij.CommonBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -26,12 +25,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
 import java.io.Serializable;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Utils for serialization. */
 public class SerializationUtil {
-  private static final Logger logger = Logger.getInstance(SerializationUtil.class.getName());
 
   public static void saveToDisk(@NotNull File file, @NotNull Serializable serializable)
       throws IOException {

@@ -32,8 +32,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
 import icons.BlazeIcons;
+import javax.annotation.Nullable;
 import javax.swing.Icon;
-import org.jetbrains.annotations.Nullable;
 
 /** The data relevant to finding file lookups. */
 public class FileLookupData {

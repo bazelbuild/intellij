@@ -19,7 +19,7 @@ import com.google.idea.blaze.base.help.BlazeHelpHandler;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.projectImport.ProjectImportProvider;
 import java.awt.event.ActionListener;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 final class BlazeNewProjectWizard extends AddModuleWizard {
   public BlazeNewProjectWizard(ProjectImportProvider provider) {

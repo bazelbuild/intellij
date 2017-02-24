@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.ideinfo;
 import com.google.common.collect.ImmutableList;
 import java.io.Serializable;
 import java.util.Collection;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Ide info specific to java rules. */
 public final class JavaIdeInfo implements Serializable {

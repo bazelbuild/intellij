@@ -21,8 +21,8 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import java.util.Collection;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Handles nodes in Structure View. */
 public class BuildStructureViewElement extends PsiTreeElementBase<BuildElement> {

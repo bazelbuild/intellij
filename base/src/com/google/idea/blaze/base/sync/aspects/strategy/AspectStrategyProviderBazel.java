@@ -21,12 +21,12 @@ import com.intellij.openapi.project.Project;
 
 class AspectStrategyProviderBazel implements AspectStrategyProvider {
   private static final BoolExperiment useSkylarkAspect =
-      new BoolExperiment("use.skylark.aspect.bazel.2", true);
+      new BoolExperiment("use.skylark.aspect.bazel.3", true);
 
   @Override
   public AspectStrategy getAspectStrategy(Project project, BlazeVersionData blazeVersionData) {
     boolean canUseSkylark =
-        useSkylarkAspect.getValue() && blazeVersionData.bazelIsAtLeastVersion(0, 4, 4);
+        useSkylarkAspect.getValue() && blazeVersionData.bazelIsAtLeastVersion(0, 4, 5);
 
     return canUseSkylark ? new AspectStrategySkylark() : new AspectStrategyNative();
   }

@@ -183,7 +183,6 @@
     <projectService serviceInterface="com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap"
                     serviceImplementation="com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.settings.BlazeImportSettingsManager"/>
-    <projectService serviceImplementation="com.google.idea.blaze.base.settings.BlazeImportSettingsManagerLegacy"/>
     <applicationService serviceImplementation="com.google.idea.blaze.base.settings.BlazeUserSettings"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProvider"
                         serviceImplementation="com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProviderImpl"/>
@@ -233,10 +232,11 @@
     <!--<annotator language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.LoadErrorAnnotator"/>-->
     <annotator language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.GlobErrorAnnotator"/>
     <annotator language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.BuiltInRuleAnnotator"/>
+    <annotator language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.LoadStatementAnnotator"/>
     <colorSettingsPage implementation="com.google.idea.blaze.base.lang.buildfile.highlighting.BuildColorsPage"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.lang.buildfile.psi.util.BuildElementGenerator"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager"/>
-    <referencesSearch implementation="com.google.idea.blaze.base.lang.buildfile.search.BuildLabelReferenceSearcher"/>
+    <referencesSearch implementation="com.google.idea.blaze.base.lang.buildfile.search.BuildReferenceSearcher"/>
     <referencesSearch implementation="com.google.idea.blaze.base.lang.buildfile.search.GlobReferenceSearcher"/>
     <readWriteAccessDetector implementation="com.google.idea.blaze.base.lang.buildfile.findusages.BuildReadWriteAccessDetector"/>
     <elementDescriptionProvider implementation="com.google.idea.blaze.base.lang.buildfile.findusages.BuildElementDescriptionProvider"/>
@@ -340,6 +340,7 @@
     <BuildifierBinaryProvider implementation="com.google.idea.blaze.base.buildmodifier.BazelBuildifierBinaryProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandlerProvider" order="last"/>
     <TestTargetHeuristic implementation="com.google.idea.blaze.base.run.TargetNameHeuristic" order="first"/>
+    <TestTargetHeuristic implementation="com.google.idea.blaze.base.run.TestTargetSourcesHeuristic" order="before TestSizeHeuristic" id="TestSourcesHeuristic"/>
     <TestTargetHeuristic implementation="com.google.idea.blaze.base.run.TestSizeHeuristic" order="last" id="TestSizeHeuristic"/>
     <RunConfigurationFactory implementation="com.google.idea.blaze.base.run.BlazeBuildTargetRunConfigurationFactory" order="last"/>
     <AspectStrategyProvider implementation="com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProviderBazel" order="last"/>

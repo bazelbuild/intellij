@@ -165,7 +165,7 @@ public class BlazeBuildSystemServiceTest extends BlazeTestCase {
   }
 
   private void mockBlazeImportSettings(Container projectServices) {
-    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
+    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager();
     importSettingsManager.setImportSettings(
         new BlazeImportSettings("", "", "", "", "", Blaze.BuildSystem.Blaze));
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);

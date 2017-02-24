@@ -19,11 +19,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.process.ExternalTask;
+import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
@@ -34,42 +35,42 @@ class BlazeInfoImpl extends BlazeInfo {
 
   @Override
   public ListenableFuture<String> runBlazeInfo(
-      @Nullable BlazeContext context,
-      BuildSystem buildSystem,
+      BlazeContext context,
+      String binaryPath,
       WorkspaceRoot workspaceRoot,
       List<String> blazeFlags,
       String key) {
     return BlazeExecutor.getInstance()
         .submit(
             () ->
-                runBlazeInfo(buildSystem, workspaceRoot, key, blazeFlags, context)
+                runBlazeInfo(binaryPath, workspaceRoot, key, blazeFlags, context)
                     .toString()
                     .trim());
   }
 
   @Override
   public ListenableFuture<byte[]> runBlazeInfoGetBytes(
-      @Nullable BlazeContext context,
-      BuildSystem buildSystem,
+      BlazeContext context,
+      String binaryPath,
       WorkspaceRoot workspaceRoot,
       List<String> blazeFlags,
       String key) {
     return BlazeExecutor.getInstance()
         .submit(
-            () -> runBlazeInfo(buildSystem, workspaceRoot, key, blazeFlags, context).toByteArray());
+            () -> runBlazeInfo(binaryPath, workspaceRoot, key, blazeFlags, context).toByteArray());
   }
 
   @Override
   public ListenableFuture<ImmutableMap<String, String>> runBlazeInfo(
-      @Nullable BlazeContext context,
-      BuildSystem buildSystem,
+      BlazeContext context,
+      String binaryPath,
       WorkspaceRoot workspaceRoot,
       List<String> blazeFlags) {
     return BlazeExecutor.getInstance()
         .submit(
             () -> {
               String blazeInfoString =
-                  runBlazeInfo(buildSystem, workspaceRoot, null /* key */, blazeFlags, context)
+                  runBlazeInfo(binaryPath, workspaceRoot, /* key */ null, blazeFlags, context)
                       .toString()
                       .trim();
               return parseBlazeInfoResult(blazeInfoString);
@@ -77,29 +78,28 @@ class BlazeInfoImpl extends BlazeInfo {
   }
 
   private static ByteArrayOutputStream runBlazeInfo(
-      BuildSystem buildSystem,
+      String binaryPath,
       WorkspaceRoot workspaceRoot,
       @Nullable String key,
       List<String> blazeFlags,
-      @Nullable BlazeContext context)
+      BlazeContext context)
       throws BlazeInfoException {
-    BlazeCommand.Builder builder = BlazeCommand.builder(buildSystem, BlazeCommandName.INFO);
+    BlazeCommand.Builder builder = BlazeCommand.builder(binaryPath, BlazeCommandName.INFO);
     if (key != null) {
       builder.addBlazeFlags(key);
     }
     BlazeCommand command = builder.addBlazeFlags(blazeFlags).build();
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
     int exitCode =
         ExternalTask.builder(workspaceRoot)
             .addBlazeCommand(command)
             .context(context)
             .stdout(stdout)
-            .stderr(stderr)
+            .stderr(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)))
             .build()
             .run();
     if (exitCode != 0) {
-      throw new BlazeInfoException(exitCode, stdout.toString(), stderr.toString());
+      throw new BlazeInfoException(exitCode, stdout.toString());
     }
     return stdout;
   }

@@ -18,7 +18,7 @@ package com.google.idea.blaze.java.syncstatus;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Changes the tab title for unsynced files. */
 public class BlazeJavaSyncStatusEditorTabTitleProvider implements EditorTabTitleProvider {

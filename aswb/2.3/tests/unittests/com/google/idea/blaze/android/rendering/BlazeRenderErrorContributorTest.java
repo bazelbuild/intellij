@@ -44,7 +44,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManagerLegacy;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
@@ -103,12 +102,10 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     projectServices.register(
         AndroidResourceModuleRegistry.class, new AndroidResourceModuleRegistry());
 
-    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
+    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager();
     BlazeImportSettings settings = new BlazeImportSettings("", "", "", "", "", BuildSystem.Blaze);
     importSettingsManager.setImportSettings(settings);
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
-    projectServices.register(
-        BlazeImportSettingsManagerLegacy.class, new BlazeImportSettingsManagerLegacy(project));
 
     createPsiClassesAndSourceToTargetMap(projectServices);
 

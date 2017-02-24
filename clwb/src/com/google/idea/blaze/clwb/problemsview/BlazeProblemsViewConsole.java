@@ -36,7 +36,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.UIUtil;
 import java.util.ArrayList;
@@ -44,6 +44,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import javax.swing.Icon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,8 +59,8 @@ public class BlazeProblemsViewConsole implements BlazeProblemsView {
       EnumSet.allOf(ErrorTreeElementKind.class);
 
   private final ProblemsViewPanel myPanel;
-  private final SequentialTaskExecutor myViewUpdater =
-      new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
+  private final ExecutorService myViewUpdater =
+      new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
   private final Icon myActiveIcon = AllIcons.Toolwindows.Problems;
   private final Icon myPassiveIcon = IconLoader.getDisabledIcon(myActiveIcon);
 

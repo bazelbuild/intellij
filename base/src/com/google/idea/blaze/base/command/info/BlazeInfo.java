@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.openapi.components.ServiceManager;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /** Runs the blaze info command. The results may be cached in the workspace. */
 public abstract class BlazeInfo {
@@ -77,8 +76,8 @@ public abstract class BlazeInfo {
    * @return The blaze info value associated with the specified key
    */
   public abstract ListenableFuture<String> runBlazeInfo(
-      @Nullable BlazeContext context,
-      BuildSystem buildSystem,
+      BlazeContext context,
+      String binaryPath,
       WorkspaceRoot workspaceRoot,
       List<String> blazeFlags,
       String key);
@@ -89,24 +88,22 @@ public abstract class BlazeInfo {
    * @return The blaze info value associated with the specified key
    */
   public abstract ListenableFuture<byte[]> runBlazeInfoGetBytes(
-      @Nullable BlazeContext context,
-      BuildSystem buildSystem,
+      BlazeContext context,
+      String binaryPath,
       WorkspaceRoot workspaceRoot,
       List<String> blazeFlags,
       String key);
 
   /**
    * This calls blaze info without any specific key so blaze info will return all keys and values
-   * that it has. There could be a performance cost for doing this, so the user should verify that
-   * calling this method is actually faster than calling {@link #runBlazeInfo(WorkspaceRoot, List,
-   * String)}.
+   * that it has.
    *
    * @param blazeFlags The blaze flags that will be passed to Blaze.
    * @return The blaze info data fields.
    */
   public abstract ListenableFuture<ImmutableMap<String, String>> runBlazeInfo(
-      @Nullable BlazeContext context,
-      BuildSystem buildSystem,
+      BlazeContext context,
+      String binaryPath,
       WorkspaceRoot workspaceRoot,
       List<String> blazeFlags);
 }

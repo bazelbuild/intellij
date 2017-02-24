@@ -34,7 +34,7 @@ import javax.annotation.Nullable;
 public class TargetReference extends PsiReferenceBase<TargetExpression> {
 
   public TargetReference(TargetExpression element) {
-    super(element, new TextRange(0, element.getTextLength()), /*soft*/ true);
+    super(element, new TextRange(0, element.getTextLength()), /* soft */ true);
   }
 
   @Nullable
@@ -51,7 +51,7 @@ public class TargetReference extends PsiReferenceBase<TargetExpression> {
   @Override
   public Object[] getVariants() {
     CompletionResultsProcessor processor =
-        new CompletionResultsProcessor(myElement, QuoteType.NoQuotes);
+        new CompletionResultsProcessor(myElement, QuoteType.NoQuotes, true);
     ResolveUtil.searchInScope(myElement, processor);
     return processor.getResults().toArray();
   }

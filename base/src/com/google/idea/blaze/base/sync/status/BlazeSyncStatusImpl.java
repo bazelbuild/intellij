@@ -37,8 +37,8 @@ import com.intellij.openapi.vfs.VirtualFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Per-project listener for changes to BUILD files, and other changes requiring an incremental sync.

@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -49,7 +50,6 @@ import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProvider;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -192,9 +192,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
           List<File> result = Lists.newArrayList();
 
-          BuildSystem buildSystem = Blaze.getBuildSystem(project);
           BlazeCommand.Builder blazeCommandBuilder =
-              BlazeCommand.builder(buildSystem, BlazeCommandName.BUILD);
+              BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.BUILD);
           blazeCommandBuilder.addTargets(targets);
           blazeCommandBuilder.addBlazeFlags(BlazeFlags.KEEP_GOING);
           blazeCommandBuilder
@@ -409,7 +408,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     AspectStrategy aspectStrategy = getAspectStrategy(project, blazeVersionData);
 
     BlazeCommand.Builder blazeCommandBuilder =
-        BlazeCommand.builder(Blaze.getBuildSystem(project), BlazeCommandName.BUILD)
+        BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.BUILD)
             .addTargets(targets)
             .addBlazeFlags()
             .addBlazeFlags(BlazeFlags.KEEP_GOING)
@@ -446,5 +445,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     }
     // Should never get here
     throw new IllegalStateException("No aspect strategy found.");
+  }
+
+  private static String getBinaryPath(Project project) {
+    BuildSystemProvider buildSystemProvider = Blaze.getBuildSystemProvider(project);
+    return buildSystemProvider.getSyncBinaryPath();
   }
 }

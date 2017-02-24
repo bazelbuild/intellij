@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefiniti
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import java.io.File;
@@ -33,6 +34,13 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   @Override
   public BuildSystem buildSystem() {
     return BuildSystem.Bazel;
+  }
+
+  @Nullable
+  @Override
+  public String getBinaryPath() {
+    BlazeUserSettings settings = BlazeUserSettings.getInstance();
+    return settings.getBazelBinaryPath();
   }
 
   @Override
@@ -65,15 +73,20 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   public File findBuildFileInDirectory(File directory) {
     FileAttributeProvider provider = FileAttributeProvider.getInstance();
     File child = new File(directory, "BUILD");
-    if (!provider.exists(child)) {
-      return null;
+    if (provider.exists(child)) {
+      return child;
     }
-    return child;
+    child = new File(directory, "BUILD.bazel");
+    if (provider.exists(child)) {
+      return child;
+    }
+    return null;
   }
 
   @Override
-  public FileNameMatcher buildFileMatcher() {
-    return new ExactFileNameMatcher("BUILD");
+  public ImmutableList<FileNameMatcher> buildFileMatchers() {
+    return ImmutableList.of(
+        new ExactFileNameMatcher("BUILD"), new ExactFileNameMatcher("BUILD.bazel"));
   }
 
   @Override

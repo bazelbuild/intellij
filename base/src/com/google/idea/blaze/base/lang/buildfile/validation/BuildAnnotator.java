@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.lang.buildfile.validation;
 
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildElementVisitor;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
@@ -39,7 +40,11 @@ public abstract class BuildAnnotator extends BuildElementVisitor implements Anno
     }
   }
 
-  protected void markError(PsiElement element, String message) {
-    getHolder().createErrorAnnotation(element, message);
+  protected Annotation markError(PsiElement element, String message) {
+    return getHolder().createErrorAnnotation(element, message);
+  }
+
+  protected Annotation markWarning(PsiElement element, String message) {
+    return getHolder().createWarningAnnotation(element, message);
   }
 }

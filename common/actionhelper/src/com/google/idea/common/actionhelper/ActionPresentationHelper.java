@@ -15,6 +15,7 @@
  */
 package com.google.idea.common.actionhelper;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,13 +25,14 @@ import javax.annotation.Nullable;
 /** Helps setting the presentation enabled/visible/text states. */
 public class ActionPresentationHelper {
 
-  private final Presentation presentation;
+  private final AnActionEvent event;
   private boolean enabled = true;
   private boolean visible = true;
   private boolean disableWithoutSubject;
   private boolean hasSubject;
   private String text;
   private String subjectText;
+  private boolean hideInContextMenuIfDisabled;
 
   /** Converts a subject to a string */
   @FunctionalInterface
@@ -38,12 +40,12 @@ public class ActionPresentationHelper {
     String subjectToString(T subject);
   }
 
-  private ActionPresentationHelper(Presentation presentation) {
-    this.presentation = presentation;
+  private ActionPresentationHelper(AnActionEvent event) {
+    this.event = event;
   }
 
-  public static ActionPresentationHelper of(AnActionEvent e) {
-    return new ActionPresentationHelper(e.getPresentation());
+  public static ActionPresentationHelper of(AnActionEvent event) {
+    return new ActionPresentationHelper(event);
   }
 
   /** Disables the action if the condition is true. */
@@ -55,6 +57,11 @@ public class ActionPresentationHelper {
   /** Hides the action if the condition is true. */
   public ActionPresentationHelper hideIf(boolean hideCondition) {
     this.visible = this.visible && !hideCondition;
+    return this;
+  }
+
+  public ActionPresentationHelper hideInContextMenuIfDisabled() {
+    this.hideInContextMenuIfDisabled = true;
     return this;
   }
 
@@ -164,6 +171,12 @@ public class ActionPresentationHelper {
     if (disableWithoutSubject) {
       enabled = enabled && hasSubject;
     }
+    boolean visible = this.visible;
+    if (hideInContextMenuIfDisabled && !enabled && ActionPlaces.isPopupPlace(event.getPlace())) {
+      visible = false;
+    }
+
+    Presentation presentation = event.getPresentation();
     presentation.setEnabled(enabled);
     presentation.setVisible(visible);
 

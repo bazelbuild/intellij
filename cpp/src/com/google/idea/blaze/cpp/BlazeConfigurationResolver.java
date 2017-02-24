@@ -34,11 +34,13 @@ import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedFunction;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
@@ -91,7 +93,7 @@ final class BlazeConfigurationResolver {
         buildBlazeConfigurationMap(context, blazeProjectData, toolchainLookupMap, headerRoots);
   }
 
-  private static ImmutableMap<File, VirtualFile> collectHeaderRoots(
+  private ImmutableMap<File, VirtualFile> collectHeaderRoots(
       BlazeContext parentContext,
       BlazeProjectData blazeProjectData,
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap) {
@@ -107,10 +109,14 @@ final class BlazeConfigurationResolver {
             });
   }
 
-  private static ImmutableMap<File, VirtualFile> doCollectHeaderRoots(
+  private ImmutableMap<File, VirtualFile> doCollectHeaderRoots(
       BlazeContext context, BlazeProjectData projectData, Set<ExecutionRootPath> rootPaths) {
     ExecutionRootPathResolver pathResolver =
-        new ExecutionRootPathResolver(projectData.blazeRoots, projectData.workspacePathResolver);
+        new ExecutionRootPathResolver(
+            Blaze.getBuildSystem(project),
+            WorkspaceRoot.fromProject(project),
+            projectData.blazeRoots.executionRoot,
+            projectData.workspacePathResolver);
     ConcurrentMap<File, VirtualFile> rootsMap = Maps.newConcurrentMap();
     List<ListenableFuture<Void>> futures = Lists.newArrayListWithCapacity(rootPaths.size());
     for (ExecutionRootPath path : rootPaths) {
@@ -253,7 +259,10 @@ final class BlazeConfigurationResolver {
             BlazeResolveConfiguration.createConfigurationForTarget(
                 project,
                 new ExecutionRootPathResolver(
-                    blazeProjectData.blazeRoots, blazeProjectData.workspacePathResolver),
+                    Blaze.getBuildSystem(project),
+                    WorkspaceRoot.fromProject(project),
+                    blazeProjectData.blazeRoots.executionRoot,
+                    blazeProjectData.workspacePathResolver),
                 blazeProjectData.workspacePathResolver,
                 headerRoots,
                 blazeProjectData.targetMap.get(targetKey),

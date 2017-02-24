@@ -18,9 +18,9 @@ package com.google.idea.blaze.base.model.primitives;
 import com.google.idea.blaze.base.ui.BlazeValidationError;
 import java.io.Serializable;
 import java.util.Collection;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a path relative to the workspace root. The path component separator is Blaze specific.

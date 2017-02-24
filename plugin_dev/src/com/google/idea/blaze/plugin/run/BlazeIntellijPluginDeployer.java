@@ -45,7 +45,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Handles finding files to deploy and copying these into the sandbox. */
 class BlazeIntellijPluginDeployer {

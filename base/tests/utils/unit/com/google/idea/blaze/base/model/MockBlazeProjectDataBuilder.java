@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.model;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -30,11 +29,12 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import java.io.File;
 
 /**
- * Use to build mock praject data for tests.
+ * Use to build mock project data for tests.
  *
- * <p>For any data you don't supply, the builder make a best-effort attempt to create default
+ * <p>For any data you don't supply, the builder makes a best-effort attempt to create default
  * objects using whatever data you have supplied if applicable.
  */
 public class MockBlazeProjectDataBuilder {
@@ -51,7 +51,7 @@ public class MockBlazeProjectDataBuilder {
   private SyncState syncState;
   private ImmutableMultimap<TargetKey, TargetKey> reverseDependencies;
 
-  public MockBlazeProjectDataBuilder(WorkspaceRoot workspaceRoot) {
+  private MockBlazeProjectDataBuilder(WorkspaceRoot workspaceRoot) {
     this.workspaceRoot = workspaceRoot;
   }
 
@@ -122,8 +122,7 @@ public class MockBlazeProjectDataBuilder {
         this.blazeRoots != null
             ? this.blazeRoots
             : new BlazeRoots(
-                null,
-                ImmutableList.of(workspaceRoot.directory()),
+                new File(workspaceRoot.directory().getParentFile(), "exec_root"),
                 new ExecutionRootPath("bin"),
                 new ExecutionRootPath("gen"),
                 null);
@@ -132,7 +131,7 @@ public class MockBlazeProjectDataBuilder {
     WorkspacePathResolver workspacePathResolver =
         this.workspacePathResolver != null
             ? this.workspacePathResolver
-            : new WorkspacePathResolverImpl(workspaceRoot, blazeRoots);
+            : new WorkspacePathResolverImpl(workspaceRoot);
     ArtifactLocationDecoder artifactLocationDecoder =
         this.artifactLocationDecoder != null
             ? this.artifactLocationDecoder

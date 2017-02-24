@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.run.testlogs;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -24,8 +24,6 @@ import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -40,28 +38,29 @@ public class TargetPathTestXmlFinderStrategy implements BlazeTestXmlFinderStrate
   }
 
   @Override
-  public ImmutableList<CompletedTestTarget> findTestXmlFiles(Project project) {
+  public ImmutableMultimap<Label, File> findTestXmlFiles(Project project) {
     File testLogsDir = getTestLogsTree(project);
     if (testLogsDir == null) {
-      return ImmutableList.of();
+      return ImmutableMultimap.of();
     }
     File commandLog = getCommandLog(project);
     if (commandLog == null) {
-      return ImmutableList.of();
+      return ImmutableMultimap.of();
     }
-    return ImmutableList.copyOf(
-        BlazeCommandLogParser.parseTestTargets(commandLog)
-            .stream()
-            .map((label) -> toKindAndTestXml(testLogsDir, label))
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList()));
+    ImmutableMultimap.Builder<Label, File> output = ImmutableMultimap.builder();
+    for (Label label : BlazeCommandLogParser.parseTestTargets(commandLog)) {
+      File testXml = findTestXml(testLogsDir, label);
+      if (testXml != null) {
+        output.put(label, testXml);
+      }
+    }
+    return output.build();
   }
 
   @Nullable
-  private static CompletedTestTarget toKindAndTestXml(File testLogsDir, Label label) {
+  private static File findTestXml(File testLogsDir, Label label) {
     String labelPath = label.blazePackage() + File.separator + label.targetName();
-    File testXml = new File(testLogsDir, labelPath + File.separator + "test.xml");
-    return new CompletedTestTarget(testXml, label);
+    return new File(testLogsDir, labelPath + File.separator + "test.xml");
   }
 
   @Nullable

@@ -17,18 +17,16 @@ package com.google.idea.blaze.base.projectview;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Project view storage implementation. */
 final class ProjectViewStorageManagerImpl extends ProjectViewStorageManager {
-  private static final Logger logger = Logger.getInstance(ProjectViewManagerImpl.class);
 
   @Nullable
   @Override

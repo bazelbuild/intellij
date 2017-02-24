@@ -63,7 +63,8 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
           @Override
           protected void execute(@NotNull BlazeContext context) {
             BlazeCommand.Builder command =
-                BlazeCommand.builder(Blaze.getBuildSystem(project), BlazeCommandName.BUILD);
+                BlazeCommand.builder(
+                    Blaze.getBuildSystemProvider(project).getBinaryPath(), BlazeCommandName.BUILD);
             WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
             command

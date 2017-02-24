@@ -20,7 +20,7 @@ import com.google.idea.blaze.base.lang.buildfile.references.LocalReference;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** References a PsiNamedElement */
 public class ReferenceExpression extends BuildElementImpl implements Expression {

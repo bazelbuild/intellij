@@ -20,7 +20,7 @@ import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
-import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
+import com.google.idea.blaze.base.lang.buildfile.psi.NamedBuildElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -39,23 +39,24 @@ import com.intellij.util.Processor;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/** String search for label references in BUILD files */
-public class BuildLabelReferenceSearcher extends QueryExecutorBase<PsiReference, SearchParameters> {
+/** String search for references in BUILD files */
+public class BuildReferenceSearcher extends QueryExecutorBase<PsiReference, SearchParameters> {
 
-  public BuildLabelReferenceSearcher() {
+  public BuildReferenceSearcher() {
     super(true);
   }
 
   @Override
   public void processQuery(SearchParameters params, Processor<PsiReference> consumer) {
     PsiElement element = params.getElementToSearch();
-    if (element instanceof FunctionStatement) {
-      String fnName = ((FunctionStatement) element).getName();
+    if (element instanceof NamedBuildElement) {
+      String fnName = ((NamedBuildElement) element).getName();
       if (fnName != null) {
         searchForString(params, element, fnName);
       }
       return;
     }
+
     PsiFile file = ResolveUtil.asFileSearch(element);
     if (file != null) {
       processFileReferences(params, file);

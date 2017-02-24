@@ -24,7 +24,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.Serializable;
 import java.util.List;
 
-/** A key that uniquely idenfifies a target in the target map */
+/** A key that uniquely identifies a target in the target map */
 public class TargetKey implements Serializable, Comparable<TargetKey> {
   private static final long serialVersionUID = 3L;
 

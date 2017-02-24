@@ -45,7 +45,6 @@ import com.google.idea.blaze.android.run.runner.BlazeApkBuildStepNormalBuild;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -60,9 +59,6 @@ import org.jetbrains.annotations.NotNull;
 
 /** Run context for android_test. */
 class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
-
-  private static final BoolExperiment smRunnerUiEnabled =
-      new BoolExperiment("use.smrunner.ui.android", true);
 
   private final Project project;
   private final AndroidFacet facet;
@@ -97,7 +93,7 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
     this.apkProvider = new BlazeApkProvider(project, buildStep.getDeployInfo());
 
     BlazeTestEventsHandler testEventsHandler = null;
-    if (smRunnerUiEnabled.getValue() && !isDebugging(env.getExecutor())) {
+    if (!isDebugging(env.getExecutor())) {
       testEventsHandler =
           BlazeTestEventsHandler.getHandlerForTarget(project, runConfiguration.getTarget());
       assert (testEventsHandler != null);

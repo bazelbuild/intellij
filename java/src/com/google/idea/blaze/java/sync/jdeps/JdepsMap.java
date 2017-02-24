@@ -17,7 +17,7 @@ package com.google.idea.blaze.java.sync.jdeps;
 
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Map of rule -> jdeps dependencies. */
 public interface JdepsMap {

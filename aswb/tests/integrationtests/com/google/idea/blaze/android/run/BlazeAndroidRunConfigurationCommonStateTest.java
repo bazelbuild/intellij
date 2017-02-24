@@ -19,8 +19,10 @@ package com.google.idea.blaze.android.run;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
+import com.google.idea.blaze.android.AndroidIntegrationTestCleanupHelper;
+import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
 import com.google.idea.blaze.android.cppapi.NdkSupport;
+import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.util.InvalidDataException;
@@ -28,15 +30,20 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Tests for {@link BlazeAndroidRunConfigurationCommonState}. */
 @RunWith(JUnit4.class)
-public class BlazeAndroidRunConfigurationCommonStateTest extends BlazeAndroidIntegrationTestCase {
+public class BlazeAndroidRunConfigurationCommonStateTest extends BlazeIntegrationTestCase {
 
+  @Rule
+  public final AndroidIntegrationTestSetupRule androidSetupRule =
+      new AndroidIntegrationTestSetupRule();
   private BlazeAndroidRunConfigurationCommonState state;
 
   @Before
@@ -48,6 +55,11 @@ public class BlazeAndroidRunConfigurationCommonStateTest extends BlazeAndroidInt
     experimentService.setExperiment(NdkSupport.NDK_SUPPORT, true);
 
     state = new BlazeAndroidRunConfigurationCommonState(buildSystem().getName(), false);
+  }
+
+  @After
+  public final void doTeardown() {
+    AndroidIntegrationTestCleanupHelper.cleanUp(getProject());
   }
 
   @Test

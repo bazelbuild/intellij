@@ -19,9 +19,11 @@ package com.google.idea.blaze.android.run.binary;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
+import com.google.idea.blaze.android.AndroidIntegrationTestCleanupHelper;
+import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
 import com.google.idea.blaze.android.cppapi.NdkSupport;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
+import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -31,15 +33,20 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Tests for {@link BlazeAndroidBinaryRunConfigurationState}. */
 @RunWith(JUnit4.class)
-public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeAndroidIntegrationTestCase {
+public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegrationTestCase {
 
+  @Rule
+  public final AndroidIntegrationTestSetupRule androidSetupRule =
+      new AndroidIntegrationTestSetupRule();
   private BlazeAndroidBinaryRunConfigurationState state;
 
   @Before
@@ -51,6 +58,11 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeAndroidInt
     experimentService.setExperiment(NdkSupport.NDK_SUPPORT, true);
 
     state = new BlazeAndroidBinaryRunConfigurationState(buildSystem().getName());
+  }
+
+  @After
+  public final void doTeardown() {
+    AndroidIntegrationTestCleanupHelper.cleanUp(getProject());
   }
 
   @Test

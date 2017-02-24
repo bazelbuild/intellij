@@ -79,7 +79,7 @@ public class BlazeJavaTestClassConfigurationProducer
     sourceElement.set(testClass);
 
     TestIdeInfo.TestSize testSize = TestSizeAnnotationMap.getTestSize(testClass);
-    TargetIdeInfo target = RunUtil.targetForTestClass(context.getProject(), testClass, testSize);
+    TargetIdeInfo target = RunUtil.targetForTestClass(testClass, testSize);
     if (target == null) {
       return false;
     }

@@ -16,7 +16,15 @@
 
 package com.google.idea.blaze.android;
 
-import com.google.idea.blaze.base.BlazeIntegrationTestCase;
+import com.intellij.openapi.project.Project;
 
-/** Compatibility test class for Blaze Android integration tests. */
-public abstract class BlazeAndroidIntegrationTestCase extends BlazeIntegrationTestCase {}
+/**
+ * Helper class for cleaning up after Android Studio initialization.
+ *
+ * <p>This class exists only for 2.2 compatibility and can be removed once 2.2 support is removed.
+ */
+public final class AndroidIntegrationTestCleanupHelper {
+
+  @SuppressWarnings("unused")
+  public static void cleanUp(Project project) {}
+}

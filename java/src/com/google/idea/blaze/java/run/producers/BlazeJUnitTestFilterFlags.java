@@ -105,10 +105,12 @@ public final class BlazeJUnitTestFilterFlags {
       String filter =
           testFilterForClassAndMethods(
               entry.getKey(), version, extractMethodFilters(entry.getValue()));
-      if (filter != null) {
-        classFilters.add(filter);
+      if (filter == null) {
+        return null;
       }
+      classFilters.add(filter);
     }
+    classFilters.sort(String::compareTo);
     return version == JUnitVersion.JUNIT_4
         ? String.join("|", classFilters)
         : String.join(",", classFilters);

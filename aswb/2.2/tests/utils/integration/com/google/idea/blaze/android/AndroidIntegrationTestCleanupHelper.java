@@ -32,7 +32,7 @@ import org.jdom.Element;
  * TODO: Remove once we build for a version where post-initialization insight and style settings are
  * used in the settings check.
  */
-public final class AndroidTestCleanupHelper {
+public final class AndroidIntegrationTestCleanupHelper {
 
   public static void cleanUp(Project project) {
     resetCodeInsightSettings();

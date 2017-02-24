@@ -17,14 +17,26 @@ package com.google.idea.blaze.base.lang.buildfile.references;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
+import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
+import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProvider;
+import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadedSymbol;
+import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
+import com.google.idea.blaze.base.lang.buildfile.psi.TargetExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiReference;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -67,7 +79,7 @@ public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
   //  BuildFile buildFile = createBuildFile(
   //    "java/com/google/tools/BUILD",
   //    "load(",
-  //    "\"//java/com/google/build_defs.bzl\",",
+  //    "\"/java/com/google/build_defs.bzl\",",
   //    "\"function\"",
   //    ")");
   //
@@ -116,6 +128,71 @@ public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
     FunctionStatement[] functions = extFile.childrenOfClass(FunctionStatement.class);
     assertThat(functions).hasLength(2);
     assertThat(load.getImportedFunctionReferences()).isEqualTo(functions);
+  }
+
+  @Test
+  public void testLoadedSymbolReference() {
+    BuildFile extFile =
+        createBuildFile(new WorkspacePath("java/com/google/tools/build_defs.bzl"), "CONSTANT = 1");
+
+    BuildFile buildFile =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "load(",
+            "\"//java/com/google/tools:build_defs.bzl\",",
+            "\"CONSTANT\"",
+            ")",
+            "NEW_CONSTANT = CONSTANT");
+
+    TargetExpression target =
+        PsiUtils.findFirstChildOfClassRecursive(extFile, TargetExpression.class);
+    ReferenceExpression ref =
+        PsiUtils.findFirstChildOfClassRecursive(buildFile, ReferenceExpression.class);
+    LoadedSymbol loadElement =
+        PsiUtils.findFirstChildOfClassRecursive(buildFile, LoadedSymbol.class);
+
+    assertThat(target).isNotNull();
+    assertThat(ref.getReferencedElement()).isEqualTo(target);
+    assertThat(loadElement.getImport().getReferencedElement()).isEqualTo(target);
+
+    assertThat(
+            Arrays.stream(FindUsages.findAllReferences(target))
+                .map(PsiReference::getElement)
+                .collect(Collectors.toList()))
+        .containsExactly(ref, loadElement.getImport());
+  }
+
+  @Test
+  public void testOverridenBuiltInSymbolReference() {
+    setBuiltInRuleNames("java_library");
+    BuildFile extFile =
+        createBuildFile(
+            new WorkspacePath("java/com/google/tools/build_defs.bzl"), "java_library = rule()");
+
+    BuildFile buildFile =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "load(",
+            "\"//java/com/google/tools:build_defs.bzl\",",
+            "\"java_library\"",
+            ")",
+            "java_library(name = 'name')");
+
+    TargetExpression target =
+        PsiUtils.findFirstChildOfClassRecursive(extFile, TargetExpression.class);
+    FuncallExpression funcall = buildFile.firstChildOfClass(FuncallExpression.class);
+    LoadedSymbol loadElement =
+        PsiUtils.findFirstChildOfClassRecursive(buildFile, LoadedSymbol.class);
+
+    assertThat(target).isNotNull();
+    assertThat(funcall.getReferencedElement()).isEqualTo(target);
+    assertThat(loadElement.getImport().getReferencedElement()).isEqualTo(target);
+
+    assertThat(
+            Arrays.stream(FindUsages.findAllReferences(target))
+                .map(PsiReference::getElement)
+                .collect(Collectors.toList()))
+        .containsExactly(funcall, loadElement.getImport());
   }
 
   @Test
@@ -180,5 +257,31 @@ public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
 
     assertThat(function).isNotNull();
     assertThat(funcall.getReferencedElement()).isEqualTo(function);
+  }
+
+  private void setBuiltInRuleNames(String... ruleNames) {
+    ImmutableMap.Builder<String, RuleDefinition> rules = ImmutableMap.builder();
+    for (String name : ruleNames) {
+      rules.put(name, new RuleDefinition(name, ImmutableMap.of(), null));
+    }
+    MockBuildLanguageSpecProvider specProvider = new MockBuildLanguageSpecProvider();
+    specProvider.setRules(rules.build());
+    registerApplicationService(BuildLanguageSpecProvider.class, specProvider);
+    specProvider.setRules(rules.build());
+  }
+
+  private static class MockBuildLanguageSpecProvider implements BuildLanguageSpecProvider {
+
+    BuildLanguageSpec languageSpec = new BuildLanguageSpec(ImmutableMap.of());
+
+    void setRules(ImmutableMap<String, RuleDefinition> rules) {
+      languageSpec = new BuildLanguageSpec(rules);
+    }
+
+    @Nullable
+    @Override
+    public BuildLanguageSpec getLanguageSpec(Project project) {
+      return languageSpec;
+    }
   }
 }

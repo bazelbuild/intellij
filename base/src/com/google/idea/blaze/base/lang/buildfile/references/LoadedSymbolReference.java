@@ -33,7 +33,7 @@ public class LoadedSymbolReference extends PsiReferenceBase<StringLiteral> {
   private final LabelReference bzlFileReference;
 
   public LoadedSymbolReference(StringLiteral element, LabelReference bzlFileReference) {
-    super(element, new TextRange(0, element.getTextLength()), /*soft*/ false);
+    super(element, new TextRange(0, element.getTextLength()), /* soft */ false);
     this.bzlFileReference = bzlFileReference;
   }
 
@@ -54,7 +54,7 @@ public class LoadedSymbolReference extends PsiReferenceBase<StringLiteral> {
       return EMPTY_ARRAY;
     }
     CompletionResultsProcessor processor =
-        new CompletionResultsProcessor(myElement, myElement.getQuoteType());
+        new CompletionResultsProcessor(myElement, myElement.getQuoteType(), false);
     ((BuildFile) bzlFile).searchSymbolsInScope(processor, null);
     return processor.getResults().toArray();
   }

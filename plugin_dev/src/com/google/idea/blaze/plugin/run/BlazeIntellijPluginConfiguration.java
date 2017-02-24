@@ -343,7 +343,8 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
 
   protected BlazeCommand buildBlazeCommand(Project project, ProjectViewSet projectViewSet) {
     BlazeCommand.Builder command =
-        BlazeCommand.builder(Blaze.getBuildSystem(getProject()), BlazeCommandName.BUILD)
+        BlazeCommand.builder(
+                Blaze.getBuildSystemProvider(project).getBinaryPath(), BlazeCommandName.BUILD)
             .addTargets(getTarget())
             .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
             .addBlazeFlags(blazeFlags.getFlags())

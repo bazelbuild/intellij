@@ -35,8 +35,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Converts a blaze label into an absolute path, then resolves that path to a PsiElements */
 public class LabelReference extends PsiReferenceBase<StringLiteral> {

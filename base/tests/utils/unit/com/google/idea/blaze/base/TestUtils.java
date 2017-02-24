@@ -37,8 +37,8 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 /** Test utilities. */

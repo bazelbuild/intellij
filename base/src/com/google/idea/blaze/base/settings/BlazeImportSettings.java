@@ -16,13 +16,9 @@
 package com.google.idea.blaze.base.settings;
 
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
-import com.intellij.util.xmlb.annotations.Tag;
 import javax.annotation.Nullable;
 
-// The tag here is for legacy migration support.
-// No longer needed and can be removed with {@link BlazeImportSettingsManagerLegacy}
 /** Project settings that are set at import time. */
-@Tag("BlazeProjectSettings")
 public final class BlazeImportSettings {
 
   private String workspaceRoot = "";

@@ -82,13 +82,14 @@ public abstract class BuildElementImpl extends ASTWrapperPsiElement implements B
     return psiElements;
   }
 
+  /** Finds the n'th child of the specified type */
   @Nullable
-  protected <T extends BuildElement> T childToPsi(TokenSet filterSet, int index) {
+  protected PsiElement childToPsi(TokenSet filterSet, int index) {
     final ASTNode[] nodes = getNode().getChildren(filterSet);
     if (nodes.length <= index) {
       return null;
     }
-    return (T) nodes[index].getPsi();
+    return nodes[index].getPsi();
   }
 
   @Nullable
@@ -160,8 +161,8 @@ public abstract class BuildElementImpl extends ASTWrapperPsiElement implements B
   @Nullable
   @Override
   public WorkspacePath getWorkspacePath() {
-    BuildFile file = (BuildFile) getContainingFile();
-    return file.getWorkspacePath();
+    BuildFile file = getContainingFile();
+    return file != null ? file.getWorkspacePath() : null;
   }
 
   @Nullable

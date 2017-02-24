@@ -24,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -67,5 +68,52 @@ public class BlazeXmlSchemaTest {
         new ByteArrayInputStream(Joiner.on('\n').join(lines).getBytes(StandardCharsets.UTF_8));
     TestSuite parsed = BlazeXmlSchema.parse(stream);
     assertThat(parsed).isNotNull();
+  }
+
+  @Test
+  public void testMergeShardedTests() {
+    TestSuite shard1 =
+        parseXml(
+            "<?xml version='1.0' encoding='UTF-8'?>",
+            "<testsuites>",
+            "  <testsuite name='com.google.ConfigTest' time='10' tests='2' failures='1'>",
+            "    <testcase name='testCase1' time='2.1' status='run' result='completed'/>",
+            "    <testcase name='testCase2' time='7.9' status='run' result='completed'>",
+            "      <failure message='failed'/>",
+            "    </testcase>",
+            "  </testsuite>",
+            "</testsuites>");
+    TestSuite shard2 =
+        parseXml(
+            "<?xml version='1.0' encoding='UTF-8'?>",
+            "<testsuites>",
+            "  <testsuite name='com.google.ConfigTest' time='5' tests='2' failures='1'>",
+            "    <testcase name='testCase3' time='1' status='run' result='completed'/>",
+            "    <testcase name='testCase4' time='4' status='run' result='completed'>",
+            "      <failure message='failed'/>",
+            "    </testcase>",
+            "  </testsuite>",
+            "</testsuites>");
+    TestSuite mergedOuter = BlazeXmlSchema.mergeSuites(ImmutableList.of(shard1, shard2));
+    assertThat(mergedOuter.testSuites).hasSize(1);
+    TestSuite mergedInner = mergedOuter.testSuites.get(0).testSuites.get(0);
+    assertThat(mergedInner.name).isEqualTo("com.google.ConfigTest");
+    assertThat(mergedInner.time).isEqualTo(15d);
+    assertThat(mergedInner.tests).isEqualTo(4);
+    assertThat(mergedInner.failures).isEqualTo(2);
+    assertThat(mergedInner.testCases).hasSize(4);
+    assertThat(
+            mergedInner
+                .testCases
+                .stream()
+                .map(testCase -> testCase.name)
+                .collect(Collectors.toList()))
+        .containsExactly("testCase1", "testCase2", "testCase3", "testCase4");
+  }
+
+  private static TestSuite parseXml(String... lines) {
+    InputStream stream =
+        new ByteArrayInputStream(Joiner.on('\n').join(lines).getBytes(StandardCharsets.UTF_8));
+    return BlazeXmlSchema.parse(stream);
   }
 }

@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 public class FuncallReference extends PsiReferenceBase<FuncallExpression> {
 
   public FuncallReference(FuncallExpression element, TextRange rangeInElement) {
-    super(element, rangeInElement, /*soft*/ true);
+    super(element, rangeInElement, /* soft */ true);
   }
 
   @Nullable

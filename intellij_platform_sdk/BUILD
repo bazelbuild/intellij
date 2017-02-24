@@ -70,6 +70,14 @@ config_setting(
     },
 )
 
+# Android Studio 2.3.0.6
+config_setting(
+    name = "android-studio-2.3.0.6",
+    values = {
+        "define": "ij_product=android-studio-2.3.0.6",
+    },
+)
+
 config_setting(
     name = "clion-latest",
     values = {
@@ -199,6 +207,9 @@ java_library(
             "missing/tests/com/jetbrains/cidr/modulemap/resolve/MockModuleMapManagerImpl.java",
         ],
         "android-studio-2.3.0.4": [
+            "missing/tests/com/jetbrains/cidr/modulemap/resolve/MockModuleMapManagerImpl.java",
+        ],
+        "android-studio-2.3.0.6": [
             "missing/tests/com/jetbrains/cidr/modulemap/resolve/MockModuleMapManagerImpl.java",
         ],
         "default": [],

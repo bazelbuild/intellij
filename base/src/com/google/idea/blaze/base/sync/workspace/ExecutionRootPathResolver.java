@@ -16,11 +16,12 @@
 package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.intellij.openapi.util.io.FileUtil;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import java.io.File;
-import java.util.List;
 
 /**
  * Converts execution-root-relative paths to absolute files with a minimum of file system calls
@@ -31,13 +32,27 @@ import java.util.List;
  */
 public class ExecutionRootPathResolver {
 
-  private final BlazeRoots blazeRoots;
+  private final ImmutableList<String> buildArtifactDirectories;
+  private final File executionRoot;
   private final WorkspacePathResolver workspacePathResolver;
 
   public ExecutionRootPathResolver(
-      BlazeRoots blazeRoots, WorkspacePathResolver workspacePathResolver) {
-    this.blazeRoots = blazeRoots;
+      BuildSystem buildSystem,
+      WorkspaceRoot workspaceRoot,
+      File executionRoot,
+      WorkspacePathResolver workspacePathResolver) {
+    this.buildArtifactDirectories = buildArtifactDirectories(buildSystem, workspaceRoot);
+    this.executionRoot = executionRoot;
     this.workspacePathResolver = workspacePathResolver;
+  }
+
+  private static ImmutableList<String> buildArtifactDirectories(
+      BuildSystem buildSystem, WorkspaceRoot workspaceRoot) {
+    BuildSystemProvider provider = BuildSystemProvider.getBuildSystemProvider(buildSystem);
+    if (provider == null) {
+      provider = BuildSystemProvider.defaultBuildSystem();
+    }
+    return provider.buildArtifactDirectories(workspaceRoot);
   }
 
   /**
@@ -53,19 +68,21 @@ public class ExecutionRootPathResolver {
       WorkspacePath workspacePath = new WorkspacePath(path.getAbsoluteOrRelativeFile().getPath());
       return workspacePathResolver.resolveToIncludeDirectories(workspacePath);
     }
-    return ImmutableList.of(path.getFileRootedAt(blazeRoots.executionRoot));
+    return ImmutableList.of(path.getFileRootedAt(executionRoot));
   }
 
   private boolean isInWorkspace(ExecutionRootPath path) {
-    boolean inOutputDir =
-        ExecutionRootPath.isAncestor(blazeRoots.blazeBinExecutionRootPath, path, false)
-            || ExecutionRootPath.isAncestor(blazeRoots.blazeGenfilesExecutionRootPath, path, false)
-            || isExternalWorkspacePath(path);
-    return !inOutputDir;
+    String firstPathComponent = getFirstPathComponent(path.getAbsoluteOrRelativeFile().getPath());
+    return !buildArtifactDirectories.contains(firstPathComponent)
+        && !isExternalWorkspacePath(firstPathComponent);
   }
 
-  private static boolean isExternalWorkspacePath(ExecutionRootPath path) {
-    List<String> pathComponents = FileUtil.splitPath(path.getAbsoluteOrRelativeFile().getPath());
-    return pathComponents.size() > 1 && "external".equals(pathComponents.get(0));
+  private static String getFirstPathComponent(String path) {
+    int index = path.indexOf(File.separatorChar);
+    return index == -1 ? path : path.substring(0, index);
+  }
+
+  private static boolean isExternalWorkspacePath(String firstPathComponent) {
+    return firstPathComponent.equals("external");
   }
 }

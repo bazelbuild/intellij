@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run.smrunner;
 
+import com.google.common.collect.ImmutableMultimap;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -23,7 +24,6 @@ import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestCase;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestXmlFinderStrategy;
-import com.google.idea.blaze.base.run.testlogs.CompletedTestTarget;
 import com.google.idea.sdkcompat.smrunner.SmRunnerCompatUtils;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -37,9 +37,13 @@ import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEv
 import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import javax.annotation.Nullable;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor;
 import jetbrains.buildServer.messages.serviceMessages.TestSuiteStarted;
@@ -87,14 +91,31 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
     onStartTesting();
     getProcessor().onTestsReporterAttached();
 
-    for (CompletedTestTarget testTarget : BlazeTestXmlFinderStrategy.locateTestXmlFiles(project)) {
-      try (InputStream input = new FileInputStream(testTarget.testResultXml)) {
-        parseXmlInput(getProcessor(), getKind(project, testTarget.label), input);
+    ImmutableMultimap<Label, File> xmlFiles =
+        BlazeTestXmlFinderStrategy.locateTestXmlFiles(project);
+    for (Label label : xmlFiles.keySet()) {
+      processTestSuites(label, xmlFiles.get(label));
+    }
+  }
+
+  /** Process all test XML files from a single test target. */
+  private void processTestSuites(Label label, Collection<File> files) {
+    Kind kind = getKind(project, label);
+    List<TestSuite> targetSuites = new ArrayList<>();
+    for (File file : files) {
+      try (InputStream input = new FileInputStream(file)) {
+        targetSuites.add(BlazeXmlSchema.parse(input));
       } catch (Exception e) {
         // ignore parsing errors -- most common cause is user cancellation, which we can't easily
         // recognize.
       }
     }
+    if (targetSuites.isEmpty()) {
+      return;
+    }
+    TestSuite suite =
+        targetSuites.size() == 1 ? targetSuites.get(0) : BlazeXmlSchema.mergeSuites(targetSuites);
+    processTestSuite(getProcessor(), kind, suite);
   }
 
   @Nullable
@@ -103,19 +124,13 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
     return target != null ? target.kind : null;
   }
 
-  private void parseXmlInput(
-      GeneralTestEventsProcessor processor, @Nullable Kind kind, InputStream input) {
-    TestSuite testResult = BlazeXmlSchema.parse(input);
-    processTestSuite(processor, kind, testResult);
-  }
-
   private void processTestSuite(
       GeneralTestEventsProcessor processor, @Nullable Kind kind, TestSuite suite) {
     if (!hasRunChild(suite)) {
       return;
     }
     // only include the innermost 'testsuite' element
-    boolean logSuite = !eventsHandler.ignoreSuite(suite);
+    boolean logSuite = !eventsHandler.ignoreSuite(kind, suite);
     if (suite.name != null && logSuite) {
       TestSuiteStarted suiteStarted =
           new TestSuiteStarted(eventsHandler.suiteDisplayName(kind, suite.name));

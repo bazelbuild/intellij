@@ -19,8 +19,8 @@ import com.google.idea.blaze.base.lang.buildfile.lexer.BuildToken;
 import com.google.idea.blaze.base.lang.buildfile.lexer.TokenKind;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
+import javax.annotation.Nullable;
 import javax.swing.Icon;
-import org.jetbrains.annotations.Nullable;
 
 /** PSI nodes for parameters in a function declaration */
 public abstract class Parameter extends NamedBuildElement {

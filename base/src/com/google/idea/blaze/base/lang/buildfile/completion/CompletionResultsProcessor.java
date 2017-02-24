@@ -32,10 +32,13 @@ public class CompletionResultsProcessor implements Processor<BuildElement> {
   private final Map<String, LookupElement> results = Maps.newHashMap();
   private final PsiElement originalElement;
   private final QuoteType quoteType;
+  private final boolean allowPrivateSymbols;
 
-  public CompletionResultsProcessor(PsiElement originalElement, QuoteType quoteType) {
+  public CompletionResultsProcessor(
+      PsiElement originalElement, QuoteType quoteType, boolean allowPrivateSymbols) {
     this.originalElement = originalElement;
     this.quoteType = quoteType;
+    this.allowPrivateSymbols = allowPrivateSymbols;
   }
 
   @Override
@@ -49,9 +52,11 @@ public class CompletionResultsProcessor implements Processor<BuildElement> {
       results.put(string, new LoadedSymbolReferenceLookupElement(loadedSymbol, string, quoteType));
     } else if (buildElement instanceof PsiNamedElement) {
       PsiNamedElement namedElement = (PsiNamedElement) buildElement;
-      results.put(
-          namedElement.getName(),
-          new NamedBuildLookupElement((PsiNamedElement) buildElement, quoteType));
+      String name = namedElement.getName();
+      if (!allowPrivateSymbols && name != null && name.startsWith("_")) {
+        return true;
+      }
+      results.put(name, new NamedBuildLookupElement((PsiNamedElement) buildElement, quoteType));
     }
     return true;
   }

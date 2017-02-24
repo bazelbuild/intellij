@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.run;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -25,7 +26,8 @@ import javax.annotation.Nullable;
 public class TestSizeHeuristic implements TestTargetHeuristic {
 
   @Override
-  public boolean matchesSource(TargetIdeInfo target, File sourceFile, @Nullable TestSize testSize) {
+  public boolean matchesSource(
+      Project project, TargetIdeInfo target, File sourceFile, @Nullable TestSize testSize) {
     // If testSize == null then prefer small
     // Some test runners will assume no size annotation == small and filter on that, others will not
     TestSize size = testSize != null ? testSize : TestIdeInfo.DEFAULT_NON_ANNOTATED_TEST_SIZE;

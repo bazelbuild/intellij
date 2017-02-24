@@ -20,8 +20,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import java.awt.Color;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Changes the color for unsynced files. */
 public class BlazeJavaSyncStatusEditorTabColorProvider implements EditorTabColorProvider {

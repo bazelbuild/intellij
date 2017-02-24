@@ -28,8 +28,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.ui.UIUtil;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Shared thread pool for blaze tasks. */
 public abstract class BlazeExecutor {
@@ -59,7 +59,7 @@ public abstract class BlazeExecutor {
       @NotNull final String title,
       @NotNull final Progressive progressive) {
     return submitTask(
-        project, title, true /* cancelable */, Modality.ALWAYS_BACKGROUND, progressive);
+        project, title, /* cancelable */ true, Modality.ALWAYS_BACKGROUND, progressive);
   }
 
   public static ListenableFuture<Void> submitTask(

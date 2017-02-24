@@ -18,7 +18,7 @@ package com.google.idea.blaze.android.projectview;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
+import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
@@ -66,7 +66,7 @@ public class AndroidSdkPlatformSection {
       if (!projectView.getSectionsOfType(KEY).isEmpty()) {
         return projectView;
       }
-      List<Sdk> sdks = AndroidSdkUtils.getAllAndroidSdks();
+      List<Sdk> sdks = BlazeSdkProvider.getInstance().getAllAndroidSdks();
       ProjectView.Builder builder =
           ProjectView.builder(projectView).add(TextBlockSection.of(TextBlock.newLine()));
 
@@ -81,7 +81,7 @@ public class AndroidSdkPlatformSection {
       } else if (sdks.size() == 1) {
         builder.add(
             ScalarSection.builder(KEY)
-                .set(AndroidSdkFromProjectView.getSdkTargetHash(sdks.get(0))));
+                .set(BlazeSdkProvider.getInstance().getSdkTargetHash(sdks.get(0))));
       } else {
         builder.add(
             TextBlockSection.of(

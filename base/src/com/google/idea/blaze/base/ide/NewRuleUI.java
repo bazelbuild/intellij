@@ -27,9 +27,9 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import java.util.Collection;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.swing.JPanel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 final class NewRuleUI {
 

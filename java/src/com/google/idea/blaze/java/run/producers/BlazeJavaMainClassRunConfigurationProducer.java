@@ -41,7 +41,7 @@ import com.intellij.psi.util.PsiMethodUtil;
 import java.io.File;
 import java.util.Collection;
 import java.util.Objects;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Creates run configurations for Java main classes sourced by java_binary targets. */
 public class BlazeJavaMainClassRunConfigurationProducer

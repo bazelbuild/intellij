@@ -71,12 +71,12 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   private MockInputStreamProvider mockInputStreamProvider;
   private SourceDirectoryCalculator sourceDirectoryCalculator;
 
-  private BlazeContext context = new BlazeContext();
-  private ErrorCollector issues = new ErrorCollector();
+  private final BlazeContext context = new BlazeContext();
+  private final ErrorCollector issues = new ErrorCollector();
   private MockExperimentService experimentService;
 
-  private WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
-  private ArtifactLocationDecoder decoder =
+  private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
+  private final ArtifactLocationDecoder decoder =
       (ArtifactLocationDecoder)
           artifactLocation -> new File("/root", artifactLocation.getRelativePath());
 
@@ -894,14 +894,12 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
                 .build()),
         ImmutableList.of("com.google"));
     ImmutableMap<TargetKey, ArtifactLocation> manifests =
-        ImmutableMap.<TargetKey, ArtifactLocation>builder()
-            .put(
-                TargetKey.forPlainTarget(LABEL),
-                ArtifactLocation.builder()
-                    .setRelativePath("java/com/test.manifest")
-                    .setIsSource(true)
-                    .build())
-            .build();
+        ImmutableMap.of(
+            TargetKey.forPlainTarget(LABEL),
+            ArtifactLocation.builder()
+                .setRelativePath("java/com/test.manifest")
+                .setIsSource(true)
+                .build());
     Map<TargetKey, Map<ArtifactLocation, String>> manifestMap =
         readPackageManifestFiles(manifests, getDecoder("/root"));
 
@@ -921,14 +919,12 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         ImmutableList.of("java/com/google/Bla.java"),
         ImmutableList.of("com.google"));
     ImmutableMap<TargetKey, ArtifactLocation> manifests =
-        ImmutableMap.<TargetKey, ArtifactLocation>builder()
-            .put(
-                TargetKey.forPlainTarget(LABEL),
-                ArtifactLocation.builder()
-                    .setRelativePath("java/com/test.manifest")
-                    .setIsSource(true)
-                    .build())
-            .build();
+        ImmutableMap.of(
+            TargetKey.forPlainTarget(LABEL),
+            ArtifactLocation.builder()
+                .setRelativePath("java/com/test.manifest")
+                .setIsSource(true)
+                .build());
     Map<TargetKey, Map<ArtifactLocation, String>> manifestMap =
         readPackageManifestFiles(manifests, getDecoder("/root"));
 
@@ -1006,14 +1002,12 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         "package com.google.different;\n public class Bla {}");
 
     ImmutableMap<TargetKey, ArtifactLocation> manifests =
-        ImmutableMap.<TargetKey, ArtifactLocation>builder()
-            .put(
-                TargetKey.forPlainTarget(LABEL),
-                ArtifactLocation.builder()
-                    .setRelativePath("java/com/test.manifest")
-                    .setIsSource(true)
-                    .build())
-            .build();
+        ImmutableMap.of(
+            TargetKey.forPlainTarget(LABEL),
+            ArtifactLocation.builder()
+                .setRelativePath("java/com/test.manifest")
+                .setIsSource(true)
+                .build());
 
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
@@ -1099,17 +1093,15 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     BlazeRoots roots =
         new BlazeRoots(
             root,
-            ImmutableList.of(root),
             new ExecutionRootPath("out/crosstool/bin"),
             new ExecutionRootPath("out/crosstool/gen"),
             null);
-    return new ArtifactLocationDecoderImpl(
-        roots, new WorkspacePathResolverImpl(workspaceRoot, roots));
+    return new ArtifactLocationDecoderImpl(roots, new WorkspacePathResolverImpl(workspaceRoot));
   }
 
   private static class MockInputStreamProvider implements InputStreamProvider {
 
-    private final Map<String, InputStream> javaFiles = new HashMap<String, InputStream>();
+    private final Map<String, InputStream> javaFiles = new HashMap<>();
 
     public MockInputStreamProvider addFile(String filePath, String javaSrc) {
       try {

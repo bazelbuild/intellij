@@ -23,7 +23,7 @@ import org.junit.rules.ExternalResource;
  * Runs before Android Studio integration tests, to ensure the AndroidStudio platform prefix is
  * honored.
  */
-public class AndroidTestSetupRule extends ExternalResource {
+public class AndroidIntegrationTestSetupRule extends ExternalResource {
 
   @Override
   protected void before() throws Throwable {
@@ -33,6 +33,7 @@ public class AndroidTestSetupRule extends ExternalResource {
     // a matching descriptor for one of them. Notably, "AndroidStudio" is not a candidate.
     // The first parameter doesn't matter in our case, so we pass a nonexistent class name.
     PlatformTestCase.initPlatformPrefix("", System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY));
+    System.setProperty("android.studio.sdk.manager.disabled", "true");
     // TODO: Remove the above once we build for a version where "AndroidStudio" is a candidate.
   }
 }

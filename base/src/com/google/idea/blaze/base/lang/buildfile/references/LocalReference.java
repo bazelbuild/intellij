@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
 public class LocalReference extends PsiReferenceBase<ReferenceExpression> {
 
   public LocalReference(ReferenceExpression element) {
-    super(element, new TextRange(0, element.getTextLength()), /*soft*/ false);
+    super(element, new TextRange(0, element.getTextLength()), /* soft */ false);
   }
 
   @Nullable
@@ -49,7 +49,7 @@ public class LocalReference extends PsiReferenceBase<ReferenceExpression> {
   @Override
   public Object[] getVariants() {
     CompletionResultsProcessor processor =
-        new CompletionResultsProcessor(myElement, QuoteType.NoQuotes);
+        new CompletionResultsProcessor(myElement, QuoteType.NoQuotes, true);
     ResolveUtil.searchInScope(myElement, processor);
     return processor.getResults().toArray();
   }

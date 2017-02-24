@@ -22,8 +22,8 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import java.util.Iterator;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Copy of {@link org.jetbrains.plugins.gradle.execution.test.runner.TestRunnerUtils}.

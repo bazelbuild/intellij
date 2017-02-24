@@ -17,12 +17,12 @@ package com.google.idea.blaze.android.sync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
 import com.google.idea.blaze.android.compatibility.Compatibility.IdeSdks;
 import com.google.idea.blaze.android.cppapi.NdkSupport;
 import com.google.idea.blaze.android.projectview.AndroidMinSdkSection;
 import com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
+import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
@@ -111,6 +111,10 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Override
   public void installSdks(BlazeContext context) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     File path = IdeSdks.getAndroidSdkPath();
     if (path != null) {
       context.output(new StatusOutput("Installing SDK platforms..."));
@@ -176,7 +180,7 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
     if (androidSdkPlatform == null) {
       return;
     }
-    Sdk sdk = AndroidSdkUtils.findSuitableAndroidSdk(androidSdkPlatform.androidSdk);
+    Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdkPlatform.androidSdk);
     if (sdk == null) {
       IssueOutput.error(
               String.format("Android platform '%s' not found.", androidSdkPlatform.androidSdk))

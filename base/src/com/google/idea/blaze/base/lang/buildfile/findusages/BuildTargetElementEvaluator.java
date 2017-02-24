@@ -56,35 +56,32 @@ public class BuildTargetElementEvaluator extends TargetElementEvaluatorEx2 {
   }
 
   private static final Comparator<PsiReference> COMPARATOR =
-      new Comparator<PsiReference>() {
-        @Override
-        public int compare(final PsiReference ref1, final PsiReference ref2) {
-          boolean resolves1 = ref1.resolve() != null;
-          boolean resolves2 = ref2.resolve() != null;
-          if (resolves1 && !resolves2) {
-            return -1;
-          }
-          if (!resolves1 && resolves2) {
-            return 1;
-          }
+      (ref1, ref2) -> {
+        boolean resolves1 = ref1.resolve() != null;
+        boolean resolves2 = ref2.resolve() != null;
+        if (resolves1 && !resolves2) {
+          return -1;
+        }
+        if (!resolves1 && resolves2) {
+          return 1;
+        }
 
-          final TextRange range1 = ref1.getRangeInElement();
-          final TextRange range2 = ref2.getRangeInElement();
+        final TextRange range1 = ref1.getRangeInElement();
+        final TextRange range2 = ref2.getRangeInElement();
 
-          if (TextRange.areSegmentsEqual(range1, range2)) {
-            return 0;
-          }
-          if (range1.getStartOffset() >= range2.getStartOffset()
-              && range1.getEndOffset() <= range2.getEndOffset()) {
-            return 1;
-          }
-          if (range2.getStartOffset() >= range1.getStartOffset()
-              && range2.getEndOffset() <= range1.getEndOffset()) {
-            return -1;
-          }
-
+        if (TextRange.areSegmentsEqual(range1, range2)) {
           return 0;
         }
+        if (range1.getStartOffset() >= range2.getStartOffset()
+            && range1.getEndOffset() <= range2.getEndOffset()) {
+          return 1;
+        }
+        if (range2.getStartOffset() >= range1.getStartOffset()
+            && range2.getEndOffset() <= range1.getEndOffset()) {
+          return -1;
+        }
+
+        return 0;
       };
 
   /** Redirect 'name' funcall argument values to the funcall expression (b/29088829). */

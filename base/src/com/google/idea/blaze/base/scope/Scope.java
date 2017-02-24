@@ -16,8 +16,8 @@
 package com.google.idea.blaze.base.scope;
 
 import com.intellij.openapi.diagnostic.Logger;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Helper methods to run scoped functions and operations in a scoped context. */
 public final class Scope {
