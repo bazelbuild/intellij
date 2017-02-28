@@ -16,8 +16,8 @@
 package com.google.idea.blaze.clwb.run.test;
 
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.run.TestTargetHeuristic;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -35,23 +35,16 @@ import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/** A blaze cpp test target, together with optional test filter. */
-public class BlazeCidrTestTarget {
+/** A {@link PsiLocation} with corresponding gtest specification */
+public class GoogleTestLocation extends PsiLocation<PsiElement> {
 
-  public final PsiElement element;
-  public final Label label;
+  public final GoogleTestSpecification gtest;
   @Nullable public final String testFilter;
-  public final String name;
 
-  private BlazeCidrTestTarget(PsiElement element, Label label, @Nullable String testFilter) {
-    this.element = element;
-    this.label = label;
-    this.testFilter = testFilter;
-    if (testFilter != null) {
-      name = String.format("%s (%s)", testFilter, label.toString());
-    } else {
-      name = label.toString();
-    }
+  GoogleTestLocation(PsiElement psi, GoogleTestSpecification gtest) {
+    super(psi);
+    this.gtest = gtest;
+    this.testFilter = gtest.testFilter();
   }
 
   /** The raw test filter string with '--test_filter=' prepended, or null if there is no filter. */
@@ -61,35 +54,15 @@ public class BlazeCidrTestTarget {
   }
 
   @Nullable
-  private static BlazeCidrTestTarget createFromFile(@Nullable PsiElement element) {
-    return createFromClassAndMethod(element, null, null);
-  }
-
-  @Nullable
-  private static BlazeCidrTestTarget createFromClass(
-      @Nullable PsiElement element, String className) {
-    return createFromClassAndMethod(element, className, null);
-  }
-
-  @Nullable
-  private static BlazeCidrTestTarget createFromClassAndMethod(
-      @Nullable PsiElement element, String classOrSuiteName, @Nullable String testName) {
-    Label label = TestTargetHeuristic.testTargetForPsiElement(element);
-    if (label == null) {
-      return null;
+  public static GoogleTestLocation findGoogleTest(Location<?> location) {
+    if (location instanceof GoogleTestLocation) {
+      return (GoogleTestLocation) location;
     }
-    String filter = null;
-    if (classOrSuiteName != null) {
-      filter = classOrSuiteName;
-      if (testName != null) {
-        filter += "." + testName;
-      }
-    }
-    return new BlazeCidrTestTarget(element, label, filter);
+    return findGoogleTest(location.getPsiElement());
   }
 
   @Nullable
-  public static BlazeCidrTestTarget findTestObject(PsiElement element) {
+  public static GoogleTestLocation findGoogleTest(PsiElement element) {
     // Copied from on CidrGoogleTestRunConfigurationProducer::findTestObject.
     // Precedence order (decreasing): class/function, macro, file
     PsiElement parent =
@@ -118,8 +91,7 @@ public class BlazeCidrTestTarget {
             if (name != null) {
               return createFromClassAndMethod(struct, name.first, name.second);
             }
-            return createFromClass(
-                struct, ((OCStructSymbol) owner).getQualifiedName().getName());
+            return createFromClass(struct, ((OCStructSymbol) owner).getQualifiedName().getName());
           }
         }
       }
@@ -146,8 +118,7 @@ public class BlazeCidrTestTarget {
               CidrTestUtil.findGoogleTestSymbol(element.getProject(), suiteName, testName);
           if (symbol != null) {
             OCStruct targetElement = (OCStruct) symbol.locateDefinition();
-            return createFromClassAndMethod(
-                targetElement, suiteName, isSuite ? null : testName);
+            return createFromClassAndMethod(targetElement, suiteName, isSuite ? null : testName);
           }
         }
       }
@@ -158,7 +129,9 @@ public class BlazeCidrTestTarget {
                 element.getProject(), suite.first, true);
         if (res.size() != 0) {
           OCStruct struct = (OCStruct) res.iterator().next().locateDefinition();
-          return createFromClassAndMethod(struct, suite.first, null);
+          GoogleTestSpecification gtest =
+              new GoogleTestSpecification.FromPsiElement(suite.first, null, suite.second, null);
+          return new GoogleTestLocation(struct, gtest);
         }
       }
     } else if (parent instanceof OCFile) {
@@ -174,5 +147,27 @@ public class BlazeCidrTestTarget {
       return arguments.size() > 0 && arguments.get(0).equals(element);
     }
     return false;
+  }
+
+  @Nullable
+  private static GoogleTestLocation createFromFile(@Nullable PsiElement element) {
+    return createFromClassAndMethod(element, null, null);
+  }
+
+  @Nullable
+  private static GoogleTestLocation createFromClass(
+      @Nullable PsiElement element, @Nullable String className) {
+    return createFromClassAndMethod(element, className, null);
+  }
+
+  @Nullable
+  private static GoogleTestLocation createFromClassAndMethod(
+      @Nullable PsiElement element, @Nullable String classOrSuiteName, @Nullable String testName) {
+    if (element == null) {
+      return null;
+    }
+    GoogleTestSpecification gtest =
+        new GoogleTestSpecification.FromPsiElement(classOrSuiteName, testName, null, null);
+    return new GoogleTestLocation(element, gtest);
   }
 }

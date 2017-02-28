@@ -30,7 +30,7 @@ import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.command.ExperimentalShowArtifactsLineProcessor;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.filecache.FileDiffer;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -190,36 +190,34 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
           context.push(
               new TimingScope(String.format("Execute%sCommand", Blaze.buildSystemName(project))));
 
-          List<File> result = Lists.newArrayList();
+          String fileExtension = aspectStrategy.getAspectOutputFileExtension();
+          String gzFileExtension = fileExtension + ".gz";
+          Predicate<String> fileFilter =
+              fileName -> fileName.endsWith(fileExtension) || fileName.endsWith(gzFileExtension);
+          BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(fileFilter);
 
           BlazeCommand.Builder blazeCommandBuilder =
               BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.BUILD);
           blazeCommandBuilder.addTargets(targets);
           blazeCommandBuilder.addBlazeFlags(BlazeFlags.KEEP_GOING);
           blazeCommandBuilder
-              .addBlazeFlags(BlazeFlags.EXPERIMENTAL_SHOW_ARTIFACTS)
+              .addBlazeFlags(buildResultHelper.getBuildFlags())
               .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet));
 
           aspectStrategy.modifyIdeInfoCommand(blazeCommandBuilder);
-
-          String fileExtension = aspectStrategy.getAspectOutputFileExtension();
-          String gzFileExtension = fileExtension + ".gz";
-          Predicate<String> fileFilter =
-              fileName -> fileName.endsWith(fileExtension) || fileName.endsWith(gzFileExtension);
 
           int retVal =
               ExternalTask.builder(workspaceRoot)
                   .addBlazeCommand(blazeCommandBuilder.build())
                   .context(context)
                   .stderr(
-                      LineProcessingOutputStream.of(
-                          new ExperimentalShowArtifactsLineProcessor(result, fileFilter),
+                      buildResultHelper.stderr(
                           new IssueOutputLineProcessor(project, context, workspaceRoot)))
                   .build()
                   .run();
 
           BuildResult buildResult = BuildResult.fromExitCode(retVal);
-          return new IdeInfoResult(result, buildResult);
+          return new IdeInfoResult(buildResultHelper.getBuildArtifacts(), buildResult);
         });
   }
 

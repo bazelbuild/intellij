@@ -13,29 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.command;
+package com.google.idea.blaze.base.command.buildresult;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import java.io.File;
-import java.util.List;
 import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 
 /** Collects the output of --experimental_show_artifacts */
-public class ExperimentalShowArtifactsLineProcessor
-    implements LineProcessingOutputStream.LineProcessor {
+class ExperimentalShowArtifactsLineProcessor implements LineProcessingOutputStream.LineProcessor {
   private static final String OUTPUT_START = "Build artifacts:";
   private static final String OUTPUT_MARKER = ">>>";
 
-  private final List<File> fileList;
+  private final ImmutableList.Builder<File> fileList;
   private final Predicate<String> filter;
   private boolean afterBuildResult = false;
 
-  public ExperimentalShowArtifactsLineProcessor(List<File> fileList) {
-    this(fileList, (value) -> true);
-  }
-
-  public ExperimentalShowArtifactsLineProcessor(List<File> fileList, Predicate<String> filter) {
+  ExperimentalShowArtifactsLineProcessor(
+      ImmutableList.Builder<File> fileList, Predicate<String> filter) {
     this.fileList = fileList;
     this.filter = filter;
   }

@@ -37,9 +37,9 @@ public interface BlazeSelectProjectViewOption extends BlazeWizardOption {
     return false;
   }
 
-  /** Returns the default project name */
-  default String getDefaultProjectName(String workspaceName) {
-    return workspaceName;
+  /** Returns the directory we're importing from, if applicable. */
+  default String getImportDirectory() {
+    return null;
   }
 
   void commit();

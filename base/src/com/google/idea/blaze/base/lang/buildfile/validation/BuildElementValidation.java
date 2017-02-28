@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.validation;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.buildfile.psi.DictionaryLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.GlobExpression;
@@ -38,14 +39,21 @@ class BuildElementValidation {
   private static final EnumSet<Build.Attribute.Discriminator> LIST_TYPES =
       EnumSet.of(
           Discriminator.STRING_LIST,
+          Discriminator.DISTRIBUTION_SET,
           Discriminator.LABEL_LIST,
           Discriminator.OUTPUT_LIST,
           Discriminator.FILESET_ENTRY_LIST,
           Discriminator.INTEGER_LIST,
-          Discriminator.LICENSE);
+          Discriminator.LICENSE,
+          Discriminator.SELECTOR_LIST);
 
   private static final EnumSet<Build.Attribute.Discriminator> DICT_TYPES =
-      EnumSet.of(Discriminator.LABEL_LIST_DICT, Discriminator.STRING_LIST_DICT);
+      EnumSet.of(
+          Discriminator.LABEL_LIST_DICT,
+          Discriminator.STRING_DICT,
+          Discriminator.STRING_LIST_DICT,
+          Discriminator.STRING_DICT_UNARY,
+          Discriminator.LABEL_DICT_UNARY);
 
   private static final EnumSet<Build.Attribute.Discriminator> STRING_TYPES =
       EnumSet.of(
@@ -58,9 +66,20 @@ class BuildElementValidation {
   private static final EnumSet<Build.Attribute.Discriminator> INTEGER_TYPES =
       EnumSet.of(Discriminator.INTEGER, Discriminator.BOOLEAN, Discriminator.TRISTATE);
 
+  // This enum list is duplicated several times through Bazel source code. In some places there are
+  // additional items not covered here. Don't show spurious errors when more items are added.
+  private static final EnumSet<Build.Attribute.Discriminator> HANDLED_TYPES =
+      EnumSet.copyOf(
+          ImmutableList.<Discriminator>builder()
+              .addAll(LIST_TYPES)
+              .addAll(DICT_TYPES)
+              .addAll(STRING_TYPES)
+              .addAll(INTEGER_TYPES)
+              .build());
+
   /** Returns false iff we know with certainty that the element cannot resolve to the given type. */
   public static boolean possiblyValidType(PsiElement element, Build.Attribute.Discriminator type) {
-    if (type == Discriminator.UNKNOWN) {
+    if (!HANDLED_TYPES.contains(type)) {
       return true;
     }
     if (element instanceof ListLiteral || element instanceof GlobExpression) {

@@ -133,7 +133,7 @@ public class ProjectViewUi {
     return editor;
   }
 
-  public void fillUi(JPanel canvas, int indentLevel) {
+  public void fillUi(JPanel canvas) {
     String tooltip =
         "Enter a project view descriptor file."
             + (Blaze.defaultBuildSystem() == BuildSystem.Blaze
@@ -149,9 +149,9 @@ public class ProjectViewUi {
 
     JBLabel labelsLabel = new JBLabel("Project View");
     labelsLabel.setToolTipText(tooltip);
-    canvas.add(labelsLabel, UiUtil.getFillLineConstraints(indentLevel));
+    canvas.add(labelsLabel, UiUtil.getFillLineConstraints(0));
 
-    canvas.add(projectViewEditor.getComponent(), UiUtil.getFillLineConstraints(indentLevel));
+    canvas.add(projectViewEditor.getComponent(), UiUtil.getFillLineConstraints(0));
 
     useShared = new JCheckBox(USE_SHARED_PROJECT_VIEW);
     useShared.addActionListener(
@@ -162,7 +162,7 @@ public class ProjectViewUi {
           }
           updateTextAreasEnabled();
         });
-    canvas.add(useShared, UiUtil.getFillLineConstraints(indentLevel));
+    canvas.add(useShared, UiUtil.getFillLineConstraints(0));
   }
 
   public void init(
@@ -185,10 +185,7 @@ public class ProjectViewUi {
     }
 
     useShared.setSelected(useSharedProjectView);
-
-    if (sharedProjectViewText == null) {
-      useShared.setEnabled(false);
-    }
+    useShared.setEnabled(sharedProjectViewText != null);
 
     setDummyWorkspacePathResolverProvider(this.workspacePathResolver);
     setProjectViewText(projectViewText);

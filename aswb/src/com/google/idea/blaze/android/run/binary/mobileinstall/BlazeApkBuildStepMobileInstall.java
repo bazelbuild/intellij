@@ -32,10 +32,10 @@ import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -118,13 +118,14 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
             }
             WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
+            BlazeApkDeployInfoProtoHelper deployInfoHelper =
+                new BlazeApkDeployInfoProtoHelper(project, buildFlags);
+            BuildResultHelper buildResultHelper = deployInfoHelper.getBuildResultHelper();
+
             command
                 .addTargets(label)
                 .addBlazeFlags(buildFlags)
-                .addBlazeFlags(BlazeFlags.EXPERIMENTAL_SHOW_ARTIFACTS);
-
-            BlazeApkDeployInfoProtoHelper deployInfoHelper =
-                new BlazeApkDeployInfoProtoHelper(project, buildFlags);
+                .addBlazeFlags(buildResultHelper.getBuildFlags());
 
             SaveUtil.saveAllFiles();
             int retVal =
@@ -132,8 +133,7 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
                     .addBlazeCommand(command.build())
                     .context(context)
                     .stderr(
-                        LineProcessingOutputStream.of(
-                            deployInfoHelper.getLineProcessor(),
+                        buildResultHelper.stderr(
                             new IssueOutputLineProcessor(project, context, workspaceRoot)))
                     .build()
                     .run();

@@ -120,9 +120,9 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
   }
 
   @Override
-  public String getDefaultProjectName(String workspaceName) {
+  public String getImportDirectory() {
     File buildFileParent = new File(getBuildFilePath()).getParentFile();
-    return buildFileParent != null ? buildFileParent.getName() : workspaceName;
+    return buildFileParent != null ? buildFileParent.getName() : null;
   }
 
   @Override

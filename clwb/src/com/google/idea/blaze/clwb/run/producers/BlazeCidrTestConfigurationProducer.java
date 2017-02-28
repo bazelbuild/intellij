@@ -17,12 +17,15 @@ package com.google.idea.blaze.clwb.run.producers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
+import com.google.idea.blaze.base.run.TestTargetHeuristic;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.clwb.run.test.BlazeCidrTestTarget;
+import com.google.idea.blaze.clwb.run.test.GoogleTestLocation;
+import com.google.idea.blaze.clwb.run.test.GoogleTestSpecification;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -60,12 +63,16 @@ public class BlazeCidrTestConfigurationProducer
     if (element == null) {
       return false;
     }
-    BlazeCidrTestTarget testObject = BlazeCidrTestTarget.findTestObject(element);
-    if (testObject == null) {
+    GoogleTestLocation test = GoogleTestLocation.findGoogleTest(element);
+    if (test == null) {
       return false;
     }
-    sourceElement.set(testObject.element);
-    configuration.setTarget(testObject.label);
+    Label label = getTestTarget(test.getPsiElement());
+    if (label == null) {
+      return false;
+    }
+    sourceElement.set(test.getPsiElement());
+    configuration.setTarget(label);
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {
@@ -74,7 +81,7 @@ public class BlazeCidrTestConfigurationProducer
     handlerState.setCommand(BlazeCommandName.TEST);
 
     ImmutableList.Builder<String> flags = ImmutableList.builder();
-    String testFilter = testObject.getTestFilterFlag();
+    String testFilter = test.getTestFilterFlag();
     if (testFilter != null) {
       flags.add(testFilter);
     }
@@ -83,7 +90,8 @@ public class BlazeCidrTestConfigurationProducer
     handlerState.setBlazeFlags(flags.build());
     configuration.setName(
         String.format(
-            "%s test: %s", Blaze.buildSystemName(configuration.getProject()), testObject.name));
+            "%s test: %s",
+            Blaze.buildSystemName(configuration.getProject()), getTestName(label, test.gtest)));
     return true;
   }
 
@@ -102,11 +110,27 @@ public class BlazeCidrTestConfigurationProducer
     if (element == null) {
       return false;
     }
-    BlazeCidrTestTarget testObject = BlazeCidrTestTarget.findTestObject(element);
-    if (testObject == null) {
+    GoogleTestLocation test = GoogleTestLocation.findGoogleTest(element);
+    if (test == null) {
       return false;
     }
-    return testObject.label.equals(configuration.getTarget())
-        && Objects.equals(handlerState.getTestFilterFlag(), testObject.getTestFilterFlag());
+    Label label = getTestTarget(test.getPsiElement());
+    if (label == null) {
+      return false;
+    }
+    return label.equals(configuration.getTarget())
+        && Objects.equals(handlerState.getTestFilterFlag(), test.getTestFilterFlag());
+  }
+
+  @Nullable
+  private static Label getTestTarget(PsiElement element) {
+    return TestTargetHeuristic.testTargetForPsiElement(element);
+  }
+
+  private static String getTestName(Label target, GoogleTestSpecification gtest) {
+    String filterDescription = gtest.description();
+    return filterDescription != null
+        ? String.format("%s (%s)", filterDescription, target.toString())
+        : target.toString();
   }
 }

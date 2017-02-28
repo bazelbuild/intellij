@@ -36,11 +36,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
-
 /** Parses blaze output for compile errors. */
 public class BlazeIssueParser {
 
-  private static class ParseResult {
+  /** Result from parsing the current line */
+  public static class ParseResult {
 
     public static final ParseResult NEEDS_MORE_INPUT = new ParseResult(true, null);
 
@@ -132,7 +132,10 @@ public class BlazeIssueParser {
   }
 
   /** Falls back to returning -1 if no integer can be parsed. */
-  public static int parseOptionalInt(String intString) {
+  public static int parseOptionalInt(@Nullable String intString) {
+    if (intString == null) {
+      return -1;
+    }
     try {
       return Integer.parseInt(intString);
     } catch (NumberFormatException e) {

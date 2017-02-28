@@ -117,6 +117,11 @@ public class UseExistingBazelWorkspaceOption implements BlazeSelectWorkspaceOpti
   }
 
   @Override
+  public String getBranchName() {
+    return null;
+  }
+
+  @Override
   public BlazeValidationResult validate() {
     if (getDirectory().isEmpty()) {
       return BlazeValidationResult.failure("Please select a workspace");

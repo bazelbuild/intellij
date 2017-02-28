@@ -23,6 +23,7 @@ import com.android.tools.idea.project.FeatureEnableService;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.settings.BlazeAndroidUserSettings;
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.logging.EventLogger;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -63,6 +64,8 @@ public class BlazeFeatureEnabledServiceTest extends BlazeTestCase {
         new BlazeImportSettings(null, null, null, null, null, BuildSystem.Blaze));
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
 
+    registerExtensionPoint(
+        ExtensionPointName.create("com.google.idea.blaze.EventLogger"), EventLogger.class);
     ExtensionPoint<FeatureEnableService> extensionPoint =
         registerExtensionPoint(
             ExtensionPointName.create("com.android.project.featureEnableService"),

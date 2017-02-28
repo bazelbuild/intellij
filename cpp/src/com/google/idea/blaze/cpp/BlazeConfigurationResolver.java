@@ -54,6 +54,7 @@ import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -371,7 +372,7 @@ final class BlazeConfigurationResolver {
     // If a source file is in two different targets,
     // we can't possibly show how it will be interpreted in both contexts at the same time
     // in the IDE, so just pick the first target after we sort.
-    targetsForSourceFile.sort((o1, o2) -> o1.toString().compareTo(o2.toString()));
+    targetsForSourceFile.sort(Comparator.comparing(TargetKey::toString));
     TargetKey targetKey = Iterables.getFirst(targetsForSourceFile, null);
     assert (targetKey != null);
 

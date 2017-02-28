@@ -22,8 +22,6 @@ import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.io.URLUtil;
-import com.jetbrains.cidr.execution.testing.OCGoogleTestLocationProvider;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -39,7 +37,7 @@ public class BlazeCidrTestEventsHandler extends BlazeTestEventsHandler {
 
   @Override
   public SMTestLocator getTestLocator() {
-    return OCGoogleTestLocationProvider.INSTANCE;
+    return BlazeCppTestLocator.INSTANCE;
   }
 
   @Nullable
@@ -47,32 +45,14 @@ public class BlazeCidrTestEventsHandler extends BlazeTestEventsHandler {
   public String getTestFilter(Project project, List<Location<?>> testLocations) {
     List<String> filters = new ArrayList<>();
     for (Location<?> location : testLocations) {
-      BlazeCidrTestTarget target = BlazeCidrTestTarget.findTestObject(location.getPsiElement());
-      if (target != null && target.testFilter != null) {
-        filters.add(target.testFilter);
+      GoogleTestLocation test = GoogleTestLocation.findGoogleTest(location);
+      if (test != null && test.testFilter != null) {
+        filters.add(test.testFilter);
       }
     }
     if (filters.isEmpty()) {
       return null;
     }
     return String.format("%s=%s", BlazeFlags.TEST_FILTER, Joiner.on(':').join(filters));
-  }
-
-  @Override
-  public String suiteLocationUrl(@Nullable Kind kind, String name) {
-    return OCGoogleTestLocationProvider.PROTOCOL + URLUtil.SCHEME_SEPARATOR + name;
-  }
-
-  @Override
-  public String testLocationUrl(
-      @Nullable Kind kind, String parentSuite, String name, @Nullable String className) {
-    if (className == null) {
-      return OCGoogleTestLocationProvider.PROTOCOL + URLUtil.SCHEME_SEPARATOR + name;
-    }
-    return OCGoogleTestLocationProvider.PROTOCOL
-        + URLUtil.SCHEME_SEPARATOR
-        + className
-        + "."
-        + name;
   }
 }

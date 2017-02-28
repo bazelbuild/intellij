@@ -15,11 +15,11 @@
  */
 package com.google.idea.blaze.base.async.process;
 
-import com.google.common.collect.Lists;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
-import org.jetbrains.annotations.NotNull;
 
 /** An base output stream which marshals output into newline-delimited segments for processing. */
 public final class LineProcessingOutputStream extends OutputStream {
@@ -31,25 +31,29 @@ public final class LineProcessingOutputStream extends OutputStream {
      *
      * @return Whether line processing should continue
      */
-    boolean processLine(@NotNull String line);
+    boolean processLine(String line);
   }
 
-  @NotNull private final StringBuffer stringBuffer = new StringBuffer();
+  private final StringBuffer stringBuffer = new StringBuffer();
   private volatile boolean closed;
-  @NotNull private final List<LineProcessor> lineProcessors;
+  private final ImmutableList<LineProcessor> lineProcessors;
 
-  LineProcessingOutputStream(@NotNull LineProcessor... lineProcessors) {
-    this.lineProcessors = Lists.newArrayList(lineProcessors);
+  LineProcessingOutputStream(ImmutableList<LineProcessor> lineProcessors) {
+    this.lineProcessors = lineProcessors;
   }
 
-  public static LineProcessingOutputStream of(@NotNull LineProcessor... lineProcessors) {
+  public static LineProcessingOutputStream of(LineProcessor... lineProcessors) {
+    return new LineProcessingOutputStream(ImmutableList.copyOf(lineProcessors));
+  }
+
+  public static LineProcessingOutputStream of(ImmutableList<LineProcessor> lineProcessors) {
     return new LineProcessingOutputStream(lineProcessors);
   }
 
   @Override
   public synchronized void write(byte[] b, int off, int len) {
     if (!closed) {
-      String text = new String(b, off, len);
+      String text = new String(b, off, len, UTF_8);
       stringBuffer.append(text);
 
       while (true) {

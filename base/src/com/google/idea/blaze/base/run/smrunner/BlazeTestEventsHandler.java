@@ -116,11 +116,11 @@ public abstract class BlazeTestEventsHandler {
 
   public String testLocationUrl(
       @Nullable Kind kind, String parentSuite, String name, @Nullable String className) {
-    String base = SmRunnerUtils.GENERIC_TEST_PROTOCOL + URLUtil.SCHEME_SEPARATOR + name;
+    String base = SmRunnerUtils.GENERIC_TEST_PROTOCOL + URLUtil.SCHEME_SEPARATOR;
     if (Strings.isNullOrEmpty(className)) {
-      return base;
+      return base + name;
     }
-    return base + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER + className;
+    return base + className + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER + name;
   }
 
   /** Whether to skip logging a {@link TestSuite}. */

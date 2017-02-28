@@ -326,6 +326,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeTestXmlFinderStrategy" interface="com.google.idea.blaze.base.run.testlogs.BlazeTestXmlFinderStrategy"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeTestEventsHandler" interface="com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AttributeSpecificStringLiteralReferenceProvider" interface="com.google.idea.blaze.base.lang.buildfile.references.AttributeSpecificStringLiteralReferenceProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.EventLogger" interface="com.google.idea.blaze.base.logging.EventLogger"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
