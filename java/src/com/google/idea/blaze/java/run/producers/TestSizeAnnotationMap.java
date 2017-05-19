@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 
 /** Maps method and class annotations to our test size enumeration. */
 public class TestSizeAnnotationMap {
-  private static ImmutableMap<String, TestIdeInfo.TestSize> ANNOTATION_TO_TEST_SIZE =
+  private static final ImmutableMap<String, TestIdeInfo.TestSize> ANNOTATION_TO_TEST_SIZE =
       ImmutableMap.<String, TestIdeInfo.TestSize>builder()
           .put("com.google.testing.testsize.SmallTest", TestIdeInfo.TestSize.SMALL)
           .put("com.google.testing.testsize.MediumTest", TestIdeInfo.TestSize.MEDIUM)

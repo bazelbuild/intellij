@@ -10,6 +10,7 @@ load(
     "merged_plugin_xml",
     "stamped_plugin_xml",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 load("//:version.bzl", "VERSION")
 
 merged_plugin_xml(
@@ -18,8 +19,8 @@ merged_plugin_xml(
         "src/META-INF/clwb.xml",
         "//base:plugin_xml",
         "//cpp:plugin_xml",
+        "//python:plugin_xml",
     ],
-    visibility = ["//visibility:public"],
 )
 
 merged_plugin_xml(
@@ -32,6 +33,7 @@ merged_plugin_xml(
 
 stamped_plugin_xml(
     name = "stamped_plugin_xml",
+    changelog_file = "//:changelog",
     include_product_code_in_stamp = True,
     plugin_id = "com.google.idea.bazel.clwb",
     plugin_name = "CLion with Bazel",
@@ -43,18 +45,30 @@ stamped_plugin_xml(
 java_library(
     name = "clwb_lib",
     srcs = glob(["src/**/*.java"]),
-    visibility = ["//visibility:public"],
+    runtime_deps = [
+        "//terminal",
+    ] + select_for_plugin_api({
+        "clion-2016.3.2": [],
+        "default": ["//python"],
+    }),
     deps = [
         "//base",
         "//common/experiments",
         "//cpp",
         "//intellij_platform_sdk:plugin_api",
+        "//sdkcompat",
         "@jsr305_annotations//jar",
     ],
 )
 
+OPTIONAL_PLUGIN_XMLS = [
+    "//python:optional_xml",
+    "//terminal:optional_xml",
+]
+
 intellij_plugin(
     name = "clwb_bazel",
+    optional_plugin_xmls = OPTIONAL_PLUGIN_XMLS,
     plugin_xml = ":stamped_plugin_xml",
     deps = [
         ":clwb_lib",

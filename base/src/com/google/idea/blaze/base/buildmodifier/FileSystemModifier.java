@@ -19,8 +19,8 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Modifies the file system. Interface so we can mock it in tests */
 public abstract class FileSystemModifier {

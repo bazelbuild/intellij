@@ -89,7 +89,7 @@ final class BlazeCSyncPlugin extends BlazeSyncPlugin.Adapter {
     VirtualFile execRoot =
         VirtualFileSystemProvider.getInstance()
             .getSystem()
-            .refreshAndFindFileByIoFile(blazeProjectData.blazeRoots.executionRoot);
+            .refreshAndFindFileByIoFile(blazeProjectData.blazeInfo.getExecutionRoot());
     if (execRoot != null) {
       VfsUtil.markDirtyAndRefresh(false, true, true, execRoot);
     }

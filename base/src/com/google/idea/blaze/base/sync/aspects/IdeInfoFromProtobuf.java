@@ -18,17 +18,18 @@ package com.google.idea.blaze.base.sync.aspects;
 
 import static java.util.stream.Collectors.toList;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
+import com.google.idea.blaze.base.ideinfo.AndroidSdkIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.CIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.Dependency.DependencyType;
-import com.google.idea.blaze.base.ideinfo.IntellijPluginDeployInfo;
-import com.google.idea.blaze.base.ideinfo.IntellijPluginDeployInfo.IntellijPluginDeployFile;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.JavaToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
@@ -40,8 +41,8 @@ import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -50,23 +51,12 @@ import javax.annotation.Nullable;
 public class IdeInfoFromProtobuf {
 
   @Nullable
-  public static TargetIdeInfo makeTargetIdeInfo(
-      WorkspaceLanguageSettings workspaceLanguageSettings, IntellijIdeInfo.TargetIdeInfo message) {
+  public static TargetIdeInfo makeTargetIdeInfo(IntellijIdeInfo.TargetIdeInfo message) {
     Kind kind = getKind(message);
     if (kind == null) {
       return null;
     }
-    if (!workspaceLanguageSettings.isLanguageActive(kind.getLanguageClass())) {
-      return null;
-    }
-
-    final TargetKey key;
-    if (message.hasKey()) {
-      key = makeTargetKey(message.getKey());
-    } else {
-      key = TargetKey.forPlainTarget(new Label(message.getLabel()));
-    }
-
+    TargetKey key = getKey(message);
     ArtifactLocation buildFile = getBuildFile(message);
 
     final Collection<Dependency> dependencies;
@@ -107,6 +97,10 @@ public class IdeInfoFromProtobuf {
     if (message.hasAndroidIdeInfo()) {
       androidIdeInfo = makeAndroidIdeInfo(message.getAndroidIdeInfo());
     }
+    AndroidSdkIdeInfo androidSdkIdeInfo = null;
+    if (message.hasAndroidSdkIdeInfo()) {
+      androidSdkIdeInfo = makeAndroidSdkIdeInfo(message.getAndroidSdkIdeInfo());
+    }
     PyIdeInfo pyIdeInfo = null;
     if (message.hasPyIdeInfo()) {
       pyIdeInfo = makePyIdeInfo(message.getPyIdeInfo());
@@ -125,11 +119,6 @@ public class IdeInfoFromProtobuf {
     if (message.hasJavaToolchainIdeInfo()) {
       javaToolchainIdeInfo = makeJavaToolchainIdeInfo(message.getJavaToolchainIdeInfo());
     }
-    IntellijPluginDeployInfo intellijPluginDeployInfo = null;
-    if (message.hasIntellijPluginDeployInfo()) {
-      intellijPluginDeployInfo =
-          makeIntellijPluginDeployInfo(message.getIntellijPluginDeployInfo());
-    }
 
     return new TargetIdeInfo(
         key,
@@ -142,23 +131,23 @@ public class IdeInfoFromProtobuf {
         cToolchainIdeInfo,
         javaIdeInfo,
         androidIdeInfo,
+        androidSdkIdeInfo,
         pyIdeInfo,
         testIdeInfo,
         protoLibraryLegacyInfo,
-        javaToolchainIdeInfo,
-        intellijPluginDeployInfo);
+        javaToolchainIdeInfo);
   }
 
   private static Collection<Dependency> makeDependencyListFromLabelList(
       List<String> dependencyList, Dependency.DependencyType dependencyType) {
     return dependencyList
         .stream()
-        .map(dep -> new Dependency(TargetKey.forPlainTarget(new Label(dep)), dependencyType))
+        .map(dep -> new Dependency(TargetKey.forPlainTarget(Label.create(dep)), dependencyType))
         .collect(toList());
   }
 
   private static TargetKey makeTargetKey(IntellijIdeInfo.TargetKey key) {
-    return TargetKey.forGeneralTarget(new Label(key.getLabel()), key.getAspectIdsList());
+    return TargetKey.forGeneralTarget(Label.create(key.getLabel()), key.getAspectIdsList());
   }
 
   private static Dependency makeDependency(IntellijIdeInfo.Dependency dep) {
@@ -194,10 +183,27 @@ public class IdeInfoFromProtobuf {
         makeExecutionRootPathList(cIdeInfo.getTransitiveQuoteIncludeDirectoryList());
     List<ExecutionRootPath> transitiveSystemIncludeDirectories =
         makeExecutionRootPathList(cIdeInfo.getTransitiveSystemIncludeDirectoryList());
+    List<String> coptDefines;
+    List<ExecutionRootPath> coptIncludeDirectories;
+    if (cIdeInfo.getTargetCoptList().isEmpty()) {
+      coptDefines = ImmutableList.of();
+      coptIncludeDirectories = ImmutableList.of();
+    } else {
+      UnfilteredCompilerOptions compilerOptions =
+          UnfilteredCompilerOptions.builder()
+              .registerSingleOrSplitOption("-D")
+              .registerSingleOrSplitOption("-I")
+              .build(cIdeInfo.getTargetCoptList());
+      coptDefines = compilerOptions.getExtractedOptionValues("-D");
+      coptIncludeDirectories =
+          makeExecutionRootPathList(compilerOptions.getExtractedOptionValues("-I"));
+    }
 
     CIdeInfo.Builder builder =
         CIdeInfo.builder()
             .addSources(sources)
+            .addLocalDefines(coptDefines)
+            .addLocalIncludeDirectories(coptIncludeDirectories)
             .addTransitiveIncludeDirectories(transitiveIncludeDirectories)
             .addTransitiveQuoteIncludeDirectories(transitiveQuoteIncludeDirectories)
             .addTransitiveDefines(cIdeInfo.getTransitiveDefineList())
@@ -222,8 +228,10 @@ public class IdeInfoFromProtobuf {
     ExecutionRootPath preprocessorExecutable =
         new ExecutionRootPath(cToolchainIdeInfo.getPreprocessorExecutable());
 
-    UnfilteredCompilerOptions unfilteredCompilerOptions =
-        new UnfilteredCompilerOptions(cToolchainIdeInfo.getUnfilteredCompilerOptionList());
+    UnfilteredCompilerOptions compilerOptions =
+        UnfilteredCompilerOptions.builder()
+            .registerSingleOrSplitOption("-isystem")
+            .build(cToolchainIdeInfo.getUnfilteredCompilerOptionList());
 
     CToolchainIdeInfo.Builder builder =
         CToolchainIdeInfo.builder()
@@ -235,9 +243,9 @@ public class IdeInfoFromProtobuf {
             .setCppExecutable(cppExecutable)
             .setPreprocessorExecutable(preprocessorExecutable)
             .setTargetName(cToolchainIdeInfo.getTargetName())
-            .addUnfilteredCompilerOptions(unfilteredCompilerOptions.getToolchainFlags())
+            .addUnfilteredCompilerOptions(compilerOptions.getUninterpretedOptions())
             .addUnfilteredToolchainSystemIncludes(
-                unfilteredCompilerOptions.getToolchainSysIncludes());
+                makeExecutionRootPathList(compilerOptions.getExtractedOptionValues("-isystem")));
 
     return builder.build();
   }
@@ -268,8 +276,13 @@ public class IdeInfoFromProtobuf {
             : null,
         androidIdeInfo.getHasIdlSources(),
         !Strings.isNullOrEmpty(androidIdeInfo.getLegacyResources())
-            ? new Label(androidIdeInfo.getLegacyResources())
+            ? Label.create(androidIdeInfo.getLegacyResources())
             : null);
+  }
+
+  private static AndroidSdkIdeInfo makeAndroidSdkIdeInfo(
+      IntellijIdeInfo.AndroidSdkIdeInfo androidSdkIdeInfo) {
+    return new AndroidSdkIdeInfo(makeArtifactLocation(androidSdkIdeInfo.getAndroidJar()));
   }
 
   private static PyIdeInfo makePyIdeInfo(IntellijIdeInfo.PyIdeInfo info) {
@@ -334,21 +347,6 @@ public class IdeInfoFromProtobuf {
         javaToolchainIdeInfo.getSourceVersion(), javaToolchainIdeInfo.getTargetVersion());
   }
 
-  private static IntellijPluginDeployInfo makeIntellijPluginDeployInfo(
-      IntellijIdeInfo.IntellijPluginDeployInfo intellijPluginDeployInfo) {
-    return new IntellijPluginDeployInfo(
-        ImmutableList.copyOf(
-            intellijPluginDeployInfo
-                .getDeployFilesList()
-                .stream()
-                .map(
-                    deployFile ->
-                        new IntellijPluginDeployFile(
-                            makeArtifactLocation(deployFile.getSrc()),
-                            deployFile.getDeployLocation()))
-                .collect(toList())));
-  }
-
   private static Collection<LibraryArtifact> makeLibraryArtifactList(
       List<IntellijIdeInfo.LibraryArtifact> jarsList) {
     ImmutableList.Builder<LibraryArtifact> builder = ImmutableList.builder();
@@ -394,26 +392,46 @@ public class IdeInfoFromProtobuf {
     return builder.build();
   }
 
+  @VisibleForTesting
   @Nullable
-  private static ArtifactLocation makeArtifactLocation(
-      IntellijIdeInfo.ArtifactLocation pbArtifactLocation) {
-    if (pbArtifactLocation == null) {
+  public static ArtifactLocation makeArtifactLocation(
+      @Nullable IntellijIdeInfo.ArtifactLocation location) {
+    if (location == null) {
       return null;
     }
+    String relativePath = location.getRelativePath();
+    String rootExecutionPathFragment = location.getRootExecutionPathFragment();
+    if (!location.getIsNewExternalVersion() && location.getIsExternal()) {
+      // fix up incorrect paths created with older aspect version
+      // Note: bazel always uses the '/' separator here, even on windows.
+      List<String> components = StringUtil.split(relativePath, "/");
+      if (components.size() > 2) {
+        relativePath = Joiner.on('/').join(components.subList(2, components.size()));
+        String prefix = components.get(0) + "/" + components.get(1);
+        rootExecutionPathFragment =
+            rootExecutionPathFragment.isEmpty() ? prefix : rootExecutionPathFragment + "/" + prefix;
+      }
+    }
     return ArtifactLocation.builder()
-        .setRootExecutionPathFragment(pbArtifactLocation.getRootExecutionPathFragment())
-        .setRelativePath(pbArtifactLocation.getRelativePath())
-        .setIsSource(pbArtifactLocation.getIsSource())
-        .setIsExternal(pbArtifactLocation.getIsExternal())
+        .setRootExecutionPathFragment(rootExecutionPathFragment)
+        .setRelativePath(relativePath)
+        .setIsSource(location.getIsSource())
+        .setIsExternal(location.getIsExternal())
         .build();
   }
 
   @Nullable
-  private static Kind getKind(IntellijIdeInfo.TargetIdeInfo target) {
-    String kindString = target.getKindString();
+  static Kind getKind(IntellijIdeInfo.TargetIdeInfo message) {
+    String kindString = message.getKindString();
     if (!Strings.isNullOrEmpty(kindString)) {
       return Kind.fromString(kindString);
     }
     return null;
+  }
+
+  static TargetKey getKey(IntellijIdeInfo.TargetIdeInfo message) {
+    return message.hasKey()
+        ? makeTargetKey(message.getKey())
+        : TargetKey.forPlainTarget(Label.create(message.getLabel()));
   }
 }

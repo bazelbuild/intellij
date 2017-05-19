@@ -16,12 +16,8 @@
 package com.google.idea.blaze.plugin;
 
 import com.google.idea.blaze.base.plugin.BlazeActionRemover;
+import com.google.idea.sdkcompat.clion.CMakeActionList;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.jetbrains.cidr.cpp.cmake.actions.ChangeCMakeProjectContentRootAction;
-import com.jetbrains.cidr.cpp.cmake.actions.DropCMakeCacheAction;
-import com.jetbrains.cidr.cpp.cmake.actions.OpenCMakeSettingsAction;
-import com.jetbrains.cidr.cpp.cmake.actions.ReloadCMakeProjectAction;
-import com.jetbrains.cidr.cpp.cmake.actions.ToggleCMakeAutoReloadAction;
 
 /** Runs on startup. */
 public class ClwbSpecificInitializer extends ApplicationComponent.Adapter {
@@ -33,12 +29,9 @@ public class ClwbSpecificInitializer extends ApplicationComponent.Adapter {
 
   // The original actions will be visible only on plain IDEA projects.
   private static void hideCMakeActions() {
-    BlazeActionRemover.hideAction(ChangeCMakeProjectContentRootAction.ID);
-    BlazeActionRemover.hideAction(DropCMakeCacheAction.ID);
-    BlazeActionRemover.hideAction(OpenCMakeSettingsAction.ID);
-    BlazeActionRemover.hideAction(ReloadCMakeProjectAction.ID);
-    BlazeActionRemover.hideAction(ToggleCMakeAutoReloadAction.ID);
-    // 'CMake' > 'Show Generated CMake Files' action
-    BlazeActionRemover.hideAction("CMake.ShowGeneratedDir");
+    for (String actionId : CMakeActionList.CMAKE_ACTION_IDS) {
+      BlazeActionRemover.hideAction(actionId);
+    }
+    BlazeActionRemover.replaceAction("OpenCPPProject", new CMakeOpenProjectActionOverride());
   }
 }

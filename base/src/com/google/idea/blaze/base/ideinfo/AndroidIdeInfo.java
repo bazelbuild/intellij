@@ -19,7 +19,7 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.Serializable;
 import java.util.Collection;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Ide info specific to android rules. */
 public final class AndroidIdeInfo implements Serializable {

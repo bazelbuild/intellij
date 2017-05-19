@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.android.run.test;
 
+import com.android.tools.idea.testartifacts.instrumented.AndroidTestRunConfiguration;
 import com.google.common.base.Strings;
-import com.google.idea.blaze.android.compatibility.Compatibility.AndroidTestRunConfiguration;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -75,7 +75,7 @@ public class BlazeAndroidTestClassRunConfigurationProducer
     }
     sourceElement.set(testClass);
 
-    TargetIdeInfo target = RunUtil.targetForTestClass(context.getProject(), testClass, null);
+    TargetIdeInfo target = RunUtil.targetForTestClass(testClass, null);
     if (target == null) {
       return false;
     }

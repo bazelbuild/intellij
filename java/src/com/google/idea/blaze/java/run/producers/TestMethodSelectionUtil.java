@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Helper functions for getting selected test methods. */
 public class TestMethodSelectionUtil {

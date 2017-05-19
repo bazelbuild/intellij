@@ -21,12 +21,12 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
+import com.google.idea.sdkcompat.cidr.OCWorkspaceModificationTrackersCompatUtils;
 import com.google.idea.sdkcompat.transactions.Transactions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceManager;
-import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackers;
 
 /** Runs after sync, triggering a rebuild of the symbol tables. */
 public class BlazeCppSymbolRebuildSyncListener extends SyncListener.Adapter {
@@ -45,20 +45,16 @@ public class BlazeCppSymbolRebuildSyncListener extends SyncListener.Adapter {
     if (!(workspace instanceof BlazeCWorkspace)) {
       return;
     }
-    rebuildSymbolTables((BlazeCWorkspace) workspace);
+    rebuildSymbolTables(project);
   }
 
-  private static void rebuildSymbolTables(BlazeCWorkspace workspace) {
-    OCWorkspaceModificationTrackers modTrackers = workspace.getModificationTrackers();
+  private static void rebuildSymbolTables(Project project) {
     Transactions.submitTransactionAndWait(
         () ->
             ApplicationManager.getApplication()
                 .runWriteAction(
-                    () -> {
-                      modTrackers.getProjectFilesListTracker().incModificationCount();
-                      modTrackers.getSourceFilesListTracker().incModificationCount();
-                      modTrackers.getBuildConfigurationChangesTracker().incModificationCount();
-                      modTrackers.getBuildSettingsChangesTracker().incModificationCount();
-                    }));
+                    () ->
+                        OCWorkspaceModificationTrackersCompatUtils.incrementModificationCounts(
+                            project)));
   }
 }

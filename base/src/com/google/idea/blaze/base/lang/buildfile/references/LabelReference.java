@@ -35,8 +35,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Converts a blaze label into an absolute path, then resolves that path to a PsiElements */
 public class LabelReference extends PsiReferenceBase<StringLiteral> {
@@ -51,7 +50,7 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
     /* Possibilities:
      * - target
      * - data file (.java, .txt, etc.)
-     * - glob contents (not yet handling globs)
+     * - glob contents
      */
     return resolveTarget(myElement.getStringContents());
   }
@@ -65,8 +64,8 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
     if (!validLabelLocation(myElement)) {
       return null;
     }
-    if (!labelString.startsWith("//") && insideSkylarkExtension(myElement)) {
-      return getReferenceManager().resolveLabel(label.blazePackage(), label.targetName(), true);
+    if (!LabelUtils.isAbsolute(labelString) && insideSkylarkExtension(myElement)) {
+      return getReferenceManager().resolveLabel(label, true);
     }
     return getReferenceManager().resolveLabel(label);
   }
@@ -86,7 +85,6 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
     return true;
   }
 
-  @NotNull
   @Override
   public Object[] getVariants() {
     if (!validLabelLocation(myElement)) {
@@ -110,7 +108,8 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
     }
     String self = null;
     if (referencedBuildFile == myElement.getContainingFile()) {
-      FuncallExpression funcall = PsiUtils.getParentOfType(myElement, FuncallExpression.class);
+      FuncallExpression funcall =
+          PsiUtils.getParentOfType(myElement, FuncallExpression.class, true);
       if (funcall != null) {
         self = funcall.getName();
       }
@@ -242,8 +241,7 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
       return null;
     }
     BlazePackage blazePackage = myElement.getBlazePackage();
-    return LabelUtils.createLabelFromString(
-        blazePackage != null ? blazePackage.buildFile : null, labelString);
+    return LabelUtils.createLabelFromString(blazePackage, labelString);
   }
 
   private static boolean skylarkExtensionReference(StringLiteral element) {

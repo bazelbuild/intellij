@@ -15,21 +15,19 @@
  */
 package com.google.idea.blaze.cpp;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.sdkcompat.cidr.CidrSwitchBuilderAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
-import com.jetbrains.cidr.lang.toolchains.CidrSwitchBuilder;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
 import com.jetbrains.cidr.lang.toolchains.DefaultCidrToolEnvironment;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerSettings;
 import java.io.File;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 final class BlazeCompilerSettings extends OCCompilerSettings {
@@ -56,7 +54,10 @@ final class BlazeCompilerSettings extends OCCompilerSettings {
 
   @Override
   public OCCompilerKind getCompiler(OCLanguageKind languageKind) {
-    return null;
+    if (languageKind == OCLanguageKind.C || languageKind == OCLanguageKind.CPP) {
+      return OCCompilerKind.CLANG;
+    }
+    return OCCompilerKind.UNKNOWN;
   }
 
   @Override
@@ -89,25 +90,10 @@ final class BlazeCompilerSettings extends OCCompilerSettings {
     if (lang == OCLanguageKind.CPP) {
       return cppCompilerSwitches;
     }
-    return new CidrSwitchBuilder().build();
+    return new CidrSwitchBuilderAdapter().build();
   }
 
   private static CidrCompilerSwitches getCompilerSwitches(List<String> allCompilerFlags) {
-    // Explanation of hack:
-    // - this list of switches is currently only used in one place -- GCCCompiler.tryRunGCC.
-    // - list is written to an argument file, whitespace-separated, then passed as a @file arg to
-    // clang.
-    // In this context, escaped whitespace within a single arg is not handled.
-    // Currently, the only way (short of using reflection) to ensure unescaped whitespace
-    // is to have CidrSwitchBuilder treat whitespace as a delimiter between args.
-    allCompilerFlags =
-        allCompilerFlags
-            .stream()
-            .map(flag -> flag.replace("\\ ", " "))
-            .collect(Collectors.toList());
-
-    return new CidrSwitchBuilder()
-        .addAll(Joiner.on(" ").join(allCompilerFlags), CidrSwitchBuilder.Format.FILE_ARGS)
-        .build();
+    return new CidrSwitchBuilderAdapter().addAllRaw(allCompilerFlags).build();
   }
 }

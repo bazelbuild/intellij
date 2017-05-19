@@ -55,11 +55,20 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
   private static final AttributeDefinition NEVERLINK_ATTRIBUTE =
       new AttributeDefinition("neverlink", Discriminator.BOOLEAN, false, null, null);
 
+  private static final AttributeDefinition VALUES_ATTRIBUTE =
+      new AttributeDefinition("values", Discriminator.STRING_DICT, true, null, null);
+
   private static final RuleDefinition JAVA_TEST =
       new RuleDefinition(
           "java_test",
           ImmutableMap.of(
               "name", NAME_ATTRIBUTE, "srcs", SRCS_ATTRIBUTE, "neverlink", NEVERLINK_ATTRIBUTE),
+          null);
+
+  private static final RuleDefinition CONFIG_SETTING =
+      new RuleDefinition(
+          "config_setting",
+          ImmutableMap.of("name", NAME_ATTRIBUTE, "values", VALUES_ATTRIBUTE),
           null);
 
   private MockBuildLanguageSpecProvider specProvider;
@@ -92,6 +101,33 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
             "    neverlink = 0,",
             ")");
     assertNoErrors(file);
+  }
+
+  @Test
+  public void testNoErrorsForValidStringDict() {
+    specProvider.setRules(ImmutableMap.of(CONFIG_SETTING.name, CONFIG_SETTING));
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "config_setting(",
+            "    name = 'setting',",
+            "    values = {'key1', 'value1', 'key2', 'value2'},",
+            ")");
+    assertNoErrors(file);
+  }
+
+  @Test
+  public void testErrorForInvalidDict() {
+    specProvider.setRules(ImmutableMap.of(CONFIG_SETTING.name, CONFIG_SETTING));
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "config_setting(",
+            "    name = 'setting',",
+            "    values = 1,",
+            ")");
+    assertHasError(
+        file, "Invalid value for attribute 'values'. Expected a value of type 'STRING_DICT'");
   }
 
   @Test
@@ -236,6 +272,35 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"), "java_test(", "    name = (ref),", ")");
+    assertNoErrors(file);
+  }
+
+  @Test
+  public void testNoMissingMandatoryArgErrorIfKwargsPresent() {
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "def java_test(srcs=[], **kwargs):",
+            "  native.java_test(srcs = srcs, **kwargs)");
+    assertNoErrors(file);
+  }
+
+  @Test
+  public void testNoMissingAttributeErrorsForOverriddenBuiltIns() {
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/foo/BUILD"),
+            "java_test(name = 'test', srcs = [':src'], extra_arg = [])");
+    assertHasError(file, "Unrecognized attribute 'extra_arg' for rule type 'java_test'");
+
+    file =
+        createBuildFile(
+            new WorkspacePath("java/com/bar/BUILD"),
+            "def java_test(srcs=[], **kwargs, extra_arg=[]):",
+            "  native.java_test(srcs = srcs, **kwargs)",
+            "java_test(name = 'test', srcs = [':src'], extra_arg = [])");
     assertNoErrors(file);
   }
 

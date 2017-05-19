@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.lang.buildfile.references;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
@@ -27,7 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import javax.annotation.Nullable;
 
-/** The label component preceeding the colon. */
+/** The label component preceding the colon. */
 public class PackageReferenceFragment extends PsiReferenceBase<StringLiteral> {
 
   public PackageReferenceFragment(LabelReference labelReference) {
@@ -84,10 +85,11 @@ public class PackageReferenceFragment extends PsiReferenceBase<StringLiteral> {
     if (element.equals(resolve())) {
       return myElement;
     }
-    WorkspacePath newPath = ((BuildFile) element).getPackageWorkspacePath();
-    if (newPath == null) {
+    Label newPackageLabel = ((BuildFile) element).getPackageLabel();
+    if (newPackageLabel == null) {
       return myElement;
     }
+    String newPath = newPackageLabel.blazePackage().toString();
     String labelString = myElement.getStringContents();
     int colonIndex = labelString.indexOf(':');
     if (colonIndex != -1) {

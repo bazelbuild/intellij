@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.lang.buildfile.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import javax.annotation.Nullable;
 
 /** PSI element for an binary operation expression [expr BIN_OP expr] */
@@ -33,12 +34,14 @@ public class BinaryOpExpression extends BuildElementImpl implements Expression {
   /** Returns the LHS of the expression */
   @Nullable
   public Expression getLhs() {
-    return childToPsi(BuildElementTypes.EXPRESSIONS, 0);
+    PsiElement psi = childToPsi(BuildElementTypes.EXPRESSIONS, 0);
+    return psi instanceof Expression ? (Expression) psi : null;
   }
 
   /** Returns the RHS of the expression */
   @Nullable
   public Expression getRhs() {
-    return childToPsi(BuildElementTypes.EXPRESSIONS, 1);
+    PsiElement psi = childToPsi(BuildElementTypes.EXPRESSIONS, 1);
+    return psi instanceof Expression ? (Expression) psi : null;
   }
 }

@@ -23,7 +23,6 @@ import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.project.Project;
 import java.io.File;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -49,46 +48,32 @@ public final class BlazeCommandRunConfigurationCommonState extends RunConfigurat
     addStates(command, blazeFlags, exeFlags, blazeBinary, runOnDistributedExecutor);
   }
 
-  @Nullable
-  public BlazeCommandName getCommand() {
-    return command.getCommand();
-  }
-
   /** @return The list of blaze flags that the user specified manually. */
-  public List<String> getBlazeFlags() {
-    return blazeFlags.getFlags();
+  public RunConfigurationFlagsState getBlazeFlagsState() {
+    return blazeFlags;
   }
 
   /** @return The list of executable flags the user specified manually. */
-  public List<String> getExeFlags() {
-    return exeFlags.getFlags();
+  public RunConfigurationFlagsState getExeFlagsState() {
+    return exeFlags;
   }
 
-  @Nullable
-  public String getBlazeBinary() {
-    return blazeBinary.getBlazeBinary();
+  public BlazeBinaryState getBlazeBinaryState() {
+    return blazeBinary;
   }
 
-  public void setCommand(@Nullable BlazeCommandName command) {
-    this.command.setCommand(command);
+  public BlazeCommandState getCommandState() {
+    return command;
   }
 
-  public void setBlazeFlags(List<String> flags) {
-    this.blazeFlags.setFlags(flags);
-  }
-
-  public void setExeFlags(List<String> flags) {
-    this.exeFlags.setFlags(flags);
-  }
-
-  public void setBlazeBinary(@Nullable String blazeBinary) {
-    this.blazeBinary.setBlazeBinary(blazeBinary);
+  public BlazeRunOnDistributedExecutorState getRunOnDistributedExecutorState() {
+    return runOnDistributedExecutor;
   }
 
   /** Searches through all blaze flags for the first one beginning with '--test_filter' */
   @Nullable
   public String getTestFilterFlag() {
-    for (String flag : getBlazeFlags()) {
+    for (String flag : getBlazeFlagsState().getExpandedFlags()) {
       if (flag.startsWith(BlazeFlags.TEST_FILTER)) {
         return flag;
       }
@@ -96,19 +81,11 @@ public final class BlazeCommandRunConfigurationCommonState extends RunConfigurat
     return null;
   }
 
-  public boolean getRunOnDistributedExecutor() {
-    return runOnDistributedExecutor.runOnDistributedExecutor;
-  }
-
-  public void setRunOnDistributedExecutor(boolean runOnDistributedExecutor) {
-    this.runOnDistributedExecutor.runOnDistributedExecutor = runOnDistributedExecutor;
-  }
-
   public void validate(String buildSystemName) throws RuntimeConfigurationException {
-    if (getCommand() == null) {
+    if (getCommandState().getCommand() == null) {
       throw new RuntimeConfigurationError("You must specify a command.");
     }
-    String blazeBinaryString = getBlazeBinary();
+    String blazeBinaryString = getBlazeBinaryState().getBlazeBinary();
     if (blazeBinaryString != null && !(new File(blazeBinaryString).exists())) {
       throw new RuntimeConfigurationError(buildSystemName + " binary does not exist");
     }
@@ -135,7 +112,7 @@ public final class BlazeCommandRunConfigurationCommonState extends RunConfigurat
 
         // this editor needs to update based on state provided by other children.
         if (runOnExecutorEditor != null) {
-          boolean isTest = BlazeCommandName.TEST.equals(state.getCommand());
+          boolean isTest = BlazeCommandName.TEST.equals(state.getCommandState().getCommand());
           runOnExecutorEditor.updateVisibility(isTest);
         }
       }

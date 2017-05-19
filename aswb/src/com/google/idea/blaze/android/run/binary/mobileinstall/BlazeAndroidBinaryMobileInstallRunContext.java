@@ -30,7 +30,6 @@ import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
-import com.google.idea.blaze.android.compatibility.Compatibility;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationIdProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLaunchTaskProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryConsoleProvider;
@@ -167,8 +166,7 @@ public class BlazeAndroidBinaryMobileInstallRunContext implements BlazeAndroidRu
       Set<String> packageIds,
       boolean monitorRemoteProcess)
       throws ExecutionException {
-    return Compatibility.getConnectDebuggerTask(
-        androidDebugger,
+    return androidDebugger.getConnectDebuggerTask(
         env,
         null,
         packageIds,

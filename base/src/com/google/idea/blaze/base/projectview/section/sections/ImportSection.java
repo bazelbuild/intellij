@@ -26,7 +26,7 @@ import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.ui.BlazeValidationError;
 import java.io.File;
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** "import" section. */
 public class ImportSection {
@@ -69,6 +69,11 @@ public class ImportSection {
     @Override
     public ItemType getItemType() {
       return ItemType.FileSystemItem;
+    }
+
+    @Override
+    public String quickDocs() {
+      return "Imports another project view.";
     }
   }
 }

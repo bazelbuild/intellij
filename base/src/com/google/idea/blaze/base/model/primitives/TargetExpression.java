@@ -32,14 +32,19 @@ public class TargetExpression implements Serializable, Comparable<TargetExpressi
    *     it is not.
    */
   public static TargetExpression fromString(String expression) {
-    return Label.validate(expression) ? new Label(expression) : new TargetExpression(expression);
+    return Label.validate(expression) ? Label.create(expression) : new TargetExpression(expression);
   }
 
-  TargetExpression(String expression) {
+  protected TargetExpression(String expression) {
     // TODO(joshgiles): Validation/canonicalization for target expressions.
     // For reference, handled in Blaze/Bazel in TargetPattern.java.
     Preconditions.checkArgument(!expression.isEmpty(), "Target should be non-empty.");
     this.expression = expression;
+  }
+
+  /** Is this an excluded target expression (i.e. starts with '-')? */
+  public boolean isExcluded() {
+    return expression.startsWith("-");
   }
 
   @Override
@@ -63,8 +68,7 @@ public class TargetExpression implements Serializable, Comparable<TargetExpressi
 
   /** All targets in all packages below the given path */
   public static TargetExpression allFromPackageRecursive(WorkspacePath localPackage) {
-    if (localPackage.relativePath().isEmpty()) {
-      // localPackage is the workspace root
+    if (localPackage.isWorkspaceRoot()) {
       return new TargetExpression("//...:all");
     }
     return new TargetExpression("//" + localPackage.relativePath() + "/...:all");

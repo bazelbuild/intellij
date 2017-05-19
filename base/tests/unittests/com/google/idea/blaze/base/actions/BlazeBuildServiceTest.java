@@ -59,9 +59,9 @@ public class BlazeBuildServiceTest extends BlazeTestCase {
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
-    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
+    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager();
     importSettingsManager.setImportSettings(
-        new BlazeImportSettings("", "", "", "", "", Blaze.BuildSystem.Blaze));
+        new BlazeImportSettings("", "", "", "", Blaze.BuildSystem.Blaze));
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
 
     ProjectView view =
@@ -91,7 +91,7 @@ public class BlazeBuildServiceTest extends BlazeTestCase {
   @Test
   public void testBuildFile() {
     ImmutableCollection<Label> labels =
-        ImmutableList.of(new Label("//foo:bar"), new Label("//foo:baz"));
+        ImmutableList.of(Label.create("//foo:bar"), Label.create("//foo:baz"));
     List<TargetExpression> targets = Lists.newArrayList(labels);
     service.buildFile(project, "Foo.java", labels);
     verify(service).buildTargetExpressions(eq(project), eq(targets), eq(viewSet), any());

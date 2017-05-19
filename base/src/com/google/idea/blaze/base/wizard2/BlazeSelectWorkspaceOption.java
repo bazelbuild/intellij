@@ -34,6 +34,9 @@ public interface BlazeSelectWorkspaceOption extends BlazeWizardOption {
   /** @return the name of the workspace. Used to generate default project names. */
   String getWorkspaceName();
 
+  /** @return the name of the 'branch', if applicable */
+  String getBranchName();
+
   BuildSystem getBuildSystemForWorkspace();
 
   void commit() throws BlazeProjectCommitException;

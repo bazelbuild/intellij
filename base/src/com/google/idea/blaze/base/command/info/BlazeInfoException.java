@@ -17,33 +17,23 @@ package com.google.idea.blaze.base.command.info;
 
 import javax.annotation.concurrent.Immutable;
 
-/** Exception occuring during blaze infoy */
+/** Exception occuring during blaze info */
 @Immutable
 public final class BlazeInfoException extends Exception {
   private final int exitCode;
   private final String stdout;
-  private final String stderr;
 
-  public BlazeInfoException(int exitCode, String stdout, String stderr) {
+  public BlazeInfoException(int exitCode, String stdout) {
     this.exitCode = exitCode;
     this.stdout = stdout;
-    this.stderr = stderr;
   }
 
   @Override
   public String getMessage() {
-    return "blaze info failed with exit code: " + exitCode + " and error stream: " + stderr;
-  }
-
-  public int getExitCode() {
-    return exitCode;
+    return "blaze info failed with exit code: " + exitCode;
   }
 
   public String getStdout() {
     return stdout;
-  }
-
-  public String getStderr() {
-    return stderr;
   }
 }

@@ -16,9 +16,10 @@
 package com.google.idea.blaze.base.run;
 
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -38,22 +39,18 @@ public interface TestTargetHeuristic {
     if (element == null) {
       return null;
     }
-    File file = getContainingFile(element);
-    if (file == null) {
-      return null;
-    }
-    Collection<TargetIdeInfo> rules =
-        TestTargetFinder.getInstance(element.getProject()).testTargetsForSourceFile(file);
-    return chooseTestTargetForSourceFile(file, rules, null);
-  }
-
-  static File getContainingFile(PsiElement element) {
     PsiFile psiFile = element.getContainingFile();
     if (psiFile == null) {
       return null;
     }
     VirtualFile vf = psiFile.getVirtualFile();
-    return vf != null ? new File(vf.getPath()) : null;
+    File file = vf != null ? new File(vf.getPath()) : null;
+    if (file == null) {
+      return null;
+    }
+    Collection<TargetIdeInfo> rules =
+        TestTargetFinder.getInstance(element.getProject()).testTargetsForSourceFile(file);
+    return chooseTestTargetForSourceFile(element.getProject(), psiFile, file, rules, null);
   }
 
   /**
@@ -62,13 +59,19 @@ public interface TestTargetHeuristic {
    */
   @Nullable
   static Label chooseTestTargetForSourceFile(
-      File sourceFile, Collection<TargetIdeInfo> targets, @Nullable TestIdeInfo.TestSize testSize) {
+      Project project,
+      @Nullable PsiFile sourcePsiFile,
+      File sourceFile,
+      Collection<TargetIdeInfo> targets,
+      @Nullable TestSize testSize) {
 
     for (TestTargetHeuristic filter : EP_NAME.getExtensions()) {
       TargetIdeInfo match =
           targets
               .stream()
-              .filter(target -> filter.matchesSource(target, sourceFile, testSize))
+              .filter(
+                  target ->
+                      filter.matchesSource(project, target, sourcePsiFile, sourceFile, testSize))
               .findFirst()
               .orElse(null);
 
@@ -81,5 +84,9 @@ public interface TestTargetHeuristic {
 
   /** Returns true if the rule and source file match, according to this heuristic. */
   boolean matchesSource(
-      TargetIdeInfo target, File sourceFile, @Nullable TestIdeInfo.TestSize testSize);
+      Project project,
+      TargetIdeInfo target,
+      @Nullable PsiFile sourcePsiFile,
+      File sourceFile,
+      @Nullable TestSize testSize);
 }

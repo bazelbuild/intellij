@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.testing.EdtRule;
 import com.google.idea.testing.IntellijTestSetupRule;
 import com.google.idea.testing.ServiceHelper;
@@ -115,7 +116,6 @@ public abstract class BlazeIntegrationTestCase {
                 workspaceRoot.toString(),
                 "test-project",
                 projectDataDirectory.getPath(),
-                "location-hash",
                 workspaceRoot.fileForPath(new WorkspacePath("project-view-file")).getPath(),
                 buildSystem()));
 
@@ -136,6 +136,7 @@ public abstract class BlazeIntegrationTestCase {
 
   @After
   public final void tearDown() throws Exception {
+    SyncCache.getInstance(getProject()).clear();
     testFixture.tearDown();
     testFixture = null;
   }

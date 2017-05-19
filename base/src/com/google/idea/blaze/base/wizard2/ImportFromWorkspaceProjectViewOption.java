@@ -109,11 +109,11 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
   }
 
   @Override
-  public String getDefaultProjectName(String workspaceName) {
+  public String getImportDirectory() {
     File projectViewFile = new File(getProjectViewPath());
     File projectViewDirectory = projectViewFile.getParentFile();
     if (projectViewDirectory == null) {
-      return workspaceName;
+      return null;
     }
     return projectViewDirectory.getName();
   }

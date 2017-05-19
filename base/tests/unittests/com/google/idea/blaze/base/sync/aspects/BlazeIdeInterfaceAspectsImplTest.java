@@ -16,16 +16,12 @@
 package com.google.idea.blaze.base.sync.aspects;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.TestUtils;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.model.primitives.WorkspaceType;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
@@ -74,11 +70,7 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
                     .setJavaPackage("package"))
             .build();
 
-    WorkspaceLanguageSettings workspaceLanguageSettings =
-        new WorkspaceLanguageSettings(
-            WorkspaceType.ANDROID, ImmutableSet.of(LanguageClass.ANDROID));
-    TargetIdeInfo target =
-        IdeInfoFromProtobuf.makeTargetIdeInfo(workspaceLanguageSettings, ideProto);
+    TargetIdeInfo target = IdeInfoFromProtobuf.makeTargetIdeInfo(ideProto);
     TestUtils.assertIsSerializable(target);
   }
 
@@ -88,7 +80,7 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
     state.fileToTargetMapKey =
         ImmutableMap.of(
             new File("fileName"),
-            TargetIdeInfo.builder().setLabel(new Label("//test:test")).build().key);
+            TargetIdeInfo.builder().setLabel(Label.create("//test:test")).build().key);
     state.fileState = ImmutableMap.of();
     state.targetMap =
         new TargetMap(ImmutableMap.of()); // Tested separately in testRuleIdeInfoIsSerializable

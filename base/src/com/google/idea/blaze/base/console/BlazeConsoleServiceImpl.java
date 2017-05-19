@@ -19,8 +19,8 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Implementation for BlazeConsoleService */
 public class BlazeConsoleServiceImpl implements BlazeConsoleService {

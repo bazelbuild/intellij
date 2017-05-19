@@ -35,17 +35,18 @@ public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
   private static final Collection<Class<? extends RunConfigurationProducer<?>>>
       PRODUCERS_TO_SUPPRESS =
           ImmutableList.of(
-              // JUnit test producers
               com.intellij.execution.junit.AllInDirectoryConfigurationProducer.class,
               com.intellij.execution.junit.AllInPackageConfigurationProducer.class,
               com.intellij.execution.junit.TestClassConfigurationProducer.class,
               com.intellij.execution.junit.TestMethodConfigurationProducer.class,
-              com.intellij.execution.junit.PatternConfigurationProducer.class);
+              com.intellij.execution.junit.PatternConfigurationProducer.class,
+              com.intellij.execution.application.ApplicationConfigurationProducer.class);
 
-  private static final ImmutableList<String> KOTLIN_JUNIT_PRODUCERS =
+  private static final ImmutableList<String> KOTLIN_PRODUCERS =
       ImmutableList.of(
           "org.jetbrains.kotlin.idea.run.KotlinJUnitRunConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinPatternConfigurationProducer");
+          "org.jetbrains.kotlin.idea.run.KotlinPatternConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer");
 
   private static Collection<Class<? extends RunConfigurationProducer<?>>> getKotlinProducers() {
     // rather than compiling against the Kotlin plugin, and including a switch in the our
@@ -55,7 +56,7 @@ public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
       return ImmutableList.of();
     }
     ClassLoader loader = plugin.getPluginClassLoader();
-    return KOTLIN_JUNIT_PRODUCERS
+    return KOTLIN_PRODUCERS
         .stream()
         .map((qualifiedName) -> loadClass(loader, qualifiedName))
         .filter(Objects::nonNull)
@@ -71,7 +72,7 @@ public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
         return (Class<RunConfigurationProducer<?>>) clazz;
       }
       return null;
-    } catch (ClassNotFoundException ignored) {
+    } catch (ClassNotFoundException | NoClassDefFoundError ignored) {
       return null;
     }
   }

@@ -36,11 +36,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
-
 /** Parses blaze output for compile errors. */
 public class BlazeIssueParser {
 
-  private static class ParseResult {
+  /** Result from parsing the current line */
+  public static class ParseResult {
 
     public static final ParseResult NEEDS_MORE_INPUT = new ParseResult(true, null);
 
@@ -117,9 +117,9 @@ public class BlazeIssueParser {
 
   /** Returns the file referenced by the target */
   @Nullable
-  public static File fileFromTarget(WorkspaceRoot workspaceRoot, String targetString) {
+  private static File fileFromTarget(WorkspaceRoot workspaceRoot, String targetString) {
     Label label = Label.createIfValid(targetString);
-    if (label == null) {
+    if (label == null || label.isExternal()) {
       return null;
     }
     try {
@@ -132,7 +132,10 @@ public class BlazeIssueParser {
   }
 
   /** Falls back to returning -1 if no integer can be parsed. */
-  public static int parseOptionalInt(String intString) {
+  public static int parseOptionalInt(@Nullable String intString) {
+    if (intString == null) {
+      return -1;
+    }
     try {
       return Integer.parseInt(intString);
     } catch (NumberFormatException e) {
@@ -202,6 +205,22 @@ public class BlazeIssueParser {
   static class BuildParser extends SingleLineParser {
     BuildParser() {
       super("^ERROR: (/.*?BUILD):([0-9]+):([0-9]+): (.*)$");
+    }
+
+    @Override
+    protected IssueOutput createIssue(Matcher matcher) {
+      File file = fileFromAbsolutePath(matcher.group(1));
+      return IssueOutput.error(matcher.group(4))
+          .inFile(file)
+          .onLine(Integer.parseInt(matcher.group(2)))
+          .inColumn(parseOptionalInt(matcher.group(3)))
+          .build();
+    }
+  }
+
+  static class SkylarkErrorParser extends SingleLineParser {
+    SkylarkErrorParser() {
+      super("^ERROR: (/.*?\\.bzl):([0-9]+):([0-9]+): (.*)$");
     }
 
     @Override

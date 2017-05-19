@@ -20,8 +20,8 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.IOException;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class FileSystemModifierImpl extends FileSystemModifier {
 

@@ -69,7 +69,7 @@ public class TestMapTest extends BlazeTestCase {
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
-        .containsExactly(new Label("//test:test"));
+        .containsExactly(Label.create("//test:test"));
   }
 
   @Test
@@ -95,7 +95,7 @@ public class TestMapTest extends BlazeTestCase {
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
-        .containsExactly(new Label("//test:test"));
+        .containsExactly(Label.create("//test:test"));
   }
 
   @Test
@@ -127,7 +127,7 @@ public class TestMapTest extends BlazeTestCase {
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
-        .containsExactly(new Label("//test:test"), new Label("//test:test2"));
+        .containsExactly(Label.create("//test:test"), Label.create("//test:test2"));
   }
 
   @Test
@@ -165,7 +165,7 @@ public class TestMapTest extends BlazeTestCase {
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
-        .containsExactly(new Label("//test:test"), new Label("//test:test2"))
+        .containsExactly(Label.create("//test:test"), Label.create("//test:test2"))
         .inOrder();
   }
 
@@ -204,7 +204,7 @@ public class TestMapTest extends BlazeTestCase {
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
-        .containsExactly(new Label("//test:test"), new Label("//test:test2"));
+        .containsExactly(Label.create("//test:test"), Label.create("//test:test2"));
   }
 
   @Test
@@ -237,7 +237,7 @@ public class TestMapTest extends BlazeTestCase {
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
         ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
-        .containsExactly(new Label("//test:test"));
+        .containsExactly(Label.create("//test:test"));
   }
 
   private ArtifactLocation sourceRoot(String relativePath) {

@@ -16,13 +16,15 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
+import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import java.io.File;
 import javax.annotation.Nullable;
@@ -33,6 +35,13 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   @Override
   public BuildSystem buildSystem() {
     return BuildSystem.Bazel;
+  }
+
+  @Nullable
+  @Override
+  public String getBinaryPath() {
+    BlazeUserSettings settings = BlazeUserSettings.getInstance();
+    return settings.getBazelBinaryPath();
   }
 
   @Override
@@ -47,17 +56,20 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
         "bazel-bin", "bazel-genfiles", "bazel-out", "bazel-testlogs", "bazel-" + rootDir);
   }
 
-  @Nullable
   @Override
   public String getRuleDocumentationUrl(RuleDefinition rule) {
     // TODO: URL pointing to specific BUILD rule.
     return "http://www.bazel.build/docs/be/overview.html";
   }
 
-  // TODO: Update the methods below when https://github.com/bazelbuild/bazel/issues/552 lands.
+  @Override
+  public String getProjectViewDocumentationUrl() {
+    return "https://ij.bazel.build/docs/project-views.html";
+  }
+
   @Override
   public boolean isBuildFile(String fileName) {
-    return fileName.equals("BUILD");
+    return fileName.equals("BUILD") || fileName.equals("BUILD.bazel");
   }
 
   @Nullable
@@ -65,22 +77,28 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   public File findBuildFileInDirectory(File directory) {
     FileAttributeProvider provider = FileAttributeProvider.getInstance();
     File child = new File(directory, "BUILD");
-    if (!provider.exists(child)) {
-      return null;
+    if (provider.exists(child)) {
+      return child;
     }
-    return child;
+    child = new File(directory, "BUILD.bazel");
+    if (provider.exists(child)) {
+      return child;
+    }
+    return null;
   }
 
   @Override
-  public FileNameMatcher buildFileMatcher() {
-    return new ExactFileNameMatcher("BUILD");
+  public ImmutableList<FileNameMatcher> buildLanguageFileTypeMatchers() {
+    return ImmutableList.of(
+        new ExactFileNameMatcher("BUILD"), new ExactFileNameMatcher("BUILD.bazel"),
+        new ExtensionFileNameMatcher("bzl"), new ExactFileNameMatcher("WORKSPACE"));
   }
 
   @Override
   public void populateBlazeVersionData(
       BuildSystem buildSystem,
       WorkspaceRoot workspaceRoot,
-      ImmutableMap<String, String> blazeInfo,
+      BlazeInfo blazeInfo,
       BlazeVersionData.Builder builder) {
     if (buildSystem != BuildSystem.Bazel) {
       return;

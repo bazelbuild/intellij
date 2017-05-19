@@ -18,30 +18,21 @@ package com.google.idea.blaze.base.command;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import java.util.Arrays;
 import java.util.List;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /** A command to issue to Blaze/Bazel on the command line. */
 @Immutable
 public final class BlazeCommand {
 
-  private final BuildSystem buildSystem;
+  private final String binaryPath;
   private final BlazeCommandName name;
-  @Nullable private final String blazeBinary;
   private final ImmutableList<String> arguments;
 
-  private BlazeCommand(
-      BuildSystem buildSystem,
-      BlazeCommandName name,
-      @Nullable String blazeBinary,
-      ImmutableList<String> arguments) {
-    this.buildSystem = buildSystem;
+  private BlazeCommand(String binaryPath, BlazeCommandName name, ImmutableList<String> arguments) {
+    this.binaryPath = binaryPath;
     this.name = name;
-    this.blazeBinary = blazeBinary;
     this.arguments = arguments;
   }
 
@@ -50,27 +41,11 @@ public final class BlazeCommand {
   }
 
   public ImmutableList<String> toList() {
-    String blazeBinary = this.blazeBinary;
-    if (blazeBinary == null) {
-      blazeBinary = getBinaryPath(buildSystem);
-    }
-
-    ImmutableList.Builder<String> commandLine = ImmutableList.builder();
-    commandLine.add(blazeBinary, name.toString());
-    commandLine.addAll(arguments);
-    return commandLine.build();
-  }
-
-  private static String getBinaryPath(BuildSystem buildSystem) {
-    BlazeUserSettings settings = BlazeUserSettings.getInstance();
-    switch (buildSystem) {
-      case Blaze:
-        return settings.getBlazeBinaryPath();
-      case Bazel:
-        return settings.getBazelBinaryPath();
-      default:
-        throw new RuntimeException("Unrecognized build system type: " + buildSystem);
-    }
+    return ImmutableList.<String>builder()
+        .add(binaryPath)
+        .add(name.toString())
+        .addAll(arguments)
+        .build();
   }
 
   @Override
@@ -78,21 +53,20 @@ public final class BlazeCommand {
     return Joiner.on(' ').join(toList());
   }
 
-  public static Builder builder(BuildSystem buildSystem, BlazeCommandName name) {
-    return new Builder(buildSystem, name);
+  public static Builder builder(String binaryPath, BlazeCommandName name) {
+    return new Builder(binaryPath, name);
   }
 
   /** Builder for a blaze command */
   public static class Builder {
-    private final BuildSystem buildSystem;
+    private final String binaryPath;
     private final BlazeCommandName name;
-    @Nullable private String blazeBinary;
     private final ImmutableList.Builder<TargetExpression> targets = ImmutableList.builder();
     private final ImmutableList.Builder<String> blazeFlags = ImmutableList.builder();
     private final ImmutableList.Builder<String> exeFlags = ImmutableList.builder();
 
-    public Builder(BuildSystem buildSystem, BlazeCommandName name) {
-      this.buildSystem = buildSystem;
+    public Builder(String binaryPath, BlazeCommandName name) {
+      this.binaryPath = binaryPath;
       this.name = name;
       // Tell forge what tool we used to call blaze so we can track usage.
       addBlazeFlags(BlazeFlags.getToolTagFlag());
@@ -109,12 +83,7 @@ public final class BlazeCommand {
       }
 
       arguments.addAll(exeFlags.build());
-      return new BlazeCommand(buildSystem, name, blazeBinary, arguments.build());
-    }
-
-    public Builder setBlazeBinary(@Nullable String blazeBinary) {
-      this.blazeBinary = blazeBinary;
-      return this;
+      return new BlazeCommand(binaryPath, name, arguments.build());
     }
 
     public Builder addTargets(TargetExpression... targets) {

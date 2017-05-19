@@ -23,16 +23,34 @@ import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.util.WorkspacePathUtil;
+import com.intellij.openapi.project.Project;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /** The roots to import. Derived from project view. */
 public final class ImportRoots {
+
+  /** Returns the ImportRoots for the project, or null if it's not a blaze project. */
+  @Nullable
+  public static ImportRoots forProjectSafe(Project project) {
+    WorkspaceRoot root = WorkspaceRoot.fromProjectSafe(project);
+    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    if (root == null || projectViewSet == null) {
+      return null;
+    }
+    return ImportRoots.builder(root, Blaze.getBuildSystem(project)).add(projectViewSet).build();
+  }
+
   /** Builder for import roots */
   public static class Builder {
     private final ImmutableCollection.Builder<WorkspacePath> rootDirectoriesBuilder =
@@ -123,29 +141,27 @@ public final class ImportRoots {
   }
 
   private boolean containsLabel(Label label) {
+    return !label.isExternal() && containsWorkspacePath(label.blazePackage());
+  }
+
+  public boolean containsWorkspacePath(WorkspacePath workspacePath) {
     boolean included = false;
     boolean excluded = false;
-    for (WorkspacePath workspacePath : rootDirectories()) {
-      included = included || matchesLabel(workspacePath, label);
+    for (WorkspacePath rootDirectory : rootDirectories()) {
+      included = included || isSubdirectory(rootDirectory, workspacePath);
     }
-    for (WorkspacePath workspacePath : excludeDirectories()) {
-      excluded = excluded || matchesLabel(workspacePath, label);
+    for (WorkspacePath excludeDirectory : excludeDirectories()) {
+      excluded = excluded || isSubdirectory(excludeDirectory, workspacePath);
     }
     return included && !excluded;
   }
 
-  private static boolean matchesLabel(WorkspacePath workspacePath, Label label) {
-    if (workspacePath.isWorkspaceRoot()) {
+  private static boolean isSubdirectory(WorkspacePath ancestor, WorkspacePath descendant) {
+    if (ancestor.isWorkspaceRoot()) {
       return true;
     }
-    String moduleLabelStr = label.toString();
-    int packagePrefixLength = "//".length();
-    int nextCharIndex = workspacePath.relativePath().length() + packagePrefixLength;
-    if (moduleLabelStr.startsWith(workspacePath.relativePath(), packagePrefixLength)
-        && moduleLabelStr.length() >= nextCharIndex) {
-      char c = moduleLabelStr.charAt(nextCharIndex);
-      return c == '/' || c == ':';
-    }
-    return false;
+    Path ancestorPath = FileSystems.getDefault().getPath(ancestor.relativePath());
+    Path descendantPath = FileSystems.getDefault().getPath(descendant.relativePath());
+    return descendantPath.startsWith(ancestorPath);
   }
 }

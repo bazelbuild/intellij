@@ -18,9 +18,9 @@ package com.google.idea.blaze.base.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import java.util.Collection;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** An error occuring during a blaze validation */
 @Immutable

@@ -18,6 +18,7 @@ package com.google.idea.blaze.cpp;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
@@ -27,7 +28,10 @@ import java.util.Set;
 public class CPrefetchFileSource implements PrefetchFileSource {
   @Override
   public void addFilesToPrefetch(
-      Project project, BlazeProjectData blazeProjectData, Collection<File> files) {}
+      Project project,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      Collection<File> files) {}
 
   @Override
   public Set<String> prefetchSrcFileExtensions() {

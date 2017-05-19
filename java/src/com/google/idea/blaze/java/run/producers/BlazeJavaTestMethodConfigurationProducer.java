@@ -80,8 +80,7 @@ public class BlazeJavaTestMethodConfigurationProducer
     sourceElement.set(methodInfo.firstMethod);
 
     TestIdeInfo.TestSize testSize = TestSizeAnnotationMap.getTestSize(methodInfo.firstMethod);
-    TargetIdeInfo target =
-        RunUtil.targetForTestClass(context.getProject(), methodInfo.containingClass, testSize);
+    TargetIdeInfo target = RunUtil.targetForTestClass(methodInfo.containingClass, testSize);
     if (target == null) {
       return false;
     }
@@ -92,13 +91,16 @@ public class BlazeJavaTestMethodConfigurationProducer
     if (handlerState == null) {
       return false;
     }
-    handlerState.setCommand(BlazeCommandName.TEST);
+    handlerState.getCommandState().setCommand(BlazeCommandName.TEST);
 
     // remove old test filter flag if present
-    List<String> flags = new ArrayList<>(handlerState.getBlazeFlags());
+    List<String> flags = new ArrayList<>(handlerState.getBlazeFlagsState().getRawFlags());
     flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
     flags.add(methodInfo.testFilterFlag);
-    handlerState.setBlazeFlags(flags);
+    if (!flags.contains(BlazeFlags.DISABLE_TEST_SHARDING)) {
+      flags.add(BlazeFlags.DISABLE_TEST_SHARDING);
+    }
+    handlerState.getBlazeFlagsState().setRawFlags(flags);
 
     BlazeConfigurationNameBuilder nameBuilder = new BlazeConfigurationNameBuilder(configuration);
     nameBuilder.setTargetString(
@@ -118,7 +120,7 @@ public class BlazeJavaTestMethodConfigurationProducer
     if (handlerState == null) {
       return false;
     }
-    if (!Objects.equals(handlerState.getCommand(), BlazeCommandName.TEST)) {
+    if (!Objects.equals(handlerState.getCommandState().getCommand(), BlazeCommandName.TEST)) {
       return false;
     }
 
@@ -127,7 +129,7 @@ public class BlazeJavaTestMethodConfigurationProducer
       return false;
     }
 
-    List<String> flags = handlerState.getBlazeFlags();
+    List<String> flags = handlerState.getBlazeFlagsState().getRawFlags();
     return flags.contains(methodInfo.testFilterFlag);
   }
 

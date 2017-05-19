@@ -35,7 +35,7 @@ public abstract class TargetFinder {
 
   @Nullable
   public TargetIdeInfo targetForLabel(Project project, final Label label) {
-    return findTarget(project, target -> target.key.label.equals(label));
+    return findTarget(project, target -> target.key.label.equals(label) && target.isPlainTarget());
   }
 
   public ImmutableList<TargetIdeInfo> targetsOfKinds(Project project, final Kind... kinds) {

@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -30,7 +31,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -90,6 +90,12 @@ public interface BlazeSyncPlugin {
   /** @return The set of supported languages under this workspace type. */
   Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType);
 
+  /**
+   * @return The set of languages which are always active, regardless of which
+   *     'additional_languages' are requested.
+   */
+  Set<LanguageClass> getAlwaysActiveLanguages();
+
   /** Installs any global SDKs */
   void installSdks(BlazeContext context);
 
@@ -100,7 +106,7 @@ public interface BlazeSyncPlugin {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings,
-      BlazeRoots blazeRoots,
+      BlazeInfo blazeInfo,
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
@@ -160,6 +166,7 @@ public interface BlazeSyncPlugin {
    * @return True for success, false for fatal error.
    */
   boolean validateProjectView(
+      @Nullable Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings);
@@ -168,7 +175,7 @@ public interface BlazeSyncPlugin {
   Collection<SectionParser> getSections();
 
   @Nullable
-  LibrarySource getLibrarySource(BlazeProjectData blazeProjectData);
+  LibrarySource getLibrarySource(ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData);
 
   /** Convenience adapter to help stubbing out methods. */
   class Adapter implements BlazeSyncPlugin {
@@ -196,6 +203,11 @@ public interface BlazeSyncPlugin {
     }
 
     @Override
+    public Set<LanguageClass> getAlwaysActiveLanguages() {
+      return ImmutableSet.of();
+    }
+
+    @Override
     public void installSdks(BlazeContext context) {}
 
     @Override
@@ -205,7 +217,7 @@ public interface BlazeSyncPlugin {
         WorkspaceRoot workspaceRoot,
         ProjectViewSet projectViewSet,
         WorkspaceLanguageSettings workspaceLanguageSettings,
-        BlazeRoots blazeRoots,
+        BlazeInfo blazeInfo,
         @Nullable WorkingSet workingSet,
         WorkspacePathResolver workspacePathResolver,
         ArtifactLocationDecoder artifactLocationDecoder,
@@ -259,6 +271,7 @@ public interface BlazeSyncPlugin {
 
     @Override
     public boolean validateProjectView(
+        @Nullable Project project,
         BlazeContext context,
         ProjectViewSet projectViewSet,
         WorkspaceLanguageSettings workspaceLanguageSettings) {
@@ -272,7 +285,8 @@ public interface BlazeSyncPlugin {
 
     @Nullable
     @Override
-    public LibrarySource getLibrarySource(BlazeProjectData blazeProjectData) {
+    public LibrarySource getLibrarySource(
+        ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
       return null;
     }
   }

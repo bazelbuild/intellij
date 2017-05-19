@@ -20,13 +20,9 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
-import com.google.idea.blaze.base.command.BlazeCommand;
-import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.BlazeRunConfiguration;
 import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState;
@@ -194,6 +190,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     final BlazeIntellijPluginDeployer deployer =
         new BlazeIntellijPluginDeployer(getProject(), sandboxHome, buildNumber);
     deployer.addTarget(getTarget());
+    env.putUserData(BlazeIntellijPluginDeployer.USER_DATA_KEY, deployer);
 
     // copy license from running instance of idea
     IdeaJdkHelper.copyIDEALicense(sandboxHome);
@@ -332,8 +329,8 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     final BlazeIntellijPluginConfiguration configuration =
         (BlazeIntellijPluginConfiguration) super.clone();
     configuration.target = target;
-    configuration.blazeFlags.setFlags(blazeFlags.getFlags());
-    configuration.exeFlags.setFlags(exeFlags.getFlags());
+    configuration.blazeFlags.setRawFlags(blazeFlags.getRawFlags());
+    configuration.exeFlags.setRawFlags(exeFlags.getRawFlags());
     configuration.pluginSdk = pluginSdk;
     configuration.vmParameters = vmParameters;
     configuration.programParameters = programParameters;
@@ -341,14 +338,12 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     return configuration;
   }
 
-  protected BlazeCommand buildBlazeCommand(Project project, ProjectViewSet projectViewSet) {
-    BlazeCommand.Builder command =
-        BlazeCommand.builder(Blaze.getBuildSystem(getProject()), BlazeCommandName.BUILD)
-            .addTargets(getTarget())
-            .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
-            .addBlazeFlags(blazeFlags.getFlags())
-            .addExeFlags(exeFlags.getFlags());
-    return command.build();
+  RunConfigurationFlagsState getBlazeFlagsState() {
+    return blazeFlags;
+  }
+
+  RunConfigurationFlagsState getExeFlagsState() {
+    return exeFlags;
   }
 
   @Override

@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.TestUtils;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectView;
@@ -34,7 +35,7 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.PlatformUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -47,8 +48,7 @@ public class BlazeJavascriptSyncPluginTest extends BlazeTestCase {
   private BlazeContext context;
 
   @Override
-  protected void initTest(
-      @NotNull Container applicationServices, @NotNull Container projectServices) {
+  protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
 
     ExtensionPointImpl<BlazeSyncPlugin> ep =
@@ -60,7 +60,8 @@ public class BlazeJavascriptSyncPluginTest extends BlazeTestCase {
   }
 
   @Test
-  public void testJavascriptLanguageAvailable() {
+  public void testJavascriptLanguageAvailableForUltimateEdition() {
+    TestUtils.setPlatformPrefix(testDisposable, PlatformUtils.IDEA_PREFIX);
     ProjectViewSet projectViewSet =
         ProjectViewSet.builder()
             .add(
@@ -74,12 +75,30 @@ public class BlazeJavascriptSyncPluginTest extends BlazeTestCase {
                     .build())
             .build();
     WorkspaceLanguageSettings workspaceLanguageSettings =
-        LanguageSupport.createWorkspaceLanguageSettings(context, projectViewSet);
+        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
     errorCollector.assertNoIssues();
     assertThat(workspaceLanguageSettings)
         .isEqualTo(
             new WorkspaceLanguageSettings(
                 WorkspaceType.JAVASCRIPT,
                 ImmutableSet.of(LanguageClass.JAVASCRIPT, LanguageClass.GENERIC)));
+  }
+
+  @Test
+  public void testJavascriptWorkspaceTypeUnavailableForCommunityEdition() {
+    TestUtils.setPlatformPrefix(testDisposable, PlatformUtils.IDEA_CE_PREFIX);
+    ProjectViewSet projectViewSet =
+        ProjectViewSet.builder()
+            .add(
+                ProjectView.builder()
+                    .add(
+                        ScalarSection.builder(WorkspaceTypeSection.KEY)
+                            .set(WorkspaceType.JAVASCRIPT))
+                    .build())
+            .build();
+    WorkspaceLanguageSettings workspaceLanguageSettings =
+        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
+    LanguageSupport.validateLanguageSettings(context, workspaceLanguageSettings);
+    errorCollector.assertIssues("Workspace type 'javascript' is not supported by this plugin");
   }
 }

@@ -23,7 +23,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
-/** Wrapper around a string for a blaze label (//package:rule). */
+/** Wrapper around a string for a blaze label ([@external_workspace]//package:rule). */
 @Immutable
 public final class Label extends TargetExpression {
   private static final Logger logger = Logger.getInstance(Label.class);
@@ -39,16 +39,31 @@ public final class Label extends TargetExpression {
     return null;
   }
 
-  public Label(String label) {
-    super(label);
+  public static Label create(String label) {
     List<BlazeValidationError> errors = Lists.newArrayList();
     if (!validate(label, errors)) {
       BlazeValidationError.throwError(errors);
     }
+    return new Label(label);
   }
 
-  public Label(WorkspacePath packageName, TargetName newTargetName) {
-    this("//" + packageName.toString() + ":" + newTargetName.toString());
+  public static Label create(WorkspacePath packageName, TargetName newTargetName) {
+    return create(null, packageName, newTargetName);
+  }
+
+  public static Label create(
+      @Nullable String externalWorkspaceName, WorkspacePath packagePath, TargetName targetName) {
+    String fullLabel =
+        String.format(
+            "%s//%s:%s",
+            externalWorkspaceName != null ? "@" + externalWorkspaceName : "",
+            packagePath,
+            targetName);
+    return new Label(fullLabel);
+  }
+
+  private Label(String label) {
+    super(label);
   }
 
   public static boolean validate(String label) {
@@ -81,6 +96,25 @@ public final class Label extends TargetExpression {
     return false;
   }
 
+  public boolean isExternal() {
+    return toString().startsWith("@");
+  }
+
+  /**
+   * Returns the external workspace referenced by this label, or null if it's a main workspace
+   * label.
+   */
+  @Nullable
+  public String externalWorkspaceName() {
+    String label = toString();
+    if (!label.startsWith("@")) {
+      return null;
+    }
+    int slashesIndex = label.indexOf("//");
+    logger.assertTrue(slashesIndex >= 0);
+    return label.substring(1, slashesIndex);
+  }
+
   /**
    * Extract the target name from a label. The target name follows a colon at the end of the label.
    *
@@ -106,7 +140,17 @@ public final class Label extends TargetExpression {
     return new WorkspacePath(labelStr.substring(startIndex, colonIndex));
   }
 
-  public static boolean validatePackagePath(String path) {
+  /** A new label with the same workspace and package paths, but a different target name. */
+  @Nullable
+  public Label withTargetName(@Nullable String targetName) {
+    if (targetName == null) {
+      return null;
+    }
+    TargetName target = TargetName.createIfValid(targetName);
+    return target != null ? Label.create(externalWorkspaceName(), blazePackage(), target) : null;
+  }
+
+  static boolean validatePackagePath(String path) {
     return validatePackagePath(path, null);
   }
 

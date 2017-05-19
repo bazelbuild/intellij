@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
+import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -46,6 +47,8 @@ import javax.annotation.Nullable;
 /** Allows people to use a javascript-only workspace. */
 public class BlazeJavascriptSyncPlugin extends BlazeSyncPlugin.Adapter {
 
+  private static final String JAVASCRIPT_PLUGIN_ID = "JavaScript";
+
   @Nullable
   @Override
   public ModuleType getWorkspaceModuleType(WorkspaceType workspaceType) {
@@ -57,12 +60,16 @@ public class BlazeJavascriptSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Override
   public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
-    return ImmutableList.of(WorkspaceType.JAVASCRIPT);
+    return PlatformUtils.isIdeaUltimate()
+        ? ImmutableList.of(WorkspaceType.JAVASCRIPT)
+        : ImmutableList.of();
   }
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
-    return ImmutableSet.of(LanguageClass.JAVASCRIPT);
+    return PlatformUtils.isIdeaUltimate()
+        ? ImmutableSet.of(LanguageClass.JAVASCRIPT)
+        : ImmutableSet.of();
   }
 
   @Nullable
@@ -114,7 +121,8 @@ public class BlazeJavascriptSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Nullable
   @Override
-  public LibrarySource getLibrarySource(BlazeProjectData blazeProjectData) {
+  public LibrarySource getLibrarySource(
+      ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
     if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVASCRIPT)) {
       return null;
     }
@@ -123,14 +131,23 @@ public class BlazeJavascriptSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Override
   public boolean validateProjectView(
+      @Nullable Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings) {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVASCRIPT)) {
       return true;
     }
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !PlatformUtils.isIdeaUltimate()) {
+    if (!PlatformUtils.isIdeaUltimate()) {
       IssueOutput.error("IntelliJ Ultimate needed for Javascript support.").submit(context);
+      return false;
+    }
+    if (!ApplicationManager.getApplication().isUnitTestMode()
+        && !PluginUtils.isPluginEnabled(JAVASCRIPT_PLUGIN_ID)) {
+      IssueOutput.error(
+              "Javascript support is disabled: please install/enable the JetBrains Javascript "
+                  + "plugin, then restart the IDE")
+          .submit(context);
       return false;
     }
     return true;

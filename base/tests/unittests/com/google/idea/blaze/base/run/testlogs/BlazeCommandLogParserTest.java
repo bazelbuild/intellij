@@ -31,13 +31,23 @@ public class BlazeCommandLogParserTest {
   @Test
   public void testParseTestXmlLine() {
     assertThat(BlazeCommandLogParser.parseTestTarget("//path/to:target    PASSED in 5.3s"))
-        .isEqualTo(new Label("//path/to:target"));
+        .isEqualTo(Label.create("//path/to:target"));
 
     assertThat(BlazeCommandLogParser.parseTestTarget("//path/to:target    FAILED in 5.3s"))
-        .isEqualTo(new Label("//path/to:target"));
+        .isEqualTo(Label.create("//path/to:target"));
 
     assertThat(BlazeCommandLogParser.parseTestTarget("//path/to:target (cached) PASSED in 5.3s"))
-        .isEqualTo(new Label("//path/to:target"));
+        .isEqualTo(Label.create("//path/to:target"));
+  }
+
+  @Test
+  public void testParseFailedTarget() {
+    assertThat(BlazeCommandLogParser.parseBuildFailure("Target //path/to:target failed to build"))
+        .isEqualTo(Label.create("//path/to:target"));
+    assertThat(BlazeCommandLogParser.parseTestTarget("Target //path/to:target failed to build"))
+        .isNull();
+    assertThat(BlazeCommandLogParser.parseBuildFailure("//path/to:target    FAILED in 5.3s"))
+        .isNull();
   }
 
   @Test
@@ -62,8 +72,8 @@ public class BlazeCommandLogParserTest {
             "Executed 1 out of 3 test: 2 test passes.");
     assertThat(BlazeCommandLogParser.parseTestTargets(lines.stream()))
         .containsExactly(
-            new Label("//base:integration_tests"),
-            new Label("//base:unit_tests"),
-            new Label("//golang:unit_tests"));
+            Label.create("//base:integration_tests"),
+            Label.create("//base:unit_tests"),
+            Label.create("//golang:unit_tests"));
   }
 }

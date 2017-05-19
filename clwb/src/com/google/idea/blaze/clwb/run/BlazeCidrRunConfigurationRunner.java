@@ -15,16 +15,15 @@
  */
 package com.google.idea.blaze.clwb.run;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.command.ExperimentalShowArtifactsLineProcessor;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -50,7 +49,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
 import java.io.File;
-import java.util.List;
 
 /** CLion-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
@@ -109,7 +107,8 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     final ProjectViewSet projectViewSet =
         ProjectViewManager.getInstance(project).getProjectViewSet();
 
-    final List<File> outputArtifacts = Lists.newArrayList();
+    BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true);
+
     final ListenableFuture<Void> buildOperation =
         BlazeExecutor.submitTask(
             project,
@@ -123,12 +122,13 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
                 context.output(new StatusOutput("Building debug binary"));
 
                 BlazeCommand.Builder command =
-                    BlazeCommand.builder(Blaze.getBuildSystem(project), BlazeCommandName.BUILD)
+                    BlazeCommand.builder(
+                            Blaze.getBuildSystemProvider(project).getBinaryPath(),
+                            BlazeCommandName.BUILD)
                         .addTargets(configuration.getTarget())
                         .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
-                        .addBlazeFlags(handlerState.getBlazeFlags());
-
-                command.addBlazeFlags("--experimental_show_artifacts");
+                        .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
+                        .addBlazeFlags(buildResultHelper.getBuildFlags());
 
                 // If we are trying to debug, make sure we are building in debug mode.
                 // This can cause a rebuild, so it is a heavyweight setting.
@@ -140,8 +140,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
                     .addBlazeCommand(command.build())
                     .context(context)
                     .stderr(
-                        LineProcessingOutputStream.of(
-                            new ExperimentalShowArtifactsLineProcessor(outputArtifacts),
+                        buildResultHelper.stderr(
                             new IssueOutputLineProcessor(project, context, workspaceRoot)))
                     .build()
                     .run();
@@ -154,6 +153,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     } catch (InterruptedException | java.util.concurrent.ExecutionException e) {
       throw new ExecutionException(e);
     }
+    ImmutableList<File> outputArtifacts = buildResultHelper.getBuildArtifacts();
     if (outputArtifacts.isEmpty()) {
       throw new ExecutionException(
           String.format("No output artifacts found when building %s", configuration.getTarget()));

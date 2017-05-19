@@ -18,15 +18,15 @@ package com.google.idea.blaze.base.scope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Wrapper between an IntelliJ Task and a BlazeContext */
 public abstract class ScopedTask implements Progressive {
   @Nullable final BlazeContext parentContext;
 
   public ScopedTask() {
-    this(null /* parentContext */);
+    this(/* parentContext */ null);
   }
 
   public ScopedTask(@Nullable BlazeContext parentContext) {

@@ -21,10 +21,12 @@ import java.io.Serializable;
 
 /** Sister class to {@link JavaIdeInfo} */
 public class CIdeInfo implements Serializable {
-  private static final long serialVersionUID = 6L;
+  private static final long serialVersionUID = 7L;
 
   public final ImmutableList<ArtifactLocation> sources;
 
+  public final ImmutableList<String> localDefines;
+  public final ImmutableList<ExecutionRootPath> localIncludeDirectories;
   // From the cpp compilation context provider.
   // These should all be for the entire transitive closure.
   public final ImmutableList<ExecutionRootPath> transitiveIncludeDirectories;
@@ -34,11 +36,15 @@ public class CIdeInfo implements Serializable {
 
   public CIdeInfo(
       ImmutableList<ArtifactLocation> sources,
+      ImmutableList<String> localDefines,
+      ImmutableList<ExecutionRootPath> localIncludeDirectories,
       ImmutableList<ExecutionRootPath> transitiveIncludeDirectories,
       ImmutableList<ExecutionRootPath> transitiveQuoteIncludeDirectories,
       ImmutableList<String> transitiveDefines,
       ImmutableList<ExecutionRootPath> transitiveSystemIncludeDirectories) {
     this.sources = sources;
+    this.localDefines = localDefines;
+    this.localIncludeDirectories = localIncludeDirectories;
     this.transitiveIncludeDirectories = transitiveIncludeDirectories;
     this.transitiveQuoteIncludeDirectories = transitiveQuoteIncludeDirectories;
     this.transitiveDefines = transitiveDefines;
@@ -53,6 +59,9 @@ public class CIdeInfo implements Serializable {
   public static class Builder {
     private final ImmutableList.Builder<ArtifactLocation> sources = ImmutableList.builder();
 
+    private final ImmutableList.Builder<String> localDefines = ImmutableList.builder();
+    private final ImmutableList.Builder<ExecutionRootPath> localIncludeDirectories =
+        ImmutableList.builder();
     private final ImmutableList.Builder<ExecutionRootPath> transitiveIncludeDirectories =
         ImmutableList.builder();
     private final ImmutableList.Builder<ExecutionRootPath> transitiveQuoteIncludeDirectories =
@@ -63,6 +72,16 @@ public class CIdeInfo implements Serializable {
 
     public Builder addSources(Iterable<ArtifactLocation> sources) {
       this.sources.addAll(sources);
+      return this;
+    }
+
+    public Builder addLocalDefines(Iterable<String> localDefines) {
+      this.localDefines.addAll(localDefines);
+      return this;
+    }
+
+    public Builder addLocalIncludeDirectories(Iterable<ExecutionRootPath> localIncludeDirectories) {
+      this.localIncludeDirectories.addAll(localIncludeDirectories);
       return this;
     }
 
@@ -92,6 +111,8 @@ public class CIdeInfo implements Serializable {
     public CIdeInfo build() {
       return new CIdeInfo(
           sources.build(),
+          localDefines.build(),
+          localIncludeDirectories.build(),
           transitiveIncludeDirectories.build(),
           transitiveQuoteIncludeDirectories.build(),
           transitiveDefines.build(),
@@ -105,6 +126,12 @@ public class CIdeInfo implements Serializable {
         + "\n"
         + "  sources="
         + sources
+        + "\n"
+        + "  localDefines="
+        + localDefines
+        + "\n"
+        + "  localIncludeDirectories="
+        + localIncludeDirectories
         + "\n"
         + "  transitiveIncludeDirectories="
         + transitiveIncludeDirectories

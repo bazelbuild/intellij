@@ -76,6 +76,6 @@ class BlazeSelectProjectViewImportWizardStep extends ProjectImportWizardStep {
 
   @Override
   public String getHelpId() {
-    return "docs/project-views.md";
+    return "docs/project-views";
   }
 }

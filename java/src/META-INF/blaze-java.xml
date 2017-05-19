@@ -69,9 +69,10 @@
     <BlazeUserSettingsContributor implementation="com.google.idea.blaze.java.settings.BlazeJavaUserSettingsContributor$BlazeJavaUserSettingsProvider"/>
     <FileCache implementation="com.google.idea.blaze.java.libraries.JarCache$FileCacheAdapter"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.java.sync.JavaPrefetchFileSource"/>
-    <SyncListener implementation="com.google.idea.blaze.java.syncstatus.SyncStatusHelper$UpdateSyncStatusMap"/>
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.java.run.BlazeJavaTestEventsHandler"/>
     <AttributeSpecificStringLiteralReferenceProvider implementation="com.google.idea.blaze.java.lang.build.references.JavaClassQualifiedNameReference"/>
+    <JavaLikeLanguage implementation="com.google.idea.blaze.java.sync.source.JavaLikeLanguage$Java"/>
+    <TestTargetHeuristic implementation="com.google.idea.blaze.java.run.JUnitTestHeuristic" order="before TestSizeHeuristic"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -83,6 +84,12 @@
         order="first"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestMethodConfigurationProducer"
+        order="first"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.java.run.producers.BlazeJavaAbstractTestCaseConfigurationProducer"
+        order="first"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.java.run.producers.MultipleJavaClassesTestConfigurationProducer"
         order="first"/>
     <projectViewNodeDecorator implementation="com.google.idea.blaze.java.syncstatus.BlazeJavaSyncStatusClassNodeDecorator"/>
     <editorTabColorProvider implementation="com.google.idea.blaze.java.syncstatus.BlazeJavaSyncStatusEditorTabColorProvider"/>
@@ -105,7 +112,6 @@
     <attachSourcesProvider implementation="com.google.idea.blaze.java.libraries.AddLibraryTargetDirectoryToProjectViewAttachSourcesProvider"/>
     <attachSourcesProvider implementation="com.google.idea.blaze.java.libraries.BlazeAttachSourceProvider"/>
     <applicationService serviceImplementation="com.google.idea.blaze.java.settings.BlazeJavaUserSettings"/>
-    <projectService serviceImplementation="com.google.idea.blaze.java.syncstatus.SyncStatusHelper"/>
     <psi.referenceContributor language="BUILD" implementation="com.google.idea.blaze.java.lang.build.references.JavaClassReferenceContributor"/>
   </extensions>
 
@@ -116,7 +122,11 @@
   </project-components>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.google.idea.blaze.java.JavaSyncAugmenter"
+    <extensionPoint qualifiedName="com.google.idea.blaze.JavaSyncAugmenter"
                     interface="com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.JavaLikeLanguage"
+                    interface="com.google.idea.blaze.java.sync.source.JavaLikeLanguage"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.JUnitParameterizedClassHeuristic"
+                    interface="com.google.idea.blaze.java.run.producers.JUnitParameterizedClassHeuristic"/>
   </extensionPoints>
 </idea-plugin>

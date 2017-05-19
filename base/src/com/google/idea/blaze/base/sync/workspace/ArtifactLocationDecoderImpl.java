@@ -15,30 +15,35 @@
  */
 package com.google.idea.blaze.base.sync.workspace;
 
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
+import java.nio.file.Paths;
 
 /** Decodes intellij_ide_info.proto ArtifactLocation file paths */
 public class ArtifactLocationDecoderImpl implements ArtifactLocationDecoder {
   private static final long serialVersionUID = 1L;
 
-  private final BlazeRoots blazeRoots;
+  private final BlazeInfo blazeInfo;
   private final WorkspacePathResolver pathResolver;
 
-  public ArtifactLocationDecoderImpl(BlazeRoots blazeRoots, WorkspacePathResolver pathResolver) {
-    this.blazeRoots = blazeRoots;
+  public ArtifactLocationDecoderImpl(BlazeInfo blazeInfo, WorkspacePathResolver pathResolver) {
+    this.blazeInfo = blazeInfo;
     this.pathResolver = pathResolver;
   }
 
   @Override
   public File decode(ArtifactLocation artifactLocation) {
-    if (artifactLocation.isSource) {
-      if (artifactLocation.isExternal) {
-        return new File(blazeRoots.externalSourceRoot, artifactLocation.relativePath);
-      }
-      File root = pathResolver.findPackageRoot(artifactLocation.relativePath);
-      return new File(root, artifactLocation.relativePath);
+    if (artifactLocation.isSource && !artifactLocation.isExternal) {
+      return pathResolver.resolveToFile(artifactLocation.relativePath);
     }
-    return new File(blazeRoots.executionRoot, artifactLocation.getExecutionRootRelativePath());
+    String path =
+        Paths.get(
+                blazeInfo.getExecutionRoot().getPath(),
+                artifactLocation.getExecutionRootRelativePath())
+            .toString();
+    // doesn't require file-system operations -- no attempt to resolve symlinks.
+    return new File(FileUtil.toCanonicalPath(path));
   }
 }

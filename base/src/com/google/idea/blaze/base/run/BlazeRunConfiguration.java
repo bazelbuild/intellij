@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.run;
 
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Marker interface for all run configurations */
 public interface BlazeRunConfiguration {

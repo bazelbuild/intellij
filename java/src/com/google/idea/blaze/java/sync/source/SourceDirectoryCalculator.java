@@ -50,10 +50,12 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -72,7 +74,7 @@ public final class SourceDirectoryCalculator {
 
   private static final JavaPackageReader generatedFileJavaPackageReader =
       new FilePathJavaPackageReader();
-  private final ListeningExecutorService executorService = MoreExecutors.sameThreadExecutor();
+  private final ListeningExecutorService executorService = MoreExecutors.newDirectExecutorService();
   private final ListeningExecutorService packageReaderExecutorService =
       MoreExecutors.listeningDecorator(new TransientExecutor(16));
 
@@ -132,7 +134,7 @@ public final class SourceDirectoryCalculator {
               result.add(new BlazeContentEntry(contentRoot, sourceDirectories));
             }
           }
-          Collections.sort(result, (lhs, rhs) -> lhs.contentRoot.compareTo(rhs.contentRoot));
+          result.sort(Comparator.comparing(lhs -> lhs.contentRoot));
         });
     return ImmutableList.copyOf(result);
   }
@@ -197,10 +199,11 @@ public final class SourceDirectoryCalculator {
       Collection<SourceArtifact> sourceArtifacts,
       Collection<JavaPackageReader> javaPackageReaders) {
 
-    // Split out java files
+    // Split out java-like files
+    Predicate<ArtifactLocation> isSourceFile = JavaLikeLanguage.getSourceFileMatcher();
     List<SourceArtifact> javaArtifacts = Lists.newArrayList();
     for (SourceArtifact sourceArtifact : sourceArtifacts) {
-      if (isJavaFile(sourceArtifact.artifactLocation)) {
+      if (isSourceFile.test(sourceArtifact.artifactLocation)) {
         javaArtifacts.add(sourceArtifact);
       }
     }
@@ -517,9 +520,5 @@ public final class SourceDirectoryCalculator {
       this.workspacePath = workspacePath;
       this.directoryName = directoryName;
     }
-  }
-
-  private static boolean isJavaFile(ArtifactLocation artifactLocation) {
-    return artifactLocation.getRelativePath().endsWith(".java");
   }
 }

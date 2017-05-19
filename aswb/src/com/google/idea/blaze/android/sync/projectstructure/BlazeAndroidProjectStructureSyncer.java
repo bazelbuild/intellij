@@ -49,12 +49,13 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
+import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -68,6 +69,8 @@ import org.jetbrains.android.facet.AndroidFacet;
 
 /** Updates the IDE's project structure. */
 public class BlazeAndroidProjectStructureSyncer {
+
+  private static final Logger logger = Logger.getInstance(BlazeAndroidProjectStructureSyncer.class);
 
   public static void updateProjectStructure(
       Project project,
@@ -214,7 +217,7 @@ public class BlazeAndroidProjectStructureSyncer {
   public static Module ensureRunConfigurationModule(Project project, Label label) {
     TargetKey targetKey = TargetKey.forPlainTarget(label);
     String moduleName = moduleNameForAndroidModule(targetKey);
-    Module module = ModuleManager.getInstance(project).findModuleByName(moduleName);
+    Module module = ModuleFinder.getInstance(project).findModuleByName(moduleName);
     if (module != null) {
       return module;
     }
@@ -308,12 +311,16 @@ public class BlazeAndroidProjectStructureSyncer {
         project, workspaceRoot, workspaceModule, androidSdkPlatform);
 
     ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.artifactLocationDecoder;
-    ModuleManager moduleManager = ModuleManager.getInstance(project);
+    ModuleFinder moduleFinder = ModuleFinder.getInstance(project);
     for (AndroidResourceModule androidResourceModule :
         syncData.importResult.androidResourceModules) {
       TargetIdeInfo target = blazeProjectData.targetMap.get(androidResourceModule.targetKey);
       String moduleName = moduleNameForAndroidModule(target.key);
-      Module module = moduleManager.findModuleByName(moduleName);
+      Module module = moduleFinder.findModuleByName(moduleName);
+      if (module == null) {
+        logger.warn("No module found for resource target: " + target.key);
+        continue;
+      }
       registry.put(module, androidResourceModule);
 
       AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
@@ -345,7 +352,11 @@ public class BlazeAndroidProjectStructureSyncer {
             project, projectViewSet, blazeProjectData, androidResourceModules);
     for (TargetIdeInfo target : runConfigurationTargets) {
       String moduleName = moduleNameForAndroidModule(target.key);
-      Module module = moduleManager.findModuleByName(moduleName);
+      Module module = moduleFinder.findModuleByName(moduleName);
+      if (module == null) {
+        logger.warn("No module found for run configuration target: " + target.key);
+        continue;
+      }
       AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
       assert androidIdeInfo != null;
       updateModuleFacetInMemoryState(

@@ -96,7 +96,7 @@ final class WebExperimentSyncer {
     experimentValues = loadCache();
     ListenableFuture<String> response = executor.submit(new WebExperimentsDownloader());
     response.addListener(
-        new WebExperimentsResultProcessor(response), MoreExecutors.sameThreadExecutor());
+        new WebExperimentsResultProcessor(response), MoreExecutors.directExecutor());
   }
 
   private void scheduleNextRefresh(boolean refreshWasSuccessful) {
@@ -105,7 +105,7 @@ final class WebExperimentSyncer {
     ListenableScheduledFuture<String> refreshResults =
         executor.schedule(new WebExperimentsDownloader(), delayInMinutes, TimeUnit.MINUTES);
     refreshResults.addListener(
-        new WebExperimentsResultProcessor(refreshResults), MoreExecutors.sameThreadExecutor());
+        new WebExperimentsResultProcessor(refreshResults), MoreExecutors.directExecutor());
   }
 
   private class WebExperimentsDownloader implements Callable<String> {
@@ -115,7 +115,7 @@ final class WebExperimentSyncer {
       logger.debug("About to fetch experiments.");
       return HttpRequests.request(
               System.getProperty(EXPERIMENTS_URL_PROPERTY, DEFAULT_EXPERIMENT_URL) + pluginName)
-          .readString(null /* progress indicator */);
+          .readString(/* progress indicator */ null);
     }
   }
 
@@ -144,10 +144,10 @@ final class WebExperimentSyncer {
         setExperimentValues(mapBuilder);
 
         logger.debug("Successfully fetched experiments: " + getExperimentValues());
-        scheduleNextRefresh(true /* refreshWasSuccessful */);
+        scheduleNextRefresh(/* refreshWasSuccessful */ true);
       } catch (InterruptedException | ExecutionException | RuntimeException e) {
         logger.debug("Error fetching experiments", e);
-        scheduleNextRefresh(false /* refreshWasSuccessful */);
+        scheduleNextRefresh(/* refreshWasSuccessful */ false);
       }
     }
   }

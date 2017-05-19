@@ -17,6 +17,14 @@
   <depends>com.intellij.modules.cidr.lang</depends>
   <depends>com.intellij.modules.cidr.debugger</depends>
 
+  <application-components>
+    <component>
+      <implementation-class>
+        com.google.idea.blaze.cpp.CidrSymbolBuilderSuppressor
+      </implementation-class>
+    </component>
+  </application-components>
+
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.cpp.BlazeCSyncPlugin"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.cpp.CPrefetchFileSource"/>

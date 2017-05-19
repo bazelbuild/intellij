@@ -18,7 +18,6 @@ package com.google.idea.blaze.android.run;
 import static com.google.idea.blaze.android.cppapi.NdkSupport.NDK_SUPPORT;
 
 import com.android.tools.idea.run.ValidationError;
-import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.cppapi.NdkSupport;
@@ -76,12 +75,8 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     return debuggerManager;
   }
 
-  public List<String> getUserFlags() {
-    return userFlags.getFlags();
-  }
-
-  public void setUserFlags(List<String> userFlags) {
-    this.userFlags.setFlags(userFlags);
+  public RunConfigurationFlagsState getBlazeFlagsState() {
+    return userFlags;
   }
 
   public boolean isNativeDebuggingEnabled() {
@@ -92,10 +87,11 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     this.nativeDebuggingEnabled = nativeDebuggingEnabled;
   }
 
-  public ImmutableList<String> getBuildFlags(Project project, ProjectViewSet projectViewSet) {
+  public ImmutableList<String> getExpandedBuildFlags(
+      Project project, ProjectViewSet projectViewSet) {
     return ImmutableList.<String>builder()
         .addAll(BlazeFlags.buildFlags(project, projectViewSet))
-        .addAll(getUserFlags())
+        .addAll(getBlazeFlagsState().getExpandedFlags())
         .addAll(getNativeDebuggerFlags())
         .build();
   }
@@ -127,19 +123,11 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     Element deployTargetStatesElement = element.getChild(DEPLOY_TARGET_STATES_TAG);
     if (deployTargetStatesElement != null) {
       deployTargetManager.readExternal(deployTargetStatesElement);
-    } else {
-      // TODO Introduced in 1.12, remove in 1.14.
-      // This was for migrating the state to a child element.
-      deployTargetManager.readExternal(element);
     }
 
     Element debuggerStatesElement = element.getChild(DEBUGGER_STATES_TAG);
     if (debuggerStatesElement != null) {
       debuggerManager.readExternal(debuggerStatesElement);
-    } else {
-      // TODO Introduced in 1.12, remove in 1.14.
-      // This was for migrating the state to a child element.
-      debuggerManager.readExternal(element);
     }
   }
 
@@ -147,8 +135,6 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
   public void writeExternal(Element element) throws WriteExternalException {
     userFlags.writeExternal(element);
     element.setAttribute(NATIVE_DEBUG_ATTR, Boolean.toString(nativeDebuggingEnabled));
-
-    removeOldManagerState(element);
 
     element.removeChildren(DEPLOY_TARGET_STATES_TAG);
     Element deployTargetStatesElement = new Element(DEPLOY_TARGET_STATES_TAG);
@@ -159,19 +145,6 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     Element debuggerStatesElement = new Element(DEBUGGER_STATES_TAG);
     debuggerManager.writeExternal(debuggerStatesElement);
     element.addContent(debuggerStatesElement);
-  }
-
-  // TODO Introduced in 1.12, remove in 1.14. This was for migrating state
-  // and cleaning up mass amounts of duplicate state caused by never removing these elements before.
-  private void removeOldManagerState(Element element) {
-    // This is safe because we know only BlazeAndroidRunConfigurationDeployTargetManager
-    // directly wrote option elements (via DefaultJDOMExternalizer.writeExternal) to our root.
-    element.removeChildren("option");
-    // BlazeAndroidRunConfigurationDebuggerManager, meanwhile, nested its state in
-    // child elements named after the AndroidDebugger extension IDs.
-    for (AndroidDebugger<?> debugger : AndroidDebugger.EP_NAME.getExtensions()) {
-      element.removeChildren(debugger.getId());
-    }
   }
 
   @Override

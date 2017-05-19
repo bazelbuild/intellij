@@ -1,0 +1,7 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.google.idea.blaze">
+    <SyncPlugin implementation="com.google.idea.blaze.scala.sync.BlazeScalaSyncPlugin"/>
+    <JavaLikeLanguage
+        implementation="com.google.idea.blaze.scala.sync.source.ScalaJavaLikeLanguage"/>
+  </extensions>
+</idea-plugin>

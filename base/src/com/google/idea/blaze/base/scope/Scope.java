@@ -16,8 +16,9 @@
 package com.google.idea.blaze.base.scope;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Helper methods to run scoped functions and operations in a scoped context. */
 public final class Scope {
@@ -34,6 +35,9 @@ public final class Scope {
     BlazeContext context = new BlazeContext(parentContext);
     try {
       return scopedFunction.execute(context);
+    } catch (ProcessCanceledException e) {
+      context.setCancelled();
+      throw e;
     } catch (RuntimeException e) {
       context.setHasError();
       logger.error(e);
@@ -54,6 +58,9 @@ public final class Scope {
     BlazeContext context = new BlazeContext(parentContext);
     try {
       scopedOperation.execute(context);
+    } catch (ProcessCanceledException e) {
+      context.setCancelled();
+      throw e;
     } catch (RuntimeException e) {
       context.setHasError();
       logger.error(e);

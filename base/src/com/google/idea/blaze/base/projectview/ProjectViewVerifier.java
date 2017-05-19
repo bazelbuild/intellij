@@ -29,11 +29,14 @@ import com.google.idea.blaze.base.projectview.section.sections.Sections;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /** Verifies project views. */
 public class ProjectViewVerifier {
@@ -48,6 +51,7 @@ public class ProjectViewVerifier {
 
   /** Verifies the project view. Any errors are output to the context as issues. */
   public static boolean verifyProjectView(
+      @Nullable Project project,
       BlazeContext context,
       WorkspacePathResolver workspacePathResolver,
       ProjectViewSet projectViewSet,
@@ -56,9 +60,13 @@ public class ProjectViewVerifier {
       return false;
     }
     for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-      if (!syncPlugin.validateProjectView(context, projectViewSet, workspaceLanguageSettings)) {
+      if (!syncPlugin.validateProjectView(
+          project, context, projectViewSet, workspaceLanguageSettings)) {
         return false;
       }
+    }
+    if (!LanguageSupport.validateLanguageSettings(context, workspaceLanguageSettings)) {
+      return false;
     }
     warnAboutDeprecatedSections(context, projectViewSet);
     if (!verifyIncludedPackagesExistOnDisk(context, workspacePathResolver, projectViewSet)) {

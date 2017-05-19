@@ -32,7 +32,7 @@ public class BlazeActionRemover extends AnAction {
     }
   }
 
-  private static void replaceAction(String actionId, AnAction newAction) {
+  public static void replaceAction(String actionId, AnAction newAction) {
     ActionManager actionManager = ActionManager.getInstance();
     AnAction oldAction = actionManager.getAction(actionId);
     if (oldAction != null) {

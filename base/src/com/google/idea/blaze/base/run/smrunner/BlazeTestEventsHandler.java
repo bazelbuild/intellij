@@ -44,17 +44,16 @@ public abstract class BlazeTestEventsHandler {
 
   /**
    * Blaze/Bazel flags required for test UI.<br>
-   * Forces local test execution, without sharding.
+   * Forces local test execution, without retries.
    */
   public static ImmutableList<String> getBlazeFlags(Project project) {
     ImmutableList.Builder<String> flags =
-        ImmutableList.<String>builder()
-            .add(
-                "--test_sharding_strategy=disabled",
-                "--runs_per_test=1",
-                "--flaky_test_attempts=1");
+        ImmutableList.<String>builder().add("--runs_per_test=1", "--flaky_test_attempts=1");
     if (Blaze.getBuildSystem(project) == BuildSystem.Blaze) {
       flags.add("--test_strategy=local");
+    }
+    if (Blaze.getBuildSystem(project) == BuildSystem.Bazel) {
+      flags.add("--test_sharding_strategy=disabled");
     }
     return flags.build();
   }
@@ -117,16 +116,16 @@ public abstract class BlazeTestEventsHandler {
 
   public String testLocationUrl(
       @Nullable Kind kind, String parentSuite, String name, @Nullable String className) {
-    String base = SmRunnerUtils.GENERIC_TEST_PROTOCOL + URLUtil.SCHEME_SEPARATOR + name;
+    String base = SmRunnerUtils.GENERIC_TEST_PROTOCOL + URLUtil.SCHEME_SEPARATOR;
     if (Strings.isNullOrEmpty(className)) {
-      return base;
+      return base + name;
     }
-    return base + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER + className;
+    return base + className + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER + name;
   }
 
   /** Whether to skip logging a {@link TestSuite}. */
-  public boolean ignoreSuite(TestSuite suite) {
+  public boolean ignoreSuite(@Nullable Kind kind, TestSuite suite) {
     // by default only include innermost 'testsuite' elements
-    return suite.testSuites.isEmpty();
+    return !suite.testSuites.isEmpty();
   }
 }

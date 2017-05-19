@@ -16,10 +16,10 @@
 
 package com.google.idea.blaze.android.run.test;
 
-import static com.google.idea.blaze.android.compatibility.Compatibility.AndroidTestRunConfiguration.TEST_ALL_IN_MODULE;
-import static com.google.idea.blaze.android.compatibility.Compatibility.AndroidTestRunConfiguration.TEST_ALL_IN_PACKAGE;
-import static com.google.idea.blaze.android.compatibility.Compatibility.AndroidTestRunConfiguration.TEST_CLASS;
-import static com.google.idea.blaze.android.compatibility.Compatibility.AndroidTestRunConfiguration.TEST_METHOD;
+import static com.android.tools.idea.testartifacts.instrumented.AndroidTestRunConfiguration.TEST_ALL_IN_MODULE;
+import static com.android.tools.idea.testartifacts.instrumented.AndroidTestRunConfiguration.TEST_ALL_IN_PACKAGE;
+import static com.android.tools.idea.testartifacts.instrumented.AndroidTestRunConfiguration.TEST_CLASS;
+import static com.android.tools.idea.testartifacts.instrumented.AndroidTestRunConfiguration.TEST_METHOD;
 
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;

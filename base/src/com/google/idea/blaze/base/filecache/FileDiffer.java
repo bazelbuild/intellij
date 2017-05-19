@@ -23,7 +23,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Provides a diffing service for a collection of files. */
 public final class FileDiffer {

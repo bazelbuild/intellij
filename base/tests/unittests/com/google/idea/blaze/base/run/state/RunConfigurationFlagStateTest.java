@@ -32,26 +32,26 @@ public class RunConfigurationFlagStateTest {
     // not putting them back when converting back to a string.
     ImmutableList<String> flags = ImmutableList.of("--flag=\\\"Hello_world!\\\"", "--flag2");
     RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
-    state.setFlags(flags);
+    state.setRawFlags(flags);
 
     RunConfigurationStateEditor editor = state.getEditor(null);
     editor.resetEditorFrom(state);
     editor.applyEditorTo(state);
 
-    assertThat(state.getFlags()).isEqualTo(flags);
+    assertThat(state.getRawFlags()).isEqualTo(flags);
   }
 
   @Test
   public void testQuotesRetainedAfterReserialization() {
     ImmutableList<String> flags = ImmutableList.of("\"--flag=test\"");
     RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
-    state.setFlags(flags);
+    state.setRawFlags(flags);
 
     RunConfigurationStateEditor editor = state.getEditor(null);
     editor.resetEditorFrom(state);
     editor.applyEditorTo(state);
 
-    assertThat(state.getFlags()).isEqualTo(flags);
+    assertThat(state.getRawFlags()).isEqualTo(flags);
   }
 
   @Test
@@ -64,12 +64,12 @@ public class RunConfigurationFlagStateTest {
             "--test_filter=com.google.idea.blaze.base.run.state.RunConfigurationFlagStateTest#",
             "--define=ij_product=intellij-latest");
     RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
-    state.setFlags(flags);
+    state.setRawFlags(flags);
 
     RunConfigurationStateEditor editor = state.getEditor(null);
     editor.resetEditorFrom(state);
     editor.applyEditorTo(state);
 
-    assertThat(state.getFlags()).isEqualTo(flags);
+    assertThat(state.getRawFlags()).isEqualTo(flags);
   }
 }

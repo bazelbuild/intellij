@@ -29,7 +29,9 @@ public enum LanguageClass {
   TYPESCRIPT("typescript", ImmutableSet.of("ts", "ats")),
   DART("dart", ImmutableSet.of("dart")),
   GO("go", ImmutableSet.of("go")),
-  PYTHON("python", ImmutableSet.of("py", "pyw"));
+  PYTHON("python", ImmutableSet.of("py", "pyw")),
+  SCALA("scala", ImmutableSet.of("scala")),
+  ;
 
   private static final ImmutableMap<String, LanguageClass> RECOGNIZED_EXTENSIONS =
       extensionToClassMap();
@@ -63,6 +65,11 @@ public enum LanguageClass {
       }
     }
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return name;
   }
 
   /** Returns the LanguageClass associated with the given filename extension, if it's recognized. */

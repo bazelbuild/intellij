@@ -43,7 +43,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Completes project view section names. */
 public class ProjectViewKeywordCompletionContributor extends CompletionContributor {

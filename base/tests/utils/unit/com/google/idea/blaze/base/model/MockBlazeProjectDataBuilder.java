@@ -15,26 +15,24 @@
  */
 package com.google.idea.blaze.base.model;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
-import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 
 /**
- * Use to build mock praject data for tests.
+ * Use to build mock project data for tests.
  *
- * <p>For any data you don't supply, the builder make a best-effort attempt to create default
+ * <p>For any data you don't supply, the builder makes a best-effort attempt to create default
  * objects using whatever data you have supplied if applicable.
  */
 public class MockBlazeProjectDataBuilder {
@@ -42,8 +40,8 @@ public class MockBlazeProjectDataBuilder {
 
   private long syncTime = 0;
   private TargetMap targetMap;
-  private ImmutableMap<String, String> blazeInfo;
-  private BlazeRoots blazeRoots;
+  private String outputBase;
+  private BlazeInfo blazeInfo;
   private BlazeVersionData blazeVersionData;
   private WorkspacePathResolver workspacePathResolver;
   private ArtifactLocationDecoder artifactLocationDecoder;
@@ -51,7 +49,7 @@ public class MockBlazeProjectDataBuilder {
   private SyncState syncState;
   private ImmutableMultimap<TargetKey, TargetKey> reverseDependencies;
 
-  public MockBlazeProjectDataBuilder(WorkspaceRoot workspaceRoot) {
+  private MockBlazeProjectDataBuilder(WorkspaceRoot workspaceRoot) {
     this.workspaceRoot = workspaceRoot;
   }
 
@@ -69,13 +67,13 @@ public class MockBlazeProjectDataBuilder {
     return this;
   }
 
-  public MockBlazeProjectDataBuilder setBlazeInfo(ImmutableMap<String, String> blazeInfo) {
-    this.blazeInfo = blazeInfo;
+  public MockBlazeProjectDataBuilder setOutputBase(String outputBase) {
+    this.outputBase = outputBase;
     return this;
   }
 
-  public MockBlazeProjectDataBuilder setBlazeRoots(BlazeRoots blazeRoots) {
-    this.blazeRoots = blazeRoots;
+  public MockBlazeProjectDataBuilder setBlazeInfo(BlazeInfo blazeInfo) {
+    this.blazeInfo = blazeInfo;
     return this;
   }
 
@@ -116,27 +114,26 @@ public class MockBlazeProjectDataBuilder {
   public BlazeProjectData build() {
     TargetMap targetMap =
         this.targetMap != null ? this.targetMap : new TargetMap(ImmutableMap.of());
-    ImmutableMap<String, String> blazeInfo =
-        this.blazeInfo != null ? this.blazeInfo : ImmutableMap.of();
-    BlazeRoots blazeRoots =
-        this.blazeRoots != null
-            ? this.blazeRoots
-            : new BlazeRoots(
-                null,
-                ImmutableList.of(workspaceRoot.directory()),
-                new ExecutionRootPath("bin"),
-                new ExecutionRootPath("gen"),
-                null);
+    BlazeInfo blazeInfo = this.blazeInfo;
+    if (blazeInfo == null) {
+      String outputBase = this.outputBase != null ? this.outputBase : "/usr/workspace/1234";
+      blazeInfo =
+          BlazeInfo.createMockBlazeInfo(
+              outputBase,
+              outputBase + "/execroot",
+              outputBase + "/execroot/bin",
+              outputBase + "/execroot/gen");
+    }
     BlazeVersionData blazeVersionData =
         this.blazeVersionData != null ? this.blazeVersionData : new BlazeVersionData();
     WorkspacePathResolver workspacePathResolver =
         this.workspacePathResolver != null
             ? this.workspacePathResolver
-            : new WorkspacePathResolverImpl(workspaceRoot, blazeRoots);
+            : new WorkspacePathResolverImpl(workspaceRoot);
     ArtifactLocationDecoder artifactLocationDecoder =
         this.artifactLocationDecoder != null
             ? this.artifactLocationDecoder
-            : new ArtifactLocationDecoderImpl(blazeRoots, workspacePathResolver);
+            : new ArtifactLocationDecoderImpl(blazeInfo, workspacePathResolver);
     WorkspaceLanguageSettings workspaceLanguageSettings =
         this.workspaceLanguageSettings != null
             ? this.workspaceLanguageSettings
@@ -150,13 +147,11 @@ public class MockBlazeProjectDataBuilder {
         syncTime,
         targetMap,
         blazeInfo,
-        blazeRoots,
         blazeVersionData,
         workspacePathResolver,
         artifactLocationDecoder,
         workspaceLanguageSettings,
         syncState,
-        reverseDependencies,
-        null);
+        reverseDependencies);
   }
 }

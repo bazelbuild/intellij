@@ -28,6 +28,8 @@ intellij_plugin_debug_target(
 
 """
 
+SUFFIX = ".intellij-plugin-debug-target-deploy-info"
+
 def _trim_start(path, prefix):
   return path[len(prefix):] if path.startswith(prefix) else path
 
@@ -86,12 +88,29 @@ _intellij_plugin_debug_target_aspect = aspect(
     implementation = _intellij_plugin_debug_target_aspect_impl,
 )
 
+def _build_deploy_info_file(deploy_file):
+  return struct(
+      execution_path = deploy_file.src.path,
+      deploy_location = deploy_file.deploy_location,
+  )
+
 def _intellij_plugin_debug_target_impl(ctx):
   files = set()
   deploy_files = []
   for target in ctx.attr.deps:
     files = files | target.files
     deploy_files.extend(target.aspect_intellij_plugin_deploy_info.deploy_files)
+  deploy_info = struct(
+      deploy_files = [_build_deploy_info_file(f) for f in deploy_files]
+  )
+  output = ctx.new_file(ctx.label.name + SUFFIX)
+  ctx.file_action(output, deploy_info.to_proto())
+
+  # We've already consumed any dependent intellij_plugin_debug_targets into our own,
+  # do not build or report these
+  files = set([f for f in files if not f.path.endswith(SUFFIX)])
+  files = files | set([output])
+
   return struct(
       files = files,
       intellij_plugin_deploy_info = struct(

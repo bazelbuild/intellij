@@ -2,32 +2,30 @@
 
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
-    "intellij-latest": "intellij-2016.3.1",
-    "android-studio-latest": "android-studio-145.1617.8",
-    "android-studio-beta": "android-studio-2.3.0.4",
-    "clion-latest": "clion-162.1967.7",
+    "intellij-latest": "intellij-2017.1.1",
+    "intellij-beta": "intellij-2017.1.1",
+    "android-studio-latest": "android-studio-2.3.1.0",
+    "android-studio-beta": "android-studio-2.3.1.0",
+    "clion-latest": "clion-2017.1.1",
+    "clion-beta": "clion-2017.1.1",
 }
 
 DIRECT_IJ_PRODUCTS = {
+    "intellij-2017.1.1": struct(
+        ide="intellij",
+        directory="intellij_ce_2017_1_1",
+    ),
     "intellij-2016.3.1": struct(
         ide="intellij",
         directory="intellij_ce_2016_3_1",
     ),
-    "intellij-162.2032.8": struct(
-        ide="intellij",
-        directory="IC_162_2032_8",
-    ),
-    "android-studio-145.1617.8": struct(
+    "android-studio-2.3.0.8": struct(
         ide="android-studio",
-        directory="AI_145_1617_8",
+        directory="android_studio_2_3_0_8",
     ),
-    "android-studio-2.3.0.3": struct(
+    "android-studio-2.3.1.0": struct(
         ide="android-studio",
-        directory="android_studio_2_3_0_3",
-    ),
-    "android-studio-2.3.0.4": struct(
-        ide="android-studio",
-        directory="android_studio_2_3_0_4",
+        directory="android_studio_2_3_1_0",
     ),
     "clion-162.1967.7": struct(
         ide="clion",
@@ -37,14 +35,11 @@ DIRECT_IJ_PRODUCTS = {
         ide="clion",
         directory="clion_2016_3_2",
     ),
+    "clion-2017.1.1": struct(
+        ide="clion",
+        directory="clion_2017_1_1",
+    ),
 }
-
-# BUILD_VARS for each IDE corresponding to indirect ij_products, eg. "intellij-latest"
-
-
-
-
-
 
 def select_for_plugin_api(params):
   """Selects for a plugin_api.
@@ -99,7 +94,7 @@ def select_for_plugin_api(params):
 
   return select(select_params)
 
-def select_for_ide(intellij=None, android_studio=None, clion=None, default=None):
+def select_for_ide(intellij=None, android_studio=None, clion=None, default=[]):
   """Selects for the supported IDEs.
 
   Args:
@@ -108,7 +103,7 @@ def select_for_ide(intellij=None, android_studio=None, clion=None, default=None)
       clion: Files to use for CLion. If None will use default.
       default: Files to use for any IDEs not passed.
   Returns:
-      A select statement on all plugin_apis, sorted into IDEs.
+      A select statement on all plugin_apis to lists of files, sorted into IDEs.
 
   Example:
     java_library(
@@ -119,9 +114,9 @@ def select_for_ide(intellij=None, android_studio=None, clion=None, default=None)
       ),
     )
   """
-  intellij = intellij or default
-  android_studio = android_studio or default
-  clion = clion or default
+  intellij = intellij if intellij != None else default
+  android_studio = android_studio if android_studio != None else default
+  clion = clion if clion != None else default
 
   ide_to_value = {
       "intellij" : intellij,

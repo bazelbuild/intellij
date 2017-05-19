@@ -50,7 +50,7 @@ public class BlazeJavaRunConfigurationFactory extends BlazeRunConfigurationFacto
     BlazeCommandRunConfigurationCommonState state =
         blazeConfig.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (state != null) {
-      state.setCommand(BlazeCommandName.RUN);
+      state.getCommandState().setCommand(BlazeCommandName.RUN);
     }
     blazeConfig.setGeneratedName();
   }

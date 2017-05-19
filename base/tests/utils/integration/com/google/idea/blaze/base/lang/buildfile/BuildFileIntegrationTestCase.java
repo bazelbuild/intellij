@@ -36,7 +36,10 @@ public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestC
   @Before
   public final void doSetup() {
     BlazeProjectDataManager mockProjectDataManager =
-        new MockBlazeProjectDataManager(MockBlazeProjectDataBuilder.builder(workspaceRoot).build());
+        new MockBlazeProjectDataManager(
+            MockBlazeProjectDataBuilder.builder(workspaceRoot)
+                .setOutputBase(fileSystem.getRootDir() + "/output_base")
+                .build());
     registerProjectService(BlazeProjectDataManager.class, mockProjectDataManager);
     editorTest = new EditorTestHelper(getProject(), testFixture);
   }

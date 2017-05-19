@@ -19,8 +19,8 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Output;
 import com.intellij.pom.Navigatable;
 import java.io.File;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** An issue in a blaze operation. */
 public class IssueOutput implements Output {

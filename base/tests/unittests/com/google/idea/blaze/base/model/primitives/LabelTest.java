@@ -68,4 +68,47 @@ public class LabelTest extends BlazeTestCase {
     assertThat(Label.validate("foo")).isFalse();
     assertThat(Label.validate("foo:bar")).isFalse();
   }
+
+  @Test
+  public void testFactoryMethod() {
+    String fullLabel = "//package/path:target/name";
+    Label label = Label.create(fullLabel);
+    assertThat(label.toString()).isEqualTo(fullLabel);
+    assertThat(label.blazePackage()).isEqualTo(new WorkspacePath("package/path"));
+    assertThat(label.targetName()).isEqualTo(TargetName.create("target/name"));
+  }
+
+  @Test
+  public void testFactoryMethodExternalWorkspace() {
+    String fullLabel = "@ext_workspace//package/path:target/name";
+    Label label = Label.create(fullLabel);
+    assertThat(label.toString()).isEqualTo(fullLabel);
+    assertThat(label.externalWorkspaceName()).isEqualTo("ext_workspace");
+    assertThat(label.blazePackage()).isEqualTo(new WorkspacePath("package/path"));
+    assertThat(label.targetName()).isEqualTo(TargetName.create("target/name"));
+  }
+
+  @Test
+  public void testConstructor() {
+    String externalWorkspaceName = "ext_workspace";
+    WorkspacePath packagePath = new WorkspacePath("package/path");
+    TargetName targetName = TargetName.create("target/name");
+
+    Label label = Label.create(externalWorkspaceName, packagePath, targetName);
+    assertThat(label.toString()).isEqualTo("@ext_workspace//package/path:target/name");
+    assertThat(label.externalWorkspaceName()).isEqualTo(externalWorkspaceName);
+    assertThat(label.blazePackage()).isEqualTo(packagePath);
+    assertThat(label.targetName()).isEqualTo(targetName);
+  }
+
+  @Test
+  public void testConstructorExternalWorkspace() {
+    WorkspacePath packagePath = new WorkspacePath("package/path");
+    TargetName targetName = TargetName.create("target/name");
+
+    Label label = Label.create(packagePath, targetName);
+    assertThat(label.toString()).isEqualTo("//package/path:target/name");
+    assertThat(label.blazePackage()).isEqualTo(packagePath);
+    assertThat(label.targetName()).isEqualTo(targetName);
+  }
 }

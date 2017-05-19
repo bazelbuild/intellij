@@ -24,8 +24,15 @@ public final class PackagePrefixCalculator {
   public static String packagePrefixOf(@NotNull WorkspacePath workspacePath) {
     int skipIndex = 0;
 
+    // For Bazel-style projects.
     skipIndex = skipIndex == 0 ? skip(workspacePath, "java/") : skipIndex;
     skipIndex = skipIndex == 0 ? skip(workspacePath, "javatests/") : skipIndex;
+
+    // For Maven-style projects.
+    skipIndex = skipIndex == 0 ? skip(workspacePath, "src/main/java/") : skipIndex;
+    skipIndex = skipIndex == 0 ? skip(workspacePath, "src/test/java/") : skipIndex;
+    skipIndex = skipIndex == 0 ? skip(workspacePath, "src/main/scala/") : skipIndex;
+    skipIndex = skipIndex == 0 ? skip(workspacePath, "src/test/scala/") : skipIndex;
 
     return workspacePath.relativePath().substring(skipIndex).replace('/', '.');
   }

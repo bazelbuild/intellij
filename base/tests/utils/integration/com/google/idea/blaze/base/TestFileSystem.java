@@ -46,6 +46,11 @@ public class TestFileSystem {
     this.tempDirTestFixture = tempDirTestFixture;
   }
 
+  /** Returns the root directory of the file system */
+  public String getRootDir() {
+    return LightPlatformTestCase.getSourceRoot().getPath();
+  }
+
   /** Creates an empty file in the temp file system */
   public VirtualFile createFile(String filePath) {
     filePath = makePathRelativeToTestFixture(filePath);
@@ -140,7 +145,7 @@ public class TestFileSystem {
     if (!FileUtil.isAbsolute(filePath)) {
       return filePath;
     }
-    String tempDirPath = LightPlatformTestCase.getSourceRoot().getPath();
+    String tempDirPath = getRootDir();
     assertThat(FileUtil.isAncestor(tempDirPath, filePath, true)).isTrue();
     return FileUtil.getRelativePath(tempDirPath, filePath, File.separatorChar);
   }

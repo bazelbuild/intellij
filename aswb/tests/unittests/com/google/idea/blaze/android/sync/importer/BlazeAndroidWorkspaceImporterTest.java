@@ -81,7 +81,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
           artifactLocation -> new File("/", artifactLocation.getRelativePath());
 
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
-      new BlazeImportSettings("", "", "", "", "", BuildSystem.Blaze);
+      new BlazeImportSettings("", "", "", "", BuildSystem.Blaze);
 
   private BlazeContext context;
   private ErrorCollector errorCollector = new ErrorCollector();
@@ -95,8 +95,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     BlazeExecutor blazeExecutor = new MockBlazeExecutor();
     applicationServices.register(BlazeExecutor.class, blazeExecutor);
 
-    projectServices.register(
-        BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
+    projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
     MockFileAttributeProvider mockFileAttributeProvider = new MockFileAttributeProvider();
@@ -221,7 +220,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     assertThat(result.androidResourceModules)
         .containsExactly(
             AndroidResourceModule.builder(
-                    TargetKey.forPlainTarget(new Label("//java/apps/example:example_debug")))
+                    TargetKey.forPlainTarget(Label.create("//java/apps/example:example_debug")))
                 .addResourceAndTransitiveResource(source("java/apps/example/res"))
                 .addTransitiveResource(source("java/apps/example/lib0/res"))
                 .addTransitiveResource(source("java/apps/example/lib1/res"))
@@ -231,7 +230,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                 .addTransitiveResourceDependency("//java/libraries/shared:shared")
                 .build(),
             AndroidResourceModule.builder(
-                    TargetKey.forPlainTarget(new Label("//java/apps/example/lib0:lib0")))
+                    TargetKey.forPlainTarget(Label.create("//java/apps/example/lib0:lib0")))
                 .addResourceAndTransitiveResource(source("java/apps/example/lib0/res"))
                 .addTransitiveResource(source("java/apps/example/lib1/res"))
                 .addTransitiveResource(source("java/libraries/shared/res"))
@@ -239,7 +238,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                 .addTransitiveResourceDependency("//java/libraries/shared:shared")
                 .build(),
             AndroidResourceModule.builder(
-                    TargetKey.forPlainTarget(new Label("//java/apps/example/lib1:lib1")))
+                    TargetKey.forPlainTarget(Label.create("//java/apps/example/lib1:lib1")))
                 .addResourceAndTransitiveResource(source("java/apps/example/lib1/res"))
                 .addTransitiveResource(source("java/libraries/shared/res"))
                 .addTransitiveResourceDependency("//java/libraries/shared:shared")
@@ -468,7 +467,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .setKind("android_library")
                     .setAndroidInfo(
                         AndroidIdeInfo.builder()
-                            .setLegacyResources(new Label("//java/example:resources"))
+                            .setLegacyResources(Label.create("//java/example:resources"))
                             .setManifestFile(source("java/example/AndroidManifest.xml"))
                             .addResource(source("java/example/res"))
                             .setGenerateResourceClass(true)
@@ -492,7 +491,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     assertThat(result.androidResourceModules)
         .containsExactly(
             AndroidResourceModule.builder(
-                    TargetKey.forPlainTarget(new Label("//java/example:resources")))
+                    TargetKey.forPlainTarget(Label.create("//java/example:resources")))
                 .addResourceAndTransitiveResource(source("java/example/res"))
                 .build());
   }
@@ -588,7 +587,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     assertThat(result.androidResourceModules)
         .containsExactly(
-            AndroidResourceModule.builder(TargetKey.forPlainTarget(new Label("//java/example:lib")))
+            AndroidResourceModule.builder(
+                    TargetKey.forPlainTarget(Label.create("//java/example:lib")))
                 .addResourceAndTransitiveResource(source("java/example/res"))
                 .build());
   }
@@ -654,7 +654,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     errorCollector.assertNoIssues();
     assertThat(result.androidResourceModules)
         .containsExactly(
-            AndroidResourceModule.builder(TargetKey.forPlainTarget(new Label("//java/example:lib")))
+            AndroidResourceModule.builder(
+                    TargetKey.forPlainTarget(Label.create("//java/example:lib")))
                 .addResourceAndTransitiveResource(source("java/example/res"))
                 .addResourceAndTransitiveResource(gen("java/example/res"))
                 .build());
@@ -759,7 +760,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     assertThat(result.androidResourceModules)
         .containsExactly(
             AndroidResourceModule.builder(
-                    TargetKey.forPlainTarget(new Label("//java/uninterestingdir:lib")))
+                    TargetKey.forPlainTarget(Label.create("//java/uninterestingdir:lib")))
                 .addResourceAndTransitiveResource(source("java/uninterestingdir/res"))
                 .build());
   }

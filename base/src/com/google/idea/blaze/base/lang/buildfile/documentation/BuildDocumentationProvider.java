@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.ParameterList;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
@@ -77,11 +78,8 @@ public class BuildDocumentationProvider extends AbstractDocumentationProvider {
       return;
     }
     BuildFile buildFile = (BuildFile) file;
-    String name = buildFile.getBuildLabel();
-    if (name == null) {
-      // fall back to qualitative description
-      name = buildFile.getPresentableText();
-    }
+    Label label = buildFile.getBuildLabel();
+    String name = label != null ? label.toString() : buildFile.getPresentableText();
     if (linkToFile) {
       builder
           .append("<a href=\"")

@@ -61,14 +61,16 @@ public class LocalVariableUsagesTest extends BuildFileIntegrationTestCase {
     assertThat(funcall).isNotNull();
 
     PsiElement firstRef = references[0].getElement();
-    assertThat(PsiUtils.getParentOfType(firstRef, FuncallExpression.class)).isEqualTo(funcall);
+    assertThat(PsiUtils.getParentOfType(firstRef, FuncallExpression.class, true))
+        .isEqualTo(funcall);
 
     FunctionStatement function = buildFile.findChildByClass(FunctionStatement.class);
     assertThat(function).isNotNull();
 
     PsiElement secondRef = references[1].getElement();
     assertThat(secondRef.getParent()).isInstanceOf(AssignmentStatement.class);
-    assertThat(PsiUtils.getParentOfType(secondRef, FunctionStatement.class)).isEqualTo(function);
+    assertThat(PsiUtils.getParentOfType(secondRef, FunctionStatement.class, true))
+        .isEqualTo(function);
   }
 
   // the case where a symbol is the target of multiple assignment statements

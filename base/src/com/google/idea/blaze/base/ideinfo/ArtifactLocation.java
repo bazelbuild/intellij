@@ -22,9 +22,9 @@ import java.nio.file.Paths;
 
 /** Represents a blaze-produced artifact. */
 public final class ArtifactLocation implements Serializable, Comparable<ArtifactLocation> {
-  private static final long serialVersionUID = 4L;
+  private static final long serialVersionUID = 5L;
 
-  public final String rootExecutionPathFragment;
+  private final String rootExecutionPathFragment;
   public final String relativePath;
   public final boolean isSource;
   public final boolean isExternal;
@@ -37,7 +37,10 @@ public final class ArtifactLocation implements Serializable, Comparable<Artifact
     this.isExternal = isExternal;
   }
 
-  /** Gets the path relative to the root path. */
+  /**
+   * The root-relative path. For external workspace artifacts, this is relative to the external
+   * workspace root.
+   */
   public String getRelativePath() {
     return relativePath;
   }
@@ -50,10 +53,7 @@ public final class ArtifactLocation implements Serializable, Comparable<Artifact
     return !isSource;
   }
 
-  /**
-   * Returns rootExecutionPathFragment + relativePath. For source artifacts, this is simply
-   * relativePath
-   */
+  /** For main-workspace source artifacts, this is simply the workspace-relative path. */
   public String getExecutionRootRelativePath() {
     return Paths.get(rootExecutionPathFragment, relativePath).toString();
   }
@@ -124,8 +124,8 @@ public final class ArtifactLocation implements Serializable, Comparable<Artifact
     return ComparisonChain.start()
         .compare(rootExecutionPathFragment, o.rootExecutionPathFragment)
         .compare(relativePath, o.relativePath)
-        .compare(isSource, o.isSource)
-        .compare(isExternal, o.isExternal)
+        .compareFalseFirst(isSource, o.isSource)
+        .compareFalseFirst(isExternal, o.isExternal)
         .result();
   }
 }

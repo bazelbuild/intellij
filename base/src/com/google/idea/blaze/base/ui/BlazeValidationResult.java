@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.ui;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Pair of (success, validation error) */
 public class BlazeValidationResult {

@@ -63,7 +63,8 @@ public final class ProjectViewSet implements Serializable {
   }
 
   /** Gets the last value from any scalar sections */
-  public <T> T getScalarValue(SectionKey<T, ScalarSection<T>> key, T defaultValue) {
+  @Nullable
+  public <T> T getScalarValue(SectionKey<T, ScalarSection<T>> key, @Nullable T defaultValue) {
     Collection<ScalarSection<T>> sections = getSections(key);
     if (sections.isEmpty()) {
       return defaultValue;
@@ -82,7 +83,7 @@ public final class ProjectViewSet implements Serializable {
     return result;
   }
 
-  public Collection<ProjectViewFile> getProjectViewFiles() {
+  public ImmutableList<ProjectViewFile> getProjectViewFiles() {
     return projectViewFiles;
   }
 

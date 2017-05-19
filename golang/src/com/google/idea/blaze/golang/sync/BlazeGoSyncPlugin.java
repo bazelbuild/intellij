@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
+import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -34,10 +35,7 @@ import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.golang.sdk.GoSdkUtil;
 import com.google.idea.sdkcompat.transactions.Transactions;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
@@ -51,10 +49,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.NavigatableAdapter;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -155,7 +150,8 @@ public class BlazeGoSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Nullable
   @Override
-  public LibrarySource getLibrarySource(BlazeProjectData blazeProjectData) {
+  public LibrarySource getLibrarySource(
+      ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
     if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.GO)) {
       return null;
     }
@@ -164,39 +160,20 @@ public class BlazeGoSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Override
   public boolean validateProjectView(
+      @Nullable Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings) {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.GO)) {
       return true;
     }
-    if (!isPluginEnabled()) {
+    if (!PluginUtils.isPluginEnabled(GO_PLUGIN_ID)) {
       IssueOutput.error("Go plugin needed for Go language support.")
-          .navigatable(
-              new NavigatableAdapter() {
-                @Override
-                public void navigate(boolean requestFocus) {
-                  if (isPluginInstalled()) {
-                    PluginManager.enablePlugin(GO_PLUGIN_ID);
-                  } else {
-                    PluginsAdvertiser.installAndEnablePlugins(
-                        ImmutableSet.of(GO_PLUGIN_ID), EmptyRunnable.INSTANCE);
-                  }
-                }
-              })
+          .navigatable(PluginUtils.installOrEnablePluginNavigable(GO_PLUGIN_ID))
           .submit(context);
       return false;
     }
     return true;
-  }
-
-  private static boolean isPluginInstalled() {
-    return PluginManager.isPluginInstalled(PluginId.getId(GO_PLUGIN_ID));
-  }
-
-  private static boolean isPluginEnabled() {
-    IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginId.getId(GO_PLUGIN_ID));
-    return plugin != null && plugin.isEnabled();
   }
 
   @Override

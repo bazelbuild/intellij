@@ -15,13 +15,18 @@
  */
 package com.google.idea.blaze.base.run;
 
+import static java.util.stream.Collectors.toList;
+
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
@@ -29,7 +34,10 @@ import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -55,7 +63,6 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -496,17 +503,27 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     }
 
     private static Collection<String> getTargets(Project project) {
-      List<String> result = Lists.newArrayList();
       BlazeProjectData projectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-      if (projectData != null) {
-        for (TargetIdeInfo target : projectData.targetMap.targets()) {
-          if (target.isPlainTarget()) {
-            result.add(target.key.label.toString());
-          }
-        }
+      BlazeImportSettings importSettings =
+          BlazeImportSettingsManager.getInstance(project).getImportSettings();
+      ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+      if (projectData == null || importSettings == null || projectViewSet == null) {
+        return ImmutableList.of();
       }
-      return result;
+      ImportRoots importRoots =
+          ImportRoots.builder(
+                  WorkspaceRoot.fromImportSettings(importSettings), importSettings.getBuildSystem())
+              .add(projectViewSet)
+              .build();
+      return projectData
+          .targetMap
+          .targets()
+          .stream()
+          .filter(TargetIdeInfo::isPlainTarget)
+          .filter(target -> importRoots.importAsSource(target.key.label))
+          .map(target -> target.key.label.toString())
+          .collect(toList());
     }
   }
 }

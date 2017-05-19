@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.lang.buildfile.references;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.globbing.UnixGlob;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.Expression;
@@ -25,7 +25,9 @@ import com.google.idea.blaze.base.lang.buildfile.psi.GlobExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.ListLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementResolveResult;
@@ -109,19 +111,19 @@ public class GlobReference extends PsiPolyVariantCachingReference {
     if (includes.isEmpty()) {
       return ResolveResult.EMPTY_ARRAY;
     }
-
+    Project project = element.getProject();
     try {
       List<File> files =
           UnixGlob.forPath(containingDirectory)
               .addPatterns(includes)
               .addExcludes(excludes)
               .setExcludeDirectories(directoriesExcluded)
-              .setDirectoryFilter(directoryFilter(containingDirectory.getPath()))
+              .setDirectoryFilter(directoryFilter(project, containingDirectory.getPath()))
               .glob();
+
       List<ResolveResult> results = Lists.newArrayListWithCapacity(files.size());
       for (File file : files) {
-        PsiFileSystemItem psiFile =
-            BuildReferenceManager.getInstance(element.getProject()).resolveFile(file);
+        PsiFileSystemItem psiFile = BuildReferenceManager.getInstance(project).resolveFile(file);
         if (psiFile != null) {
           results.add(new PsiElementResolveResult(psiFile));
         }
@@ -133,14 +135,14 @@ public class GlobReference extends PsiPolyVariantCachingReference {
     }
   }
 
-  private static Predicate<File> directoryFilter(String base) {
+  /** Don't traverse sub-directories which are themselves blaze packages */
+  private static Predicate<File> directoryFilter(Project project, String base) {
+    BuildSystemProvider provider = Blaze.getBuildSystemProvider(project);
     return file -> {
       if (base.equals(file.getPath())) {
         return true;
       }
-      File child = new File(file, "BUILD");
-      FileAttributeProvider attributeProvider = FileAttributeProvider.getInstance();
-      return !attributeProvider.exists(child) || attributeProvider.isDirectory(child);
+      return provider.findBuildFileInDirectory(file) == null;
     };
   }
 

@@ -28,8 +28,8 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Project view manager implementation. */
 /** Stores mutable per-project user settings. */

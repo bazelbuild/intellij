@@ -77,6 +77,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
             new BlazeIssueParser.CompileParser(workspaceRoot),
             new BlazeIssueParser.TracebackParser(),
             new BlazeIssueParser.BuildParser(),
+            new BlazeIssueParser.SkylarkErrorParser(),
             new BlazeIssueParser.LinelessBuildParser(),
             new BlazeIssueParser.ProjectViewLabelParser(projectViewSet),
             new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
@@ -146,6 +147,22 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getColumn()).isEqualTo(12);
     assertThat(issue.getMessage())
         .isEqualTo("Target '//java/package_path:helloroot_visibility' failed");
+    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+  }
+
+  @Test
+  public void testParseSkylarkError() {
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    IssueOutput issue =
+        blazeIssueParser.parseIssue(
+            "ERROR: /root/third_party/bazel/tools/ide/intellij_info_impl.bzl:42:12: "
+                + "Variable artifact_location is read only");
+    assertNotNull(issue);
+    assertThat(issue.getFile().getPath())
+        .isEqualTo("/root/third_party/bazel/tools/ide/intellij_info_impl.bzl");
+    assertThat(issue.getLine()).isEqualTo(42);
+    assertThat(issue.getColumn()).isEqualTo(12);
+    assertThat(issue.getMessage()).isEqualTo("Variable artifact_location is read only");
     assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
   }
 

@@ -17,12 +17,11 @@ package com.google.idea.blaze.android.run.deployinfo;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.manifest.ManifestParser;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
-import com.google.idea.blaze.base.command.ExperimentalShowArtifactsLineProcessor;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -44,24 +43,23 @@ public class BlazeApkDeployInfoProtoHelper {
   private final Project project;
   private final WorkspaceRoot workspaceRoot;
   private final ImmutableList<String> buildFlags;
-  private final List<File> deployInfoFiles = Lists.newArrayList();
-  private final LineProcessingOutputStream.LineProcessor lineProcessor =
-      new ExperimentalShowArtifactsLineProcessor(
-          deployInfoFiles, fileName -> fileName.endsWith(".deployinfo.pb"));
+  private final BuildResultHelper buildResultHelper;
 
   public BlazeApkDeployInfoProtoHelper(Project project, ImmutableList<String> buildFlags) {
     this.project = project;
     this.buildFlags = buildFlags;
     this.workspaceRoot = WorkspaceRoot.fromProject(project);
+    this.buildResultHelper =
+        BuildResultHelper.forFiles(fileName -> fileName.endsWith(".deployinfo.pb"));
   }
 
-  public LineProcessingOutputStream.LineProcessor getLineProcessor() {
-    return lineProcessor;
+  public BuildResultHelper getBuildResultHelper() {
+    return buildResultHelper;
   }
 
   @Nullable
   public BlazeAndroidDeployInfo readDeployInfo(BlazeContext context) {
-    File deployInfoFile = Iterables.getOnlyElement(deployInfoFiles, null);
+    File deployInfoFile = Iterables.getOnlyElement(buildResultHelper.getBuildArtifacts(), null);
     if (deployInfoFile == null) {
       return null;
     }
@@ -88,10 +86,10 @@ public class BlazeApkDeployInfoProtoHelper {
   @Nullable
   private String getExecutionRoot(BlazeContext context) {
     ListenableFuture<String> execRootFuture =
-        BlazeInfo.getInstance()
+        BlazeInfoRunner.getInstance()
             .runBlazeInfo(
                 context,
-                Blaze.getBuildSystem(project),
+                Blaze.getBuildSystemProvider(project).getBinaryPath(),
                 workspaceRoot,
                 buildFlags,
                 BlazeInfo.EXECUTION_ROOT_KEY);

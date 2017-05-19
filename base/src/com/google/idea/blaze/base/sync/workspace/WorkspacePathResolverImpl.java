@@ -16,31 +16,19 @@
 package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import java.io.File;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /** Uses the package path locations to resolve a workspace path. */
 public class WorkspacePathResolverImpl implements WorkspacePathResolver {
-  private static final long serialVersionUID = 2L;
+  private static final long serialVersionUID = 3L;
 
   private final WorkspaceRoot workspaceRoot;
-  private final List<File> packagePaths;
-
-  public WorkspacePathResolverImpl(WorkspaceRoot workspaceRoot, BlazeRoots blazeRoots) {
-    this(workspaceRoot, blazeRoots.packagePaths);
-  }
 
   public WorkspacePathResolverImpl(WorkspaceRoot workspaceRoot) {
-    this(workspaceRoot, ImmutableList.of(workspaceRoot.directory()));
-  }
-
-  public WorkspacePathResolverImpl(WorkspaceRoot workspaceRoot, List<File> packagePaths) {
     this.workspaceRoot = workspaceRoot;
-    this.packagePaths = packagePaths;
   }
 
   @Override
@@ -50,24 +38,18 @@ public class WorkspacePathResolverImpl implements WorkspacePathResolver {
 
   @Override
   public File findPackageRoot(String relativePath) {
-    if (packagePaths.size() == 1) {
-      return packagePaths.get(0);
-    }
-    // fall back to manually checking each one
-    FileAttributeProvider existenceChecker = FileAttributeProvider.getInstance();
-    for (File pkg : packagePaths) {
-      if (existenceChecker.exists(new File(pkg, relativePath))) {
-        return pkg;
-      }
-    }
-
-    // Return first in package path, even though it might not exist
-    return packagePaths.get(0);
+    return workspaceRoot.directory();
   }
 
   @Nullable
   @Override
   public WorkspacePath getWorkspacePath(File absoluteFile) {
     return workspaceRoot.workspacePathForSafe(absoluteFile);
+  }
+
+  @Nullable
+  @Override
+  public WorkspaceRoot findWorkspaceRoot(File absoluteFile) {
+    return workspaceRoot.isInWorkspace(absoluteFile) ? workspaceRoot : null;
   }
 }

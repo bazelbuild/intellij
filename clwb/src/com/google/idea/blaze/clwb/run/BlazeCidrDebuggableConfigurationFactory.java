@@ -15,9 +15,7 @@
  */
 package com.google.idea.blaze.clwb.run;
 
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -57,10 +55,9 @@ public class BlazeCidrDebuggableConfigurationFactory extends BlazeRunConfigurati
     Kind kind = blazeConfig.getKindForTarget();
     if (state != null) {
       if (kind != null && Kind.isTestRule(kind.toString())) {
-        state.setCommand(BlazeCommandName.TEST);
-        state.setBlazeFlags(ImmutableList.of(BlazeFlags.TEST_OUTPUT_STREAMED));
+        state.getCommandState().setCommand(BlazeCommandName.TEST);
       } else {
-        state.setCommand(BlazeCommandName.RUN);
+        state.getCommandState().setCommand(BlazeCommandName.RUN);
       }
     }
     blazeConfig.setGeneratedName();

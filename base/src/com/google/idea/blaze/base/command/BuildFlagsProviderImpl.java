@@ -15,26 +15,19 @@
  */
 package com.google.idea.blaze.base.command;
 
-import static com.google.idea.blaze.base.command.BlazeFlags.VERSION_WINDOW_FOR_DIRTY_NODE_GC;
-
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
-import com.google.idea.common.experiments.BoolExperiment;
 import java.util.List;
 
 /** Flags added to blaze/bazel build commands. */
 public class BuildFlagsProviderImpl implements BuildFlagsProvider {
 
-  private static final BoolExperiment experimentUseVersionWindowForDirtyNodeGc =
-      new BoolExperiment("ide_build_info.use_version_window_for_dirty_node_gc", false);
-
   @Override
   public void addBuildFlags(
       BuildSystem buildSystem, ProjectViewSet projectViewSet, List<String> flags) {
-    if (experimentUseVersionWindowForDirtyNodeGc.getValue()) {
-      flags.add(VERSION_WINDOW_FOR_DIRTY_NODE_GC);
-    }
     flags.add("--curses=no");
     flags.add("--color=no");
+    flags.add("--noexperimental_ui");
+    flags.add("--noprogress_in_terminal_title");
   }
 }

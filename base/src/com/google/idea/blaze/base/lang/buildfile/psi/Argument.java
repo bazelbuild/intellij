@@ -107,13 +107,15 @@ public abstract class Argument extends BuildElementImpl {
     }
   }
 
+  /** Variable number of positional arguments: *args */
   static class Star extends Argument {
     public Star(ASTNode node) {
       super(node);
     }
   }
 
-  static class StarStar extends Argument {
+  /** Variable number of keyword arguments: **kwargs */
+  public static class StarStar extends Argument {
     public StarStar(ASTNode node) {
       super(node);
     }

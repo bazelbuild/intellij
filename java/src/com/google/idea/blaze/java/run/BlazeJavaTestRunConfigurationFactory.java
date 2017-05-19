@@ -50,7 +50,7 @@ public class BlazeJavaTestRunConfigurationFactory extends BlazeRunConfigurationF
     BlazeCommandRunConfigurationCommonState state =
         blazeConfig.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (state != null) {
-      state.setCommand(BlazeCommandName.TEST);
+      state.getCommandState().setCommand(BlazeCommandName.TEST);
     }
     blazeConfig.setGeneratedName();
   }

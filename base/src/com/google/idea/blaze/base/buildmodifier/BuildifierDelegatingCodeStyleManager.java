@@ -78,7 +78,7 @@ public class BuildifierDelegatingCodeStyleManager extends DelegatingCodeStyleMan
   private static boolean overrideFormatterForFile(PsiFile file) {
     // don't format skylark extensions
     return file instanceof BuildFile
-        && ((BuildFile) file).getBlazeFileType() == BlazeFileType.BuildPackage;
+        && ((BuildFile) file).getBlazeFileType() != BlazeFileType.SkylarkExtension;
   }
 
   private void formatInternal(PsiFile file, Collection<TextRange> ranges) {

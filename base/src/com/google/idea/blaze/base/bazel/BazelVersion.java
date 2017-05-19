@@ -21,7 +21,6 @@ import com.google.common.collect.ComparisonChain;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.Serializable;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -77,7 +76,7 @@ public class BazelVersion implements Serializable {
     return new BazelVersion(major, minor, bugfix);
   }
 
-  public static BazelVersion parseVersion(Map<String, String> blazeInfo) {
+  public static BazelVersion parseVersion(BlazeInfo blazeInfo) {
     return parseVersion(blazeInfo.get(BlazeInfo.RELEASE));
   }
 

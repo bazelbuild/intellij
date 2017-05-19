@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.projectview.parser;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -22,7 +23,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.ui.BlazeValidationError;
 import java.io.File;
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Context for the project view parser. */
 public class ParseContext {
@@ -55,7 +56,7 @@ public class ParseContext {
     this.context = context;
     this.workspacePathResolver = workspacePathResolver;
     this.file = file;
-    this.lines = Lists.newArrayList(text.split("\n"));
+    this.lines = Lists.newArrayList(Splitter.on('\n').split(text));
     this.currentLine = null;
     this.currentLineIndex = -1;
     consume();

@@ -25,11 +25,10 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
-import com.google.idea.blaze.cpp.BlazeCWorkspace;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
-import org.jetbrains.annotations.NotNull;
+import com.jetbrains.cidr.lang.workspace.OCWorkspaceManager;
 
 final class BlazeNdkSupportEnabler extends SyncListener.Adapter {
 
@@ -57,7 +56,7 @@ final class BlazeNdkSupportEnabler extends SyncListener.Adapter {
    * @param enabled if true, turn on C support in the IDE. If false, turn off C support in the IDE.
    */
   private static void enableCSupportInIde(Project project, boolean enabled) {
-    BlazeCWorkspace workspace = BlazeCWorkspace.getInstance(project);
+    OCWorkspace workspace = OCWorkspaceManager.getWorkspace(project);
     Boolean isCurrentlyEnabled = !LANGUAGE_SUPPORT_DISABLED.get(project, false);
     if (isCurrentlyEnabled != enabled) {
       NdkHelper.disableCppLanguageSupport(project, !enabled);
@@ -65,7 +64,7 @@ final class BlazeNdkSupportEnabler extends SyncListener.Adapter {
     }
   }
 
-  private static void rebuildSymbols(@NotNull Project project, @NotNull OCWorkspace workspace) {
+  private static void rebuildSymbols(Project project, OCWorkspace workspace) {
     ApplicationManager.getApplication()
         .runReadAction(
             () -> {

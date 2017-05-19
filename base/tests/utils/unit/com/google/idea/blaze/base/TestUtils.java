@@ -17,7 +17,6 @@ package com.google.idea.blaze.base;
 
 import static org.junit.Assert.fail;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.intellij.mock.MockApplicationEx;
 import com.intellij.mock.MockProject;
@@ -29,6 +28,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.pico.DefaultPicoContainer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -36,16 +36,17 @@ import java.io.NotSerializableException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 /** Test utilities. */
 public class TestUtils {
 
   static class BlazeMockApplication extends MockApplicationEx {
-    private final ListeningExecutorService executor = MoreExecutors.sameThreadExecutor();
+    private final ExecutorService executor = MoreExecutors.newDirectExecutorService();
 
     public BlazeMockApplication(@NotNull Disposable parentDisposable) {
       super(parentDisposable);
@@ -118,5 +119,23 @@ public class TestUtils {
         // ignore
       }
     }
+  }
+
+  /**
+   * Sets the platform prefix system property, reverting to the previous value when the supplied
+   * parent disposable is disposed.
+   */
+  public static void setPlatformPrefix(Disposable parentDisposable, String platformPrefix) {
+    String prevValue = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
+    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, platformPrefix);
+    Disposer.register(
+        parentDisposable,
+        () -> {
+          if (prevValue != null) {
+            System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prevValue);
+          } else {
+            System.clearProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
+          }
+        });
   }
 }

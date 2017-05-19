@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.base.Objects;
 import java.io.Serializable;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Represents a jar artifact. */
 public class LibraryArtifact implements Serializable {

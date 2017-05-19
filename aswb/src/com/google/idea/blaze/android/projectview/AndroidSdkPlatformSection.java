@@ -18,17 +18,20 @@ package com.google.idea.blaze.android.projectview;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
+import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
 import com.google.idea.blaze.base.projectview.ProjectView;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
+import com.google.idea.blaze.base.projectview.section.ProjectViewDefaultValueProvider;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.ScalarSectionParser;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import java.util.List;
@@ -60,15 +63,19 @@ public class AndroidSdkPlatformSection {
     public ItemType getItemType() {
       return ItemType.Other;
     }
+  }
 
+  static class AndroidSdkPlatformProjectViewDefaultValueProvider
+      implements ProjectViewDefaultValueProvider {
     @Override
-    public ProjectView addProjectViewDefaultValue(ProjectView projectView) {
-      if (!projectView.getSectionsOfType(KEY).isEmpty()) {
-        return projectView;
+    public ProjectView addProjectViewDefaultValue(
+        BuildSystem buildSystem, ProjectViewSet projectViewSet, ProjectView topLevelProjectView) {
+      if (!topLevelProjectView.getSectionsOfType(KEY).isEmpty()) {
+        return topLevelProjectView;
       }
-      List<Sdk> sdks = AndroidSdkUtils.getAllAndroidSdks();
+      List<Sdk> sdks = BlazeSdkProvider.getInstance().getAllAndroidSdks();
       ProjectView.Builder builder =
-          ProjectView.builder(projectView).add(TextBlockSection.of(TextBlock.newLine()));
+          ProjectView.builder(topLevelProjectView).add(TextBlockSection.of(TextBlock.newLine()));
 
       if (sdks.isEmpty()) {
         builder
@@ -81,7 +88,7 @@ public class AndroidSdkPlatformSection {
       } else if (sdks.size() == 1) {
         builder.add(
             ScalarSection.builder(KEY)
-                .set(AndroidSdkFromProjectView.getSdkTargetHash(sdks.get(0))));
+                .set(BlazeSdkProvider.getInstance().getSdkTargetHash(sdks.get(0))));
       } else {
         builder.add(
             TextBlockSection.of(
@@ -94,6 +101,11 @@ public class AndroidSdkPlatformSection {
         builder.add(TextBlockSection.of(new TextBlock(ImmutableList.copyOf(sdkOptions))));
       }
       return builder.build();
+    }
+
+    @Override
+    public SectionKey<?, ?> getSectionKey() {
+      return KEY;
     }
   }
 }

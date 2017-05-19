@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.cpp;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -62,17 +61,20 @@ final class BlazeCompilerMacros extends OCCompilerMacros {
 
     // Combine the info we got from Blaze with the info we get from IntelliJ's methods.
     ImmutableSet.Builder<String> allDefinesBuilder = ImmutableSet.builder();
-    // IntelliJ expects a string of "#define [VAR_NAME]\n#define [VAR_NAME2]\n..."
+    // IntelliJ expects a string of "#define [VAR_NAME] [VALUE]\n#define [VAR_NAME2] [VALUE]\n...",
+    // where VALUE is optional.
     for (String globalDefine : globalDefines) {
-      allDefinesBuilder.add("#define " + globalDefine);
-    }
-    if (compilerInfo != null) {
-      String[] split = compilerInfo.defines.split("\n");
-      for (String s : split) {
-        allDefinesBuilder.add(s);
+      String[] split = globalDefine.split("=", 2);
+      if (split.length == 1) {
+        allDefinesBuilder.add("#define " + split[0]);
+      } else {
+        allDefinesBuilder.add("#define " + split[0] + " " + split[1]);
       }
     }
-    final String allDefines = Joiner.on("\n").join(allDefinesBuilder.build());
+    String allDefines = String.join("\n", allDefinesBuilder.build());
+    if (compilerInfo != null) {
+      allDefines += "\n" + compilerInfo.defines;
+    }
 
     Map<String, String> allFeatures = Maps.newHashMap();
     allFeatures.putAll(globalFeatures);

@@ -1,0 +1,101 @@
+v2017.05.08
+===========
+* Add Python support to CLion
+* Fix some bazel targets not being linkified in the run configuration console
+  output
+* Add an action to open a workspace file outside your project (File > Open
+  Workspace File...)
+* Add an action to add a source directory to your bazel project (Bazel >
+  Project > Add Directory To Project...)
+* CLion: fix project directories being cleared when reopening a project
+
+v2017.04.17
+===========
+* Add support for IntelliJ 2017.1
+* Support bazel build sharding for large projects
+* Detect out-of-memory errors during sync, and suggest enabling sharding
+* Add documentation links for .bazelproject items
+
+v2017.04.03
+===========
+* Add python support for IntelliJ
+* Prefetch project files on project open, prior to initial indexing
+* Handle nested junit test classes
+
+v2017.03.15
+===========
+* Bazel: WORKSPACE file language integration (syntax highlighting, navigation,
+  etc.)
+* Bazel: Find usages, navigation support for external workspace labels
+* Expand macros in run configuration build flags
+
+v2017.02.27
+===========
+* Add CLion support
+* Run configuration support for abstract test classes/methods
+* Support running all test classes in a directory
+* BUILD support: don't suggest private symbols in 'load' statement autocomplete
+
+v2017.02.13
+===========
+* Test UI support for parameterized tests
+* Test UI support for sharded tests, run locally
+* BUILD: Fix navigation for overridden built-in symbols
+* BUILD: Add auto-complete for fully-qualified class names
+
+v2017.01.30
+============
+* Integrate bazel test results with the IDE's test runner UI.
+* Add support for sharing run configurations
+* Restructure Bazel menu items
+
+v2017.01.09
+===========
+* Create source roots for all directories matching 'test_sources'.
+* When viewing source files for supported but inactive languages, suggest
+  enabling support for that language.
+* BUILD: Add syntax highlight/autocomplete support for more built-in functions.
+* Fix java debugger connection timeout
+* Basic support for Go-lang projects
+
+v2016.12.5
+==========
+* BUILD files: add syntax hightlighting for built-in names
+* BUILD files: support aliased load statements
+* ASwB: enable NDK support
+
+v1.12
+=====
+* Add autocomplete in run configuration target editor.
+* Fix debugging of java_binary targets with args
+
+v1.11
+=====
+* Completely suppress JUnit for Bazel projects, removing a common source of
+  confusion.
+* Improve sync working set / partial sync to include more targets that
+  users might expect should be included.
+* Add more history to import wizard.
+
+v1.10
+=====
+* Compatibility with 2016.2.4
+* Improve create run configuration from scratch experience
+
+v1.9
+==========
+* Better tolerance of broken BUILD files during sync
+* Sync working set action -- sync only the files you're
+  working on.
+* BUILD file support: performance improvements.
+* Unified run configurations -- there is only one type,
+  the Bazel Command Run Configuration.
+* Add test rule chooser heuristics, to support some common
+  test genrules.
+
+v1.8
+==========
+* Add local jar cache to improve performance and robustness.
+* Support filtered gen jars to allow mixed generated/non-
+  generated rules (requires bazel release to activate).
+* Abbreviate generated run configuration names.

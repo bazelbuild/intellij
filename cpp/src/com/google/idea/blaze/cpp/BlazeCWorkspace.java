@@ -19,37 +19,26 @@ package com.google.idea.blaze.cpp;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.cidr.OCWorkspaceAdapter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.symbols.OCSymbol;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
-import com.jetbrains.cidr.lang.workspace.OCWorkspace;
-import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackers;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /** Main entry point for C/CPP configuration data. */
-public final class BlazeCWorkspace implements OCWorkspace {
+public final class BlazeCWorkspace extends OCWorkspaceAdapter {
   private static final Logger logger = Logger.getInstance(BlazeCWorkspace.class);
 
-  @Nullable private final Project project;
-  @Nullable private final OCWorkspaceModificationTrackers modTrackers;
-
-  @Nullable private BlazeConfigurationResolver configurationResolver;
+  private final BlazeConfigurationResolver configurationResolver;
 
   private BlazeCWorkspace(Project project) {
-    if (Blaze.isBlazeProject(project)) {
-      this.project = project;
-      this.modTrackers = new OCWorkspaceModificationTrackers(project);
-      this.configurationResolver = new BlazeConfigurationResolver(project);
-    } else {
-      this.project = null;
-      this.modTrackers = null;
-    }
+    super(project);
+    this.configurationResolver = new BlazeConfigurationResolver(project);
   }
 
   public static BlazeCWorkspace getInstance(Project project) {
@@ -57,13 +46,8 @@ public final class BlazeCWorkspace implements OCWorkspace {
   }
 
   public void update(BlazeContext context, BlazeProjectData blazeProjectData) {
-    logger.assertTrue(project != null);
-    logger.assertTrue(modTrackers != null);
-    logger.assertTrue(configurationResolver != null);
-
-    long start = System.currentTimeMillis();
-
     // Non-incremental update to our c configurations.
+    long start = System.currentTimeMillis();
     configurationResolver.update(context, blazeProjectData);
     long end = System.currentTimeMillis();
 
@@ -97,29 +81,15 @@ public final class BlazeCWorkspace implements OCWorkspace {
     return false;
   }
 
-  @Nullable
-  @Override
-  public OCResolveConfiguration getSelectedResolveConfiguration() {
-    return null;
-  }
-
-  @Override
-  public OCWorkspaceModificationTrackers getModificationTrackers() {
-    logger.assertTrue(modTrackers != null);
-    return modTrackers;
-  }
-
   @Override
   public List<? extends OCResolveConfiguration> getConfigurations() {
-    return configurationResolver == null
-        ? ImmutableList.of()
-        : configurationResolver.getAllConfigurations();
+    return configurationResolver.getAllConfigurations();
   }
 
   @Override
   public List<? extends OCResolveConfiguration> getConfigurationsForFile(
       @Nullable VirtualFile sourceFile) {
-    if (sourceFile == null || !sourceFile.isValid() || configurationResolver == null) {
+    if (sourceFile == null || !sourceFile.isValid()) {
       return ImmutableList.of();
     }
     OCResolveConfiguration config = configurationResolver.getConfigurationForFile(sourceFile);

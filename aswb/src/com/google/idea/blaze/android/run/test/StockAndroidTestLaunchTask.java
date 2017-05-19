@@ -22,8 +22,8 @@ import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.util.LaunchStatus;
+import com.android.tools.idea.testartifacts.instrumented.AndroidTestListener;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.android.compatibility.Compatibility.AndroidTestListener;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -158,6 +158,7 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
   }
 
   @Override
+  @SuppressWarnings("FutureReturnValueIgnored")
   public boolean perform(
       IDevice device, final LaunchStatus launchStatus, final ConsolePrinter printer) {
     printer.stdout("Running tests\n");
@@ -165,6 +166,8 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
     final RemoteAndroidTestRunner runner =
         new RemoteAndroidTestRunner(testApplicationId, instrumentationTestRunner, device);
     switch (configState.getTestingType()) {
+      case BlazeAndroidTestRunConfigurationState.TEST_ALL_IN_MODULE:
+        break;
       case BlazeAndroidTestRunConfigurationState.TEST_ALL_IN_PACKAGE:
         runner.setTestPackageName(configState.getPackageName());
         break;
@@ -183,15 +186,12 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
     // run in a separate thread as this will block until the tests complete
     ApplicationManager.getApplication()
         .executeOnPooledThread(
-            new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  runner.run(new AndroidTestListener(launchStatus, printer));
-                } catch (Exception e) {
-                  LOG.info(e);
-                  printer.stderr("Error: Unexpected exception while running tests: " + e);
-                }
+            () -> {
+              try {
+                runner.run(new AndroidTestListener(launchStatus, printer));
+              } catch (Exception e) {
+                LOG.info(e);
+                printer.stderr("Error: Unexpected exception while running tests: " + e);
               }
             });
 

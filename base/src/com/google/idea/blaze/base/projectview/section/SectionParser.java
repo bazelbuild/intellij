@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.projectview.section;
 
-import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import javax.annotation.Nullable;
@@ -52,9 +51,10 @@ public abstract class SectionParser {
     return null;
   }
 
-  /** Allows the section to add a default value. Used during the wizard. */
-  public ProjectView addProjectViewDefaultValue(ProjectView projectView) {
-    return projectView;
+  /** A brief description of this section, used for in-IDE documentation. */
+  @Nullable
+  public String quickDocs() {
+    return null;
   }
 
   /** The type of item(s) in this section. */

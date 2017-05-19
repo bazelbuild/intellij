@@ -1,8 +1,21 @@
 """Merges multiple xml files with the same top element tags into a single file.
 """
 
+import argparse
 import sys
 from xml.dom.minidom import parse
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument(
+    "--output",
+    help="The file to output to. If none, prints to stdout.",
+    required=False,)
+
+parser.add_argument(
+    "xmls",
+    nargs="+",
+    help="The xml files to merge",)
 
 
 def AppendFileToTree(filepath, tree):
@@ -30,12 +43,16 @@ def AppendFileToTree(filepath, tree):
 
 
 if __name__ == "__main__":
-  if len(sys.argv) < 2:
-    print "Need xml filename(s) to be checked as parameter"
+  args = parser.parse_args()
+  if not args.xmls:
     sys.exit(2)
 
-  dom = parse(sys.argv[1])
-  for filename in sys.argv[2:]:
+  dom = parse(args.xmls[0])
+  for filename in args.xmls[1:]:
     AppendFileToTree(filename, dom)
 
-  print dom.toxml()
+  if args.output:
+    with file(args.output, "w") as f:
+      f.write(dom.toxml())
+  else:
+    print dom.toxml()

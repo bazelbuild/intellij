@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.TestUtils;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectView;
@@ -35,6 +36,7 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.util.PlatformUtils;
 import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -75,7 +77,8 @@ public class BlazeTypescriptSyncPluginTest extends BlazeTestCase {
   }
 
   @Test
-  public void testTypescriptLanguageAvailable() {
+  public void testTypescriptLanguageAvailableInUltimateEdition() {
+    TestUtils.setPlatformPrefix(testDisposable, PlatformUtils.IDEA_PREFIX);
     ProjectViewSet projectViewSet =
         ProjectViewSet.builder()
             .add(
@@ -87,7 +90,7 @@ public class BlazeTypescriptSyncPluginTest extends BlazeTestCase {
                     .build())
             .build();
     WorkspaceLanguageSettings workspaceLanguageSettings =
-        LanguageSupport.createWorkspaceLanguageSettings(context, projectViewSet);
+        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
     errorCollector.assertNoIssues();
     assertThat(workspaceLanguageSettings)
         .isEqualTo(
@@ -95,5 +98,24 @@ public class BlazeTypescriptSyncPluginTest extends BlazeTestCase {
                 WorkspaceType.JAVA,
                 ImmutableSet.of(
                     LanguageClass.TYPESCRIPT, LanguageClass.GENERIC, LanguageClass.JAVA)));
+  }
+
+  @Test
+  public void testTypescriptNotLanguageAvailableInCommunityEdition() {
+    TestUtils.setPlatformPrefix(testDisposable, PlatformUtils.IDEA_CE_PREFIX);
+    ProjectViewSet projectViewSet =
+        ProjectViewSet.builder()
+            .add(
+                ProjectView.builder()
+                    .add(ScalarSection.builder(WorkspaceTypeSection.KEY).set(WorkspaceType.JAVA))
+                    .add(
+                        ListSection.builder(AdditionalLanguagesSection.KEY)
+                            .add(LanguageClass.TYPESCRIPT))
+                    .build())
+            .build();
+    WorkspaceLanguageSettings workspaceLanguageSettings =
+        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
+    LanguageSupport.validateLanguageSettings(context, workspaceLanguageSettings);
+    errorCollector.assertIssues("Language 'typescript' is not supported by this plugin");
   }
 }

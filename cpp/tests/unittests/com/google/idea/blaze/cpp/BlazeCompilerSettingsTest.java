@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.sdkcompat.cidr.CidrCompilerSwitchesAdapter;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
 import java.io.File;
@@ -39,43 +40,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
         new BlazeCompilerSettings(getProject(), cppExe, cppExe, cFlags, cFlags);
 
     CidrCompilerSwitches compilerSwitches = settings.getCompilerSwitches(OCLanguageKind.C, null);
-    List<String> commandLineArgs = compilerSwitches.getFileArgs();
+    List<String> commandLineArgs = CidrCompilerSwitchesAdapter.getFileArgs(compilerSwitches);
     assertThat(commandLineArgs).containsExactly("-fast", "-slow");
-  }
-
-  @Test
-  public void testCompilerSwitchesWithUnescapedSpaces() {
-    File cppExe = new File("bin/cpp");
-    ImmutableList<String> cFlags = ImmutableList.of("-f ast", "-slo w");
-    BlazeCompilerSettings settings =
-        new BlazeCompilerSettings(getProject(), cppExe, cppExe, cFlags, cFlags);
-
-    CidrCompilerSwitches compilerSwitches = settings.getCompilerSwitches(OCLanguageKind.C, null);
-    List<String> fileArgs = compilerSwitches.getFileArgs();
-    assertThat(fileArgs).containsExactly("-f", "ast", "-slo", "w");
-  }
-
-  @Test
-  public void testCompilerSwitchesWithEscapedSpaces() {
-    File cppExe = new File("bin/cpp");
-    ImmutableList<String> cFlags = ImmutableList.of("-f\\ ast", "-slo\\ w");
-    BlazeCompilerSettings settings =
-        new BlazeCompilerSettings(getProject(), cppExe, cppExe, cFlags, cFlags);
-
-    CidrCompilerSwitches compilerSwitches = settings.getCompilerSwitches(OCLanguageKind.C, null);
-    List<String> fileArgs = compilerSwitches.getFileArgs();
-    assertThat(fileArgs).containsExactly("-f", "ast", "-slo", "w");
-  }
-
-  @Test
-  public void testCompilerSwitchesWithUnescapedAndEscapedSpaces() {
-    File cppExe = new File("bin/cpp");
-    ImmutableList<String> cFlags = ImmutableList.of("-f ast", "-slo\\ w");
-    BlazeCompilerSettings settings =
-        new BlazeCompilerSettings(getProject(), cppExe, cppExe, cFlags, cFlags);
-
-    CidrCompilerSwitches compilerSwitches = settings.getCompilerSwitches(OCLanguageKind.C, null);
-    List<String> fileArgs = compilerSwitches.getFileArgs();
-    assertThat(fileArgs).containsExactly("-f", "ast", "-slo", "w");
   }
 }

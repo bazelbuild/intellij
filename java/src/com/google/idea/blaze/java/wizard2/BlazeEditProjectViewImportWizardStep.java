@@ -83,6 +83,7 @@ class BlazeEditProjectViewImportWizardStep extends ProjectImportWizardStep {
   public void onWizardFinished() throws CommitStepException {
     try {
       getProjectBuilder().commit();
+      control.commit();
     } catch (BlazeProjectCommitException e) {
       throw new CommitStepException(e.getMessage());
     }

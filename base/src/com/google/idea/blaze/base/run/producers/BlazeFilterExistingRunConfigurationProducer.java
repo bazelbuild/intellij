@@ -59,14 +59,20 @@ public class BlazeFilterExistingRunConfigurationProducer
     }
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    if (handlerState == null || !BlazeCommandName.TEST.equals(handlerState.getCommand())) {
+    if (handlerState == null
+        || !BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand())) {
       return false;
     }
     // replace old test filter flag if present
-    List<String> flags = new ArrayList<>(handlerState.getBlazeFlags());
+    List<String> flags = new ArrayList<>(handlerState.getBlazeFlagsState().getRawFlags());
     flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
     flags.add(testFilter);
-    handlerState.setBlazeFlags(flags);
+
+    if (SmRunnerUtils.countSelectedTestCases(context) == 1
+        && !flags.contains(BlazeFlags.DISABLE_TEST_SHARDING)) {
+      flags.add(BlazeFlags.DISABLE_TEST_SHARDING);
+    }
+    handlerState.getBlazeFlagsState().setRawFlags(flags);
     configuration.setName(configuration.getName() + " (filtered)");
     configuration.setNameChangedByUser(true);
     return true;
@@ -83,7 +89,7 @@ public class BlazeFilterExistingRunConfigurationProducer
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
 
     return handlerState != null
-        && Objects.equals(handlerState.getCommand(), BlazeCommandName.TEST)
+        && Objects.equals(handlerState.getCommandState().getCommand(), BlazeCommandName.TEST)
         && Objects.equals(testFilter, handlerState.getTestFilterFlag());
   }
 

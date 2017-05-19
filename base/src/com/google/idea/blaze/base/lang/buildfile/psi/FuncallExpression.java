@@ -15,8 +15,7 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.psi;
 
-import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
-import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProvider;
+import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.FuncallReference;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
@@ -106,8 +105,10 @@ public class FuncallExpression extends BuildElementImpl
   @Nullable
   public Label resolveBuildLabel() {
     BuildFile containingFile = getContainingFile();
-    if (containingFile == null
-        || containingFile.getBlazeFileType() == BuildFile.BlazeFileType.SkylarkExtension) {
+    if (containingFile == null) {
+      return null;
+    }
+    if (containingFile.getBlazeFileType() != BlazeFileType.BuildPackage) {
       return null;
     }
     return LabelUtils.createLabelFromRuleName(getBlazePackage(), getNameArgumentValue());
@@ -173,11 +174,6 @@ public class FuncallExpression extends BuildElementImpl
   public FuncallReference getReference() {
     ASTNode nameNode = getFunctionNameNode();
     if (nameNode == null) {
-      return null;
-    }
-    BuildLanguageSpec spec = BuildLanguageSpecProvider.getInstance().getLanguageSpec(getProject());
-    if (spec != null && spec.hasRule(nameNode.getText())) {
-      // don't try to follow references to built-in rules
       return null;
     }
     TextRange range = PsiUtils.childRangeInParent(getTextRange(), nameNode.getTextRange());

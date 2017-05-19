@@ -54,8 +54,8 @@ public class LabelUtils {
     if (blazePackage == null || ruleName == null) {
       return null;
     }
-    WorkspacePath packagePath = blazePackage.buildFile.getPackageWorkspacePath();
-    return createLabelFromRuleName(packagePath, ruleName);
+    Label packageLabel = blazePackage.buildFile.getPackageLabel();
+    return packageLabel != null ? packageLabel.withTargetName(ruleName) : null;
   }
 
   public static Label createLabelFromRuleName(
@@ -67,36 +67,35 @@ public class LabelUtils {
     if (packagePath == null || name == null) {
       return null;
     }
-    // TODO: Is Label too inefficient?
-    // (validation done twice,creating List during constructor,
-    // re-parsing to extract the package/rule each time)
-    return new Label(packagePath, name);
+    return Label.create(packagePath, name);
   }
 
   /**
-   * Canonicalizes the label (to the form //packagePath:packageRelativeTarget). Returns null if the
-   * string does not represent a valid label.
+   * Canonicalizes the label (to the form [@external_workspace]//packagePath:packageRelativeTarget).
+   * Returns null if the string does not represent a valid label.
    */
   @Nullable
   public static Label createLabelFromString(
-      @Nullable BuildFile file, @Nullable String labelString) {
+      @Nullable BlazePackage blazePackage, @Nullable String labelString) {
     if (labelString == null) {
       return null;
     }
     int colonIndex = labelString.indexOf(':');
-    if (labelString.startsWith("//")) {
+    if (isAbsolute(labelString)) {
       if (colonIndex == -1) {
         // add the implicit rule name
         labelString += ":" + PathUtil.getFileName(labelString);
       }
       return Label.createIfValid(labelString);
     }
-    WorkspacePath packagePath = file != null ? file.getPackageWorkspacePath() : null;
-    if (packagePath == null) {
+    // package-relative label of the form '[:]relativePath'
+    if (colonIndex > 0 || blazePackage == null) {
       return null;
     }
-    String localPath = colonIndex == -1 ? labelString : labelString.substring(1);
-    return Label.createIfValid("//" + packagePath.relativePath() + ":" + localPath);
+    Label packageLabel = blazePackage.getPackageLabel();
+    return packageLabel != null
+        ? packageLabel.withTargetName(labelString.substring(colonIndex + 1))
+        : null;
   }
 
   /** The blaze file referenced by the label. */
@@ -121,12 +120,33 @@ public class LabelUtils {
     return labelString.startsWith(":") ? labelString.substring(1) : labelString;
   }
 
+  /** For a label of the form '[@ext]//package/path:target/name', returns '//package/path' */
   public static String getPackagePathComponent(String labelString) {
-    if (!labelString.startsWith("//")) {
+    if (!isAbsolute(labelString)) {
+      return "";
+    }
+    int slashesIndex = labelString.indexOf("//");
+    if (slashesIndex == -1) {
       return "";
     }
     int colonIndex = labelString.indexOf(':');
-    return colonIndex == -1 ? labelString : labelString.substring(0, colonIndex);
+    return colonIndex == -1
+        ? labelString.substring(slashesIndex)
+        : labelString.substring(slashesIndex, colonIndex);
+  }
+
+  @Nullable
+  public static String getExternalWorkspaceComponent(String labelString) {
+    if (!labelString.startsWith("@")) {
+      return null;
+    }
+    int slashesIndex = labelString.indexOf("//");
+    return slashesIndex == -1 ? null : labelString.substring(1, slashesIndex);
+  }
+
+  /** Returns false for package-relative labels */
+  public static boolean isAbsolute(String labelString) {
+    return labelString.startsWith("//") || labelString.startsWith("@");
   }
 
   /** 'load' reference. Of the form [path][/ or :][extra_path/]file_name.bzl */

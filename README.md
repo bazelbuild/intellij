@@ -13,8 +13,8 @@ with live, working code and we will start accepting contributions.
 ## Installation
 
 You can find our plugin in the Jetbrains plugin repository by going to
-`Settings -> Browse Repositories`, and searching for `IntelliJ with Bazel`
-or `Android Studio with Bazel`.
+`Settings -> Browse Repositories`, and searching for `IntelliJ with Bazel`,
+`Android Studio with Bazel`, or `CLion with Bazel`.
 
 ## Usage
 
@@ -25,6 +25,6 @@ Detailed docs are available [here](http://ij.bazel.build).
 
 ## Building the plugin
 
-Install Bazel, then run 'bazel build //ijwb:ijwb_bazel --define=ij_product=intellij-latest'
+Install Bazel, then run `bazel build //ijwb:ijwb_bazel --define=ij_product=intellij-latest`
 from the project root. This will create a plugin jar in
-'bazel-genfiles/ijwb/ijwb_bazel.jar'.
+`bazel-genfiles/ijwb/ijwb_bazel.jar`.

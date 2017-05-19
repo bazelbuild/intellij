@@ -1,16 +1,30 @@
 licenses(["notice"])  # Apache 2.0
 
+load(
+    "//build_defs:build_defs.bzl",
+    "merged_plugin_xml",
+    "stamped_plugin_xml",
+    "intellij_plugin",
+)
+load(
+    "//testing:test_defs.bzl",
+    "intellij_integration_test_suite",
+    "intellij_unit_test_suite",
+)
+
 java_library(
     name = "java",
     srcs = glob(["src/**/*.java"]),
     visibility = ["//visibility:public"],
-    deps = [
-        "//base",
+    runtime_deps = [
         "//common/actionhelper",
         "//common/experiments",
+    ],
+    deps = [
+        "//base",
         "//intellij_platform_sdk:junit",
         "//intellij_platform_sdk:plugin_api",
-        "//proto_deps",
+        "//proto:proto_deps",
         "//sdkcompat",
         "@jsr305_annotations//jar",
     ],
@@ -20,13 +34,6 @@ filegroup(
     name = "plugin_xml",
     srcs = ["src/META-INF/blaze-java.xml"],
     visibility = ["//visibility:public"],
-)
-
-load(
-    "//build_defs:build_defs.bzl",
-    "merged_plugin_xml",
-    "stamped_plugin_xml",
-    "intellij_plugin",
 )
 
 merged_plugin_xml(
@@ -54,12 +61,6 @@ intellij_plugin(
     ],
 )
 
-load(
-    "//testing:test_defs.bzl",
-    "intellij_integration_test_suite",
-    "intellij_unit_test_suite",
-)
-
 intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
@@ -71,7 +72,7 @@ intellij_unit_test_suite(
         "//common/experiments",
         "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
-        "//proto_deps",
+        "//proto:proto_deps",
         "@jsr305_annotations//jar",
         "@junit//jar",
     ],

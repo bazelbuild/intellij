@@ -15,9 +15,11 @@
  */
 package com.google.idea.blaze.base.model.primitives;
 
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 
 /** Wrapper around a string for a blaze kind (android_library, android_test...) */
 public enum Kind {
@@ -25,6 +27,7 @@ public enum Kind {
   ANDROID_LIBRARY("android_library", LanguageClass.ANDROID),
   ANDROID_TEST("android_test", LanguageClass.ANDROID),
   ANDROID_ROBOLECTRIC_TEST("android_robolectric_test", LanguageClass.ANDROID),
+  ANDROID_SDK("android_sdk", LanguageClass.ANDROID),
   JAVA_LIBRARY("java_library", LanguageClass.JAVA),
   JAVA_TEST("java_test", LanguageClass.JAVA),
   JAVA_BINARY("java_binary", LanguageClass.JAVA),
@@ -57,9 +60,15 @@ public enum Kind {
   GO_APPENGINE_LIBRARY("go_appengine_library", LanguageClass.GO),
   GO_WRAP_CC("go_wrap_cc", LanguageClass.GO),
   INTELLIJ_PLUGIN_DEBUG_TARGET("intellij_plugin_debug_target", LanguageClass.JAVA),
+  SCALA_BINARY("scala_binary", LanguageClass.SCALA),
+  SCALA_LIBRARY("scala_library", LanguageClass.SCALA),
+  SCALA_MACRO_LIBRARY("scala_macro_library", LanguageClass.SCALA),
+  SCALA_TEST("scala_test", LanguageClass.SCALA),
   ;
 
   static final ImmutableMap<String, Kind> STRING_TO_KIND = makeStringToKindMap();
+
+  static final ImmutableMultimap<LanguageClass, Kind> PER_LANGUAGES_KINDS = makePerLanguageMap();
 
   private static ImmutableMap<String, Kind> makeStringToKindMap() {
     ImmutableMap.Builder<String, Kind> result = ImmutableMap.builder();
@@ -69,8 +78,20 @@ public enum Kind {
     return result.build();
   }
 
+  private static ImmutableMultimap<LanguageClass, Kind> makePerLanguageMap() {
+    ImmutableMultimap.Builder<LanguageClass, Kind> result = ImmutableMultimap.builder();
+    for (Kind kind : Kind.values()) {
+      result.put(kind.languageClass, kind);
+    }
+    return result.build();
+  }
+
   public static Kind fromString(String kindString) {
     return STRING_TO_KIND.get(kindString);
+  }
+
+  public static ImmutableCollection<Kind> allKindsForLanguage(LanguageClass language) {
+    return PER_LANGUAGES_KINDS.get(language);
   }
 
   private final String kind;
@@ -94,7 +115,7 @@ public enum Kind {
     return isOneOf(Arrays.asList(kinds));
   }
 
-  public boolean isOneOf(List<Kind> kinds) {
+  public boolean isOneOf(Collection<Kind> kinds) {
     for (Kind kind : kinds) {
       if (this.equals(kind)) {
         return true;

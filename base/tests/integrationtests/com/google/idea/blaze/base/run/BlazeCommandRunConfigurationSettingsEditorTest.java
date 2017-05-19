@@ -51,7 +51,7 @@ public class BlazeCommandRunConfigurationSettingsEditorTest extends BlazeIntegra
   public void testEditorApplyToAndResetFromMatches() throws ConfigurationException {
     BlazeCommandRunConfigurationSettingsEditor editor =
         new BlazeCommandRunConfigurationSettingsEditor(configuration);
-    Label label = new Label("//package:rule");
+    Label label = Label.create("//package:rule");
     configuration.setTarget(label);
 
     editor.resetFrom(configuration);

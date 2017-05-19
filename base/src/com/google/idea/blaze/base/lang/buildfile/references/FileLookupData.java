@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.lang.buildfile.completion.FilePathLookupElemen
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.icons.AllIcons;
@@ -32,8 +33,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
 import icons.BlazeIcons;
+import javax.annotation.Nullable;
 import javax.swing.Icon;
-import org.jetbrains.annotations.Nullable;
 
 /** The data relevant to finding file lookups. */
 public class FileLookupData {
@@ -89,11 +90,14 @@ public class FileLookupData {
       StringLiteral element,
       @Nullable BuildFile basePackage,
       @Nullable VirtualFileFilter fileFilter) {
-    String basePackagePath =
-        basePackage != null ? basePackage.getWorkspaceRelativePackagePath() : null;
-    if (basePackagePath == null) {
+    if (basePackage == null) {
       return null;
     }
+    Label packageLabel = basePackage.getPackageLabel();
+    if (packageLabel == null) {
+      return null;
+    }
+    String basePackagePath = packageLabel.blazePackage().relativePath();
     String filePath = basePackagePath + "/" + LabelUtils.getRuleComponent(originalLabel);
     return new FileLookupData(
         originalLabel,

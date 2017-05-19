@@ -81,7 +81,7 @@ public class LanguageSupportTest extends BlazeTestCase {
                     .build())
             .build();
     WorkspaceLanguageSettings workspaceLanguageSettings =
-        LanguageSupport.createWorkspaceLanguageSettings(context, projectViewSet);
+        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
     errorCollector.assertNoIssues();
     assertThat(workspaceLanguageSettings)
         .isEqualTo(
@@ -98,7 +98,9 @@ public class LanguageSupportTest extends BlazeTestCase {
                     .add(ScalarSection.builder(WorkspaceTypeSection.KEY).set(WorkspaceType.C))
                     .build())
             .build();
-    LanguageSupport.createWorkspaceLanguageSettings(context, projectViewSet);
+    WorkspaceLanguageSettings settings =
+        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
+    LanguageSupport.validateLanguageSettings(context, settings);
     errorCollector.assertIssues("Workspace type 'c' is not supported by this plugin");
   }
 
@@ -127,7 +129,9 @@ public class LanguageSupportTest extends BlazeTestCase {
                             .add(LanguageClass.PYTHON))
                     .build())
             .build();
-    LanguageSupport.createWorkspaceLanguageSettings(context, projectViewSet);
+    WorkspaceLanguageSettings settings =
+        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
+    LanguageSupport.validateLanguageSettings(context, settings);
     errorCollector.assertIssues("Language 'python' is not supported by this plugin");
   }
 
@@ -155,7 +159,7 @@ public class LanguageSupportTest extends BlazeTestCase {
                     .build())
             .build();
     WorkspaceLanguageSettings workspaceLanguageSettings =
-        LanguageSupport.createWorkspaceLanguageSettings(context, projectViewSet);
+        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
     assertThat(workspaceLanguageSettings)
         .isEqualTo(
             new WorkspaceLanguageSettings(

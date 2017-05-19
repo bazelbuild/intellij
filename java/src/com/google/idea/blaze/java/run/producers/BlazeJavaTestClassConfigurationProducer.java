@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.run.producers;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -36,8 +37,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 /** Producer for run configurations related to Java test classes in Blaze. */
@@ -79,7 +85,7 @@ public class BlazeJavaTestClassConfigurationProducer
     sourceElement.set(testClass);
 
     TestIdeInfo.TestSize testSize = TestSizeAnnotationMap.getTestSize(testClass);
-    TargetIdeInfo target = RunUtil.targetForTestClass(context.getProject(), testClass, testSize);
+    TargetIdeInfo target = RunUtil.targetForTestClass(testClass, testSize);
     if (target == null) {
       return false;
     }
@@ -90,17 +96,17 @@ public class BlazeJavaTestClassConfigurationProducer
     if (handlerState == null) {
       return false;
     }
-    String testFilter = BlazeJUnitTestFilterFlags.testFilterForClass(testClass);
+    String testFilter = getTestFilter(testClass);
     if (testFilter == null) {
       return false;
     }
-    handlerState.setCommand(BlazeCommandName.TEST);
+    handlerState.getCommandState().setCommand(BlazeCommandName.TEST);
 
     // remove old test filter flag if present
-    List<String> flags = new ArrayList<>(handlerState.getBlazeFlags());
+    List<String> flags = new ArrayList<>(handlerState.getBlazeFlagsState().getRawFlags());
     flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
     flags.add(BlazeFlags.TEST_FILTER + "=" + testFilter);
-    handlerState.setBlazeFlags(flags);
+    handlerState.getBlazeFlagsState().setRawFlags(flags);
 
     BlazeConfigurationNameBuilder nameBuilder = new BlazeConfigurationNameBuilder(configuration);
     nameBuilder.setTargetString(testClass.getName());
@@ -148,13 +154,25 @@ public class BlazeJavaTestClassConfigurationProducer
     if (handlerState == null) {
       return false;
     }
-    if (!Objects.equals(handlerState.getCommand(), BlazeCommandName.TEST)) {
+    if (!Objects.equals(handlerState.getCommandState().getCommand(), BlazeCommandName.TEST)) {
       return false;
     }
-    String filter = BlazeJUnitTestFilterFlags.testFilterForClass(testClass);
+    String filter = getTestFilter(testClass);
     if (filter == null) {
       return false;
     }
     return Objects.equals(BlazeFlags.TEST_FILTER + "=" + filter, handlerState.getTestFilterFlag());
+  }
+
+  @Nullable
+  private static String getTestFilter(PsiClass testClass) {
+    Set<PsiClass> innerTestClasses = ProducerUtils.getInnerTestClasses(testClass);
+    if (innerTestClasses.isEmpty()) {
+      return BlazeJUnitTestFilterFlags.testFilterForClass(testClass);
+    }
+    innerTestClasses.add(testClass);
+    Map<PsiClass, Collection<Location<?>>> methodsPerClass =
+        innerTestClasses.stream().collect(Collectors.toMap(c -> c, c -> ImmutableList.of()));
+    return BlazeJUnitTestFilterFlags.testFilterForClassesAndMethods(methodsPerClass);
   }
 }

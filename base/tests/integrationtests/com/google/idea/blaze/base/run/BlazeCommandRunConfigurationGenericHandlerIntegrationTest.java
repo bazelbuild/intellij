@@ -84,10 +84,10 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
 
     BlazeCommandRunConfigurationCommonState state =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
-    state.setCommand(COMMAND);
-    state.setBlazeFlags(ImmutableList.of("--flag1", "--flag2"));
-    state.setExeFlags(ImmutableList.of("--exeFlag1"));
-    state.setBlazeBinary("/usr/bin/blaze");
+    state.getCommandState().setCommand(COMMAND);
+    state.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
+    state.getExeFlagsState().setRawFlags(ImmutableList.of("--exeFlag1"));
+    state.getBlazeBinaryState().setBlazeBinary("/usr/bin/blaze");
 
     Element element = new Element("test");
     configuration.writeExternal(element);
@@ -101,10 +101,12 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
 
     BlazeCommandRunConfigurationCommonState readState =
         (BlazeCommandRunConfigurationCommonState) readConfiguration.getHandler().getState();
-    assertThat(readState.getCommand()).isEqualTo(COMMAND);
-    assertThat(readState.getBlazeFlags()).containsExactly("--flag1", "--flag2").inOrder();
-    assertThat(readState.getExeFlags()).containsExactly("--exeFlag1");
-    assertThat(readState.getBlazeBinary()).isEqualTo("/usr/bin/blaze");
+    assertThat(readState.getCommandState().getCommand()).isEqualTo(COMMAND);
+    assertThat(readState.getBlazeFlagsState().getRawFlags())
+        .containsExactly("--flag1", "--flag2")
+        .inOrder();
+    assertThat(readState.getExeFlagsState().getRawFlags()).containsExactly("--exeFlag1");
+    assertThat(readState.getBlazeBinaryState().getBlazeBinary()).isEqualTo("/usr/bin/blaze");
   }
 
   @Test
@@ -129,10 +131,10 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
 
     BlazeCommandRunConfigurationCommonState state =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
-    state.setCommand(COMMAND);
-    state.setBlazeFlags(ImmutableList.of("--flag1", "--flag2"));
-    state.setExeFlags(ImmutableList.of("--exeFlag1"));
-    state.setBlazeBinary("/usr/bin/blaze");
+    state.getCommandState().setCommand(COMMAND);
+    state.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
+    state.getExeFlagsState().setRawFlags(ImmutableList.of("--exeFlag1"));
+    state.getBlazeBinaryState().setBlazeBinary("/usr/bin/blaze");
 
     editor.resetFrom(configuration);
     BlazeCommandRunConfiguration readConfiguration =
@@ -145,10 +147,14 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
 
     BlazeCommandRunConfigurationCommonState readState =
         (BlazeCommandRunConfigurationCommonState) readConfiguration.getHandler().getState();
-    assertThat(readState.getCommand()).isEqualTo(state.getCommand());
-    assertThat(readState.getBlazeFlags()).isEqualTo(state.getBlazeFlags());
-    assertThat(readState.getExeFlags()).isEqualTo(state.getExeFlags());
-    assertThat(readState.getBlazeBinary()).isEqualTo(state.getBlazeBinary());
+    assertThat(readState.getCommandState().getCommand())
+        .isEqualTo(state.getCommandState().getCommand());
+    assertThat(readState.getBlazeFlagsState().getRawFlags())
+        .isEqualTo(state.getBlazeFlagsState().getRawFlags());
+    assertThat(readState.getExeFlagsState().getRawFlags())
+        .isEqualTo(state.getExeFlagsState().getRawFlags());
+    assertThat(readState.getBlazeBinaryState().getBlazeBinary())
+        .isEqualTo(state.getBlazeBinaryState().getBlazeBinary());
 
     Disposer.dispose(editor);
   }
@@ -175,10 +181,10 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
 
     BlazeCommandRunConfigurationCommonState readState =
         (BlazeCommandRunConfigurationCommonState) readConfiguration.getHandler().getState();
-    readState.setCommand(COMMAND);
-    readState.setBlazeFlags(ImmutableList.of("--flag1", "--flag2"));
-    readState.setExeFlags(ImmutableList.of("--exeFlag1"));
-    readState.setBlazeBinary("/usr/bin/blaze");
+    readState.getCommandState().setCommand(COMMAND);
+    readState.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
+    readState.getExeFlagsState().setRawFlags(ImmutableList.of("--exeFlag1"));
+    readState.getBlazeBinaryState().setBlazeBinary("/usr/bin/blaze");
 
     editor.applyEditorTo(readConfiguration);
 
@@ -187,10 +193,14 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
         .isInstanceOf(BlazeCommandGenericRunConfigurationHandler.class);
 
     readState = (BlazeCommandRunConfigurationCommonState) readConfiguration.getHandler().getState();
-    assertThat(readState.getCommand()).isEqualTo(state.getCommand());
-    assertThat(readState.getBlazeFlags()).isEqualTo(state.getBlazeFlags());
-    assertThat(readState.getExeFlags()).isEqualTo(state.getExeFlags());
-    assertThat(readState.getBlazeBinary()).isEqualTo(state.getBlazeBinary());
+    assertThat(readState.getCommandState().getCommand())
+        .isEqualTo(state.getCommandState().getCommand());
+    assertThat(readState.getBlazeFlagsState().getRawFlags())
+        .isEqualTo(state.getBlazeFlagsState().getRawFlags());
+    assertThat(readState.getExeFlagsState().getRawFlags())
+        .isEqualTo(state.getExeFlagsState().getRawFlags());
+    assertThat(readState.getBlazeBinaryState().getBlazeBinary())
+        .isEqualTo(state.getBlazeBinaryState().getBlazeBinary());
 
     Disposer.dispose(editor);
   }

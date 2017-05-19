@@ -68,6 +68,11 @@ public class ProjectViewParser {
   }
 
   public void parseProjectView(String text) {
+    if (text.isEmpty()) {
+      ProjectView projectView = new ProjectView(ImmutableList.of());
+      projectViewFiles.add(new ProjectViewSet.ProjectViewFile(projectView, null));
+      return;
+    }
     parseProjectView(new ParseContext(context, workspacePathResolver, null, text));
   }
 

@@ -53,8 +53,8 @@ public class TransitiveDependencyMapTest extends BlazeTestCase {
 
   @Test
   public void testGetSimpleDependency() {
-    TargetKey simpleA = TargetKey.forPlainTarget(new Label("//com/google/example/simple:a"));
-    TargetKey simpleB = TargetKey.forPlainTarget(new Label("//com/google/example/simple:b"));
+    TargetKey simpleA = TargetKey.forPlainTarget(Label.create("//com/google/example/simple:a"));
+    TargetKey simpleB = TargetKey.forPlainTarget(Label.create("//com/google/example/simple:b"));
 
     assertThat(transitiveDependencyMap.getTransitiveDependencies(simpleA)).containsExactly(simpleB);
     assertThat(transitiveDependencyMap.getTransitiveDependencies(simpleB)).isEmpty();
@@ -62,10 +62,10 @@ public class TransitiveDependencyMapTest extends BlazeTestCase {
 
   @Test
   public void testGetChainDependencies() {
-    TargetKey chainA = TargetKey.forPlainTarget(new Label("//com/google/example/chain:a"));
-    TargetKey chainB = TargetKey.forPlainTarget(new Label("//com/google/example/chain:b"));
-    TargetKey chainC = TargetKey.forPlainTarget(new Label("//com/google/example/chain:c"));
-    TargetKey chainD = TargetKey.forPlainTarget(new Label("//com/google/example/chain:d"));
+    TargetKey chainA = TargetKey.forPlainTarget(Label.create("//com/google/example/chain:a"));
+    TargetKey chainB = TargetKey.forPlainTarget(Label.create("//com/google/example/chain:b"));
+    TargetKey chainC = TargetKey.forPlainTarget(Label.create("//com/google/example/chain:c"));
+    TargetKey chainD = TargetKey.forPlainTarget(Label.create("//com/google/example/chain:d"));
 
     assertThat(transitiveDependencyMap.getTransitiveDependencies(chainA))
         .containsExactly(chainB, chainC, chainD);
@@ -77,13 +77,15 @@ public class TransitiveDependencyMapTest extends BlazeTestCase {
 
   @Test
   public void testGetDiamondDependencies() {
-    TargetKey diamondA = TargetKey.forPlainTarget(new Label("//com/google/example/diamond:a"));
-    TargetKey diamondB = TargetKey.forPlainTarget(new Label("//com/google/example/diamond:b"));
-    TargetKey diamondBB = TargetKey.forPlainTarget(new Label("//com/google/example/diamond:bb"));
-    TargetKey diamondBBB = TargetKey.forPlainTarget(new Label("//com/google/example/diamond:bbb"));
-    TargetKey diamondC = TargetKey.forPlainTarget(new Label("//com/google/example/diamond:c"));
-    TargetKey diamondCC = TargetKey.forPlainTarget(new Label("//com/google/example/diamond:cc"));
-    TargetKey diamondCCC = TargetKey.forPlainTarget(new Label("//com/google/example/diamond:ccc"));
+    TargetKey diamondA = TargetKey.forPlainTarget(Label.create("//com/google/example/diamond:a"));
+    TargetKey diamondB = TargetKey.forPlainTarget(Label.create("//com/google/example/diamond:b"));
+    TargetKey diamondBB = TargetKey.forPlainTarget(Label.create("//com/google/example/diamond:bb"));
+    TargetKey diamondBBB =
+        TargetKey.forPlainTarget(Label.create("//com/google/example/diamond:bbb"));
+    TargetKey diamondC = TargetKey.forPlainTarget(Label.create("//com/google/example/diamond:c"));
+    TargetKey diamondCC = TargetKey.forPlainTarget(Label.create("//com/google/example/diamond:cc"));
+    TargetKey diamondCCC =
+        TargetKey.forPlainTarget(Label.create("//com/google/example/diamond:ccc"));
 
     assertThat(transitiveDependencyMap.getTransitiveDependencies(diamondA))
         .containsExactly(diamondB, diamondBB, diamondBBB, diamondC, diamondCC, diamondCCC);
@@ -100,24 +102,24 @@ public class TransitiveDependencyMapTest extends BlazeTestCase {
 
   @Test
   public void testGetDependencyForNonExistentTarget() {
-    TargetKey bogus = TargetKey.forPlainTarget(new Label("//com/google/fake:target"));
+    TargetKey bogus = TargetKey.forPlainTarget(Label.create("//com/google/fake:target"));
     assertThat(transitiveDependencyMap.getTransitiveDependencies(bogus)).isEmpty();
   }
 
   private static TargetMap buildTargetMap() {
-    Label simpleA = new Label("//com/google/example/simple:a");
-    Label simpleB = new Label("//com/google/example/simple:b");
-    Label chainA = new Label("//com/google/example/chain:a");
-    Label chainB = new Label("//com/google/example/chain:b");
-    Label chainC = new Label("//com/google/example/chain:c");
-    Label chainD = new Label("//com/google/example/chain:d");
-    Label diamondA = new Label("//com/google/example/diamond:a");
-    Label diamondB = new Label("//com/google/example/diamond:b");
-    Label diamondBB = new Label("//com/google/example/diamond:bb");
-    Label diamondBBB = new Label("//com/google/example/diamond:bbb");
-    Label diamondC = new Label("//com/google/example/diamond:c");
-    Label diamondCC = new Label("//com/google/example/diamond:cc");
-    Label diamondCCC = new Label("//com/google/example/diamond:ccc");
+    Label simpleA = Label.create("//com/google/example/simple:a");
+    Label simpleB = Label.create("//com/google/example/simple:b");
+    Label chainA = Label.create("//com/google/example/chain:a");
+    Label chainB = Label.create("//com/google/example/chain:b");
+    Label chainC = Label.create("//com/google/example/chain:c");
+    Label chainD = Label.create("//com/google/example/chain:d");
+    Label diamondA = Label.create("//com/google/example/diamond:a");
+    Label diamondB = Label.create("//com/google/example/diamond:b");
+    Label diamondBB = Label.create("//com/google/example/diamond:bb");
+    Label diamondBBB = Label.create("//com/google/example/diamond:bbb");
+    Label diamondC = Label.create("//com/google/example/diamond:c");
+    Label diamondCC = Label.create("//com/google/example/diamond:cc");
+    Label diamondCCC = Label.create("//com/google/example/diamond:ccc");
     return TargetMapBuilder.builder()
         .addTarget(TargetIdeInfo.builder().setLabel(simpleA).addDependency(simpleB))
         .addTarget(TargetIdeInfo.builder().setLabel(simpleB))

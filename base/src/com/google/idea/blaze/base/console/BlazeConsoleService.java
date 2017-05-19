@@ -18,8 +18,8 @@ package com.google.idea.blaze.base.console;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Prints text to the blaze console. */
 public interface BlazeConsoleService {

@@ -25,3 +25,13 @@ py_binary(
     name = "api_version_txt",
     srcs = ["api_version_txt.py"],
 )
+
+py_binary(
+    name = "append_optional_xml_elements",
+    srcs = ["append_optional_xml_elements.py"],
+)
+
+py_binary(
+    name = "package_meta_inf_files",
+    srcs = ["package_meta_inf_files.py"],
+)

@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -71,6 +71,16 @@ public interface BuildSystemProvider {
    */
   BuildSystem buildSystem();
 
+  /** @return The location of the blaze/bazel binary. */
+  @Nullable
+  String getBinaryPath();
+
+  /** @return The location of the blaze/bazel binary to use for syncing. */
+  @Nullable
+  default String getSyncBinaryPath() {
+    return getBinaryPath();
+  }
+
   WorkspaceRootProvider getWorkspaceRootProvider();
 
   /** Directories containing artifacts produced during the build process. */
@@ -79,6 +89,10 @@ public interface BuildSystemProvider {
   /** The URL providing the built-in BUILD rule's documentation, if one can be found. */
   @Nullable
   String getRuleDocumentationUrl(RuleDefinition rule);
+
+  /** The URL providing documentation for project view files, if one can be found. */
+  @Nullable
+  String getProjectViewDocumentationUrl();
 
   /** Check if the given filename is a valid BUILD file name. */
   boolean isBuildFile(String fileName);
@@ -101,12 +115,13 @@ public interface BuildSystemProvider {
     return buildFile != null ? directory.getFileSystem().findFileByPath(buildFile.getPath()) : null;
   }
 
-  FileNameMatcher buildFileMatcher();
+  /** Returns the list of file types recognized as build system files. */
+  ImmutableList<FileNameMatcher> buildLanguageFileTypeMatchers();
 
   /** Populates the passed builder with version data. */
   void populateBlazeVersionData(
       BuildSystem buildSystem,
       WorkspaceRoot workspaceRoot,
-      ImmutableMap<String, String> blazeInfo,
+      BlazeInfo blazeInfo,
       BlazeVersionData.Builder builder);
 }

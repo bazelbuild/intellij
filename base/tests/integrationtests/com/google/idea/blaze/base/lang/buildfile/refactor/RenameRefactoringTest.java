@@ -36,6 +36,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
 import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
+import com.intellij.refactoring.rename.RenameUtil;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -112,6 +113,32 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
         barPackage,
         "rule_type(name = \"ref\", arg = \"//com/google/foo:newTargetName\")",
         "top_level_ref = \"//com/google/foo:newTargetName\"");
+  }
+
+  @Test
+  public void testTargetRenameValidation() {
+    BuildFile file =
+        createBuildFile(new WorkspacePath("com/google/foo/BUILD"), "rule_type(name = \"target\")");
+    FuncallExpression target =
+        PsiUtils.findFirstChildOfClassRecursive(file, FuncallExpression.class);
+
+    assertThat(RenameUtil.isValidName(getProject(), target, "name-with_allowed,meta=chars+-./@~"))
+        .isTrue();
+    assertThat(RenameUtil.isValidName(getProject(), target, "name:withColon")).isFalse();
+    assertThat(RenameUtil.isValidName(getProject(), target, "/start-with-slash")).isFalse();
+    assertThat(RenameUtil.isValidName(getProject(), target, "up-level-ref/../etc")).isFalse();
+  }
+
+  @Test
+  public void testFunctionRenameValidation() {
+    BuildFile file =
+        createBuildFile(new WorkspacePath("com/google/foo/BUILD"), "def fn_name():", "  return");
+    FunctionStatement fn = PsiUtils.findFirstChildOfClassRecursive(file, FunctionStatement.class);
+
+    assertThat(RenameUtil.isValidName(getProject(), fn, "name-with-dash")).isFalse();
+    assertThat(RenameUtil.isValidName(getProject(), fn, "name:withColon")).isFalse();
+    assertThat(RenameUtil.isValidName(getProject(), fn, "return")).isFalse();
+    assertThat(RenameUtil.isValidName(getProject(), fn, "name_with_underscore")).isTrue();
   }
 
   @Test
@@ -234,6 +261,37 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
         "\"function\"",
         ")",
         "function(name = \"name\", exports = []");
+  }
+
+  @Test
+  public void testRenameExternalWorkspaceTarget() {
+    BuildFile workspaceFile =
+        createBuildFile(
+            new WorkspacePath("WORKSPACE"),
+            "maven_jar(",
+            "    name = \"javax\",",
+            "    artifact = \"javax.inject:javax.inject:1\",",
+            "    sha1 = \"6975da39a7040257bd51d21a231b76c915872d38\",",
+            ")");
+    BuildFile referencingFile =
+        createBuildFile(
+            new WorkspacePath("java/com/foo/BUILD"),
+            "java_library(name = \"javax_inject\", exports = [\"@javax//jar\"])");
+
+    FuncallExpression targetRule =
+        PsiUtils.findFirstChildOfClassRecursive(workspaceFile, FuncallExpression.class);
+    testFixture.renameElement(targetRule, "v2_lib");
+
+    assertFileContents(
+        workspaceFile,
+        "maven_jar(",
+        "    name = \"v2_lib\",",
+        "    artifact = \"javax.inject:javax.inject:1\",",
+        "    sha1 = \"6975da39a7040257bd51d21a231b76c915872d38\",",
+        ")");
+
+    assertFileContents(
+        referencingFile, "java_library(name = \"javax_inject\", exports = [\"@v2_lib//jar\"])");
   }
 
   @Test

@@ -21,8 +21,8 @@ import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Allows BUILD language-specific code style settings */
 public class BuildLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {

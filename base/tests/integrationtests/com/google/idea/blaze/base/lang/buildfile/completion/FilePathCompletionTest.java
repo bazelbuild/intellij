@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
@@ -41,6 +42,30 @@ public class FilePathCompletionTest extends BuildFileIntegrationTestCase {
     assertFileContents(file, "'//java'");
     // check caret remains inside closing quote
     editorTest.assertCaretPosition(editor, 0, "'//java".length());
+  }
+
+  @Test
+  public void testInsertPairQuoteOptionRespected() {
+    boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE;
+    try {
+      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE = false;
+      BuildFile file = createBuildFile(new WorkspacePath("java/BUILD"), "'//");
+      Editor editor = editorTest.openFileInEditor(file);
+      editorTest.setCaretPosition(editor, 0, "'//".length());
+
+      assertThat(editorTest.completeIfUnique()).isTrue();
+      assertFileContents(file, "'//java");
+
+      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE = true;
+      file = createBuildFile(new WorkspacePath("foo/BUILD"), "'//j");
+      editor = editorTest.openFileInEditor(file);
+      editorTest.setCaretPosition(editor, 0, "'//j".length());
+
+      assertThat(editorTest.completeIfUnique()).isTrue();
+      assertFileContents(file, "'//java'");
+    } finally {
+      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE = old;
+    }
   }
 
   @Test

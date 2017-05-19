@@ -15,20 +15,15 @@
  */
 package com.google.idea.blaze.clwb.run.producers;
 
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.clion.CMakeConfigurationProducersList;
 import com.intellij.execution.RunConfigurationProducerService;
-import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.cidr.cpp.execution.testing.CMakeGoogleTestRunConfigurationProducer;
-import java.util.Collection;
 
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
 public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
 
-  private static final Collection<Class<? extends RunConfigurationProducer<?>>>
-      PRODUCERS_TO_SUPPRESS = ImmutableList.of(CMakeGoogleTestRunConfigurationProducer.class);
 
   public NonBlazeProducerSuppressor(Project project) {
     super(project);
@@ -44,6 +39,7 @@ public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
   private static void suppressProducers(Project project) {
     RunConfigurationProducerService producerService =
         RunConfigurationProducerService.getInstance(project);
-    PRODUCERS_TO_SUPPRESS.forEach(producerService::addIgnoredProducer);
+    CMakeConfigurationProducersList.PRODUCERS_TO_SUPPRESS.forEach(
+        producerService::addIgnoredProducer);
   }
 }

@@ -36,8 +36,8 @@ import com.intellij.psi.PsiManager;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Modifies the project view:
@@ -147,6 +147,9 @@ public class BlazeTreeStructureProvider implements TreeStructureProvider, DumbAw
 
       @Override
       public boolean isShowExcludedFiles() {
+        if (original instanceof ProjectViewSettings) {
+          return ((ProjectViewSettings) original).isShowExcludedFiles();
+        }
         return true;
       }
     };

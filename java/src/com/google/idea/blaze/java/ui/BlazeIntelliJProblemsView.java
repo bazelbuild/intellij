@@ -41,7 +41,7 @@ class BlazeIntelliJProblemsView implements BlazeProblemsView {
   public void addMessage(IssueOutput issue, UUID sessionId) {
     VirtualFile virtualFile =
         issue.getFile() != null
-            ? VfsUtil.findFileByIoFile(issue.getFile(), true /* refresh */)
+            ? VfsUtil.findFileByIoFile(issue.getFile(), /* refresh */ true)
             : null;
     CompilerMessageCategory category =
         issue.getCategory() == IssueOutput.Category.ERROR

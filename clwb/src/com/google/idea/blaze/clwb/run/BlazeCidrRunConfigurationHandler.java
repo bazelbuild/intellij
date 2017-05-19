@@ -78,7 +78,7 @@ public final class BlazeCidrRunConfigurationHandler implements BlazeCommandRunCo
   @Override
   @Nullable
   public String getCommandName() {
-    BlazeCommandName command = state.getCommand();
+    BlazeCommandName command = state.getCommandState().getCommand();
     return command != null ? command.toString() : null;
   }
 

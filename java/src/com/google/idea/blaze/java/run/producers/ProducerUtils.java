@@ -21,17 +21,15 @@ import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * Copy of {@link org.jetbrains.plugins.gradle.execution.test.runner.TestRunnerUtils}.
- *
- * <p>
- *
- * <p>Do not modify.
- */
+/** Utility methods for java test run configuration producers. */
 public class ProducerUtils {
   @Nullable
   public static Location<PsiMethod> getMethodLocation(@NotNull Location contextLocation) {
@@ -62,5 +60,20 @@ public class ProducerUtils {
       }
     }
     return null;
+  }
+
+  /** For any test classes with nested inner test classes, also add the inner classes to the set. */
+  static Set<PsiClass> includeInnerTestClasses(Set<PsiClass> testClasses) {
+    Set<PsiClass> result = new HashSet<>(testClasses);
+    for (PsiClass psiClass : testClasses) {
+      result.addAll(getInnerTestClasses(psiClass));
+    }
+    return result;
+  }
+
+  static Set<PsiClass> getInnerTestClasses(PsiClass psiClass) {
+    return Arrays.stream(psiClass.getInnerClasses())
+        .filter(JUnitUtil::isTestClass)
+        .collect(Collectors.toSet());
   }
 }

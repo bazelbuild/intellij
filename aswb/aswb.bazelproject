@@ -3,9 +3,6 @@ directories:
   -ijwb
   -plugin_dev
   -clwb
-  -cpp/src/com/google/idea/blaze/cpp/versioned/v162
-  # TODO(chaorenl): remove when 2.2 is obsolete.
-  -aswb/2.3
 
 targets:
   //aswb:aswb_bazel

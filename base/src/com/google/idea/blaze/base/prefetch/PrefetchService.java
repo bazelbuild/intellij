@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.prefetch;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -31,5 +32,6 @@ public interface PrefetchService {
   /** Instructs all prefetchers to prefetch these files. */
   ListenableFuture<?> prefetchFiles(Project project, Collection<File> files);
 
-  ListenableFuture<?> prefetchProjectFiles(Project project, BlazeProjectData blazeProjectData);
+  ListenableFuture<?> prefetchProjectFiles(
+      Project project, ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData);
 }

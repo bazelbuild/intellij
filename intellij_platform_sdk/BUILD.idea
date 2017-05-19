@@ -25,6 +25,11 @@ java_import(
     jars = glob(["plugins/junit/lib/*.jar"]),
 )
 
+java_import(
+    name = "terminal",
+    jars = ["plugins/terminal/lib/terminal.jar"],
+)
+
 # The plugins required by IJwB. We need to include them
 # when running integration tests.
 java_import(

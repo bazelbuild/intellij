@@ -15,20 +15,21 @@
  */
 package com.google.idea.blaze.android.sync;
 
+import com.android.tools.idea.sdk.IdeSdks;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
-import com.google.idea.blaze.android.compatibility.Compatibility.IdeSdks;
 import com.google.idea.blaze.android.cppapi.NdkSupport;
 import com.google.idea.blaze.android.projectview.AndroidMinSdkSection;
 import com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
+import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer;
 import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -49,7 +50,6 @@ import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
@@ -111,13 +111,17 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Override
   public void installSdks(BlazeContext context) {
-    File path = IdeSdks.getAndroidSdkPath();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
+    File path = IdeSdks.getInstance().getAndroidSdkPath();
     if (path != null) {
       context.output(new StatusOutput("Installing SDK platforms..."));
       ApplicationManager.getApplication()
           .invokeAndWait(
               () -> {
-                IdeSdks.createAndroidSdkPerAndroidTarget(path);
+                IdeSdks.getInstance().createAndroidSdkPerAndroidTarget(path);
               },
               ModalityState.defaultModalityState());
     }
@@ -130,7 +134,7 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings,
-      BlazeRoots blazeRoots,
+      BlazeInfo blazeInfo,
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
@@ -176,7 +180,7 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
     if (androidSdkPlatform == null) {
       return;
     }
-    Sdk sdk = AndroidSdkUtils.findSuitableAndroidSdk(androidSdkPlatform.androidSdk);
+    Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdkPlatform.androidSdk);
     if (sdk == null) {
       IssueOutput.error(
               String.format("Android platform '%s' not found.", androidSdkPlatform.androidSdk))
@@ -260,6 +264,7 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Override
   public boolean validateProjectView(
+      @Nullable Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings) {
@@ -306,7 +311,8 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Nullable
   @Override
-  public LibrarySource getLibrarySource(BlazeProjectData blazeProjectData) {
+  public LibrarySource getLibrarySource(
+      ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
     if (!isAndroidWorkspace(blazeProjectData.workspaceLanguageSettings)) {
       return null;
     }

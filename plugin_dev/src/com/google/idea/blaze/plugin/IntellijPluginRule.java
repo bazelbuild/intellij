@@ -22,21 +22,14 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 public class IntellijPluginRule {
 
   public static final String TARGET_TAG_IJ_PLUGIN = "intellij-plugin";
-  public static final String TARGET_TAG_IJ_PLUGIN_BUNDLE = "intellij-plugin-bundle";
 
   public static boolean isPluginTarget(TargetIdeInfo target) {
     return isIntellijPluginDebugTarget(target)
-        || isPluginBundle(target)
         || isSinglePluginTarget(target);
   }
 
   public static boolean isIntellijPluginDebugTarget(TargetIdeInfo target) {
-    return target.intellijPluginDeployInfo != null;
-  }
-
-  public static boolean isPluginBundle(TargetIdeInfo target) {
-    return target.kindIsOneOf(Kind.JAVA_LIBRARY)
-        && target.tags.contains(TARGET_TAG_IJ_PLUGIN_BUNDLE);
+    return target.kind == Kind.INTELLIJ_PLUGIN_DEBUG_TARGET;
   }
 
   public static boolean isSinglePluginTarget(TargetIdeInfo target) {

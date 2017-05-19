@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 
 /** Simple implementation of TargetIdeInfo. */
 public final class TargetIdeInfo implements Serializable {
-  private static final long serialVersionUID = 15L;
+  private static final long serialVersionUID = 17L;
 
   public final TargetKey key;
   public final Kind kind;
@@ -39,11 +39,11 @@ public final class TargetIdeInfo implements Serializable {
   @Nullable public final CToolchainIdeInfo cToolchainIdeInfo;
   @Nullable public final JavaIdeInfo javaIdeInfo;
   @Nullable public final AndroidIdeInfo androidIdeInfo;
+  @Nullable public final AndroidSdkIdeInfo androidSdkIdeInfo;
   @Nullable public final PyIdeInfo pyIdeInfo;
   @Nullable public final TestIdeInfo testIdeInfo;
   @Nullable public final ProtoLibraryLegacyInfo protoLibraryLegacyInfo;
   @Nullable public final JavaToolchainIdeInfo javaToolchainIdeInfo;
-  @Nullable public final IntellijPluginDeployInfo intellijPluginDeployInfo;
 
   public TargetIdeInfo(
       TargetKey key,
@@ -56,11 +56,11 @@ public final class TargetIdeInfo implements Serializable {
       @Nullable CToolchainIdeInfo cToolchainIdeInfo,
       @Nullable JavaIdeInfo javaIdeInfo,
       @Nullable AndroidIdeInfo androidIdeInfo,
+      @Nullable AndroidSdkIdeInfo androidSdkIdeInfo,
       @Nullable PyIdeInfo pyIdeInfo,
       @Nullable TestIdeInfo testIdeInfo,
       @Nullable ProtoLibraryLegacyInfo protoLibraryLegacyInfo,
-      @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo,
-      @Nullable IntellijPluginDeployInfo intellijPluginDeployInfo) {
+      @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo) {
     this.key = key;
     this.kind = kind;
     this.buildFile = buildFile;
@@ -71,11 +71,11 @@ public final class TargetIdeInfo implements Serializable {
     this.cToolchainIdeInfo = cToolchainIdeInfo;
     this.javaIdeInfo = javaIdeInfo;
     this.androidIdeInfo = androidIdeInfo;
+    this.androidSdkIdeInfo = androidSdkIdeInfo;
     this.pyIdeInfo = pyIdeInfo;
     this.testIdeInfo = testIdeInfo;
     this.protoLibraryLegacyInfo = protoLibraryLegacyInfo;
     this.javaToolchainIdeInfo = javaToolchainIdeInfo;
-    this.intellijPluginDeployInfo = intellijPluginDeployInfo;
   }
 
   @Override
@@ -89,7 +89,7 @@ public final class TargetIdeInfo implements Serializable {
   }
 
   /** Returns whether this rule is one of the kinds. */
-  public boolean kindIsOneOf(List<Kind> kinds) {
+  public boolean kindIsOneOf(Collection<Kind> kinds) {
     if (kind != null) {
       return kind.isOneOf(kinds);
     }
@@ -122,7 +122,7 @@ public final class TargetIdeInfo implements Serializable {
     private JavaToolchainIdeInfo javaToolchainIdeInfo;
 
     public Builder setLabel(String label) {
-      return setLabel(new Label(label));
+      return setLabel(Label.create(label));
     }
 
     public Builder setLabel(Label label) {
@@ -212,7 +212,7 @@ public final class TargetIdeInfo implements Serializable {
     }
 
     public Builder addDependency(String s) {
-      return addDependency(new Label(s));
+      return addDependency(Label.create(s));
     }
 
     public Builder addDependency(Label label) {
@@ -222,7 +222,7 @@ public final class TargetIdeInfo implements Serializable {
     }
 
     public Builder addRuntimeDep(String s) {
-      return addRuntimeDep(new Label(s));
+      return addRuntimeDep(Label.create(s));
     }
 
     public Builder addRuntimeDep(Label label) {
@@ -243,11 +243,11 @@ public final class TargetIdeInfo implements Serializable {
           cToolchainIdeInfo,
           javaIdeInfo,
           androidIdeInfo,
+          null,
           pyIdeInfo,
           testIdeInfo,
           protoLibraryLegacyInfo,
-          javaToolchainIdeInfo,
-          null);
+          javaToolchainIdeInfo);
     }
   }
 }

@@ -28,6 +28,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /** Points to the ts_config rule. */
+@Deprecated
 public class TsConfigRuleSection {
   public static final SectionKey<Label, ScalarSection<Label>> KEY = SectionKey.of("ts_config_rule");
   public static final SectionParser PARSER = new TsConfigRuleSectionParser();
@@ -45,7 +46,7 @@ public class TsConfigRuleSection {
         parseContext.addErrors(errors);
         return null;
       }
-      return new Label(rest);
+      return Label.create(rest);
     }
 
     @Override
@@ -56,6 +57,17 @@ public class TsConfigRuleSection {
     @Override
     public ItemType getItemType() {
       return ItemType.Label;
+    }
+
+    @Override
+    public boolean isDeprecated() {
+      return true;
+    }
+
+    @Nullable
+    @Override
+    public String getDeprecationMessage() {
+      return "Use `ts_config_rules` instead, which allows specifying multiple `ts_config` targets.";
     }
   }
 }

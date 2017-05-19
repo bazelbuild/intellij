@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.libraries.JarCache;
@@ -35,7 +36,10 @@ import java.util.Set;
 public class JavaPrefetchFileSource implements PrefetchFileSource {
   @Override
   public void addFilesToPrefetch(
-      Project project, BlazeProjectData blazeProjectData, Collection<File> files) {
+      Project project,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      Collection<File> files) {
     BlazeJavaSyncData syncData = blazeProjectData.syncState.get(BlazeJavaSyncData.class);
     if (syncData == null) {
       return;
@@ -47,7 +51,8 @@ public class JavaPrefetchFileSource implements PrefetchFileSource {
     boolean attachSourcesByDefault =
         BlazeJavaUserSettings.getInstance().getAttachSourcesByDefault();
     SourceJarManager sourceJarManager = SourceJarManager.getInstance(project);
-    Collection<BlazeLibrary> libraries = BlazeLibraryCollector.getLibraries(blazeProjectData);
+    Collection<BlazeLibrary> libraries =
+        BlazeLibraryCollector.getLibraries(projectViewSet, blazeProjectData);
     ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.artifactLocationDecoder;
     for (BlazeLibrary library : libraries) {
       if (!(library instanceof BlazeJarLibrary)) {

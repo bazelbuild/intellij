@@ -19,12 +19,19 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import java.io.File;
 import java.util.Collection;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -33,9 +40,16 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
 
+  @Before
+  public final void doSetup() {
+    BlazeProjectData blazeProjectData = MockBlazeProjectDataBuilder.builder(workspaceRoot).build();
+    registerProjectService(
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(blazeProjectData));
+  }
+
   @Test
-  public void testTestSizeMatched() throws Exception {
-    File source = new File("java/com/foo/FooTest.java");
+  public void testTestSizeMatched() {
+    File source = workspaceRoot.fileForPath(new WorkspacePath("java/com/foo/FooTest.java"));
     Collection<TargetIdeInfo> targets =
         ImmutableList.of(
             TargetIdeInfo.builder()
@@ -49,24 +63,48 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .build());
     Label match =
-        TestTargetHeuristic.chooseTestTargetForSourceFile(source, targets, TestSize.SMALL);
-    assertThat(match).isEqualTo(new Label("//foo:test2"));
+        TestTargetHeuristic.chooseTestTargetForSourceFile(
+            getProject(), null, source, targets, TestSize.SMALL);
+    assertThat(match).isEqualTo(Label.create("//foo:test2"));
   }
 
   @Test
-  public void testTargetNameMatched() throws Exception {
-    File source = new File("java/com/foo/FooTest.java");
+  public void testTargetSourcesMatched() {
+    File source = workspaceRoot.fileForPath(new WorkspacePath("java/com/foo/FooTest.java"));
+    Collection<TargetIdeInfo> targets =
+        ImmutableList.of(
+            TargetIdeInfo.builder()
+                .setLabel("//foo:test1")
+                .setKind("java_test")
+                .addSource(sourceRoot("java/com/bar/OtherTest.java"))
+                .build(),
+            TargetIdeInfo.builder()
+                .setLabel("//foo:test2")
+                .setKind("java_test")
+                .addSource(sourceRoot("java/com/foo/FooTest.java"))
+                .build());
+    Label match =
+        TestTargetHeuristic.chooseTestTargetForSourceFile(
+            getProject(), null, source, targets, null);
+    assertThat(match).isEqualTo(Label.create("//foo:test2"));
+  }
+
+  @Test
+  public void testTargetNameMatched() {
+    File source = workspaceRoot.fileForPath(new WorkspacePath("java/com/foo/FooTest.java"));
     Collection<TargetIdeInfo> targets =
         ImmutableList.of(
             TargetIdeInfo.builder().setLabel("//foo:FirstTest").setKind("java_test").build(),
             TargetIdeInfo.builder().setLabel("//foo:FooTest").setKind("java_test").build());
-    Label match = TestTargetHeuristic.chooseTestTargetForSourceFile(source, targets, null);
-    assertThat(match).isEqualTo(new Label("//foo:FooTest"));
+    Label match =
+        TestTargetHeuristic.chooseTestTargetForSourceFile(
+            getProject(), null, source, targets, null);
+    assertThat(match).isEqualTo(Label.create("//foo:FooTest"));
   }
 
   @Test
-  public void testNoMatchFallBackToFirstTarget() throws Exception {
-    File source = new File("java/com/foo/FooTest.java");
+  public void testNoMatchFallBackToFirstTarget() {
+    File source = workspaceRoot.fileForPath(new WorkspacePath("java/com/foo/FooTest.java"));
     ImmutableList<TargetIdeInfo> targets =
         ImmutableList.of(
             TargetIdeInfo.builder()
@@ -80,13 +118,14 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .build());
     Label match =
-        TestTargetHeuristic.chooseTestTargetForSourceFile(source, targets, TestSize.LARGE);
-    assertThat(match).isEqualTo(new Label("//bar:BarTest"));
+        TestTargetHeuristic.chooseTestTargetForSourceFile(
+            getProject(), null, source, targets, TestSize.LARGE);
+    assertThat(match).isEqualTo(Label.create("//bar:BarTest"));
   }
 
   @Test
-  public void testTargetNameCheckedBeforeTestSize() throws Exception {
-    File source = new File("java/com/foo/FooTest.java");
+  public void testTargetNameCheckedBeforeTestSize() {
+    File source = workspaceRoot.fileForPath(new WorkspacePath("java/com/foo/FooTest.java"));
     ImmutableList<TargetIdeInfo> targets =
         ImmutableList.of(
             TargetIdeInfo.builder()
@@ -100,7 +139,35 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
                 .build());
     Label match =
-        TestTargetHeuristic.chooseTestTargetForSourceFile(source, targets, TestSize.SMALL);
-    assertThat(match).isEqualTo(new Label("//foo:FooTest"));
+        TestTargetHeuristic.chooseTestTargetForSourceFile(
+            getProject(), null, source, targets, TestSize.SMALL);
+    assertThat(match).isEqualTo(Label.create("//foo:FooTest"));
+  }
+
+  @Test
+  public void testTargetSourcesCheckedBeforeTestSize() {
+    File source = workspaceRoot.fileForPath(new WorkspacePath("java/com/foo/FooTest.java"));
+    Collection<TargetIdeInfo> targets =
+        ImmutableList.of(
+            TargetIdeInfo.builder()
+                .setLabel("//foo:test1")
+                .setKind("java_test")
+                .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
+                .addSource(sourceRoot("java/com/bar/OtherTest.java"))
+                .build(),
+            TargetIdeInfo.builder()
+                .setLabel("//foo:test2")
+                .setKind("java_test")
+                .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
+                .addSource(sourceRoot("java/com/foo/FooTest.java"))
+                .build());
+    Label match =
+        TestTargetHeuristic.chooseTestTargetForSourceFile(
+            getProject(), null, source, targets, TestSize.SMALL);
+    assertThat(match).isEqualTo(Label.create("//foo:test2"));
+  }
+
+  private static ArtifactLocation sourceRoot(String relativePath) {
+    return ArtifactLocation.builder().setRelativePath(relativePath).setIsSource(true).build();
   }
 }

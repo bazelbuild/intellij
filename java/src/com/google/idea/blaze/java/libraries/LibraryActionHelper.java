@@ -31,8 +31,8 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class LibraryActionHelper {
 

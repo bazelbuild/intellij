@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.lang.buildfile.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import javax.annotation.Nullable;
 
 /** PSI element for an augmented assignment statement [expr += expr] */
@@ -28,13 +29,15 @@ public class AugmentedAssignmentStatement extends BuildElementImpl implements St
   /** Returns the LHS of the assignment */
   @Nullable
   public TargetExpression getLeftHandSideExpression() {
-    return childToPsi(BuildElementTypes.EXPRESSIONS, 0);
+    PsiElement psi = childToPsi(BuildElementTypes.EXPRESSIONS, 0);
+    return psi instanceof TargetExpression ? (TargetExpression) psi : null;
   }
 
   /** Returns the RHS of the assignment */
   @Nullable
   public Expression getAssignedValue() {
-    return childToPsi(BuildElementTypes.EXPRESSIONS, 1);
+    PsiElement psi = childToPsi(BuildElementTypes.EXPRESSIONS, 1);
+    return psi instanceof Expression ? (Expression) psi : null;
   }
 
   @Override

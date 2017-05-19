@@ -80,13 +80,15 @@ public class BlazeRerunFailedTestsAction extends AbstractRerunFailedTestsAction 
         throws ExecutionException {
       BlazeCommandRunConfigurationCommonState handlerState =
           configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-      if (handlerState == null || !BlazeCommandName.TEST.equals(handlerState.getCommand())) {
+      if (handlerState == null
+          || !BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand())) {
         return null;
       }
       Project project = getProject();
       List<Location<?>> locations =
           getFailedTests(project)
               .stream()
+              .filter(AbstractTestProxy::isLeaf)
               .map((test) -> toLocation(project, test))
               .filter(Objects::nonNull)
               .collect(Collectors.toList());
@@ -94,8 +96,9 @@ public class BlazeRerunFailedTestsAction extends AbstractRerunFailedTestsAction 
       if (testFilter == null) {
         return null;
       }
-      List<String> blazeFlags = setTestFilter(handlerState.getBlazeFlags(), testFilter);
-      handlerState.setBlazeFlags(blazeFlags);
+      List<String> blazeFlags =
+          setTestFilter(handlerState.getBlazeFlagsState().getRawFlags(), testFilter);
+      handlerState.getBlazeFlagsState().setRawFlags(blazeFlags);
       return configuration.getState(executor, environment);
     }
 

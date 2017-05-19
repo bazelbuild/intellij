@@ -51,11 +51,13 @@ public class AndroidResourceModuleRegistryTest extends BlazeTestCase {
     Module moduleTwo = mock(Module.class);
     Module moduleThree = mock(Module.class);
     AndroidResourceModule resourceModuleOne =
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(new Label("//foo/bar:one"))).build();
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//foo/bar:one")))
+            .build();
     AndroidResourceModule resourceModuleTwo =
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(new Label("//foo/bar:two"))).build();
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//foo/bar:two")))
+            .build();
     AndroidResourceModule resourceModuleThree =
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(new Label("//foo/bar:three")))
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//foo/bar:three")))
             .build();
     registry.put(moduleOne, resourceModuleOne);
     registry.put(moduleTwo, resourceModuleTwo);
@@ -76,9 +78,11 @@ public class AndroidResourceModuleRegistryTest extends BlazeTestCase {
   public void testPutSameKeyDifferentValues() {
     Module module = mock(Module.class);
     AndroidResourceModule resourceModuleOne =
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(new Label("//foo/bar:one"))).build();
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//foo/bar:one")))
+            .build();
     AndroidResourceModule resourceModuleTwo =
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(new Label("//foo/bar:two"))).build();
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//foo/bar:two")))
+            .build();
     registry.put(module, resourceModuleOne);
     registry.put(module, resourceModuleTwo);
     assertThat(registry.get(module)).isEqualTo(resourceModuleTwo);
@@ -89,7 +93,8 @@ public class AndroidResourceModuleRegistryTest extends BlazeTestCase {
     Module moduleOne = mock(Module.class);
     Module moduleTwo = mock(Module.class);
     AndroidResourceModule resourceModule =
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(new Label("//foo/bar:one"))).build();
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//foo/bar:one")))
+            .build();
     registry.put(moduleOne, resourceModule);
     try {
       registry.put(moduleTwo, resourceModule);

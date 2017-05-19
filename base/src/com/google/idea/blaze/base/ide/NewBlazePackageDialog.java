@@ -38,11 +38,11 @@ import com.intellij.util.IncorrectOperationException;
 import java.awt.GridBagLayout;
 import java.io.File;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class NewBlazePackageDialog extends DialogWrapper {
   private static final Logger logger = Logger.getInstance(NewBlazePackageDialog.class);
@@ -112,7 +112,7 @@ class NewBlazePackageDialog extends DialogWrapper {
     WorkspacePath newPackagePath = workspaceRoot.workspacePathFor(newPackageDirectory);
 
     TargetName newTargetName = newRuleUI.getRuleName();
-    Label newRule = new Label(newPackagePath, newTargetName);
+    Label newRule = Label.create(newPackagePath, newTargetName);
     Kind ruleKind = newRuleUI.getSelectedRuleKind();
     try {
       parentDirectory.checkCreateSubdirectory(newPackageName);

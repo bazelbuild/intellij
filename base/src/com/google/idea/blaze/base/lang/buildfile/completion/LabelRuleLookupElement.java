@@ -16,8 +16,6 @@
 package com.google.idea.blaze.base.lang.buildfile.completion;
 
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
-import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProvider;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
@@ -45,9 +43,6 @@ public class LabelRuleLookupElement extends BuildLookupElement {
 
     String ruleFragment = LabelUtils.getRuleComponent(originalString);
     List<BuildLookupElement> lookups = Lists.newArrayList();
-    // TODO: Handle rules generated via functions? (e.g. via blaze sync)
-    BuildLanguageSpec spec =
-        BuildLanguageSpecProvider.getInstance().getLanguageSpec(file.getProject());
     for (FuncallExpression target : file.findChildrenByClass(FuncallExpression.class)) {
       String targetName = target.getName();
       if (targetName == null
@@ -56,7 +51,7 @@ public class LabelRuleLookupElement extends BuildLookupElement {
         continue;
       }
       String ruleType = target.getFunctionName();
-      if (ruleType == null || (spec != null && !spec.hasRule(ruleType))) {
+      if (ruleType == null) {
         continue;
       }
       lookups.add(

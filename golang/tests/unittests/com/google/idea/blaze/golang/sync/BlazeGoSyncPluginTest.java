@@ -71,7 +71,7 @@ public class BlazeGoSyncPluginTest extends BlazeTestCase {
                     .build())
             .build();
     WorkspaceLanguageSettings workspaceLanguageSettings =
-        LanguageSupport.createWorkspaceLanguageSettings(context, projectViewSet);
+        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
     errorCollector.assertNoIssues();
     assertThat(workspaceLanguageSettings)
         .isEqualTo(
@@ -109,7 +109,9 @@ public class BlazeGoSyncPluginTest extends BlazeTestCase {
                     .add(ListSection.builder(AdditionalLanguagesSection.KEY).add(LanguageClass.GO))
                     .build())
             .build();
-    LanguageSupport.createWorkspaceLanguageSettings(context, projectViewSet);
+    WorkspaceLanguageSettings workspaceLanguageSettings =
+        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
+    LanguageSupport.validateLanguageSettings(context, workspaceLanguageSettings);
     errorCollector.assertIssueContaining(
         "Language 'go' is not supported for this plugin with workspace type: 'java'");
   }

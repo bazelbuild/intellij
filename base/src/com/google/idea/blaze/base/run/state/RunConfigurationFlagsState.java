@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.run.state;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,11 +43,17 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
     this.fieldLabel = fieldLabel;
   }
 
-  public List<String> getFlags() {
+  /** @return Flags subject to macro expansion. */
+  public List<String> getExpandedFlags() {
+    return BlazeFlags.expandBuildFlags(flags);
+  }
+
+  /** @return Raw flags that haven't been macro expanded */
+  public List<String> getRawFlags() {
     return flags;
   }
 
-  public void setFlags(List<String> flags) {
+  public void setRawFlags(List<String> flags) {
     this.flags = ImmutableList.copyOf(flags);
   }
 
@@ -118,13 +125,13 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
     @Override
     public void resetEditorFrom(RunConfigurationState genericState) {
       RunConfigurationFlagsState state = (RunConfigurationFlagsState) genericState;
-      flagsField.setText(makeFlagString(state.getFlags()));
+      flagsField.setText(makeFlagString(state.getRawFlags()));
     }
 
     @Override
     public void applyEditorTo(RunConfigurationState genericState) {
       RunConfigurationFlagsState state = (RunConfigurationFlagsState) genericState;
-      state.setFlags(ParametersListUtil.parse(Strings.nullToEmpty(flagsField.getText())));
+      state.setRawFlags(ParametersListUtil.parse(Strings.nullToEmpty(flagsField.getText())));
     }
 
     @Override

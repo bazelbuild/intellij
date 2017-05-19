@@ -17,10 +17,8 @@ package com.google.idea.blaze.android.run.test;
 
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.intellij.openapi.project.Project;
@@ -130,10 +128,6 @@ final class BlazeAndroidTestRunConfigurationState implements RunConfigurationSta
 
   public void setExtraOptions(String extraOptions) {
     this.extraOptions = extraOptions;
-  }
-
-  public ImmutableList<String> getBuildFlags(Project project, ProjectViewSet projectViewSet) {
-    return commonState.getBuildFlags(project, projectViewSet);
   }
 
   /**

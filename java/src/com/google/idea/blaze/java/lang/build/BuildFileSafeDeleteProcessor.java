@@ -28,10 +28,9 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Removes glob references which don't refer directly to the item(s) being deleted (b/28979434)
@@ -55,12 +54,7 @@ public class BuildFileSafeDeleteProcessor extends JavaSafeDeleteProcessor {
       @NotNull PsiElement[] allElementsToDelete,
       @NotNull List<UsageInfo> result) {
     NonCodeUsageSearchInfo superResult = super.findUsages(element, allElementsToDelete, result);
-    Iterator<UsageInfo> iter = result.iterator();
-    while (iter.hasNext()) {
-      if (ignoreUsage(iter.next())) {
-        iter.remove();
-      }
-    }
+    result.removeIf(BuildFileSafeDeleteProcessor::ignoreUsage);
     return superResult;
   }
 

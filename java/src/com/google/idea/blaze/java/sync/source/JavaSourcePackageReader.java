@@ -42,8 +42,8 @@ public class JavaSourcePackageReader extends JavaPackageReader {
 
   private static final Logger logger = Logger.getInstance(SourceDirectoryCalculator.class);
 
-  private static final Pattern JAVA_PACKAGE_PATTERN =
-      Pattern.compile("^\\s*package\\s+([\\w\\.]+);");
+  // Package declaration of java-like languages.
+  private static final Pattern PACKAGE_PATTERN = Pattern.compile("^\\s*package\\s+([\\w\\.]+)");
 
   @Override
   @Nullable
@@ -61,7 +61,7 @@ public class JavaSourcePackageReader extends JavaPackageReader {
       String javaLine;
 
       while ((javaLine = javaReader.readLine()) != null) {
-        Matcher packageMatch = JAVA_PACKAGE_PATTERN.matcher(javaLine);
+        Matcher packageMatch = PACKAGE_PATTERN.matcher(javaLine);
         if (packageMatch.find()) {
           return packageMatch.group(1);
         }

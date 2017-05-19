@@ -15,12 +15,22 @@
  */
 package com.google.idea.blaze.base.lang.projectview.psi;
 
+import com.google.idea.blaze.base.lang.projectview.lexer.ProjectViewTokenType;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import javax.annotation.Nullable;
 
 /** Psi element for scalar section. */
-public class ProjectViewPsiScalarSection extends ProjectViewPsiElement {
+public class ProjectViewPsiScalarSection extends ProjectViewSection {
 
   public ProjectViewPsiScalarSection(ASTNode node) {
     super(node);
+  }
+
+  @Nullable
+  @Override
+  public String getSectionName() {
+    PsiElement keyword = findChildByType(ProjectViewTokenType.SCALAR_KEYWORD);
+    return keyword != null ? keyword.getText() : null;
   }
 }

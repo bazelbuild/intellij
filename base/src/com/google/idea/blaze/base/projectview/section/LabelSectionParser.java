@@ -38,7 +38,7 @@ public final class LabelSectionParser extends ListSectionParser<Label> {
       parseContext.addErrors(errors);
       return null;
     }
-    return new Label(text);
+    return Label.create(text);
   }
 
   @Override

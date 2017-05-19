@@ -25,7 +25,7 @@ import java.util.Collection;
 /** Augments the java importer */
 public interface BlazeJavaSyncAugmenter {
   ExtensionPointName<BlazeJavaSyncAugmenter> EP_NAME =
-      ExtensionPointName.create("com.google.idea.blaze.java.JavaSyncAugmenter");
+      ExtensionPointName.create("com.google.idea.blaze.JavaSyncAugmenter");
 
   /**
    * Adds extra libraries for this source rule.

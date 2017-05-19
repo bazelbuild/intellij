@@ -15,22 +15,30 @@
  */
 package com.google.idea.common.actionhelper;
 
+import com.google.common.collect.Iterables;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.vfs.VirtualFile;
-import java.util.List;
+import java.util.Collection;
 import javax.annotation.Nullable;
 
 /** Helps setting the presentation enabled/visible/text states. */
 public class ActionPresentationHelper {
 
-  private final Presentation presentation;
+  private final AnActionEvent event;
+
   private boolean enabled = true;
   private boolean visible = true;
   private boolean disableWithoutSubject;
+  private boolean hideInContextMenuIfDisabled;
+
   private boolean hasSubject;
   private String text;
   private String subjectText;
+  private boolean useTextMnemonic;
+
+  private String description;
 
   /** Converts a subject to a string */
   @FunctionalInterface
@@ -38,12 +46,12 @@ public class ActionPresentationHelper {
     String subjectToString(T subject);
   }
 
-  private ActionPresentationHelper(Presentation presentation) {
-    this.presentation = presentation;
+  private ActionPresentationHelper(AnActionEvent event) {
+    this.event = event;
   }
 
-  public static ActionPresentationHelper of(AnActionEvent e) {
-    return new ActionPresentationHelper(e.getPresentation());
+  public static ActionPresentationHelper of(AnActionEvent event) {
+    return new ActionPresentationHelper(event);
   }
 
   /** Disables the action if the condition is true. */
@@ -52,9 +60,14 @@ public class ActionPresentationHelper {
     return this;
   }
 
-  /** Hides the action if the condition is true. */
+  /** Hides the action if the condition is true. If the action is hidden, it is also disabled. */
   public ActionPresentationHelper hideIf(boolean hideCondition) {
     this.visible = this.visible && !hideCondition;
+    return this;
+  }
+
+  public ActionPresentationHelper hideInContextMenuIfDisabled() {
+    this.hideInContextMenuIfDisabled = true;
     return this;
   }
 
@@ -67,6 +80,18 @@ public class ActionPresentationHelper {
   /** Sets the text of the presentation. */
   public ActionPresentationHelper setText(String text) {
     this.text = text;
+    return this;
+  }
+
+  /** Use & or _ in the presentation text as a mnemonic shortcut. */
+  public ActionPresentationHelper useTextMnemonic() {
+    this.useTextMnemonic = true;
+    return this;
+  }
+
+  /** Sets the description of the presentation. */
+  public ActionPresentationHelper setDescription(String description) {
+    this.description = description;
     return this;
   }
 
@@ -121,7 +146,7 @@ public class ActionPresentationHelper {
       String noSubjectText,
       String singleSubjectText,
       String multipleSubjectText,
-      List<VirtualFile> files) {
+      Collection<VirtualFile> files) {
     return setTextWithSubjects(
         noSubjectText,
         singleSubjectText,
@@ -142,7 +167,7 @@ public class ActionPresentationHelper {
       String noSubjectText,
       String singleSubjectText,
       String multipleSubjectText,
-      List<T> subjects,
+      Collection<T> subjects,
       SubjectToString<T> subjectToString) {
     if (subjects.size() > 1) {
       this.text = noSubjectText;
@@ -150,7 +175,7 @@ public class ActionPresentationHelper {
       this.hasSubject = true;
       return this;
     } else {
-      T subject = !subjects.isEmpty() ? subjects.get(0) : null;
+      T subject = !subjects.isEmpty() ? Iterables.getOnlyElement(subjects) : null;
       return setTextWithSubject(noSubjectText, singleSubjectText, subject, subjectToString);
     }
   }
@@ -160,16 +185,26 @@ public class ActionPresentationHelper {
   }
 
   public void commit() {
-    boolean enabled = this.enabled;
+    boolean enabled = this.enabled && this.visible;
     if (disableWithoutSubject) {
       enabled = enabled && hasSubject;
     }
+    boolean visible = this.visible;
+    if (hideInContextMenuIfDisabled && !enabled && ActionPlaces.isPopupPlace(event.getPlace())) {
+      visible = false;
+    }
+
+    Presentation presentation = event.getPresentation();
     presentation.setEnabled(enabled);
     presentation.setVisible(visible);
 
     String text = enabled && hasSubject ? subjectText : this.text;
     if (text != null) {
-      presentation.setText(text, false);
+      presentation.setText(text, useTextMnemonic);
+    }
+
+    if (description != null) {
+      presentation.setDescription(description);
     }
   }
 }

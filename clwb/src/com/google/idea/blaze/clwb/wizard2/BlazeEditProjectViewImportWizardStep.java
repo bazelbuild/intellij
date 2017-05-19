@@ -82,6 +82,7 @@ class BlazeEditProjectViewImportWizardStep extends ProjectImportWizardStep {
   public void onWizardFinished() throws CommitStepException {
     try {
       getProjectBuilder().commit();
+      control.commit();
     } catch (BlazeProjectCommitException e) {
       throw new CommitStepException(e.getMessage());
     }
@@ -89,6 +90,6 @@ class BlazeEditProjectViewImportWizardStep extends ProjectImportWizardStep {
 
   @Override
   public String getHelpId() {
-    return "docs/project-views.md";
+    return "docs/project-views";
   }
 }
