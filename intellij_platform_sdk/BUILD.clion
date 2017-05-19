@@ -15,6 +15,16 @@ java_import(
     jars = glob(["clion-*/plugins/hg4idea/lib/hg4idea.jar"]),
 )
 
+java_import(
+    name = "terminal",
+    jars = glob(["clion-*/plugins/terminal/lib/terminal.jar"]),
+)
+
+java_import(
+    name = "python",
+    jars = glob(["clion-*/plugins/python/lib/python.jar"]),
+)
+
 # The plugins required by CLwB. Presumably there will be some, when we write
 # some integration tests.
 java_import(

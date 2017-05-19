@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.lang;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -35,6 +36,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -111,12 +113,15 @@ public class AdditionalLanguagesHelper
     panel.setText(message);
     panel.createActionLabel(
         String.format("Enable %s support", langName),
-        () -> enableLanguageSupport(project, language));
+        () -> {
+          enableLanguageSupport(project, ImmutableList.of(language));
+          suppressNotifications(language);
+        });
     panel.createActionLabel("Don't show again", () -> suppressNotifications(language));
     return panel;
   }
 
-  private void enableLanguageSupport(Project project, LanguageClass language) {
+  public static void enableLanguageSupport(Project project, List<LanguageClass> languages) {
     ProjectViewEdit edit =
         ProjectViewEdit.editLocalProjectView(
             project,
@@ -126,7 +131,7 @@ public class AdditionalLanguagesHelper
               builder.replace(
                   existingSection,
                   ListSection.update(AdditionalLanguagesSection.KEY, existingSection)
-                      .add(language));
+                      .addAll(languages));
               return true;
             });
     if (edit == null) {
@@ -136,8 +141,6 @@ public class AdditionalLanguagesHelper
       return;
     }
     edit.apply();
-
-    suppressNotifications(language);
 
     BlazeSyncManager.getInstance(project)
         .requestProjectSync(

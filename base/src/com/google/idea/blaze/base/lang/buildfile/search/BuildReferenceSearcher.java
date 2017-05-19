@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.NamedBuildElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -62,19 +61,22 @@ public class BuildReferenceSearcher extends QueryExecutorBase<PsiReference, Sear
       processFileReferences(params, file);
       return;
     }
-
     if (!(element instanceof FuncallExpression)) {
       return;
     }
-
-    Label label = ((FuncallExpression) element).resolveBuildLabel();
+    FuncallExpression funcall = (FuncallExpression) element;
     PsiFile localFile = element.getContainingFile();
-    if (label == null || localFile == null) {
+    if (localFile == null) {
+      return;
+    }
+    Label label = funcall.resolveBuildLabel();
+    if (label == null) {
+      searchForExternalWorkspace(params, localFile, funcall);
       return;
     }
     List<String> stringsToSearch = LabelUtils.getAllValidLabelStrings(label, true);
     for (String string : stringsToSearch) {
-      if (string.startsWith("//")) {
+      if (LabelUtils.isAbsolute(string)) {
         searchForString(params, element, string);
       } else {
         // only a valid reference from local package -- restrict the search scope accordingly
@@ -118,17 +120,18 @@ public class BuildReferenceSearcher extends QueryExecutorBase<PsiReference, Sear
 
   /** Find references to both the file itself, and build targets defined in the file. */
   private void processBuildFileReferences(SearchParameters params, BuildFile file) {
-    WorkspacePath workspacePath = file.getPackageWorkspacePath();
-    if (workspacePath == null) {
+    Label label = file.getBuildLabel();
+    if (label == null) {
       return;
     }
+    String labelString = label.toString();
     List<String> stringsToSearch = Lists.newArrayList();
     if (file.getBlazeFileType() == BlazeFileType.BuildPackage) {
-      stringsToSearch.add("//" + workspacePath);
+      // remove ':__pkg__' component of label
+      stringsToSearch.add(labelString.split(":", 2)[0]);
     } else {
-      stringsToSearch.add("//" + workspacePath + ":" + file.getName());
-      stringsToSearch.add(
-          "//" + workspacePath + "/" + file.getName()); // deprecated load/subinclude format
+      stringsToSearch.add(labelString);
+      stringsToSearch.add(labelString.replace(':', '/')); // deprecated load/subinclude format
     }
     for (String string : stringsToSearch) {
       searchForString(params, file, string);
@@ -161,5 +164,22 @@ public class BuildReferenceSearcher extends QueryExecutorBase<PsiReference, Sear
               (GlobalSearchScope) scope, BuildFileType.INSTANCE);
     }
     params.getOptimizer().searchWord(string, scope, UsageSearchContext.IN_STRINGS, true, element);
+  }
+
+  private static void searchForExternalWorkspace(
+      SearchParameters params, PsiFile file, FuncallExpression funcall) {
+    if (!isBlazeWorkspaceFile(file)) {
+      return;
+    }
+    String name = funcall.getNameArgumentValue();
+    if (name != null) {
+      searchForString(params, funcall, "@" + name);
+    }
+  }
+
+  /** Is the file a blaze WORKSPACE file */
+  private static boolean isBlazeWorkspaceFile(PsiFile file) {
+    return file instanceof BuildFile
+        && ((BuildFile) file).getBlazeFileType() == BlazeFileType.Workspace;
   }
 }

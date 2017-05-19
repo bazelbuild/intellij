@@ -1,13 +1,27 @@
 licenses(["notice"])  # Apache 2.0
 
+load(
+    "//build_defs:build_defs.bzl",
+    "merged_plugin_xml",
+    "stamped_plugin_xml",
+    "intellij_plugin",
+)
+load(
+    "//testing:test_defs.bzl",
+    "intellij_integration_test_suite",
+    "intellij_unit_test_suite",
+)
+
 java_library(
     name = "java",
     srcs = glob(["src/**/*.java"]),
     visibility = ["//visibility:public"],
-    deps = [
-        "//base",
+    runtime_deps = [
         "//common/actionhelper",
         "//common/experiments",
+    ],
+    deps = [
+        "//base",
         "//intellij_platform_sdk:junit",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
@@ -20,13 +34,6 @@ filegroup(
     name = "plugin_xml",
     srcs = ["src/META-INF/blaze-java.xml"],
     visibility = ["//visibility:public"],
-)
-
-load(
-    "//build_defs:build_defs.bzl",
-    "merged_plugin_xml",
-    "stamped_plugin_xml",
-    "intellij_plugin",
 )
 
 merged_plugin_xml(
@@ -52,12 +59,6 @@ intellij_plugin(
     deps = [
         ":java",
     ],
-)
-
-load(
-    "//testing:test_defs.bzl",
-    "intellij_integration_test_suite",
-    "intellij_unit_test_suite",
 )
 
 intellij_unit_test_suite(

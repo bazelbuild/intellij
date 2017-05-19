@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import java.io.File;
 import java.io.Serializable;
 import javax.annotation.Nullable;
@@ -45,6 +46,13 @@ public interface WorkspacePathResolver extends Serializable {
 
   /** Finds the package root directory that a workspace relative path is in. */
   File findPackageRoot(String relativePath);
+
+  /**
+   * Finds the workspace root directory that an absolute file lies under. Returns null if the file
+   * is not in a known workspace.
+   */
+  @Nullable
+  WorkspaceRoot findWorkspaceRoot(File absoluteFile);
 
   /**
    * Given a resolved, absolute file, returns the corresponding {@link WorkspacePath}. Returns null

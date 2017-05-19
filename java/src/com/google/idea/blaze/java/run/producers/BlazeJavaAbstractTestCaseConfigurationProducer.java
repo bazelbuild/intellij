@@ -94,6 +94,9 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
       return null;
     }
     location = JavaExecutionUtil.stepIntoSingleClass(location);
+    if (location == null) {
+      return null;
+    }
     PsiClass psiClass =
         PsiTreeUtil.getParentOfType(location.getPsiElement(), PsiClass.class, false);
     if (!isAbstractClass(psiClass)) {
@@ -193,10 +196,10 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
     if (handlerState == null) {
       return;
     }
-    handlerState.setCommand(BlazeCommandName.TEST);
+    handlerState.getCommandState().setCommand(BlazeCommandName.TEST);
 
     // remove old test filter flag if present
-    List<String> flags = new ArrayList<>(handlerState.getBlazeFlags());
+    List<String> flags = new ArrayList<>(handlerState.getBlazeFlagsState().getRawFlags());
     flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
 
     String testFilter =
@@ -206,7 +209,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
       return;
     }
     flags.add(BlazeFlags.TEST_FILTER + "=" + testFilter);
-    handlerState.setBlazeFlags(flags);
+    handlerState.getBlazeFlagsState().setRawFlags(flags);
 
     BlazeConfigurationNameBuilder nameBuilder = new BlazeConfigurationNameBuilder(configuration);
     nameBuilder.setTargetString(configName(subClass, method));

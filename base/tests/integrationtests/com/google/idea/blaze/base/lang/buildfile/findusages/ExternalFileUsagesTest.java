@@ -61,7 +61,7 @@ public class ExternalFileUsagesTest extends BuildFileIntegrationTestCase {
 
     PsiElement ref = references[0].getElement();
     assertThat(ref).isInstanceOf(StringLiteral.class);
-    assertThat(PsiUtils.getParentOfType(ref, Argument.Keyword.class)).isEqualTo(arg);
+    assertThat(PsiUtils.getParentOfType(ref, Argument.Keyword.class, true)).isEqualTo(arg);
   }
 
   @Test

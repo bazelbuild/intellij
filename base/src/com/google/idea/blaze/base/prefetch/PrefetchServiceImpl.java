@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -47,11 +46,7 @@ public class PrefetchServiceImpl implements PrefetchService {
 
   @Override
   public ListenableFuture<?> prefetchProjectFiles(
-      Project project, BlazeProjectData blazeProjectData) {
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    if (projectViewSet == null) {
-      return Futures.immediateFuture(null);
-    }
+      Project project, ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     if (importSettings == null) {
@@ -68,7 +63,7 @@ public class PrefetchServiceImpl implements PrefetchService {
       files.add(workspaceRoot.fileForPath(workspacePath));
     }
     for (PrefetchFileSource fileSource : PrefetchFileSource.EP_NAME.getExtensions()) {
-      fileSource.addFilesToPrefetch(project, blazeProjectData, files);
+      fileSource.addFilesToPrefetch(project, projectViewSet, blazeProjectData, files);
     }
     return prefetchFiles(project, files);
   }

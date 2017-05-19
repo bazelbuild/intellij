@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.lang.buildfile.quickfix;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -56,7 +57,7 @@ public class DeprecatedLoadQuickFix implements LocalQuickFix, HighPriorityAction
 
   private static void fixLoadString(Project project, StringLiteral importString) {
     String contents = importString.getStringContents();
-    if (!contents.startsWith("/") || contents.startsWith("//")) {
+    if (!contents.startsWith("/") || LabelUtils.isAbsolute(contents)) {
       return;
     }
     WorkspaceRoot root = WorkspaceRoot.fromProjectSafe(project);
@@ -81,7 +82,7 @@ public class DeprecatedLoadQuickFix implements LocalQuickFix, HighPriorityAction
     if (relativePath == null) {
       return;
     }
-    String newString = "//" + packagePath + ":" + relativePath;
+    String newString = "//" + packagePath + ":" + relativePath + ".bzl";
 
     ASTNode node = importString.getNode();
     node.replaceChild(

@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.lang.buildfile.psi;
 
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import javax.annotation.Nullable;
@@ -40,8 +39,6 @@ public interface BuildElement extends NavigatablePsiElement {
 
   @Nullable
   <P extends PsiElement> P firstChildOfClass(Class<P> psiClass);
-
-  WorkspacePath getWorkspacePath();
 
   @Nullable
   BlazePackage getBlazePackage();

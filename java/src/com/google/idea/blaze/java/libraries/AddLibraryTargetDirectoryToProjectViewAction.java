@@ -21,6 +21,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
+import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -86,7 +87,7 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
     if (blazeLibrary == null) {
       return null;
     }
-    TargetKey originatingTarget = blazeLibrary.originatingTarget;
+    TargetKey originatingTarget = findOriginatingTargetForLibrary(blazeProjectData, blazeLibrary);
     if (originatingTarget == null) {
       return null;
     }
@@ -121,6 +122,21 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
       return null;
     }
     return workspacePath;
+  }
+
+  @Nullable
+  private static TargetKey findOriginatingTargetForLibrary(
+      BlazeProjectData blazeProjectData, BlazeJarLibrary library) {
+    for (TargetIdeInfo target : blazeProjectData.targetMap.targets()) {
+      JavaIdeInfo javaIdeInfo = target.javaIdeInfo;
+      if (javaIdeInfo == null) {
+        continue;
+      }
+      if (javaIdeInfo.jars.contains(library.libraryArtifact)) {
+        return target.key;
+      }
+    }
+    return null;
   }
 
   static void addDirectoriesToProjectView(Project project, List<Library> libraries) {

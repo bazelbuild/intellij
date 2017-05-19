@@ -166,27 +166,27 @@ public final class BlazeCommandGenericRunConfigurationRunner
       assert projectViewSet != null;
 
       String binaryPath =
-          handlerState.getBlazeBinary() != null
-              ? handlerState.getBlazeBinary()
+          handlerState.getBlazeBinaryState().getBlazeBinary() != null
+              ? handlerState.getBlazeBinaryState().getBlazeBinary()
               : Blaze.getBuildSystemProvider(project).getBinaryPath();
 
       BlazeCommand.Builder command =
-          BlazeCommand.builder(binaryPath, handlerState.getCommand())
+          BlazeCommand.builder(binaryPath, handlerState.getCommandState().getCommand())
               .addTargets(configuration.getTarget())
               .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
               .addBlazeFlags(testHandlerFlags)
-              .addBlazeFlags(handlerState.getBlazeFlags())
-              .addExeFlags(handlerState.getExeFlags());
+              .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
+              .addExeFlags(handlerState.getExeFlagsState().getExpandedFlags());
 
       command.addBlazeFlags(
           DistributedExecutorSupport.getBlazeFlags(
-              project, handlerState.getRunOnDistributedExecutor()));
+              project, handlerState.getRunOnDistributedExecutorState().runOnDistributedExecutor));
       return command.build();
     }
 
     private boolean canUseTestUi() {
-      return BlazeCommandName.TEST.equals(handlerState.getCommand())
-          && !handlerState.getRunOnDistributedExecutor();
+      return BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand())
+          && !handlerState.getRunOnDistributedExecutorState().runOnDistributedExecutor;
     }
   }
 }

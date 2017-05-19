@@ -59,5 +59,10 @@ public class RunConfigurationsSection {
     public ItemType getItemType() {
       return ItemType.FileSystemItem;
     }
+
+    @Override
+    public String quickDocs() {
+      return "A list of XML files which will be imported as run configurations during sync.";
+    }
   }
 }

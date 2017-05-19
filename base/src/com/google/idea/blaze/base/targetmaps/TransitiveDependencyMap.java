@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.targetmaps;
 
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
@@ -26,6 +27,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
@@ -53,11 +55,16 @@ public class TransitiveDependencyMap {
     return getTransitiveDependencies(targetKey, blazeProjectData.targetMap);
   }
 
-  private static ImmutableCollection<TargetKey> getTransitiveDependencies(
+  public static ImmutableCollection<TargetKey> getTransitiveDependencies(
       TargetKey targetKey, TargetMap targetMap) {
+    return getTransitiveDependencies(ImmutableList.of(targetKey), targetMap);
+  }
+
+  public static ImmutableCollection<TargetKey> getTransitiveDependencies(
+      Collection<TargetKey> targetKeys, TargetMap targetMap) {
     Queue<TargetKey> targetsToVisit = Queues.newArrayDeque();
     Set<TargetKey> transitiveDependencies = Sets.newHashSet();
-    targetsToVisit.add(targetKey);
+    targetsToVisit.addAll(targetKeys);
     while (!targetsToVisit.isEmpty()) {
       TargetIdeInfo currentTarget = targetMap.get(targetsToVisit.remove());
       if (currentTarget == null) {

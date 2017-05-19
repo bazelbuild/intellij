@@ -17,12 +17,16 @@ package com.google.idea.blaze.base.projectview.section.sections;
 
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectView;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.ListSectionParser;
+import com.google.idea.blaze.base.projectview.section.ProjectViewDefaultValueProvider;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import javax.annotation.Nullable;
 
 /** "targets" section. */
 public class TargetSection {
@@ -51,20 +55,35 @@ public class TargetSection {
       return ItemType.Label;
     }
 
+    @Nullable
     @Override
-    public ProjectView addProjectViewDefaultValue(ProjectView projectView) {
-      if (!projectView.getSectionsOfType(KEY).isEmpty()) {
-        return projectView;
+    public String quickDocs() {
+      return "A list of build targets that will be included during sync. To resolve source files "
+          + "under a project directory, the source must be reachable from one of your targets.";
+    }
+  }
+
+  static class TargetsProjectViewDefaultValueProvider implements ProjectViewDefaultValueProvider {
+    @Override
+    public ProjectView addProjectViewDefaultValue(
+        BuildSystem buildSystem, ProjectViewSet projectViewSet, ProjectView topLevelProjectView) {
+      if (!topLevelProjectView.getSectionsOfType(KEY).isEmpty()) {
+        return topLevelProjectView;
       }
-      return ProjectView.builder(projectView)
-          .add(
-              ListSection.builder(KEY)
-                  .add(
-                      TextBlock.of(
-                          "  # Add targets that reach the source code "
-                              + "that you want to resolve here"))
-                  .add(TextBlock.newLine()))
-          .build();
+      ListSection.Builder<TargetExpression> builder = ListSection.builder(KEY);
+      builder.add(
+          TextBlock.of("  # Add targets that reach the source code that you want to resolve here"));
+      if (buildSystem == BuildSystem.Bazel) {
+        builder.add(TextBlock.of("  # By default, we've added all targets in your workspace"));
+        builder.add(TargetExpression.fromString("//..."));
+      }
+      builder.add(TextBlock.newLine());
+      return ProjectView.builder(topLevelProjectView).add(builder).build();
+    }
+
+    @Override
+    public SectionKey<?, ?> getSectionKey() {
+      return KEY;
     }
   }
 }

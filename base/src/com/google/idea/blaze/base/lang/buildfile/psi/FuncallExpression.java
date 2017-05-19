@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.psi;
 
+import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.FuncallReference;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
@@ -104,8 +105,10 @@ public class FuncallExpression extends BuildElementImpl
   @Nullable
   public Label resolveBuildLabel() {
     BuildFile containingFile = getContainingFile();
-    if (containingFile == null
-        || containingFile.getBlazeFileType() == BuildFile.BlazeFileType.SkylarkExtension) {
+    if (containingFile == null) {
+      return null;
+    }
+    if (containingFile.getBlazeFileType() != BlazeFileType.BuildPackage) {
       return null;
     }
     return LabelUtils.createLabelFromRuleName(getBlazePackage(), getNameArgumentValue());

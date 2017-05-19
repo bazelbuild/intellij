@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.lang.buildfile.completion.FilePathLookupElemen
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.icons.AllIcons;
@@ -89,11 +90,14 @@ public class FileLookupData {
       StringLiteral element,
       @Nullable BuildFile basePackage,
       @Nullable VirtualFileFilter fileFilter) {
-    String basePackagePath =
-        basePackage != null ? basePackage.getWorkspaceRelativePackagePath() : null;
-    if (basePackagePath == null) {
+    if (basePackage == null) {
       return null;
     }
+    Label packageLabel = basePackage.getPackageLabel();
+    if (packageLabel == null) {
+      return null;
+    }
+    String basePackagePath = packageLabel.blazePackage().relativePath();
     String filePath = basePackagePath + "/" + LabelUtils.getRuleComponent(originalLabel);
     return new FileLookupData(
         originalLabel,

@@ -20,16 +20,12 @@ import javax.annotation.Nullable;
 
 /**
  * Support for resolving globs.
- *
- * <p>
  */
 public class GlobPatternValidator {
 
   /**
    * Validate a single glob pattern. If it's invalid, returns an error message. Otherwise, returns
    * null.
-   *
-   * <p>
    */
   @Nullable
   public static String validate(String pattern) {
@@ -58,6 +54,7 @@ public class GlobPatternValidator {
         case '[':
         case ']':
           return "illegal character '" + c + "'";
+        default: // fall out
       }
     }
     Iterable<String> segments = Splitter.on('/').split(pattern);

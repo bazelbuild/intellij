@@ -275,6 +275,35 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
     assertNoErrors(file);
   }
 
+  @Test
+  public void testNoMissingMandatoryArgErrorIfKwargsPresent() {
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "def java_test(srcs=[], **kwargs):",
+            "  native.java_test(srcs = srcs, **kwargs)");
+    assertNoErrors(file);
+  }
+
+  @Test
+  public void testNoMissingAttributeErrorsForOverriddenBuiltIns() {
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/foo/BUILD"),
+            "java_test(name = 'test', srcs = [':src'], extra_arg = [])");
+    assertHasError(file, "Unrecognized attribute 'extra_arg' for rule type 'java_test'");
+
+    file =
+        createBuildFile(
+            new WorkspacePath("java/com/bar/BUILD"),
+            "def java_test(srcs=[], **kwargs, extra_arg=[]):",
+            "  native.java_test(srcs = srcs, **kwargs)",
+            "java_test(name = 'test', srcs = [':src'], extra_arg = [])");
+    assertNoErrors(file);
+  }
+
   private void setRules(String... ruleNames) {
     ImmutableMap.Builder<String, RuleDefinition> rules = ImmutableMap.builder();
     for (String name : ruleNames) {

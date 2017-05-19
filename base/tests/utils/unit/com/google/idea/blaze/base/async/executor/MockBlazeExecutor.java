@@ -23,7 +23,7 @@ import java.util.concurrent.Callable;
 /** Used in tests. */
 public class MockBlazeExecutor extends BlazeExecutor {
 
-  private final ListeningExecutorService executor = MoreExecutors.sameThreadExecutor();
+  private final ListeningExecutorService executor = MoreExecutors.newDirectExecutorService();
 
   @Override
   public <T> ListenableFuture<T> submit(final Callable<T> callable) {

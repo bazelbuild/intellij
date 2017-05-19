@@ -49,6 +49,7 @@ public class IssueOutputLineProcessor implements LineProcessingOutputStream.Line
             new BlazeIssueParser.CompileParser(workspaceRoot),
             new BlazeIssueParser.TracebackParser(),
             new BlazeIssueParser.BuildParser(),
+            new BlazeIssueParser.SkylarkErrorParser(),
             new BlazeIssueParser.LinelessBuildParser(),
             new BlazeIssueParser.ProjectViewLabelParser(projectViewSet),
             new BlazeIssueParser.InvalidTargetProjectViewPackageParser(

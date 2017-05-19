@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -42,7 +43,6 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.module.Module;
@@ -51,7 +51,9 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.util.PlatformUtils;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -62,7 +64,9 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
-    return ImmutableSet.of(LanguageClass.TYPESCRIPT);
+    return PlatformUtils.isIdeaUltimate()
+        ? ImmutableSet.of(LanguageClass.TYPESCRIPT)
+        : ImmutableSet.of();
   }
 
   @Override
@@ -72,7 +76,7 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings,
-      BlazeRoots blazeRoots,
+      BlazeInfo blazeInfo,
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
@@ -83,8 +87,8 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
       return;
     }
 
-    Label tsConfig = projectViewSet.getScalarValue(TsConfigRuleSection.KEY);
-    if (tsConfig == null) {
+    Set<Label> tsConfigTargets = getTsConfigTargets(projectViewSet);
+    if (tsConfigTargets.isEmpty()) {
       invalidProjectViewError(context);
       return;
     }
@@ -99,7 +103,7 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
               BlazeCommand.builder(
                       Blaze.getBuildSystemProvider(project).getSyncBinaryPath(),
                       BlazeCommandName.RUN)
-                  .addTargets(tsConfig)
+                  .addTargets(new ArrayList<>(tsConfigTargets))
                   .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
                   .build();
 
@@ -145,6 +149,7 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Override
   public boolean validateProjectView(
+      @Nullable Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings) {
@@ -155,9 +160,8 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
       return false;
     }
 
-    // Must have either both typescript and ts_config_rule or neither
-    Label tsConfig = projectViewSet.getScalarValue(TsConfigRuleSection.KEY);
-    if (typescriptActive ^ (tsConfig != null)) {
+    // Must have either both typescript and ts_config_rules or neither
+    if (typescriptActive ^ !getTsConfigTargets(projectViewSet).isEmpty()) {
       invalidProjectViewError(context);
       return false;
     }
@@ -167,19 +171,29 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   private void invalidProjectViewError(BlazeContext context) {
     IssueOutput.error(
-            "For Typescript support you must add both additional_languages: "
-                + "typescript and the ts_config_rule attribute.")
+            "For Typescript support you must add both `additional_languages`: "
+                + "typescript and the `ts_config_rules` attribute.")
         .submit(context);
+  }
+
+  private static Set<Label> getTsConfigTargets(ProjectViewSet projectViewSet) {
+    Label oldSectionType = projectViewSet.getScalarValue(TsConfigRuleSection.KEY);
+    Set<Label> labels = new LinkedHashSet<>(projectViewSet.listItems(TsConfigRulesSection.KEY));
+    if (oldSectionType != null) {
+      labels.add(oldSectionType);
+    }
+    return labels;
   }
 
   @Override
   public Collection<SectionParser> getSections() {
-    return ImmutableList.of(TsConfigRuleSection.PARSER);
+    return ImmutableList.of(TsConfigRuleSection.PARSER, TsConfigRulesSection.PARSER);
   }
 
   @Nullable
   @Override
-  public LibrarySource getLibrarySource(BlazeProjectData blazeProjectData) {
+  public LibrarySource getLibrarySource(
+      ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
     if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)) {
       return null;
     }

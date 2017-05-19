@@ -37,6 +37,11 @@ public class JPanelProvidingProject extends JPanel implements DataProvider {
     this.project = project;
   }
 
+  public JPanelProvidingProject(Project project) {
+    super();
+    this.project = project;
+  }
+
   @Nullable
   @Override
   public Object getData(String dataId) {

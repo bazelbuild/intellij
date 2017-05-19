@@ -15,26 +15,22 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.psi;
 
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
-import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.lang.buildfile.references.QuoteType;
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
-import com.google.idea.blaze.base.lang.buildfile.search.ResolveUtil;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.intellij.extapi.psi.PsiFileBase;
-import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import icons.BlazeIcons;
 import java.io.File;
-import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
@@ -44,24 +40,17 @@ public class BuildFile extends PsiFileBase implements BuildElement, DocStringOwn
   /** The blaze file type */
   public enum BlazeFileType {
     SkylarkExtension,
-    BuildPackage // "BUILD", plus hacks such as "BUILD.tools", "BUILD.bazel"
-  }
-
-  @Nullable
-  public static WorkspacePath getWorkspacePath(Project project, String filePath) {
-    return BuildReferenceManager.getInstance(project).getWorkspaceRelativePath(filePath);
+    BuildPackage, // "BUILD", "BUILD.bazel"
+    Workspace, // the top-level WORKSPACE file
   }
 
   public static String getBuildFileString(Project project, String filePath) {
-    WorkspacePath workspacePath = getWorkspacePath(project, PathUtil.getParentPath(filePath));
-    if (workspacePath == null) {
+    Label label = WorkspaceHelper.getBuildLabel(project, new File(filePath));
+    if (label == null) {
       return "BUILD file: " + filePath;
     }
-    String fileName = PathUtil.getFileName(filePath);
-    if (fileName.startsWith("BUILD")) {
-      return "//" + workspacePath + "/" + fileName;
-    }
-    return "//" + workspacePath + ":" + fileName;
+    String labelString = label.toString();
+    return labelString.replace(":__pkg__", "/" + PathUtil.getFileName(filePath));
   }
 
   public BuildFile(FileViewProvider viewProvider) {
@@ -77,6 +66,9 @@ public class BuildFile extends PsiFileBase implements BuildElement, DocStringOwn
     String fileName = getFileName();
     if (fileName.startsWith("BUILD")) {
       return BlazeFileType.BuildPackage;
+    }
+    if (fileName.equals("WORKSPACE")) {
+      return BlazeFileType.Workspace;
     }
     return BlazeFileType.SkylarkExtension;
   }
@@ -117,37 +109,19 @@ public class BuildFile extends PsiFileBase implements BuildElement, DocStringOwn
     return new File(getFilePath());
   }
 
-  @Nullable
-  @Override
-  public WorkspacePath getWorkspacePath() {
-    return getWorkspacePath(getProject(), getFilePath());
-  }
-
   /**
-   * The workspace path of the containing blaze package (this is always the parent directory for
-   * BUILD files, but may be a more distant ancestor for Skylark extensions)
+   * The label of the containing blaze package (this is always the parent directory for BUILD files,
+   * but may be a more distant ancestor for Skylark extensions)
    */
   @Nullable
-  public WorkspacePath getPackageWorkspacePath() {
+  public Label getPackageLabel() {
     BlazePackage parentPackage = getBlazePackage();
-    if (parentPackage == null) {
-      return null;
-    }
-    String filePath = parentPackage.buildFile.getFilePath();
-    return filePath != null
-        ? getWorkspacePath(getProject(), PathUtil.getParentPath(filePath))
-        : null;
-  }
-
-  @Nullable
-  public String getWorkspaceRelativePackagePath() {
-    WorkspacePath packagePath = getPackageWorkspacePath();
-    return packagePath != null ? packagePath.relativePath() : null;
+    return parentPackage != null ? parentPackage.getPackageLabel() : null;
   }
 
   /** The path for this file, formatted as a BUILD label. */
   @Nullable
-  public String getBuildLabel() {
+  public Label getBuildLabel() {
     BlazePackage containingPackage = getBlazePackage();
     return containingPackage != null
         ? containingPackage.getBuildLabelForChild(getFilePath())
@@ -166,24 +140,6 @@ public class BuildFile extends PsiFileBase implements BuildElement, DocStringOwn
     return null;
   }
 
-  /** .bzl files referenced in 'load' statements */
-  @Nullable
-  public String[] getImportedPaths() {
-    ASTNode[] loadStatements =
-        getNode().getChildren(TokenSet.create(BuildElementTypes.LOAD_STATEMENT));
-    if (loadStatements.length == 0) {
-      return null;
-    }
-    List<String> importedPaths = Lists.newArrayListWithCapacity(loadStatements.length);
-    for (int i = 0; i < loadStatements.length; i++) {
-      String path = ((LoadStatement) loadStatements[i].getPsi()).getImportedPath();
-      if (path != null) {
-        importedPaths.add(path);
-      }
-    }
-    return importedPaths.toArray(new String[importedPaths.size()]);
-  }
-
   @Nullable
   public FunctionStatement findDeclaredFunction(String name) {
     for (FunctionStatement fn : getFunctionDeclarations()) {
@@ -192,11 +148,6 @@ public class BuildFile extends PsiFileBase implements BuildElement, DocStringOwn
       }
     }
     return null;
-  }
-
-  @Nullable
-  public TargetExpression findTopLevelVariable(String name) {
-    return ResolveUtil.searchChildAssignmentStatements(this, name);
   }
 
   @Nullable
@@ -290,6 +241,28 @@ public class BuildFile extends PsiFileBase implements BuildElement, DocStringOwn
   @Override
   public String getPresentableText() {
     return toString();
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    final BuildFile element = this;
+    return new ItemPresentation() {
+      @Override
+      public String getPresentableText() {
+        return element.getName();
+      }
+
+      @Override
+      public String getLocationString() {
+        String label = getBuildFileString(element.getProject(), element.getFilePath());
+        return String.format("(%s)", label);
+      }
+
+      @Override
+      public Icon getIcon(boolean unused) {
+        return element.getIcon(0);
+      }
+    };
   }
 
   @Override

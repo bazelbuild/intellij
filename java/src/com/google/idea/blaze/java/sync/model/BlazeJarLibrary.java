@@ -17,7 +17,6 @@ package com.google.idea.blaze.java.sync.model;
 
 import com.google.common.base.Objects;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -33,16 +32,13 @@ import javax.annotation.concurrent.Immutable;
 /** An immutable reference to a .jar required by a rule. */
 @Immutable
 public final class BlazeJarLibrary extends BlazeLibrary {
-  private static final long serialVersionUID = 2L;
+  private static final long serialVersionUID = 3L;
 
   public final LibraryArtifact libraryArtifact;
 
-  public final TargetKey originatingTarget;
-
-  public BlazeJarLibrary(LibraryArtifact libraryArtifact, TargetKey originatingTarget) {
+  public BlazeJarLibrary(LibraryArtifact libraryArtifact) {
     super(LibraryKey.fromJarFile(libraryArtifact.jarForIntellijLibrary()));
     this.libraryArtifact = libraryArtifact;
-    this.originatingTarget = originatingTarget;
   }
 
   @Override
@@ -68,7 +64,7 @@ public final class BlazeJarLibrary extends BlazeLibrary {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), libraryArtifact, originatingTarget);
+    return Objects.hashCode(super.hashCode(), libraryArtifact);
   }
 
   @Override
@@ -82,8 +78,6 @@ public final class BlazeJarLibrary extends BlazeLibrary {
 
     BlazeJarLibrary that = (BlazeJarLibrary) other;
 
-    return super.equals(other)
-        && Objects.equal(libraryArtifact, that.libraryArtifact)
-        && Objects.equal(originatingTarget, that.originatingTarget);
+    return super.equals(other) && Objects.equal(libraryArtifact, that.libraryArtifact);
   }
 }

@@ -15,13 +15,12 @@
  */
 package com.google.idea.blaze.base.model;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import java.io.Serializable;
 import javax.annotation.concurrent.Immutable;
@@ -29,12 +28,11 @@ import javax.annotation.concurrent.Immutable;
 /** The top-level object serialized to cache. */
 @Immutable
 public class BlazeProjectData implements Serializable {
-  private static final long serialVersionUID = 27L;
+  private static final long serialVersionUID = 28L;
 
   public final long syncTime;
   public final TargetMap targetMap;
-  public final ImmutableMap<String, String> blazeInfo;
-  public final BlazeRoots blazeRoots;
+  public final BlazeInfo blazeInfo;
   public final BlazeVersionData blazeVersionData;
   public final WorkspacePathResolver workspacePathResolver;
   public final ArtifactLocationDecoder artifactLocationDecoder;
@@ -45,19 +43,16 @@ public class BlazeProjectData implements Serializable {
   public BlazeProjectData(
       long syncTime,
       TargetMap targetMap,
-      ImmutableMap<String, String> blazeInfo,
-      BlazeRoots blazeRoots,
+      BlazeInfo blazeInfo,
       BlazeVersionData blazeVersionData,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       SyncState syncState,
-      ImmutableMultimap<TargetKey, TargetKey> reverseDependencies,
-      Object dummy) {
+      ImmutableMultimap<TargetKey, TargetKey> reverseDependencies) {
     this.syncTime = syncTime;
     this.targetMap = targetMap;
     this.blazeInfo = blazeInfo;
-    this.blazeRoots = blazeRoots;
     this.blazeVersionData = blazeVersionData;
     this.workspacePathResolver = workspacePathResolver;
     this.artifactLocationDecoder = artifactLocationDecoder;

@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.projectview.parser;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -55,7 +56,7 @@ public class ParseContext {
     this.context = context;
     this.workspacePathResolver = workspacePathResolver;
     this.file = file;
-    this.lines = Lists.newArrayList(text.split("\n"));
+    this.lines = Lists.newArrayList(Splitter.on('\n').split(text));
     this.currentLine = null;
     this.currentLineIndex = -1;
     consume();

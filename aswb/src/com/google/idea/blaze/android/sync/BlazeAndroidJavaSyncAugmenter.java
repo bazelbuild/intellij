@@ -48,7 +48,7 @@ public class BlazeAndroidJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
     }
     LibraryArtifact idlJar = androidIdeInfo.idlJar;
     if (idlJar != null) {
-      genJars.add(new BlazeJarLibrary(idlJar, target.key));
+      genJars.add(new BlazeJarLibrary(idlJar));
     }
     Set<String> whitelistedGenResourcePaths =
         projectViewSet
@@ -66,7 +66,7 @@ public class BlazeAndroidJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
       if (!discardResourceJar) {
         LibraryArtifact resourceJar = androidIdeInfo.resourceJar;
         if (resourceJar != null) {
-          jars.add(new BlazeJarLibrary(resourceJar, target.key));
+          jars.add(new BlazeJarLibrary(resourceJar));
         }
       }
     }

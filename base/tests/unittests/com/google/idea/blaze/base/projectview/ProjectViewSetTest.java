@@ -40,6 +40,7 @@ import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
 import com.google.idea.blaze.base.projectview.section.sections.ImportTargetOutputSection;
 import com.google.idea.blaze.base.projectview.section.sections.RunConfigurationsSection;
 import com.google.idea.blaze.base.projectview.section.sections.Sections;
+import com.google.idea.blaze.base.projectview.section.sections.ShardBlazeBuildsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
@@ -83,9 +84,10 @@ public class ProjectViewSetTest extends BlazeTestCase {
                     .add(ListSection.builder(BuildFlagsSection.KEY).add("--android_sdk=abcd"))
                     .add(
                         ListSection.builder(ImportTargetOutputSection.KEY)
-                            .add(new Label("//test:test")))
+                            .add(Label.create("//test:test")))
                     .add(
-                        ListSection.builder(ExcludeTargetSection.KEY).add(new Label("//test:test")))
+                        ListSection.builder(ExcludeTargetSection.KEY)
+                            .add(Label.create("//test:test")))
                     .add(ScalarSection.builder(WorkspaceTypeSection.KEY).set(WorkspaceType.JAVA))
                     .add(
                         ListSection.builder(AdditionalLanguagesSection.KEY).add(LanguageClass.JAVA))
@@ -93,6 +95,7 @@ public class ProjectViewSetTest extends BlazeTestCase {
                     .add(
                         ListSection.builder(RunConfigurationsSection.KEY)
                             .add(new WorkspacePath("test")))
+                    .add(ScalarSection.builder(ShardBlazeBuildsSection.KEY).set(false))
                     .build())
             .build();
 

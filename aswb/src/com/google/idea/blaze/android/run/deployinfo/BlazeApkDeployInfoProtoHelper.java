@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -85,7 +86,7 @@ public class BlazeApkDeployInfoProtoHelper {
   @Nullable
   private String getExecutionRoot(BlazeContext context) {
     ListenableFuture<String> execRootFuture =
-        BlazeInfo.getInstance()
+        BlazeInfoRunner.getInstance()
             .runBlazeInfo(
                 context,
                 Blaze.getBuildSystemProvider(project).getBinaryPath(),

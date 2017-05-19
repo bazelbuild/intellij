@@ -117,9 +117,9 @@ public class BlazeIssueParser {
 
   /** Returns the file referenced by the target */
   @Nullable
-  public static File fileFromTarget(WorkspaceRoot workspaceRoot, String targetString) {
+  private static File fileFromTarget(WorkspaceRoot workspaceRoot, String targetString) {
     Label label = Label.createIfValid(targetString);
-    if (label == null) {
+    if (label == null || label.isExternal()) {
       return null;
     }
     try {
@@ -205,6 +205,22 @@ public class BlazeIssueParser {
   static class BuildParser extends SingleLineParser {
     BuildParser() {
       super("^ERROR: (/.*?BUILD):([0-9]+):([0-9]+): (.*)$");
+    }
+
+    @Override
+    protected IssueOutput createIssue(Matcher matcher) {
+      File file = fileFromAbsolutePath(matcher.group(1));
+      return IssueOutput.error(matcher.group(4))
+          .inFile(file)
+          .onLine(Integer.parseInt(matcher.group(2)))
+          .inColumn(parseOptionalInt(matcher.group(3)))
+          .build();
+    }
+  }
+
+  static class SkylarkErrorParser extends SingleLineParser {
+    SkylarkErrorParser() {
+      super("^ERROR: (/.*?\\.bzl):([0-9]+):([0-9]+): (.*)$");
     }
 
     @Override

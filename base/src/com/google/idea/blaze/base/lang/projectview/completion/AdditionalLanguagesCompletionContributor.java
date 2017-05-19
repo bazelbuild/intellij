@@ -17,10 +17,14 @@ package com.google.idea.blaze.base.lang.projectview.completion;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
+import com.google.common.collect.Ordering;
 import com.google.idea.blaze.base.lang.projectview.language.ProjectViewLanguage;
 import com.google.idea.blaze.base.lang.projectview.psi.ProjectViewPsiListSection;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguagesSection;
+import com.google.idea.blaze.base.sync.SyncCache;
+import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.intellij.codeInsight.completion.AutoCompletionContext;
 import com.intellij.codeInsight.completion.AutoCompletionDecision;
 import com.intellij.codeInsight.completion.CompletionContributor;
@@ -30,8 +34,11 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.project.Project;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.util.ProcessingContext;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /** Code completion for additional language types. */
 public class AdditionalLanguagesCompletionContributor extends CompletionContributor {
@@ -62,10 +69,28 @@ public class AdditionalLanguagesCompletionContributor extends CompletionContribu
               CompletionParameters parameters,
               ProcessingContext context,
               CompletionResultSet result) {
-            for (LanguageClass type : LanguageClass.values()) {
+            for (LanguageClass type :
+                availableAdditionalLanguages(parameters.getEditor().getProject())) {
               result.addElement(LookupElementBuilder.create(type.getName()));
             }
           }
         });
+  }
+
+  private static List<LanguageClass> availableAdditionalLanguages(Project project) {
+    List<LanguageClass> langs =
+        SyncCache.getInstance(project)
+            .get(
+                AdditionalLanguagesCompletionContributor.class,
+                (proj, projectData) ->
+                    additionalLanguages(projectData.workspaceLanguageSettings.getWorkspaceType()));
+    return langs == null ? additionalLanguages(LanguageSupport.getDefaultWorkspaceType()) : langs;
+  }
+
+  private static List<LanguageClass> additionalLanguages(WorkspaceType workspaceType) {
+    return LanguageSupport.availableAdditionalLanguages(workspaceType)
+        .stream()
+        .sorted(Ordering.usingToString())
+        .collect(Collectors.toList());
   }
 }

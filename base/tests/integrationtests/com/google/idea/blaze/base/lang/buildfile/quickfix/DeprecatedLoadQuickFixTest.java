@@ -40,7 +40,7 @@ public class DeprecatedLoadQuickFixTest extends BuildFileIntegrationTestCase {
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
-            "load('/java/com/google/subdir/build_defs.bzl', 'symbol')");
+            "load('/java/com/google/subdir/build_defs', 'symbol')");
 
     StringLiteral string = PsiUtils.findFirstChildOfClassRecursive(file, StringLiteral.class);
     applyQuickFix(string);
@@ -55,8 +55,7 @@ public class DeprecatedLoadQuickFixTest extends BuildFileIntegrationTestCase {
 
     BuildFile file =
         createBuildFile(
-            new WorkspacePath("java/com/google/BUILD"),
-            "load('/foo/bar/build_defs.bzl', 'symbol')");
+            new WorkspacePath("java/com/google/BUILD"), "load('/foo/bar/build_defs', 'symbol')");
 
     StringLiteral string = PsiUtils.findFirstChildOfClassRecursive(file, StringLiteral.class);
     applyQuickFix(string);

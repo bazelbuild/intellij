@@ -137,5 +137,11 @@ public final class TextBlockSection extends Section<TextBlock> {
     public ItemType getItemType() {
       return ItemType.Other;
     }
+
+    @Nullable
+    @Override
+    public String quickDocs() {
+      return null;
+    }
   }
 }

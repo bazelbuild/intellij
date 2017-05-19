@@ -112,7 +112,7 @@ class NewBlazePackageDialog extends DialogWrapper {
     WorkspacePath newPackagePath = workspaceRoot.workspacePathFor(newPackageDirectory);
 
     TargetName newTargetName = newRuleUI.getRuleName();
-    Label newRule = new Label(newPackagePath, newTargetName);
+    Label newRule = Label.create(newPackagePath, newTargetName);
     Kind ruleKind = newRuleUI.getSelectedRuleKind();
     try {
       parentDirectory.checkCreateSubdirectory(newPackageName);

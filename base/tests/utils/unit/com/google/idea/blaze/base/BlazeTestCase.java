@@ -69,7 +69,7 @@ public class BlazeTestCase {
 
   protected Project project;
   private ExtensionsAreaImpl extensionsArea;
-  private Disposable testDisposable;
+  protected Disposable testDisposable;
 
   private static class RootDisposable implements Disposable {
     @Override

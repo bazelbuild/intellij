@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.lang.buildfile.completion;
 
 import com.google.idea.blaze.base.lang.buildfile.references.QuoteType;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -42,9 +43,15 @@ public abstract class BuildLookupElement extends LookupElement {
     this.wrapWithQuotes = quoteWrapping != QuoteType.NoQuotes;
   }
 
+  private static boolean insertClosingQuotes() {
+    return CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE;
+  }
+
   @Override
   public String getLookupString() {
-    return quoteWrapping.wrap(baseName);
+    return insertClosingQuotes()
+        ? quoteWrapping.wrap(baseName)
+        : quoteWrapping.quoteString + baseName;
   }
 
   @Nullable
@@ -75,19 +82,17 @@ public abstract class BuildLookupElement extends LookupElement {
   /**
    * If we're wrapping with quotes, handle the (very common) case where we have a closing quote
    * after the caret -- we want to remove this quote.
-   *
-   * @param context
    */
   @Override
   public void handleInsert(InsertionContext context) {
-    if (!wrapWithQuotes) {
+    if (!wrapWithQuotes || !insertClosingQuotes()) {
       super.handleInsert(context);
       return;
     }
     Document document = context.getDocument();
     context.commitDocument();
     PsiElement suffix = context.getFile().findElementAt(context.getTailOffset());
-    if (suffix.getText().startsWith(quoteWrapping.quoteString)) {
+    if (suffix != null && suffix.getText().startsWith(quoteWrapping.quoteString)) {
       int offset = suffix.getTextOffset();
       document.deleteString(offset, offset + 1);
       context.commitDocument();

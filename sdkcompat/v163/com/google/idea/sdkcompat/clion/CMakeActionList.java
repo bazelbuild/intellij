@@ -10,7 +10,7 @@ import com.jetbrains.cidr.cpp.cmake.actions.ToggleCMakeAutoReloadAction;
 /** Handles CMake actions which have changed between our supported versions. */
 public class CMakeActionList {
 
-  public static ImmutableSet<String> CMAKE_ACTION_IDS =
+  public static final ImmutableSet<String> CMAKE_ACTION_IDS =
       ImmutableSet.of(
           ChangeCMakeProjectContentRootAction.ID,
           ClearCMakeCacheAndReloadAction.ID,

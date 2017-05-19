@@ -73,6 +73,11 @@
     <component>
       <implementation-class>com.google.idea.blaze.clwb.run.producers.NonBlazeProducerSuppressor</implementation-class>
     </component>
+    <component>
+      <interface-class>com.jetbrains.cidr.cpp.cmake.workspace.CMakeWorkspace</interface-class>
+      <implementation-class>com.google.idea.blaze.plugin.CMakeWorkspaceOverride</implementation-class>
+      <option name="overrides" value="true"/>
+    </component>
   </project-components>
 
 </idea-plugin>

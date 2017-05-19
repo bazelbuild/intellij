@@ -16,21 +16,26 @@
 package com.google.idea.blaze.base.sync.libraries;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /** Collects libraries from the sync data using all contributors. */
 public class BlazeLibraryCollector {
-  public static List<BlazeLibrary> getLibraries(BlazeProjectData blazeProjectData) {
-    List<BlazeLibrary> result = Lists.newArrayList();
+  public static List<BlazeLibrary> getLibraries(
+      ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
+    // Use set to filter out duplicates.
+    Set<BlazeLibrary> result = Sets.newLinkedHashSet();
     List<LibrarySource> librarySources = Lists.newArrayList();
     for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-      LibrarySource librarySource = syncPlugin.getLibrarySource(blazeProjectData);
+      LibrarySource librarySource = syncPlugin.getLibrarySource(projectViewSet, blazeProjectData);
       if (librarySource != null) {
         librarySources.add(librarySource);
       }

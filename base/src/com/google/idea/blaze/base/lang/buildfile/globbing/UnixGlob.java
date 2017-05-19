@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.globbing;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
@@ -31,17 +30,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.lang.buildfile.validation.GlobPatternValidator;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -49,6 +45,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import javax.annotation.Nullable;
 
 /**
@@ -63,35 +60,16 @@ import javax.annotation.Nullable;
 public final class UnixGlob {
   private UnixGlob() {}
 
-  private static List<File> globInternal(
+  private static Set<File> globInternal(
       File base,
       Collection<String> patterns,
-      Collection<String> excludePatterns,
       boolean excludeDirectories,
       Predicate<File> dirPred,
       ThreadPoolExecutor threadPool)
       throws IOException, InterruptedException {
 
     GlobVisitor visitor = (threadPool == null) ? new GlobVisitor() : new GlobVisitor(threadPool);
-    return visitor.glob(base, patterns, excludePatterns, excludeDirectories, dirPred);
-  }
-
-  private static Future<List<File>> globAsyncInternal(
-      File base,
-      Collection<String> patterns,
-      Collection<String> excludePatterns,
-      boolean excludeDirectories,
-      Predicate<File> dirPred,
-      ThreadPoolExecutor threadPool) {
-    Preconditions.checkNotNull(threadPool, "%s %s", base, patterns);
-    try {
-      return new GlobVisitor(threadPool)
-          .globAsync(base, patterns, excludePatterns, excludeDirectories, dirPred);
-    } catch (IOException e) {
-      // We are evaluating asynchronously, so no exceptions should be thrown until the future is
-      // retrieved.
-      throw new IllegalStateException(e);
-    }
+    return visitor.glob(base, patterns, excludeDirectories, dirPred);
   }
 
   /**
@@ -113,58 +91,13 @@ public final class UnixGlob {
     return list;
   }
 
-  private static boolean excludedOnMatch(
-      File path, List<String[]> excludePatterns, int idx, Cache<String, Pattern> cache) {
-    for (String[] excludePattern : excludePatterns) {
-      String text = path.getName();
-      if (idx == excludePattern.length && matches(excludePattern[idx - 1], text, cache)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Returns the exclude patterns in {@code excludePatterns} which could apply to the children of
-   * {@code base}
-   *
-   * @param idx index into {@code excludePatterns} for the part of the pattern which might match
-   *     {@code base}
-   */
-  private static List<String[]> getRelevantExcludes(
-      final File base,
-      List<String[]> excludePatterns,
-      final int idx,
-      final Cache<String, Pattern> cache) {
-
-    if (excludePatterns.isEmpty()) {
-      return excludePatterns;
-    }
-    List<String[]> list = new ArrayList<>();
-    for (String[] patterns : excludePatterns) {
-      if (excludePatternMatches(patterns, idx, base, cache)) {
-        list.add(patterns);
-      }
-    }
-    return list;
-  }
-
-  /**
-   * @param patterns a list of patterns
-   * @param idx index into {@code patterns}
-   */
-  private static boolean excludePatternMatches(
-      String[] patterns, int idx, File base, Cache<String, Pattern> cache) {
-    if (idx == 0) {
-      return true;
-    }
-    String text = base.getName();
-    return patterns.length > idx && matches(patterns[idx - 1], text, cache);
-  }
-
   /** Calls {@link #matches(String, String, Cache) matches(pattern, str, null)} */
   public static boolean matches(String pattern, String str) {
-    return matches(pattern, str, null);
+    try {
+      return matches(pattern, str, null);
+    } catch (PatternSyntaxException e) {
+      return false;
+    }
   }
 
   /**
@@ -176,7 +109,7 @@ public final class UnixGlob {
    * @param patternCache a cache from patterns to compiled Pattern objects, or {@code null} to skip
    *     caching
    */
-  public static boolean matches(String pattern, String str, Cache<String, Pattern> patternCache) {
+  private static boolean matches(String pattern, String str, Cache<String, Pattern> patternCache) {
     if (pattern.length() == 0 || str.length() == 0) {
       return false;
     }
@@ -278,8 +211,8 @@ public final class UnixGlob {
   /** Builder class for UnixGlob. */
   public static class Builder {
     private File base;
-    private List<String> patterns;
-    private List<String> excludes;
+    private final List<String> patterns = new ArrayList<>();
+    private final List<String> excludes = new ArrayList<>();
     private boolean excludeDirectories;
     private Predicate<File> pathFilter;
     private ThreadPoolExecutor threadPool;
@@ -287,8 +220,6 @@ public final class UnixGlob {
     /** Creates a glob builder with the given base path. */
     public Builder(File base) {
       this.base = base;
-      this.patterns = Lists.newArrayList();
-      this.excludes = Lists.newArrayList();
       this.excludeDirectories = false;
       this.pathFilter = file -> true;
     }
@@ -374,37 +305,29 @@ public final class UnixGlob {
      * @throws InterruptedException if the thread is interrupted.
      */
     public List<File> glob() throws IOException, InterruptedException {
-      return globInternal(base, patterns, excludes, excludeDirectories, pathFilter, threadPool);
-    }
-
-    /**
-     * Executes the glob asynchronously. {@link #setThreadPool} must have been called already with a
-     * non-null argument.
-     *
-     * @param checkForInterrupt if the returned future may throw InterruptedException.
-     */
-    public Future<List<File>> globAsync() {
-      return globAsyncInternal(
-          base, patterns, excludes, excludeDirectories, pathFilter, threadPool);
+      Set<File> included = globInternal(base, patterns, excludeDirectories, pathFilter, threadPool);
+      Set<File> excluded = globInternal(base, excludes, excludeDirectories, pathFilter, threadPool);
+      included.removeAll(excluded);
+      return Ordering.<File>natural().immutableSortedCopy(included);
     }
   }
 
   /** Adapts the result of the glob visitation as a Future. */
-  private static class GlobFuture extends ForwardingListenableFuture<List<File>> {
+  private static class GlobFuture extends ForwardingListenableFuture<Set<File>> {
     private final GlobVisitor visitor;
-    private final SettableFuture<List<File>> delegate = SettableFuture.create();
+    private final SettableFuture<Set<File>> delegate = SettableFuture.create();
 
-    public GlobFuture(GlobVisitor visitor) {
+    private GlobFuture(GlobVisitor visitor) {
       this.visitor = visitor;
     }
 
     @Override
-    public List<File> get() throws InterruptedException, ExecutionException {
+    public Set<File> get() throws InterruptedException, ExecutionException {
       return super.get();
     }
 
     @Override
-    protected ListenableFuture<List<File>> delegate() {
+    protected ListenableFuture<Set<File>> delegate() {
       return delegate;
     }
 
@@ -412,7 +335,7 @@ public final class UnixGlob {
       delegate.setException(exception);
     }
 
-    public void set(List<File> paths) {
+    public void set(Set<File> paths) {
       delegate.set(paths);
     }
 
@@ -423,7 +346,7 @@ public final class UnixGlob {
       return true;
     }
 
-    public void markCanceled() {
+    void markCanceled() {
       super.cancel(true);
     }
   }
@@ -434,7 +357,7 @@ public final class UnixGlob {
    */
   private static final class GlobVisitor {
     // These collections are used across workers and must therefore be thread-safe.
-    private final Collection<File> results = Sets.newConcurrentHashSet();
+    private final Set<File> results = Sets.newConcurrentHashSet();
     private final Cache<String, Pattern> cache =
         CacheBuilder.newBuilder()
             .build(
@@ -452,40 +375,34 @@ public final class UnixGlob {
     private final FileAttributeProvider fileAttributeProvider = FileAttributeProvider.getInstance();
     private volatile boolean canceled = false;
 
-    public GlobVisitor(ThreadPoolExecutor executor) {
+    private GlobVisitor(ThreadPoolExecutor executor) {
       this.executor = executor;
       this.result = new GlobFuture(this);
     }
 
-    public GlobVisitor() {
+    private GlobVisitor() {
       this(null);
     }
 
     /**
      * Performs wildcard globbing: returns the sorted list of filenames that match any of {@code
-     * patterns} relative to {@code base}, but which do not match {@code excludePatterns}.
-     * Directories are traversed if and only if they match {@code dirPred}. The predicate is also
-     * called for the root of the traversal.
+     * patterns} relative to {@code base}. Directories are traversed if and only if they match
+     * {@code dirPred}. The predicate is also called for the root of the traversal.
      *
      * <p>Patterns may include "*" and "?", but not "[a-z]".
      *
      * <p><code>**</code> gets special treatment in include patterns. If it is used as a complete
      * path segment it matches the filenames in subdirectories recursively.
      *
-     * @throws IllegalArgumentException if any glob or exclude pattern {@linkplain
-     *     #checkPatternForError(String) contains errors} or if any exclude pattern segment contains
-     *     <code>**</code> or if any include pattern segment contains <code>**</code> but not equal
-     *     to it.
+     * @throws IllegalArgumentException if any glob or exclude pattern contains errors, or if any
+     *     exclude pattern segment contains <code>**</code> or if any include pattern segment
+     *     contains <code>**</code> but not equal to it.
      */
-    public List<File> glob(
-        File base,
-        Collection<String> patterns,
-        Collection<String> excludePatterns,
-        boolean excludeDirectories,
-        Predicate<File> dirPred)
+    private Set<File> glob(
+        File base, Collection<String> patterns, boolean excludeDirectories, Predicate<File> dirPred)
         throws IOException, InterruptedException {
       try {
-        return globAsync(base, patterns, excludePatterns, excludeDirectories, dirPred).get();
+        return globAsync(base, patterns, excludeDirectories, dirPred).get();
       } catch (ExecutionException e) {
         Throwable cause = e.getCause();
         Throwables.propagateIfPossible(cause, IOException.class);
@@ -493,21 +410,14 @@ public final class UnixGlob {
       }
     }
 
-    public Future<List<File>> globAsync(
-        File base,
-        Collection<String> patterns,
-        Collection<String> excludePatterns,
-        boolean excludeDirectories,
-        Predicate<File> dirPred)
+    private Future<Set<File>> globAsync(
+        File base, Collection<String> patterns, boolean excludeDirectories, Predicate<File> dirPred)
         throws IOException {
 
       if (!fileAttributeProvider.exists(base) || patterns.isEmpty()) {
-        return Futures.immediateFuture(Collections.emptyList());
+        return Futures.immediateFuture(Collections.emptySet());
       }
       boolean baseIsDirectory = fileAttributeProvider.isDirectory(base);
-
-      List<String[]> splitPatterns = checkAndSplitPatterns(patterns);
-      List<String[]> splitExcludes = checkAndSplitPatterns(excludePatterns);
 
       // We do a dumb loop, even though it will likely duplicate work
       // (e.g., readdir calls). In order to optimize, we would need
@@ -515,18 +425,9 @@ public final class UnixGlob {
       // (for example consider the glob [*/*.java, sub/*.java, */*.txt]).
       pendingOps.incrementAndGet();
       try {
-        for (String[] splitPattern : splitPatterns) {
+        for (String[] splitPattern : checkAndSplitPatterns(patterns)) {
           queueGlob(
-              base,
-              baseIsDirectory,
-              splitPattern,
-              0,
-              excludeDirectories,
-              splitExcludes,
-              0,
-              results,
-              cache,
-              dirPred);
+              base, baseIsDirectory, splitPattern, 0, excludeDirectories, results, cache, dirPred);
         }
       } finally {
         decrementAndCheckDone();
@@ -541,8 +442,6 @@ public final class UnixGlob {
         String[] patternParts,
         int idx,
         boolean excludeDirectories,
-        List<String[]> excludePatterns,
-        int excludeIdx,
         Collection<File> results,
         Cache<String, Pattern> cache,
         Predicate<File> dirPred)
@@ -556,8 +455,6 @@ public final class UnixGlob {
                   patternParts,
                   idx,
                   excludeDirectories,
-                  excludePatterns,
-                  excludeIdx,
                   results,
                   cache,
                   dirPred);
@@ -567,7 +464,7 @@ public final class UnixGlob {
           });
     }
 
-    protected void enqueue(final Runnable r) {
+    void enqueue(final Runnable r) {
       pendingOps.incrementAndGet();
 
       Runnable wrapped =
@@ -602,7 +499,7 @@ public final class UnixGlob {
         } else if (failure.get() != null) {
           result.setException(failure.get());
         } else {
-          result.set(Ordering.<File>natural().immutableSortedCopy(results));
+          result.set(results);
         }
       }
     }
@@ -621,8 +518,6 @@ public final class UnixGlob {
         String[] patternParts,
         int idx,
         boolean excludeDirectories,
-        List<String[]> excludePatterns,
-        int excludeIdx,
         Collection<File> results,
         Cache<String, Pattern> cache,
         Predicate<File> dirPred)
@@ -633,8 +528,7 @@ public final class UnixGlob {
       }
 
       if (idx == patternParts.length) { // Base case.
-        if (!(excludeDirectories && baseIsDirectory)
-            && !excludedOnMatch(base, excludePatterns, excludeIdx, cache)) {
+        if (!(excludeDirectories && baseIsDirectory)) {
           results.add(base);
         }
         return;
@@ -645,8 +539,6 @@ public final class UnixGlob {
         return;
       }
 
-      List<String[]> relevantExcludes =
-          getRelevantExcludes(base, excludePatterns, excludeIdx, cache);
       final String pattern = patternParts[idx];
 
       // ** is special: it can match nothing at all.
@@ -658,8 +550,6 @@ public final class UnixGlob {
             patternParts,
             idx + 1,
             excludeDirectories,
-            excludePatterns,
-            excludeIdx,
             results,
             cache,
             dirPred);
@@ -675,16 +565,7 @@ public final class UnixGlob {
         }
 
         queueGlob(
-            child,
-            childIsDir,
-            patternParts,
-            idx + 1,
-            excludeDirectories,
-            relevantExcludes,
-            excludeIdx + 1,
-            results,
-            cache,
-            dirPred);
+            child, childIsDir, patternParts, idx + 1, excludeDirectories, results, cache, dirPred);
         return;
       }
 
@@ -699,16 +580,7 @@ public final class UnixGlob {
           // Recurse without shifting the pattern.
           if (childIsDir) {
             queueGlob(
-                child,
-                childIsDir,
-                patternParts,
-                idx,
-                excludeDirectories,
-                relevantExcludes,
-                excludeIdx + 1,
-                results,
-                cache,
-                dirPred);
+                child, childIsDir, patternParts, idx, excludeDirectories, results, cache, dirPred);
           }
         }
         if (matches(pattern, child.getName(), cache)) {
@@ -720,15 +592,12 @@ public final class UnixGlob {
                 patternParts,
                 idx + 1,
                 excludeDirectories,
-                relevantExcludes,
-                excludeIdx + 1,
                 results,
                 cache,
                 dirPred);
           } else {
             // Instead of using an async call, just repeat the base case above.
-            if (idx + 1 == patternParts.length
-                && !excludedOnMatch(child, relevantExcludes, excludeIdx + 1, cache)) {
+            if (idx + 1 == patternParts.length) {
               results.add(child);
             }
           }
@@ -738,16 +607,7 @@ public final class UnixGlob {
 
     @Nullable
     private File[] getChildren(File file) {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        return file.listFiles();
-      }
-      TempFileSystem fs = TempFileSystem.getInstance();
-      VirtualFile vf = fs.findFileByIoFile(file);
-      VirtualFile[] children = vf.getChildren();
-      if (children == null) {
-        return null;
-      }
-      return Arrays.stream(children).map(VirtualFile::getPath).map(File::new).toArray(File[]::new);
+      return FileAttributeProvider.getInstance().listFiles(file);
     }
   }
 }

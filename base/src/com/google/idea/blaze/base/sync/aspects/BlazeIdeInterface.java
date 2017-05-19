@@ -18,15 +18,14 @@ package com.google.idea.blaze.base.sync.aspects;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
-import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /** Indirection between ide_build_info and aspect style IDE info. */
@@ -34,22 +33,6 @@ public interface BlazeIdeInterface {
 
   static BlazeIdeInterface getInstance() {
     return ServiceManager.getService(BlazeIdeInterface.class);
-  }
-
-  /** The result of a blaze operation */
-  enum BuildResult {
-    SUCCESS, // Success
-    BUILD_ERROR, // Return code 1, a build error
-    FATAL_ERROR; // Some other failure
-
-    public static BuildResult fromExitCode(int exitCode) {
-      if (exitCode == 0) {
-        return SUCCESS;
-      } else if (exitCode == 1) {
-        return BUILD_ERROR;
-      }
-      return FATAL_ERROR;
-    }
   }
 
   /** The result of the ide operation */
@@ -75,7 +58,7 @@ public interface BlazeIdeInterface {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
-      List<TargetExpression> targets,
+      ShardedTargetList shardedTargets,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       ArtifactLocationDecoder artifactLocationDecoder,
       SyncState.Builder syncStateBuilder,
@@ -93,7 +76,7 @@ public interface BlazeIdeInterface {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
-      List<TargetExpression> targets);
+      ShardedTargetList shardedTargets);
 
   /**
    * Attempts to compile the requested ide artifacts.
@@ -106,5 +89,5 @@ public interface BlazeIdeInterface {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
-      List<TargetExpression> targets);
+      ShardedTargetList shardedTargets);
 }

@@ -18,12 +18,14 @@ package com.google.idea.blaze.ijwb.javascript;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.TestUtils;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PlatformUtils;
 import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,6 +37,7 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
 
   @Test
   public void testSimpleTestSourcesIdentified() {
+    TestUtils.setPlatformPrefix(getTestRootDisposable(), PlatformUtils.IDEA_PREFIX);
     setProjectView(
         "directories:",
         "  common/jslayout/calendar",
@@ -75,6 +78,7 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
 
   @Test
   public void testTestSourcesMissingFromDirectoriesSectionAreAdded() {
+    TestUtils.setPlatformPrefix(getTestRootDisposable(), PlatformUtils.IDEA_PREFIX);
     setProjectView(
         "directories:",
         "  common/jslayout",
@@ -107,6 +111,7 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
 
   @Test
   public void testTestSourceChildrenAreNotAddedAsSourceFolders() {
+    TestUtils.setPlatformPrefix(getTestRootDisposable(), PlatformUtils.IDEA_PREFIX);
     // child directories of test sources are always test sources, so they should never
     // appear as separate SourceFolders.
     setProjectView(
@@ -142,6 +147,26 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
     SourceFolder testRoot = findSourceFolder(contentEntries.get(0), nestedTestDir.getParent());
     assertThat(testRoot).isNotNull();
     assertThat(testRoot.isTestSource()).isTrue();
+  }
+
+  @Test
+  public void testUsefulErrorMessageInCommunityEdition() {
+    TestUtils.setPlatformPrefix(getTestRootDisposable(), PlatformUtils.IDEA_CE_PREFIX);
+    setProjectView(
+        "directories:",
+        "  common/jslayout",
+        "targets:",
+        "  //common/jslayout/...:all",
+        "workspace_type: javascript");
+
+    workspace.createDirectory(new WorkspacePath("common/jslayout"));
+
+    BlazeSyncParams syncParams =
+        new BlazeSyncParams.Builder("Full Sync", BlazeSyncParams.SyncMode.FULL)
+            .addProjectViewTargets(true)
+            .build();
+    runBlazeSync(syncParams);
+    errorCollector.assertIssues("IntelliJ Ultimate needed for Javascript support.");
   }
 
   @Nullable

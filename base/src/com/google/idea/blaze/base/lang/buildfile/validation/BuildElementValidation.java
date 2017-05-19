@@ -50,9 +50,9 @@ class BuildElementValidation {
   private static final EnumSet<Build.Attribute.Discriminator> DICT_TYPES =
       EnumSet.of(
           Discriminator.LABEL_LIST_DICT,
+          Discriminator.LABEL_KEYED_STRING_DICT,
           Discriminator.STRING_DICT,
           Discriminator.STRING_LIST_DICT,
-          Discriminator.STRING_DICT_UNARY,
           Discriminator.LABEL_DICT_UNARY);
 
   private static final EnumSet<Build.Attribute.Discriminator> STRING_TYPES =

@@ -81,7 +81,7 @@ public class BlazeJavaMainClassRunConfigurationProducer
     if (handlerState == null) {
       return false;
     }
-    handlerState.setCommand(BlazeCommandName.RUN);
+    handlerState.getCommandState().setCommand(BlazeCommandName.RUN);
     configuration.setGeneratedName();
     return true;
   }
@@ -94,7 +94,7 @@ public class BlazeJavaMainClassRunConfigurationProducer
     if (handlerState == null) {
       return false;
     }
-    if (!Objects.equals(handlerState.getCommand(), BlazeCommandName.RUN)) {
+    if (!Objects.equals(handlerState.getCommandState().getCommand(), BlazeCommandName.RUN)) {
       return false;
     }
     PsiClass mainClass = getMainClass(context);

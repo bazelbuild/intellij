@@ -77,7 +77,7 @@ public class BlazeCommandRunConfigurationRunManagerImplTest extends BlazeIntegra
 
   @Test
   public void loadStateAndGetStateShouldMatch() {
-    final Label label = new Label("//package:rule");
+    final Label label = Label.create("//package:rule");
     configuration.setTarget(label);
 
     final Element element = runManager.getState();
@@ -94,7 +94,7 @@ public class BlazeCommandRunConfigurationRunManagerImplTest extends BlazeIntegra
   @Test
   public void loadStateAndGetStateElementShouldMatch() {
     final XMLOutputter xmlOutputter = new XMLOutputter(Format.getCompactFormat());
-    configuration.setTarget(new Label("//package:rule"));
+    configuration.setTarget(Label.create("//package:rule"));
 
     final Element initialElement = runManager.getState();
     runManager.loadState(initialElement);
@@ -107,14 +107,14 @@ public class BlazeCommandRunConfigurationRunManagerImplTest extends BlazeIntegra
   @Test
   public void loadStateAndGetStateElementShouldMatchAfterChangeAndRevert() {
     final XMLOutputter xmlOutputter = new XMLOutputter(Format.getCompactFormat());
-    final Label label = new Label("//package:rule");
+    final Label label = Label.create("//package:rule");
     configuration.setTarget(label);
 
     final Element initialElement = runManager.getState();
     runManager.loadState(initialElement);
     final BlazeCommandRunConfiguration modifiedConfiguration =
         (BlazeCommandRunConfiguration) runManager.getAllConfigurations()[0];
-    modifiedConfiguration.setTarget(new Label("//new:label"));
+    modifiedConfiguration.setTarget(Label.create("//new:label"));
 
     final Element modifiedElement = runManager.getState();
     assertThat(xmlOutputter.outputString(modifiedElement))
@@ -135,7 +135,7 @@ public class BlazeCommandRunConfigurationRunManagerImplTest extends BlazeIntegra
     final XMLOutputter xmlOutputter = new XMLOutputter(Format.getCompactFormat());
     final BlazeCommandRunConfigurationSettingsEditor editor =
         new BlazeCommandRunConfigurationSettingsEditor(configuration);
-    configuration.setTarget(new Label("//package:rule"));
+    configuration.setTarget(Label.create("//package:rule"));
 
     final Element initialElement = runManager.getState();
     editor.resetFrom(configuration);

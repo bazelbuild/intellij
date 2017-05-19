@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.sync.aspects;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.BlazeTestCase;
 import java.util.List;
 import org.junit.Test;
@@ -41,13 +40,17 @@ public class UnfilteredCompilerOptionsTest extends BlazeTestCase {
             "sys3/inc1",
             "-isystm",
             "sys4/inc1");
-    List<String> sysIncludes = Lists.newArrayList();
-    List<String> flags = Lists.newArrayList();
-    UnfilteredCompilerOptions.splitUnfilteredCompilerOptions(unfilteredOptions, sysIncludes, flags);
+    UnfilteredCompilerOptions compilerOptions =
+        UnfilteredCompilerOptions.builder()
+            .registerSingleOrSplitOption("-isystem")
+            .build(unfilteredOptions);
 
-    assertThat(sysIncludes).containsExactly("sys/inc1", "sys2/inc1", "sys3/inc1");
+    List<String> sysIncludes = compilerOptions.getExtractedOptionValues("-isystem");
+    List<String> flags = compilerOptions.getUninterpretedOptions();
 
-    assertThat(flags).containsExactly("-VER2", "-isystm", "sys4/inc1");
+    assertThat(sysIncludes).containsExactly("sys/inc1", "sys2/inc1", "sys3/inc1").inOrder();
+
+    assertThat(flags).containsExactly("-VER2", "-isystm", "sys4/inc1").inOrder();
   }
 
   @Test
@@ -55,12 +58,47 @@ public class UnfilteredCompilerOptionsTest extends BlazeTestCase {
     ImmutableList<String> unfilteredOptions =
         ImmutableList.of(
             "-isystem", "sys/inc1", "-VER2", "-isystemsys2/inc1", "-isystem", "sys3/inc1");
-    List<String> sysIncludes = Lists.newArrayList();
-    List<String> flags = Lists.newArrayList();
-    UnfilteredCompilerOptions.splitUnfilteredCompilerOptions(unfilteredOptions, sysIncludes, flags);
+    UnfilteredCompilerOptions compilerOptions =
+        UnfilteredCompilerOptions.builder()
+            .registerSingleOrSplitOption("-isystem")
+            .build(unfilteredOptions);
 
-    assertThat(sysIncludes).containsExactly("sys/inc1", "sys2/inc1", "sys3/inc1");
+    List<String> sysIncludes = compilerOptions.getExtractedOptionValues("-isystem");
+    List<String> flags = compilerOptions.getUninterpretedOptions();
+    assertThat(sysIncludes).containsExactly("sys/inc1", "sys2/inc1", "sys3/inc1").inOrder();
 
-    assertThat(flags).containsExactly("-VER2");
+    assertThat(flags).containsExactly("-VER2").inOrder();
+  }
+
+  @Test
+  public void testMultipleFlagsToExtract() {
+    ImmutableList<String> unfilteredOptions =
+        ImmutableList.of(
+            "-I",
+            "foo/headers1",
+            "-fno-exceptions",
+            "-Werror",
+            "-DMACRO1=1",
+            "-D",
+            "MACRO2",
+            "-Ifoo/headers2",
+            "-I=sysroot_header",
+            "-Wall",
+            "-I",
+            "foo/headers3");
+    UnfilteredCompilerOptions compilerOptions =
+        UnfilteredCompilerOptions.builder()
+            .registerSingleOrSplitOption("-I")
+            .registerSingleOrSplitOption("-D")
+            .build(unfilteredOptions);
+
+    List<String> defines = compilerOptions.getExtractedOptionValues("-D");
+    List<String> includes = compilerOptions.getExtractedOptionValues("-I");
+    List<String> flags = compilerOptions.getUninterpretedOptions();
+    assertThat(includes)
+        .containsExactly("foo/headers1", "foo/headers2", "=sysroot_header", "foo/headers3")
+        .inOrder();
+    assertThat(defines).containsExactly("MACRO1=1", "MACRO2").inOrder();
+    assertThat(flags).containsExactly("-fno-exceptions", "-Werror", "-Wall").inOrder();
   }
 }

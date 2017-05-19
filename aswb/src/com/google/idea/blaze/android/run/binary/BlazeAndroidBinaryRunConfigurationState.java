@@ -18,10 +18,8 @@ package com.google.idea.blaze.android.run.binary;
 import com.android.tools.idea.run.ValidationError;
 import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.intellij.openapi.project.Project;
@@ -121,10 +119,6 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
 
   public void setMode(String mode) {
     this.mode = mode;
-  }
-
-  public ImmutableList<String> getBuildFlags(Project project, ProjectViewSet projectViewSet) {
-    return commonState.getBuildFlags(project, projectViewSet);
   }
 
   /**

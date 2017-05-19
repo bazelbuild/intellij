@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.sync.source;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -29,11 +30,13 @@ import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.PackageManifestOuterClass;
 import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.PackageManifestOuterClass.JavaSourcePackage;
 import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.PackageManifestOuterClass.PackageManifest;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -111,7 +114,7 @@ public class PackageManifestReader {
     return manifestMap;
   }
 
-  protected Map<ArtifactLocation, String> parseManifestFile(File packageManifest) {
+  private static Map<ArtifactLocation, String> parseManifestFile(File packageManifest) {
     Map<ArtifactLocation, String> outputMap = Maps.newHashMap();
     InputStreamProvider inputStreamProvider = InputStreamProvider.getInstance();
 
@@ -119,14 +122,7 @@ public class PackageManifestReader {
       try (BufferedInputStream bufferedInputStream = new BufferedInputStream(input)) {
         PackageManifest proto = PackageManifest.parseFrom(bufferedInputStream);
         for (JavaSourcePackage source : proto.getSourcesList()) {
-          ArtifactLocation artifactLocation =
-              ArtifactLocation.builder()
-                  .setRootExecutionPathFragment(
-                      source.getArtifactLocation().getRootExecutionPathFragment())
-                  .setRelativePath(source.getArtifactLocation().getRelativePath())
-                  .setIsSource(source.getArtifactLocation().getIsSource())
-                  .build();
-          outputMap.put(artifactLocation, source.getPackageString());
+          outputMap.put(fromProto(source.getArtifactLocation()), source.getPackageString());
         }
       }
       return outputMap;
@@ -134,5 +130,27 @@ public class PackageManifestReader {
       logger.error(e);
       return outputMap;
     }
+  }
+
+  private static ArtifactLocation fromProto(PackageManifestOuterClass.ArtifactLocation location) {
+    String relativePath = location.getRelativePath();
+    String rootExecutionPathFragment = location.getRootExecutionPathFragment();
+    if (!location.getIsNewExternalVersion() && location.getIsExternal()) {
+      // fix up incorrect paths created with older aspect version
+      // Note: bazel always uses the '/' separator here, even on windows.
+      List<String> components = StringUtil.split(relativePath, "/");
+      if (components.size() > 2) {
+        relativePath = Joiner.on('/').join(components.subList(2, components.size()));
+        String prefix = components.get(0) + "/" + components.get(1);
+        rootExecutionPathFragment =
+            rootExecutionPathFragment.isEmpty() ? prefix : rootExecutionPathFragment + "/" + prefix;
+      }
+    }
+    return ArtifactLocation.builder()
+        .setRootExecutionPathFragment(rootExecutionPathFragment)
+        .setRelativePath(relativePath)
+        .setIsSource(location.getIsSource())
+        .setIsExternal(location.getIsExternal())
+        .build();
   }
 }

@@ -195,8 +195,9 @@ public class BlazeBuildFileRunConfigurationProducer
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState != null) {
       // TODO move the old test rule functionality to a BlazeRunConfigurationFactory
-      handlerState.setCommand(
-          Kind.isTestRule(target.ruleType) ? BlazeCommandName.TEST : BlazeCommandName.BUILD);
+      BlazeCommandName command =
+          Kind.isTestRule(target.ruleType) ? BlazeCommandName.TEST : BlazeCommandName.BUILD;
+      handlerState.getCommandState().setCommand(command);
     }
     configuration.setGeneratedName();
   }

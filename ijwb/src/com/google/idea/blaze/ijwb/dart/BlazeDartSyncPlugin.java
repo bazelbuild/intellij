@@ -20,17 +20,17 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
+import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
-import com.google.idea.blaze.ijwb.ide.IdeCheck;
+import com.google.idea.sdkcompat.dart.DartSdkCompatUtils;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -38,7 +38,6 @@ import javax.annotation.Nullable;
 /** Supports dart. */
 public class BlazeDartSyncPlugin extends BlazeSyncPlugin.Adapter {
 
-  static final String DART_SDK_LIBRARY_NAME = "Dart SDK";
   private static final String DART_PLUGIN_ID = "Dart";
 
   @Override
@@ -61,8 +60,7 @@ public class BlazeDartSyncPlugin extends BlazeSyncPlugin.Adapter {
       return;
     }
 
-    Library dartSdkLibrary =
-        ApplicationLibraryTable.getApplicationTable().getLibraryByName(DART_SDK_LIBRARY_NAME);
+    Library dartSdkLibrary = DartSdkCompatUtils.findDartLibrary(project);
     if (dartSdkLibrary != null) {
       if (workspaceModifiableModel.findLibraryOrderEntry(dartSdkLibrary) == null) {
         workspaceModifiableModel.addLibraryEntry(dartSdkLibrary);
@@ -78,14 +76,17 @@ public class BlazeDartSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Override
   public boolean validateProjectView(
+      @Nullable Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings) {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.DART)) {
       return true;
     }
-    if (!IdeCheck.isPluginEnabled(DART_PLUGIN_ID)) {
-      IssueOutput.error("Dart plugin needed for Dart language support.").submit(context);
+    if (!PluginUtils.isPluginEnabled(DART_PLUGIN_ID)) {
+      IssueOutput.error("Dart plugin needed for Dart language support.")
+          .navigatable(PluginUtils.installOrEnablePluginNavigable(DART_PLUGIN_ID))
+          .submit(context);
       return false;
     }
     return true;
@@ -93,7 +94,8 @@ public class BlazeDartSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Nullable
   @Override
-  public LibrarySource getLibrarySource(BlazeProjectData blazeProjectData) {
+  public LibrarySource getLibrarySource(
+      ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
     if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.DART)) {
       return null;
     }

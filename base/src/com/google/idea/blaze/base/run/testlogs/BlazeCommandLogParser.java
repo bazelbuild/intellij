@@ -36,6 +36,8 @@ public class BlazeCommandLogParser {
   private static final Logger logger = Logger.getInstance(BlazeCommandLogParser.class);
 
   private static final Pattern TEST_LOG = Pattern.compile("^(//[^\\s]*) .*? (PASSED|FAILED)");
+  private static final Pattern FAILED_TARGET =
+      Pattern.compile("^Target (//[^\\s]*) failed to build");
 
   /** Finds log location and target label for all tests listed in the master log. */
   public static ImmutableSet<Label> parseTestTargets(File commandLog) {
@@ -45,6 +47,25 @@ public class BlazeCommandLogParser {
       logger.warn("Error parsing master log", e);
       return ImmutableSet.of();
     }
+  }
+
+  /** Finds the targets which failed to build */
+  public static ImmutableSet<Label> parseFailedTargets(File commandLog) {
+    try (Stream<String> stream = Files.lines(Paths.get(commandLog.getPath()))) {
+      return parseTestTargets(stream);
+    } catch (IOException e) {
+      logger.warn("Error parsing master log", e);
+      return ImmutableSet.of();
+    }
+  }
+
+  @VisibleForTesting
+  static ImmutableSet<Label> parseFailedTargets(Stream<String> lines) {
+    return ImmutableSet.copyOf(
+        lines
+            .map(BlazeCommandLogParser::parseBuildFailure)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet()));
   }
 
   @VisibleForTesting
@@ -60,6 +81,16 @@ public class BlazeCommandLogParser {
   @VisibleForTesting
   static Label parseTestTarget(String line) {
     Matcher match = TEST_LOG.matcher(line);
+    if (!match.find()) {
+      return null;
+    }
+    return Label.createIfValid(match.group(1));
+  }
+
+  @Nullable
+  @VisibleForTesting
+  static Label parseBuildFailure(String line) {
+    Matcher match = FAILED_TARGET.matcher(line);
     if (!match.find()) {
       return null;
     }

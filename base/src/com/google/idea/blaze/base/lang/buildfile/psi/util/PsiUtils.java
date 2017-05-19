@@ -67,13 +67,14 @@ public class PsiUtils {
    * a parent of type PsiDirectory.
    */
   @Nullable
-  public static <T extends PsiElement> T getParentOfType(PsiElement element, Class<T> psiClass) {
-    PsiElement parent = element.getParent();
-    while (parent != null && !(parent instanceof PsiDirectory)) {
-      if (psiClass.isInstance(parent)) {
-        return (T) parent;
+  public static <T extends PsiElement> T getParentOfType(
+      PsiElement element, Class<T> psiClass, boolean strict) {
+    element = strict ? element.getParent() : element;
+    while (element != null && !(element instanceof PsiDirectory)) {
+      if (psiClass.isInstance(element)) {
+        return psiClass.cast(element);
       }
-      parent = parent.getParent();
+      element = element.getParent();
     }
     return null;
   }
@@ -159,7 +160,7 @@ public class PsiUtils {
    * Unwraps ParenthesizedExpression.<br>
    * For other types, returns the input expression.
    */
-  public static PsiElement getReferencedTarget(Expression expr) {
+  private static PsiElement getReferencedTarget(Expression expr) {
     PsiElement element = expr;
     while (true) {
       PsiElement unwrapped = unwrap(element);
@@ -170,6 +171,7 @@ public class PsiUtils {
     }
   }
 
+  @Nullable
   private static PsiElement unwrap(PsiElement expr) {
     if (expr instanceof ParenthesizedExpression) {
       return ((ParenthesizedExpression) expr).getContainedExpression();

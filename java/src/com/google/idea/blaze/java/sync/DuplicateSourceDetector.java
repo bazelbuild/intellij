@@ -24,7 +24,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -64,12 +64,7 @@ public class DuplicateSourceDetector {
       return;
     }
 
-    Collections.sort(
-        duplicates,
-        (lhs, rhs) ->
-            lhs.artifactLocation
-                .getRelativePath()
-                .compareTo(rhs.artifactLocation.getRelativePath()));
+    duplicates.sort(Comparator.comparing(lhs -> lhs.artifactLocation.getRelativePath()));
 
     context.output(new PerformanceWarning("Duplicate sources detected:"));
     for (Duplicate duplicate : duplicates) {

@@ -47,7 +47,7 @@ public class BlazeCommandTest extends BlazeTestCase {
   public void addedFlagsShouldGoAtStart() {
     List<String> flagsCommand =
         BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN)
-            .addTargets(new Label("//a:b"))
+            .addTargets(Label.create("//a:b"))
             .addBlazeFlags("--flag1", "--flag2")
             .addExeFlags("--exeFlag1", "--exeFlag2")
             .build()
@@ -60,7 +60,7 @@ public class BlazeCommandTest extends BlazeTestCase {
   public void targetsShouldGoAfterBlazeFlagsAndDoubleHyphen() {
     List<String> command =
         BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN)
-            .addTargets(new Label("//a:b"), new Label("//c:d"))
+            .addTargets(Label.create("//a:b"), Label.create("//c:d"))
             .addBlazeFlags("--flag1", "--flag2")
             .addExeFlags("--exeFlag1", "--exeFlag2")
             .build()
@@ -75,7 +75,7 @@ public class BlazeCommandTest extends BlazeTestCase {
   public void exeFlagsShouldGoLast() {
     List<String> command =
         BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN)
-            .addTargets(new Label("//a:b"), new Label("//c:d"))
+            .addTargets(Label.create("//a:b"), Label.create("//c:d"))
             .addBlazeFlags("--flag1", "--flag2")
             .addExeFlags("--exeFlag1", "--exeFlag2")
             .build()
@@ -89,7 +89,7 @@ public class BlazeCommandTest extends BlazeTestCase {
     List<String> command =
         BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN)
             .addTargets(
-                new Label("//a:b"), TargetExpression.fromString("-//e:f"), new Label("//c:d"))
+                Label.create("//a:b"), TargetExpression.fromString("-//e:f"), Label.create("//c:d"))
             .addBlazeFlags("--flag1", "--flag2")
             .addExeFlags("--exeFlag1", "--exeFlag2")
             .build()

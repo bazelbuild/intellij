@@ -20,6 +20,7 @@ import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryKey;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
@@ -45,6 +46,7 @@ public class LibraryEditor {
   public static void updateProjectLibraries(
       Project project,
       BlazeContext context,
+      ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
       Collection<BlazeLibrary> libraries) {
     Set<LibraryKey> intelliJLibraryState = Sets.newHashSet();
@@ -71,7 +73,7 @@ public class LibraryEditor {
       // Garbage collect unused libraries
       List<LibrarySource> librarySources = Lists.newArrayList();
       for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-        LibrarySource librarySource = syncPlugin.getLibrarySource(blazeProjectData);
+        LibrarySource librarySource = syncPlugin.getLibrarySource(projectViewSet, blazeProjectData);
         if (librarySource != null) {
           librarySources.add(librarySource);
         }

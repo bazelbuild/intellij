@@ -72,7 +72,7 @@ public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
         return (Class<RunConfigurationProducer<?>>) clazz;
       }
       return null;
-    } catch (ClassNotFoundException ignored) {
+    } catch (ClassNotFoundException | NoClassDefFoundError ignored) {
       return null;
     }
   }

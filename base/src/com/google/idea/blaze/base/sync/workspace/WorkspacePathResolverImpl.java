@@ -46,4 +46,10 @@ public class WorkspacePathResolverImpl implements WorkspacePathResolver {
   public WorkspacePath getWorkspacePath(File absoluteFile) {
     return workspaceRoot.workspacePathForSafe(absoluteFile);
   }
+
+  @Nullable
+  @Override
+  public WorkspaceRoot findWorkspaceRoot(File absoluteFile) {
+    return workspaceRoot.isInWorkspace(absoluteFile) ? workspaceRoot : null;
+  }
 }

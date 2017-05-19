@@ -25,6 +25,8 @@ import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiReference;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -76,8 +78,7 @@ public class PackageReferenceTest extends BuildFileIntegrationTestCase {
         PsiUtils.findFirstChildOfClassRecursive(packagesArg, StringLiteral.class);
 
     PsiReference[] references = string.getReferences();
-    assertThat(references).hasLength(2);
-    assertThat(references[0].resolve()).isEqualTo(libTarget);
-    assertThat(references[1].resolve()).isEqualTo(buildFile1);
+    assertThat(Arrays.stream(references).map(PsiReference::resolve).collect(Collectors.toList()))
+        .containsAllOf(libTarget, buildFile1);
   }
 }

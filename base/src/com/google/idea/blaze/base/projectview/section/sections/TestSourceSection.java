@@ -24,5 +24,12 @@ import com.google.idea.blaze.base.projectview.section.SectionParser;
 /** Section for configuring test sources. */
 public class TestSourceSection {
   public static final SectionKey<Glob, ListSection<Glob>> KEY = SectionKey.of("test_sources");
-  public static final SectionParser PARSER = new GlobSectionParser(KEY);
+  public static final SectionParser PARSER =
+      new GlobSectionParser(KEY) {
+        @Override
+        public String quickDocs() {
+          return "A list of workspace-relative glob patterns. Determines which sources IntelliJ "
+              + "treats as test sources.";
+        }
+      };
 }

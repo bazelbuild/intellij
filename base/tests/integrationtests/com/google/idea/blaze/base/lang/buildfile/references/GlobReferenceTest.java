@@ -137,13 +137,26 @@ public class GlobReferenceTest extends BuildFileIntegrationTestCase {
     PsiFile foo = workspace.createPsiFile(new WorkspacePath("java/com/google/Foo.java"));
     BuildFile file =
         createBuildFile(
-            new WorkspacePath("java/com/google/BUILD"),
-            "glob(" + "  ['**/*']," + "  exclude = ['BUILD'])");
+            new WorkspacePath("java/com/google/BUILD"), "glob(['**/*'],  exclude = ['BUILD'])");
 
     GlobExpression glob = PsiUtils.findFirstChildOfClassRecursive(file, GlobExpression.class);
     List<PsiElement> references = multiResolve(glob);
     assertThat(references).hasSize(2);
     assertThat(references).containsExactly(foo, test);
+  }
+
+  @Test
+  public void testExcludeDirectories2() {
+    workspace.createDirectory(new WorkspacePath("java/com/google/tests"));
+    workspace.createPsiFile(new WorkspacePath("java/com/google/tests/Test.java"));
+    workspace.createPsiFile(new WorkspacePath("java/com/google/Foo.java"));
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"), "glob(['**/*'],  exclude = ['**/*'])");
+
+    GlobExpression glob = PsiUtils.findFirstChildOfClassRecursive(file, GlobExpression.class);
+    List<PsiElement> references = multiResolve(glob);
+    assertThat(references).isEmpty();
   }
 
   @Test

@@ -48,5 +48,10 @@ public class BuildFlagsSection {
     public ItemType getItemType() {
       return ItemType.Other;
     }
+
+    @Override
+    public String quickDocs() {
+      return "A set of flags that get passed to all build command invocations as arguments";
+    }
   }
 }

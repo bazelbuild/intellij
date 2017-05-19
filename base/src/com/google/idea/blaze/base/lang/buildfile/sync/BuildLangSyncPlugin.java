@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.lang.buildfile.sync;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
 import com.google.idea.blaze.base.model.SyncState;
@@ -30,7 +31,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.repackaged.devtools.build.lib.query2.proto.proto2api.Build;
@@ -53,7 +53,7 @@ public class BuildLangSyncPlugin extends BlazeSyncPlugin.Adapter {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings,
-      BlazeRoots blazeRoots,
+      BlazeInfo blazeInfo,
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
@@ -105,7 +105,7 @@ public class BuildLangSyncPlugin extends BlazeSyncPlugin.Adapter {
       // it's wasteful converting to a string and back, but uses existing code,
       // and has a very minor cost (this is only run once per workspace)
       ListenableFuture<byte[]> future =
-          BlazeInfo.getInstance()
+          BlazeInfoRunner.getInstance()
               .runBlazeInfoGetBytes(
                   context,
                   Blaze.getBuildSystemProvider(project).getSyncBinaryPath(),

@@ -15,18 +15,24 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.refactor;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.lang.buildfile.lexer.BuildLexer;
 import com.google.idea.blaze.base.lang.buildfile.lexer.BuildLexerBase;
 import com.google.idea.blaze.base.lang.buildfile.lexer.TokenKind;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.project.Project;
+import java.util.stream.Collectors;
 
-/** Used for rename validation */
+/** Used for rename validation of elements which aren't string literals. */
 public class BuildNamesValidator implements NamesValidator {
+
+  private static final ImmutableSet<String> KEYWORDS =
+      ImmutableSet.copyOf(
+          TokenKind.KEYWORDS.stream().map(TokenKind::toString).collect(Collectors.toSet()));
 
   @Override
   public boolean isKeyword(String s, Project project) {
-    return false;
+    return KEYWORDS.contains(s);
   }
 
   @Override

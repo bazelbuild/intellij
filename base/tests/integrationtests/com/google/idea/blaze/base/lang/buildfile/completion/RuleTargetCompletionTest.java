@@ -17,11 +17,17 @@ package com.google.idea.blaze.base.lang.buildfile.completion;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
+import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
+import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProvider;
+import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -36,6 +42,28 @@ public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
             "java_library(name = 'lib')",
+            "java_library(",
+            "    name = 'test',",
+            "    deps = [':']");
+
+    Editor editor = editorTest.openFileInEditor(file);
+    editorTest.setCaretPosition(editor, 3, "    deps = [':".length());
+
+    LookupElement[] completionItems = testFixture.completeBasic();
+    assertThat(completionItems).hasLength(1);
+    assertThat(completionItems[0].toString()).isEqualTo("':lib'");
+  }
+
+  @Test
+  public void testCustomRuleCompletion() {
+    MockBuildLanguageSpecProvider specProvider = new MockBuildLanguageSpecProvider();
+    setBuildLanguageSpecRules(specProvider, "java_library");
+    registerApplicationService(BuildLanguageSpecProvider.class, specProvider);
+
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "custom_rule(name = 'lib')",
             "java_library(",
             "    name = 'test',",
             "    deps = [':']");
@@ -159,5 +187,29 @@ public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
     String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).asList().contains("'//java:root_rule'");
     assertThat(completionItems).asList().doesNotContain("'//java/com/google:other_rule'");
+  }
+
+  private static void setBuildLanguageSpecRules(
+      MockBuildLanguageSpecProvider specProvider, String... ruleNames) {
+    ImmutableMap.Builder<String, RuleDefinition> rules = ImmutableMap.builder();
+    for (String name : ruleNames) {
+      rules.put(name, new RuleDefinition(name, ImmutableMap.of(), null));
+    }
+    specProvider.setRules(rules.build());
+  }
+
+  private static class MockBuildLanguageSpecProvider implements BuildLanguageSpecProvider {
+
+    BuildLanguageSpec languageSpec = new BuildLanguageSpec(ImmutableMap.of());
+
+    void setRules(ImmutableMap<String, RuleDefinition> rules) {
+      languageSpec = new BuildLanguageSpec(rules);
+    }
+
+    @Nullable
+    @Override
+    public BuildLanguageSpec getLanguageSpec(Project project) {
+      return languageSpec;
+    }
   }
 }

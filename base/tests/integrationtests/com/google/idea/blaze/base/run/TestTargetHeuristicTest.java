@@ -64,8 +64,8 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
                 .build());
     Label match =
         TestTargetHeuristic.chooseTestTargetForSourceFile(
-            getProject(), source, targets, TestSize.SMALL);
-    assertThat(match).isEqualTo(new Label("//foo:test2"));
+            getProject(), null, source, targets, TestSize.SMALL);
+    assertThat(match).isEqualTo(Label.create("//foo:test2"));
   }
 
   @Test
@@ -84,8 +84,9 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
                 .addSource(sourceRoot("java/com/foo/FooTest.java"))
                 .build());
     Label match =
-        TestTargetHeuristic.chooseTestTargetForSourceFile(getProject(), source, targets, null);
-    assertThat(match).isEqualTo(new Label("//foo:test2"));
+        TestTargetHeuristic.chooseTestTargetForSourceFile(
+            getProject(), null, source, targets, null);
+    assertThat(match).isEqualTo(Label.create("//foo:test2"));
   }
 
   @Test
@@ -96,8 +97,9 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
             TargetIdeInfo.builder().setLabel("//foo:FirstTest").setKind("java_test").build(),
             TargetIdeInfo.builder().setLabel("//foo:FooTest").setKind("java_test").build());
     Label match =
-        TestTargetHeuristic.chooseTestTargetForSourceFile(getProject(), source, targets, null);
-    assertThat(match).isEqualTo(new Label("//foo:FooTest"));
+        TestTargetHeuristic.chooseTestTargetForSourceFile(
+            getProject(), null, source, targets, null);
+    assertThat(match).isEqualTo(Label.create("//foo:FooTest"));
   }
 
   @Test
@@ -117,8 +119,8 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
                 .build());
     Label match =
         TestTargetHeuristic.chooseTestTargetForSourceFile(
-            getProject(), source, targets, TestSize.LARGE);
-    assertThat(match).isEqualTo(new Label("//bar:BarTest"));
+            getProject(), null, source, targets, TestSize.LARGE);
+    assertThat(match).isEqualTo(Label.create("//bar:BarTest"));
   }
 
   @Test
@@ -138,8 +140,8 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
                 .build());
     Label match =
         TestTargetHeuristic.chooseTestTargetForSourceFile(
-            getProject(), source, targets, TestSize.SMALL);
-    assertThat(match).isEqualTo(new Label("//foo:FooTest"));
+            getProject(), null, source, targets, TestSize.SMALL);
+    assertThat(match).isEqualTo(Label.create("//foo:FooTest"));
   }
 
   @Test
@@ -161,8 +163,8 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
                 .build());
     Label match =
         TestTargetHeuristic.chooseTestTargetForSourceFile(
-            getProject(), source, targets, TestSize.SMALL);
-    assertThat(match).isEqualTo(new Label("//foo:test2"));
+            getProject(), null, source, targets, TestSize.SMALL);
+    assertThat(match).isEqualTo(Label.create("//foo:test2"));
   }
 
   private static ArtifactLocation sourceRoot(String relativePath) {

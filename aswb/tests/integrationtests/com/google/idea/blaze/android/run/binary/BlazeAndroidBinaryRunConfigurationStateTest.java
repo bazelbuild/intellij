@@ -19,7 +19,6 @@ package com.google.idea.blaze.android.run.binary;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.android.AndroidIntegrationTestCleanupHelper;
 import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
 import com.google.idea.blaze.android.cppapi.NdkSupport;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
@@ -33,7 +32,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -60,15 +58,10 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     state = new BlazeAndroidBinaryRunConfigurationState(buildSystem().getName());
   }
 
-  @After
-  public final void doTeardown() {
-    AndroidIntegrationTestCleanupHelper.cleanUp(getProject());
-  }
-
   @Test
   public void readAndWriteShouldMatch() throws InvalidDataException, WriteExternalException {
     BlazeAndroidRunConfigurationCommonState commonState = state.getCommonState();
-    commonState.setUserFlags(ImmutableList.of("--flag1", "--flag2"));
+    commonState.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
     commonState.setNativeDebuggingEnabled(true);
 
     state.setActivityClass("com.example.TestActivity");
@@ -86,7 +79,9 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     readState.readExternal(element);
 
     BlazeAndroidRunConfigurationCommonState readCommonState = readState.getCommonState();
-    assertThat(readCommonState.getUserFlags()).containsExactly("--flag1", "--flag2").inOrder();
+    assertThat(readCommonState.getBlazeFlagsState().getRawFlags())
+        .containsExactly("--flag1", "--flag2")
+        .inOrder();
     assertThat(readCommonState.isNativeDebuggingEnabled()).isTrue();
 
     assertThat(readState.getActivityClass()).isEqualTo("com.example.TestActivity");
@@ -109,7 +104,8 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
 
     BlazeAndroidRunConfigurationCommonState commonState = state.getCommonState();
     BlazeAndroidRunConfigurationCommonState readCommonState = readState.getCommonState();
-    assertThat(readCommonState.getUserFlags()).isEqualTo(commonState.getUserFlags());
+    assertThat(readCommonState.getBlazeFlagsState().getRawFlags())
+        .isEqualTo(commonState.getBlazeFlagsState().getRawFlags());
     assertThat(readCommonState.isNativeDebuggingEnabled())
         .isEqualTo(commonState.isNativeDebuggingEnabled());
 
@@ -127,7 +123,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     final XMLOutputter xmlOutputter = new XMLOutputter(Format.getCompactFormat());
 
     BlazeAndroidRunConfigurationCommonState commonState = state.getCommonState();
-    commonState.setUserFlags(ImmutableList.of("--flag1", "--flag2"));
+    commonState.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
     commonState.setNativeDebuggingEnabled(true);
 
     state.setActivityClass("com.example.TestActivity");
@@ -152,7 +148,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     RunConfigurationStateEditor editor = state.getEditor(getProject());
 
     BlazeAndroidRunConfigurationCommonState commonState = state.getCommonState();
-    commonState.setUserFlags(ImmutableList.of("--flag1", "--flag2"));
+    commonState.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
     commonState.setNativeDebuggingEnabled(true);
 
     state.setActivityClass("com.example.TestActivity");
@@ -170,7 +166,8 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     editor.applyEditorTo(readState);
 
     BlazeAndroidRunConfigurationCommonState readCommonState = readState.getCommonState();
-    assertThat(readCommonState.getUserFlags()).isEqualTo(commonState.getUserFlags());
+    assertThat(readCommonState.getBlazeFlagsState().getRawFlags())
+        .isEqualTo(commonState.getBlazeFlagsState().getRawFlags());
     assertThat(readCommonState.isNativeDebuggingEnabled())
         .isEqualTo(commonState.isNativeDebuggingEnabled());
 
@@ -195,7 +192,8 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
 
     BlazeAndroidRunConfigurationCommonState commonState = state.getCommonState();
     BlazeAndroidRunConfigurationCommonState readCommonState = readState.getCommonState();
-    assertThat(readCommonState.getUserFlags()).isEqualTo(commonState.getUserFlags());
+    assertThat(readCommonState.getBlazeFlagsState().getRawFlags())
+        .isEqualTo(commonState.getBlazeFlagsState().getRawFlags());
     assertThat(readCommonState.isNativeDebuggingEnabled())
         .isEqualTo(commonState.isNativeDebuggingEnabled());
 

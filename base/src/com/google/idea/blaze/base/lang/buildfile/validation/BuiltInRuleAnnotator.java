@@ -43,8 +43,16 @@ public class BuiltInRuleAnnotator extends BuildAnnotator {
     if (rule == null) {
       return;
     }
+    if (node.getReferencedElement() != null) {
+      // this has been locally overridden, so don't attempt validation
+      return;
+    }
     Set<String> missingAttributes = new TreeSet<>(rule.mandatoryAttributes.keySet());
     for (Argument arg : node.getArguments()) {
+      if (arg instanceof Argument.StarStar) {
+        missingAttributes.clear();
+        continue;
+      }
       String name = arg.getName();
       if (name == null) {
         continue;

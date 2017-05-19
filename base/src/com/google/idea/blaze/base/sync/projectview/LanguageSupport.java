@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.projectview;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -25,34 +25,39 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.intellij.openapi.diagnostic.Logger;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /** Reads the user's language preferences from the project view. */
 public class LanguageSupport {
 
   private static final Logger logger = Logger.getInstance(LanguageSupport.class);
 
-  public static WorkspaceLanguageSettings createWorkspaceLanguageSettings(
-      BlazeContext context, ProjectViewSet projectViewSet) {
-    WorkspaceType workspaceType = projectViewSet.getScalarValue(WorkspaceTypeSection.KEY);
-    Set<WorkspaceType> supportedTypes = supportedWorkspaceTypes();
-    if (workspaceType != null && !supportedTypes.contains(workspaceType)) {
-      IssueOutput.error(
-              String.format(
-                  "Workspace type '%s' is not supported by this plugin", workspaceType.getName()))
-          .submit(context);
-      return null;
-    }
-    if (workspaceType == null) {
-      // if no workspace type is specified, prioritize by enum ordinal.
-      for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-        WorkspaceType recommendedType = syncPlugin.getDefaultWorkspaceType();
-        if (recommendedType != null
-            && (workspaceType == null || workspaceType.ordinal() > recommendedType.ordinal())) {
-          workspaceType = recommendedType;
-        }
+  @Nullable
+  public static WorkspaceType getDefaultWorkspaceType() {
+    WorkspaceType workspaceType = null;
+    // prioritize by enum ordinal.
+    for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
+      WorkspaceType recommendedType = syncPlugin.getDefaultWorkspaceType();
+      if (recommendedType != null
+          && (workspaceType == null || workspaceType.ordinal() > recommendedType.ordinal())) {
+        workspaceType = recommendedType;
       }
+    }
+    return workspaceType;
+  }
+
+  /**
+   * Derives {@link WorkspaceLanguageSettings} from the {@link ProjectViewSet}. Does no validation.
+   */
+  @Nullable
+  public static WorkspaceLanguageSettings createWorkspaceLanguageSettings(
+      ProjectViewSet projectViewSet) {
+    WorkspaceType workspaceType = projectViewSet.getScalarValue(WorkspaceTypeSection.KEY);
+    if (workspaceType == null) {
+      workspaceType = getDefaultWorkspaceType();
     }
 
     if (workspaceType == null) {
@@ -60,22 +65,41 @@ public class LanguageSupport {
       return null;
     }
 
-    Set<LanguageClass> activeLanguages = Sets.newHashSet(workspaceType.getLanguages());
-    activeLanguages.addAll(projectViewSet.listItems(AdditionalLanguagesSection.KEY));
+    ImmutableSet.Builder<LanguageClass> activeLanguages =
+        ImmutableSet.<LanguageClass>builder()
+            .addAll(workspaceType.getLanguages())
+            .addAll(projectViewSet.listItems(AdditionalLanguagesSection.KEY))
+            .add(LanguageClass.GENERIC);
+    Arrays.stream(BlazeSyncPlugin.EP_NAME.getExtensions())
+        .forEach(plugin -> activeLanguages.addAll(plugin.getAlwaysActiveLanguages()));
+    return new WorkspaceLanguageSettings(workspaceType, activeLanguages.build());
+  }
 
+  public static boolean validateLanguageSettings(
+      BlazeContext context, WorkspaceLanguageSettings languageSettings) {
+    Set<WorkspaceType> supportedTypes = supportedWorkspaceTypes();
+    WorkspaceType workspaceType = languageSettings.getWorkspaceType();
+    if (!supportedTypes.contains(languageSettings.getWorkspaceType())) {
+      IssueOutput.error(
+              String.format(
+                  "Workspace type '%s' is not supported by this plugin",
+                  languageSettings.getWorkspaceType().getName()))
+          .submit(context);
+      return false;
+    }
     Set<LanguageClass> supportedLanguages = supportedLanguagesForWorkspaceType(workspaceType);
     Set<LanguageClass> availableLanguages = EnumSet.noneOf(LanguageClass.class);
     for (WorkspaceType type : supportedTypes) {
       availableLanguages.addAll(supportedLanguagesForWorkspaceType(type));
     }
 
-    for (LanguageClass languageClass : activeLanguages) {
+    for (LanguageClass languageClass : languageSettings.activeLanguages) {
       if (!availableLanguages.contains(languageClass)) {
         IssueOutput.error(
                 String.format(
                     "Language '%s' is not supported by this plugin", languageClass.getName()))
             .submit(context);
-        return null;
+        return false;
       }
       if (!supportedLanguages.contains(languageClass)) {
         IssueOutput.error(
@@ -83,12 +107,10 @@ public class LanguageSupport {
                     "Language '%s' is not supported for this plugin with workspace type: '%s'",
                     languageClass.getName(), workspaceType.getName()))
             .submit(context);
-        return null;
+        return false;
       }
     }
-
-    activeLanguages.add(LanguageClass.GENERIC);
-    return new WorkspaceLanguageSettings(workspaceType, activeLanguages);
+    return true;
   }
 
   /** The {@link WorkspaceType}s supported by this plugin */
@@ -105,7 +127,21 @@ public class LanguageSupport {
     Set<LanguageClass> supportedLanguages = EnumSet.noneOf(LanguageClass.class);
     for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
       supportedLanguages.addAll(syncPlugin.getSupportedLanguagesInWorkspace(type));
+      supportedLanguages.addAll(syncPlugin.getAlwaysActiveLanguages());
     }
+    supportedLanguages.add(LanguageClass.GENERIC);
     return supportedLanguages;
+  }
+
+  /** @return The valid 'additional_language' options for this workspace type */
+  public static Set<LanguageClass> availableAdditionalLanguages(WorkspaceType workspaceType) {
+    Set<LanguageClass> langs = LanguageSupport.supportedLanguagesForWorkspaceType(workspaceType);
+    langs.removeAll(workspaceType.getLanguages());
+    langs.remove(LanguageClass.GENERIC);
+
+    Arrays.stream(BlazeSyncPlugin.EP_NAME.getExtensions())
+        .forEach(plugin -> langs.removeAll(plugin.getAlwaysActiveLanguages()));
+
+    return langs;
   }
 }

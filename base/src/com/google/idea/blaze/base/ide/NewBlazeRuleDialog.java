@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.ui.UiUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -37,8 +36,6 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 class NewBlazeRuleDialog extends DialogWrapper {
-  private static final Logger logger = Logger.getInstance(NewBlazeRuleDialog.class);
-
   private static final int UI_INDENT = 0;
   private static final int TEXT_BOX_WIDTH = 40;
 
@@ -94,7 +91,7 @@ class NewBlazeRuleDialog extends DialogWrapper {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     WorkspacePath workspacePath =
         workspaceRoot.workspacePathFor(new File(buildFile.getParent().getPath()));
-    Label newRule = new Label(workspacePath, targetName);
+    Label newRule = Label.create(workspacePath, targetName);
     BuildFileModifier buildFileModifier = BuildFileModifier.getInstance();
     boolean success = buildFileModifier.addRule(project, context, newRule, ruleKind);
 

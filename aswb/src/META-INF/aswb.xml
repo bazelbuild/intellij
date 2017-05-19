@@ -18,8 +18,7 @@
 
   <depends>com.intellij.modules.androidstudio</depends>
   <depends>org.jetbrains.android</depends>
-  <!-- TODO(chaorenl): remove when 2.2 is obsolete -->
-  <depends optional="true">com.android.tools.idea.updater</depends>
+  <depends>com.google.gct.test.recorder</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <java.elementFinder implementation="com.google.idea.blaze.android.resources.AndroidResourceClassFinder"
@@ -60,12 +59,13 @@
     <SyncListener implementation="com.google.idea.blaze.android.cppimpl.BlazeNdkSupportEnabler"/>
     <SyncListener implementation="com.google.idea.blaze.android.manifest.ManifestParser$ClearManifestParser"/>
     <RunConfigurationFactory implementation="com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationFactory"/>
-    <java.JavaSyncAugmenter implementation="com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter"/>
+    <JavaSyncAugmenter implementation="com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.android.sync.AndroidPrefetchFileSource"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandlerProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationHandlerProvider"/>
     <BuildSystemAndroidJdkProvider implementation="com.google.idea.blaze.android.sync.BazelAndroidJdkProvider"/>
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.android.run.test.smrunner.BlazeAndroidTestEventsHandler"/>
+    <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection$AndroidSdkPlatformProjectViewDefaultValueProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">
@@ -86,6 +86,23 @@
     <androidDebugger implementation="com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger"/>
   </extensions>
   <!-- END NDK SUPPORT -->
+
+  <extensions defaultExtensionNs="com.google.idea.blaze">
+    <BlazeUserSettingsContributor implementation="com.google.idea.blaze.android.settings.BlazeAndroidUserSettingsContributor$BlazeAndroidUserSettingsProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.android.project">
+    <buildSystemService implementation="com.google.idea.blaze.android.project.BlazeBuildSystemService"/>
+    <featureEnableService implementation="com.google.idea.blaze.android.project.BlazeFeatureEnableService"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.android.rendering">
+    <renderErrorContributor implementation="com.google.idea.blaze.android.rendering.BlazeRenderErrorContributor$BlazeProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.google.gct.testrecorder.run">
+    <testRecorderRunConfigurationProxyProvider implementation="com.google.idea.blaze.android.run.testrecorder.TestRecorderBlazeCommandRunConfigurationProxyProvider" />
+  </extensions>
 
   <application-components>
     <component>

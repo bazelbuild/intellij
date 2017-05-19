@@ -154,8 +154,8 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
     BlazeCommandRunConfigurationCommonState state =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     return state != null
-        && BlazeCommandName.TEST.equals(state.getCommand())
-        && !state.getRunOnDistributedExecutor();
+        && BlazeCommandName.TEST.equals(state.getCommandState().getCommand())
+        && !state.getRunOnDistributedExecutorState().runOnDistributedExecutor;
   }
 
   @Override
@@ -183,18 +183,18 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
     assert handlerState != null;
 
     String binaryPath =
-        handlerState.getBlazeBinary() != null
-            ? handlerState.getBlazeBinary()
+        handlerState.getBlazeBinaryState().getBlazeBinary() != null
+            ? handlerState.getBlazeBinaryState().getBlazeBinary()
             : Blaze.getBuildSystemProvider(project).getBinaryPath();
 
-    BlazeCommandName blazeCommand = handlerState.getCommand();
+    BlazeCommandName blazeCommand = handlerState.getCommandState().getCommand();
     assert blazeCommand != null;
     BlazeCommand.Builder command =
         BlazeCommand.builder(binaryPath, blazeCommand)
             .addTargets(configuration.getTarget())
             .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
             .addBlazeFlags(extraBlazeFlags)
-            .addBlazeFlags(handlerState.getBlazeFlags());
+            .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags());
 
     if (debug) {
       Kind kind = configuration.getKindForTarget();
@@ -205,11 +205,12 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
         command.addBlazeFlags(BlazeFlags.JAVA_TEST_DEBUG);
       }
     } else {
-      boolean runDistributed = handlerState.getRunOnDistributedExecutor();
+      boolean runDistributed =
+          handlerState.getRunOnDistributedExecutorState().runOnDistributedExecutor;
       command.addBlazeFlags(DistributedExecutorSupport.getBlazeFlags(project, runDistributed));
     }
 
-    command.addExeFlags(handlerState.getExeFlags());
+    command.addExeFlags(handlerState.getExeFlagsState().getExpandedFlags());
     return command.build();
   }
 }

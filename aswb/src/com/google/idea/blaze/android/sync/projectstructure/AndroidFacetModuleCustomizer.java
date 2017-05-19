@@ -16,7 +16,6 @@
 package com.google.idea.blaze.android.sync.projectstructure;
 
 import com.android.builder.model.AndroidProject;
-import com.google.idea.blaze.android.compatibility.Compatibility;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.module.Module;
@@ -56,7 +55,7 @@ public class AndroidFacetModuleCustomizer {
   private static void configureFacet(AndroidFacet facet) {
     JpsAndroidModuleProperties facetState = facet.getProperties();
     facetState.ALLOW_USER_CONFIGURATION = false;
-    Compatibility.setFacetStateIsLibraryProject(facetState);
+    facetState.PROJECT_TYPE = AndroidProject.PROJECT_TYPE_LIBRARY;
     facetState.MANIFEST_FILE_RELATIVE_PATH = "";
     facetState.RES_FOLDER_RELATIVE_PATH = "";
     facetState.ASSETS_FOLDER_RELATIVE_PATH = "";

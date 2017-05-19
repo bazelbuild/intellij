@@ -48,7 +48,8 @@ public final class RunUtil {
     Collection<TargetIdeInfo> targets =
         TestTargetFinder.getInstance(project).testTargetsForSourceFile(testFile);
     Label testLabel =
-        TestTargetHeuristic.chooseTestTargetForSourceFile(project, testFile, targets, testSize);
+        TestTargetHeuristic.chooseTestTargetForSourceFile(
+            project, testClass.getContainingFile(), testFile, targets, testSize);
     if (testLabel == null) {
       return null;
     }

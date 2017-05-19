@@ -16,6 +16,7 @@
 package com.google.idea.blaze.ijwb.dart;
 
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
+import com.google.idea.sdkcompat.dart.DartSdkCompatUtils;
 import com.intellij.openapi.roots.libraries.Library;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
@@ -28,7 +29,7 @@ class BlazeDartLibrarySource extends LibrarySource.Adapter {
   public Predicate<Library> getGcRetentionFilter() {
     return library -> {
       String libraryName = library.getName();
-      return libraryName != null && libraryName.equals(BlazeDartSyncPlugin.DART_SDK_LIBRARY_NAME);
+      return libraryName != null && libraryName.equals(DartSdkCompatUtils.DART_SDK_LIBRARY_NAME);
     };
   }
 }

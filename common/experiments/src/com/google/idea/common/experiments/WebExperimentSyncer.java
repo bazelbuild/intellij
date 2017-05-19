@@ -96,7 +96,7 @@ final class WebExperimentSyncer {
     experimentValues = loadCache();
     ListenableFuture<String> response = executor.submit(new WebExperimentsDownloader());
     response.addListener(
-        new WebExperimentsResultProcessor(response), MoreExecutors.sameThreadExecutor());
+        new WebExperimentsResultProcessor(response), MoreExecutors.directExecutor());
   }
 
   private void scheduleNextRefresh(boolean refreshWasSuccessful) {
@@ -105,7 +105,7 @@ final class WebExperimentSyncer {
     ListenableScheduledFuture<String> refreshResults =
         executor.schedule(new WebExperimentsDownloader(), delayInMinutes, TimeUnit.MINUTES);
     refreshResults.addListener(
-        new WebExperimentsResultProcessor(refreshResults), MoreExecutors.sameThreadExecutor());
+        new WebExperimentsResultProcessor(refreshResults), MoreExecutors.directExecutor());
   }
 
   private class WebExperimentsDownloader implements Callable<String> {

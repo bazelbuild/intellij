@@ -39,22 +39,18 @@ public interface TestTargetHeuristic {
     if (element == null) {
       return null;
     }
-    File file = getContainingFile(element);
-    if (file == null) {
-      return null;
-    }
-    Collection<TargetIdeInfo> rules =
-        TestTargetFinder.getInstance(element.getProject()).testTargetsForSourceFile(file);
-    return chooseTestTargetForSourceFile(element.getProject(), file, rules, null);
-  }
-
-  static File getContainingFile(PsiElement element) {
     PsiFile psiFile = element.getContainingFile();
     if (psiFile == null) {
       return null;
     }
     VirtualFile vf = psiFile.getVirtualFile();
-    return vf != null ? new File(vf.getPath()) : null;
+    File file = vf != null ? new File(vf.getPath()) : null;
+    if (file == null) {
+      return null;
+    }
+    Collection<TargetIdeInfo> rules =
+        TestTargetFinder.getInstance(element.getProject()).testTargetsForSourceFile(file);
+    return chooseTestTargetForSourceFile(element.getProject(), psiFile, file, rules, null);
   }
 
   /**
@@ -64,6 +60,7 @@ public interface TestTargetHeuristic {
   @Nullable
   static Label chooseTestTargetForSourceFile(
       Project project,
+      @Nullable PsiFile sourcePsiFile,
       File sourceFile,
       Collection<TargetIdeInfo> targets,
       @Nullable TestSize testSize) {
@@ -72,7 +69,9 @@ public interface TestTargetHeuristic {
       TargetIdeInfo match =
           targets
               .stream()
-              .filter(target -> filter.matchesSource(project, target, sourceFile, testSize))
+              .filter(
+                  target ->
+                      filter.matchesSource(project, target, sourcePsiFile, sourceFile, testSize))
               .findFirst()
               .orElse(null);
 
@@ -85,5 +84,9 @@ public interface TestTargetHeuristic {
 
   /** Returns true if the rule and source file match, according to this heuristic. */
   boolean matchesSource(
-      Project project, TargetIdeInfo target, File sourceFile, @Nullable TestSize testSize);
+      Project project,
+      TargetIdeInfo target,
+      @Nullable PsiFile sourcePsiFile,
+      File sourceFile,
+      @Nullable TestSize testSize);
 }

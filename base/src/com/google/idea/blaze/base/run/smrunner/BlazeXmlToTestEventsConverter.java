@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.run.smrunner;
 
-import com.google.common.collect.ImmutableMultimap;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -23,7 +22,8 @@ import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.ErrorOrFailureOrSk
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestCase;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
-import com.google.idea.blaze.base.run.testlogs.BlazeTestXmlFinderStrategy;
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.sdkcompat.smrunner.SmRunnerCompatUtils;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -91,11 +91,26 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
     onStartTesting();
     getProcessor().onTestsReporterAttached();
 
-    ImmutableMultimap<Label, File> xmlFiles =
-        BlazeTestXmlFinderStrategy.locateTestXmlFiles(project);
-    for (Label label : xmlFiles.keySet()) {
-      processTestSuites(label, xmlFiles.get(label));
+    BlazeTestResults testResults = BlazeTestResultFinderStrategy.locateTestResults(project);
+    for (Label target : testResults.failedTargets) {
+      reportFailedTarget(target);
     }
+    for (Label label : testResults.testXmlFiles.keySet()) {
+      processTestSuites(label, testResults.testXmlFiles.get(label));
+    }
+  }
+
+  private void reportFailedTarget(Label label) {
+    GeneralTestEventsProcessor processor = getProcessor();
+    TestSuiteStarted suiteStarted = new TestSuiteStarted(label.toString());
+    processor.onSuiteStarted(new TestSuiteStartedEvent(suiteStarted, null));
+    String targetName = label.targetName().toString();
+    processor.onTestStarted(new TestStartedEvent(targetName, null));
+    processor.onTestFailure(
+        SmRunnerCompatUtils.getTestFailedEvent(
+            targetName, "Target failed to build. See console output for details", null, 0));
+    processor.onTestFinished(new TestFinishedEvent(targetName, 0L));
+    processor.onSuiteFinished(new TestSuiteFinishedEvent(label.toString()));
   }
 
   /** Process all test XML files from a single test target. */

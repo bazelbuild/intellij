@@ -19,7 +19,9 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.projectview.section.sections.ItemOrTextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -82,7 +84,7 @@ public final class ListSection<T> extends Section<T> {
 
   /** Builder for list sections */
   public static class Builder<T> extends SectionBuilder<T, ListSection<T>> {
-    private final ImmutableList.Builder<ItemOrTextBlock<T>> items = ImmutableList.builder();
+    private final List<ItemOrTextBlock<T>> items = new ArrayList<>();
 
     public Builder(SectionKey<T, ListSection<T>> sectionKey, @Nullable ListSection<T> section) {
       super(sectionKey);
@@ -96,14 +98,26 @@ public final class ListSection<T> extends Section<T> {
       return this;
     }
 
+    public final Builder<T> addAll(List<T> items) {
+      for (T item : items) {
+        add(item);
+      }
+      return this;
+    }
+
     public final Builder<T> add(TextBlock textBlock) {
       items.add(new ItemOrTextBlock<T>(textBlock));
       return this;
     }
 
+    public final Builder<T> remove(T item) {
+      items.remove(new ItemOrTextBlock<>(item));
+      return this;
+    }
+
     @Override
     public final ListSection<T> build() {
-      return new ListSection<>(getSectionKey(), items.build());
+      return new ListSection<>(getSectionKey(), ImmutableList.copyOf(items));
     }
   }
 }

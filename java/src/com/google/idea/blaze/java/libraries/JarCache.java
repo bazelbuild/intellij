@@ -78,8 +78,12 @@ public class JarCache {
   }
 
   public void onSync(
-      BlazeContext context, BlazeProjectData projectData, BlazeSyncParams.SyncMode syncMode) {
-    Collection<BlazeLibrary> libraries = BlazeLibraryCollector.getLibraries(projectData);
+      BlazeContext context,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData projectData,
+      BlazeSyncParams.SyncMode syncMode) {
+    Collection<BlazeLibrary> libraries =
+        BlazeLibraryCollector.getLibraries(projectViewSet, projectData);
     boolean fullRefresh = syncMode == SyncMode.FULL;
     boolean removeMissingFiles = syncMode == SyncMode.INCREMENTAL;
     boolean enabled = updateEnabled();
@@ -326,7 +330,7 @@ public class JarCache {
         ProjectViewSet projectViewSet,
         BlazeProjectData projectData,
         BlazeSyncParams.SyncMode syncMode) {
-      getInstance(project).onSync(context, projectData, syncMode);
+      getInstance(project).onSync(context, projectViewSet, projectData, syncMode);
     }
 
     @Override

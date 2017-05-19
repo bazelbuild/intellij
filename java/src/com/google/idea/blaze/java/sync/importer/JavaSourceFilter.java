@@ -25,10 +25,12 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
+import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /** Segments java rules into source/libraries */
@@ -59,14 +61,11 @@ public class JavaSourceFilter {
             .collect(Collectors.toList());
 
     targetToJavaSources = Maps.newHashMap();
+    Predicate<ArtifactLocation> isSourceFile = JavaLikeLanguage.getSourceFileMatcher();
     for (TargetIdeInfo target : javaTargets) {
-      List<ArtifactLocation> javaSources =
-          target
-              .sources
-              .stream()
-              .filter(source -> source.getRelativePath().endsWith(".java"))
-              .collect(Collectors.toList());
-      targetToJavaSources.put(target.key, javaSources);
+      List<ArtifactLocation> javaLikeSources =
+          target.sources.stream().filter(isSourceFile).collect(Collectors.toList());
+      targetToJavaSources.put(target.key, javaLikeSources);
     }
 
     sourceTargets = Lists.newArrayList();

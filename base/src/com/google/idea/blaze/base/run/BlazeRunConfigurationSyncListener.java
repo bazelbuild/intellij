@@ -34,6 +34,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -67,7 +68,7 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
 
           Set<Label> labelsWithConfigs = labelsWithConfigs(project);
           Set<TargetExpression> targetExpressions =
-              Sets.newHashSet(projectViewSet.listItems(TargetSection.KEY));
+              Sets.newLinkedHashSet(projectViewSet.listItems(TargetSection.KEY));
           // We only auto-generate configurations for rules listed in the project view.
           for (TargetExpression target : targetExpressions) {
             if (!(target instanceof Label) || labelsWithConfigs.contains(target)) {
@@ -86,7 +87,7 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
         .listItems(RunConfigurationsSection.KEY)
         .stream()
         .map(pathResolver::resolveToFile)
-        .collect(Collectors.toSet());
+        .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
   /** Collects a set of all the Blaze labels that have an associated run configuration. */

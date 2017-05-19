@@ -145,7 +145,7 @@ public final class AndroidResourceModule implements Serializable {
     }
 
     public Builder addTransitiveResourceDependency(String dependency) {
-      return addTransitiveResourceDependency(new Label(dependency));
+      return addTransitiveResourceDependency(Label.create(dependency));
     }
 
     @NotNull

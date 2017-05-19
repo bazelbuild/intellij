@@ -19,8 +19,12 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
+import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
@@ -45,6 +49,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import icons.BlazeIcons;
+import java.io.File;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -159,20 +164,64 @@ public final class BuildPluginBeforeRunTaskProvider
               new ScopedTask(context) {
                 @Override
                 protected void execute(BlazeContext context) {
+                  BlazeIntellijPluginDeployer deployer =
+                      env.getUserData(BlazeIntellijPluginDeployer.USER_DATA_KEY);
+                  if (deployer == null) {
+                    IssueOutput.error("Could not find BlazeIntellijPluginDeployer in env.")
+                        .submit(context);
+                    return;
+                  }
+
+                  String binaryPath = Blaze.getBuildSystemProvider(project).getBinaryPath();
+                  WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
                   BlazeIntellijPluginConfiguration config =
                       (BlazeIntellijPluginConfiguration) configuration;
-                  BlazeCommand command = config.buildBlazeCommand(project, projectViewSet);
+
+                  ListenableFuture<String> executionRootFuture =
+                      BlazeInfoRunner.getInstance()
+                          .runBlazeInfo(
+                              context,
+                              binaryPath,
+                              workspaceRoot,
+                              config.getBlazeFlagsState().getExpandedFlags(),
+                              BlazeInfo.EXECUTION_ROOT_KEY);
+
+                  String executionRoot;
+                  try {
+                    executionRoot = executionRootFuture.get();
+                  } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    context.setCancelled();
+                    return;
+                  } catch (ExecutionException e) {
+                    IssueOutput.error(e.getMessage()).submit(context);
+                    context.setHasError();
+                    return;
+                  }
+                  if (executionRoot == null) {
+                    IssueOutput.error("Could not determine execution root").submit(context);
+                    return;
+                  }
+
+                  BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(f -> true);
+                  BlazeCommand command =
+                      BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
+                          .addTargets(config.getTarget())
+                          .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
+                          .addBlazeFlags(config.getBlazeFlagsState().getExpandedFlags())
+                          .addExeFlags(config.getExeFlagsState().getExpandedFlags())
+                          .addBlazeFlags(buildResultHelper.getBuildFlags())
+                          .build();
                   if (command == null || context.hasErrors() || context.isCancelled()) {
                     return;
                   }
                   SaveUtil.saveAllFiles();
-                  WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
                   int retVal =
                       ExternalTask.builder(workspaceRoot)
                           .addBlazeCommand(command)
                           .context(context)
                           .stderr(
-                              LineProcessingOutputStream.of(
+                              buildResultHelper.stderr(
                                   new IssueOutputLineProcessor(project, context, workspaceRoot)))
                           .build()
                           .run();
@@ -180,6 +229,7 @@ public final class BuildPluginBeforeRunTaskProvider
                     context.setHasError();
                   }
                   FileCaches.refresh(project);
+                  deployer.reportBuildComplete(new File(executionRoot), buildResultHelper);
                 }
               };
 

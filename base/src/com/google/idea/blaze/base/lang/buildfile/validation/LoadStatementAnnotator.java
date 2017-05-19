@@ -53,6 +53,7 @@ public class LoadStatementAnnotator extends BuildAnnotator {
     if (targetString == null
         || targetString.startsWith(":")
         || targetString.startsWith("//")
+        || targetString.startsWith("@")
         || targetString.length() < 2) {
       return;
     }

@@ -49,6 +49,15 @@ public class LoadStatementAnnotatorTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
+  public void testNoWarningsInExternalLoad() {
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "load('@tools//ide:build_test.bzl', 'build_test')");
+    assertNoAnnotations(file);
+  }
+
+  @Test
   public void testNoWarningsWhenTyping() {
     BuildFile file = createBuildFile(new WorkspacePath("java/com/google/BUILD"), "load('/')");
     assertNoAnnotations(file);

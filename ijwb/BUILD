@@ -20,8 +20,9 @@ merged_plugin_xml(
         "//golang:plugin_xml",
         "//java:plugin_xml",
         "//plugin_dev:plugin_xml",
+        "//python:plugin_xml",
+        "//scala:plugin_xml",
     ],
-    visibility = ["//visibility:public"],
 )
 
 merged_plugin_xml(
@@ -34,6 +35,7 @@ merged_plugin_xml(
 
 stamped_plugin_xml(
     name = "stamped_plugin_xml",
+    changelog_file = "//:changelog",
     include_product_code_in_stamp = True,
     plugin_id = "com.google.idea.bazel.ijwb",
     plugin_name = "IntelliJ with Bazel",
@@ -45,21 +47,33 @@ stamped_plugin_xml(
 java_library(
     name = "ijwb_lib",
     srcs = glob(["src/**/*.java"]),
-    visibility = ["//visibility:public"],
     exports = [
         "//plugin_dev",
     ],
+    runtime_deps = [
+        "//golang",
+        "//python",
+        "//terminal",
+    ],
     deps = [
         "//base",
-        "//golang",
         "//intellij_platform_sdk:plugin_api",
         "//java",
+        "//scala",
+        "//sdkcompat",
         "@jsr305_annotations//jar",
     ],
 )
 
+OPTIONAL_PLUGIN_XMLS = [
+    "//scala:optional_xml",
+    "//python:optional_xml",
+    "//terminal:optional_xml",
+]
+
 intellij_plugin(
     name = "ijwb_bazel",
+    optional_plugin_xmls = OPTIONAL_PLUGIN_XMLS,
     plugin_xml = ":stamped_plugin_xml",
     deps = [
         ":ijwb_lib",

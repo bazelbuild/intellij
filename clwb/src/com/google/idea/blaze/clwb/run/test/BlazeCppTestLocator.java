@@ -18,13 +18,13 @@ package com.google.idea.blaze.clwb.run.test;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
+import com.google.idea.sdkcompat.cidr.CidrGoogleTestUtilAdapter;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.CommonProcessors;
-import com.jetbrains.cidr.execution.testing.CidrTestUtil;
 import com.jetbrains.cidr.lang.psi.OCMacroCall;
 import com.jetbrains.cidr.lang.psi.OCStruct;
 import com.jetbrains.cidr.lang.symbols.OCSymbol;
@@ -96,9 +96,11 @@ public class BlazeCppTestLocator implements SMTestLocator {
     }
     OCSymbol<?> symbol;
     if (method != null) {
-      symbol = CidrTestUtil.findGoogleTestSymbol(project, suite, method);
+      symbol = CidrGoogleTestUtilAdapter.findGoogleTestSymbol(project, suite, method);
     } else if (instantiation != null) {
-      symbol = CidrTestUtil.findGoogleTestInstantiationSymbol(project, suite, instantiation);
+      symbol =
+          CidrGoogleTestUtilAdapter.findGoogleTestInstantiationSymbol(
+              project, suite, instantiation);
     } else {
       symbol = findSuiteSymbol(project, suite);
     }
@@ -120,7 +122,7 @@ public class BlazeCppTestLocator implements SMTestLocator {
           @Override
           protected boolean accept(OCSymbol symbol) {
             return symbol instanceof OCStructSymbol
-                && CidrTestUtil.isGoogleTestClass((OCStructSymbol) symbol);
+                && CidrGoogleTestUtilAdapter.isGoogleTestClass((OCStructSymbol) symbol);
           }
         };
     OCGlobalProjectSymbolsCache.processTopLevelAndMemberSymbols(project, processor, suite);
@@ -128,7 +130,7 @@ public class BlazeCppTestLocator implements SMTestLocator {
       return (OCStructSymbol) processor.getFoundValue();
     }
     Collection<OCStructSymbol> symbolsForSuite =
-        CidrTestUtil.findGoogleTestSymbolsForSuiteSorted(project, suite);
+        CidrGoogleTestUtilAdapter.findGoogleTestSymbolsForSuiteSorted(project, suite);
     return Iterables.getFirst(symbolsForSuite, null);
   }
 }

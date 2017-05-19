@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.run.producers;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -45,9 +46,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -78,15 +82,15 @@ public class MultipleJavaClassesTestConfigurationProducer
     if (handlerState == null) {
       return false;
     }
-    handlerState.setCommand(BlazeCommandName.TEST);
+    handlerState.getCommandState().setCommand(BlazeCommandName.TEST);
 
     // remove old test filter flag if present
-    List<String> flags = new ArrayList<>(handlerState.getBlazeFlags());
+    List<String> flags = new ArrayList<>(handlerState.getBlazeFlagsState().getRawFlags());
     flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
     if (location.testFilter != null) {
       flags.add(location.testFilter);
     }
-    handlerState.setBlazeFlags(flags);
+    handlerState.getBlazeFlagsState().setRawFlags(flags);
 
     if (location.description != null) {
       BlazeConfigurationNameBuilder nameBuilder = new BlazeConfigurationNameBuilder(configuration);
@@ -112,7 +116,7 @@ public class MultipleJavaClassesTestConfigurationProducer
     if (handlerState == null) {
       return false;
     }
-    return BlazeCommandName.TEST.equals(handlerState.getCommand())
+    return BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand())
         && location.label.equals(configuration.getTarget())
         && Objects.equals(location.testFilter, handlerState.getTestFilterFlag());
   }
@@ -129,25 +133,29 @@ public class MultipleJavaClassesTestConfigurationProducer
       TargetIdeInfo target = getTestTargetIfUnique(dir);
       return target != null ? TestLocation.fromDirectory(target.key.label, dir) : null;
     }
-    List<PsiClass> testClasses = selectedTestClasses(context);
+    Set<PsiClass> testClasses = selectedTestClasses(context);
     if (testClasses.size() < 2) {
       return null;
     }
     TargetIdeInfo target = getTestTargetIfUnique(testClasses);
-    return target != null ? TestLocation.fromClasses(target.key.label, testClasses) : null;
+    if (target == null) {
+      return null;
+    }
+    testClasses = ProducerUtils.includeInnerTestClasses(testClasses);
+    return TestLocation.fromClasses(target.key.label, testClasses);
   }
 
-  private static List<PsiClass> selectedTestClasses(ConfigurationContext context) {
+  private static Set<PsiClass> selectedTestClasses(ConfigurationContext context) {
     DataContext dataContext = context.getDataContext();
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (elements == null) {
-      return ImmutableList.of();
+      return ImmutableSet.of();
     }
     return Arrays.stream(elements)
         .map(JUnitUtil::getTestClass)
         .filter(Objects::nonNull)
         .filter(testClass -> !testClass.hasModifierProperty(PsiModifier.ABSTRACT))
-        .collect(Collectors.toList());
+        .collect(Collectors.toSet());
   }
 
   @Nullable
@@ -155,12 +163,12 @@ public class MultipleJavaClassesTestConfigurationProducer
     if (BlazePackage.hasBlazePackageChild(directory)) {
       return null;
     }
-    List<PsiClass> classes = new ArrayList<>();
+    Set<PsiClass> classes = new HashSet<>();
     addClassesInDirectory(directory, classes);
     return getTestTargetIfUnique(classes);
   }
 
-  private static void addClassesInDirectory(PsiDirectory directory, List<PsiClass> list) {
+  private static void addClassesInDirectory(PsiDirectory directory, Set<PsiClass> list) {
     Collections.addAll(list, JavaDirectoryService.getInstance().getClasses(directory));
     for (PsiDirectory child : directory.getSubdirectories()) {
       addClassesInDirectory(child, list);
@@ -168,7 +176,7 @@ public class MultipleJavaClassesTestConfigurationProducer
   }
 
   @Nullable
-  private static TargetIdeInfo getTestTargetIfUnique(List<PsiClass> classes) {
+  private static TargetIdeInfo getTestTargetIfUnique(Set<PsiClass> classes) {
     TargetIdeInfo testTarget = null;
     for (PsiClass psiClass : classes) {
       TargetIdeInfo target = testTargetForClass(psiClass);
@@ -195,18 +203,20 @@ public class MultipleJavaClassesTestConfigurationProducer
 
   private static class TestLocation {
     @Nullable
-    static TestLocation fromClasses(Label label, List<PsiClass> classes) {
+    static TestLocation fromClasses(Label label, Set<PsiClass> classes) {
       Map<PsiClass, Collection<Location<?>>> methodsPerClass =
           classes.stream().collect(Collectors.toMap(c -> c, c -> ImmutableList.of()));
       String filter = BlazeJUnitTestFilterFlags.testFilterForClassesAndMethods(methodsPerClass);
       if (filter == null) {
         return null;
       }
-      String name = classes.get(0).getName();
+      PsiClass sampleClass =
+          classes.stream().min(Comparator.comparing(PsiClass::getName)).orElse(null);
+      String name = sampleClass.getName();
       if (classes.size() > 1) {
         name += String.format(" and %s others", classes.size() - 1);
       }
-      return new TestLocation(label, classes.get(0), filter, name);
+      return new TestLocation(label, sampleClass, filter, name);
     }
 
     @Nullable

@@ -96,7 +96,7 @@ public class BuiltInFunctionAttributeCompletionContributor extends CompletionCon
 
   @Nullable
   private static String getEnclosingFuncallName(PsiElement element) {
-    FuncallExpression funcall = PsiUtils.getParentOfType(element, FuncallExpression.class);
+    FuncallExpression funcall = PsiUtils.getParentOfType(element, FuncallExpression.class, true);
     return funcall != null ? funcall.getFunctionName() : null;
   }
 }

@@ -24,11 +24,11 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.io.InputStreamProvider;
-import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -39,7 +39,6 @@ import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
-import com.google.idea.blaze.base.sync.workspace.BlazeRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
@@ -66,7 +65,7 @@ import org.junit.runners.JUnit4;
 public class SourceDirectoryCalculatorTest extends BlazeTestCase {
 
   private static final ImmutableMap<TargetKey, ArtifactLocation> NO_MANIFESTS = ImmutableMap.of();
-  private static final Label LABEL = new Label("//fake:label");
+  private static final Label LABEL = Label.create("//fake:label");
 
   private MockInputStreamProvider mockInputStreamProvider;
   private SourceDirectoryCalculator sourceDirectoryCalculator;
@@ -101,6 +100,9 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     applicationServices.register(ExperimentService.class, experimentService);
 
     applicationServices.register(PrefetchService.class, new MockPrefetchService());
+
+    registerExtensionPoint(JavaLikeLanguage.EP_NAME, JavaLikeLanguage.class)
+        .registerExtension(new JavaLikeLanguage.Java());
   }
 
   @Test
@@ -901,7 +903,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
                 .setIsSource(true)
                 .build());
     Map<TargetKey, Map<ArtifactLocation, String>> manifestMap =
-        readPackageManifestFiles(manifests, getDecoder("/root"));
+        readPackageManifestFiles(manifests, getDecoder());
 
     assertThat(manifestMap.get(TargetKey.forPlainTarget(LABEL)))
         .containsEntry(
@@ -926,7 +928,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
                 .setIsSource(true)
                 .build());
     Map<TargetKey, Map<ArtifactLocation, String>> manifestMap =
-        readPackageManifestFiles(manifests, getDecoder("/root"));
+        readPackageManifestFiles(manifests, getDecoder());
 
     assertThat(manifestMap.get(TargetKey.forPlainTarget(LABEL)))
         .containsEntry(
@@ -950,38 +952,38 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     ImmutableMap<TargetKey, ArtifactLocation> manifests =
         ImmutableMap.<TargetKey, ArtifactLocation>builder()
             .put(
-                TargetKey.forPlainTarget(new Label("//a:a")),
+                TargetKey.forPlainTarget(Label.create("//a:a")),
                 ArtifactLocation.builder()
                     .setRelativePath("java/com/test.manifest")
                     .setIsSource(true)
                     .build())
             .put(
-                TargetKey.forPlainTarget(new Label("//b:b")),
+                TargetKey.forPlainTarget(Label.create("//b:b")),
                 ArtifactLocation.builder()
                     .setRelativePath("java/com/test2.manifest")
                     .setIsSource(true)
                     .build())
             .build();
     Map<TargetKey, Map<ArtifactLocation, String>> manifestMap =
-        readPackageManifestFiles(manifests, getDecoder("/root"));
+        readPackageManifestFiles(manifests, getDecoder());
 
     assertThat(manifestMap).hasSize(2);
 
-    assertThat(manifestMap.get(TargetKey.forPlainTarget(new Label("//a:a"))))
+    assertThat(manifestMap.get(TargetKey.forPlainTarget(Label.create("//a:a"))))
         .containsEntry(
             ArtifactLocation.builder()
                 .setRelativePath("java/com/google/Bla.java")
                 .setIsSource(true)
                 .build(),
             "com.google");
-    assertThat(manifestMap.get(TargetKey.forPlainTarget(new Label("//a:a"))))
+    assertThat(manifestMap.get(TargetKey.forPlainTarget(Label.create("//a:a"))))
         .containsEntry(
             ArtifactLocation.builder()
                 .setRelativePath("java/com/google/Foo.java")
                 .setIsSource(true)
                 .build(),
             "com.google.subpackage");
-    assertThat(manifestMap.get(TargetKey.forPlainTarget(new Label("//b:b"))))
+    assertThat(manifestMap.get(TargetKey.forPlainTarget(Label.create("//b:b"))))
         .containsEntry(
             ArtifactLocation.builder()
                 .setRelativePath("java/com/google/other/Temp.java")
@@ -1035,7 +1037,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project,
             context,
             workspaceRoot,
-            getDecoder("/root"),
+            getDecoder(),
             ImmutableList.of(new WorkspacePath("java/com/google")),
             sourceArtifacts,
             manifests);
@@ -1087,15 +1089,12 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     mockInputStreamProvider.addFile(manifestPath, manifest.build().toByteArray());
   }
 
-  private static ArtifactLocationDecoder getDecoder(String rootPath) {
-    File root = new File(rootPath);
+  private static ArtifactLocationDecoder getDecoder() {
+    File root = new File("/root");
     WorkspaceRoot workspaceRoot = new WorkspaceRoot(root);
-    BlazeRoots roots =
-        new BlazeRoots(
-            root,
-            new ExecutionRootPath("out/crosstool/bin"),
-            new ExecutionRootPath("out/crosstool/gen"),
-            null);
+    BlazeInfo roots =
+        BlazeInfo.createMockBlazeInfo(
+            "/", "/root", "/root/out/crosstool/bin", "/root/out/crosstool/gen");
     return new ArtifactLocationDecoderImpl(roots, new WorkspacePathResolverImpl(workspaceRoot));
   }
 
@@ -1132,7 +1131,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
       Map<TargetKey, ArtifactLocation> manifests, ArtifactLocationDecoder decoder) {
     return PackageManifestReader.getInstance()
         .readPackageManifestFiles(
-            project, context, decoder, manifests, MoreExecutors.sameThreadExecutor());
+            project, context, decoder, manifests, MoreExecutors.newDirectExecutorService());
   }
 
   static class MockFileAttributeProvider extends FileAttributeProvider {

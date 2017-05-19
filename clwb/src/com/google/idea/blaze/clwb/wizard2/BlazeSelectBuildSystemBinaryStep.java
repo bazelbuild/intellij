@@ -28,8 +28,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import org.jetbrains.annotations.NotNull;
 
-class BlazeSelectBuildSystemBinaryStep extends
-    com.google.idea.blaze.clwb.wizard2.ProjectImportWizardStep {
+class BlazeSelectBuildSystemBinaryStep extends ProjectImportWizardStep {
 
   private final JPanel component = new JPanel(new BorderLayout());
   private SelectBazelBinaryControl control;

@@ -177,7 +177,7 @@ public class LabelReferenceTest extends BuildFileIntegrationTestCase {
     assertThat(references).hasLength(1);
 
     PsiElement element = references[0].getElement();
-    FuncallExpression rule = PsiUtils.getParentOfType(element, FuncallExpression.class);
+    FuncallExpression rule = PsiUtils.getParentOfType(element, FuncallExpression.class, true);
     assertThat(rule.getName()).isEqualTo("bar");
     assertThat(rule.getContainingFile()).isEqualTo(referencingFile);
   }

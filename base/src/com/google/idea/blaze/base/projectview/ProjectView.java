@@ -17,11 +17,15 @@ package com.google.idea.blaze.base.projectview;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.base.projectview.section.ListSection;
+import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.Section;
 import com.google.idea.blaze.base.projectview.section.SectionBuilder;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -45,6 +49,32 @@ public final class ProjectView implements Serializable {
       }
     }
     return result.build();
+  }
+
+  /** Returns all values from the given list section */
+  public <T> List<T> listItems(SectionKey<T, ListSection<T>> key) {
+    List<T> result = Lists.newArrayList();
+    for (ListSection<T> section : getSectionsOfType(key)) {
+      result.addAll(section.items());
+    }
+    return result;
+  }
+
+  /** Gets the last value from any scalar sections */
+  @Nullable
+  public <T> T getScalarValue(SectionKey<T, ScalarSection<T>> key) {
+    return getScalarValue(key, null);
+  }
+
+  /** Gets the last value from any scalar sections */
+  @Nullable
+  public <T> T getScalarValue(SectionKey<T, ScalarSection<T>> key, @Nullable T defaultValue) {
+    Collection<ScalarSection<T>> sections = getSectionsOfType(key);
+    if (sections.isEmpty()) {
+      return defaultValue;
+    } else {
+      return Iterables.getLast(sections).getValue();
+    }
   }
 
   public static Builder builder() {
@@ -104,6 +134,11 @@ public final class ProjectView implements Serializable {
 
     public <T, SectionType extends Section<T>> Builder add(SectionType section) {
       sections.add(section);
+      return this;
+    }
+
+    public <T> Builder remove(Section<T> section) {
+      sections.remove(section);
       return this;
     }
 

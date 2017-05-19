@@ -38,18 +38,13 @@ public interface EventLogger {
 
   boolean isApplicable();
 
-  default void log(String eventType, Map<String, String> keyValues) {
-    log(eventType, keyValues, null);
-  }
-
-  default void log(
-      String eventType, Map<String, String> keyValues, @Nullable Long timestampInMillis) {
-    log(eventType, keyValues, timestampInMillis, null);
+  default void log(Class<?> loggingClass, String eventType, Map<String, String> keyValues) {
+    log(loggingClass, eventType, keyValues, null);
   }
 
   void log(
+      Class<?> loggingClass,
       String eventType,
       Map<String, String> keyValues,
-      @Nullable Long timestampInMillis,
       @Nullable Long durationInNanos);
 }

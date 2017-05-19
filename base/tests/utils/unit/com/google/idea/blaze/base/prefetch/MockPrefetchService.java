@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.prefetch;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
@@ -32,7 +33,7 @@ public class MockPrefetchService implements PrefetchService {
 
   @Override
   public ListenableFuture<?> prefetchProjectFiles(
-      Project project, BlazeProjectData blazeProjectData) {
+      Project project, ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
     return Futures.immediateFuture(null);
   }
 }

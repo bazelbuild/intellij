@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.projectview;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.BlazeTestCase;
@@ -35,6 +36,7 @@ import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.io.File;
 import java.util.Set;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +62,20 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
   protected void initTest(
       @NotNull Container applicationServices, @NotNull Container projectServices) {
     super.initTest(applicationServices, projectServices);
-    registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
+    ExtensionPointImpl<BlazeSyncPlugin> ep =
+        registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
+    ep.registerExtension(
+        new BlazeSyncPlugin.Adapter() {
+          @Override
+          public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
+            return ImmutableList.of(WorkspaceType.JAVA);
+          }
+
+          @Override
+          public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
+            return ImmutableSet.of(LanguageClass.JAVA);
+          }
+        });
 
     fileAttributeProvider = new MockFileAttributeProvider(workspaceRoot);
     applicationServices.register(FileAttributeProvider.class, fileAttributeProvider);
@@ -86,7 +101,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
             .build();
     fileAttributeProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
-        context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
+        project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
     errorCollector.assertNoIssues();
   }
 
@@ -108,7 +123,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
             .build();
     fileAttributeProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
-        context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
+        project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
     errorCollector.assertIssues(
         "java/com/google/android/apps/example is included, "
             + "but that contradicts java/com/google/android/apps/example which was excluded");
@@ -132,7 +147,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
             .build();
     fileAttributeProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
-        context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
+        project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
     errorCollector.assertIssues(
         "java/com/google/android/apps/example is included, "
             + "but that contradicts java/com/google/android/apps which was excluded");
@@ -157,7 +172,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
             .build();
     fileAttributeProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
-        context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
+        project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
     errorCollector.assertNoIssues();
   }
 
@@ -175,7 +190,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
                     .build())
             .build();
     ProjectViewVerifier.verifyProjectView(
-        context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
+        project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
     errorCollector.assertIssues(
         String.format(
             "Directory '%s' specified in project view not found.",
@@ -197,7 +212,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
             .build();
     fileAttributeProvider.addFile(new WorkspacePath("java/com/google/android/apps/example"));
     ProjectViewVerifier.verifyProjectView(
-        context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
+        project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
     errorCollector.assertIssues(
         String.format(
             "Directory '%s' specified in project view is a file.",

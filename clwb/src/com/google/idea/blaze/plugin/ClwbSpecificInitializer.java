@@ -32,5 +32,6 @@ public class ClwbSpecificInitializer extends ApplicationComponent.Adapter {
     for (String actionId : CMakeActionList.CMAKE_ACTION_IDS) {
       BlazeActionRemover.hideAction(actionId);
     }
+    BlazeActionRemover.replaceAction("OpenCPPProject", new CMakeOpenProjectActionOverride());
   }
 }

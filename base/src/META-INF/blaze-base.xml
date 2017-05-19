@@ -56,12 +56,20 @@
       class="com.google.idea.blaze.base.settings.ui.OpenLocalProjectViewAction"
       text="Open Local Project View File">
     </action>
-    <action class="com.google.idea.blaze.base.buildmap.OpenCorrespondingBuildFile"
-      id="Blaze.OpenCorrespondingBuildFile"
+    <action id="Blaze.AddDirectoryToProjectView"
+      class="com.google.idea.blaze.base.settings.ui.AddDirectoryToProjectAction"
+      text="Add Directory To Project...">
+    </action>
+    <action id="Blaze.OpenCorrespondingBuildFile"
+      class="com.google.idea.blaze.base.buildmap.OpenCorrespondingBuildFile"
       text="Open Corresponding BUILD File">
     </action>
-    <action class="com.google.idea.blaze.base.sync.actions.PartialSyncAction"
-      id="Blaze.PartialSync"
+    <action id="Blaze.CopyBlazeTargetPathAction"
+      class="com.google.idea.blaze.base.actions.CopyBlazeTargetPathAction"
+      text="Copy BUILD target string">
+    </action>
+    <action id="Blaze.PartialSync"
+      class="com.google.idea.blaze.base.sync.actions.PartialSyncAction"
       text="Partially Sync File"
       icon="BlazeIcons.Blaze">
     </action>
@@ -77,12 +85,15 @@
       class="com.google.idea.blaze.base.ide.NewBlazeRuleAction"
       text="New Rule"
       popup="true"/>
+    <action id="Blaze.OpenWorkspaceFile"
+      class="com.google.idea.blaze.base.ide.OpenBlazeWorkspaceFileAction"
+      text="Open Workspace File..."
+      icon="BlazeIcons.Blaze">
+      <add-to-group group-id="FileOpenGroup" relative-to-action="OpenFile" anchor="after"/>
+    </action>
 
     <group id="Blaze.MainMenuActionGroup" class="com.google.idea.blaze.base.actions.BlazeMenuGroup">
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="HelpMenu"/>
-      <reference id="Blaze.EditLocalProjectView"/>
-      <reference id="Blaze.EditProjectView"/>
-      <separator/>
       <group id ="Blaze.SyncMenuGroup" text="Sync" popup="true">
         <reference id="Blaze.IncrementalSyncProject"/>
         <reference id="Blaze.FullSyncProject"/>
@@ -94,6 +105,11 @@
       <group id="Blaze.BuildMenuGroup" text="Build" popup="true">
         <reference id="MakeBlazeProject"/>
         <reference id="MakeBlazeModule"/>
+      </group>
+      <group id="Blaze.Project" text="Project" popup="true">
+        <reference id="Blaze.EditLocalProjectView"/>
+        <reference id="Blaze.EditProjectView"/>
+        <reference id="Blaze.AddDirectoryToProjectView"/>
       </group>
       <!--Add popup groups anchored after this bookmark-->
       <group id="Blaze.MenuGroupsBookmark"/>
@@ -123,6 +139,7 @@
       <separator/>
       <reference ref="Blaze.PartialSync"/>
       <reference ref="Blaze.OpenCorrespondingBuildFile"/>
+      <reference ref="Blaze.CopyBlazeTargetPathAction"/>
     </group>
   </actions>
 
@@ -162,8 +179,8 @@
                     serviceImplementation="com.google.idea.blaze.base.buildmodifier.FileSystemModifierImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.run.targetfinder.TargetFinder"
                         serviceImplementation="com.google.idea.blaze.base.run.targetfinder.TargetFinderImpl"/>
-    <applicationService serviceInterface="com.google.idea.blaze.base.command.info.BlazeInfo"
-                        serviceImplementation="com.google.idea.blaze.base.command.info.BlazeInfoImpl"/>
+    <applicationService serviceInterface="com.google.idea.blaze.base.command.info.BlazeInfoRunner"
+                        serviceImplementation="com.google.idea.blaze.base.command.info.BlazeInfoRunnerImpl"/>
 
     <treeStructureProvider implementation="com.google.idea.blaze.base.treeview.BlazeTreeStructureProvider" id="blaze"/>
 
@@ -188,6 +205,9 @@
                         serviceImplementation="com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProviderImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider"
                         serviceImplementation="com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProviderImpl"/>
+    <projectService serviceInterface="com.google.idea.blaze.base.sync.projectstructure.ModuleFinder"
+                    serviceImplementation="com.google.idea.blaze.base.sync.projectstructure.ModuleFinderImpl"/>
+    <applicationService serviceImplementation="com.google.idea.blaze.base.sync.projectview.RelatedWorkspacePathFinder"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.prefetch.PrefetchService"
                         serviceImplementation="com.google.idea.blaze.base.prefetch.PrefetchServiceImpl"/>
     <applicationService serviceImplementation="com.google.idea.blaze.base.wizard2.BlazeWizardUserSettingsStorage"/>
@@ -224,6 +244,9 @@
     <completion.contributor language="projectview" implementationClass="com.google.idea.blaze.base.lang.projectview.completion.WorkspaceTypeCompletionContributor"/>
     <completion.contributor language="projectview" implementationClass="com.google.idea.blaze.base.lang.projectview.completion.AdditionalLanguagesCompletionContributor"/>
     <enterHandlerDelegate implementation="com.google.idea.blaze.base.lang.projectview.formatting.ProjectViewEnterHandler"/>
+    <filetype.stubBuilder filetype="projectview" implementationClass="com.google.idea.blaze.base.lang.projectview.stubs.ProjectViewFileStubBuilder"/>
+    <lang.documentationProvider language="projectview" implementationClass="com.google.idea.blaze.base.lang.projectview.documentation.ProjectViewDocumentationProvider"/>
+    <langCodeStyleSettingsProvider implementation="com.google.idea.blaze.base.lang.projectview.formatting.ProjectViewCodeStyleSettingsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -257,6 +280,7 @@
     <filetype.stubBuilder filetype="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.stubs.BuildFileStubBuilder"/>
     <editorNotificationProvider implementation="com.google.idea.blaze.base.lang.AdditionalLanguagesHelper"/>
     <usageTypeProvider implementation="com.google.idea.blaze.base.lang.buildfile.findusages.BuildUsageTypeProvider"/>
+    <renameInputValidator implementation="com.google.idea.blaze.base.lang.buildfile.refactor.TargetRenameValidator"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.lang">
@@ -288,6 +312,9 @@
     <component>
       <interface-class>com.google.idea.common.experiments.ExperimentService</interface-class>
       <implementation-class>com.google.idea.blaze.base.experiments.BlazeExperimentService</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.google.idea.blaze.base.prefetch.PrefetchProjectInitializer</implementation-class>
     </component>
   </application-components>
 
@@ -323,10 +350,11 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.AspectStrategyProvider" interface="com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.DistributedExecutorSupport" interface="com.google.idea.blaze.base.run.DistributedExecutorSupport"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FileStringParser" interface="com.google.idea.blaze.base.run.filter.FileResolver"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.BlazeTestXmlFinderStrategy" interface="com.google.idea.blaze.base.run.testlogs.BlazeTestXmlFinderStrategy"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.BlazeTestXmlFinderStrategy" interface="com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeTestEventsHandler" interface="com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AttributeSpecificStringLiteralReferenceProvider" interface="com.google.idea.blaze.base.lang.buildfile.references.AttributeSpecificStringLiteralReferenceProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.EventLogger" interface="com.google.idea.blaze.base.logging.EventLogger"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.ProjectViewDefaultValueProvider" interface="com.google.idea.blaze.base.projectview.section.ProjectViewDefaultValueProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -340,14 +368,17 @@
     <BuildSystemProvider implementation="com.google.idea.blaze.base.bazel.BazelBuildSystemProvider" order="last"/>
     <BuildifierBinaryProvider implementation="com.google.idea.blaze.base.buildmodifier.BazelBuildifierBinaryProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandlerProvider" order="last"/>
-    <TestTargetHeuristic implementation="com.google.idea.blaze.base.run.TargetNameHeuristic" order="first"/>
-    <TestTargetHeuristic implementation="com.google.idea.blaze.base.run.TestTargetSourcesHeuristic" order="before TestSizeHeuristic" id="TestSourcesHeuristic"/>
+    <TestTargetHeuristic implementation="com.google.idea.blaze.base.run.TargetNameHeuristic" order="first" id="TargetNameHeuristic"/>
+    <TestTargetHeuristic implementation="com.google.idea.blaze.base.run.TestTargetSourcesHeuristic"/>
     <TestTargetHeuristic implementation="com.google.idea.blaze.base.run.TestSizeHeuristic" order="last" id="TestSizeHeuristic"/>
     <RunConfigurationFactory implementation="com.google.idea.blaze.base.run.BlazeBuildTargetRunConfigurationFactory" order="last"/>
     <AspectStrategyProvider implementation="com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProviderBazel" order="last"/>
     <FileStringParser implementation="com.google.idea.blaze.base.run.filter.StandardFileResolver" order="last"/>
-    <BlazeTestXmlFinderStrategy implementation="com.google.idea.blaze.base.run.testlogs.TargetPathTestXmlFinderStrategy"/>
+    <BlazeTestXmlFinderStrategy implementation="com.google.idea.blaze.base.run.testlogs.TargetPathTestResultFinderStrategy"/>
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.base.run.smrunner.BlazeCompositeTestEventsHandler" order="last"/>
+    <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.base.projectview.section.sections.DirectorySection$DirectoriesProjectViewDefaultValueProvider"/>
+    <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.base.projectview.section.sections.TargetSection$TargetsProjectViewDefaultValueProvider"/>
+    <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguagesSection$AdditionalLanguagesDefaultValueProvider"/>
   </extensions>
 
 </idea-plugin>

@@ -62,7 +62,7 @@ public class AllInPackageBlazeConfigurationProducer
     if (handlerState == null) {
       return false;
     }
-    handlerState.setCommand(BlazeCommandName.TEST);
+    handlerState.getCommandState().setCommand(BlazeCommandName.TEST);
     configuration.setGeneratedName();
     return true;
   }
@@ -85,7 +85,7 @@ public class AllInPackageBlazeConfigurationProducer
     if (handlerState == null) {
       return false;
     }
-    return Objects.equals(handlerState.getCommand(), BlazeCommandName.TEST)
+    return Objects.equals(handlerState.getCommandState().getCommand(), BlazeCommandName.TEST)
         && Objects.equals(
             configuration.getTarget(), TargetExpression.allFromPackageRecursive(packagePath));
   }

@@ -25,8 +25,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import org.jetbrains.annotations.NotNull;
 
-class BlazeSelectWorkspaceImportWizardStep extends
-    com.google.idea.blaze.clwb.wizard2.ProjectImportWizardStep {
+class BlazeSelectWorkspaceImportWizardStep extends ProjectImportWizardStep {
 
   private final JPanel component = new JPanel(new BorderLayout());
   private BlazeSelectWorkspaceControl control;
@@ -75,6 +74,6 @@ class BlazeSelectWorkspaceImportWizardStep extends
 
   @Override
   public String getHelpId() {
-    return "docs/import-project.md";
+    return "docs/import-project";
   }
 }

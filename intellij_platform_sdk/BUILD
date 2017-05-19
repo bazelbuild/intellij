@@ -16,19 +16,26 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "intellij-beta",
+    values = {
+        "define": "ij_product=intellij-beta",
+    },
+)
+
+# IntelliJ CE 2017.1.1
+config_setting(
+    name = "intellij-2017.1.1",
+    values = {
+        "define": "ij_product=intellij-2017.1.1",
+    },
+)
+
 # IntelliJ CE 2016.3.1
 config_setting(
     name = "intellij-2016.3.1",
     values = {
         "define": "ij_product=intellij-2016.3.1",
-    },
-)
-
-# IntelliJ CE 2016.2.4
-config_setting(
-    name = "intellij-162.2032.8",
-    values = {
-        "define": "ij_product=intellij-162.2032.8",
     },
 )
 
@@ -39,14 +46,6 @@ config_setting(
     },
 )
 
-# Android Studio 2.2.0.7
-config_setting(
-    name = "android-studio-145.1617.8",
-    values = {
-        "define": "ij_product=android-studio-145.1617.8",
-    },
-)
-
 config_setting(
     name = "android-studio-beta",
     values = {
@@ -54,27 +53,19 @@ config_setting(
     },
 )
 
-# Android Studio 2.3.0.3
+# Android Studio 2.3.0.8
 config_setting(
-    name = "android-studio-2.3.0.3",
+    name = "android-studio-2.3.0.8",
     values = {
-        "define": "ij_product=android-studio-2.3.0.3",
+        "define": "ij_product=android-studio-2.3.0.8",
     },
 )
 
-# Android Studio 2.3.0.4
+# Android Studio 2.3.1.0
 config_setting(
-    name = "android-studio-2.3.0.4",
+    name = "android-studio-2.3.1.0",
     values = {
-        "define": "ij_product=android-studio-2.3.0.4",
-    },
-)
-
-# Android Studio 2.3.0.6
-config_setting(
-    name = "android-studio-2.3.0.6",
-    values = {
-        "define": "ij_product=android-studio-2.3.0.6",
+        "define": "ij_product=android-studio-2.3.1.0",
     },
 )
 
@@ -82,6 +73,21 @@ config_setting(
     name = "clion-latest",
     values = {
         "define": "ij_product=clion-latest",
+    },
+)
+
+config_setting(
+    name = "clion-beta",
+    values = {
+        "define": "ij_product=clion-beta",
+    },
+)
+
+# CLion 2017.1.1
+config_setting(
+    name = "clion-2017.1.1",
+    values = {
+        "define": "ij_product=clion-2017.1.1",
     },
 )
 
@@ -186,6 +192,28 @@ java_library(
     ),
 )
 
+# IntelliJ tasks plugin
+java_library(
+    name = "tasks",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [":tasks"],
+        clion = [":tasks"],
+        intellij = [":tasks"],
+    ),
+)
+
+# terminal plugin
+java_library(
+    name = "terminal",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [":terminal"],
+        intellij = [":terminal"],
+    ),
+)
+
 # Bundled plugins required by integration tests
 java_library(
     name = "bundled_plugins",
@@ -203,13 +231,10 @@ java_library(
 java_library(
     name = "missing_test_classes",
     srcs = select_for_plugin_api({
-        "android-studio-2.3.0.3": [
+        "android-studio-2.3.0.8": [
             "missing/tests/com/jetbrains/cidr/modulemap/resolve/MockModuleMapManagerImpl.java",
         ],
-        "android-studio-2.3.0.4": [
-            "missing/tests/com/jetbrains/cidr/modulemap/resolve/MockModuleMapManagerImpl.java",
-        ],
-        "android-studio-2.3.0.6": [
+        "android-studio-2.3.1.0": [
             "missing/tests/com/jetbrains/cidr/modulemap/resolve/MockModuleMapManagerImpl.java",
         ],
         "default": [],

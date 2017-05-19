@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.intellij.openapi.components.ServiceManager;
@@ -58,19 +59,19 @@ public class BuildReferenceManager {
   /** Finds the PSI element associated with the given label. */
   @Nullable
   public PsiElement resolveLabel(Label label) {
-    return resolveLabel(label.blazePackage(), label.targetName(), false);
+    return resolveLabel(label, false);
   }
 
   /** Finds the PSI element associated with the given label. */
   @Nullable
-  public PsiElement resolveLabel(
-      WorkspacePath packagePath, TargetName targetName, boolean excludeRules) {
-    File packageDir = resolvePackage(packagePath);
+  public PsiElement resolveLabel(Label label, boolean excludeRules) {
+    File packageDir = WorkspaceHelper.resolveBlazePackage(project, label);
     if (packageDir == null) {
       return null;
     }
 
-    if (targetName.toString().equals("__pkg__")) {
+    String targetName = label.targetName().toString();
+    if (targetName.equals("__pkg__")) {
       return findBuildFile(packageDir);
     }
 
@@ -82,7 +83,7 @@ public class BuildReferenceManager {
     }
 
     // try a direct file reference (e.g. ":a.java")
-    File fullFile = new File(packageDir, targetName.toString());
+    File fullFile = new File(packageDir, targetName);
     if (FileAttributeProvider.getInstance().exists(fullFile)) {
       return resolveFile(fullFile);
     }
@@ -90,9 +91,9 @@ public class BuildReferenceManager {
     return null;
   }
 
-  private FuncallExpression findRule(File packageDir, TargetName targetName) {
+  private FuncallExpression findRule(File packageDir, String targetName) {
     BuildFile psiFile = findBuildFile(packageDir);
-    return psiFile != null ? psiFile.findRule(targetName.toString()) : null;
+    return psiFile != null ? psiFile.findRule(targetName) : null;
   }
 
   @Nullable
@@ -190,7 +191,8 @@ public class BuildReferenceManager {
   }
 
   private BuildLookupElement lookupForFile(VirtualFile file, FileLookupData lookupData) {
-    WorkspacePath workspacePath = getWorkspaceRelativePath(file.getPath());
+    WorkspacePath workspacePath =
+        WorkspaceHelper.resolveWorkspacePath(project, new File(file.getPath()));
     return lookupData.lookupElementForFile(project, file, workspacePath);
   }
 
@@ -243,11 +245,5 @@ public class BuildReferenceManager {
     }
     String rulePathParent = PathUtil.getParentPath(targetName.toString());
     return new File(packageFile, rulePathParent);
-  }
-
-  @Nullable
-  public WorkspacePath getWorkspaceRelativePath(String absolutePath) {
-    WorkspacePathResolver pathResolver = getWorkspacePathResolver();
-    return pathResolver != null ? pathResolver.getWorkspacePath(new File(absolutePath)) : null;
   }
 }

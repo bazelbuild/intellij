@@ -33,8 +33,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.GlobalSearchScope;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.swing.tree.TreePath;
@@ -88,6 +90,26 @@ public class SmRunnerUtils {
   }
 
   public static List<Location<?>> getSelectedSmRunnerTreeElements(ConfigurationContext context) {
+    Project project = context.getProject();
+    List<SMTestProxy> tests = getSelectedTestProxies(context);
+    return tests
+        .stream()
+        .map(test -> (Location<?>) test.getLocation(project, GlobalSearchScope.allScope(project)))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+  }
+
+  /** Counts all selected test cases, and their children, recursively */
+  public static int countSelectedTestCases(ConfigurationContext context) {
+    List<SMTestProxy> tests = getSelectedTestProxies(context);
+    Set<SMTestProxy> allTests = new HashSet<>(tests);
+    for (SMTestProxy test : tests) {
+      allTests.addAll(test.collectChildren());
+    }
+    return allTests.size();
+  }
+
+  private static List<SMTestProxy> getSelectedTestProxies(ConfigurationContext context) {
     SMTRunnerTestTreeView treeView =
         SMTRunnerTestTreeView.SM_TEST_RUNNER_VIEW.getData(context.getDataContext());
     if (treeView == null) {
@@ -98,18 +120,16 @@ public class SmRunnerUtils {
       return ImmutableList.of();
     }
     return Arrays.stream(paths)
-        .map((path) -> toLocation(context.getProject(), treeView, path))
+        .map((path) -> toTestProxy(treeView, path))
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
   }
 
   @Nullable
-  private static Location<?> toLocation(
-      Project project, SMTRunnerTestTreeView treeView, TreePath path) {
+  private static SMTestProxy toTestProxy(SMTRunnerTestTreeView treeView, TreePath path) {
     if (treeView.isPathSelected(path.getParentPath())) {
       return null;
     }
-    SMTestProxy test = treeView.getSelectedTest(path);
-    return test != null ? test.getLocation(project, GlobalSearchScope.allScope(project)) : null;
+    return treeView.getSelectedTest(path);
   }
 }

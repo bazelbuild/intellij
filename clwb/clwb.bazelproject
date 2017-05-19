@@ -3,7 +3,6 @@ directories:
   -ijwb
   -aswb
   -plugin_dev
-  -cpp/src/com/google/idea/blaze/cpp/versioned/v145
 
 targets:
   //clwb:clwb_bazel

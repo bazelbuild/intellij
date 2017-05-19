@@ -56,7 +56,7 @@ import org.junit.runners.JUnit4;
 public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
-      new BlazeImportSettings("", "", "", "", "", BuildSystem.Blaze);
+      new BlazeImportSettings("", "", "", "", BuildSystem.Blaze);
 
   private BlazeCommandRunConfiguration configuration;
 
@@ -89,11 +89,11 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
   @Test
   public void flagsShouldBeAppendedIfPresent() {
-    configuration.setTarget(new Label("//label:rule"));
+    configuration.setTarget(Label.create("//label:rule"));
     BlazeCommandRunConfigurationCommonState handlerState =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
-    handlerState.setCommand(BlazeCommandName.fromString("command"));
-    handlerState.setBlazeFlags(ImmutableList.of("--flag1", "--flag2"));
+    handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
+    handlerState.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
     assertThat(
             BlazeJavaRunProfileState.getBlazeCommand(
                     project,
@@ -115,10 +115,10 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
   @Test
   public void debugFlagShouldBeIncludedForJavaTest() {
-    configuration.setTarget(new Label("//label:rule"));
+    configuration.setTarget(Label.create("//label:rule"));
     BlazeCommandRunConfigurationCommonState handlerState =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
-    handlerState.setCommand(BlazeCommandName.fromString("command"));
+    handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
     assertThat(
             BlazeJavaRunProfileState.getBlazeCommand(
                     project,
@@ -139,10 +139,10 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
   @Test
   public void debugFlagShouldBeIncludedForJavaBinary() {
-    configuration.setTarget(new Label("//label:java_binary_rule"));
+    configuration.setTarget(Label.create("//label:java_binary_rule"));
     BlazeCommandRunConfigurationCommonState handlerState =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
-    handlerState.setCommand(BlazeCommandName.fromString("command"));
+    handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
     assertThat(
             BlazeJavaRunProfileState.getBlazeCommand(
                     project,

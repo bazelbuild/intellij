@@ -102,7 +102,8 @@ public class BlazeAndroidTestRunConfigurationHandler
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
     BlazeAndroidRunConfigurationValidationUtil.validateExecution(module, facet, projectViewSet);
 
-    ImmutableList<String> buildFlags = configState.getBuildFlags(project, projectViewSet);
+    ImmutableList<String> buildFlags =
+        configState.getCommonState().getExpandedBuildFlags(project, projectViewSet);
     BlazeAndroidRunContext runContext = createRunContext(project, facet, environment, buildFlags);
 
     return new BlazeAndroidRunConfigurationRunner(

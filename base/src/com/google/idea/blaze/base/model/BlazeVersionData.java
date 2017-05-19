@@ -16,9 +16,9 @@
 package com.google.idea.blaze.base.model;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import java.io.Serializable;
@@ -59,10 +59,12 @@ public class BlazeVersionData implements Serializable {
     return bazelVersion != null && bazelVersion.isAtLeast(major, minor, bugfix);
   }
 
+  public BuildSystem buildSystem() {
+    return bazelVersion != null ? BuildSystem.Bazel : BuildSystem.Blaze;
+  }
+
   public static BlazeVersionData build(
-      BuildSystem buildSystem,
-      WorkspaceRoot workspaceRoot,
-      ImmutableMap<String, String> blazeInfo) {
+      BuildSystem buildSystem, WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo) {
     Builder builder = new Builder();
     for (BuildSystemProvider provider : BuildSystemProvider.EP_NAME.getExtensions()) {
       provider.populateBlazeVersionData(buildSystem, workspaceRoot, blazeInfo, builder);

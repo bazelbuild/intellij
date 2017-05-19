@@ -16,10 +16,12 @@
 package com.google.idea.blaze.base.sync.projectview;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import java.io.Serializable;
-import java.util.Set;
+import java.util.EnumSet;
 import javax.annotation.concurrent.Immutable;
 
 /** Contains the user's language preferences from the project view. */
@@ -28,10 +30,10 @@ public class WorkspaceLanguageSettings implements Serializable {
   private static final long serialVersionUID = 1L;
 
   private final WorkspaceType workspaceType;
-  private final Set<LanguageClass> activeLanguages;
+  final ImmutableSet<LanguageClass> activeLanguages;
 
   public WorkspaceLanguageSettings(
-      WorkspaceType workspaceType, Set<LanguageClass> activeLanguages) {
+      WorkspaceType workspaceType, ImmutableSet<LanguageClass> activeLanguages) {
     this.workspaceType = workspaceType;
     this.activeLanguages = activeLanguages;
   }
@@ -55,6 +57,12 @@ public class WorkspaceLanguageSettings implements Serializable {
 
   public boolean isLanguageActive(LanguageClass languageClass) {
     return activeLanguages.contains(languageClass);
+  }
+
+  public EnumSet<Kind> getAvailableTargetKinds() {
+    EnumSet<Kind> kinds = EnumSet.allOf(Kind.class);
+    kinds.removeIf(kind -> !activeLanguages.contains(kind.getLanguageClass()));
+    return kinds;
   }
 
   @Override

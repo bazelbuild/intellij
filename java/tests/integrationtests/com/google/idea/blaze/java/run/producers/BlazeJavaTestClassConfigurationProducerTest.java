@@ -132,4 +132,57 @@ public class BlazeJavaTestClassConfigurationProducerTest
     assertThat(config.getName()).isEqualTo("Blaze test TestClass");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
+
+  @Test
+  public void testProducedFromPsiClassWithInnerTestClass() {
+    PsiFile javaFile =
+        createAndIndexFile(
+            new WorkspacePath("java/com/google/test/OuterClass.java"),
+            "package com.google.test;",
+            "@org.junit.runner.RunWith(org.junit.runners.Suite.class)",
+            "@org.junit.runners.Suite.SuiteClasses({OuterClass.InnerClass.class})",
+            "public class OuterClass {",
+            "  @org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
+            "  public static class InnerClass {",
+            "    @org.junit.Test",
+            "    public void testMethod1() {}",
+            "    @org.junit.Test",
+            "    public void testMethod2() {}",
+            "  }",
+            "}");
+
+    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
+    builder.setTargetMap(
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setKind("java_test")
+                    .setLabel("//java/com/google/test:OuterClass")
+                    .addSource(sourceRoot("java/com/google/test/OuterClass.java"))
+                    .build())
+            .build());
+    registerProjectService(
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+
+    PsiClass javaClass = ((PsiClassOwner) javaFile).getClasses()[0];
+    assertThat(javaClass).isNotNull();
+
+    ConfigurationContext context = createContextFromPsi(javaClass);
+    List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
+    assertThat(configurations).hasSize(1);
+
+    ConfigurationFromContext fromContext = configurations.get(0);
+    assertThat(fromContext.isProducedBy(BlazeJavaTestClassConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
+
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) fromContext.getConfiguration();
+    assertThat(config.getTarget())
+        .isEqualTo(TargetExpression.fromString("//java/com/google/test:OuterClass"));
+    assertThat(getTestFilterContents(config))
+        .isEqualTo(
+            "--test_filter=com.google.test.OuterClass#|com.google.test.OuterClass.InnerClass#");
+    assertThat(config.getName()).isEqualTo("Blaze test OuterClass");
+    assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
+  }
 }

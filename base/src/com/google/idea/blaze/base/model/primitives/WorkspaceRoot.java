@@ -108,7 +108,8 @@ public class WorkspaceRoot implements Serializable {
 
   private WorkspacePath workspacePathFor(String path) {
     if (!isInWorkspace(path)) {
-      throw new IllegalArgumentException("File is not under this workspace");
+      throw new IllegalArgumentException(
+          String.format("File '%s' is not under workspace %s", path, directory));
     }
     if (directory.getPath().length() == path.length()) {
       return new WorkspacePath("");

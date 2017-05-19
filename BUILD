@@ -4,6 +4,13 @@
 
 licenses(["notice"])  # Apache 2.0
 
+# Changelog file
+filegroup(
+    name = "changelog",
+    srcs = ["CHANGELOG"],
+    visibility = ["//:__subpackages__"],
+)
+
 # IJwB tests, run with an IntelliJ plugin SDK
 test_suite(
     name = "ijwb_tests",
@@ -16,6 +23,10 @@ test_suite(
         "//java:integration_tests",
         "//java:unit_tests",
         "//plugin_dev:integration_tests",
+        "//python:integration_tests",
+        "//python:unit_tests",
+        "//scala:integration_tests",
+        "//scala:unit_tests",
     ],
 )
 
@@ -38,5 +49,6 @@ test_suite(
     tests = [
         "//base:unit_tests",
         "//cpp:unit_tests",
+        "//python:unit_tests",
     ],
 )

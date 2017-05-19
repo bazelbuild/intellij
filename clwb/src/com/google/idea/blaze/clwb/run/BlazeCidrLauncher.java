@@ -102,16 +102,17 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
     BlazeCommand.Builder command =
         BlazeCommand.builder(
-                Blaze.getBuildSystemProvider(project).getBinaryPath(), handlerState.getCommand())
+                Blaze.getBuildSystemProvider(project).getBinaryPath(),
+                handlerState.getCommandState().getCommand())
             .addTargets(configuration.getTarget())
             .addBlazeFlags(BlazeFlags.buildFlags(project, ProjectViewSet.builder().build()))
             .addBlazeFlags(testHandlerFlags)
-            .addBlazeFlags(handlerState.getBlazeFlags())
-            .addExeFlags(handlerState.getExeFlags());
+            .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
+            .addExeFlags(handlerState.getExeFlagsState().getExpandedFlags());
 
     command.addBlazeFlags(
         DistributedExecutorSupport.getBlazeFlags(
-            project, handlerState.getRunOnDistributedExecutor()));
+            project, handlerState.getRunOnDistributedExecutorState().runOnDistributedExecutor));
 
     state.setConsoleBuilder(createConsoleBuilder(testEventsHandler));
 
@@ -153,7 +154,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     GeneralCommandLine commandLine = new GeneralCommandLine(runner.executableToDebug.getPath());
     File workingDir = workspaceRoot.directory();
     commandLine.setWorkDirectory(workingDir);
-    commandLine.addParameters(handlerState.getExeFlags());
+    commandLine.addParameters(handlerState.getExeFlagsState().getExpandedFlags());
 
     TrivialInstaller installer = new TrivialInstaller(commandLine);
     ImmutableList<String> startupCommands = getGdbStartupCommands(workingDir);
@@ -189,8 +190,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
   }
 
   private boolean useTestUi() {
-    return BlazeCommandName.TEST.equals(handlerState.getCommand())
-        && !handlerState.getRunOnDistributedExecutor();
+    return BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand())
+        && !handlerState.getRunOnDistributedExecutorState().runOnDistributedExecutor;
   }
 
   private final class GoogleTestConsoleBuilder extends CidrConsoleBuilderAdapter {

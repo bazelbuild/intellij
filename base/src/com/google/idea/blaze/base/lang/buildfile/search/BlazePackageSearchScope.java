@@ -65,7 +65,7 @@ public class BlazePackageSearchScope extends GlobalSearchScope {
   public String toString() {
     return String.format(
         "%s directory scope: %s",
-        Blaze.buildSystemName(getProject()), blazePackage.buildFile.getPackageWorkspacePath());
+        Blaze.buildSystemName(getProject()), blazePackage.buildFile.getPackageLabel());
   }
 
   @Override

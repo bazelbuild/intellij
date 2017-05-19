@@ -34,7 +34,7 @@ public class RunConfigurationUtils {
     if (handlerState == null) {
       return false;
     }
-    BlazeCommandName command = handlerState.getCommand();
+    BlazeCommandName command = handlerState.getCommandState().getCommand();
     return kind != null
         && command != null
         && ((kind == Kind.CC_TEST && command.equals(BlazeCommandName.TEST))

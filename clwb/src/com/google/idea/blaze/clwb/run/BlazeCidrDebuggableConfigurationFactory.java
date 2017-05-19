@@ -55,9 +55,9 @@ public class BlazeCidrDebuggableConfigurationFactory extends BlazeRunConfigurati
     Kind kind = blazeConfig.getKindForTarget();
     if (state != null) {
       if (kind != null && Kind.isTestRule(kind.toString())) {
-        state.setCommand(BlazeCommandName.TEST);
+        state.getCommandState().setCommand(BlazeCommandName.TEST);
       } else {
-        state.setCommand(BlazeCommandName.RUN);
+        state.getCommandState().setCommand(BlazeCommandName.RUN);
       }
     }
     blazeConfig.setGeneratedName();

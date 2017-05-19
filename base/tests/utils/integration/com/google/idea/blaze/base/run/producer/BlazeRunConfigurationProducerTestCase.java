@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
-import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
@@ -42,7 +41,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.MapDataContext;
 import javax.annotation.Nullable;
-import org.junit.After;
 import org.junit.Before;
 
 /** Run configuration producer integration test base */
@@ -79,11 +77,6 @@ public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestC
     registerApplicationComponent(DataManager.class, dataManager);
   }
 
-  @After
-  public final void doTearDown() {
-    SyncCache.getInstance(getProject()).clear();
-  }
-
   protected PsiFile createAndIndexFile(WorkspacePath path, String... contents) {
     PsiFile file = workspace.createPsiFile(path, contents);
     editorTest.openFileInEditor(file); // open file to trigger update of indices
@@ -101,7 +94,7 @@ public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestC
   protected static BlazeCommandName getCommandType(BlazeCommandRunConfiguration config) {
     BlazeCommandRunConfigurationCommonState handlerState =
         config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    return handlerState != null ? handlerState.getCommand() : null;
+    return handlerState != null ? handlerState.getCommandState().getCommand() : null;
   }
 
   protected ConfigurationContext createContextFromPsi(PsiElement element) {

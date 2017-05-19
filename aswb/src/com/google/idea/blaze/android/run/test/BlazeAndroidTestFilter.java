@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.android.run.test;
 
+import com.android.tools.idea.testartifacts.instrumented.AndroidTestRunConfiguration;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.android.compatibility.Compatibility.AndroidTestRunConfiguration;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

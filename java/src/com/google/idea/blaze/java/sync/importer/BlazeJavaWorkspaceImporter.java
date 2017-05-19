@@ -167,10 +167,7 @@ public final class BlazeJavaWorkspaceImporter {
       List<LibraryArtifact> allJars = Lists.newArrayList();
       allJars.addAll(javaIdeInfo.jars);
       Collection<BlazeJarLibrary> libraries =
-          allJars
-              .stream()
-              .map(library -> new BlazeJarLibrary(library, target.key))
-              .collect(Collectors.toList());
+          allJars.stream().map(BlazeJarLibrary::new).collect(Collectors.toList());
 
       targetKeyToLibrary.putAll(target.key, libraries);
       for (BlazeJarLibrary library : libraries) {
@@ -189,7 +186,7 @@ public final class BlazeJavaWorkspaceImporter {
               protoLibraryLegacyInfo.jarsV1,
               protoLibraryLegacyInfo.jarsMutable,
               protoLibraryLegacyInfo.jarsImmutable)) {
-        addLibraryToJdeps(jdepsPathToLibrary, new BlazeJarLibrary(libraryArtifact, target.key));
+        addLibraryToJdeps(jdepsPathToLibrary, new BlazeJarLibrary(libraryArtifact));
       }
     }
 
@@ -303,7 +300,7 @@ public final class BlazeJavaWorkspaceImporter {
 
       if (libraries != null) {
         for (LibraryArtifact libraryArtifact : libraries) {
-          BlazeJarLibrary library = new BlazeJarLibrary(libraryArtifact, targetKey);
+          BlazeJarLibrary library = new BlazeJarLibrary(libraryArtifact);
           result.put(library.key, library);
         }
       }
@@ -374,14 +371,10 @@ public final class BlazeJavaWorkspaceImporter {
       }
     }
     workspaceBuilder.generatedJarsFromSourceTargets.addAll(
-        javaIdeInfo
-            .generatedJars
-            .stream()
-            .map(libraryArtifact -> new BlazeJarLibrary(libraryArtifact, targetKey))
-            .collect(Collectors.toList()));
+        javaIdeInfo.generatedJars.stream().map(BlazeJarLibrary::new).collect(Collectors.toList()));
     if (javaIdeInfo.filteredGenJar != null) {
       workspaceBuilder.generatedJarsFromSourceTargets.add(
-          new BlazeJarLibrary(javaIdeInfo.filteredGenJar, targetKey));
+          new BlazeJarLibrary(javaIdeInfo.filteredGenJar));
     }
 
     for (BlazeJavaSyncAugmenter augmenter : augmenters) {

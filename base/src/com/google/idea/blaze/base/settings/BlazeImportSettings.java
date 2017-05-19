@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.settings;
 
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import java.util.UUID;
 import javax.annotation.Nullable;
 
 /** Project settings that are set at import time. */
@@ -42,15 +43,20 @@ public final class BlazeImportSettings {
       String workspaceRoot,
       String projectName,
       String projectDataDirectory,
-      String locationHash,
       String projectViewFile,
       BuildSystem buildSystem) {
     this.workspaceRoot = workspaceRoot;
     this.projectName = projectName;
     this.projectDataDirectory = projectDataDirectory;
-    this.locationHash = locationHash;
+    this.locationHash = createLocationHash(projectName);
     this.projectViewFile = projectViewFile;
     this.buildSystem = buildSystem;
+  }
+
+  private static String createLocationHash(String projectName) {
+    String uuid = UUID.randomUUID().toString();
+    uuid = uuid.substring(0, Math.min(uuid.length(), 8));
+    return projectName.replaceAll("[^a-zA-Z0-9]", "") + "-" + uuid;
   }
 
   @SuppressWarnings("unused")

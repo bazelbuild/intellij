@@ -78,7 +78,8 @@ public final class BlazeJUnitTestFilterFlags {
   }
 
   private static boolean isParameterized(PsiClass testClass) {
-    return PsiMemberParameterizedLocation.getParameterizedLocation(testClass, null) != null;
+    return PsiMemberParameterizedLocation.getParameterizedLocation(testClass, null) != null
+        || JUnitParameterizedClassHeuristic.isParameterizedTest(testClass);
   }
 
   private static String methodFilter(PsiMethod method, boolean parameterizedClass) {

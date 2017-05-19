@@ -31,8 +31,8 @@ public class NullEventLogger implements EventLogger {
 
   @Override
   public void log(
+      Class<?> loggingClass,
       String eventType,
       Map<String, String> keyValues,
-      @Nullable Long timestampInMillis,
       @Nullable Long durationInNanos) {}
 }

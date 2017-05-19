@@ -16,7 +16,7 @@
 package com.google.idea.blaze.android.run.test;
 
 import com.android.tools.idea.run.ConsoleProvider;
-import com.google.idea.blaze.android.compatibility.Compatibility.AndroidTestConsoleProperties;
+import com.android.tools.idea.testartifacts.instrumented.AndroidTestConsoleProperties;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.intellij.execution.ExecutionException;

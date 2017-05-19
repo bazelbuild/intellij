@@ -27,11 +27,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
-import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -45,10 +45,13 @@ import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
+import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorImpl;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
+import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -81,7 +84,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
 
   private MockProjectViewManager projectViewManager;
   private MockBlazeVcsHandler vcsHandler;
-  private MockBlazeInfo blazeInfoData;
+  private MockBlazeInfoRunner blazeInfoData;
   private MockBlazeIdeInterface blazeIdeInterface;
 
   protected ErrorCollector errorCollector;
@@ -109,17 +112,33 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     }
   }
 
+  // Since MockModuleEditor does not actually commit modules, the normal ModuleManager
+  // won't find modules we've created. This helps look up modules for later stages of Sync.
+  // We could override ModuleManager, but that has a wide interface and there are a lot of
+  // changes across API versions.
+  private class MockModuleFinder implements ModuleFinder {
+
+    MockModuleFinder() {}
+
+    @Nullable
+    @Override
+    public Module findModuleByName(String name) {
+      return getModuleCreatedDuringSync(name);
+    }
+  }
+
   @Before
   public void doSetup() throws Exception {
     projectViewManager = new MockProjectViewManager();
     vcsHandler = new MockBlazeVcsHandler();
-    blazeInfoData = new MockBlazeInfo();
+    blazeInfoData = new MockBlazeInfoRunner();
     blazeIdeInterface = new MockBlazeIdeInterface();
     registerProjectService(ProjectViewManager.class, projectViewManager);
     registerExtension(BlazeVcsHandler.EP_NAME, vcsHandler);
-    registerApplicationService(BlazeInfo.class, blazeInfoData);
+    registerApplicationService(BlazeInfoRunner.class, blazeInfoData);
     registerApplicationService(BlazeIdeInterface.class, blazeIdeInterface);
     registerApplicationService(ModuleEditorProvider.class, MockModuleEditor::new);
+    registerProjectService(ModuleFinder.class, new MockModuleFinder());
 
     errorCollector = new ErrorCollector();
     context = new BlazeContext();
@@ -147,7 +166,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   }
 
   /** The modules created during sync */
-  protected Module getModuleCreatedDuringSync(String module) {
+  private Module getModuleCreatedDuringSync(String module) {
     ModifiableRootModel modifiableRootModel = modules.get(module);
     return modifiableRootModel != null ? modifiableRootModel.getModule() : null;
   }
@@ -269,7 +288,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     }
   }
 
-  private static class MockBlazeInfo extends BlazeInfo {
+  private static class MockBlazeInfoRunner extends BlazeInfoRunner {
     private final Map<String, String> results = Maps.newHashMap();
 
     @Override
@@ -293,12 +312,13 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     }
 
     @Override
-    public ListenableFuture<ImmutableMap<String, String>> runBlazeInfo(
+    public ListenableFuture<BlazeInfo> runBlazeInfo(
         @Nullable BlazeContext context,
+        BuildSystem buildSystem,
         String binaryPath,
         WorkspaceRoot workspaceRoot,
         List<String> blazeFlags) {
-      return Futures.immediateFuture(ImmutableMap.copyOf(results));
+      return Futures.immediateFuture(new BlazeInfo(buildSystem, ImmutableMap.copyOf(results)));
     }
 
     public void setResults(Map<String, String> results) {
@@ -317,7 +337,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         WorkspaceRoot workspaceRoot,
         ProjectViewSet projectViewSet,
         BlazeVersionData blazeVersionData,
-        List<TargetExpression> targets,
+        ShardedTargetList shardedTargets,
         WorkspaceLanguageSettings workspaceLanguageSettings,
         ArtifactLocationDecoder artifactLocationDecoder,
         SyncState.Builder syncStateBuilder,
@@ -333,7 +353,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         WorkspaceRoot workspaceRoot,
         ProjectViewSet projectViewSet,
         BlazeVersionData blazeVersionData,
-        List<TargetExpression> targets) {
+        ShardedTargetList shardedTargets) {
       return BuildResult.SUCCESS;
     }
 
@@ -344,7 +364,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         WorkspaceRoot workspaceRoot,
         ProjectViewSet projectViewSet,
         BlazeVersionData blazeVersionData,
-        List<TargetExpression> targets) {
+        ShardedTargetList shardedTargets) {
       return BuildResult.SUCCESS;
     }
   }

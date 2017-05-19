@@ -127,7 +127,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
                             BlazeCommandName.BUILD)
                         .addTargets(configuration.getTarget())
                         .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
-                        .addBlazeFlags(handlerState.getBlazeFlags())
+                        .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
                         .addBlazeFlags(buildResultHelper.getBuildFlags());
 
                 // If we are trying to debug, make sure we are building in debug mode.

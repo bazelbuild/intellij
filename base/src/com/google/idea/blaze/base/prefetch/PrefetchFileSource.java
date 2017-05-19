@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.prefetch;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -28,7 +29,10 @@ public interface PrefetchFileSource {
       ExtensionPointName.create("com.google.idea.blaze.PrefetchFileSource");
   /** Adds any files or directories that we would be interested in prefetching. */
   void addFilesToPrefetch(
-      Project project, BlazeProjectData blazeProjectData, Collection<File> files);
+      Project project,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      Collection<File> files);
 
   /** Returns any source file extensions that are a good candidate for the {@link Prefetcher}. */
   Set<String> prefetchSrcFileExtensions();

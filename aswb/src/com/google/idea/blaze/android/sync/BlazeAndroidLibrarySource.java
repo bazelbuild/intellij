@@ -19,13 +19,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.projectview.section.Glob;
-import com.google.idea.blaze.base.projectview.section.Glob.GlobSet;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
-import com.google.idea.blaze.java.sync.LibraryGlobFilter;
 import java.util.Collection;
-import java.util.function.Predicate;
-import javax.annotation.Nullable;
 
 class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
   private final BlazeProjectData blazeProjectData;
@@ -45,13 +40,5 @@ class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
       libraries.add(syncData.importResult.resourceLibrary);
     }
     return libraries.build();
-  }
-
-  @Nullable
-  @Override
-  public Predicate<BlazeLibrary> getLibraryFilter() {
-    // This is supplied via the SDK
-    GlobSet globSet = new GlobSet(ImmutableList.of(new Glob("*/android_blaze.jar")));
-    return new LibraryGlobFilter(globSet);
   }
 }

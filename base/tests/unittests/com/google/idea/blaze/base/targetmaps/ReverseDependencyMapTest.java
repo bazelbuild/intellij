@@ -61,8 +61,8 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
         ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(reverseDependencies)
         .containsEntry(
-            TargetKey.forPlainTarget(new Label("//l:l2")),
-            TargetKey.forPlainTarget(new Label("//l:l1")));
+            TargetKey.forPlainTarget(Label.create("//l:l2")),
+            TargetKey.forPlainTarget(Label.create("//l:l1")));
   }
 
   @Test
@@ -93,12 +93,12 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
         ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(reverseDependencies)
         .containsEntry(
-            TargetKey.forPlainTarget(new Label("//l:l2")),
-            TargetKey.forPlainTarget(new Label("//l:l1")));
+            TargetKey.forPlainTarget(Label.create("//l:l2")),
+            TargetKey.forPlainTarget(Label.create("//l:l1")));
     assertThat(reverseDependencies)
         .containsEntry(
-            TargetKey.forPlainTarget(new Label("//l:l3")),
-            TargetKey.forPlainTarget(new Label("//l:l1")));
+            TargetKey.forPlainTarget(Label.create("//l:l3")),
+            TargetKey.forPlainTarget(Label.create("//l:l1")));
   }
 
   @Test
@@ -129,12 +129,12 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
         ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(reverseDependencies)
         .containsEntry(
-            TargetKey.forPlainTarget(new Label("//l:l3")),
-            TargetKey.forPlainTarget(new Label("//l:l1")));
+            TargetKey.forPlainTarget(Label.create("//l:l3")),
+            TargetKey.forPlainTarget(Label.create("//l:l1")));
     assertThat(reverseDependencies)
         .containsEntry(
-            TargetKey.forPlainTarget(new Label("//l:l3")),
-            TargetKey.forPlainTarget(new Label("//l:l2")));
+            TargetKey.forPlainTarget(Label.create("//l:l3")),
+            TargetKey.forPlainTarget(Label.create("//l:l2")));
   }
 
   @Test
@@ -177,20 +177,20 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
         ReverseDependencyMap.createRdepsMap(targetMap);
     assertThat(reverseDependencies)
         .containsEntry(
-            TargetKey.forPlainTarget(new Label("//l:l3")),
-            TargetKey.forPlainTarget(new Label("//l:l1")));
+            TargetKey.forPlainTarget(Label.create("//l:l3")),
+            TargetKey.forPlainTarget(Label.create("//l:l1")));
     assertThat(reverseDependencies)
         .containsEntry(
-            TargetKey.forPlainTarget(new Label("//l:l3")),
-            TargetKey.forPlainTarget(new Label("//l:l2")));
+            TargetKey.forPlainTarget(Label.create("//l:l3")),
+            TargetKey.forPlainTarget(Label.create("//l:l2")));
     assertThat(reverseDependencies)
         .containsEntry(
-            TargetKey.forPlainTarget(new Label("//l:l3")),
-            TargetKey.forPlainTarget(new Label("//l:l4")));
+            TargetKey.forPlainTarget(Label.create("//l:l3")),
+            TargetKey.forPlainTarget(Label.create("//l:l4")));
     assertThat(reverseDependencies)
         .containsEntry(
-            TargetKey.forPlainTarget(new Label("//l:l4")),
-            TargetKey.forPlainTarget(new Label("//l:l5")));
+            TargetKey.forPlainTarget(Label.create("//l:l4")),
+            TargetKey.forPlainTarget(Label.create("//l:l5")));
   }
 
   private static ArtifactLocation sourceRoot(String relativePath) {

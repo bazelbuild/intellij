@@ -18,8 +18,6 @@ package com.google.idea.blaze.java.run.producers;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
-import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -33,14 +31,11 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.ClassUtil;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -48,10 +43,6 @@ import java.util.List;
  * isMultipleElementsSelected.
  */
 public class JUnitConfigurationUtil {
-  protected static boolean isTestClass(PsiClass psiClass) {
-    return JUnitUtil.isTestClass(psiClass);
-  }
-
   protected static boolean isTestMethod(boolean checkAbstract, PsiElement psiElement) {
     return JUnitUtil.getTestMethod(psiElement, checkAbstract) != null;
   }
@@ -61,14 +52,13 @@ public class JUnitConfigurationUtil {
     if (TestsUIUtil.isMultipleSelectionImpossible(dataContext)) {
       return false;
     }
-    final LinkedHashSet<String> classes = new LinkedHashSet<String>();
     final PsiElementProcessor.CollectElementsWithLimit<PsiElement> processor =
         new PsiElementProcessor.CollectElementsWithLimit<PsiElement>(2);
-    final PsiElement[] locationElements = collectLocationElements(classes, dataContext);
+    final PsiElement[] locationElements = collectLocationElements(dataContext);
     if (locationElements != null) {
       collectTestMembers(locationElements, false, false, processor);
     } else {
-      collectContextElements(dataContext, false, false, classes, processor);
+      collectContextElements(dataContext, false, false, processor);
     }
     return processor.getCollection().size() > 1;
   }
@@ -83,14 +73,14 @@ public class JUnitConfigurationUtil {
         final PsiClass[] classes = ((PsiClassOwner) psiElement).getClasses();
         for (PsiClass aClass : classes) {
           if ((!checkIsTest && aClass.hasModifierProperty(PsiModifier.PUBLIC)
-                  || checkIsTest && isTestClass(aClass))
+                  || checkIsTest && JUnitUtil.isTestClass(aClass))
               && !collectingProcessor.execute(aClass)) {
             return;
           }
         }
       } else if (psiElement instanceof PsiClass) {
         if ((!checkIsTest && ((PsiClass) psiElement).hasModifierProperty(PsiModifier.PUBLIC)
-                || checkIsTest && isTestClass((PsiClass) psiElement))
+                || checkIsTest && JUnitUtil.isTestClass((PsiClass) psiElement))
             && !collectingProcessor.execute(psiElement)) {
           return;
         }
@@ -122,14 +112,10 @@ public class JUnitConfigurationUtil {
       DataContext dataContext,
       boolean checkAbstract,
       boolean checkIsTest,
-      LinkedHashSet<String> classes,
       PsiElementProcessor.CollectElements<PsiElement> processor) {
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (elements != null) {
       collectTestMembers(elements, checkAbstract, checkIsTest, processor);
-      for (PsiElement psiClass : processor.getCollection()) {
-        classes.add(getQName(psiClass));
-      }
       return true;
     } else {
       final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
@@ -142,9 +128,6 @@ public class JUnitConfigurationUtil {
             if (psiFile instanceof PsiClassOwner) {
               collectTestMembers(
                   ((PsiClassOwner) psiFile).getClasses(), checkAbstract, checkIsTest, processor);
-              for (PsiElement psiMember : processor.getCollection()) {
-                classes.add(((PsiClass) psiMember).getQualifiedName());
-              }
             }
           }
           return true;
@@ -154,41 +137,16 @@ public class JUnitConfigurationUtil {
     return false;
   }
 
-  private static PsiElement[] collectLocationElements(
-      LinkedHashSet<String> classes, DataContext dataContext) {
+  private static PsiElement[] collectLocationElements(DataContext dataContext) {
     final Location<?>[] locations = Location.DATA_KEYS.getData(dataContext);
     if (locations != null) {
       List<PsiElement> elements = new ArrayList<PsiElement>();
       for (Location<?> location : locations) {
         final PsiElement psiElement = location.getPsiElement();
-        classes.add(getQName(psiElement, location));
         elements.add(psiElement);
       }
       return elements.toArray(new PsiElement[elements.size()]);
     }
-    return null;
-  }
-
-  public static String getQName(PsiElement psiMember) {
-    return getQName(psiMember, null);
-  }
-
-  public static String getQName(PsiElement psiMember, Location location) {
-    if (psiMember instanceof PsiClass) {
-      return ClassUtil.getJVMClassName((PsiClass) psiMember);
-    } else if (psiMember instanceof PsiMember) {
-      final PsiClass containingClass =
-          location instanceof MethodLocation
-              ? ((MethodLocation) location).getContainingClass()
-              : location instanceof PsiMemberParameterizedLocation
-                  ? ((PsiMemberParameterizedLocation) location).getContainingClass()
-                  : ((PsiMember) psiMember).getContainingClass();
-      assert containingClass != null;
-      return ClassUtil.getJVMClassName(containingClass) + "," + ((PsiMember) psiMember).getName();
-    } else if (psiMember instanceof PsiPackage) {
-      return ((PsiPackage) psiMember).getQualifiedName();
-    }
-    assert false;
     return null;
   }
 }

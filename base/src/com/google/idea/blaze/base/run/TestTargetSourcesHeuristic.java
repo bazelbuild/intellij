@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -33,7 +34,11 @@ public class TestTargetSourcesHeuristic implements TestTargetHeuristic {
 
   @Override
   public boolean matchesSource(
-      Project project, TargetIdeInfo target, File sourceFile, @Nullable TestSize testSize) {
+      Project project,
+      TargetIdeInfo target,
+      @Nullable PsiFile sourcePsiFile,
+      File sourceFile,
+      @Nullable TestSize testSize) {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null) {

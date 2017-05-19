@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.lang.buildfile.psi;
 
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
@@ -156,13 +155,6 @@ public abstract class BuildElementImpl extends ASTWrapperPsiElement implements B
         return element.getIcon(0);
       }
     };
-  }
-
-  @Nullable
-  @Override
-  public WorkspacePath getWorkspacePath() {
-    BuildFile file = getContainingFile();
-    return file != null ? file.getWorkspacePath() : null;
   }
 
   @Nullable

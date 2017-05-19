@@ -19,7 +19,6 @@ package com.google.idea.blaze.android.run;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.android.AndroidIntegrationTestCleanupHelper;
 import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
 import com.google.idea.blaze.android.cppapi.NdkSupport;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
@@ -30,7 +29,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -57,14 +55,9 @@ public class BlazeAndroidRunConfigurationCommonStateTest extends BlazeIntegratio
     state = new BlazeAndroidRunConfigurationCommonState(buildSystem().getName(), false);
   }
 
-  @After
-  public final void doTeardown() {
-    AndroidIntegrationTestCleanupHelper.cleanUp(getProject());
-  }
-
   @Test
   public void readAndWriteShouldMatch() throws InvalidDataException, WriteExternalException {
-    state.setUserFlags(ImmutableList.of("--flag1", "--flag2"));
+    state.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
     state.setNativeDebuggingEnabled(true);
 
     Element element = new Element("test");
@@ -73,7 +66,9 @@ public class BlazeAndroidRunConfigurationCommonStateTest extends BlazeIntegratio
         new BlazeAndroidRunConfigurationCommonState(buildSystem().getName(), false);
     readState.readExternal(element);
 
-    assertThat(readState.getUserFlags()).containsExactly("--flag1", "--flag2").inOrder();
+    assertThat(readState.getBlazeFlagsState().getRawFlags())
+        .containsExactly("--flag1", "--flag2")
+        .inOrder();
     assertThat(readState.isNativeDebuggingEnabled()).isTrue();
   }
 
@@ -85,13 +80,16 @@ public class BlazeAndroidRunConfigurationCommonStateTest extends BlazeIntegratio
         new BlazeAndroidRunConfigurationCommonState(buildSystem().getName(), false);
     readState.readExternal(element);
 
-    assertThat(readState.getUserFlags()).isEqualTo(state.getUserFlags());
+    assertThat(readState.getBlazeFlagsState().getRawFlags())
+        .isEqualTo(state.getBlazeFlagsState().getRawFlags());
     assertThat(readState.isNativeDebuggingEnabled()).isEqualTo(state.isNativeDebuggingEnabled());
   }
 
   @Test
   public void readShouldOmitEmptyFlags() throws InvalidDataException, WriteExternalException {
-    state.setUserFlags(ImmutableList.of("hi ", "", "I'm", " ", "\t", "Josh\r\n", "\n"));
+    state
+        .getBlazeFlagsState()
+        .setRawFlags(ImmutableList.of("hi ", "", "I'm", " ", "\t", "Josh\r\n", "\n"));
 
     Element element = new Element("test");
     state.writeExternal(element);
@@ -99,14 +97,16 @@ public class BlazeAndroidRunConfigurationCommonStateTest extends BlazeIntegratio
         new BlazeAndroidRunConfigurationCommonState(buildSystem().getName(), false);
     readState.readExternal(element);
 
-    assertThat(readState.getUserFlags()).containsExactly("hi", "I'm", "Josh").inOrder();
+    assertThat(readState.getBlazeFlagsState().getRawFlags())
+        .containsExactly("hi", "I'm", "Josh")
+        .inOrder();
   }
 
   @Test
   public void repeatedWriteShouldNotChangeElement() throws WriteExternalException {
     final XMLOutputter xmlOutputter = new XMLOutputter(Format.getCompactFormat());
 
-    state.setUserFlags(ImmutableList.of("--flag1", "--flag2"));
+    state.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
     state.setNativeDebuggingEnabled(true);
 
     Element firstWrite = new Element("test");

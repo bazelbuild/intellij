@@ -43,7 +43,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
-      new BlazeImportSettings("", "", "", "", "", Blaze.BuildSystem.Blaze);
+      new BlazeImportSettings("", "", "", "", Blaze.BuildSystem.Blaze);
 
   private final BlazeCommandRunConfigurationType type = new BlazeCommandRunConfigurationType();
   private BlazeCommandRunConfiguration configuration;
@@ -70,7 +70,7 @@ public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
 
   @Test
   public void readAndWriteShouldMatch() throws Exception {
-    Label label = new Label("//package:rule");
+    Label label = Label.create("//package:rule");
     configuration.setTarget(label);
 
     Element element = new Element("test");

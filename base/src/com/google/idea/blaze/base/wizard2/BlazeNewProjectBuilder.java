@@ -36,7 +36,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 /** Contains the state to build a new project throughout the new project wizard process. */
 public final class BlazeNewProjectBuilder {
@@ -218,18 +217,11 @@ public final class BlazeNewProjectBuilder {
             workspaceRoot.directory().getPath(),
             projectName,
             projectDataDirectory,
-            createLocationHash(projectName),
             projectViewFile.getPath(),
             buildSystem);
 
     BlazeImportSettingsManager.getInstance(project).setImportSettings(importSettings);
     PluginDependencyHelper.addDependencyOnSyncPlugin(project);
     // Initial sync of the project happens in BlazeSyncStartupActivity
-  }
-
-  private static String createLocationHash(String projectName) {
-    String uuid = UUID.randomUUID().toString();
-    uuid = uuid.substring(0, Math.min(uuid.length(), 8));
-    return projectName.replaceAll("[^a-zA-Z0-9]", "") + "-" + uuid;
   }
 }

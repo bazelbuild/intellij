@@ -68,6 +68,7 @@ import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
+import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
 import com.google.idea.blaze.java.sync.source.JavaSourcePackageReader;
 import com.google.idea.blaze.java.sync.source.PackageManifestReader;
 import com.google.idea.blaze.java.sync.source.SourceArtifact;
@@ -97,13 +98,12 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
   private static final String FAKE_GEN_ROOT_EXECUTION_PATH_FRAGMENT =
       "blaze-out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
 
-
   private static final ArtifactLocationDecoder FAKE_ARTIFACT_DECODER =
       (ArtifactLocationDecoder)
           artifactLocation -> new File("/", artifactLocation.getRelativePath());
 
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
-      new BlazeImportSettings("", "", "", "", "", BuildSystem.Blaze);
+      new BlazeImportSettings("", "", "", "", BuildSystem.Blaze);
   private ExtensionPointImpl<BlazeJavaSyncAugmenter> augmenters;
 
   private static class JdepsMock implements JdepsMap {
@@ -130,6 +130,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
   private MockExperimentService experimentService;
 
   @Override
+  @SuppressWarnings("FunctionalInterfaceClash") // False positive on getDeclaredPackageOfJavaFile.
   protected void initTest(
       @NotNull Container applicationServices, @NotNull Container projectServices) {
     experimentService = new MockExperimentService();
@@ -161,6 +162,9 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     augmenters =
         registerExtensionPoint(BlazeJavaSyncAugmenter.EP_NAME, BlazeJavaSyncAugmenter.class);
+
+    registerExtensionPoint(JavaLikeLanguage.EP_NAME, JavaLikeLanguage.class)
+        .registerExtension(new JavaLikeLanguage.Java());
   }
 
   BlazeJavaImportResult importWorkspace(
@@ -890,7 +894,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
                     .add(DirectoryEntry.include(new WorkspacePath("import"))))
             .add(
                 ListSection.builder(ImportTargetOutputSection.KEY)
-                    .add(new Label("//import:import")))
+                    .add(Label.create("//import:import")))
             .build();
 
     TargetMapBuilder response =
@@ -986,7 +990,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
             .build();
     TargetMapBuilder targetMapBuilder = targetMapForJdepsSuite();
     jdepsMap.put(
-        TargetKey.forPlainTarget(new Label("//java/apps/example:example_debug")),
+        TargetKey.forPlainTarget(Label.create("//java/apps/example:example_debug")),
         Lists.newArrayList(jdepsPath("thirdparty/a.jar"), jdepsPath("thirdparty/c.jar")));
 
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
@@ -1070,7 +1074,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
                     .add(DirectoryEntry.include(new WorkspacePath("java/apps/example"))))
             .add(
                 ListSection.builder(ExcludeTargetSection.KEY)
-                    .add(new Label("//java/apps/example:example")))
+                    .add(Label.create("//java/apps/example:example")))
             .build();
 
     TargetMapBuilder targetMapBuilder =
@@ -1217,7 +1221,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     // First test - make sure that jdeps is working
     jdepsMap.put(
-        TargetKey.forPlainTarget(new Label("//java/example:liba")),
+        TargetKey.forPlainTarget(Label.create("//java/example:liba")),
         Lists.newArrayList(jdepsPath("thirdparty/proto/a/liba-ijar.jar")));
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     errorCollector.assertNoIssues();
@@ -1329,11 +1333,10 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
               TargetIdeInfo target,
               Collection<BlazeJarLibrary> jars,
               Collection<BlazeJarLibrary> genJars) {
-            if (target.key.label.equals(new Label("//java/example:source"))) {
+            if (target.key.label.equals(Label.create("//java/example:source"))) {
               jars.add(
                   new BlazeJarLibrary(
-                      LibraryArtifact.builder().setInterfaceJar(gen("source.jar")).build(),
-                      target.key));
+                      LibraryArtifact.builder().setInterfaceJar(gen("source.jar")).build()));
             }
           }
         });
@@ -1392,10 +1395,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
   }
 
   private static ArtifactLocation source(String relativePath) {
-    return ArtifactLocation.builder()
-        .setRelativePath(relativePath)
-        .setIsSource(true)
-        .build();
+    return ArtifactLocation.builder().setRelativePath(relativePath).setIsSource(true).build();
   }
 
   private static ArtifactLocation gen(String relativePath) {

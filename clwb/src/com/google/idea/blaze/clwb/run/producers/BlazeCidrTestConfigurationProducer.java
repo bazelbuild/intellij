@@ -78,16 +78,16 @@ public class BlazeCidrTestConfigurationProducer
     if (handlerState == null) {
       return false;
     }
-    handlerState.setCommand(BlazeCommandName.TEST);
+    handlerState.getCommandState().setCommand(BlazeCommandName.TEST);
 
     ImmutableList.Builder<String> flags = ImmutableList.builder();
     String testFilter = test.getTestFilterFlag();
     if (testFilter != null) {
       flags.add(testFilter);
     }
-    flags.addAll(handlerState.getBlazeFlags());
+    flags.addAll(handlerState.getBlazeFlagsState().getRawFlags());
 
-    handlerState.setBlazeFlags(flags.build());
+    handlerState.getBlazeFlagsState().setRawFlags(flags.build());
     configuration.setName(
         String.format(
             "%s test: %s",
@@ -103,7 +103,7 @@ public class BlazeCidrTestConfigurationProducer
     if (handlerState == null) {
       return false;
     }
-    if (!Objects.equals(handlerState.getCommand(), BlazeCommandName.TEST)) {
+    if (!Objects.equals(handlerState.getCommandState().getCommand(), BlazeCommandName.TEST)) {
       return false;
     }
     PsiElement element = selectedPsiElement(context);

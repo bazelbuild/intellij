@@ -74,7 +74,7 @@ public class SourceToTargetMapImpl implements SourceToTargetMap {
         .get(SourceToTargetMapImpl.class, SourceToTargetMapImpl::computeSourceToTargetMap);
   }
 
-  @Nullable
+  @SuppressWarnings("unused")
   private static ImmutableMultimap<File, TargetKey> computeSourceToTargetMap(
       Project project, BlazeProjectData blazeProjectData) {
     ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.artifactLocationDecoder;

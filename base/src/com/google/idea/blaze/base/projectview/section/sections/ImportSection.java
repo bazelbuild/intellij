@@ -70,5 +70,10 @@ public class ImportSection {
     public ItemType getItemType() {
       return ItemType.FileSystemItem;
     }
+
+    @Override
+    public String quickDocs() {
+      return "Imports another project view.";
+    }
   }
 }

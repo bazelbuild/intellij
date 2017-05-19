@@ -87,8 +87,18 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
             .add(new DirectoryEntry(new WorkspacePath(""), true))
             .build();
 
-    assertThat(importRoots.importAsSource(new Label("//:target"))).isTrue();
-    assertThat(importRoots.importAsSource(new Label("//foo/bar:target"))).isTrue();
+    assertThat(importRoots.importAsSource(Label.create("//:target"))).isTrue();
+    assertThat(importRoots.importAsSource(Label.create("//foo/bar:target"))).isTrue();
+  }
+
+  @Test
+  public void testExternalWorkspaceLabelsNotIncludedUnderWorkspaceRoot() {
+    ImportRoots importRoots =
+        ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
+            .add(new DirectoryEntry(new WorkspacePath(""), true))
+            .build();
+
+    assertThat(importRoots.importAsSource(Label.create("@lib//:target"))).isFalse();
   }
 
   @Test
@@ -137,5 +147,56 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
             .add(new DirectoryEntry(new WorkspacePath("root/subdir"), false))
             .build();
     assertThat(importRoots.excludeDirectories()).containsExactly(new WorkspacePath("root"));
+  }
+
+  @Test
+  public void testContainsWorkspacePath_samePath() throws Exception {
+    ImportRoots importRoots =
+        ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
+            .add(DirectoryEntry.include(new WorkspacePath("root")))
+            .build();
+
+    assertThat(importRoots.containsWorkspacePath(new WorkspacePath("root"))).isTrue();
+  }
+
+  @Test
+  public void testContainsWorkspacePath_subdirectory() throws Exception {
+    ImportRoots importRoots =
+        ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
+            .add(DirectoryEntry.include(new WorkspacePath("root")))
+            .build();
+
+    assertThat(importRoots.containsWorkspacePath(new WorkspacePath("root/subdir"))).isTrue();
+  }
+
+  @Test
+  public void testContainsWorkspacePath_differentRoot() throws Exception {
+    ImportRoots importRoots =
+        ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
+            .add(DirectoryEntry.include(new WorkspacePath("root")))
+            .build();
+
+    assertThat(importRoots.containsWorkspacePath(new WorkspacePath("otherroot"))).isFalse();
+  }
+
+  @Test
+  public void testContainsWorkspacePath_similarRoot() throws Exception {
+    ImportRoots importRoots =
+        ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
+            .add(DirectoryEntry.include(new WorkspacePath("root")))
+            .build();
+
+    assertThat(importRoots.containsWorkspacePath(new WorkspacePath("root2/subdir"))).isFalse();
+  }
+
+  @Test
+  public void testContainsWorkspacePath_excludedParentsAreHandled() throws Exception {
+    ImportRoots importRoots =
+        ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
+            .add(DirectoryEntry.include(new WorkspacePath("root")))
+            .add(DirectoryEntry.exclude(new WorkspacePath("root/a")))
+            .build();
+
+    assertThat(importRoots.containsWorkspacePath(new WorkspacePath("root/a/b"))).isFalse();
   }
 }

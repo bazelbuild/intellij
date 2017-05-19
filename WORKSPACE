@@ -2,6 +2,14 @@ workspace(name = "intellij_with_bazel")
 
 # Long-lived download links available at: https://www.jetbrains.com/intellij-repository/releases
 
+# The plugin api for IntelliJ 2017.1.1. This is required to build IJwB,
+# and run integration tests.
+new_http_archive(
+    name = "intellij_ce_2017_1_1",
+    build_file = "intellij_platform_sdk/BUILD.idea",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2017.1.1/ideaIC-2017.1.1.zip",
+)
+
 # The plugin api for IntelliJ 2016.3.1. This is required to build IJwB,
 # and run integration tests.
 new_http_archive(
@@ -34,36 +42,62 @@ new_http_archive(
     url = "https://download.jetbrains.com/cpp/CLion-2016.3.2.tar.gz",
 )
 
-# The plugin api for Android Studio 2.3 Beta 1. This is required to build ASwB,
+# The plugin api for CLion 2017.1.1. This is required to build CLwB,
 # and run integration tests.
 new_http_archive(
-    name = "android_studio_2_3_0_3",
-    build_file = "intellij_platform_sdk/BUILD.android_studio",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2.3.0.3/android-studio-ide-162.3573574-linux.zip",
+    name = "clion_2017_1_1",
+    build_file = "intellij_platform_sdk/BUILD.clion",
+    url = "https://download.jetbrains.com/cpp/CLion-2017.1.1.tar.gz",
 )
 
-# The plugin api for Android Studio 2.3 Beta 2. This is required to build ASwB,
+# The plugin api for Android Studio 2.3.1. This is required to build ASwB,
 # and run integration tests.
 new_http_archive(
-    name = "android_studio_2_3_0_4",
+    name = "android_studio_2_3_1_0",
     build_file = "intellij_platform_sdk/BUILD.android_studio",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2.3.0.4/android-studio-ide-162.3616766-linux.zip",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2.3.1.0/android-studio-ide-162.3871768-linux.zip",
 )
 
-# The plugin api for Android Studio 2.3 Beta 4. This is required to build ASwB,
-# and run integration tests.
+# Python plugin for IntelliJ CE 2016.3. Required at compile-time for python-specific features.
 new_http_archive(
-    name = "android_studio_2_3_0_6",
-    build_file = "intellij_platform_sdk/BUILD.android_studio",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2.3.0.6/android-studio-ide-162.3715353-linux.zip",
+    name = "python_2016_3",
+    build_file_content = "\n".join([
+        "java_import(",
+        "    name = 'python',",
+        "    jars = ['python/lib/python.jar'],",
+        "    visibility = ['//visibility:public'],",
+        ")"]),
+    url = "https://plugins.jetbrains.com/files/7322/32326/python-community-163.298.zip",
 )
 
-# The plugin api for Android Studio 2.2 stable. This is required to build ASwB,
-# and run integration tests.
+# Python plugin for IntelliJ CE 2017.1. Required at compile-time for python-specific features.
 new_http_archive(
-    name = "AI_145_1617_8",
-    build_file = "intellij_platform_sdk/BUILD.android_studio",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2.2.0.12/android-studio-ide-145.3276617-linux.zip",
+    name = "python_2017_1",
+    build_file_content = "\n".join([
+        "java_import(",
+        "    name = 'python',",
+        "    jars = ['python-ce/lib/python-ce.jar'],",
+        "    visibility = ['//visibility:public'],",
+        ")"]),
+    url = "https://plugins.jetbrains.com/files/7322/33704/python-ce-2017.1.171.3780.116.zip",
+)
+
+# Scala plugin for IntelliJ CE 2017.1. Required at compile-time for scala-specific features.
+new_http_archive(
+    name = "scala_2017_1",
+    build_file_content = "\n".join([
+        "java_import(",
+        "    name = 'scala-library',",
+        "    jars = ['Scala/lib/scala-library.jar'],",
+        ")",
+        "",
+        "java_import(",
+        "    name = 'scala',",
+        "    jars = ['Scala/lib/scala-plugin.jar'],",
+        "    runtime_deps = [':scala-library'],",
+        "    visibility = ['//visibility:public'],",
+        ")"]),
+    url = "https://plugins.jetbrains.com/files/1347/33637/scala-intellij-bin-2017.1.15.zip",
 )
 
 # LICENSE: Common Public License 1.0

@@ -17,7 +17,7 @@ package com.google.idea.blaze.java.run;
 
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.google.idea.sdkcompat.debugger.GenericDebuggerRunnerSdkCompatAdapter;
+import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RemoteConnection;
@@ -30,7 +30,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import javax.annotation.Nullable;
 
 /** A runner that adapts the GenericDebuggerRunner to work with Blaze run configurations. */
-public class BlazeJavaDebuggerRunner extends GenericDebuggerRunnerSdkCompatAdapter {
+public class BlazeJavaDebuggerRunner extends GenericDebuggerRunner {
 
   // wait 10 minutes for the blaze build to complete before connecting
   private static final long POLL_TIMEOUT_MILLIS = 10 * 60 * 1000;

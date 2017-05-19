@@ -18,7 +18,6 @@ package com.google.idea.blaze.android.run.test.smrunner;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.Iterables;
-import com.google.idea.blaze.android.AndroidIntegrationTestCleanupHelper;
 import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -30,7 +29,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import javax.annotation.Nullable;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -61,11 +59,6 @@ public class BlazeAndroidTestEventsHandlerTest extends BlazeIntegrationTestCase 
         new WorkspacePath("org/junit/runners/JUnit4"),
         "package org.junit.runners;",
         "public class JUnit4 {}");
-  }
-
-  @After
-  public final void doTeardown() {
-    AndroidIntegrationTestCleanupHelper.cleanUp(getProject());
   }
 
   @Test

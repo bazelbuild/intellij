@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.wizard2.ui;
 
+import static java.util.stream.Collectors.toList;
+
 import com.google.common.collect.Lists;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
@@ -26,15 +28,21 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet.ProjectViewFile;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
 import com.google.idea.blaze.base.projectview.ProjectViewVerifier;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
+import com.google.idea.blaze.base.projectview.section.ProjectViewDefaultValueProvider;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
+import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
+import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
+import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
 import com.google.idea.blaze.base.projectview.section.sections.Sections;
+import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.OutputSink.Propagation;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.ui.JPanelProvidingProject;
 import com.google.idea.blaze.base.settings.ui.ProjectViewUi;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
@@ -67,8 +75,8 @@ import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.swing.ButtonGroup;
 import javax.swing.JLabel;
@@ -164,6 +172,13 @@ public final class BlazeEditProjectViewControl {
     workspaceDefaultNameOption = new JRadioButton("Workspace");
     branchDefaultNameOption = new JRadioButton("Branch");
     importDirectoryDefaultNameOption = new JRadioButton("Import Directory");
+
+    workspaceDefaultNameOption.setToolTipText("Infer default name from the workspace name");
+    branchDefaultNameOption.setToolTipText(
+        "Infer default name from the current branch of your workspace");
+    importDirectoryDefaultNameOption.setToolTipText(
+        "Infer default name from the directory used to import your project view");
+
     workspaceDefaultNameOption.addItemListener(e -> inferDefaultNameModeSelectionChanged());
     branchDefaultNameOption.addItemListener(e -> inferDefaultNameModeSelectionChanged());
     importDirectoryDefaultNameOption.addItemListener(e -> inferDefaultNameModeSelectionChanged());
@@ -205,6 +220,7 @@ public final class BlazeEditProjectViewControl {
       this.paramsHash = hashCode;
       this.isInitialising = true;
       init(
+          workspaceOption.getBuildSystemForWorkspace(),
           workspaceRoot,
           workspacePathResolver,
           workspacePath,
@@ -215,7 +231,9 @@ public final class BlazeEditProjectViewControl {
   }
 
   private static String modifyInitialProjectView(
-      String initialProjectViewText, WorkspacePathResolver workspacePathResolver) {
+      BuildSystem buildSystem,
+      String initialProjectViewText,
+      WorkspacePathResolver workspacePathResolver) {
     BlazeContext context = new BlazeContext();
     ProjectViewParser projectViewParser = new ProjectViewParser(context, workspacePathResolver);
     projectViewParser.parseProjectView(initialProjectViewText);
@@ -225,13 +243,23 @@ public final class BlazeEditProjectViewControl {
       return initialProjectViewText;
     }
     ProjectView projectView = projectViewFile.projectView;
-    for (SectionParser sectionParser : Sections.getParsers()) {
-      projectView = sectionParser.addProjectViewDefaultValue(projectView);
+
+    // Sort default value providers to match the section order
+    List<SectionKey> sectionKeys =
+        Sections.getParsers().stream().map(SectionParser::getSectionKey).collect(toList());
+    List<ProjectViewDefaultValueProvider> defaultValueProviders =
+        Lists.newArrayList(ProjectViewDefaultValueProvider.EP_NAME.getExtensions());
+    defaultValueProviders.sort(
+        Comparator.comparingInt(val -> sectionKeys.indexOf(val.getSectionKey())));
+    for (ProjectViewDefaultValueProvider defaultValueProvider : defaultValueProviders) {
+      projectView =
+          defaultValueProvider.addProjectViewDefaultValue(buildSystem, projectViewSet, projectView);
     }
     return ProjectViewParser.projectViewToString(projectView);
   }
 
   private void init(
+      BuildSystem buildSystem,
       WorkspaceRoot workspaceRoot,
       WorkspacePathResolver workspacePathResolver,
       @Nullable WorkspacePath sharedProjectView,
@@ -239,7 +267,7 @@ public final class BlazeEditProjectViewControl {
       boolean allowAddDefaultValues) {
     if (allowAddDefaultValues && initialProjectViewText != null) {
       initialProjectViewText =
-          modifyInitialProjectView(initialProjectViewText, workspacePathResolver);
+          modifyInitialProjectView(buildSystem, initialProjectViewText, workspacePathResolver);
     }
     this.workspaceRoot = workspaceRoot;
     this.workspacePathResolver = workspacePathResolver;
@@ -454,6 +482,16 @@ public final class BlazeEditProjectViewControl {
               + "Please report a bug.");
     }
 
+    List<DirectoryEntry> directories = projectViewSet.listItems(DirectorySection.KEY);
+    if (directories.isEmpty()) {
+      String msg = "Add some directories to index in the 'directories' section.";
+      if (projectViewSet.listItems(TargetSection.KEY).isEmpty()) {
+        msg += "\nTargets are also generally required to resolve sources.";
+      }
+      return BlazeValidationResult.failure(msg);
+    }
+
+
     return BlazeValidationResult.success();
   }
 
@@ -489,12 +527,12 @@ public final class BlazeEditProjectViewControl {
         syncPlugin.installSdks(context);
       }
       WorkspaceLanguageSettings workspaceLanguageSettings =
-          LanguageSupport.createWorkspaceLanguageSettings(context, projectViewSet);
+          LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
       if (workspaceLanguageSettings == null) {
         return false;
       }
       return ProjectViewVerifier.verifyProjectView(
-          context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
+          null, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
     }
   }
 
@@ -504,7 +542,7 @@ public final class BlazeEditProjectViewControl {
         issues
             .stream()
             .filter(issue -> issue.getCategory() == IssueOutput.Category.ERROR)
-            .collect(Collectors.toList());
+            .collect(toList());
 
     if (!errors.isEmpty()) {
       StringBuilder errorMessage = new StringBuilder();

@@ -18,8 +18,6 @@ package com.google.idea.blaze.base.sync.data;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.util.SerializationUtil;
@@ -52,15 +50,14 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
   }
 
   @Nullable
-  public BlazeProjectData loadProjectRoot(
-      BlazeContext context, BlazeImportSettings importSettings) {
+  public BlazeProjectData loadProjectRoot(BlazeImportSettings importSettings) throws IOException {
     BlazeProjectData projectData = blazeProjectData;
     if (projectData != null) {
       return projectData;
     }
     synchronized (this) {
       projectData = blazeProjectData;
-      return projectData != null ? projectData : loadProject(context, importSettings);
+      return projectData != null ? projectData : loadProject(importSettings);
     }
   }
 
@@ -71,29 +68,18 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
   }
 
   @Nullable
-  private synchronized BlazeProjectData loadProject(
-      BlazeContext context, BlazeImportSettings importSettings) {
-    BlazeProjectData blazeProjectData = null;
-    try {
-      File file = getCacheFile(project, importSettings);
+  private synchronized BlazeProjectData loadProject(BlazeImportSettings importSettings)
+      throws IOException {
+    File file = getCacheFile(project, importSettings);
 
-      List<ClassLoader> classLoaders = Lists.newArrayList();
-      for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-        classLoaders.add(syncPlugin.getClass().getClassLoader());
-      }
-      classLoaders.add(getClass().getClassLoader());
-      classLoaders.add(Thread.currentThread().getContextClassLoader());
-
-      blazeProjectData = (BlazeProjectData) SerializationUtil.loadFromDisk(file, classLoaders);
-    } catch (IOException e) {
-      String buildSystemName = importSettings.getBuildSystem().getLowerCaseName();
-      context.output(
-          new StatusOutput(
-              String.format("Stale %s project cache, sync will be needed", buildSystemName)));
-      logger.info(e);
+    List<ClassLoader> classLoaders = Lists.newArrayList();
+    for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
+      classLoaders.add(syncPlugin.getClass().getClassLoader());
     }
+    classLoaders.add(getClass().getClassLoader());
+    classLoaders.add(Thread.currentThread().getContextClassLoader());
 
-    this.blazeProjectData = blazeProjectData;
+    blazeProjectData = (BlazeProjectData) SerializationUtil.loadFromDisk(file, classLoaders);
     return blazeProjectData;
   }
 

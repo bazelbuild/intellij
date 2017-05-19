@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
+import java.io.IOException;
 import javax.annotation.Nullable;
 
 /** Parses absolute and workspace-relative paths. */
@@ -31,7 +32,9 @@ public class StandardFileResolver implements FileResolver {
   public VirtualFile resolveToFile(Project project, String fileString) {
     File file = new File(fileString);
     if (file.isAbsolute()) {
-      return VirtualFileSystemProvider.getInstance().getSystem().findFileByPath(file.getPath());
+      return VirtualFileSystemProvider.getInstance()
+          .getSystem()
+          .findFileByPath(getCanonicalPathSafe(file));
     }
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
@@ -40,5 +43,17 @@ public class StandardFileResolver implements FileResolver {
     }
     file = projectData.workspacePathResolver.resolveToFile(fileString);
     return VirtualFileSystemProvider.getInstance().getSystem().findFileByPath(file.getPath());
+  }
+
+  /**
+   * Swallows {@link IOException}s, falling back to returning the absolute, possibly non-canonical
+   * path.
+   */
+  private static String getCanonicalPathSafe(File file) {
+    try {
+      return file.getCanonicalPath();
+    } catch (IOException e) {
+      return file.getAbsolutePath();
+    }
   }
 }

@@ -28,6 +28,8 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
@@ -57,16 +59,20 @@ public class JavaSourceFolderProvider implements SourceFolderProvider {
 
   @Override
   public ImmutableMap<File, SourceFolder> initializeSourceFolders(ContentEntry contentEntry) {
-    ImmutableMap.Builder<File, SourceFolder> output = ImmutableMap.builder();
+    Map<File, SourceFolder> map = new HashMap<>();
     BlazeContentEntry javaContentEntry =
         blazeContentEntries.get(UrlUtil.urlToFile(contentEntry.getUrl()));
     if (javaContentEntry != null) {
       for (BlazeSourceDirectory sourceDirectory : javaContentEntry.sources) {
+        File file = sourceDirectory.getDirectory();
+        if (map.containsKey(file)) {
+          continue;
+        }
         SourceFolder sourceFolder = addSourceFolderToContentEntry(contentEntry, sourceDirectory);
-        output.put(UrlUtil.urlToFile(sourceFolder.getUrl()), sourceFolder);
+        map.put(file, sourceFolder);
       }
     }
-    return output.build();
+    return ImmutableMap.copyOf(map);
   }
 
   @Override
@@ -99,8 +105,10 @@ public class JavaSourceFolderProvider implements SourceFolderProvider {
     if (Strings.isNullOrEmpty(relativePath)) {
       return parentPackagePrefix;
     }
-
-    return parentPackagePrefix + "." + relativePath.replaceAll(File.separator, ".");
+    relativePath = relativePath.replaceAll(File.separator, ".");
+    return Strings.isNullOrEmpty(parentPackagePrefix)
+        ? relativePath
+        : parentPackagePrefix + "." + relativePath;
   }
 
   @VisibleForTesting

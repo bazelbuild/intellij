@@ -6,7 +6,7 @@ import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackers;
 import javax.annotation.Nullable;
 
-/** Adapter to extend two bridge different SDK versions. */
+/** Adapter to bridge different SDK versions. */
 public abstract class OCWorkspaceAdapter implements OCWorkspace {
 
   private final Project project;

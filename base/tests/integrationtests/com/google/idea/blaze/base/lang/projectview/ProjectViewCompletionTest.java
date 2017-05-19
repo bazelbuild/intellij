@@ -19,7 +19,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.lang.projectview.completion.ProjectViewKeywordCompletionContributor;
-import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
@@ -122,20 +121,6 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
         .containsAllIn(
             Arrays.stream(WorkspaceType.values())
                 .map(WorkspaceType::getName)
-                .collect(Collectors.toList()));
-  }
-
-  @Test
-  public void testAdditionalLanguagesCompletion() {
-    setInput("additional_languages:", "  <caret>");
-
-    String[] types = editorTest.getCompletionItemsAsStrings();
-
-    assertThat(types)
-        .asList()
-        .containsAllIn(
-            Arrays.stream(LanguageClass.values())
-                .map(LanguageClass::getName)
                 .collect(Collectors.toList()));
   }
 

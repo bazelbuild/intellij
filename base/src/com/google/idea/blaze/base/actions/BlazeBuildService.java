@@ -37,7 +37,10 @@ import com.google.idea.blaze.base.scope.scopes.NotificationScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
+import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder;
+import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedTargetsResult;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -113,20 +116,31 @@ public class BlazeBuildService {
                 .push(notificationScope);
 
             WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-            BlazeIdeInterface blazeIdeInterface = BlazeIdeInterface.getInstance();
 
             SaveUtil.saveAllFiles();
-            BlazeIdeInterface.BuildResult buildResult =
-                blazeIdeInterface.compileIdeArtifacts(
+            ShardedTargetsResult shardedTargets =
+                BlazeBuildTargetSharder.expandAndShardTargets(
                     project,
                     context,
                     workspaceRoot,
                     projectViewSet,
-                    blazeProjectData.blazeVersionData,
+                    blazeProjectData.workspacePathResolver,
                     targets);
+            if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
+              return;
+            }
+            BuildResult buildResult =
+                BlazeIdeInterface.getInstance()
+                    .compileIdeArtifacts(
+                        project,
+                        context,
+                        workspaceRoot,
+                        projectViewSet,
+                        blazeProjectData.blazeVersionData,
+                        shardedTargets.shardedTargets);
             FileCaches.refresh(project);
 
-            if (buildResult != BlazeIdeInterface.BuildResult.SUCCESS) {
+            if (buildResult.status != BuildResult.Status.SUCCESS) {
               context.setHasError();
             }
           }

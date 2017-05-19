@@ -46,7 +46,8 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
     File source = new File("java/com/foo/FooTest.java");
     TargetIdeInfo target =
         TargetIdeInfo.builder().setLabel("//foo:FooTest").setKind("java_test").build();
-    assertThat(new TargetNameHeuristic().matchesSource(project, target, source, null)).isTrue();
+    assertThat(new TargetNameHeuristic().matchesSource(project, target, null, source, null))
+        .isTrue();
   }
 
   @Test
@@ -54,7 +55,8 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
     File source = new File("java/com/foo/FooTest.java");
     TargetIdeInfo target =
         TargetIdeInfo.builder().setLabel("//foo:foo/FooTest").setKind("java_test").build();
-    assertThat(new TargetNameHeuristic().matchesSource(project, target, source, null)).isTrue();
+    assertThat(new TargetNameHeuristic().matchesSource(project, target, null, source, null))
+        .isTrue();
   }
 
   @Test
@@ -62,7 +64,8 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
     File source = new File("java/com/foo/BarFooTest.java");
     TargetIdeInfo target =
         TargetIdeInfo.builder().setLabel("//foo:FooTest").setKind("java_test").build();
-    assertThat(new TargetNameHeuristic().matchesSource(project, target, source, null)).isFalse();
+    assertThat(new TargetNameHeuristic().matchesSource(project, target, null, source, null))
+        .isFalse();
   }
 
   @Test
@@ -70,7 +73,8 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
     File source = new File("java/com/foo/FooTest.java");
     TargetIdeInfo target =
         TargetIdeInfo.builder().setLabel("//foo:bar/FooTest").setKind("java_test").build();
-    assertThat(new TargetNameHeuristic().matchesSource(project, target, source, null)).isFalse();
+    assertThat(new TargetNameHeuristic().matchesSource(project, target, null, source, null))
+        .isFalse();
   }
 
   @Test
@@ -78,7 +82,8 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
     File source = new File("java/com/foo/FooTest.java");
     TargetIdeInfo target =
         TargetIdeInfo.builder().setLabel("//foo:ForTest").setKind("java_test").build();
-    assertThat(new TargetNameHeuristic().matchesSource(project, target, source, null)).isFalse();
+    assertThat(new TargetNameHeuristic().matchesSource(project, target, null, source, null))
+        .isFalse();
   }
 
   @Test
@@ -88,8 +93,9 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder().setLabel("//foo:FirstTest").setKind("java_test").build(),
             TargetIdeInfo.builder().setLabel("//bar:OtherTest").setKind("java_test").build());
-    Label match = TestTargetHeuristic.chooseTestTargetForSourceFile(project, source, targets, null);
-    assertThat(match).isEqualTo(new Label("//foo:FirstTest"));
+    Label match =
+        TestTargetHeuristic.chooseTestTargetForSourceFile(project, null, source, targets, null);
+    assertThat(match).isEqualTo(Label.create("//foo:FirstTest"));
   }
 
   @Test
@@ -99,8 +105,9 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder().setLabel("//bar:FirstTest").setKind("java_test").build(),
             TargetIdeInfo.builder().setLabel("//foo:FooTest").setKind("java_test").build());
-    Label match = TestTargetHeuristic.chooseTestTargetForSourceFile(project, source, targets, null);
-    assertThat(match).isEqualTo(new Label("//foo:FooTest"));
+    Label match =
+        TestTargetHeuristic.chooseTestTargetForSourceFile(project, null, source, targets, null);
+    assertThat(match).isEqualTo(Label.create("//foo:FooTest"));
   }
 
   @Test
@@ -111,7 +118,8 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
             TargetIdeInfo.builder().setLabel("//bar:OtherTest").setKind("java_test").build(),
             TargetIdeInfo.builder().setLabel("//foo:FooTest").setKind("java_test").build(),
             TargetIdeInfo.builder().setLabel("//bar/foo:FooTest").setKind("java_test").build());
-    Label match = TestTargetHeuristic.chooseTestTargetForSourceFile(project, source, targets, null);
-    assertThat(match).isEqualTo(new Label("//foo:FooTest"));
+    Label match =
+        TestTargetHeuristic.chooseTestTargetForSourceFile(project, null, source, targets, null);
+    assertThat(match).isEqualTo(Label.create("//foo:FooTest"));
   }
 }

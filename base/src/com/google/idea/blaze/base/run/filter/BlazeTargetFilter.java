@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run.filter;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -23,6 +24,8 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -30,7 +33,15 @@ import javax.annotation.Nullable;
 /** Parse blaze targets in streamed output. */
 public class BlazeTargetFilter implements Filter {
 
-  private static final Pattern TARGET_PATTERN = Pattern.compile("//([^\\s:]*):(\\S*)");
+  // See Bazel's LabelValidator class. Whitespace character intentionally not included here.
+  private static final String PACKAGE_NAME_CHARS = "a-zA-Z0-9/\\-\\._$()";
+  private static final String TARGET_CHARS = "a-zA-Z0-9+,=~#()$_@\\-";
+
+  private static final String TARGET_REGEX =
+      String.format(
+          "(@[%s]*)?//[%s]*(:[%s]*)?", PACKAGE_NAME_CHARS, PACKAGE_NAME_CHARS, TARGET_CHARS);
+
+  @VisibleForTesting static final Pattern TARGET_PATTERN = Pattern.compile(TARGET_REGEX);
 
   private final Project project;
 
@@ -42,20 +53,21 @@ public class BlazeTargetFilter implements Filter {
   @Override
   public Result applyFilter(String line, int entireLength) {
     Matcher matcher = TARGET_PATTERN.matcher(line);
-    if (!matcher.find()) {
-      return null;
+    List<ResultItem> results = new ArrayList<>();
+    while (matcher.find()) {
+      String labelString = matcher.group();
+      Label label = LabelUtils.createLabelFromString(null, labelString);
+      if (label == null) {
+        continue;
+      }
+      PsiElement psi = BuildReferenceManager.getInstance(project).resolveLabel(label);
+      if (!(psi instanceof NavigatablePsiElement)) {
+        continue;
+      }
+      HyperlinkInfo link = project -> ((NavigatablePsiElement) psi).navigate(true);
+      int offset = entireLength - line.length();
+      results.add(new ResultItem(matcher.start() + offset, matcher.end() + offset, link));
     }
-    String labelString = matcher.group();
-    Label label = LabelUtils.createLabelFromString(null, labelString);
-    if (label == null) {
-      return null;
-    }
-    PsiElement psi = BuildReferenceManager.getInstance(project).resolveLabel(label);
-    if (!(psi instanceof NavigatablePsiElement)) {
-      return null;
-    }
-    HyperlinkInfo link = project -> ((NavigatablePsiElement) psi).navigate(true);
-    int offset = entireLength - line.length();
-    return new Result(matcher.start() + offset, matcher.end() + offset, link);
+    return results.isEmpty() ? null : new Result(results);
   }
 }

@@ -140,6 +140,42 @@ public class JavaSourceFolderProviderTest extends BlazeIntegrationTestCase {
     assertThat(testSourceChild.getPackagePrefix()).isEqualTo("apps.tests.model");
   }
 
+  @Test
+  public void testRelativePackagePrefixWithoutParentPrefix() {
+    ImmutableList<BlazeContentEntry> contentEntries =
+        ImmutableList.of(
+            BlazeContentEntry.builder("/src/workspace/java")
+                .addSource(
+                    BlazeSourceDirectory.builder("/src/workspace/java")
+                        .setPackagePrefix("")
+                        .build())
+                .build());
+
+    JavaSourceFolderProvider provider =
+        new JavaSourceFolderProvider(
+            new BlazeJavaSyncData(
+                new BlazeJavaImportResult(
+                    contentEntries, ImmutableMap.of(), ImmutableList.of(), ImmutableSet.of(), null),
+                new GlobSet(ImmutableList.of())));
+
+    VirtualFile root = workspace.createDirectory(new WorkspacePath("java"));
+    ContentEntry contentEntry = getContentEntry(root);
+
+    ImmutableMap<File, SourceFolder> sourceFolders = provider.initializeSourceFolders(contentEntry);
+    assertThat(sourceFolders).hasSize(1);
+
+    VirtualFile testRoot = workspace.createDirectory(new WorkspacePath("java/apps/tests"));
+
+    SourceFolder testSourceChild =
+        provider.setSourceFolderForLocation(
+            contentEntry,
+            sourceFolders.get(new File(root.getPath())),
+            new File(testRoot.getPath()),
+            true);
+    assertThat(testSourceChild.isTestSource()).isTrue();
+    assertThat(testSourceChild.getPackagePrefix()).isEqualTo("apps.tests");
+  }
+
   private ContentEntry getContentEntry(VirtualFile root) {
     return ModuleRootManager.getInstance(testFixture.getModule())
         .getModifiableModel()

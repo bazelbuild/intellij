@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.common.base.Strings;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -27,6 +29,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
+import com.google.idea.blaze.base.sync.projectview.RelatedWorkspacePathFinder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.ui.UiUtil;
@@ -41,6 +44,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import java.awt.Dimension;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -91,14 +96,25 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
 
   @Override
   public BlazeValidationResult validate() {
-    if (getBuildFilePath().isEmpty()) {
+    String buildFilePath = getBuildFilePath();
+    if (buildFilePath.isEmpty()) {
       return BlazeValidationResult.failure("BUILD file field cannot be empty.");
+    }
+    if (!WorkspacePath.validate(buildFilePath)) {
+      return BlazeValidationResult.failure(
+          "Invalid BUILD file path: specify a path relative to the workspace root.");
     }
     WorkspacePathResolver workspacePathResolver =
         builder.getWorkspaceOption().getWorkspacePathResolver();
-    File file = workspacePathResolver.resolveToFile(new WorkspacePath(getBuildFilePath()));
+    File file = workspacePathResolver.resolveToFile(new WorkspacePath(buildFilePath));
     if (!file.exists()) {
       return BlazeValidationResult.failure("BUILD file does not exist.");
+    }
+    BuildSystemProvider buildSystemProvider =
+        BuildSystemProvider.getBuildSystemProvider(builder.getBuildSystem());
+    checkState(buildSystemProvider != null);
+    if (!buildSystemProvider.isBuildFile(file.getName())) {
+      return BlazeValidationResult.failure("File must be a BUILD file.");
     }
 
     return BlazeValidationResult.success();
@@ -134,52 +150,29 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
   private static String guessProjectViewFromLocation(
       WorkspacePathResolver workspacePathResolver, WorkspacePath workspacePath) {
 
-    WorkspacePath mainModuleWorkspaceRelativePath = workspacePath;
-    WorkspacePath testModuleWorkspaceRelativePath =
-        guessTestRelativePath(workspacePathResolver, mainModuleWorkspaceRelativePath);
+    List<WorkspacePath> workspacePaths = new ArrayList<>();
+    workspacePaths.add(workspacePath);
+    workspacePaths.addAll(
+        RelatedWorkspacePathFinder.getInstance()
+            .findRelatedWorkspaceDirectories(workspacePathResolver, workspacePath));
 
     ListSection.Builder<DirectoryEntry> directorySectionBuilder =
         ListSection.builder(DirectorySection.KEY);
-    directorySectionBuilder.add(DirectoryEntry.include(mainModuleWorkspaceRelativePath));
-    if (testModuleWorkspaceRelativePath != null) {
-      directorySectionBuilder.add(DirectoryEntry.include(testModuleWorkspaceRelativePath));
-    }
-
     ListSection.Builder<TargetExpression> targetSectionBuilder =
         ListSection.builder(TargetSection.KEY);
-    targetSectionBuilder.add(
-        TargetExpression.allFromPackageRecursive(mainModuleWorkspaceRelativePath));
-    if (testModuleWorkspaceRelativePath != null) {
-      targetSectionBuilder.add(
-          TargetExpression.allFromPackageRecursive(testModuleWorkspaceRelativePath));
-    }
+    workspacePaths.forEach(
+        path -> {
+          directorySectionBuilder.add(DirectoryEntry.include(path));
+          targetSectionBuilder.add(TargetExpression.allFromPackageRecursive(path));
+        });
 
     return ProjectViewParser.projectViewToString(
         ProjectView.builder()
             .add(directorySectionBuilder)
             .add(TextBlockSection.of(TextBlock.newLine()))
             .add(targetSectionBuilder)
+            .add(TextBlockSection.of(TextBlock.newLine()))
             .build());
-  }
-
-  @Nullable
-  private static WorkspacePath guessTestRelativePath(
-      WorkspacePathResolver workspacePathResolver, WorkspacePath projectWorkspacePath) {
-    String projectRelativePath = projectWorkspacePath.relativePath();
-    String testBuildFileRelativePath = null;
-    if (projectRelativePath.startsWith("java/")) {
-      testBuildFileRelativePath = projectRelativePath.replaceFirst("java/", "javatests/");
-    } else if (projectRelativePath.contains("/java/")) {
-      testBuildFileRelativePath = projectRelativePath.replaceFirst("/java/", "/javatests/");
-    }
-    if (testBuildFileRelativePath != null) {
-      File testBuildFile =
-          workspacePathResolver.resolveToFile(new WorkspacePath(testBuildFileRelativePath));
-      if (testBuildFile.exists()) {
-        return new WorkspacePath(testBuildFileRelativePath);
-      }
-    }
-    return null;
   }
 
   private String getBuildFilePath() {

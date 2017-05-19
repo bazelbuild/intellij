@@ -46,7 +46,7 @@ public class BuildReadWriteAccessDetector extends ReadWriteAccessDetector {
       return Access.Write;
     }
     if (expression instanceof ReferenceExpression) {
-      if (PsiUtils.getParentOfType(expression, AugmentedAssignmentStatement.class) != null) {
+      if (PsiUtils.getParentOfType(expression, AugmentedAssignmentStatement.class, true) != null) {
         return Access.ReadWrite;
       }
     }

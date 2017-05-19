@@ -17,8 +17,9 @@ package com.google.idea.blaze.base.lang.buildfile.search;
 
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.intellij.history.core.Paths;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +33,10 @@ import com.intellij.util.Processor;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
-/** Defines the files accessible by a given blaze package. */
+/**
+ * A Blaze package is a directory containing a BUILD file, plus all subdirectories which aren't
+ * themselves Blaze packages.
+ */
 public class BlazePackage {
 
   @Nullable
@@ -98,6 +102,11 @@ public class BlazePackage {
     return new BlazePackageSearchScope(this, onlyBlazeFiles);
   }
 
+  @Nullable
+  public Label getPackageLabel() {
+    return WorkspaceHelper.getBuildLabel(buildFile.getProject(), buildFile.getFile());
+  }
+
   /**
    * Returns the file path relative to this blaze package, or null if it does lie inside this
    * package
@@ -110,19 +119,13 @@ public class BlazePackage {
 
   /** Formats the child file path as a BUILD label (i.e. "//package_path[:relative_path]") */
   @Nullable
-  public String getBuildLabelForChild(String filePath) {
-    WorkspacePath packagePath = buildFile.getPackageWorkspacePath();
-    if (packagePath == null) {
+  public Label getBuildLabelForChild(String filePath) {
+    Label parentPackage = getPackageLabel();
+    if (parentPackage == null) {
       return null;
     }
     String relativePath = getPackageRelativePath(filePath);
-    if (relativePath == null) {
-      return null;
-    }
-    if (relativePath.isEmpty()) {
-      return "//" + packagePath;
-    }
-    return "//" + packagePath + ":" + relativePath;
+    return parentPackage.withTargetName(relativePath);
   }
 
   /**
@@ -192,7 +195,7 @@ public class BlazePackage {
   public String toString() {
     return String.format(
         "%s package: %s",
-        Blaze.buildSystemName(buildFile.getProject()), buildFile.getPackageWorkspacePath());
+        Blaze.buildSystemName(buildFile.getProject()), buildFile.getPackageLabel());
   }
 
   public static boolean hasBlazePackageChild(PsiDirectory directory) {

@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.lang.buildfile.psi;
 import com.google.idea.blaze.base.lang.buildfile.psi.Argument.Keyword;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.AttributeSpecificStringLiteralReferenceProvider;
+import com.google.idea.blaze.base.lang.buildfile.references.ExternalWorkspaceReferenceFragment;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelReference;
 import com.google.idea.blaze.base.lang.buildfile.references.LoadedSymbolReference;
 import com.google.idea.blaze.base.lang.buildfile.references.PackageReferenceFragment;
@@ -128,8 +129,11 @@ public class StringLiteral extends BuildElementImpl implements LiteralExpression
     }
     PsiReference primaryReference = getReference();
     if (primaryReference instanceof LabelReference) {
+      LabelReference labelReference = (LabelReference) primaryReference;
       return new PsiReference[] {
-        primaryReference, new PackageReferenceFragment((LabelReference) primaryReference)
+        primaryReference,
+        new PackageReferenceFragment(labelReference),
+        new ExternalWorkspaceReferenceFragment(labelReference)
       };
     }
     return primaryReference != null
@@ -159,7 +163,7 @@ public class StringLiteral extends BuildElementImpl implements LiteralExpression
   /** If this string is an attribute value within a BUILD rule, return the attribute type. */
   @Nullable
   private String getParentAttributeName() {
-    Keyword parentKeyword = PsiUtils.getParentOfType(this, Keyword.class);
+    Keyword parentKeyword = PsiUtils.getParentOfType(this, Keyword.class, true);
     return parentKeyword != null ? parentKeyword.getName() : null;
   }
 

@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.android.sdk;
 
-import com.google.idea.blaze.android.compatibility.Compatibility.AndroidSdkUtils;
+import com.android.tools.idea.sdk.AndroidSdks;
 import com.intellij.openapi.projectRoots.Sdk;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -25,18 +25,19 @@ import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 public class BlazeSdkProviderImpl implements BlazeSdkProvider {
   @Override
   public List<Sdk> getAllAndroidSdks() {
-    return AndroidSdkUtils.getAllAndroidSdks();
+    return AndroidSdks.getInstance().getAllAndroidSdks();
   }
 
   @Override
   public Sdk findSdk(String targetHash) {
-    return AndroidSdkUtils.findSuitableAndroidSdk(targetHash);
+    return AndroidSdks.getInstance().findSuitableAndroidSdk(targetHash);
   }
 
   @Override
   @Nullable
   public String getSdkTargetHash(Sdk sdk) {
-    AndroidSdkAdditionalData additionalData = AndroidSdkUtils.getAndroidSdkAdditionalData(sdk);
+    AndroidSdkAdditionalData additionalData =
+        AndroidSdks.getInstance().getAndroidSdkAdditionalData(sdk);
     if (additionalData == null) {
       return null;
     }

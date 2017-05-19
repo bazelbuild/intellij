@@ -35,7 +35,7 @@ public class BuildFileModifierTest extends BuildFileIntegrationTestCase {
     BuildFile buildFile =
         createBuildFile(new WorkspacePath("BUILD"), "java_library(name = 'existing')", "");
     BuildFileModifier.getInstance()
-        .addRule(getProject(), new BlazeContext(), new Label("//:new_target"), Kind.JAVA_TEST);
+        .addRule(getProject(), new BlazeContext(), Label.create("//:new_target"), Kind.JAVA_TEST);
     assertFileContents(
         buildFile,
         "java_library(name = 'existing')",

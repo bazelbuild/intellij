@@ -41,10 +41,11 @@ public final class BlazeCommand {
   }
 
   public ImmutableList<String> toList() {
-    ImmutableList.Builder<String> commandLine = ImmutableList.builder();
-    commandLine.add(binaryPath, name.toString());
-    commandLine.addAll(arguments);
-    return commandLine.build();
+    return ImmutableList.<String>builder()
+        .add(binaryPath)
+        .add(name.toString())
+        .addAll(arguments)
+        .build();
   }
 
   @Override
