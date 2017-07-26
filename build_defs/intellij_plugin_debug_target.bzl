@@ -95,7 +95,7 @@ def _build_deploy_info_file(deploy_file):
   )
 
 def _intellij_plugin_debug_target_impl(ctx):
-  files = set()
+  files = depset()
   deploy_files = []
   for target in ctx.attr.deps:
     files = files | target.files
@@ -108,8 +108,8 @@ def _intellij_plugin_debug_target_impl(ctx):
 
   # We've already consumed any dependent intellij_plugin_debug_targets into our own,
   # do not build or report these
-  files = set([f for f in files if not f.path.endswith(SUFFIX)])
-  files = files | set([output])
+  files = depset([f for f in files if not f.path.endswith(SUFFIX)])
+  files = files | depset([output])
 
   return struct(
       files = files,

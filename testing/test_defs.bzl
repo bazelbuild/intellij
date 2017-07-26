@@ -181,7 +181,7 @@ def _get_test_class(test_src, test_package_root):
 
 def _get_test_srcs(targets):
   """Returns all files of the given targets that end with Test.java."""
-  files = set()
+  files = depset()
   for target in targets:
     files += target.files
   return [f for f in files if f.basename.endswith("Test.java")]
