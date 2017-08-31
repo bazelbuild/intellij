@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.aspects;
 
+import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
@@ -58,6 +59,7 @@ public interface BlazeIdeInterface {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
+      BlazeConfigurationHandler configHandler,
       ShardedTargetList shardedTargets,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       ArtifactLocationDecoder artifactLocationDecoder,
@@ -76,6 +78,7 @@ public interface BlazeIdeInterface {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
+      WorkspaceLanguageSettings workspaceLanguageSettings,
       ShardedTargetList shardedTargets);
 
   /**
@@ -89,5 +92,6 @@ public interface BlazeIdeInterface {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
+      WorkspaceLanguageSettings workspaceLanguageSettings,
       ShardedTargetList shardedTargets);
 }

@@ -125,7 +125,7 @@ public class MockBlazeProjectDataBuilder {
               outputBase + "/execroot/gen");
     }
     BlazeVersionData blazeVersionData =
-        this.blazeVersionData != null ? this.blazeVersionData : new BlazeVersionData();
+        this.blazeVersionData != null ? this.blazeVersionData : BlazeVersionData.builder().build();
     WorkspacePathResolver workspacePathResolver =
         this.workspacePathResolver != null
             ? this.workspacePathResolver

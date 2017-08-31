@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
 import com.google.idea.blaze.android.cppapi.NdkSupport;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
+import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProvider.AndroidBinaryLaunchMethod;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.common.experiments.ExperimentService;
@@ -45,6 +46,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
   @Rule
   public final AndroidIntegrationTestSetupRule androidSetupRule =
       new AndroidIntegrationTestSetupRule();
+
   private BlazeAndroidBinaryRunConfigurationState state;
 
   @Before
@@ -66,7 +68,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
 
     state.setActivityClass("com.example.TestActivity");
     state.setMode(BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY);
-    state.setMobileInstall(true);
+    state.setLaunchMethod(AndroidBinaryLaunchMethod.MOBILE_INSTALL);
     state.setUseSplitApksIfPossible(false);
     state.setUseWorkProfileIfPresent(true);
     state.setUserId(2);
@@ -87,7 +89,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     assertThat(readState.getActivityClass()).isEqualTo("com.example.TestActivity");
     assertThat(readState.getMode())
         .isEqualTo(BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY);
-    assertThat(readState.mobileInstall()).isTrue();
+    assertThat(readState.getLaunchMethod()).isEqualTo(AndroidBinaryLaunchMethod.MOBILE_INSTALL);
     assertThat(readState.useSplitApksIfPossible()).isFalse();
     assertThat(readState.useWorkProfileIfPresent()).isTrue();
     assertThat(readState.getUserId()).isEqualTo(2);
@@ -111,7 +113,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
 
     assertThat(readState.getActivityClass()).isEqualTo(state.getActivityClass());
     assertThat(readState.getMode()).isEqualTo(state.getMode());
-    assertThat(readState.mobileInstall()).isEqualTo(state.mobileInstall());
+    assertThat(readState.getLaunchMethod()).isEqualTo(state.getLaunchMethod());
     assertThat(readState.useSplitApksIfPossible()).isEqualTo(state.useSplitApksIfPossible());
     assertThat(readState.useWorkProfileIfPresent()).isEqualTo(state.useWorkProfileIfPresent());
     assertThat(readState.getUserId()).isEqualTo(state.getUserId());
@@ -128,7 +130,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
 
     state.setActivityClass("com.example.TestActivity");
     state.setMode(BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY);
-    state.setMobileInstall(true);
+    state.setLaunchMethod(AndroidBinaryLaunchMethod.MOBILE_INSTALL);
     state.setUseSplitApksIfPossible(false);
     state.setUseWorkProfileIfPresent(true);
     state.setUserId(2);
@@ -153,12 +155,12 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
 
     state.setActivityClass("com.example.TestActivity");
     state.setMode(BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY);
-    state.setMobileInstall(true);
+    state.setLaunchMethod(AndroidBinaryLaunchMethod.MOBILE_INSTALL);
     state.setUseSplitApksIfPossible(false);
     state.setUseWorkProfileIfPresent(true);
     state.setUserId(2);
     // We don't test DeepLink because it is not exposed in the editor.
-    //state.setDeepLink("http://deeplink");
+    // state.setDeepLink("http://deeplink");
 
     editor.resetEditorFrom(state);
     BlazeAndroidBinaryRunConfigurationState readState =
@@ -173,12 +175,12 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
 
     assertThat(readState.getActivityClass()).isEqualTo(state.getActivityClass());
     assertThat(readState.getMode()).isEqualTo(state.getMode());
-    assertThat(readState.mobileInstall()).isEqualTo(state.mobileInstall());
+    assertThat(readState.getLaunchMethod()).isEqualTo(state.getLaunchMethod());
     assertThat(readState.useSplitApksIfPossible()).isEqualTo(state.useSplitApksIfPossible());
     assertThat(readState.useWorkProfileIfPresent()).isEqualTo(state.useWorkProfileIfPresent());
     assertThat(readState.getUserId()).isEqualTo(state.getUserId());
     // We don't test DeepLink because it is not exposed in the editor.
-    //assertThat(readState.getDeepLink()).isEqualTo(state.getDeepLink());
+    // assertThat(readState.getDeepLink()).isEqualTo(state.getDeepLink());
   }
 
   @Test
@@ -199,11 +201,11 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
 
     assertThat(readState.getActivityClass()).isEqualTo(state.getActivityClass());
     assertThat(readState.getMode()).isEqualTo(state.getMode());
-    assertThat(readState.mobileInstall()).isEqualTo(state.mobileInstall());
+    assertThat(readState.getLaunchMethod()).isEqualTo(state.getLaunchMethod());
     assertThat(readState.useSplitApksIfPossible()).isEqualTo(state.useSplitApksIfPossible());
     assertThat(readState.useWorkProfileIfPresent()).isEqualTo(state.useWorkProfileIfPresent());
     assertThat(readState.getUserId()).isEqualTo(state.getUserId());
     // We don't test DeepLink because it is not exposed in the editor.
-    //assertThat(readState.getDeepLink()).isEqualTo(state.getDeepLink());
+    // assertThat(readState.getDeepLink()).isEqualTo(state.getDeepLink());
   }
 }

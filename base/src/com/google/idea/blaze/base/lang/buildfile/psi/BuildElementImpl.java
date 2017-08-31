@@ -147,7 +147,7 @@ public abstract class BuildElementImpl extends ASTWrapperPsiElement implements B
 
       @Override
       public String getLocationString() {
-        return null;
+        return element.getLocationString();
       }
 
       @Override

@@ -15,10 +15,11 @@
  */
 package com.google.idea.blaze.android.resources.actions;
 
+import com.android.SdkConstants;
 import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.resources.ResourceConstants;
 import com.android.resources.ResourceFolderType;
-import com.android.tools.idea.res.ResourceNameValidator;
+import com.android.tools.idea.res.IdeResourceNameValidator;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.TemplateKindCombo;
@@ -221,7 +222,8 @@ public class BlazeCreateResourceFileDialog extends CreateResourceFileDialogBase 
     if (typeName != null) {
       ResourceFolderType type = ResourceFolderType.getFolderType(typeName);
       if (type != null) {
-        ResourceNameValidator validator = ResourceNameValidator.create(true, type);
+        IdeResourceNameValidator validator =
+            IdeResourceNameValidator.forFilename(type, SdkConstants.DOT_XML);
         return validator.getErrorText(fileName);
       }
     }

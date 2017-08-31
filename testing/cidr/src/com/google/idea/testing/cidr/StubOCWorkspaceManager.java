@@ -1,5 +1,7 @@
 package com.google.idea.testing.cidr;
 
+import com.google.idea.sdkcompat.cidr.OCWorkspaceModificationTrackersCompatUtils;
+import com.google.idea.sdkcompat.transactions.Transactions;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
@@ -75,16 +77,14 @@ public class StubOCWorkspaceManager extends OCWorkspaceManager {
   }
 
   private static void rebuildSymbols(Project project, OCWorkspace workspace) {
-    ApplicationManager.getApplication()
-        .runReadAction(
-            () -> {
-              if (project.isDisposed()) {
-                return;
-              }
-              workspace
-                  .getModificationTrackers()
-                  .getBuildSettingsChangesTracker()
-                  .incModificationCount();
-            });
+    Transactions.submitTransaction(
+        project,
+        () ->
+            ApplicationManager.getApplication()
+                .runReadAction(
+                    () ->
+                        OCWorkspaceModificationTrackersCompatUtils.getTrackers(project)
+                            .getBuildSettingsChangesTracker()
+                            .incModificationCount()));
   }
 }

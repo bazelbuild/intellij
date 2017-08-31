@@ -17,10 +17,12 @@ package com.google.idea.blaze.android.sync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
+import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
-import java.util.Collection;
+import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
+import java.util.List;
 
 class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
   private final BlazeProjectData blazeProjectData;
@@ -30,7 +32,7 @@ class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
   }
 
   @Override
-  public Collection<BlazeLibrary> getLibraries() {
+  public List<BlazeLibrary> getLibraries() {
     BlazeAndroidSyncData syncData = blazeProjectData.syncState.get(BlazeAndroidSyncData.class);
     if (syncData == null) {
       return ImmutableList.of();
@@ -38,6 +40,10 @@ class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
     ImmutableList.Builder<BlazeLibrary> libraries = ImmutableList.builder();
     if (syncData.importResult.resourceLibrary != null) {
       libraries.add(syncData.importResult.resourceLibrary);
+    }
+    if (syncData.importResult.javacJar != null) {
+      libraries.add(
+          new BlazeJarLibrary(new LibraryArtifact(null, syncData.importResult.javacJar, null)));
     }
     return libraries.build();
   }

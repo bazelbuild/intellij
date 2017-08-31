@@ -51,6 +51,10 @@ public class MockExperimentService implements ExperimentService {
     return defaultValue;
   }
 
+  public void setExperimentInt(IntExperiment experiment, int value) {
+    experiments.put(experiment.getKey(), value);
+  }
+
   @Override
   public int getExperimentInt(String key, int defaultValue) {
     if (experiments.containsKey(key)) {

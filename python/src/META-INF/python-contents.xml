@@ -19,8 +19,9 @@
     <SyncPlugin implementation="com.google.idea.blaze.python.sync.BlazePythonSyncPlugin"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.python.sync.PythonPrefetchFileSource"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.python.run.BlazePyRunConfigurationHandlerProvider" order="first"/>
-    <RunConfigurationFactory implementation="com.google.idea.blaze.python.run.BlazePyDebuggableRunConfigurationFactory"/>
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.python.run.smrunner.BlazePythonTestEventsHandler"/>
+    <PyParameterizedNameConverter implementation="com.google.idea.blaze.python.run.smrunner.PyBaseParameterizedNameConverter" order="first"/>
+    <BlazeIssueParserProvider implementation="com.google.idea.blaze.python.issueparser.PyIssueParserProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -36,6 +37,8 @@
       interface="com.google.idea.blaze.python.run.filter.BlazePyFilterProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazePyDebugFlagsProvider"
       interface="com.google.idea.blaze.python.run.BlazePyDebugHelper"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.PyParameterizedNameConverter"
+      interface="com.google.idea.blaze.python.run.smrunner.PyParameterizedNameConverter"/>
   </extensionPoints>
 
   <project-components>

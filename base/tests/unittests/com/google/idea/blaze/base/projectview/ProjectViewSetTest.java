@@ -41,7 +41,9 @@ import com.google.idea.blaze.base.projectview.section.sections.ImportTargetOutpu
 import com.google.idea.blaze.base.projectview.section.sections.RunConfigurationsSection;
 import com.google.idea.blaze.base.projectview.section.sections.Sections;
 import com.google.idea.blaze.base.projectview.section.sections.ShardBlazeBuildsSection;
+import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
+import com.google.idea.blaze.base.projectview.section.sections.TargetShardSizeSection;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
@@ -82,6 +84,7 @@ public class ProjectViewSetTest extends BlazeTestCase {
                     .add(ListSection.builder(TestSourceSection.KEY).add(new Glob("javatests/*")))
                     .add(ListSection.builder(ExcludedSourceSection.KEY).add(new Glob("*.java")))
                     .add(ListSection.builder(BuildFlagsSection.KEY).add("--android_sdk=abcd"))
+                    .add(ListSection.builder(SyncFlagsSection.KEY).add("--config=arm"))
                     .add(
                         ListSection.builder(ImportTargetOutputSection.KEY)
                             .add(Label.create("//test:test")))
@@ -96,6 +99,7 @@ public class ProjectViewSetTest extends BlazeTestCase {
                         ListSection.builder(RunConfigurationsSection.KEY)
                             .add(new WorkspacePath("test")))
                     .add(ScalarSection.builder(ShardBlazeBuildsSection.KEY).set(false))
+                    .add(ScalarSection.builder(TargetShardSizeSection.KEY).set(500))
                     .build())
             .build();
 

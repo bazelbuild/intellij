@@ -21,7 +21,6 @@ import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidJavaDebugger;
 import com.android.tools.idea.run.editor.DeployTargetProvider;
 import com.android.tools.idea.run.editor.ShowChooserTargetProvider;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.gct.testrecorder.run.TestRecorderRunConfigurationProxy;
 import com.google.gct.testrecorder.run.TestRecorderRunConfigurationProxyProvider;
@@ -68,6 +67,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.List;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -274,6 +274,11 @@ public class BlazeConfigurationsTest extends BlazeTestCase {
     @Nullable
     @Override
     public String getProjectViewDocumentationUrl() {
+      return null;
+    }
+
+    @Override
+    public String getLanguageSupportDocumentationUrl(String relativeDocName) {
       return null;
     }
 

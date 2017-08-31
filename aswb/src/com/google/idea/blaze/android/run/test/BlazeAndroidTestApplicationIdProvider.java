@@ -18,31 +18,24 @@ package com.google.idea.blaze.android.run.test;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
+import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import javax.annotation.Nullable;
 import org.jetbrains.android.dom.manifest.Manifest;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Application id provider for android_binary. */
 public class BlazeAndroidTestApplicationIdProvider implements ApplicationIdProvider {
-  private final Project project;
-  private final ListenableFuture<BlazeAndroidDeployInfo> deployInfoFuture;
+  private final BlazeApkBuildStep buildStep;
 
-  public BlazeAndroidTestApplicationIdProvider(
-      Project project, ListenableFuture<BlazeAndroidDeployInfo> deployInfoFuture) {
-    this.project = project;
-    this.deployInfoFuture = deployInfoFuture;
+  BlazeAndroidTestApplicationIdProvider(BlazeApkBuildStep buildStep) {
+    this.buildStep = buildStep;
   }
 
-  @NotNull
   @Override
   public String getPackageName() throws ApkProvisionException {
-    BlazeAndroidDeployInfo deployInfo = Futures.get(deployInfoFuture, ApkProvisionException.class);
+    BlazeAndroidDeployInfo deployInfo = buildStep.getDeployInfo();
     Manifest manifest = Iterables.getFirst(deployInfo.getAdditionalMergedManifests(), null);
     if (manifest == null) {
       // The application may not have a separate package,
@@ -61,7 +54,7 @@ public class BlazeAndroidTestApplicationIdProvider implements ApplicationIdProvi
   @Nullable
   @Override
   public String getTestPackageName() throws ApkProvisionException {
-    BlazeAndroidDeployInfo deployInfo = Futures.get(deployInfoFuture, ApkProvisionException.class);
+    BlazeAndroidDeployInfo deployInfo = buildStep.getDeployInfo();
     Manifest manifest = deployInfo.getMergedManifest();
     if (manifest == null) {
       throw new ApkProvisionException(

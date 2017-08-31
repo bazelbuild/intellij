@@ -17,6 +17,8 @@ package com.google.idea.blaze.base.sync.projectview;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.idea.blaze.base.BlazeTestCase;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -24,6 +26,8 @@ import org.junit.runners.JUnit4;
 /** Unit tests for {@link SourceTestConfig} */
 @RunWith(JUnit4.class)
 public class SourceTestConfigTest {
+  @Rule
+  public final BlazeTestCase.IgnoreOnWindowsRule rule = new BlazeTestCase.IgnoreOnWindowsRule();
 
   @Test
   public void testGlobModification() {

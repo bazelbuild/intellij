@@ -24,16 +24,20 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.ui.UiUtil;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.io.File;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import org.jetbrains.annotations.NotNull;
 
 class NewBlazeRuleDialog extends DialogWrapper {
   private static final int UI_INDENT = 0;
@@ -46,7 +50,6 @@ class NewBlazeRuleDialog extends DialogWrapper {
 
   private JPanel component = new JPanel(new GridBagLayout());
   private final NewRuleUI newRuleUI = new NewRuleUI(TEXT_BOX_WIDTH);
-  private static final Dimension componentSize = new Dimension(500, 500);
 
   public NewBlazeRuleDialog(BlazeContext context, Project project, VirtualFile buildFile) {
     super(project);
@@ -61,9 +64,6 @@ class NewBlazeRuleDialog extends DialogWrapper {
     setTitle(String.format("Create a New %s Rule", buildSystemName));
     setOKButtonText("Create");
     setCancelButtonText("Cancel");
-
-    component.setPreferredSize(componentSize);
-    component.setMinimumSize(componentSize);
 
     newRuleUI.fillUI(component, UI_INDENT);
     UiUtil.fillBottom(component);
@@ -93,7 +93,22 @@ class NewBlazeRuleDialog extends DialogWrapper {
         workspaceRoot.workspacePathFor(new File(buildFile.getParent().getPath()));
     Label newRule = Label.create(workspacePath, targetName);
     BuildFileModifier buildFileModifier = BuildFileModifier.getInstance();
-    boolean success = buildFileModifier.addRule(project, context, newRule, ruleKind);
+
+    String commandName = String.format("Add %s %s rule '%s'", buildSystemName, ruleKind, newRule);
+
+    boolean success =
+        new WriteCommandAction<Boolean>(project, commandName) {
+          @Override
+          protected void run(@NotNull Result<Boolean> result) throws Throwable {
+            LocalHistory localHistory = LocalHistory.getInstance();
+            LocalHistoryAction action = localHistory.startAction(commandName);
+            try {
+              result.setResult(buildFileModifier.addRule(project, context, newRule, ruleKind));
+            } finally {
+              action.finish();
+            }
+          }
+        }.execute().getResultObject();
 
     if (success) {
       super.doOKAction();

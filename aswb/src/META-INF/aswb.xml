@@ -51,14 +51,14 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildSystemAndroidJdkProvider" interface="com.google.idea.blaze.android.sync.BuildSystemAndroidJdkProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.AndroidBinaryLaunchMethodsProvider" interface="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.AndroidTestLaunchMethodsProvider" interface="com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncPlugin"/>
     <SyncListener implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncListener"/>
-    <SyncListener implementation="com.google.idea.blaze.android.cppimpl.BlazeNdkSupportEnabler"/>
     <SyncListener implementation="com.google.idea.blaze.android.manifest.ManifestParser$ClearManifestParser"/>
-    <RunConfigurationFactory implementation="com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationFactory"/>
     <JavaSyncAugmenter implementation="com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.android.sync.AndroidPrefetchFileSource"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandlerProvider"/>
@@ -66,26 +66,13 @@
     <BuildSystemAndroidJdkProvider implementation="com.google.idea.blaze.android.sync.BazelAndroidJdkProvider"/>
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.android.run.test.smrunner.BlazeAndroidTestEventsHandler"/>
     <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection$AndroidSdkPlatformProjectViewDefaultValueProvider"/>
+    <AndroidBinaryLaunchMethodsProvider implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProviderImpl"/>
+    <AndroidTestLaunchMethodsProvider implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProviderImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">
     <sdkEventListener implementation="com.google.idea.blaze.android.sdk.AndroidSdkListener"/>
   </extensions>
-
-  <!-- BEGIN NDK SUPPORT -->
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.google.idea.blaze.android.cppapi.BlazeNativeDebuggerIdProvider"
-                        serviceImplementation="com.google.idea.blaze.android.cppimpl.debug.BlazeNativeAndroidDebuggerIdProviderImpl"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="cidr.debugger">
-    <languageSupportFactory implementation="com.google.idea.blaze.android.cppimpl.debug.BlazeAndroidNativeDebuggerLanguageSupportFactory"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="com.android.run">
-    <androidDebugger implementation="com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger"/>
-  </extensions>
-  <!-- END NDK SUPPORT -->
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <BlazeUserSettingsContributor implementation="com.google.idea.blaze.android.settings.BlazeAndroidUserSettingsContributor$BlazeAndroidUserSettingsProvider"/>

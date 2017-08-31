@@ -57,7 +57,7 @@ public class BlazePythonTestEventsHandlerTest extends BlazeIntegrationTestCase {
   }
 
   @Test
-  public void testFunctionLocationResolves() {
+  public void testFunctionLocationOldFormatResolves() {
     PsiFile file =
         workspace.createPsiFile(
             new WorkspacePath("lib/app_unittest.py"),
@@ -69,6 +69,23 @@ public class BlazePythonTestEventsHandlerTest extends BlazeIntegrationTestCase {
     assertThat(function).isNotNull();
 
     String url = handler.testLocationUrl(null, null, "__main__.AppUnitTest.testApp", null);
+    Location<?> location = getLocation(url);
+    assertThat(location.getPsiElement()).isEqualTo(function);
+  }
+
+  @Test
+  public void testFunctionLocationResolves() {
+    PsiFile file =
+        workspace.createPsiFile(
+            new WorkspacePath("lib/app_unittest.py"),
+            "class AppUnitTest:",
+            "  def testApp(self):",
+            "    return");
+    PyClass pyClass = PsiUtils.findFirstChildOfClassRecursive(file, PyClass.class);
+    PyFunction function = pyClass.findMethodByName("testApp", false, null);
+    assertThat(function).isNotNull();
+
+    String url = handler.testLocationUrl(null, null, "__main__.AppUnitTest::testApp", null);
     Location<?> location = getLocation(url);
     assertThat(location.getPsiElement()).isEqualTo(function);
   }

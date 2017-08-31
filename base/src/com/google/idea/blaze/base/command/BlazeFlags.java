@@ -15,12 +15,11 @@
  */
 package com.google.idea.blaze.base.command;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.project.Project;
@@ -47,39 +46,50 @@ public final class BlazeFlags {
   public static final String DISABLE_TEST_SHARDING = "--test_sharding_strategy=disabled";
   // Filters the unit tests that are run (used with regexp for Java/Robolectric tests).
   public static final String TEST_FILTER = "--test_filter";
-  // When used with mobile-install, deploys the an app incrementally.
-  public static final String INCREMENTAL = "--incremental";
-  // When used with mobile-install, deploys the an app incrementally
-  // can be used for API 23 or higher, for which it is preferred to --incremental
-  public static final String SPLIT_APKS = "--split_apks";
   // Re-run the test even if the results are cached.
   public static final String NO_CACHE_TEST_RESULTS = "--nocache_test_results";
+  public static final String LOCAL_TEST_EXECUTION = "--test_strategy=local";
 
   public static final String EXPERIMENTAL_SHOW_ARTIFACTS = "--experimental_show_artifacts";
 
-  public static List<String> buildFlags(Project project, ProjectViewSet projectViewSet) {
-    BuildSystem buildSystem = Blaze.getBuildSystem(project);
+  public static final String DELETED_PACKAGES = "--deleted_packages";
+
+  public static List<String> blazeFlags(
+      Project project,
+      ProjectViewSet projectViewSet,
+      BlazeCommandName command,
+      BlazeInvocationContext context) {
     List<String> flags = Lists.newArrayList();
     for (BuildFlagsProvider buildFlagsProvider : BuildFlagsProvider.EP_NAME.getExtensions()) {
-      buildFlagsProvider.addBuildFlags(buildSystem, projectViewSet, flags);
+      buildFlagsProvider.addBuildFlags(project, projectViewSet, command, flags);
     }
     flags.addAll(expandBuildFlags(projectViewSet.listItems(BuildFlagsSection.KEY)));
+    if (context == BlazeInvocationContext.Sync) {
+      flags.addAll(expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY)));
+    }
     return flags;
   }
 
-  // Pass-through arg for sending adb options during mobile-install.
-  public static final String ADB_ARG = "--adb_arg=";
-
-  public static ImmutableList<String> adbSerialFlags(String serial) {
-    return ImmutableList.of(ADB_ARG + "-s ", ADB_ARG + serial);
-  }
+  public static final String ADB_PATH = "--adb_path";
+  public static final String DEVICE = "--device";
 
   // Pass-through arg for sending test arguments.
   public static final String TEST_ARG = "--test_arg=";
 
   private static final String TOOL_TAG = "--tool_tag=ijwb:";
 
+  // TODO: remove these when mobile-install V1 is obsolete
+  // When used with mobile-install, deploys the an app incrementally.
+  public static final String INCREMENTAL = "--incremental";
+  // When used with mobile-install, deploys the an app incrementally
+  // can be used for API 23 or higher, for which it is preferred to --incremental
+  public static final String SPLIT_APKS = "--split_apks";
+  // Pass-through arg for sending adb options during mobile-install.
+  public static final String ADB_ARG = "--adb_arg=";
+  public static final String ADB = "--adb";
+
   // We add this to every single BlazeCommand instance. It's for tracking usage.
+  @VisibleForTesting
   public static String getToolTagFlag() {
     String platformPrefix = PlatformUtils.getPlatformPrefix();
 

@@ -26,10 +26,8 @@ import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManage
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiElement;
 import java.io.File;
@@ -41,24 +39,19 @@ public class BuildFileModifierImpl implements BuildFileModifier {
 
   @Override
   public boolean addRule(Project project, BlazeContext context, Label newRule, Kind ruleKind) {
-    return WriteCommandAction.runWriteCommandAction(
-        project,
-        (Computable<Boolean>)
-            () -> {
-              BuildReferenceManager manager = BuildReferenceManager.getInstance(project);
-              File file = manager.resolvePackage(newRule.blazePackage());
-              if (file == null) {
-                return null;
-              }
-              LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
-              BuildFile buildFile = manager.resolveBlazePackage(newRule.blazePackage());
-              if (buildFile == null) {
-                logger.error("No BUILD file found at location: " + newRule.blazePackage());
-                return false;
-              }
-              buildFile.add(createRule(project, ruleKind, newRule.targetName().toString()));
-              return true;
-            });
+    BuildReferenceManager manager = BuildReferenceManager.getInstance(project);
+    File file = manager.resolvePackage(newRule.blazePackage());
+    if (file == null) {
+      return false;
+    }
+    LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
+    BuildFile buildFile = manager.resolveBlazePackage(newRule.blazePackage());
+    if (buildFile == null) {
+      logger.error("No BUILD file found at location: " + newRule.blazePackage());
+      return false;
+    }
+    buildFile.add(createRule(project, ruleKind, newRule.targetName().toString()));
+    return true;
   }
 
   private PsiElement createRule(Project project, Kind ruleKind, String ruleName) {

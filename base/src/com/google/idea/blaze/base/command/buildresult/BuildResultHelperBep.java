@@ -18,9 +18,7 @@ package com.google.idea.blaze.base.command.buildresult;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream.LineProcessor;
-import com.google.repackaged.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent;
-import com.google.repackaged.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId;
-import com.google.repackaged.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.IdCase;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -29,7 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
@@ -39,6 +37,7 @@ import java.util.function.Predicate;
  * build events.
  */
 class BuildResultHelperBep implements BuildResultHelper {
+
   private static final Logger logger = Logger.getInstance(BuildResultHelperBep.class);
   private final File outputFile;
   private final Predicate<String> fileFilter;
@@ -46,15 +45,12 @@ class BuildResultHelperBep implements BuildResultHelper {
 
   BuildResultHelperBep(Predicate<String> fileFilter) {
     this.fileFilter = fileFilter;
-    File tempDir = new File(System.getProperty("java.io.tmpdir"));
-    String suffix = UUID.randomUUID().toString();
-    String fileName = "intellij-bep-" + suffix;
-    this.outputFile = new File(tempDir, fileName);
+    outputFile = BuildEventProtocolUtils.createTempOutputFile();
   }
 
   @Override
   public List<String> getBuildFlags() {
-    return ImmutableList.of("--experimental_build_event_binary_file=" + outputFile.getPath());
+    return BuildEventProtocolUtils.getBuildFlags(outputFile);
   }
 
   @Override
@@ -65,34 +61,47 @@ class BuildResultHelperBep implements BuildResultHelper {
   @Override
   public ImmutableList<File> getBuildArtifacts() {
     if (result == null) {
-      result = readResult();
+      result =
+          readResult(
+                  input ->
+                      BuildEventProtocolOutputReader.parseAllOutputFilenames(input, fileFilter))
+              .orElse(ImmutableList.of());
     }
     return result;
   }
 
-  private ImmutableList<File> readResult() {
-    ImmutableList.Builder<File> result = ImmutableList.builder();
+  @Override
+  public ImmutableList<File> getBuildArtifactsForTarget(Label target) {
+    if (result == null) {
+      result =
+          readResult(
+                  input ->
+                      BuildEventProtocolOutputReader.parseArtifactsForTarget(
+                          input, target, fileFilter))
+              .orElse(ImmutableList.of());
+    }
+    return result;
+  }
+
+  private <V> Optional<V> readResult(BepReader<V> readAction) {
     try (InputStream inputStream = new BufferedInputStream(new FileInputStream(outputFile))) {
-      BuildEvent buildEvent;
-      while ((buildEvent = BuildEvent.parseDelimitedFrom(inputStream)) != null) {
-        BuildEventId buildEventId = buildEvent.getId();
-        // Note: This doesn't actually work. BEP does not issue these for actions
-        // that don't execute during the build, so we can't find the files
-        // for a no-op build the way we can for --experimental_show_artifacts
-        if (buildEventId.getIdCase() == IdCase.ACTION_COMPLETED) {
-          String output = buildEventId.getActionCompleted().getPrimaryOutput();
-          if (fileFilter.test(output)) {
-            result.add(new File(output));
-          }
-        }
-      }
+      return Optional.of(readAction.read(inputStream));
     } catch (IOException e) {
       logger.error(e);
-      return ImmutableList.of();
+      return Optional.empty();
+    } finally {
+      close();
     }
+  }
+
+  @Override
+  public void close() {
     if (!outputFile.delete()) {
       logger.warn("Could not delete BEP output file: " + outputFile);
     }
-    return result.build();
+  }
+
+  private interface BepReader<V> {
+    V read(InputStream inputStream) throws IOException;
   }
 }

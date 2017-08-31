@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.run;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -33,6 +32,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import java.util.List;
+import java.util.function.Predicate;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;

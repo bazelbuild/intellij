@@ -18,52 +18,65 @@ package com.google.idea.blaze.cpp;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.Processor;
 import com.jetbrains.cidr.lang.autoImport.OCDefaultAutoImportHelper;
 import com.jetbrains.cidr.lang.workspace.OCResolveRootAndConfiguration;
+import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import com.jetbrains.cidr.lang.workspace.headerRoots.IncludedHeadersRoot;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * CLion's auto-import suggestions result in include paths relative to the current file (CPP-7593).
- * Instead, we want paths relative to the header search root (e.g. the relevant blaze/bazel package
- * path). Presumably this will be fixed in a future CLwB release, but in the meantime, fix it
- * ourselves.
+ * CLion's auto-import suggestions result in include paths relative to the current file (CPP-7593,
+ * CPP-6369). Instead, we want paths relative to the header search root (e.g. the relevant
+ * blaze/bazel package path). Presumably this will be fixed in a future CLion release, but in the
+ * meantime, fix it ourselves.
  */
 public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelper {
 
   @Override
   public boolean supports(OCResolveRootAndConfiguration rootAndConfiguration) {
-    return rootAndConfiguration.getConfiguration()
-        instanceof com.google.idea.blaze.cpp.BlazeResolveConfiguration;
+    return rootAndConfiguration.getConfiguration() instanceof BlazeResolveConfiguration;
   }
 
   /**
-   * Search in project header roots only. All other cases are covered by CLion's default
+   * Search in the configuration's header roots only. All other cases are covered by CLion's default
    * implementation.
    */
   @Override
   public boolean processPathSpecificationToInclude(
       Project project,
       @Nullable VirtualFile targetFile,
-      final VirtualFile fileToImport,
+      VirtualFile fileToImport,
       OCResolveRootAndConfiguration rootAndConfiguration,
       Processor<ImportSpecification> processor) {
-    String name = fileToImport.getName();
-    String path = fileToImport.getPath();
-
-    VirtualFile targetFileParent = targetFile != null ? targetFile.getParent() : null;
-
-    if (targetFileParent != null && targetFileParent.equals(fileToImport.getParent())) {
-      if (!processor.process(
-          new ImportSpecification(name, ImportSpecification.Kind.PROJECT_HEADER))) {
-        return false;
-      }
+    // Check system headers of library roots first. Project roots may include the workspace root,
+    // and the system headers might be under the workspace root as well.
+    ImportSpecification specification =
+        findMatchingRoot(
+            fileToImport,
+            rootAndConfiguration.getLibraryHeadersRoots().getRoots(),
+            /* asUserHeader= */ false);
+    if (specification != null && !processor.process(specification)) {
+      return false;
     }
+    specification =
+        findMatchingRoot(
+            fileToImport,
+            rootAndConfiguration.getProjectHeadersRoots().getRoots(),
+            /* asUserHeader= */ true);
+    return specification == null || processor.process(specification);
+  }
 
-    for (PsiFileSystemItem root : rootAndConfiguration.getProjectHeadersRoots().getRoots()) {
+  @Nullable
+  private static ImportSpecification findMatchingRoot(
+      VirtualFile fileToImport, List<HeadersSearchRoot> roots, boolean asUserHeader) {
+    for (HeadersSearchRoot root : roots) {
       if (!(root instanceof IncludedHeadersRoot)) {
+        continue;
+      }
+      IncludedHeadersRoot includedHeadersRoot = (IncludedHeadersRoot) root;
+      if (asUserHeader != includedHeadersRoot.isUserHeaders()) {
         continue;
       }
       VirtualFile rootBase = root.getVirtualFile();
@@ -71,11 +84,12 @@ public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelper {
       if (relativePath == null) {
         continue;
       }
-      if (!processor.process(
-          new ImportSpecification(relativePath, ImportSpecification.Kind.PROJECT_HEADER))) {
-        return false;
-      }
+      return new ImportSpecification(
+          relativePath,
+          asUserHeader
+              ? ImportSpecification.Kind.USER_HEADER_SEARCH_PATH
+              : ImportSpecification.Kind.SYSTEM_HEADER_SEARCH_PATH);
     }
-    return true;
+    return null;
   }
 }

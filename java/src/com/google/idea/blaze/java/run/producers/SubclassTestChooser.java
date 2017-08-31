@@ -47,7 +47,7 @@ public class SubclassTestChooser {
     }
     PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
     classes.sort(renderer.getComparator());
-    // JBList has no generics in AS 2.2. TODO: Add generics here when we migrate to AS 2.3.
+    // #api171 add generics to JBList.
     JBList list = new JBList(classes);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
@@ -57,6 +57,7 @@ public class SubclassTestChooser {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
+        .setCancelOnWindowDeactivation(false)
         .setItemChoosenCallback(
             () -> callbackOnClassSelection.accept((PsiClass) list.getSelectedValue()))
         .createPopup()

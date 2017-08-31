@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.python.run.producers;
 
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -121,16 +120,14 @@ public class BlazePyTestConfigurationProducer
     }
     handlerState.getCommandState().setCommand(BlazeCommandName.TEST);
 
-    ImmutableList.Builder<String> flags = ImmutableList.builder();
+    // remove conflicting flags from initial configuration
+    List<String> flags = new ArrayList<>(handlerState.getBlazeFlagsState().getRawFlags());
+    flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
     String filter = testLocation.testFilter();
     if (filter != null) {
       flags.add(BlazeFlags.TEST_FILTER + "=" + filter);
     }
-    // remove conflicting flags from initial configuration
-    List<String> oldFlags = new ArrayList<>(handlerState.getBlazeFlagsState().getRawFlags());
-    oldFlags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
-    flags.addAll(oldFlags);
-    handlerState.getBlazeFlagsState().setRawFlags(flags.build());
+    handlerState.getBlazeFlagsState().setRawFlags(flags);
 
     BlazeConfigurationNameBuilder nameBuilder = new BlazeConfigurationNameBuilder(configuration);
     nameBuilder.setTargetString(

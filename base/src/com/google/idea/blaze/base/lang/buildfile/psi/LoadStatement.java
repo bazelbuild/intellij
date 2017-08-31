@@ -86,7 +86,12 @@ public class LoadStatement extends BuildElementImpl implements Statement {
 
   @Override
   public String getPresentableText() {
-    String path = LabelUtils.getNiceSkylarkFileName(getImportedPath());
-    return path != null ? "load: " + path : "load";
+    return "load";
+  }
+
+  @Nullable
+  @Override
+  public String getLocationString() {
+    return LabelUtils.getNiceSkylarkFileName(getImportedPath());
   }
 }

@@ -92,7 +92,6 @@ def intellij_integration_test_suite(
     test_package_root,
     deps,
     size="medium",
-    shard_count=None,
     jvm_flags = [],
     runtime_deps = [],
     platform_prefix="Idea",
@@ -110,7 +109,6 @@ def intellij_integration_test_suite(
     test_package_root: only tests under this package root will be run.
     deps: the required deps.
     size: the test size.
-    shard_count: the number of shards to use.
     jvm_flags: extra flags to be passed to the test vm.
     runtime_deps: the required runtime_deps.
     platform_prefix: Specifies the JetBrains product these tests are run against. Examples are
@@ -160,7 +158,6 @@ def intellij_integration_test_suite(
       size = size,
       srcs = srcs + [suite_class_name],
       data = data,
-      shard_count = shard_count,
       jvm_flags = jvm_flags,
       test_class = suite_class,
       runtime_deps = runtime_deps,
@@ -181,7 +178,7 @@ def _get_test_class(test_src, test_package_root):
 
 def _get_test_srcs(targets):
   """Returns all files of the given targets that end with Test.java."""
-  files = set()
+  files = depset()
   for target in targets:
     files += target.files
   return [f for f in files if f.basename.endswith("Test.java")]

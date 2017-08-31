@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.wizard2.BlazeNewProjectBuilder;
 import com.google.idea.blaze.base.wizard2.BlazeSelectWorkspaceOption;
 import com.google.idea.blaze.base.wizard2.BlazeWizardOptionProvider;
+import com.intellij.openapi.Disposable;
 import java.util.Collection;
 import javax.swing.JComponent;
 
@@ -26,9 +27,10 @@ import javax.swing.JComponent;
 public class BlazeSelectWorkspaceControl {
   BlazeSelectOptionControl<BlazeSelectWorkspaceOption> selectOptionControl;
 
-  public BlazeSelectWorkspaceControl(BlazeNewProjectBuilder builder) {
+  public BlazeSelectWorkspaceControl(BlazeNewProjectBuilder builder, Disposable parentDisposable) {
     Collection<BlazeSelectWorkspaceOption> options =
-        BlazeWizardOptionProvider.getInstance().getSelectWorkspaceOptions(builder);
+        BlazeWizardOptionProvider.getInstance()
+            .getSelectWorkspaceOptions(builder, parentDisposable);
 
     this.selectOptionControl =
         new BlazeSelectOptionControl<BlazeSelectWorkspaceOption>(builder, options) {

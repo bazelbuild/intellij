@@ -15,22 +15,96 @@
  */
 package com.google.idea.blaze.base.sync.aspects.strategy;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.command.BlazeCommand;
+import com.google.idea.blaze.base.command.BlazeCommand.Builder;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.repackaged.protobuf.TextFormat;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-/** Indirection for our various ways of calling the aspect. */
-public interface AspectStrategy {
-  String getName();
+/** Aspect strategy for Skylark. */
+public abstract class AspectStrategy {
 
-  void modifyIdeInfoCommand(BlazeCommand.Builder blazeCommandBuilder);
+  private static final BoolExperiment usePerLanguageOutputGroups =
+      new BoolExperiment("blaze.use.per.language.output.groups", true);
 
-  void modifyIdeResolveCommand(BlazeCommand.Builder blazeCommandBuilder);
+  public abstract String getName();
 
-  void modifyIdeCompileCommand(BlazeCommand.Builder blazeCommandBuilder);
+  protected abstract List<String> getAspectFlags();
 
-  String getAspectOutputFileExtension();
+  protected abstract boolean hasPerLanguageOutputGroups();
 
-  IntellijIdeInfo.TargetIdeInfo readAspectFile(InputStream inputStream) throws IOException;
+  private boolean usePerLanguageOutputGroups() {
+    return usePerLanguageOutputGroups.getValue() && hasPerLanguageOutputGroups();
+  }
+
+  public final void modifyIdeInfoCommand(
+      BlazeCommand.Builder blazeCommandBuilder, Set<LanguageClass> activeLanguages) {
+    blazeCommandBuilder.addBlazeFlags(getAspectFlags());
+    if (!usePerLanguageOutputGroups()) {
+      blazeCommandBuilder.addBlazeFlags("--output_groups=intellij-info-text");
+      return;
+    }
+    List<String> outputGroups = getOutputGroups(activeLanguages, "intellij-info-");
+    outputGroups.add("intellij-info-generic");
+    String flag = "--output_groups=" + Joiner.on(',').join(outputGroups);
+    blazeCommandBuilder.addBlazeFlags(flag);
+  }
+
+  public final void modifyIdeResolveCommand(
+      BlazeCommand.Builder blazeCommandBuilder, Set<LanguageClass> activeLanguages) {
+    blazeCommandBuilder.addBlazeFlags(getAspectFlags());
+    if (!usePerLanguageOutputGroups()) {
+      blazeCommandBuilder.addBlazeFlags("--output_groups=intellij-resolve");
+      return;
+    }
+    List<String> outputGroups = getOutputGroups(activeLanguages, "intellij-resolve-");
+    String flag = "--output_groups=" + Joiner.on(',').join(outputGroups);
+    blazeCommandBuilder.addBlazeFlags(flag);
+  }
+
+  public final void modifyIdeCompileCommand(
+      Builder blazeCommandBuilder, Set<LanguageClass> activeLanguages) {
+    blazeCommandBuilder.addBlazeFlags(getAspectFlags());
+    if (!usePerLanguageOutputGroups()) {
+      blazeCommandBuilder.addBlazeFlags("--output_groups=intellij-compile");
+      return;
+    }
+    List<String> outputGroups = getOutputGroups(activeLanguages, "intellij-compile-");
+    String flag = "--output_groups=" + Joiner.on(',').join(outputGroups);
+    blazeCommandBuilder.addBlazeFlags(flag);
+  }
+
+  private static List<String> getOutputGroups(Set<LanguageClass> activeLanguages, String prefix) {
+    return activeLanguages
+        .stream()
+        .map(LanguageOutputGroup::forLanguage)
+        .filter(Objects::nonNull)
+        .map(lang -> prefix + lang.suffix)
+        .distinct()
+        .sorted()
+        .collect(Collectors.toList());
+  }
+
+  public final String getAspectOutputFileExtension() {
+    return ".intellij-info.txt";
+  }
+
+  public final IntellijIdeInfo.TargetIdeInfo readAspectFile(InputStream inputStream)
+      throws IOException {
+    IntellijIdeInfo.TargetIdeInfo.Builder builder = IntellijIdeInfo.TargetIdeInfo.newBuilder();
+    TextFormat.Parser parser = TextFormat.Parser.newBuilder().setAllowUnknownFields(true).build();
+    parser.merge(new InputStreamReader(inputStream, UTF_8), builder);
+    return builder.build();
+  }
 }

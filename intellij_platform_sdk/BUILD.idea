@@ -7,12 +7,18 @@ package(default_visibility = ["//visibility:public"])
 java_import(
     name = "sdk",
     jars = glob(["lib/*.jar"]),
+    deps = ["@error_prone_annotations//jar"],
     tags = ["intellij-provided-by-sdk"],
 )
 
 java_import(
     name = "devkit",
     jars = glob(["plugins/devkit/lib/devkit.jar"]),
+)
+
+java_import(
+    name = "guava",
+    jars = glob(["lib/guava-*.jar"]),
 )
 
 java_import(

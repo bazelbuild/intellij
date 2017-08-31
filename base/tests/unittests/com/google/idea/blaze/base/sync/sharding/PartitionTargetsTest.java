@@ -83,7 +83,7 @@ public class PartitionTargetsTest {
         .inOrder();
 
     shards = BlazeBuildTargetSharder.shardTargets(targets, 1);
-    assertThat(shards.shardedTargets).hasSize(6);
+    assertThat(shards.shardedTargets).hasSize(3);
     assertThat(shards.shardedTargets.get(0))
         .containsExactly(
             TargetExpression.fromString("//java/com/google:one"),
@@ -91,5 +91,22 @@ public class PartitionTargetsTest {
             TargetExpression.fromString("-//java/com/google:four"),
             TargetExpression.fromString("-//java/com/google:six"))
         .inOrder();
+  }
+
+  @Test
+  public void testShardWithOnlyExcludedTargetsIsDropped() {
+    List<TargetExpression> targets =
+        ImmutableList.of(
+            TargetExpression.fromString("//java/com/google:one"),
+            TargetExpression.fromString("//java/com/google:two"),
+            TargetExpression.fromString("//java/com/google:three"),
+            TargetExpression.fromString("-//java/com/google:four"),
+            TargetExpression.fromString("-//java/com/google:five"),
+            TargetExpression.fromString("-//java/com/google:six"));
+
+    ShardedTargetList shards = BlazeBuildTargetSharder.shardTargets(targets, 3);
+
+    assertThat(shards.shardedTargets).hasSize(1);
+    assertThat(shards.shardedTargets.get(0)).hasSize(6);
   }
 }

@@ -15,9 +15,7 @@
  */
 package com.google.idea.blaze.java.sync.projectstructure;
 
-import static com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil.createAndAddSDK;
 import static com.intellij.openapi.util.io.FileUtil.notNullize;
-import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 import static java.util.Collections.emptyList;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -29,33 +27,35 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.SystemProperties;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 /** Utility methods related to IDEA JDKs. */
 public class Jdks {
-  @NonNls private static final LanguageLevel DEFAULT_LANG_LEVEL = LanguageLevel.JDK_1_7;
+
+  private static final Logger logger = Logger.getInstance(Jdks.class);
 
   @Nullable
   public static Sdk chooseOrCreateJavaSdk(LanguageLevel langLevel) {
-    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (isApplicableJdk(sdk, langLevel)) {
-        return sdk;
-      }
+    Sdk existing = findClosestMatch(langLevel);
+    if (existing != null) {
+      return existing;
     }
     String jdkHomePath = null;
     for (DefaultSdkProvider defaultSdkProvider : DefaultSdkProvider.EP_NAME.getExtensions()) {
-      File sdk = defaultSdkProvider.provideSdkForLanguage(LanguageClass.JAVA);
-      if (sdk != null) {
-        jdkHomePath = sdk.getPath();
+      File sdkRoot = defaultSdkProvider.provideSdkForLanguage(LanguageClass.JAVA);
+      if (sdkRoot != null) {
+        jdkHomePath = sdkRoot.getPath();
         break;
       }
     }
@@ -63,39 +63,43 @@ public class Jdks {
     if (jdkHomePath == null) {
       jdkHomePath = getJdkHomePath(langLevel);
     }
-
-    if (jdkHomePath == null) {
-      return null;
-    }
-
-    return createJdk(jdkHomePath);
-  }
-
-  public static boolean isApplicableJdk(@NotNull Sdk jdk, @Nullable LanguageLevel langLevel) {
-    if (!(jdk.getSdkType() instanceof JavaSdk)) {
-      return false;
-    }
-    if (langLevel == null) {
-      langLevel = DEFAULT_LANG_LEVEL;
-    }
-    JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
-    if (version != null) {
-      //noinspection TestOnlyProblems
-      return hasMatchingLangLevel(version, langLevel);
-    }
-    return false;
+    return jdkHomePath != null ? createJdk(jdkHomePath) : null;
   }
 
   @Nullable
-  public static String getJdkHomePath(@NotNull LanguageLevel langLevel) {
-    Collection<String> jdkHomePaths =
-        new ArrayList<String>(JavaSdk.getInstance().suggestHomePaths());
+  @VisibleForTesting
+  static Sdk findClosestMatch(LanguageLevel langLevel) {
+    return Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
+        .filter(
+            sdk -> {
+              LanguageLevel level = getJavaLanguageLevel(sdk);
+              return level != null && level.isAtLeast(langLevel);
+            })
+        .min(Comparator.comparing(Jdks::getJavaLanguageLevel))
+        .orElse(null);
+  }
+
+  /**
+   * Returns null if the SDK is not a java JDK, or doesn't have a recognized java langauge level.
+   */
+  @Nullable
+  private static LanguageLevel getJavaLanguageLevel(Sdk sdk) {
+    if (!(sdk.getSdkType() instanceof JavaSdk)) {
+      return null;
+    }
+    JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
+    return version != null ? version.getMaxLanguageLevel() : null;
+  }
+
+  @Nullable
+  private static String getJdkHomePath(LanguageLevel langLevel) {
+    Collection<String> jdkHomePaths = new ArrayList<>(JavaSdk.getInstance().suggestHomePaths());
     if (jdkHomePaths.isEmpty()) {
       return null;
     }
     // prefer jdk path of getJavaHome(), since we have to allow access to it in tests
     // see AndroidProjectDataServiceTest#testImportData()
-    final List<String> list = new ArrayList<String>();
+    final List<String> list = new ArrayList<>();
     String javaHome = SystemProperties.getJavaHome();
 
     if (javaHome != null && !javaHome.isEmpty()) {
@@ -112,14 +116,12 @@ public class Jdks {
     return getBestJdkHomePath(list, langLevel);
   }
 
-  @VisibleForTesting
   @Nullable
-  static String getBestJdkHomePath(
-      @NotNull Collection<String> jdkHomePaths, @NotNull LanguageLevel langLevel) {
+  private static String getBestJdkHomePath(List<String> jdkHomePaths, LanguageLevel langLevel) {
     // Search for JDKs in both the suggest folder and all its sub folders.
     List<String> roots = Lists.newArrayList();
     for (String jdkHomePath : jdkHomePaths) {
-      if (isNotEmpty(jdkHomePath)) {
+      if (StringUtil.isNotEmpty(jdkHomePath)) {
         roots.add(jdkHomePath);
         roots.addAll(getChildrenPaths(jdkHomePath));
       }
@@ -127,8 +129,7 @@ public class Jdks {
     return getBestJdk(roots, langLevel);
   }
 
-  @NotNull
-  private static List<String> getChildrenPaths(@NotNull String dirPath) {
+  private static List<String> getChildrenPaths(String dirPath) {
     File dir = new File(dirPath);
     if (!dir.isDirectory()) {
       return emptyList();
@@ -144,48 +145,16 @@ public class Jdks {
   }
 
   @Nullable
-  private static String getBestJdk(
-      @NotNull List<String> jdkRoots, @NotNull LanguageLevel langLevel) {
-    String bestJdk = null;
-    for (String jdkRoot : jdkRoots) {
-      if (JavaSdk.getInstance().isValidSdkHome(jdkRoot)) {
-        if (bestJdk == null && hasMatchingLangLevel(jdkRoot, langLevel)) {
-          bestJdk = jdkRoot;
-        } else if (bestJdk != null) {
-          bestJdk = selectJdk(bestJdk, jdkRoot, langLevel);
-        }
-      }
-    }
-    return bestJdk;
+  private static String getBestJdk(List<String> jdkRoots, LanguageLevel langLevel) {
+    return jdkRoots
+        .stream()
+        .filter(root -> JavaSdk.getInstance().isValidSdkHome(root))
+        .filter(root -> getVersion(root).getMaxLanguageLevel().isAtLeast(langLevel))
+        .min(Comparator.comparing(o -> getVersion(o).getMaxLanguageLevel()))
+        .orElse(null);
   }
 
-  @Nullable
-  private static String selectJdk(
-      @NotNull String jdk1, @NotNull String jdk2, @NotNull LanguageLevel langLevel) {
-    if (hasMatchingLangLevel(jdk1, langLevel)) {
-      return jdk1;
-    }
-    if (hasMatchingLangLevel(jdk2, langLevel)) {
-      return jdk2;
-    }
-    return null;
-  }
-
-  private static boolean hasMatchingLangLevel(
-      @NotNull String jdkRoot, @NotNull LanguageLevel langLevel) {
-    JavaSdkVersion version = getVersion(jdkRoot);
-    return hasMatchingLangLevel(version, langLevel);
-  }
-
-  @VisibleForTesting
-  static boolean hasMatchingLangLevel(
-      @NotNull JavaSdkVersion jdkVersion, @NotNull LanguageLevel langLevel) {
-    LanguageLevel max = jdkVersion.getMaxLanguageLevel();
-    return max.isAtLeast(langLevel);
-  }
-
-  @NotNull
-  private static JavaSdkVersion getVersion(@NotNull String jdkRoot) {
+  private static JavaSdkVersion getVersion(String jdkRoot) {
     String version = JavaSdk.getInstance().getVersionString(jdkRoot);
     if (version == null) {
       return JavaSdkVersion.JDK_1_0;
@@ -195,11 +164,10 @@ public class Jdks {
   }
 
   @Nullable
-  public static Sdk createJdk(@NotNull String jdkHomePath) {
-    Sdk jdk = createAndAddSDK(jdkHomePath, JavaSdk.getInstance());
+  private static Sdk createJdk(String jdkHomePath) {
+    Sdk jdk = SdkConfigurationUtil.createAndAddSDK(jdkHomePath, JavaSdk.getInstance());
     if (jdk == null) {
-      String msg = String.format("Unable to create JDK from path '%1$s'", jdkHomePath);
-      Logger.getInstance(Jdks.class).error(msg);
+      logger.error(String.format("Unable to create JDK from path '%1$s'", jdkHomePath));
     }
     return jdk;
   }

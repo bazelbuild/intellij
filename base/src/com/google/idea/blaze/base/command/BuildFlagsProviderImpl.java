@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.command;
 
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.intellij.openapi.project.Project;
 import java.util.List;
 
 /** Flags added to blaze/bazel build commands. */
@@ -24,7 +24,10 @@ public class BuildFlagsProviderImpl implements BuildFlagsProvider {
 
   @Override
   public void addBuildFlags(
-      BuildSystem buildSystem, ProjectViewSet projectViewSet, List<String> flags) {
+      Project project,
+      ProjectViewSet projectViewSet,
+      BlazeCommandName command,
+      List<String> flags) {
     flags.add("--curses=no");
     flags.add("--color=no");
     flags.add("--noexperimental_ui");

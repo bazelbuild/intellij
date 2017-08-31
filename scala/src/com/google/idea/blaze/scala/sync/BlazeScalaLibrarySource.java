@@ -20,7 +20,7 @@ import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.scala.sync.model.BlazeScalaSyncData;
-import java.util.Collection;
+import java.util.List;
 
 /** Provides libraries required by Scala rules. */
 public class BlazeScalaLibrarySource extends LibrarySource.Adapter {
@@ -31,11 +31,11 @@ public class BlazeScalaLibrarySource extends LibrarySource.Adapter {
   }
 
   @Override
-  public Collection<? extends BlazeLibrary> getLibraries() {
+  public List<? extends BlazeLibrary> getLibraries() {
     BlazeScalaSyncData syncData = blazeProjectData.syncState.get(BlazeScalaSyncData.class);
     if (syncData == null) {
       return ImmutableList.of();
     }
-    return syncData.importResult.libraries.values();
+    return syncData.importResult.libraries.values().asList();
   }
 }

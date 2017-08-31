@@ -77,13 +77,11 @@ import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.io.File;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -127,14 +125,11 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
   private JavaWorkingSet workingSet = null;
   private final WorkspaceLanguageSettings workspaceLanguageSettings =
       new WorkspaceLanguageSettings(WorkspaceType.JAVA, ImmutableSet.of(LanguageClass.JAVA));
-  private MockExperimentService experimentService;
 
   @Override
   @SuppressWarnings("FunctionalInterfaceClash") // False positive on getDeclaredPackageOfJavaFile.
-  protected void initTest(
-      @NotNull Container applicationServices, @NotNull Container projectServices) {
-    experimentService = new MockExperimentService();
-    applicationServices.register(ExperimentService.class, experimentService);
+  protected void initTest(Container applicationServices, Container projectServices) {
+    applicationServices.register(ExperimentService.class, new MockExperimentService());
 
     BlazeExecutor blazeExecutor = new MockBlazeExecutor();
     applicationServices.register(BlazeExecutor.class, blazeExecutor);
@@ -167,7 +162,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
         .registerExtension(new JavaLikeLanguage.Java());
   }
 
-  BlazeJavaImportResult importWorkspace(
+  private BlazeJavaImportResult importWorkspace(
       WorkspaceRoot workspaceRoot, TargetMapBuilder targetMapBuilder, ProjectView projectView) {
 
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
@@ -1229,7 +1224,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     assertThat(findLibrary(result.libraries, "liba-ijar.jar")).isNotNull();
 
     // Second test
-    // Put everything in the working set, which should expand to the full transitive closure
+    // Put everything in the working set, which should expand to include the direct deps
     workingSet =
         new JavaWorkingSet(
             workspaceRoot,
@@ -1242,13 +1237,9 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     errorCollector.assertNoIssues();
 
-    assertThat(result.libraries).hasSize(6);
+    assertThat(result.libraries).hasSize(2);
     assertThat(findLibrary(result.libraries, "liba-ijar.jar")).isNotNull();
     assertThat(findLibrary(result.libraries, "libb-ijar.jar")).isNotNull();
-    assertThat(findLibrary(result.libraries, "libb-2-ijar.jar")).isNotNull();
-    assertThat(findLibrary(result.libraries, "libc-ijar.jar")).isNotNull();
-    assertThat(findLibrary(result.libraries, "libd-ijar.jar")).isNotNull();
-    assertThat(findLibrary(result.libraries, "libd-2-ijar.jar")).isNotNull();
   }
 
   /** Test that the non-android libraries can be imported. */
@@ -1325,19 +1316,11 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
   @Test
   public void testSyncAugmenter() {
     augmenters.registerExtension(
-        new BlazeJavaSyncAugmenter() {
-          @Override
-          public void addJarsForSourceTarget(
-              WorkspaceLanguageSettings workspaceLanguageSettings,
-              ProjectViewSet projectViewSet,
-              TargetIdeInfo target,
-              Collection<BlazeJarLibrary> jars,
-              Collection<BlazeJarLibrary> genJars) {
-            if (target.key.label.equals(Label.create("//java/example:source"))) {
-              jars.add(
-                  new BlazeJarLibrary(
-                      LibraryArtifact.builder().setInterfaceJar(gen("source.jar")).build()));
-            }
+        (workspaceLanguageSettings, projectViewSet, target, jars, genJars) -> {
+          if (target.key.label.equals(Label.create("//java/example:source"))) {
+            jars.add(
+                new BlazeJarLibrary(
+                    LibraryArtifact.builder().setInterfaceJar(gen("source.jar")).build()));
           }
         });
 

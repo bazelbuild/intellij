@@ -1,0 +1,30 @@
+#
+# Description:
+# The final form of the BUILD file accessed at runtime as an external WORKSPACE.
+#
+
+licenses(["notice"])  # Apache 2.0
+
+java_binary(
+    name = "JarFilter_bin",
+    main_class = "com.google.idea.blaze.aspect.JarFilter",
+    runtime_deps = [":jar_filter_lib"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jar_filter_lib",
+    jars = ["JarFilter_deploy.jar"],
+)
+
+java_binary(
+    name = "PackageParser_bin",
+    main_class = "com.google.idea.blaze.aspect.PackageParser",
+    runtime_deps = [":package_parser_lib"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "package_parser_lib",
+    jars = ["PackageParser_deploy.jar"],
+)

@@ -29,8 +29,14 @@ public interface PrefetchService {
     return ServiceManager.getService(PrefetchService.class);
   }
 
-  /** Instructs all prefetchers to prefetch these files. */
-  ListenableFuture<?> prefetchFiles(Project project, Collection<File> files);
+  /**
+   * Instructs all prefetchers to prefetch these files.
+   *
+   * @param refetchCachedFiles True if all files should be fetched, regardless of whether they were
+   *     recently fetched.
+   */
+  ListenableFuture<?> prefetchFiles(
+      Project project, Collection<File> files, boolean refetchCachedFiles);
 
   ListenableFuture<?> prefetchProjectFiles(
       Project project, ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData);

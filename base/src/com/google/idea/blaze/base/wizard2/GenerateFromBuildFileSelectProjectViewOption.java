@@ -110,6 +110,9 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
     if (!file.exists()) {
       return BlazeValidationResult.failure("BUILD file does not exist.");
     }
+    if (file.isDirectory()) {
+      return BlazeValidationResult.failure("Specified path is a directory, not a file");
+    }
     BuildSystemProvider buildSystemProvider =
         BuildSystemProvider.getBuildSystemProvider(builder.getBuildSystem());
     checkState(buildSystemProvider != null);

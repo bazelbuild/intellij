@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.ListSectionParser;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
+import com.google.idea.blaze.base.settings.Blaze;
 import javax.annotation.Nullable;
 
 /** Section for blaze_flags */
@@ -29,7 +30,7 @@ public class BuildFlagsSection {
   public static final SectionParser PARSER = new BuildFlagsSectionParser();
 
   static class BuildFlagsSectionParser extends ListSectionParser<String> {
-    protected BuildFlagsSectionParser() {
+    BuildFlagsSectionParser() {
       super(KEY);
     }
 
@@ -51,7 +52,10 @@ public class BuildFlagsSection {
 
     @Override
     public String quickDocs() {
-      return "A set of flags that get passed to all build command invocations as arguments";
+      return String.format(
+          "A set of flags that get passed to all %s build command invocations as arguments. This"
+              + "includes both sync and run configuration actions.",
+          Blaze.guessBuildSystemName());
     }
   }
 }

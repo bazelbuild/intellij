@@ -111,8 +111,30 @@ public class BlazeTestSystemPropertiesRule extends ExternalResource {
       return null;
     }
     File jarFile = new File(platformJar).getAbsoluteFile();
-    File libDir = jarFile.getParentFile();
-    return libDir != null ? libDir.getParent() : null;
+    File jarDir = jarFile.getParentFile();
+    if (jarDir == null) {
+      return null;
+    }
+    if (jarDir.getName().equals("lib")) {
+      // Building against IDE distribution.
+      // root/ <- we want this
+      // |-lib/
+      // | `-openapi.jar (jarFile)
+      // `-plugins/
+      return jarDir.getParent();
+    } else if (jarDir.getName().equals("core-api")) {
+      // Building against source.
+      // tools/idea/ <- we want this
+      // |-platform/
+      // | `-core-api/
+      // |   `-libcore-api.jar (jarFile)
+      // `-plugins/
+      File platformDir = jarDir.getParentFile();
+      if (platformDir != null && platformDir.getName().equals("platform")) {
+        return platformDir.getParent();
+      }
+    }
+    return null;
   }
 
   private static void addArchiveFile(URL url, List<String> files) {

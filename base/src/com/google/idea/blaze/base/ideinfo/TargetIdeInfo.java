@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.ideinfo.Dependency.DependencyType;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -41,6 +43,9 @@ public final class TargetIdeInfo implements Serializable {
   @Nullable public final AndroidIdeInfo androidIdeInfo;
   @Nullable public final AndroidSdkIdeInfo androidSdkIdeInfo;
   @Nullable public final PyIdeInfo pyIdeInfo;
+  @Nullable public final GoIdeInfo goIdeInfo;
+  @Nullable public final JsIdeInfo jsIdeInfo;
+  @Nullable public final TsIdeInfo tsIdeInfo;
   @Nullable public final TestIdeInfo testIdeInfo;
   @Nullable public final ProtoLibraryLegacyInfo protoLibraryLegacyInfo;
   @Nullable public final JavaToolchainIdeInfo javaToolchainIdeInfo;
@@ -58,6 +63,9 @@ public final class TargetIdeInfo implements Serializable {
       @Nullable AndroidIdeInfo androidIdeInfo,
       @Nullable AndroidSdkIdeInfo androidSdkIdeInfo,
       @Nullable PyIdeInfo pyIdeInfo,
+      @Nullable GoIdeInfo goIdeInfo,
+      @Nullable JsIdeInfo jsIdeInfo,
+      @Nullable TsIdeInfo tsIdeInfo,
       @Nullable TestIdeInfo testIdeInfo,
       @Nullable ProtoLibraryLegacyInfo protoLibraryLegacyInfo,
       @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo) {
@@ -73,6 +81,9 @@ public final class TargetIdeInfo implements Serializable {
     this.androidIdeInfo = androidIdeInfo;
     this.androidSdkIdeInfo = androidSdkIdeInfo;
     this.pyIdeInfo = pyIdeInfo;
+    this.goIdeInfo = goIdeInfo;
+    this.jsIdeInfo = jsIdeInfo;
+    this.tsIdeInfo = tsIdeInfo;
     this.testIdeInfo = testIdeInfo;
     this.protoLibraryLegacyInfo = protoLibraryLegacyInfo;
     this.javaToolchainIdeInfo = javaToolchainIdeInfo;
@@ -117,6 +128,9 @@ public final class TargetIdeInfo implements Serializable {
     private JavaIdeInfo javaIdeInfo;
     private AndroidIdeInfo androidIdeInfo;
     private PyIdeInfo pyIdeInfo;
+    private GoIdeInfo goIdeInfo;
+    private JsIdeInfo jsIdeInfo;
+    private TsIdeInfo tsIdeInfo;
     private TestIdeInfo testIdeInfo;
     private ProtoLibraryLegacyInfo protoLibraryLegacyInfo;
     private JavaToolchainIdeInfo javaToolchainIdeInfo;
@@ -135,8 +149,10 @@ public final class TargetIdeInfo implements Serializable {
       return this;
     }
 
-    public Builder setKind(String kind) {
-      return setKind(Kind.fromString(kind));
+    @VisibleForTesting
+    public Builder setKind(String kindString) {
+      Kind kind = Preconditions.checkNotNull(Kind.fromString(kindString));
+      return setKind(kind);
     }
 
     public Builder setKind(Kind kind) {
@@ -160,6 +176,9 @@ public final class TargetIdeInfo implements Serializable {
 
     public Builder setCInfo(CIdeInfo cInfo) {
       this.cIdeInfo = cInfo;
+      this.sources.addAll(cInfo.sources);
+      this.sources.addAll(cInfo.headers);
+      this.sources.addAll(cInfo.textualHeaders);
       return this;
     }
 
@@ -187,6 +206,21 @@ public final class TargetIdeInfo implements Serializable {
 
     public Builder setPyInfo(PyIdeInfo.Builder pyInfo) {
       this.pyIdeInfo = pyInfo.build();
+      return this;
+    }
+
+    public Builder setGoInfo(GoIdeInfo.Builder goInfo) {
+      this.goIdeInfo = goInfo.build();
+      return this;
+    }
+
+    public Builder setJsInfo(JsIdeInfo.Builder jsInfo) {
+      this.jsIdeInfo = jsInfo.build();
+      return this;
+    }
+
+    public Builder setTsInfo(TsIdeInfo.Builder tsInfo) {
+      this.tsIdeInfo = tsInfo.build();
       return this;
     }
 
@@ -245,6 +279,9 @@ public final class TargetIdeInfo implements Serializable {
           androidIdeInfo,
           null,
           pyIdeInfo,
+          goIdeInfo,
+          jsIdeInfo,
+          tsIdeInfo,
           testIdeInfo,
           protoLibraryLegacyInfo,
           javaToolchainIdeInfo);

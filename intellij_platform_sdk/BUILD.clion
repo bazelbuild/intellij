@@ -7,12 +7,18 @@ package(default_visibility = ["//visibility:public"])
 java_import(
     name = "sdk",
     jars = glob(["clion-*/lib/*.jar"]),
+    deps = ["@error_prone_annotations//jar"],
     tags = ["intellij-provided-by-sdk"],
 )
 
 java_import(
     name = "hg4idea",
     jars = glob(["clion-*/plugins/hg4idea/lib/hg4idea.jar"]),
+)
+
+java_import(
+    name = "guava",
+    jars = glob(["clion-*/lib/guava-*.jar"]),
 )
 
 java_import(

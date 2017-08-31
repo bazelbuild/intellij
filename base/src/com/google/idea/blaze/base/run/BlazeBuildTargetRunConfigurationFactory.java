@@ -15,9 +15,15 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.run.producers.BlazeBuildFileRunConfigurationProducer;
+import com.google.idea.blaze.base.model.primitives.RuleType;
+import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
@@ -28,9 +34,14 @@ import com.intellij.openapi.project.Project;
  */
 public class BlazeBuildTargetRunConfigurationFactory extends BlazeRunConfigurationFactory {
 
+  // The rule types we auto-create run configurations for during sync.
+  private static final ImmutableSet<RuleType> HANDLED_RULE_TYPES =
+      ImmutableSet.of(RuleType.TEST, RuleType.BINARY);
+
   @Override
   public boolean handlesTarget(Project project, BlazeProjectData blazeProjectData, Label label) {
-    return BlazeBuildFileRunConfigurationProducer.handlesTarget(project, label);
+    TargetIdeInfo target = blazeProjectData.targetMap.get(TargetKey.forPlainTarget(label));
+    return target != null && HANDLED_RULE_TYPES.contains(target.kind.ruleType);
   }
 
   @Override
@@ -40,6 +51,26 @@ public class BlazeBuildTargetRunConfigurationFactory extends BlazeRunConfigurati
 
   @Override
   public void setupConfiguration(RunConfiguration configuration, Label target) {
-    BlazeBuildFileRunConfigurationProducer.setupConfiguration(configuration, target);
+    BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) configuration;
+    blazeConfig.setTarget(target);
+
+    BlazeCommandRunConfigurationCommonState state =
+        blazeConfig.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    Kind kind = blazeConfig.getKindForTarget();
+    if (state != null && kind != null) {
+      state.getCommandState().setCommand(commandForRuleType(kind.ruleType));
+    }
+    blazeConfig.setGeneratedName();
+  }
+
+  private static BlazeCommandName commandForRuleType(RuleType ruleType) {
+    switch (ruleType) {
+      case BINARY:
+        return BlazeCommandName.RUN;
+      case TEST:
+        return BlazeCommandName.TEST;
+      default:
+        return BlazeCommandName.BUILD;
+    }
   }
 }

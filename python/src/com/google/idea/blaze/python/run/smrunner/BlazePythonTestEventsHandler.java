@@ -25,17 +25,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
-import java.util.ArrayList;
-import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Provides python-specific methods needed by the SM-runner test UI. */
-public class BlazePythonTestEventsHandler extends BlazeTestEventsHandler {
+public class BlazePythonTestEventsHandler implements BlazeTestEventsHandler {
 
   @Override
-  protected EnumSet<Kind> handledKinds() {
-    return EnumSet.of(Kind.PY_TEST);
+  public boolean handlesKind(@Nullable Kind kind) {
+    return kind == Kind.PY_TEST;
   }
 
   @Override
@@ -53,7 +53,9 @@ public class BlazePythonTestEventsHandler extends BlazeTestEventsHandler {
   @Override
   public String getTestFilter(Project project, List<Location<?>> testLocations) {
     // python test runner parses filters of the form "class1.method1 class2.method2 ..."
-    List<String> filters = new ArrayList<>();
+    // parameterized test cases can cause the same class.method combination to be present
+    // multiple times, so we use a set
+    Set<String> filters = new LinkedHashSet<>();
     for (Location<?> location : testLocations) {
       String filter = getFilter(location.getPsiElement());
       if (filter != null) {

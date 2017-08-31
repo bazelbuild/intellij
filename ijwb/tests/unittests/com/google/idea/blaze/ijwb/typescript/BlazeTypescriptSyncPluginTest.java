@@ -70,6 +70,11 @@ public class BlazeTypescriptSyncPluginTest extends BlazeTestCase {
           public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
             return ImmutableSet.of(LanguageClass.JAVA);
           }
+
+          @Override
+          public WorkspaceType getDefaultWorkspaceType() {
+            return WorkspaceType.JAVA;
+          }
         });
 
     context = new BlazeContext();

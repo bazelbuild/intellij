@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.libraries.SourceJarManager;
@@ -38,8 +39,9 @@ public class JavaPrefetchFileSource implements PrefetchFileSource {
   public void addFilesToPrefetch(
       Project project,
       ProjectViewSet projectViewSet,
+      ImportRoots importRoots,
       BlazeProjectData blazeProjectData,
-      Collection<File> files) {
+      Set<File> files) {
     BlazeJavaSyncData syncData = blazeProjectData.syncState.get(BlazeJavaSyncData.class);
     if (syncData == null) {
       return;
@@ -70,7 +72,7 @@ public class JavaPrefetchFileSource implements PrefetchFileSource {
   }
 
   @Override
-  public Set<String> prefetchSrcFileExtensions() {
+  public Set<String> prefetchFileExtensions() {
     return ImmutableSet.of("java");
   }
 }

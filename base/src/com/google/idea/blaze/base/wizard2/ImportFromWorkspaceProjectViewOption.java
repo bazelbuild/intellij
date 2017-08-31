@@ -98,6 +98,9 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
     if (!file.exists()) {
       return BlazeValidationResult.failure("Project view file does not exist.");
     }
+    if (file.isDirectory()) {
+      return BlazeValidationResult.failure("Specified path is a directory, not a file");
+    }
 
     return BlazeValidationResult.success();
   }

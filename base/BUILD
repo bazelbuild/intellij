@@ -3,16 +3,20 @@ licenses(["notice"])  # Apache 2.0
 java_library(
     name = "base",
     srcs = glob(["src/**/*.java"]),
+    javacopts = ["-Xep:FutureReturnValueIgnored:OFF"],
     resources = glob(["resources/**/*"]),
     visibility = ["//visibility:public"],
     deps = [
         "//common/actionhelper",
         "//common/binaryhelper",
+        "//common/concurrency",
         "//common/experiments",
         "//common/formatter",
+        "//common/guava",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//sdkcompat",
+        "//third_party/auto_value",
         "@jsr305_annotations//jar",
     ],
 )
@@ -90,6 +94,7 @@ intellij_unit_test_suite(
         ":unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
+        "//common/guava",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//proto:proto_deps",
         "@jsr305_annotations//jar",

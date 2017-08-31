@@ -15,12 +15,14 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import java.util.Collection;
 
 /** Provides options during the import process. */
 public interface BlazeWizardOptionProvider {
-  Collection<BlazeSelectWorkspaceOption> getSelectWorkspaceOptions(BlazeNewProjectBuilder builder);
+  Collection<BlazeSelectWorkspaceOption> getSelectWorkspaceOptions(
+      BlazeNewProjectBuilder builder, Disposable parentDisposable);
 
   Collection<BlazeSelectProjectViewOption> getSelectProjectViewOptions(
       BlazeNewProjectBuilder builder);

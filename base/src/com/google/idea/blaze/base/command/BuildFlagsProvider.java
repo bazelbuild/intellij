@@ -16,15 +16,17 @@
 package com.google.idea.blaze.base.command;
 
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import java.util.List;
 
-/** Provides additional build flags for bazel/blaze commands. */
+/** Provides additional flags for bazel/blaze commands. */
 public interface BuildFlagsProvider {
 
   ExtensionPointName<BuildFlagsProvider> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.BuildFlagsProvider");
 
-  void addBuildFlags(BuildSystem buildSystem, ProjectViewSet projectViewSet, List<String> flags);
+  /** Flags to add to blaze/bazel invocations of the given type. */
+  void addBuildFlags(
+      Project project, ProjectViewSet projectViewSet, BlazeCommandName command, List<String> flags);
 }

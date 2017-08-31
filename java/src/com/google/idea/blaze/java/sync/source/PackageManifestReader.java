@@ -30,9 +30,9 @@ import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.PackageManifestOuterClass;
-import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.PackageManifestOuterClass.JavaSourcePackage;
-import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.PackageManifestOuterClass.PackageManifest;
+import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo.JavaSourcePackage;
+import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo.PackageManifest;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -78,7 +78,7 @@ public class PackageManifestReader {
         FileDiffer.updateFiles(fileDiffState, fileToLabelMap.keySet(), updatedFiles, removedFiles);
 
     ListenableFuture<?> fetchFuture =
-        PrefetchService.getInstance().prefetchFiles(project, updatedFiles);
+        PrefetchService.getInstance().prefetchFiles(project, updatedFiles, true);
     if (!FutureUtil.waitForFuture(context, fetchFuture)
         .timed("FetchPackageManifests")
         .withProgressMessage("Reading package manifests...")
@@ -132,7 +132,7 @@ public class PackageManifestReader {
     }
   }
 
-  private static ArtifactLocation fromProto(PackageManifestOuterClass.ArtifactLocation location) {
+  private static ArtifactLocation fromProto(IntellijIdeInfo.ArtifactLocation location) {
     String relativePath = location.getRelativePath();
     String rootExecutionPathFragment = location.getRootExecutionPathFragment();
     if (!location.getIsNewExternalVersion() && location.getIsExternal()) {

@@ -20,14 +20,13 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import java.util.List;
-import org.jetbrains.annotations.NotNull;
 
 /** Test class that collects issues. */
 public class ErrorCollector implements OutputSink<IssueOutput> {
   List<IssueOutput> issues = Lists.newArrayList();
 
   @Override
-  public Propagation onOutput(@NotNull IssueOutput output) {
+  public Propagation onOutput(IssueOutput output) {
     issues.add(output);
     return Propagation.Continue;
   }
@@ -36,7 +35,7 @@ public class ErrorCollector implements OutputSink<IssueOutput> {
     assertThat(issues).isEmpty();
   }
 
-  public void assertIssues(@NotNull String... requiredMessages) {
+  public void assertIssues(String... requiredMessages) {
     List<String> messages = Lists.newArrayList();
     for (IssueOutput issue : issues) {
       messages.add(issue.getMessage());
@@ -44,7 +43,7 @@ public class ErrorCollector implements OutputSink<IssueOutput> {
     assertThat(messages).containsExactly((Object[]) requiredMessages);
   }
 
-  public void assertIssueContaining(@NotNull String s) {
+  public void assertIssueContaining(String s) {
     assertThat(issues.stream().anyMatch((issue) -> issue.getMessage().contains(s)))
         .named("Issues must contain: " + s)
         .isTrue();

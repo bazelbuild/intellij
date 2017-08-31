@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.FuncallReference;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
@@ -51,6 +52,12 @@ public class FuncallExpression extends BuildElementImpl
   public String getFunctionName() {
     ASTNode node = getFunctionNameNode();
     return node != null ? node.getText() : null;
+  }
+
+  @Nullable
+  public Kind getRuleKind() {
+    String functionName = getFunctionName();
+    return functionName != null ? Kind.fromString(functionName) : null;
   }
 
   @Override
@@ -161,12 +168,15 @@ public class FuncallExpression extends BuildElementImpl
 
   @Override
   public String getPresentableText() {
-    String name = getFunctionName();
-    if (name == null) {
+    String functionName = getFunctionName();
+    if (functionName == null) {
       return super.getPresentableText();
     }
     String targetName = getNameArgumentValue();
-    return targetName != null ? name + "(\"" + targetName + "\")" : name;
+    if (targetName == null) {
+      return functionName;
+    }
+    return String.format("%s : %s", targetName, functionName);
   }
 
   @Override

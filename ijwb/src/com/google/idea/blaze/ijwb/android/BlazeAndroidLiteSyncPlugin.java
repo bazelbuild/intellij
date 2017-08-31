@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -62,7 +61,7 @@ public class BlazeAndroidLiteSyncPlugin extends BlazeSyncPlugin.Adapter {
     }
     return new LibrarySource.Adapter() {
       @Override
-      public Collection<? extends BlazeLibrary> getLibraries() {
+      public List<? extends BlazeLibrary> getLibraries() {
         return ImmutableList.of(sdkLibrary);
       }
     };

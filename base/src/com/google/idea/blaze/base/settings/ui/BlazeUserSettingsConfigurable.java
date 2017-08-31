@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
 import com.google.idea.blaze.base.ui.FileSelectorWithStoredHistory;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -33,6 +34,7 @@ import java.awt.Insets;
 import java.util.Collection;
 import javax.annotation.Nullable;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -49,6 +51,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
   private final Collection<BlazeUserSettingsContributor> settingsContributors;
 
   private JPanel myMainPanel;
+  private JComboBox<BlazeConsolePopupBehavior> showBlazeConsoleOnSync;
   private JCheckBox suppressConsoleForRunAction;
   private JCheckBox resyncAutomatically;
   private JCheckBox collapseProjectView;
@@ -81,6 +84,8 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
   @Override
   public void apply() throws ConfigurationException {
     BlazeUserSettings settings = BlazeUserSettings.getInstance();
+    settings.setShowBlazeConsoleOnSync(
+        (BlazeConsolePopupBehavior) showBlazeConsoleOnSync.getSelectedItem());
     settings.setSuppressConsoleForRunAction(suppressConsoleForRunAction.isSelected());
     settings.setResyncAutomatically(resyncAutomatically.isSelected());
     settings.setCollapseProjectView(collapseProjectView.isSelected());
@@ -96,6 +101,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
   @Override
   public void reset() {
     BlazeUserSettings settings = BlazeUserSettings.getInstance();
+    showBlazeConsoleOnSync.setSelectedItem(settings.getShowBlazeConsoleOnSync());
     suppressConsoleForRunAction.setSelected(settings.getSuppressConsoleForRunAction());
     resyncAutomatically.setSelected(settings.getResyncAutomatically());
     collapseProjectView.setSelected(settings.getCollapseProjectView());
@@ -118,7 +124,8 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
   public boolean isModified() {
     BlazeUserSettings settings = BlazeUserSettings.getInstance();
     boolean isModified =
-        suppressConsoleForRunAction.isSelected() != settings.getSuppressConsoleForRunAction()
+        showBlazeConsoleOnSync.getSelectedItem() != settings.getShowBlazeConsoleOnSync()
+            || suppressConsoleForRunAction.isSelected() != settings.getSuppressConsoleForRunAction()
             || resyncAutomatically.isSelected() != settings.getResyncAutomatically()
             || collapseProjectView.isSelected() != settings.getCollapseProjectView()
             || formatBuildFilesOnSave.isSelected() != settings.getFormatBuildFilesOnSave()
@@ -156,11 +163,46 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
       contributorRowCount += contributor.getRowCount();
     }
 
-    final int totalRowSize = 7 + contributorRowCount;
+    final int totalRowSize = 8 + contributorRowCount;
     int rowi = 0;
 
     myMainPanel = new JPanel();
     myMainPanel.setLayout(new GridLayoutManager(totalRowSize, 2, new Insets(0, 0, 0, 0), -1, -1));
+
+    JLabel label = new JLabel(String.format("Show %s console on sync:", defaultBuildSystem));
+    myMainPanel.add(
+        label,
+        new GridConstraints(
+            rowi,
+            0,
+            1,
+            1,
+            GridConstraints.ANCHOR_WEST,
+            GridConstraints.FILL_NONE,
+            GridConstraints.SIZEPOLICY_FIXED,
+            GridConstraints.SIZEPOLICY_FIXED,
+            null,
+            null,
+            null,
+            0,
+            false));
+    showBlazeConsoleOnSync = new JComboBox<>(BlazeConsolePopupBehavior.values());
+    myMainPanel.add(
+        showBlazeConsoleOnSync,
+        new GridConstraints(
+            rowi++,
+            1,
+            1,
+            1,
+            GridConstraints.ANCHOR_WEST,
+            GridConstraints.FILL_HORIZONTAL,
+            GridConstraints.SIZEPOLICY_CAN_GROW,
+            GridConstraints.SIZEPOLICY_FIXED,
+            null,
+            null,
+            null,
+            0,
+            false));
     suppressConsoleForRunAction = new JCheckBox();
     suppressConsoleForRunAction.setText(
         String.format("Suppress %s console for Run/Debug actions", defaultBuildSystem));

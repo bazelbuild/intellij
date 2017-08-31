@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** A collection of project views and their file names. */
@@ -57,20 +58,12 @@ public final class ProjectViewSet implements Serializable {
   }
 
   /** Gets the last value from any scalar sections */
-  @Nullable
-  public <T> T getScalarValue(SectionKey<T, ScalarSection<T>> key) {
-    return getScalarValue(key, null);
-  }
-
-  /** Gets the last value from any scalar sections */
-  @Nullable
-  public <T> T getScalarValue(SectionKey<T, ScalarSection<T>> key, @Nullable T defaultValue) {
+  public <T> Optional<T> getScalarValue(SectionKey<T, ScalarSection<T>> key) {
     Collection<ScalarSection<T>> sections = getSections(key);
     if (sections.isEmpty()) {
-      return defaultValue;
-    } else {
-      return Iterables.getLast(sections).getValue();
+      return Optional.empty();
     }
+    return Optional.of(Iterables.getLast(sections).getValue());
   }
 
   public <T, SectionType extends Section<T>> Collection<SectionType> getSections(

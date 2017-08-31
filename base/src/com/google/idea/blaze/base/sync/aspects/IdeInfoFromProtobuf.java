@@ -30,14 +30,17 @@ import com.google.idea.blaze.base.ideinfo.CIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.Dependency.DependencyType;
+import com.google.idea.blaze.base.ideinfo.GoIdeInfo;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.JavaToolchainIdeInfo;
+import com.google.idea.blaze.base.ideinfo.JsIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.ProtoLibraryLegacyInfo;
 import com.google.idea.blaze.base.ideinfo.PyIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TsIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -81,6 +84,8 @@ public class IdeInfoFromProtobuf {
     if (message.hasCIdeInfo()) {
       cIdeInfo = makeCIdeInfo(message.getCIdeInfo());
       sources.addAll(cIdeInfo.sources);
+      sources.addAll(cIdeInfo.headers);
+      sources.addAll(cIdeInfo.textualHeaders);
     }
     CToolchainIdeInfo cToolchainIdeInfo = null;
     if (message.hasCToolchainIdeInfo()) {
@@ -105,6 +110,21 @@ public class IdeInfoFromProtobuf {
     if (message.hasPyIdeInfo()) {
       pyIdeInfo = makePyIdeInfo(message.getPyIdeInfo());
       sources.addAll(pyIdeInfo.sources);
+    }
+    GoIdeInfo goIdeInfo = null;
+    if (message.hasGoIdeInfo()) {
+      goIdeInfo = makeGoIdeInfo(message.getGoIdeInfo());
+      sources.addAll(goIdeInfo.generatedSources);
+    }
+    JsIdeInfo jsIdeInfo = null;
+    if (message.hasJsIdeInfo()) {
+      jsIdeInfo = makeJsIdeInfo(message.getJsIdeInfo());
+      sources.addAll(jsIdeInfo.sources);
+    }
+    TsIdeInfo tsIdeInfo = null;
+    if (message.hasTsIdeInfo()) {
+      tsIdeInfo = makeTsIdeInfo(message.getTsIdeInfo());
+      sources.addAll(tsIdeInfo.sources);
     }
     TestIdeInfo testIdeInfo = null;
     if (message.hasTestInfo()) {
@@ -133,6 +153,9 @@ public class IdeInfoFromProtobuf {
         androidIdeInfo,
         androidSdkIdeInfo,
         pyIdeInfo,
+        goIdeInfo,
+        jsIdeInfo,
+        tsIdeInfo,
         testIdeInfo,
         protoLibraryLegacyInfo,
         javaToolchainIdeInfo);
@@ -177,6 +200,9 @@ public class IdeInfoFromProtobuf {
 
   private static CIdeInfo makeCIdeInfo(IntellijIdeInfo.CIdeInfo cIdeInfo) {
     List<ArtifactLocation> sources = makeArtifactLocationList(cIdeInfo.getSourceList());
+    List<ArtifactLocation> headers = makeArtifactLocationList(cIdeInfo.getHeaderList());
+    List<ArtifactLocation> textualHeaders =
+        makeArtifactLocationList(cIdeInfo.getTextualHeaderList());
     List<ExecutionRootPath> transitiveIncludeDirectories =
         makeExecutionRootPathList(cIdeInfo.getTransitiveIncludeDirectoryList());
     List<ExecutionRootPath> transitiveQuoteIncludeDirectories =
@@ -202,6 +228,8 @@ public class IdeInfoFromProtobuf {
     CIdeInfo.Builder builder =
         CIdeInfo.builder()
             .addSources(sources)
+            .addHeaders(headers)
+            .addTextualHeaders(textualHeaders)
             .addLocalDefines(coptDefines)
             .addLocalIncludeDirectories(coptIncludeDirectories)
             .addTransitiveIncludeDirectories(transitiveIncludeDirectories)
@@ -289,6 +317,20 @@ public class IdeInfoFromProtobuf {
     return PyIdeInfo.builder().addSources(makeArtifactLocationList(info.getSourcesList())).build();
   }
 
+  private static GoIdeInfo makeGoIdeInfo(IntellijIdeInfo.GoIdeInfo info) {
+    return GoIdeInfo.builder()
+        .addGeneratedSources(makeArtifactLocationList(info.getGeneratedSourcesList()))
+        .build();
+  }
+
+  private static JsIdeInfo makeJsIdeInfo(IntellijIdeInfo.JsIdeInfo info) {
+    return JsIdeInfo.builder().addSources(makeArtifactLocationList(info.getSourcesList())).build();
+  }
+
+  private static TsIdeInfo makeTsIdeInfo(IntellijIdeInfo.TsIdeInfo info) {
+    return TsIdeInfo.builder().addSources(makeArtifactLocationList(info.getSourcesList())).build();
+  }
+
   private static TestIdeInfo makeTestIdeInfo(IntellijIdeInfo.TestInfo testInfo) {
     String size = testInfo.getSize();
     TestIdeInfo.TestSize testSize = TestIdeInfo.DEFAULT_RULE_TEST_SIZE;
@@ -343,8 +385,12 @@ public class IdeInfoFromProtobuf {
 
   private static JavaToolchainIdeInfo makeJavaToolchainIdeInfo(
       IntellijIdeInfo.JavaToolchainIdeInfo javaToolchainIdeInfo) {
+    ArtifactLocation javacJar =
+        javaToolchainIdeInfo.hasJavacJar()
+            ? makeArtifactLocation(javaToolchainIdeInfo.getJavacJar())
+            : null;
     return new JavaToolchainIdeInfo(
-        javaToolchainIdeInfo.getSourceVersion(), javaToolchainIdeInfo.getTargetVersion());
+        javaToolchainIdeInfo.getSourceVersion(), javaToolchainIdeInfo.getTargetVersion(), javacJar);
   }
 
   private static Collection<LibraryArtifact> makeLibraryArtifactList(

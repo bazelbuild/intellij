@@ -32,7 +32,7 @@ import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
+import com.google.idea.blaze.android.run.binary.mobileinstall.BlazeApkBuildStepMobileInstall;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
@@ -41,9 +41,12 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebu
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStepNormalBuild;
+import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
+import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
+import com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -54,7 +57,6 @@ import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.annotations.NotNull;
 
 /** Run context for android_test. */
 class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
@@ -65,47 +67,55 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
   private final ExecutionEnvironment env;
   private final BlazeAndroidTestRunConfigurationState configState;
   private final Label label;
-  private final ImmutableList<String> buildFlags;
+  private final ImmutableList<String> blazeFlags;
   private final List<Runnable> launchTaskCompleteListeners = Lists.newArrayList();
   private final ConsoleProvider consoleProvider;
-  private final BlazeApkBuildStepNormalBuild buildStep;
+  private final BlazeApkBuildStep buildStep;
   private final ApplicationIdProvider applicationIdProvider;
   private final ApkProvider apkProvider;
 
-  public BlazeAndroidTestRunContext(
+  BlazeAndroidTestRunContext(
       Project project,
       AndroidFacet facet,
       BlazeCommandRunConfiguration runConfiguration,
       ExecutionEnvironment env,
       BlazeAndroidTestRunConfigurationState configState,
       Label label,
-      ImmutableList<String> buildFlags) {
+      ImmutableList<String> blazeFlags,
+      ImmutableList<String> exeFlags) {
     this.project = project;
     this.facet = facet;
     this.runConfiguration = runConfiguration;
     this.env = env;
     this.label = label;
     this.configState = configState;
-    this.buildStep = new BlazeApkBuildStepNormalBuild(project, label, buildFlags);
-    this.applicationIdProvider =
-        new BlazeAndroidTestApplicationIdProvider(project, buildStep.getDeployInfo());
-    this.apkProvider = new BlazeApkProvider(project, buildStep.getDeployInfo());
+    this.buildStep =
+        configState.getLaunchMethod().equals(AndroidTestLaunchMethod.MOBILE_INSTALL)
+            ? new BlazeApkBuildStepMobileInstall(
+                project, env, label, blazeFlags, exeFlags, false, true)
+            : new BlazeApkBuildStepNormalBuild(project, label, blazeFlags);
+    this.applicationIdProvider = new BlazeAndroidTestApplicationIdProvider(buildStep);
+    this.apkProvider = new BlazeApkProvider(project, buildStep);
 
-    BlazeTestEventsHandler testEventsHandler = null;
-    if (!isDebugging(env.getExecutor())) {
-      testEventsHandler =
-          BlazeTestEventsHandler.getHandlerForTarget(project, runConfiguration.getTarget());
-      assert (testEventsHandler != null);
-      this.buildFlags =
+    BlazeTestUiSession testUiSession =
+        canUseTestUi(env.getExecutor())
+            ? TestUiSessionProvider.createForTarget(project, runConfiguration.getTarget())
+            : null;
+    if (testUiSession != null) {
+      this.blazeFlags =
           ImmutableList.<String>builder()
-              .addAll(BlazeTestEventsHandler.getBlazeFlags(project))
-              .addAll(buildFlags)
+              .addAll(testUiSession.getBlazeFlags())
+              .addAll(blazeFlags)
               .build();
     } else {
-      this.buildFlags = buildFlags;
+      this.blazeFlags = blazeFlags;
     }
     this.consoleProvider =
-        new AndroidTestConsoleProvider(project, runConfiguration, configState, testEventsHandler);
+        new AndroidTestConsoleProvider(project, runConfiguration, configState, testUiSession);
+  }
+
+  private static boolean canUseTestUi(Executor executor) {
+    return !isDebugging(executor);
   }
 
   private static boolean isDebugging(Executor executor) {
@@ -122,7 +132,7 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
 
   @Override
   public void augmentLaunchOptions(LaunchOptions.Builder options) {
-    options.setDeploy(!configState.isRunThroughBlaze());
+    options.setDeploy(!configState.getLaunchMethod().equals(AndroidTestLaunchMethod.BLAZE_TEST));
   }
 
   @Override
@@ -160,25 +170,35 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
   @Override
   public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
       throws ExecutionException {
-    if (!configState.isRunThroughBlaze()) {
-      BlazeAndroidDeployInfo deployInfo =
-          Futures.get(buildStep.getDeployInfo(), ExecutionException.class);
-      if (!deployInfo.getDataToDeploy().isEmpty()) {
-        throw new ExecutionException(
-            "This test target has data dependencies (defined in the 'data' attribute).\n"
-                + "These can only be installed if the configuration is run through 'blaze test'.\n"
-                + "Check the \"Run through 'blaze test'\" checkbox on your "
-                + "run configuration and try again.");
-      }
+    switch (configState.getLaunchMethod()) {
+      case NON_BLAZE:
+        BlazeAndroidDeployInfo deployInfo;
+        try {
+          deployInfo = buildStep.getDeployInfo();
+        } catch (ApkProvisionException e) {
+          throw new ExecutionException(e);
+        }
+        if (!deployInfo.getDataToDeploy().isEmpty()) {
+          throw new ExecutionException(
+              String.format(
+                  "This test target has data dependencies (defined in the 'data' attribute).\n"
+                      + "These can only be installed if the configuration is run through blaze.\n"
+                      + "Choose \"Run with %1$s test\" on your run configuration and try again.",
+                  Blaze.getBuildSystem(project).getLowerCaseName()));
+        }
+        // fall through
+      case BLAZE_TEST:
+        Collection<ApkInfo> apks;
+        try {
+          apks = apkProvider.getApks(device);
+        } catch (ApkProvisionException e) {
+          throw new ExecutionException(e);
+        }
+        return ImmutableList.of(new DeployApkTask(project, launchOptions, apks));
+      case MOBILE_INSTALL:
+        return ImmutableList.of();
     }
-
-    Collection<ApkInfo> apks;
-    try {
-      apks = apkProvider.getApks(device);
-    } catch (ApkProvisionException e) {
-      throw new ExecutionException(e);
-    }
-    return ImmutableList.of(new DeployApkTask(project, launchOptions, apks));
+    throw new AssertionError();
   }
 
   @Nullable
@@ -190,27 +210,35 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
       AndroidDebuggerState androidDebuggerState,
       ProcessHandlerLaunchStatus processHandlerLaunchStatus)
       throws ExecutionException {
-    if (configState.isRunThroughBlaze()) {
-      return new BlazeAndroidTestLaunchTask(
-          project,
-          label,
-          buildFlags,
-          new BlazeAndroidTestFilter(
-              configState.getTestingType(),
-              configState.getClassName(),
-              configState.getMethodName(),
-              configState.getPackageName()),
-          this,
-          launchOptions.isDebug());
+    switch (configState.getLaunchMethod()) {
+      case BLAZE_TEST:
+        return new BlazeAndroidTestLaunchTask(
+            project,
+            label,
+            blazeFlags,
+            new BlazeAndroidTestFilter(
+                configState.getTestingType(),
+                configState.getClassName(),
+                configState.getMethodName(),
+                configState.getPackageName()),
+            this,
+            launchOptions.isDebug());
+      case NON_BLAZE:
+      case MOBILE_INSTALL:
+        BlazeAndroidDeployInfo deployInfo;
+        try {
+          deployInfo = buildStep.getDeployInfo();
+        } catch (ApkProvisionException e) {
+          throw new ExecutionException(e);
+        }
+        return StockAndroidTestLaunchTask.getStockTestLaunchTask(
+            configState,
+            applicationIdProvider,
+            launchOptions.isDebug(),
+            deployInfo,
+            processHandlerLaunchStatus);
     }
-    BlazeAndroidDeployInfo deployInfo =
-        Futures.get(buildStep.getDeployInfo(), ExecutionException.class);
-    return StockAndroidTestLaunchTask.getStockTestLaunchTask(
-        configState,
-        applicationIdProvider,
-        launchOptions.isDebug(),
-        deployInfo,
-        processHandlerLaunchStatus);
+    throw new AssertionError();
   }
 
   @Override
@@ -218,21 +246,25 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
   public DebugConnectorTask getDebuggerTask(
       AndroidDebugger androidDebugger,
       AndroidDebuggerState androidDebuggerState,
-      @NotNull Set<String> packageIds,
+      Set<String> packageIds,
       boolean monitorRemoteProcess)
       throws ExecutionException {
-    if (configState.isRunThroughBlaze()) {
-      return new ConnectBlazeTestDebuggerTask(
-          env.getProject(), androidDebugger, packageIds, applicationIdProvider, this);
+    switch (configState.getLaunchMethod()) {
+      case BLAZE_TEST:
+        return new ConnectBlazeTestDebuggerTask(
+            env.getProject(), androidDebugger, packageIds, applicationIdProvider, this);
+      case NON_BLAZE:
+      case MOBILE_INSTALL:
+        return androidDebugger.getConnectDebuggerTask(
+            env,
+            null,
+            packageIds,
+            facet,
+            androidDebuggerState,
+            runConfiguration.getType().getId(),
+            monitorRemoteProcess);
     }
-    return androidDebugger.getConnectDebuggerTask(
-        env,
-        null,
-        packageIds,
-        facet,
-        androidDebuggerState,
-        runConfiguration.getType().getId(),
-        monitorRemoteProcess);
+    throw new AssertionError();
   }
 
   void onLaunchTaskComplete() {

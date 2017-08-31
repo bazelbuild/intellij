@@ -45,7 +45,10 @@ public class FileSaveHandler extends FileDocumentManagerAdapter {
     int lines = document.getLineCount();
     if (lines > 0) {
       String text = document.getText();
-      String formattedText = BuildFileFormatter.formatText(text);
+      String formattedText = BuildFileFormatter.formatTextWithTimeout(text);
+      if (formattedText == null) {
+        return;
+      }
       updateDocument(document, formattedText);
     }
   }

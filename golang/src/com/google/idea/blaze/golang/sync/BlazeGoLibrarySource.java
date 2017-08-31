@@ -33,6 +33,14 @@ class BlazeGoLibrarySource extends LibrarySource.Adapter {
 
   static boolean isGoLibrary(Library library) {
     String name = library.getName();
-    return name != null && name.startsWith(BlazeGoSyncPlugin.GO_LIBRARY_PREFIX);
+    if (name == null) {
+      return false;
+    }
+    for (String prefix : BlazeGoSyncPlugin.GO_LIBRARY_PREFIXES) {
+      if (name.startsWith(prefix)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -53,4 +53,9 @@ public class BuildStructureViewElement extends PsiTreeElementBase<BuildElement> 
   public String getPresentableText() {
     return element.getPresentableText();
   }
+
+  @Override
+  public String getLocationString() {
+    return element.getLocationString();
+  }
 }

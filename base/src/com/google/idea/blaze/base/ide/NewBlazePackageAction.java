@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.buildmodifier.BuildFileModifier;
-import com.google.idea.blaze.base.buildmodifier.FileSystemModifier;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -29,7 +28,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
-import com.google.idea.blaze.base.scope.ScopedOperation;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -42,6 +40,8 @@ import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -52,7 +52,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PlatformIcons;
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -70,91 +72,81 @@ class NewBlazePackageAction extends BlazeProjectAction implements DumbAware {
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent event) {
     final IdeView view = event.getData(LangDataKeys.IDE_VIEW);
     Scope.root(
-        new ScopedOperation() {
-          @Override
-          public void execute(@NotNull final BlazeContext context) {
-            if (view == null || project == null) {
-              return;
-            }
-            PsiDirectory directory = getOrChooseDirectory(project, view);
-
-            if (directory == null) {
-              return;
-            }
-
-            NewBlazePackageDialog newBlazePackageDialog =
-                new NewBlazePackageDialog(project, directory);
-            boolean isOk = newBlazePackageDialog.showAndGet();
-            if (!isOk) {
-              return;
-            }
-
-            final Label newRule = newBlazePackageDialog.getNewRule();
-            final Kind newRuleKind = newBlazePackageDialog.getNewRuleKind();
-            // If we returned OK, we should have a non null result
-            logger.assertTrue(newRule != null);
-            logger.assertTrue(newRuleKind != null);
-
-            context.output(
-                new StatusOutput(
-                    String.format("Setting up a new %s package", Blaze.buildSystemName(project))));
-
-            boolean success = createPackageOnDisk(project, context, newRule, newRuleKind);
-
-            if (!success) {
-              return;
-            }
-
-            File newDirectory =
-                WorkspaceRoot.fromProject(project).fileForPath(newRule.blazePackage());
-            VirtualFile virtualFile = VfsUtil.findFileByIoFile(newDirectory, true);
-            // We just created this file, it should exist
-            logger.assertTrue(virtualFile != null);
-            PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-            view.selectElement(psiFile);
+        context -> {
+          if (view == null || project == null) {
+            return;
           }
+          PsiDirectory directory = getOrChooseDirectory(project, view);
+
+          if (directory == null) {
+            return;
+          }
+
+          NewBlazePackageDialog newBlazePackageDialog =
+              new NewBlazePackageDialog(project, directory);
+          boolean isOk = newBlazePackageDialog.showAndGet();
+          if (!isOk) {
+            return;
+          }
+
+          final Label newRule = newBlazePackageDialog.getNewRule();
+          final Kind newRuleKind = newBlazePackageDialog.getNewRuleKind();
+          // If we returned OK, we should have a non null result
+          logger.assertTrue(newRule != null);
+          logger.assertTrue(newRuleKind != null);
+
+          context.output(
+              new StatusOutput(
+                  String.format("Setting up a new %s package", Blaze.buildSystemName(project))));
+
+          Optional<VirtualFile> virtualFile =
+              createPackageOnDisk(project, context, newRule, newRuleKind);
+          if (!virtualFile.isPresent()) {
+            return;
+          }
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile.get());
+          view.selectElement(psiFile);
         });
   }
 
-  private static Boolean createPackageOnDisk(
-      @NotNull Project project,
-      @NotNull BlazeContext context,
-      @NotNull Label newRule,
-      @NotNull Kind ruleKind) {
-    LocalHistoryAction action;
+  private Optional<VirtualFile> createPackageOnDisk(
+      Project project, BlazeContext context, Label newRule, Kind ruleKind) {
 
-    String actionName =
+    String commandName =
         String.format(
             "Creating %s package: %s", Blaze.buildSystemName(project), newRule.toString());
-    LocalHistory localHistory = LocalHistory.getInstance();
-    action = localHistory.startAction(actionName);
 
-    // Create the package + BUILD file + rule
-    FileSystemModifier fileSystemModifier = FileSystemModifier.getInstance(project);
-    WorkspacePath newWorkspacePath = newRule.blazePackage();
-    File newDirectory = fileSystemModifier.makeWorkspacePathDirs(newWorkspacePath);
-    if (newDirectory == null) {
-      String errorMessage =
-          "Could not create new package directory: " + newWorkspacePath.toString();
-      context.output(PrintOutput.error(errorMessage));
-      return false;
-    }
-    File buildFile = fileSystemModifier.createFile(newWorkspacePath, BUILD_FILE_NAME);
-    if (buildFile == null) {
-      String errorMessage =
-          "Could not create new BUILD file in package: " + newWorkspacePath.toString();
-      context.output(PrintOutput.error(errorMessage));
-      return false;
-    }
-    BuildFileModifier buildFileModifier = BuildFileModifier.getInstance();
-    buildFileModifier.addRule(project, context, newRule, ruleKind);
-    action.finish();
+    return new WriteCommandAction<Optional<VirtualFile>>(project, commandName) {
 
-    return true;
+      @Override
+      protected void run(@NotNull Result<Optional<VirtualFile>> result) throws Throwable {
+        LocalHistory localHistory = LocalHistory.getInstance();
+        LocalHistoryAction action = localHistory.startAction(commandName);
+
+        try {
+          WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+          File dir = workspaceRoot.fileForPath(newRule.blazePackage());
+          try {
+            VirtualFile newDirectory = VfsUtil.createDirectories(dir.getPath());
+            VirtualFile newFile = newDirectory.createChildData(this, BUILD_FILE_NAME);
+            BuildFileModifier buildFileModifier = BuildFileModifier.getInstance();
+            buildFileModifier.addRule(project, context, newRule, ruleKind);
+            result.setResult(Optional.of(newFile));
+          } catch (IOException e) {
+            String errorMessage = "Error creating new package: " + e.getMessage();
+            context.output(PrintOutput.error(errorMessage));
+            logger.warn("Error creating new package", e);
+            result.setResult(Optional.empty());
+          }
+        } finally {
+          action.finish();
+        }
+      }
+    }.execute().getResultObject();
   }
 
   @Override
-  protected void updateForBlazeProject(Project project, @NotNull AnActionEvent event) {
+  protected void updateForBlazeProject(Project project, AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     if (isEnabled(event)) {
       String text = String.format("New %s Package", Blaze.buildSystemName(project));

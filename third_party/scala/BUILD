@@ -8,7 +8,8 @@ java_library(
     name = "scala_internal",
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
-        "intellij-2017.1.1": ["@scala_2017_1//:scala"],
+        "intellij-2017.1.5": ["@scala_2017_1//:scala"],
+        "intellij-2017.2.2": ["@scala_2017_2//:scala"],
     }),
 )
 

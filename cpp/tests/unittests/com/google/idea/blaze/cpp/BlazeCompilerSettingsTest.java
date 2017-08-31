@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.sdkcompat.cidr.CidrCompilerSwitchesAdapter;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
+import com.jetbrains.cidr.toolchains.CompilerInfoCache;
 import java.io.File;
 import java.util.List;
 import org.junit.Test;
@@ -36,8 +37,16 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
   public void testCompilerSwitchesSimple() {
     File cppExe = new File("bin/cpp");
     ImmutableList<String> cFlags = ImmutableList.of("-fast", "-slow");
+    CompilerInfoCache compilerInfoCache = new CompilerInfoCache();
     BlazeCompilerSettings settings =
-        new BlazeCompilerSettings(getProject(), cppExe, cppExe, cFlags, cFlags);
+        new BlazeCompilerSettings(
+            getProject(),
+            cppExe,
+            cppExe,
+            cFlags,
+            cFlags,
+            "cc version (trunk r123456)",
+            compilerInfoCache);
 
     CidrCompilerSwitches compilerSwitches = settings.getCompilerSwitches(OCLanguageKind.C, null);
     List<String> commandLineArgs = CidrCompilerSwitchesAdapter.getFileArgs(compilerSwitches);

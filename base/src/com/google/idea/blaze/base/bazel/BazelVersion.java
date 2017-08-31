@@ -29,14 +29,14 @@ import javax.annotation.Nullable;
 public class BazelVersion implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  public static final BazelVersion UNKNOWN = new BazelVersion(0, 0, 0);
+  static final BazelVersion DEVELOPMENT = new BazelVersion(999, 999, 999);
   private static final Pattern PATTERN = Pattern.compile("([[0-9]\\.]+)");
 
-  public final int major;
-  public final int minor;
-  public final int bugfix;
+  final int major;
+  final int minor;
+  final int bugfix;
 
-  BazelVersion(int major, int minor, int bugfix) {
+  public BazelVersion(int major, int minor, int bugfix) {
     this.bugfix = bugfix;
     this.minor = minor;
     this.major = major;
@@ -44,21 +44,22 @@ public class BazelVersion implements Serializable {
 
   @VisibleForTesting
   static BazelVersion parseVersion(@Nullable String string) {
+    // treat all unknown / development versions as the very latest version
     if (string == null) {
-      return UNKNOWN;
+      return DEVELOPMENT;
     }
     Matcher matcher = PATTERN.matcher(string);
     if (!matcher.find()) {
-      return UNKNOWN;
+      return DEVELOPMENT;
     }
     try {
       BazelVersion version = parseVersion(matcher.group(1).split("\\."));
       if (version == null) {
-        return UNKNOWN;
+        return DEVELOPMENT;
       }
       return version;
     } catch (Exception e) {
-      return UNKNOWN;
+      return DEVELOPMENT;
     }
   }
 
@@ -76,8 +77,13 @@ public class BazelVersion implements Serializable {
     return new BazelVersion(major, minor, bugfix);
   }
 
-  public static BazelVersion parseVersion(BlazeInfo blazeInfo) {
+  static BazelVersion parseVersion(BlazeInfo blazeInfo) {
     return parseVersion(blazeInfo.get(BlazeInfo.RELEASE));
+  }
+
+  @Override
+  public String toString() {
+    return String.format("%s.%s.%s", major, minor, bugfix);
   }
 
   @Override
@@ -95,6 +101,10 @@ public class BazelVersion implements Serializable {
   @Override
   public int hashCode() {
     return Objects.hashCode(major, minor, bugfix);
+  }
+
+  public boolean isAtLeast(BazelVersion version) {
+    return isAtLeast(version.major, version.minor, version.bugfix);
   }
 
   public boolean isAtLeast(int major, int minor, int bugfix) {

@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import java.awt.Color;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /** Changes the color for unsynced files. */
 public class BlazeJavaSyncStatusEditorTabColorProvider implements EditorTabColorProvider {
@@ -30,7 +29,7 @@ public class BlazeJavaSyncStatusEditorTabColorProvider implements EditorTabColor
 
   @Nullable
   @Override
-  public Color getEditorTabColor(@NotNull Project project, @NotNull VirtualFile file) {
+  public Color getEditorTabColor(Project project, VirtualFile file) {
     if (file.getName().endsWith(".java") && SyncStatusHelper.isUnsynced(project, file)) {
       return UNSYNCED_COLOR;
     }

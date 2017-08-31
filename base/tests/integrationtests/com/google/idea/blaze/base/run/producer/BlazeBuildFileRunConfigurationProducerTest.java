@@ -17,14 +17,18 @@ package com.google.idea.blaze.base.run.producer;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.producers.BlazeBuildFileRunConfigurationProducer;
+import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.psi.PsiFile;
@@ -86,5 +90,69 @@ public class BlazeBuildFileRunConfigurationProducerTest
     assertThat(config.getTarget())
         .isEqualTo(TargetExpression.fromString("//java/com/google/test:unit_tests"));
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
+  }
+
+  @Test
+  public void testConfigFromContextRecognizesItsOwnConfig() {
+    PsiFile buildFile =
+        workspace.createPsiFile(
+            new WorkspacePath("java/com/google/test/BUILD"), "java_test(name='unit_tests'");
+
+    StringLiteral nameString =
+        PsiUtils.findFirstChildOfClassRecursive(buildFile, StringLiteral.class);
+    ConfigurationContext context = createContextFromPsi(nameString);
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) context.getConfiguration().getConfiguration();
+
+    assertThat(
+            new BlazeBuildFileRunConfigurationProducer()
+                .isConfigurationFromContext(config, context))
+        .isTrue();
+  }
+
+  @Test
+  public void testConfigWithDifferentLabelIgnored() {
+    PsiFile buildFile =
+        workspace.createPsiFile(
+            new WorkspacePath("java/com/google/test/BUILD"), "java_test(name='unit_tests'");
+
+    StringLiteral nameString =
+        PsiUtils.findFirstChildOfClassRecursive(buildFile, StringLiteral.class);
+    ConfigurationContext context = createContextFromPsi(nameString);
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) context.getConfiguration().getConfiguration();
+
+    // modify the label, and check that is enough for the producer to class it as different.
+    config.setTarget(Label.create("//java/com/google/test:integration_tests"));
+
+    assertThat(
+            new BlazeBuildFileRunConfigurationProducer()
+                .isConfigurationFromContext(config, context))
+        .isFalse();
+  }
+
+  @Test
+  public void testConfigWithTestFilterIgnored() {
+    PsiFile buildFile =
+        workspace.createPsiFile(
+            new WorkspacePath("java/com/google/test/BUILD"), "java_test(name='unit_tests'");
+
+    StringLiteral nameString =
+        PsiUtils.findFirstChildOfClassRecursive(buildFile, StringLiteral.class);
+    ConfigurationContext context = createContextFromPsi(nameString);
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) context.getConfiguration().getConfiguration();
+
+    BlazeCommandRunConfigurationCommonState handlerState =
+        config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    handlerState
+        .getBlazeFlagsState()
+        .setRawFlags(
+            ImmutableList.of(BlazeFlags.TEST_FILTER + "=com.google.test.SingleTestClass#"));
+
+    assertThat(
+            new BlazeBuildFileRunConfigurationProducer()
+                .isConfigurationFromContext(config, context))
+        .isFalse();
   }
 }

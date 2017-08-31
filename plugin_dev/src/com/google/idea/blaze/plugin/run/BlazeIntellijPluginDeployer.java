@@ -21,23 +21,16 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
-import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.plugin.IntellijPluginRule;
 import com.google.repackaged.devtools.intellij.plugin.IntellijPluginTargetDeployInfo.IntellijPluginDeployFile;
 import com.google.repackaged.devtools.intellij.plugin.IntellijPluginTargetDeployInfo.IntellijPluginDeployInfo;
 import com.google.repackaged.protobuf.TextFormat;
+import com.intellij.concurrency.AsyncUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Key;
 import java.io.BufferedInputStream;
@@ -52,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
 /** Handles finding files to deploy and copying these into the sandbox. */
@@ -62,48 +56,35 @@ class BlazeIntellijPluginDeployer {
 
   private final String sandboxHome;
   private final String buildNumber;
-  private final TargetMap targetMap;
-  private final List<Label> targetsToDeploy = new ArrayList<>();
+  private final Label pluginTarget;
   private final List<File> deployInfoFiles = new ArrayList<>();
   private final Map<File, File> filesToDeploy = Maps.newHashMap();
   private File executionRoot;
 
-  BlazeIntellijPluginDeployer(Project project, String sandboxHome, String buildNumber)
-      throws ExecutionException {
-    BlazeProjectData blazeProjectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (blazeProjectData == null) {
-      throw new ExecutionException("Not synced yet, please sync project");
-    }
+  private Future<Void> fileCopyingTask;
+
+  BlazeIntellijPluginDeployer(String sandboxHome, String buildNumber, Label pluginTarget) {
     this.sandboxHome = sandboxHome;
     this.buildNumber = buildNumber;
-    this.targetMap = blazeProjectData.targetMap;
-  }
-
-  /** Adds an intellij plugin target to deploy */
-  void addTarget(Label label) throws ExecutionException {
-    targetsToDeploy.add(label);
+    this.pluginTarget = pluginTarget;
   }
 
   void reportBuildComplete(File executionRoot, BuildResultHelper buildResultHelper) {
     this.executionRoot = executionRoot;
-    for (File file : buildResultHelper.getBuildArtifacts()) {
+    for (File file : buildResultHelper.getBuildArtifactsForTarget(pluginTarget)) {
       if (file.getName().endsWith(".intellij-plugin-debug-target-deploy-info")) {
         deployInfoFiles.add(file);
       }
     }
   }
 
-  List<String> deploy() throws ExecutionException {
+  /**
+   * Returns a list of plugin IDs, and asynchronously copies the corresponding files to the sandbox.
+   */
+  List<String> deployNonBlocking() throws ExecutionException {
     List<IntellijPluginDeployInfo> deployInfoList = Lists.newArrayList();
-    if (!deployInfoFiles.isEmpty()) {
-      for (File deployInfoFile : deployInfoFiles) {
-        deployInfoList.addAll(readDeployInfoFromFile(deployInfoFile));
-      }
-    } else {
-      for (Label label : targetsToDeploy) {
-        deployInfoList.addAll(findDeployInfoFromBareIntelliJPluginTargets(label));
-      }
+    for (File deployInfoFile : deployInfoFiles) {
+      deployInfoList.addAll(readDeployInfoFromFile(deployInfoFile));
     }
     ImmutableMap<File, File> filesToDeploy = getFilesToDeploy(executionRoot, deployInfoList);
     this.filesToDeploy.putAll(filesToDeploy);
@@ -114,11 +95,24 @@ class BlazeIntellijPluginDeployer {
             String.format("Plugin file '%s' not found. Did the build fail?", file.getName()));
       }
     }
-    List<String> pluginIds = readPluginIds(filesToDeploy.keySet());
-    for (Map.Entry<File, File> entry : filesToDeploy.entrySet()) {
-      copyFileToSandbox(entry.getKey(), entry.getValue());
-    }
-    return pluginIds;
+    // kick off file copying task asynchronously, so it doesn't block the EDT.
+    fileCopyingTask =
+        BlazeExecutor.getInstance()
+            .submit(
+                () -> {
+                  for (Map.Entry<File, File> entry : filesToDeploy.entrySet()) {
+                    copyFileToSandbox(entry.getKey(), entry.getValue());
+                  }
+                  return null;
+                });
+
+    return readPluginIds(filesToDeploy.keySet());
+  }
+
+  /** Blocks until the plugin files have been copied to the sandbox */
+  void blockUntilDeployComplete() {
+    AsyncUtil.get(fileCopyingTask);
+    fileCopyingTask = null;
   }
 
   void deleteDeployment() {
@@ -142,40 +136,6 @@ class BlazeIntellijPluginDeployer {
       throw new ExecutionException(e);
     }
     return result.build();
-  }
-
-  private ImmutableList<IntellijPluginDeployInfo> findDeployInfoFromBareIntelliJPluginTargets(
-      Label label) throws ExecutionException {
-    TargetIdeInfo target = targetMap.get(TargetKey.forPlainTarget(label));
-    if (target == null) {
-      throw new ExecutionException("Target '" + label + "' not imported during sync");
-    }
-    if (IntellijPluginRule.isSinglePluginTarget(target)) {
-      return ImmutableList.of(deployInfoForIntellijPlugin(target));
-    }
-    throw new ExecutionException("Target is not a supported intellij plugin type.");
-  }
-
-  private static IntellijPluginDeployInfo deployInfoForIntellijPlugin(TargetIdeInfo target)
-      throws ExecutionException {
-    JavaIdeInfo javaIdeInfo = target.javaIdeInfo;
-    if (!IntellijPluginRule.isSinglePluginTarget(target) || javaIdeInfo == null) {
-      throw new ExecutionException("Target '" + target + "' is not a valid intellij_plugin target");
-    }
-    Collection<LibraryArtifact> jars = javaIdeInfo.jars;
-    if (javaIdeInfo.jars.size() > 1) {
-      throw new ExecutionException("Invalid IntelliJ plugin target: it has multiple output jars");
-    }
-    LibraryArtifact artifact = jars.isEmpty() ? null : jars.iterator().next();
-    if (artifact == null || artifact.classJar == null) {
-      throw new ExecutionException("No output plugin jar found for '" + target + "'");
-    }
-    return IntellijPluginDeployInfo.newBuilder()
-        .addDeployFiles(
-            IntellijPluginDeployFile.newBuilder()
-                .setExecutionPath(artifact.classJar.getExecutionRootRelativePath())
-                .setDeployLocation(new File(artifact.classJar.relativePath).getName()))
-        .build();
   }
 
   private ImmutableMap<File, File> getFilesToDeploy(
@@ -229,6 +189,7 @@ class BlazeIntellijPluginDeployer {
     try {
       dest.getParentFile().mkdirs();
       Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      dest.deleteOnExit();
     } catch (IOException e) {
       throw new ExecutionException("Error copying plugin file to sandbox", e);
     }

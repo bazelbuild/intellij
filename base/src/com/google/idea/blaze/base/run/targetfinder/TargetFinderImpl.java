@@ -15,13 +15,13 @@
  */
 package com.google.idea.blaze.base.run.targetfinder;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
 import java.util.List;
+import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 
 /** Implementation of RuleFinder. */
@@ -37,7 +37,7 @@ class TargetFinderImpl extends TargetFinder {
 
     ImmutableList.Builder<TargetIdeInfo> resultList = ImmutableList.builder();
     for (TargetIdeInfo target : projectData.targetMap.targets()) {
-      if (predicate.apply(target)) {
+      if (predicate.test(target)) {
         resultList.add(target);
       }
     }

@@ -1,7 +1,6 @@
 """Custom build macros for IntelliJ plugin handling.
 """
 
-load(":intellij_plugin_debug_target.bzl", "intellij_plugin_debug_target")
 load(":intellij_plugin.bzl", "intellij_plugin", "optional_plugin_xml")
 
 def merged_plugin_xml(name, srcs, **kwargs):
@@ -179,61 +178,123 @@ def api_version_txt(name, **kwargs):
       tools = [api_version_txt_tool],
       **kwargs)
 
-def repackaged_jar(name, deps, rules, **kwargs):
-  """Repackages classes in a jar, to avoid collisions in the classpath.
-
-  Args:
-    name: the name of this target
-    deps: The dependencies repackage
-    rules: the rules to apply in the repackaging
-        Do not repackage:
-        - com.google.net.** because that has JNI files which use
-          FindClass(JNIEnv *, const char *) with hard-coded native string
-          literals that jarjar doesn't rewrite.
-        - com.google.errorprone packages (rewriting will throw off blaze build).
-    **kwargs: Any additional arguments to pass to the final target.
-  """
-  java_binary_name = name + "_orig"
-  out = name + ".jar"
-  native.java_binary(
-      name = java_binary_name,
-      create_executable = 0,
-      stamp = 0,
-      runtime_deps = deps)
-  _repackaged_jar(name, java_binary_name, out, rules, **kwargs)
-
-def _repackaged_jar(name, src_rule, out, rules, **kwargs):
-  """Repackages classes in a jar, to avoid collisions in the classpath."""
-  repackage_tool = "@jarjar//jar"
-  deploy_jar = "{src_rule}_deploy.jar".format(src_rule=src_rule)
-  script_lines = []
-  script_lines.append("echo >> /tmp/repackaged_rule.txt")
-  for rule in rules:
-    script_lines.append("echo 'rule {rule}' >> /tmp/repackaged_rule.txt;".format(rule=rule))
-  script_lines.append(" ".join([
-      "$(location {repackage_tool})",
-      "process /tmp/repackaged_rule.txt",
-      "$(location {deploy_jar})",
-      "$@",
-  ]).format(
-      repackage_tool = repackage_tool,
-      deploy_jar = deploy_jar,
-  ))
-  genrule_name = name + "_repackaged"
-  native.genrule(
-      name = genrule_name,
-      srcs = [deploy_jar],
-      outs = [out],
-      tools = [repackage_tool],
-      cmd = "\n".join(script_lines),
-  )
-  native.java_import(
-      name = name,
-      jars = [out],
-      **kwargs)
-
 def beta_gensignature(name, srcs, stable, stable_version, beta_version):
   if stable_version == beta_version:
     native.alias(name = name, actual = stable)
   else:
     native.gensignature(name = name, srcs = srcs)
+
+repackaged_files_data = provider()
+
+def _repackaged_files_impl(ctx):
+  prefix = ctx.attr.prefix
+  if prefix.startswith("/"):
+    fail("'prefix' must be a relative path")
+  input_files = depset()
+  for target in ctx.attr.srcs:
+    input_files = input_files | target.files
+
+  return [
+      # TODO(brendandouglas): Only valid for Bazel 0.5 onwards. Uncomment when
+      # 0.5 used more widely.
+      # DefaultInfo(files = input_files),
+      repackaged_files_data(
+          files = input_files,
+          prefix = prefix,
+      )
+  ]
+
+_repackaged_files = rule(
+    implementation = _repackaged_files_impl,
+    attrs = {
+        "srcs": attr.label_list(mandatory = True, allow_files = True),
+        "prefix": attr.string(mandatory = True),
+    },
+)
+
+def repackaged_files(name, srcs, prefix, **kwargs):
+  """Assembles files together so that they can be packaged as an IntelliJ plugin.
+
+  A cut-down version of the internal 'pkgfilegroup' rule.
+
+  Args:
+    name: The name of this target
+    srcs: A list of targets which are dependencies of this rule. All output files of each of these
+        targets will be repackaged.
+    prefix: Where the package should install these files, relative to the 'plugins' directory. The
+        input file path is stripped prior to applying this prefix.
+    **kwargs: Any further arguments to be passed to the target
+  """
+  _repackaged_files(name = name, srcs = srcs, prefix = prefix, **kwargs)
+
+def _plugin_deploy_zip_impl(ctx):
+  zip_name = ctx.attr.zip_filename
+  zip_file = ctx.new_file(zip_name)
+
+  input_files = depset()
+  exec_path_to_zip_path = {}
+  for target in ctx.attr.srcs:
+    data = target[repackaged_files_data]
+    input_files = input_files | data.files
+    for f in data.files:
+      exec_path_to_zip_path[f.path] = data.prefix + "/" + f.basename
+
+  args = []
+  args.extend(["--output", zip_file.path])
+  for exec_path, zip_path in exec_path_to_zip_path.items():
+    args.extend([exec_path, zip_path])
+  ctx.action(
+      executable = ctx.executable._zip_plugin_files,
+      arguments = args,
+      inputs = list(input_files),
+      outputs = [zip_file],
+      mnemonic = "ZipPluginFiles",
+      progress_message = "Creating final plugin zip archive",
+  )
+  files = depset([zip_file])
+  return struct(
+      files = files,
+  )
+
+_plugin_deploy_zip = rule(
+    implementation = _plugin_deploy_zip_impl,
+    attrs = {
+        "srcs": attr.label_list(mandatory = True, providers = []),
+        "zip_filename": attr.string(mandatory = True),
+        "_zip_plugin_files": attr.label(
+            default = Label("//build_defs:zip_plugin_files"),
+            executable = True,
+            cfg = "host",
+        ),
+    }
+)
+
+def plugin_deploy_zip(name, srcs, zip_filename):
+  """Packages up plugin files into a zip archive.
+
+  Args:
+    name: The name of this target
+    srcs: A list of targets of type 'repackaged_files', specifying the input files and relative
+        paths to include in the output zip archive.
+    zip_filename: The output zip filename.
+  """
+  _plugin_deploy_zip(name = name, zip_filename = zip_filename, srcs = srcs)
+
+def unescape_filenames(name, srcs):
+  """Macro to generate files with spaces in their names instead of underscores.
+
+  For each file in the srcs, a file will be generated with the same name but with all underscores
+  replaced with spaces.
+
+  Args:
+    name: The name of the generator rule
+    srcs: A list of source files to process
+  """
+  outs = [s.replace("_", " ") for s in srcs]
+  cmd = "&&".join(["cp \"{}\" $(@D)/\"{}\"".format(s, d) for (s,d) in zip(srcs, outs)])
+  native.genrule(
+      name = name,
+      srcs = srcs,
+      outs = outs,
+      cmd = cmd,
+  )

@@ -44,10 +44,14 @@ import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedT
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import java.util.List;
 
 /** Utility to build various collections of targets. */
 public class BlazeBuildService {
+  private static final Key<Long> PROJECT_LAST_BUILD_TIMESTAMP_KEY =
+      Key.create("blaze.project.last.build.timestamp");
+
   public static BlazeBuildService getInstance() {
     return ServiceManager.getService(BlazeBuildService.class);
   }
@@ -86,6 +90,15 @@ public class BlazeBuildService {
             "Make project",
             "Make project completed successfully",
             "Make project failed"));
+
+    // In case the user touched a file, but didn't change its content. The user will get a false
+    // positive for class file out of date. We need a way for the user to suppress the false
+    // message. Clicking the "build project" link should at least make the message go away.
+    project.putUserData(PROJECT_LAST_BUILD_TIMESTAMP_KEY, System.currentTimeMillis());
+  }
+
+  public static Long getLastBuildTimeStamp(Project project) {
+    return project.getUserData(PROJECT_LAST_BUILD_TIMESTAMP_KEY);
   }
 
   @VisibleForTesting
@@ -137,6 +150,7 @@ public class BlazeBuildService {
                         workspaceRoot,
                         projectViewSet,
                         blazeProjectData.blazeVersionData,
+                        blazeProjectData.workspaceLanguageSettings,
                         shardedTargets.shardedTargets);
             FileCaches.refresh(project);
 

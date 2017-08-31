@@ -4,4 +4,28 @@
     <JavaLikeLanguage
         implementation="com.google.idea.blaze.scala.sync.source.ScalaJavaLikeLanguage"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaMainClassRunConfigurationProducer"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaTestClassConfigurationProducer"/>
+    <!-- TODO: add configuration producer for infix expression test cases in scalatest and specs2. -->
+    <!-- Need to come before the one in the scala plugin to override the icon. -->
+    <runLineMarkerContributor
+        implementationClass="com.google.idea.blaze.scala.run.producers.BlazeScalaRunLineMarkerContributor"
+        language="Scala"
+        order="first"/>
+    <runLineMarkerContributor
+        implementationClass="com.google.idea.blaze.scala.run.producers.BlazeScalaTestRunLineMarkerContributor"
+        language="Scala"
+        order="first"/>
+  </extensions>
+
+  <project-components>
+    <component>
+      <implementation-class>com.google.idea.blaze.scala.run.producers.NonBlazeProducerSuppressor
+      </implementation-class>
+    </component>
+  </project-components>
 </idea-plugin>

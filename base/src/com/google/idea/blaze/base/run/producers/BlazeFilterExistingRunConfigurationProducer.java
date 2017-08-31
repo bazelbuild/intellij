@@ -31,7 +31,7 @@ import com.intellij.psi.PsiElement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 /**
  * Handles the specific case where the user creates a run configuration by selecting test suites /
@@ -53,8 +53,8 @@ public class BlazeFilterExistingRunConfigurationProducer
       BlazeCommandRunConfiguration configuration,
       ConfigurationContext context,
       Ref<PsiElement> sourceElement) {
-    String testFilter = getTestFilter(context);
-    if (testFilter == null) {
+    Optional<String> testFilter = getTestFilter(context);
+    if (!testFilter.isPresent()) {
       return false;
     }
     BlazeCommandRunConfigurationCommonState handlerState =
@@ -66,7 +66,7 @@ public class BlazeFilterExistingRunConfigurationProducer
     // replace old test filter flag if present
     List<String> flags = new ArrayList<>(handlerState.getBlazeFlagsState().getRawFlags());
     flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
-    flags.add(testFilter);
+    flags.add(testFilter.get());
 
     if (SmRunnerUtils.countSelectedTestCases(context) == 1
         && !flags.contains(BlazeFlags.DISABLE_TEST_SHARDING)) {
@@ -81,8 +81,8 @@ public class BlazeFilterExistingRunConfigurationProducer
   @Override
   protected boolean doIsConfigFromContext(
       BlazeCommandRunConfiguration configuration, ConfigurationContext context) {
-    String testFilter = getTestFilter(context);
-    if (testFilter == null) {
+    Optional<String> testFilter = getTestFilter(context);
+    if (!testFilter.isPresent()) {
       return false;
     }
     BlazeCommandRunConfigurationCommonState handlerState =
@@ -90,28 +90,25 @@ public class BlazeFilterExistingRunConfigurationProducer
 
     return handlerState != null
         && Objects.equals(handlerState.getCommandState().getCommand(), BlazeCommandName.TEST)
-        && Objects.equals(testFilter, handlerState.getTestFilterFlag());
+        && Objects.equals(testFilter.get(), handlerState.getTestFilterFlag());
   }
 
-  @Nullable
-  private static String getTestFilter(ConfigurationContext context) {
+  private static Optional<String> getTestFilter(ConfigurationContext context) {
     RunConfiguration base = context.getOriginalConfiguration(null);
     if (!(base instanceof BlazeCommandRunConfiguration)) {
-      return null;
+      return Optional.empty();
     }
     TargetExpression target = ((BlazeCommandRunConfiguration) base).getTarget();
     if (target == null) {
-      return null;
-    }
-    BlazeTestEventsHandler testEventsHandler =
-        BlazeTestEventsHandler.getHandlerForTarget(context.getProject(), target);
-    if (testEventsHandler == null) {
-      return null;
+      return Optional.empty();
     }
     List<Location<?>> selectedElements = SmRunnerUtils.getSelectedSmRunnerTreeElements(context);
     if (selectedElements.isEmpty()) {
       return null;
     }
-    return testEventsHandler.getTestFilter(context.getProject(), selectedElements);
+    Optional<BlazeTestEventsHandler> testEventsHandler =
+        BlazeTestEventsHandler.getHandlerForTarget(context.getProject(), target);
+    return testEventsHandler.map(
+        handler -> handler.getTestFilter(context.getProject(), selectedElements));
   }
 }

@@ -99,7 +99,7 @@ public class JUnitTestHeuristicTest extends BlazeIntegrationTestCase {
     PsiFile psiFile = workspace.createPsiFile(new WorkspacePath("foo/script_test.py"));
     File file = new File(psiFile.getVirtualFile().getPath());
     TargetIdeInfo target =
-        TargetIdeInfo.builder().setLabel("//foo:unrelatedName").setKind("python_test").build();
+        TargetIdeInfo.builder().setLabel("//foo:unrelatedName").setKind("py_test").build();
     assertThat(new JUnitTestHeuristic().matchesSource(getProject(), target, psiFile, file, null))
         .isFalse();
   }
@@ -108,7 +108,7 @@ public class JUnitTestHeuristicTest extends BlazeIntegrationTestCase {
   public void testNullPsiFileDoesNotMatch() {
     File file = new File("foo/script_test.py");
     TargetIdeInfo target =
-        TargetIdeInfo.builder().setLabel("//foo:unrelatedName").setKind("python_test").build();
+        TargetIdeInfo.builder().setLabel("//foo:unrelatedName").setKind("py_test").build();
     assertThat(new JUnitTestHeuristic().matchesSource(getProject(), target, null, file, null))
         .isFalse();
   }

@@ -21,11 +21,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.FileStructureGroupRuleProvider;
 import com.intellij.usages.impl.rules.FileGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageInFile;
+import javax.annotation.Nullable;
 import javax.swing.Icon;
 
 /**
@@ -52,8 +54,9 @@ public class BuildFileGroupingRuleProvider implements FileStructureGroupRuleProv
       this.project = project;
     }
 
-    @Override
-    public UsageGroup groupUsage(Usage usage) {
+    @SuppressWarnings("MissingOverride") // #api171: added in 2017.2
+    @Nullable
+    public UsageGroup getParentGroupFor(Usage usage, UsageTarget[] targets) {
       if (!(usage instanceof UsageInFile)) {
         return null;
       }
@@ -87,6 +90,11 @@ public class BuildFileGroupingRuleProvider implements FileStructureGroupRuleProv
           return null; // already shown by default usage group (which we can't remove...)
         }
       };
+    }
+
+    @Override
+    public UsageGroup groupUsage(Usage usage) {
+      return getParentGroupFor(usage, UsageTarget.EMPTY_ARRAY);
     }
   }
 }

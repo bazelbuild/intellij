@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
@@ -46,14 +47,15 @@ import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
+import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.python.PySdkUtils;
 import com.google.idea.blaze.python.run.filter.BlazePyFilterProvider;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -68,11 +70,9 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.PathUtil;
@@ -85,7 +85,6 @@ import com.jetbrains.python.run.PythonScriptCommandLineState;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -97,13 +96,6 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       Key.create("blaze.debug.py.executable");
 
   private static final Logger logger = Logger.getInstance(BlazePyRunConfigurationRunner.class);
-
-  // Filter executables instead of files in the bin directory
-  // This bin directory isn't the right one, because we don't know the blaze binary
-  // or the config flags used to execute the build command
-  // Introduced March 2017
-  private static final BoolExperiment filterExecutableFiles =
-      new BoolExperiment("filter.executable.files", true);
 
   /** Converts to the native python plugin debug configuration state */
   static class BlazePyDummyRunProfileState implements RunProfileState {
@@ -130,15 +122,12 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
           Strings.nullToEmpty(
               getRunfilesPath(executable, WorkspaceRoot.fromProjectSafe(env.getProject()))));
 
-      Module workspaceModule =
-          nativeConfig.getConfigurationModule().findModule(BlazeDataStorage.WORKSPACE_MODULE_NAME);
-      if (workspaceModule != null) {
-        nativeConfig.setModule(workspaceModule);
-        nativeConfig.setUseModuleSdk(true);
-      } else {
-        throw new ExecutionException(
-            "Can't find the workspace module when debugging a python target");
+      Sdk sdk = PySdkUtils.getPythonSdk(env.getProject());
+      if (sdk == null) {
+        throw new ExecutionException("Can't find a Python SDK when debugging a python target.");
       }
+      nativeConfig.setModule(null);
+      nativeConfig.setSdkHome(sdk.getHomePath());
 
       BlazeCommandRunConfigurationCommonState handlerState =
           configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
@@ -230,6 +219,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     if (!isDebugging(env)) {
       return true;
     }
+    env.getCopyableUserData(EXECUTABLE_KEY).set(null);
     try {
       File executable = getExecutableToDebug(env);
       env.getCopyableUserData(EXECUTABLE_KEY).set(executable);
@@ -297,8 +287,12 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     final ProjectViewSet projectViewSet =
         ProjectViewManager.getInstance(project).getProjectViewSet();
 
-    BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true);
-    boolean suppressConsole = BlazeUserSettings.getInstance().getSuppressConsoleForRunAction();
+    BuildResultHelper buildResultHelper =
+        BuildResultHelper.forFiles(blazeProjectData.blazeVersionData, file -> true);
+    BlazeConsolePopupBehavior consolePopupBehavior =
+        BlazeUserSettings.getInstance().getSuppressConsoleForRunAction()
+            ? BlazeConsolePopupBehavior.NEVER
+            : BlazeConsolePopupBehavior.ALWAYS;
     final ListenableFuture<Void> buildOperation =
         BlazeExecutor.submitTask(
             project,
@@ -309,7 +303,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
                     .push(new IssuesScope(project))
                     .push(
                         new BlazeConsoleScope.Builder(project)
-                            .setSuppressConsole(suppressConsole)
+                            .setPopupBehavior(consolePopupBehavior)
                             .build());
 
                 context.output(new StatusOutput("Building debug binary"));
@@ -319,7 +313,12 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
                             Blaze.getBuildSystemProvider(project).getBinaryPath(),
                             BlazeCommandName.BUILD)
                         .addTargets(configuration.getTarget())
-                        .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
+                        .addBlazeFlags(
+                            BlazeFlags.blazeFlags(
+                                project,
+                                projectViewSet,
+                                BlazeCommandName.BUILD,
+                                BlazeInvocationContext.RunConfiguration))
                         .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
                         .addBlazeFlags(BlazePyDebugHelper.getAllBlazeDebugFlags())
                         .addBlazeFlags(buildResultHelper.getBuildFlags());
@@ -338,14 +337,16 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     try {
       SaveUtil.saveAllFiles();
       buildOperation.get();
-    } catch (InterruptedException | java.util.concurrent.ExecutionException e) {
+    } catch (InterruptedException e) {
+      throw new RunCanceledByUserException();
+    } catch (java.util.concurrent.ExecutionException e) {
       throw new ExecutionException(e);
     }
     List<File> candidateFiles =
         buildResultHelper
-            .getBuildArtifacts()
+            .getBuildArtifactsForTarget((Label) configuration.getTarget())
             .stream()
-            .filter(fileFilter(blazeProjectData))
+            .filter(File::canExecute)
             .collect(Collectors.toList());
     if (candidateFiles.isEmpty()) {
       throw new ExecutionException(
@@ -360,12 +361,6 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     }
     LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
     return file;
-  }
-
-  private static Predicate<File> fileFilter(BlazeProjectData blazeProjectData) {
-    return filterExecutableFiles.getValue()
-        ? File::canExecute
-        : f -> FileUtil.isAncestor(blazeProjectData.blazeInfo.getBlazeBinDirectory(), f, true);
   }
 
   /**

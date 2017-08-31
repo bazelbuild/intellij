@@ -1,6 +1,7 @@
 """Stamps a plugin xml with build information."""
 
 import argparse
+import io
 import re
 from xml.dom.minidom import parse
 
@@ -62,7 +63,7 @@ parser.add_argument(
 
 def _read_changelog(changelog_file):
   """Reads the changelog and transforms it into trivial HTML."""
-  with open(changelog_file) as f:
+  with io.open(changelog_file, encoding="utf-8") as f:
     return "\n".join("<p>" + line + "</p>" for line in f.readlines())
 
 
@@ -189,7 +190,7 @@ def main():
   for new_element in new_elements:
     idea_plugin.appendChild(new_element)
 
-  print dom.toxml()
+  print dom.toxml(encoding="utf-8")
 
 
 if __name__ == "__main__":

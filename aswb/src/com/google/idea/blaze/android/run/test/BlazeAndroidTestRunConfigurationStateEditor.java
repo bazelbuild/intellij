@@ -21,9 +21,9 @@ import static com.android.tools.idea.testartifacts.instrumented.AndroidTestRunCo
 import static com.android.tools.idea.testartifacts.instrumented.AndroidTestRunConfiguration.TEST_CLASS;
 import static com.android.tools.idea.testartifacts.instrumented.AndroidTestRunConfiguration.TEST_METHOD;
 
+import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethodComboEntry;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -38,7 +38,7 @@ import java.awt.event.ActionListener;
 import java.util.ResourceBundle;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
-import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -61,7 +61,7 @@ class BlazeAndroidTestRunConfigurationStateEditor implements RunConfigurationSta
   private JPanel panel;
   private LabeledComponent<EditorTextField> runnerComponent;
   private JBLabel labelTest;
-  private JCheckBox runThroughBlazeTestCheckBox;
+  private JComboBox<AndroidTestLaunchMethodComboEntry> launchMethodComboBox;
   private final JRadioButton[] testingType2RadioButton = new JRadioButton[4];
 
   private boolean componentEnabled = true;
@@ -351,13 +351,10 @@ class BlazeAndroidTestRunConfigurationStateEditor implements RunConfigurationSta
             null,
             0,
             false));
-    runThroughBlazeTestCheckBox = new JCheckBox();
-    runThroughBlazeTestCheckBox.setText(
-        String.format("Run through '%s test'", Blaze.buildSystemName(project).toLowerCase()));
-    runThroughBlazeTestCheckBox.setToolTipText(
-        String.format("Slower, but more truthful to %s", Blaze.buildSystemName(project)));
+    launchMethodComboBox =
+        new JComboBox<>(BlazeAndroidTestLaunchMethodsProvider.getAllLaunchMethods(project));
     panel.add(
-        runThroughBlazeTestCheckBox,
+        launchMethodComboBox,
         new GridConstraints(
             0,
             0,
@@ -452,7 +449,8 @@ class BlazeAndroidTestRunConfigurationStateEditor implements RunConfigurationSta
         (BlazeAndroidTestRunConfigurationState) genericState;
     commonStateEditor.applyEditorTo(state.getCommonState());
 
-    state.setRunThroughBlaze(runThroughBlazeTestCheckBox.isSelected());
+    state.setLaunchMethod(
+        ((AndroidTestLaunchMethodComboEntry) launchMethodComboBox.getSelectedItem()).launchMethod);
 
     state.setTestingType(getTestingType());
     state.setClassName(classComponent.getComponent().getText());
@@ -467,8 +465,12 @@ class BlazeAndroidTestRunConfigurationStateEditor implements RunConfigurationSta
         (BlazeAndroidTestRunConfigurationState) genericState;
     commonStateEditor.resetEditorFrom(state.getCommonState());
 
-    runThroughBlazeTestCheckBox.setSelected(state.isRunThroughBlaze());
-
+    for (int i = 0; i < launchMethodComboBox.getItemCount(); ++i) {
+      if (launchMethodComboBox.getItemAt(i).launchMethod.equals(state.getLaunchMethod())) {
+        launchMethodComboBox.setSelectedIndex(i);
+        break;
+      }
+    }
     updateButtonsAndLabelComponents(state.getTestingType());
     packageComponent.getComponent().setText(state.getPackageName());
     classComponent.getComponent().setText(state.getClassName());
@@ -498,7 +500,7 @@ class BlazeAndroidTestRunConfigurationStateEditor implements RunConfigurationSta
     methodComponent.setEnabled(componentEnabled);
     runnerComponent.setEnabled(componentEnabled);
     labelTest.setEnabled(componentEnabled);
-    runThroughBlazeTestCheckBox.setEnabled(componentEnabled);
+    launchMethodComboBox.setEnabled(componentEnabled);
     for (JComponent button : testingType2RadioButton) {
       if (button != null) {
         button.setEnabled(componentEnabled);

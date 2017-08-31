@@ -16,25 +16,66 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
-import java.util.Collection;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /** Causes C files to become prefetched. */
 public class CPrefetchFileSource implements PrefetchFileSource {
+
+  private static final BoolExperiment prefetchAllCppSources =
+      new BoolExperiment("prefetch.all.cpp.sources", true);
+
   @Override
   public void addFilesToPrefetch(
       Project project,
       ProjectViewSet projectViewSet,
+      ImportRoots importRoots,
       BlazeProjectData blazeProjectData,
-      Collection<File> files) {}
+      Set<File> files) {
+    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C)
+        || !prefetchAllCppSources.getValue()) {
+      return;
+    }
+    // Prefetch all non-project CPP header files encountered during sync
+    Predicate<ArtifactLocation> shouldPrefetch =
+        location -> {
+          if (!location.isSource || location.isExternal) {
+            return false;
+          }
+          WorkspacePath path = WorkspacePath.createIfValid(location.relativePath);
+          if (path == null || importRoots.containsWorkspacePath(path)) {
+            return false;
+          }
+          String extension = FileUtil.getExtension(path.relativePath());
+          return CFileExtensions.HEADER_EXTENSIONS.contains(extension);
+        };
+    ArtifactLocationDecoder decoder = blazeProjectData.artifactLocationDecoder;
+    for (TargetIdeInfo target : blazeProjectData.targetMap.targets()) {
+      if (target.cIdeInfo == null) {
+        continue;
+      }
+      target.sources.stream().filter(shouldPrefetch).map(decoder::decode).forEach(files::add);
+    }
+  }
 
   @Override
-  public Set<String> prefetchSrcFileExtensions() {
-    return ImmutableSet.of("c", "cc", "cpp", "h", "hh", "hpp");
+  public Set<String> prefetchFileExtensions() {
+    return ImmutableSet.<String>builder()
+        .addAll(CFileExtensions.SOURCE_EXTENSIONS)
+        .addAll(CFileExtensions.HEADER_EXTENSIONS)
+        .build();
   }
 }

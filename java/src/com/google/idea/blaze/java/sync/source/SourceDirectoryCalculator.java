@@ -20,7 +20,6 @@ import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -51,6 +50,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -258,19 +258,21 @@ public final class SourceDirectoryCalculator {
     }
 
     // Sort source roots into their respective directories
-    Multimap<WorkspacePath, SourceRoot> sourceDirectoryToSourceRoots = HashMultimap.create();
+    Map<WorkspacePath, Multiset<SourceRoot>> sourceDirectoryToSourceRoots = new HashMap<>();
     for (SourceRoot sourceRoot : sourceRootsPerFile) {
-      sourceDirectoryToSourceRoots.put(sourceRoot.workspacePath, sourceRoot);
+      sourceDirectoryToSourceRoots
+          .computeIfAbsent(sourceRoot.workspacePath, k -> HashMultiset.create())
+          .add(sourceRoot);
     }
 
     // Create a mapping from directory to package prefix
     Map<WorkspacePath, SourceRoot> workspacePathToSourceRoot = Maps.newHashMap();
     for (WorkspacePath workspacePath : sourceDirectoryToSourceRoots.keySet()) {
-      Collection<SourceRoot> sources = sourceDirectoryToSourceRoots.get(workspacePath);
+      Multiset<SourceRoot> sources = sourceDirectoryToSourceRoots.get(workspacePath);
       Multiset<String> packages = HashMultiset.create();
 
-      for (SourceRoot source : sources) {
-        packages.add(source.packagePrefix);
+      for (Multiset.Entry<SourceRoot> entry : sources.entrySet()) {
+        packages.setCount(entry.getElement().packagePrefix, entry.getCount());
       }
 
       final String directoryPackagePrefix;

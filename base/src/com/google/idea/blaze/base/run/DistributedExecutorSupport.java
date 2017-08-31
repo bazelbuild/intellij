@@ -23,7 +23,11 @@ import com.intellij.openapi.project.Project;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/** Information about any distributed executor available to the build system. */
+/**
+ * Information about any distributed executor available to the build system.
+ *
+ * <p>TODO(brendandouglas): Temporary migration code. Remove in 2017.09.XX+
+ */
 public interface DistributedExecutorSupport {
 
   ExtensionPointName<DistributedExecutorSupport> EP_NAME =

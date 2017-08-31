@@ -15,10 +15,10 @@
  */
 package com.google.idea.blaze.android.run.runner;
 
+import com.android.tools.idea.run.ApkProvisionException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
@@ -38,14 +38,13 @@ import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.project.Project;
 import java.util.concurrent.CancellationException;
-import org.jetbrains.annotations.NotNull;
 
 /** Builds the APK using normal blaze build. */
 public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
   private final Project project;
   private final Label label;
   private final ImmutableList<String> buildFlags;
-  private final SettableFuture<BlazeAndroidDeployInfo> deployInfoFuture = SettableFuture.create();
+  private BlazeAndroidDeployInfo deployInfo = null;
 
   public BlazeApkBuildStepNormalBuild(
       Project project, Label label, ImmutableList<String> buildFlags) {
@@ -60,7 +59,7 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
     final ScopedTask buildTask =
         new ScopedTask(context) {
           @Override
-          protected void execute(@NotNull BlazeContext context) {
+          protected void execute(BlazeContext context) {
             BlazeCommand.Builder command =
                 BlazeCommand.builder(
                     Blaze.getBuildSystemProvider(project).getBinaryPath(), BlazeCommandName.BUILD);
@@ -92,12 +91,10 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
               context.setHasError();
               return;
             }
-            BlazeAndroidDeployInfo deployInfo = deployInfoHelper.readDeployInfo(context);
+            deployInfo = deployInfoHelper.readDeployInfo(context);
             if (deployInfo == null) {
               IssueOutput.error("Could not read apk deploy info from build").submit(context);
-              return;
             }
-            deployInfoFuture.set(deployInfo);
           }
         };
 
@@ -117,7 +114,11 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
     return context.shouldContinue();
   }
 
-  public ListenableFuture<BlazeAndroidDeployInfo> getDeployInfo() {
-    return deployInfoFuture;
+  @Override
+  public BlazeAndroidDeployInfo getDeployInfo() throws ApkProvisionException {
+    if (deployInfo != null) {
+      return deployInfo;
+    }
+    throw new ApkProvisionException("Failed to read APK deploy info");
   }
 }

@@ -19,9 +19,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
@@ -54,6 +56,7 @@ import com.intellij.util.PlatformUtils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -89,7 +92,7 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
 
     Set<Label> tsConfigTargets = getTsConfigTargets(projectViewSet);
     if (tsConfigTargets.isEmpty()) {
-      invalidProjectViewError(context);
+      invalidProjectViewError(context, Blaze.getBuildSystemProvider(project));
       return;
     }
 
@@ -104,7 +107,12 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
                       Blaze.getBuildSystemProvider(project).getSyncBinaryPath(),
                       BlazeCommandName.RUN)
                   .addTargets(new ArrayList<>(tsConfigTargets))
-                  .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
+                  .addBlazeFlags(
+                      BlazeFlags.blazeFlags(
+                          project,
+                          projectViewSet,
+                          BlazeCommandName.RUN,
+                          BlazeInvocationContext.Sync))
                   .build();
 
           int retVal =
@@ -162,26 +170,30 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
 
     // Must have either both typescript and ts_config_rules or neither
     if (typescriptActive ^ !getTsConfigTargets(projectViewSet).isEmpty()) {
-      invalidProjectViewError(context);
+      invalidProjectViewError(context, Blaze.getBuildSystemProvider(project));
       return false;
     }
 
     return true;
   }
 
-  private void invalidProjectViewError(BlazeContext context) {
-    IssueOutput.error(
-            "For Typescript support you must add both `additional_languages`: "
-                + "typescript and the `ts_config_rules` attribute.")
-        .submit(context);
+  private void invalidProjectViewError(
+      BlazeContext context, BuildSystemProvider buildSystemProvider) {
+    String errorNote =
+        "For Typescript support you must add both `additional_languages: typescript`"
+            + " and the `ts_config_rules` attribute.";
+    String documentationUrl =
+        buildSystemProvider.getLanguageSupportDocumentationUrl("dynamic-languages-typescript");
+    if (documentationUrl != null) {
+      errorNote += String.format("<p>See <a href=\"%1$s\">%1$s</a>.", documentationUrl);
+    }
+    IssueOutput.error(errorNote).submit(context);
   }
 
   private static Set<Label> getTsConfigTargets(ProjectViewSet projectViewSet) {
-    Label oldSectionType = projectViewSet.getScalarValue(TsConfigRuleSection.KEY);
+    Optional<Label> oldSectionType = projectViewSet.getScalarValue(TsConfigRuleSection.KEY);
     Set<Label> labels = new LinkedHashSet<>(projectViewSet.listItems(TsConfigRulesSection.KEY));
-    if (oldSectionType != null) {
-      labels.add(oldSectionType);
-    }
+    oldSectionType.ifPresent(labels::add);
     return labels;
   }
 

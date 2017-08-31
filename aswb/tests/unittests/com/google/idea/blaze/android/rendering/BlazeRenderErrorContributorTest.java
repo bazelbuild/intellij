@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.rendering;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.android.tools.idea.rendering.RenderErrorContributor;
 import com.android.tools.idea.rendering.RenderErrorModelFactory;
@@ -59,6 +60,7 @@ import com.intellij.openapi.fileTypes.MockFileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -70,7 +72,6 @@ import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.search.ProjectScopeBuilderImpl;
-import com.intellij.psi.util.PsiUtil.NullPsiClass;
 import java.io.File;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -96,6 +97,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(FileTypeManager.class, new MockFileTypeManager());
 
+    projectServices.register(ProjectFileIndex.class, mock(ProjectFileIndex.class));
     projectServices.register(BuildReferenceManager.class, new MockBuildReferenceManager(project));
     projectServices.register(TransitiveDependencyMap.class, new TransitiveDependencyMap(project));
     projectServices.register(ProjectScopeBuilder.class, new ProjectScopeBuilderImpl(project));
@@ -651,15 +653,15 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     ImmutableMap<String, PsiClass> classes =
         ImmutableMap.of(
             "com.google.example.independent.LibraryView",
-            new MockPsiClass(psiManager, independentLibraryView),
+            mockPsiClass(independentLibraryView),
             "com.google.example.independent.LibraryView2",
-            new MockPsiClass(psiManager, independentLibraryView2),
+            mockPsiClass(independentLibraryView2),
             "com.google.example.independent.Library2View",
-            new MockPsiClass(psiManager, independentLibrary2View),
+            mockPsiClass(independentLibrary2View),
             "com.google.example.dependent.LibraryView",
-            new MockPsiClass(psiManager, dependentLibraryView),
+            mockPsiClass(dependentLibraryView),
             "com.google.example.ResourceView",
-            new MockPsiClass(psiManager, resourceView));
+            mockPsiClass(resourceView));
 
     ImmutableMap<File, TargetKey> sourceToTarget =
         ImmutableMap.of(
@@ -677,6 +679,14 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     projectServices.register(
         JavaPsiFacade.class, new MockJavaPsiFacade(project, psiManager, classes));
     projectServices.register(SourceToTargetMap.class, new MockSourceToTargetMap(sourceToTarget));
+  }
+
+  private static PsiClass mockPsiClass(VirtualFile virtualFile) {
+    PsiFile psiFile = mock(PsiFile.class);
+    when(psiFile.getVirtualFile()).thenReturn(virtualFile);
+    PsiClass psiClass = mock(PsiClass.class);
+    when(psiClass.getContainingFile()).thenReturn(psiFile);
+    return psiClass;
   }
 
   private static class MockBlazeProjectDataManager implements BlazeProjectDataManager {
@@ -708,25 +718,6 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     @Override
     public PsiElement resolveLabel(Label label) {
       return null;
-    }
-  }
-
-  private static class MockPsiClass extends NullPsiClass {
-    private PsiFile psiFile;
-
-    public MockPsiClass(PsiManager psiManager, VirtualFile virtualFile) {
-      psiFile =
-          new MockPsiFile(psiManager) {
-            @Override
-            public VirtualFile getVirtualFile() {
-              return virtualFile;
-            }
-          };
-    }
-
-    @Override
-    public PsiFile getContainingFile() {
-      return psiFile;
     }
   }
 

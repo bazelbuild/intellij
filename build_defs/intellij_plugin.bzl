@@ -131,7 +131,7 @@ def _intellij_plugin_jar_impl(ctx):
   module_to_merged_xmls = _merge_optional_plugin_xmls(ctx)
   final_plugin_xml_file = _add_optional_dependencies_to_plugin_xml(ctx, module_to_merged_xmls.keys())
   jar_file = _package_meta_inf_files(ctx, final_plugin_xml_file, module_to_merged_xmls)
-  files = set([jar_file])
+  files = depset([jar_file])
   return struct(
       files = files,
   )

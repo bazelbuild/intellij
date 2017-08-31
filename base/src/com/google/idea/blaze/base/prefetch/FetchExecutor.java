@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.prefetch;
 
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.idea.common.concurrency.ConcurrencyUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import java.util.concurrent.Executors;
 
@@ -25,5 +26,10 @@ public class FetchExecutor {
   private static final int THREAD_COUNT = 32;
   public static final ListeningExecutorService EXECUTOR =
       MoreExecutors.listeningDecorator(
-          new BoundedTaskExecutor(Executors.newFixedThreadPool(THREAD_COUNT), THREAD_COUNT));
+          new BoundedTaskExecutor(
+              // #api171 add this argument, the form without a name is deprecated
+              // FetchExecutor.class.getSimpleName(),
+              Executors.newFixedThreadPool(
+                  THREAD_COUNT, ConcurrencyUtil.namedDaemonThreadPoolFactory(FetchExecutor.class)),
+              THREAD_COUNT));
 }

@@ -42,7 +42,10 @@ import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.cpp.BlazeCWorkspace;
+import com.google.idea.blaze.cpp.CompilerVersionChecker;
+import com.google.idea.blaze.cpp.MockCompilerVersionChecker;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
+import com.google.idea.sdkcompat.cidr.CidrCompilerSwitchesAdapter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
@@ -74,6 +77,8 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
   public void setup() {
     mockSdk("android-25", "Android 25 SDK");
     registerProjectService(OCWorkspaceManager.class, new MockOCWorkspaceManager());
+    registerApplicationService(
+        CompilerVersionChecker.class, new MockCompilerVersionChecker("1234"));
   }
 
   private void mockSdk(String targetHash, String sdkName) {
@@ -288,7 +293,8 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
                             .addTransitiveSystemIncludeDirectories(
                                 ImmutableList.of(
                                     new ExecutionRootPath("third_party/stl/gcc3"),
-                                    new ExecutionRootPath("third_party/java/jdk/include"))))
+                                    new ExecutionRootPath("third_party/java/jdk/include")))
+                            .addSource(sourceRoot("java/com/google/jni/native.cc")))
                     .addSource(sourceRoot("java/com/google/jni/native.cc"))
                     .addDependency("//android_ndk_linux/toolchains:aarch64"))
             .addTarget(
@@ -307,7 +313,8 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
                             .addTransitiveSystemIncludeDirectories(
                                 ImmutableList.of(
                                     new ExecutionRootPath("third_party/stl/gcc3"),
-                                    new ExecutionRootPath("third_party/java/jdk/include"))))
+                                    new ExecutionRootPath("third_party/java/jdk/include")))
+                            .addSource(sourceRoot("java/com/google/jni/native2.cc")))
                     .addSource(sourceRoot("java/com/google/jni/native2.cc"))
                     .addDependency("//java/com/google:native_lib")
                     .addDependency("//android_ndk_linux/toolchains:armv7a"))
@@ -374,7 +381,8 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
     assertThat(resolveConfigurations).hasSize(1);
     OCCompilerSettings compilerSettings = resolveConfigurations.get(0).getCompilerSettings();
     List<String> compilerSwitches =
-        compilerSettings.getCompilerSwitches(OCLanguageKind.CPP, nativeCc).getCommandLineArgs();
+        CidrCompilerSwitchesAdapter.getCommandLineArgs(
+            compilerSettings.getCompilerSwitches(OCLanguageKind.CPP, nativeCc));
     assertThat(compilerSwitches)
         .contains("--sysroot=android_ndk_linux/platforms/android-21/arch-arm64");
 
@@ -383,7 +391,8 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
     assertThat(resolveConfigurations).hasSize(1);
     compilerSettings = resolveConfigurations.get(0).getCompilerSettings();
     compilerSwitches =
-        compilerSettings.getCompilerSwitches(OCLanguageKind.CPP, nativeCc).getCommandLineArgs();
+        CidrCompilerSwitchesAdapter.getCommandLineArgs(
+            compilerSettings.getCompilerSwitches(OCLanguageKind.CPP, nativeCc));
     assertThat(compilerSwitches)
         .contains("--sysroot=android_ndk_linux/platforms/android-18/arch-arm");
   }

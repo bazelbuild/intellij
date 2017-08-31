@@ -15,29 +15,33 @@
  */
 package com.google.idea.blaze.cpp;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.idea.sdkcompat.cidr.OCCompilerMacrosAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.preprocessor.OCInclusionContext;
 import com.jetbrains.cidr.lang.preprocessor.OCInclusionContextUtil;
 import com.jetbrains.cidr.lang.workspace.compiler.CidrCompilerResult;
-import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerMacros;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerSettings;
 import com.jetbrains.cidr.toolchains.CompilerInfoCache;
 import java.util.Map;
 
-final class BlazeCompilerMacros extends OCCompilerMacros {
-  private final CompilerInfoCache compilerInfoCache;
-  private final ImmutableCollection<String> globalDefines;
-  private final ImmutableMap<String, String> globalFeatures;
-  private final OCCompilerSettings compilerSettings;
+final class BlazeCompilerMacros extends OCCompilerMacrosAdapter {
   private final Project project;
 
-  public BlazeCompilerMacros(
+  private final CompilerInfoCache compilerInfoCache;
+  private final OCCompilerSettings compilerSettings;
+
+  private final ImmutableCollection<String> globalDefines;
+  private final ImmutableMap<String, String> globalFeatures;
+
+  BlazeCompilerMacros(
       Project project,
       CompilerInfoCache compilerInfoCache,
       OCCompilerSettings compilerSettings,
@@ -51,14 +55,10 @@ final class BlazeCompilerMacros extends OCCompilerMacros {
   }
 
   @Override
-  protected void fillFileMacros(OCInclusionContext context, PsiFile sourceFile) {
-    // Get the default compiler info for this file.
-    VirtualFile vf = OCInclusionContextUtil.getVirtualFile(sourceFile);
+  public String getAllDefines(OCLanguageKind kind, VirtualFile vf) {
     CidrCompilerResult<CompilerInfoCache.Entry> compilerInfoProvider =
-        compilerInfoCache.getCompilerInfoCache(
-            project, compilerSettings, context.getLanguageKind(), vf);
+        compilerInfoCache.getCompilerInfoCache(project, compilerSettings, kind, vf);
     CompilerInfoCache.Entry compilerInfo = compilerInfoProvider.getResult();
-
     // Combine the info we got from Blaze with the info we get from IntelliJ's methods.
     ImmutableSet.Builder<String> allDefinesBuilder = ImmutableSet.builder();
     // IntelliJ expects a string of "#define [VAR_NAME] [VALUE]\n#define [VAR_NAME2] [VALUE]\n...",
@@ -76,14 +76,45 @@ final class BlazeCompilerMacros extends OCCompilerMacros {
       allDefines += "\n" + compilerInfo.defines;
     }
 
+    return allDefines;
+  }
+
+  @Override
+  protected void fillFileMacros(OCInclusionContext context, PsiFile sourceFile) {
+    // Get the default compiler info for this file.
+    VirtualFile vf = OCInclusionContextUtil.getVirtualFile(sourceFile);
+
+    CidrCompilerResult<CompilerInfoCache.Entry> compilerInfoProvider =
+        compilerInfoCache.getCompilerInfoCache(
+            project, compilerSettings, context.getLanguageKind(), vf);
+    CompilerInfoCache.Entry compilerInfo = compilerInfoProvider.getResult();
+
     Map<String, String> allFeatures = Maps.newHashMap();
     allFeatures.putAll(globalFeatures);
     if (compilerInfo != null) {
-      allFeatures.putAll(compilerInfo.features);
+      addAllFeatures(allFeatures, compilerInfo.features);
     }
 
-    fillSubstitutions(context, allDefines);
+    fillSubstitutions(context, getAllDefines(context.getLanguageKind(), vf));
     enableClangFeatures(context, allFeatures);
     enableClangExtensions(context, allFeatures);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (!(obj instanceof BlazeCompilerMacros)) {
+      return false;
+    }
+    BlazeCompilerMacros other = (BlazeCompilerMacros) obj;
+    return this.globalDefines.equals(other.globalDefines)
+        && this.globalFeatures.equals(other.globalFeatures);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(globalDefines, globalFeatures);
   }
 }

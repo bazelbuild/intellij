@@ -20,7 +20,7 @@ import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
-import java.util.Collection;
+import java.util.List;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
@@ -33,12 +33,12 @@ class BlazeJavaLibrarySource extends LibrarySource.Adapter {
   }
 
   @Override
-  public Collection<? extends BlazeLibrary> getLibraries() {
+  public List<? extends BlazeLibrary> getLibraries() {
     BlazeJavaSyncData syncData = blazeProjectData.syncState.get(BlazeJavaSyncData.class);
     if (syncData == null) {
       return ImmutableList.of();
     }
-    return syncData.importResult.libraries.values();
+    return syncData.importResult.libraries.values().asList();
   }
 
   @Nullable

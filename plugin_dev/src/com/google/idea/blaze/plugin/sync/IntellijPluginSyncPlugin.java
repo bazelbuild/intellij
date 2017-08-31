@@ -29,7 +29,6 @@ import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider;
 import com.google.idea.sdkcompat.transactions.Transactions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
@@ -92,14 +91,10 @@ public class IntellijPluginSyncPlugin extends BlazeSyncPlugin.Adapter {
             projectViewSet, blazeProjectData, LanguageLevel.JDK_1_7);
 
     // Leave the SDK, but set the language level
-    Transactions.submitTransactionAndWait(
-        () ->
-            ApplicationManager.getApplication()
-                .runWriteAction(
-                    () -> {
-                      LanguageLevelProjectExtension ext =
-                          LanguageLevelProjectExtension.getInstance(project);
-                      ext.setLanguageLevel(javaLanguageLevel);
-                    }));
+    Transactions.submitWriteActionTransactionAndWait(
+        () -> {
+          LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
+          ext.setLanguageLevel(javaLanguageLevel);
+        });
   }
 }

@@ -1,39 +1,55 @@
 """Convenience methods for plugin_api."""
 
+# BUILD_VARS for each IDE corresponding to indirect ij_products, eg. "intellij-latest"
+
+
+
+
+
+
+
+
+
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
-    "intellij-latest": "intellij-2017.1.1",
-    "intellij-beta": "intellij-2017.1.1",
+    "intellij-latest": "intellij-2017.1.5",
+    "intellij-beta": "intellij-2017.2.2",
+    "intellij-ue-latest": "intellij-ue-2017.1.5",
+    "intellij-ue-beta": "intellij-ue-2017.2.2",
     "android-studio-latest": "android-studio-2.3.1.0",
-    "android-studio-beta": "android-studio-2.3.1.0",
+    "android-studio-beta": "android-studio-3.0.0.9",
     "clion-latest": "clion-2017.1.1",
-    "clion-beta": "clion-2017.1.1",
+    "clion-beta": "clion-2017.2.1",
 }
 
 DIRECT_IJ_PRODUCTS = {
-    "intellij-2017.1.1": struct(
+    "intellij-2017.2.2": struct(
         ide="intellij",
-        directory="intellij_ce_2017_1_1",
+        directory="intellij_ce_2017_2_2",
     ),
-    "intellij-2016.3.1": struct(
+    "intellij-ue-2017.2.2": struct(
+        ide="intellij-ue",
+        directory="intellij_ue_2017_2_2",
+    ),
+    "intellij-2017.1.5": struct(
         ide="intellij",
-        directory="intellij_ce_2016_3_1",
+        directory="intellij_ce_2017_1_5",
     ),
-    "android-studio-2.3.0.8": struct(
+    "intellij-ue-2017.1.5": struct(
+        ide="intellij-ue",
+        directory="intellij_ue_2017_1_5",
+    ),
+    "android-studio-3.0.0.9": struct(
         ide="android-studio",
-        directory="android_studio_2_3_0_8",
+        directory="android_studio_3_0_0_9",
     ),
     "android-studio-2.3.1.0": struct(
         ide="android-studio",
         directory="android_studio_2_3_1_0",
     ),
-    "clion-162.1967.7": struct(
+    "clion-2017.2.1": struct(
         ide="clion",
-        directory="CL_162_1967_7",
-    ),
-    "clion-2016.3.2": struct(
-        ide="clion",
-        directory="clion_2016_3_2",
+        directory="clion_2017_2_1",
     ),
     "clion-2017.1.1": struct(
         ide="clion",
@@ -94,11 +110,12 @@ def select_for_plugin_api(params):
 
   return select(select_params)
 
-def select_for_ide(intellij=None, android_studio=None, clion=None, default=[]):
+def select_for_ide(intellij=None, intellij_ue=None, android_studio=None, clion=None, default=[]):
   """Selects for the supported IDEs.
 
   Args:
       intellij: Files to use for IntelliJ. If None, will use default.
+      intellij_ue: Files to use for IntelliJ UE. If None, will use value chosen for 'intellij'.
       android_studio: Files to use for Android Studio. If None will use default.
       clion: Files to use for CLion. If None will use default.
       default: Files to use for any IDEs not passed.
@@ -115,11 +132,13 @@ def select_for_ide(intellij=None, android_studio=None, clion=None, default=[]):
     )
   """
   intellij = intellij if intellij != None else default
+  intellij_ue = intellij_ue if intellij_ue != None else intellij
   android_studio = android_studio if android_studio != None else default
   clion = clion if clion != None else default
 
   ide_to_value = {
       "intellij" : intellij,
+      "intellij-ue" : intellij_ue,
       "android-studio": android_studio,
       "clion": clion,
   }
@@ -135,11 +154,12 @@ def select_for_ide(intellij=None, android_studio=None, clion=None, default=[]):
 def _plugin_api_directory(value):
   return "@" + value.directory + "//"
 
-def select_from_plugin_api_directory(intellij, android_studio, clion):
+def select_from_plugin_api_directory(intellij, android_studio, clion, intellij_ue=None):
   """Internal convenience method to generate select statement from the IDE's plugin_api directories."""
 
   ide_to_value = {
       "intellij" : intellij,
+      "intellij-ue" : intellij_ue if intellij_ue else intellij,
       "android-studio": android_studio,
       "clion": clion,
   }

@@ -24,12 +24,12 @@ import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /** Moves print output to the blaze console. */
 public class BlazeConsoleScope implements BlazeScope {
@@ -38,20 +38,20 @@ public class BlazeConsoleScope implements BlazeScope {
   public static class Builder {
     private Project project;
     private ProgressIndicator progressIndicator;
-    private boolean suppressConsole = false;
+    private BlazeConsolePopupBehavior popupBehavior;
     private boolean escapeAnsiColorCodes = false;
 
-    public Builder(@NotNull Project project) {
+    public Builder(Project project) {
       this(project, null);
     }
 
-    public Builder(@NotNull Project project, ProgressIndicator progressIndicator) {
+    public Builder(Project project, ProgressIndicator progressIndicator) {
       this.project = project;
       this.progressIndicator = progressIndicator;
     }
 
-    public Builder setSuppressConsole(boolean suppressConsole) {
-      this.suppressConsole = suppressConsole;
+    public Builder setPopupBehavior(BlazeConsolePopupBehavior popupBehavior) {
+      this.popupBehavior = popupBehavior;
       return this;
     }
 
@@ -61,24 +61,23 @@ public class BlazeConsoleScope implements BlazeScope {
     }
 
     public BlazeConsoleScope build() {
-      return new BlazeConsoleScope(
-          project, progressIndicator, suppressConsole, escapeAnsiColorCodes);
+      return new BlazeConsoleScope(project, progressIndicator, popupBehavior, escapeAnsiColorCodes);
     }
   }
 
-  @NotNull private final BlazeConsoleService blazeConsoleService;
+  private final BlazeConsoleService blazeConsoleService;
 
   @Nullable private final ProgressIndicator progressIndicator;
 
-  private final boolean showDialogOnChange;
+  private final BlazeConsolePopupBehavior popupBehavior;
   private boolean activated;
 
   private final ConsoleStream consoleStream;
 
   private OutputSink<PrintOutput> printSink =
       (output) -> {
-        @NotNull String text = output.getText();
-        @NotNull
+        String text = output.getText();
+
         ConsoleViewContentType contentType =
             output.getOutputType() == OutputType.ERROR
                 ? ConsoleViewContentType.ERROR_OUTPUT
@@ -89,20 +88,20 @@ public class BlazeConsoleScope implements BlazeScope {
 
   private OutputSink<StatusOutput> statusSink =
       (output) -> {
-        @NotNull String text = output.getStatus();
-        @NotNull ConsoleViewContentType contentType = ConsoleViewContentType.NORMAL_OUTPUT;
+        String text = output.getStatus();
+        ConsoleViewContentType contentType = ConsoleViewContentType.NORMAL_OUTPUT;
         print(text, contentType);
         return OutputSink.Propagation.Continue;
       };
 
   private BlazeConsoleScope(
-      @NotNull Project project,
+      Project project,
       @Nullable ProgressIndicator progressIndicator,
-      boolean suppressConsole,
+      BlazeConsolePopupBehavior popupBehavior,
       boolean escapeAnsiColorCodes) {
     this.blazeConsoleService = BlazeConsoleService.getInstance(project);
     this.progressIndicator = progressIndicator;
-    this.showDialogOnChange = !suppressConsole;
+    this.popupBehavior = popupBehavior;
     ConsoleStream sinkConsoleStream = blazeConsoleService::print;
     this.consoleStream =
         escapeAnsiColorCodes ? new ColoredConsoleStream(sinkConsoleStream) : sinkConsoleStream;
@@ -112,14 +111,21 @@ public class BlazeConsoleScope implements BlazeScope {
     consoleStream.print(text, contentType);
     consoleStream.print("\n", contentType);
 
-    if (showDialogOnChange && !activated) {
+    if (activated) {
+      return;
+    }
+    boolean activate =
+        popupBehavior == BlazeConsolePopupBehavior.ALWAYS
+            || (popupBehavior == BlazeConsolePopupBehavior.ON_ERROR
+                && contentType == ConsoleViewContentType.ERROR_OUTPUT);
+    if (activate) {
       activated = true;
       ApplicationManager.getApplication().invokeLater(blazeConsoleService::activateConsoleWindow);
     }
   }
 
   @Override
-  public void onScopeBegin(@NotNull final BlazeContext context) {
+  public void onScopeBegin(final BlazeContext context) {
     context.addOutputSink(PrintOutput.class, printSink);
     context.addOutputSink(StatusOutput.class, statusSink);
     blazeConsoleService.clear();
@@ -133,7 +139,7 @@ public class BlazeConsoleScope implements BlazeScope {
   }
 
   @Override
-  public void onScopeEnd(@NotNull BlazeContext context) {
+  public void onScopeEnd(BlazeContext context) {
     blazeConsoleService.setStopHandler(null);
   }
 }

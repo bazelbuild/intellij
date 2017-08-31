@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.wizard2;
 
 import com.google.common.collect.ImmutableList;
+import com.intellij.openapi.Disposable;
 import java.util.Collection;
 
 /** Provides bazel options for the wizard. */
@@ -23,7 +24,7 @@ public class BazelWizardOptionProvider implements BlazeWizardOptionProvider {
 
   @Override
   public Collection<BlazeSelectWorkspaceOption> getSelectWorkspaceOptions(
-      BlazeNewProjectBuilder builder) {
+      BlazeNewProjectBuilder builder, Disposable parentDisposable) {
     return ImmutableList.of(new UseExistingBazelWorkspaceOption(builder));
   }
 

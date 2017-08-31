@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.InputStreamProvider;
+import com.google.idea.blaze.base.io.MockInputStreamProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -36,15 +37,8 @@ import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
 import com.google.idea.blaze.scala.sync.source.ScalaJavaLikeLanguage;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.util.containers.HashMap;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.List;
-import java.util.Map;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -63,8 +57,7 @@ public class ScalaSourceDirectoryCalculatorTest extends BlazeTestCase {
           artifactLocation -> new File("/root", artifactLocation.getRelativePath());
 
   @Override
-  protected void initTest(
-      @NotNull Container applicationServices, @NotNull Container projectServices) {
+  protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
 
     mockInputStreamProvider = new MockInputStreamProvider();
@@ -243,25 +236,5 @@ public class ScalaSourceDirectoryCalculatorTest extends BlazeTestCase {
                         .build())
                 .build());
     issues.assertNoIssues();
-  }
-
-  private static class MockInputStreamProvider implements InputStreamProvider {
-
-    private final Map<String, InputStream> files = new HashMap<>();
-
-    MockInputStreamProvider addFile(String filePath, String src) {
-      try {
-        files.put(filePath, new ByteArrayInputStream(src.getBytes("UTF-8")));
-      } catch (UnsupportedEncodingException ignored) {
-        // ignored
-      }
-      return this;
-    }
-
-    @Nullable
-    @Override
-    public InputStream getFile(@NotNull File path) {
-      return files.get(path.getPath());
-    }
   }
 }

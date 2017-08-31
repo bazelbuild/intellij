@@ -26,7 +26,9 @@ public abstract class DelegatingCodeStyleManagerSdkCompatAdapter extends CodeSty
   public void reformatTextWithContext(@NotNull PsiFile file, @NotNull ChangedRangesInfo info)
       throws IncorrectOperationException {
     List<TextRange> ranges = new ArrayList<>();
-    ranges.addAll(info.insertedRanges);
+    if (info.insertedRanges != null) {
+      ranges.addAll(info.insertedRanges);
+    }
     ranges.addAll(info.allChangedRanges);
     this.reformatTextWithContext(file, ranges);
   }

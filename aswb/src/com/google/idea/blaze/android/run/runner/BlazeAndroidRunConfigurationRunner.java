@@ -42,6 +42,7 @@ import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -190,7 +191,10 @@ public final class BlazeAndroidRunConfigurationRunner
   @Override
   public boolean executeBeforeRunTask(ExecutionEnvironment env) {
     final Project project = env.getProject();
-    boolean suppressConsole = BlazeUserSettings.getInstance().getSuppressConsoleForRunAction();
+    BlazeConsolePopupBehavior consolePopupBehavior =
+        BlazeUserSettings.getInstance().getSuppressConsoleForRunAction()
+            ? BlazeConsolePopupBehavior.NEVER
+            : BlazeConsolePopupBehavior.ALWAYS;
     return Scope.root(
         context -> {
           context
@@ -198,7 +202,7 @@ public final class BlazeAndroidRunConfigurationRunner
               .push(new ExperimentScope())
               .push(
                   new BlazeConsoleScope.Builder(project)
-                      .setSuppressConsole(suppressConsole)
+                      .setPopupBehavior(consolePopupBehavior)
                       .build())
               .push(new IdeaLogScope());
 

@@ -1,5 +1,13 @@
 licenses(["notice"])  # Apache 2.0
 
+load(
+    "//build_defs:build_defs.bzl",
+    "intellij_plugin",
+    "merged_plugin_xml",
+    "optional_plugin_xml",
+    "stamped_plugin_xml",
+)
+
 java_library(
     name = "plugin_dev",
     srcs = glob(["src/**/*.java"]),
@@ -15,17 +23,22 @@ java_library(
     ],
 )
 
+optional_plugin_xml(
+    name = "optional_xml",
+    module = "DevKit",
+    plugin_xml = "src/META-INF/blaze-plugin-dev.xml",
+    visibility = ["//visibility:public"],
+)
+
+OPTIONAL_PLUGIN_XMLS = [
+    ":optional_xml",
+    "//java:optional_xml",
+]
+
 filegroup(
     name = "plugin_xml",
     srcs = ["src/META-INF/blaze-plugin-dev.xml"],
     visibility = ["//visibility:public"],
-)
-
-load(
-    "//build_defs:build_defs.bzl",
-    "merged_plugin_xml",
-    "stamped_plugin_xml",
-    "intellij_plugin",
 )
 
 merged_plugin_xml(
@@ -48,6 +61,7 @@ stamped_plugin_xml(
 intellij_plugin(
     name = "plugin_dev_integration_test_plugin",
     testonly = 1,
+    optional_plugin_xmls = OPTIONAL_PLUGIN_XMLS,
     plugin_xml = ":plugin_dev_plugin_xml",
     deps = [
         ":plugin_dev",
@@ -64,7 +78,7 @@ load(
 intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(["tests/integrationtests/**/*.java"]),
-    required_plugins = "com.google.idea.blaze.ijwb",
+    required_plugins = "com.google.idea.blaze.plugin_dev,DevKit",
     test_package_root = "com.google.idea.blaze.plugin",
     runtime_deps = [
         ":plugin_dev_integration_test_plugin",

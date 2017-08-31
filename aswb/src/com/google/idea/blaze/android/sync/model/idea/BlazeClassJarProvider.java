@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
+import com.google.idea.sdkcompat.android.res.AppResourceRepositoryAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
@@ -44,20 +45,21 @@ import com.intellij.util.containers.OrderedSet;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.jetbrains.annotations.Nullable;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 /** Collects class jars from the user's build. */
 public class BlazeClassJarProvider extends ClassJarProvider {
 
   private final Project project;
-  private AtomicBoolean pendingModuleJarsRefresh;
-  private AtomicBoolean pendingDependencyJarsRefresh;
+  private final AtomicBoolean pendingJarsRefresh;
 
   public BlazeClassJarProvider(final Project project) {
     this.project = project;
-    this.pendingModuleJarsRefresh = new AtomicBoolean(false);
-    this.pendingDependencyJarsRefresh = new AtomicBoolean(false);
+    this.pendingJarsRefresh = new AtomicBoolean(false);
   }
 
   @Override
@@ -69,6 +71,7 @@ public class BlazeClassJarProvider extends ClassJarProvider {
       return null;
     }
 
+    TargetMap targetMap = blazeProjectData.targetMap;
     ArtifactLocationDecoder decoder = blazeProjectData.artifactLocationDecoder;
     AndroidResourceModuleRegistry registry = AndroidResourceModuleRegistry.getInstance(project);
     TargetIdeInfo target = blazeProjectData.targetMap.get(registry.getTargetKey(module));
@@ -84,9 +87,19 @@ public class BlazeClassJarProvider extends ClassJarProvider {
 
     String classNamePath = className.replace('.', File.separatorChar) + SdkConstants.DOT_CLASS;
 
+    List<LibraryArtifact> jarsToSearch = Lists.newArrayList(target.javaIdeInfo.jars);
+    jarsToSearch.addAll(
+        TransitiveDependencyMap.getInstance(project)
+            .getTransitiveDependencies(target.key)
+            .stream()
+            .map(targetMap::get)
+            .filter(Objects::nonNull)
+            .flatMap(BlazeClassJarProvider::getNonResourceJars)
+            .collect(Collectors.toList()));
+
     List<File> missingClassJars = Lists.newArrayList();
-    for (LibraryArtifact jar : target.javaIdeInfo.jars) {
-      if (jar.classJar == null) {
+    for (LibraryArtifact jar : jarsToSearch) {
+      if (jar.classJar == null || jar.classJar.isSource()) {
         continue;
       }
       File classJarFile = decoder.decode(jar.classJar);
@@ -104,8 +117,19 @@ public class BlazeClassJarProvider extends ClassJarProvider {
       }
     }
 
-    maybeRefreshJars(missingClassJars, pendingModuleJarsRefresh);
+    maybeRefreshJars(missingClassJars, pendingJarsRefresh);
     return null;
+  }
+
+  private static Stream<LibraryArtifact> getNonResourceJars(TargetIdeInfo target) {
+    if (target.javaIdeInfo == null) {
+      return null;
+    }
+    Stream<LibraryArtifact> jars = target.javaIdeInfo.jars.stream();
+    if (target.androidIdeInfo != null) {
+      jars = jars.filter(jar -> !jar.equals(target.androidIdeInfo.resourceJar));
+    }
+    return jars;
   }
 
   @Nullable
@@ -137,38 +161,26 @@ public class BlazeClassJarProvider extends ClassJarProvider {
       return results;
     }
 
-    AppResourceRepository repository = AppResourceRepository.getAppResources(module, true);
+    AppResourceRepository repository = AppResourceRepositoryAdapter.getOrCreateInstance(module);
 
-    List<File> missingClassJars = Lists.newArrayList();
     for (TargetKey dependencyTargetKey :
         TransitiveDependencyMap.getInstance(project).getTransitiveDependencies(target.key)) {
       TargetIdeInfo dependencyTarget = targetMap.get(dependencyTargetKey);
       if (dependencyTarget == null) {
         continue;
       }
-      JavaIdeInfo javaIdeInfo = dependencyTarget.javaIdeInfo;
-      AndroidIdeInfo androidIdeInfo = dependencyTarget.androidIdeInfo;
 
-      // Add all non-resource jars to be searched.
-      // Multiple resource jars will have ID conflicts unless generated dynamically.
+      // Add all import jars as external libraries.
+      JavaIdeInfo javaIdeInfo = dependencyTarget.javaIdeInfo;
       if (javaIdeInfo != null) {
         for (LibraryArtifact jar : javaIdeInfo.jars) {
-          if (androidIdeInfo != null && jar.equals(androidIdeInfo.resourceJar)) {
-            // No resource jars.
-            continue;
-          }
-          // Some of these could be empty class jars from resource only android_library targets.
-          // A potential optimization could be to filter out jars like these,
-          // so we don't waste time fetching and searching them.
-          // TODO: benchmark to see if optimization is worthwhile.
-          if (jar.classJar != null) {
-            File classJarFile = decoder.decode(jar.classJar);
+          if (jar.classJar != null && jar.classJar.isSource()) {
             VirtualFile classJar =
-                VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(classJarFile);
+                VirtualFileSystemProvider.getInstance()
+                    .getSystem()
+                    .findFileByIoFile(decoder.decode(jar.classJar));
             if (classJar != null) {
               results.add(classJar);
-            } else if (classJarFile.exists()) {
-              missingClassJars.add(classJarFile);
             }
           }
         }
@@ -185,13 +197,13 @@ public class BlazeClassJarProvider extends ClassJarProvider {
       // The resource repository remembers the dynamic IDs that it handed out and when the layoutlib
       // calls to ask about the name and content of a given resource ID, the repository can just
       // answer what it has already stored.
+      AndroidIdeInfo androidIdeInfo = dependencyTarget.androidIdeInfo;
       if (androidIdeInfo != null && repository != null) {
         ResourceClassRegistry.get(module.getProject())
             .addLibrary(repository, androidIdeInfo.resourceJavaPackage);
       }
     }
 
-    maybeRefreshJars(missingClassJars, pendingDependencyJarsRefresh);
     return results;
   }
 

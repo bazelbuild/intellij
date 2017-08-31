@@ -129,12 +129,15 @@ class PackageLister {
     if (provider.findBuildFileInDirectory(dir) != null) {
       output.add(TargetExpression.allFromPackageNonRecursive(path));
     }
-    File[] children = FileAttributeProvider.getInstance().listFiles(dir);
+    FileAttributeProvider attributeProvider = FileAttributeProvider.getInstance();
+    File[] children = attributeProvider.listFiles(dir);
     if (children == null) {
       return;
     }
     for (File child : children) {
-      traversePackageRecursively(provider, pathResolver, child, output);
+      if (attributeProvider.isDirectory(child)) {
+        traversePackageRecursively(provider, pathResolver, child, output);
+      }
     }
   }
 }

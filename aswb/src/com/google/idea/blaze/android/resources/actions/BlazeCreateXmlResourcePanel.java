@@ -17,7 +17,9 @@ package com.google.idea.blaze.android.resources.actions;
 
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
-import com.android.tools.idea.res.ResourceNameValidator;
+import com.android.tools.idea.res.IdeResourceNameValidator;
+import com.google.idea.sdkcompat.android.resources.actions.CreateXmlResourceDialogAdapter;
+import com.google.idea.sdkcompat.android.resources.actions.CreateXmlResourcePanelAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -40,24 +42,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import javax.annotation.Nullable;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import org.jetbrains.android.actions.CreateXmlResourceDialog;
-import org.jetbrains.android.actions.CreateXmlResourcePanel;
 import org.jetbrains.android.actions.CreateXmlResourceSubdirPanel;
 import org.jetbrains.android.actions.CreateXmlResourceSubdirPanel.Parent;
 import org.jetbrains.android.util.AndroidResourceUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Embeddable UI for selecting how to create a new resource value (which XML file and directories to
  * place it).
  */
-public class BlazeCreateXmlResourcePanel implements CreateXmlResourcePanel, Parent {
+public class BlazeCreateXmlResourcePanel extends CreateXmlResourcePanelAdapter implements Parent {
 
   private JPanel myPanel;
   private JTextField myNameField;
@@ -76,14 +76,14 @@ public class BlazeCreateXmlResourcePanel implements CreateXmlResourcePanel, Pare
   private JBLabel myDirectoriesLabel;
   private CreateXmlResourceSubdirPanel mySubdirPanel;
 
-  private ResourceNameValidator myResourceNameValidator;
+  private final IdeResourceNameValidator myResourceNameValidator;
   @Nullable private VirtualFile myContextFile;
   @Nullable private VirtualFile myResDirectory;
 
   public BlazeCreateXmlResourcePanel(
-      @NotNull Module module,
-      @NotNull ResourceType resourceType,
-      @NotNull ResourceFolderType folderType,
+      Module module,
+      ResourceType resourceType,
+      ResourceFolderType folderType,
       @Nullable String resourceName,
       @Nullable String resourceValue,
       boolean chooseName,
@@ -91,7 +91,7 @@ public class BlazeCreateXmlResourcePanel implements CreateXmlResourcePanel, Pare
       boolean chooseFilename,
       @Nullable VirtualFile defaultFile,
       @Nullable VirtualFile contextFile,
-      @NotNull Function<Module, ResourceNameValidator> nameValidatorFactory) {
+      Function<Module, IdeResourceNameValidator> nameValidatorFactory) {
     setupUi();
     setChangeNameVisible(false);
     setChangeValueVisible(false);
@@ -178,7 +178,7 @@ public class BlazeCreateXmlResourcePanel implements CreateXmlResourcePanel, Pare
   }
 
   @Override
-  public void resetFromFile(@NotNull VirtualFile file, @NotNull Project project) {
+  public void resetFromFile(VirtualFile file, Project project) {
     final VirtualFile parent = file.getParent();
     if (parent == null) {
       return;
@@ -247,16 +247,21 @@ public class BlazeCreateXmlResourcePanel implements CreateXmlResourcePanel, Pare
       return new ValidationInfo("choose directories", myDirectoriesPanel);
     }
 
-    return CreateXmlResourceDialog.checkIfResourceAlreadyExists(
-        myModule.getProject(), resourceDir, resourceName, myResourceType, directoryNames, fileName);
+    return CreateXmlResourceDialogAdapter.checkIfResourceAlreadyExists(
+        myModule.getProject(),
+        resourceDir,
+        resourceName,
+        null,
+        myResourceType,
+        directoryNames,
+        fileName);
   }
 
   @Override
-  public ResourceNameValidator getResourceNameValidator() {
+  public IdeResourceNameValidator getResourceNameValidatorCompat() {
     return myResourceNameValidator;
   }
 
-  @NotNull
   @Override
   public Module getModule() {
     return myModule;

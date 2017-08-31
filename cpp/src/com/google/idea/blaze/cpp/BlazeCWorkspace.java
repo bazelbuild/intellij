@@ -18,10 +18,11 @@ package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceAdapter;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.symbols.OCSymbol;
@@ -32,26 +33,28 @@ import javax.annotation.Nullable;
 
 /** Main entry point for C/CPP configuration data. */
 public final class BlazeCWorkspace extends OCWorkspaceAdapter {
-  private static final Logger logger = Logger.getInstance(BlazeCWorkspace.class);
-
   private final BlazeConfigurationResolver configurationResolver;
+  private BlazeConfigurationResolverResult resolverResult;
 
   private BlazeCWorkspace(Project project) {
     super(project);
     this.configurationResolver = new BlazeConfigurationResolver(project);
+    this.resolverResult = BlazeConfigurationResolverResult.empty(project);
   }
 
   public static BlazeCWorkspace getInstance(Project project) {
     return ServiceManager.getService(project, BlazeCWorkspace.class);
   }
 
-  public void update(BlazeContext context, BlazeProjectData blazeProjectData) {
-    // Non-incremental update to our c configurations.
-    long start = System.currentTimeMillis();
-    configurationResolver.update(context, blazeProjectData);
-    long end = System.currentTimeMillis();
-
-    logger.info(String.format("Blaze OCWorkspace update took: %d ms", (end - start)));
+  public void update(
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData) {
+    BlazeConfigurationResolverResult oldResult = resolverResult;
+    resolverResult =
+        configurationResolver.update(
+            context, workspaceRoot, projectViewSet, blazeProjectData, oldResult);
   }
 
   @Override
@@ -82,8 +85,8 @@ public final class BlazeCWorkspace extends OCWorkspaceAdapter {
   }
 
   @Override
-  public List<? extends OCResolveConfiguration> getConfigurations() {
-    return configurationResolver.getAllConfigurations();
+  public List<BlazeResolveConfiguration> getConfigurations() {
+    return resolverResult.getAllConfigurations();
   }
 
   @Override
@@ -92,7 +95,12 @@ public final class BlazeCWorkspace extends OCWorkspaceAdapter {
     if (sourceFile == null || !sourceFile.isValid()) {
       return ImmutableList.of();
     }
-    OCResolveConfiguration config = configurationResolver.getConfigurationForFile(sourceFile);
+    OCResolveConfiguration config = resolverResult.getConfigurationForFile(sourceFile);
     return config == null ? ImmutableList.of() : ImmutableList.of(config);
+  }
+
+  @Nullable
+  BlazeConfigurationResolverDiff getConfigurationDiff() {
+    return resolverResult.getConfigurationDiff();
   }
 }

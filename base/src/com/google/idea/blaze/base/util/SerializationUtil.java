@@ -26,13 +26,16 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
 import java.io.Serializable;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /** Utils for serialization. */
 public class SerializationUtil {
 
-  public static void saveToDisk(@NotNull File file, @NotNull Serializable serializable)
-      throws IOException {
+  /**
+   * Write {@link Serializable} to disk.
+   *
+   * @throws IOException if serialization fails.
+   */
+  public static void saveToDisk(File file, Serializable serializable) throws IOException {
     ensureExists(file.getParentFile());
     FileOutputStream fos = null;
     try {
@@ -48,48 +51,46 @@ public class SerializationUtil {
     }
   }
 
+  /**
+   * Read the serialized objects from disk. Returns null if the file doesn't exist or is empty.
+   *
+   * @throws IOException if deserialization fails.
+   */
   @Nullable
-  public static Object loadFromDisk(
-      @NotNull File file, @NotNull final Iterable<ClassLoader> classLoaders) throws IOException {
-    try {
-      FileInputStream fin = null;
-      try {
-        if (!file.exists()) {
-          return null;
-        }
-        fin = new FileInputStream(file);
-        ObjectInputStream ois =
-            new ObjectInputStream(fin) {
-              @Override
-              protected Class<?> resolveClass(ObjectStreamClass desc)
-                  throws IOException, ClassNotFoundException {
-                String name = desc.getName();
-                for (ClassLoader loader : classLoaders) {
-                  try {
-                    return Class.forName(name, false, loader);
-                  } catch (ClassNotFoundException e) {
-                    // Ignore - will throw eventually in super
-                  }
+  public static Object loadFromDisk(File file, final Iterable<ClassLoader> classLoaders)
+      throws IOException {
+    if (!file.exists()) {
+      return null;
+    }
+    try (FileInputStream fin = new FileInputStream(file)) {
+      ObjectInputStream ois =
+          new ObjectInputStream(fin) {
+            @Override
+            protected Class<?> resolveClass(ObjectStreamClass desc)
+                throws IOException, ClassNotFoundException {
+              String name = desc.getName();
+              for (ClassLoader loader : classLoaders) {
+                try {
+                  return Class.forName(name, false, loader);
+                } catch (ClassNotFoundException e) {
+                  // Ignore - will throw eventually in super
                 }
-                return super.resolveClass(desc);
               }
-            };
-        try {
-          return (Object) ois.readObject();
-        } finally {
-          Closeables.close(ois, false);
-        }
+              return super.resolveClass(desc);
+            }
+          };
+      try {
+        return ois.readObject();
       } finally {
-        Closeables.close(fin, false);
+        Closeables.close(ois, false);
       }
-    } catch (ClassNotFoundException e) {
-      throw new IOException(e);
-    } catch (ClassCastException e) {
+    } catch (ClassNotFoundException | ClassCastException | IllegalStateException e) {
+      // rethrow as an IOException, handled by callers
       throw new IOException(e);
     }
   }
 
-  private static void ensureExists(@NotNull File dir) throws IOException {
+  private static void ensureExists(File dir) throws IOException {
     if (!dir.exists() && !dir.mkdirs()) {
       throw new IOException(
           CommonBundle.message("exception.directory.can.not.create", dir.getPath()));

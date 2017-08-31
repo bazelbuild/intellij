@@ -33,11 +33,10 @@ public class JavaLanguageLevelSection {
 
   public static LanguageLevel getLanguageLevel(
       ProjectViewSet projectViewSet, LanguageLevel defaultValue) {
-    Integer level = projectViewSet.getScalarValue(KEY, null);
-    if (level == null) {
-      return defaultValue;
-    }
-    return getLanguageLevel(level, defaultValue);
+    return projectViewSet
+        .getScalarValue(KEY)
+        .map(i -> getLanguageLevel(i, defaultValue))
+        .orElse(defaultValue);
   }
 
   @Nullable

@@ -8,9 +8,14 @@ load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "merged_plugin_xml",
+    "plugin_deploy_zip",
+    "repackaged_files",
     "stamped_plugin_xml",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
+load(
+    "//build_defs:intellij_plugin_debug_target.bzl",
+    "intellij_plugin_debug_target",
+)
 load("//:version.bzl", "VERSION")
 
 merged_plugin_xml(
@@ -36,7 +41,7 @@ stamped_plugin_xml(
     changelog_file = "//:changelog",
     include_product_code_in_stamp = True,
     plugin_id = "com.google.idea.bazel.clwb",
-    plugin_name = "CLion with Bazel",
+    plugin_name = "Bazel",
     plugin_xml = ":merged_plugin_xml",
     stamp_since_build = True,
     version = VERSION,
@@ -46,11 +51,10 @@ java_library(
     name = "clwb_lib",
     srcs = glob(["src/**/*.java"]),
     runtime_deps = [
+        "//golang",
+        "//python",
         "//terminal",
-    ] + select_for_plugin_api({
-        "clion-2016.3.2": [],
-        "default": ["//python"],
-    }),
+    ],
     deps = [
         "//base",
         "//common/experiments",
@@ -62,6 +66,7 @@ java_library(
 )
 
 OPTIONAL_PLUGIN_XMLS = [
+    "//golang:optional_xml",
     "//python:optional_xml",
     "//terminal:optional_xml",
 ]
@@ -73,4 +78,33 @@ intellij_plugin(
     deps = [
         ":clwb_lib",
     ],
+)
+
+repackaged_files(
+    name = "plugin_jar",
+    srcs = [":clwb_bazel"],
+    prefix = "clwb/lib",
+)
+
+repackaged_files(
+    name = "aspect_directory",
+    srcs = ["//aspect:aspect_files"],
+    prefix = "clwb/aspect",
+)
+
+intellij_plugin_debug_target(
+    name = "clwb_bazel_dev",
+    deps = [
+        ":aspect_directory",
+        ":plugin_jar",
+    ],
+)
+
+plugin_deploy_zip(
+    name = "clwb_bazel_zip",
+    srcs = [
+        ":aspect_directory",
+        ":plugin_jar",
+    ],
+    zip_filename = "clwb_bazel.zip",
 )

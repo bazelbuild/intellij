@@ -6,9 +6,8 @@ package(default_visibility = ["//visibility:public"])
 
 java_import(
     name = "sdk",
-    jars = glob([
-        "android-studio/lib/*.jar",
-    ]),
+    jars = glob(["android-studio/lib/*.jar"]),
+    deps = ["@error_prone_annotations//jar"],
     tags = ["intellij-provided-by-sdk"],
 )
 
@@ -33,6 +32,11 @@ java_import(
     jars = glob(["android-studio/plugins/junit/lib/*.jar"]),
 )
 
+java_import(
+    name = "guava",
+    jars = glob(["android-studio/lib/guava-*.jar"]),
+)
+
 # The plugins required by ASwB. We need to include them
 # when running integration tests.
 java_import(
@@ -45,6 +49,7 @@ java_import(
             "android-studio/plugins/junit/lib/*.jar",
             "android-studio/plugins/ndk-workspace/lib/*.jar",
             "android-studio/plugins/properties/lib/*.jar",
+            "android-studio/plugins/smali/lib/*.jar",
         ],
         exclude = [
             # Conflict with lib/guava-*.jar

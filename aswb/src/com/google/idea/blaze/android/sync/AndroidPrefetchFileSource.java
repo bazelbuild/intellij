@@ -20,10 +20,10 @@ import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
 import java.io.File;
-import java.util.Collection;
 import java.util.Set;
 
 /** Adds the resource directories outside our source roots to prefetch. */
@@ -32,8 +32,9 @@ public class AndroidPrefetchFileSource implements PrefetchFileSource {
   public void addFilesToPrefetch(
       Project project,
       ProjectViewSet projectViewSet,
+      ImportRoots importRoots,
       BlazeProjectData blazeProjectData,
-      Collection<File> files) {
+      Set<File> files) {
     BlazeAndroidSyncData syncData = blazeProjectData.syncState.get(BlazeAndroidSyncData.class);
     if (syncData == null) {
       return;
@@ -46,7 +47,7 @@ public class AndroidPrefetchFileSource implements PrefetchFileSource {
   }
 
   @Override
-  public Set<String> prefetchSrcFileExtensions() {
+  public Set<String> prefetchFileExtensions() {
     return ImmutableSet.of("xml");
   }
 }

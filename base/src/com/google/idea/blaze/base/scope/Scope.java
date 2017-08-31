@@ -38,7 +38,7 @@ public final class Scope {
     } catch (ProcessCanceledException e) {
       context.setCancelled();
       throw e;
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       context.setHasError();
       logger.error(e);
       throw e;
@@ -61,7 +61,7 @@ public final class Scope {
     } catch (ProcessCanceledException e) {
       context.setCancelled();
       throw e;
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       context.setHasError();
       logger.error(e);
       throw e;

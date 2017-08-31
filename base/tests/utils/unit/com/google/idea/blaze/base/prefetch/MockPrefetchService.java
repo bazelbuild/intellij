@@ -27,7 +27,8 @@ import java.util.Collection;
 public class MockPrefetchService implements PrefetchService {
 
   @Override
-  public ListenableFuture<?> prefetchFiles(Project project, Collection<File> files) {
+  public ListenableFuture<?> prefetchFiles(
+      Project project, Collection<File> files, boolean refetchCachedFiles) {
     return Futures.immediateFuture(null);
   }
 

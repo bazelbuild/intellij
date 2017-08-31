@@ -20,6 +20,7 @@ import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
+import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProvider.AndroidBinaryLaunchMethod;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.intellij.openapi.project.Project;
@@ -38,11 +39,15 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
   public static final String DO_NOTHING = "do_nothing";
   public static final String LAUNCH_DEEP_LINK = "launch_deep_link";
 
-  private static final String MOBILE_INSTALL_ATTR = "blaze-mobile-install";
+  private static final String LAUNCH_METHOD_ATTR = "launch-method";
+  @Deprecated private static final String MOBILE_INSTALL_ATTR = "blaze-mobile-install";
+  // Remove once v2 becomes default.
   private static final String USE_SPLIT_APKS_IF_POSSIBLE = "use-split-apks-if-possible";
+
   private static final String WORK_PROFILE_ATTR = "use-work-profile-if-present";
   private static final String USER_ID_ATTR = "user-id";
-  private boolean mobileInstall = false;
+
+  private AndroidBinaryLaunchMethod launchMethod = AndroidBinaryLaunchMethod.NON_BLAZE;
   private boolean useSplitApksIfPossible = false;
   private boolean useWorkProfileIfPresent = false;
   private Integer userId;
@@ -65,12 +70,12 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
     return commonState;
   }
 
-  boolean mobileInstall() {
-    return mobileInstall;
+  public AndroidBinaryLaunchMethod getLaunchMethod() {
+    return launchMethod;
   }
 
-  void setMobileInstall(boolean mobileInstall) {
-    this.mobileInstall = mobileInstall;
+  void setLaunchMethod(AndroidBinaryLaunchMethod launchMethod) {
+    this.launchMethod = launchMethod;
   }
 
   public boolean useSplitApksIfPossible() {
@@ -137,7 +142,16 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
     setActivityClass(Strings.nullToEmpty(element.getAttributeValue(ACTIVITY_CLASS)));
     String modeValue = element.getAttributeValue(MODE);
     setMode(Strings.isNullOrEmpty(modeValue) ? LAUNCH_DEFAULT_ACTIVITY : modeValue);
-    setMobileInstall(Boolean.parseBoolean(element.getAttributeValue(MOBILE_INSTALL_ATTR)));
+    String launchMethodAttribute = element.getAttributeValue(LAUNCH_METHOD_ATTR);
+    if (launchMethodAttribute != null) {
+      launchMethod = AndroidBinaryLaunchMethod.valueOf(launchMethodAttribute);
+    } else {
+      if (Boolean.parseBoolean(element.getAttributeValue(MOBILE_INSTALL_ATTR))) {
+        launchMethod = AndroidBinaryLaunchMethod.MOBILE_INSTALL;
+      } else {
+        launchMethod = AndroidBinaryLaunchMethod.NON_BLAZE;
+      }
+    }
     setUseSplitApksIfPossible(
         Boolean.parseBoolean(element.getAttributeValue(USE_SPLIT_APKS_IF_POSSIBLE)));
     setUseWorkProfileIfPresent(Boolean.parseBoolean(element.getAttributeValue(WORK_PROFILE_ATTR)));
@@ -177,7 +191,7 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
     element.setAttribute(DEEP_LINK, deepLink);
     element.setAttribute(ACTIVITY_CLASS, activityClass);
     element.setAttribute(MODE, mode);
-    element.setAttribute(MOBILE_INSTALL_ATTR, Boolean.toString(mobileInstall));
+    element.setAttribute(LAUNCH_METHOD_ATTR, launchMethod.name());
     element.setAttribute(USE_SPLIT_APKS_IF_POSSIBLE, Boolean.toString(useSplitApksIfPossible));
     element.setAttribute(WORK_PROFILE_ATTR, Boolean.toString(useWorkProfileIfPresent));
 

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.run.binary.mobileinstall;
 
 import com.android.ddmlib.IDevice;
+import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.ConsoleProvider;
@@ -29,10 +30,10 @@ import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationIdProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLaunchTaskProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryConsoleProvider;
+import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProvider.AndroidBinaryLaunchMethod;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
@@ -49,7 +50,6 @@ import com.intellij.openapi.project.Project;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.annotations.NotNull;
 
 /** Run context for android_binary. */
 public class BlazeAndroidBinaryMobileInstallRunContext implements BlazeAndroidRunContext {
@@ -70,7 +70,8 @@ public class BlazeAndroidBinaryMobileInstallRunContext implements BlazeAndroidRu
       ExecutionEnvironment env,
       BlazeAndroidBinaryRunConfigurationState configState,
       Label label,
-      ImmutableList<String> buildFlags) {
+      ImmutableList<String> blazeFlags,
+      ImmutableList<String> exeFlags) {
     this.project = project;
     this.facet = facet;
     this.runConfiguration = runConfiguration;
@@ -79,9 +80,14 @@ public class BlazeAndroidBinaryMobileInstallRunContext implements BlazeAndroidRu
     this.consoleProvider = new BlazeAndroidBinaryConsoleProvider(project);
     this.buildStep =
         new BlazeApkBuildStepMobileInstall(
-            project, env, label, buildFlags, configState.useSplitApksIfPossible());
-    this.applicationIdProvider =
-        new BlazeAndroidBinaryApplicationIdProvider(project, buildStep.getDeployInfo());
+            project,
+            env,
+            label,
+            blazeFlags,
+            exeFlags,
+            configState.useSplitApksIfPossible(),
+            configState.getLaunchMethod().equals(AndroidBinaryLaunchMethod.MOBILE_INSTALL_V2));
+    this.applicationIdProvider = new BlazeAndroidBinaryApplicationIdProvider(buildStep);
   }
 
   @Override
@@ -93,11 +99,10 @@ public class BlazeAndroidBinaryMobileInstallRunContext implements BlazeAndroidRu
   public void augmentEnvironment(ExecutionEnvironment env) {}
 
   @Override
-  public void augmentLaunchOptions(@NotNull LaunchOptions.Builder options) {
+  public void augmentLaunchOptions(LaunchOptions.Builder options) {
     options.setDeploy(false).setOpenLogcatAutomatically(true);
   }
 
-  @NotNull
   @Override
   public ConsoleProvider getConsoleProvider() {
     return consoleProvider;
@@ -144,9 +149,12 @@ public class BlazeAndroidBinaryMobileInstallRunContext implements BlazeAndroidRu
             project,
             launchOptions.isDebug(),
             UserIdHelper.getFlagsFromUserId(userId));
-
-    BlazeAndroidDeployInfo deployInfo =
-        Futures.get(buildStep.getDeployInfo(), ExecutionException.class);
+    BlazeAndroidDeployInfo deployInfo;
+    try {
+      deployInfo = buildStep.getDeployInfo();
+    } catch (ApkProvisionException e) {
+      throw new ExecutionException(e);
+    }
 
     return BlazeAndroidBinaryApplicationLaunchTaskProvider.getApplicationLaunchTask(
         project,

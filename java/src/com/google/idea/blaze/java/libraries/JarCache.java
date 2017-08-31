@@ -112,9 +112,11 @@ public class JarCache {
           artifactLocationDecoder.decode(library.libraryArtifact.jarForIntellijLibrary());
       sourceFileToCacheKey.put(jarFile, cacheKeyForJar(jarFile));
 
-      boolean attachSourceJar =
-          attachAllSourceJars || sourceJarManager.hasSourceJarAttached(library.key);
-      if (attachSourceJar && library.libraryArtifact.sourceJar != null) {
+      boolean copySourceJar =
+          attachAllSourceJars
+              || BlazeSourceJarNavigationPolicy.cacheEnabled.getValue()
+              || sourceJarManager.hasSourceJarAttached(library.key);
+      if (copySourceJar && library.libraryArtifact.sourceJar != null) {
         File srcJarFile = artifactLocationDecoder.decode(library.libraryArtifact.sourceJar);
         sourceFileToCacheKey.put(srcJarFile, cacheKeyForSourceJar(srcJarFile));
       }

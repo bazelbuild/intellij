@@ -28,7 +28,6 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -40,14 +39,11 @@ import org.picocontainer.MutablePicoContainer;
 /**
  * Test base class.
  *
- * <p>
- *
  * <p>Provides a mock application and a mock project.
  */
 public class BlazeTestCase {
   /** Test rule that ensures tests do not run on Windows (see http://b.android.com/222904) */
   public static class IgnoreOnWindowsRule implements TestRule {
-    @NotNull
     @Override
     public Statement apply(Statement base, Description description) {
       if (SystemInfo.isWindows) {
@@ -80,7 +76,7 @@ public class BlazeTestCase {
   public static class Container {
     private final MutablePicoContainer container;
 
-    Container(@NotNull MutablePicoContainer container) {
+    Container(MutablePicoContainer container) {
       this.container = container;
     }
 
@@ -115,11 +111,10 @@ public class BlazeTestCase {
     return project;
   }
 
-  protected void initTest(
-      @NotNull Container applicationServices, @NotNull Container projectServices) {}
+  protected void initTest(Container applicationServices, Container projectServices) {}
 
   protected <T> ExtensionPointImpl<T> registerExtensionPoint(
-      @NotNull ExtensionPointName<T> name, @NotNull Class<T> type) {
+      ExtensionPointName<T> name, Class<T> type) {
     PluginDescriptor pluginDescriptor =
         new DefaultPluginDescriptor(PluginId.getId(type.getName()), type.getClassLoader());
     extensionsArea.registerExtensionPoint(name.getName(), type.getName(), pluginDescriptor);

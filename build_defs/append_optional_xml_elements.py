@@ -37,9 +37,9 @@ def main():
 
   if args.output:
     with file(args.output, "w") as f:
-      f.write(dom.toxml())
+      f.write(dom.toxml(encoding="utf-8"))
   else:
-    print dom.toxml()
+    print dom.toxml(encoding="utf-8")
 
 
 if __name__ == "__main__":

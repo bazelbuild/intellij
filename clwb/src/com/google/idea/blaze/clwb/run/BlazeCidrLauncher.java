@@ -20,17 +20,20 @@ import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.google.idea.blaze.base.run.DistributedExecutorSupport;
+import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
 import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
-import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
+import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
+import com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
@@ -41,6 +44,8 @@ import com.google.idea.sdkcompat.cidr.CidrConsoleBuilderAdapter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -54,6 +59,7 @@ import com.jetbrains.cidr.execution.TrivialInstaller;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
 import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess;
 import com.jetbrains.cidr.execution.testing.CidrLauncher;
+import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestConsoleProperties;
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -92,12 +98,12 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     LOG.assertTrue(projectViewSet != null);
 
     ImmutableList<String> testHandlerFlags = ImmutableList.of();
-    BlazeTestEventsHandler testEventsHandler =
+    BlazeTestUiSession testUiSession =
         useTestUi()
-            ? BlazeTestEventsHandler.getHandlerForTarget(project, configuration.getTarget())
+            ? TestUiSessionProvider.createForTarget(project, configuration.getTarget())
             : null;
-    if (testEventsHandler != null) {
-      testHandlerFlags = BlazeTestEventsHandler.getBlazeFlags(project);
+    if (testUiSession != null) {
+      testHandlerFlags = testUiSession.getBlazeFlags();
     }
 
     BlazeCommand.Builder command =
@@ -105,16 +111,18 @@ public final class BlazeCidrLauncher extends CidrLauncher {
                 Blaze.getBuildSystemProvider(project).getBinaryPath(),
                 handlerState.getCommandState().getCommand())
             .addTargets(configuration.getTarget())
-            .addBlazeFlags(BlazeFlags.buildFlags(project, ProjectViewSet.builder().build()))
+            .addBlazeFlags(
+                BlazeFlags.blazeFlags(
+                    project,
+                    ProjectViewSet.builder().build(),
+                    handlerState.getCommandState().getCommand(),
+                    BlazeInvocationContext.RunConfiguration))
             .addBlazeFlags(testHandlerFlags)
             .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
             .addExeFlags(handlerState.getExeFlagsState().getExpandedFlags());
 
-    command.addBlazeFlags(
-        DistributedExecutorSupport.getBlazeFlags(
-            project, handlerState.getRunOnDistributedExecutorState().runOnDistributedExecutor));
-
-    state.setConsoleBuilder(createConsoleBuilder(testEventsHandler));
+    state.setConsoleBuilder(createConsoleBuilder(testUiSession));
+    state.addConsoleFilters(getConsoleFilters().toArray(new Filter[0]));
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
     return new ScopedBlazeProcessHandler(
@@ -155,6 +163,16 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     File workingDir = workspaceRoot.directory();
     commandLine.setWorkDirectory(workingDir);
     commandLine.addParameters(handlerState.getExeFlagsState().getExpandedFlags());
+    // Disable colored output, to workaround parsing bug (CPP-10054)
+    // Note: cc_test runner currently only supports GUnit tests.
+    if (Kind.CC_TEST.equals(configuration.getKindForTarget())) {
+      commandLine.addParameter("--gunit_color=no");
+    }
+
+    String testFilter = convertToGUnitTestFilter(handlerState.getTestFilterFlag());
+    if (testFilter != null) {
+      commandLine.addParameter(testFilter);
+    }
 
     TrivialInstaller installer = new TrivialInstaller(commandLine);
     ImmutableList<String> startupCommands = getGdbStartupCommands(workingDir);
@@ -162,7 +180,18 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         new CLionRunParameters(
             new BlazeGDBDriverConfiguration(project, startupCommands, workspaceRoot), installer);
 
+    state.setConsoleBuilder(createConsoleBuilder(null));
+    state.addConsoleFilters(getConsoleFilters().toArray(new Filter[0]));
     return new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder());
+  }
+
+  /** Convert Blaze test filter to gunit test filter */
+  @Nullable
+  private static String convertToGUnitTestFilter(@Nullable String blazeTestFilter) {
+    if (blazeTestFilter == null || !blazeTestFilter.startsWith(BlazeFlags.TEST_FILTER)) {
+      return null;
+    }
+    return "--gunit_filter" + blazeTestFilter.substring(BlazeFlags.TEST_FILTER.length());
   }
 
   @Override
@@ -170,10 +199,14 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     return project;
   }
 
-  private CidrConsoleBuilder createConsoleBuilder(
-      @Nullable BlazeTestEventsHandler testEventsHandler) {
-    if (testEventsHandler != null) {
-      return new GoogleTestConsoleBuilder(configuration.getProject(), testEventsHandler);
+  private ImmutableList<Filter> getConsoleFilters() {
+    return ImmutableList.of(new BlazeTargetFilter(project), new UrlFilter());
+  }
+
+  private CidrConsoleBuilder createConsoleBuilder(@Nullable BlazeTestUiSession testUiSession) {
+    if (BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand())) {
+      // hook up the test tree UI
+      return new GoogleTestConsoleBuilder(configuration.getProject(), testUiSession);
     }
     return new CidrConsoleBuilderAdapter(configuration.getProject());
   }
@@ -190,26 +223,35 @@ public final class BlazeCidrLauncher extends CidrLauncher {
   }
 
   private boolean useTestUi() {
-    return BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand())
-        && !handlerState.getRunOnDistributedExecutorState().runOnDistributedExecutor;
+    return BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand());
   }
 
   private final class GoogleTestConsoleBuilder extends CidrConsoleBuilderAdapter {
-    private final BlazeTestEventsHandler testEventsHandler;
+    @Nullable private final BlazeTestUiSession testUiSession;
 
-    private GoogleTestConsoleBuilder(Project project, BlazeTestEventsHandler testEventsHandler) {
+    private GoogleTestConsoleBuilder(Project project, @Nullable BlazeTestUiSession testUiSession) {
       super(project);
-      this.testEventsHandler = testEventsHandler;
+      this.testUiSession = testUiSession;
       addFilter(new BlazeCidrTestOutputFilter(project));
     }
 
     @Override
     protected ConsoleView createConsole() {
-      return SmRunnerUtils.getConsoleView(
-          configuration.getProject(),
-          configuration,
-          executionEnvironment.getExecutor(),
-          testEventsHandler);
+      if (testUiSession != null) {
+        return SmRunnerUtils.getConsoleView(
+            configuration.getProject(),
+            configuration,
+            executionEnvironment.getExecutor(),
+            testUiSession);
+      }
+      // When debugging, we run gdb manually on the debug binary, so the blaze test runners aren't
+      // involved.
+      CidrGoogleTestConsoleProperties consoleProperties =
+          new CidrGoogleTestConsoleProperties(
+              configuration,
+              executionEnvironment.getExecutor(),
+              executionEnvironment.getExecutionTarget());
+      return createConsole(configuration.getType(), consoleProperties);
     }
   }
 }

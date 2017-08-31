@@ -39,6 +39,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.sdkcompat.android.res.AppResourceRepositoryAdapter;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ApplicationManager;
@@ -84,24 +85,77 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
     createClassesInJars();
 
     // Make sure we can find classes in the main resource module.
-    assertThat(classJarProvider.findModuleClassFile("com.google.example.main.MainActivity", module))
+    VirtualFile found =
+        classJarProvider.findModuleClassFile("com.google.example.main.MainActivity", module);
+    assertThat(found).isNotNull();
+    assertThat(found)
         .isEqualTo(
             fileSystem.findFile(
                 BLAZE_BIN
-                    + "/com/google/example/main.jar!"
+                    + "/com/google/example/libmain.jar!"
                     + "/com/google/example/main/MainActivity.class"));
-    assertThat(classJarProvider.findModuleClassFile("com.google.example.main.R", module))
+    found = classJarProvider.findModuleClassFile("com.google.example.main.R", module);
+    assertThat(found).isNotNull();
+    assertThat(found)
         .isEqualTo(
             fileSystem.findFile(
                 BLAZE_BIN
                     + "/com/google/example/main_resources.jar!"
                     + "/com/google/example/main/R.class"));
-    assertThat(classJarProvider.findModuleClassFile("com.google.example.main.R$string", module))
+
+    found = classJarProvider.findModuleClassFile("com.google.example.main.R$string", module);
+    assertThat(found).isNotNull();
+    assertThat(found)
         .isEqualTo(
             fileSystem.findFile(
                 BLAZE_BIN
                     + "/com/google/example/main_resources.jar!"
                     + "/com/google/example/main/R$string.class"));
+
+    // And dependencies.
+    found = classJarProvider.findModuleClassFile("com.google.example.java.Java", module);
+    assertThat(found).isNotNull();
+    assertThat(found)
+        .isEqualTo(
+            fileSystem.findFile(
+                BLAZE_BIN
+                    + "/com/google/example/libjava.jar!"
+                    + "/com/google/example/java/Java.class"));
+    found = classJarProvider.findModuleClassFile("com.google.example.shared.Shared", module);
+    assertThat(found).isNotNull();
+    assertThat(found)
+        .isEqualTo(
+            fileSystem.findFile(
+                BLAZE_BIN
+                    + "/com/google/example/libshared.jar!"
+                    + "/com/google/example/shared/Shared.class"));
+    found = classJarProvider.findModuleClassFile("com.google.example.shared2.Shared2", module);
+    assertThat(found).isNotNull();
+    assertThat(found)
+        .isEqualTo(
+            fileSystem.findFile(
+                BLAZE_BIN
+                    + "/com/google/example/libshared2.jar!"
+                    + "/com/google/example/shared2/Shared2.class"));
+    found =
+        classJarProvider.findModuleClassFile("com.google.example.transitive.Transitive", module);
+    assertThat(found).isNotNull();
+    assertThat(found)
+        .isEqualTo(
+            fileSystem.findFile(
+                BLAZE_BIN
+                    + "/com/google/example/libtransitive.jar!"
+                    + "/com/google/example/transitive/Transitive.class"));
+
+    // But not resource classes in dependencies.
+    assertThat(classJarProvider.findModuleClassFile("com.google.example.resource.R", module))
+        .isNull();
+    assertThat(classJarProvider.findModuleClassFile("com.google.example.resource.R$style", module))
+        .isNull();
+    assertThat(classJarProvider.findModuleClassFile("com.google.example.resource.R$layout", module))
+        .isNull();
+    assertThat(classJarProvider.findModuleClassFile("com.google.example.resource2.R", module))
+        .isNull();
 
     // And not classes that are missing.
     assertThat(classJarProvider.findModuleClassFile("com.google.example.main.MissingClass", module))
@@ -109,50 +163,87 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
     assertThat(classJarProvider.findModuleClassFile("com.google.example.main.R$missing", module))
         .isNull();
 
-    // And not classes in other libraries.
-    assertThat(classJarProvider.findModuleClassFile("com.google.example.java.CustomView", module))
-        .isNull();
-    assertThat(classJarProvider.findModuleClassFile("com.google.example.android_res.R", module))
-        .isNull();
-    assertThat(
-            classJarProvider.findModuleClassFile("com.google.example.android_res.R$style", module))
+    // And not imported libraries.
+    assertThat(classJarProvider.findModuleClassFile("com.google.example.import.Import", module))
         .isNull();
     assertThat(
             classJarProvider.findModuleClassFile(
-                "com.google.unrelated.android_res.R$layout", module))
+                "com.google.example.transitive.import.TransitiveImport", module))
         .isNull();
+
+    // And not unrelated libraries.
+    assertThat(classJarProvider.findModuleClassFile("com.google.unrelated.Java", module)).isNull();
+    assertThat(classJarProvider.findModuleClassFile("com.google.unrelated.Android", module))
+        .isNull();
+    assertThat(classJarProvider.findModuleClassFile("com.google.unrelated.Resource", module))
+        .isNull();
+    assertThat(classJarProvider.findModuleClassFile("com.google.unrelated.R", module)).isNull();
   }
 
   @Test
-  public void testMissingMainJar() {
+  public void testMissingClassJars() {
     createClassesInJars();
 
     ApplicationManager.getApplication()
         .runWriteAction(
             () -> {
               try {
-                // Let's pretend that this hasn't been built yet.
-                fileSystem.findFile(BLAZE_BIN + "/com/google/example/main.jar").delete(this);
+                // Let's pretend that these haven't been built yet.
+                fileSystem.findFile(BLAZE_BIN + "/com/google/example/libmain.jar").delete(this);
+                fileSystem.findFile(BLAZE_BIN + "/com/google/example/libjava.jar").delete(this);
+                fileSystem.findFile(BLAZE_BIN + "/com/google/example/libshared.jar").delete(this);
+                fileSystem
+                    .findFile(BLAZE_BIN + "/com/google/example/libtransitive.jar")
+                    .delete(this);
               } catch (IOException ignored) {
                 // ignored
               }
             });
-    // This hasn't been built yet, and shouldn't be found.
+    // These hasn't been built yet, and shouldn't be found.
     assertThat(classJarProvider.findModuleClassFile("com.google.example.main.MainActivity", module))
         .isNull();
+    assertThat(classJarProvider.findModuleClassFile("com.google.example.java.Java", module))
+        .isNull();
+    assertThat(classJarProvider.findModuleClassFile("com.google.example.shared.Shared", module))
+        .isNull();
+    assertThat(
+            classJarProvider.findModuleClassFile(
+                "com.google.example.transitive.Transitive", module))
+        .isNull();
+
     // But these should still be found.
-    assertThat(classJarProvider.findModuleClassFile("com.google.example.main.R", module))
+    VirtualFile found = classJarProvider.findModuleClassFile("com.google.example.main.R", module);
+    assertThat(found).isNotNull();
+    assertThat(found)
         .isEqualTo(
             fileSystem.findFile(
                 BLAZE_BIN
                     + "/com/google/example/main_resources.jar!"
                     + "/com/google/example/main/R.class"));
-    assertThat(classJarProvider.findModuleClassFile("com.google.example.main.R$string", module))
+    found = classJarProvider.findModuleClassFile("com.google.example.main.R$string", module);
+    assertThat(found).isNotNull();
+    assertThat(found)
         .isEqualTo(
             fileSystem.findFile(
                 BLAZE_BIN
                     + "/com/google/example/main_resources.jar!"
                     + "/com/google/example/main/R$string.class"));
+    found = classJarProvider.findModuleClassFile("com.google.example.android.Android", module);
+    assertThat(found).isNotNull();
+    assertThat(found)
+        .isEqualTo(
+            fileSystem.findFile(
+                BLAZE_BIN
+                    + "/com/google/example/libandroid.jar!"
+                    + "/com/google/example/android/Android.class"));
+    found = classJarProvider.findModuleClassFile("com.google.example.shared2.Shared2", module);
+    assertThat(found).isNotNull();
+    assertThat(found)
+        .isEqualTo(
+            fileSystem.findFile(
+                BLAZE_BIN
+                    + "/com/google/example/libshared2.jar!"
+                    + "/com/google/example/shared2/Shared2.class"));
   }
 
   @Test
@@ -169,53 +260,40 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
     List<VirtualFile> externalLibraries = classJarProvider.getModuleExternalLibraries(module);
     assertThat(externalLibraries)
         .containsExactly(
-            fileSystem.findFile(BLAZE_BIN + "/com/google/example/android_lib.jar"),
-            fileSystem.findFile(BLAZE_BIN + "/com/google/example/android_res.jar"),
-            fileSystem.findFile(BLAZE_BIN + "/com/google/example/android_res2.jar"),
-            fileSystem.findFile(BLAZE_BIN + "/com/google/example/transitive/android_res.jar"),
-            fileSystem.findFile(BLAZE_BIN + "/com/google/example/java.jar"),
-            fileSystem.findFile(BLAZE_BIN + "/com/google/example/transitive/java.jar"),
-            fileSystem.findFile(BLAZE_BIN + "/com/google/example/shared/java.jar"),
-            fileSystem.findFile(BLAZE_BIN + "/com/google/example/shared2/java.jar"),
-            fileSystem.findFile("com/google/example/import.jar"),
-            fileSystem.findFile("com/google/example/transitive/import.jar"),
-            fileSystem.findFile("com/google/example/transitive/import2.jar"));
+            fileSystem.findFile("com/google/example/libimport.jar"),
+            fileSystem.findFile("com/google/example/transitive/libimport.jar"),
+            fileSystem.findFile("com/google/example/transitive/libimport2.jar"));
 
     // Make sure we can generate dynamic classes from all resource packages in dependencies.
     ResourceClassRegistry registry = ResourceClassRegistry.get(getProject());
-    AppResourceRepository repository = AppResourceRepository.getAppResources(module, false);
+    AppResourceRepository repository = AppResourceRepositoryAdapter.findExistingInstance(module);
     assertThat(repository).isNotNull();
-    assertThat(registry.findClassDefinition("com.google.example.android_res.R", repository))
+    assertThat(registry.findClassDefinition("com.google.example.resource.R", repository))
         .isNotNull();
-    assertThat(registry.findClassDefinition("com.google.example.android_res.R$string", repository))
+    assertThat(registry.findClassDefinition("com.google.example.resource.R$string", repository))
         .isNotNull();
-    assertThat(registry.findClassDefinition("com.google.example.android_res2.R", repository))
+    assertThat(registry.findClassDefinition("com.google.example.resource2.R", repository))
         .isNotNull();
-    assertThat(registry.findClassDefinition("com.google.example.android_res2.R$layout", repository))
+    assertThat(registry.findClassDefinition("com.google.example.resource2.R$layout", repository))
         .isNotNull();
-    assertThat(
-            registry.findClassDefinition("com.google.example.transitive.android_res.R", repository))
+    assertThat(registry.findClassDefinition("com.google.example.transitive.resource.R", repository))
         .isNotNull();
     assertThat(
             registry.findClassDefinition(
-                "com.google.example.transitive.android_res.R$style", repository))
+                "com.google.example.transitive.resource.R$style", repository))
         .isNotNull();
 
     // And nothing else.
     assertThat(registry.findClassDefinition("com.google.example.main.MainActivity", repository))
         .isNull();
-    assertThat(registry.findClassDefinition("com.google.example.android_res.Bogus", repository))
+    assertThat(registry.findClassDefinition("com.google.example.resource.Bogus", repository))
         .isNull();
     assertThat(registry.findClassDefinition("com.google.example.main.R", repository)).isNull();
     assertThat(registry.findClassDefinition("com.google.example.main.R$string", repository))
         .isNull();
-    assertThat(registry.findClassDefinition("com.google.example.java.CustomView", repository))
-        .isNull();
-    assertThat(registry.findClassDefinition("com.google.unrelated.android_res.R", repository))
-        .isNull();
-    assertThat(
-            registry.findClassDefinition("com.google.unrelated.android_res.R$layout", repository))
-        .isNull();
+    assertThat(registry.findClassDefinition("com.google.example.java.Java", repository)).isNull();
+    assertThat(registry.findClassDefinition("com.google.unrelated.R", repository)).isNull();
+    assertThat(registry.findClassDefinition("com.google.unrelated.R$layout", repository)).isNull();
   }
 
   @Test
@@ -224,14 +302,9 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
         .runWriteAction(
             () -> {
               try {
-                // Let's pretend that these haven't been built yet.
-                fileSystem.findFile(BLAZE_BIN + "/com/google/example/java.jar").delete(this);
-                fileSystem
-                    .findFile(BLAZE_BIN + "/com/google/example/android_res2.jar")
-                    .delete(this);
-                fileSystem
-                    .findFile(BLAZE_BIN + "/com/google/example/shared2/java.jar")
-                    .delete(this);
+                // Let's pretend that these were deleted.
+                fileSystem.findFile("com/google/example/libimport.jar").delete(this);
+                fileSystem.findFile("com/google/example/transitive/libimport.jar").delete(this);
               } catch (IOException ignored) {
                 // ignored
               }
@@ -239,26 +312,16 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
     List<VirtualFile> externalLibraries = classJarProvider.getModuleExternalLibraries(module);
     assertThat(externalLibraries)
         .containsExactly(
-            fileSystem.findFile(BLAZE_BIN + "/com/google/example/android_lib.jar"),
-            fileSystem.findFile(BLAZE_BIN + "/com/google/example/android_res.jar"),
-            // This should be missing.
-            // fileSystem.findFile(BLAZE_BIN + "/com/google/example/android_res2.jar"),
-            fileSystem.findFile(BLAZE_BIN + "/com/google/example/transitive/android_res.jar"),
-            // This should be missing.
-            // fileSystem.findFile(BLAZE_BIN + "/com/google/example/java.jar"),
-            fileSystem.findFile(BLAZE_BIN + "/com/google/example/transitive/java.jar"),
-            fileSystem.findFile(BLAZE_BIN + "/com/google/example/shared/java.jar"),
-            // This should be missing.
-            // fileSystem.findFile(BLAZE_BIN + "/com/google/example/shared2/java.jar"),
-            fileSystem.findFile("com/google/example/import.jar"),
-            fileSystem.findFile("com/google/example/transitive/import.jar"),
-            fileSystem.findFile("com/google/example/transitive/import2.jar"));
+            // These should be missing.
+            // fileSystem.findFile("com/google/example/libimport.jar"),
+            // fileSystem.findFile("com/google/example/transitive/libimport.jar"),
+            fileSystem.findFile("com/google/example/transitive/libimport2.jar"));
   }
 
   private void createClassesInJars() {
     fileSystem.createFile(
         BLAZE_BIN
-            + "/com/google/example/main.jar!"
+            + "/com/google/example/libmain.jar!"
             + "/com/google/example/main/MainActivity.class");
     fileSystem.createFile(
         BLAZE_BIN + "/com/google/example/main_resources.jar!" + "/com/google/example/main/R.class");
@@ -267,37 +330,81 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
             + "/com/google/example/main_resources.jar!"
             + "/com/google/example/main/R$string.class");
     fileSystem.createFile(
-        BLAZE_BIN + "/com/google/example/java.jar!" + "/com/google/example/java/CustomView.class");
+        BLAZE_BIN
+            + "/com/google/example/libandroid.jar!"
+            + "/com/google/example/android/Android.class");
     fileSystem.createFile(
         BLAZE_BIN
-            + "/com/google/example/android_res_resources.jar!"
-            + "/com/google/example/android_res/R.class");
+            + "/com/google/example/resource_resources.jar!"
+            + "/com/google/example/resource/R.class");
     fileSystem.createFile(
         BLAZE_BIN
-            + "/com/google/example/android_res_resources.jar!"
-            + "/com/google/example/android_res/R$style.class");
+            + "/com/google/example/resource_resources.jar!"
+            + "/com/google/example/resource/R$style.class");
     fileSystem.createFile(
         BLAZE_BIN
-            + "/com/google/unrelated/android_res_resources.jar!"
-            + "/com/google/unrelated/android_res/R$layout.class");
+            + "/com/google/unrelated/resource_resources.jar!"
+            + "/com/google/unrelated/resource/R$layout.class");
+    fileSystem.createFile(
+        BLAZE_BIN
+            + "/com/google/example/resource2_resources.jar!"
+            + "/com/google/example/resource2/R.class");
+    fileSystem.createFile(
+        BLAZE_BIN
+            + "/com/google/example/transitive/resource_resources.jar!"
+            + "/com/google/example/transitive/R.class");
+    fileSystem.createFile(
+        BLAZE_BIN + "/com/google/example/libjava.jar!" + "/com/google/example/java/Java.class");
+    fileSystem.createFile(
+        BLAZE_BIN
+            + "/com/google/example/libtransitive.jar!"
+            + "/com/google/example/transitive/Transitive.class");
+    fileSystem.createFile(
+        BLAZE_BIN
+            + "/com/google/example/libshared.jar!"
+            + "/com/google/example/shared/Shared.class");
+    fileSystem.createFile(
+        BLAZE_BIN
+            + "/com/google/example/libshared2.jar!"
+            + "/com/google/example/shared2/Shared2.class");
+    fileSystem.createFile(
+        "com/google/example/libimport.jar!" + "/com/google/example/import/Import.class");
+    fileSystem.createFile(
+        "com/google/example/transitive/libimport.jar!"
+            + "/com/google/example/transitive/import/TransitiveImport.class");
+    fileSystem.createFile(
+        BLAZE_BIN
+            + "/com/google/example/unrelated/libjava.jar!"
+            + "/com/google/example/unrelated/Java.class");
+    fileSystem.createFile(
+        BLAZE_BIN
+            + "/com/google/example/unrelated/libandroid.jar!"
+            + "/com/google/example/unrelated/Android.class");
+    fileSystem.createFile(
+        BLAZE_BIN
+            + "/com/google/example/unrelated/libresource.jar!"
+            + "/com/google/example/unrelated/Resource.class");
+    fileSystem.createFile(
+        BLAZE_BIN
+            + "/com/google/example/unrelated/resource_resources.jar!"
+            + "/com/google/example/unrelated/R.class");
   }
 
   private TargetMap buildTargetMap() {
     Label mainResourceLibrary = Label.create("//com/google/example:main");
-    Label androidLibraryDependency = Label.create("//com/google/example:android_lib");
-    Label androidResourceDependency = Label.create("//com/google/example:android_res");
-    Label androidResourceDependency2 = Label.create("//com/google/example:android_res2");
-    Label transitiveResourceDependency =
-        Label.create("//com/google/example/transitive:android_res");
+    Label androidDependency = Label.create("//com/google/example:android");
+    Label resourceDependency = Label.create("//com/google/example:resource");
+    Label resourceDependency2 = Label.create("//com/google/example:resource2");
+    Label transitiveResourceDependency = Label.create("//com/google/example/transitive:resource");
     Label javaDependency = Label.create("//com/google/example:java");
-    Label transitiveJavaDependency = Label.create("//com/google/example/transitive:java");
-    Label sharedJavaDependency = Label.create("//com/google/example/shared:java");
-    Label sharedJavaDependency2 = Label.create("//com/google/example/shared2:java");
+    Label transitiveJavaDependency = Label.create("//com/google/example:transitive");
+    Label sharedJavaDependency = Label.create("//com/google/example:shared");
+    Label sharedJavaDependency2 = Label.create("//com/google/example:shared2");
     Label importDependency = Label.create("//com/google/example:import");
     Label transitiveImportDependency = Label.create("//com/google/example/transitive:import");
     Label unrelatedJava = Label.create("//com/google/unrelated:java");
-    Label unrelatedAndroidLibrary = Label.create("//com/google/unrelated:android_lib");
-    Label unrelatedAndroidResource = Label.create("//com/google/unrelated:android_res");
+    Label unrelatedAndroid = Label.create("//com/google/unrelated:android");
+    Label unrelatedResource = Label.create("//com/google/unrelated:resource");
 
     AndroidResourceModuleRegistry registry = new AndroidResourceModuleRegistry();
     registry.put(
@@ -306,18 +413,17 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
     // Not using these, but they should be in the registry.
     registry.put(
         mock(Module.class),
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(androidResourceDependency)).build());
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(resourceDependency)).build());
     registry.put(
         mock(Module.class),
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(androidResourceDependency2))
-            .build());
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(resourceDependency2)).build());
     registry.put(
         mock(Module.class),
         AndroidResourceModule.builder(TargetKey.forPlainTarget(transitiveResourceDependency))
             .build());
     registry.put(
         mock(Module.class),
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(unrelatedAndroidResource)).build());
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(unrelatedResource)).build());
     registerProjectService(AndroidResourceModuleRegistry.class, registry);
 
     return TargetMapBuilder.builder()
@@ -327,67 +433,67 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
                 .setKind(Kind.ANDROID_LIBRARY)
                 .setJavaInfo(
                     javaInfoWithJars(
-                        "com/google/example/main.jar", "com/google/example/main_resources.jar"))
+                        "com/google/example/libmain.jar", "com/google/example/main_resources.jar"))
                 .setAndroidInfo(
                     androidInfoWithResourceAndJar(
                         "com.google.example.main",
                         "com/google/example/main/res",
                         "com/google/example/main_resources.jar"))
-                .addDependency(androidLibraryDependency)
-                .addDependency(androidResourceDependency)
-                .addDependency(androidResourceDependency2)
+                .addDependency(androidDependency)
+                .addDependency(resourceDependency)
+                .addDependency(resourceDependency2)
                 .addDependency(javaDependency)
                 .addDependency(importDependency))
         .addTarget(
             TargetIdeInfo.builder()
-                .setLabel(androidLibraryDependency)
+                .setLabel(androidDependency)
                 .setKind(Kind.ANDROID_LIBRARY)
-                .setJavaInfo(javaInfoWithJars("com/google/example/android_lib.jar"))
+                .setJavaInfo(javaInfoWithJars("com/google/example/libandroid.jar"))
                 .addDependency(transitiveResourceDependency))
         .addTarget(
             TargetIdeInfo.builder()
-                .setLabel(androidResourceDependency)
+                .setLabel(resourceDependency)
                 .setKind(Kind.ANDROID_LIBRARY)
                 .setJavaInfo(
                     javaInfoWithJars(
-                        "com/google/example/android_res.jar",
-                        "com/google/example/android_res_resources.jar"))
+                        "com/google/example/resource.jar",
+                        "com/google/example/resource_resources.jar"))
                 .setAndroidInfo(
                     androidInfoWithResourceAndJar(
-                        "com.google.example.android_res",
-                        "com/google/example/android_res/res",
-                        "com/google/example/android_res_resources.jar")))
+                        "com.google.example.resource",
+                        "com/google/example/resource/res",
+                        "com/google/example/resource_resources.jar")))
         .addTarget(
             TargetIdeInfo.builder()
-                .setLabel(androidResourceDependency2)
+                .setLabel(resourceDependency2)
                 .setKind(Kind.ANDROID_LIBRARY)
                 .setJavaInfo(
                     javaInfoWithJars(
-                        "com/google/example/android_res2.jar",
-                        "com/google/example/android_res2_resources.jar"))
+                        "com/google/example/resource2.jar",
+                        "com/google/example/resource2_resources.jar"))
                 .setAndroidInfo(
                     androidInfoWithResourceAndJar(
-                        "com.google.example.android_res2",
-                        "com/google/example/android_res2/res",
-                        "com/google/example/android_res2_resources.jar")))
+                        "com.google.example.resource2",
+                        "com/google/example/resource2/res",
+                        "com/google/example/resource2_resources.jar")))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(transitiveResourceDependency)
                 .setKind(Kind.ANDROID_LIBRARY)
                 .setJavaInfo(
                     javaInfoWithJars(
-                        "com/google/example/transitive/android_res.jar",
-                        "com/google/example/transitive/android_res_resources.jar"))
+                        "com/google/example/transitive/resource.jar",
+                        "com/google/example/transitive/resource_resources.jar"))
                 .setAndroidInfo(
                     androidInfoWithResourceAndJar(
-                        "com.google.example.transitive.android_res",
-                        "com/google/example/transitive/android_res/res",
-                        "com/google/example/transitive/android_res_resources.jar")))
+                        "com.google.example.transitive.resource",
+                        "com/google/example/transitive/resource/res",
+                        "com/google/example/transitive/resource_resources.jar")))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(javaDependency)
                 .setKind(Kind.JAVA_LIBRARY)
-                .setJavaInfo(javaInfoWithJars("com/google/example/java.jar"))
+                .setJavaInfo(javaInfoWithJars("com/google/example/libjava.jar"))
                 .addDependency(transitiveJavaDependency)
                 .addDependency(sharedJavaDependency)
                 .addDependency(sharedJavaDependency2)
@@ -396,56 +502,56 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
             TargetIdeInfo.builder()
                 .setLabel(transitiveJavaDependency)
                 .setKind(Kind.JAVA_LIBRARY)
-                .setJavaInfo(javaInfoWithJars("com/google/example/transitive/java.jar"))
+                .setJavaInfo(javaInfoWithJars("com/google/example/libtransitive.jar"))
                 .addDependency(sharedJavaDependency)
                 .addDependency(sharedJavaDependency2))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(sharedJavaDependency)
                 .setKind(Kind.JAVA_LIBRARY)
-                .setJavaInfo(javaInfoWithJars("com/google/example/shared/java.jar"))
+                .setJavaInfo(javaInfoWithJars("com/google/example/libshared.jar"))
                 .addDependency(sharedJavaDependency2))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(sharedJavaDependency2)
                 .setKind(Kind.JAVA_LIBRARY)
-                .setJavaInfo(javaInfoWithJars("com/google/example/shared2/java.jar")))
+                .setJavaInfo(javaInfoWithJars("com/google/example/libshared2.jar")))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(importDependency)
                 .setKind(Kind.JAVA_IMPORT)
-                .setJavaInfo(javaInfoWithCheckedInJars("com/google/example/import.jar")))
+                .setJavaInfo(javaInfoWithCheckedInJars("com/google/example/libimport.jar")))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(transitiveImportDependency)
                 .setKind(Kind.JAVA_IMPORT)
                 .setJavaInfo(
                     javaInfoWithCheckedInJars(
-                        "com/google/example/transitive/import.jar",
-                        "com/google/example/transitive/import2.jar")))
+                        "com/google/example/transitive/libimport.jar",
+                        "com/google/example/transitive/libimport2.jar")))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(unrelatedJava)
                 .setKind(Kind.JAVA_LIBRARY)
-                .setJavaInfo(javaInfoWithJars("com/google/unrelated/java.jar")))
+                .setJavaInfo(javaInfoWithJars("com/google/unrelated/libjava.jar")))
         .addTarget(
             TargetIdeInfo.builder()
-                .setLabel(unrelatedAndroidLibrary)
+                .setLabel(unrelatedAndroid)
                 .setKind(Kind.ANDROID_LIBRARY)
-                .setJavaInfo(javaInfoWithJars("com/google/unrelated/android_lib.jar")))
+                .setJavaInfo(javaInfoWithJars("com/google/unrelated/libandroid.jar")))
         .addTarget(
             TargetIdeInfo.builder()
-                .setLabel(unrelatedAndroidResource)
+                .setLabel(unrelatedResource)
                 .setKind(Kind.ANDROID_LIBRARY)
                 .setJavaInfo(
                     javaInfoWithJars(
-                        "com/google/unrelated/android_res.jar",
-                        "com/google/unrelated/android_res_resources.jar"))
+                        "com/google/unrelated/libresource.jar",
+                        "com/google/unrelated/resource_resources.jar"))
                 .setAndroidInfo(
                     androidInfoWithResourceAndJar(
-                        "com.google.unrelated.android_res",
-                        "com/google/unrelated/android_res/res",
-                        "com/google/unrelated/android_res_resources.jar")))
+                        "com.google.unrelated.resource",
+                        "com/google/unrelated/resource/res",
+                        "com/google/unrelated/resource_resources.jar")))
         .build();
   }
 

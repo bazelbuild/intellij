@@ -15,12 +15,66 @@
  */
 package com.google.idea.blaze.base.sync.aspects.strategy;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeVersionData;
-import com.intellij.openapi.project.Project;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
+import java.io.File;
+import java.util.List;
 
 class AspectStrategyProviderBazel implements AspectStrategyProvider {
   @Override
-  public AspectStrategy getAspectStrategy(Project project, BlazeVersionData blazeVersionData) {
-    return new AspectStrategySkylark();
+  public AspectStrategy getAspectStrategy(BlazeVersionData blazeVersionData) {
+    if (blazeVersionData.buildSystem() != BuildSystem.Bazel) {
+      return null;
+    }
+    return new AspectStrategyBazel(blazeVersionData);
+  }
+
+  private static class AspectStrategyBazel extends AspectStrategy {
+
+    private final BlazeVersionData blazeVersionData;
+
+    private AspectStrategyBazel(BlazeVersionData blazeVersionData) {
+      this.blazeVersionData = blazeVersionData;
+    }
+
+    @Override
+    public String getName() {
+      return "AspectStrategySkylarkBazel";
+    }
+
+    @Override
+    protected boolean hasPerLanguageOutputGroups() {
+      return useBundledAspect();
+    }
+
+    @Override
+    protected List<String> getAspectFlags() {
+      if (useBundledAspect()) {
+        return ImmutableList.of(
+            "--aspects=@intellij_aspect//:intellij_info.bzl%intellij_info_aspect",
+            getAspectRepositoryOverrideFlag());
+      }
+      return ImmutableList.of(
+          "--aspects=@bazel_tools//tools/ide:intellij_info.bzl%intellij_info_aspect");
+    }
+
+    private boolean useBundledAspect() {
+      return blazeVersionData.bazelIsAtLeastVersion(0, 5, 0);
+    }
+
+    private static File findAspectDirectory() {
+      IdeaPluginDescriptor plugin =
+          PluginManager.getPlugin(
+              PluginManager.getPluginByClassName(AspectStrategy.class.getName()));
+      return new File(plugin.getPath(), "aspect");
+    }
+
+    private static String getAspectRepositoryOverrideFlag() {
+      return String.format(
+          "--override_repository=intellij_aspect=%s", findAspectDirectory().getPath());
+    }
   }
 }

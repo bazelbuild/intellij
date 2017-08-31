@@ -42,25 +42,24 @@ import javax.annotation.Nullable;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import org.jetbrains.annotations.NotNull;
 
 class NewBlazePackageDialog extends DialogWrapper {
   private static final Logger logger = Logger.getInstance(NewBlazePackageDialog.class);
 
-  @NotNull private final Project project;
-  @NotNull private final PsiDirectory parentDirectory;
+  private final Project project;
+  private final PsiDirectory parentDirectory;
 
   @Nullable private Label newRule;
   @Nullable private Kind newRuleKind;
 
   private static final int UI_INDENT_LEVEL = 0;
   private static final int TEXT_FIELD_LENGTH = 40;
-  @NotNull private final JPanel component = new JPanel(new GridBagLayout());
-  @NotNull private final JBLabel packageLabel = new JBLabel("Package name:");
-  @NotNull private final JBTextField packageNameField = new JBTextField(TEXT_FIELD_LENGTH);
-  @NotNull private final NewRuleUI newRuleUI = new NewRuleUI(TEXT_FIELD_LENGTH);
+  private final JPanel component = new JPanel(new GridBagLayout());
+  private final JBLabel packageLabel = new JBLabel("Package name:");
+  private final JBTextField packageNameField = new JBTextField(TEXT_FIELD_LENGTH);
+  private final NewRuleUI newRuleUI = new NewRuleUI(TEXT_FIELD_LENGTH);
 
-  public NewBlazePackageDialog(@NotNull Project project, @NotNull PsiDirectory currentDirectory) {
+  public NewBlazePackageDialog(Project project, PsiDirectory currentDirectory) {
     super(project);
     this.project = project;
     this.parentDirectory = currentDirectory;
@@ -72,14 +71,19 @@ class NewBlazePackageDialog extends DialogWrapper {
     component.add(packageLabel);
     component.add(packageNameField, UiUtil.getFillLineConstraints(UI_INDENT_LEVEL));
     newRuleUI.fillUI(component, UI_INDENT_LEVEL);
+    newRuleUI.syncRuleNameTo(packageNameField);
     UiUtil.fillBottom(component);
     init();
   }
 
-  @Nullable
   @Override
   protected JComponent createCenterPanel() {
     return component;
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return packageNameField;
   }
 
   @Nullable
@@ -126,7 +130,7 @@ class NewBlazePackageDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  private void showErrorDialog(@NotNull String message) {
+  private void showErrorDialog(String message) {
     String title = CommonBundle.getErrorTitle();
     Icon icon = Messages.getErrorIcon();
     Messages.showMessageDialog(component, message, title, icon);

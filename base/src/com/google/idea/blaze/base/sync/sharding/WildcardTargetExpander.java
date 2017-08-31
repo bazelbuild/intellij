@@ -21,11 +21,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
-import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.sharding.QueryResultLineProcessor.RuleTypeAndLabel;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -108,7 +109,7 @@ public class WildcardTargetExpander {
         PackageLister.getDirectoriesToPrefetch(pathResolver, includes, excludePredicate);
 
     ListenableFuture<?> prefetchFuture =
-        PrefetchService.getInstance().prefetchFiles(project, toPrefetch);
+        PrefetchService.getInstance().prefetchFiles(project, toPrefetch, false);
     if (!FutureUtil.waitForFuture(context, prefetchFuture)
         .withProgressMessage("Prefetching wildcard target pattern directories...")
         .timed("PrefetchingWildcardTargetDirectories")
@@ -144,7 +145,7 @@ public class WildcardTargetExpander {
       ExpandedTargetsResult result =
           queryIndividualTargets(project, context, workspaceRoot, handledRuleTypes, shard);
       output = output == null ? result : ExpandedTargetsResult.merge(output, result);
-      if (output.buildResult == BuildResult.FATAL_ERROR) {
+      if (output.buildResult.status == Status.FATAL_ERROR) {
         return output;
       }
     }
@@ -158,6 +159,11 @@ public class WildcardTargetExpander {
       WorkspaceRoot workspaceRoot,
       ImmutableSet<String> handledRuleTypes,
       List<TargetExpression> targetPatterns) {
+    String query = queryString(targetPatterns);
+    if (query.isEmpty()) {
+      // will be empty if there are no non-excluded targets
+      return new ExpandedTargetsResult(ImmutableList.of(), BuildResult.SUCCESS);
+    }
     BlazeCommand.Builder builder =
         BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.QUERY)
             .addBlazeFlags(BlazeFlags.KEEP_GOING)
@@ -179,7 +185,9 @@ public class WildcardTargetExpander {
             .addBlazeCommand(builder.build())
             .context(context)
             .stdout(LineProcessingOutputStream.of(new QueryResultLineProcessor(output, filter)))
-            .stderr(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)))
+            .stderr(
+                LineProcessingOutputStream.of(
+                    new IssueOutputLineProcessor(project, context, workspaceRoot)))
             .build()
             .run();
 

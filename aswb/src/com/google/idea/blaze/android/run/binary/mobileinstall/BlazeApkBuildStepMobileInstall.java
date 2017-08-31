@@ -16,12 +16,12 @@
 package com.google.idea.blaze.android.run.binary.mobileinstall;
 
 import com.android.ddmlib.IDevice;
+import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.DeviceFutures;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
@@ -59,21 +59,27 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
   private final Project project;
   private final ExecutionEnvironment env;
   private final Label label;
-  private final ImmutableList<String> buildFlags;
+  private final ImmutableList<String> blazeFlags;
+  private final ImmutableList<String> exeFlags;
   private final boolean useSplitApksIfPossible;
-  private final SettableFuture<BlazeAndroidDeployInfo> deployInfoFuture = SettableFuture.create();
+  private final boolean mobileInstallV2;
+  private BlazeAndroidDeployInfo deployInfo = null;
 
   public BlazeApkBuildStepMobileInstall(
       Project project,
       ExecutionEnvironment env,
       Label label,
-      ImmutableList<String> buildFlags,
-      boolean useSplitApksIfPossible) {
+      ImmutableList<String> blazeFlags,
+      ImmutableList<String> exeFlags,
+      boolean useSplitApksIfPossible,
+      boolean mobileInstallV2) {
     this.project = project;
     this.env = env;
     this.label = label;
-    this.buildFlags = buildFlags;
+    this.blazeFlags = blazeFlags;
+    this.exeFlags = exeFlags;
     this.useSplitApksIfPossible = useSplitApksIfPossible;
+    this.mobileInstallV2 = mobileInstallV2;
   }
 
   @Override
@@ -95,31 +101,50 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
                 BlazeCommand.builder(
                     Blaze.getBuildSystemProvider(project).getBinaryPath(),
                     BlazeCommandName.MOBILE_INSTALL);
-            command.addBlazeFlags(BlazeFlags.adbSerialFlags(device.getSerialNumber()));
+
+            if (mobileInstallV2) {
+              // Will become no-op once v2 is default.
+              command.addBlazeFlags("--mode=skylark");
+            }
+
+            if (mobileInstallV2) {
+              command.addExeFlags(BlazeFlags.DEVICE, device.getSerialNumber());
+            } else {
+              command.addBlazeFlags(
+                  BlazeFlags.ADB_ARG + "-s ", BlazeFlags.ADB_ARG + device.getSerialNumber());
+            }
 
             if (USE_SDK_ADB.getValue()) {
               File adb = AndroidSdkUtils.getAdb(project);
               if (adb != null) {
-                command.addBlazeFlags(ImmutableList.of("--adb", adb.toString()));
+                if (mobileInstallV2) {
+                  command.addExeFlags(BlazeFlags.ADB_PATH, adb.toString());
+                } else {
+                  command.addBlazeFlags(BlazeFlags.ADB, adb.toString());
+                }
               }
             }
 
-            // split-apks only supported for API level 23 and above
-            if (useSplitApksIfPossible && device.getVersion().getApiLevel() >= 23) {
-              command.addBlazeFlags(BlazeFlags.SPLIT_APKS);
-            } else if (incrementalInstall) {
-              command.addBlazeFlags(BlazeFlags.INCREMENTAL);
+            // These flags are obsolete in V2.
+            if (!mobileInstallV2) {
+              // split-apks only supported for API level 23 and above
+              if (useSplitApksIfPossible && device.getVersion().getApiLevel() >= 23) {
+                command.addBlazeFlags(BlazeFlags.SPLIT_APKS);
+              } else if (incrementalInstall) {
+                command.addBlazeFlags(BlazeFlags.INCREMENTAL);
+              }
             }
             WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
             BlazeApkDeployInfoProtoHelper deployInfoHelper =
-                new BlazeApkDeployInfoProtoHelper(project, buildFlags);
+                new BlazeApkDeployInfoProtoHelper(project, blazeFlags);
             BuildResultHelper buildResultHelper = deployInfoHelper.getBuildResultHelper();
 
             command
                 .addTargets(label)
-                .addBlazeFlags(buildFlags)
-                .addBlazeFlags(buildResultHelper.getBuildFlags());
+                .addBlazeFlags(blazeFlags)
+                .addBlazeFlags(buildResultHelper.getBuildFlags())
+                .addExeFlags(exeFlags);
 
             SaveUtil.saveAllFiles();
             int retVal =
@@ -138,12 +163,10 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
               return;
             }
 
-            BlazeAndroidDeployInfo deployInfo = deployInfoHelper.readDeployInfo(context);
+            deployInfo = deployInfoHelper.readDeployInfo(context);
             if (deployInfo == null) {
               IssueOutput.error("Could not read apk deploy info from build").submit(context);
-              return;
             }
-            deployInfoFuture.set(deployInfo);
           }
         };
 
@@ -163,8 +186,12 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
     return context.shouldContinue();
   }
 
-  public ListenableFuture<BlazeAndroidDeployInfo> getDeployInfo() {
-    return deployInfoFuture;
+  @Override
+  public BlazeAndroidDeployInfo getDeployInfo() throws ApkProvisionException {
+    if (deployInfo != null) {
+      return deployInfo;
+    }
+    throw new ApkProvisionException("Failed to read APK deploy info");
   }
 
   @Nullable

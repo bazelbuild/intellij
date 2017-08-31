@@ -49,7 +49,6 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.clwb.sync.BlazeCLionSyncPlugin"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.clwb.run.BlazeCidrRunConfigurationHandlerProvider" order="first"/>
-    <RunConfigurationFactory implementation="com.google.idea.blaze.clwb.run.BlazeCidrDebuggableConfigurationFactory"/>
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.run.test.BlazeCidrTestEventsHandler"/>
   </extensions>
 

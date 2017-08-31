@@ -50,6 +50,8 @@ public class BlazeLibraryCollector {
             .filter(Objects::nonNull)
             .reduce(Predicate::and)
             .orElse(o -> true);
-    return result.stream().filter(libraryFilter).collect(Collectors.toList());
+
+    return BlazeLibrarySorter.sortLibraries(
+        result.stream().filter(libraryFilter).collect(Collectors.toList()));
   }
 }

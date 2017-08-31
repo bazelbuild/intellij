@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.prefetch;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -28,10 +29,16 @@ public interface Prefetcher {
       ExtensionPointName.create("com.google.idea.blaze.Prefetcher");
 
   /**
-   * Prefetches the given list of files.
+   * Prefetches the given list of canonical files.
    *
    * <p>It is the responsibility of the prefetcher to filter out any files it isn't interested in.
    */
   ListenableFuture<?> prefetchFiles(
-      Project project, Collection<File> file, ListeningExecutorService executor);
+      Project project,
+      Collection<ListenableFuture<File>> fileFutures,
+      ListeningExecutorService executor);
+
+  default boolean enabled(Project project) {
+    return Blaze.isBlazeProject(project);
+  }
 }

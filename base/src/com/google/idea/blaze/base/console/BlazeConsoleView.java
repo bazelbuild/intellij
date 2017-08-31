@@ -37,10 +37,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
-import java.awt.BorderLayout;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import org.jetbrains.annotations.NotNull;
 
 class BlazeConsoleView implements Disposable {
@@ -55,14 +53,12 @@ class BlazeConsoleView implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private final ConsoleViewImpl myConsoleView;
 
-  private JPanel myConsolePanel;
   private volatile Runnable myStopHandler;
 
   public BlazeConsoleView(@NotNull Project project) {
     myProject = project;
     myConsoleView = new ConsoleViewImpl(myProject, false);
     Disposer.register(this, myConsoleView);
-    setupUI();
   }
 
   public static BlazeConsoleView getInstance(@NotNull Project project) {
@@ -106,7 +102,6 @@ class BlazeConsoleView implements Disposable {
     group.add(new StopAction());
 
     JComponent layoutComponent = layoutUi.getComponent();
-    myConsolePanel.add(layoutComponent, BorderLayout.CENTER);
 
     //noinspection ConstantConditions
     Content content =
@@ -125,11 +120,6 @@ class BlazeConsoleView implements Disposable {
 
   @Override
   public void dispose() {}
-
-  private void setupUI() {
-    myConsolePanel = new JPanel();
-    myConsolePanel.setLayout(new BorderLayout(0, 0));
-  }
 
   private class StopAction extends DumbAwareAction {
     public StopAction() {

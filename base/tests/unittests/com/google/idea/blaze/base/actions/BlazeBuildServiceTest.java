@@ -107,6 +107,22 @@ public class BlazeBuildServiceTest extends BlazeTestCase {
     verify(service).buildTargetExpressions(eq(project), eq(targets), eq(viewSet), any());
   }
 
+  @Test
+  public void testLastBuildProjectTimestampIsNull() {
+    assertThat(BlazeBuildService.getLastBuildTimeStamp(project)).isNull();
+  }
+
+  @Test
+  public void testGetLastBuildProjectTimestamp() {
+    long beforeTime = System.currentTimeMillis() - 1;
+    service.buildProject(project);
+    long afterTime = System.currentTimeMillis() + 1;
+    Long timestamp = BlazeBuildService.getLastBuildTimeStamp(project);
+    assertThat(timestamp).isNotNull();
+    assertThat(timestamp).isGreaterThan(beforeTime);
+    assertThat(timestamp).isLessThan(afterTime);
+  }
+
   private static class MockProjectViewManager extends ProjectViewManager {
     private final ProjectViewSet viewSet;
 

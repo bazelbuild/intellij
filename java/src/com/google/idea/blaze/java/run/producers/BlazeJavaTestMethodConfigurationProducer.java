@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
@@ -41,21 +42,24 @@ import javax.annotation.Nullable;
 public class BlazeJavaTestMethodConfigurationProducer
     extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
 
-  private static class SelectedMethodInfo {
+  private static class TestMethodContext {
     private final PsiMethod firstMethod;
     private final PsiClass containingClass;
     private final List<String> methodNames;
     private final String testFilterFlag;
+    private final Label blazeTarget;
 
-    public SelectedMethodInfo(
+    TestMethodContext(
         PsiMethod firstMethod,
         PsiClass containingClass,
         List<String> methodNames,
-        String testFilterFlag) {
+        String testFilterFlag,
+        Label blazeTarget) {
       this.firstMethod = firstMethod;
       this.containingClass = containingClass;
       this.methodNames = methodNames;
       this.testFilterFlag = testFilterFlag;
+      this.blazeTarget = blazeTarget;
     }
   }
 
@@ -69,23 +73,17 @@ public class BlazeJavaTestMethodConfigurationProducer
       ConfigurationContext context,
       Ref<PsiElement> sourceElement) {
 
-    SelectedMethodInfo methodInfo = getSelectedMethodInfo(context);
-    if (methodInfo == null) {
+    TestMethodContext methodContext = getSelectedMethodContext(context);
+    if (methodContext == null) {
       return false;
     }
 
     // PatternConfigurationProducer also chooses the first method as its source element.
     // As long as we choose an element at the same PSI hierarchy level,
     // PatternConfigurationProducer won't override our configuration.
-    sourceElement.set(methodInfo.firstMethod);
+    sourceElement.set(methodContext.firstMethod);
 
-    TestIdeInfo.TestSize testSize = TestSizeAnnotationMap.getTestSize(methodInfo.firstMethod);
-    TargetIdeInfo target = RunUtil.targetForTestClass(methodInfo.containingClass, testSize);
-    if (target == null) {
-      return false;
-    }
-
-    configuration.setTarget(target.key.label);
+    configuration.setTarget(methodContext.blazeTarget);
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {
@@ -96,7 +94,7 @@ public class BlazeJavaTestMethodConfigurationProducer
     // remove old test filter flag if present
     List<String> flags = new ArrayList<>(handlerState.getBlazeFlagsState().getRawFlags());
     flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
-    flags.add(methodInfo.testFilterFlag);
+    flags.add(methodContext.testFilterFlag);
     if (!flags.contains(BlazeFlags.DISABLE_TEST_SHARDING)) {
       flags.add(BlazeFlags.DISABLE_TEST_SHARDING);
     }
@@ -106,7 +104,7 @@ public class BlazeJavaTestMethodConfigurationProducer
     nameBuilder.setTargetString(
         String.format(
             "%s.%s",
-            methodInfo.containingClass.getName(), String.join(",", methodInfo.methodNames)));
+            methodContext.containingClass.getName(), String.join(",", methodContext.methodNames)));
     configuration.setName(nameBuilder.build());
     configuration.setNameChangedByUser(true); // don't revert to generated name
     return true;
@@ -124,17 +122,14 @@ public class BlazeJavaTestMethodConfigurationProducer
       return false;
     }
 
-    SelectedMethodInfo methodInfo = getSelectedMethodInfo(context);
-    if (methodInfo == null) {
-      return false;
-    }
-
-    List<String> flags = handlerState.getBlazeFlagsState().getRawFlags();
-    return flags.contains(methodInfo.testFilterFlag);
+    TestMethodContext methodContext = getSelectedMethodContext(context);
+    return methodContext != null
+        && handlerState.getBlazeFlagsState().getRawFlags().contains(methodContext.testFilterFlag)
+        && methodContext.blazeTarget.equals(configuration.getTarget());
   }
 
   @Nullable
-  private static SelectedMethodInfo getSelectedMethodInfo(ConfigurationContext context) {
+  private static TestMethodContext getSelectedMethodContext(ConfigurationContext context) {
     if (!SmRunnerUtils.getSelectedSmRunnerTreeElements(context).isEmpty()) {
       // handled by a different producer
       return null;
@@ -155,6 +150,13 @@ public class BlazeJavaTestMethodConfigurationProducer
         return null;
       }
     }
+
+    TestIdeInfo.TestSize testSize = TestSizeAnnotationMap.getTestSize(firstMethod);
+    TargetIdeInfo target = RunUtil.targetForTestClass(containingClass, testSize);
+    if (target == null) {
+      return null;
+    }
+
     String testFilter =
         BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(containingClass, selectedMethods);
     if (testFilter == null) {
@@ -164,6 +166,7 @@ public class BlazeJavaTestMethodConfigurationProducer
     List<String> methodNames =
         selectedMethods.stream().map(PsiMethod::getName).sorted().collect(Collectors.toList());
     final String testFilterFlag = BlazeFlags.TEST_FILTER + "=" + testFilter;
-    return new SelectedMethodInfo(firstMethod, containingClass, methodNames, testFilterFlag);
+    return new TestMethodContext(
+        firstMethod, containingClass, methodNames, testFilterFlag, target.key.label);
   }
 }

@@ -22,12 +22,14 @@ import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -40,6 +42,8 @@ import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
@@ -141,7 +145,10 @@ public final class BuildPluginBeforeRunTaskProvider
     if (!canExecuteTask(configuration, task)) {
       return false;
     }
-    boolean suppressConsole = BlazeUserSettings.getInstance().getSuppressConsoleForRunAction();
+    BlazeConsolePopupBehavior consolePopupBehavior =
+        BlazeUserSettings.getInstance().getSuppressConsoleForRunAction()
+            ? BlazeConsolePopupBehavior.NEVER
+            : BlazeConsolePopupBehavior.ALWAYS;
     return Scope.root(
         context -> {
           context
@@ -149,7 +156,7 @@ public final class BuildPluginBeforeRunTaskProvider
               .push(new IssuesScope(project))
               .push(
                   new BlazeConsoleScope.Builder(project)
-                      .setSuppressConsole(suppressConsole)
+                      .setPopupBehavior(consolePopupBehavior)
                       .build())
               .push(new IdeaLogScope());
 
@@ -202,12 +209,24 @@ public final class BuildPluginBeforeRunTaskProvider
                     IssueOutput.error("Could not determine execution root").submit(context);
                     return;
                   }
+                  BlazeProjectData blazeProjectData =
+                      BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+                  if (blazeProjectData == null) {
+                    IssueOutput.error("Could not determine execution root").submit(context);
+                    return;
+                  }
 
-                  BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(f -> true);
+                  BuildResultHelper buildResultHelper =
+                      BuildResultHelper.forFiles(blazeProjectData.blazeVersionData, f -> true);
                   BlazeCommand command =
                       BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
                           .addTargets(config.getTarget())
-                          .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
+                          .addBlazeFlags(
+                              BlazeFlags.blazeFlags(
+                                  project,
+                                  projectViewSet,
+                                  BlazeCommandName.BUILD,
+                                  BlazeInvocationContext.RunConfiguration))
                           .addBlazeFlags(config.getBlazeFlagsState().getExpandedFlags())
                           .addExeFlags(config.getExeFlagsState().getExpandedFlags())
                           .addBlazeFlags(buildResultHelper.getBuildFlags())

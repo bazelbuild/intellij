@@ -17,13 +17,11 @@ package com.google.idea.blaze.java.settings;
 
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.NotNull;
 
 /** Java-specific user settings. */
 @State(name = "BlazeJavaUserSettings", storages = @Storage("blaze.java.user.settings.xml"))
@@ -31,12 +29,9 @@ public class BlazeJavaUserSettings implements PersistentStateComponent<BlazeJava
   private boolean useJarCache = getDefaultJarCacheValue();
   private boolean attachSourcesByDefault = false;
   private boolean attachSourcesOnDemand = false;
-  private boolean migrated;
 
   public static BlazeJavaUserSettings getInstance() {
-    BlazeJavaUserSettings settings = ServiceManager.getService(BlazeJavaUserSettings.class);
-    settings.migrate();
-    return settings;
+    return ServiceManager.getService(BlazeJavaUserSettings.class);
   }
 
   private static boolean getDefaultJarCacheValue() {
@@ -44,7 +39,6 @@ public class BlazeJavaUserSettings implements PersistentStateComponent<BlazeJava
   }
 
   @Override
-  @NotNull
   public BlazeJavaUserSettings getState() {
     return this;
   }
@@ -52,20 +46,6 @@ public class BlazeJavaUserSettings implements PersistentStateComponent<BlazeJava
   @Override
   public void loadState(BlazeJavaUserSettings state) {
     XmlSerializerUtil.copyBean(state, this);
-    migrate();
-  }
-
-  /**
-   * Added in 1.8, can be removed ~2.2. When this is removed, java settings can no longer be
-   * migrated. (This is non-catastrophic though -- the settings will just reset)
-   */
-  private void migrate() {
-    if (!migrated) {
-      BlazeUserSettings userSettings = BlazeUserSettings.getInstance();
-      this.attachSourcesByDefault = userSettings.getAttachSourcesByDefault();
-      this.attachSourcesOnDemand = userSettings.getAttachSourcesOnDemand();
-      this.migrated = true;
-    }
   }
 
   public boolean getUseJarCache() {
@@ -90,15 +70,5 @@ public class BlazeJavaUserSettings implements PersistentStateComponent<BlazeJava
 
   public void setAttachSourcesOnDemand(boolean attachSourcesOnDemand) {
     this.attachSourcesOnDemand = attachSourcesOnDemand;
-  }
-
-  @SuppressWarnings("unused") // Used by bean serialization
-  public boolean getMigrated() {
-    return migrated;
-  }
-
-  @SuppressWarnings("unused") // Used by bean serialization
-  public void setMigrated(boolean migrated) {
-    this.migrated = migrated;
   }
 }
