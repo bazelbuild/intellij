@@ -16,7 +16,9 @@
 package com.google.idea.blaze.base.lang.buildfile.sync;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -102,15 +104,14 @@ public class BuildLangSyncPlugin extends BlazeSyncPlugin.Adapter {
       ProjectViewSet projectViewSet,
       BlazeContext context) {
     try {
-      // it's wasteful converting to a string and back, but uses existing code,
-      // and has a very minor cost (this is only run once per workspace)
       ListenableFuture<byte[]> future =
           BlazeInfoRunner.getInstance()
               .runBlazeInfoGetBytes(
                   context,
                   Blaze.getBuildSystemProvider(project).getSyncBinaryPath(),
                   workspace,
-                  BlazeFlags.buildFlags(project, projectViewSet),
+                  BlazeFlags.blazeFlags(
+                      project, projectViewSet, BlazeCommandName.INFO, BlazeInvocationContext.Sync),
                   BlazeInfo.BUILD_LANGUAGE);
 
       return BuildLanguageSpec.fromProto(Build.BuildLanguage.parseFrom(future.get()));

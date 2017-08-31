@@ -90,7 +90,9 @@ public final class ExecutionRootPath implements Serializable {
     if (!isAncestor(root.getPath(), path.getPath(), /* strict */ false)) {
       return null;
     }
-    String relativePath = FileUtil.getRelativePath(root, path);
+    String relativePath =
+        FileUtil.getRelativePath(
+            root.getAbsolutePath(), path.getAbsolutePath(), File.separatorChar);
     if (relativePath == null) {
       return null;
     }

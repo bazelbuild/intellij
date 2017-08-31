@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
+import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -77,10 +78,11 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   // blaze-info data
   private static final String OUTPUT_BASE = "/output_base";
   private static final String EXECUTION_ROOT = "/execroot/root";
+  private static final String OUTPUT_PATH = EXECUTION_ROOT + "/blaze-out";
   private static final String BLAZE_BIN =
-      EXECUTION_ROOT + "/blaze-out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
+      OUTPUT_PATH + "/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
   private static final String BLAZE_GENFILES =
-      EXECUTION_ROOT + "/blaze-out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/genfiles";
+      OUTPUT_PATH + "/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/genfiles";
 
   private MockProjectViewManager projectViewManager;
   private MockBlazeVcsHandler vcsHandler;
@@ -147,17 +149,14 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     fileSystem.createDirectory(projectDataDirectory.getPath() + "/.blaze/modules");
 
     blazeInfoData.setResults(
-        ImmutableMap.of(
-            BlazeInfo.blazeBinKey(Blaze.getBuildSystem(getProject())),
-            BLAZE_BIN,
-            BlazeInfo.blazeGenfilesKey(Blaze.getBuildSystem(getProject())),
-            BLAZE_GENFILES,
-            BlazeInfo.EXECUTION_ROOT_KEY,
-            EXECUTION_ROOT,
-            BlazeInfo.OUTPUT_BASE_KEY,
-            OUTPUT_BASE,
-            BlazeInfo.PACKAGE_PATH_KEY,
-            workspaceRoot.toString()));
+        ImmutableMap.<String, String>builder()
+            .put(BlazeInfo.blazeBinKey(Blaze.getBuildSystem(getProject())), BLAZE_BIN)
+            .put(BlazeInfo.blazeGenfilesKey(Blaze.getBuildSystem(getProject())), BLAZE_GENFILES)
+            .put(BlazeInfo.EXECUTION_ROOT_KEY, EXECUTION_ROOT)
+            .put(BlazeInfo.OUTPUT_BASE_KEY, OUTPUT_BASE)
+            .put(BlazeInfo.OUTPUT_PATH_KEY, OUTPUT_PATH)
+            .put(BlazeInfo.PACKAGE_PATH_KEY, workspaceRoot.toString())
+            .build());
   }
 
   /** The workspace content entries created during sync */
@@ -337,6 +336,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         WorkspaceRoot workspaceRoot,
         ProjectViewSet projectViewSet,
         BlazeVersionData blazeVersionData,
+        BlazeConfigurationHandler configHandler,
         ShardedTargetList shardedTargets,
         WorkspaceLanguageSettings workspaceLanguageSettings,
         ArtifactLocationDecoder artifactLocationDecoder,
@@ -353,6 +353,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         WorkspaceRoot workspaceRoot,
         ProjectViewSet projectViewSet,
         BlazeVersionData blazeVersionData,
+        WorkspaceLanguageSettings workspaceLanguageSettings,
         ShardedTargetList shardedTargets) {
       return BuildResult.SUCCESS;
     }
@@ -364,6 +365,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         WorkspaceRoot workspaceRoot,
         ProjectViewSet projectViewSet,
         BlazeVersionData blazeVersionData,
+        WorkspaceLanguageSettings workspaceLanguageSettings,
         ShardedTargetList shardedTargets) {
       return BuildResult.SUCCESS;
     }

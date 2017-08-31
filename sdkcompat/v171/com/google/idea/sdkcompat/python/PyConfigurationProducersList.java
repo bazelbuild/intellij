@@ -1,12 +1,11 @@
 package com.google.idea.sdkcompat.python;
 
 import com.google.common.collect.ImmutableList;
-import java.util.Collection;
 
 /** List of python configuration producers for a given plugin version. */
 public class PyConfigurationProducersList {
 
-  public static final Collection<Class<?>> PRODUCERS_TO_SUPPRESS =
+  public static final ImmutableList<Class<?>> PRODUCERS_TO_SUPPRESS =
       ImmutableList.of(
           com.jetbrains.python.run.PythonRunConfigurationProducer.class,
           com.jetbrains.python.testing.universalTests.PyUniversalTestsConfigurationProducer.class,

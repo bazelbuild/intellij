@@ -15,40 +15,25 @@
  */
 package com.google.idea.blaze.golang.sync;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
-import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
-import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
-import com.google.idea.blaze.base.sync.SourceFolderProvider;
-import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
-import com.google.idea.blaze.golang.sdk.GoSdkUtil;
-import com.google.idea.sdkcompat.transactions.Transactions;
-import com.intellij.openapi.application.ApplicationManager;
+import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.util.List;
 import java.util.Set;
@@ -57,46 +42,16 @@ import javax.annotation.Nullable;
 /** Supports golang. */
 public class BlazeGoSyncPlugin extends BlazeSyncPlugin.Adapter {
 
-  static final String GO_LIBRARY_PREFIX = "GOPATH";
-  private static final String GO_MODULE_TYPE_ID = "GO_MODULE";
-  private static final String GO_PLUGIN_ID = "ro.redeul.google.go";
-  private static final String GO_SDK_TYPE_ID = "Go SDK";
+  private static final Logger logger = Logger.getInstance(BlazeGoSyncPlugin.class);
 
-  @Nullable
-  @Override
-  public ModuleType<?> getWorkspaceModuleType(WorkspaceType workspaceType) {
-    if (workspaceType == WorkspaceType.GO) {
-      return ModuleTypeManager.getInstance().findByID(GO_MODULE_TYPE_ID);
-    }
-    return null;
-  }
+  private static final BoolExperiment refreshExecRoot =
+      new BoolExperiment("refresh.exec.root.golang", true);
 
-  @Override
-  public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
-    return ImmutableList.of(WorkspaceType.GO);
-  }
+  static final ImmutableSet<String> GO_LIBRARY_PREFIXES = ImmutableSet.of("GOPATH", "Go SDK");
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
-    if (workspaceType == WorkspaceType.GO) {
-      return ImmutableSet.of(LanguageClass.GO);
-    }
-    return ImmutableSet.of();
-  }
-
-  @Nullable
-  @Override
-  public WorkspaceType getDefaultWorkspaceType() {
-    return WorkspaceType.GO;
-  }
-
-  @Nullable
-  @Override
-  public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
-    if (!projectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.GO)) {
-      return null;
-    }
-    return GenericSourceFolderProvider.INSTANCE;
+    return ImmutableSet.of(LanguageClass.GO);
   }
 
   @Override
@@ -129,23 +84,12 @@ public class BlazeGoSyncPlugin extends BlazeSyncPlugin.Adapter {
       }
     }
 
-    String moduleLibraryName =
-        String.format("%s <%s>", GO_LIBRARY_PREFIX, BlazeDataStorage.WORKSPACE_MODULE_NAME);
-    Library goModuleLibrary =
-        registrar.getLibraryTable(project).getLibraryByName(moduleLibraryName);
-    if (goModuleLibrary != null) {
-      libraries.add(goModuleLibrary);
+    for (Library lib : registrar.getLibraryTable(project).getLibraries()) {
+      if (BlazeGoLibrarySource.isGoLibrary(lib)) {
+        libraries.add(lib);
+      }
     }
     return libraries;
-  }
-
-  /**
-   * By default the Go plugin will create duplicate copies of project libraries, one for each
-   * module. We only care about library associated with the workspace module.
-   */
-  static boolean isGoLibraryForModule(Library library, String moduleName) {
-    String name = library.getName();
-    return name != null && name.equals("GOPATH <" + moduleName + ">");
   }
 
   @Nullable
@@ -159,62 +103,28 @@ public class BlazeGoSyncPlugin extends BlazeSyncPlugin.Adapter {
   }
 
   @Override
-  public boolean validateProjectView(
-      @Nullable Project project,
-      BlazeContext context,
-      ProjectViewSet projectViewSet,
-      WorkspaceLanguageSettings workspaceLanguageSettings) {
-    if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.GO)) {
-      return true;
-    }
-    if (!PluginUtils.isPluginEnabled(GO_PLUGIN_ID)) {
-      IssueOutput.error("Go plugin needed for Go language support.")
-          .navigatable(PluginUtils.installOrEnablePluginNavigable(GO_PLUGIN_ID))
-          .submit(context);
-      return false;
-    }
-    return true;
-  }
-
-  @Override
-  public void updateProjectSdk(
-      Project project,
-      BlazeContext context,
-      ProjectViewSet projectViewSet,
-      BlazeVersionData blazeVersionData,
-      BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.GO)) {
+  public void refreshVirtualFileSystem(BlazeProjectData blazeProjectData) {
+    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.GO)) {
       return;
     }
-    Sdk currentSdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    if (currentSdk != null && currentSdk.getSdkType().getName().equals(GO_SDK_TYPE_ID)) {
+    if (!refreshExecRoot.getValue()) {
       return;
     }
-    Sdk sdk = getOrCreateGoSdk();
-    if (sdk != null) {
-      setProjectSdk(project, sdk);
-    }
+    long start = System.currentTimeMillis();
+    refreshExecRoot(blazeProjectData);
+    long end = System.currentTimeMillis();
+    logger.info(String.format("Refreshing execution root took: %d ms", (end - start)));
   }
 
-  @Nullable
-  private static Sdk getOrCreateGoSdk() {
-    ProjectJdkTable sdkTable = ProjectJdkTable.getInstance();
-    SdkTypeId type = sdkTable.getSdkTypeByName(GO_SDK_TYPE_ID);
-    List<Sdk> sdk = sdkTable.getSdksOfType(type);
-    if (!sdk.isEmpty()) {
-      return sdk.get(0);
+  private static void refreshExecRoot(BlazeProjectData blazeProjectData) {
+    // recursive refresh of the blaze execution root. This is required because our blaze aspect
+    // can't yet tell us exactly which genfiles are required to resolve the project.
+    VirtualFile execRoot =
+        VirtualFileSystemProvider.getInstance()
+            .getSystem()
+            .refreshAndFindFileByIoFile(blazeProjectData.blazeInfo.getExecutionRoot());
+    if (execRoot != null) {
+      VfsUtil.markDirtyAndRefresh(false, true, true, execRoot);
     }
-    VirtualFile defaultSdk = GoSdkUtil.suggestSdkDirectory();
-    if (defaultSdk != null) {
-      return SdkConfigurationUtil.createAndAddSDK(defaultSdk.getPath(), (SdkType) type);
-    }
-    return null;
-  }
-
-  private static void setProjectSdk(Project project, Sdk sdk) {
-    Transactions.submitTransactionAndWait(
-        () ->
-            ApplicationManager.getApplication()
-                .runWriteAction(() -> ProjectRootManager.getInstance(project).setProjectSdk(sdk)));
   }
 }

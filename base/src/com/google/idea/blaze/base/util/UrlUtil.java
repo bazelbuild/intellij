@@ -17,10 +17,12 @@ package com.google.idea.blaze.base.util;
 
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.URLUtil;
 import java.io.File;
+import javax.annotation.Nullable;
 
 /** Utility methods for converting between URLs and file paths. */
 public class UrlUtil {
@@ -30,7 +32,7 @@ public class UrlUtil {
   }
 
   public static String fileToIdeaUrl(File path) {
-    return pathToUrl(toSystemIndependentName(path.getPath()));
+    return pathToUrl(FileUtil.toSystemIndependentName(path.getPath()));
   }
 
   public static String pathToUrl(String filePath) {
@@ -45,7 +47,16 @@ public class UrlUtil {
     }
   }
 
-  private static String toSystemIndependentName(String aFileName) {
-    return FileUtilRt.toSystemIndependentName(aFileName);
+  /**
+   * Returns the local file path associated with the given URL, or null if it doesn't refer to a
+   * local file.
+   */
+  @Nullable
+  public static String urlToFilePath(@Nullable String url) {
+    if (url == null || !url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
+      return null;
+    }
+    return FileUtil.toSystemDependentName(
+        StringUtil.trimStart(url, LocalFileSystem.PROTOCOL_PREFIX));
   }
 }

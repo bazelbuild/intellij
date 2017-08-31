@@ -94,6 +94,15 @@ public interface BuildSystemProvider {
   @Nullable
   String getProjectViewDocumentationUrl();
 
+  /**
+   * The URL providing documentation for language support, if one can be found.
+   *
+   * @param relativeDocName the path to the language doc, relative to the plugin documentation
+   *     site's base URL, without the webpage's file extension.
+   */
+  @Nullable
+  String getLanguageSupportDocumentationUrl(String relativeDocName);
+
   /** Check if the given filename is a valid BUILD file name. */
   boolean isBuildFile(String fileName);
 

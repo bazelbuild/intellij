@@ -16,11 +16,11 @@
 package com.google.idea.blaze.base.run.smrunner;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
@@ -52,11 +52,11 @@ public class SmRunnerUtils {
 
   public static SMTRunnerConsoleView getConsoleView(
       Project project,
-      RunConfiguration configuration,
+      BlazeCommandRunConfiguration configuration,
       Executor executor,
-      BlazeTestEventsHandler eventsHandler) {
+      BlazeTestUiSession testUiSession) {
     SMTRunnerConsoleProperties properties =
-        new BlazeTestConsoleProperties(configuration, executor, eventsHandler);
+        new BlazeTestConsoleProperties(configuration, executor, testUiSession);
     SMTRunnerConsoleView console =
         (SMTRunnerConsoleView)
             SMTestRunnerConnectionUtil.createConsole(BLAZE_FRAMEWORK, properties);

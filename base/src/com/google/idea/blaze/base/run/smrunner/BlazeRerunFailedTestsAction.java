@@ -42,7 +42,7 @@ public class BlazeRerunFailedTestsAction extends AbstractRerunFailedTestsAction 
 
   private final BlazeTestEventsHandler eventsHandler;
 
-  public BlazeRerunFailedTestsAction(
+  BlazeRerunFailedTestsAction(
       BlazeTestEventsHandler eventsHandler, ComponentContainer componentContainer) {
     super(componentContainer);
     this.eventsHandler = eventsHandler;

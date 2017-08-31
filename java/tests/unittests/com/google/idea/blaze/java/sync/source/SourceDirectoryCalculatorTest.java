@@ -16,7 +16,6 @@
 package com.google.idea.blaze.java.sync.source;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -29,6 +28,7 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
 import com.google.idea.blaze.base.io.InputStreamProvider;
+import com.google.idea.blaze.base.io.MockInputStreamProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -44,18 +44,12 @@ import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
-import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.PackageManifestOuterClass;
-import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.PackageManifestOuterClass.JavaSourcePackage;
-import com.google.repackaged.devtools.build.lib.ideinfo.androidstudio.PackageManifestOuterClass.PackageManifest;
-import com.intellij.util.containers.HashMap;
-import java.io.ByteArrayInputStream;
+import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo.JavaSourcePackage;
+import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo.PackageManifest;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -80,8 +74,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
           artifactLocation -> new File("/root", artifactLocation.getRelativePath());
 
   @Override
-  protected void initTest(
-      @NotNull Container applicationServices, @NotNull Container projectServices) {
+  protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
 
     mockInputStreamProvider = new MockInputStreamProvider();
@@ -678,11 +671,15 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   @Test
   public void testCompetingPackageDeclarationPicksMajority() throws Exception {
     mockInputStreamProvider
+        .addFile("/root/java/com/google/Foo.java", "package com.google;\n public class Foo {}")
         .addFile(
-            "/root/java/com/google/Foo.java", "package com.google.different;\n public class Foo {}")
-        .addFile("/root/java/com/google/Bla.java", "package com.google;\n public class Bla {}")
-        .addFile("/root/java/com/google/Bla2.java", "package com.google;\n public class Bla2 {}")
-        .addFile("/root/java/com/google/Bla3.java", "package com.google;\n public class Bla3 {}");
+            "/root/java/com/google/Bla.java", "package com.google.different;\n public class Bla {}")
+        .addFile(
+            "/root/java/com/google/Bla2.java",
+            "package com.google.different;\n public class Bla2 {}")
+        .addFile(
+            "/root/java/com/google/Bla3.java",
+            "package com.google.different;\n public class Bla3 {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
             SourceArtifact.builder(TargetKey.forPlainTarget(LABEL))
@@ -707,6 +704,46 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("java/com/google/Foo.java")
+                        .setIsSource(true))
+                .build());
+    ImmutableList<BlazeContentEntry> result =
+        sourceDirectoryCalculator.calculateContentEntries(
+            project,
+            context,
+            workspaceRoot,
+            decoder,
+            ImmutableList.of(new WorkspacePath("java/com/google")),
+            sourceArtifacts,
+            NO_MANIFESTS);
+    issues.assertNoIssues();
+    assertThat(result)
+        .containsExactly(
+            BlazeContentEntry.builder("/root/java/com/google")
+                .addSource(
+                    BlazeSourceDirectory.builder("/root/java/com/google")
+                        .setPackagePrefix("com.google.different")
+                        .build())
+                .build());
+  }
+
+  @Test
+  public void testCompetingPackageDeclarationWithEqualCountsPicksDefault() throws Exception {
+    mockInputStreamProvider
+        .addFile(
+            "/root/java/com/google/Bla.java", "package com.google.different;\n public class Bla {}")
+        .addFile("/root/java/com/google/Foo.java", "package com.google;\n public class Foo {}");
+    List<SourceArtifact> sourceArtifacts =
+        ImmutableList.of(
+            SourceArtifact.builder(TargetKey.forPlainTarget(LABEL))
+                .setArtifactLocation(
+                    ArtifactLocation.builder()
+                        .setRelativePath("java/com/google/Foo.java")
+                        .setIsSource(true))
+                .build(),
+            SourceArtifact.builder(TargetKey.forPlainTarget(LABEL))
+                .setArtifactLocation(
+                    ArtifactLocation.builder()
+                        .setRelativePath("java/com/google/Bla.java")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
@@ -890,7 +927,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     setNewFormatPackageManifest(
         "/root/java/com/test.manifest",
         ImmutableList.of(
-            PackageManifestOuterClass.ArtifactLocation.newBuilder()
+            IntellijIdeInfo.ArtifactLocation.newBuilder()
                 .setRelativePath("java/com/google/Bla.java")
                 .setIsSource(true)
                 .build()),
@@ -1062,8 +1099,8 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     PackageManifest.Builder manifest = PackageManifest.newBuilder();
     for (int i = 0; i < sourceRelativePaths.size(); i++) {
       String sourceRelativePath = sourceRelativePaths.get(i);
-      PackageManifestOuterClass.ArtifactLocation source =
-          PackageManifestOuterClass.ArtifactLocation.newBuilder()
+      IntellijIdeInfo.ArtifactLocation source =
+          IntellijIdeInfo.ArtifactLocation.newBuilder()
               .setRelativePath(sourceRelativePath)
               .setIsSource(true)
               .build();
@@ -1076,9 +1113,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   private void setNewFormatPackageManifest(
-      String manifestPath,
-      List<PackageManifestOuterClass.ArtifactLocation> sources,
-      List<String> packages) {
+      String manifestPath, List<IntellijIdeInfo.ArtifactLocation> sources, List<String> packages) {
     PackageManifest.Builder manifest = PackageManifest.newBuilder();
     for (int i = 0; i < sources.size(); i++) {
       manifest.addSources(
@@ -1098,35 +1133,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     return new ArtifactLocationDecoderImpl(roots, new WorkspacePathResolverImpl(workspaceRoot));
   }
 
-  private static class MockInputStreamProvider implements InputStreamProvider {
-
-    private final Map<String, InputStream> javaFiles = new HashMap<>();
-
-    public MockInputStreamProvider addFile(String filePath, String javaSrc) {
-      try {
-        addFile(filePath, javaSrc.getBytes("UTF-8"));
-      } catch (UnsupportedEncodingException e) {
-        fail(e.getMessage());
-      }
-      return this;
-    }
-
-    public MockInputStreamProvider addFile(String filePath, byte[] contents) {
-      javaFiles.put(filePath, new ByteArrayInputStream(contents));
-      return this;
-    }
-
-    @Override
-    public InputStream getFile(@NotNull File path) throws FileNotFoundException {
-      final InputStream inputStream = javaFiles.get(path.getPath());
-      if (inputStream == null) {
-        throw new FileNotFoundException(
-            path + " has not been mapped into MockInputStreamProvider.");
-      }
-      return inputStream;
-    }
-  }
-
   private Map<TargetKey, Map<ArtifactLocation, String>> readPackageManifestFiles(
       Map<TargetKey, ArtifactLocation> manifests, ArtifactLocationDecoder decoder) {
     return PackageManifestReader.getInstance()
@@ -1136,7 +1142,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
 
   static class MockFileAttributeProvider extends FileAttributeProvider {
     @Override
-    public long getFileModifiedTime(@NotNull File file) {
+    public long getFileModifiedTime(File file) {
       return 1;
     }
   }

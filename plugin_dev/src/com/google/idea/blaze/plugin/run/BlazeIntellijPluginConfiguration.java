@@ -188,54 +188,52 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     }
     String buildNumber = IdeaJdkHelper.getBuildNumber(ideaJdk);
     final BlazeIntellijPluginDeployer deployer =
-        new BlazeIntellijPluginDeployer(getProject(), sandboxHome, buildNumber);
-    deployer.addTarget(getTarget());
+        new BlazeIntellijPluginDeployer(sandboxHome, buildNumber, getTarget());
     env.putUserData(BlazeIntellijPluginDeployer.USER_DATA_KEY, deployer);
 
     // copy license from running instance of idea
     IdeaJdkHelper.copyIDEALicense(sandboxHome);
 
-    final JavaCommandLineState state =
-        new JavaCommandLineState(env) {
-          @Override
-          protected JavaParameters createJavaParameters() throws ExecutionException {
-            List<String> pluginIds = deployer.deploy();
+    return new JavaCommandLineState(env) {
+      @Override
+      protected JavaParameters createJavaParameters() throws ExecutionException {
+        List<String> pluginIds = deployer.deployNonBlocking();
 
-            final JavaParameters params = new JavaParameters();
+        final JavaParameters params = new JavaParameters();
 
-            ParametersList vm = params.getVMParametersList();
+        ParametersList vm = params.getVMParametersList();
 
-            fillParameterList(vm, vmParameters);
-            fillParameterList(params.getProgramParametersList(), programParameters);
+        fillParameterList(vm, vmParameters);
+        fillParameterList(params.getProgramParametersList(), programParameters);
 
-            IntellijWithPluginClasspathHelper.addRequiredVmParams(params, ideaJdk);
+        IntellijWithPluginClasspathHelper.addRequiredVmParams(params, ideaJdk);
 
-            vm.defineProperty(
-                JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY, Joiner.on(',').join(pluginIds));
+        vm.defineProperty(
+            JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY, Joiner.on(',').join(pluginIds));
 
-            if (!vm.hasProperty(PlatformUtils.PLATFORM_PREFIX_KEY) && buildNumber != null) {
-              String prefix = IdeaJdkHelper.getPlatformPrefix(buildNumber);
-              if (prefix != null) {
-                vm.defineProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
+        if (!vm.hasProperty(PlatformUtils.PLATFORM_PREFIX_KEY) && buildNumber != null) {
+          String prefix = IdeaJdkHelper.getPlatformPrefix(buildNumber);
+          if (prefix != null) {
+            vm.defineProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
+          }
+        }
+        return params;
+      }
+
+      @Override
+      protected OSProcessHandler startProcess() throws ExecutionException {
+        deployer.blockUntilDeployComplete();
+        final OSProcessHandler handler = super.startProcess();
+        handler.addProcessListener(
+            new ProcessAdapter() {
+              @Override
+              public void processTerminated(ProcessEvent event) {
+                deployer.deleteDeployment();
               }
-            }
-            return params;
-          }
-
-          @Override
-          protected OSProcessHandler startProcess() throws ExecutionException {
-            final OSProcessHandler handler = super.startProcess();
-            handler.addProcessListener(
-                new ProcessAdapter() {
-                  @Override
-                  public void processTerminated(ProcessEvent event) {
-                    deployer.deleteDeployment();
-                  }
-                });
-            return handler;
-          }
-        };
-    return state;
+            });
+        return handler;
+      }
+    };
   }
 
   private static void fillParameterList(ParametersList list, @Nullable String value) {

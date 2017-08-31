@@ -33,13 +33,8 @@ public abstract class BlazeRunConfigurationFactory {
   public abstract boolean handlesTarget(
       Project project, BlazeProjectData blazeProjectData, Label label);
 
-  /**
-   * Returns whether this factory can initialize a configuration. <br>
-   * The default implementation simply checks that the configuration has the same {@link
-   * com.intellij.execution.configurations.ConfigurationType} as the type of {@link
-   * #getConfigurationFactory()}.
-   */
-  public boolean handlesConfiguration(RunConfiguration configuration) {
+  /** Returns whether this factory is compatible with the given run configuration type. */
+  public final boolean handlesConfiguration(RunConfiguration configuration) {
     return getConfigurationFactory().getType().equals(configuration.getType());
   }
 

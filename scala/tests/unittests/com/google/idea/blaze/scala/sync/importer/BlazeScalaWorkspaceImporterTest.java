@@ -516,6 +516,59 @@ public class BlazeScalaWorkspaceImporterTest extends BlazeTestCase {
     assertThat(scalaImportResult.libraries).isEmpty();
   }
 
+  @Test
+  public void testDuplicateScalaLibraries() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("src/main/scala/apps/example"))))
+            .build();
+
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//src/main/scala/apps/example:example")
+                    .setKind("scala_binary")
+                    .addSource(source("src/main/scala/apps/example/Main.scala"))
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder()
+                                    .setInterfaceJar(gen("src/main/scala/apps/example/example.jar"))
+                                    .setClassJar(gen("src/main/scala/apps/example/example.jar"))))
+                    .addDependency("//src/main/scala/imports:import1")
+                    .addDependency("//src/main/scala/imports:import2"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//src/main/scala/imports:import1")
+                    .setKind("scala_import")
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder()
+                                    .setInterfaceJar(gen("src/main/scala/imports/import.jar"))
+                                    .setClassJar(gen("src/main/scala/imports/import.jar")))))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//src/main/scala/imports:import2")
+                    .setKind("scala_import")
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder()
+                                    .setInterfaceJar(gen("src/main/scala/imports/import.jar"))
+                                    .setClassJar(gen("src/main/scala/imports/import.jar")))))
+            .build();
+
+    BlazeScalaImportResult scalaImportResult = importScala(projectView, targetMap);
+    errorCollector.assertNoIssues();
+
+    assertThat(scalaImportResult.libraries).hasSize(1);
+    assertThat(hasLibrary(scalaImportResult.libraries, "import")).isTrue();
+  }
+
   private static boolean hasLibrary(
       Map<LibraryKey, BlazeJarLibrary> libraries, String libraryName) {
     return libraries

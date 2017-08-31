@@ -2,9 +2,10 @@ licenses(["notice"])  # Apache 2.0
 
 load(
     "//build_defs:build_defs.bzl",
-    "merged_plugin_xml",
-    "stamped_plugin_xml",
     "intellij_plugin",
+    "merged_plugin_xml",
+    "optional_plugin_xml",
+    "stamped_plugin_xml",
 )
 load(
     "//testing:test_defs.bzl",
@@ -15,13 +16,12 @@ load(
 java_library(
     name = "java",
     srcs = glob(["src/**/*.java"]),
+    javacopts = ["-Xep:FutureReturnValueIgnored:OFF"],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        "//common/actionhelper",
-        "//common/experiments",
-    ],
+    runtime_deps = ["//common/actionhelper"],
     deps = [
         "//base",
+        "//common/experiments",
         "//intellij_platform_sdk:junit",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
@@ -52,9 +52,17 @@ stamped_plugin_xml(
     plugin_xml = "merged_plugin_xml",
 )
 
+optional_plugin_xml(
+    name = "optional_xml",
+    module = "JUnit",
+    plugin_xml = "src/META-INF/java-contents.xml",
+    visibility = ["//visibility:public"],
+)
+
 intellij_plugin(
     name = "java_integration_test_plugin",
     testonly = 1,
+    optional_plugin_xmls = [":optional_xml"],
     plugin_xml = ":java_plugin_xml",
     deps = [
         ":java",

@@ -38,5 +38,11 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.google.idea.blaze.cpp.BlazeCWorkspace"/>
+    <projectViewNodeDecorator implementation="com.google.idea.blaze.cpp.syncstatus.BlazeCppSyncStatusFileNodeDecorator"/>
+    <editorTabColorProvider implementation="com.google.idea.blaze.cpp.syncstatus.BlazeCppSyncStatusEditorTabColorProvider"/>
+    <editorTabTitleProvider implementation="com.google.idea.blaze.cpp.syncstatus.BlazeCppSyncStatusEditorTabTitleProvider"/>
+
+    <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerVersionChecker"
+                        serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>
   </extensions>
 </idea-plugin>

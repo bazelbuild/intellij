@@ -38,7 +38,7 @@ public final class UiUtil {
   }
 
   /** Puts all the given components in order in a box, aligned left. */
-  public static Box createBox(@NotNull Iterable<Component> components) {
+  public static Box createBox(@NotNull Iterable<? extends Component> components) {
     Box box = Box.createVerticalBox();
     box.setAlignmentX(0);
     for (Component component : components) {

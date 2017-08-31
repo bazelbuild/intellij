@@ -16,6 +16,7 @@
 package com.google.idea.blaze.scala.sync.importer;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -26,11 +27,13 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
+import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.scala.sync.model.BlazeScalaImportResult;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /** Builds a BlazeWorkspace. */
@@ -66,7 +69,7 @@ public final class BlazeScalaWorkspaceImporter {
             .map(target -> target.key)
             .collect(Collectors.toList());
 
-    ImmutableMap.Builder<LibraryKey, BlazeJarLibrary> libraries = ImmutableMap.builder();
+    Map<LibraryKey, BlazeJarLibrary> libraries = Maps.newHashMap();
 
     // Add every jar in the transitive closure of dependencies.
     // Direct dependencies of the working set will be double counted by BlazeJavaWorkspaceImporter,
@@ -78,7 +81,7 @@ public final class BlazeScalaWorkspaceImporter {
         continue;
       }
       // Except source targets.
-      if (importFilter.isSourceTarget(target)) {
+      if (importFilter.isSourceTarget(target) && JavaSourceFilter.canImportAsSource(target)) {
         continue;
       }
       if (target.javaIdeInfo != null) {
@@ -87,10 +90,10 @@ public final class BlazeScalaWorkspaceImporter {
             .jars
             .stream()
             .map(BlazeJarLibrary::new)
-            .forEach(library -> libraries.put(library.key, library));
+            .forEach(library -> libraries.putIfAbsent(library.key, library));
       }
     }
 
-    return new BlazeScalaImportResult(libraries.build());
+    return new BlazeScalaImportResult(ImmutableMap.copyOf(libraries));
   }
 }

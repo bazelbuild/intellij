@@ -20,7 +20,6 @@ import com.google.idea.blaze.base.scope.Output;
 import com.intellij.pom.Navigatable;
 import java.io.File;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /** An issue in a blaze operation. */
 public class IssueOutput implements Output {
@@ -31,8 +30,8 @@ public class IssueOutput implements Output {
   @Nullable private final File file;
   private final int line;
   private final int column;
-  @NotNull private final Category category;
-  @NotNull private final String message;
+  private final Category category;
+  private final String message;
   @Nullable Navigatable navigatable;
   @Nullable IssueData issueData;
 
@@ -47,61 +46,53 @@ public class IssueOutput implements Output {
     INFORMATION
   }
 
-  @NotNull
-  public static Builder issue(@NotNull Category category, @NotNull String message) {
+  public static Builder issue(Category category, String message) {
     return new Builder(category, message);
   }
 
-  @NotNull
-  public static Builder error(@NotNull String message) {
+  public static Builder error(String message) {
     return new Builder(Category.ERROR, message);
   }
 
-  @NotNull
-  public static Builder warn(@NotNull String message) {
+  public static Builder warn(String message) {
     return new Builder(Category.WARNING, message);
   }
 
   /** Builder for an issue */
   public static class Builder {
-    @NotNull private final Category category;
-    @NotNull private final String message;
+    private final Category category;
+    private final String message;
     @Nullable private File file;
     private int line = NO_LINE;
     private int column = NO_COLUMN;
     @Nullable Navigatable navigatable;
     @Nullable IssueData issueData;
 
-    public Builder(@NotNull Category category, @NotNull String message) {
+    public Builder(Category category, String message) {
       this.category = category;
       this.message = message;
     }
 
-    @NotNull
     public Builder inFile(@Nullable File file) {
       this.file = file;
       return this;
     }
 
-    @NotNull
     public Builder onLine(int line) {
       this.line = line;
       return this;
     }
 
-    @NotNull
     public Builder inColumn(int column) {
       this.column = column;
       return this;
     }
 
-    @NotNull
     public Builder withData(@Nullable IssueData issueData) {
       this.issueData = issueData;
       return this;
     }
 
-    @NotNull
     public Builder navigatable(@Nullable Navigatable navigatable) {
       this.navigatable = navigatable;
       return this;
@@ -111,7 +102,7 @@ public class IssueOutput implements Output {
       return new IssueOutput(file, line, column, navigatable, category, message, issueData);
     }
 
-    public void submit(@NotNull BlazeContext context) {
+    public void submit(BlazeContext context) {
       context.output(build());
       if (category == Category.ERROR) {
         context.setHasError();
@@ -124,8 +115,8 @@ public class IssueOutput implements Output {
       int line,
       int column,
       @Nullable Navigatable navigatable,
-      @NotNull Category category,
-      @NotNull String message,
+      Category category,
+      String message,
       @Nullable IssueData issueData) {
     this.file = file;
     this.line = line;
@@ -154,12 +145,10 @@ public class IssueOutput implements Output {
     return navigatable;
   }
 
-  @NotNull
   public Category getCategory() {
     return category;
   }
 
-  @NotNull
   public String getMessage() {
     return message;
   }

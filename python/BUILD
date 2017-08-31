@@ -92,6 +92,7 @@ intellij_unit_test_suite(
     deps = [
         ":python",
         "//base",
+        "//base:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "@jsr305_annotations//jar",
         "@junit//jar",

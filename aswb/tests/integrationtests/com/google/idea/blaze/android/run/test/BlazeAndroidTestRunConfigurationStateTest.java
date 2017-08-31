@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
 import com.google.idea.blaze.android.cppapi.NdkSupport;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
+import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.common.experiments.ExperimentService;
@@ -44,6 +45,7 @@ public class BlazeAndroidTestRunConfigurationStateTest extends BlazeIntegrationT
   @Rule
   public final AndroidIntegrationTestSetupRule androidSetupRule =
       new AndroidIntegrationTestSetupRule();
+
   private BlazeAndroidTestRunConfigurationState state;
 
   @Before
@@ -61,6 +63,7 @@ public class BlazeAndroidTestRunConfigurationStateTest extends BlazeIntegrationT
   public void readAndWriteShouldMatch() throws InvalidDataException, WriteExternalException {
     BlazeAndroidRunConfigurationCommonState commonState = state.getCommonState();
     commonState.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
+    commonState.getExeFlagsState().setRawFlags(ImmutableList.of("--exe1", "--exe2"));
     commonState.setNativeDebuggingEnabled(true);
 
     state.setTestingType(BlazeAndroidTestRunConfigurationState.TEST_METHOD);
@@ -68,7 +71,7 @@ public class BlazeAndroidTestRunConfigurationStateTest extends BlazeIntegrationT
     state.setMethodName("fooMethod");
     state.setClassName("BarClass");
     state.setPackageName("com.test.package.name");
-    state.setRunThroughBlaze(true);
+    state.setLaunchMethod(AndroidTestLaunchMethod.BLAZE_TEST);
     state.setExtraOptions("--option");
 
     Element element = new Element("test");
@@ -81,6 +84,9 @@ public class BlazeAndroidTestRunConfigurationStateTest extends BlazeIntegrationT
     assertThat(readCommonState.getBlazeFlagsState().getRawFlags())
         .containsExactly("--flag1", "--flag2")
         .inOrder();
+    assertThat(readCommonState.getExeFlagsState().getRawFlags())
+        .containsExactly("--exe1", "--exe2")
+        .inOrder();
     assertThat(readCommonState.isNativeDebuggingEnabled()).isTrue();
 
     assertThat(readState.getTestingType())
@@ -89,7 +95,7 @@ public class BlazeAndroidTestRunConfigurationStateTest extends BlazeIntegrationT
     assertThat(readState.getMethodName()).isEqualTo("fooMethod");
     assertThat(readState.getClassName()).isEqualTo("BarClass");
     assertThat(readState.getPackageName()).isEqualTo("com.test.package.name");
-    assertThat(readState.isRunThroughBlaze()).isTrue();
+    assertThat(readState.getLaunchMethod()).isEqualTo(AndroidTestLaunchMethod.BLAZE_TEST);
     assertThat(readState.getExtraOptions()).isEqualTo("--option");
   }
 
@@ -105,6 +111,8 @@ public class BlazeAndroidTestRunConfigurationStateTest extends BlazeIntegrationT
     BlazeAndroidRunConfigurationCommonState readCommonState = readState.getCommonState();
     assertThat(readCommonState.getBlazeFlagsState().getRawFlags())
         .isEqualTo(commonState.getBlazeFlagsState().getRawFlags());
+    assertThat(readCommonState.getExeFlagsState().getRawFlags())
+        .isEqualTo(commonState.getExeFlagsState().getRawFlags());
     assertThat(readCommonState.isNativeDebuggingEnabled())
         .isEqualTo(commonState.isNativeDebuggingEnabled());
 
@@ -114,7 +122,7 @@ public class BlazeAndroidTestRunConfigurationStateTest extends BlazeIntegrationT
     assertThat(readState.getMethodName()).isEqualTo(state.getMethodName());
     assertThat(readState.getClassName()).isEqualTo(state.getClassName());
     assertThat(readState.getPackageName()).isEqualTo(state.getPackageName());
-    assertThat(readState.isRunThroughBlaze()).isEqualTo(state.isRunThroughBlaze());
+    assertThat(readState.getLaunchMethod()).isEqualTo(state.getLaunchMethod());
     assertThat(readState.getExtraOptions()).isEqualTo(state.getExtraOptions());
   }
 
@@ -131,7 +139,7 @@ public class BlazeAndroidTestRunConfigurationStateTest extends BlazeIntegrationT
     state.setMethodName("fooMethod");
     state.setClassName("BarClass");
     state.setPackageName("com.test.package.name");
-    state.setRunThroughBlaze(true);
+    state.setLaunchMethod(AndroidTestLaunchMethod.MOBILE_INSTALL);
     state.setExtraOptions("--option");
 
     Element firstWrite = new Element("test");
@@ -149,6 +157,7 @@ public class BlazeAndroidTestRunConfigurationStateTest extends BlazeIntegrationT
 
     BlazeAndroidRunConfigurationCommonState commonState = state.getCommonState();
     commonState.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
+    commonState.getExeFlagsState().setRawFlags(ImmutableList.of("--exe1", "--exe2"));
     commonState.setNativeDebuggingEnabled(true);
 
     state.setTestingType(BlazeAndroidTestRunConfigurationState.TEST_METHOD);
@@ -156,9 +165,9 @@ public class BlazeAndroidTestRunConfigurationStateTest extends BlazeIntegrationT
     state.setMethodName("fooMethod");
     state.setClassName("BarClass");
     state.setPackageName("com.test.package.name");
-    state.setRunThroughBlaze(true);
+    state.setLaunchMethod(AndroidTestLaunchMethod.BLAZE_TEST);
     // We don't test ExtraOptions because it is not exposed in the editor.
-    //state.setExtraOptions("--option");
+    // state.setExtraOptions("--option");
 
     editor.resetEditorFrom(state);
     BlazeAndroidTestRunConfigurationState readState =
@@ -168,6 +177,8 @@ public class BlazeAndroidTestRunConfigurationStateTest extends BlazeIntegrationT
     BlazeAndroidRunConfigurationCommonState readCommonState = readState.getCommonState();
     assertThat(readCommonState.getBlazeFlagsState().getRawFlags())
         .isEqualTo(commonState.getBlazeFlagsState().getRawFlags());
+    assertThat(readCommonState.getExeFlagsState().getRawFlags())
+        .isEqualTo(commonState.getExeFlagsState().getRawFlags());
     assertThat(readCommonState.isNativeDebuggingEnabled())
         .isEqualTo(commonState.isNativeDebuggingEnabled());
 
@@ -177,9 +188,9 @@ public class BlazeAndroidTestRunConfigurationStateTest extends BlazeIntegrationT
     assertThat(readState.getMethodName()).isEqualTo(state.getMethodName());
     assertThat(readState.getClassName()).isEqualTo(state.getClassName());
     assertThat(readState.getPackageName()).isEqualTo(state.getPackageName());
-    assertThat(readState.isRunThroughBlaze()).isEqualTo(state.isRunThroughBlaze());
+    assertThat(readState.getLaunchMethod()).isEqualTo(state.getLaunchMethod());
     // We don't test ExtraOptions because it is not exposed in the editor.
-    //assertThat(readState.getExtraOptions()).isEqualTo(state.getExtraOptions());
+    // assertThat(readState.getExtraOptions()).isEqualTo(state.getExtraOptions());
   }
 
   @Test
@@ -195,6 +206,8 @@ public class BlazeAndroidTestRunConfigurationStateTest extends BlazeIntegrationT
     BlazeAndroidRunConfigurationCommonState readCommonState = readState.getCommonState();
     assertThat(readCommonState.getBlazeFlagsState().getRawFlags())
         .isEqualTo(commonState.getBlazeFlagsState().getRawFlags());
+    assertThat(readCommonState.getExeFlagsState().getRawFlags())
+        .isEqualTo(commonState.getExeFlagsState().getRawFlags());
     assertThat(readCommonState.isNativeDebuggingEnabled())
         .isEqualTo(commonState.isNativeDebuggingEnabled());
 
@@ -204,8 +217,8 @@ public class BlazeAndroidTestRunConfigurationStateTest extends BlazeIntegrationT
     assertThat(readState.getMethodName()).isEqualTo(state.getMethodName());
     assertThat(readState.getClassName()).isEqualTo(state.getClassName());
     assertThat(readState.getPackageName()).isEqualTo(state.getPackageName());
-    assertThat(readState.isRunThroughBlaze()).isEqualTo(state.isRunThroughBlaze());
+    assertThat(readState.getLaunchMethod()).isEqualTo(state.getLaunchMethod());
     // We don't test ExtraOptions because it is not exposed in the editor.
-    //assertThat(readState.getExtraOptions()).isEqualTo(state.getExtraOptions());
+    // assertThat(readState.getExtraOptions()).isEqualTo(state.getExtraOptions());
   }
 }

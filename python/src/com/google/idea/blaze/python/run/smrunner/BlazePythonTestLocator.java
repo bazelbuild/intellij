@@ -29,7 +29,9 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Locate python test classes / methods for test UI navigation. */
@@ -49,7 +51,7 @@ public final class BlazePythonTestLocator implements SMTestLocator {
     }
     if (protocol.equals(SmRunnerUtils.GENERIC_TEST_PROTOCOL)) {
       path = StringUtil.trimStart(path, PY_TESTCASE_PREFIX);
-      String[] components = path.split("\\.");
+      String[] components = path.split("\\.|::");
       if (components.length < 2) {
         return ImmutableList.of();
       }
@@ -68,7 +70,7 @@ public final class BlazePythonTestLocator implements SMTestLocator {
     for (PyClass pyClass : PyClassNameIndex.find(className, project, scope)) {
       ProgressManager.checkCanceled();
       if (PyTestUtils.isTestClass(pyClass)) {
-        PyFunction method = pyClass.findMethodByName(methodName, true, null);
+        PyFunction method = findMethod(pyClass, methodName);
         if (method != null && PyTestUtils.isTestFunction(method)) {
           results.add(new PsiLocation<>(project, method));
         }
@@ -88,5 +90,19 @@ public final class BlazePythonTestLocator implements SMTestLocator {
       }
     }
     return results;
+  }
+
+  @Nullable
+  private static PyFunction findMethod(PyClass pyClass, String methodName) {
+    PyFunction method = pyClass.findMethodByName(methodName, true, null);
+    if (method != null) {
+      return method;
+    }
+    return Arrays.stream(PyParameterizedNameConverter.EP_NAME.getExtensions())
+        .map(converter -> converter.toFunctionName(methodName))
+        .map(name -> pyClass.findMethodByName(name, true, null))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
   }
 }

@@ -17,7 +17,7 @@
   <depends>DevKit</depends>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
-    <RunConfigurationFactory implementation="com.google.idea.blaze.plugin.run.BlazeIntellijPluginConfigurationType$BlazeIntellijPluginRunConfigurationFactory"/>
+    <RunConfigurationFactory implementation="com.google.idea.blaze.plugin.run.BlazeIntellijPluginConfigurationType$BlazeIntellijPluginRunConfigurationFactory" order="first"/>
     <SyncPlugin implementation="com.google.idea.blaze.plugin.sync.IntellijPluginSyncPlugin"/>
   </extensions>
 

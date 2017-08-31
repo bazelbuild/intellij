@@ -15,16 +15,26 @@
  */
 package com.google.idea.blaze.base.buildmodifier;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.intellij.openapi.diagnostic.Logger;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /** Formats BUILD files using 'buildifier' */
 public class BuildFileFormatter {
+
+  private static final Logger logger = Logger.getInstance(BuildFileFormatter.class);
+  // 10 seconds ought to be enough for formatting a BUILD file...
+  private static final long TIMEOUT_SECS = 10;
 
   @Nullable
   private static File getBuildifierBinary() {
@@ -37,7 +47,29 @@ public class BuildFileFormatter {
     return null;
   }
 
-  static String formatText(String text) {
+  /**
+   * Format the BUILD file with a timeout. The tool may be fetched from a network filesystem, and we
+   * don't want to block the UI if there is a network issue.
+   *
+   * @return formatted text, or null if there is an error or timeout
+   */
+  @Nullable
+  static String formatTextWithTimeout(String text) {
+    BlazeExecutor executor = BlazeExecutor.getInstance();
+    ListenableFuture<String> result = executor.submit(() -> formatText(text));
+    try {
+      return result.get(TIMEOUT_SECS, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return null;
+    } catch (ExecutionException | TimeoutException e) {
+      logger.warn(e);
+      return null;
+    }
+  }
+
+  @Nullable
+  private static String formatText(String text) {
     try {
       File buildifierBinary = getBuildifierBinary();
       if (buildifierBinary == null) {
@@ -49,9 +81,9 @@ public class BuildFileFormatter {
       file.delete();
       return formattedFile;
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.warn(e);
     }
-    return text;
+    return null;
   }
 
   private static void formatFile(File file, String buildifierBinaryPath) throws IOException {

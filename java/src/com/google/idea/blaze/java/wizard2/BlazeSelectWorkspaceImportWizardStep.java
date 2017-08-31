@@ -50,7 +50,8 @@ class BlazeSelectWorkspaceImportWizardStep extends ProjectImportWizardStep {
   }
 
   private void init() {
-    control = new BlazeSelectWorkspaceControl(getProjectBuilder());
+    control =
+        new BlazeSelectWorkspaceControl(getProjectBuilder(), getWizardContext().getDisposable());
     this.component.add(control.getUiComponent());
     settingsInitialised = true;
   }

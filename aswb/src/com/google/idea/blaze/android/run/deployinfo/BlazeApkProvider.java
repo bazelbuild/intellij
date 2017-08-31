@@ -21,30 +21,26 @@ import com.android.tools.idea.run.ApkProvider;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.run.runner.AaptUtil;
+import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
-import org.jetbrains.annotations.NotNull;
 
 /** Apk provider from deploy info proto */
 public class BlazeApkProvider implements ApkProvider {
   private final Project project;
-  private final ListenableFuture<BlazeAndroidDeployInfo> deployInfoFuture;
+  private final BlazeApkBuildStep buildStep;
 
-  public BlazeApkProvider(
-      Project project, ListenableFuture<BlazeAndroidDeployInfo> deployInfoFuture) {
+  public BlazeApkProvider(Project project, BlazeApkBuildStep buildStep) {
     this.project = project;
-    this.deployInfoFuture = deployInfoFuture;
+    this.buildStep = buildStep;
   }
 
-  @NotNull
   @Override
-  public Collection<ApkInfo> getApks(@NotNull IDevice device) throws ApkProvisionException {
-    BlazeAndroidDeployInfo deployInfo = Futures.get(deployInfoFuture, ApkProvisionException.class);
+  public Collection<ApkInfo> getApks(IDevice device) throws ApkProvisionException {
+    BlazeAndroidDeployInfo deployInfo = buildStep.getDeployInfo();
     ImmutableList.Builder<ApkInfo> apkInfos = ImmutableList.builder();
     for (File apk : deployInfo.getApksToDeploy()) {
       apkInfos.add(new ApkInfo(apk, manifestPackageForApk(apk)));
@@ -52,8 +48,7 @@ public class BlazeApkProvider implements ApkProvider {
     return apkInfos.build();
   }
 
-  @NotNull
-  private String manifestPackageForApk(@NotNull final File apk) throws ApkProvisionException {
+  private String manifestPackageForApk(final File apk) throws ApkProvisionException {
     try {
       return AaptUtil.getApkManifestPackage(project, apk);
     } catch (AaptUtil.AaptUtilException e) {
@@ -66,7 +61,6 @@ public class BlazeApkProvider implements ApkProvider {
     }
   }
 
-  @NotNull
   @Override
   public List<ValidationError> validate() {
     return ImmutableList.of();

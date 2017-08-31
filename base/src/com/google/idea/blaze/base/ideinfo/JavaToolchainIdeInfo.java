@@ -16,17 +16,21 @@
 package com.google.idea.blaze.base.ideinfo;
 
 import java.io.Serializable;
+import javax.annotation.Nullable;
 
 /** Represents the java_toolchain class */
 public class JavaToolchainIdeInfo implements Serializable {
-  private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 2L;
 
   public final String sourceVersion;
   public final String targetVersion;
+  @Nullable public final ArtifactLocation javacJar;
 
-  public JavaToolchainIdeInfo(String sourceVersion, String targetVersion) {
+  public JavaToolchainIdeInfo(
+      String sourceVersion, String targetVersion, @Nullable ArtifactLocation javacJar) {
     this.sourceVersion = sourceVersion;
     this.targetVersion = targetVersion;
+    this.javacJar = javacJar;
   }
 
   @Override
@@ -39,6 +43,9 @@ public class JavaToolchainIdeInfo implements Serializable {
         + "  targetVersion="
         + targetVersion
         + "\n"
+        + "  javacJar="
+        + javacJar
+        + "\n"
         + '}';
   }
 
@@ -50,6 +57,7 @@ public class JavaToolchainIdeInfo implements Serializable {
   public static class Builder {
     String sourceVersion;
     String targetVersion;
+    ArtifactLocation javacJar;
 
     public Builder setSourceVersion(String sourceVersion) {
       this.sourceVersion = sourceVersion;
@@ -61,8 +69,13 @@ public class JavaToolchainIdeInfo implements Serializable {
       return this;
     }
 
+    public Builder setJavacJar(ArtifactLocation javacJar) {
+      this.javacJar = javacJar;
+      return this;
+    }
+
     public JavaToolchainIdeInfo build() {
-      return new JavaToolchainIdeInfo(sourceVersion, targetVersion);
+      return new JavaToolchainIdeInfo(sourceVersion, targetVersion, javacJar);
     }
   }
 }

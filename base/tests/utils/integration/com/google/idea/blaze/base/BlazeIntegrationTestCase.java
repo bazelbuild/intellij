@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.testing.EdtRule;
 import com.google.idea.testing.IntellijTestSetupRule;
 import com.google.idea.testing.ServiceHelper;
+import com.google.idea.testing.VerifyRequiredPluginsEnabled;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -132,6 +133,11 @@ public abstract class BlazeIntegrationTestCase {
         });
     registerApplicationService(
         VirtualFileSystemProvider.class, new TestFileSystem.TempVirtualFileSystemProvider());
+
+    String requiredPlugins = System.getProperty("idea.required.plugins.id");
+    if (requiredPlugins != null) {
+      VerifyRequiredPluginsEnabled.runCheck(requiredPlugins.split(","));
+    }
   }
 
   @After

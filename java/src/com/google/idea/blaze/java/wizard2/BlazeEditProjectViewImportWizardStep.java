@@ -64,7 +64,8 @@ class BlazeEditProjectViewImportWizardStep extends ProjectImportWizardStep {
   public boolean validate() throws ConfigurationException {
     BlazeValidationResult validationResult = control.validate();
     if (validationResult.error != null) {
-      throw new ConfigurationException(validationResult.error.getError());
+      throw new ConfigurationException(
+          "<html><body>" + validationResult.error.getError() + "</body></html>");
     }
     return validationResult.success;
   }

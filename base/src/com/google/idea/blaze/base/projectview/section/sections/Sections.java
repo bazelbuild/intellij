@@ -33,11 +33,13 @@ public class Sections {
           AdditionalLanguagesSection.PARSER,
           TestSourceSection.PARSER,
           BuildFlagsSection.PARSER,
+          SyncFlagsSection.PARSER,
           ImportTargetOutputSection.PARSER,
           ExcludeTargetSection.PARSER,
           ExcludedSourceSection.PARSER,
           RunConfigurationsSection.PARSER,
-          ShardBlazeBuildsSection.PARSER);
+          ShardBlazeBuildsSection.PARSER,
+          TargetShardSizeSection.PARSER);
 
   public static List<SectionParser> getParsers() {
     List<SectionParser> parsers = Lists.newArrayList(PARSERS);

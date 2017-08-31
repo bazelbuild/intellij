@@ -40,7 +40,8 @@ import com.google.idea.blaze.scala.sync.model.BlazeScalaSyncData;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -70,20 +71,17 @@ public class BlazeScalaSyncPlugin extends BlazeSyncPlugin.Adapter {
     if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.SCALA)) {
       return;
     }
-    OrderEnumerator.orderEntries(workspaceModule)
-        .forEachLibrary(
-            library -> {
-              // Convert the type of the SDK library to prevent the scala plugin from
-              // showing the missing SDK notification.
-              // TODO: use a canonical class in the SDK (e.g., scala.App) instead of the name?
-              if (library.getName() != null && library.getName().startsWith("scala-library")) {
-                ExistingLibraryEditor editor = new ExistingLibraryEditor(library, null);
-                editor.setType(ScalaLibraryType.instance());
-                editor.commit();
-                return false; // stop
-              }
-              return true; // continue
-            });
+    for (Library library : ProjectLibraryTable.getInstance(project).getLibraries()) {
+      // Convert the type of the SDK library to prevent the scala plugin from
+      // showing the missing SDK notification.
+      // TODO: use a canonical class in the SDK (e.g., scala.App) instead of the name?
+      if (library.getName() != null && library.getName().startsWith("scala-library")) {
+        ExistingLibraryEditor editor = new ExistingLibraryEditor(library, null);
+        editor.setType(ScalaLibraryType.instance());
+        editor.commit();
+        return;
+      }
+    }
   }
 
   @Override

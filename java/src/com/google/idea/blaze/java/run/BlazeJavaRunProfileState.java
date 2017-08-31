@@ -21,18 +21,19 @@ import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.google.idea.blaze.base.run.DistributedExecutorSupport;
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
 import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
-import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
+import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
+import com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
@@ -97,23 +98,20 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
     assert projectViewSet != null;
 
     BlazeCommand blazeCommand;
-    if (useTestUi()) {
-      BlazeTestEventsHandler eventsHandler =
-          BlazeTestEventsHandler.getHandlerForTarget(project, configuration.getTarget());
-      assert (eventsHandler != null);
+    BlazeTestUiSession testUiSession =
+        useTestUi()
+            ? TestUiSessionProvider.createForTarget(project, configuration.getTarget())
+            : null;
+    if (testUiSession != null) {
       blazeCommand =
           getBlazeCommand(
-              project,
-              configuration,
-              projectViewSet,
-              BlazeTestEventsHandler.getBlazeFlags(project),
-              debug);
+              project, configuration, projectViewSet, testUiSession.getBlazeFlags(), debug);
       setConsoleBuilder(
           new TextConsoleBuilderImpl(project) {
             @Override
             protected ConsoleView createConsole() {
               return SmRunnerUtils.getConsoleView(
-                  project, configuration, getEnvironment().getExecutor(), eventsHandler);
+                  project, configuration, getEnvironment().getExecutor(), testUiSession);
             }
           });
     } else {
@@ -153,9 +151,7 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
   private boolean useTestUi() {
     BlazeCommandRunConfigurationCommonState state =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    return state != null
-        && BlazeCommandName.TEST.equals(state.getCommandState().getCommand())
-        && !state.getRunOnDistributedExecutorState().runOnDistributedExecutor;
+    return state != null && BlazeCommandName.TEST.equals(state.getCommandState().getCommand());
   }
 
   @Override
@@ -192,22 +188,20 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
     BlazeCommand.Builder command =
         BlazeCommand.builder(binaryPath, blazeCommand)
             .addTargets(configuration.getTarget())
-            .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
+            .addBlazeFlags(
+                BlazeFlags.blazeFlags(
+                    project, projectViewSet, blazeCommand, BlazeInvocationContext.RunConfiguration))
             .addBlazeFlags(extraBlazeFlags)
             .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags());
 
     if (debug) {
       Kind kind = configuration.getKindForTarget();
-      boolean isJavaBinary = kind == Kind.JAVA_BINARY;
-      if (isJavaBinary) {
+      boolean isBinary = kind != null && kind.isOneOf(Kind.JAVA_BINARY, Kind.SCALA_BINARY);
+      if (isBinary) {
         command.addExeFlags(BlazeFlags.JAVA_BINARY_DEBUG);
       } else {
         command.addBlazeFlags(BlazeFlags.JAVA_TEST_DEBUG);
       }
-    } else {
-      boolean runDistributed =
-          handlerState.getRunOnDistributedExecutorState().runOnDistributedExecutor;
-      command.addBlazeFlags(DistributedExecutorSupport.getBlazeFlags(project, runDistributed));
     }
 
     command.addExeFlags(handlerState.getExeFlagsState().getExpandedFlags());

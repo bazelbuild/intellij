@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
@@ -34,7 +35,6 @@ import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,7 +44,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /** Producer for run configurations related to Java test classes in Blaze. */
 public class BlazeJavaTestClassConfigurationProducer
@@ -54,49 +53,70 @@ public class BlazeJavaTestClassConfigurationProducer
     super(BlazeCommandRunConfigurationType.getInstance());
   }
 
-  @Override
-  protected boolean doSetupConfigFromContext(
-      @NotNull BlazeCommandRunConfiguration configuration,
-      @NotNull ConfigurationContext context,
-      @NotNull Ref<PsiElement> sourceElement) {
+  private static class TestLocation {
+    final PsiClass testClass;
+    final Label blazeTarget;
 
-    final Location contextLocation = context.getLocation();
-    assert contextLocation != null;
-    final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
+    private TestLocation(PsiClass testClass, Label blazeTarget) {
+      this.testClass = testClass;
+      this.blazeTarget = blazeTarget;
+    }
+  }
+
+  /**
+   * Returns the {@link TestLocation} corresponding to the single selected JUnit test class, or
+   * {@code null} if something else is selected.
+   */
+  @Nullable
+  private static TestLocation getSingleJUnitTestClass(ConfigurationContext context) {
+    Location<?> location = context.getLocation();
     if (location == null) {
-      return false;
+      return null;
+    }
+    location = JavaExecutionUtil.stepIntoSingleClass(location);
+    if (location == null) {
+      return null;
     }
 
+    // check for contexts handled by a different producer
     if (!SmRunnerUtils.getSelectedSmRunnerTreeElements(context).isEmpty()) {
-      // handled by a different producer
-      return false;
+      return null;
     }
     if (JUnitConfigurationUtil.isMultipleElementsSelected(context)) {
-      return false;
+      return null;
+    }
+    if (TestMethodSelectionUtil.getSelectedMethods(context) != null) {
+      return null;
     }
 
     PsiClass testClass = JUnitUtil.getTestClass(location);
-    if (testClass == null) {
-      return false;
+    if (testClass == null || testClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return null;
     }
-    if (testClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      return false;
-    }
-    sourceElement.set(testClass);
 
     TestIdeInfo.TestSize testSize = TestSizeAnnotationMap.getTestSize(testClass);
     TargetIdeInfo target = RunUtil.targetForTestClass(testClass, testSize);
-    if (target == null) {
+    return target != null ? new TestLocation(testClass, target.key.label) : null;
+  }
+
+  @Override
+  protected boolean doSetupConfigFromContext(
+      BlazeCommandRunConfiguration configuration,
+      ConfigurationContext context,
+      Ref<PsiElement> sourceElement) {
+    TestLocation location = getSingleJUnitTestClass(context);
+    if (location == null) {
       return false;
     }
+    sourceElement.set(location.testClass);
+    configuration.setTarget(location.blazeTarget);
 
-    configuration.setTarget(target.key.label);
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {
       return false;
     }
-    String testFilter = getTestFilter(testClass);
+    String testFilter = getTestFilter(location.testClass);
     if (testFilter == null) {
       return false;
     }
@@ -108,47 +128,30 @@ public class BlazeJavaTestClassConfigurationProducer
     flags.add(BlazeFlags.TEST_FILTER + "=" + testFilter);
     handlerState.getBlazeFlagsState().setRawFlags(flags);
 
-    BlazeConfigurationNameBuilder nameBuilder = new BlazeConfigurationNameBuilder(configuration);
-    nameBuilder.setTargetString(testClass.getName());
-    configuration.setName(nameBuilder.build());
+    String name =
+        new BlazeConfigurationNameBuilder(configuration)
+            .setTargetString(location.testClass.getName())
+            .build();
+    configuration.setName(name);
     configuration.setNameChangedByUser(true); // don't revert to generated name
     return true;
   }
 
   @Override
   protected boolean doIsConfigFromContext(
-      @NotNull BlazeCommandRunConfiguration configuration, @NotNull ConfigurationContext context) {
-
-    final Location contextLocation = context.getLocation();
-    assert contextLocation != null;
-    final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
+      BlazeCommandRunConfiguration configuration, ConfigurationContext context) {
+    TestLocation location = getSingleJUnitTestClass(context);
     if (location == null) {
       return false;
     }
-
-    if (!SmRunnerUtils.getSelectedSmRunnerTreeElements(context).isEmpty()) {
-      // handled by a different producer
-      return false;
-    }
-    if (JUnitConfigurationUtil.isMultipleElementsSelected(context)) {
-      return false;
-    }
-
-    Location<PsiMethod> methodLocation = ProducerUtils.getMethodLocation(contextLocation);
-    if (methodLocation != null) {
-      return false;
-    }
-
-    PsiClass testClass = JUnitUtil.getTestClass(location);
-    if (testClass == null) {
-      return false;
-    }
-
-    return checkIfAttributesAreTheSame(configuration, testClass);
+    return checkIfAttributesAreTheSame(configuration, location);
   }
 
   private boolean checkIfAttributesAreTheSame(
-      @NotNull BlazeCommandRunConfiguration configuration, @NotNull PsiClass testClass) {
+      BlazeCommandRunConfiguration configuration, TestLocation location) {
+    if (!location.blazeTarget.equals(configuration.getTarget())) {
+      return false;
+    }
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {
@@ -157,11 +160,9 @@ public class BlazeJavaTestClassConfigurationProducer
     if (!Objects.equals(handlerState.getCommandState().getCommand(), BlazeCommandName.TEST)) {
       return false;
     }
-    String filter = getTestFilter(testClass);
-    if (filter == null) {
-      return false;
-    }
-    return Objects.equals(BlazeFlags.TEST_FILTER + "=" + filter, handlerState.getTestFilterFlag());
+    String filter = getTestFilter(location.testClass);
+    return filter != null
+        && Objects.equals(BlazeFlags.TEST_FILTER + "=" + filter, handlerState.getTestFilterFlag());
   }
 
   @Nullable

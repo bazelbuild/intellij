@@ -1,0 +1,84 @@
+#
+# Description:
+# Tools needed by the bazel plugin's aspect.
+#
+
+package(default_visibility = ["//aspect:__pkg__"])
+
+licenses(["notice"])  # Apache 2.0
+
+# To prevent versioning conflicts when developing internally, we always use the same
+# guava version bundled with the IntelliJ plugin API.
+java_library(
+    name = "guava",
+    exports = ["//intellij_platform_sdk:guava"],
+)
+
+java_library(
+    name = "lib",
+    srcs = glob(["src/**/*.java"]),
+    deps = [
+        ":guava",
+        "//proto:proto_deps",
+        "@jsr305_annotations//jar",
+    ],
+)
+
+java_binary(
+    name = "JarFilter",
+    main_class = "com.google.idea.blaze.aspect.JarFilter",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":lib"],
+)
+
+java_binary(
+    name = "PackageParser",
+    main_class = "com.google.idea.blaze.aspect.PackageParser",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":lib"],
+)
+
+java_library(
+    name = "test_lib",
+    testonly = 1,
+    exports = [
+        ":guava",
+        ":lib",
+        "//intellij_platform_sdk:truth",
+        "//proto:proto_deps",
+        "@jsr305_annotations//jar",
+        "@junit//jar",
+    ],
+)
+
+java_test(
+    name = "JarFilterTest",
+    size = "medium",
+    srcs = ["tests/unittests/com/google/idea/blaze/aspect/JarFilterTest.java"],
+    test_class = "com.google.idea.blaze.aspect.JarFilterTest",
+    deps = [":test_lib"],
+)
+
+java_test(
+    name = "PackageParserTest",
+    size = "small",
+    srcs = ["tests/unittests/com/google/idea/blaze/aspect/PackageParserTest.java"],
+    test_class = "com.google.idea.blaze.aspect.PackageParserTest",
+    deps = [":test_lib"],
+)
+
+java_test(
+    name = "OptionParserTest",
+    size = "small",
+    srcs = ["tests/unittests/com/google/idea/blaze/aspect/OptionParserTest.java"],
+    test_class = "com.google.idea.blaze.aspect.OptionParserTest",
+    deps = [":test_lib"],
+)
+
+java_test(
+    name = "ArtifactLocationParserTest",
+    size = "small",
+    srcs = ["tests/unittests/com/google/idea/blaze/aspect/ArtifactLocationParserTest.java"],
+    test_class = "com.google.idea.blaze.aspect.ArtifactLocationParserTest",
+    deps = [":test_lib"],
+)

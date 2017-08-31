@@ -71,6 +71,11 @@ public class LanguageSupportTest extends BlazeTestCase {
           public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
             return ImmutableList.of(WorkspaceType.C);
           }
+
+          @Override
+          public WorkspaceType getDefaultWorkspaceType() {
+            return WorkspaceType.C;
+          }
         });
 
     ProjectViewSet projectViewSet =
@@ -91,6 +96,13 @@ public class LanguageSupportTest extends BlazeTestCase {
 
   @Test
   public void testFailWithUnsupportedWorkspaceType() {
+    syncPlugins.registerExtension(
+        new BlazeSyncPlugin.Adapter() {
+          @Override
+          public WorkspaceType getDefaultWorkspaceType() {
+            return WorkspaceType.JAVA;
+          }
+        });
     ProjectViewSet projectViewSet =
         ProjectViewSet.builder()
             .add(
@@ -116,6 +128,11 @@ public class LanguageSupportTest extends BlazeTestCase {
           @Override
           public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
             return ImmutableList.of(WorkspaceType.C);
+          }
+
+          @Override
+          public WorkspaceType getDefaultWorkspaceType() {
+            return WorkspaceType.C;
           }
         });
 
@@ -148,6 +165,11 @@ public class LanguageSupportTest extends BlazeTestCase {
           @Override
           public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
             return ImmutableList.of(WorkspaceType.ANDROID);
+          }
+
+          @Override
+          public WorkspaceType getDefaultWorkspaceType() {
+            return WorkspaceType.ANDROID;
           }
         });
 

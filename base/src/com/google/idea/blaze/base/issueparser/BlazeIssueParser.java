@@ -147,7 +147,7 @@ public class BlazeIssueParser {
     private final WorkspaceRoot workspaceRoot;
 
     CompileParser(WorkspaceRoot workspaceRoot) {
-      super("^([^/].*?):([0-9]+):(?:([0-9]+):)? (error|warning): (.*)$");
+      super("^([^/].*?):([0-9]+):(?:([0-9]+):)? (fatal error|error|warning): (.*)$");
       this.workspaceRoot = workspaceRoot;
     }
 
@@ -155,9 +155,9 @@ public class BlazeIssueParser {
     protected IssueOutput createIssue(Matcher matcher) {
       final File file = fileFromRelativePath(workspaceRoot, matcher.group(1));
       IssueOutput.Category type =
-          matcher.group(4).equals("error")
-              ? IssueOutput.Category.ERROR
-              : IssueOutput.Category.WARNING;
+          matcher.group(4).equals("warning")
+              ? IssueOutput.Category.WARNING
+              : IssueOutput.Category.ERROR;
       return IssueOutput.issue(type, matcher.group(5))
           .inFile(file)
           .onLine(Integer.parseInt(matcher.group(2)))

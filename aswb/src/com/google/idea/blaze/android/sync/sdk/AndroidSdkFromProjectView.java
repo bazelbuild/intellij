@@ -67,8 +67,8 @@ public class AndroidSdkFromProjectView {
       return null;
     }
 
-    String androidSdk = projectViewSet.getScalarValue(AndroidSdkPlatformSection.KEY);
-    Integer androidMinSdk = projectViewSet.getScalarValue(AndroidMinSdkSection.KEY);
+    String androidSdk = projectViewSet.getScalarValue(AndroidSdkPlatformSection.KEY).orElse(null);
+    Integer androidMinSdk = projectViewSet.getScalarValue(AndroidMinSdkSection.KEY).orElse(null);
 
     if (androidSdk == null) {
       ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();

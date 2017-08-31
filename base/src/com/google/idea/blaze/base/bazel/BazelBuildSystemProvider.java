@@ -32,6 +32,8 @@ import javax.annotation.Nullable;
 /** Provides the bazel build system name string. */
 public class BazelBuildSystemProvider implements BuildSystemProvider {
 
+  private static final String BAZEL_DOC_SITE = "https://ij.bazel.build/docs";
+
   @Override
   public BuildSystem buildSystem() {
     return BuildSystem.Bazel;
@@ -64,7 +66,12 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
 
   @Override
   public String getProjectViewDocumentationUrl() {
-    return "https://ij.bazel.build/docs/project-views.html";
+    return BAZEL_DOC_SITE + "/project-views.html";
+  }
+
+  @Override
+  public String getLanguageSupportDocumentationUrl(String relativeDocName) {
+    return String.format("%s/%s.html", BAZEL_DOC_SITE, relativeDocName);
   }
 
   @Override

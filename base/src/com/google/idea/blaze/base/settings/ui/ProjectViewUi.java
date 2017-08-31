@@ -93,8 +93,14 @@ public class ProjectViewUi {
     return ProjectManager.getInstance().getDefaultProject();
   }
 
-  public static Dimension getMinimumSize() {
+  private static Dimension getEditorSize() {
     return new Dimension(1000, 550);
+  }
+
+  public static Dimension getContainerSize() {
+    // Add pixels so we have room for our extra fields
+    Dimension dimension = getEditorSize();
+    return new Dimension(dimension.width, dimension.height + 200);
   }
 
   private static EditorEx createEditor(String tooltip) {
@@ -125,8 +131,8 @@ public class ProjectViewUi {
     settings.setFoldingOutlineShown(false);
     settings.setRightMarginShown(false);
     settings.setAdditionalPageAtBottom(false);
-    editor.getComponent().setMinimumSize(getMinimumSize());
-    editor.getComponent().setPreferredSize(getMinimumSize());
+    editor.getComponent().setMinimumSize(getEditorSize());
+    editor.getComponent().setPreferredSize(getEditorSize());
     editor.getComponent().setToolTipText(tooltip);
     editor.getComponent().setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
     editor.getComponent().setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);

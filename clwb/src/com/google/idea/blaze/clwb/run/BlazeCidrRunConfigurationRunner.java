@@ -16,15 +16,17 @@
 package com.google.idea.blaze.clwb.run;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -37,6 +39,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
@@ -47,8 +50,12 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
 import java.io.File;
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /** CLion-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
@@ -74,6 +81,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
 
   @Override
   public boolean executeBeforeRunTask(ExecutionEnvironment environment) {
+    executableToDebug = null;
     if (!isDebugging(environment)) {
       return true;
     }
@@ -107,7 +115,10 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     final ProjectViewSet projectViewSet =
         ProjectViewManager.getInstance(project).getProjectViewSet();
 
-    BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true);
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    BuildResultHelper buildResultHelper =
+        BuildResultHelper.forFiles(projectData.blazeVersionData, file -> true);
 
     final ListenableFuture<Void> buildOperation =
         BlazeExecutor.submitTask(
@@ -126,14 +137,19 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
                             Blaze.getBuildSystemProvider(project).getBinaryPath(),
                             BlazeCommandName.BUILD)
                         .addTargets(configuration.getTarget())
-                        .addBlazeFlags(BlazeFlags.buildFlags(project, projectViewSet))
+                        .addBlazeFlags(
+                            BlazeFlags.blazeFlags(
+                                project,
+                                projectViewSet,
+                                BlazeCommandName.BUILD,
+                                BlazeInvocationContext.RunConfiguration))
                         .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
                         .addBlazeFlags(buildResultHelper.getBuildFlags());
 
                 // If we are trying to debug, make sure we are building in debug mode.
                 // This can cause a rebuild, so it is a heavyweight setting.
                 if (FORCE_DEBUG_BUILD_FOR_DEBUGGING_TEST.getValue()) {
-                  command.addBlazeFlags("-c", "dbg");
+                  command.addBlazeFlags("-c", "dbg", "--copt=-g", "--strip=never");
                 }
 
                 ExternalTask.builder(workspaceRoot)
@@ -153,18 +169,42 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     } catch (InterruptedException | java.util.concurrent.ExecutionException e) {
       throw new ExecutionException(e);
     }
-    ImmutableList<File> outputArtifacts = buildResultHelper.getBuildArtifacts();
-    if (outputArtifacts.isEmpty()) {
+    List<File> candidateFiles =
+        buildResultHelper
+            .getBuildArtifactsForTarget((Label) configuration.getTarget())
+            .stream()
+            .filter(File::canExecute)
+            .collect(Collectors.toList());
+    if (candidateFiles.isEmpty()) {
       throw new ExecutionException(
           String.format("No output artifacts found when building %s", configuration.getTarget()));
     }
-    if (outputArtifacts.size() > 1) {
+    File file = findExecutable((Label) configuration.getTarget(), candidateFiles);
+    if (file == null) {
       throw new ExecutionException(
           String.format(
               "More than 1 executable was produced when building %s; don't know which one to debug",
               configuration.getTarget()));
     }
-    LocalFileSystem.getInstance().refreshIoFiles(outputArtifacts);
-    return Iterables.getOnlyElement(outputArtifacts);
+    LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
+    return file;
+  }
+
+  /**
+   * Basic heuristic for choosing between multiple output files. Currently just looks for a filename
+   * matching the target name.
+   */
+  @Nullable
+  private static File findExecutable(Label target, List<File> outputs) {
+    if (outputs.size() == 1) {
+      return outputs.get(0);
+    }
+    String name = PathUtil.getFileName(target.targetName().toString());
+    for (File file : outputs) {
+      if (file.getName().equals(name)) {
+        return file;
+      }
+    }
+    return null;
   }
 }

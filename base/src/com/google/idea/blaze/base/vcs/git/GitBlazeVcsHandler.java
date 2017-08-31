@@ -61,7 +61,7 @@ public class GitBlazeVcsHandler implements BlazeVcsHandler {
           if (upstreamSha == null) {
             return null;
           }
-          return GitWorkingSetProvider.calculateWorkingSet(workspaceRoot, upstreamSha);
+          return GitWorkingSetProvider.calculateWorkingSet(workspaceRoot, upstreamSha, context);
         });
   }
 

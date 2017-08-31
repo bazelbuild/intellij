@@ -30,6 +30,14 @@ test_suite(
     ],
 )
 
+# UE-specific IJwB tests
+test_suite(
+    name = "ijwb_ue_tests",
+    tests = [
+        "//golang:integration_tests",
+    ],
+)
+
 # ASwB tests, run with an Android Studio plugin SDK
 test_suite(
     name = "aswb_tests",
@@ -38,6 +46,8 @@ test_suite(
         "//aswb:unit_tests",
         "//base:integration_tests",
         "//base:unit_tests",
+        "//cpp:integration_tests",
+        "//cpp:unit_tests",
         "//java:integration_tests",
         "//java:unit_tests",
     ],

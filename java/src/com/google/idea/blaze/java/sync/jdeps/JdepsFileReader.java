@@ -132,7 +132,7 @@ public class JdepsFileReader {
             removedFiles);
 
     ListenableFuture<?> fetchFuture =
-        PrefetchService.getInstance().prefetchFiles(project, updatedFiles);
+        PrefetchService.getInstance().prefetchFiles(project, updatedFiles, true);
     if (!FutureUtil.waitForFuture(context, fetchFuture)
         .timed("FetchJdeps")
         .withProgressMessage("Reading jdeps files...")

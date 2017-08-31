@@ -135,6 +135,20 @@ public class BlazeIssueParserTest extends BlazeTestCase {
   }
 
   @Test
+  public void testParseCompileFatalErrorWithColumn() {
+    // Clang also has a 'fatal error' category.
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    IssueOutput issue =
+        blazeIssueParser.parseIssue(
+            "net/something/foo_bar.cc:29:10: fatal error: 'util/ptr_util2.h' file not found");
+    assertNotNull(issue);
+    assertThat(issue.getLine()).isEqualTo(29);
+    assertThat(issue.getColumn()).isEqualTo(10);
+    assertThat(issue.getMessage()).isEqualTo("'util/ptr_util2.h' file not found");
+    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+  }
+
+  @Test
   public void testParseBuildError() {
     BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     IssueOutput issue =

@@ -30,7 +30,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.io.URLUtil;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -38,11 +37,11 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /** Provides java-specific methods needed by the SM-runner test UI. */
-public class BlazeAndroidTestEventsHandler extends BlazeTestEventsHandler {
+public class BlazeAndroidTestEventsHandler implements BlazeTestEventsHandler {
 
   @Override
-  protected EnumSet<Kind> handledKinds() {
-    return EnumSet.of(Kind.ANDROID_TEST);
+  public boolean handlesKind(@Nullable Kind kind) {
+    return kind == Kind.ANDROID_TEST;
   }
 
   @Override

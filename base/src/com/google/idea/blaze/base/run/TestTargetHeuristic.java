@@ -24,7 +24,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Heuristic to match test targets to source files. */
@@ -64,22 +67,28 @@ public interface TestTargetHeuristic {
       File sourceFile,
       Collection<TargetIdeInfo> targets,
       @Nullable TestSize testSize) {
-
+    if (targets.isEmpty()) {
+      return null;
+    }
+    List<TargetIdeInfo> filteredTargets = new ArrayList<>(targets);
     for (TestTargetHeuristic filter : EP_NAME.getExtensions()) {
-      TargetIdeInfo match =
-          targets
+      List<TargetIdeInfo> matches =
+          filteredTargets
               .stream()
               .filter(
                   target ->
                       filter.matchesSource(project, target, sourcePsiFile, sourceFile, testSize))
-              .findFirst()
-              .orElse(null);
-
-      if (match != null) {
-        return match.key.label;
+              .collect(Collectors.toList());
+      if (matches.size() == 1) {
+        return matches.get(0).key.label;
+      }
+      if (!matches.isEmpty()) {
+        // A higher-priority filter found more than one match -- subsequent filters will only
+        // consider these matches.
+        filteredTargets = matches;
       }
     }
-    return targets.isEmpty() ? null : targets.iterator().next().key.label;
+    return filteredTargets.iterator().next().key.label;
   }
 
   /** Returns true if the rule and source file match, according to this heuristic. */

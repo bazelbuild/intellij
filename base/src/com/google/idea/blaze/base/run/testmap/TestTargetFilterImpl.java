@@ -73,6 +73,8 @@ public class TestTargetFilterImpl implements TestTargetFinder {
             Kind.GWT_TEST,
             Kind.CC_TEST,
             Kind.PY_TEST,
-            Kind.GO_TEST);
+            Kind.GO_TEST,
+            Kind.SCALA_TEST,
+            Kind.SCALA_JUNIT_TEST);
   }
 }

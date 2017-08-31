@@ -19,6 +19,7 @@ import com.android.tools.idea.run.ValidationError;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
+import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.intellij.openapi.project.Project;
@@ -34,7 +35,8 @@ import org.jetbrains.annotations.Contract;
 /** State specific for the android test configuration. */
 final class BlazeAndroidTestRunConfigurationState implements RunConfigurationState {
 
-  private static final String RUN_THROUGH_BLAZE_ATTR = "blaze-run-through-blaze";
+  private static final String LAUNCH_METHOD_ATTR = "launch-method";
+  @Deprecated private static final String RUN_THROUGH_BLAZE_ATTR = "blaze-run-through-blaze";
 
   public static final int TEST_ALL_IN_MODULE = 0;
   public static final int TEST_ALL_IN_PACKAGE = 1;
@@ -60,8 +62,7 @@ final class BlazeAndroidTestRunConfigurationState implements RunConfigurationSta
   private String packageName = "";
   private String extraOptions = "";
 
-  // Whether to delegate to 'blaze test'.
-  private boolean runThroughBlaze;
+  private AndroidTestLaunchMethod launchMethod = AndroidTestLaunchMethod.NON_BLAZE;
 
   private final BlazeAndroidRunConfigurationCommonState commonState;
 
@@ -74,12 +75,12 @@ final class BlazeAndroidTestRunConfigurationState implements RunConfigurationSta
   }
 
   @Contract(pure = true)
-  boolean isRunThroughBlaze() {
-    return runThroughBlaze;
+  AndroidTestLaunchMethod getLaunchMethod() {
+    return launchMethod;
   }
 
-  void setRunThroughBlaze(boolean runThroughBlaze) {
-    this.runThroughBlaze = runThroughBlaze;
+  void setLaunchMethod(AndroidTestLaunchMethod launchMethod) {
+    this.launchMethod = launchMethod;
   }
 
   public int getTestingType() {
@@ -152,7 +153,17 @@ final class BlazeAndroidTestRunConfigurationState implements RunConfigurationSta
     className = Strings.nullToEmpty(element.getAttributeValue(CLASS_NAME));
     packageName = Strings.nullToEmpty(element.getAttributeValue(PACKAGE_NAME));
     extraOptions = Strings.nullToEmpty(element.getAttributeValue(EXTRA_OPTIONS));
-    runThroughBlaze = Boolean.parseBoolean(element.getAttributeValue(RUN_THROUGH_BLAZE_ATTR));
+
+    String launchMethodAttribute = element.getAttributeValue(LAUNCH_METHOD_ATTR);
+    if (launchMethodAttribute != null) {
+      launchMethod = AndroidTestLaunchMethod.valueOf(launchMethodAttribute);
+    } else {
+      if (Boolean.parseBoolean(element.getAttributeValue(RUN_THROUGH_BLAZE_ATTR))) {
+        launchMethod = AndroidTestLaunchMethod.BLAZE_TEST;
+      } else {
+        launchMethod = AndroidTestLaunchMethod.NON_BLAZE;
+      }
+    }
 
     for (Map.Entry<String, String> entry : getLegacyValues(element).entrySet()) {
       String value = entry.getValue();
@@ -187,7 +198,7 @@ final class BlazeAndroidTestRunConfigurationState implements RunConfigurationSta
   public void writeExternal(Element element) throws WriteExternalException {
     commonState.writeExternal(element);
 
-    element.setAttribute(RUN_THROUGH_BLAZE_ATTR, Boolean.toString(runThroughBlaze));
+    element.setAttribute(LAUNCH_METHOD_ATTR, launchMethod.name());
     element.setAttribute(TESTING_TYPE, Integer.toString(testingType));
     element.setAttribute(INSTRUMENTATION_RUNNER_CLASS, instrumentationRunnerClass);
     element.setAttribute(METHOD_NAME, methodName);

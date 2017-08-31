@@ -52,7 +52,7 @@ public class BlazeCommandLogParser {
   /** Finds the targets which failed to build */
   public static ImmutableSet<Label> parseFailedTargets(File commandLog) {
     try (Stream<String> stream = Files.lines(Paths.get(commandLog.getPath()))) {
-      return parseTestTargets(stream);
+      return parseFailedTargets(stream);
     } catch (IOException e) {
       logger.warn("Error parsing master log", e);
       return ImmutableSet.of();

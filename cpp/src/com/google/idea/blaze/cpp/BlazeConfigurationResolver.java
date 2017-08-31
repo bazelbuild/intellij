@@ -15,104 +15,134 @@
  */
 package com.google.idea.blaze.cpp;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
-import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.CIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedFunction;
+import com.google.idea.blaze.base.scope.ScopedOperation;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.toolchains.CompilerInfoCache;
 import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 final class BlazeConfigurationResolver {
-  private static final class MapEntry {
-    public final TargetKey targetKey;
-    public final BlazeResolveConfiguration configuration;
+  private static final Logger logger = Logger.getInstance(BlazeConfigurationResolver.class);
+  // Don't recursively check too many directories, in case the root is just too big.
+  // Sometimes genfiles/java is considered a header search root.
+  private static final int GEN_HEADER_ROOT_SEARCH_LIMIT = 50;
 
-    public MapEntry(TargetKey targetKey, BlazeResolveConfiguration configuration) {
-      this.targetKey = targetKey;
-      this.configuration = configuration;
-    }
-  }
-
-  private static final Logger LOG = Logger.getInstance(BlazeConfigurationResolver.class);
   private final Project project;
 
-  private ImmutableMap<TargetKey, BlazeResolveConfiguration> resolveConfigurations =
-      ImmutableMap.of();
-
-  public BlazeConfigurationResolver(Project project) {
+  BlazeConfigurationResolver(Project project) {
     this.project = project;
   }
 
-  public void update(BlazeContext context, BlazeProjectData blazeProjectData) {
+  public BlazeConfigurationResolverResult update(
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      BlazeConfigurationResolverResult oldResult) {
+    ExecutionRootPathResolver executionRootPathResolver =
+        new ExecutionRootPathResolver(
+            Blaze.getBuildSystem(project),
+            WorkspaceRoot.fromProject(project),
+            blazeProjectData.blazeInfo.getExecutionRoot(),
+            blazeProjectData.workspacePathResolver);
     ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap =
-        BlazeResolveConfiguration.buildToolchainLookupMap(context, blazeProjectData.targetMap);
+        BlazeConfigurationToolchainResolver.buildToolchainLookupMap(
+            context, blazeProjectData.targetMap);
     ImmutableMap<File, VirtualFile> headerRoots =
-        collectHeaderRoots(context, blazeProjectData, toolchainLookupMap);
-    ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings =
-        buildCompilerSettingsMap(
-            context, project, toolchainLookupMap, blazeProjectData.workspacePathResolver);
+        collectHeaderRoots(
+            context, blazeProjectData, toolchainLookupMap, executionRootPathResolver);
     CompilerInfoCache compilerInfoCache = new CompilerInfoCache();
-    resolveConfigurations =
-        buildBlazeConfigurationMap(
+    ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings =
+        BlazeConfigurationToolchainResolver.buildCompilerSettingsMap(
             context,
-            blazeProjectData,
+            project,
+            workspaceRoot,
             toolchainLookupMap,
-            headerRoots,
-            compilerSettings,
-            compilerInfoCache);
+            blazeProjectData.workspacePathResolver,
+            compilerInfoCache,
+            oldResult.compilerSettings);
+    BlazeConfigurationResolverResult.Builder builder =
+        BlazeConfigurationResolverResult.builder(project);
+    buildBlazeConfigurationData(
+        context,
+        workspaceRoot,
+        projectViewSet,
+        blazeProjectData,
+        toolchainLookupMap,
+        headerRoots,
+        compilerSettings,
+        compilerInfoCache,
+        executionRootPathResolver,
+        oldResult,
+        builder);
+    builder.setCompilerSettings(compilerSettings);
+    builder.setResolveDiff(
+        computeConfigurationDiff(
+            blazeProjectData, builder.configurationMap, oldResult.configurationMap));
+    return builder.build();
   }
 
-  private ImmutableMap<File, VirtualFile> collectHeaderRoots(
+  private static ImmutableMap<File, VirtualFile> collectHeaderRoots(
       BlazeContext parentContext,
       BlazeProjectData blazeProjectData,
-      ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap) {
+      ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
+      ExecutionRootPathResolver executionRootPathResolver) {
     // Type specification needed to avoid incorrect type inference during command line build.
     return Scope.push(
         parentContext,
@@ -121,20 +151,20 @@ final class BlazeConfigurationResolver {
               context.push(new TimingScope("Resolve header include roots"));
               Set<ExecutionRootPath> paths =
                   collectExecutionRootPaths(blazeProjectData.targetMap, toolchainLookupMap);
-              return doCollectHeaderRoots(context, blazeProjectData, paths);
+              return doCollectHeaderRoots(
+                  context, blazeProjectData, paths, executionRootPathResolver);
             });
   }
 
-  private ImmutableMap<File, VirtualFile> doCollectHeaderRoots(
-      BlazeContext context, BlazeProjectData projectData, Set<ExecutionRootPath> rootPaths) {
-    ExecutionRootPathResolver pathResolver =
-        new ExecutionRootPathResolver(
-            Blaze.getBuildSystem(project),
-            WorkspaceRoot.fromProject(project),
-            projectData.blazeInfo.getExecutionRoot(),
-            projectData.workspacePathResolver);
+  private static ImmutableMap<File, VirtualFile> doCollectHeaderRoots(
+      BlazeContext context,
+      BlazeProjectData projectData,
+      Set<ExecutionRootPath> rootPaths,
+      ExecutionRootPathResolver pathResolver) {
     ConcurrentMap<File, VirtualFile> rootsMap = Maps.newConcurrentMap();
     List<ListenableFuture<Void>> futures = Lists.newArrayListWithCapacity(rootPaths.size());
+    AtomicInteger genRootsWithHeaders = new AtomicInteger();
+    AtomicInteger genRootsWithoutHeaders = new AtomicInteger();
     for (ExecutionRootPath path : rootPaths) {
       futures.add(
           submit(
@@ -144,11 +174,20 @@ final class BlazeConfigurationResolver {
                 for (File file : possibleDirectories) {
                   VirtualFile vf = getVirtualFile(file);
                   if (vf != null) {
-                    rootsMap.put(file, vf);
+                    // Check gen directories to see if they actually contain headers and not just
+                    // other random generated files (like .s, .cc, or module maps).
+                    if (!isOutputArtifact(projectData.blazeInfo, path)) {
+                      rootsMap.put(file, vf);
+                    } else if (genRootMayContainHeaders(vf)) {
+                      genRootsWithHeaders.incrementAndGet();
+                      rootsMap.put(file, vf);
+                    } else {
+                      genRootsWithoutHeaders.incrementAndGet();
+                    }
                   } else if (!isOutputArtifact(projectData.blazeInfo, path)
                       && FileAttributeProvider.getInstance().exists(file)) {
                     // If it's not a blaze output file, we expect it to always resolve.
-                    LOG.info(String.format("Unresolved header root %s", file.getAbsolutePath()));
+                    logger.info(String.format("Unresolved header root %s", file.getAbsolutePath()));
                   }
                 }
                 return null;
@@ -156,15 +195,44 @@ final class BlazeConfigurationResolver {
     }
     try {
       Futures.allAsList(futures).get();
-      return ImmutableMap.copyOf(rootsMap);
+      ImmutableMap<File, VirtualFile> result = ImmutableMap.copyOf(rootsMap);
+      logger.info(
+          String.format(
+              "CollectHeaderRoots: %s roots, (%s, %s) genroots with/without headers",
+              result.size(), genRootsWithHeaders.get(), genRootsWithoutHeaders.get()));
+      return result;
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       context.setCancelled();
     } catch (ExecutionException e) {
       IssueOutput.error("Error resolving header include roots: " + e).submit(context);
-      LOG.error("Error resolving header include roots", e);
+      logger.error("Error resolving header include roots", e);
     }
     return ImmutableMap.of();
+  }
+
+  private static boolean genRootMayContainHeaders(VirtualFile directory) {
+    int totalDirectoriesChecked = 0;
+    Queue<VirtualFile> worklist = new ArrayDeque<>();
+    worklist.add(directory);
+    while (!worklist.isEmpty()) {
+      totalDirectoriesChecked++;
+      if (totalDirectoriesChecked > GEN_HEADER_ROOT_SEARCH_LIMIT) {
+        return true;
+      }
+      VirtualFile dir = worklist.poll();
+      for (VirtualFile child : dir.getChildren()) {
+        if (child.isDirectory()) {
+          worklist.add(child);
+          continue;
+        }
+        String fileExtension = child.getExtension();
+        if (CFileExtensions.HEADER_EXTENSIONS.contains(fileExtension)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean isOutputArtifact(BlazeInfo blazeInfo, ExecutionRootPath path) {
@@ -193,7 +261,7 @@ final class BlazeConfigurationResolver {
 
   @Nullable
   private static VirtualFile getVirtualFile(File file) {
-    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    LocalFileSystem fileSystem = VirtualFileSystemProvider.getInstance().getSystem();
     VirtualFile vf = fileSystem.findFileByPathIfCached(file.getPath());
     if (vf == null) {
       vf = fileSystem.findFileByIoFile(file);
@@ -201,62 +269,136 @@ final class BlazeConfigurationResolver {
     return vf;
   }
 
-  private ImmutableMap<TargetKey, BlazeResolveConfiguration> buildBlazeConfigurationMap(
+  private static boolean containsCompiledSources(TargetIdeInfo target) {
+    Predicate<ArtifactLocation> isCompiled =
+        location -> {
+          String locationExtension = FileUtilRt.getExtension(location.getRelativePath());
+          return CFileExtensions.SOURCE_EXTENSIONS.contains(locationExtension);
+        };
+    return target.cIdeInfo != null
+        && target.cIdeInfo.sources.stream().filter(ArtifactLocation::isSource).anyMatch(isCompiled);
+  }
+
+  private void buildBlazeConfigurationData(
       BlazeContext parentContext,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
       ImmutableMap<File, VirtualFile> headerRoots,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings,
-      CompilerInfoCache compilerInfoCache) {
+      CompilerInfoCache compilerInfoCache,
+      ExecutionRootPathResolver executionRootPathResolver,
+      BlazeConfigurationResolverResult oldConfigurationData,
+      BlazeConfigurationResolverResult.Builder builder) {
     // Type specification needed to avoid incorrect type inference during command line build.
-    return Scope.push(
+    Scope.push(
         parentContext,
-        (ScopedFunction<ImmutableMap<TargetKey, BlazeResolveConfiguration>>)
+        (ScopedOperation)
             context -> {
               context.push(new TimingScope("Build C configuration map"));
 
-              List<ListenableFuture<MapEntry>> mapEntryFutures = Lists.newArrayList();
+              ProjectViewTargetImportFilter filter =
+                  new ProjectViewTargetImportFilter(project, workspaceRoot, projectViewSet);
 
-              for (TargetIdeInfo target : blazeProjectData.targetMap.targets()) {
-                if (target.kind.getLanguageClass() == LanguageClass.C
-                    && target.kind != Kind.CC_TOOLCHAIN) {
-                  ListenableFuture<MapEntry> future =
-                      submit(
-                          () ->
-                              createResolveConfiguration(
-                                  target,
-                                  toolchainLookupMap,
-                                  headerRoots,
-                                  compilerSettings,
-                                  blazeProjectData,
-                                  compilerInfoCache));
-                  mapEntryFutures.add(future);
-                }
-              }
-
-              ImmutableMap.Builder<TargetKey, BlazeResolveConfiguration> newResolveConfigurations =
-                  ImmutableMap.builder();
-              List<MapEntry> mapEntries;
+              ConcurrentMap<TargetKey, BlazeResolveConfigurationData> targetToData =
+                  Maps.newConcurrentMap();
+              List<ListenableFuture<?>> targetToDataFutures =
+                  blazeProjectData
+                      .targetMap
+                      .targets()
+                      .stream()
+                      .filter(target -> target.kind.languageClass == LanguageClass.C)
+                      .filter(target -> target.kind != Kind.CC_TOOLCHAIN)
+                      .filter(filter::isSourceTarget)
+                      .filter(BlazeConfigurationResolver::containsCompiledSources)
+                      .map(
+                          target ->
+                              submit(
+                                  () -> {
+                                    BlazeResolveConfigurationData data =
+                                        createResolveConfiguration(
+                                            target,
+                                            toolchainLookupMap,
+                                            headerRoots,
+                                            compilerSettings,
+                                            compilerInfoCache,
+                                            executionRootPathResolver);
+                                    if (data != null) {
+                                      targetToData.put(target.key, data);
+                                    }
+                                    return null;
+                                  }))
+                      .collect(Collectors.toList());
               try {
-                mapEntries = Futures.allAsList(mapEntryFutures).get();
+                Futures.allAsList(targetToDataFutures).get();
               } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 context.setCancelled();
-                return ImmutableMap.of();
+                return;
               } catch (ExecutionException e) {
                 IssueOutput.error("Could not build C resolve configurations: " + e).submit(context);
-                LOG.error("Could not build C resolve configurations", e);
-                return ImmutableMap.of();
+                logger.error("Could not build C resolve configurations", e);
+                return;
               }
-
-              for (MapEntry mapEntry : mapEntries) {
-                // Skip over labels that don't have C configuration data.
-                if (mapEntry != null) {
-                  newResolveConfigurations.put(mapEntry.targetKey, mapEntry.configuration);
-                }
-              }
-              return newResolveConfigurations.build();
+              findEquivalenceClasses(
+                  context,
+                  project,
+                  blazeProjectData.workspacePathResolver,
+                  targetToData,
+                  oldConfigurationData,
+                  builder);
             });
+  }
+
+  private static void findEquivalenceClasses(
+      BlazeContext context,
+      Project project,
+      WorkspacePathResolver workspacePathResolver,
+      Map<TargetKey, BlazeResolveConfigurationData> targetToData,
+      BlazeConfigurationResolverResult oldConfigurationData,
+      BlazeConfigurationResolverResult.Builder builder) {
+    Map<BlazeResolveConfigurationData, BlazeResolveConfiguration> dataToConfiguration =
+        new HashMap<>();
+    Multimap<BlazeResolveConfigurationData, TargetKey> dataEquivalenceClasses =
+        ArrayListMultimap.create();
+    int reused = 0;
+    for (Map.Entry<TargetKey, BlazeResolveConfigurationData> entry : targetToData.entrySet()) {
+      TargetKey target = entry.getKey();
+      BlazeResolveConfigurationData data = entry.getValue();
+      if (!dataToConfiguration.containsKey(data)) {
+        BlazeResolveConfiguration configuration;
+        if (oldConfigurationData.uniqueResolveConfigurations.containsKey(data)) {
+          configuration = oldConfigurationData.uniqueResolveConfigurations.get(data);
+          reused++;
+        } else {
+          configuration =
+              BlazeResolveConfiguration.createForTargets(
+                  project, workspacePathResolver, data, ImmutableList.of(target));
+        }
+        dataToConfiguration.put(data, configuration);
+      }
+      dataEquivalenceClasses.put(data, target);
+    }
+    ImmutableMap.Builder<TargetKey, BlazeResolveConfiguration> targetToConfiguration =
+        ImmutableMap.builder();
+    for (Map.Entry<BlazeResolveConfigurationData, Collection<TargetKey>> entry :
+        dataEquivalenceClasses.asMap().entrySet()) {
+      BlazeResolveConfigurationData data = entry.getKey();
+      Collection<TargetKey> targets = entry.getValue();
+      BlazeResolveConfiguration configuration = dataToConfiguration.get(data);
+      configuration.representMultipleTargets(targets);
+      for (TargetKey targetKey : targets) {
+        targetToConfiguration.put(targetKey, configuration);
+      }
+    }
+    context.output(
+        PrintOutput.log(
+            String.format(
+                "%s unique C configurations (%s reused), %s C targets",
+                dataEquivalenceClasses.keySet().size(), reused, dataEquivalenceClasses.size())));
+    builder.setConfigurationMap(targetToConfiguration.build());
+    builder.setUniqueConfigurations(ImmutableMap.copyOf(dataToConfiguration));
   }
 
   private static <T> ListenableFuture<T> submit(Callable<T> callable) {
@@ -264,14 +406,18 @@ final class BlazeConfigurationResolver {
   }
 
   @Nullable
-  private MapEntry createResolveConfiguration(
+  private BlazeResolveConfigurationData createResolveConfiguration(
       TargetIdeInfo target,
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
       ImmutableMap<File, VirtualFile> headerRoots,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettingsMap,
-      BlazeProjectData blazeProjectData,
-      CompilerInfoCache compilerInfoCache) {
+      CompilerInfoCache compilerInfoCache,
+      ExecutionRootPathResolver executionRootPathResolver) {
     TargetKey targetKey = target.key;
+    CIdeInfo cIdeInfo = target.cIdeInfo;
+    if (cIdeInfo == null) {
+      return null;
+    }
     CToolchainIdeInfo toolchainIdeInfo = toolchainLookupMap.get(targetKey);
     if (toolchainIdeInfo == null) {
       return null;
@@ -280,177 +426,76 @@ final class BlazeConfigurationResolver {
     if (compilerSettings == null) {
       return null;
     }
-    BlazeResolveConfiguration config =
-        BlazeResolveConfiguration.createConfigurationForTarget(
-            project,
-            new ExecutionRootPathResolver(
-                Blaze.getBuildSystem(project),
-                WorkspaceRoot.fromProject(project),
-                blazeProjectData.blazeInfo.getExecutionRoot(),
-                blazeProjectData.workspacePathResolver),
-            blazeProjectData.workspacePathResolver,
-            headerRoots,
-            blazeProjectData.targetMap.get(targetKey),
-            toolchainIdeInfo,
-            compilerSettings,
-            compilerInfoCache);
-    if (config == null) {
-      return null;
-    }
-    return new MapEntry(targetKey, config);
+    return BlazeResolveConfigurationData.create(
+        project,
+        executionRootPathResolver,
+        headerRoots,
+        cIdeInfo,
+        toolchainIdeInfo,
+        compilerSettings,
+        compilerInfoCache);
   }
 
-  private static ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> buildCompilerSettingsMap(
-      BlazeContext context,
-      Project project,
-      ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
-      WorkspacePathResolver workspacePathResolver) {
-    Set<CToolchainIdeInfo> toolchains =
-        toolchainLookupMap.values().stream().distinct().collect(Collectors.toSet());
-    List<ListenableFuture<Map.Entry<CToolchainIdeInfo, BlazeCompilerSettings>>>
-        compilerSettingsFutures = new ArrayList<>();
-    for (CToolchainIdeInfo toolchain : toolchains) {
-      compilerSettingsFutures.add(
-          submit(
-              () -> {
-                BlazeCompilerSettings settings =
-                    createBlazeCompilerSettings(project, toolchain, workspacePathResolver);
-                if (settings == null) {
-                  return null;
-                }
-                return new SimpleImmutableEntry<>(toolchain, settings);
-              }));
+  @Nullable
+  private static BlazeConfigurationResolverDiff computeConfigurationDiff(
+      BlazeProjectData blazeProjectData,
+      ImmutableMap<TargetKey, BlazeResolveConfiguration> newConfigs,
+      ImmutableMap<TargetKey, BlazeResolveConfiguration> oldConfigs) {
+    if (oldConfigs.isEmpty()) {
+      return null;
     }
-    ImmutableMap.Builder<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettingsMap =
-        ImmutableMap.builder();
+    List<ListenableFuture<List<VirtualFile>>> fileResolveFutures = new ArrayList<>();
+    for (Map.Entry<TargetKey, BlazeResolveConfiguration> entry : newConfigs.entrySet()) {
+      TargetKey targetKey = entry.getKey();
+      BlazeResolveConfiguration newConfiguration = entry.getValue();
+      BlazeResolveConfiguration oldConfiguration = oldConfigs.get(targetKey);
+      if (newConfiguration != oldConfiguration) {
+        fileResolveFutures.add(
+            submit(
+                () ->
+                    changedFilesForTarget(
+                        blazeProjectData.targetMap,
+                        blazeProjectData.artifactLocationDecoder,
+                        targetKey)));
+      }
+    }
+    ImmutableSet.Builder<VirtualFile> changedFiles = ImmutableSet.builder();
     try {
-      List<Map.Entry<CToolchainIdeInfo, BlazeCompilerSettings>> createdSettings =
-          Futures.allAsList(compilerSettingsFutures).get();
-      for (Map.Entry<CToolchainIdeInfo, BlazeCompilerSettings> createdSetting : createdSettings) {
-        if (createdSetting != null) {
-          compilerSettingsMap.put(createdSetting);
-        }
+      for (List<VirtualFile> changedFilesForTarget : Futures.allAsList(fileResolveFutures).get()) {
+        changedFiles.addAll(changedFilesForTarget);
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      context.setCancelled();
+      return null;
     } catch (ExecutionException e) {
-      IssueOutput.error("Could not build C compiler settings map: " + e).submit(context);
-      LOG.error("Could not build C compiler settings map", e);
-    }
-    return compilerSettingsMap.build();
-  }
-
-  @Nullable
-  private static BlazeCompilerSettings createBlazeCompilerSettings(
-      Project project,
-      CToolchainIdeInfo toolchainIdeInfo,
-      WorkspacePathResolver workspacePathResolver) {
-    File compilerWrapper = getCompilerWrapper(toolchainIdeInfo, workspacePathResolver);
-    if (compilerWrapper == null) {
+      logger.error("Error getting changed files", e);
       return null;
     }
-    ImmutableList.Builder<String> cFlagsBuilder = ImmutableList.builder();
-    cFlagsBuilder.addAll(toolchainIdeInfo.baseCompilerOptions);
-    cFlagsBuilder.addAll(toolchainIdeInfo.cCompilerOptions);
-    cFlagsBuilder.addAll(toolchainIdeInfo.unfilteredCompilerOptions);
-
-    ImmutableList.Builder<String> cppFlagsBuilder = ImmutableList.builder();
-    cppFlagsBuilder.addAll(toolchainIdeInfo.baseCompilerOptions);
-    cppFlagsBuilder.addAll(toolchainIdeInfo.cppCompilerOptions);
-    cppFlagsBuilder.addAll(toolchainIdeInfo.unfilteredCompilerOptions);
-    return new BlazeCompilerSettings(
-        project, compilerWrapper, compilerWrapper, cFlagsBuilder.build(), cppFlagsBuilder.build());
+    return new BlazeConfigurationResolverDiff(
+        changedFiles.build(), hasRemovedTargets(newConfigs, oldConfigs));
   }
 
-  @Nullable
-  private static File getCompilerWrapper(
-      CToolchainIdeInfo toolchainIdeInfo, WorkspacePathResolver workspacePathResolver) {
-    File cppExecutable = toolchainIdeInfo.cppExecutable.getAbsoluteOrRelativeFile();
-    if (cppExecutable != null && !cppExecutable.isAbsolute()) {
-      cppExecutable = workspacePathResolver.resolveToFile(cppExecutable.getPath());
-    }
-    if (cppExecutable == null) {
-      LOG.warn(
-          String.format(
-              "Unable to find compiler executable: %s for toolchain %s",
-              toolchainIdeInfo.cppExecutable.toString(), toolchainIdeInfo));
-      return null;
-    }
-    return createCompilerExecutableWrapper(cppExecutable);
-  }
-
-  /**
-   * Create a wrapper script that transforms the CLion compiler invocation into a safe invocation of
-   * the compiler script that blaze uses.
-   *
-   * <p>CLion passes arguments to the compiler in an arguments file. The c toolchain compiler
-   * wrapper script doesn't handle arguments files, so we need to move the compiler arguments from
-   * the file to the command line.
-   *
-   * @param blazeCompilerExecutableFile blaze compiler wrapper
-   * @return The wrapper script that CLion can call.
-   */
-  @Nullable
-  private static File createCompilerExecutableWrapper(File blazeCompilerExecutableFile) {
-    try {
-      File blazeCompilerWrapper =
-          FileUtil.createTempFile("blaze_compiler", ".sh", true /* deleteOnExit */);
-      if (!blazeCompilerWrapper.setExecutable(true)) {
-        return null;
+  private static List<VirtualFile> changedFilesForTarget(
+      TargetMap targetMap, ArtifactLocationDecoder locationDecoder, TargetKey targetKey) {
+    List<VirtualFile> changedFilesForTarget = new ArrayList<>();
+    for (ArtifactLocation sourceLocation : targetMap.get(targetKey).sources) {
+      File sourceFile = locationDecoder.decode(sourceLocation);
+      VirtualFile virtualFile = getVirtualFile(sourceFile);
+      if (virtualFile != null) {
+        changedFilesForTarget.add(virtualFile);
       }
-      ImmutableList<String> compilerWrapperScriptLines =
-          ImmutableList.of(
-              "#!/bin/bash",
-              "",
-              "# The c toolchain compiler wrapper script doesn't handle arguments files, so we",
-              "# need to move the compiler arguments from the file to the command line.",
-              "",
-              "if [ $# -ne 2 ]; then",
-              "  echo \"Usage: $0 @arg-file compile-file\"",
-              "  exit 2;",
-              "fi",
-              "",
-              "if [[ $1 != @* ]]; then",
-              "  echo \"Usage: $0 @arg-file compile-file\"",
-              "  exit 3;",
-              "fi",
-              "",
-              " # Remove the @ before the arguments file path",
-              "ARG_FILE=${1#@}",
-              "# The actual compiler wrapper script we get from blaze",
-              "EXE=" + blazeCompilerExecutableFile.getPath(),
-              "# Read in the arguments file so we can pass the arguments on the command line.",
-              "ARGS=`cat $ARG_FILE`",
-              "$EXE $ARGS $2");
+    }
+    return changedFilesForTarget;
+  }
 
-      try (PrintWriter pw = new PrintWriter(blazeCompilerWrapper, UTF_8.name())) {
-        compilerWrapperScriptLines.forEach(pw::println);
+  private static boolean hasRemovedTargets(
+      Map<TargetKey, BlazeResolveConfiguration> newConfigs,
+      Map<TargetKey, BlazeResolveConfiguration> oldConfigs) {
+    for (TargetKey oldKey : oldConfigs.keySet()) {
+      if (!newConfigs.containsKey(oldKey)) {
+        return true;
       }
-      return blazeCompilerWrapper;
-    } catch (IOException e) {
-      return null;
     }
-  }
-
-  @Nullable
-  public OCResolveConfiguration getConfigurationForFile(VirtualFile sourceFile) {
-    SourceToTargetMap sourceToTargetMap = SourceToTargetMap.getInstance(project);
-    ImmutableCollection<TargetKey> targetsForSourceFile =
-        sourceToTargetMap.getRulesForSourceFile(VfsUtilCore.virtualToIoFile(sourceFile));
-    if (targetsForSourceFile.isEmpty()) {
-      return null;
-    }
-
-    // If a source file is in two different targets, we can't possibly show how it will be
-    // interpreted in both contexts at the same time in the IDE, so just pick the "first" target.
-    TargetKey targetKey = targetsForSourceFile.stream().min(TargetKey::compareTo).orElse(null);
-    assert (targetKey != null);
-
-    return resolveConfigurations.get(targetKey);
-  }
-
-  ImmutableList<? extends OCResolveConfiguration> getAllConfigurations() {
-    return resolveConfigurations.values().asList();
+    return false;
   }
 }

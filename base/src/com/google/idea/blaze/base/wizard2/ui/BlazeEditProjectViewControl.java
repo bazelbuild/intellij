@@ -70,18 +70,20 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.SystemProperties;
+import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import javax.annotation.Nullable;
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import org.jetbrains.annotations.NotNull;
 
@@ -122,10 +124,14 @@ public final class BlazeEditProjectViewControl {
 
   public BlazeEditProjectViewControl(BlazeNewProjectBuilder builder, Disposable parentDisposable) {
     this.projectViewUi = new ProjectViewUi(parentDisposable);
-    JPanel component = new JPanelProvidingProject(ProjectViewUi.getProject(), new GridBagLayout());
-    fillUi(component);
+    JPanel content = new JPanel(new GridBagLayout());
+    fillUi(content);
     update(builder);
-    UiUtil.fillBottom(component);
+    UiUtil.fillBottom(content);
+    JScrollPane scrollPane = new JScrollPane(content);
+    scrollPane.setBorder(BorderFactory.createEmptyBorder());
+    JPanel component = new JPanelProvidingProject(ProjectViewUi.getProject(), new BorderLayout());
+    component.add(scrollPane);
     this.component = component;
     this.buildSystemName = builder.getBuildSystemName();
   }
@@ -137,11 +143,7 @@ public final class BlazeEditProjectViewControl {
   private void fillUi(JPanel canvas) {
     JLabel projectDataDirLabel = new JBLabel("Project data directory:");
 
-    Dimension minSize = ProjectViewUi.getMinimumSize();
-    // Add pixels so we have room for our extra fields
-    minSize.setSize(minSize.width, minSize.height + 180);
-    canvas.setMinimumSize(minSize);
-    canvas.setPreferredSize(minSize);
+    canvas.setPreferredSize(ProjectViewUi.getContainerSize());
 
     projectDataDirField = new TextFieldWithBrowseButton();
     projectDataDirField.addBrowseFolderListener(
@@ -491,7 +493,6 @@ public final class BlazeEditProjectViewControl {
       return BlazeValidationResult.failure(msg);
     }
 
-
     return BlazeValidationResult.success();
   }
 
@@ -528,9 +529,6 @@ public final class BlazeEditProjectViewControl {
       }
       WorkspaceLanguageSettings workspaceLanguageSettings =
           LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
-      if (workspaceLanguageSettings == null) {
-        return false;
-      }
       return ProjectViewVerifier.verifyProjectView(
           null, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
     }

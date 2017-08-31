@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -45,6 +46,7 @@ import com.intellij.openapi.project.Project;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -88,7 +90,7 @@ public final class BlazeAndroidWorkspaceImporter {
         targetMap
             .targets()
             .stream()
-            .filter(target -> target.kind.getLanguageClass() == LanguageClass.ANDROID)
+            .filter(target -> target.kind.languageClass == LanguageClass.ANDROID)
             .filter(target -> target.androidIdeInfo != null)
             .filter(importFilter::isSourceTarget)
             .filter(target -> !importFilter.excludeTarget(target))
@@ -114,7 +116,20 @@ public final class BlazeAndroidWorkspaceImporter {
         buildAndroidResourceModules(workspaceBuilder);
     BlazeResourceLibrary resourceLibrary = createResourceLibrary(androidResourceModules);
 
-    return new BlazeAndroidImportResult(androidResourceModules, resourceLibrary);
+    return new BlazeAndroidImportResult(
+        androidResourceModules, resourceLibrary, getJavacJar(targetMap.targets()));
+  }
+
+  private static ArtifactLocation getJavacJar(Collection<TargetIdeInfo> targets) {
+    return targets
+        .stream()
+        .filter(target -> target.kind == Kind.JAVA_TOOLCHAIN)
+        .map(
+            target ->
+                target.javaToolchainIdeInfo != null ? target.javaToolchainIdeInfo.javacJar : null)
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
   }
 
   private void addSourceTarget(

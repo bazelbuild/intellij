@@ -18,20 +18,24 @@ package com.google.idea.blaze.java.run.producers;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.producer.BlazeRunConfigurationProducerTestCase;
+import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -184,5 +188,117 @@ public class BlazeJavaTestClassConfigurationProducerTest
             "--test_filter=com.google.test.OuterClass#|com.google.test.OuterClass.InnerClass#");
     assertThat(config.getName()).isEqualTo("Blaze test OuterClass");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
+  }
+
+  @Test
+  public void testConfigFromContextRecognizesItsOwnConfig() {
+    PsiFile javaFile =
+        createAndIndexFile(
+            new WorkspacePath("java/com/google/test/TestClass.java"),
+            "package com.google.test;",
+            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
+            "public class TestClass {",
+            "  @org.junit.Test",
+            "  public void testMethod() {}",
+            "}");
+
+    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
+    builder.setTargetMap(
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setKind("java_test")
+                    .setLabel("//java/com/google/test:TestClass")
+                    .addSource(sourceRoot("java/com/google/test/TestClass.java"))
+                    .build())
+            .build());
+    registerProjectService(
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+
+    ConfigurationContext context = createContextFromPsi(javaFile);
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) context.getConfiguration().getConfiguration();
+    assertThat(config).isNotNull();
+
+    assertThat(new BlazeJavaTestClassConfigurationProducer().doIsConfigFromContext(config, context))
+        .isTrue();
+  }
+
+  @Test
+  public void testConfigWithDifferentLabelIgnored() {
+    PsiFile javaFile =
+        createAndIndexFile(
+            new WorkspacePath("java/com/google/test/TestClass.java"),
+            "package com.google.test;",
+            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
+            "public class TestClass {",
+            "  @org.junit.Test",
+            "  public void testMethod() {}",
+            "}");
+
+    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
+    builder.setTargetMap(
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setKind("java_test")
+                    .setLabel("//java/com/google/test:TestClass")
+                    .addSource(sourceRoot("java/com/google/test/TestClass.java"))
+                    .build())
+            .build());
+    registerProjectService(
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+
+    ConfigurationContext context = createContextFromPsi(javaFile);
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) context.getConfiguration().getConfiguration();
+    assertThat(config).isNotNull();
+
+    // modify the label, and check that is enough for the producer to class it as different.
+    config.setTarget(Label.create("//java/com/google/test:TestClass2"));
+
+    assertThat(new BlazeJavaTestClassConfigurationProducer().doIsConfigFromContext(config, context))
+        .isFalse();
+  }
+
+  @Test
+  public void testConfigWithDifferentFilterIgnored() {
+    PsiFile javaFile =
+        createAndIndexFile(
+            new WorkspacePath("java/com/google/test/TestClass.java"),
+            "package com.google.test;",
+            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
+            "public class TestClass {",
+            "  @org.junit.Test",
+            "  public void testMethod() {}",
+            "}");
+
+    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
+    builder.setTargetMap(
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setKind("java_test")
+                    .setLabel("//java/com/google/test:TestClass")
+                    .addSource(sourceRoot("java/com/google/test/TestClass.java"))
+                    .build())
+            .build());
+    registerProjectService(
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+
+    ConfigurationContext context = createContextFromPsi(javaFile);
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) context.getConfiguration().getConfiguration();
+    BlazeCommandRunConfigurationCommonState handlerState =
+        config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+
+    // modify the test filter, and check that is enough for the producer to class it as different.
+    List<String> flags = new ArrayList<>(handlerState.getBlazeFlagsState().getRawFlags());
+    flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
+    flags.add(BlazeFlags.TEST_FILTER + "=com.google.test.OtherTestClass#");
+    handlerState.getBlazeFlagsState().setRawFlags(flags);
+
+    assertThat(new BlazeJavaTestClassConfigurationProducer().doIsConfigFromContext(config, context))
+        .isFalse();
   }
 }

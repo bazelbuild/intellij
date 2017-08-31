@@ -35,9 +35,11 @@ import java.util.stream.Collectors;
 public class CMakeWorkspaceOverride extends CMakeWorkspace {
 
   private final boolean isBlazeProject;
+  private final Project projectOverride;
 
   public CMakeWorkspaceOverride(Project project) {
     super(project);
+    projectOverride = project;
     isBlazeProject = Blaze.isBlazeProject(project);
   }
 
@@ -47,7 +49,7 @@ public class CMakeWorkspaceOverride extends CMakeWorkspace {
       super.projectOpened();
       return;
     }
-    removeClasspathStorageFromModules(myProject);
+    removeClasspathStorageFromModules(projectOverride);
   }
 
   /**

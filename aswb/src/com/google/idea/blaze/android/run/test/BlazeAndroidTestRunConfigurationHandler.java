@@ -24,6 +24,7 @@ import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationValidationU
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunner;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer;
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -102,9 +103,14 @@ public class BlazeAndroidTestRunConfigurationHandler
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
     BlazeAndroidRunConfigurationValidationUtil.validateExecution(module, facet, projectViewSet);
 
-    ImmutableList<String> buildFlags =
-        configState.getCommonState().getExpandedBuildFlags(project, projectViewSet);
-    BlazeAndroidRunContext runContext = createRunContext(project, facet, environment, buildFlags);
+    ImmutableList<String> blazeFlags =
+        configState
+            .getCommonState()
+            .getExpandedBuildFlags(project, projectViewSet, BlazeCommandName.TEST);
+    ImmutableList<String> exeFlags =
+        ImmutableList.copyOf(configState.getCommonState().getExeFlagsState().getExpandedFlags());
+    BlazeAndroidRunContext runContext =
+        createRunContext(project, facet, environment, blazeFlags, exeFlags);
 
     return new BlazeAndroidRunConfigurationRunner(
         module,
@@ -118,9 +124,10 @@ public class BlazeAndroidTestRunConfigurationHandler
       Project project,
       AndroidFacet facet,
       ExecutionEnvironment env,
-      ImmutableList<String> buildFlags) {
+      ImmutableList<String> blazeFlags,
+      ImmutableList<String> exeFlags) {
     return new BlazeAndroidTestRunContext(
-        project, facet, configuration, env, configState, getLabel(), buildFlags);
+        project, facet, configuration, env, configState, getLabel(), blazeFlags, exeFlags);
   }
 
   @Override

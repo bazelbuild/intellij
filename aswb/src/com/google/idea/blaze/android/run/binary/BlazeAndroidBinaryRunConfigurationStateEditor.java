@@ -16,6 +16,8 @@
 package com.google.idea.blaze.android.run.binary;
 
 import com.android.tools.idea.run.activity.ActivityLocatorUtils;
+import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProvider.AndroidBinaryLaunchMethod;
+import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProvider.AndroidBinaryLaunchMethodComboEntry;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.blaze.base.ui.IntegerTextField;
@@ -49,6 +51,7 @@ import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -72,7 +75,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
   private JRadioButton launchNothingButton;
   private JRadioButton launchDefaultButton;
   private JRadioButton launchCustomButton;
-  private JCheckBox mobileInstallCheckBox;
+  private JComboBox<AndroidBinaryLaunchMethodComboEntry> launchMethodComboBox;
   private JCheckBox splitApksCheckBox;
   private JCheckBox useWorkProfileIfPresentCheckBox;
   private JLabel userIdLabel;
@@ -131,8 +134,12 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     launchDefaultButton.addActionListener(listener);
     launchNothingButton.addActionListener(listener);
 
-    mobileInstallCheckBox.addActionListener(
-        e -> splitApksCheckBox.setVisible(mobileInstallCheckBox.isSelected()));
+    launchMethodComboBox.addActionListener(
+        e ->
+            splitApksCheckBox.setVisible(
+                ((AndroidBinaryLaunchMethodComboEntry) launchMethodComboBox.getSelectedItem())
+                    .launchMethod.equals(AndroidBinaryLaunchMethod.MOBILE_INSTALL) // v1 only
+                ));
 
     useWorkProfileIfPresentCheckBox.addActionListener(e -> updateEnabledState());
   }
@@ -155,12 +162,18 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
       activityField.getChildComponent().setText(state.getActivityClass());
     }
 
-    mobileInstallCheckBox.setSelected(state.mobileInstall());
+    for (int i = 0; i < launchMethodComboBox.getItemCount(); ++i) {
+      if (launchMethodComboBox.getItemAt(i).launchMethod.equals(state.getLaunchMethod())) {
+        launchMethodComboBox.setSelectedIndex(i);
+        break;
+      }
+    }
     splitApksCheckBox.setSelected(state.useSplitApksIfPossible());
     useWorkProfileIfPresentCheckBox.setSelected(state.useWorkProfileIfPresent());
 
     userIdField.setValue(state.getUserId());
-    splitApksCheckBox.setVisible(state.mobileInstall());
+    splitApksCheckBox.setVisible(
+        state.getLaunchMethod().equals(AndroidBinaryLaunchMethod.MOBILE_INSTALL));
 
     updateEnabledState();
   }
@@ -180,7 +193,9 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     } else {
       state.setMode(BlazeAndroidBinaryRunConfigurationState.DO_NOTHING);
     }
-    state.setMobileInstall(mobileInstallCheckBox.isSelected());
+    state.setLaunchMethod(
+        ((AndroidBinaryLaunchMethodComboEntry) launchMethodComboBox.getSelectedItem())
+            .launchMethod);
     state.setUseSplitApksIfPossible(splitApksCheckBox.isSelected());
     state.setUseWorkProfileIfPresent(useWorkProfileIfPresentCheckBox.isSelected());
   }
@@ -199,7 +214,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     launchNothingButton.setEnabled(componentEnabled);
     launchDefaultButton.setEnabled(componentEnabled);
     launchCustomButton.setEnabled(componentEnabled);
-    mobileInstallCheckBox.setEnabled(componentEnabled);
+    launchMethodComboBox.setEnabled(componentEnabled);
     splitApksCheckBox.setEnabled(componentEnabled);
     useWorkProfileIfPresentCheckBox.setEnabled(componentEnabled);
   }
@@ -423,10 +438,10 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
             null,
             0,
             false));
-    mobileInstallCheckBox = new JCheckBox();
-    mobileInstallCheckBox.setText(" Use mobile-install");
+    launchMethodComboBox =
+        new JComboBox<>(BlazeAndroidBinaryLaunchMethodsProvider.getAllLaunchMethods(project));
     panel.add(
-        mobileInstallCheckBox,
+        launchMethodComboBox,
         new GridConstraints(
             0,
             0,
@@ -442,7 +457,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
             0,
             false));
     splitApksCheckBox = new JCheckBox();
-    splitApksCheckBox.setText(" Use --split_apks where possible");
+    splitApksCheckBox.setText("Use --split_apks where possible");
     panel.add(
         splitApksCheckBox,
         new GridConstraints(

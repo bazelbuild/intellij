@@ -27,6 +27,7 @@ import java.io.File;
 import java.util.Set;
 
 class SyncStatusHelper {
+  private SyncStatusHelper() {}
 
   static boolean isUnsynced(Project project, VirtualFile virtualFile) {
     if (!virtualFile.isInLocalFileSystem()) {

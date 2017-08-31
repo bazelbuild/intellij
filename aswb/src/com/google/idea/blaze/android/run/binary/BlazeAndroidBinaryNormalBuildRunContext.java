@@ -32,7 +32,6 @@ import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
@@ -50,7 +49,6 @@ import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.annotations.NotNull;
 
 /** Run context for android_binary. */
 class BlazeAndroidBinaryNormalBuildRunContext implements BlazeAndroidRunContext {
@@ -65,24 +63,23 @@ class BlazeAndroidBinaryNormalBuildRunContext implements BlazeAndroidRunContext 
   private final BlazeApkProvider apkProvider;
   private final ApplicationIdProvider applicationIdProvider;
 
-  public BlazeAndroidBinaryNormalBuildRunContext(
+  BlazeAndroidBinaryNormalBuildRunContext(
       Project project,
       AndroidFacet facet,
       RunConfiguration runConfiguration,
       ExecutionEnvironment env,
       BlazeAndroidBinaryRunConfigurationState configState,
       Label label,
-      ImmutableList<String> buildFlags) {
+      ImmutableList<String> blazeFlags) {
     this.project = project;
     this.facet = facet;
     this.runConfiguration = runConfiguration;
     this.env = env;
     this.configState = configState;
     this.consoleProvider = new BlazeAndroidBinaryConsoleProvider(project);
-    this.buildStep = new BlazeApkBuildStepNormalBuild(project, label, buildFlags);
-    this.apkProvider = new BlazeApkProvider(project, buildStep.getDeployInfo());
-    this.applicationIdProvider =
-        new BlazeAndroidBinaryApplicationIdProvider(project, buildStep.getDeployInfo());
+    this.buildStep = new BlazeApkBuildStepNormalBuild(project, label, blazeFlags);
+    this.apkProvider = new BlazeApkProvider(project, buildStep);
+    this.applicationIdProvider = new BlazeAndroidBinaryApplicationIdProvider(buildStep);
   }
 
   @Override
@@ -94,11 +91,10 @@ class BlazeAndroidBinaryNormalBuildRunContext implements BlazeAndroidRunContext 
   }
 
   @Override
-  public void augmentLaunchOptions(@NotNull LaunchOptions.Builder options) {
+  public void augmentLaunchOptions(LaunchOptions.Builder options) {
     options.setDeploy(true).setOpenLogcatAutomatically(true);
   }
 
-  @NotNull
   @Override
   public ConsoleProvider getConsoleProvider() {
     return consoleProvider;
@@ -153,8 +149,12 @@ class BlazeAndroidBinaryNormalBuildRunContext implements BlazeAndroidRunContext 
             launchOptions.isDebug(),
             UserIdHelper.getFlagsFromUserId(userId));
 
-    BlazeAndroidDeployInfo deployInfo =
-        Futures.get(buildStep.getDeployInfo(), ExecutionException.class);
+    BlazeAndroidDeployInfo deployInfo;
+    try {
+      deployInfo = buildStep.getDeployInfo();
+    } catch (ApkProvisionException e) {
+      throw new ExecutionException(e);
+    }
 
     return BlazeAndroidBinaryApplicationLaunchTaskProvider.getApplicationLaunchTask(
         project,

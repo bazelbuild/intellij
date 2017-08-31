@@ -15,25 +15,41 @@
  */
 package com.google.idea.blaze.base.prefetch;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import java.io.File;
-import java.util.Collection;
 import java.util.Set;
 
 /** Provides a source of files to prefetch */
 public interface PrefetchFileSource {
+
   ExtensionPointName<PrefetchFileSource> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.PrefetchFileSource");
-  /** Adds any files or directories that we would be interested in prefetching. */
+
+  /** Returns all file extensions provided by available PrefetchFileSource implementations. */
+  static ImmutableSet<String> getAllPrefetchFileExtensions() {
+    ImmutableSet.Builder<String> extensionsToFetchContent = ImmutableSet.builder();
+    for (PrefetchFileSource fileSource : PrefetchFileSource.EP_NAME.getExtensions()) {
+      extensionsToFetchContent.addAll(fileSource.prefetchFileExtensions());
+    }
+    return extensionsToFetchContent.build();
+  }
+
+  /**
+   * Adds any files or directories that we would be interested in prefetching. Project source files
+   * should not be added here, as they're always prefetched.
+   */
   void addFilesToPrefetch(
       Project project,
       ProjectViewSet projectViewSet,
+      ImportRoots importRoots,
       BlazeProjectData blazeProjectData,
-      Collection<File> files);
+      Set<File> files);
 
-  /** Returns any source file extensions that are a good candidate for the {@link Prefetcher}. */
-  Set<String> prefetchSrcFileExtensions();
+  /** Returns any file extensions that are a good candidate for the {@link Prefetcher}. */
+  Set<String> prefetchFileExtensions();
 }

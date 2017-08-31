@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.sync.projectview;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -24,18 +26,13 @@ import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSect
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
-import com.intellij.openapi.diagnostic.Logger;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /** Reads the user's language preferences from the project view. */
 public class LanguageSupport {
 
-  private static final Logger logger = Logger.getInstance(LanguageSupport.class);
-
-  @Nullable
   public static WorkspaceType getDefaultWorkspaceType() {
     WorkspaceType workspaceType = null;
     // prioritize by enum ordinal.
@@ -46,24 +43,19 @@ public class LanguageSupport {
         workspaceType = recommendedType;
       }
     }
+    // Should never happen, outside of tests without proper set up.
+    checkState(
+        workspaceType != null, "No SyncPlugin present which provides a default workspace type.");
     return workspaceType;
   }
 
   /**
    * Derives {@link WorkspaceLanguageSettings} from the {@link ProjectViewSet}. Does no validation.
    */
-  @Nullable
   public static WorkspaceLanguageSettings createWorkspaceLanguageSettings(
       ProjectViewSet projectViewSet) {
-    WorkspaceType workspaceType = projectViewSet.getScalarValue(WorkspaceTypeSection.KEY);
-    if (workspaceType == null) {
-      workspaceType = getDefaultWorkspaceType();
-    }
-
-    if (workspaceType == null) {
-      logger.error("Could not find workspace type."); // Should never happen
-      return null;
-    }
+    WorkspaceType workspaceType =
+        projectViewSet.getScalarValue(WorkspaceTypeSection.KEY).orElse(getDefaultWorkspaceType());
 
     ImmutableSet.Builder<LanguageClass> activeLanguages =
         ImmutableSet.<LanguageClass>builder()

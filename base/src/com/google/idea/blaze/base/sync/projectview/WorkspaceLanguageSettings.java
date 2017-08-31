@@ -30,7 +30,7 @@ public class WorkspaceLanguageSettings implements Serializable {
   private static final long serialVersionUID = 1L;
 
   private final WorkspaceType workspaceType;
-  final ImmutableSet<LanguageClass> activeLanguages;
+  public final ImmutableSet<LanguageClass> activeLanguages;
 
   public WorkspaceLanguageSettings(
       WorkspaceType workspaceType, ImmutableSet<LanguageClass> activeLanguages) {
@@ -61,7 +61,7 @@ public class WorkspaceLanguageSettings implements Serializable {
 
   public EnumSet<Kind> getAvailableTargetKinds() {
     EnumSet<Kind> kinds = EnumSet.allOf(Kind.class);
-    kinds.removeIf(kind -> !activeLanguages.contains(kind.getLanguageClass()));
+    kinds.removeIf(kind -> !activeLanguages.contains(kind.languageClass));
     return kinds;
   }
 

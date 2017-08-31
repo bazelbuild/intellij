@@ -1,6 +1,6 @@
 # An IntelliJ plugin for [Bazel](http://bazel.build) projects
 
-This is an early-access version of our Blaze plugins for IntelliJ,
+This is an early-access version of our Bazel plugins for IntelliJ,
 Android Studio, and CLion.
 
 This code drop is for educational purposes only and is currently
@@ -13,8 +13,7 @@ with live, working code and we will start accepting contributions.
 ## Installation
 
 You can find our plugin in the Jetbrains plugin repository by going to
-`Settings -> Browse Repositories`, and searching for `IntelliJ with Bazel`,
-`Android Studio with Bazel`, or `CLion with Bazel`.
+`Settings -> Browse Repositories`, and searching for `Bazel`.
 
 ## Usage
 

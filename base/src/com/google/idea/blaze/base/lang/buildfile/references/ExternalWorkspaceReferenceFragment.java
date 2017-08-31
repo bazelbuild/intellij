@@ -65,7 +65,7 @@ public class ExternalWorkspaceReferenceFragment extends PsiReferenceBase<StringL
 
   @Nullable
   private static BuildFile resolveProjectWorkspaceFile(Project project) {
-    WorkspaceRoot projectRoot = WorkspaceRoot.fromProject(project);
+    WorkspaceRoot projectRoot = WorkspaceRoot.fromProjectSafe(project);
     if (projectRoot == null) {
       return null;
     }

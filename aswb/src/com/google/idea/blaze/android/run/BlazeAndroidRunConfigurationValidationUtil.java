@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.run;
 
-import com.android.tools.idea.gradle.util.Projects;
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
@@ -25,6 +24,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.android.project.AndroidProjectInfoAdapter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -73,7 +73,7 @@ public final class BlazeAndroidRunConfigurationValidationUtil {
       return errors;
     }
     final Project project = module.getProject();
-    if (Projects.requiredAndroidModelMissing(project)) {
+    if (AndroidProjectInfoAdapter.requiredAndroidModelMissing(project)) {
       errors.add(ValidationError.fatal(SYNC_FAILED_ERR_MSG));
     }
     return errors;

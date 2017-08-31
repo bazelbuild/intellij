@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.LibraryKey;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -222,9 +223,9 @@ public final class BlazeJavaWorkspaceImporter {
       WorkspaceBuilder workspaceBuilder,
       TargetMap targetMap,
       Map<LibraryKey, BlazeJarLibrary> result) {
-    List<TargetKey> version1Roots = Lists.newArrayList();
-    List<TargetKey> immutableRoots = Lists.newArrayList();
-    List<TargetKey> mutableRoots = Lists.newArrayList();
+    List<TargetKey> version1Targets = Lists.newArrayList();
+    List<TargetKey> immutableTargets = Lists.newArrayList();
+    List<TargetKey> mutableTargets = Lists.newArrayList();
     for (TargetKey targetKey : workspaceBuilder.directDeps) {
       TargetIdeInfo target = targetMap.get(targetKey);
       if (target == null) {
@@ -236,17 +237,17 @@ public final class BlazeJavaWorkspaceImporter {
       }
       switch (protoLibraryLegacyInfo.apiFlavor) {
         case VERSION_1:
-          version1Roots.add(targetKey);
+          version1Targets.add(targetKey);
           break;
         case IMMUTABLE:
-          immutableRoots.add(targetKey);
+          immutableTargets.add(targetKey);
           break;
         case MUTABLE:
-          mutableRoots.add(targetKey);
+          mutableTargets.add(targetKey);
           break;
         case BOTH:
-          mutableRoots.add(targetKey);
-          immutableRoots.add(targetKey);
+          mutableTargets.add(targetKey);
+          immutableTargets.add(targetKey);
           break;
         default:
           // Can't happen
@@ -255,25 +256,20 @@ public final class BlazeJavaWorkspaceImporter {
     }
 
     addProtoLegacyLibrariesFromDirectDepsForFlavor(
-        targetMap, ProtoLibraryLegacyInfo.ApiFlavor.VERSION_1, version1Roots, result);
+        targetMap, ProtoLibraryLegacyInfo.ApiFlavor.VERSION_1, version1Targets, result);
     addProtoLegacyLibrariesFromDirectDepsForFlavor(
-        targetMap, ProtoLibraryLegacyInfo.ApiFlavor.IMMUTABLE, immutableRoots, result);
+        targetMap, ProtoLibraryLegacyInfo.ApiFlavor.IMMUTABLE, immutableTargets, result);
     addProtoLegacyLibrariesFromDirectDepsForFlavor(
-        targetMap, ProtoLibraryLegacyInfo.ApiFlavor.MUTABLE, mutableRoots, result);
+        targetMap, ProtoLibraryLegacyInfo.ApiFlavor.MUTABLE, mutableTargets, result);
   }
 
   private void addProtoLegacyLibrariesFromDirectDepsForFlavor(
       TargetMap targetMap,
       ProtoLibraryLegacyInfo.ApiFlavor apiFlavor,
-      List<TargetKey> roots,
+      List<TargetKey> targetKeys,
       Map<LibraryKey, BlazeJarLibrary> result) {
-    Set<TargetKey> seen = Sets.newHashSet();
-    while (!roots.isEmpty()) {
-      TargetKey targetKey = roots.remove(roots.size() - 1);
-      if (!seen.add(targetKey)) {
-        continue;
-      }
-      TargetIdeInfo target = targetMap.get(targetKey);
+    for (TargetKey key : targetKeys) {
+      TargetIdeInfo target = targetMap.get(key);
       if (target == null) {
         continue;
       }
@@ -302,12 +298,6 @@ public final class BlazeJavaWorkspaceImporter {
         for (LibraryArtifact libraryArtifact : libraries) {
           BlazeJarLibrary library = new BlazeJarLibrary(libraryArtifact);
           result.put(library.key, library);
-        }
-      }
-
-      for (Dependency dep : target.dependencies) {
-        if (dep.dependencyType == DependencyType.COMPILE_TIME) {
-          roots.add(dep.targetKey);
         }
       }
     }
@@ -346,7 +336,15 @@ public final class BlazeJavaWorkspaceImporter {
       // Add self, so we pick up our own gen jars if in working set
       workspaceBuilder.directDeps.add(targetKey);
       for (Dependency dep : target.dependencies) {
-        if (dep.dependencyType == DependencyType.COMPILE_TIME) {
+        if (dep.dependencyType != DependencyType.COMPILE_TIME) {
+          continue;
+        }
+        // forward deps from java_proto_library
+        TargetIdeInfo depTarget = targetMap.get(dep.targetKey);
+        if (depTarget != null && depTarget.kind == Kind.JAVA_PROTO_LIBRARY) {
+          workspaceBuilder.directDeps.addAll(
+              depTarget.dependencies.stream().map(d -> d.targetKey).collect(Collectors.toList()));
+        } else {
           workspaceBuilder.directDeps.add(dep.targetKey);
         }
       }

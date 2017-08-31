@@ -32,6 +32,12 @@ public interface BuildElement extends NavigatablePsiElement {
 
   String getPresentableText();
 
+  /** See {@link com.intellij.navigation.ItemPresentation#getLocationString}. */
+  @Nullable
+  default String getLocationString() {
+    return null;
+  }
+
   @Nullable
   PsiElement getReferencedElement();
 

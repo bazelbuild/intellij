@@ -1,3 +1,53 @@
+v2017.08.28
+===========
+* CLion test output: make URLs and bazel targets clickable
+* Retrieve Javadocs for unattached sources
+* CLion: incremental sync retains more caches. Prefill caches on project reload.
+
+v2017.08.14
+===========
+* Fix spurious 'unused' warnings for AutoFactory-annotated classes
+* Python: Test UI support for paramaterized python tests
+* Python: Linkify stack traces in Bazel Console view
+* Test UI: fix timeouts not being marked as failures
+* Go: migrate Go code to the latest JetBrains plugin
+
+v2017.08.01
+===========
+* Add a user setting to suppress the Bazel console during sync
+* Add support for IntelliJ 2017.1.5
+* ASwB: fix generated resources not resolving
+* Fix unresolved references when targets are built with multiple Bazel configurations
+* Python: fix 'argument list too long' errors when debugging
+
+v2017.07.17
+===========
+* Explicitly deprioritize older android/gwt-specific versions of libraries during sync
+* Improve test finder heuristics when creating run configurations
+
+v2017.07.05
+===========
+* CLwB: Show "unsynced" diagnostic file status for C++ files
+
+v2017.06.19
+===========
+* Improve performance when indexing proto_library targets in the working set.
+* Fix incorrectly reusing existing, but different, run configurations.
+* Order BUILD file structure view by target name, not rule type.
+
+v2017.06.05
+===========
+* Add Scala support to IntelliJ.
+* Add 'sync_flags' .blazeproject section, for flags only applied during sync.
+* Android Studio: NDK plugins are now optional.
+* CLion: Improve performance by prefetching required genfiles during sync.
+
+v2017.05.22
+===========
+* TypeScript: Support multiple ts_config rules in .bazelproject
+* Android Studio: Index javac jar for javax.lang classes
+* Show failed test targets in test result UI
+
 v2017.05.08
 ===========
 * Add Python support to CLion

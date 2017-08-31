@@ -15,54 +15,103 @@
  */
 package com.google.idea.blaze.base.ide;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.ui.BlazeValidationError;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.JPanel;
-import org.jetbrains.annotations.NotNull;
+import javax.swing.event.DocumentEvent;
 
 final class NewRuleUI {
 
-  private static final String[] POSSIBLE_RULES = {
-    "android_library", "java_library", "cc_library", "cc_binary", "proto_library"
-  };
+  private static final ImmutableSet<Kind> HANDLED_RULES =
+      ImmutableSet.of(
+          Kind.ANDROID_LIBRARY,
+          Kind.JAVA_LIBRARY,
+          Kind.CC_LIBRARY,
+          Kind.CC_BINARY,
+          Kind.PROTO_LIBRARY);
 
-  @NotNull private final ComboBox ruleComboBox = new ComboBox(POSSIBLE_RULES);
-  @NotNull private final JBLabel ruleNameLabel = new JBLabel("Rule name:");
-  @NotNull private final JBTextField ruleNameField;
+  private static final String LAST_SELECTED_KIND = "Blaze.Rule.Kind";
+
+  private final ComboBox ruleComboBox = new ComboBox(HANDLED_RULES.toArray(new Kind[0]));
+  private final JBLabel ruleNameLabel = new JBLabel("Rule name:");
+  private final JBTextField ruleNameField;
+
+  private boolean ruleNameEditedByUser = false;
 
   public NewRuleUI(int textFieldLength) {
     this.ruleNameField = new JBTextField(textFieldLength);
+    Kind lastValue =
+        Kind.fromString(PropertiesComponent.getInstance().getValue(LAST_SELECTED_KIND));
+    if (HANDLED_RULES.contains(lastValue)) {
+      ruleComboBox.setSelectedItem(lastValue);
+    }
   }
 
-  public void fillUI(@NotNull JPanel component, int indentLevel) {
+  public void fillUI(JPanel component, int indentLevel) {
     component.add(ruleNameLabel);
     component.add(ruleNameField, UiUtil.getFillLineConstraints(indentLevel));
     component.add(ruleComboBox, UiUtil.getFillLineConstraints(indentLevel));
   }
 
-  @NotNull
   public Kind getSelectedRuleKind() {
-    return Kind.fromString((String) ruleComboBox.getSelectedItem());
+    Kind kind = (Kind) ruleComboBox.getSelectedItem();
+    PropertiesComponent.getInstance().setValue(LAST_SELECTED_KIND, kind.toString());
+    return kind;
   }
 
-  @NotNull
   public TargetName getRuleName() {
     return TargetName.create(ruleNameField.getText());
   }
 
+  void syncRuleNameTo(JBTextField textField) {
+    ruleNameField
+        .getDocument()
+        .addDocumentListener(
+            new DocumentAdapter() {
+              @Override
+              protected void textChanged(DocumentEvent e) {
+                ruleNameEditedByUser = true;
+              }
+            });
+
+    textField
+        .getDocument()
+        .addDocumentListener(
+            new DocumentAdapter() {
+              @Override
+              protected void textChanged(DocumentEvent e) {
+                if (!ruleNameEditedByUser) {
+                  syncRuleName(textField.getText());
+                }
+              }
+            });
+  }
+
+  private void syncRuleName(String text) {
+    ruleNameField.setText(text);
+    // setText triggers an event which flips the field, so we'll set it back to false
+    this.ruleNameEditedByUser = false;
+  }
+
   @Nullable
   public ValidationInfo validate() {
+    if (ruleComboBox.getSelectedItem() == null) {
+      return new ValidationInfo("Select a rule type", ruleComboBox);
+    }
     String ruleName = ruleNameField.getText();
     List<BlazeValidationError> errors = Lists.newArrayList();
     if (!validateRuleName(ruleName, errors)) {
@@ -73,7 +122,7 @@ final class NewRuleUI {
   }
 
   private static boolean validateRuleName(
-      @NotNull String inputString, @Nullable Collection<BlazeValidationError> errors) {
+      String inputString, @Nullable Collection<BlazeValidationError> errors) {
     if (inputString.length() == 0) {
       BlazeValidationError.collect(
           errors, new BlazeValidationError(IdeBundle.message("error.name.should.be.specified")));

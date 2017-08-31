@@ -26,7 +26,13 @@ public class BlazeJavaRunConfigurationHandlerProvider
     implements BlazeCommandRunConfigurationHandlerProvider {
 
   private static final ImmutableSet<Kind> RELEVANT_RULE_KINDS =
-      ImmutableSet.of(Kind.ANDROID_ROBOLECTRIC_TEST, Kind.JAVA_TEST, Kind.JAVA_BINARY);
+      ImmutableSet.of(
+          Kind.ANDROID_ROBOLECTRIC_TEST,
+          Kind.JAVA_TEST,
+          Kind.JAVA_BINARY,
+          Kind.SCALA_BINARY,
+          Kind.SCALA_TEST,
+          Kind.SCALA_JUNIT_TEST);
 
   static boolean supportsKind(Kind kind) {
     return RELEVANT_RULE_KINDS.contains(kind);
@@ -46,5 +52,4 @@ public class BlazeJavaRunConfigurationHandlerProvider
   public String getId() {
     return "BlazeJavaRunConfigurationHandlerProvider";
   }
-
 }

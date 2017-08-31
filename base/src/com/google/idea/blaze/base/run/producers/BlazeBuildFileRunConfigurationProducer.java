@@ -111,14 +111,11 @@ public class BlazeBuildFileRunConfigurationProducer
     setupConfiguration(
         configuration.getProject(), blazeProjectData, generatedConfiguration, target);
 
-    // TODO This check should be removed once isTestRule is in a RuleFactory and
-    // test rules' suggestedName is modified to account for test filter flags.
-    if (Kind.isTestRule(target.ruleType)) {
-      BlazeCommandRunConfigurationCommonState handlerState =
-          configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-      if (handlerState != null && handlerState.getTestFilterFlag() != null) {
-        return false;
-      }
+    // ignore filtered test configs, produced by other configuration producers.
+    BlazeCommandRunConfigurationCommonState handlerState =
+        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    if (handlerState != null && handlerState.getTestFilterFlag() != null) {
+      return false;
     }
 
     return Objects.equals(configuration.suggestedName(), generatedConfiguration.suggestedName())

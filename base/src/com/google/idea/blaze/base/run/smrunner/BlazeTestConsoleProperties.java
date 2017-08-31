@@ -15,8 +15,9 @@
  */
 package com.google.idea.blaze.base.run.smrunner;
 
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMCustomMessagesParsing;
@@ -24,34 +25,50 @@ import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsC
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.ui.ConsoleView;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Integrates blaze test results with the SM-runner test UI. */
 public class BlazeTestConsoleProperties extends SMTRunnerConsoleProperties
     implements SMCustomMessagesParsing {
 
-  private final BlazeTestEventsHandler eventsHandler;
+  private final BlazeCommandRunConfiguration runConfiguration;
+  private final BlazeTestUiSession testUiSession;
 
   public BlazeTestConsoleProperties(
-      RunConfiguration runConfiguration, Executor executor, BlazeTestEventsHandler eventsHandler) {
+      BlazeCommandRunConfiguration runConfiguration,
+      Executor executor,
+      BlazeTestUiSession testUiSession) {
     super(runConfiguration, SmRunnerUtils.BLAZE_FRAMEWORK, executor);
-    this.eventsHandler = eventsHandler;
+    this.runConfiguration = runConfiguration;
+    this.testUiSession = testUiSession;
   }
 
   @Override
   public OutputToGeneralTestEventsConverter createTestEventsConverter(
       String framework, TestConsoleProperties consoleProperties) {
-    return new BlazeXmlToTestEventsConverter(framework, consoleProperties, eventsHandler);
+    return new BlazeXmlToTestEventsConverter(
+        framework, consoleProperties, testUiSession.getTestResultFinderStrategy());
   }
 
   @Override
   public SMTestLocator getTestLocator() {
-    return eventsHandler.getTestLocator();
+    return new CompositeSMTestLocator(
+        ImmutableList.copyOf(
+            Arrays.stream(BlazeTestEventsHandler.EP_NAME.getExtensions())
+                .map(BlazeTestEventsHandler::getTestLocator)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList())));
   }
 
   @Nullable
   @Override
   public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
-    return eventsHandler.createRerunFailedTestsAction(consoleView);
+    return BlazeTestEventsHandler.getHandlerForTarget(
+            runConfiguration.getProject(), runConfiguration.getTarget())
+        .map(handler -> handler.createRerunFailedTestsAction(consoleView))
+        .orElse(null);
   }
 }

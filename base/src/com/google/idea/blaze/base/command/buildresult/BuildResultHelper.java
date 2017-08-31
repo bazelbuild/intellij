@@ -17,26 +17,25 @@ package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream.LineProcessor;
-import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.model.primitives.Label;
+import java.io.Closeable;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.function.Predicate;
 
 /** Assists in getting build artifacts from a build operation. */
-public interface BuildResultHelper {
-  // This experiment does *not* work yet and should remain off
-  BoolExperiment USE_BEP = new BoolExperiment("use.bep", false);
+public interface BuildResultHelper extends Closeable {
 
   /**
    * Constructs a new build result helper.
    *
+   * @param blazeVersion The blaze version used for the build invocation.
    * @param files A filter for the output artifacts you are interested in.
    */
-  static BuildResultHelper forFiles(Predicate<String> files) {
-    return USE_BEP.getValue()
-        ? new BuildResultHelperBep(files)
-        : new BuildResultHelperStderr(files);
+  static BuildResultHelper forFiles(BlazeVersionData blazeVersion, Predicate<String> files) {
+    return new BuildResultHelperBep(files);
   }
 
   /**
@@ -62,4 +61,15 @@ public interface BuildResultHelper {
    * @return The build artifacts from the build operation.
    */
   ImmutableList<File> getBuildArtifacts();
+
+  /**
+   * Returns the build artifacts, attempting to filter out all artifacts not directly produced by
+   * the specified target. Some implementations may return artifacts produced by other targets.
+   *
+   * <p>May only be called once the build is complete, or no artifacts will be returned.
+   */
+  ImmutableList<File> getBuildArtifactsForTarget(Label target);
+
+  @Override
+  void close();
 }

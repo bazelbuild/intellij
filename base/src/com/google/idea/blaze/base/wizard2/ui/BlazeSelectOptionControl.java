@@ -25,13 +25,15 @@ import com.google.idea.blaze.base.wizard2.BlazeWizardUserSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.VerticalLayout;
-import java.awt.Dimension;
+import java.awt.BorderLayout;
 import java.util.Collection;
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.border.EmptyBorder;
 
@@ -61,10 +63,9 @@ public abstract class BlazeSelectOptionControl<T extends BlazeWizardOption> {
 
     this.userSettings = builder.getUserSettings();
 
-    JPanel canvas = new JPanel(new VerticalLayout(4));
+    JPanel canvas = new JPanel(new BorderLayout(0, 4));
 
-    Dimension minSize = ProjectViewUi.getMinimumSize();
-    canvas.setPreferredSize(minSize);
+    canvas.setPreferredSize(ProjectViewUi.getContainerSize());
 
     titleLabel = new JLabel(getTitle());
     canvas.add(titleLabel);
@@ -72,7 +73,9 @@ public abstract class BlazeSelectOptionControl<T extends BlazeWizardOption> {
 
     JPanel content = new JPanel(new VerticalLayout(12));
     content.setBorder(new EmptyBorder(20, 100, 0, 0));
-    canvas.add(content);
+    JScrollPane scrollPane = new JScrollPane(content);
+    scrollPane.setBorder(BorderFactory.createEmptyBorder());
+    canvas.add(scrollPane);
 
     ButtonGroup buttonGroup = new ButtonGroup();
     Collection<OptionUiEntry<T>> optionUiEntryList = Lists.newArrayList();

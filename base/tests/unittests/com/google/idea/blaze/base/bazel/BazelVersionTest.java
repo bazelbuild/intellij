@@ -53,9 +53,10 @@ public class BazelVersionTest {
   }
 
   @Test
-  public void testParseVersionFormatManualOld() {
+  public void testParseDevelopmentVersion() {
     BazelVersion version = BazelVersion.parseVersion("development version");
-    assertThat(version).isEqualTo(BazelVersion.UNKNOWN);
+    assertThat(version).isEqualTo(BazelVersion.DEVELOPMENT);
+    assertThat(version.isAtLeast(9, 9, 9)).isTrue();
   }
 
   @Test

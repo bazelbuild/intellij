@@ -100,8 +100,9 @@ public class AdditionalLanguagesSection {
 
     private static Set<LanguageClass> availableAdditionalLanguages(ProjectViewSet projectView) {
       WorkspaceType workspaceType =
-          projectView.getScalarValue(
-              WorkspaceTypeSection.KEY, LanguageSupport.getDefaultWorkspaceType());
+          projectView
+              .getScalarValue(WorkspaceTypeSection.KEY)
+              .orElse(LanguageSupport.getDefaultWorkspaceType());
       return LanguageSupport.availableAdditionalLanguages(workspaceType);
     }
   }

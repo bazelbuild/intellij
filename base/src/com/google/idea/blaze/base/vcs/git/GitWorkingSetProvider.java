@@ -21,6 +21,8 @@ import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,7 +42,8 @@ public class GitWorkingSetProvider {
    * Returns null if an error occurred.
    */
   @Nullable
-  public static WorkingSet calculateWorkingSet(WorkspaceRoot workspaceRoot, String upstreamSha) {
+  public static WorkingSet calculateWorkingSet(
+      WorkspaceRoot workspaceRoot, String upstreamSha, BlazeContext context) {
 
     String gitRoot = getConsoleOutput(workspaceRoot, "git", "rev-parse", "--show-toplevel");
     if (gitRoot == null) {
@@ -53,10 +56,11 @@ public class GitWorkingSetProvider {
     int retVal =
         ExternalTask.builder(workspaceRoot)
             .args("git", "diff", "--name-status", "--no-renames", upstreamSha)
+            .context(context)
             .stdout(LineProcessingOutputStream.of(processor))
             .stderr(stderr)
             .build()
-            .run();
+            .run(new TimingScope("GitDiff"));
     if (retVal != 0) {
       logger.error(stderr);
       return null;

@@ -41,11 +41,11 @@ import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.sdkcompat.python.PythonFacetUtil;
 import com.google.idea.sdkcompat.transactions.Transactions;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -62,8 +62,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PythonModuleTypeBase;
-import com.jetbrains.python.facet.PythonFacet;
-import com.jetbrains.python.facet.PythonFacetType;
+import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.sdk.PythonSdkType;
 import java.util.List;
 import java.util.Set;
@@ -134,6 +133,9 @@ public class BlazePythonSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   @Override
   public void refreshVirtualFileSystem(BlazeProjectData blazeProjectData) {
+    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.PYTHON)) {
+      return;
+    }
     if (!refreshExecRoot.getValue()) {
       return;
     }
@@ -168,7 +170,7 @@ public class BlazePythonSyncPlugin extends BlazeSyncPlugin.Adapter {
     if (ModuleType.get(workspaceModule) instanceof PythonModuleTypeBase) {
       return;
     }
-    PythonFacet pythonFacet = getOrCreatePythonFacet(context, workspaceModule);
+    LibraryContributingFacet<?> pythonFacet = getOrCreatePythonFacet(context, workspaceModule);
     if (pythonFacet == null) {
       return;
     }
@@ -181,7 +183,7 @@ public class BlazePythonSyncPlugin extends BlazeSyncPlugin.Adapter {
   private static void removeFacet(Module workspaceModule) {
     FacetManager manager = FacetManager.getInstance(workspaceModule);
     ModifiableFacetModel facetModel = manager.createModifiableModel();
-    PythonFacet facet = manager.findFacet(PythonFacet.ID, "Python");
+    LibraryContributingFacet<?> facet = manager.findFacet(PythonFacetUtil.getFacetId(), "Python");
     if (facet != null) {
       facetModel.removeFacet(facet);
       facetModel.commit();
@@ -189,8 +191,9 @@ public class BlazePythonSyncPlugin extends BlazeSyncPlugin.Adapter {
   }
 
   @Nullable
-  private static PythonFacet getOrCreatePythonFacet(BlazeContext context, Module module) {
-    PythonFacet facet = findPythonFacet(module);
+  private static LibraryContributingFacet<?> getOrCreatePythonFacet(
+      BlazeContext context, Module module) {
+    LibraryContributingFacet<?> facet = findPythonFacet(module);
     if (facet != null && facetHasSdk(facet)) {
       return facet;
     }
@@ -210,35 +213,37 @@ public class BlazePythonSyncPlugin extends BlazeSyncPlugin.Adapter {
       IssueOutput.error(msg).submit(context);
       return null;
     }
-    facet = manager.createFacet(PythonFacetType.getInstance(), "Python", null);
+    facet = manager.createFacet(PythonFacetUtil.getTypeInstance(), "Python", null);
     facetModel.addFacet(facet);
     facetModel.commit();
     return facet;
   }
 
-  private static boolean facetHasSdk(PythonFacet facet) {
+  private static boolean facetHasSdk(LibraryContributingFacet<?> facet) {
     // facets aren't properly updated when SDKs change (e.g. when they're deleted), so we need to
     // manually check against the full list.
-    Sdk sdk = facet.getConfiguration().getSdk();
+    Sdk sdk = PythonFacetUtil.getSdk(facet);
     return sdk != null && PythonSdkType.getAllSdks().contains(sdk);
   }
 
   @Nullable
-  private static Library getFacetLibrary(PythonFacet pythonFacet) {
-    Sdk sdk = pythonFacet.getConfiguration().getSdk();
+  private static Library getFacetLibrary(LibraryContributingFacet<?> facet) {
+    Sdk sdk = PythonFacetUtil.getSdk(facet);
     if (sdk == null) {
       return null;
     }
     return LibraryTablesRegistrar.getInstance()
         .getLibraryTable()
-        .getLibraryByName(sdk.getName() + PythonFacet.PYTHON_FACET_LIBRARY_NAME_SUFFIX);
+        .getLibraryByName(
+            sdk.getName() + LibraryContributingFacet.PYTHON_FACET_LIBRARY_NAME_SUFFIX);
   }
 
-  private static PythonFacet findPythonFacet(Module module) {
+  private static LibraryContributingFacet<?> findPythonFacet(Module module) {
     final Facet<?>[] allFacets = FacetManager.getInstance(module).getAllFacets();
     for (Facet<?> facet : allFacets) {
-      if (facet instanceof PythonFacet) {
-        return (PythonFacet) facet;
+      if ((facet instanceof LibraryContributingFacet)
+          && (facet.getTypeId() == PythonFacetUtil.getFacetId())) {
+        return (LibraryContributingFacet<?>) facet;
       }
     }
     return null;
@@ -274,10 +279,8 @@ public class BlazePythonSyncPlugin extends BlazeSyncPlugin.Adapter {
   }
 
   private static void setProjectSdk(Project project, Sdk sdk) {
-    Transactions.submitTransactionAndWait(
-        () ->
-            ApplicationManager.getApplication()
-                .runWriteAction(() -> ProjectRootManager.getInstance(project).setProjectSdk(sdk)));
+    Transactions.submitWriteActionTransactionAndWait(
+        () -> ProjectRootManager.getInstance(project).setProjectSdk(sdk));
   }
 
   @Override

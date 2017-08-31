@@ -36,13 +36,30 @@ import javax.annotation.Nullable;
 )
 public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSettings> {
 
+  /** A setting to control whether the Blaze Console view is activated for a given operation. */
+  public enum BlazeConsolePopupBehavior {
+    ALWAYS("Always"),
+    ON_ERROR("On error"),
+    NEVER("Never");
+
+    private final String uiName;
+
+    BlazeConsolePopupBehavior(String uiName) {
+      this.uiName = uiName;
+    }
+
+    @Override
+    public String toString() {
+      return uiName;
+    }
+  }
+
+  private BlazeConsolePopupBehavior showBlazeConsoleOnSync = BlazeConsolePopupBehavior.ALWAYS;
   private boolean suppressConsoleForRunAction = false;
   private boolean resyncAutomatically = false;
   private boolean syncStatusPopupShown = false;
   private boolean expandSyncToWorkingSet = true;
   private boolean showPerformanceWarnings = false;
-  private boolean attachSourcesByDefault = false;
-  private boolean attachSourcesOnDemand = false;
   private boolean collapseProjectView = true;
   private boolean formatBuildFilesOnSave = true;
   private String blazeBinaryPath = "/usr/bin/blaze";
@@ -83,6 +100,14 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
 
   public boolean getResyncAutomatically() {
     return resyncAutomatically;
+  }
+
+  public BlazeConsolePopupBehavior getShowBlazeConsoleOnSync() {
+    return showBlazeConsoleOnSync;
+  }
+
+  public void setShowBlazeConsoleOnSync(BlazeConsolePopupBehavior showBlazeConsoleOnSync) {
+    this.showBlazeConsoleOnSync = showBlazeConsoleOnSync;
   }
 
   public boolean getSuppressConsoleForRunAction() {
@@ -148,33 +173,5 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
 
   public void setFormatBuildFilesOnSave(boolean formatBuildFilesOnSave) {
     this.formatBuildFilesOnSave = formatBuildFilesOnSave;
-  }
-
-  // Deprecated -- use BlazeJavaUserSettings
-  @Deprecated
-  @SuppressWarnings("unused") // Used by bean serialization
-  public boolean getAttachSourcesByDefault() {
-    return attachSourcesByDefault;
-  }
-
-  // Deprecated -- use BlazeJavaUserSettings
-  @Deprecated
-  @SuppressWarnings("unused") // Used by bean serialization
-  public void setAttachSourcesByDefault(boolean attachSourcesByDefault) {
-    this.attachSourcesByDefault = attachSourcesByDefault;
-  }
-
-  // Deprecated -- use BlazeJavaUserSettings
-  @Deprecated
-  @SuppressWarnings("unused") // Used by bean serialization
-  public boolean getAttachSourcesOnDemand() {
-    return attachSourcesOnDemand;
-  }
-
-  // Deprecated -- use BlazeJavaUserSettings
-  @Deprecated
-  @SuppressWarnings("unused") // Used by bean serialization
-  public void setAttachSourcesOnDemand(boolean attachSourcesOnDemand) {
-    this.attachSourcesOnDemand = attachSourcesOnDemand;
   }
 }

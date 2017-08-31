@@ -35,3 +35,8 @@ py_binary(
     name = "package_meta_inf_files",
     srcs = ["package_meta_inf_files.py"],
 )
+
+py_binary(
+    name = "zip_plugin_files",
+    srcs = ["zip_plugin_files.py"],
+)

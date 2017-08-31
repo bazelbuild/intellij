@@ -5,12 +5,11 @@ the 'deps' attribute are deployed to the plugin sandbox.
 
 Any files are stripped of their prefix and installed into
 <sandbox>/plugins. If you need structure, first put the files
-into a pkgfilegroup. The files will be installed relative to the
-'plugins' directory if present in the pkgfilegroup prefix.
+into //build_defs:build_defs%repackage_files.
 
 intellij_plugin_debug_targets can be nested.
 
-pkgfilegroup(
+repackaged_files(
   name = "foo_files",
   srcs = [
     ":my_plugin_jar",
@@ -28,35 +27,17 @@ intellij_plugin_debug_target(
 
 """
 
+load("//build_defs:build_defs.bzl", "repackaged_files_data")
+
 SUFFIX = ".intellij-plugin-debug-target-deploy-info"
 
 def _trim_start(path, prefix):
   return path[len(prefix):] if path.startswith(prefix) else path
 
-def _pkgfilegroup_deploy_file(ctx, f):
-  strip_prefix = ctx.rule.attr.strip_prefix
-  prefix = ctx.rule.attr.prefix
-  if strip_prefix == ".":
-    stripped_relative_path = f.basename
-  elif strip_prefix.startswith("/"):
-    stripped_relative_path = _trim_start(f.short_path, strip_prefix[1:])
-  else:
-    stripped_relative_path = _trim_start(f.short_path, PACKAGE_NAME)
-    stripped_relative_path = _trim_start(stripped_relative_path, strip_prefix)
-  stripped_relative_path = _trim_start(stripped_relative_path, "/")
-
-  # If there's a 'plugins' directory, make destination relative to that
-  plugini = prefix.find("plugins/")
-  plugins_prefix = prefix[plugini + len("plugins/"):] if plugini >= 0 else prefix
-
-  # If the install location is still absolute, fail
-  if plugins_prefix.startswith("/"):
-    fail("Cannot compute plugins-relative install directory for pkgfilegroup")
-
-  dest = plugins_prefix + "/" + stripped_relative_path if plugins_prefix else stripped_relative_path
+def _repackaged_deploy_file(f, prefix):
   return struct(
       src = f,
-      deploy_location = dest,
+      deploy_location = prefix + "/" + f.basename,
   )
 
 def _flat_deploy_file(f):
@@ -68,19 +49,24 @@ def _flat_deploy_file(f):
 def _intellij_plugin_debug_target_aspect_impl(target, ctx):
   aspect_intellij_plugin_deploy_info = None
 
+  files = target.files
   if ctx.rule.kind == "intellij_plugin_debug_target":
     aspect_intellij_plugin_deploy_info = target.intellij_plugin_deploy_info
-  elif ctx.rule.kind == "pkgfilegroup":
+  elif ctx.rule.kind == "_repackaged_files":
+    data = target[repackaged_files_data]
+    prefix = data.prefix
     aspect_intellij_plugin_deploy_info = struct(
-        deploy_files = [_pkgfilegroup_deploy_file(ctx, f) for f in target.files],
+        deploy_files = [_repackaged_deploy_file(f, prefix) for f in data.files],
     )
+    # TODO(brendandouglas): Remove when migrating to Bazel 0.5, when DefaultInfo
+    # provider can be populated by '_repackaged_files' directly
+    files = files | data.files
   else:
     aspect_intellij_plugin_deploy_info = struct(
         deploy_files = [_flat_deploy_file(f) for f in target.files],
     )
-
   return struct(
-      files = target.files,
+      input_files = files,
       aspect_intellij_plugin_deploy_info = aspect_intellij_plugin_deploy_info,
   )
 
@@ -95,10 +81,10 @@ def _build_deploy_info_file(deploy_file):
   )
 
 def _intellij_plugin_debug_target_impl(ctx):
-  files = set()
+  files = depset()
   deploy_files = []
   for target in ctx.attr.deps:
-    files = files | target.files
+    files = files | target.input_files
     deploy_files.extend(target.aspect_intellij_plugin_deploy_info.deploy_files)
   deploy_info = struct(
       deploy_files = [_build_deploy_info_file(f) for f in deploy_files]
@@ -108,8 +94,8 @@ def _intellij_plugin_debug_target_impl(ctx):
 
   # We've already consumed any dependent intellij_plugin_debug_targets into our own,
   # do not build or report these
-  files = set([f for f in files if not f.path.endswith(SUFFIX)])
-  files = files | set([output])
+  files = depset([f for f in files if not f.path.endswith(SUFFIX)])
+  files = files | depset([output])
 
   return struct(
       files = files,

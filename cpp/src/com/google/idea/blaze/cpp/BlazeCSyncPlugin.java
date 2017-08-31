@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
-import com.jetbrains.cidr.lang.workspace.OCWorkspaceManager;
 import java.util.Set;
 
 final class BlazeCSyncPlugin extends BlazeSyncPlugin.Adapter {
@@ -65,10 +64,10 @@ final class BlazeCSyncPlugin extends BlazeSyncPlugin.Adapter {
         childContext -> {
           childContext.push(new TimingScope("Setup C Workspace"));
 
-          OCWorkspace workspace = OCWorkspaceManager.getWorkspace(project);
+          OCWorkspace workspace = OCWorkspaceProvider.getWorkspace(project);
           if (workspace instanceof BlazeCWorkspace) {
             BlazeCWorkspace blazeCWorkspace = (BlazeCWorkspace) workspace;
-            blazeCWorkspace.update(childContext, blazeProjectData);
+            blazeCWorkspace.update(childContext, workspaceRoot, projectViewSet, blazeProjectData);
           }
         });
   }

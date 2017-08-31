@@ -15,9 +15,7 @@
  */
 package com.google.idea.blaze.base.run.state;
 
-import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.run.state.BlazeRunOnDistributedExecutorState.RunOnExecutorStateEditor;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -37,15 +35,18 @@ public final class BlazeCommandRunConfigurationCommonState extends RunConfigurat
   private final RunConfigurationFlagsState blazeFlags;
   private final RunConfigurationFlagsState exeFlags;
   private final BlazeBinaryState blazeBinary;
-  private final BlazeRunOnDistributedExecutorState runOnDistributedExecutor;
 
   public BlazeCommandRunConfigurationCommonState(BuildSystem buildSystem) {
     command = new BlazeCommandState();
     blazeFlags = new RunConfigurationFlagsState(USER_BLAZE_FLAG_TAG, buildSystem + " flags:");
     exeFlags = new RunConfigurationFlagsState(USER_EXE_FLAG_TAG, "Executable flags:");
     blazeBinary = new BlazeBinaryState();
-    runOnDistributedExecutor = new BlazeRunOnDistributedExecutorState(buildSystem);
-    addStates(command, blazeFlags, exeFlags, blazeBinary, runOnDistributedExecutor);
+    addStates(command, blazeFlags, exeFlags, blazeBinary);
+
+    // no need to migrate Bazel, which at this time doesn't support distributed execution
+    if (buildSystem == BuildSystem.Blaze) {
+      addStates(new BlazeRunOnDistributedExecutorStateMigrator(buildSystem, blazeFlags));
+    }
   }
 
   /** @return The list of blaze flags that the user specified manually. */
@@ -64,10 +65,6 @@ public final class BlazeCommandRunConfigurationCommonState extends RunConfigurat
 
   public BlazeCommandState getCommandState() {
     return command;
-  }
-
-  public BlazeRunOnDistributedExecutorState getRunOnDistributedExecutorState() {
-    return runOnDistributedExecutor;
   }
 
   /** Searches through all blaze flags for the first one beginning with '--test_filter' */
@@ -93,29 +90,6 @@ public final class BlazeCommandRunConfigurationCommonState extends RunConfigurat
 
   @Override
   public RunConfigurationStateEditor getEditor(Project project) {
-    return new RunConfigurationCompositeStateEditor(project, getStates()) {
-
-      @Nullable
-      private final RunOnExecutorStateEditor runOnExecutorEditor =
-          (RunOnExecutorStateEditor)
-              editors
-                  .stream()
-                  .filter(editor -> editor instanceof RunOnExecutorStateEditor)
-                  .findFirst()
-                  .orElse(null);
-
-      @Override
-      public void applyEditorTo(RunConfigurationState genericState) {
-        BlazeCommandRunConfigurationCommonState state =
-            (BlazeCommandRunConfigurationCommonState) genericState;
-        super.applyEditorTo(genericState);
-
-        // this editor needs to update based on state provided by other children.
-        if (runOnExecutorEditor != null) {
-          boolean isTest = BlazeCommandName.TEST.equals(state.getCommandState().getCommand());
-          runOnExecutorEditor.updateVisibility(isTest);
-        }
-      }
-    };
+    return new RunConfigurationCompositeStateEditor(project, getStates());
   }
 }

@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -34,6 +35,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,6 +48,116 @@ public class BlazeJavaTestMethodConfigurationProducerTest
 
   @Test
   public void testProducedFromPsiMethod() {
+    // Arrange
+    PsiFile javaFile =
+        createAndIndexFile(
+            new WorkspacePath("java/com/google/test/TestClass.java"),
+            "package com.google.test;",
+            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
+            "public class TestClass {",
+            "  @org.junit.Test",
+            "  public void testMethod1() {}",
+            "}");
+
+    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
+    builder.setTargetMap(
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setKind("java_test")
+                    .setLabel("//java/com/google/test:TestClass")
+                    .addSource(sourceRoot("java/com/google/test/TestClass.java"))
+                    .build())
+            .build());
+    registerProjectService(
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+    PsiMethod method = PsiUtils.findFirstChildOfClassRecursive(javaFile, PsiMethod.class);
+
+    // Act
+    ConfigurationContext context = createContextFromPsi(method);
+    List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
+    ConfigurationFromContext fromContext = configurations.get(0);
+
+    // Assert
+    assertThat(configurations).hasSize(1);
+    assertThat(fromContext.isProducedBy(BlazeJavaTestMethodConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
+
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) fromContext.getConfiguration();
+    assertThat(config.getTarget())
+        .isEqualTo(TargetExpression.fromString("//java/com/google/test:TestClass"));
+    assertThat(getTestFilterContents(config))
+        .isEqualTo("--test_filter=com.google.test.TestClass#testMethod1$");
+    assertThat(config.getName()).isEqualTo("Blaze test TestClass.testMethod1");
+    assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
+
+    BlazeCommandRunConfigurationCommonState state =
+        config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    assertThat(state.getBlazeFlagsState().getRawFlags()).contains(BlazeFlags.DISABLE_TEST_SHARDING);
+  }
+
+  @Test
+  public void testConfigFromContextRecognizesItsOwnConfig() {
+    PsiMethod method = setupGenericJunitTestClassAndBlazeTarget();
+    ConfigurationContext context = createContextFromPsi(method);
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) context.getConfiguration().getConfiguration();
+
+    boolean isConfigFromContext =
+        new BlazeJavaTestMethodConfigurationProducer().doIsConfigFromContext(config, context);
+
+    assertThat(isConfigFromContext).isTrue();
+  }
+
+  @Test
+  public void testConfigWithDifferentLabelIsIgnored() {
+    // Arrange
+    PsiMethod method = setupGenericJunitTestClassAndBlazeTarget();
+    ConfigurationContext context = createContextFromPsi(method);
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) context.getConfiguration().getConfiguration();
+    // modify the label, and check that is enough for the producer to class it as different.
+    config.setTarget(Label.create("//java/com/google/test:DifferentTestTarget"));
+
+    // Act
+    boolean isConfigFromContext =
+        new BlazeJavaTestMethodConfigurationProducer().doIsConfigFromContext(config, context);
+
+    // Assert
+    assertThat(isConfigFromContext).isFalse();
+  }
+
+  @Test
+  public void testConfigWithDifferentFilterIgnored() {
+    // Arrange
+    PsiMethod method = setupGenericJunitTestClassAndBlazeTarget();
+    ConfigurationContext context = createContextFromPsi(method);
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) context.getConfiguration().getConfiguration();
+    BlazeCommandRunConfigurationCommonState handlerState =
+        config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+
+    // modify the test filter, and check that is enough for the producer to class it as different.
+    List<String> flags = new ArrayList<>(handlerState.getBlazeFlagsState().getRawFlags());
+    flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
+    flags.add(BlazeFlags.TEST_FILTER + "=com.google.test.DifferentTestClass#");
+    handlerState.getBlazeFlagsState().setRawFlags(flags);
+
+    // Act
+    boolean isConfigFromContext =
+        new BlazeJavaTestMethodConfigurationProducer().doIsConfigFromContext(config, context);
+
+    // Assert
+    assertThat(isConfigFromContext).isFalse();
+  }
+
+  /**
+   * Creates a JUnit test class and associated blaze target, and returns a PsiMethod from that
+   * class. Used when the implementation details (class name, target string, etc.) aren't relevant
+   * to the test.
+   */
+  private PsiMethod setupGenericJunitTestClassAndBlazeTarget() {
     PsiFile javaFile =
         createAndIndexFile(
             new WorkspacePath("java/com/google/test/TestClass.java"),
@@ -69,28 +181,6 @@ public class BlazeJavaTestMethodConfigurationProducerTest
     registerProjectService(
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
 
-    PsiMethod method = PsiUtils.findFirstChildOfClassRecursive(javaFile, PsiMethod.class);
-    assertThat(method).isNotNull();
-
-    ConfigurationContext context = createContextFromPsi(method);
-    List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
-    assertThat(configurations).hasSize(1);
-
-    ConfigurationFromContext fromContext = configurations.get(0);
-    assertThat(fromContext.isProducedBy(BlazeJavaTestMethodConfigurationProducer.class)).isTrue();
-    assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
-
-    BlazeCommandRunConfiguration config =
-        (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromString("//java/com/google/test:TestClass"));
-    assertThat(getTestFilterContents(config))
-        .isEqualTo("--test_filter=com.google.test.TestClass#testMethod1$");
-    assertThat(config.getName()).isEqualTo("Blaze test TestClass.testMethod1");
-    assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
-
-    BlazeCommandRunConfigurationCommonState state =
-        config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    assertThat(state.getBlazeFlagsState().getRawFlags()).contains(BlazeFlags.DISABLE_TEST_SHARDING);
+    return PsiUtils.findFirstChildOfClassRecursive(javaFile, PsiMethod.class);
   }
 }

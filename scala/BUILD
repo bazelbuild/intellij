@@ -26,6 +26,11 @@ optional_plugin_xml(
     visibility = ["//visibility:public"],
 )
 
+OPTIONAL_PLUGIN_XMLS = [
+    ":optional_xml",
+    "//java:optional_xml",
+]
+
 merged_plugin_xml(
     name = "merged_plugin_xml",
     srcs = [
@@ -58,7 +63,7 @@ java_library(
 intellij_plugin(
     name = "scala_integration_test_plugin",
     testonly = 1,
-    optional_plugin_xmls = [":optional_xml"],
+    optional_plugin_xmls = OPTIONAL_PLUGIN_XMLS,
     plugin_xml = ":scala_plugin_xml",
     deps = [":scala"],
 )

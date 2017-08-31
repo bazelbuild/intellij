@@ -25,6 +25,7 @@ import com.android.tools.idea.run.util.LaunchStatus;
 import com.android.tools.idea.testartifacts.instrumented.AndroidTestListener;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
+import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
@@ -36,6 +37,10 @@ import org.jetbrains.android.dom.manifest.Manifest;
 
 final class StockAndroidTestLaunchTask implements LaunchTask {
   private static final Logger LOG = Logger.getInstance(StockAndroidTestLaunchTask.class);
+
+  private static final String TEST_FILE_ARG = "testFile";
+  private static final String TEST_FILE_LOCATION_FORMAT =
+      "/data/local/tmp/deployment/%s/test/all_tests.txt";
 
   private final BlazeAndroidTestRunConfigurationState configState;
   private final String instrumentationTestRunner;
@@ -165,6 +170,10 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
 
     final RemoteAndroidTestRunner runner =
         new RemoteAndroidTestRunner(testApplicationId, instrumentationTestRunner, device);
+    if (configState.getLaunchMethod().equals(AndroidTestLaunchMethod.MOBILE_INSTALL)) {
+      runner.addInstrumentationArg(
+          TEST_FILE_ARG, String.format(TEST_FILE_LOCATION_FORMAT, testApplicationId));
+    }
     switch (configState.getTestingType()) {
       case BlazeAndroidTestRunConfigurationState.TEST_ALL_IN_MODULE:
         break;
@@ -177,6 +186,9 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
       case BlazeAndroidTestRunConfigurationState.TEST_METHOD:
         runner.setMethodName(configState.getClassName(), configState.getMethodName());
         break;
+      default:
+        LOG.error(String.format("Unrecognized testing type: %d", configState.getTestingType()));
+        return false;
     }
     runner.setDebug(waitForDebugger);
     runner.setRunOptions(configState.getExtraOptions());

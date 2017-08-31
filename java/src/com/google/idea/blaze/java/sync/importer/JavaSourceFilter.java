@@ -94,8 +94,8 @@ public class JavaSourceFilter {
     return sourceTargets;
   }
 
-  private boolean canImportAsSource(TargetIdeInfo target) {
-    return !target.kindIsOneOf(Kind.JAVA_WRAP_CC, Kind.JAVA_IMPORT);
+  public static boolean canImportAsSource(TargetIdeInfo target) {
+    return !target.kindIsOneOf(Kind.JAVA_WRAP_CC, Kind.JAVA_IMPORT, Kind.SCALA_IMPORT);
   }
 
   private boolean anyNonGeneratedSources(Collection<ArtifactLocation> sources) {

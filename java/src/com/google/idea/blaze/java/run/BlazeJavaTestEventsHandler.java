@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.run;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
@@ -30,7 +31,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.io.URLUtil;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -38,11 +38,19 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /** Provides java-specific methods needed by the SM-runner test UI. */
-public class BlazeJavaTestEventsHandler extends BlazeTestEventsHandler {
+public class BlazeJavaTestEventsHandler implements BlazeTestEventsHandler {
+
+  private static final ImmutableSet<Kind> HANDLED_KINDS =
+      ImmutableSet.of(
+          Kind.JAVA_TEST,
+          Kind.ANDROID_ROBOLECTRIC_TEST,
+          Kind.GWT_TEST,
+          Kind.SCALA_TEST,
+          Kind.SCALA_JUNIT_TEST);
 
   @Override
-  protected EnumSet<Kind> handledKinds() {
-    return EnumSet.of(Kind.JAVA_TEST, Kind.ANDROID_ROBOLECTRIC_TEST, Kind.GWT_TEST);
+  public boolean handlesKind(@Nullable Kind kind) {
+    return HANDLED_KINDS.contains(kind);
   }
 
   /** Overridden to support parameterized tests, which use nested test_suite XML elements. */

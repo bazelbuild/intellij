@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.run.producers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.java.JavaConfigurationProducerList;
 import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -32,15 +33,8 @@ import javax.annotation.Nullable;
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
 public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
 
-  private static final Collection<Class<? extends RunConfigurationProducer<?>>>
-      PRODUCERS_TO_SUPPRESS =
-          ImmutableList.of(
-              com.intellij.execution.junit.AllInDirectoryConfigurationProducer.class,
-              com.intellij.execution.junit.AllInPackageConfigurationProducer.class,
-              com.intellij.execution.junit.TestClassConfigurationProducer.class,
-              com.intellij.execution.junit.TestMethodConfigurationProducer.class,
-              com.intellij.execution.junit.PatternConfigurationProducer.class,
-              com.intellij.execution.application.ApplicationConfigurationProducer.class);
+  private static final String KOTLIN_PLUGIN_ID = "org.jetbrains.kotlin";
+  private static final String ANDROID_PLUGIN_ID = "org.jetbrains.android";
 
   private static final ImmutableList<String> KOTLIN_PRODUCERS =
       ImmutableList.of(
@@ -48,15 +42,26 @@ public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
           "org.jetbrains.kotlin.idea.run.KotlinPatternConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer");
 
-  private static Collection<Class<? extends RunConfigurationProducer<?>>> getKotlinProducers() {
-    // rather than compiling against the Kotlin plugin, and including a switch in the our
+  private static final ImmutableList<String> ANDROID_PRODUCERS =
+      ImmutableList.of(
+          "com.android.tools.idea.run.AndroidConfigurationProducer",
+          "com.android.tools.idea.testartifacts.instrumented.AndroidTestConfigurationProducer",
+          "com.android.tools.idea.testartifacts.junit.TestClassAndroidConfigurationProducer",
+          "com.android.tools.idea.testartifacts.junit.TestDirectoryAndroidConfigurationProducer",
+          "com.android.tools.idea.testartifacts.junit.TestMethodAndroidConfigurationProducer",
+          "com.android.tools.idea.testartifacts.junit.TestPackageAndroidConfigurationProducer",
+          "com.android.tools.idea.testartifacts.junit.TestPatternConfigurationProducer");
+
+  private static Collection<Class<? extends RunConfigurationProducer<?>>> getProducers(
+      String pluginId, Collection<String> qualifiedClassNames) {
+    // rather than compiling against additional plugins, and including a switch in the our
     // plugin.xml, just get the classes manually via the plugin class loader.
-    IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginId.getId("org.jetbrains.kotlin"));
+    IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginId.getId(pluginId));
     if (plugin == null || !plugin.isEnabled()) {
       return ImmutableList.of();
     }
     ClassLoader loader = plugin.getPluginClassLoader();
-    return KOTLIN_PRODUCERS
+    return qualifiedClassNames
         .stream()
         .map((qualifiedName) -> loadClass(loader, qualifiedName))
         .filter(Objects::nonNull)
@@ -92,8 +97,9 @@ public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
     RunConfigurationProducerService producerService =
         RunConfigurationProducerService.getInstance(project);
     ImmutableList.<Class<? extends RunConfigurationProducer<?>>>builder()
-        .addAll(PRODUCERS_TO_SUPPRESS)
-        .addAll(getKotlinProducers())
+        .addAll(JavaConfigurationProducerList.PRODUCERS_TO_SUPPRESS)
+        .addAll(getProducers(KOTLIN_PLUGIN_ID, KOTLIN_PRODUCERS))
+        .addAll(getProducers(ANDROID_PLUGIN_ID, ANDROID_PRODUCERS))
         .build()
         .forEach(producerService::addIgnoredProducer);
   }

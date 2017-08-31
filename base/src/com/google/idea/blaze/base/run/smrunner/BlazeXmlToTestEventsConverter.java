@@ -15,13 +15,14 @@
  */
 package com.google.idea.blaze.base.run.smrunner;
 
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.ErrorOrFailureOrSkipped;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestCase;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
-import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.sdkcompat.smrunner.SmRunnerCompatUtils;
@@ -35,17 +36,15 @@ import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import javax.annotation.Nullable;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor;
 import jetbrains.buildServer.messages.serviceMessages.TestSuiteStarted;
 
 /** Converts blaze test runner xml logs to smRunner events. */
@@ -57,32 +56,14 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
     NO_ERROR.message = "No message"; // cannot be null
   }
 
-  private final Project project;
-  private final BlazeTestEventsHandler eventsHandler;
+  private final BlazeTestResultFinderStrategy testResultFinderStrategy;
 
   public BlazeXmlToTestEventsConverter(
       String testFrameworkName,
       TestConsoleProperties testConsoleProperties,
-      BlazeTestEventsHandler eventsHandler) {
+      BlazeTestResultFinderStrategy testResultFinderStrategy) {
     super(testFrameworkName, testConsoleProperties);
-    this.project = testConsoleProperties.getProject();
-    this.eventsHandler = eventsHandler;
-  }
-
-  @Override
-  protected boolean processServiceMessages(
-      String s, Key key, ServiceMessageVisitor serviceMessageVisitor) throws ParseException {
-    return super.processServiceMessages(s, key, serviceMessageVisitor);
-  }
-
-  @Override
-  public void process(String text, Key outputType) {
-    super.process(text, outputType);
-  }
-
-  @Override
-  public void dispose() {
-    super.dispose();
+    this.testResultFinderStrategy = testResultFinderStrategy;
   }
 
   @Override
@@ -91,33 +72,29 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
     onStartTesting();
     getProcessor().onTestsReporterAttached();
 
-    BlazeTestResults testResults = BlazeTestResultFinderStrategy.locateTestResults(project);
-    for (Label target : testResults.failedTargets) {
-      reportFailedTarget(target);
+    BlazeTestResults testResults = testResultFinderStrategy.findTestResults();
+    if (testResults == null) {
+      return;
     }
-    for (Label label : testResults.testXmlFiles.keySet()) {
-      processTestSuites(label, testResults.testXmlFiles.get(label));
+    for (Label label : testResults.perTargetResults.keySet()) {
+      processTestSuites(label, testResults.perTargetResults.get(label));
     }
-  }
-
-  private void reportFailedTarget(Label label) {
-    GeneralTestEventsProcessor processor = getProcessor();
-    TestSuiteStarted suiteStarted = new TestSuiteStarted(label.toString());
-    processor.onSuiteStarted(new TestSuiteStartedEvent(suiteStarted, null));
-    String targetName = label.targetName().toString();
-    processor.onTestStarted(new TestStartedEvent(targetName, null));
-    processor.onTestFailure(
-        SmRunnerCompatUtils.getTestFailedEvent(
-            targetName, "Target failed to build. See console output for details", null, 0));
-    processor.onTestFinished(new TestFinishedEvent(targetName, 0L));
-    processor.onSuiteFinished(new TestSuiteFinishedEvent(label.toString()));
   }
 
   /** Process all test XML files from a single test target. */
-  private void processTestSuites(Label label, Collection<File> files) {
-    Kind kind = getKind(project, label);
+  private void processTestSuites(Label label, Collection<BlazeTestResult> results) {
+    List<File> outputFiles = new ArrayList<>();
+    results.forEach(result -> outputFiles.addAll(result.getOutputXmlFiles()));
+
+    if (noUsefulOutput(results, outputFiles)) {
+      Optional<TestStatus> status =
+          results.stream().map(BlazeTestResult::getTestStatus).findFirst();
+      status.ifPresent(testStatus -> reportTargetWithoutOutputFiles(label, testStatus));
+      return;
+    }
+
     List<TestSuite> targetSuites = new ArrayList<>();
-    for (File file : files) {
+    for (File file : outputFiles) {
       try (InputStream input = new FileInputStream(file)) {
         targetSuites.add(BlazeXmlSchema.parse(input));
       } catch (Exception e) {
@@ -128,19 +105,71 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
     if (targetSuites.isEmpty()) {
       return;
     }
+    Kind kind =
+        results
+            .stream()
+            .map(BlazeTestResult::getTargetKind)
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse(null);
+    BlazeTestEventsHandler eventsHandler =
+        BlazeTestEventsHandler.getHandlerForTargetKindOrFallback(kind);
     TestSuite suite =
         targetSuites.size() == 1 ? targetSuites.get(0) : BlazeXmlSchema.mergeSuites(targetSuites);
-    processTestSuite(getProcessor(), kind, suite);
+    processTestSuite(getProcessor(), eventsHandler, kind, suite);
   }
 
-  @Nullable
-  private static Kind getKind(Project project, Label label) {
-    TargetIdeInfo target = TargetFinder.getInstance().targetForLabel(project, label);
-    return target != null ? target.kind : null;
+  /** Return false if there's output XML which should be parsed. */
+  private static boolean noUsefulOutput(
+      Collection<BlazeTestResult> results, List<File> outputFiles) {
+    if (outputFiles.isEmpty()) {
+      return true;
+    }
+    TestStatus status =
+        results.stream().map(BlazeTestResult::getTestStatus).findFirst().orElse(null);
+    return status != null && BlazeTestResult.NO_USEFUL_OUTPUT.contains(status);
   }
 
-  private void processTestSuite(
-      GeneralTestEventsProcessor processor, @Nullable Kind kind, TestSuite suite) {
+  /**
+   * If there are no output files, the test may have failed to build, or timed out. Provide a
+   * suitable message in the test UI.
+   */
+  private void reportTargetWithoutOutputFiles(Label label, TestStatus status) {
+    if (status == TestStatus.PASSED) {
+      // Empty test targets do not produce output XML, yet technically pass. Ignore them.
+      return;
+    }
+    GeneralTestEventsProcessor processor = getProcessor();
+    TestSuiteStarted suiteStarted = new TestSuiteStarted(label.toString());
+    processor.onSuiteStarted(new TestSuiteStartedEvent(suiteStarted, /*locationUrl=*/ null));
+    String targetName = label.targetName().toString();
+    processor.onTestStarted(new TestStartedEvent(targetName, /*locationUrl=*/ null));
+    processor.onTestFailure(
+        SmRunnerCompatUtils.getTestFailedEvent(
+            targetName,
+            STATUS_EXPLANATIONS.get(status) + " See console output for details",
+            /*content=*/ null,
+            /*duration=*/ 0));
+    processor.onTestFinished(new TestFinishedEvent(targetName, /*duration=*/ 0L));
+    processor.onSuiteFinished(new TestSuiteFinishedEvent(label.toString()));
+  }
+
+  /** Status explanations for tests without output XML. */
+  private static final ImmutableMap<TestStatus, String> STATUS_EXPLANATIONS =
+      new ImmutableMap.Builder<TestStatus, String>()
+          .put(TestStatus.TIMEOUT, "Test target timed out.")
+          .put(TestStatus.INCOMPLETE, "Test output was incomplete.")
+          .put(TestStatus.REMOTE_FAILURE, "Remote failure during test execution.")
+          .put(TestStatus.FAILED_TO_BUILD, "Test target failed to build.")
+          .put(TestStatus.BLAZE_HALTED_BEFORE_TESTING, "Test target failed to build.")
+          .put(TestStatus.NO_STATUS, "No output found for test target.")
+          .build();
+
+  private static void processTestSuite(
+      GeneralTestEventsProcessor processor,
+      BlazeTestEventsHandler eventsHandler,
+      @Nullable Kind kind,
+      TestSuite suite) {
     if (!hasRunChild(suite)) {
       return;
     }
@@ -154,13 +183,13 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
     }
 
     for (TestSuite child : suite.testSuites) {
-      processTestSuite(processor, kind, child);
+      processTestSuite(processor, eventsHandler, kind, child);
     }
     for (TestSuite decorator : suite.testDecorators) {
-      processTestSuite(processor, kind, decorator);
+      processTestSuite(processor, eventsHandler, kind, decorator);
     }
     for (TestCase test : suite.testCases) {
-      processTestCase(processor, kind, suite, test);
+      processTestCase(processor, eventsHandler, kind, suite, test);
     }
 
     if (suite.sysOut != null) {
@@ -224,8 +253,12 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
     return test.failure != null || test.error != null;
   }
 
-  private void processTestCase(
-      GeneralTestEventsProcessor processor, @Nullable Kind kind, TestSuite parent, TestCase test) {
+  private static void processTestCase(
+      GeneralTestEventsProcessor processor,
+      BlazeTestEventsHandler eventsHandler,
+      @Nullable Kind kind,
+      TestSuite parent,
+      TestCase test) {
     if (test.name == null || !wasRun(test) || isCancelled(test)) {
       return;
     }

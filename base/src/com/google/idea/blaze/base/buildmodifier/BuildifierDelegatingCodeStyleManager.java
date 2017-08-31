@@ -101,7 +101,7 @@ public class BuildifierDelegatingCodeStyleManager extends DelegatingCodeStyleMan
       String text, Collection<TextRange> ranges) {
     ImmutableMap.Builder<TextRange, String> output = ImmutableMap.builder();
     for (TextRange range : ranges) {
-      String result = BuildFileFormatter.formatText(range.substring(text));
+      String result = BuildFileFormatter.formatTextWithTimeout(range.substring(text));
       if (result == null) {
         return ImmutableMap.of();
       }

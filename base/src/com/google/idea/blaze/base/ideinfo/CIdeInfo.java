@@ -21,9 +21,11 @@ import java.io.Serializable;
 
 /** Sister class to {@link JavaIdeInfo} */
 public class CIdeInfo implements Serializable {
-  private static final long serialVersionUID = 7L;
+  private static final long serialVersionUID = 8L;
 
   public final ImmutableList<ArtifactLocation> sources;
+  public final ImmutableList<ArtifactLocation> headers;
+  public final ImmutableList<ArtifactLocation> textualHeaders;
 
   public final ImmutableList<String> localDefines;
   public final ImmutableList<ExecutionRootPath> localIncludeDirectories;
@@ -36,6 +38,8 @@ public class CIdeInfo implements Serializable {
 
   public CIdeInfo(
       ImmutableList<ArtifactLocation> sources,
+      ImmutableList<ArtifactLocation> headers,
+      ImmutableList<ArtifactLocation> textualHeaders,
       ImmutableList<String> localDefines,
       ImmutableList<ExecutionRootPath> localIncludeDirectories,
       ImmutableList<ExecutionRootPath> transitiveIncludeDirectories,
@@ -43,6 +47,8 @@ public class CIdeInfo implements Serializable {
       ImmutableList<String> transitiveDefines,
       ImmutableList<ExecutionRootPath> transitiveSystemIncludeDirectories) {
     this.sources = sources;
+    this.headers = headers;
+    this.textualHeaders = textualHeaders;
     this.localDefines = localDefines;
     this.localIncludeDirectories = localIncludeDirectories;
     this.transitiveIncludeDirectories = transitiveIncludeDirectories;
@@ -58,6 +64,8 @@ public class CIdeInfo implements Serializable {
   /** Builder for c rule info */
   public static class Builder {
     private final ImmutableList.Builder<ArtifactLocation> sources = ImmutableList.builder();
+    private final ImmutableList.Builder<ArtifactLocation> headers = ImmutableList.builder();
+    private final ImmutableList.Builder<ArtifactLocation> textualHeaders = ImmutableList.builder();
 
     private final ImmutableList.Builder<String> localDefines = ImmutableList.builder();
     private final ImmutableList.Builder<ExecutionRootPath> localIncludeDirectories =
@@ -72,6 +80,31 @@ public class CIdeInfo implements Serializable {
 
     public Builder addSources(Iterable<ArtifactLocation> sources) {
       this.sources.addAll(sources);
+      return this;
+    }
+
+    public Builder addSource(ArtifactLocation source) {
+      this.sources.add(source);
+      return this;
+    }
+
+    public Builder addHeaders(Iterable<ArtifactLocation> headers) {
+      this.headers.addAll(headers);
+      return this;
+    }
+
+    public Builder addHeader(ArtifactLocation header) {
+      this.headers.add(header);
+      return this;
+    }
+
+    public Builder addTextualHeaders(Iterable<ArtifactLocation> textualHeaders) {
+      this.textualHeaders.addAll(textualHeaders);
+      return this;
+    }
+
+    public Builder addTextualHeader(ArtifactLocation textualHeader) {
+      this.textualHeaders.add(textualHeader);
       return this;
     }
 
@@ -111,6 +144,8 @@ public class CIdeInfo implements Serializable {
     public CIdeInfo build() {
       return new CIdeInfo(
           sources.build(),
+          headers.build(),
+          textualHeaders.build(),
           localDefines.build(),
           localIncludeDirectories.build(),
           transitiveIncludeDirectories.build(),
@@ -126,6 +161,12 @@ public class CIdeInfo implements Serializable {
         + "\n"
         + "  sources="
         + sources
+        + "\n"
+        + "  headers="
+        + headers
+        + "\n"
+        + "  textualHeaders="
+        + textualHeaders
         + "\n"
         + "  localDefines="
         + localDefines

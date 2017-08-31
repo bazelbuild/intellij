@@ -86,7 +86,7 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
 
   private static class RunConfigurationFlagsStateEditor implements RunConfigurationStateEditor {
 
-    private final JTextArea flagsField = new JTextArea(5, 1);
+    private final JTextArea flagsField = new JTextArea(10, 1);
     private final String fieldLabel;
 
     RunConfigurationFlagsStateEditor(String fieldLabel) {

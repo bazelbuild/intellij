@@ -23,16 +23,15 @@ import com.intellij.execution.Location;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /** Provides C/C++ specific methods needed by the SM-runner test UI. */
-public class BlazeCidrTestEventsHandler extends BlazeTestEventsHandler {
+public class BlazeCidrTestEventsHandler implements BlazeTestEventsHandler {
 
   @Override
-  protected EnumSet<Kind> handledKinds() {
-    return EnumSet.of(Kind.CC_TEST);
+  public boolean handlesKind(@Nullable Kind kind) {
+    return kind == Kind.CC_TEST;
   }
 
   @Override

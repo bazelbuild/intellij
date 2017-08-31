@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.sync.libraries;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.intellij.openapi.roots.libraries.Library;
-import java.util.Collection;
+import java.util.List;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
 public interface LibrarySource {
 
   /** Called during the project structure phase to get libraries. */
-  Collection<? extends BlazeLibrary> getLibraries();
+  List<? extends BlazeLibrary> getLibraries();
 
   /**
    * Returns a filter on libraries.
@@ -49,7 +49,7 @@ public interface LibrarySource {
   /** Adapter class */
   abstract class Adapter implements LibrarySource {
     @Override
-    public Collection<? extends BlazeLibrary> getLibraries() {
+    public List<? extends BlazeLibrary> getLibraries() {
       return ImmutableList.of();
     }
 

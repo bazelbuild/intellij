@@ -58,7 +58,6 @@ import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider
 import com.google.idea.blaze.java.sync.projectstructure.Jdks;
 import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
 import com.google.idea.sdkcompat.transactions.Transactions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
@@ -214,18 +213,13 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
 
   private static void setProjectSdkAndLanguageLevel(
       final Project project, final Sdk sdk, final LanguageLevel javaLanguageLevel) {
-    Transactions.submitTransactionAndWait(
-        () ->
-            ApplicationManager.getApplication()
-                .runWriteAction(
-                    () -> {
-                      ProjectRootManagerEx rootManager =
-                          ProjectRootManagerEx.getInstanceEx(project);
-                      rootManager.setProjectSdk(sdk);
-                      LanguageLevelProjectExtension ext =
-                          LanguageLevelProjectExtension.getInstance(project);
-                      ext.setLanguageLevel(javaLanguageLevel);
-                    }));
+    Transactions.submitWriteActionTransactionAndWait(
+        () -> {
+          ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(project);
+          rootManager.setProjectSdk(sdk);
+          LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
+          ext.setLanguageLevel(javaLanguageLevel);
+        });
   }
 
   @Override

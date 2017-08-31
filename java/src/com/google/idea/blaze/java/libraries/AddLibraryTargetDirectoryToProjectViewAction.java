@@ -97,7 +97,7 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
     }
     // To start with, we whitelist only library rules
     // It makes no sense to add directories for java_imports and the like
-    if (!target.kind.isOneOf(Kind.JAVA_LIBRARY, Kind.ANDROID_LIBRARY)) {
+    if (!target.kind.isOneOf(Kind.JAVA_LIBRARY, Kind.ANDROID_LIBRARY, Kind.PROTO_LIBRARY)) {
       return null;
     }
     if (target.buildFile == null) {

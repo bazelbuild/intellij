@@ -15,16 +15,13 @@
  */
 package com.google.idea.blaze.base.run.targetfinder;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /** Searches BlazeProjectData for matching rules. */
@@ -38,22 +35,9 @@ public abstract class TargetFinder {
     return findTarget(project, target -> target.key.label.equals(label) && target.isPlainTarget());
   }
 
-  public ImmutableList<TargetIdeInfo> targetsOfKinds(Project project, final Kind... kinds) {
-    return targetsOfKinds(project, Arrays.asList(kinds));
-  }
-
-  public ImmutableList<TargetIdeInfo> targetsOfKinds(Project project, final List<Kind> kinds) {
-    return ImmutableList.copyOf(findTargets(project, target -> target.kindIsOneOf(kinds)));
-  }
-
   @Nullable
-  public TargetIdeInfo firstTargetOfKinds(Project project, Kind... kinds) {
-    return Iterables.getFirst(targetsOfKinds(project, kinds), null);
-  }
-
-  @Nullable
-  public TargetIdeInfo firstTargetOfKinds(Project project, List<Kind> kinds) {
-    return Iterables.getFirst(targetsOfKinds(project, kinds), null);
+  public TargetIdeInfo findFirstTarget(Project project, Predicate<TargetIdeInfo> predicate) {
+    return Iterables.getFirst(findTargets(project, predicate), null);
   }
 
   @Nullable
@@ -61,11 +45,6 @@ public abstract class TargetFinder {
     List<TargetIdeInfo> results = findTargets(project, predicate);
     assert results.size() <= 1;
     return Iterables.getFirst(results, null);
-  }
-
-  @Nullable
-  public TargetIdeInfo findFirstTarget(Project project, Predicate<TargetIdeInfo> predicate) {
-    return Iterables.getFirst(findTargets(project, predicate), null);
   }
 
   public abstract List<TargetIdeInfo> findTargets(

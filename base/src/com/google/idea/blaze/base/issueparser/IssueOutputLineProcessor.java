@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.intellij.openapi.project.Project;
-import javax.annotation.Nullable;
 
 /**
  * Forwards output to PrintOutputs, colored by whether or not an issue is found per-line.
@@ -39,26 +38,28 @@ public class IssueOutputLineProcessor implements LineProcessingOutputStream.Line
   private final BlazeIssueParser blazeIssueParser;
 
   public IssueOutputLineProcessor(
-      @Nullable Project project, BlazeContext context, WorkspaceRoot workspaceRoot) {
+      Project project, BlazeContext context, WorkspaceRoot workspaceRoot) {
     this.context = context;
-    ProjectViewSet projectViewSet =
-        project != null ? ProjectViewManager.getInstance(project).getProjectViewSet() : null;
+    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
 
     ImmutableList<BlazeIssueParser.Parser> parsers =
-        ImmutableList.of(
-            new BlazeIssueParser.CompileParser(workspaceRoot),
-            new BlazeIssueParser.TracebackParser(),
-            new BlazeIssueParser.BuildParser(),
-            new BlazeIssueParser.SkylarkErrorParser(),
-            new BlazeIssueParser.LinelessBuildParser(),
-            new BlazeIssueParser.ProjectViewLabelParser(projectViewSet),
-            new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                projectViewSet, "no such package '(.*)': BUILD file not found on package path"),
-            new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                projectViewSet, "no targets found beneath '(.*)'"),
-            new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                projectViewSet, "ERROR: invalid target format '(.*)'"),
-            new BlazeIssueParser.FileNotFoundBuildParser(workspaceRoot));
+        ImmutableList.<BlazeIssueParser.Parser>builder()
+            .add(
+                new BlazeIssueParser.CompileParser(workspaceRoot),
+                new BlazeIssueParser.TracebackParser(),
+                new BlazeIssueParser.BuildParser(),
+                new BlazeIssueParser.SkylarkErrorParser(),
+                new BlazeIssueParser.LinelessBuildParser(),
+                new BlazeIssueParser.ProjectViewLabelParser(projectViewSet),
+                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                    projectViewSet, "no such package '(.*)': BUILD file not found on package path"),
+                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                    projectViewSet, "no targets found beneath '(.*)'"),
+                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                    projectViewSet, "ERROR: invalid target format '(.*)'"),
+                new BlazeIssueParser.FileNotFoundBuildParser(workspaceRoot))
+            .addAll(BlazeIssueParserProvider.getAllIssueParsers(project))
+            .build();
     this.blazeIssueParser = new BlazeIssueParser(parsers);
   }
 

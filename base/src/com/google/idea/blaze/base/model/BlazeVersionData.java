@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.model;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
@@ -35,11 +34,6 @@ public class BlazeVersionData implements Serializable {
   @Nullable private final Long clientCl;
   @Nullable private final BazelVersion bazelVersion;
 
-  @VisibleForTesting
-  public BlazeVersionData() {
-    this(null, null, null);
-  }
-
   private BlazeVersionData(
       @Nullable Long blazeCl, @Nullable Long clientCl, @Nullable BazelVersion bazelVersion) {
     this.blazeCl = blazeCl;
@@ -51,6 +45,10 @@ public class BlazeVersionData implements Serializable {
     return blazeCl != null && blazeCl >= cl;
   }
 
+  public boolean blazeClientIsKnown() {
+    return clientCl != null;
+  }
+
   public boolean blazeClientIsAtLeastCl(long cl) {
     return clientCl != null && clientCl >= cl;
   }
@@ -59,24 +57,40 @@ public class BlazeVersionData implements Serializable {
     return bazelVersion != null && bazelVersion.isAtLeast(major, minor, bugfix);
   }
 
+  public boolean bazelIsAtLeastVersion(BazelVersion version) {
+    return bazelVersion != null && bazelVersion.isAtLeast(version);
+  }
+
   public BuildSystem buildSystem() {
     return bazelVersion != null ? BuildSystem.Bazel : BuildSystem.Blaze;
   }
 
+  @Override
+  public String toString() {
+    if (bazelVersion != null) {
+      return bazelVersion.toString();
+    }
+    return String.format("Blaze CL: %s, Client CL: %s", blazeCl, clientCl);
+  }
+
   public static BlazeVersionData build(
       BuildSystem buildSystem, WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo) {
-    Builder builder = new Builder();
+    Builder builder = builder();
     for (BuildSystemProvider provider : BuildSystemProvider.EP_NAME.getExtensions()) {
       provider.populateBlazeVersionData(buildSystem, workspaceRoot, blazeInfo, builder);
     }
     return builder.build();
   }
 
+  public static Builder builder() {
+    return new Builder();
+  }
+
   /** Builder class for constructing the blaze version data */
   public static class Builder {
-    public Long blazeCl;
-    public Long clientCl;
-    public BazelVersion bazelVersion;
+    private Long blazeCl;
+    private Long clientCl;
+    private BazelVersion bazelVersion;
 
     public Builder setBlazeCl(Long blazeCl) {
       this.blazeCl = blazeCl;

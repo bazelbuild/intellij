@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.run.binary;
 import com.android.tools.idea.fd.InstantRunUtils;
 import com.android.tools.idea.run.AndroidSessionInfo;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
+import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProvider.AndroidBinaryLaunchMethod;
 import com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallDebugExecutor;
 import com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallRunExecutor;
 import com.intellij.execution.ExecutionException;
@@ -30,12 +31,11 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.DefaultProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
-import org.jetbrains.annotations.NotNull;
 
 /** Program runner for {@link BlazeAndroidRunConfiguration} */
 public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
   @Override
-  public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
+  public boolean canRun(String executorId, RunProfile profile) {
     BlazeAndroidRunConfigurationHandler handler =
         BlazeAndroidRunConfigurationHandler.getHandlerFrom(profile);
     if (handler == null) {
@@ -51,15 +51,17 @@ public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
     if (!(handler instanceof BlazeAndroidBinaryRunConfigurationHandler)) {
       return false;
     }
-    return ((BlazeAndroidBinaryRunConfigurationHandler) handler).getState().mobileInstall()
+    AndroidBinaryLaunchMethod launchMethod =
+        ((BlazeAndroidBinaryRunConfigurationHandler) handler).getState().getLaunchMethod();
+    return (AndroidBinaryLaunchMethod.MOBILE_INSTALL.equals(launchMethod)
+            || AndroidBinaryLaunchMethod.MOBILE_INSTALL_V2.equals(launchMethod))
         && (IncrementalInstallDebugExecutor.EXECUTOR_ID.equals(executorId)
             || IncrementalInstallRunExecutor.EXECUTOR_ID.equals(executorId));
   }
 
   @Override
   protected RunContentDescriptor doExecute(
-      @NotNull final RunProfileState state, @NotNull final ExecutionEnvironment env)
-      throws ExecutionException {
+      final RunProfileState state, final ExecutionEnvironment env) throws ExecutionException {
     RunContentDescriptor descriptor = super.doExecute(state, env);
     if (descriptor != null) {
       ProcessHandler processHandler = descriptor.getProcessHandler();
@@ -84,7 +86,6 @@ public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
   }
 
   @Override
-  @NotNull
   public String getRunnerId() {
     return "AndroidProgramRunner";
   }

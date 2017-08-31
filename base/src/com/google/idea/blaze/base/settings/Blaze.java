@@ -35,7 +35,7 @@ public class Blaze {
       return name();
     }
 
-    /** The build system name, capitalized. */
+    /** The build system name, lower case. */
     public String getLowerCaseName() {
       return name().toLowerCase();
     }

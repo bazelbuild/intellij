@@ -16,15 +16,12 @@
 package com.google.idea.blaze.base.run.smrunner;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
@@ -32,46 +29,60 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.io.URLUtil;
-import java.util.EnumSet;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
-/** Language-specific handling of SM runner test protocol */
-public abstract class BlazeTestEventsHandler {
+/** Stateless language-specific handling of SM runner test protocol */
+public interface BlazeTestEventsHandler {
 
-  static final ExtensionPointName<BlazeTestEventsHandler> EP_NAME =
+  ExtensionPointName<BlazeTestEventsHandler> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.BlazeTestEventsHandler");
 
   /**
-   * Blaze/Bazel flags required for test UI.<br>
-   * Forces local test execution, without retries.
+   * Whether there's a {@link BlazeTestEventsHandler} applicable to the given target.
+   *
+   * <p>Test results will still be displayed for unhandled kinds if they're included in a test_suite
+   * or multi-target Blaze invocation, where we don't know up front the languages involved.
    */
-  public static ImmutableList<String> getBlazeFlags(Project project) {
-    ImmutableList.Builder<String> flags =
-        ImmutableList.<String>builder().add("--runs_per_test=1", "--flaky_test_attempts=1");
-    if (Blaze.getBuildSystem(project) == BuildSystem.Blaze) {
-      flags.add("--test_strategy=local");
-    }
-    if (Blaze.getBuildSystem(project) == BuildSystem.Bazel) {
-      flags.add("--test_sharding_strategy=disabled");
-    }
-    return flags.build();
-  }
-
-  @Nullable
-  public static BlazeTestEventsHandler getHandlerForTarget(
-      Project project, TargetExpression target) {
+  static boolean targetSupported(Project project, TargetExpression target) {
     Kind kind = getKindForTarget(project, target);
-    for (BlazeTestEventsHandler handler : EP_NAME.getExtensions()) {
-      if (handler.handlesTargetKind(kind)) {
-        return handler;
-      }
-    }
-    return null;
+    return Arrays.stream(EP_NAME.getExtensions()).anyMatch(handler -> handler.handlesKind(kind));
+  }
+
+  /**
+   * Returns a {@link BlazeTestEventsHandler} applicable to the given target.
+   *
+   * <p>If no such handler exists, falls back to returning {@link BlazeGenericTestEventsHandler}.
+   * This adds support for test suites / multi-target invocations, which can mix supported and
+   * unsupported target kinds.
+   */
+  static BlazeTestEventsHandler getHandlerForTargetKindOrFallback(@Nullable Kind kind) {
+    return getHandlerForTargetKind(kind).orElse(new BlazeGenericTestEventsHandler());
+  }
+
+  /**
+   * Returns a {@link BlazeTestEventsHandler} applicable to the given target or {@link
+   * Optional#empty()} if no such handler can be found.
+   */
+  static Optional<BlazeTestEventsHandler> getHandlerForTarget(
+      Project project, TargetExpression target) {
+    return getHandlerForTargetKind(getKindForTarget(project, target));
+  }
+
+  /**
+   * Returns a {@link BlazeTestEventsHandler} applicable to the given target kind, or {@link
+   * Optional#empty()} if no such handler can be found.
+   */
+  static Optional<BlazeTestEventsHandler> getHandlerForTargetKind(@Nullable Kind kind) {
+    return Arrays.stream(EP_NAME.getExtensions())
+        .filter(handler -> handler.handlesKind(kind))
+        .findFirst();
   }
 
   @Nullable
-  private static Kind getKindForTarget(Project project, TargetExpression target) {
+  static Kind getKindForTarget(Project project, TargetExpression target) {
     if (!(target instanceof Label)) {
       return null;
     }
@@ -79,42 +90,46 @@ public abstract class BlazeTestEventsHandler {
     return targetInfo != null ? targetInfo.kind : null;
   }
 
-  public boolean handlesTargetKind(@Nullable Kind kind) {
-    return handledKinds().contains(kind);
-  }
+  boolean handlesKind(@Nullable Kind kind);
 
-  protected abstract EnumSet<Kind> handledKinds();
-
-  public abstract SMTestLocator getTestLocator();
+  /**
+   * A {@link SMTestLocator} to convert location URLs provided by this event handler to project PSI
+   * elements. Returns {@code null} if no such conversion is available.
+   */
+  @Nullable
+  SMTestLocator getTestLocator();
 
   /**
    * The --test_filter flag passed to blaze to rerun the given tests.
    *
-   * @return null if no filter can be constructed for these tests.
+   * @return {@code null} if no filter can be constructed for these tests
    */
   @Nullable
-  public abstract String getTestFilter(Project project, List<Location<?>> testLocations);
+  String getTestFilter(Project project, List<Location<?>> testLocations);
 
+  /** Returns {@code null} if this test events handler doesn't support test filtering. */
   @Nullable
-  public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
+  default AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
     return new BlazeRerunFailedTestsAction(this, consoleView);
   }
 
-  /** Converts the testsuite name in the blaze test XML to a user-friendly format */
-  public String suiteDisplayName(@Nullable Kind kind, String rawName) {
+  /** Converts the testsuite name in the blaze test XML to a user-friendly format. */
+  default String suiteDisplayName(@Nullable Kind kind, String rawName) {
     return rawName;
   }
 
-  /** Converts the testcase name in the blaze test XML to a user-friendly format */
-  public String testDisplayName(@Nullable Kind kind, String rawName) {
+  /** Converts the testcase name in the blaze test XML to a user-friendly format. */
+  default String testDisplayName(@Nullable Kind kind, String rawName) {
     return rawName;
   }
 
-  public String suiteLocationUrl(@Nullable Kind kind, String name) {
+  /** Converts the suite name to a parsable location URL. */
+  default String suiteLocationUrl(@Nullable Kind kind, String name) {
     return SmRunnerUtils.GENERIC_SUITE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + name;
   }
 
-  public String testLocationUrl(
+  /** Converts the test case and suite names to a parsable location URL. */
+  default String testLocationUrl(
       @Nullable Kind kind, String parentSuite, String name, @Nullable String className) {
     String base = SmRunnerUtils.GENERIC_TEST_PROTOCOL + URLUtil.SCHEME_SEPARATOR;
     if (Strings.isNullOrEmpty(className)) {
@@ -124,7 +139,7 @@ public abstract class BlazeTestEventsHandler {
   }
 
   /** Whether to skip logging a {@link TestSuite}. */
-  public boolean ignoreSuite(@Nullable Kind kind, TestSuite suite) {
+  default boolean ignoreSuite(@Nullable Kind kind, TestSuite suite) {
     // by default only include innermost 'testsuite' elements
     return !suite.testSuites.isEmpty();
   }

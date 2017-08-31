@@ -122,7 +122,6 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
             configurationFactory.createForTarget(project, runManager, label);
         runManager.addConfiguration(settings, /* isShared */ false);
         if (runManager.getSelectedConfiguration() == null) {
-          // TODO(joshgiles): Better strategy for picking initially selected config.
           runManager.setSelectedConfiguration(settings);
         }
         break;

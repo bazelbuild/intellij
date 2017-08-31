@@ -21,11 +21,12 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.ShardBlazeBuildsSection;
+import com.google.idea.blaze.base.projectview.section.sections.TargetShardSizeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.sharding.WildcardTargetExpander.ExpandedTargetsResult;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.common.experiments.IntExperiment;
 import com.intellij.openapi.project.Project;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,14 +37,12 @@ import java.util.stream.Collectors;
 /** Utility methods for sharding blaze build invocations. */
 public class BlazeBuildTargetSharder {
 
-  private static final BoolExperiment allowSharding =
-      new BoolExperiment("blaze.build.sharding.allowed", true);
+  /** Default number of individual targets per blaze build shard. Can be overridden by the user. */
+  private static final IntExperiment targetShardSize =
+      new IntExperiment("blaze.target.shard.size", 1000);
 
   // number of packages per blaze query shard
   static final int PACKAGE_SHARD_SIZE = 500;
-
-  // number of individual targets per blaze build shard
-  private static final int TARGET_SHARD_SIZE = 1000;
 
   /** Result of expanding then sharding wildcard target patterns */
   public static class ShardedTargetsResult {
@@ -56,20 +55,21 @@ public class BlazeBuildTargetSharder {
     }
   }
 
-  /** Returns true if sharding can be enabled for this project, and is not already enabled */
-  static boolean canEnableSharding(Project project) {
-    if (!allowSharding.getValue()) {
-      return false;
-    }
+  /** Returns true if sharding is already enabled for this project. */
+  static boolean shardingEnabled(Project project) {
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    return projectViewSet != null && !shardingEnabled(projectViewSet);
+    return projectViewSet != null && shardingEnabled(projectViewSet);
   }
 
   private static boolean shardingEnabled(ProjectViewSet projectViewSet) {
-    if (!allowSharding.getValue()) {
-      return false;
-    }
-    return projectViewSet.getScalarValue(ShardBlazeBuildsSection.KEY, false);
+    return projectViewSet.getScalarValue(ShardBlazeBuildsSection.KEY).orElse(false);
+  }
+
+  /** Number of individual targets per blaze build shard */
+  static int getTargetShardSize(ProjectViewSet projectViewSet) {
+    return projectViewSet
+        .getScalarValue(TargetShardSizeSection.KEY)
+        .orElse(targetShardSize.getValue());
   }
 
   /** Expand wildcard target patterns and partition the resulting target list. */
@@ -98,7 +98,7 @@ public class BlazeBuildTargetSharder {
           new ShardedTargetList(ImmutableList.of()), expandedTargets.buildResult);
     }
     return new ShardedTargetsResult(
-        shardTargets(expandedTargets.singleTargets, TARGET_SHARD_SIZE),
+        shardTargets(expandedTargets.singleTargets, getTargetShardSize(projectViewSet)),
         expandedTargets.buildResult);
   }
 
@@ -150,6 +150,9 @@ public class BlazeBuildTargetSharder {
     for (int index = 0; index < targets.size(); index += shardSize) {
       int endIndex = Math.min(targets.size(), index + shardSize);
       List<TargetExpression> shard = new ArrayList<>(targets.subList(index, endIndex));
+      if (shard.stream().filter(TargetExpression::isExcluded).count() == shard.size()) {
+        continue;
+      }
       List<TargetExpression> remainingExcludes =
           targets
               .subList(endIndex, targets.size())

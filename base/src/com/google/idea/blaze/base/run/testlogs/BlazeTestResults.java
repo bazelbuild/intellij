@@ -15,22 +15,24 @@
  */
 package com.google.idea.blaze.base.run.testlogs;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Label;
-import java.io.File;
 
 /** Results from a 'blaze test' invocation. */
 public class BlazeTestResults {
 
-  /** Output test XML files, grouped by target label. */
-  public final ImmutableMultimap<Label, File> testXmlFiles;
-  /** Targets which failed to build */
-  public final ImmutableSet<Label> failedTargets;
+  public static final BlazeTestResults NO_RESULTS = fromFlatList(ImmutableList.of());
 
-  public BlazeTestResults(
-      ImmutableMultimap<Label, File> testXmlFiles, ImmutableSet<Label> failedTargets) {
-    this.testXmlFiles = testXmlFiles;
-    this.failedTargets = failedTargets;
+  public static BlazeTestResults fromFlatList(Iterable<BlazeTestResult> results) {
+    ImmutableMultimap.Builder<Label, BlazeTestResult> map = ImmutableMultimap.builder();
+    results.forEach(result -> map.put(result.getLabel(), result));
+    return new BlazeTestResults(map.build());
+  }
+
+  public final ImmutableMultimap<Label, BlazeTestResult> perTargetResults;
+
+  private BlazeTestResults(ImmutableMultimap<Label, BlazeTestResult> perTargetResults) {
+    this.perTargetResults = perTargetResults;
   }
 }

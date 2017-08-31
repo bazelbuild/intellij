@@ -25,10 +25,12 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
+import com.google.idea.blaze.cpp.OCWorkspaceProvider;
+import com.google.idea.sdkcompat.cidr.OCWorkspaceModificationTrackersCompatUtils;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
-import com.jetbrains.cidr.lang.workspace.OCWorkspaceManager;
 
 final class BlazeNdkSupportEnabler extends SyncListener.Adapter {
 
@@ -56,29 +58,36 @@ final class BlazeNdkSupportEnabler extends SyncListener.Adapter {
    * @param enabled if true, turn on C support in the IDE. If false, turn off C support in the IDE.
    */
   private static void enableCSupportInIde(Project project, boolean enabled) {
-    OCWorkspace workspace = OCWorkspaceManager.getWorkspace(project);
+    OCWorkspace workspace = OCWorkspaceProvider.getWorkspace(project);
+    if (workspace == null) {
+      // NDK workspace manager plugin isn't enabled.
+      return;
+    }
     Boolean isCurrentlyEnabled = !LANGUAGE_SUPPORT_DISABLED.get(project, false);
     if (isCurrentlyEnabled != enabled) {
       NdkHelper.disableCppLanguageSupport(project, !enabled);
-      rebuildSymbols(project, workspace);
+      rebuildSymbols(project);
     }
   }
 
-  private static void rebuildSymbols(Project project, OCWorkspace workspace) {
-    ApplicationManager.getApplication()
-        .runReadAction(
-            () -> {
-              if (project.isDisposed()) {
-                return;
-              }
-              // Notifying BuildSettingsChangeTracker in unitTestMode will leads to a dead lock.
-              // See b/23087433 for more information.
-              if (!ApplicationManager.getApplication().isUnitTestMode()) {
-                workspace
-                    .getModificationTrackers()
-                    .getBuildSettingsChangesTracker()
-                    .incModificationCount();
-              }
-            });
+  private static void rebuildSymbols(Project project) {
+    TransactionGuard.getInstance()
+        .submitTransactionLater(
+            project,
+            () ->
+                ApplicationManager.getApplication().runReadAction(() -> doRebuildSymbols(project)));
+  }
+
+  private static void doRebuildSymbols(Project project) {
+    if (project.isDisposed()) {
+      return;
+    }
+    // Notifying BuildSettingsChangeTracker in unitTestMode will leads to a dead lock.
+    // See b/23087433 for more information.
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      OCWorkspaceModificationTrackersCompatUtils.getTrackers(project)
+          .getBuildSettingsChangesTracker()
+          .incModificationCount();
+    }
   }
 }

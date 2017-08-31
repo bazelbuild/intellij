@@ -35,10 +35,13 @@ final class BlazeLanguageKindCalculatorHelper implements OCLanguageKindCalculato
   public OCLanguageKind getLanguageByExtension(Project project, String name) {
     if (Blaze.isBlazeProject(project)) {
       String extension = FileUtilRt.getExtension(name);
-      if (extension.equalsIgnoreCase("c")) {
+      if (CFileExtensions.C_FILE_EXTENSIONS.contains(extension)) {
         return OCLanguageKind.C;
       }
-      if (extension.equalsIgnoreCase("cc")) {
+      if (CFileExtensions.CXX_FILE_EXTENSIONS.contains(extension)) {
+        return OCLanguageKind.CPP;
+      }
+      if (CFileExtensions.CXX_ONLY_HEADER_EXTENSIONS.contains(extension)) {
         return OCLanguageKind.CPP;
       }
     }
