@@ -18,6 +18,7 @@ package com.google.idea.blaze.cpp;
 import static com.google.common.truth.Truth.assertThat;
 import static com.jetbrains.cidr.lang.OCLanguage.LANGUAGE_SUPPORT_DISABLED;
 
+import com.google.common.base.Splitter;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.project.Project;
@@ -48,6 +49,10 @@ public class BlazeCppIntegrationTestCase extends BlazeIntegrationTestCase {
     if (LANGUAGE_SUPPORT_DISABLED.get(project, false)) {
       LANGUAGE_SUPPORT_DISABLED.set(project, false);
     }
+  }
+
+  protected static void assertText(OCFile file, String... lines) {
+    assertThat(Splitter.on('\n').split(file.getText())).containsExactly((Object[]) lines).inOrder();
   }
 
   private class TestOCWorkspaceManager extends OCWorkspaceManager {

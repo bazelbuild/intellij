@@ -50,7 +50,7 @@ merged_plugin_xml(
     name = "merged_ndk_contents_xml",
     srcs = ["src/META-INF/ndk-contents.xml"] + select_for_plugin_api({
         "android-studio-2.3.1.0": [],
-        "android-studio-3.0.0.9": ["3.0/src/META-INF/ndk-workspace-contents.xml"],
+        "android-studio-3.0.0.13": ["3.0/src/META-INF/ndk-workspace-contents.xml"],
     }),
 )
 
@@ -83,7 +83,7 @@ java_library(
     name = "aswb_lib",
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
         "android-studio-2.3.1.0": glob(["2.3/src/**/*.java"]),
-        "android-studio-3.0.0.9": glob(["3.0/src/**/*.java"]),
+        "android-studio-3.0.0.13": glob(["3.0/src/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     deps = [
@@ -112,7 +112,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]) + select_for_plugin_api({
         "android-studio-2.3.1.0": [],
-        "android-studio-3.0.0.9": glob(["3.0/tests/unittests/**/*.java"]),
+        "android-studio-3.0.0.13": glob(["3.0/tests/unittests/**/*.java"]),
     }),
     test_package_root = "com.google.idea.blaze.android",
     deps = [

@@ -52,11 +52,21 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 /** Unit tests for {@link BuildEventProtocolOutputReader}. */
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class BuildEventProtocolOutputReaderTest {
+
+  @Parameters
+  public static Collection<Object[]> data() {
+    return ImmutableList.of(new Object[] {true}, new Object[] {false});
+  }
+
+  // BEP file URI format changed from 'file://[abs_path]' to 'file:[abs_path]'
+  @Parameter public boolean useOldFormatFileUri = false;
 
   @Rule public TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -370,7 +380,7 @@ public class BuildEventProtocolOutputReaderTest {
         .setConfigured(TargetConfigured.newBuilder().setTargetKind(targetKind));
   }
 
-  private static BuildEvent.Builder targetCompletedEvent(String label, String targetKind) {
+  private BuildEvent.Builder targetCompletedEvent(String label, String targetKind) {
     return BuildEvent.newBuilder()
         .setId(
             BuildEventId.newBuilder()
@@ -378,7 +388,7 @@ public class BuildEventProtocolOutputReaderTest {
         .setCompleted(TargetComplete.newBuilder().setTargetKind(targetKind));
   }
 
-  private static BuildEvent.Builder testResultEvent(
+  private BuildEvent.Builder testResultEvent(
       String label, BuildEventStreamProtos.TestStatus status, List<String> filePaths) {
     return BuildEvent.newBuilder()
         .setId(BuildEventId.newBuilder().setTestResult(TestResultId.newBuilder().setLabel(label)))
@@ -386,27 +396,22 @@ public class BuildEventProtocolOutputReaderTest {
             TestResult.newBuilder()
                 .setStatus(status)
                 .addAllTestActionOutput(
-                    filePaths
-                        .stream()
-                        .map(BuildEventProtocolOutputReaderTest::toEventFile)
-                        .collect(toImmutableList())));
+                    filePaths.stream().map(this::toEventFile).collect(toImmutableList())));
   }
 
-  private static NamedSetOfFiles setOfFiles(List<String> filePaths) {
+  private NamedSetOfFiles setOfFiles(List<String> filePaths) {
     return NamedSetOfFiles.newBuilder()
-        .addAllFiles(
-            filePaths
-                .stream()
-                .map(BuildEventProtocolOutputReaderTest::toEventFile)
-                .collect(toImmutableList()))
+        .addAllFiles(filePaths.stream().map(this::toEventFile).collect(toImmutableList()))
         .build();
   }
 
-  private static BuildEventStreamProtos.File toEventFile(String filePath) {
-    return BuildEventStreamProtos.File.newBuilder().setUri(fileUrl(filePath)).build();
+  private BuildEventStreamProtos.File toEventFile(String filePath) {
+    return BuildEventStreamProtos.File.newBuilder().setUri(fileUri(filePath)).build();
   }
 
-  private static String fileUrl(String filePath) {
-    return LocalFileSystem.PROTOCOL_PREFIX + filePath;
+  private String fileUri(String filePath) {
+    return useOldFormatFileUri
+        ? LocalFileSystem.PROTOCOL_PREFIX + filePath
+        : new File(filePath).toURI().toString();
   }
 }

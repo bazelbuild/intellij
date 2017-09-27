@@ -23,17 +23,23 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.java.run.hotswap.ClassFileManifestBuilder;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
 /** Java-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunConfigurationHandler {
+
+  private static final Logger logger = Logger.getInstance(BlazeJavaRunConfigurationHandler.class);
 
   private final String buildSystemName;
   private final BlazeCommandRunConfigurationCommonState state;
@@ -89,14 +95,24 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
 
   private static class BlazeJavaRunConfigurationRunner
       implements BlazeCommandRunConfigurationRunner {
+
     @Override
-    public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment environment) {
-      return new BlazeJavaRunProfileState(environment, executor instanceof DefaultDebugExecutor);
+    public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment env) {
+      ClassFileManifestBuilder.initState(env);
+      return new BlazeJavaRunProfileState(env, executor instanceof DefaultDebugExecutor);
     }
 
     @Override
-    public boolean executeBeforeRunTask(ExecutionEnvironment environment) {
-      return true;
+    public boolean executeBeforeRunTask(ExecutionEnvironment env) {
+      try {
+        ClassFileManifestBuilder.buildManifest(env, null);
+        return true;
+      } catch (ExecutionException e) {
+        ExecutionUtil.handleExecutionError(
+            env.getProject(), env.getExecutor().getToolWindowId(), env.getRunProfile(), e);
+        logger.info(e);
+      }
+      return false;
     }
   }
 }

@@ -1,3 +1,20 @@
+v2017.09.25
+===========
+* Support HotSwapping when debugging java_binary targets.
+* Add an 'Update Directories' sync action, to add directories to the project
+  without running blaze (note: new directories won't properly resolve until
+  a full sync is run).
+* JavaScript: reduce hangs while editing, by prefetching all indexed JS files
+  during sync.
+* Suppress spurious 'never assigned' warnings for @Inject-annotated fields.
+* Add basic support for custom java rules, providing the 'java_common' skylark
+  API.
+* Python: prioritize project files over SDK packages when resolving imports.
+
+v2017.09.11
+===========
+* Bug fixes and internal cleanup.
+
 v2017.08.28
 ===========
 * CLion test output: make URLs and bazel targets clickable

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.sync.model;
 
 import com.google.common.base.Objects;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.LibraryKey;
@@ -54,10 +55,12 @@ public final class BlazeJarLibrary extends BlazeLibrary {
         BlazeJavaUserSettings.getInstance().getAttachSourcesByDefault();
     SourceJarManager sourceJarManager = SourceJarManager.getInstance(project);
     boolean attachSourceJar = attachSourcesByDefault || sourceJarManager.hasSourceJarAttached(key);
-    if (attachSourceJar && libraryArtifact.sourceJar != null) {
-      File sourceJar = jarCache.getCachedSourceJar(artifactLocationDecoder, this);
-      if (sourceJar != null) {
-        libraryModel.addRoot(pathToUrl(sourceJar), OrderRootType.SOURCES);
+    if (attachSourceJar) {
+      for (ArtifactLocation srcJar : libraryArtifact.sourceJars) {
+        File sourceJar = jarCache.getCachedSourceJar(artifactLocationDecoder, srcJar);
+        if (sourceJar != null) {
+          libraryModel.addRoot(pathToUrl(sourceJar), OrderRootType.SOURCES);
+        }
       }
     }
   }

@@ -16,28 +16,29 @@
 package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
 import java.io.Serializable;
 import javax.annotation.Nullable;
 
 /** Represents a jar artifact. */
 public class LibraryArtifact implements Serializable {
-  private static final long serialVersionUID = 2L;
+  private static final long serialVersionUID = 3L;
 
   @Nullable public final ArtifactLocation interfaceJar;
   @Nullable public final ArtifactLocation classJar;
-  @Nullable public final ArtifactLocation sourceJar;
+  public final ImmutableList<ArtifactLocation> sourceJars;
 
   public LibraryArtifact(
       @Nullable ArtifactLocation interfaceJar,
       @Nullable ArtifactLocation classJar,
-      @Nullable ArtifactLocation sourceJar) {
+      ImmutableList<ArtifactLocation> sourceJars) {
     if (interfaceJar == null && classJar == null) {
       throw new IllegalArgumentException("Interface and class jars cannot both be null.");
     }
 
     this.interfaceJar = interfaceJar;
     this.classJar = classJar;
-    this.sourceJar = sourceJar;
+    this.sourceJars = sourceJars;
   }
 
   /**
@@ -54,7 +55,7 @@ public class LibraryArtifact implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("jar=%s, ijar=%s, srcjar=%s", classJar, interfaceJar, sourceJar);
+    return String.format("jar=%s, ijar=%s, srcjars=%s", classJar, interfaceJar, sourceJars);
   }
 
   @Override
@@ -68,12 +69,12 @@ public class LibraryArtifact implements Serializable {
     LibraryArtifact that = (LibraryArtifact) o;
     return Objects.equal(interfaceJar, that.interfaceJar)
         && Objects.equal(classJar, that.classJar)
-        && Objects.equal(sourceJar, that.sourceJar);
+        && Objects.equal(sourceJars, that.sourceJars);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(interfaceJar, classJar, sourceJar);
+    return Objects.hashCode(interfaceJar, classJar, sourceJars);
   }
 
   public static Builder builder() {
@@ -84,7 +85,7 @@ public class LibraryArtifact implements Serializable {
   public static class Builder {
     private ArtifactLocation interfaceJar;
     private ArtifactLocation classJar;
-    private ArtifactLocation sourceJar;
+    private final ImmutableList.Builder<ArtifactLocation> sourceJars = ImmutableList.builder();
 
     public Builder setInterfaceJar(ArtifactLocation artifactLocation) {
       this.interfaceJar = artifactLocation;
@@ -96,13 +97,13 @@ public class LibraryArtifact implements Serializable {
       return this;
     }
 
-    public Builder setSourceJar(@Nullable ArtifactLocation artifactLocation) {
-      this.sourceJar = artifactLocation;
+    public Builder addSourceJar(ArtifactLocation... artifactLocations) {
+      this.sourceJars.add(artifactLocations);
       return this;
     }
 
     public LibraryArtifact build() {
-      return new LibraryArtifact(interfaceJar, classJar, sourceJar);
+      return new LibraryArtifact(interfaceJar, classJar, sourceJars.build());
     }
   }
 }

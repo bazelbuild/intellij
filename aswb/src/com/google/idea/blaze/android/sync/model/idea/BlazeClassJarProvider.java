@@ -16,9 +16,9 @@
 package com.google.idea.blaze.android.sync.model.idea;
 
 import com.android.SdkConstants;
-import com.android.tools.idea.model.ClassJarProvider;
 import com.android.tools.idea.res.AppResourceRepository;
 import com.android.tools.idea.res.ResourceClassRegistry;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.google.idea.sdkcompat.android.res.AppResourceRepositoryAdapter;
+import com.google.idea.sdkcompat.android.sync.model.idea.ClassJarProviderCompat;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
@@ -41,7 +42,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.util.containers.OrderedSet;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
@@ -52,7 +52,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /** Collects class jars from the user's build. */
-public class BlazeClassJarProvider extends ClassJarProvider {
+public class BlazeClassJarProvider extends ClassJarProviderCompat {
 
   private final Project project;
   private final AtomicBoolean pendingJarsRefresh;
@@ -142,13 +142,12 @@ public class BlazeClassJarProvider extends ClassJarProvider {
   }
 
   @Override
-  public List<VirtualFile> getModuleExternalLibraries(Module module) {
-    OrderedSet<VirtualFile> results = new OrderedSet<>();
+  public List<File> getModuleExternalLibrariesCompat(Module module) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
 
     if (blazeProjectData == null) {
-      return results;
+      return ImmutableList.of();
     }
 
     TargetMap targetMap = blazeProjectData.targetMap;
@@ -158,11 +157,11 @@ public class BlazeClassJarProvider extends ClassJarProvider {
     TargetIdeInfo target = targetMap.get(registry.getTargetKey(module));
 
     if (target == null) {
-      return results;
+      return ImmutableList.of();
     }
 
     AppResourceRepository repository = AppResourceRepositoryAdapter.getOrCreateInstance(module);
-
+    ImmutableList.Builder<File> results = ImmutableList.builder();
     for (TargetKey dependencyTargetKey :
         TransitiveDependencyMap.getInstance(project).getTransitiveDependencies(target.key)) {
       TargetIdeInfo dependencyTarget = targetMap.get(dependencyTargetKey);
@@ -175,13 +174,7 @@ public class BlazeClassJarProvider extends ClassJarProvider {
       if (javaIdeInfo != null) {
         for (LibraryArtifact jar : javaIdeInfo.jars) {
           if (jar.classJar != null && jar.classJar.isSource()) {
-            VirtualFile classJar =
-                VirtualFileSystemProvider.getInstance()
-                    .getSystem()
-                    .findFileByIoFile(decoder.decode(jar.classJar));
-            if (classJar != null) {
-              results.add(classJar);
-            }
+            results.add(decoder.decode(jar.classJar));
           }
         }
       }
@@ -204,7 +197,7 @@ public class BlazeClassJarProvider extends ClassJarProvider {
       }
     }
 
-    return results;
+    return results.build();
   }
 
   private static void maybeRefreshJars(Collection<File> missingJars, AtomicBoolean pendingRefresh) {

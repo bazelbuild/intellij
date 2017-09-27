@@ -26,14 +26,11 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
-import com.intellij.openapi.diagnostic.Logger;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import javax.annotation.Nullable;
 
 class BlazeInfoRunnerImpl extends BlazeInfoRunner {
-  private static final Logger logger = Logger.getInstance(BlazeInfoRunnerImpl.class);
-
   @Override
   public ListenableFuture<String> runBlazeInfo(
       BlazeContext context,
@@ -113,7 +110,10 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
     for (String blazeInfoLine : blazeInfoLines) {
       // Just split on the first ":".
       String[] keyValue = blazeInfoLine.split(":", 2);
-      logger.assertTrue(keyValue.length == 2, blazeInfoLine);
+      if (keyValue.length != 2) {
+        // ignore any extraneous stdout
+        continue;
+      }
       String key = keyValue[0].trim();
       String value = keyValue[1].trim();
       blazeInfoMapBuilder.put(key, value);

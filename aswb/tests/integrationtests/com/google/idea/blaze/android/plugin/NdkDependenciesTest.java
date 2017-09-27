@@ -17,12 +17,14 @@ package com.google.idea.blaze.android.plugin;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
 import com.google.idea.blaze.android.settings.BlazeAndroidUserSettings;
 import com.google.idea.blaze.android.sync.BlazeNdkDependencySyncPlugin;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.testing.DisablePluginsTestRule;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
@@ -39,6 +41,10 @@ public class NdkDependenciesTest extends BlazeIntegrationTestCase {
   @ClassRule
   public static TestRule setDisabledPlugins =
       new DisablePluginsTestRule(BlazeNdkDependencySyncPlugin.getPluginsRequiredForNdkSupport());
+
+  @Rule
+  public final AndroidIntegrationTestSetupRule androidSetupRule =
+      new AndroidIntegrationTestSetupRule();
 
   @Test
   public void testNdkPluginsInstalled() {

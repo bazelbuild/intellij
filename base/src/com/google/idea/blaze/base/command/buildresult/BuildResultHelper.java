@@ -17,12 +17,12 @@ package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream.LineProcessor;
-import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.Closeable;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /** Assists in getting build artifacts from a build operation. */
@@ -31,10 +31,9 @@ public interface BuildResultHelper extends Closeable {
   /**
    * Constructs a new build result helper.
    *
-   * @param blazeVersion The blaze version used for the build invocation.
    * @param files A filter for the output artifacts you are interested in.
    */
-  static BuildResultHelper forFiles(BlazeVersionData blazeVersion, Predicate<String> files) {
+  static BuildResultHelper forFiles(Predicate<String> files) {
     return new BuildResultHelperBep(files);
   }
 
@@ -69,6 +68,9 @@ public interface BuildResultHelper extends Closeable {
    * <p>May only be called once the build is complete, or no artifacts will be returned.
    */
   ImmutableList<File> getBuildArtifactsForTarget(Label target);
+
+  /** Returns all build artifacts belonging to the given output groups. */
+  ImmutableList<File> getArtifactsForOutputGroups(Set<String> outputGroups);
 
   @Override
   void close();

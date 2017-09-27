@@ -418,7 +418,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                             .setIdlJar(
                                 LibraryArtifact.builder()
                                     .setInterfaceJar(gen("example/libidl.jar"))
-                                    .setSourceJar(gen("example/libidl.srcjar"))
+                                    .addSourceJar(gen("example/libidl.srcjar"))
                                     .build())
                             .setHasIdlSources(true)));
 

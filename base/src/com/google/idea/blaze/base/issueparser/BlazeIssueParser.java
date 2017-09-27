@@ -99,7 +99,6 @@ public class BlazeIssueParser {
     protected abstract IssueOutput createIssue(Matcher matcher);
   }
 
-  @Nullable
   public static File fileFromAbsolutePath(String absolutePath) {
     return new File(absolutePath);
   }
@@ -287,31 +286,28 @@ public class BlazeIssueParser {
   }
 
   static class InvalidTargetProjectViewPackageParser extends SingleLineParser {
-    @Nullable private final ProjectViewSet projectViewSet;
+    private final ProjectViewSet projectViewSet;
 
-    InvalidTargetProjectViewPackageParser(@Nullable ProjectViewSet projectViewSet, String regex) {
+    InvalidTargetProjectViewPackageParser(ProjectViewSet projectViewSet, String regex) {
       super(regex);
       this.projectViewSet = projectViewSet;
     }
 
     @Override
     protected IssueOutput createIssue(Matcher matcher) {
-      File file = null;
-      if (projectViewSet != null) {
-        final String packageString = matcher.group(1);
-        file =
-            projectViewFileWithSection(
-                projectViewSet,
-                TargetSection.KEY,
-                targetSection -> {
-                  for (TargetExpression targetExpression : targetSection.items()) {
-                    if (targetExpression.toString().startsWith("//" + packageString + ":")) {
-                      return true;
-                    }
+      final String packageString = matcher.group(1);
+      File file =
+          projectViewFileWithSection(
+              projectViewSet,
+              TargetSection.KEY,
+              targetSection -> {
+                for (TargetExpression targetExpression : targetSection.items()) {
+                  if (targetExpression.toString().contains(packageString)) {
+                    return true;
                   }
-                  return false;
-                });
-      }
+                }
+                return false;
+              });
 
       return IssueOutput.error(matcher.group(0)).inFile(file).build();
     }

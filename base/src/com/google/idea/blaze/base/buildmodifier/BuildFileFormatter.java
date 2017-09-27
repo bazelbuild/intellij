@@ -61,9 +61,11 @@ public class BuildFileFormatter {
       return result.get(TIMEOUT_SECS, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+      result.cancel(true);
       return null;
     } catch (ExecutionException | TimeoutException e) {
       logger.warn(e);
+      result.cancel(true);
       return null;
     }
   }

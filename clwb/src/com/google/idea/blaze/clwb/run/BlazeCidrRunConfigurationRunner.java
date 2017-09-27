@@ -17,38 +17,19 @@ package com.google.idea.blaze.clwb.run;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.command.BlazeCommand;
-import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
-import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.ScopedTask;
-import com.google.idea.blaze.base.scope.output.StatusOutput;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
-import com.google.idea.blaze.base.scope.scopes.IssuesScope;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
@@ -61,9 +42,6 @@ import javax.annotation.Nullable;
 public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
 
   private static final Logger LOG = Logger.getInstance(ExternalTask.class);
-
-  private static final BoolExperiment FORCE_DEBUG_BUILD_FOR_DEBUGGING_TEST =
-      new BoolExperiment("clwb.force.debug.build.for.debugging.test", true);
 
   private final BlazeCommandRunConfiguration configuration;
 
@@ -108,60 +86,14 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
    * @throws ExecutionException if no unique output artifact was found.
    */
   private File getExecutableToDebug() throws ExecutionException {
-    final Project project = configuration.getProject();
-    final BlazeCommandRunConfigurationCommonState handlerState =
-        (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
-    final WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    final ProjectViewSet projectViewSet =
-        ProjectViewManager.getInstance(project).getProjectViewSet();
+    BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true);
 
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    BuildResultHelper buildResultHelper =
-        BuildResultHelper.forFiles(projectData.blazeVersionData, file -> true);
-
-    final ListenableFuture<Void> buildOperation =
-        BlazeExecutor.submitTask(
-            project,
-            new ScopedTask() {
-              @Override
-              protected void execute(BlazeContext context) {
-                context
-                    .push(new IssuesScope(project))
-                    .push(new BlazeConsoleScope.Builder(project).build());
-
-                context.output(new StatusOutput("Building debug binary"));
-
-                BlazeCommand.Builder command =
-                    BlazeCommand.builder(
-                            Blaze.getBuildSystemProvider(project).getBinaryPath(),
-                            BlazeCommandName.BUILD)
-                        .addTargets(configuration.getTarget())
-                        .addBlazeFlags(
-                            BlazeFlags.blazeFlags(
-                                project,
-                                projectViewSet,
-                                BlazeCommandName.BUILD,
-                                BlazeInvocationContext.RunConfiguration))
-                        .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
-                        .addBlazeFlags(buildResultHelper.getBuildFlags());
-
-                // If we are trying to debug, make sure we are building in debug mode.
-                // This can cause a rebuild, so it is a heavyweight setting.
-                if (FORCE_DEBUG_BUILD_FOR_DEBUGGING_TEST.getValue()) {
-                  command.addBlazeFlags("-c", "dbg", "--copt=-g", "--strip=never");
-                }
-
-                ExternalTask.builder(workspaceRoot)
-                    .addBlazeCommand(command.build())
-                    .context(context)
-                    .stderr(
-                        buildResultHelper.stderr(
-                            new IssueOutputLineProcessor(project, context, workspaceRoot)))
-                    .build()
-                    .run();
-              }
-            });
+    ListenableFuture<Void> buildOperation =
+        BlazeBeforeRunCommandHelper.runBlazeBuild(
+            configuration,
+            buildResultHelper,
+            ImmutableList.of("-c", "dbg", "--copt=-g", "--strip=never"),
+            "Building debug binary");
 
     try {
       SaveUtil.saveAllFiles();

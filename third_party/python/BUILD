@@ -9,11 +9,11 @@ java_library(
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
         "intellij-2017.1.5": ["@python_2017_1//:python"],
-        "intellij-2017.2.2": ["@python_2017_2//:python"],
+        "intellij-2017.2.3": ["@python_2017_2//:python"],
         "intellij-ue-2017.1.5": ["@python_2017_1//:python"],
-        "intellij-ue-2017.2.2": ["@python_2017_2//:python"],
+        "intellij-ue-2017.2.3": ["@python_2017_2//:python"],
         "clion-2017.1.1": ["@clion_2017_1_1//:python"],
-        "clion-2017.2.1": ["@clion_2017_2_1//:python"],
+        "clion-2017.2.2": ["@clion_2017_2_2//:python"],
     }),
 )
 

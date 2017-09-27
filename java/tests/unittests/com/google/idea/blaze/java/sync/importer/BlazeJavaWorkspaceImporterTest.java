@@ -485,14 +485,14 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
                                 LibraryArtifact.builder()
                                     .setInterfaceJar(gen("thirdparty/some/library.jar"))
                                     .setClassJar(gen("thirdparty/some/library.jar"))
-                                    .setSourceJar(gen("thirdparty/some/library.srcjar")))));
+                                    .addSourceJar(gen("thirdparty/some/library.srcjar")))));
 
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     errorCollector.assertNoIssues();
 
     BlazeJarLibrary library = findLibrary(result.libraries, "library.jar");
     assertNotNull(library);
-    assertNotNull(library.libraryArtifact.sourceJar);
+    assertThat(library.libraryArtifact.sourceJars).isNotEmpty();
   }
 
   /** Test a project with a java test rule */
@@ -944,7 +944,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
                             LibraryArtifact.builder()
                                 .setInterfaceJar(gen("thirdparty/a.jar"))
                                 .setClassJar(gen("thirdparty/a.jar"))
-                                .setSourceJar(gen("thirdparty/a.srcjar")))))
+                                .addSourceJar(gen("thirdparty/a.srcjar")))))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel("//thirdparty/b:b")
@@ -958,7 +958,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
                             LibraryArtifact.builder()
                                 .setInterfaceJar(gen("thirdparty/b.jar"))
                                 .setClassJar(gen("thirdparty/b.jar"))
-                                .setSourceJar(gen("thirdparty/b.srcjar")))))
+                                .addSourceJar(gen("thirdparty/b.srcjar")))))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel("//thirdparty/c:c")
@@ -971,7 +971,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
                             LibraryArtifact.builder()
                                 .setInterfaceJar(gen("thirdparty/c.jar"))
                                 .setClassJar(gen("thirdparty/c.jar"))
-                                .setSourceJar(gen("thirdparty/c.srcjar")))));
+                                .addSourceJar(gen("thirdparty/c.srcjar")))));
   }
 
   @Test

@@ -73,6 +73,11 @@
       text="Partially Sync File"
       icon="BlazeIcons.Blaze">
     </action>
+    <action id="Blaze.UpdateDirectories"
+        class="com.google.idea.blaze.base.sync.actions.UpdateDirectoriesSyncAction"
+        text="Sync Directories"
+        icon="AllIcons.Nodes.Folder">
+    </action>
     <action id="Blaze.ExportRunConfigurations"
       class="com.google.idea.blaze.base.run.exporter.ExportRunConfigurationAction"
       text="Export Run Configurations"
@@ -99,6 +104,7 @@
         <reference id="Blaze.FullSyncProject"/>
         <reference id="Blaze.SyncWorkingSet"/>
         <reference id="Blaze.PartialSync"/>
+        <reference id="Blaze.UpdateDirectories"/>
         <reference id="Blaze.ExpandSyncToWorkingSet"/>
         <reference id="Blaze.ShowPerformanceWarnings"/>
       </group>

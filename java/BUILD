@@ -22,6 +22,7 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
+        "//common/guava",
         "//intellij_platform_sdk:junit",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",

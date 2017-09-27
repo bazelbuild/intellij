@@ -74,9 +74,26 @@ intellij_plugin(
     ],
 )
 
+java_library(
+    name = "integration_test_utils",
+    testonly = 1,
+    srcs = ["tests/integrationtests/com/google/idea/blaze/cpp/BlazeCppIntegrationTestCase.java"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":cpp",
+        "//base",
+        "//base:integration_test_utils",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "@junit//jar",
+    ],
+)
+
 intellij_integration_test_suite(
     name = "integration_tests",
-    srcs = glob(["tests/integrationtests/**/*.java"]),
+    srcs = glob(
+        ["tests/integrationtests/**/*.java"],
+        exclude = ["tests/integrationtests/com/google/idea/blaze/cpp/BlazeCppIntegrationTestCase.java"],
+    ),
     required_plugins = "com.google.idea.bazel.cpp",
     test_package_root = "com.google.idea.blaze.cpp",
     runtime_deps = [
@@ -84,6 +101,7 @@ intellij_integration_test_suite(
     ],
     deps = [
         ":cpp",
+        ":integration_test_utils",
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",

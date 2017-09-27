@@ -15,11 +15,14 @@
  */
 package com.google.idea.blaze.java.libraries;
 
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,7 +36,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
@@ -129,24 +132,49 @@ final class BlazeSourceJarNavigationPolicy extends ClsCustomNavigationPolicyEx {
       return null;
     }
 
-    File sourceJar =
-        JarCache.getInstance(project)
-            .getCachedSourceJar(blazeProjectData.artifactLocationDecoder, blazeLibrary);
-
-    if (sourceJar == null && blazeLibrary.libraryArtifact.sourceJar != null) {
-      sourceJar =
-          blazeProjectData.artifactLocationDecoder.decode(blazeLibrary.libraryArtifact.sourceJar);
+    // TODO: If there are multiple source jars, search for one containing this PsiJavaFile.
+    for (ArtifactLocation jar : blazeLibrary.libraryArtifact.sourceJars) {
+      VirtualFile root = getSourceJarRoot(project, blazeProjectData.artifactLocationDecoder, jar);
+      if (root != null) {
+        return root;
+      }
     }
+    return null;
+  }
 
+  @Nullable
+  private static VirtualFile getSourceJarRoot(
+      Project project,
+      ArtifactLocationDecoder artifactLocationDecoder,
+      ArtifactLocation sourceJar) {
+    File sourceJarFile =
+        JarCache.getInstance(project).getCachedSourceJar(artifactLocationDecoder, sourceJar);
+    if (sourceJarFile == null) {
+      sourceJarFile = artifactLocationDecoder.decode(sourceJar);
+    }
     if (sourceJar == null) {
       return null;
     }
-
-    VirtualFile vfsFile = VfsUtil.findFileByIoFile(sourceJar, true);
+    VirtualFile vfsFile = getVirtualFile(sourceJarFile);
     if (vfsFile == null) {
       return null;
     }
     return JarFileSystem.getInstance().getJarRootForLocalFile(vfsFile);
+  }
+
+  @Nullable
+  private static VirtualFile getVirtualFile(File file) {
+    LocalFileSystem fileSystem = VirtualFileSystemProvider.getInstance().getSystem();
+    VirtualFile vf = fileSystem.findFileByPathIfCached(file.getPath());
+    if (vf != null) {
+      return vf;
+    }
+    vf = fileSystem.findFileByIoFile(file);
+    if (vf != null && vf.isValid()) {
+      return vf;
+    }
+    boolean shouldRefresh = ApplicationManager.getApplication().isDispatchThread();
+    return shouldRefresh ? fileSystem.refreshAndFindFileByIoFile(file) : null;
   }
 
   @Nullable

@@ -54,7 +54,7 @@ class AspectStrategyProviderBazel implements AspectStrategyProvider {
     protected List<String> getAspectFlags() {
       if (useBundledAspect()) {
         return ImmutableList.of(
-            "--aspects=@intellij_aspect//:intellij_info.bzl%intellij_info_aspect",
+            "--aspects=@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect",
             getAspectRepositoryOverrideFlag());
       }
       return ImmutableList.of(

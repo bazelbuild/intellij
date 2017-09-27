@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.filecache.FileDiffer;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.io.FileSizeScanner;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -54,6 +55,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -116,9 +118,11 @@ public class JarCache {
           attachAllSourceJars
               || BlazeSourceJarNavigationPolicy.cacheEnabled.getValue()
               || sourceJarManager.hasSourceJarAttached(library.key);
-      if (copySourceJar && library.libraryArtifact.sourceJar != null) {
-        File srcJarFile = artifactLocationDecoder.decode(library.libraryArtifact.sourceJar);
-        sourceFileToCacheKey.put(srcJarFile, cacheKeyForSourceJar(srcJarFile));
+      if (copySourceJar) {
+        for (ArtifactLocation sourceJar : library.libraryArtifact.sourceJars) {
+          File srcJarFile = artifactLocationDecoder.decode(sourceJar);
+          sourceFileToCacheKey.put(srcJarFile, cacheKeyForSourceJar(srcJarFile));
+        }
       }
     }
 
@@ -262,7 +266,8 @@ public class JarCache {
     if (cacheDir.exists()) {
       File[] cacheFiles = cacheDir.listFiles();
       if (cacheFiles != null) {
-        FileUtil.asyncDelete(Lists.newArrayList(cacheFiles));
+        @SuppressWarnings("unused") // go/futurereturn-lsc
+        Future<?> possiblyIgnoredError = FileUtil.asyncDelete(Lists.newArrayList(cacheFiles));
       }
     }
     sourceFileToCacheKey = null;
@@ -283,11 +288,8 @@ public class JarCache {
 
   /** Gets the cached file for a source jar. */
   @Nullable
-  public File getCachedSourceJar(ArtifactLocationDecoder decoder, BlazeJarLibrary library) {
-    if (library.libraryArtifact.sourceJar == null) {
-      return null;
-    }
-    File file = decoder.decode(library.libraryArtifact.sourceJar);
+  public File getCachedSourceJar(ArtifactLocationDecoder decoder, ArtifactLocation sourceJar) {
+    File file = decoder.decode(sourceJar);
     if (!enabled || sourceFileToCacheKey == null) {
       return file;
     }

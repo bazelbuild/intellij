@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run.smrunner;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -161,7 +162,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
           .put(TestStatus.INCOMPLETE, "Test output was incomplete.")
           .put(TestStatus.REMOTE_FAILURE, "Remote failure during test execution.")
           .put(TestStatus.FAILED_TO_BUILD, "Test target failed to build.")
-          .put(TestStatus.BLAZE_HALTED_BEFORE_TESTING, "Test target failed to build.")
+          .put(TestStatus.TOOL_HALTED_BEFORE_TESTING, "Test target failed to build.")
           .put(TestStatus.NO_STATUS, "No output found for test target.")
           .build();
 
@@ -250,7 +251,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   }
 
   private static boolean isFailed(TestCase test) {
-    return test.failure != null || test.error != null;
+    return !test.failures.isEmpty() || !test.errors.isEmpty();
   }
 
   private static void processTestCase(
@@ -278,11 +279,15 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
       ErrorOrFailureOrSkipped err = test.skipped != null ? test.skipped : NO_ERROR;
       processor.onTestIgnored(new TestIgnoredEvent(displayName, err.message, err.content));
     } else if (isFailed(test)) {
-      ErrorOrFailureOrSkipped err =
-          test.failure != null ? test.failure : test.error != null ? test.error : NO_ERROR;
-      processor.onTestFailure(
-          SmRunnerCompatUtils.getTestFailedEvent(
-              displayName, err.message, err.content, parseTimeMillis(test.time)));
+      List<ErrorOrFailureOrSkipped> errors =
+          !test.failures.isEmpty()
+              ? test.failures
+              : !test.errors.isEmpty() ? test.errors : ImmutableList.of(NO_ERROR);
+      for (ErrorOrFailureOrSkipped err : errors) {
+        processor.onTestFailure(
+            SmRunnerCompatUtils.getTestFailedEvent(
+                displayName, err.message, err.content, parseTimeMillis(test.time)));
+      }
     }
     processor.onTestFinished(new TestFinishedEvent(displayName, parseTimeMillis(test.time)));
   }

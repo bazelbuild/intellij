@@ -1,14 +1,14 @@
 """Bazel-specific intellij aspect."""
 
 load(
-    "//:intellij_info_impl.bzl",
+    ":intellij_info_impl.bzl",
     "make_intellij_info_aspect",
     "intellij_info_aspect_impl",
 )
 
 def tool_label(tool_name):
   """Returns a label that points to a tool target in the bundled aspect workspace."""
-  return Label("//:" + tool_name + "_bin")
+  return Label("//aspect/tools:" + tool_name)
 
 semantics = struct(
     tool_label = tool_label,

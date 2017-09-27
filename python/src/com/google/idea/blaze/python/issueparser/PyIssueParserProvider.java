@@ -20,14 +20,19 @@ import com.google.idea.blaze.base.issueparser.BlazeIssueParser.Parser;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser.SingleLineParser;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParserProvider;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.python.PySdkUtils;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.jetbrains.python.sdk.PythonSdkType;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.regex.Matcher;
 import javax.annotation.Nullable;
 
@@ -80,10 +85,24 @@ public class PyIssueParserProvider implements BlazeIssueParserProvider {
 
     @Nullable
     private static PsiFile findFile(Project project, String fileName) {
+      GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+      Sdk sdk = PySdkUtils.getPythonSdk(project);
       return Arrays.stream(
               FilenameIndex.getFilesByName(project, fileName, GlobalSearchScope.allScope(project)))
-          .findFirst()
+          .min(Comparator.comparingInt((psi) -> rankResult(psi, projectScope, sdk)))
           .orElse(null);
+    }
+
+    /** Used to sort search results, in order: {project, library, sdk, no virtual file} */
+    private static int rankResult(PsiFile file, GlobalSearchScope projectScope, Sdk sdk) {
+      VirtualFile vf = file.getVirtualFile();
+      if (vf == null) {
+        return 3;
+      }
+      if (projectScope.contains(vf)) {
+        return 0;
+      }
+      return PythonSdkType.isStdLib(vf, sdk) ? 2 : 1;
     }
 
     /** defaults to -1 if no line number can be parsed. */

@@ -73,6 +73,7 @@
     <TestTargetHeuristic implementation="com.google.idea.blaze.java.run.JUnitTestHeuristic" order="before TestSizeHeuristic"/>
     <TestTargetHeuristic implementation="com.google.idea.blaze.java.run.QualifiedClassNameHeuristic" order="before TargetNameHeuristic"/>
     <SyncListener implementation="com.google.idea.blaze.java.libraries.BlazeSourceJarNavigationPolicy$SyncTrackerUpdater"/>
+    <JavaClasspathAspectStrategy implementation="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy$BazelStrategy"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -115,8 +116,15 @@
     <psi.referenceContributor language="BUILD" implementation="com.google.idea.blaze.java.lang.build.references.JavaClassReferenceContributor"/>
     <useScopeEnlarger implementation="com.google.idea.blaze.java.psi.AutoFactoryUseScopeEnlarger"/>
     <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.AutoFactoryImplicitUsageProvider"/>
+    <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.InjectImplicitUsageProvider"/>
     <psi.clsCustomNavigationPolicy implementation="com.google.idea.blaze.java.libraries.BlazeSourceJarNavigationPolicy"/>
   </extensions>
+
+  <application-components>
+  <component>
+    <implementation-class>com.google.idea.blaze.java.run.hotswap.BlazeHotSwapAction$Initializer</implementation-class>
+  </component>
+  </application-components>
 
   <project-components>
     <component>
@@ -131,5 +139,7 @@
                     interface="com.google.idea.blaze.java.sync.source.JavaLikeLanguage"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.JUnitParameterizedClassHeuristic"
                     interface="com.google.idea.blaze.java.run.producers.JUnitParameterizedClassHeuristic"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.JavaClasspathAspectStrategy"
+                    interface="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy"/>
   </extensionPoints>
 </idea-plugin>

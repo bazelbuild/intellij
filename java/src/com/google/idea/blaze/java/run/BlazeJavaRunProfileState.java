@@ -39,8 +39,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.java.run.hotswap.HotSwapUtils;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -57,6 +56,10 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.execution.ParametersListUtil;
+import java.io.File;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * A Blaze run configuration set up with a an executor, program runner, and other settings, ready to
@@ -65,9 +68,7 @@ import com.intellij.openapi.project.Project;
  */
 final class BlazeJavaRunProfileState extends CommandLineState implements RemoteState {
 
-  // Blaze seems to always use this port for --java_debug.
-  // TODO(joshgiles): Look at manually identifying and setting port.
-  private static final int DEBUG_PORT = 5005;
+  private static final int DEBUG_PORT = 5005; // default port for java debugging
   private static final String DEBUG_HOST_NAME = "localhost";
 
   private final BlazeCommandRunConfiguration configuration;
@@ -90,22 +91,15 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
   @Override
   protected ProcessHandler startProcess() throws ExecutionException {
     Project project = configuration.getProject();
-    BlazeImportSettings importSettings =
-        BlazeImportSettingsManager.getInstance(project).getImportSettings();
-    assert importSettings != null;
 
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    assert projectViewSet != null;
-
-    BlazeCommand blazeCommand;
+    BlazeCommand.Builder blazeCommand;
     BlazeTestUiSession testUiSession =
         useTestUi()
             ? TestUiSessionProvider.createForTarget(project, configuration.getTarget())
             : null;
     if (testUiSession != null) {
       blazeCommand =
-          getBlazeCommand(
-              project, configuration, projectViewSet, testUiSession.getBlazeFlags(), debug);
+          getBlazeCommandBuilder(project, configuration, testUiSession.getBlazeFlags(), debug);
       setConsoleBuilder(
           new TextConsoleBuilderImpl(project) {
             @Override
@@ -115,15 +109,19 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
             }
           });
     } else {
-      blazeCommand =
-          getBlazeCommand(project, configuration, projectViewSet, ImmutableList.of(), debug);
+      blazeCommand = getBlazeCommandBuilder(project, configuration, ImmutableList.of(), debug);
     }
     addConsoleFilters(new BlazeTargetFilter(project));
 
-    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
+    List<String> command =
+        HotSwapUtils.canHotSwap(getEnvironment())
+            ? getBashCommandsToRunScript(blazeCommand)
+            : blazeCommand.build().toList();
+
+    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     return new ScopedBlazeProcessHandler(
         project,
-        blazeCommand,
+        command,
         workspaceRoot,
         new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
           @Override
@@ -139,6 +137,24 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
             return ImmutableList.of(new LineProcessingProcessAdapter(outputStream));
           }
         });
+  }
+
+  /** Appends '--script_path' to blaze flags, then runs 'bash -c blaze build ... && run_script' */
+  private static List<String> getBashCommandsToRunScript(BlazeCommand.Builder blazeCommand) {
+    File scriptFile = createTempOutputFile();
+    blazeCommand.addBlazeFlags("--script_path=" + scriptFile.getPath());
+    String blaze = ParametersListUtil.join(blazeCommand.build().toList());
+    return ImmutableList.of("/bin/bash", "-c", blaze + " && " + scriptFile.getPath());
+  }
+
+  /** Creates a temporary output file to write the shell script to. */
+  private static File createTempOutputFile() {
+    File tempDir = new File(System.getProperty("java.io.tmpdir"));
+    String suffix = UUID.randomUUID().toString().substring(0, 8);
+    String fileName = "blaze-script-" + suffix;
+    File tempFile = new File(tempDir, fileName);
+    tempFile.deleteOnExit();
+    return tempFile;
   }
 
   @Override
@@ -167,12 +183,14 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
   }
 
   @VisibleForTesting
-  static BlazeCommand getBlazeCommand(
+  static BlazeCommand.Builder getBlazeCommandBuilder(
       Project project,
       BlazeCommandRunConfiguration configuration,
-      ProjectViewSet projectViewSet,
       ImmutableList<String> extraBlazeFlags,
       boolean debug) {
+
+    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    assert projectViewSet != null;
 
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
@@ -205,6 +223,6 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
     }
 
     command.addExeFlags(handlerState.getExeFlagsState().getExpandedFlags());
-    return command.build();
+    return command;
   }
 }

@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.sync.aspects;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -101,10 +103,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   private static final Logger logger = Logger.getInstance(BlazeIdeInterfaceAspectsImpl.class);
 
   static class State implements Serializable {
-    private static final long serialVersionUID = 14L;
+    private static final long serialVersionUID = 15L;
     TargetMap targetMap;
     ImmutableMap<File, Long> fileState = null;
-    Map<File, TargetKey> fileToTargetMapKey = Maps.newHashMap();
+    BiMap<File, TargetKey> fileToTargetMapKey = HashBiMap.create();
     WorkspaceLanguageSettings workspaceLanguageSettings;
     String aspectStrategyName;
   }
@@ -144,10 +146,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             context,
             workspaceRoot,
             projectViewSet,
-            blazeVersionData,
             workspaceLanguageSettings.activeLanguages,
             shardedTargets,
             aspectStrategy);
+    context.output(PrintOutput.log("ide-info result: " + ideInfoResult.buildResult.status));
     if (ideInfoResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
       return new IdeResult(
           prevState != null ? prevState.targetMap : null, ideInfoResult.buildResult);
@@ -168,11 +170,15 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       return new IdeResult(prevState != null ? prevState.targetMap : null, BuildResult.FATAL_ERROR);
     }
 
+    // if we're merging with the old state, no files are removed
+    int targetCount = fileList.size() + (mergeWithOldState ? removedFiles.size() : 0);
+    int removedCount = mergeWithOldState ? 0 : removedFiles.size();
+
     context.output(
         PrintOutput.log(
             String.format(
                 "Total rules: %d, new/changed: %d, removed: %d",
-                fileList.size(), updatedFiles.size(), removedFiles.size())));
+                targetCount, updatedFiles.size(), removedCount)));
 
     ListenableFuture<?> prefetchFuture =
         PrefetchService.getInstance().prefetchFiles(project, updatedFiles, true);
@@ -224,7 +230,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       BlazeContext parentContext,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
-      BlazeVersionData blazeVersionData,
       ImmutableSet<LanguageClass> activeLanguages,
       ShardedTargetList shardedTargets,
       AspectStrategy aspectStrategy) {
@@ -247,7 +252,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                         context,
                         workspaceRoot,
                         projectViewSet,
-                        blazeVersionData,
                         activeLanguages,
                         targets,
                         aspectStrategy);
@@ -266,7 +270,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
-      BlazeVersionData blazeVersionData,
       ImmutableSet<LanguageClass> activeLanguages,
       List<TargetExpression> targets,
       AspectStrategy aspectStrategy) {
@@ -274,7 +277,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     String gzFileExtension = fileExtension + ".gz";
     Predicate<String> fileFilter =
         fileName -> fileName.endsWith(fileExtension) || fileName.endsWith(gzFileExtension);
-    BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(blazeVersionData, fileFilter);
+    BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(fileFilter);
 
     BlazeCommand.Builder builder =
         BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.BUILD)
@@ -410,7 +413,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                         configurations.add(config);
                         TargetKey key = targetFilePair.target.key;
                         if (targetMap.putIfAbsent(key, targetFilePair.target) == null) {
-                          state.fileToTargetMapKey.put(file, key);
+                          state.fileToTargetMapKey.forcePut(file, key);
                         } else {
                           if (!newTargets.add(key)) {
                             duplicateTargetLabels++;
@@ -419,7 +422,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                           if (Objects.equals(
                               config, configHandler.defaultConfigurationPathComponent)) {
                             targetMap.put(key, targetFilePair.target);
-                            state.fileToTargetMapKey.put(file, key);
+                            state.fileToTargetMapKey.forcePut(file, key);
                           }
                         }
                       }
@@ -609,8 +612,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       BlazeVersionData blazeVersionData,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       List<TargetExpression> targets) {
-    BuildResultHelper buildResultHelper =
-        BuildResultHelper.forFiles(blazeVersionData, getGenfilePrefetchFilter());
+    BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(getGenfilePrefetchFilter());
 
     BlazeCommand.Builder blazeCommandBuilder =
         BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.BUILD)

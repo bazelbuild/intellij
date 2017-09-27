@@ -17,8 +17,10 @@ package com.google.idea.blaze.android.prefetch;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -26,6 +28,10 @@ import org.junit.runners.JUnit4;
 /** Test for file extensions prefetched in ASwB. */
 @RunWith(JUnit4.class)
 public class AswbPrefetchFileSourceTest extends BlazeIntegrationTestCase {
+
+  @Rule
+  public final AndroidIntegrationTestSetupRule androidSetupRule =
+      new AndroidIntegrationTestSetupRule();
 
   @Test
   public void testPrefetchedExtensions() {

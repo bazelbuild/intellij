@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.aspects;
 
+import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.TestUtils;
@@ -78,7 +79,7 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
   public void testBlazeStateIsSerializable() {
     BlazeIdeInterfaceAspectsImpl.State state = new BlazeIdeInterfaceAspectsImpl.State();
     state.fileToTargetMapKey =
-        ImmutableMap.of(
+        ImmutableBiMap.of(
             new File("fileName"),
             TargetIdeInfo.builder().setLabel(Label.create("//test:test")).build().key);
     state.fileState = ImmutableMap.of();

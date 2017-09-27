@@ -83,6 +83,9 @@ public enum Kind {
   PINTO_MODULE("pinto_module", LanguageClass.JAVASCRIPT, RuleType.UNKNOWN),
   TS_LIBRARY("ts_library", LanguageClass.TYPESCRIPT, RuleType.UNKNOWN),
   TS_CONFIG("ts_config", LanguageClass.TYPESCRIPT, RuleType.BINARY),
+
+  // any rule exposing java_common.provider which isn't specifically recognized
+  GENERIC_JAVA_PROVIDER("generic_java", LanguageClass.JAVA, RuleType.UNKNOWN),
   ;
 
   static final ImmutableMap<String, Kind> STRING_TO_KIND = makeStringToKindMap();
@@ -106,7 +109,7 @@ public enum Kind {
   }
 
   @Nullable
-  public static Kind fromString(String kindString) {
+  public static Kind fromString(@Nullable String kindString) {
     return STRING_TO_KIND.get(kindString);
   }
 

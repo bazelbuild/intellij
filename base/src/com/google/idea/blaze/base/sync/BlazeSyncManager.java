@@ -21,6 +21,8 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
+import com.google.idea.blaze.base.sync.projectview.SyncDirectoriesWarning;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -41,24 +43,23 @@ public class BlazeSyncManager {
 
   /** Requests a project sync with Blaze. */
   public void requestProjectSync(final BlazeSyncParams syncParams) {
+    if (syncParams.syncMode == SyncMode.NO_BUILD && !SyncDirectoriesWarning.warn(project)) {
+      return;
+    }
     StartupManager.getInstance(project)
         .runWhenProjectIsInitialized(
-            new Runnable() {
-              @Override
-              public void run() {
-                final BlazeImportSettings importSettings =
-                    BlazeImportSettingsManager.getInstance(project).getImportSettings();
-                if (importSettings == null) {
-                  throw new IllegalStateException(
-                      String.format(
-                          "Attempt to sync non-%s project.", Blaze.buildSystemName(project)));
-                }
-
-                final BlazeSyncTask syncTask =
-                    new BlazeSyncTask(project, importSettings, syncParams);
-
-                BlazeExecutor.submitTask(project, syncTask);
+            () -> {
+              final BlazeImportSettings importSettings =
+                  BlazeImportSettingsManager.getInstance(project).getImportSettings();
+              if (importSettings == null) {
+                throw new IllegalStateException(
+                    String.format(
+                        "Attempt to sync non-%s project.", Blaze.buildSystemName(project)));
               }
+
+              final BlazeSyncTask syncTask = new BlazeSyncTask(project, importSettings, syncParams);
+
+              BlazeExecutor.submitTask(project, syncTask);
             });
   }
 
@@ -84,6 +85,13 @@ public class BlazeSyncManager {
     BlazeSyncParams syncParams =
         new BlazeSyncParams.Builder("Partial Sync", BlazeSyncParams.SyncMode.PARTIAL)
             .addTargetExpressions(targetExpressions)
+            .build();
+    requestProjectSync(syncParams);
+  }
+
+  public void directoryUpdate() {
+    BlazeSyncParams syncParams =
+        new BlazeSyncParams.Builder("Update Directories", BlazeSyncParams.SyncMode.NO_BUILD)
             .build();
     requestProjectSync(syncParams);
   }

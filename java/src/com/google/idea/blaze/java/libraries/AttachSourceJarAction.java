@@ -51,7 +51,7 @@ class AttachSourceJarAction extends BlazeProjectAction {
       }
 
       final LibraryArtifact libraryArtifact = blazeLibrary.libraryArtifact;
-      if (libraryArtifact.sourceJar == null) {
+      if (libraryArtifact.sourceJars.isEmpty()) {
         return;
       }
       SourceJarManager sourceJarManager = SourceJarManager.getInstance(project);
@@ -90,7 +90,7 @@ class AttachSourceJarAction extends BlazeProjectAction {
         BlazeJarLibrary blazeLibrary =
             LibraryActionHelper.findLibraryFromIntellijLibrary(
                 e.getProject(), blazeProjectData, library);
-        if (blazeLibrary != null && blazeLibrary.libraryArtifact.sourceJar != null) {
+        if (blazeLibrary != null && !blazeLibrary.libraryArtifact.sourceJars.isEmpty()) {
           enabled = true;
           if (SourceJarManager.getInstance(project).hasSourceJarAttached(blazeLibrary.key)) {
             text = "Detach Source Jar";

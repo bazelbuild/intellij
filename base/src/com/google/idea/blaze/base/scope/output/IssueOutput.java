@@ -24,19 +24,15 @@ import javax.annotation.Nullable;
 /** An issue in a blaze operation. */
 public class IssueOutput implements Output {
 
-  public static final int NO_LINE = -1;
-  public static final int NO_COLUMN = -1;
+  static final int NO_LINE = -1;
+  static final int NO_COLUMN = -1;
 
   @Nullable private final File file;
   private final int line;
   private final int column;
   private final Category category;
   private final String message;
-  @Nullable Navigatable navigatable;
-  @Nullable IssueData issueData;
-
-  /** Base class for issue data */
-  public static class IssueData {}
+  @Nullable private Navigatable navigatable;
 
   /** Issue category */
   public enum Category {
@@ -66,7 +62,6 @@ public class IssueOutput implements Output {
     private int line = NO_LINE;
     private int column = NO_COLUMN;
     @Nullable Navigatable navigatable;
-    @Nullable IssueData issueData;
 
     public Builder(Category category, String message) {
       this.category = category;
@@ -88,18 +83,13 @@ public class IssueOutput implements Output {
       return this;
     }
 
-    public Builder withData(@Nullable IssueData issueData) {
-      this.issueData = issueData;
-      return this;
-    }
-
     public Builder navigatable(@Nullable Navigatable navigatable) {
       this.navigatable = navigatable;
       return this;
     }
 
     public IssueOutput build() {
-      return new IssueOutput(file, line, column, navigatable, category, message, issueData);
+      return new IssueOutput(file, line, column, navigatable, category, message);
     }
 
     public void submit(BlazeContext context) {
@@ -116,15 +106,13 @@ public class IssueOutput implements Output {
       int column,
       @Nullable Navigatable navigatable,
       Category category,
-      String message,
-      @Nullable IssueData issueData) {
+      String message) {
     this.file = file;
     this.line = line;
     this.column = column;
     this.navigatable = navigatable;
     this.category = category;
     this.message = message;
-    this.issueData = issueData;
   }
 
   @Nullable
@@ -156,10 +144,5 @@ public class IssueOutput implements Output {
   @Override
   public String toString() {
     return message;
-  }
-
-  @Nullable
-  public IssueData getIssueData() {
-    return issueData;
   }
 }

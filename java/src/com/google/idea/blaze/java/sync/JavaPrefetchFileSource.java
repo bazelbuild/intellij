@@ -65,8 +65,8 @@ public class JavaPrefetchFileSource implements PrefetchFileSource {
 
       boolean attachSourceJar =
           attachSourcesByDefault || sourceJarManager.hasSourceJarAttached(jarLibrary.key);
-      if (attachSourceJar && jarLibrary.libraryArtifact.sourceJar != null) {
-        files.add(artifactLocationDecoder.decode(jarLibrary.libraryArtifact.sourceJar));
+      if (attachSourceJar) {
+        files.addAll(artifactLocationDecoder.decodeAll(jarLibrary.libraryArtifact.sourceJars));
       }
     }
   }

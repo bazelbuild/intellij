@@ -13,23 +13,23 @@
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
     "intellij-latest": "intellij-2017.1.5",
-    "intellij-beta": "intellij-2017.2.2",
+    "intellij-beta": "intellij-2017.2.3",
     "intellij-ue-latest": "intellij-ue-2017.1.5",
-    "intellij-ue-beta": "intellij-ue-2017.2.2",
+    "intellij-ue-beta": "intellij-ue-2017.2.3",
     "android-studio-latest": "android-studio-2.3.1.0",
-    "android-studio-beta": "android-studio-3.0.0.9",
+    "android-studio-beta": "android-studio-3.0.0.13",
     "clion-latest": "clion-2017.1.1",
-    "clion-beta": "clion-2017.2.1",
+    "clion-beta": "clion-2017.2.2",
 }
 
 DIRECT_IJ_PRODUCTS = {
-    "intellij-2017.2.2": struct(
+    "intellij-2017.2.3": struct(
         ide="intellij",
-        directory="intellij_ce_2017_2_2",
+        directory="intellij_ce_2017_2_3",
     ),
-    "intellij-ue-2017.2.2": struct(
+    "intellij-ue-2017.2.3": struct(
         ide="intellij-ue",
-        directory="intellij_ue_2017_2_2",
+        directory="intellij_ue_2017_2_3",
     ),
     "intellij-2017.1.5": struct(
         ide="intellij",
@@ -39,17 +39,17 @@ DIRECT_IJ_PRODUCTS = {
         ide="intellij-ue",
         directory="intellij_ue_2017_1_5",
     ),
-    "android-studio-3.0.0.9": struct(
+    "android-studio-3.0.0.13": struct(
         ide="android-studio",
-        directory="android_studio_3_0_0_9",
+        directory="android_studio_3_0_0_13",
     ),
     "android-studio-2.3.1.0": struct(
         ide="android-studio",
         directory="android_studio_2_3_1_0",
     ),
-    "clion-2017.2.1": struct(
+    "clion-2017.2.2": struct(
         ide="clion",
-        directory="clion_2017_2_1",
+        directory="clion_2017_2_2",
     ),
     "clion-2017.1.1": struct(
         ide="clion",

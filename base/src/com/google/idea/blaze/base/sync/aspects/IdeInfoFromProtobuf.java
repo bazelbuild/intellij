@@ -48,6 +48,7 @@ import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Conversion functions from new aspect-style Bazel IDE info to ASWB internal classes. */
@@ -414,16 +415,22 @@ public class IdeInfoFromProtobuf {
         libraryArtifact.hasInterfaceJar()
             ? makeArtifactLocation(libraryArtifact.getInterfaceJar())
             : null;
-    ArtifactLocation sourceJar =
-        libraryArtifact.hasSourceJar()
-            ? makeArtifactLocation(libraryArtifact.getSourceJar())
-            : null;
+    ImmutableList.Builder<ArtifactLocation> sourceJars = ImmutableList.builder();
+    if (!libraryArtifact.getSourceJarsList().isEmpty()) {
+      sourceJars.addAll(
+          libraryArtifact
+              .getSourceJarsList()
+              .stream()
+              .map(IdeInfoFromProtobuf::makeArtifactLocation)
+              .collect(Collectors.toList()));
+    } else if (libraryArtifact.hasSourceJar()) {
+      sourceJars.add(makeArtifactLocation(libraryArtifact.getSourceJar()));
+    }
     if (iJar == null && classJar == null) {
-      // Failed to find ArtifactLocation file --
-      // presumably because it was removed from file system since blaze build
+      // drop invalid ArtifactLocations
       return null;
     }
-    return new LibraryArtifact(iJar, classJar, sourceJar);
+    return new LibraryArtifact(iJar, classJar, sourceJars.build());
   }
 
   private static List<ArtifactLocation> makeArtifactLocationList(
@@ -468,9 +475,12 @@ public class IdeInfoFromProtobuf {
 
   @Nullable
   static Kind getKind(IntellijIdeInfo.TargetIdeInfo message) {
-    String kindString = message.getKindString();
-    if (!Strings.isNullOrEmpty(kindString)) {
-      return Kind.fromString(kindString);
+    Kind kind = Kind.fromString(message.getKindString());
+    if (kind != null) {
+      return kind;
+    }
+    if (message.hasJavaIdeInfo()) {
+      return Kind.GENERIC_JAVA_PROVIDER;
     }
     return null;
   }

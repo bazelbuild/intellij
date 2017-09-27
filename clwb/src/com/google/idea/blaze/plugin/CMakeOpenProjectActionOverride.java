@@ -52,7 +52,8 @@ public class CMakeOpenProjectActionOverride extends OpenCPPProjectAction {
           if (cmakeFile != null) {
             return cmakeFile;
           }
-          return ProjectKt.getProjectStoreDirectory(virtualFile);
+          VirtualFile dotIdeaDir = ProjectKt.getProjectStoreDirectory(virtualFile);
+          return dotIdeaDir != null ? dotIdeaDir.getParent() : null;
         });
   }
 

@@ -38,16 +38,16 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-2017.2.2",
+    name = "intellij-2017.2.3",
     values = {
-        "define": "ij_product=intellij-2017.2.2",
+        "define": "ij_product=intellij-2017.2.3",
     },
 )
 
 config_setting(
-    name = "intellij-ue-2017.2.2",
+    name = "intellij-ue-2017.2.3",
     values = {
-        "define": "ij_product=intellij-ue-2017.2.2",
+        "define": "ij_product=intellij-ue-2017.2.3",
     },
 )
 
@@ -80,9 +80,9 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-3.0.0.9",
+    name = "android-studio-3.0.0.13",
     values = {
-        "define": "ij_product=android-studio-3.0.0.9",
+        "define": "ij_product=android-studio-3.0.0.13",
     },
 )
 
@@ -115,9 +115,9 @@ config_setting(
 )
 
 config_setting(
-    name = "clion-2017.2.1",
+    name = "clion-2017.2.2",
     values = {
-        "define": "ij_product=clion-2017.2.1",
+        "define": "ij_product=clion-2017.2.2",
     },
 )
 
@@ -170,7 +170,7 @@ java_library(
 java_library(
     name = "plugin_api_for_grammar_kit",
     visibility = ["//third_party/java/jetbrains/grammar_kit:__pkg__"],
-    exports = ["//intellij_platform_sdk/intellij_ce_2017_2_2:sdk"],
+    exports = ["//intellij_platform_sdk/intellij_ce_2017_2_3:sdk"],
 )
 
 # The version of guava bundled with the IntelliJ plugin API.
