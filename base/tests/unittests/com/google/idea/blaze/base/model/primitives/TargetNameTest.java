@@ -29,28 +29,39 @@ public class TargetNameTest extends BlazeTestCase {
   @Test
   public void testValidateTargetName() {
     // Legal names
-    assertThat(TargetName.validate("foo")).isTrue();
-    assertThat(TargetName.validate(".")).isTrue();
-    assertThat(TargetName.validate(".foo")).isTrue();
-    assertThat(TargetName.validate("foo+")).isTrue();
-    assertThat(TargetName.validate("_foo")).isTrue();
-    assertThat(TargetName.validate("-foo")).isTrue();
-    assertThat(TargetName.validate("foo-bar")).isTrue();
-    assertThat(TargetName.validate("foo..")).isTrue();
-    assertThat(TargetName.validate("..foo")).isTrue();
+    assertThat(TargetName.validate("foo")).isNull();
+    assertThat(TargetName.validate(".")).isNull();
+    assertThat(TargetName.validate(".foo")).isNull();
+    assertThat(TargetName.validate("foo+")).isNull();
+    assertThat(TargetName.validate("_foo")).isNull();
+    assertThat(TargetName.validate("-foo")).isNull();
+    assertThat(TargetName.validate("foo-bar")).isNull();
+    assertThat(TargetName.validate("foo..")).isNull();
+    assertThat(TargetName.validate("..foo")).isNull();
+    assertThat(TargetName.validate("foo+bar")).isNull();
+    assertThat(TargetName.validate("foo_bar")).isNull();
+    assertThat(TargetName.validate("foo=bar")).isNull();
+    assertThat(TargetName.validate("foo.bar")).isNull();
+    assertThat(TargetName.validate("foo@bar")).isNull();
+    assertThat(TargetName.validate("foo~bar")).isNull();
+    assertThat(TargetName.validate("foo#bar")).isNull();
+    assertThat(TargetName.validate("foo bar")).isNull();
 
     // Illegal names
-    assertThat(TargetName.validate("")).isFalse();
-    assertThat(TargetName.validate("/foo")).isFalse();
-    assertThat(TargetName.validate("../foo")).isFalse();
-    assertThat(TargetName.validate("./foo")).isFalse();
-    assertThat(TargetName.validate("..")).isFalse();
-    assertThat(TargetName.validate("foo/../bar")).isFalse();
-    assertThat(TargetName.validate("foo/./bar")).isFalse();
-    assertThat(TargetName.validate("foo//bar")).isFalse();
-    assertThat(TargetName.validate("foo/..")).isFalse();
-    assertThat(TargetName.validate("/..")).isFalse();
-    assertThat(TargetName.validate("foo/")).isFalse();
-    assertThat(TargetName.validate("/")).isFalse();
+    assertThat(TargetName.validate("")).isNotEmpty();
+    assertThat(TargetName.validate("/foo")).isNotEmpty();
+    assertThat(TargetName.validate("../foo")).isNotEmpty();
+    assertThat(TargetName.validate("./foo")).isNotEmpty();
+    assertThat(TargetName.validate("..")).isNotEmpty();
+    assertThat(TargetName.validate("foo/../bar")).isNotEmpty();
+    assertThat(TargetName.validate("foo/./bar")).isNotEmpty();
+    assertThat(TargetName.validate("foo//bar")).isNotEmpty();
+    assertThat(TargetName.validate("foo/..")).isNotEmpty();
+    assertThat(TargetName.validate("/..")).isNotEmpty();
+    assertThat(TargetName.validate("foo/")).isNotEmpty();
+    assertThat(TargetName.validate("/")).isNotEmpty();
+    assertThat(TargetName.validate("bar:baz")).isNotEmpty();
+    assertThat(TargetName.validate("bar:")).isNotEmpty();
+    assertThat(TargetName.validate("bar&")).isNotEmpty();
   }
 }

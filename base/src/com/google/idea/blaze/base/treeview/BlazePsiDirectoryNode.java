@@ -21,13 +21,9 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.NotNull;
 
 /** A PsiDirectoryNode that doesn't render module names or source roots. */
 public class BlazePsiDirectoryNode extends PsiDirectoryNode {
-  public BlazePsiDirectoryNode(@NotNull PsiDirectoryNode original) {
-    this(original.getProject(), original.getValue(), original.getSettings());
-  }
 
   public BlazePsiDirectoryNode(Project project, PsiDirectory directory, ViewSettings settings) {
     super(project, directory, settings);

@@ -99,7 +99,7 @@
 
     <group id="Blaze.MainMenuActionGroup" class="com.google.idea.blaze.base.actions.BlazeMenuGroup">
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="HelpMenu"/>
-      <group id ="Blaze.SyncMenuGroup" text="Sync" popup="true">
+      <group id ="Blaze.SyncMenuGroup" text="_Sync" popup="true">
         <reference id="Blaze.IncrementalSyncProject"/>
         <reference id="Blaze.FullSyncProject"/>
         <reference id="Blaze.SyncWorkingSet"/>
@@ -108,11 +108,11 @@
         <reference id="Blaze.ExpandSyncToWorkingSet"/>
         <reference id="Blaze.ShowPerformanceWarnings"/>
       </group>
-      <group id="Blaze.BuildMenuGroup" text="Build" popup="true">
+      <group id="Blaze.BuildMenuGroup" text="_Build" popup="true">
         <reference id="MakeBlazeProject"/>
         <reference id="MakeBlazeModule"/>
       </group>
-      <group id="Blaze.Project" text="Project" popup="true">
+      <group id="Blaze.Project" text="_Project" popup="true">
         <reference id="Blaze.EditLocalProjectView"/>
         <reference id="Blaze.EditProjectView"/>
         <reference id="Blaze.AddDirectoryToProjectView"/>
@@ -198,7 +198,6 @@
                         serviceImplementation="com.google.idea.blaze.base.run.testmap.TestTargetFilterImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.console.BlazeConsoleService"
                     serviceImplementation="com.google.idea.blaze.base.console.BlazeConsoleServiceImpl"/>
-    <projectService serviceImplementation="com.google.idea.blaze.base.buildmap.FileToBuildMap"/>
     <projectService serviceInterface="com.google.idea.blaze.base.targetmaps.SourceToTargetMap"
                     serviceImplementation="com.google.idea.blaze.base.targetmaps.SourceToTargetMapImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap"
@@ -352,7 +351,6 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.TestTargetHeuristic" interface="com.google.idea.blaze.base.run.TestTargetHeuristic"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ProjectDataDirectoryValidator" interface="com.google.idea.blaze.base.wizard2.ProjectDataDirectoryValidator"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AspectStrategyProvider" interface="com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProvider"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.DistributedExecutorSupport" interface="com.google.idea.blaze.base.run.DistributedExecutorSupport"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FileStringParser" interface="com.google.idea.blaze.base.run.filter.FileResolver"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeTestEventsHandler" interface="com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AttributeSpecificStringLiteralReferenceProvider" interface="com.google.idea.blaze.base.lang.buildfile.references.AttributeSpecificStringLiteralReferenceProvider"/>

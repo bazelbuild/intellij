@@ -15,12 +15,9 @@
  */
 package com.google.idea.blaze.base.projectview.section;
 
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
-import com.google.idea.blaze.base.ui.BlazeValidationError;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /** Section of labels */
@@ -33,9 +30,9 @@ public final class LabelSectionParser extends ListSectionParser<Label> {
   @Override
   protected Label parseItem(ProjectViewParser parser, ParseContext parseContext) {
     String text = parseContext.current().text;
-    List<BlazeValidationError> errors = Lists.newArrayList();
-    if (!Label.validate(text, errors)) {
-      parseContext.addErrors(errors);
+    String error = Label.validate(text);
+    if (error != null) {
+      parseContext.addError(error);
       return null;
     }
     return Label.create(text);

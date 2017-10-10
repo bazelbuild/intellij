@@ -99,7 +99,8 @@ message PyIdeInfo {
 }
 
 message GoIdeInfo {
-  repeated ArtifactLocation generated_sources = 1;
+  repeated ArtifactLocation sources = 1;
+  string import_path = 2;
 }
 
 message JsIdeInfo {

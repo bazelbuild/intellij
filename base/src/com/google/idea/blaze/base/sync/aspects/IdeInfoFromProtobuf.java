@@ -115,7 +115,7 @@ public class IdeInfoFromProtobuf {
     GoIdeInfo goIdeInfo = null;
     if (message.hasGoIdeInfo()) {
       goIdeInfo = makeGoIdeInfo(message.getGoIdeInfo());
-      sources.addAll(goIdeInfo.generatedSources);
+      sources.addAll(goIdeInfo.sources);
     }
     JsIdeInfo jsIdeInfo = null;
     if (message.hasJsIdeInfo()) {
@@ -320,7 +320,8 @@ public class IdeInfoFromProtobuf {
 
   private static GoIdeInfo makeGoIdeInfo(IntellijIdeInfo.GoIdeInfo info) {
     return GoIdeInfo.builder()
-        .addGeneratedSources(makeArtifactLocationList(info.getGeneratedSourcesList()))
+        .addSources(makeArtifactLocationList(info.getSourcesList()))
+        .setImportPath(Strings.emptyToNull(info.getImportPath()))
         .build();
   }
 

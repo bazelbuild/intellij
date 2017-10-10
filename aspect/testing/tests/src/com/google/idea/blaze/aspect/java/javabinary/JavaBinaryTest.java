@@ -84,5 +84,6 @@ public class JavaBinaryTest extends BazelIntellijAspectTest {
 
     assertThat(binaryInfo.getJavaIdeInfo().getJdeps().getRelativePath())
         .isEqualTo(testRelative("foo.jdeps"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
   }
 }

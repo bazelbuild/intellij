@@ -42,6 +42,8 @@ intellij_unit_test_suite(
         ":cpp",
         "//base",
         "//base:unit_test_utils",
+        "//common/experiments",
+        "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//sdkcompat",
         "@jsr305_annotations//jar",

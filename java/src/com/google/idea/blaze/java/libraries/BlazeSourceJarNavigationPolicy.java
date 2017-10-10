@@ -69,7 +69,7 @@ final class BlazeSourceJarNavigationPolicy extends ClsCustomNavigationPolicyEx {
   private static final BoolExperiment enabled =
       new BoolExperiment("blaze.source.jar.navigation.policy", true);
   static final BoolExperiment cacheEnabled =
-      new BoolExperiment("blaze.source.jar.navigation.policy.cache", false);
+      new BoolExperiment("blaze.source.jar.navigation.policy.cache", true);
 
   private final ConcurrentMap<Project, SimpleModificationTracker> projectSyncTrackers =
       new ConcurrentHashMap<>();

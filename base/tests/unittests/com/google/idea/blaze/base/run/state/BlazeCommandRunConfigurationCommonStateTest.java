@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.run.DistributedExecutorSupport;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -49,8 +48,6 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
     applicationServices.register(UISettings.class, new UISettings());
     projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
-
-    registerExtensionPoint(DistributedExecutorSupport.EP_NAME, DistributedExecutorSupport.class);
 
     state = new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystem(project));
   }

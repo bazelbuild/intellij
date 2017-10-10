@@ -17,8 +17,12 @@ package com.google.idea.blaze.base.lang.buildfile.language.semantics;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.common.guava.GuavaHelper;
 import com.google.repackaged.devtools.build.lib.query2.proto.proto2api.Build;
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import javax.annotation.Nullable;
 
 /** Simple implementation of RuleDefinition, from build.proto */
@@ -35,7 +39,7 @@ public class RuleDefinition implements Serializable {
 
   public static RuleDefinition fromProto(Build.RuleDefinition rule) {
     boolean hasNameAttr = false;
-    ImmutableMap.Builder<String, AttributeDefinition> map = ImmutableMap.builder();
+    Map<String, AttributeDefinition> map = new HashMap<>();
     for (Build.AttributeDefinition attr : rule.getAttributeList()) {
       map.put(attr.getName(), AttributeDefinition.fromProto(attr));
       hasNameAttr |= "name".equals(attr.getName());
@@ -43,13 +47,19 @@ public class RuleDefinition implements Serializable {
     if (!hasNameAttr) {
       map.put(NAME_ATTRIBUTE.name, NAME_ATTRIBUTE);
     }
+    ImmutableMap<String, AttributeDefinition> sortedMap =
+        map.entrySet()
+            .stream()
+            .sorted(Map.Entry.comparingByValue())
+            .collect(GuavaHelper.toImmutableMap(Entry::getKey, Entry::getValue));
     return new RuleDefinition(
-        rule.getName(), map.build(), rule.hasDocumentation() ? rule.getDocumentation() : null);
+        rule.getName(), sortedMap, rule.hasDocumentation() ? rule.getDocumentation() : null);
   }
 
   public final String name;
   /** This map is not exhaustive; it only contains documented attributes. */
   public final ImmutableMap<String, AttributeDefinition> attributes;
+
   public final ImmutableMap<String, AttributeDefinition> mandatoryAttributes;
 
   @Nullable public final String documentation;

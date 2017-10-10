@@ -70,7 +70,7 @@ public class BlazeScalaMainClassConfigurationProducerTest
     BlazeRunConfiguration blazeConfig = (BlazeRunConfiguration) config;
     assertThat(blazeConfig).isNotNull();
     assertThat(blazeConfig.getTarget())
-        .isEqualTo(TargetExpression.fromString("//com/google/binary:UnrelatedName"));
+        .isEqualTo(TargetExpression.fromStringSafe("//com/google/binary:UnrelatedName"));
   }
 
   @Test
@@ -166,7 +166,7 @@ public class BlazeScalaMainClassConfigurationProducerTest
     BlazeRunConfiguration blazeConfig = (BlazeRunConfiguration) config;
     assertThat(blazeConfig).isNotNull();
     assertThat(blazeConfig.getTarget())
-        .isEqualTo(TargetExpression.fromString("//com/google/binary:MainClass"));
+        .isEqualTo(TargetExpression.fromStringSafe("//com/google/binary:MainClass"));
   }
 
   @Test
@@ -208,6 +208,6 @@ public class BlazeScalaMainClassConfigurationProducerTest
     BlazeRunConfiguration blazeConfig = (BlazeRunConfiguration) config;
     assertThat(blazeConfig).isNotNull();
     assertThat(blazeConfig.getTarget())
-        .isEqualTo(TargetExpression.fromString("//com/google/binary:OtherName"));
+        .isEqualTo(TargetExpression.fromStringSafe("//com/google/binary:OtherName"));
   }
 }

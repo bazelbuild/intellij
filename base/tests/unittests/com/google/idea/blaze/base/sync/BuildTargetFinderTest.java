@@ -32,6 +32,8 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import java.io.File;
 import java.util.Collection;
@@ -72,6 +74,7 @@ public class BuildTargetFinderTest extends BlazeTestCase {
     super.initTest(applicationServices, projectServices);
 
     applicationServices.register(FileAttributeProvider.class, fileAttributeProvider);
+    applicationServices.register(ExperimentService.class, new MockExperimentService());
     applicationServices.register(
         BlazeImportSettingsManager.class, mock(BlazeImportSettingsManager.class));
     ExtensionPoint<BuildSystemProvider> extensionPoint =
@@ -99,7 +102,7 @@ public class BuildTargetFinderTest extends BlazeTestCase {
         new File("/root/j/c/g/some/dir/File.java"));
 
     assertThat(buildTargetFinder.findTargetForFile(new File("/root/j/c/g/some/dir/File.java")))
-        .isEqualTo(TargetExpression.fromString("//j/c/g/some:all"));
+        .isEqualTo(TargetExpression.fromStringSafe("//j/c/g/some:all"));
   }
 
   @Test
@@ -143,7 +146,7 @@ public class BuildTargetFinderTest extends BlazeTestCase {
         new File("/root/j/c/g/bar/dir/File.java"));
 
     assertThat(buildTargetFinder.findTargetForFile(new File("/root/j/c/g/bar/dir/File.java")))
-        .isEqualTo(TargetExpression.fromString("//j/c/g/bar:all"));
+        .isEqualTo(TargetExpression.fromStringSafe("//j/c/g/bar:all"));
   }
 
   @Test
@@ -155,6 +158,6 @@ public class BuildTargetFinderTest extends BlazeTestCase {
         new File("/root/j/c/g/some/BUILD"), new File("/root/j/c/g/BUILD"));
 
     assertThat(buildTargetFinder.findTargetForFile(new File("/root/j/c/g/some/BUILD")))
-        .isEqualTo(TargetExpression.fromString("//j/c/g/some:all"));
+        .isEqualTo(TargetExpression.fromStringSafe("//j/c/g/some:all"));
   }
 }

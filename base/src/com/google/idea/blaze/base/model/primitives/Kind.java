@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.model.primitives;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.Collection;
 import javax.annotation.Nullable;
@@ -35,6 +36,8 @@ public enum Kind {
   JAVA_IMPORT("java_import", LanguageClass.JAVA, RuleType.UNKNOWN),
   JAVA_TOOLCHAIN("java_toolchain", LanguageClass.JAVA, RuleType.UNKNOWN),
   JAVA_PROTO_LIBRARY("java_proto_library", LanguageClass.JAVA, RuleType.UNKNOWN),
+  JAVA_LITE_PROTO_LIBRARY("java_lite_proto_library", LanguageClass.JAVA, RuleType.UNKNOWN),
+  JAVA_MUTABLE_PROTO_LIBRARY("java_mutable_proto_library", LanguageClass.JAVA, RuleType.UNKNOWN),
   JAVA_PLUGIN("java_plugin", LanguageClass.JAVA, RuleType.UNKNOWN),
   PROTO_LIBRARY("proto_library", LanguageClass.GENERIC, RuleType.UNKNOWN),
   ANDROID_RESOURCES("android_resources", LanguageClass.ANDROID, RuleType.UNKNOWN),
@@ -91,6 +94,9 @@ public enum Kind {
   static final ImmutableMap<String, Kind> STRING_TO_KIND = makeStringToKindMap();
 
   static final ImmutableMultimap<LanguageClass, Kind> PER_LANGUAGES_KINDS = makePerLanguageMap();
+
+  public static final ImmutableSet<Kind> JAVA_PROTO_LIBRARY_KINDS =
+      ImmutableSet.of(JAVA_PROTO_LIBRARY, JAVA_LITE_PROTO_LIBRARY, JAVA_MUTABLE_PROTO_LIBRARY);
 
   private static ImmutableMap<String, Kind> makeStringToKindMap() {
     ImmutableMap.Builder<String, Kind> result = ImmutableMap.builder();

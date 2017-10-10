@@ -77,7 +77,7 @@ public class GitWorkingSetProvider {
         Arrays.asList(untrackedFilesOutput.split("\n"))
             .stream()
             .filter(s -> !Strings.isNullOrEmpty(s))
-            .filter(WorkspacePath::validate)
+            .filter(WorkspacePath::isValid)
             .map(WorkspacePath::new)
             .collect(Collectors.toList());
 

@@ -40,5 +40,9 @@ public class PyLibraryTest extends BazelIntellijAspectTest {
 
     assertThat(relativePathsForArtifacts(target.getPyIdeInfo().getSourcesList()))
         .containsExactly(testRelative("simple.py"));
+
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-py"))
+        .containsExactly(testRelative("simple.intellij-info.txt"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
   }
 }

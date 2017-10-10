@@ -39,6 +39,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Known attributes for built-in blaze functions. */
@@ -65,7 +66,9 @@ public class BuiltInFunctionAttributeCompletionContributor extends CompletionCon
             .andOr(
                 psiElement().withSuperParent(2, FuncallExpression.class),
                 psiElement()
-                    .withSuperParent(2, Argument.class)
+                    .andOr(
+                        psiElement().withSuperParent(2, Argument.class),
+                        psiElement().withParent(Argument.class))
                     .andNot(psiElement().afterLeaf("="))
                     .andNot(
                         psiElement()
@@ -82,21 +85,27 @@ public class BuiltInFunctionAttributeCompletionContributor extends CompletionCon
             if (spec == null) {
               return;
             }
-            RuleDefinition rule = spec.getRule(getEnclosingFuncallName(parameters.getPosition()));
+            FuncallExpression funcall = getEnclosingFuncall(parameters.getPosition());
+            if (funcall == null) {
+              return;
+            }
+            RuleDefinition rule = spec.getRule(funcall.getFunctionName());
             if (rule == null) {
               return;
             }
+            Set<String> existingAttributes = funcall.getKeywordArgumentNames();
             for (String attributeName : rule.getKnownAttributeNames()) {
-              result.addElement(
-                  LookupElementBuilder.create(attributeName).withIcon(AllIcons.Nodes.Parameter));
+              if (!existingAttributes.contains(attributeName)) {
+                result.addElement(
+                    LookupElementBuilder.create(attributeName).withIcon(AllIcons.Nodes.Parameter));
+              }
             }
           }
         });
   }
 
   @Nullable
-  private static String getEnclosingFuncallName(PsiElement element) {
-    FuncallExpression funcall = PsiUtils.getParentOfType(element, FuncallExpression.class, true);
-    return funcall != null ? funcall.getFunctionName() : null;
+  private static FuncallExpression getEnclosingFuncall(PsiElement element) {
+    return PsiUtils.getParentOfType(element, FuncallExpression.class, true);
   }
 }

@@ -62,6 +62,7 @@ public class JavaTestTest extends BazelIntellijAspectTest {
         .containsAllOf(testRelative("FooTest.jar"), testRelative("FooTest-src.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile"))
         .contains(testRelative("FooTest.jar"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
 
     assertThat(testInfo.getJavaIdeInfo().getJdeps().getRelativePath())
         .isEqualTo(testRelative("FooTest.jdeps"));

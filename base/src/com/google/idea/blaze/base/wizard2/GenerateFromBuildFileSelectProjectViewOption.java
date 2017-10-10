@@ -100,7 +100,7 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
     if (buildFilePath.isEmpty()) {
       return BlazeValidationResult.failure("BUILD file field cannot be empty.");
     }
-    if (!WorkspacePath.validate(buildFilePath)) {
+    if (!WorkspacePath.isValid(buildFilePath)) {
       return BlazeValidationResult.failure(
           "Invalid BUILD file path: specify a path relative to the workspace root.");
     }
@@ -202,11 +202,11 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
     File fileBrowserRoot = builder.getWorkspaceOption().getFileBrowserRoot();
     File startingLocation = fileBrowserRoot;
     String buildFilePath = getBuildFilePath();
-    if (!buildFilePath.isEmpty() && WorkspacePath.validate(buildFilePath)) {
+    if (!buildFilePath.isEmpty() && WorkspacePath.isValid(buildFilePath)) {
       // If the user has typed part of the path then clicked the '...', try to start from the
       // partial state
       buildFilePath = StringUtil.trimEnd(buildFilePath, '/');
-      if (WorkspacePath.validate(buildFilePath)) {
+      if (WorkspacePath.isValid(buildFilePath)) {
         File fileLocation = workspacePathResolver.resolveToFile(new WorkspacePath(buildFilePath));
         if (fileLocation.exists() && FileUtil.isAncestor(fileBrowserRoot, fileLocation, true)) {
           startingLocation = fileLocation;

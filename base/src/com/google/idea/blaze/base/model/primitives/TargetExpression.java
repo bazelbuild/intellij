@@ -16,28 +16,61 @@
 package com.google.idea.blaze.base.model.primitives;
 
 import com.google.common.base.Preconditions;
+import com.google.idea.blaze.base.sync.sharding.WildcardTargetPattern;
+import com.google.idea.common.experiments.BoolExperiment;
 import java.io.Serializable;
+import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 /**
  * An interface for objects that represent targets you could pass to Blaze on the command line. See
- * {@link com.google.idea.blaze.base.model.primitives.Label},
+ * {@link Label}.
+ *
+ * <p>TargetExpression is a generalization of {@link Label} to include wildcards for finding all
+ * packages beneath some root, and/or all targets within a package.
  */
 public class TargetExpression implements Serializable, Comparable<TargetExpression> {
   public static final long serialVersionUID = 1L;
 
+  // Additional TargetExpression validation has the potential to break many users, so
+  // roll it out under an experiment.
+  static final BoolExperiment enableValidation =
+      new BoolExperiment("blaze.validate.target.expressions", true);
+
+  protected static final Pattern VALID_REPO_NAME = Pattern.compile("@[\\w\\-.]*");
+
   private final String expression;
+
+  /** Silently returns null if this is not a valid {@link TargetExpression}. */
+  @Nullable
+  public static TargetExpression fromStringSafe(String expression) {
+    String error = validate(expression);
+    if (error != null) {
+      return null;
+    }
+    return Label.validate(expression) == null
+        ? Label.create(expression)
+        : new TargetExpression(expression);
+  }
 
   /**
    * @return A Label instance if the expression is a valid label, or a TargetExpression instance if
    *     it is not.
+   * @throws InvalidTargetException if it's not a valid blaze target pattern
    */
-  public static TargetExpression fromString(String expression) {
-    return Label.validate(expression) ? Label.create(expression) : new TargetExpression(expression);
+  public static TargetExpression fromString(String expression) throws InvalidTargetException {
+    String error = validate(expression);
+    if (error != null) {
+      throw new InvalidTargetException(error);
+    }
+    return Label.validate(expression) == null
+        ? Label.create(expression)
+        : new TargetExpression(expression);
   }
 
   protected TargetExpression(String expression) {
-    // TODO(joshgiles): Validation/canonicalization for target expressions.
-    // For reference, handled in Blaze/Bazel in TargetPattern.java.
+    // TODO(brendandouglas): Remove this redundant check when the 'enableValidation' experiment is
+    // removed.
     Preconditions.checkArgument(!expression.isEmpty(), "Target should be non-empty.");
     this.expression = expression;
   }
@@ -81,5 +114,55 @@ public class TargetExpression implements Serializable, Comparable<TargetExpressi
   @Override
   public int compareTo(TargetExpression o) {
     return expression.compareTo(o.expression);
+  }
+
+  /** Validate the given target pattern. Returns null on success or an error message otherwise. */
+  @Nullable
+  public static String validate(String targetPattern) {
+    if (!enableValidation.getValue()) {
+      return null;
+    }
+    if (targetPattern.isEmpty()) {
+      return "Target should be non-empty.";
+    }
+    if (targetPattern.charAt(0) == '-') {
+      targetPattern = targetPattern.substring(1);
+    }
+
+    if (targetPattern.charAt(0) == '@') {
+      int slashesIndex = targetPattern.indexOf("//");
+      if (slashesIndex <= 1) {
+        return String.format(
+            "Invalid target expression '%s': Couldn't find package path", targetPattern);
+      }
+      if (!VALID_REPO_NAME.matcher(targetPattern.substring(0, slashesIndex)).matches()) {
+        return String.format(
+            "Invalid target expression '%s': workspace names may contain only "
+                + "A-Z, a-z, 0-9, '-', '_' and '.'",
+            targetPattern);
+      }
+      targetPattern = targetPattern.substring(slashesIndex);
+    }
+    targetPattern = WildcardTargetPattern.stripWildcardSuffix(targetPattern);
+
+    String error = PackagePathValidator.validatePackageName(getPackagePath(targetPattern));
+    if (error != null) {
+      return error;
+    }
+
+    int colonIndex = targetPattern.indexOf(':');
+    if (colonIndex < 0) {
+      return null;
+    }
+    return TargetName.validate(targetPattern.substring(colonIndex + 1));
+  }
+
+  /** Parse package path from a target pattern of the form [//][packagePath][:targetName] */
+  private static String getPackagePath(String targetPattern) {
+    int colonIndex = targetPattern.indexOf(':');
+    int prefixLength = targetPattern.startsWith("//") ? 2 : 0;
+    return colonIndex >= 0
+        ? targetPattern.substring(prefixLength, colonIndex)
+        : targetPattern.substring(prefixLength);
   }
 }

@@ -57,6 +57,12 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
     this.flags = ImmutableList.copyOf(flags);
   }
 
+  public RunConfigurationFlagsState copy() {
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState(tag, fieldLabel);
+    state.setRawFlags(getRawFlags());
+    return state;
+  }
+
   @Override
   public void readExternal(Element element) {
     ImmutableList.Builder<String> flagsBuilder = ImmutableList.builder();

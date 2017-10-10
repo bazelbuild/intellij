@@ -50,6 +50,8 @@ import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -83,6 +85,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(BlazeExecutor.class, new MockBlazeExecutor());
+    applicationServices.register(ExperimentService.class, new MockExperimentService());
     compilerVersionChecker = new MockCompilerVersionChecker("1234");
     applicationServices.register(CompilerVersionChecker.class, compilerVersionChecker);
     applicationServices.register(ProgressManager.class, new ProgressManagerImpl());
@@ -600,7 +603,9 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   private static ListSection<TargetExpression> targets(String... targets) {
     return ListSection.builder(TargetSection.KEY)
         .addAll(
-            Arrays.stream(targets).map(TargetExpression::fromString).collect(Collectors.toList()))
+            Arrays.stream(targets)
+                .map(TargetExpression::fromStringSafe)
+                .collect(Collectors.toList()))
         .build();
   }
 

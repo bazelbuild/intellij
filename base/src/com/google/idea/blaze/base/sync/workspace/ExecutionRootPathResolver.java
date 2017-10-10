@@ -65,8 +65,13 @@ public class ExecutionRootPathResolver {
       return ImmutableList.of(path.getAbsoluteOrRelativeFile());
     }
     if (isInWorkspace(path)) {
-      WorkspacePath workspacePath = new WorkspacePath(path.getAbsoluteOrRelativeFile().getPath());
-      return workspacePathResolver.resolveToIncludeDirectories(workspacePath);
+      WorkspacePath workspacePath =
+          WorkspacePath.createIfValid(path.getAbsoluteOrRelativeFile().getPath());
+      if (workspacePath != null) {
+        return workspacePathResolver.resolveToIncludeDirectories(workspacePath);
+      } else {
+        return ImmutableList.of();
+      }
     }
     return ImmutableList.of(path.getFileRootedAt(executionRoot));
   }

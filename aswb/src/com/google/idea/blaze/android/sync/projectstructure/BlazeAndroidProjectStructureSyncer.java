@@ -255,6 +255,17 @@ public class BlazeAndroidProjectStructureSyncer {
               AndroidFacetModuleCustomizer.createAndroidFacet(newModule);
               moduleEditor.commit();
             });
+    File moduleDirectory =
+        moduleDirectoryForAndroidTarget(WorkspaceRoot.fromProject(project), target);
+    updateModuleFacetInMemoryState(
+        project,
+        androidSdkPlatform,
+        newModule,
+        moduleDirectory,
+        manifestFileForAndroidTarget(
+            blazeProjectData.artifactLocationDecoder, target.androidIdeInfo, moduleDirectory),
+        target.androidIdeInfo.resourceJavaPackage,
+        ImmutableList.of());
     return newModule;
   }
 

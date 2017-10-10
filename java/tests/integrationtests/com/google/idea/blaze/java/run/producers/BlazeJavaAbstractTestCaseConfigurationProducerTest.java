@@ -47,7 +47,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     extends BlazeRunConfigurationProducerTestCase {
 
   @Test
-  public void testNonAbstractClassIgnored() {
+  public void testIgnoreTestClassWitNoTestSubclasses() {
     PsiFile javaFile =
         createAndIndexFile(
             new WorkspacePath("java/com/google/test/TestClass.java"),
@@ -68,6 +68,49 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
         new BlazeJavaAbstractTestCaseConfigurationProducer()
             .createConfigurationFromContext(context);
     assertThat(fromContext).isNull();
+  }
+
+  @Test
+  public void testHandlesNonAbstractClassWithTestSubclass() {
+    workspace.createPsiDirectory(new WorkspacePath("java/com/google/test"));
+    PsiFile superClassFile =
+        createAndIndexFile(
+            new WorkspacePath("java/com/google/test/NonAbstractSuperClassTestCase.java"),
+            "package com.google.test;",
+            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
+            "public class NonAbstractSuperClassTestCase {",
+            "  @org.junit.Test",
+            "  public void testMethod() {}",
+            "}");
+
+    createAndIndexFile(
+        new WorkspacePath("java/com/google/test/TestClass.java"),
+        "package com.google.test;",
+        "import com.google.test.NonAbstractSuperClassTestCase;",
+        "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
+        "public class TestClass extends NonAbstractSuperClassTestCase {",
+        "  @org.junit.Test",
+        "  public void anotherTestMethod() {}",
+        "}");
+
+    PsiClass javaClass = ((PsiClassOwner) superClassFile).getClasses()[0];
+    assertThat(javaClass).isNotNull();
+
+    ConfigurationContext context = createContextFromPsi(superClassFile);
+    List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
+    assertThat(configurations).hasSize(1);
+
+    ConfigurationFromContext fromContext = configurations.get(0);
+    assertThat(fromContext.isProducedBy(BlazeJavaAbstractTestCaseConfigurationProducer.class))
+        .isTrue();
+    assertThat(fromContext.getSourceElement()).isEqualTo(javaClass);
+
+    RunConfiguration config = fromContext.getConfiguration();
+    assertThat(config).isInstanceOf(BlazeCommandRunConfiguration.class);
+    BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) config;
+    assertThat(blazeConfig.getTarget()).isNull();
+    assertThat(blazeConfig.getName())
+        .isEqualTo("Choose subclass for NonAbstractSuperClassTestCase");
   }
 
   @Test
@@ -107,7 +150,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     assertThat(config).isInstanceOf(BlazeCommandRunConfiguration.class);
     BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) config;
     assertThat(blazeConfig.getTarget()).isNull();
-    assertThat(blazeConfig.getName()).isEqualTo("AbstractTestCase");
+    assertThat(blazeConfig.getName()).isEqualTo("Choose subclass for AbstractTestCase");
 
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
@@ -126,7 +169,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
         fromContext, context, EmptyRunnable.INSTANCE);
 
     assertThat(blazeConfig.getTarget())
-        .isEqualTo(TargetExpression.fromString("//java/com/google/test:TestClass"));
+        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
     assertThat(getTestFilterContents(blazeConfig))
         .isEqualTo(BlazeFlags.TEST_FILTER + "=com.google.test.TestClass#");
   }
@@ -168,7 +211,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     assertThat(config).isInstanceOf(BlazeCommandRunConfiguration.class);
     BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) config;
     assertThat(blazeConfig.getTarget()).isNull();
-    assertThat(blazeConfig.getName()).isEqualTo("AbstractTestCase.testMethod");
+    assertThat(blazeConfig.getName()).isEqualTo("Choose subclass for AbstractTestCase.testMethod");
 
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
@@ -187,7 +230,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
         fromContext, context, EmptyRunnable.INSTANCE);
 
     assertThat(blazeConfig.getTarget())
-        .isEqualTo(TargetExpression.fromString("//java/com/google/test:TestClass"));
+        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
     assertThat(getTestFilterContents(blazeConfig))
         .isEqualTo(BlazeFlags.TEST_FILTER + "=com.google.test.TestClass#testMethod$");
   }

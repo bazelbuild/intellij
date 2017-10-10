@@ -78,6 +78,7 @@ public class JavaLibraryTest extends BazelIntellijAspectTest {
             testRelative("libsimple-src.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile"))
         .containsExactly(testRelative("libsimple.jar"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
 
     assertThat(target.getJavaIdeInfo().getJdeps().getRelativePath())
         .isEqualTo(testRelative("libsimple.jdeps"));

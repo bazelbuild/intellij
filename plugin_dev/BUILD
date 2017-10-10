@@ -32,7 +32,7 @@ optional_plugin_xml(
 
 OPTIONAL_PLUGIN_XMLS = [
     ":optional_xml",
-    "//java:optional_xml",
+    "//java:optional_java",
 ]
 
 filegroup(

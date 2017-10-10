@@ -195,7 +195,18 @@ java_library(
     name = "coverage",
     neverlink = 1,
     exports = select_from_plugin_api_directory(
-        android_studio = [],
+        android_studio = [":coverage"],
+        clion = [],
+        intellij = [":coverage"],
+    ),
+)
+
+# IntelliJ Coverage plugin
+java_library(
+    name = "coverage_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [":coverage"],
         clion = [],
         intellij = [":coverage"],
     ),

@@ -55,7 +55,8 @@ merged_plugin_xml(
 )
 
 OPTIONAL_PLUGIN_XMLS = [
-    "//java:optional_xml",
+    "//java:optional_java",
+    "//java:optional_coverage",
     ":optional_cpp_xml",
     ":optional_ndk_xml",
 ]

@@ -20,35 +20,26 @@ import com.intellij.openapi.ui.Messages;
 import java.util.Collection;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
-import org.jetbrains.annotations.NotNull;
 
 /** An error occuring during a blaze validation */
 @Immutable
 public final class BlazeValidationError {
 
-  @NotNull private final String error;
+  private final String error;
 
-  public BlazeValidationError(@NotNull String validationFailure) {
+  public BlazeValidationError(String validationFailure) {
     this.error = validationFailure;
   }
 
-  @NotNull
   public String getError() {
     return error;
   }
 
   public static void collect(
-      @Nullable Collection<BlazeValidationError> errors, @NotNull BlazeValidationError error) {
+      @Nullable Collection<BlazeValidationError> errors, BlazeValidationError error) {
     if (errors != null) {
       errors.add(error);
     }
-  }
-
-  public static void throwError(@NotNull Collection<BlazeValidationError> errors)
-      throws IllegalArgumentException {
-    BlazeValidationError error = !errors.isEmpty() ? errors.iterator().next() : null;
-    String errorMessage = error != null ? error.getError() : "Unknown validation error";
-    throw new IllegalArgumentException(errorMessage);
   }
 
   /**
@@ -57,9 +48,7 @@ public final class BlazeValidationError {
    * @return true if there are no errors
    */
   public static boolean verify(
-      @NotNull Project project,
-      @NotNull String title,
-      @NotNull Collection<BlazeValidationError> errors) {
+      Project project, String title, Collection<BlazeValidationError> errors) {
     if (!errors.isEmpty()) {
       BlazeValidationError error = errors.iterator().next();
       Messages.showErrorDialog(project, error.getError(), title);

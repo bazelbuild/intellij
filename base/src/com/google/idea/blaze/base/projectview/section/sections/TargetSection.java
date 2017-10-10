@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.projectview.section.sections;
 
+import com.google.idea.blaze.base.model.primitives.InvalidTargetException;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -39,10 +40,16 @@ public class TargetSection {
       super(KEY);
     }
 
+    @Nullable
     @Override
     protected TargetExpression parseItem(ProjectViewParser parser, ParseContext parseContext) {
       String text = parseContext.current().text;
-      return TargetExpression.fromString(text);
+      try {
+        return TargetExpression.fromString(text);
+      } catch (InvalidTargetException e) {
+        parseContext.addError(e.getMessage());
+        return null;
+      }
     }
 
     @Override
@@ -75,7 +82,7 @@ public class TargetSection {
           TextBlock.of("  # Add targets that reach the source code that you want to resolve here"));
       if (buildSystem == BuildSystem.Bazel) {
         builder.add(TextBlock.of("  # By default, we've added all targets in your workspace"));
-        builder.add(TargetExpression.fromString("//..."));
+        builder.add(TargetExpression.fromStringSafe("//..."));
       }
       builder.add(TextBlock.newLine());
       return ProjectView.builder(topLevelProjectView).add(builder).build();

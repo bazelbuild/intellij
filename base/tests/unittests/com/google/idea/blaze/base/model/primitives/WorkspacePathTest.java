@@ -17,10 +17,7 @@ package com.google.idea.blaze.base.model.primitives;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.ui.BlazeValidationError;
-import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -32,38 +29,31 @@ public class WorkspacePathTest extends BlazeTestCase {
   @Test
   public void testValidation() {
     // Valid workspace paths
-    assertThat(WorkspacePath.validate("")).isTrue();
-    assertThat(WorkspacePath.validate("foo")).isTrue();
-    assertThat(WorkspacePath.validate("foo")).isTrue();
-    assertThat(WorkspacePath.validate("foo/bar")).isTrue();
-    assertThat(WorkspacePath.validate("foo/bar/baz")).isTrue();
+    assertThat(WorkspacePath.isValid("")).isTrue();
+    assertThat(WorkspacePath.isValid("foo")).isTrue();
+    assertThat(WorkspacePath.isValid("foo")).isTrue();
+    assertThat(WorkspacePath.isValid("foo/bar")).isTrue();
+    assertThat(WorkspacePath.isValid("foo/bar/baz")).isTrue();
 
     // Invalid workspace paths
-    assertThat(WorkspacePath.validate("/foo")).isFalse();
-    assertThat(WorkspacePath.validate("//foo")).isFalse();
-    assertThat(WorkspacePath.validate("/")).isFalse();
-    assertThat(WorkspacePath.validate("foo/")).isFalse();
-    assertThat(WorkspacePath.validate("foo:")).isFalse();
-    assertThat(WorkspacePath.validate(":")).isFalse();
-    assertThat(WorkspacePath.validate("foo:bar")).isFalse();
+    assertThat(WorkspacePath.isValid("/foo")).isFalse();
+    assertThat(WorkspacePath.isValid("//foo")).isFalse();
+    assertThat(WorkspacePath.isValid("/")).isFalse();
+    assertThat(WorkspacePath.isValid("foo/")).isFalse();
+    assertThat(WorkspacePath.isValid("foo:")).isFalse();
+    assertThat(WorkspacePath.isValid(":")).isFalse();
+    assertThat(WorkspacePath.isValid("foo:bar")).isFalse();
 
-    List<BlazeValidationError> errors = Lists.newArrayList();
-
-    WorkspacePath.validate("/foo", errors);
-    assertThat(errors.get(0).getError())
+    assertThat(WorkspacePath.validate("/foo"))
         .isEqualTo("Workspace path must be relative; cannot start with '/': /foo");
-    errors.clear();
 
-    WorkspacePath.validate("/", errors);
-    assertThat(errors.get(0).getError())
+    assertThat(WorkspacePath.validate("/"))
         .isEqualTo("Workspace path must be relative; cannot start with '/': /");
-    errors.clear();
 
-    WorkspacePath.validate("foo/", errors);
-    assertThat(errors.get(0).getError()).isEqualTo("Workspace path may not end with '/': foo/");
-    errors.clear();
+    assertThat(WorkspacePath.validate("foo/"))
+        .isEqualTo("Workspace path may not end with '/': foo/");
 
-    WorkspacePath.validate("foo:bar", errors);
-    assertThat(errors.get(0).getError()).isEqualTo("Workspace path may not contain ':': foo:bar");
+    assertThat(WorkspacePath.validate("foo:bar"))
+        .isEqualTo("Workspace path may not contain ':': foo:bar");
   }
 }

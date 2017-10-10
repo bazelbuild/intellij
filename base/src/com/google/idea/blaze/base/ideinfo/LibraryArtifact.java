@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import java.io.Serializable;
@@ -38,7 +40,7 @@ public class LibraryArtifact implements Serializable {
 
     this.interfaceJar = interfaceJar;
     this.classJar = classJar;
-    this.sourceJars = sourceJars;
+    this.sourceJars = checkNotNull(sourceJars);
   }
 
   /**

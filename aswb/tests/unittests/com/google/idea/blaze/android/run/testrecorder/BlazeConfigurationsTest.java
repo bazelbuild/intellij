@@ -48,6 +48,8 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
@@ -83,6 +85,7 @@ public class BlazeConfigurationsTest extends BlazeTestCase {
 
     mockBlazeImportSettings(projectServices);
     applicationServices.register(TargetFinder.class, new MockTargetFinder());
+    applicationServices.register(ExperimentService.class, new MockExperimentService());
 
     ExtensionPoint<ConfigurationType> configurationTypeExtensionPoint =
         registerExtensionPoint(ConfigurationType.CONFIGURATION_TYPE_EP, ConfigurationType.class);

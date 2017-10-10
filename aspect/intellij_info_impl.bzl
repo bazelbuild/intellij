@@ -8,6 +8,7 @@ DEPS = [
     "_java_toolchain",  # From java rules
     "deps",
     "exports",
+    "java_lib",  # From old proto_library rules
     "_robolectric",  # From android_robolectric_test
     "_android_sdk",  # from android rules
     "aidl_lib",  # from android_sdk
@@ -276,22 +277,48 @@ def _collect_generated_proto_go_sources(target):
   if not go_proto_info:
     return None
   files = getattr(go_proto_info, "files_to_build", [])
-  return depset([f for f in files if f.basename.endswith(".pb.go")])
+  return [f for f in files if f.basename.endswith(".pb.go")]
 
-def collect_go_info(target, ide_info, ide_info_file, output_groups):
+def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
   """Updates Go-specific output groups, returns false if not a recognized Go target."""
+  sources = []
+  generated = []
+
   # currently there's no Go Skylark API, with the only exception being proto_library targets
-  generated_sources = _collect_generated_proto_go_sources(target)
-  if not generated_sources:
-    return False
+  if ctx.rule.kind in ["go_binary",
+                       "go_library",
+                       "go_test",
+                       "go_appengine_binary",
+                       "go_appengine_library",
+                       "go_appengine_test"]:
+    sources += [f for src in getattr(ctx.rule.attr, "srcs", []) for f in src.files]
+    generated += [f for f in sources if not f.is_source]
+  elif ctx.rule.kind == "go_wrap_cc":
+    # we want the .go file, but the rule only provides .a and .x files
+    # add those to the output group to make sure the .go file gets built,
+    # then manually construct the .go file in the sync plugin
+    # TODO(chaorenl): change this if we ever get the .go file from a provider
+    generated += target.files.to_list()
+  else:
+    proto_sources = _collect_generated_proto_go_sources(target)
+    if not proto_sources:
+      return False
+    sources += proto_sources
+    generated += proto_sources
+
+  import_path = None
+  go_semantics = getattr(semantics, "go", None)
+  if go_semantics:
+    import_path = go_semantics.get_import_path(ctx)
 
   ide_info["go_ide_info"] = struct_omit_none(
-      generated_sources = [artifact_location(f) for f in generated_sources],
+      sources = [artifact_location(f) for f in sources],
+      import_path = import_path,
   )
 
   update_set_in_dict(output_groups, "intellij-info-go", depset([ide_info_file]))
-  update_set_in_dict(output_groups, "intellij-compile-go", generated_sources)
-  update_set_in_dict(output_groups, "intellij-resolve-go", generated_sources)
+  update_set_in_dict(output_groups, "intellij-compile-go", depset(generated))
+  update_set_in_dict(output_groups, "intellij-resolve-go", depset(generated))
   return True
 
 def collect_cpp_info(target, ctx, ide_info, ide_info_file, output_groups):
@@ -366,15 +393,18 @@ def collect_c_toolchain_info(ctx, ide_info, ide_info_file, output_groups):
   update_set_in_dict(output_groups, "intellij-info-cpp", depset([ide_info_file]))
   return True
 
-def get_java_provider(target, semantics):
+def get_java_provider(target):
+  """Find a provider exposing java compilation/outputs data."""
   if hasattr(target, "proto_java"):
     return target.proto_java
   if hasattr(target, "java"):
     return target.java
   if hasattr(target, "scala"):
     return target.scala
-  if hasattr(semantics, "java") and hasattr(semantics.java, "alternative_java_provider"):
-    return semantics.java.alternative_java_provider(target)
+  # java_common.provider is a work in progress. It will soon expose the information
+  # we require (e.g. outputs jars, jdeps), but does not yet do so.
+  if java_common.provider in target:
+    return target[java_common.provider]
   return None
 
 def get_java_jars(outputs):
@@ -387,8 +417,8 @@ def get_java_jars(outputs):
 
 def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
   """Updates Java-specific output groups, returns false if not a Java target."""
-  java = get_java_provider(target, semantics)
-  if not java:
+  java = get_java_provider(target)
+  if not java or not hasattr(java, "outputs") or not java.outputs:
     return False
 
   java_semantics = semantics.java if hasattr(semantics, "java") else None
@@ -704,7 +734,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
   handled = collect_py_info(target, ctx, ide_info, ide_info_file, output_groups) or handled
   handled = collect_cpp_info(target, ctx, ide_info, ide_info_file, output_groups) or handled
   handled = collect_c_toolchain_info(ctx, ide_info, ide_info_file, output_groups) or handled
-  handled = collect_go_info(target, ide_info, ide_info_file, output_groups) or handled
+  handled = collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
   handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
   handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
   handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled

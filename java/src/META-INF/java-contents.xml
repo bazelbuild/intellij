@@ -78,6 +78,9 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationProducer
+        implementation="com.google.idea.blaze.java.run.producers.BlazeJavaAbstractTestCaseConfigurationProducer"
+        order="first"/>
+    <runConfigurationProducer
         implementation="com.google.idea.blaze.java.run.producers.BlazeJavaMainClassRunConfigurationProducer"
         order="first"/>
     <runConfigurationProducer
@@ -85,9 +88,6 @@
         order="first"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestMethodConfigurationProducer"
-        order="first"/>
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.java.run.producers.BlazeJavaAbstractTestCaseConfigurationProducer"
         order="first"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.java.run.producers.MultipleJavaClassesTestConfigurationProducer"

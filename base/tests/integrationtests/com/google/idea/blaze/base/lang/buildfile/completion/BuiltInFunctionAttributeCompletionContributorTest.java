@@ -110,6 +110,43 @@ public class BuiltInFunctionAttributeCompletionContributorTest
   }
 
   @Test
+  public void testDoNotShowExistingAttributesInAutocompleteSuggestions() {
+    setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
+
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "sh_binary(name = 'bin', )");
+
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, "sh_binary(name = 'bin', ".length());
+
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
+    assertThat(completionItems).asList().containsAllOf("deps", "srcs", "data");
+    assertThat(completionItems).asList().doesNotContain("name");
+  }
+
+  @Test
+  public void testCompletionAtEndOfElement() {
+    setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
+
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("BUILD"),
+            "sh_binary(",
+            "    nam = 'bin',",
+            "    srcs = ['source.sh', 'other_source.sh'],",
+            ")");
+
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 1, "    nam".length());
+    assertThat(editorTest.getCompletionItemsAsStrings()).isNull();
+    assertFileContents(
+        file,
+        "sh_binary(",
+        "    name = 'bin',",
+        "    srcs = ['source.sh', 'other_source.sh'],",
+        ")");
+  }
+
+  @Test
   public void testCompletionInSkylarkExtension() {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 

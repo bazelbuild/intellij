@@ -15,12 +15,9 @@
  */
 package com.google.idea.blaze.base.model.primitives;
 
-import com.google.idea.blaze.base.ui.BlazeValidationError;
 import java.io.Serializable;
-import java.util.Collection;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a path relative to the workspace root. The path component separator is Blaze specific.
@@ -36,58 +33,54 @@ public class WorkspacePath implements Serializable {
   /** Silently returns null if this is not a valid workspace path. */
   @Nullable
   public static WorkspacePath createIfValid(String relativePath) {
-    if (validate(relativePath)) {
-      return new WorkspacePath(relativePath);
-    }
-    return null;
+    return isValid(relativePath) ? new WorkspacePath(relativePath) : null;
   }
 
   private static final char BLAZE_COMPONENT_SEPARATOR = '/';
 
-  @NotNull private final String relativePath;
+  private final String relativePath;
 
   /**
    * @param relativePath relative path that must use the Blaze specific separator char to separate
    *     path components
+   * @throws IllegalArgumentException if the path is invalid
    */
-  public WorkspacePath(@NotNull String relativePath) {
-    if (!validate(relativePath)) {
-      throw new IllegalArgumentException("Invalid workspace path: " + relativePath);
+  public WorkspacePath(String relativePath) {
+    String error = validate(relativePath);
+    if (error != null) {
+      throw new IllegalArgumentException(
+          String.format("Invalid workspace path '%s': %s", relativePath, error));
     }
     this.relativePath = relativePath;
   }
 
-  public WorkspacePath(@NotNull WorkspacePath parentPath, @NotNull String childPath) {
+  public WorkspacePath(WorkspacePath parentPath, String childPath) {
     this(parentPath.relativePath() + BLAZE_COMPONENT_SEPARATOR + childPath);
   }
 
-  public static boolean validate(@NotNull String relativePath) {
-    return validate(relativePath, null);
+  public static boolean isValid(String relativePath) {
+    return validate(relativePath) == null;
   }
 
-  public static boolean validate(
-      @NotNull String relativePath, @Nullable Collection<BlazeValidationError> errors) {
+  /** Validates a workspace path. Returns null on success or an error message otherwise. */
+  @Nullable
+  public static String validate(String relativePath) {
     if (relativePath.startsWith("/")) {
-      BlazeValidationError.collect(
-          errors,
-          new BlazeValidationError(
-              "Workspace path must be relative; cannot start with '/': " + relativePath));
-      return false;
+      return "Workspace path must be relative; cannot start with '/': " + relativePath;
     }
-
+    if (relativePath.startsWith("../")) {
+      return "Workspace path must be inside the workspace; cannot start with '../': "
+          + relativePath;
+    }
     if (relativePath.endsWith("/")) {
-      BlazeValidationError.collect(
-          errors, new BlazeValidationError("Workspace path may not end with '/': " + relativePath));
-      return false;
+      return "Workspace path may not end with '/': " + relativePath;
     }
 
     if (relativePath.indexOf(':') >= 0) {
-      BlazeValidationError.collect(
-          errors, new BlazeValidationError("Workspace path may not contain ':': " + relativePath));
-      return false;
+      return "Workspace path may not contain ':': " + relativePath;
     }
 
-    return true;
+    return null;
   }
 
   public boolean isWorkspaceRoot() {

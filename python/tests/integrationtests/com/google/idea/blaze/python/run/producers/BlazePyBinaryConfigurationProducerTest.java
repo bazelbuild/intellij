@@ -74,7 +74,7 @@ public class BlazePyBinaryConfigurationProducerTest extends BlazeRunConfiguratio
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget()).isEqualTo(TargetExpression.fromString("//py/bin:main"));
+    assertThat(config.getTarget()).isEqualTo(TargetExpression.fromStringSafe("//py/bin:main"));
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.RUN);
   }
 }

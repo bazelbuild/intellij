@@ -10,21 +10,33 @@ proto_library(
     srcs = ["foo.proto"],
 )
 
-java_proto_library(
-    name = "foo_java_proto",
+proto_library(
+    name = "bar_proto",
+    srcs = ["bar.proto"],
     deps = [":foo_proto"],
 )
 
+java_proto_library(
+    name = "bar_java_proto",
+    deps = [":bar_proto"],
+)
+
+java_library(
+    name = "lib",
+    srcs = ["Lib.java"],
+    deps = [":bar_java_proto"],
+)
+
 intellij_aspect_test_fixture(
-    name = "java_proto_library_fixture",
-    deps = [":foo_java_proto"],
+    name = "lib_fixture",
+    deps = [":lib"],
 )
 
 java_test(
     name = "JavaProtoLibraryTest",
     srcs = ["JavaProtoLibraryTest.java"],
     data = [
-        ":java_proto_library_fixture",
+        ":lib_fixture",
     ],
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",

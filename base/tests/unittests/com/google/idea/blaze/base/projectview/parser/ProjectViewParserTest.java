@@ -128,9 +128,9 @@ public class ProjectViewParserTest extends BlazeTestCase {
             new DirectoryEntry(new WorkspacePath("java/com/google/android/notme"), false));
     assertThat(projectView.getSectionsOfType(TargetSection.KEY).get(0).items())
         .containsExactly(
-            TargetExpression.fromString("//java/com/google:all"),
-            TargetExpression.fromString("//java/com/google/...:all"),
-            TargetExpression.fromString("-//java/com/google:thistarget"));
+            TargetExpression.fromStringSafe("//java/com/google:all"),
+            TargetExpression.fromStringSafe("//java/com/google/...:all"),
+            TargetExpression.fromStringSafe("-//java/com/google:thistarget"));
   }
 
   @Test
@@ -158,7 +158,7 @@ public class ProjectViewParserTest extends BlazeTestCase {
             new DirectoryEntry(new WorkspacePath(""), true),
             new DirectoryEntry(new WorkspacePath("java/com/google/android/notme"), false));
     assertThat(projectView.getSectionsOfType(TargetSection.KEY).get(0).items())
-        .containsExactly(TargetExpression.fromString("//java/com/google:all"));
+        .containsExactly(TargetExpression.fromStringSafe("//java/com/google:all"));
 
     String text = ProjectViewParser.projectViewToString(projectView);
     assertThat(text)
@@ -183,8 +183,8 @@ public class ProjectViewParserTest extends BlazeTestCase {
                     .add(DirectoryEntry.exclude(new WorkspacePath("java/com/google/two"))))
             .add(
                 ListSection.builder(TargetSection.KEY)
-                    .add(TargetExpression.fromString("//java/com/google:one"))
-                    .add(TargetExpression.fromString("//java/com/google:two")))
+                    .add(TargetExpression.fromStringSafe("//java/com/google:one"))
+                    .add(TargetExpression.fromStringSafe("//java/com/google:two")))
             .add(
                 ScalarSection.builder(ImportSection.KEY)
                     .set(new WorkspacePath("some/file.blazeproject")))

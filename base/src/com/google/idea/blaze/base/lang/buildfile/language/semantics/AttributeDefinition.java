@@ -22,7 +22,7 @@ import java.io.Serializable;
 import javax.annotation.Nullable;
 
 /** Simple implementation of AttributeDefinition, from build.proto */
-public class AttributeDefinition implements Serializable {
+public class AttributeDefinition implements Comparable<AttributeDefinition>, Serializable {
 
   public static AttributeDefinition fromProto(Build.AttributeDefinition attr) {
     return new AttributeDefinition(
@@ -70,5 +70,13 @@ public class AttributeDefinition implements Serializable {
    */
   public boolean isRuleTypeAllowed(RuleDefinition rule) {
     return allowedRuleClasses == null || allowedRuleClasses.contains(rule.name);
+  }
+
+  @Override
+  public int compareTo(AttributeDefinition other) {
+    if (mandatory != other.mandatory) {
+      return mandatory ? -1 : 1;
+    }
+    return name.compareTo(other.name);
   }
 }

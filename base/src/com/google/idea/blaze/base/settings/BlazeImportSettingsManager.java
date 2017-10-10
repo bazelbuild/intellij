@@ -36,7 +36,6 @@ public class BlazeImportSettingsManager implements PersistentStateComponent<Blaz
     return ServiceManager.getService(project, BlazeImportSettingsManager.class);
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   @Override
   public BlazeImportSettings getState() {

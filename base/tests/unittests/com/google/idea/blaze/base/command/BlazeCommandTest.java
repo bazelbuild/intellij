@@ -89,7 +89,9 @@ public class BlazeCommandTest extends BlazeTestCase {
     List<String> command =
         BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN)
             .addTargets(
-                Label.create("//a:b"), TargetExpression.fromString("-//e:f"), Label.create("//c:d"))
+                Label.create("//a:b"),
+                TargetExpression.fromStringSafe("-//e:f"),
+                Label.create("//c:d"))
             .addBlazeFlags("--flag1", "--flag2")
             .addExeFlags("--exeFlag1", "--exeFlag2")
             .build()

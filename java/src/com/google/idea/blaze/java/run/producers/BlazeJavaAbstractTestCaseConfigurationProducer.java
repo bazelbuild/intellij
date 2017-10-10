@@ -87,7 +87,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
     PsiMethod method = getTestMethod(context);
     if (method != null) {
       PsiClass psiClass = method.getContainingClass();
-      return isAbstractClass(psiClass) ? new AbstractTestLocation(psiClass, method) : null;
+      return hasTestSubclasses(psiClass) ? new AbstractTestLocation(psiClass, method) : null;
     }
     Location location = context.getLocation();
     if (location == null) {
@@ -99,15 +99,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
     }
     PsiClass psiClass =
         PsiTreeUtil.getParentOfType(location.getPsiElement(), PsiClass.class, false);
-    if (!isAbstractClass(psiClass)) {
-      return null;
-    }
-    for (PsiClass subclass : SubclassTestChooser.findTestSubclasses(psiClass)) {
-      if (JUnitUtil.isTestClass(subclass)) {
-        return new AbstractTestLocation(psiClass, null);
-      }
-    }
-    return null;
+    return hasTestSubclasses(psiClass) ? new AbstractTestLocation(psiClass, null) : null;
   }
 
   private static PsiMethod getTestMethod(ConfigurationContext context) {
@@ -120,8 +112,14 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
     return selectedMethods != null && selectedMethods.size() == 1 ? selectedMethods.get(0) : null;
   }
 
-  private static boolean isAbstractClass(@Nullable PsiClass psiClass) {
-    return psiClass != null && psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
+  private static boolean hasTestSubclasses(@Nullable PsiClass psiClass) {
+    if (psiClass == null) {
+      return false;
+    }
+    if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return true;
+    }
+    return !SubclassTestChooser.findTestSubclasses(psiClass).isEmpty();
   }
 
   @Override
@@ -177,7 +175,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
       psiClass = (PsiClass) element;
     }
 
-    return isAbstractClass(psiClass) ? new AbstractTestLocation(psiClass, method) : null;
+    return hasTestSubclasses(psiClass) ? new AbstractTestLocation(psiClass, method) : null;
   }
 
   private static void setupContext(
@@ -218,8 +216,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
   }
 
   private static String configName(PsiClass psiClass, @Nullable PsiMethod method) {
-    return method == null
-        ? psiClass.getName()
-        : String.format("%s.%s", psiClass.getName(), method.getName());
+    String classPart = "Choose subclass for " + psiClass.getName();
+    return method == null ? classPart : String.format("%s.%s", classPart, method.getName());
   }
 }

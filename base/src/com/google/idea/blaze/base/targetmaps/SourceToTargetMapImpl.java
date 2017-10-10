@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.targetmaps;
 
+import static com.google.idea.common.guava.GuavaHelper.toImmutableList;
+
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
@@ -29,7 +31,6 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Maps source files to their respective targets */
@@ -41,22 +42,21 @@ public class SourceToTargetMapImpl implements SourceToTargetMap {
   }
 
   @Override
-  public ImmutableCollection<Label> getTargetsToBuildForSourceFile(File sourceFile) {
+  public ImmutableList<Label> getTargetsToBuildForSourceFile(File sourceFile) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
       return ImmutableList.of();
     }
-    return ImmutableList.copyOf(
-        getRulesForSourceFile(sourceFile)
-            .stream()
-            .map(blazeProjectData.targetMap::get)
-            .filter(Objects::nonNull)
-            // TODO(tomlu): For non-plain targets we need to rdep our way back to a target to build
-            // Without this, you won't be able to invoke "build" on (say) a proto_library
-            .filter(TargetIdeInfo::isPlainTarget)
-            .map(rule -> rule.key.label)
-            .collect(Collectors.toList()));
+    return getRulesForSourceFile(sourceFile)
+        .stream()
+        .map(blazeProjectData.targetMap::get)
+        .filter(Objects::nonNull)
+        // TODO(tomlu): For non-plain targets we need to rdep our way back to a target to build
+        // Without this, you won't be able to invoke "build" on (say) a proto_library
+        .filter(TargetIdeInfo::isPlainTarget)
+        .map(rule -> rule.key.label)
+        .collect(toImmutableList());
   }
 
   @Override

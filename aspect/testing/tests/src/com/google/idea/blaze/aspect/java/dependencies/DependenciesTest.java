@@ -93,6 +93,7 @@ public class DependenciesTest extends BazelIntellijAspectTest {
             testRelative("libfoo.jar"),
             testRelative("libsingle_dep.jar"),
             testRelative("libtransitive_dep.jar"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
   }
 
   @Test

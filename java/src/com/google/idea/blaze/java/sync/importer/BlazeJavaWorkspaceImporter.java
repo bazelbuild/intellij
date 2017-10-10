@@ -196,9 +196,19 @@ public final class BlazeJavaWorkspaceImporter {
     // Collect jars from jdep references
     for (String jdepsPath : workspaceBuilder.jdeps) {
       BlazeJarLibrary library = jdepsPathToLibrary.get(jdepsPath);
-      if (library != null) {
-        result.put(library.key, library);
+      if (library == null) {
+        // It's in the target's jdeps, but our aspect never attached to the target building it
+        // Perhaps it's an implicit dependency, or not referenced in an attribute we propagate along
+        // Make a best-effort attempt to add it to the project anyway
+        ArtifactLocation location =
+            ArtifactLocation.builder()
+                .setIsSource(false)
+                .setRootExecutionPathFragment(jdepsPath)
+                .setRelativePath("")
+                .build();
+        library = new BlazeJarLibrary(new LibraryArtifact(location, null, ImmutableList.of()));
       }
+      result.put(library.key, library);
     }
 
     // Collect jars referenced by direct deps from your working set
@@ -339,9 +349,9 @@ public final class BlazeJavaWorkspaceImporter {
         if (dep.dependencyType != DependencyType.COMPILE_TIME) {
           continue;
         }
-        // forward deps from java_proto_library
+        // forward deps from java proto_library aspect targets
         TargetIdeInfo depTarget = targetMap.get(dep.targetKey);
-        if (depTarget != null && depTarget.kind == Kind.JAVA_PROTO_LIBRARY) {
+        if (depTarget != null && Kind.JAVA_PROTO_LIBRARY_KINDS.contains(depTarget.kind)) {
           workspaceBuilder.directDeps.addAll(
               depTarget.dependencies.stream().map(d -> d.targetKey).collect(Collectors.toList()));
         } else {

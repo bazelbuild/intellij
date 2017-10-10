@@ -43,6 +43,8 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import java.io.File;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -63,13 +65,14 @@ public class BlazeBuildServiceTest extends BlazeTestCase {
     importSettingsManager.setImportSettings(
         new BlazeImportSettings("", "", "", "", Blaze.BuildSystem.Blaze));
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
+    applicationServices.register(ExperimentService.class, new MockExperimentService());
 
     ProjectView view =
         ProjectView.builder()
             .add(
                 ListSection.builder(TargetSection.KEY)
-                    .add(TargetExpression.fromString("//view/target:one"))
-                    .add(TargetExpression.fromString("//view/target:two")))
+                    .add(TargetExpression.fromStringSafe("//view/target:one"))
+                    .add(TargetExpression.fromStringSafe("//view/target:two")))
             .build();
     viewSet = ProjectViewSet.builder().add(new File("view/target/.blazeproject"), view).build();
     ProjectViewManager viewManager = new MockProjectViewManager(viewSet);
@@ -102,8 +105,8 @@ public class BlazeBuildServiceTest extends BlazeTestCase {
     service.buildProject(project);
     List<TargetExpression> targets =
         Lists.newArrayList(
-            TargetExpression.fromString("//view/target:one"),
-            TargetExpression.fromString("//view/target:two"));
+            TargetExpression.fromStringSafe("//view/target:one"),
+            TargetExpression.fromStringSafe("//view/target:two"));
     verify(service).buildTargetExpressions(eq(project), eq(targets), eq(viewSet), any());
   }
 

@@ -43,7 +43,8 @@ class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
     }
     if (syncData.importResult.javacJar != null) {
       libraries.add(
-          new BlazeJarLibrary(new LibraryArtifact(null, syncData.importResult.javacJar, null)));
+          new BlazeJarLibrary(
+              new LibraryArtifact(null, syncData.importResult.javacJar, ImmutableList.of())));
     }
     return libraries.build();
   }

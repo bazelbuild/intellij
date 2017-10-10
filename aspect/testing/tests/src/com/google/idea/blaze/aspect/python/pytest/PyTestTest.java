@@ -34,5 +34,9 @@ public class PyTestTest extends BazelIntellijAspectTest {
     assertThat(target.getKindString()).isEqualTo("py_test");
     assertThat(relativePathsForArtifacts(target.getPyIdeInfo().getSourcesList()))
         .containsExactly(testRelative("simple.py"));
+
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-py"))
+        .containsExactly(testRelative("simple.intellij-info.txt"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
   }
 }

@@ -96,8 +96,8 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
   private final String buildSystem;
 
   @Nullable private Label target;
-  private final RunConfigurationFlagsState blazeFlags;
-  private final RunConfigurationFlagsState exeFlags;
+  private RunConfigurationFlagsState blazeFlags;
+  private RunConfigurationFlagsState exeFlags;
   @Nullable private Sdk pluginSdk;
   @Nullable String vmParameters;
   @Nullable private String programParameters;
@@ -279,7 +279,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     // Target is persisted as a tag to permit multiple targets in the future.
     Element targetElement = element.getChild(TARGET_TAG);
     if (targetElement != null && !Strings.isNullOrEmpty(targetElement.getTextTrim())) {
-      target = (Label) TargetExpression.fromString(targetElement.getTextTrim());
+      target = (Label) TargetExpression.fromStringSafe(targetElement.getTextTrim());
     } else {
       target = null;
     }
@@ -327,8 +327,8 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     final BlazeIntellijPluginConfiguration configuration =
         (BlazeIntellijPluginConfiguration) super.clone();
     configuration.target = target;
-    configuration.blazeFlags.setRawFlags(blazeFlags.getRawFlags());
-    configuration.exeFlags.setRawFlags(exeFlags.getRawFlags());
+    configuration.blazeFlags = blazeFlags.copy();
+    configuration.exeFlags = exeFlags.copy();
     configuration.pluginSdk = pluginSdk;
     configuration.vmParameters = vmParameters;
     configuration.programParameters = programParameters;

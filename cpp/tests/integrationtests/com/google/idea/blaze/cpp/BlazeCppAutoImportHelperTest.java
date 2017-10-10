@@ -223,7 +223,9 @@ public class BlazeCppAutoImportHelperTest extends BlazeCppIntegrationTestCase {
   private static ListSection<TargetExpression> targets(String... targets) {
     return ListSection.builder(TargetSection.KEY)
         .addAll(
-            Arrays.stream(targets).map(TargetExpression::fromString).collect(Collectors.toList()))
+            Arrays.stream(targets)
+                .map(TargetExpression::fromStringSafe)
+                .collect(Collectors.toList()))
         .build();
   }
 

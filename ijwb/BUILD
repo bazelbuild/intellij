@@ -78,7 +78,8 @@ java_library(
 
 OPTIONAL_PLUGIN_XMLS = [
     "//golang:optional_xml",
-    "//java:optional_xml",
+    "//java:optional_java",
+    "//java:optional_coverage",
     "//plugin_dev:optional_xml",
     "//python:optional_xml",
     "//scala:optional_xml",

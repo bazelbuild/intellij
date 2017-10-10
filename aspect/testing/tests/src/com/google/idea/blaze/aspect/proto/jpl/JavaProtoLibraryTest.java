@@ -35,34 +35,40 @@ public class JavaProtoLibraryTest extends BazelIntellijAspectTest {
 
   @Test
   public void testJavaProtoLibrary() throws Exception {
-    IntellijAspectTestFixture testFixture = loadTestFixture(":java_proto_library_fixture");
+    IntellijAspectTestFixture testFixture = loadTestFixture(":lib_fixture");
 
-    TargetIdeInfo jpl = findTarget(testFixture, ":foo_java_proto");
+    TargetIdeInfo lib = findTarget(testFixture, ":lib");
+    assertThat(lib).isNotNull();
+
+    TargetIdeInfo jpl = findTarget(testFixture, ":bar_java_proto");
     assertThat(jpl).isNotNull();
 
     // We don't want java_proto_library to be rolling up any jars
     assertThat(jpl.getJavaIdeInfo().getJarsList()).isEmpty();
 
-    // We shouldn't have reached the underlying base proto_library
+    // We shouldn't have reached the underlying base proto_library's
+    assertThat(findTarget(testFixture, ":bar_proto")).isNull();
     assertThat(findTarget(testFixture, ":foo_proto")).isNull();
 
-    TargetIdeInfo proto = findAspectTarget(testFixture, ":foo_proto", "java_proto_library");
-    assertThat(proto).isNotNull();
+    TargetIdeInfo barProto = findAspectTarget(testFixture, ":bar_proto", "java_proto_library");
+    TargetIdeInfo fooProto = findAspectTarget(testFixture, ":foo_proto", "java_proto_library");
+    assertThat(barProto).isNotNull();
+    assertThat(fooProto).isNotNull();
 
     // jpl -> (proto + jpl aspect)
     assertThat(jpl.getDepsList())
         .contains(
             Dependency.newBuilder()
                 .setDependencyType(DependencyType.COMPILE_TIME)
-                .setTarget(proto.getKey())
+                .setTarget(barProto.getKey())
                 .build());
 
     // Make sure we suppress the proto_library legacy provider info
-    assertThat(proto.hasProtoLibraryLegacyJavaIdeInfo()).isFalse();
+    assertThat(barProto.hasProtoLibraryLegacyJavaIdeInfo()).isFalse();
 
-    assertThat(proto.hasJavaIdeInfo()).isTrue();
+    assertThat(barProto.hasJavaIdeInfo()).isTrue();
     List<String> jarStrings =
-        proto
+        barProto
             .getJavaIdeInfo()
             .getJarsList()
             .stream()
@@ -71,8 +77,8 @@ public class JavaProtoLibraryTest extends BazelIntellijAspectTest {
     assertThat(jarStrings)
         .containsExactly(
             jarString(
-                testRelative("libfoo_proto-speed.jar"),
-                testRelative("libfoo_proto-speed-hjar.jar"),
-                testRelative("foo_proto-speed-src.jar")));
+                testRelative("libbar_proto-speed.jar"),
+                testRelative("libbar_proto-speed-hjar.jar"),
+                testRelative("bar_proto-speed-src.jar")));
   }
 }

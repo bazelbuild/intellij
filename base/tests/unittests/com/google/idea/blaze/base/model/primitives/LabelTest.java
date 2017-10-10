@@ -39,34 +39,34 @@ public class LabelTest extends BlazeTestCase {
   @Test
   public void testValidatePackage() {
     // Legal names
-    assertThat(Label.validatePackagePath("foo")).isTrue();
-    assertThat(Label.validatePackagePath("f")).isTrue();
-    assertThat(Label.validatePackagePath("fooBAR")).isTrue();
-    assertThat(Label.validatePackagePath("foo/bar")).isTrue();
-    assertThat(Label.validatePackagePath("f9oo")).isTrue();
-    assertThat(Label.validatePackagePath("f_9oo")).isTrue();
-    assertThat(Label.validatePackagePath("Foo")).isTrue();
-    assertThat(Label.validatePackagePath("9.oo")).isTrue();
+    assertThat(Label.validatePackagePath("foo")).isNull();
+    assertThat(Label.validatePackagePath("f")).isNull();
+    assertThat(Label.validatePackagePath("fooBAR")).isNull();
+    assertThat(Label.validatePackagePath("foo/bar")).isNull();
+    assertThat(Label.validatePackagePath("f9oo")).isNull();
+    assertThat(Label.validatePackagePath("f_9oo")).isNull();
+    assertThat(Label.validatePackagePath("Foo")).isNull();
+    assertThat(Label.validatePackagePath("9.oo")).isNull();
     // This is not advised but is technically legal
-    assertThat(Label.validatePackagePath("")).isTrue();
+    assertThat(Label.validatePackagePath("")).isNull();
 
     // Illegal names
-    assertThat(Label.validatePackagePath("/foo")).isFalse();
-    assertThat(Label.validatePackagePath("foo/")).isFalse();
-    assertThat(Label.validatePackagePath("foo//bar")).isFalse();
+    assertThat(Label.validatePackagePath("/foo")).isNotEmpty();
+    assertThat(Label.validatePackagePath("foo/")).isNotEmpty();
+    assertThat(Label.validatePackagePath("foo//bar")).isNotEmpty();
   }
 
   @Test
   public void testValidateLabel() {
     // Valid labels
-    assertThat(Label.validate("//foo:bar")).isTrue();
-    assertThat(Label.validate("//foo/baz:bar")).isTrue();
-    assertThat(Label.validate("//:bar")).isTrue();
+    assertThat(Label.validate("//foo:bar")).isNull();
+    assertThat(Label.validate("//foo/baz:bar")).isNull();
+    assertThat(Label.validate("//:bar")).isNull();
 
     // Invalid labels
-    assertThat(Label.validate("//foo")).isFalse();
-    assertThat(Label.validate("foo")).isFalse();
-    assertThat(Label.validate("foo:bar")).isFalse();
+    assertThat(Label.validate("//foo")).isNotEmpty();
+    assertThat(Label.validate("foo")).isNotEmpty();
+    assertThat(Label.validate("foo:bar")).isNotEmpty();
   }
 
   @Test

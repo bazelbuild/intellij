@@ -20,6 +20,7 @@ import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.ui.components.JBList;
 import java.util.List;
@@ -29,15 +30,18 @@ import javax.swing.ListSelectionModel;
 
 /**
  * Pop up a dialog to choose a child test class. Called when creating a run configuration from an
- * abstract test class/method.
+ * abstract (or non-abstract super-class) test class/method.
  */
 public class SubclassTestChooser {
 
   static void chooseSubclass(
       ConfigurationContext context,
-      PsiClass abstractClass,
+      PsiClass testClass,
       Consumer<PsiClass> callbackOnClassSelection) {
-    List<PsiClass> classes = findTestSubclasses(abstractClass);
+    List<PsiClass> classes = findTestSubclasses(testClass);
+    if (!testClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      classes.add(testClass);
+    }
     if (classes.isEmpty()) {
       return;
     }
@@ -64,8 +68,8 @@ public class SubclassTestChooser {
         .showInBestPositionFor(context.getDataContext());
   }
 
-  static List<PsiClass> findTestSubclasses(PsiClass abstractClass) {
-    return ClassInheritorsSearch.search(abstractClass)
+  static List<PsiClass> findTestSubclasses(PsiClass testClass) {
+    return ClassInheritorsSearch.search(testClass)
         .findAll()
         .stream()
         .filter(JUnitUtil::isTestClass)

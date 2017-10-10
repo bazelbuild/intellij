@@ -273,12 +273,14 @@ public class BlazeIssueParser {
       File file = null;
       if (projectViewSet != null) {
         String targetString = matcher.group(1);
-        final TargetExpression targetExpression = TargetExpression.fromString(targetString);
-        file =
-            projectViewFileWithSection(
-                projectViewSet,
-                TargetSection.KEY,
-                targetSection -> targetSection.items().contains(targetExpression));
+        final TargetExpression target = TargetExpression.fromStringSafe(targetString);
+        if (target != null) {
+          file =
+              projectViewFileWithSection(
+                  projectViewSet,
+                  TargetSection.KEY,
+                  targetSection -> targetSection.items().contains(target));
+        }
       }
 
       return IssueOutput.error(matcher.group(0)).inFile(file).build();

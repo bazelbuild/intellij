@@ -16,10 +16,8 @@
 package com.google.idea.blaze.base.ide;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.TargetName;
-import com.google.idea.blaze.base.ui.BlazeValidationError;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
@@ -28,8 +26,6 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
-import java.util.Collection;
-import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
@@ -113,22 +109,18 @@ final class NewRuleUI {
       return new ValidationInfo("Select a rule type", ruleComboBox);
     }
     String ruleName = ruleNameField.getText();
-    List<BlazeValidationError> errors = Lists.newArrayList();
-    if (!validateRuleName(ruleName, errors)) {
-      BlazeValidationError issue = errors.get(0);
-      return new ValidationInfo(issue.getError(), ruleNameField);
+    String error = validateRuleName(ruleName);
+    if (error != null) {
+      return new ValidationInfo(error, ruleNameField);
     }
     return null;
   }
 
-  private static boolean validateRuleName(
-      String inputString, @Nullable Collection<BlazeValidationError> errors) {
+  @Nullable
+  private static String validateRuleName(String inputString) {
     if (inputString.length() == 0) {
-      BlazeValidationError.collect(
-          errors, new BlazeValidationError(IdeBundle.message("error.name.should.be.specified")));
-      return false;
+      return IdeBundle.message("error.name.should.be.specified");
     }
-
-    return TargetName.validate(inputString, errors);
+    return TargetName.validate(inputString);
   }
 }

@@ -34,6 +34,6 @@ public class TargetRenameValidator implements RenameInputValidator {
 
   @Override
   public boolean isInputValid(String newName, PsiElement element, ProcessingContext context) {
-    return TargetName.validate(newName);
+    return TargetName.validate(newName) == null;
   }
 }

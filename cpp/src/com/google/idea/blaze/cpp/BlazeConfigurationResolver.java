@@ -171,6 +171,9 @@ final class BlazeConfigurationResolver {
               () -> {
                 ImmutableList<File> possibleDirectories =
                     pathResolver.resolveToIncludeDirectories(path);
+                if (possibleDirectories.isEmpty()) {
+                  logger.info(String.format("Couldn't resolve include root: %s", path));
+                }
                 for (File file : possibleDirectories) {
                   VirtualFile vf = getVirtualFile(file);
                   if (vf != null) {

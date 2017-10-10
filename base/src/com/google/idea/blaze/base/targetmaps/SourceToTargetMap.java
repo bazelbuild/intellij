@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.targetmaps;
 
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.components.ServiceManager;
@@ -30,7 +31,7 @@ public interface SourceToTargetMap {
   }
 
   /** Returns a set of targets that will cause the file to build */
-  ImmutableCollection<Label> getTargetsToBuildForSourceFile(File file);
+  ImmutableList<Label> getTargetsToBuildForSourceFile(File file);
 
   /** Returns the rules that contain a given source file */
   ImmutableCollection<TargetKey> getRulesForSourceFile(File file);

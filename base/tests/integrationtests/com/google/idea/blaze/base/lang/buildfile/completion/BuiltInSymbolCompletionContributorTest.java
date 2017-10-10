@@ -83,4 +83,14 @@ public class BuiltInSymbolCompletionContributorTest extends BuildFileIntegration
 
     assertThat(editorTest.getCompletionItemsAsStrings()).isEmpty();
   }
+
+  @Test
+  public void testNoCompletionInFuncall() {
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "java_library()");
+
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, "java_library(".length());
+
+    assertThat(editorTest.getCompletionItemsAsStrings()).isEmpty();
+  }
 }

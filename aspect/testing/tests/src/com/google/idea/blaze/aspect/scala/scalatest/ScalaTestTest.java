@@ -52,13 +52,7 @@ public class ScalaTestTest extends BazelIntellijAspectTest {
         .contains(testRelative("FooTest.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
         .contains(testRelative("FooTest.jar"));
-
-    assertThat(getOutputGroupFiles(testFixture, "intellij-info-text"))
-        .contains(testRelative("FooTest.intellij-info.txt"));
-    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve"))
-        .contains(testRelative("FooTest.jar"));
-    assertThat(getOutputGroupFiles(testFixture, "intellij-compile"))
-        .contains(testRelative("FooTest.jar"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
 
     assertThat(testInfo.getTestInfo().getSize()).isEqualTo("large");
   }

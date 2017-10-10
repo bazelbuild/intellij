@@ -21,6 +21,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -28,6 +30,11 @@ import org.junit.runners.JUnit4;
 /** Unit tests for {@link QueryResultLineProcessor}. */
 @RunWith(JUnit4.class)
 public class QueryResultLineProcessorTest extends BlazeTestCase {
+
+  @Override
+  protected void initTest(Container applicationServices, Container projectServices) {
+    applicationServices.register(ExperimentService.class, new MockExperimentService());
+  }
 
   @Test
   public void testRecognizesStandardResultLines() {
@@ -40,8 +47,8 @@ public class QueryResultLineProcessorTest extends BlazeTestCase {
     ImmutableList<TargetExpression> parsedTargets = output.build();
     assertThat(parsedTargets)
         .containsExactly(
-            TargetExpression.fromString("//java/com/google/foo/styles:global"),
-            TargetExpression.fromString("//java/com/google/bar/console:runtime_deps"));
+            TargetExpression.fromStringSafe("//java/com/google/foo/styles:global"),
+            TargetExpression.fromStringSafe("//java/com/google/bar/console:runtime_deps"));
   }
 
   @Test
@@ -73,9 +80,9 @@ public class QueryResultLineProcessorTest extends BlazeTestCase {
 
     assertThat(output.build())
         .containsExactly(
-            TargetExpression.fromString("//java/com/google/bar/console:runtime_deps"),
-            TargetExpression.fromString("//java/com/google/bar/console:custom"),
-            TargetExpression.fromString("//java/com/google/bar/console:sh_test"));
+            TargetExpression.fromStringSafe("//java/com/google/bar/console:runtime_deps"),
+            TargetExpression.fromStringSafe("//java/com/google/bar/console:custom"),
+            TargetExpression.fromStringSafe("//java/com/google/bar/console:sh_test"));
   }
 
   @Test
@@ -99,9 +106,9 @@ public class QueryResultLineProcessorTest extends BlazeTestCase {
 
     assertThat(output.build())
         .containsExactly(
-            TargetExpression.fromString("//java/com/google/foo/styles:global"),
-            TargetExpression.fromString("//java/com/google/bar/console:runtime_deps"),
-            TargetExpression.fromString("//java/com/google/bar/console:custom"),
-            TargetExpression.fromString("//java/com/google/bar/console:sh_test"));
+            TargetExpression.fromStringSafe("//java/com/google/foo/styles:global"),
+            TargetExpression.fromStringSafe("//java/com/google/bar/console:runtime_deps"),
+            TargetExpression.fromStringSafe("//java/com/google/bar/console:custom"),
+            TargetExpression.fromStringSafe("//java/com/google/bar/console:sh_test"));
   }
 }

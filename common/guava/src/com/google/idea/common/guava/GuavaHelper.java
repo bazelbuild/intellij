@@ -23,7 +23,7 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-/** Adds a few methods that aren't available until future versions of Guava. */
+/** Adds a few methods that aren't available until Guava 21. #api172 */
 public final class GuavaHelper {
 
   private static final Collector<Object, ?, ImmutableSet<Object>> TO_IMMUTABLE_SET =
@@ -78,6 +78,7 @@ public final class GuavaHelper {
     return one.putAll(two.build());
   }
 
+  /** Replaces {@code Streams::stream} in Guava 21, or {@code Optional::stream} in Java 9. */
   public static <T> Stream<T> stream(Optional<T> optional) {
     return optional.isPresent() ? Stream.of(optional.get()) : Stream.of();
   }

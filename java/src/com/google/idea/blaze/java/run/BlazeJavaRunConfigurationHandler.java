@@ -29,7 +29,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -99,7 +98,7 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
     @Override
     public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment env) {
       ClassFileManifestBuilder.initState(env);
-      return new BlazeJavaRunProfileState(env, executor instanceof DefaultDebugExecutor);
+      return new BlazeJavaRunProfileState(env);
     }
 
     @Override

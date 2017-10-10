@@ -53,7 +53,7 @@ public class AllInPackageBlazeConfigurationProducerTest
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
     assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromString("//java/com/google/test/...:all"));
+        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test/...:all"));
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 

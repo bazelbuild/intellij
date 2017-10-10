@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.run;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
@@ -28,6 +29,8 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.ExecutorType;
+import com.google.idea.blaze.base.run.coverage.CoverageUtils;
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
 import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
@@ -58,6 +61,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.execution.ParametersListUtil;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -72,12 +76,12 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
   private static final String DEBUG_HOST_NAME = "localhost";
 
   private final BlazeCommandRunConfiguration configuration;
-  private final boolean debug;
+  private final ExecutorType executorType;
 
-  public BlazeJavaRunProfileState(ExecutionEnvironment environment, boolean debug) {
+  public BlazeJavaRunProfileState(ExecutionEnvironment environment) {
     super(environment);
     this.configuration = getConfiguration(environment);
-    this.debug = debug;
+    this.executorType = ExecutorType.fromExecutor(environment.getExecutor());
   }
 
   private static BlazeCommandRunConfiguration getConfiguration(ExecutionEnvironment environment) {
@@ -99,7 +103,8 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
             : null;
     if (testUiSession != null) {
       blazeCommand =
-          getBlazeCommandBuilder(project, configuration, testUiSession.getBlazeFlags(), debug);
+          getBlazeCommandBuilder(
+              project, configuration, testUiSession.getBlazeFlags(), executorType);
       setConsoleBuilder(
           new TextConsoleBuilderImpl(project) {
             @Override
@@ -109,7 +114,8 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
             }
           });
     } else {
-      blazeCommand = getBlazeCommandBuilder(project, configuration, ImmutableList.of(), debug);
+      blazeCommand =
+          getBlazeCommandBuilder(project, configuration, ImmutableList.of(), executorType);
     }
     addConsoleFilters(new BlazeTargetFilter(project));
 
@@ -172,7 +178,7 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
 
   @Override
   public RemoteConnection getRemoteConnection() {
-    if (!debug) {
+    if (executorType != ExecutorType.DEBUG) {
       return null;
     }
     return new RemoteConnection(
@@ -186,33 +192,38 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
   static BlazeCommand.Builder getBlazeCommandBuilder(
       Project project,
       BlazeCommandRunConfiguration configuration,
-      ImmutableList<String> extraBlazeFlags,
-      boolean debug) {
+      List<String> extraBlazeFlags,
+      ExecutorType executorType) {
 
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    assert projectViewSet != null;
+    List<String> blazeFlags = new ArrayList<>(extraBlazeFlags);
 
+    ProjectViewSet projectViewSet =
+        Preconditions.checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet());
     BlazeCommandRunConfigurationCommonState handlerState =
-        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    assert handlerState != null;
+        Preconditions.checkNotNull(
+            configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class));
 
     String binaryPath =
         handlerState.getBlazeBinaryState().getBlazeBinary() != null
             ? handlerState.getBlazeBinaryState().getBlazeBinary()
             : Blaze.getBuildSystemProvider(project).getBinaryPath();
 
-    BlazeCommandName blazeCommand = handlerState.getCommandState().getCommand();
-    assert blazeCommand != null;
+    BlazeCommandName blazeCommand =
+        Preconditions.checkNotNull(handlerState.getCommandState().getCommand());
+    if (executorType == ExecutorType.COVERAGE) {
+      blazeCommand = BlazeCommandName.COVERAGE;
+      blazeFlags.addAll(CoverageUtils.getBlazeFlags());
+    }
     BlazeCommand.Builder command =
         BlazeCommand.builder(binaryPath, blazeCommand)
             .addTargets(configuration.getTarget())
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(
                     project, projectViewSet, blazeCommand, BlazeInvocationContext.RunConfiguration))
-            .addBlazeFlags(extraBlazeFlags)
+            .addBlazeFlags(blazeFlags)
             .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags());
 
-    if (debug) {
+    if (executorType == ExecutorType.DEBUG) {
       Kind kind = configuration.getKindForTarget();
       boolean isBinary = kind != null && kind.isOneOf(Kind.JAVA_BINARY, Kind.SCALA_BINARY);
       if (isBinary) {

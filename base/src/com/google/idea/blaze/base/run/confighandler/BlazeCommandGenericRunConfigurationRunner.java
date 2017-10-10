@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run.confighandler;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
@@ -26,6 +27,8 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.ExecutorType;
+import com.google.idea.blaze.base.run.coverage.CoverageUtils;
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
 import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
@@ -56,8 +59,9 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
+import java.util.ArrayList;
 import java.util.Collection;
-import org.jetbrains.annotations.NotNull;
+import java.util.List;
 
 /**
  * Generic runner for {@link BlazeCommandRunConfiguration}s, used as a fallback in the case where no
@@ -113,7 +117,6 @@ public final class BlazeCommandGenericRunConfigurationRunner
     }
 
     @Override
-    @NotNull
     protected ProcessHandler startProcess() throws ExecutionException {
       Project project = configuration.getProject();
       BlazeImportSettings importSettings =
@@ -141,7 +144,9 @@ public final class BlazeCommandGenericRunConfigurationRunner
       }
       addConsoleFilters(consoleFilters.toArray(new Filter[0]));
 
-      BlazeCommand blazeCommand = getBlazeCommand(project, testHandlerFlags);
+      BlazeCommand blazeCommand =
+          getBlazeCommand(
+              project, ExecutorType.fromExecutor(getEnvironment().getExecutor()), testHandlerFlags);
 
       WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
       return new ScopedBlazeProcessHandler(
@@ -164,21 +169,30 @@ public final class BlazeCommandGenericRunConfigurationRunner
           });
     }
 
-    private BlazeCommand getBlazeCommand(Project project, ImmutableList<String> testHandlerFlags) {
-      ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-      assert projectViewSet != null;
+    private BlazeCommand getBlazeCommand(
+        Project project, ExecutorType executorType, ImmutableList<String> testHandlerFlags) {
+      ProjectViewSet projectViewSet =
+          Preconditions.checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet());
+
+      List<String> extraBlazeFlags = new ArrayList<>(testHandlerFlags);
+      BlazeCommandName command = getCommand();
+      if (executorType == ExecutorType.COVERAGE) {
+        command = BlazeCommandName.COVERAGE;
+        extraBlazeFlags.addAll(CoverageUtils.getBlazeFlags());
+      }
 
       String binaryPath =
           handlerState.getBlazeBinaryState().getBlazeBinary() != null
               ? handlerState.getBlazeBinaryState().getBlazeBinary()
               : Blaze.getBuildSystemProvider(project).getBinaryPath();
 
-      return BlazeCommand.builder(binaryPath, getCommand())
+      return BlazeCommand.builder(binaryPath, command)
           .addTargets(configuration.getTarget())
           .addBlazeFlags(
               BlazeFlags.blazeFlags(
                   project, projectViewSet, getCommand(), BlazeInvocationContext.RunConfiguration))
           .addBlazeFlags(testHandlerFlags)
+          .addBlazeFlags(extraBlazeFlags)
           .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
           .addExeFlags(handlerState.getExeFlagsState().getExpandedFlags())
           .build();

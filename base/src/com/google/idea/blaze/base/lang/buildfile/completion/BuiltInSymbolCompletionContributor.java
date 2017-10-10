@@ -20,6 +20,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileLanguage;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuiltInNamesProvider;
+import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
 import com.intellij.codeInsight.completion.AutoCompletionContext;
 import com.intellij.codeInsight.completion.AutoCompletionDecision;
@@ -51,7 +52,9 @@ public class BuiltInSymbolCompletionContributor extends CompletionContributor {
         psiElement()
             .withLanguage(BuildFileLanguage.INSTANCE)
             .andNot(psiComment())
-            .withParent(ReferenceExpression.class),
+            .withParent(ReferenceExpression.class)
+            .andNot(psiElement().inside(FuncallExpression.class))
+            .andNot(psiElement().afterLeaf(psiElement().withText("."))),
         new CompletionProvider<CompletionParameters>() {
           @Override
           protected void addCompletions(

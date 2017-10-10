@@ -58,7 +58,7 @@ public class JavascriptPrefetchFileSource implements PrefetchFileSource {
     // Prefetch all non-project js source files found during sync
     Predicate<ArtifactLocation> shouldPrefetch =
         location -> {
-          if (!location.isSource || location.isExternal) {
+          if (!location.isSource) {
             return false;
           }
           WorkspacePath path = WorkspacePath.createIfValid(location.relativePath);

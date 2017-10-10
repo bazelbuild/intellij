@@ -32,7 +32,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
-import com.google.idea.blaze.base.run.DistributedExecutorSupport;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
@@ -77,7 +77,6 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     projectServices.register(ProjectViewManager.class, new MockProjectViewManager());
 
     registerExtensionPoint(BuildFlagsProvider.EP_NAME, BuildFlagsProvider.class);
-    registerExtensionPoint(DistributedExecutorSupport.EP_NAME, DistributedExecutorSupport.class);
     ExtensionPointImpl<BlazeCommandRunConfigurationHandlerProvider> handlerProviderEp =
         registerExtensionPoint(
             BlazeCommandRunConfigurationHandlerProvider.EP_NAME,
@@ -102,7 +101,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     handlerState.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
     assertThat(
             BlazeJavaRunProfileState.getBlazeCommandBuilder(
-                    project, configuration, ImmutableList.of(), /* debug */ false)
+                    project, configuration, ImmutableList.of(), ExecutorType.RUN)
                 .build()
                 .toList())
         .isEqualTo(
@@ -124,7 +123,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
     assertThat(
             BlazeJavaRunProfileState.getBlazeCommandBuilder(
-                    project, configuration, ImmutableList.of(), /* debug */ true)
+                    project, configuration, ImmutableList.of(), ExecutorType.DEBUG)
                 .build()
                 .toList())
         .isEqualTo(
@@ -145,7 +144,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
     assertThat(
             BlazeJavaRunProfileState.getBlazeCommandBuilder(
-                    project, configuration, ImmutableList.of(), /* debug */ true)
+                    project, configuration, ImmutableList.of(), ExecutorType.DEBUG)
                 .build()
                 .toList())
         .isEqualTo(
