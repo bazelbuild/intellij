@@ -55,5 +55,22 @@
       "build_opts": ["--define=ij_product=android-studio-beta"],
       "tests": [":aswb_tests"]
     }
+  },
+  {
+    "product": "aspect",
+    "configurations": [
+      {
+        "variation": "",
+        "configurations": [
+          {"node": "linux-x86_64"},
+          {"node": "ubuntu_16.04-x86_64"},
+          {"node": "darwin-x86_64"}
+        ]
+      }
+    ],
+    "parameters": {
+      "targets": ["//aspect:aspect_files"],
+      "tests": ["//aspect/testing/..."]
+    }
   }
 ]
