@@ -22,6 +22,8 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
+        "//common/guava",
+        "//intellij_platform_sdk:coverage",
         "//intellij_platform_sdk:junit",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
@@ -53,16 +55,26 @@ stamped_plugin_xml(
 )
 
 optional_plugin_xml(
-    name = "optional_xml",
+    name = "optional_java",
     module = "JUnit",
     plugin_xml = "src/META-INF/java-contents.xml",
+    visibility = ["//visibility:public"],
+)
+
+optional_plugin_xml(
+    name = "optional_coverage",
+    module = "com.intellij.modules.coverage",
+    plugin_xml = "src/META-INF/coverage-contents.xml",
     visibility = ["//visibility:public"],
 )
 
 intellij_plugin(
     name = "java_integration_test_plugin",
     testonly = 1,
-    optional_plugin_xmls = [":optional_xml"],
+    optional_plugin_xmls = [
+        ":optional_java",
+        ":optional_coverage",
+    ],
     plugin_xml = ":java_plugin_xml",
     deps = [
         ":java",
@@ -79,6 +91,8 @@ intellij_unit_test_suite(
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
+        "//common/guava",
+        "//intellij_platform_sdk:coverage_for_tests",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//proto:proto_deps",
         "@jsr305_annotations//jar",

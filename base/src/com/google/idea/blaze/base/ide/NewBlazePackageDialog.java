@@ -15,13 +15,11 @@
  */
 package com.google.idea.blaze.base.ide;
 
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.ui.BlazeValidationError;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
@@ -37,7 +35,6 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.IncorrectOperationException;
 import java.awt.GridBagLayout;
 import java.io.File;
-import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -97,12 +94,10 @@ class NewBlazePackageDialog extends DialogWrapper {
       return new ValidationInfo(
           IdeBundle.message("error.name.should.be.specified"), packageNameField);
     }
-    List<BlazeValidationError> errors = Lists.newArrayList();
-    if (!Label.validatePackagePath(packageName, errors)) {
-      BlazeValidationError validationResult = errors.get(0);
-      return new ValidationInfo(validationResult.getError(), packageNameField);
+    String error = Label.validatePackagePath(packageName);
+    if (error != null) {
+      return new ValidationInfo(error, packageNameField);
     }
-
     return newRuleUI.validate();
   }
 

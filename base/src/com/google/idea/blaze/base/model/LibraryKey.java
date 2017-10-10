@@ -30,7 +30,7 @@ public final class LibraryKey implements Serializable {
   private final String name;
 
   public static LibraryKey fromJarFile(ArtifactLocation artifactLocation) {
-    File jarFile = new File(artifactLocation.getRelativePath());
+    File jarFile = new File(artifactLocation.getExecutionRootRelativePath());
     String parent = jarFile.getParent();
     int parentHash = parent != null ? parent.hashCode() : jarFile.hashCode();
     String name = FileUtil.getNameWithoutExtension(jarFile) + "_" + Integer.toHexString(parentHash);

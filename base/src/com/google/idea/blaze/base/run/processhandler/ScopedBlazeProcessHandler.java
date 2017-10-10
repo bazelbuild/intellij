@@ -29,6 +29,7 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import java.util.List;
 
 /**
  * Scoped process handler.
@@ -69,9 +70,16 @@ public final class ScopedBlazeProcessHandler extends KillableColoredProcessHandl
       WorkspaceRoot workspaceRoot,
       ScopedProcessHandlerDelegate scopedProcessHandlerDelegate)
       throws ExecutionException {
-    super(
-        new GeneralCommandLine(blazeCommand.toList())
-            .withWorkDirectory(workspaceRoot.directory().getPath()));
+    this(project, blazeCommand.toList(), workspaceRoot, scopedProcessHandlerDelegate);
+  }
+
+  public ScopedBlazeProcessHandler(
+      Project project,
+      List<String> command,
+      WorkspaceRoot workspaceRoot,
+      ScopedProcessHandlerDelegate scopedProcessHandlerDelegate)
+      throws ExecutionException {
+    super(new GeneralCommandLine(command).withWorkDirectory(workspaceRoot.directory().getPath()));
 
     this.scopedProcessHandlerDelegate = scopedProcessHandlerDelegate;
     this.context = new BlazeContext();

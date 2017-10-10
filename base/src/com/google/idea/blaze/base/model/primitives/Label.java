@@ -15,11 +15,7 @@
  */
 package com.google.idea.blaze.base.model.primitives;
 
-import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.ui.BlazeValidationError;
 import com.intellij.openapi.diagnostic.Logger;
-import java.util.Collection;
-import java.util.List;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
@@ -33,16 +29,13 @@ public final class Label extends TargetExpression {
   /** Silently returns null if this is not a valid Label */
   @Nullable
   public static Label createIfValid(String label) {
-    if (validate(label)) {
-      return new Label(label);
-    }
-    return null;
+    return validate(label) == null ? new Label(label) : null;
   }
 
   public static Label create(String label) {
-    List<BlazeValidationError> errors = Lists.newArrayList();
-    if (!validate(label, errors)) {
-      BlazeValidationError.throwError(errors);
+    String error = validate(label);
+    if (error != null) {
+      throw new IllegalArgumentException(error);
     }
     return new Label(label);
   }
@@ -66,34 +59,31 @@ public final class Label extends TargetExpression {
     super(label);
   }
 
-  public static boolean validate(String label) {
-    return validate(label, null);
-  }
-
-  public static boolean validate(String label, @Nullable Collection<BlazeValidationError> errors) {
+  /** Validate the given target label. Returns null on success or an error message otherwise. */
+  @Nullable
+  public static String validate(String label) {
     int colonIndex = label.indexOf(':');
     if (label.startsWith("//") && colonIndex >= 0) {
       String packageName = label.substring("//".length(), colonIndex);
-      if (!validatePackagePath(packageName, errors)) {
-        return false;
+      String error = validatePackagePath(packageName);
+      if (error != null) {
+        return error;
       }
       String ruleName = label.substring(colonIndex + 1);
-      if (!TargetName.validate(ruleName, errors)) {
-        return false;
+      error = TargetName.validate(ruleName);
+      if (error != null) {
+        return error;
       }
-      return true;
+      return null;
     }
     if (label.startsWith("@") && colonIndex >= 0) {
       // a bazel-specific label pointing to a different repository
       int slashIndex = label.indexOf("//");
       if (slashIndex >= 0) {
-        return validate(label.substring(slashIndex), errors);
+        return validate(label.substring(slashIndex));
       }
     }
-    if (errors != null) {
-      errors.add(new BlazeValidationError("Not a valid label, no target name found: " + label));
-    }
-    return false;
+    return "Not a valid label, no target name found: " + label;
   }
 
   public boolean isExternal() {
@@ -150,41 +140,8 @@ public final class Label extends TargetExpression {
     return target != null ? Label.create(externalWorkspaceName(), blazePackage(), target) : null;
   }
 
-  static boolean validatePackagePath(String path) {
-    return validatePackagePath(path, null);
-  }
-
-  public static boolean validatePackagePath(
-      String path, @Nullable Collection<BlazeValidationError> errors) {
-    // Empty packages are legal but not recommended
-    if (path.isEmpty()) {
-      return true;
-    }
-
-    if (path.charAt(0) == '/') {
-      BlazeValidationError.collect(
-          errors,
-          new BlazeValidationError(
-              "Invalid package name: " + path + "\n" + "Package names may not start with \"/\"."));
-      return false;
-    }
-    if (path.contains("//")) {
-      BlazeValidationError.collect(
-          errors,
-          new BlazeValidationError(
-              "Invalid package name: "
-                  + path
-                  + "\n "
-                  + "package names may not contain \"//\" path separators."));
-      return false;
-    }
-    if (path.endsWith("/")) {
-      BlazeValidationError.collect(
-          errors,
-          new BlazeValidationError(
-              "Invalid package name: " + path + "\n " + "package names may not end with \"/\""));
-      return false;
-    }
-    return true;
+  @Nullable
+  public static String validatePackagePath(String path) {
+    return PackagePathValidator.validatePackageName(path);
   }
 }

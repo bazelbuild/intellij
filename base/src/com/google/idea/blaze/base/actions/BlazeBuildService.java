@@ -46,6 +46,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /** Utility to build various collections of targets. */
 public class BlazeBuildService {
@@ -115,49 +116,52 @@ public class BlazeBuildService {
     if (blazeProjectData == null) {
       return;
     }
-    BlazeExecutor.submitTask(
-        project,
-        new ScopedTask() {
-          @Override
-          public void execute(BlazeContext context) {
-            context
-                .push(new ExperimentScope())
-                .push(new BlazeConsoleScope.Builder(project).build())
-                .push(new IssuesScope(project))
-                .push(new IdeaLogScope())
-                .push(new TimingScope("Make"))
-                .push(notificationScope);
+    @SuppressWarnings("unused") // go/futurereturn-lsc
+    Future<?> possiblyIgnoredError =
+        BlazeExecutor.submitTask(
+            project,
+            "Building targets",
+            new ScopedTask() {
+              @Override
+              public void execute(BlazeContext context) {
+                context
+                    .push(new ExperimentScope())
+                    .push(new BlazeConsoleScope.Builder(project).build())
+                    .push(new IssuesScope(project))
+                    .push(new IdeaLogScope())
+                    .push(new TimingScope("Make"))
+                    .push(notificationScope);
 
-            WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+                WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
-            SaveUtil.saveAllFiles();
-            ShardedTargetsResult shardedTargets =
-                BlazeBuildTargetSharder.expandAndShardTargets(
-                    project,
-                    context,
-                    workspaceRoot,
-                    projectViewSet,
-                    blazeProjectData.workspacePathResolver,
-                    targets);
-            if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
-              return;
-            }
-            BuildResult buildResult =
-                BlazeIdeInterface.getInstance()
-                    .compileIdeArtifacts(
+                SaveUtil.saveAllFiles();
+                ShardedTargetsResult shardedTargets =
+                    BlazeBuildTargetSharder.expandAndShardTargets(
                         project,
                         context,
                         workspaceRoot,
                         projectViewSet,
-                        blazeProjectData.blazeVersionData,
-                        blazeProjectData.workspaceLanguageSettings,
-                        shardedTargets.shardedTargets);
-            FileCaches.refresh(project);
+                        blazeProjectData.workspacePathResolver,
+                        targets);
+                if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
+                  return;
+                }
+                BuildResult buildResult =
+                    BlazeIdeInterface.getInstance()
+                        .compileIdeArtifacts(
+                            project,
+                            context,
+                            workspaceRoot,
+                            projectViewSet,
+                            blazeProjectData.blazeVersionData,
+                            blazeProjectData.workspaceLanguageSettings,
+                            shardedTargets.shardedTargets);
+                FileCaches.refresh(project);
 
-            if (buildResult.status != BuildResult.Status.SUCCESS) {
-              context.setHasError();
-            }
-          }
-        });
+                if (buildResult.status != BuildResult.Status.SUCCESS) {
+                  context.setHasError();
+                }
+              }
+            });
   }
 }

@@ -54,9 +54,11 @@ public class IssueOutputLineProcessor implements LineProcessingOutputStream.Line
                 new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
                     projectViewSet, "no such package '(.*)': BUILD file not found on package path"),
                 new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                    projectViewSet, "no targets found beneath '(.*)'"),
+                    projectViewSet, "no targets found beneath '(.*?)'"),
                 new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                    projectViewSet, "ERROR: invalid target format '(.*)'"),
+                    projectViewSet, "ERROR: invalid target format '(.*?)'"),
+                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                    projectViewSet, "ERROR: Skipping '(.*?)'"),
                 new BlazeIssueParser.FileNotFoundBuildParser(workspaceRoot))
             .addAll(BlazeIssueParserProvider.getAllIssueParsers(project))
             .build();

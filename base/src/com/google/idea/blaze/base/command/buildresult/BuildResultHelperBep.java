@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -78,6 +79,19 @@ class BuildResultHelperBep implements BuildResultHelper {
                   input ->
                       BuildEventProtocolOutputReader.parseArtifactsForTarget(
                           input, target, fileFilter))
+              .orElse(ImmutableList.of());
+    }
+    return result;
+  }
+
+  @Override
+  public ImmutableList<File> getArtifactsForOutputGroups(Set<String> outputGroups) {
+    if (result == null) {
+      result =
+          readResult(
+                  input ->
+                      BuildEventProtocolOutputReader.parseAllOutputGroupFilenames(
+                          input, outputGroups, fileFilter))
               .orElse(ImmutableList.of());
     }
     return result;

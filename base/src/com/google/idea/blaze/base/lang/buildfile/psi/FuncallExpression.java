@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.psi;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.FuncallReference;
@@ -28,6 +29,7 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import icons.BlazeIcons;
+import java.util.Set;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
@@ -129,6 +131,11 @@ public class FuncallExpression extends BuildElementImpl
   public Argument[] getArguments() {
     ArgumentList argList = getArgList();
     return argList != null ? argList.getArguments() : Argument.EMPTY_ARRAY;
+  }
+
+  public Set<String> getKeywordArgumentNames() {
+    ArgumentList argList = getArgList();
+    return argList != null ? argList.getKeywordArgNames() : ImmutableSet.of();
   }
 
   /** Keyword argument with name "name", if one is present. */

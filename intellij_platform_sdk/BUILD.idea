@@ -22,6 +22,11 @@ java_import(
 )
 
 java_import(
+    name = "coverage",
+    jars = glob(["plugins/coverage/lib/*.jar"]),
+)
+
+java_import(
     name = "hg4idea",
     jars = ["plugins/hg4idea/lib/hg4idea.jar"],
 )

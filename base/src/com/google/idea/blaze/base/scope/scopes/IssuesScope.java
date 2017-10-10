@@ -24,23 +24,25 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nullable;
 
 /** Shows the compiler output. */
 public class IssuesScope implements BlazeScope, OutputSink<IssueOutput> {
 
   private final Project project;
   private final UUID sessionId;
-  private int issuesCount;
+  private final IssueBuffer issueBuffer = new IssueBuffer();
 
-  public IssuesScope(@NotNull Project project) {
+  public IssuesScope(Project project) {
     this.project = project;
     this.sessionId = UUID.randomUUID();
   }
 
   @Override
-  public void onScopeBegin(@NotNull BlazeContext context) {
+  public void onScopeBegin(BlazeContext context) {
     context.addOutputSink(IssueOutput.class, this);
     BlazeProblemsView blazeProblemsView = BlazeProblemsView.getInstance(project);
     if (blazeProblemsView != null) {
@@ -49,16 +51,13 @@ public class IssuesScope implements BlazeScope, OutputSink<IssueOutput> {
   }
 
   @Override
-  public void onScopeEnd(@NotNull BlazeContext context) {
-    if (issuesCount > 0) {
-      ApplicationManager.getApplication()
-          .invokeLater(
-              new Runnable() {
-                @Override
-                public void run() {
-                  focusProblemsView();
-                }
-              });
+  public void onScopeEnd(BlazeContext context) {
+    if (!issueBuffer.isEmpty()) {
+      BlazeProblemsView blazeProblemsView = BlazeProblemsView.getInstance(project);
+      if (blazeProblemsView != null) {
+        issueBuffer.flushBuffer(blazeProblemsView);
+      }
+      ApplicationManager.getApplication().invokeLater(this::focusProblemsView);
     }
   }
 
@@ -71,12 +70,61 @@ public class IssuesScope implements BlazeScope, OutputSink<IssueOutput> {
   }
 
   @Override
-  public Propagation onOutput(@NotNull IssueOutput output) {
+  public Propagation onOutput(IssueOutput output) {
     BlazeProblemsView blazeProblemsView = BlazeProblemsView.getInstance(project);
-    if (blazeProblemsView != null) {
-      blazeProblemsView.addMessage(output, sessionId);
-    }
-    ++issuesCount;
+    issueBuffer.addOrBufferIssue(blazeProblemsView, output);
     return Propagation.Continue;
+  }
+
+  /**
+   * Buffer to limit problems sent to {@link BlazeProblemsView}. Too many can freeze the IDE.
+   *
+   * <p>Stream out the first {@link #NUM_ISSUES_BEFORE_BUFFER} so that users can see them
+   * immediately, but buffer the rest so that we can limit the total number of issues written.
+   */
+  private class IssueBuffer {
+    private static final int NUM_ISSUES_BEFORE_BUFFER = 500;
+    private static final int MAX_ISSUES = 4000; // 80,000 is too slow (but benchmark)
+    int issuesCount;
+    final List<IssueOutput> buffer = new ArrayList<>();
+
+    void addOrBufferIssue(@Nullable BlazeProblemsView blazeProblemsView, IssueOutput output) {
+      issuesCount++;
+      if (blazeProblemsView == null) {
+        return;
+      }
+      if (issuesCount <= NUM_ISSUES_BEFORE_BUFFER) {
+        blazeProblemsView.addMessage(output, sessionId);
+      } else {
+        buffer.add(output);
+      }
+    }
+
+    boolean isEmpty() {
+      return issuesCount == 0;
+    }
+
+    private void flushBuffer(BlazeProblemsView blazeProblemsView) {
+      if (issuesCount < MAX_ISSUES) {
+        flushIssues(blazeProblemsView, buffer);
+        return;
+      }
+      int numIssuesToFlush = MAX_ISSUES - NUM_ISSUES_BEFORE_BUFFER;
+      List<IssueOutput> subList = buffer.subList(buffer.size() - numIssuesToFlush, buffer.size());
+      flushIssues(blazeProblemsView, subList);
+      IssueOutput truncationIssue =
+          IssueOutput.warn(
+                  String.format(
+                      "Too many problems found. Truncating from %d down to %d (first %d, last %d)",
+                      issuesCount, MAX_ISSUES, NUM_ISSUES_BEFORE_BUFFER, numIssuesToFlush))
+              .build();
+      blazeProblemsView.addMessage(truncationIssue, sessionId);
+    }
+
+    private void flushIssues(BlazeProblemsView problemsView, List<IssueOutput> bufferedIssues) {
+      for (IssueOutput issueOutput : bufferedIssues) {
+        problemsView.addMessage(issueOutput, sessionId);
+      }
+    }
   }
 }

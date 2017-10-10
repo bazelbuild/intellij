@@ -79,7 +79,7 @@ public class ProjectViewSetTest extends BlazeTestCase {
                             .add(DirectoryEntry.include(new WorkspacePath("test"))))
                     .add(
                         ListSection.builder(TargetSection.KEY)
-                            .add(TargetExpression.fromString("//test:all")))
+                            .add(TargetExpression.fromStringSafe("//test:all")))
                     .add(ScalarSection.builder(ImportSection.KEY).set(new WorkspacePath("test")))
                     .add(ListSection.builder(TestSourceSection.KEY).add(new Glob("javatests/*")))
                     .add(ListSection.builder(ExcludedSourceSection.KEY).add(new Glob("*.java")))

@@ -41,14 +41,6 @@ import javax.annotation.Nullable;
 /** Verifies project views. */
 public class ProjectViewVerifier {
 
-  private static class MissingDirectoryIssueData extends IssueOutput.IssueData {
-    public final WorkspacePath workspacePath;
-
-    public MissingDirectoryIssueData(WorkspacePath workspacePath) {
-      this.workspacePath = workspacePath;
-    }
-  }
-
   /** Verifies the project view. Any errors are output to the context as issues. */
   public static boolean verifyProjectView(
       @Nullable Project project,
@@ -165,7 +157,6 @@ public class ProjectViewVerifier {
                   String.format(
                       "Directory '%s' specified in project view not found.", workspacePath))
               .inFile(projectViewFile.projectViewFile)
-              .withData(new MissingDirectoryIssueData(workspacePath))
               .submit(context);
           ok = false;
         } else if (!fileAttributeProvider.isDirectory(file)) {
@@ -173,7 +164,6 @@ public class ProjectViewVerifier {
                   String.format(
                       "Directory '%s' specified in project view is a file.", workspacePath))
               .inFile(projectViewFile.projectViewFile)
-              .withData(new MissingDirectoryIssueData(workspacePath))
               .submit(context);
           ok = false;
         }

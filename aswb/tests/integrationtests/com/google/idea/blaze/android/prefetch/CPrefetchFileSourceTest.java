@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.prefetch;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.base.Joiner;
+import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.CIdeInfo;
@@ -39,6 +40,7 @@ import com.google.idea.blaze.cpp.CPrefetchFileSource;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -46,6 +48,10 @@ import org.junit.runners.JUnit4;
 /** Unit tests for {@link CPrefetchFileSource}. */
 @RunWith(JUnit4.class)
 public class CPrefetchFileSourceTest extends BlazeIntegrationTestCase {
+
+  @Rule
+  public final AndroidIntegrationTestSetupRule androidSetupRule =
+      new AndroidIntegrationTestSetupRule();
 
   @Test
   public void testSourceFilesInProjectIgnored() {

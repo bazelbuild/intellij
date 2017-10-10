@@ -82,7 +82,9 @@ public class BlazeAndroidLiteSyncPlugin extends BlazeSyncPlugin.Adapter {
             .filter(Objects::nonNull)
             .findFirst()
             .orElse(null);
-    return sdk != null ? new BlazeJarLibrary(new LibraryArtifact(null, sdk, null)) : null;
+    return sdk != null
+        ? new BlazeJarLibrary(new LibraryArtifact(null, sdk, ImmutableList.of()))
+        : null;
   }
 
   private static List<AndroidSdkIdeInfo> androidSdkTargets(TargetMap targetMap) {

@@ -53,6 +53,11 @@ public final class ArtifactLocation implements Serializable, Comparable<Artifact
     return !isSource;
   }
 
+  /** Returns false for generated or external artifacts */
+  public boolean isMainWorkspaceSourceArtifact() {
+    return isSource && !isExternal;
+  }
+
   /** For main-workspace source artifacts, this is simply the workspace-relative path. */
   public String getExecutionRootRelativePath() {
     return Paths.get(rootExecutionPathFragment, relativePath).toString();

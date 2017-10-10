@@ -38,6 +38,7 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.sdkcompat.cidr.CidrConsoleBuilderAdapter;
@@ -163,13 +164,18 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     File workingDir = workspaceRoot.directory();
     commandLine.setWorkDirectory(workingDir);
     commandLine.addParameters(handlerState.getExeFlagsState().getExpandedFlags());
+
+    String testPrefix = "--gtest";
+    if (Blaze.getBuildSystem(project).equals(BuildSystem.Blaze)) {
+      testPrefix = "--gunit";
+    }
     // Disable colored output, to workaround parsing bug (CPP-10054)
     // Note: cc_test runner currently only supports GUnit tests.
     if (Kind.CC_TEST.equals(configuration.getKindForTarget())) {
-      commandLine.addParameter("--gunit_color=no");
+      commandLine.addParameter(testPrefix + "_color=no");
     }
 
-    String testFilter = convertToGUnitTestFilter(handlerState.getTestFilterFlag());
+    String testFilter = convertToGUnitTestFilter(handlerState.getTestFilterFlag(), testPrefix);
     if (testFilter != null) {
       commandLine.addParameter(testFilter);
     }
@@ -185,13 +191,14 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     return new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder());
   }
 
-  /** Convert Blaze test filter to gunit test filter */
+  /** Convert Blaze test filter to gunit/gtest test filter */
   @Nullable
-  private static String convertToGUnitTestFilter(@Nullable String blazeTestFilter) {
+  private static String convertToGUnitTestFilter(
+      @Nullable String blazeTestFilter, String testPrefix) {
     if (blazeTestFilter == null || !blazeTestFilter.startsWith(BlazeFlags.TEST_FILTER)) {
       return null;
     }
-    return "--gunit_filter" + blazeTestFilter.substring(BlazeFlags.TEST_FILTER.length());
+    return testPrefix + "_filter" + blazeTestFilter.substring(BlazeFlags.TEST_FILTER.length());
   }
 
   @Override

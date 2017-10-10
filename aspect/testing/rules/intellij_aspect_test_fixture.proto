@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+import "proto/intellij_ide_info.proto";
+
+package blaze;
+
+option java_package = "com.google.devtools.intellij";
+
+message IntellijAspectTestFixture {
+  repeated TargetIdeInfo targets = 1;
+  repeated OutputGroup output_groups = 2;
+}
+
+message OutputGroup {
+  string name = 1;
+  repeated string file_paths = 2;
+}

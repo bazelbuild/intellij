@@ -18,7 +18,10 @@ package com.google.idea.blaze.base.sync.sharding;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,17 +29,22 @@ import org.junit.runners.JUnit4;
 
 /** Test that targets are correctly partitioned in {@link BlazeBuildTargetSharder#shardTargets}. */
 @RunWith(JUnit4.class)
-public class PartitionTargetsTest {
+public class PartitionTargetsTest extends BlazeTestCase {
+
+  @Override
+  protected void initTest(Container applicationServices, Container projectServices) {
+    applicationServices.register(ExperimentService.class, new MockExperimentService());
+  }
 
   @Test
   public void testShardSizeRespected() {
     List<TargetExpression> targets =
         ImmutableList.of(
-            TargetExpression.fromString("//java/com/google:one"),
-            TargetExpression.fromString("//java/com/google:two"),
-            TargetExpression.fromString("//java/com/google:three"),
-            TargetExpression.fromString("//java/com/google:four"),
-            TargetExpression.fromString("//java/com/google:five"));
+            TargetExpression.fromStringSafe("//java/com/google:one"),
+            TargetExpression.fromStringSafe("//java/com/google:two"),
+            TargetExpression.fromStringSafe("//java/com/google:three"),
+            TargetExpression.fromStringSafe("//java/com/google:four"),
+            TargetExpression.fromStringSafe("//java/com/google:five"));
     ShardedTargetList shards = BlazeBuildTargetSharder.shardTargets(targets, 2);
     assertThat(shards.shardedTargets).hasSize(3);
     assertThat(shards.shardedTargets.get(0)).hasSize(2);
@@ -57,39 +65,39 @@ public class PartitionTargetsTest {
   public void testAllSubsequentExcludedTargetsAppendedToShards() {
     List<TargetExpression> targets =
         ImmutableList.of(
-            TargetExpression.fromString("//java/com/google:one"),
-            TargetExpression.fromString("-//java/com/google:two"),
-            TargetExpression.fromString("//java/com/google:three"),
-            TargetExpression.fromString("-//java/com/google:four"),
-            TargetExpression.fromString("//java/com/google:five"),
-            TargetExpression.fromString("-//java/com/google:six"));
+            TargetExpression.fromStringSafe("//java/com/google:one"),
+            TargetExpression.fromStringSafe("-//java/com/google:two"),
+            TargetExpression.fromStringSafe("//java/com/google:three"),
+            TargetExpression.fromStringSafe("-//java/com/google:four"),
+            TargetExpression.fromStringSafe("//java/com/google:five"),
+            TargetExpression.fromStringSafe("-//java/com/google:six"));
     ShardedTargetList shards = BlazeBuildTargetSharder.shardTargets(targets, 3);
     assertThat(shards.shardedTargets).hasSize(2);
     assertThat(shards.shardedTargets.get(0)).hasSize(5);
     assertThat(shards.shardedTargets.get(0))
         .isEqualTo(
             ImmutableList.of(
-                TargetExpression.fromString("//java/com/google:one"),
-                TargetExpression.fromString("-//java/com/google:two"),
-                TargetExpression.fromString("//java/com/google:three"),
-                TargetExpression.fromString("-//java/com/google:four"),
-                TargetExpression.fromString("-//java/com/google:six")));
+                TargetExpression.fromStringSafe("//java/com/google:one"),
+                TargetExpression.fromStringSafe("-//java/com/google:two"),
+                TargetExpression.fromStringSafe("//java/com/google:three"),
+                TargetExpression.fromStringSafe("-//java/com/google:four"),
+                TargetExpression.fromStringSafe("-//java/com/google:six")));
     assertThat(shards.shardedTargets.get(1)).hasSize(3);
     assertThat(shards.shardedTargets.get(1))
         .containsExactly(
-            TargetExpression.fromString("-//java/com/google:four"),
-            TargetExpression.fromString("//java/com/google:five"),
-            TargetExpression.fromString("-//java/com/google:six"))
+            TargetExpression.fromStringSafe("-//java/com/google:four"),
+            TargetExpression.fromStringSafe("//java/com/google:five"),
+            TargetExpression.fromStringSafe("-//java/com/google:six"))
         .inOrder();
 
     shards = BlazeBuildTargetSharder.shardTargets(targets, 1);
     assertThat(shards.shardedTargets).hasSize(3);
     assertThat(shards.shardedTargets.get(0))
         .containsExactly(
-            TargetExpression.fromString("//java/com/google:one"),
-            TargetExpression.fromString("-//java/com/google:two"),
-            TargetExpression.fromString("-//java/com/google:four"),
-            TargetExpression.fromString("-//java/com/google:six"))
+            TargetExpression.fromStringSafe("//java/com/google:one"),
+            TargetExpression.fromStringSafe("-//java/com/google:two"),
+            TargetExpression.fromStringSafe("-//java/com/google:four"),
+            TargetExpression.fromStringSafe("-//java/com/google:six"))
         .inOrder();
   }
 
@@ -97,12 +105,12 @@ public class PartitionTargetsTest {
   public void testShardWithOnlyExcludedTargetsIsDropped() {
     List<TargetExpression> targets =
         ImmutableList.of(
-            TargetExpression.fromString("//java/com/google:one"),
-            TargetExpression.fromString("//java/com/google:two"),
-            TargetExpression.fromString("//java/com/google:three"),
-            TargetExpression.fromString("-//java/com/google:four"),
-            TargetExpression.fromString("-//java/com/google:five"),
-            TargetExpression.fromString("-//java/com/google:six"));
+            TargetExpression.fromStringSafe("//java/com/google:one"),
+            TargetExpression.fromStringSafe("//java/com/google:two"),
+            TargetExpression.fromStringSafe("//java/com/google:three"),
+            TargetExpression.fromStringSafe("-//java/com/google:four"),
+            TargetExpression.fromStringSafe("-//java/com/google:five"),
+            TargetExpression.fromStringSafe("-//java/com/google:six"));
 
     ShardedTargetList shards = BlazeBuildTargetSharder.shardTargets(targets, 3);
 

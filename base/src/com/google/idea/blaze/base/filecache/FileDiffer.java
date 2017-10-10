@@ -20,7 +20,7 @@ import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.io.ModifiedTimeScanner;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -35,8 +35,8 @@ public final class FileDiffer {
   public static ImmutableMap<File, Long> updateFiles(
       @Nullable ImmutableMap<File, Long> oldState,
       Iterable<File> files,
-      List<File> updatedFiles,
-      List<File> removedFiles) {
+      Collection<File> updatedFiles,
+      Collection<File> removedFiles) {
     ImmutableMap<File, Long> newState = readFileState(files);
     if (newState == null) {
       return null;
@@ -56,7 +56,10 @@ public final class FileDiffer {
   }
 
   public static <K, V> void diffState(
-      @Nullable Map<K, V> oldState, Map<K, V> newState, List<K> updated, List<K> removed) {
+      @Nullable Map<K, V> oldState,
+      Map<K, V> newState,
+      Collection<K> updated,
+      Collection<K> removed) {
     oldState = oldState != null ? oldState : ImmutableMap.of();
 
     // Find changed/new

@@ -64,8 +64,10 @@ public class BlazeIssueParserTest extends BlazeTestCase {
                 ProjectView.builder()
                     .add(
                         ListSection.builder(TargetSection.KEY)
-                            .add(TargetExpression.fromString("//tests/com/google/a/b/c/d/baz:baz"))
-                            .add(TargetExpression.fromString("//package/path:hello4")))
+                            .add(
+                                TargetExpression.fromStringSafe(
+                                    "//tests/com/google/a/b/c/d/baz:baz"))
+                            .add(TargetExpression.fromStringSafe("//package/path:hello4")))
                     .build())
             .build();
     when(projectViewManager.getProjectViewSet()).thenReturn(projectViewSet);

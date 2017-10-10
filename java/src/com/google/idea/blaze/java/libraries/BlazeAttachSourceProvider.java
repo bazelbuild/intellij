@@ -17,7 +17,6 @@ package com.google.idea.blaze.java.libraries;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -69,8 +68,7 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
         continue;
       }
       LibraryArtifact libraryArtifact = blazeLibrary.libraryArtifact;
-      ArtifactLocation artifactLocation = libraryArtifact.sourceJar;
-      if (artifactLocation == null) {
+      if (libraryArtifact.sourceJars.isEmpty()) {
         continue;
       }
       librariesToAttachSourceTo.add(blazeLibrary);

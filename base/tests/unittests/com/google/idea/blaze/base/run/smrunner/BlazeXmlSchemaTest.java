@@ -19,11 +19,11 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestCase;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,23 +35,20 @@ public class BlazeXmlSchemaTest {
 
   @Test
   public void testNoTestSuitesOuterElement() {
-    List<String> lines =
-        ImmutableList.of(
+    TestSuite parsed =
+        parseXml(
             "  <testsuite name=\"foo/bar\" tests=\"1\" time=\"19.268\">",
             "      <testcase name=\"TestName\" result=\"completed\" status=\"run\" time=\"19.2\">",
             "          <system-out>PASS&#xA;&#xA;</system-out>",
             "      </testcase>",
             "  </testsuite>");
-    InputStream stream =
-        new ByteArrayInputStream(Joiner.on('\n').join(lines).getBytes(StandardCharsets.UTF_8));
-    TestSuite parsed = BlazeXmlSchema.parse(stream);
     assertThat(parsed).isNotNull();
   }
 
   @Test
   public void testOuterTestSuitesElement() {
-    List<String> lines =
-        ImmutableList.of(
+    TestSuite parsed =
+        parseXml(
             "<?xml version='1.0' encoding='UTF-8'?>",
             "<testsuites>",
             "  <testsuite name='foo' hostname='localhost' tests='331' failures='0' id='0'>",
@@ -64,10 +61,32 @@ public class BlazeXmlSchemaTest {
             "    <system-out />",
             "  </testsuite>",
             "</testsuites>");
-    InputStream stream =
-        new ByteArrayInputStream(Joiner.on('\n').join(lines).getBytes(StandardCharsets.UTF_8));
-    TestSuite parsed = BlazeXmlSchema.parse(stream);
     assertThat(parsed).isNotNull();
+  }
+
+  @Test
+  public void testTestCaseWithMultipleFailures() {
+    TestSuite parsed =
+        parseXml(
+            "<?xml version='1.0' encoding='UTF-8'?>",
+            "<testsuites>",
+            "  <testsuite name='com.google.ConfigTest' time='10' tests='2' failures='1'>",
+            "    <testcase name='testCase1' time='7.9' status='run' result='completed'>",
+            "      <failure message='failed' type='AssertionError'>Error message</failure>",
+            "      <failure message='failed2' type='AssertionError'>Another Error</failure>",
+            "    </testcase>",
+            "  </testsuite>",
+            "</testsuites>");
+
+    assertThat(parsed.testSuites.get(0).testCases).hasSize(1);
+    assertThat(parsed.testSuites.get(0).failures).isEqualTo(1);
+
+    TestCase testCase = parsed.testSuites.get(0).testCases.get(0);
+    assertThat(testCase.failures).hasSize(2);
+    assertThat(testCase.failures.get(0).message).isEqualTo("failed");
+    assertThat(testCase.failures.get(0).content).isEqualTo("Error message");
+    assertThat(testCase.failures.get(1).message).isEqualTo("failed2");
+    assertThat(testCase.failures.get(1).content).isEqualTo("Another Error");
   }
 
   @Test

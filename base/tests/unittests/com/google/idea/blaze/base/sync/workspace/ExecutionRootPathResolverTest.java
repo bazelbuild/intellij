@@ -86,4 +86,11 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
         .containsExactly(
             new File(EXECUTION_ROOT, "bazel-out/arm-linux-fastbuild/genfiles/res/normal"));
   }
+
+  @Test
+  public void testIllegalWorkspacePaths() {
+    ImmutableList<File> files =
+        pathResolver.resolveToIncludeDirectories(new ExecutionRootPath("tools/fast/:include"));
+    assertThat(files).isEmpty();
+  }
 }

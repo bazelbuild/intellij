@@ -17,11 +17,11 @@ package com.google.idea.blaze.base.command;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import java.util.Collection;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import javax.annotation.concurrent.Immutable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * A class for Blaze/Bazel command names. We enumerate the commands we use (and that we expect users
@@ -30,25 +30,25 @@ import org.jetbrains.annotations.NotNull;
  */
 @Immutable
 public final class BlazeCommandName {
-  @NotNull
-  private static final ConcurrentMap<String, BlazeCommandName> knownCommands =
-      Maps.newConcurrentMap();
+  private static final Map<String, BlazeCommandName> knownCommands =
+      Collections.synchronizedMap(new LinkedHashMap<>());
 
-  public static final BlazeCommandName BUILD = fromString("build");
   public static final BlazeCommandName TEST = fromString("test");
-  public static final BlazeCommandName MOBILE_INSTALL = fromString("mobile-install");
   public static final BlazeCommandName RUN = fromString("run");
+  public static final BlazeCommandName BUILD = fromString("build");
   public static final BlazeCommandName QUERY = fromString("query");
   public static final BlazeCommandName INFO = fromString("info");
+  public static final BlazeCommandName MOBILE_INSTALL = fromString("mobile-install");
+  public static final BlazeCommandName COVERAGE = fromString("coverage");
 
-  public static BlazeCommandName fromString(@NotNull String name) {
+  public static BlazeCommandName fromString(String name) {
     knownCommands.putIfAbsent(name, new BlazeCommandName(name));
     return knownCommands.get(name);
   }
 
   private final String name;
 
-  private BlazeCommandName(@NotNull String name) {
+  private BlazeCommandName(String name) {
     Preconditions.checkArgument(!name.isEmpty(), "Command should be non-empty.");
     this.name = name;
   }
@@ -76,7 +76,6 @@ public final class BlazeCommandName {
    * @return An unmodifiable view of the Blaze commands we know about (including those that the user
    *     has specified, in addition to those we have hard-coded).
    */
-  @NotNull
   public static Collection<BlazeCommandName> knownCommands() {
     return ImmutableList.copyOf(knownCommands.values());
   }

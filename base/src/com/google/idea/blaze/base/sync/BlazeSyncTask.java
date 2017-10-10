@@ -162,7 +162,7 @@ final class BlazeSyncTask implements Progressive {
                         project, "Sync", "Sync project", "Sync successful", "Sync failed"));
           }
 
-          context.output(new StatusOutput("Syncing project..."));
+          context.output(new StatusOutput(String.format("Syncing project: %s...", syncParams)));
           syncProject(context);
         });
   }
@@ -366,6 +366,7 @@ final class BlazeSyncTask implements Progressive {
     if (context.isCancelled()) {
       return SyncResult.CANCELLED;
     }
+    context.output(PrintOutput.log("ide-query result: " + ideQueryResult.buildResult.status));
     if (ideQueryResult.targetMap == null
         || ideQueryResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
       context.setHasError();
@@ -376,6 +377,8 @@ final class BlazeSyncTask implements Progressive {
     }
 
     TargetMap targetMap = ideQueryResult.targetMap;
+    context.output(
+        PrintOutput.log("Target map size: " + ideQueryResult.targetMap.targets().size()));
     BuildResult ideInfoResult = ideQueryResult.buildResult;
 
     ListenableFuture<ImmutableMultimap<TargetKey, TargetKey>> reverseDependenciesFuture =

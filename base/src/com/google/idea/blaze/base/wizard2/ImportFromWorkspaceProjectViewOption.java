@@ -15,11 +15,9 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.base.ui.BlazeValidationError;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -33,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import java.awt.Dimension;
 import java.io.File;
-import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -75,7 +72,7 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
 
   @Override
   public String getOptionText() {
-    return "Import from workspace";
+    return "Import project view file";
   }
 
   @Override
@@ -88,9 +85,9 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
     if (getProjectViewPath().isEmpty()) {
       return BlazeValidationResult.failure("Workspace path to project view file cannot be empty.");
     }
-    List<BlazeValidationError> errors = Lists.newArrayList();
-    if (!WorkspacePath.validate(getProjectViewPath(), errors)) {
-      return BlazeValidationResult.failure(errors.get(0));
+    String error = WorkspacePath.validate(getProjectViewPath());
+    if (error != null) {
+      return BlazeValidationResult.failure(error);
     }
     WorkspacePathResolver workspacePathResolver =
         builder.getWorkspaceOption().getWorkspacePathResolver();
@@ -153,7 +150,7 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
       // If the user has typed part of the path then clicked the '...', try to start from the
       // partial state
       projectViewPath = StringUtil.trimEnd(projectViewPath, '/');
-      if (WorkspacePath.validate(projectViewPath)) {
+      if (WorkspacePath.isValid(projectViewPath)) {
         File fileLocation = workspacePathResolver.resolveToFile(new WorkspacePath(projectViewPath));
         if (fileLocation.exists() && FileUtil.isAncestor(fileBrowserRoot, fileLocation, true)) {
           startingLocation = fileLocation;

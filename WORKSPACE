@@ -5,10 +5,10 @@ workspace(name = "intellij_with_bazel")
 # The plugin api for IntelliJ 2017.2. This is required to build IJwB,
 # and run integration tests.
 new_http_archive(
-    name = "intellij_ce_2017_2_2",
+    name = "intellij_ce_2017_2_3",
     build_file = "intellij_platform_sdk/BUILD.idea",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2017.2.2/ideaIC-2017.2.2.zip",
-    sha256 = "4e14343ecaab00a3a02f2e51995a46cdbea90e20d336f806a1ec40892bbd7e53",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2017.2.3/ideaIC-2017.2.3.zip",
+    sha256 = "423ae4ae94da7e37807afb859928416965f03c397278b43a251c95212f8a552e",
 )
 
 # The plugin api for IntelliJ 2017.1. This is required to build IJwB,
@@ -23,10 +23,10 @@ new_http_archive(
 # The plugin api for IntelliJ UE 2017.2. This is required to run UE-specific
 # integration tests.
 new_http_archive(
-    name = "intellij_ue_2017_2_2",
+    name = "intellij_ue_2017_2_3",
     build_file = "intellij_platform_sdk/BUILD.idea",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2017.2.2/ideaIU-2017.2.2.zip",
-    sha256 = "b5a07d41b255799b2cdf2aa8b1c154aa35bf88deac4ae3718b2bae257b68d47d",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2017.2.3/ideaIU-2017.2.3.zip",
+    sha256 = "080be11393fc8b64766dc6ecacdf8a3eaa507e55c01b1f63734db441a003f6ea",
 )
 
 # The plugin api for IntelliJ UE 2017.1. This is required to run UE-specific
@@ -50,10 +50,10 @@ new_http_archive(
 # The plugin api for CLion 2017.2.0. This is required to build CLwB,
 # and run integration tests.
 new_http_archive(
-    name = "clion_2017_2_1",
+    name = "clion_2017_2_2",
     build_file = "intellij_platform_sdk/BUILD.clion",
-    url = "https://download.jetbrains.com/cpp/CLion-2017.2.1.tar.gz",
-    sha256 = "acd3d09a37a3fa922a85a48635d1b230d559ea68917e2e7895caf16460d50c13",
+    url = "https://download.jetbrains.com/cpp/CLion-2017.2.2.tar.gz",
+    sha256 = "a019cd2469ecda7d93f3cd7ad3b8e349f374425783f6b4a54181907f6264d6e6",
 )
 
 # The plugin api for Android Studio 2.3.1. This is required to build ASwB,
@@ -65,13 +65,13 @@ new_http_archive(
     sha256 = "36520f21678f80298b5df5fe5956db17a5984576f895fdcaa36ab0dbfb408433",
 )
 
-# The plugin api for Android Studio 3.0 Beta 1. This is required to build ASwB,
+# The plugin api for Android Studio 3.0 Beta 5. This is required to build ASwB,
 # and run integration tests.
 new_http_archive(
-    name = "android_studio_3_0_0_9",
+    name = "android_studio_3_0_0_13",
     build_file = "intellij_platform_sdk/BUILD.android_studio",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/3.0.0.9/android-studio-ide-171.4243858-linux.zip",
-    sha256 = "422cc6c85ee62186bdb81facd970c0058575dc45ba39f6fd8b326b430269f28c",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/3.0.0.13/android-studio-ide-171.4316950-linux.zip",
+    sha256 = "accab8a8270bcc8c273ff980d26195dad3ea77839741e4dcd01cad5bd8ac462a",
 )
 
 # Python plugin for IntelliJ CE 2017.1. Required at compile-time for python-specific features.
@@ -100,7 +100,7 @@ new_http_archive(
     sha256 = "c7ee48c0bafb29f4a18eaac804b113c4dcdfeaaae174d9003c9ad96e44df6fe0",
 )
 
-# Go plugin for IntelliJ UE and CLion 2017.2.1. Required at compile-time for Bazel integration.
+# Go plugin for IntelliJ UE and CLion. Required at compile-time for Bazel integration.
 new_http_archive(
     name = "go_2017_2",
     build_file_content = "\n".join([
@@ -219,3 +219,33 @@ maven_jar(
     artifact = "com.google.errorprone:error_prone_annotations:2.0.15",
     sha1 = "822652ed7196d119b35d2e22eb9cd4ffda11e640",
 )
+
+# LICENSE: The Apache Software License, Version 2.0
+# proto_library rules implicitly depend on @com_google_protobuf//:protoc
+http_archive(
+    name = "com_google_protobuf",
+    strip_prefix = "protobuf-master",
+    urls = ["https://github.com/google/protobuf/archive/master.zip"],
+)
+
+# LICENSE: The Apache Software License, Version 2.0
+# java_proto_library rules implicitly depend on @com_google_protobuf_java//:java_toolchain
+# It's the same repository as above, but there's no way to alias them at the moment (and both are
+# required).
+http_archive(
+    name = "com_google_protobuf_java",
+    strip_prefix = "protobuf-master",
+    urls = ["https://github.com/google/protobuf/archive/master.zip"],
+)
+
+rules_scala_version="a72dc8bb2033fed96deec39420b99331a2119a4e"
+
+# LICENSE: The Apache Software License, Version 2.0
+http_archive(
+    name = "io_bazel_rules_scala",
+    strip_prefix= "rules_scala-%s" % rules_scala_version,
+    urls = ["https://github.com/bazelbuild/rules_scala/archive/%s.zip" % rules_scala_version],
+)
+
+load("@io_bazel_rules_scala//scala:scala.bzl", "scala_repositories")
+scala_repositories()

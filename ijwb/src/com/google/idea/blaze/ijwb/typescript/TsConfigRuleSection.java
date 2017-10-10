@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.ijwb.typescript;
 
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
@@ -23,8 +22,6 @@ import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.ScalarSectionParser;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
-import com.google.idea.blaze.base.ui.BlazeValidationError;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /** Points to the ts_config rule. */
@@ -41,9 +38,9 @@ public class TsConfigRuleSection {
     @Nullable
     @Override
     protected Label parseItem(ProjectViewParser parser, ParseContext parseContext, String rest) {
-      List<BlazeValidationError> errors = Lists.newArrayList();
-      if (!Label.validate(rest, errors)) {
-        parseContext.addErrors(errors);
+      String error = Label.validate(rest);
+      if (error != null) {
+        parseContext.addError(error);
         return null;
       }
       return Label.create(rest);

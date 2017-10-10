@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import com.android.tools.idea.model.ClassJarProvider;
 import com.android.tools.idea.res.AppResourceRepository;
 import com.android.tools.idea.res.ResourceClassRegistry;
+import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
@@ -40,10 +41,12 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.sdkcompat.android.res.AppResourceRepositoryAdapter;
+import com.google.idea.sdkcompat.android.sync.model.idea.ClassJarProviderCompat;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.io.IOException;
@@ -51,6 +54,7 @@ import java.util.List;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -59,6 +63,10 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCase {
   private static final String BLAZE_BIN = "blaze-out/crosstool/bin";
+
+  @Rule
+  public final AndroidIntegrationTestSetupRule androidSetupRule =
+      new AndroidIntegrationTestSetupRule();
 
   private Module module;
   private ClassJarProvider classJarProvider;
@@ -257,12 +265,15 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
               model.commit();
             });
 
-    List<VirtualFile> externalLibraries = classJarProvider.getModuleExternalLibraries(module);
+    ClassJarProviderCompat providerCompat = (ClassJarProviderCompat) classJarProvider;
+    List<File> externalLibraries = providerCompat.getModuleExternalLibrariesCompat(module);
     assertThat(externalLibraries)
         .containsExactly(
-            fileSystem.findFile("com/google/example/libimport.jar"),
-            fileSystem.findFile("com/google/example/transitive/libimport.jar"),
-            fileSystem.findFile("com/google/example/transitive/libimport2.jar"));
+            VfsUtilCore.virtualToIoFile(fileSystem.findFile("com/google/example/libimport.jar")),
+            VfsUtilCore.virtualToIoFile(
+                fileSystem.findFile("com/google/example/transitive/libimport.jar")),
+            VfsUtilCore.virtualToIoFile(
+                fileSystem.findFile("com/google/example/transitive/libimport2.jar")));
 
     // Make sure we can generate dynamic classes from all resource packages in dependencies.
     ResourceClassRegistry registry = ResourceClassRegistry.get(getProject());
@@ -294,28 +305,6 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
     assertThat(registry.findClassDefinition("com.google.example.java.Java", repository)).isNull();
     assertThat(registry.findClassDefinition("com.google.unrelated.R", repository)).isNull();
     assertThat(registry.findClassDefinition("com.google.unrelated.R$layout", repository)).isNull();
-  }
-
-  @Test
-  public void testMissingExternalJars() {
-    ApplicationManager.getApplication()
-        .runWriteAction(
-            () -> {
-              try {
-                // Let's pretend that these were deleted.
-                fileSystem.findFile("com/google/example/libimport.jar").delete(this);
-                fileSystem.findFile("com/google/example/transitive/libimport.jar").delete(this);
-              } catch (IOException ignored) {
-                // ignored
-              }
-            });
-    List<VirtualFile> externalLibraries = classJarProvider.getModuleExternalLibraries(module);
-    assertThat(externalLibraries)
-        .containsExactly(
-            // These should be missing.
-            // fileSystem.findFile("com/google/example/libimport.jar"),
-            // fileSystem.findFile("com/google/example/transitive/libimport.jar"),
-            fileSystem.findFile("com/google/example/transitive/libimport2.jar"));
   }
 
   private void createClassesInJars() {

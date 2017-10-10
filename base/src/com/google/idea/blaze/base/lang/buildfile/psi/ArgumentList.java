@@ -17,6 +17,8 @@ package com.google.idea.blaze.base.lang.buildfile.psi;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.lang.ASTNode;
+import java.util.HashSet;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Argument list of a function call */
@@ -33,6 +35,22 @@ public class ArgumentList extends BuildListType<Argument> {
 
   public Argument[] getArguments() {
     return getElements();
+  }
+
+  public Set<String> getKeywordArgNames() {
+    Set<String> set = new HashSet<>();
+    ASTNode node = getNode().getFirstChildNode();
+    while (node != null) {
+      if (node.getElementType() == BuildElementTypes.KEYWORD) {
+        Argument.Keyword arg = (Argument.Keyword) node.getPsi();
+        String keyword = arg.getName();
+        if (keyword != null) {
+          set.add(keyword);
+        }
+      }
+      node = node.getTreeNext();
+    }
+    return set;
   }
 
   @Nullable

@@ -42,11 +42,6 @@ public final class BlazeCommandRunConfigurationCommonState extends RunConfigurat
     exeFlags = new RunConfigurationFlagsState(USER_EXE_FLAG_TAG, "Executable flags:");
     blazeBinary = new BlazeBinaryState();
     addStates(command, blazeFlags, exeFlags, blazeBinary);
-
-    // no need to migrate Bazel, which at this time doesn't support distributed execution
-    if (buildSystem == BuildSystem.Blaze) {
-      addStates(new BlazeRunOnDistributedExecutorStateMigrator(buildSystem, blazeFlags));
-    }
   }
 
   /** @return The list of blaze flags that the user specified manually. */

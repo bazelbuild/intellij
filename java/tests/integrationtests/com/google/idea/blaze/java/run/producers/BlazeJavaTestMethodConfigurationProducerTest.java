@@ -86,7 +86,7 @@ public class BlazeJavaTestMethodConfigurationProducerTest
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
     assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromString("//java/com/google/test:TestClass"));
+        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
     assertThat(getTestFilterContents(config))
         .isEqualTo("--test_filter=com.google.test.TestClass#testMethod1$");
     assertThat(config.getName()).isEqualTo("Blaze test TestClass.testMethod1");

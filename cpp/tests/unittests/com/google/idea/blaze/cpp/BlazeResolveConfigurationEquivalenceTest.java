@@ -53,6 +53,8 @@ import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.mock.MockPsiManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
@@ -89,6 +91,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(BlazeExecutor.class, new MockBlazeExecutor());
+    applicationServices.register(ExperimentService.class, new MockExperimentService());
     applicationServices.register(
         CompilerVersionChecker.class, new MockCompilerVersionChecker("1234"));
 
@@ -569,7 +572,9 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   private static ListSection<TargetExpression> targets(String... targets) {
     return ListSection.builder(TargetSection.KEY)
         .addAll(
-            Arrays.stream(targets).map(TargetExpression::fromString).collect(Collectors.toList()))
+            Arrays.stream(targets)
+                .map(TargetExpression::fromStringSafe)
+                .collect(Collectors.toList()))
         .build();
   }
 

@@ -744,7 +744,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     }
 
     @Override
-    public ImmutableCollection<Label> getTargetsToBuildForSourceFile(File file) {
+    public ImmutableList<Label> getTargetsToBuildForSourceFile(File file) {
       return ImmutableList.of();
     }
 

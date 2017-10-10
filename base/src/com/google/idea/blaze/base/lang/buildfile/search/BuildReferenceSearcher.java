@@ -107,8 +107,13 @@ public class BuildReferenceSearcher extends QueryExecutorBase<PsiReference, Sear
     if (label == null) {
       return;
     }
+    if (!(file instanceof BuildFile)) {
+      // search globally, for an absolute label reference
+      String absoluteLabel = String.format("//%s:%s", label.blazePackage(), label.targetName());
+      searchForString(params, file, absoluteLabel);
+    }
 
-    // files can only be directly referenced in the containing blaze package
+    // search for local references in the containing blaze package
     List<String> stringsToSearch = LabelUtils.getAllValidLabelStrings(label, true);
     SearchScope scope =
         params.getScopeDeterminedByUser().intersectWith(blazePackage.getSearchScope(true));

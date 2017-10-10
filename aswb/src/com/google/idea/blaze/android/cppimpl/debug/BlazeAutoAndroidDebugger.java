@@ -15,25 +15,23 @@
  */
 package com.google.idea.blaze.android.cppimpl.debug;
 
-import com.android.tools.ndk.run.editor.AutoAndroidDebugger;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.sdkcompat.android.cppimpl.debug.AutoAndroidDebuggerAdapter;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
 
-class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
-  public static String ID = "BlazeAuto";
+class BlazeAutoAndroidDebugger extends AutoAndroidDebuggerAdapter {
+  public static final String ID = "BlazeAuto";
 
   @Override
-  protected boolean isNativeProject(@NotNull Project project) {
+  protected boolean isNativeProject(Project project) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     return blazeProjectData != null
         && blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C);
   }
 
-  @NotNull
   @Override
   public String getId() {
     return ID;

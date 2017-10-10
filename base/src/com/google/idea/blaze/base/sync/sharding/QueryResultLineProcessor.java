@@ -60,7 +60,10 @@ class QueryResultLineProcessor implements LineProcessingOutputStream.LineProcess
     String ruleType = match.group(1);
     String label = match.group(2);
     if (targetFilter.test(new RuleTypeAndLabel(ruleType, label))) {
-      outputList.add(TargetExpression.fromString(label));
+      TargetExpression target = TargetExpression.fromStringSafe(label);
+      if (target != null) {
+        outputList.add(target);
+      }
     }
     return true;
   }

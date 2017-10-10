@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.projectview.section.sections;
 
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -27,9 +26,7 @@ import com.google.idea.blaze.base.projectview.section.ProjectViewDefaultValuePro
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
-import com.google.idea.blaze.base.ui.BlazeValidationError;
 import com.intellij.util.PathUtil;
-import java.util.List;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,9 +50,9 @@ public class DirectorySection {
 
       text = PathUtil.getCanonicalPath(text);
 
-      List<BlazeValidationError> errors = Lists.newArrayList();
-      if (!WorkspacePath.validate(text, errors)) {
-        parseContext.addErrors(errors);
+      String error = WorkspacePath.validate(text);
+      if (error != null) {
+        parseContext.addError(error);
         return null;
       }
       return new DirectoryEntry(new WorkspacePath(text), !excluded);

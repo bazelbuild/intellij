@@ -72,14 +72,14 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
 
   @Test
   public void testTargetExpressionMakesGenericHandler() {
-    configuration.setTarget(TargetExpression.fromString("//..."));
+    configuration.setTarget(TargetExpression.fromStringSafe("//..."));
     assertThat(configuration.getHandler())
         .isInstanceOf(BlazeCommandGenericRunConfigurationHandler.class);
   }
 
   @Test
   public void testReadAndWriteMatches() throws Exception {
-    TargetExpression targetExpression = TargetExpression.fromString("//...");
+    TargetExpression targetExpression = TargetExpression.fromStringSafe("//...");
     configuration.setTarget(targetExpression);
 
     BlazeCommandRunConfigurationCommonState state =
@@ -126,7 +126,7 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
   public void testEditorApplyToAndResetFromMatches() throws ConfigurationException {
     BlazeCommandRunConfigurationSettingsEditor editor =
         new BlazeCommandRunConfigurationSettingsEditor(configuration);
-    TargetExpression targetExpression = TargetExpression.fromString("//...");
+    TargetExpression targetExpression = TargetExpression.fromStringSafe("//...");
     configuration.setTarget(targetExpression);
 
     BlazeCommandRunConfigurationCommonState state =
@@ -176,7 +176,7 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
 
     BlazeCommandRunConfiguration readConfiguration =
         type.getFactory().createTemplateConfiguration(getProject());
-    TargetExpression targetExpression = TargetExpression.fromString("//...");
+    TargetExpression targetExpression = TargetExpression.fromStringSafe("//...");
     readConfiguration.setTarget(targetExpression);
 
     BlazeCommandRunConfigurationCommonState readState =

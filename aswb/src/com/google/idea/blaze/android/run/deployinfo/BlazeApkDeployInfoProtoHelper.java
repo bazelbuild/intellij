@@ -22,11 +22,9 @@ import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.repackaged.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -51,12 +49,8 @@ public class BlazeApkDeployInfoProtoHelper {
     this.project = project;
     this.buildFlags = buildFlags;
     this.workspaceRoot = WorkspaceRoot.fromProject(project);
-
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     this.buildResultHelper =
-        BuildResultHelper.forFiles(
-            projectData.blazeVersionData, fileName -> fileName.endsWith(".deployinfo.pb"));
+        BuildResultHelper.forFiles(fileName -> fileName.endsWith(".deployinfo.pb"));
   }
 
   public BuildResultHelper getBuildResultHelper() {

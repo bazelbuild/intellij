@@ -25,7 +25,6 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -35,9 +34,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Modifies the project view:
@@ -46,47 +43,35 @@ import org.jetbrains.annotations.NotNull;
  * source roots
  */
 public class BlazeTreeStructureProvider implements TreeStructureProvider, DumbAware {
-  @NotNull
+
   @Override
   public Collection<AbstractTreeNode> modify(
-      @NotNull AbstractTreeNode parent,
-      @NotNull Collection<AbstractTreeNode> children,
-      ViewSettings settings) {
+      AbstractTreeNode parent, Collection<AbstractTreeNode> children, ViewSettings settings) {
     Project project = parent.getProject();
     if (project == null || !Blaze.isBlazeProject(project)) {
       return children;
     }
 
-    if (parent instanceof ProjectViewProjectNode) {
-      WorkspaceRootNode rootNode = createRootNode(project, settings);
-      if (rootNode == null) {
-        return children;
-      }
-
-      Collection<AbstractTreeNode> result = Lists.newArrayList();
-      result.add(rootNode);
-      for (AbstractTreeNode treeNode : children) {
-        if (treeNode instanceof ExternalLibrariesNode) {
-          result.add(treeNode);
-        }
-      }
-      return result;
-    } else {
-      List<AbstractTreeNode> result = Lists.newArrayList();
-      for (AbstractTreeNode treeNode : children) {
-        if (treeNode.getClass().equals(PsiDirectoryNode.class)) {
-          result.add(new BlazePsiDirectoryNode((PsiDirectoryNode) treeNode));
-        } else {
-          result.add(treeNode);
-        }
-      }
-      return result;
+    if (!(parent instanceof ProjectViewProjectNode)) {
+      return children;
     }
+    WorkspaceRootNode rootNode = createRootNode(project, settings);
+    if (rootNode == null) {
+      return children;
+    }
+
+    Collection<AbstractTreeNode> result = Lists.newArrayList();
+    result.add(rootNode);
+    for (AbstractTreeNode treeNode : children) {
+      if (treeNode instanceof ExternalLibrariesNode) {
+        result.add(treeNode);
+      }
+    }
+    return result;
   }
 
   @Nullable
-  private WorkspaceRootNode createRootNode(
-      @NotNull Project project, @NotNull ViewSettings settings) {
+  private WorkspaceRootNode createRootNode(Project project, ViewSettings settings) {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     if (importSettings != null) {
@@ -108,7 +93,7 @@ public class BlazeTreeStructureProvider implements TreeStructureProvider, DumbAw
     return null;
   }
 
-  private ViewSettings wrapViewSettings(@NotNull final ViewSettings original) {
+  private ViewSettings wrapViewSettings(final ViewSettings original) {
     return new ProjectViewSettings() {
       @Override
       public boolean isShowMembers() {
@@ -132,12 +117,12 @@ public class BlazeTreeStructureProvider implements TreeStructureProvider, DumbAw
 
       @Override
       public boolean isAbbreviatePackageNames() {
-        return original.isAbbreviatePackageNames();
+        return false;
       }
 
       @Override
       public boolean isHideEmptyMiddlePackages() {
-        return false;
+        return original.isHideEmptyMiddlePackages();
       }
 
       @Override

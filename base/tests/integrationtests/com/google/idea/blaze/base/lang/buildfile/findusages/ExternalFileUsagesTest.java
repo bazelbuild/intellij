@@ -142,4 +142,17 @@ public class ExternalFileUsagesTest extends BuildFileIntegrationTestCase {
     PsiReference[] references = FindUsages.findAllReferences(ext1);
     assertThat(references).hasLength(1);
   }
+
+  @Test
+  public void testFileReferencedFromDifferentPackage() {
+    createBuildFile(new WorkspacePath("com/google/foo/BUILD"));
+    PsiFile textFileInFoo = workspace.createPsiFile(new WorkspacePath("com/google/foo/data.txt"));
+
+    createBuildFile(
+        new WorkspacePath("com/google/bar/BUILD"),
+        "filegroup(name = \"lib\", srcs = [\"//com/google/foo:data.txt\"])");
+
+    PsiReference[] references = FindUsages.findAllReferences(textFileInFoo);
+    assertThat(references).hasLength(1);
+  }
 }

@@ -9,8 +9,9 @@ filegroup(
     name = "aspect_files",
     srcs = [
         "WORKSPACE",
-        "intellij_info.bzl",
+        "intellij_info_bundled.bzl",
         "intellij_info_impl.bzl",
+        "java_classpath.bzl",
         ":BUILD.bazel",
         "//aspect/tools:JarFilter_deploy.jar",
         "//aspect/tools:PackageParser_deploy.jar",
@@ -26,4 +27,16 @@ genrule(
     srcs = ["BUILD.aspect"],
     outs = ["BUILD.bazel"],
     cmd = "cp $< $@",
+)
+
+_dev_tools_path = "//aspect/tools"
+
+# Aspect tools have different label paths in development vs. when bundled with the plugin.
+# This genrule is required for the aspect to be valid in all three repositories in which it's used.
+genrule(
+    name = "modify_tools_path",
+    srcs = ["intellij_info.bzl"],
+    outs = ["intellij_info_bundled.bzl"],
+    cmd = "cat $(SRCS) >$@ && " +
+          "sed -i -e 's,%s:\" + tool_name,//:\" + tool_name + \"_bin\",g' $@" % _dev_tools_path,
 )

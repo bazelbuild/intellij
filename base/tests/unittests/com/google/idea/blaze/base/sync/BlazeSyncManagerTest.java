@@ -26,6 +26,8 @@ import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import java.io.IOException;
 import java.util.List;
 import org.junit.Test;
@@ -47,6 +49,7 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
     super.initTest(applicationServices, projectServices);
     MockitoAnnotations.initMocks(this);
     applicationServices.register(BlazeUserSettings.class, mock(BlazeUserSettings.class));
+    applicationServices.register(ExperimentService.class, new MockExperimentService());
     doNothing().when(manager).requestProjectSync(any());
     projectServices.register(BlazeSyncManager.class, manager);
     assertThat(BlazeSyncManager.getInstance(project)).isSameAs(manager);
@@ -86,7 +89,8 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
   public void testPartialSync() {
     List<TargetExpression> targets =
         ImmutableList.of(
-            TargetExpression.fromString("//foo:bar"), TargetExpression.fromString("//foo:baz"));
+            TargetExpression.fromStringSafe("//foo:bar"),
+            TargetExpression.fromStringSafe("//foo:baz"));
     manager.partialSync(targets);
     verify(manager).requestProjectSync(paramsCaptor.capture());
     BlazeSyncParams params = paramsCaptor.getValue();

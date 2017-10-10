@@ -67,7 +67,7 @@ public class BlazeJavaMainClassConfigurationProducerTest
     assertThat(config).isInstanceOf(BlazeRunConfiguration.class);
     BlazeRunConfiguration blazeConfig = (BlazeRunConfiguration) config;
     assertThat(blazeConfig.getTarget())
-        .isEqualTo(TargetExpression.fromString("//com/google/binary:UnrelatedName"));
+        .isEqualTo(TargetExpression.fromStringSafe("//com/google/binary:UnrelatedName"));
   }
 
   @Test
@@ -157,7 +157,7 @@ public class BlazeJavaMainClassConfigurationProducerTest
     assertThat(config).isInstanceOf(BlazeRunConfiguration.class);
     BlazeRunConfiguration blazeConfig = (BlazeRunConfiguration) config;
     assertThat(blazeConfig.getTarget())
-        .isEqualTo(TargetExpression.fromString("//com/google/binary:MainClass"));
+        .isEqualTo(TargetExpression.fromStringSafe("//com/google/binary:MainClass"));
   }
 
   @Test
@@ -196,6 +196,6 @@ public class BlazeJavaMainClassConfigurationProducerTest
     assertThat(config).isInstanceOf(BlazeRunConfiguration.class);
     BlazeRunConfiguration blazeConfig = (BlazeRunConfiguration) config;
     assertThat(blazeConfig.getTarget())
-        .isEqualTo(TargetExpression.fromString("//com/google/binary:OtherName"));
+        .isEqualTo(TargetExpression.fromStringSafe("//com/google/binary:OtherName"));
   }
 }

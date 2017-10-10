@@ -96,7 +96,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   /** The last serialized state of the configuration. */
   private Element elementState = new Element("dummy");
 
-  @Nullable private TargetExpression target;
+  @Nullable private String targetPattern;
   // Null if the target is null, not a Label, or not a known rule.
   @Nullable private Kind targetKind;
 
@@ -151,11 +151,11 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   @Override
   @Nullable
   public TargetExpression getTarget() {
-    return target;
+    return parseTarget(targetPattern);
   }
 
   public void setTarget(@Nullable TargetExpression target) {
-    this.target = target;
+    targetPattern = target != null ? target.toString() : null;
     updateHandler();
   }
 
@@ -186,6 +186,11 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     }
   }
 
+  @Nullable
+  private static TargetExpression parseTarget(@Nullable String targetPattern) {
+    return targetPattern != null ? TargetExpression.fromStringSafe(targetPattern) : null;
+  }
+
   /**
    * Returns the {@link Kind} of the single blaze target corresponding to the configuration's target
    * expression, if it can be determined. Returns null if the target expression points to multiple
@@ -193,10 +198,15 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
    */
   @Nullable
   public Kind getKindForTarget() {
+    return getKindForTarget(getProject(), parseTarget(targetPattern));
+  }
+
+  @Nullable
+  private static Kind getKindForTarget(Project project, @Nullable TargetExpression target) {
     if (target instanceof Label) {
-      TargetIdeInfo target =
-          TargetFinder.getInstance().targetForLabel(getProject(), (Label) this.target);
-      return target != null ? target.kind : null;
+      TargetIdeInfo targetIdeInfo =
+          TargetFinder.getInstance().targetForLabel(project, (Label) target);
+      return targetIdeInfo != null ? targetIdeInfo.kind : null;
     }
     return null;
   }
@@ -207,7 +217,8 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
    *     known rule, and "unknown target" if there is no target.
    */
   public String getTargetKindName() {
-    Kind kind = getKindForTarget();
+    TargetExpression target = parseTarget(targetPattern);
+    Kind kind = getKindForTarget(getProject(), target);
     if (kind != null) {
       return kind.toString();
     } else if (target instanceof Label) {
@@ -226,14 +237,18 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       throw new RuntimeConfigurationError(
           "Configuration cannot be run until project has been synced.");
     }
-    if (target == null) {
+    if (Strings.isNullOrEmpty(targetPattern)) {
       throw new RuntimeConfigurationError(
           String.format(
               "You must specify a %s target expression.", Blaze.buildSystemName(getProject())));
     }
-    if (!target.toString().startsWith("//")) {
+    if (!targetPattern.startsWith("//")) {
       throw new RuntimeConfigurationError(
           "You must specify the full target expression, starting with //");
+    }
+    String error = TargetExpression.validate(targetPattern);
+    if (error != null) {
+      throw new RuntimeConfigurationError(error);
     }
     handler.checkConfiguration();
   }
@@ -249,15 +264,8 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     // Target is persisted as a tag to permit multiple targets in the future.
     Element targetElement = element.getChild(TARGET_TAG);
     if (targetElement != null && !Strings.isNullOrEmpty(targetElement.getTextTrim())) {
-      target = TargetExpression.fromString(targetElement.getTextTrim());
+      targetPattern = targetElement.getTextTrim();
       targetKind = Kind.fromString(targetElement.getAttributeValue(KIND_ATTR));
-    } else {
-      // Legacy: Added in 1.9 to support reading target as an attribute so
-      // BlazeAndroid(Binary/Test)RunConfiguration elements can be read.
-      // TODO remove in 2.1 once BlazeAndroidBinaryRunConfigurationType and
-      // BlazeAndroidTestRunConfigurationType have been removed.
-      String targetString = element.getAttributeValue(TARGET_TAG);
-      target = targetString != null ? TargetExpression.fromString(targetString) : null;
     }
     // Because BlazeProjectData is not available when configurations are loading,
     // we can't call setTarget and have it find the appropriate handler provider.
@@ -284,9 +292,9 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   @SuppressWarnings("ThrowsUncheckedException")
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    if (target != null) {
+    if (targetPattern != null) {
       Element targetElement = new Element(TARGET_TAG);
-      targetElement.setText(target.toString());
+      targetElement.setText(targetPattern);
       if (targetKind != null) {
         targetElement.setAttribute(KIND_ATTR, targetKind.toString());
       }
@@ -324,7 +332,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   public BlazeCommandRunConfiguration clone() {
     final BlazeCommandRunConfiguration configuration = (BlazeCommandRunConfiguration) super.clone();
     configuration.elementState = elementState.clone();
-    configuration.target = target;
+    configuration.targetPattern = targetPattern;
     configuration.targetKind = targetKind;
     configuration.keepInSync = keepInSync;
     configuration.handlerProvider = handlerProvider;
@@ -342,7 +350,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   @Nullable
   public RunProfileState getState(Executor executor, ExecutionEnvironment environment)
       throws ExecutionException {
-    if (target != null) {
+    if (getTarget() != null) {
       // We need to update the handler manually because it might otherwise be out of date (e.g.
       // because the target map has changed since the last update).
       updateHandler();
@@ -459,7 +467,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       if (config.handlerProvider != handlerProvider) {
         updateHandlerEditor(config);
       }
-      targetField.setText(config.target == null ? null : config.target.toString());
+      targetField.setText(config.targetPattern);
       handlerStateEditor.resetEditorFrom(config.handler.getState());
     }
 
@@ -484,9 +492,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       }
 
       // finally, update the handler
-      String targetString = targetField.getText();
-      config.setTarget(
-          Strings.isNullOrEmpty(targetString) ? null : TargetExpression.fromString(targetString));
+      config.targetPattern = Strings.emptyToNull(targetField.getText());
       updateEditor(config);
       if (config.handlerProvider != handlerProvider) {
         updateHandlerEditor(config);

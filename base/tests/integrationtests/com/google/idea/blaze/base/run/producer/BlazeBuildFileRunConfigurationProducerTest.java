@@ -63,7 +63,7 @@ public class BlazeBuildFileRunConfigurationProducerTest
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
     assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromString("//java/com/google/test:unit_tests"));
+        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:unit_tests"));
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 
@@ -88,7 +88,7 @@ public class BlazeBuildFileRunConfigurationProducerTest
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
     assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromString("//java/com/google/test:unit_tests"));
+        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:unit_tests"));
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 

@@ -23,6 +23,11 @@
         com.google.idea.blaze.cpp.CidrSymbolBuilderSuppressor
       </implementation-class>
     </component>
+    <component>
+      <implementation-class>
+        com.google.idea.blaze.cpp.navigation.DelegatingSwitchToHeaderOrSourceProvider$ExtensionReplacer
+      </implementation-class>
+    </component>
   </application-components>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -41,6 +46,7 @@
     <projectViewNodeDecorator implementation="com.google.idea.blaze.cpp.syncstatus.BlazeCppSyncStatusFileNodeDecorator"/>
     <editorTabColorProvider implementation="com.google.idea.blaze.cpp.syncstatus.BlazeCppSyncStatusEditorTabColorProvider"/>
     <editorTabTitleProvider implementation="com.google.idea.blaze.cpp.syncstatus.BlazeCppSyncStatusEditorTabTitleProvider"/>
+    <gotoRelatedProvider implementation="com.google.idea.blaze.cpp.navigation.DelegatingSwitchToHeaderOrSourceProvider"/>
 
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerVersionChecker"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>

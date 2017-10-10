@@ -30,6 +30,23 @@ public class WildcardTargetPattern {
       ImmutableList.of("*", "all-targets");
   private static final String ALL_RULES_IN_SUFFIX = "all";
 
+  /**
+   * Strip any wildcard suffix from the given target pattern, returning a non-wildcard pattern. This
+   * is used to validate general target expressions.
+   */
+  public static String stripWildcardSuffix(String pattern) {
+    if (pattern.endsWith(":all")) {
+      pattern = pattern.substring(0, pattern.length() - ":all".length());
+    } else if (pattern.endsWith(":*")) {
+      pattern = pattern.substring(0, pattern.length() - ":*".length());
+    } else if (pattern.endsWith(":all-targets")) {
+      pattern = pattern.substring(0, pattern.length() - ":all-targets".length());
+    }
+    return pattern.equals("//...")
+        ? ""
+        : StringUtil.trimEnd(pattern, ALL_PACKAGES_RECURSIVE_SUFFIX);
+  }
+
   /** Returns null if the target is not a valid wildcard target pattern. */
   @Nullable
   public static WildcardTargetPattern fromExpression(TargetExpression target) {

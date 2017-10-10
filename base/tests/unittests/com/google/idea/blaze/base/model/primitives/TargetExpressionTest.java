@@ -26,25 +26,29 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Tests for {@link com.google.idea.blaze.base.model.primitives.TargetExpressionFactory}. */
+/** Tests for {@link com.google.idea.blaze.base.model.primitives.TargetExpression}. */
 @RunWith(JUnit4.class)
 public class TargetExpressionTest extends BlazeTestCase {
+
+  private MockExperimentService experimentService;
+
   @Override
   protected void initTest(
       @NotNull Container applicationServices, @NotNull Container projectServices) {
     super.initTest(applicationServices, projectServices);
-    applicationServices.register(ExperimentService.class, new MockExperimentService());
+    experimentService = new MockExperimentService();
+    applicationServices.register(ExperimentService.class, experimentService);
   }
 
   @Test
   public void validLabelShouldYieldLabel() {
-    TargetExpression target = TargetExpression.fromString("//package:rule");
+    TargetExpression target = TargetExpression.fromStringSafe("//package:rule");
     assertThat(target).isInstanceOf(Label.class);
   }
 
   @Test
   public void globExpressionShouldYieldGeneralTargetExpression() {
-    TargetExpression target = TargetExpression.fromString("//package/...");
+    TargetExpression target = TargetExpression.fromStringSafe("//package/...");
     assertThat(target.getClass()).isSameAs(TargetExpression.class);
   }
 
@@ -53,7 +57,48 @@ public class TargetExpressionTest extends BlazeTestCase {
     try {
       TargetExpression.fromString("");
       fail("Empty expressions should not be allowed.");
-    } catch (IllegalArgumentException expected) {
+    } catch (InvalidTargetException expected) {
     }
+  }
+
+  @Test
+  public void testNoValidationWhenExperimentDisabled() {
+    experimentService.setExperiment(TargetExpression.enableValidation, false);
+
+    assertThat(TargetExpression.validate("///")).isNull();
+    assertThat(TargetExpression.validate("../a")).isNull();
+  }
+
+  @Test
+  public void testPassingValidations() {
+    assertThat(TargetExpression.validate("foo:bar")).isNull();
+    assertThat(TargetExpression.validate("foo:all")).isNull();
+    assertThat(TargetExpression.validate("foo/...:all")).isNull();
+    assertThat(TargetExpression.validate("foo:*")).isNull();
+
+    assertThat(TargetExpression.validate("//foo")).isNull();
+    assertThat(TargetExpression.validate("-//foo:bar")).isNull();
+    assertThat(TargetExpression.validate("-//foo:all")).isNull();
+
+    assertThat(TargetExpression.validate("//foo/all")).isNull();
+    assertThat(TargetExpression.validate("java/com/google/foo/Bar.java")).isNull();
+    assertThat(TargetExpression.validate("//foo/...:all")).isNull();
+
+    assertThat(TargetExpression.validate("//...")).isNull();
+    assertThat(TargetExpression.validate("@repo//foo:bar")).isNull();
+    assertThat(TargetExpression.validate("@repo//foo:all")).isNull();
+    assertThat(TargetExpression.validate("-@repo//:bar")).isNull();
+  }
+
+  @Test
+  public void testFailingValidations() {
+    assertThat(TargetExpression.validate("@//package_path:rule")).isNotNull();
+    assertThat(TargetExpression.validate("@repo&//package_path:rule")).isNotNull();
+    assertThat(TargetExpression.validate("../path")).isNotNull();
+    assertThat(TargetExpression.validate("path/../other")).isNotNull();
+    assertThat(TargetExpression.validate("path/.:rule")).isNotNull();
+    assertThat(TargetExpression.validate("//path:rule:other_rule")).isNotNull();
+    assertThat(TargetExpression.validate("//path:rule/")).isNotNull();
+    assertThat(TargetExpression.validate("//path:rule//a")).isNotNull();
   }
 }

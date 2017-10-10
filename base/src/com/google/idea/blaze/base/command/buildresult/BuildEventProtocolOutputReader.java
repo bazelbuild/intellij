@@ -20,24 +20,31 @@ import static com.google.idea.common.guava.GuavaHelper.toImmutableSet;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Queues;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
-import com.google.idea.blaze.base.util.UrlUtil;
 import com.google.repackaged.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.repackaged.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.NamedSetOfFilesId;
 import com.google.repackaged.devtools.build.lib.buildeventstream.BuildEventStreamProtos.OutputGroup;
+import com.intellij.util.io.URLUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Utility methods for reading Blaze's build event procotol output, in proto form. */
@@ -150,6 +157,66 @@ public final class BuildEventProtocolOutputReader {
         .collect(toImmutableList());
   }
 
+  /**
+   * Reads all output files belonging to the given output group(s).
+   *
+   * @throws IOException if the BEP output file is incorrectly formatted
+   */
+  static ImmutableList<File> parseAllOutputGroupFilenames(
+      InputStream inputStream, Set<String> outputGroups, Predicate<String> fileFilter)
+      throws IOException {
+    Map<String, BuildEventStreamProtos.NamedSetOfFiles> fileSets = new HashMap<>();
+    Set<String> fileSetsForOutputGroups = new HashSet<>();
+    BuildEventStreamProtos.BuildEvent event;
+    while ((event = BuildEventStreamProtos.BuildEvent.parseDelimitedFrom(inputStream)) != null) {
+      if (event.getId().hasNamedSet() && event.hasNamedSetOfFiles()) {
+        fileSets.put(event.getId().getNamedSet().getId(), event.getNamedSetOfFiles());
+      } else if (event.hasCompleted()) {
+        fileSetsForOutputGroups.addAll(
+            event
+                .getCompleted()
+                .getOutputGroupList()
+                .stream()
+                .filter(o -> outputGroups.contains(o.getName()))
+                .map(OutputGroup::getFileSetsList)
+                .flatMap(List::stream)
+                .map(NamedSetOfFilesId::getId)
+                .collect(Collectors.toList()));
+      }
+    }
+    return traverseFileSetsTransitively(fileSets, fileSetsForOutputGroups, fileFilter);
+  }
+
+  /**
+   * Finds transitive closure of all files in the given file sets (traversing child filesets
+   * transitively).
+   */
+  private static ImmutableList<File> traverseFileSetsTransitively(
+      Map<String, BuildEventStreamProtos.NamedSetOfFiles> fileSets,
+      Set<String> fileSetsToVisit,
+      Predicate<String> fileFilter) {
+    Queue<String> toVisit = Queues.newArrayDeque();
+    Set<File> allFiles = new HashSet<>();
+    Set<String> visited = new HashSet<>();
+    toVisit.addAll(fileSetsToVisit);
+    visited.addAll(fileSetsToVisit);
+    while (!toVisit.isEmpty()) {
+      String name = toVisit.remove();
+      BuildEventStreamProtos.NamedSetOfFiles fs = fileSets.get(name);
+      allFiles.addAll(
+          fs.getFilesList().stream().map(f -> parseFile(f, fileFilter)).collect(toImmutableList()));
+      Set<String> children =
+          fs.getFileSetsList()
+              .stream()
+              .map(NamedSetOfFilesId::getId)
+              .filter(s -> !visited.contains(s))
+              .collect(toImmutableSet());
+      visited.addAll(children);
+      toVisit.addAll(children);
+    }
+    return ImmutableList.copyOf(allFiles);
+  }
+
   private static boolean isTargetCompletedEvent(
       BuildEventStreamProtos.BuildEvent event, Label label) {
     return event.getId().hasTargetCompleted()
@@ -192,7 +259,15 @@ public final class BuildEventProtocolOutputReader {
 
   @Nullable
   private static File parseFile(BuildEventStreamProtos.File file, Predicate<String> fileFilter) {
-    String filePath = UrlUtil.urlToFilePath(file.getUri());
-    return filePath != null && fileFilter.test(filePath) ? new File(filePath) : null;
+    String uri = file.getUri();
+    if (uri == null || !uri.startsWith(URLUtil.FILE_PROTOCOL)) {
+      return null;
+    }
+    try {
+      File f = new File(new URI(uri));
+      return fileFilter.test(f.getPath()) ? f : null;
+    } catch (URISyntaxException | IllegalArgumentException e) {
+      return null;
+    }
   }
 }

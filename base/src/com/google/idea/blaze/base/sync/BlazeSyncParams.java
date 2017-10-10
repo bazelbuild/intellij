@@ -33,7 +33,9 @@ public final class BlazeSyncParams {
     /** This is the standard incremental sync */
     INCREMENTAL,
     /** Full sync, can invalidate/redo work that an incremental sync does not */
-    FULL
+    FULL,
+    /** A partial sync, without any blaze build (i.e. updates directories / in-memory state only) */
+    NO_BUILD,
   }
 
   /** Builder for sync params */
@@ -106,5 +108,10 @@ public final class BlazeSyncParams {
     this.addProjectViewTargets = addProjectViewTargets;
     this.addWorkingSet = addWorkingSet;
     this.targetExpressions = targetExpressions;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("%s (%s)", title, syncMode.name().toLowerCase());
   }
 }

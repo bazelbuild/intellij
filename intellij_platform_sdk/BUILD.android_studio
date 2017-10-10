@@ -37,6 +37,11 @@ java_import(
     jars = glob(["android-studio/lib/guava-*.jar"]),
 )
 
+java_import(
+    name = "coverage",
+    jars = glob(["android-studio/plugins/coverage/lib/*.jar"]),
+)
+
 # The plugins required by ASwB. We need to include them
 # when running integration tests.
 java_import(

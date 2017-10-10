@@ -20,34 +20,19 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
-import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.command.BlazeCommand;
-import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.io.FileAttributeProvider;
-import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.WithBrowserHyperlinkExecutionException;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationRunner.BlazeCommandRunProfileState;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.ScopedTask;
-import com.google.idea.blaze.base.scope.output.StatusOutput;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
-import com.google.idea.blaze.base.scope.scopes.IssuesScope;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.python.PySdkUtils;
@@ -268,7 +253,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
    */
   private static File getExecutableToDebug(ExecutionEnvironment env) throws ExecutionException {
     BlazeCommandRunConfiguration configuration = getConfiguration(env);
-    final Project project = configuration.getProject();
+    Project project = configuration.getProject();
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
@@ -281,63 +266,20 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       throw new WithBrowserHyperlinkExecutionException(validationError);
     }
 
-    final BlazeCommandRunConfigurationCommonState handlerState =
-        (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
-    final WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    final ProjectViewSet projectViewSet =
-        ProjectViewManager.getInstance(project).getProjectViewSet();
+    BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true);
 
-    BuildResultHelper buildResultHelper =
-        BuildResultHelper.forFiles(blazeProjectData.blazeVersionData, file -> true);
-    BlazeConsolePopupBehavior consolePopupBehavior =
-        BlazeUserSettings.getInstance().getSuppressConsoleForRunAction()
-            ? BlazeConsolePopupBehavior.NEVER
-            : BlazeConsolePopupBehavior.ALWAYS;
-    final ListenableFuture<Void> buildOperation =
-        BlazeExecutor.submitTask(
-            project,
-            new ScopedTask() {
-              @Override
-              protected void execute(BlazeContext context) {
-                context
-                    .push(new IssuesScope(project))
-                    .push(
-                        new BlazeConsoleScope.Builder(project)
-                            .setPopupBehavior(consolePopupBehavior)
-                            .build());
-
-                context.output(new StatusOutput("Building debug binary"));
-
-                BlazeCommand.Builder command =
-                    BlazeCommand.builder(
-                            Blaze.getBuildSystemProvider(project).getBinaryPath(),
-                            BlazeCommandName.BUILD)
-                        .addTargets(configuration.getTarget())
-                        .addBlazeFlags(
-                            BlazeFlags.blazeFlags(
-                                project,
-                                projectViewSet,
-                                BlazeCommandName.BUILD,
-                                BlazeInvocationContext.RunConfiguration))
-                        .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
-                        .addBlazeFlags(BlazePyDebugHelper.getAllBlazeDebugFlags())
-                        .addBlazeFlags(buildResultHelper.getBuildFlags());
-
-                ExternalTask.builder(workspaceRoot)
-                    .addBlazeCommand(command.build())
-                    .context(context)
-                    .stderr(
-                        buildResultHelper.stderr(
-                            new IssueOutputLineProcessor(project, context, workspaceRoot)))
-                    .build()
-                    .run();
-              }
-            });
+    ListenableFuture<Void> buildOperation =
+        BlazeBeforeRunCommandHelper.runBlazeBuild(
+            configuration,
+            buildResultHelper,
+            BlazePyDebugHelper.getAllBlazeDebugFlags(),
+            "Building debug binary");
 
     try {
       SaveUtil.saveAllFiles();
       buildOperation.get();
     } catch (InterruptedException e) {
+      buildOperation.cancel(true);
       throw new RunCanceledByUserException();
     } catch (java.util.concurrent.ExecutionException e) {
       throw new ExecutionException(e);

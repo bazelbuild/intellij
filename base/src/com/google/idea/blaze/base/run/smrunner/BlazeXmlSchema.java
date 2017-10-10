@@ -146,10 +146,10 @@ public class BlazeXmlSchema {
     String sysErr;
 
     @XmlElement(name = "error", type = ErrorOrFailureOrSkipped.class)
-    ErrorOrFailureOrSkipped error;
+    List<ErrorOrFailureOrSkipped> errors = Lists.newArrayList();
 
     @XmlElement(name = "failure", type = ErrorOrFailureOrSkipped.class)
-    ErrorOrFailureOrSkipped failure;
+    List<ErrorOrFailureOrSkipped> failures = Lists.newArrayList();
 
     @XmlElement(name = "skipped", type = ErrorOrFailureOrSkipped.class)
     ErrorOrFailureOrSkipped skipped;

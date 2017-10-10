@@ -32,7 +32,7 @@ public abstract class BlazeTestResult {
           TestStatus.TIMEOUT,
           TestStatus.REMOTE_FAILURE,
           TestStatus.FAILED_TO_BUILD,
-          TestStatus.BLAZE_HALTED_BEFORE_TESTING);
+          TestStatus.TOOL_HALTED_BEFORE_TESTING);
 
   /** Status for a single blaze test action. */
   public enum TestStatus {
@@ -44,7 +44,7 @@ public abstract class BlazeTestResult {
     INCOMPLETE,
     REMOTE_FAILURE,
     FAILED_TO_BUILD,
-    BLAZE_HALTED_BEFORE_TESTING,
+    TOOL_HALTED_BEFORE_TESTING,
   }
 
   public static BlazeTestResult create(

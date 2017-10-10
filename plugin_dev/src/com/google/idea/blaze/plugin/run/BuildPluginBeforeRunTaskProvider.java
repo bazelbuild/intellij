@@ -216,8 +216,7 @@ public final class BuildPluginBeforeRunTaskProvider
                     return;
                   }
 
-                  BuildResultHelper buildResultHelper =
-                      BuildResultHelper.forFiles(blazeProjectData.blazeVersionData, f -> true);
+                  BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(f -> true);
                   BlazeCommand command =
                       BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
                           .addTargets(config.getTarget())

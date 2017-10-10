@@ -28,24 +28,28 @@ import com.google.idea.blaze.base.command.BuildFlagsProvider;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
-import com.google.idea.blaze.base.run.DistributedExecutorSupport;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import java.util.List;
 import java.util.function.Predicate;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -70,8 +74,9 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     applicationServices.register(ExperimentService.class, experimentService);
     applicationServices.register(TargetFinder.class, new MockTargetFinder());
     applicationServices.register(BlazeUserSettings.class, new BlazeUserSettings());
+    projectServices.register(ProjectViewManager.class, new MockProjectViewManager());
+
     registerExtensionPoint(BuildFlagsProvider.EP_NAME, BuildFlagsProvider.class);
-    registerExtensionPoint(DistributedExecutorSupport.EP_NAME, DistributedExecutorSupport.class);
     ExtensionPointImpl<BlazeCommandRunConfigurationHandlerProvider> handlerProviderEp =
         registerExtensionPoint(
             BlazeCommandRunConfigurationHandlerProvider.EP_NAME,
@@ -95,12 +100,9 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
     handlerState.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
     assertThat(
-            BlazeJavaRunProfileState.getBlazeCommand(
-                    project,
-                    configuration,
-                    ProjectViewSet.builder().build(),
-                    ImmutableList.of(),
-                    /* debug */ false)
+            BlazeJavaRunProfileState.getBlazeCommandBuilder(
+                    project, configuration, ImmutableList.of(), ExecutorType.RUN)
+                .build()
                 .toList())
         .isEqualTo(
             ImmutableList.of(
@@ -120,12 +122,9 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
     handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
     assertThat(
-            BlazeJavaRunProfileState.getBlazeCommand(
-                    project,
-                    configuration,
-                    ProjectViewSet.builder().build(),
-                    ImmutableList.of(),
-                    /* debug */ true)
+            BlazeJavaRunProfileState.getBlazeCommandBuilder(
+                    project, configuration, ImmutableList.of(), ExecutorType.DEBUG)
+                .build()
                 .toList())
         .isEqualTo(
             ImmutableList.of(
@@ -144,12 +143,9 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
     handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
     assertThat(
-            BlazeJavaRunProfileState.getBlazeCommand(
-                    project,
-                    configuration,
-                    ProjectViewSet.builder().build(),
-                    ImmutableList.of(),
-                    /* debug */ true)
+            BlazeJavaRunProfileState.getBlazeCommandBuilder(
+                    project, configuration, ImmutableList.of(), ExecutorType.DEBUG)
+                .build()
                 .toList())
         .isEqualTo(
             ImmutableList.of(
@@ -176,6 +172,20 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
         builder.setKind(Kind.JAVA_TEST);
       }
       return builder.build();
+    }
+  }
+
+  private static class MockProjectViewManager extends ProjectViewManager {
+    @Override
+    public ProjectViewSet getProjectViewSet() {
+      return ProjectViewSet.builder().build();
+    }
+
+    @Nullable
+    @Override
+    public ProjectViewSet reloadProjectView(
+        BlazeContext context, WorkspacePathResolver workspacePathResolver) {
+      return ProjectViewSet.builder().build();
     }
   }
 }

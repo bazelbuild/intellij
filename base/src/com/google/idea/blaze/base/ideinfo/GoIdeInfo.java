@@ -17,15 +17,18 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.collect.ImmutableList;
 import java.io.Serializable;
+import javax.annotation.Nullable;
 
 /** Ide info specific to go rules. */
 public class GoIdeInfo implements Serializable {
-  private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 2L;
 
-  public final ImmutableList<ArtifactLocation> generatedSources;
+  public final ImmutableList<ArtifactLocation> sources;
+  @Nullable public final String importPath;
 
-  public GoIdeInfo(ImmutableList<ArtifactLocation> generatedSources) {
-    this.generatedSources = generatedSources;
+  public GoIdeInfo(ImmutableList<ArtifactLocation> sources, @Nullable String importPath) {
+    this.sources = sources;
+    this.importPath = importPath;
   }
 
   public static Builder builder() {
@@ -34,21 +37,34 @@ public class GoIdeInfo implements Serializable {
 
   /** Builder for go rule info */
   public static class Builder {
-    private final ImmutableList.Builder<ArtifactLocation> generatedSources =
-        ImmutableList.builder();
+    private final ImmutableList.Builder<ArtifactLocation> sources = ImmutableList.builder();
+    private String importPath = null;
 
-    public Builder addGeneratedSources(Iterable<ArtifactLocation> generatedSources) {
-      this.generatedSources.addAll(generatedSources);
+    public Builder addSources(Iterable<ArtifactLocation> sources) {
+      this.sources.addAll(sources);
+      return this;
+    }
+
+    public Builder setImportPath(@Nullable String importPath) {
+      this.importPath = importPath;
       return this;
     }
 
     public GoIdeInfo build() {
-      return new GoIdeInfo(generatedSources.build());
+      return new GoIdeInfo(sources.build(), importPath);
     }
   }
 
   @Override
   public String toString() {
-    return "GoIdeInfo{" + "\n" + "  generatedSources=" + generatedSources + "\n" + '}';
+    return "GoIdeInfo{"
+        + "\n"
+        + "  sources="
+        + sources
+        + "\n"
+        + "  importPath="
+        + importPath
+        + "\n"
+        + '}';
   }
 }

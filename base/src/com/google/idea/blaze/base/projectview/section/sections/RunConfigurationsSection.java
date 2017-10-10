@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.projectview.section.sections;
 
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
@@ -23,8 +22,6 @@ import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.ListSectionParser;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
-import com.google.idea.blaze.base.ui.BlazeValidationError;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /** Allows users to import run configurations from XML files in their workspace. */
@@ -42,9 +39,9 @@ public class RunConfigurationsSection {
     @Override
     protected WorkspacePath parseItem(ProjectViewParser parser, ParseContext parseContext) {
       String text = parseContext.current().text;
-      List<BlazeValidationError> errors = Lists.newArrayList();
-      if (!WorkspacePath.validate(text, errors)) {
-        parseContext.addErrors(errors);
+      String error = WorkspacePath.validate(text);
+      if (error != null) {
+        parseContext.addError(error);
         return null;
       }
       return new WorkspacePath(text);

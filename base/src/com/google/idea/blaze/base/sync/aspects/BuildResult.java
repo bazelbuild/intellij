@@ -37,6 +37,11 @@ public class BuildResult {
       }
       return FATAL_ERROR;
     }
+
+    @Override
+    public String toString() {
+      return name().toLowerCase();
+    }
   }
 
   public static final BuildResult SUCCESS = fromExitCode(SUCCESS_EXIT_CODE);
