@@ -63,13 +63,14 @@
         "variation": "",
         "configurations": [
           {"node": "linux-x86_64"},
-          {"node": "ubuntu_16.04-x86_64"},
-          {"node": "darwin-x86_64"}
+          {"node": "ubuntu_16.04-x86_64"}
         ]
       }
     ],
     "parameters": {
       "targets": ["//aspect:aspect_files"],
+      "build_opts": ["--incompatible_disallow_set_constructor=false"],
+      "test_opts": ["--incompatible_disallow_set_constructor=false"],
       "tests": ["//aspect/testing/..."]
     }
   }
