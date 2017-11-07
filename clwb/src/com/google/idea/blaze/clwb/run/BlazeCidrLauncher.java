@@ -21,7 +21,7 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
+import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -140,7 +140,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
           public ImmutableList<ProcessListener> createProcessListeners(BlazeContext context) {
             LineProcessingOutputStream outputStream =
                 LineProcessingOutputStream.of(
-                    new IssueOutputLineProcessor(project, context, workspaceRoot));
+                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
+                        project, context, workspaceRoot));
             return ImmutableList.of(new LineProcessingProcessAdapter(outputStream));
           }
         });

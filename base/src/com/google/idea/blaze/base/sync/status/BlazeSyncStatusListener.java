@@ -34,6 +34,6 @@ public class BlazeSyncStatusListener extends SyncListener.Adapter {
   @Override
   public void afterSync(
       Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {
-    BlazeSyncStatusImpl.getImpl(project).syncEnded(syncResult);
+    BlazeSyncStatusImpl.getImpl(project).syncEnded(syncMode, syncResult);
   }
 }

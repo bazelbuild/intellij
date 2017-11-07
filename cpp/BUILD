@@ -20,6 +20,7 @@ java_library(
     visibility = ["//visibility:public"],
     deps = [
         "//base",
+        "//common/actionhelper",
         "//common/experiments",
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",

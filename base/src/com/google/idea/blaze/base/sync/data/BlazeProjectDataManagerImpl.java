@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.sync.data;
 
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
@@ -89,19 +89,19 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
 
     // Can only run one save operation per project at a time
     synchronized (saveLock) {
-      BlazeExecutor.submitTask(
-          project,
-          "Saving sync data...",
-          (ProgressIndicator indicator) -> {
-            try {
-              File file = getCacheFile(project, importSettings);
-              SerializationUtil.saveToDisk(file, blazeProjectData);
-            } catch (IOException e) {
-              logger.error(
-                  "Could not save cache data file to disk. Please resync project. Error: "
-                      + e.getMessage());
-            }
-          });
+      ProgressiveTaskWithProgressIndicator.builder(project)
+          .setTitle("Saving sync data...")
+          .submitTask(
+              (ProgressIndicator indicator) -> {
+                try {
+                  File file = getCacheFile(project, importSettings);
+                  SerializationUtil.saveToDisk(file, blazeProjectData);
+                } catch (IOException e) {
+                  logger.error(
+                      "Could not save cache data file to disk. Please resync project. Error: "
+                          + e.getMessage());
+                }
+              });
     }
   }
 

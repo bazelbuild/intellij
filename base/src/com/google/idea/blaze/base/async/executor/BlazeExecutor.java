@@ -18,29 +18,11 @@ package com.google.idea.blaze.base.async.executor;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Progressive;
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
-import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.util.ui.UIUtil;
 import java.util.concurrent.Callable;
-import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /** Shared thread pool for blaze tasks. */
 public abstract class BlazeExecutor {
-  /** The type of modality used to launch tasks */
-  public enum Modality {
-    MODAL, // This task must start in the foreground and stay there.
-    BACKGROUNDABLE, // This task will start in the foreground, but can be sent to the background.
-    ALWAYS_BACKGROUND // This task will start in the background and stay there.
-  }
 
-  @NotNull
   public static BlazeExecutor getInstance() {
     return ServiceManager.getService(BlazeExecutor.class);
   }
@@ -48,77 +30,4 @@ public abstract class BlazeExecutor {
   public abstract <T> ListenableFuture<T> submit(Callable<T> callable);
 
   public abstract ListeningExecutorService getExecutor();
-
-  public static ListenableFuture<Void> submitTask(
-      @Nullable final Project project, @NotNull final Progressive progressive) {
-    return submitTask(project, "", progressive);
-  }
-
-  public static ListenableFuture<Void> submitTask(
-      @Nullable final Project project,
-      @NotNull final String title,
-      @NotNull final Progressive progressive) {
-    return submitTask(
-        project, title, /* cancelable */ true, Modality.ALWAYS_BACKGROUND, progressive);
-  }
-
-  public static ListenableFuture<Void> submitTask(
-      @Nullable final Project project,
-      @NotNull final String title,
-      final boolean cancelable,
-      final Modality modality,
-      @NotNull final Progressive progressive) {
-
-    // The progress indicator must be created on the UI thread.
-    final ProgressWindow indicator =
-        UIUtil.invokeAndWaitIfNeeded(
-            new Computable<ProgressWindow>() {
-              @Override
-              public ProgressWindow compute() {
-                if (modality == Modality.MODAL) {
-                  ProgressWindow indicator = new ProgressWindow(cancelable, project);
-                  indicator.setTitle(title);
-                  return indicator;
-                } else {
-                  PerformInBackgroundOption backgroundOption =
-                      modality == Modality.BACKGROUNDABLE
-                          ? PerformInBackgroundOption.DEAF
-                          : PerformInBackgroundOption.ALWAYS_BACKGROUND;
-                  return new BackgroundableProcessIndicator(
-                      project, title, backgroundOption, "Cancel", "Cancel", cancelable);
-                }
-              }
-            });
-
-    indicator.setIndeterminate(true);
-    indicator.start();
-    final Runnable process =
-        new Runnable() {
-          @Override
-          public void run() {
-            progressive.run(indicator);
-          }
-        };
-    final ListenableFuture<Void> future =
-        getInstance()
-            .submit(
-                new Callable<Void>() {
-                  @Override
-                  public Void call() throws Exception {
-                    ProgressManager.getInstance().runProcess(process, indicator);
-                    return null;
-                  }
-                });
-    if (cancelable) {
-      indicator.addStateDelegate(
-          new AbstractProgressIndicatorExBase() {
-            @Override
-            public void cancel() {
-              super.cancel();
-              future.cancel(true);
-            }
-          });
-    }
-    return future;
-  }
 }

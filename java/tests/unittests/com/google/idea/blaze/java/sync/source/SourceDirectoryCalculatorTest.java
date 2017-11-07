@@ -26,7 +26,7 @@ import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.io.MockInputStreamProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -81,7 +81,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     applicationServices.register(InputStreamProvider.class, mockInputStreamProvider);
     applicationServices.register(JavaSourcePackageReader.class, new JavaSourcePackageReader());
     applicationServices.register(PackageManifestReader.class, new PackageManifestReader());
-    applicationServices.register(FileAttributeProvider.class, new MockFileAttributeProvider());
+    applicationServices.register(FileOperationProvider.class, new MockFileOperationProvider());
 
     context.addOutputSink(IssueOutput.class, issues);
     sourceDirectoryCalculator = new SourceDirectoryCalculator();
@@ -1140,7 +1140,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             project, context, decoder, manifests, MoreExecutors.newDirectExecutorService());
   }
 
-  static class MockFileAttributeProvider extends FileAttributeProvider {
+  static class MockFileOperationProvider extends FileOperationProvider {
     @Override
     public long getFileModifiedTime(File file) {
       return 1;

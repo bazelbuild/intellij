@@ -24,8 +24,12 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.Scope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
+import com.google.idea.blaze.golang.resolve.BlazeGoRootsProvider;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -40,7 +44,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Supports golang. */
-public class BlazeGoSyncPlugin extends BlazeSyncPlugin.Adapter {
+public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
 
   private static final Logger logger = Logger.getInstance(BlazeGoSyncPlugin.class);
 
@@ -73,6 +77,12 @@ public class BlazeGoSyncPlugin extends BlazeSyncPlugin.Adapter {
         workspaceModifiableModel.addLibraryEntry(lib);
       }
     }
+    Scope.push(
+        context,
+        (childContext) -> {
+          childContext.push(new TimingScope("BuildGoSymbolicLinks", EventType.Other));
+          BlazeGoRootsProvider.createGoPathSourceRoot(project);
+        });
   }
 
   private static List<Library> getGoLibraries(Project project) {

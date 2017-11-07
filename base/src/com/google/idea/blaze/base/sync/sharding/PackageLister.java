@@ -23,11 +23,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.FutureUtil.FutureResult;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.util.WorkspacePathUtil;
 import java.io.File;
@@ -88,7 +89,7 @@ class PackageLister {
         continue;
       }
       File dir = pathResolver.resolveToFile(pattern.getBasePackage());
-      if (!FileAttributeProvider.getInstance().isDirectory(dir)) {
+      if (!FileOperationProvider.getInstance().isDirectory(dir)) {
         continue;
       }
       futures.add(
@@ -105,7 +106,7 @@ class PackageLister {
     FutureResult<List<Entry<TargetExpression, List<TargetExpression>>>> result =
         FutureUtil.waitForFuture(context, Futures.allAsList(futures))
             .withProgressMessage("Expanding wildcard target patterns...")
-            .timed("ExpandWildcardTargets")
+            .timed("ExpandWildcardTargets", EventType.Other)
             .onError("Expanding wildcard target patterns failed")
             .run();
     if (!result.success()) {
@@ -129,13 +130,13 @@ class PackageLister {
     if (provider.findBuildFileInDirectory(dir) != null) {
       output.add(TargetExpression.allFromPackageNonRecursive(path));
     }
-    FileAttributeProvider attributeProvider = FileAttributeProvider.getInstance();
-    File[] children = attributeProvider.listFiles(dir);
+    FileOperationProvider fileOperationProvider = FileOperationProvider.getInstance();
+    File[] children = fileOperationProvider.listFiles(dir);
     if (children == null) {
       return;
     }
     for (File child : children) {
-      if (attributeProvider.isDirectory(child)) {
+      if (fileOperationProvider.isDirectory(child)) {
         traversePackageRecursively(provider, pathResolver, child, output);
       }
     }

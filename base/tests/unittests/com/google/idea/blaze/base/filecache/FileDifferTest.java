@@ -23,7 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import java.io.File;
@@ -36,13 +36,13 @@ import org.junit.runners.JUnit4;
 /** Tests for {@link FileDiffer} */
 @RunWith(JUnit4.class)
 public class FileDifferTest extends BlazeTestCase {
-  private MockFileAttributeProvider fileModificationProvider;
+  private MockFileOperationProvider fileModificationProvider;
 
-  private static class MockFileAttributeProvider extends FileAttributeProvider {
+  private static class MockFileOperationProvider extends FileOperationProvider {
     List<Long> times = Lists.newArrayList();
     int index;
 
-    public MockFileAttributeProvider add(long time) {
+    public MockFileOperationProvider add(long time) {
       times.add(time);
       return this;
     }
@@ -60,8 +60,8 @@ public class FileDifferTest extends BlazeTestCase {
     applicationServices.register(ExperimentService.class, new MockExperimentService());
     applicationServices.register(BlazeExecutor.class, new MockBlazeExecutor());
 
-    this.fileModificationProvider = new MockFileAttributeProvider();
-    applicationServices.register(FileAttributeProvider.class, fileModificationProvider);
+    this.fileModificationProvider = new MockFileOperationProvider();
+    applicationServices.register(FileOperationProvider.class, fileModificationProvider);
   }
 
   @Test

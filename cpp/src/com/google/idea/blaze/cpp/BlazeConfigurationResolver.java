@@ -33,7 +33,7 @@ import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
@@ -48,6 +48,7 @@ import com.google.idea.blaze.base.scope.ScopedOperation;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -148,7 +149,7 @@ final class BlazeConfigurationResolver {
         parentContext,
         (ScopedFunction<ImmutableMap<File, VirtualFile>>)
             context -> {
-              context.push(new TimingScope("Resolve header include roots"));
+              context.push(new TimingScope("Resolve header include roots", EventType.Other));
               Set<ExecutionRootPath> paths =
                   collectExecutionRootPaths(blazeProjectData.targetMap, toolchainLookupMap);
               return doCollectHeaderRoots(
@@ -188,7 +189,7 @@ final class BlazeConfigurationResolver {
                       genRootsWithoutHeaders.incrementAndGet();
                     }
                   } else if (!isOutputArtifact(projectData.blazeInfo, path)
-                      && FileAttributeProvider.getInstance().exists(file)) {
+                      && FileOperationProvider.getInstance().exists(file)) {
                     // If it's not a blaze output file, we expect it to always resolve.
                     logger.info(String.format("Unresolved header root %s", file.getAbsolutePath()));
                   }
@@ -266,10 +267,14 @@ final class BlazeConfigurationResolver {
   private static VirtualFile getVirtualFile(File file) {
     LocalFileSystem fileSystem = VirtualFileSystemProvider.getInstance().getSystem();
     VirtualFile vf = fileSystem.findFileByPathIfCached(file.getPath());
-    if (vf == null) {
-      vf = fileSystem.findFileByIoFile(file);
+    if (vf != null && vf.isValid()) {
+      return vf;
     }
-    return vf;
+    vf = fileSystem.findFileByIoFile(file);
+    if (vf != null && vf.isValid()) {
+      return vf;
+    }
+    return null;
   }
 
   private static boolean containsCompiledSources(TargetIdeInfo target) {
@@ -299,7 +304,7 @@ final class BlazeConfigurationResolver {
         parentContext,
         (ScopedOperation)
             context -> {
-              context.push(new TimingScope("Build C configuration map"));
+              context.push(new TimingScope("Build C configuration map", EventType.Other));
 
               ProjectViewTargetImportFilter filter =
                   new ProjectViewTargetImportFilter(project, workspaceRoot, projectViewSet);

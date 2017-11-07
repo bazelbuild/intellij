@@ -35,6 +35,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -69,7 +70,7 @@ final class BlazeConfigurationToolchainResolver {
     return Scope.push(
         context,
         childContext -> {
-          childContext.push(new TimingScope("Build toolchain lookup map"));
+          childContext.push(new TimingScope("Build toolchain lookup map", EventType.Other));
 
           Map<TargetKey, CToolchainIdeInfo> toolchains = Maps.newLinkedHashMap();
           for (TargetIdeInfo target : targetMap.targets()) {
@@ -141,7 +142,7 @@ final class BlazeConfigurationToolchainResolver {
     return Scope.push(
         context,
         childContext -> {
-          childContext.push(new TimingScope("Build compiler settings map"));
+          childContext.push(new TimingScope("Build compiler settings map", EventType.Other));
           return doBuildCompilerSettingsMap(
               context,
               project,

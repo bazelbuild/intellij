@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.run.exporter;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -55,6 +55,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -68,24 +69,33 @@ import javax.swing.table.TableColumn;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 
-/** UI for exporting blaze run configurations. */
+/** UI for exporting run configurations. */
 public class ExportRunConfigurationDialog extends DialogWrapper {
 
-  private final ImmutableList<RunConfiguration> blazeConfigurations;
+  // show blaze run configurations first, otherwise sort by name
+  private static final Comparator<RunConfiguration> COMPARATOR =
+      (o1, o2) -> {
+        if (o1 instanceof BlazeRunConfiguration != o2 instanceof BlazeRunConfiguration) {
+          return o1 instanceof BlazeRunConfiguration ? -1 : 1;
+        }
+        return o1.getName().compareTo(o2.getName());
+      };
+
+  private final ImmutableList<RunConfiguration> configurations;
   private final ExportRunConfigurationTableModel tableModel;
   private final JBTable table;
   private final FieldPanel outputDirectoryPanel;
 
   ExportRunConfigurationDialog(Project project) {
     super(project, true);
-    blazeConfigurations =
+    configurations =
         ImmutableList.copyOf(
             RunManager.getInstance(project)
                 .getAllConfigurationsList()
                 .stream()
-                .filter((config) -> config instanceof BlazeRunConfiguration)
+                .sorted(COMPARATOR)
                 .collect(Collectors.toList()));
-    tableModel = new ExportRunConfigurationTableModel(blazeConfigurations);
+    tableModel = new ExportRunConfigurationTableModel(configurations);
     table = new JBTable(tableModel);
 
     TableColumn booleanColumn = table.getColumnModel().getColumn(0);
@@ -107,7 +117,7 @@ public class ExportRunConfigurationDialog extends DialogWrapper {
           @Override
           protected void customizeCellRenderer(
               JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            RunConfiguration config = blazeConfigurations.get(row);
+            RunConfiguration config = configurations.get(row);
             setIcon(config.getType().getIcon());
             append(config.getName());
           }
@@ -184,11 +194,11 @@ public class ExportRunConfigurationDialog extends DialogWrapper {
     if (outputDir.isEmpty()) {
       return new ValidationInfo("Choose an output directory");
     }
-    if (!FileAttributeProvider.getInstance().exists(new File(outputDir))) {
+    if (!FileOperationProvider.getInstance().exists(new File(outputDir))) {
       return new ValidationInfo("Invalid output directory");
     }
     Set<String> names = new HashSet<>();
-    for (int i = 0; i < blazeConfigurations.size(); i++) {
+    for (int i = 0; i < configurations.size(); i++) {
       if (!tableModel.enabled[i]) {
         continue;
       }
@@ -203,12 +213,12 @@ public class ExportRunConfigurationDialog extends DialogWrapper {
   protected void doOKAction() {
     File outputDir = new File(getOutputDirectoryPath());
     List<File> outputFiles = new ArrayList<>();
-    for (int i = 0; i < blazeConfigurations.size(); i++) {
+    for (int i = 0; i < configurations.size(); i++) {
       if (!tableModel.enabled[i]) {
         continue;
       }
       File outputFile = new File(outputDir, tableModel.paths[i]);
-      writeConfiguration(blazeConfigurations.get(i), outputFile);
+      writeConfiguration(configurations.get(i), outputFile);
       outputFiles.add(outputFile);
     }
     LocalFileSystem.getInstance().refreshIoFiles(outputFiles);

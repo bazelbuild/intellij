@@ -21,6 +21,39 @@ java_library(
     ],
 )
 
+# neverlink library exposed so other plugins can optionally depend on it
+java_library(
+    name = "event_logger_api",
+    srcs = ["src/com/google/idea/blaze/base/logging/EventLogger.java"],
+    neverlink = 1,
+    visibility = ["//java/com/google/devtools/intellij/g3plugins:visibility"],
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+        "@jsr305_annotations//jar",
+    ],
+)
+
+# neverlink library exposed so other plugins can provide dependency information
+java_library(
+    name = "source_to_target_api",
+    srcs = [
+        "src/com/google/idea/blaze/base/dependencies/SourceToTargetProvider.java",
+        "src/com/google/idea/blaze/base/dependencies/TargetInfo.java",
+    ],
+    neverlink = 1,
+    visibility = ["//java/com/google/devtools/intellij/g3plugins:visibility"],
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+java_library(
+    name = "base_for_g3plugins",
+    neverlink = 1,
+    visibility = ["//java/com/google/devtools/intellij/g3plugins:visibility"],
+    exports = [":base"],
+)
+
 filegroup(
     name = "plugin_xml",
     srcs = ["src/META-INF/blaze-base.xml"],

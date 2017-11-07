@@ -76,7 +76,7 @@ new_http_archive(
 
 # Python plugin for IntelliJ CE 2017.1. Required at compile-time for python-specific features.
 new_http_archive(
-    name = "python_2017_1",
+    name = "python_2017_1_4694",
     build_file_content = "\n".join([
         "java_import(",
         "    name = 'python',",
@@ -85,6 +85,19 @@ new_http_archive(
         ")"]),
     url = "https://download.plugins.jetbrains.com/7322/35756/python-ce-2017.1.171.4694.26.zip",
     sha256 = "640d116ff01bcc2f87c75d20da642f17fcd86ed69929e4e0247ffc0df8aa780f",
+)
+
+# Python plugin for Android Studio 3.0. Required at compile-time for python-specific features.
+new_http_archive(
+    name = "python_2017_1_4249",
+    build_file_content = "\n".join([
+        "java_import(",
+        "    name = 'python',",
+        "    jars = ['python-ce/lib/python-ce.jar'],",
+        "    visibility = ['//visibility:public'],",
+        ")"]),
+    url = "https://download.plugins.jetbrains.com/7322/34430/python-ce-2017.1.171.4249.28.zip",
+    sha256 = "2192e2248297e85995b647024a66a75b25c27de023b118c51e3d1ea2025a4b32",
 )
 
 # Python plugin for IntelliJ CE 2017.2. Required at compile-time for python-specific features.

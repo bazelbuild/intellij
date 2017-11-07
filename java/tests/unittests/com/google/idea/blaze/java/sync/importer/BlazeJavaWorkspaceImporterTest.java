@@ -1000,6 +1000,118 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
+  public void testLibraryDependenciesWithJdepsButNoTarget() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/apps/example"))))
+            .build();
+    TargetMapBuilder targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/apps/example:example_debug")
+                    .setBuildFile(source("java/apps/example/BUILD"))
+                    .setKind("java_library")
+                    .addSource(source("java/apps/example/Test.java"))
+                    .setJavaInfo(JavaIdeInfo.builder())
+                    .addDependency("//thirdparty/a:a"));
+    jdepsMap.put(
+        TargetKey.forPlainTarget(Label.create("//java/apps/example:example_debug")),
+        Lists.newArrayList(jdepsPath("thirdparty/a.jar"), jdepsPath("thirdparty/c.jar")));
+
+    BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
+    assertThat(
+            result
+                .libraries
+                .values()
+                .stream()
+                .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
+                .collect(Collectors.toList()))
+        .containsExactly("a.jar", "c.jar");
+  }
+
+  @Test
+  public void testJarsGeneratedFromProjectSourcesExcluded() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/apps/example")))
+                    .add(DirectoryEntry.include(new WorkspacePath("thirdparty"))))
+            .build();
+    TargetMapBuilder targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/apps/example:example_debug")
+                    .setBuildFile(source("java/apps/example/BUILD"))
+                    .setKind("java_library")
+                    .addSource(source("java/apps/example/Test.java"))
+                    .setJavaInfo(JavaIdeInfo.builder())
+                    .addDependency("//thirdparty/a:a"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//thirdparty:jars")
+                    .setKind("java_library")
+                    .addSource(source("thirdparty/Other.java"))
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(LibraryArtifact.builder().setClassJar(gen("thirdparty/a.jar")))
+                            .addJar(LibraryArtifact.builder().setClassJar(gen("thirdparty/c.jar"))))
+                    .build());
+    jdepsMap.put(
+        TargetKey.forPlainTarget(Label.create("//java/apps/example:example_debug")),
+        Lists.newArrayList(jdepsPath("thirdparty/a.jar"), jdepsPath("thirdparty/c.jar")));
+
+    BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
+    assertThat(result.libraries).isEmpty();
+  }
+
+  @Test
+  public void testJarsGeneratedFromExcludedTargetsNotAddedToProjectLibraries() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/apps/example"))))
+            .build();
+    TargetMapBuilder targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/apps/example:example_debug")
+                    .setBuildFile(source("java/apps/example/BUILD"))
+                    .setKind("java_library")
+                    .addSource(source("java/apps/example/Test.java"))
+                    .setJavaInfo(JavaIdeInfo.builder())
+                    .addDependency("//thirdparty:jars"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//thirdparty:jars")
+                    .setKind("java_library")
+                    .addTag("intellij-provided-by-sdk")
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(LibraryArtifact.builder().setClassJar(gen("thirdparty/a.jar"))))
+                    .build());
+    jdepsMap.put(
+        TargetKey.forPlainTarget(Label.create("//java/apps/example:example_debug")),
+        Lists.newArrayList(jdepsPath("thirdparty/a.jar"), jdepsPath("thirdparty/c.jar")));
+
+    BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
+    assertThat(
+            result
+                .libraries
+                .values()
+                .stream()
+                .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
+                .collect(Collectors.toList()))
+        .containsExactly("c.jar");
+  }
+
+  @Test
   public void
       testLibraryDependenciesWithJdepsReportingNothingShouldStillIncludeDirectDepsIfInWorkingSet() {
     ProjectView projectView =
@@ -1363,14 +1475,19 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
   /* Utility methods */
 
   private static String libraryFileName(BlazeJarLibrary library) {
-    return new File(library.libraryArtifact.jarForIntellijLibrary().relativePath).getName();
+    return new File(library.libraryArtifact.jarForIntellijLibrary().getExecutionRootRelativePath())
+        .getName();
   }
 
   @Nullable
   private static BlazeJarLibrary findLibrary(
       Map<LibraryKey, BlazeJarLibrary> libraries, String libraryName) {
     for (BlazeJarLibrary library : libraries.values()) {
-      if (library.libraryArtifact.jarForIntellijLibrary().relativePath.endsWith(libraryName)) {
+      if (library
+          .libraryArtifact
+          .jarForIntellijLibrary()
+          .getExecutionRootRelativePath()
+          .endsWith(libraryName)) {
         return library;
       }
     }

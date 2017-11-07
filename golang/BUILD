@@ -20,7 +20,6 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
-        "//common/guava",
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
         "//third_party/go",

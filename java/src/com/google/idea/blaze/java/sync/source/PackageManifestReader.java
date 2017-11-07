@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo.JavaSourcePackage;
@@ -80,7 +81,7 @@ public class PackageManifestReader {
     ListenableFuture<?> fetchFuture =
         PrefetchService.getInstance().prefetchFiles(project, updatedFiles, true);
     if (!FutureUtil.waitForFuture(context, fetchFuture)
-        .timed("FetchPackageManifests")
+        .timed("FetchPackageManifests", EventType.Prefetching)
         .withProgressMessage("Reading package manifests...")
         .run()
         .success()) {

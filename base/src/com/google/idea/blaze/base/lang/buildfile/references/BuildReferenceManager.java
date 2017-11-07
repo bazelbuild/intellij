@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.lang.buildfile.references;
 
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.completion.BuildLookupElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
@@ -84,7 +84,7 @@ public class BuildReferenceManager {
 
     // try a direct file reference (e.g. ":a.java")
     File fullFile = new File(packageDir, targetName);
-    if (FileAttributeProvider.getInstance().exists(fullFile)) {
+    if (FileOperationProvider.getInstance().exists(fullFile)) {
       return resolveFile(fullFile);
     }
 
@@ -139,7 +139,7 @@ public class BuildReferenceManager {
     }
     File file = resolveWorkspaceRelativePath(relativePath);
 
-    FileAttributeProvider provider = FileAttributeProvider.getInstance();
+    FileOperationProvider provider = FileOperationProvider.getInstance();
     String pathFragment = "";
     if (file == null || (!provider.isDirectory(file) && !relativePath.endsWith("/"))) {
       // we might be partway through a file name. Try the parent directory
@@ -209,7 +209,7 @@ public class BuildReferenceManager {
 
   @Nullable
   public BuildFile findBuildFile(@Nullable File packageDirectory) {
-    FileAttributeProvider provider = FileAttributeProvider.getInstance();
+    FileOperationProvider provider = FileOperationProvider.getInstance();
     if (packageDirectory == null || !provider.isDirectory(packageDirectory)) {
       return null;
     }

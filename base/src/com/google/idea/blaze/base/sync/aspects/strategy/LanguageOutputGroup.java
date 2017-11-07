@@ -26,7 +26,8 @@ public enum LanguageOutputGroup {
   PYTHON(LanguageClass.PYTHON, "py"),
   GO(LanguageClass.GO, "go"),
   JAVASCRIPT(LanguageClass.JAVASCRIPT, "js"),
-  TYPESCRIPT(LanguageClass.TYPESCRIPT, "ts");
+  TYPESCRIPT(LanguageClass.TYPESCRIPT, "ts"),
+  DART(LanguageClass.DART, "dart");
 
   public final LanguageClass languageClass;
   public final String suffix;

@@ -54,16 +54,8 @@ public class BlazeIssueParser {
       this.output = output;
     }
 
-    public static ParseResult needsMoreInput() {
-      return NEEDS_MORE_INPUT;
-    }
-
     public static ParseResult output(IssueOutput output) {
       return new ParseResult(false, output);
-    }
-
-    public static ParseResult noResult() {
-      return NO_RESULT;
     }
   }
 
@@ -74,14 +66,14 @@ public class BlazeIssueParser {
 
   /** Base for a Parser that consumes a single contextless line at a time, matched via regex */
   public abstract static class SingleLineParser implements Parser {
-    Pattern pattern;
+    final Pattern pattern;
 
     public SingleLineParser(String regex) {
       pattern = Pattern.compile(regex);
     }
 
     @Override
-    public ParseResult parse(String currentLine, List<String> multilineMatchResult) {
+    public final ParseResult parse(String currentLine, List<String> multilineMatchResult) {
       checkState(
           multilineMatchResult.isEmpty(), "SingleLineParser recieved multiple lines of input");
       return parse(currentLine);
@@ -90,9 +82,10 @@ public class BlazeIssueParser {
     ParseResult parse(String line) {
       Matcher matcher = pattern.matcher(line);
       if (matcher.find()) {
-        return ParseResult.output(createIssue(matcher));
+        IssueOutput issue = createIssue(matcher);
+        return issue != null ? ParseResult.output(issue) : ParseResult.NO_RESULT;
       }
-      return ParseResult.noResult();
+      return ParseResult.NO_RESULT;
     }
 
     @Nullable
@@ -174,14 +167,14 @@ public class BlazeIssueParser {
     public ParseResult parse(String currentLine, List<String> previousLines) {
       if (previousLines.isEmpty()) {
         if (PATTERN.matcher(currentLine).find()) {
-          return ParseResult.needsMoreInput();
+          return ParseResult.NEEDS_MORE_INPUT;
         } else {
-          return ParseResult.noResult();
+          return ParseResult.NO_RESULT;
         }
       }
 
       if (currentLine.startsWith("\t")) {
-        return ParseResult.needsMoreInput();
+        return ParseResult.NEEDS_MORE_INPUT;
       } else {
         Matcher matcher = PATTERN.matcher(previousLines.get(0));
         checkState(
@@ -312,6 +305,35 @@ public class BlazeIssueParser {
               });
 
       return IssueOutput.error(matcher.group(0)).inFile(file).build();
+    }
+  }
+
+  /**
+   * Fallback parser, intended to be run last to catch any errors not specifically handled by other
+   * parsers. Avoids parsing test failure notifications.
+   */
+  static class GenericErrorParser extends SingleLineParser {
+    static final GenericErrorParser INSTANCE = new GenericErrorParser();
+
+    // Match either specific blacklisted patterns we don't want, or the generic error message we do.
+    // Then throw away the blacklisted matches later.
+    private static final String PATTERN =
+        "^ERROR: (?:"
+            + "(//.+?: Exit [0-9]+\\.)|"
+            + "(build interrupted\\.)|"
+            + "(Couldn't start the build. Unable to run tests.)|"
+            + "(.*))$";
+
+    private GenericErrorParser() {
+      super(PATTERN);
+    }
+
+    @Override
+    protected IssueOutput createIssue(Matcher matcher) {
+      if (matcher.group(1) != null || matcher.group(2) != null || matcher.group(3) != null) {
+        return null;
+      }
+      return IssueOutput.error(matcher.group(4)).build();
     }
   }
 

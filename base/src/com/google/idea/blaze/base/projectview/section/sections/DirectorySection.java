@@ -65,7 +65,7 @@ public class DirectorySection {
 
     @Override
     public ItemType getItemType() {
-      return ItemType.FileSystemItem;
+      return ItemType.DirectoryItem;
     }
 
     @Override

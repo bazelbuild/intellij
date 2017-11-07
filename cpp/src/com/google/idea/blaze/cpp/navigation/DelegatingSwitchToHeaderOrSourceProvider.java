@@ -32,25 +32,22 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.jetbrains.cidr.lang.navigation.OCSwitchToHeaderOrSourceRelatedProvider;
 import com.jetbrains.cidr.lang.psi.OCFile;
-import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
- * Wrapper around {@link OCSwitchToHeaderOrSourceRelatedProvider} to work around 20+ second freezes
- * when symbol resolution needs to be recomputed (cache invalidated). Seems especially bad for
- * *_test.cc files (which currently churn through lots of headers).
+ * Wrapper around {@link OCSwitchToHeaderOrSourceRelatedProvider} to work around freezes when symbol
+ * resolution needs to be recomputed (cache invalidated). Seems especially bad for *_test.cc files
+ * (which currently churn through lots of headers).
+ *
+ * <p>For now, this just locates the corresponding file, and doesn't try to do any "related symbol"
+ * location. If users still want that, just click the related symbol gutter icon on the left, or do
+ * "Navigate Declaration/Definition" (ctrl+B).
  *
  * <p>Remove this workaround once https://youtrack.jetbrains.com/issue/CPP-7168, or
  * https://youtrack.jetbrains.com/issue/CPP-8461 are fixed.
@@ -61,8 +58,6 @@ public class DelegatingSwitchToHeaderOrSourceProvider extends GotoRelatedProvide
   private static final GotoRelatedProvider DELEGATE = new OCSwitchToHeaderOrSourceRelatedProvider();
   private static final Logger logger =
       Logger.getInstance(DelegatingSwitchToHeaderOrSourceProvider.class);
-  private static final ImmutableList<String> TEST_SUFFIXES =
-      ImmutableList.of("_test", "-test", "_unittest", "-unittest");
 
   @Override
   public List<? extends GotoRelatedItem> getItems(PsiElement psiElement) {
@@ -71,13 +66,22 @@ public class DelegatingSwitchToHeaderOrSourceProvider extends GotoRelatedProvide
     if (!(psiFile instanceof OCFile) || !Blaze.isBlazeProject(project)) {
       return ImmutableList.of();
     }
-    Optional<List<? extends GotoRelatedItem>> fromDelegate =
-        getItemsWithTimeout(() -> DELEGATE.getItems(psiElement));
-    if (!fromDelegate.isPresent()) {
-      logger.info("Timed out: Trying fallback for .h <-> .cc");
-      return getItemsFallback((OCFile) psiFile);
+    OCFile ocFile = (OCFile) psiFile;
+    // Try to find the corresponding file quickly. If we can't even figure that out (e.g.,
+    // if headers are stored in a different directory) then delegate to the original provider.
+    OCFile correspondingFile = SwitchToHeaderOrSourceSearch.getCorrespondingFile(ocFile);
+    if (correspondingFile == null) {
+      Optional<List<? extends GotoRelatedItem>> fromDelegate =
+          getItemsWithTimeout(() -> DELEGATE.getItems(psiElement));
+      if (fromDelegate.isPresent()) {
+        return fromDelegate.get();
+      }
+      logger.info("Timed out without a fallback.");
+      return ImmutableList.of();
     }
-    return fromDelegate.get();
+    return ImmutableList.of(
+        new GotoRelatedItem(
+            correspondingFile, correspondingFile.isHeader() ? "Headers" : "Sources"));
   }
 
   @Override
@@ -120,37 +124,12 @@ public class DelegatingSwitchToHeaderOrSourceProvider extends GotoRelatedProvide
     }
   }
 
-  private List<? extends GotoRelatedItem> getItemsFallback(OCFile file) {
-    OCFile target = file.getAssociatedFileWithSameName();
-    if (target == null && !file.isHeader() && file.getVirtualFile() != null) {
-      target = correlateTestToHeader(file);
-    }
+  private static List<? extends GotoRelatedItem> getItemsFallback(OCFile file) {
+    OCFile target = SwitchToHeaderOrSourceSearch.getCorrespondingFile(file);
     if (target == null) {
       return ImmutableList.of();
     }
     return ImmutableList.of(new GotoRelatedItem(target, target.isHeader() ? "Headers" : "Sources"));
-  }
-
-  @Nullable
-  private OCFile correlateTestToHeader(OCFile file) {
-    // Quickly check foo_test.cc -> foo.h as well. "getAssociatedFileWithSameName" only does
-    // foo.cc <-> foo.h. However, if you do goto-related-symbol again, it will go from
-    // foo.h -> foo.cc instead of back to foo_test.cc.
-    PsiManager psiManager = PsiManager.getInstance(file.getProject());
-    String pathWithoutExtension = FileUtil.getNameWithoutExtension(file.getVirtualFile().getPath());
-    for (String testSuffix : TEST_SUFFIXES) {
-      if (pathWithoutExtension.endsWith(testSuffix)) {
-        String possibleHeaderName = StringUtil.trimEnd(pathWithoutExtension, testSuffix) + ".h";
-        VirtualFile virtualFile = VfsUtil.findFileByIoFile(new File(possibleHeaderName), false);
-        if (virtualFile != null) {
-          PsiFile psiFile = psiManager.findFile(virtualFile);
-          if (psiFile instanceof OCFile) {
-            return (OCFile) psiFile;
-          }
-        }
-      }
-    }
-    return null;
   }
 
   /**

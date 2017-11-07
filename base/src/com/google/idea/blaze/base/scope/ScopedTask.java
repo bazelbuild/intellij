@@ -15,14 +15,14 @@
  */
 package com.google.idea.blaze.base.scope;
 
+import com.google.idea.blaze.base.async.executor.ProgressiveWithResult;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Progressive;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 /** Wrapper between an IntelliJ Task and a BlazeContext */
-public abstract class ScopedTask implements Progressive {
+public abstract class ScopedTask<T> implements ProgressiveWithResult<T> {
   @Nullable final BlazeContext parentContext;
 
   public ScopedTask() {
@@ -34,17 +34,14 @@ public abstract class ScopedTask implements Progressive {
   }
 
   @Override
-  public void run(@NotNull final ProgressIndicator indicator) {
-    Scope.push(
+  public T compute(@NotNull final ProgressIndicator indicator) {
+    return Scope.push(
         parentContext,
-        new ScopedOperation() {
-          @Override
-          public void execute(@NotNull BlazeContext context) {
-            context.push(new ProgressIndicatorScope(indicator));
-            ScopedTask.this.execute(context);
-          }
+        context -> {
+          context.push(new ProgressIndicatorScope(indicator));
+          return ScopedTask.this.execute(context);
         });
   }
 
-  protected abstract void execute(@NotNull BlazeContext context);
+  protected abstract T execute(@NotNull BlazeContext context);
 }

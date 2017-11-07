@@ -31,6 +31,8 @@ import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.logging.EventLoggingService;
+import com.google.idea.blaze.base.logging.utils.SyncStats;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -88,6 +90,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   private MockBlazeVcsHandler vcsHandler;
   private MockBlazeInfoRunner blazeInfoData;
   private MockBlazeIdeInterface blazeIdeInterface;
+  private MockEventLoggingService eventLogger;
 
   protected ErrorCollector errorCollector;
   protected BlazeContext context;
@@ -135,8 +138,10 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     vcsHandler = new MockBlazeVcsHandler();
     blazeInfoData = new MockBlazeInfoRunner();
     blazeIdeInterface = new MockBlazeIdeInterface();
+    eventLogger = new MockEventLoggingService();
     registerProjectService(ProjectViewManager.class, projectViewManager);
     registerExtension(BlazeVcsHandler.EP_NAME, vcsHandler);
+    registerApplicationService(EventLoggingService.class, eventLogger);
     registerApplicationService(BlazeInfoRunner.class, blazeInfoData);
     registerApplicationService(BlazeIdeInterface.class, blazeIdeInterface);
     registerApplicationService(ModuleEditorProvider.class, MockModuleEditor::new);
@@ -225,6 +230,10 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         e.printStackTrace();
       }
     }
+  }
+
+  protected List<SyncStats> getSyncStats() {
+    return eventLogger.syncStats;
   }
 
   private static class MockProjectViewManager extends ProjectViewManager {
@@ -369,5 +378,25 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         ShardedTargetList shardedTargets) {
       return BuildResult.SUCCESS;
     }
+  }
+
+  private static class MockEventLoggingService implements EventLoggingService {
+
+    private final List<SyncStats> syncStats = Lists.newArrayList();
+
+    @Override
+    public void log(SyncStats stats) {
+      syncStats.add(stats);
+    }
+
+    @Override
+    public void logEvent(Class<?> loggingClass, String eventType, Map<String, String> keyValues) {}
+
+    @Override
+    public void logEvent(
+        Class<?> loggingClass,
+        String eventType,
+        Map<String, String> keyValues,
+        @Nullable Long durationInNanos) {}
   }
 }

@@ -61,7 +61,7 @@ public class GeneratedAndroidResourcesSection {
 
     @Override
     public ItemType getItemType() {
-      return ItemType.FileSystemItem;
+      return ItemType.DirectoryItem;
     }
   }
 }

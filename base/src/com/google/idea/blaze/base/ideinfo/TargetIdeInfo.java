@@ -46,6 +46,7 @@ public final class TargetIdeInfo implements Serializable {
   @Nullable public final GoIdeInfo goIdeInfo;
   @Nullable public final JsIdeInfo jsIdeInfo;
   @Nullable public final TsIdeInfo tsIdeInfo;
+  @Nullable public final DartIdeInfo dartIdeInfo;
   @Nullable public final TestIdeInfo testIdeInfo;
   @Nullable public final ProtoLibraryLegacyInfo protoLibraryLegacyInfo;
   @Nullable public final JavaToolchainIdeInfo javaToolchainIdeInfo;
@@ -66,6 +67,7 @@ public final class TargetIdeInfo implements Serializable {
       @Nullable GoIdeInfo goIdeInfo,
       @Nullable JsIdeInfo jsIdeInfo,
       @Nullable TsIdeInfo tsIdeInfo,
+      @Nullable DartIdeInfo dartIdeInfo,
       @Nullable TestIdeInfo testIdeInfo,
       @Nullable ProtoLibraryLegacyInfo protoLibraryLegacyInfo,
       @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo) {
@@ -84,6 +86,7 @@ public final class TargetIdeInfo implements Serializable {
     this.goIdeInfo = goIdeInfo;
     this.jsIdeInfo = jsIdeInfo;
     this.tsIdeInfo = tsIdeInfo;
+    this.dartIdeInfo = dartIdeInfo;
     this.testIdeInfo = testIdeInfo;
     this.protoLibraryLegacyInfo = protoLibraryLegacyInfo;
     this.javaToolchainIdeInfo = javaToolchainIdeInfo;
@@ -131,6 +134,7 @@ public final class TargetIdeInfo implements Serializable {
     private GoIdeInfo goIdeInfo;
     private JsIdeInfo jsIdeInfo;
     private TsIdeInfo tsIdeInfo;
+    private DartIdeInfo dartIdeInfo;
     private TestIdeInfo testIdeInfo;
     private ProtoLibraryLegacyInfo protoLibraryLegacyInfo;
     private JavaToolchainIdeInfo javaToolchainIdeInfo;
@@ -224,6 +228,11 @@ public final class TargetIdeInfo implements Serializable {
       return this;
     }
 
+    public Builder setDartInfo(DartIdeInfo.Builder dartInfo) {
+      this.dartIdeInfo = dartInfo.build();
+      return this;
+    }
+
     public Builder setTestInfo(TestIdeInfo.Builder testInfo) {
       this.testIdeInfo = testInfo.build();
       return this;
@@ -282,6 +291,7 @@ public final class TargetIdeInfo implements Serializable {
           goIdeInfo,
           jsIdeInfo,
           tsIdeInfo,
+          dartIdeInfo,
           testIdeInfo,
           protoLibraryLegacyInfo,
           javaToolchainIdeInfo);

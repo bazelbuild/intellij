@@ -31,7 +31,10 @@ merged_plugin_xml(
         "src/META-INF/aswb.xml",
         "//base:plugin_xml",
         "//java:plugin_xml",
-    ],
+    ] + select_for_plugin_api({
+        "android-studio-2.3.1.0": [],
+        "android-studio-3.0.0.13": ["//python:plugin_xml"],
+    }),
 )
 
 optional_plugin_xml(
@@ -59,7 +62,10 @@ OPTIONAL_PLUGIN_XMLS = [
     "//java:optional_coverage",
     ":optional_cpp_xml",
     ":optional_ndk_xml",
-]
+] + select_for_plugin_api({
+    "android-studio-2.3.1.0": [],
+    "android-studio-3.0.0.13": ["//python:optional_xml"],
+})
 
 merged_plugin_xml(
     name = "merged_plugin_xml",
@@ -87,6 +93,10 @@ java_library(
         "android-studio-3.0.0.13": glob(["3.0/src/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
+    runtime_deps = select_for_plugin_api({
+        "android-studio-2.3.1.0": [],
+        "android-studio-3.0.0.13": ["//python"],
+    }),
     deps = [
         "//base",
         "//common/experiments",

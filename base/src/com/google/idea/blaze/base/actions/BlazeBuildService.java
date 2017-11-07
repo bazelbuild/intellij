@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.actions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -35,6 +35,7 @@ import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.scope.scopes.NotificationScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
@@ -118,50 +119,51 @@ public class BlazeBuildService {
     }
     @SuppressWarnings("unused") // go/futurereturn-lsc
     Future<?> possiblyIgnoredError =
-        BlazeExecutor.submitTask(
-            project,
-            "Building targets",
-            new ScopedTask() {
-              @Override
-              public void execute(BlazeContext context) {
-                context
-                    .push(new ExperimentScope())
-                    .push(new BlazeConsoleScope.Builder(project).build())
-                    .push(new IssuesScope(project))
-                    .push(new IdeaLogScope())
-                    .push(new TimingScope("Make"))
-                    .push(notificationScope);
+        ProgressiveTaskWithProgressIndicator.builder(project)
+            .setTitle("Building targets")
+            .submitTaskWithResult(
+                new ScopedTask<Void>() {
+                  @Override
+                  public Void execute(BlazeContext context) {
+                    context
+                        .push(new ExperimentScope())
+                        .push(new BlazeConsoleScope.Builder(project).build())
+                        .push(new IssuesScope(project))
+                        .push(new IdeaLogScope())
+                        .push(new TimingScope("Make", EventType.BlazeInvocation))
+                        .push(notificationScope);
 
-                WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+                    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
-                SaveUtil.saveAllFiles();
-                ShardedTargetsResult shardedTargets =
-                    BlazeBuildTargetSharder.expandAndShardTargets(
-                        project,
-                        context,
-                        workspaceRoot,
-                        projectViewSet,
-                        blazeProjectData.workspacePathResolver,
-                        targets);
-                if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
-                  return;
-                }
-                BuildResult buildResult =
-                    BlazeIdeInterface.getInstance()
-                        .compileIdeArtifacts(
+                    SaveUtil.saveAllFiles();
+                    ShardedTargetsResult shardedTargets =
+                        BlazeBuildTargetSharder.expandAndShardTargets(
                             project,
                             context,
                             workspaceRoot,
                             projectViewSet,
-                            blazeProjectData.blazeVersionData,
-                            blazeProjectData.workspaceLanguageSettings,
-                            shardedTargets.shardedTargets);
-                FileCaches.refresh(project);
+                            blazeProjectData.workspacePathResolver,
+                            targets);
+                    if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
+                      return null;
+                    }
+                    BuildResult buildResult =
+                        BlazeIdeInterface.getInstance()
+                            .compileIdeArtifacts(
+                                project,
+                                context,
+                                workspaceRoot,
+                                projectViewSet,
+                                blazeProjectData.blazeVersionData,
+                                blazeProjectData.workspaceLanguageSettings,
+                                shardedTargets.shardedTargets);
+                    FileCaches.refresh(project);
 
-                if (buildResult.status != BuildResult.Status.SUCCESS) {
-                  context.setHasError();
-                }
-              }
-            });
+                    if (buildResult.status != BuildResult.Status.SUCCESS) {
+                      context.setHasError();
+                    }
+                    return null;
+                  }
+                });
   }
 }

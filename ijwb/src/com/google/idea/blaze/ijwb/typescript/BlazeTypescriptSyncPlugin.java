@@ -25,14 +25,15 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
+import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -40,6 +41,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
@@ -53,7 +55,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.util.PlatformUtils;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Optional;
@@ -61,7 +62,10 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Supports typescript. */
-public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
+public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
+
+  // TypeScript support provided by JavaScript plugin
+  private static final String TYPESCRIPT_PLUGIN_ID = "JavaScript";
 
   static final String TSCONFIG_LIBRARY_NAME = "tsconfig$roots";
 
@@ -70,6 +74,13 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
     return PlatformUtils.isIdeaUltimate()
         ? ImmutableSet.of(LanguageClass.TYPESCRIPT)
         : ImmutableSet.of();
+  }
+
+  @Override
+  public ImmutableList<String> getRequiredExternalPluginIds(Collection<LanguageClass> languages) {
+    return languages.contains(LanguageClass.TYPESCRIPT)
+        ? ImmutableList.of(TYPESCRIPT_PLUGIN_ID)
+        : ImmutableList.of();
   }
 
   @Override
@@ -99,36 +110,42 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
     Scope.push(
         context,
         (childContext) -> {
-          childContext.push(new TimingScope("TsConfig"));
+          childContext.push(new TimingScope("TsConfig", EventType.BlazeInvocation));
           childContext.output(new StatusOutput("Updating tsconfig..."));
 
-          BlazeCommand command =
-              BlazeCommand.builder(
-                      Blaze.getBuildSystemProvider(project).getSyncBinaryPath(),
-                      BlazeCommandName.RUN)
-                  .addTargets(new ArrayList<>(tsConfigTargets))
-                  .addBlazeFlags(
-                      BlazeFlags.blazeFlags(
-                          project,
-                          projectViewSet,
-                          BlazeCommandName.RUN,
-                          BlazeInvocationContext.Sync))
-                  .build();
-
-          int retVal =
-              ExternalTask.builder(workspaceRoot)
-                  .addBlazeCommand(command)
-                  .context(childContext)
-                  .stderr(
-                      LineProcessingOutputStream.of(
-                          new IssueOutputLineProcessor(project, childContext, workspaceRoot)))
-                  .build()
-                  .run();
-
-          if (retVal != 0) {
-            childContext.setHasError();
+          for (Label target : tsConfigTargets) {
+            if (runTsConfigTarget(project, childContext, workspaceRoot, projectViewSet, target)
+                != 0) {
+              childContext.setHasError();
+              // continue running any remaining targets
+            }
           }
         });
+  }
+
+  private static int runTsConfigTarget(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      Label target) {
+    BlazeCommand command =
+        BlazeCommand.builder(
+                Blaze.getBuildSystemProvider(project).getSyncBinaryPath(), BlazeCommandName.RUN)
+            .addTargets(target)
+            .addBlazeFlags(
+                BlazeFlags.blazeFlags(
+                    project, projectViewSet, BlazeCommandName.RUN, BlazeInvocationContext.Sync))
+            .build();
+    return ExternalTask.builder(workspaceRoot)
+        .addBlazeCommand(command)
+        .context(context)
+        .stderr(
+            LineProcessingOutputStream.of(
+                BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
+                    project, context, workspaceRoot)))
+        .build()
+        .run();
   }
 
   @Override
@@ -153,6 +170,23 @@ public class BlazeTypescriptSyncPlugin extends BlazeSyncPlugin.Adapter {
         workspaceModifiableModel.addLibraryEntry(tsConfigLibrary);
       }
     }
+  }
+
+  @Override
+  public boolean validate(
+      Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
+    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)) {
+      return true;
+    }
+    if (!PluginUtils.isPluginEnabled(TYPESCRIPT_PLUGIN_ID)) {
+      IssueOutput.error(
+              "The JavaScript plugin is required for TypeScript support. "
+                  + "Click here to install/enable the plugin and restart")
+          .navigatable(PluginUtils.installOrEnablePluginNavigable(TYPESCRIPT_PLUGIN_ID))
+          .submit(context);
+      return false;
+    }
+    return true;
   }
 
   @Override

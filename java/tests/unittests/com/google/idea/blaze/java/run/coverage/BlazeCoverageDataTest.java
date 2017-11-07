@@ -64,6 +64,24 @@ public class BlazeCoverageDataTest {
     assertThat(toMap(fileData.lineHits)).containsExactly(1, 1, 2, 2, 5, 0, 123, 1);
   }
 
+  @Test
+  public void testEmptyFilesIgnored() throws IOException {
+    BlazeCoverageData data =
+        BlazeCoverageData.parse(
+            inputStream(
+                "SF:path/to/file.txt",
+                "FS:0",
+                "unrecognized junk",
+                "end_of_record",
+                "SF:path/to/another/file.txt",
+                "DA:1,1",
+                "DA:2,2",
+                "DA:5,0",
+                "DA:123,1",
+                "end_of_record"));
+    assertThat(data.perFileData.keySet()).containsExactly("path/to/another/file.txt");
+  }
+
   private static ImmutableMap<Integer, Integer> toMap(TIntIntHashMap troveMap) {
     return Arrays.stream(troveMap.keys())
         .boxed()

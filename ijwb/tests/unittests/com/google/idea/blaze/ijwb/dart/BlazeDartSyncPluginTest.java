@@ -58,7 +58,7 @@ public class BlazeDartSyncPluginTest extends BlazeTestCase {
     ep.registerExtension(new BlazeDartSyncPlugin());
     // add java, because we need at least one WorkspaceType available.
     ep.registerExtension(
-        new BlazeSyncPlugin.Adapter() {
+        new BlazeSyncPlugin() {
           @Override
           public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
             return ImmutableList.of(WorkspaceType.JAVA);

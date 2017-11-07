@@ -16,14 +16,14 @@
 package com.google.idea.blaze.base.run;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
+import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
+import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.intellij.openapi.project.Project;
 import java.util.List;
 
@@ -48,7 +49,7 @@ public final class BlazeBeforeRunCommandHelper {
   private BlazeBeforeRunCommandHelper() {}
 
   /** Kicks off the blaze build task, returning a corresponding {@link ListenableFuture}. */
-  public static ListenableFuture<Void> runBlazeBuild(
+  public static ListenableFuture<BuildResult> runBlazeBuild(
       BlazeCommandRunConfiguration configuration,
       BuildResultHelper buildResultHelper,
       List<String> extraBlazeFlags,
@@ -69,42 +70,45 @@ public final class BlazeBeforeRunCommandHelper {
             ? BlazeConsolePopupBehavior.NEVER
             : BlazeConsolePopupBehavior.ALWAYS;
 
-    return BlazeExecutor.submitTask(
-        project,
-        new ScopedTask() {
-          @Override
-          protected void execute(BlazeContext context) {
-            context
-                .push(new IssuesScope(project))
-                .push(
-                    new BlazeConsoleScope.Builder(project)
-                        .setPopupBehavior(consolePopupBehavior)
-                        .build());
+    return ProgressiveTaskWithProgressIndicator.builder(project)
+        .submitTaskWithResult(
+            new ScopedTask<BuildResult>() {
+              @Override
+              protected BuildResult execute(BlazeContext context) {
+                context
+                    .push(new IssuesScope(project))
+                    .push(
+                        new BlazeConsoleScope.Builder(project)
+                            .setPopupBehavior(consolePopupBehavior)
+                            .build());
 
-            context.output(new StatusOutput(progressMessage));
+                context.output(new StatusOutput(progressMessage));
 
-            BlazeCommand.Builder command =
-                BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
-                    .addTargets(configuration.getTarget())
-                    .addBlazeFlags(
-                        BlazeFlags.blazeFlags(
-                            project,
-                            projectViewSet,
-                            BlazeCommandName.BUILD,
-                            BlazeInvocationContext.RunConfiguration))
-                    .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
-                    .addBlazeFlags(extraBlazeFlags)
-                    .addBlazeFlags(buildResultHelper.getBuildFlags());
+                BlazeCommand.Builder command =
+                    BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
+                        .addTargets(configuration.getTarget())
+                        .addBlazeFlags(
+                            BlazeFlags.blazeFlags(
+                                project,
+                                projectViewSet,
+                                BlazeCommandName.BUILD,
+                                BlazeInvocationContext.RunConfiguration))
+                        .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
+                        .addBlazeFlags(extraBlazeFlags)
+                        .addBlazeFlags(buildResultHelper.getBuildFlags());
 
-            ExternalTask.builder(workspaceRoot)
-                .addBlazeCommand(command.build())
-                .context(context)
-                .stderr(
-                    buildResultHelper.stderr(
-                        new IssueOutputLineProcessor(project, context, workspaceRoot)))
-                .build()
-                .run();
-          }
-        });
+                int exitCode =
+                    ExternalTask.builder(workspaceRoot)
+                        .addBlazeCommand(command.build())
+                        .context(context)
+                        .stderr(
+                            buildResultHelper.stderr(
+                                BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
+                                    project, context, workspaceRoot)))
+                        .build()
+                        .run();
+                return BuildResult.fromExitCode(exitCode);
+              }
+            });
   }
 }

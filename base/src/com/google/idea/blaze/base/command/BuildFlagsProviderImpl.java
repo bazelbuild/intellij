@@ -30,7 +30,7 @@ public class BuildFlagsProviderImpl implements BuildFlagsProvider {
       List<String> flags) {
     flags.add("--curses=no");
     flags.add("--color=no");
-    flags.add("--noexperimental_ui");
-    flags.add("--noprogress_in_terminal_title");
+    flags.add("--experimental_ui=no");
+    flags.add("--progress_in_terminal_title=no");
   }
 }

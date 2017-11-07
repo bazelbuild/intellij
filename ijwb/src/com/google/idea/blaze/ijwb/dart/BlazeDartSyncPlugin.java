@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.ijwb.dart;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -26,23 +27,30 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.sdkcompat.dart.DartSdkCompatUtils;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Supports dart. */
-public class BlazeDartSyncPlugin extends BlazeSyncPlugin.Adapter {
+public class BlazeDartSyncPlugin implements BlazeSyncPlugin {
 
   private static final String DART_PLUGIN_ID = "Dart";
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
     return ImmutableSet.of(LanguageClass.DART);
+  }
+
+  @Override
+  public ImmutableList<String> getRequiredExternalPluginIds(Collection<LanguageClass> languages) {
+    return languages.contains(LanguageClass.DART)
+        ? ImmutableList.of(DART_PLUGIN_ID)
+        : ImmutableList.of();
   }
 
   @Override
@@ -75,16 +83,15 @@ public class BlazeDartSyncPlugin extends BlazeSyncPlugin.Adapter {
   }
 
   @Override
-  public boolean validateProjectView(
-      @Nullable Project project,
-      BlazeContext context,
-      ProjectViewSet projectViewSet,
-      WorkspaceLanguageSettings workspaceLanguageSettings) {
-    if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.DART)) {
+  public boolean validate(
+      Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
+    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.DART)) {
       return true;
     }
     if (!PluginUtils.isPluginEnabled(DART_PLUGIN_ID)) {
-      IssueOutput.error("Dart plugin needed for Dart language support.")
+      IssueOutput.error(
+              "The Dart plugin is required for Dart support. "
+                  + "Click here to install/enable the plugin and restart")
           .navigatable(PluginUtils.installOrEnablePluginNavigable(DART_PLUGIN_ID))
           .submit(context);
       return false;

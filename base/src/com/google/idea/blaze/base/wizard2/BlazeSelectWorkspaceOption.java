@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import java.io.File;
+import javax.annotation.Nullable;
 
 /** Provides an option on the "Select workspace" screen */
 public interface BlazeSelectWorkspaceOption extends BlazeWizardOption {
@@ -35,6 +36,7 @@ public interface BlazeSelectWorkspaceOption extends BlazeWizardOption {
   String getWorkspaceName();
 
   /** @return the name of the 'branch', if applicable */
+  @Nullable
   String getBranchName();
 
   BuildSystem getBuildSystemForWorkspace();

@@ -25,9 +25,14 @@ public final class PythonPluginUtils {
 
   private static final ImmutableMap<String, String> PRODUCT_TO_PLUGIN_ID =
       ImmutableMap.of(
-          PlatformUtils.IDEA_PREFIX, "Pythonid",
-          PlatformUtils.IDEA_CE_PREFIX, "PythonCore",
-          PlatformUtils.CLION_PREFIX, "com.intellij.clion-python");
+          PlatformUtils.IDEA_PREFIX,
+          "Pythonid",
+          PlatformUtils.IDEA_CE_PREFIX,
+          "PythonCore",
+          "AndroidStudio",
+          "PythonCore",
+          PlatformUtils.CLION_PREFIX,
+          "com.intellij.clion-python");
 
   public static String getPythonPluginId() {
     String pluginId = PRODUCT_TO_PLUGIN_ID.get(PlatformUtils.getPlatformPrefix());

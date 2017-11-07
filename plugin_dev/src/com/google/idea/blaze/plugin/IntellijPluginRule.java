@@ -21,18 +21,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 /** Utility methods for intellij_plugin blaze targets */
 public class IntellijPluginRule {
 
-  public static final String TARGET_TAG_IJ_PLUGIN = "intellij-plugin";
-
   public static boolean isPluginTarget(TargetIdeInfo target) {
-    return isIntellijPluginDebugTarget(target)
-        || isSinglePluginTarget(target);
-  }
-
-  public static boolean isIntellijPluginDebugTarget(TargetIdeInfo target) {
     return target.kind == Kind.INTELLIJ_PLUGIN_DEBUG_TARGET;
-  }
-
-  public static boolean isSinglePluginTarget(TargetIdeInfo target) {
-    return target.kindIsOneOf(Kind.JAVA_IMPORT) && target.tags.contains(TARGET_TAG_IJ_PLUGIN);
   }
 }

@@ -18,6 +18,7 @@ java_library(
         android_studio = glob([
             "com/google/idea/sdkcompat/cidr/**",
             "com/google/idea/sdkcompat/java/**",
+            "com/google/idea/sdkcompat/python/*",
         ]),
         clion = glob([
             "com/google/idea/sdkcompat/clion/**",
@@ -34,11 +35,9 @@ java_library(
     ),
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
-        "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:junit",
+        "//intellij_platform_sdk:plugin_api",
+        "//third_party/python",
         "@jsr305_annotations//jar",
-    ] + select_for_ide(
-        clion = ["//third_party/python"],
-        intellij = ["//third_party/python"],
-    ),
+    ],
 )

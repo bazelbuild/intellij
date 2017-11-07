@@ -33,13 +33,13 @@
                     serviceImplementation="com.google.idea.blaze.clwb.cworkspace.BlazeCWorkspaceManager"
                     overrides="true"/>
 
-    <!-- run configurations -->
+    <consoleFilterProvider implementation="com.google.idea.blaze.clwb.run.BlazeCppPathConsoleFilter$Provider"/>
+
     <programRunner implementation="com.google.idea.blaze.clwb.run.BlazeCppRunner"/>
 
     <runConfigurationProducer
         implementation="com.google.idea.blaze.clwb.run.producers.BlazeCidrTestConfigurationProducer"
         order="first"/>
-    <!-- end run configurations -->
   </extensions>
 
   <extensions defaultExtensionNs="cidr.debugger">

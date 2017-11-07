@@ -17,6 +17,10 @@ load(
     "intellij_plugin_debug_target",
 )
 load("//:version.bzl", "VERSION")
+load(
+    "//testing:test_defs.bzl",
+    "intellij_unit_test_suite",
+)
 
 merged_plugin_xml(
     name = "merged_plugin_xml_common",
@@ -57,7 +61,6 @@ java_library(
     ],
     deps = [
         "//base",
-        "//common/experiments",
         "//cpp",
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
@@ -107,4 +110,16 @@ plugin_deploy_zip(
         ":plugin_jar",
     ],
     zip_filename = "clwb_bazel.zip",
+)
+
+intellij_unit_test_suite(
+    name = "unit_tests",
+    srcs = glob(["tests/unittests/**/*.java"]),
+    test_package_root = "com.google.idea.blaze.clwb",
+    deps = [
+        ":clwb_lib",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "@jsr305_annotations//jar",
+        "@junit//jar",
+    ],
 )

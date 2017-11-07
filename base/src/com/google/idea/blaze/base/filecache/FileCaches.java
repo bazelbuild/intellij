@@ -15,13 +15,14 @@
  */
 package com.google.idea.blaze.base.filecache;
 
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -39,7 +40,7 @@ public class FileCaches {
       Scope.push(
           context,
           childContext -> {
-            childContext.push(new TimingScope(fileCache.getName()));
+            childContext.push(new TimingScope(fileCache.getName(), EventType.Other));
             childContext.output(new StatusOutput("Updating " + fileCache.getName() + "..."));
             fileCache.onSync(project, context, projectViewSet, blazeProjectData, syncMode);
           });
@@ -49,15 +50,15 @@ public class FileCaches {
 
   /** Call at the end of build when you want the IDE to pick up any changes. */
   public static void refresh(Project project) {
-    BlazeExecutor.submitTask(
-        project,
-        indicator -> {
-          indicator.setIndeterminate(true);
-          for (FileCache fileCache : FileCache.EP_NAME.getExtensions()) {
-            indicator.setText("Updating " + fileCache.getName() + "...");
-            fileCache.refreshFiles(project);
-          }
-          LocalFileSystem.getInstance().refresh(true);
-        });
+    ProgressiveTaskWithProgressIndicator.builder(project)
+        .submitTask(
+            indicator -> {
+              indicator.setIndeterminate(true);
+              for (FileCache fileCache : FileCache.EP_NAME.getExtensions()) {
+                indicator.setText("Updating " + fileCache.getName() + "...");
+                fileCache.refreshFiles(project);
+              }
+              LocalFileSystem.getInstance().refresh(true);
+            });
   }
 }

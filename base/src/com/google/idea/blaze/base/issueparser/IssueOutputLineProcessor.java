@@ -61,6 +61,7 @@ public class IssueOutputLineProcessor implements LineProcessingOutputStream.Line
                     projectViewSet, "ERROR: Skipping '(.*?)'"),
                 new BlazeIssueParser.FileNotFoundBuildParser(workspaceRoot))
             .addAll(BlazeIssueParserProvider.getAllIssueParsers(project))
+            .add(BlazeIssueParser.GenericErrorParser.INSTANCE)
             .build();
     this.blazeIssueParser = new BlazeIssueParser(parsers);
   }

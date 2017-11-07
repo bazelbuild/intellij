@@ -69,7 +69,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Allows people to use a python workspace. */
-public class BlazePythonSyncPlugin extends BlazeSyncPlugin.Adapter {
+public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
 
   private static final Logger logger = Logger.getInstance(BlazePythonSyncPlugin.class);
 

@@ -617,6 +617,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   private VirtualFile createVirtualFile(String path) {
     VirtualFile mockFile = mock(VirtualFile.class);
     when(mockFile.getPath()).thenReturn(path);
+    when(mockFile.isValid()).thenReturn(true);
     when(mockFileSystem.findFileByIoFile(new File(path))).thenReturn(mockFile);
     return mockFile;
   }

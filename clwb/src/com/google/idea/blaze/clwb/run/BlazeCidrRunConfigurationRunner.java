@@ -17,19 +17,20 @@ package com.google.idea.blaze.clwb.run;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
+import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
@@ -40,8 +41,6 @@ import javax.annotation.Nullable;
 
 /** CLion-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
-
-  private static final Logger LOG = Logger.getInstance(ExternalTask.class);
 
   private final BlazeCommandRunConfiguration configuration;
 
@@ -58,9 +57,9 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
   }
 
   @Override
-  public boolean executeBeforeRunTask(ExecutionEnvironment environment) {
+  public boolean executeBeforeRunTask(ExecutionEnvironment env) {
     executableToDebug = null;
-    if (!isDebugging(environment)) {
+    if (!isDebugging(env)) {
       return true;
     }
     try {
@@ -70,7 +69,8 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
         return true;
       }
     } catch (ExecutionException e) {
-      LOG.error(e.getMessage());
+      ExecutionUtil.handleExecutionError(
+          env.getProject(), env.getExecutor().getToolWindowId(), env.getRunProfile(), e);
     }
     return false;
   }
@@ -88,7 +88,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
   private File getExecutableToDebug() throws ExecutionException {
     BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true);
 
-    ListenableFuture<Void> buildOperation =
+    ListenableFuture<BuildResult> buildOperation =
         BlazeBeforeRunCommandHelper.runBlazeBuild(
             configuration,
             buildResultHelper,
@@ -97,8 +97,14 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
 
     try {
       SaveUtil.saveAllFiles();
-      buildOperation.get();
-    } catch (InterruptedException | java.util.concurrent.ExecutionException e) {
+      BuildResult result = buildOperation.get();
+      if (result.status != BuildResult.Status.SUCCESS) {
+        throw new ExecutionException("Blaze failure building debug binary");
+      }
+    } catch (InterruptedException e) {
+      buildOperation.cancel(true);
+      throw new RunCanceledByUserException();
+    } catch (java.util.concurrent.ExecutionException e) {
       throw new ExecutionException(e);
     }
     List<File> candidateFiles =

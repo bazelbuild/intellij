@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * Returns an error during sync (with quick-fix) if NDK support is requested, but the required
  * plugin dependencies aren't enabled.
  */
-public final class BlazeNdkDependencySyncPlugin extends BlazeSyncPlugin.Adapter {
+public final class BlazeNdkDependencySyncPlugin implements BlazeSyncPlugin {
 
   private static class PluginNameAndId {
     final String name;

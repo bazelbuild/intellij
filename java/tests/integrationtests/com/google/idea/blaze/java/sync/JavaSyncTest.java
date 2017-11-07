@@ -22,12 +22,15 @@ import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
+import com.google.idea.blaze.base.logging.utils.SyncStats;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
+import com.google.idea.blaze.base.sync.SyncListener.SyncResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
@@ -143,6 +146,61 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
     assertThat(blazeProjectData.targetMap).isEqualTo(targetMap);
     assertThat(blazeProjectData.workspaceLanguageSettings.getWorkspaceType())
         .isEqualTo(WorkspaceType.JAVA);
+  }
+
+  @Test
+  public void testSimpleSyncLogging() throws Exception {
+    setProjectView("directories:", "  java/com/google", "targets:", "  //java/com/google:lib");
+
+    workspace.createFile(
+        new WorkspacePath("java/com/google/Source.java"),
+        "package com.google;",
+        "public class Source {}");
+
+    workspace.createFile(
+        new WorkspacePath("java/com/google/Other.java"),
+        "package com.google;",
+        "public class Other {}");
+
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setBuildFile(sourceRoot("java/com/google/BUILD"))
+                    .setLabel("//java/com/google:lib")
+                    .setKind("java_library")
+                    .addSource(sourceRoot("java/com/google/Source.java"))
+                    .addSource(sourceRoot("java/com/google/Other.java")))
+            .build();
+
+    setTargetMap(targetMap);
+
+    runBlazeSync(
+        new BlazeSyncParams.Builder("Sync", SyncMode.INCREMENTAL)
+            .addProjectViewTargets(true)
+            .build());
+
+    errorCollector.assertNoIssues();
+
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
+    assertThat(blazeProjectData).isNotNull();
+    assertThat(blazeProjectData.targetMap).isEqualTo(targetMap);
+    assertThat(blazeProjectData.workspaceLanguageSettings.getWorkspaceType())
+        .isEqualTo(WorkspaceType.JAVA);
+
+    List<SyncStats> syncStatsList = getSyncStats();
+    assertThat(syncStatsList).hasSize(1);
+
+    SyncStats syncStats = syncStatsList.get(0);
+    assertThat(syncStats).isNotNull();
+    assertThat(syncStats.workspaceType()).isEqualTo(WorkspaceType.JAVA);
+    assertThat(syncStats.blazeProjectTargets())
+        .containsExactly(TargetExpression.fromString("//java/com/google:lib"));
+    assertThat(syncStats.syncMode()).isEqualTo(SyncMode.INCREMENTAL);
+    assertThat(syncStats.syncResult()).isEqualTo(SyncResult.SUCCESS);
+    assertThat(syncStats.startTimeInEpochTime()).isNotEqualTo(0);
+    assertThat(syncStats.timedEvents()).isNotEmpty();
   }
 
   @Test

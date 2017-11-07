@@ -41,7 +41,7 @@ import javax.annotation.Nullable;
  * Development environment support for intellij plugin projects. Prevents the project SDK being
  * reset during sync
  */
-public class IntellijPluginSyncPlugin extends BlazeSyncPlugin.Adapter {
+public class IntellijPluginSyncPlugin implements BlazeSyncPlugin {
 
   @Override
   public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {

@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.module.Module;
@@ -34,7 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import java.util.Set;
 
-final class BlazeCSyncPlugin extends BlazeSyncPlugin.Adapter {
+final class BlazeCSyncPlugin implements BlazeSyncPlugin {
 
   private static final BoolExperiment refreshExecRoot =
       new BoolExperiment("refresh.exec.root.cpp", true);
@@ -62,7 +63,7 @@ final class BlazeCSyncPlugin extends BlazeSyncPlugin.Adapter {
     Scope.push(
         context,
         childContext -> {
-          childContext.push(new TimingScope("Setup C Workspace"));
+          childContext.push(new TimingScope("Setup C Workspace", EventType.Other));
 
           OCWorkspace workspace = OCWorkspaceProvider.getWorkspace(project);
           if (workspace instanceof BlazeCWorkspace) {

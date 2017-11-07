@@ -43,6 +43,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.preprocessor.OCImportGraph;
 import com.jetbrains.cidr.lang.preprocessor.OCInclusionContextUtil;
+import com.jetbrains.cidr.lang.symbols.symtable.FileSymbolTablesCache;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceManager;
@@ -74,7 +75,7 @@ class CidrCacheFiller extends DumbModeTask {
     this.executor = executor;
   }
 
-  static void prefillCaches(Project project) {
+  static void queuePrefillCachesTask(Project project) {
     DumbService.getInstance(project)
         .queueTask(new CidrCacheFiller(project, BlazeExecutor.getInstance().getExecutor()));
   }
@@ -89,6 +90,10 @@ class CidrCacheFiller extends DumbModeTask {
     }
     OCWorkspace ocWorkspace = OCWorkspaceManager.getWorkspace(project);
     if (!(ocWorkspace instanceof BlazeCWorkspace)) {
+      return;
+    }
+    if (!FileSymbolTablesCache.areSymbolsLoaded(project)) {
+      logger.info("Pre-fill C++ caches skipped (symbols aren't loaded yet)");
       return;
     }
     Stopwatch timer = Stopwatch.createStarted();

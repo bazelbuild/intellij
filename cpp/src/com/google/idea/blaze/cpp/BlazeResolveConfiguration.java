@@ -43,6 +43,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Blaze implementation of {@link OCResolveConfiguration}. */
@@ -177,6 +178,15 @@ final class BlazeResolveConfiguration extends OCResolveConfigurationAdapter {
 
   @Override
   public HeaderRoots getProjectHeadersRoots() {
+    // OCFileReferenceHelper checks if the virtual files in getLibraryHeadersRoots() are valid
+    // before passing them along, but it does not check if getProjectHeadersRoots()
+    // are valid first. Check https://youtrack.jetbrains.com/issue/CPP-11126 to see if upstream
+    // code will start filtering at a higher level.
+    List<HeadersSearchRoot> roots = configurationData.projectIncludeRoots.getRoots();
+    if (roots.stream().anyMatch(root -> !root.isValid())) {
+      return new HeaderRoots(
+          roots.stream().filter(HeadersSearchRoot::isValid).collect(Collectors.toList()));
+    }
     return configurationData.projectIncludeRoots;
   }
 

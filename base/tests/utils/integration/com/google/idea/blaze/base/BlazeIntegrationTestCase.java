@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base;
 
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -121,7 +121,7 @@ public abstract class BlazeIntegrationTestCase {
                 buildSystem()));
 
     registerApplicationService(
-        FileAttributeProvider.class, new TestFileSystem.TempFileAttributeProvider());
+        FileOperationProvider.class, new TestFileSystem.MockFileOperationProvider());
     registerApplicationService(
         InputStreamProvider.class,
         file -> {

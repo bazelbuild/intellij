@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.ideinfo.AndroidSdkIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.CIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
+import com.google.idea.blaze.base.ideinfo.DartIdeInfo;
 import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.Dependency.DependencyType;
 import com.google.idea.blaze.base.ideinfo.GoIdeInfo;
@@ -127,6 +128,11 @@ public class IdeInfoFromProtobuf {
       tsIdeInfo = makeTsIdeInfo(message.getTsIdeInfo());
       sources.addAll(tsIdeInfo.sources);
     }
+    DartIdeInfo dartIdeInfo = null;
+    if (message.hasDartIdeInfo()) {
+      dartIdeInfo = makeDartIdeInfo(message.getDartIdeInfo());
+      sources.addAll(dartIdeInfo.sources);
+    }
     TestIdeInfo testIdeInfo = null;
     if (message.hasTestInfo()) {
       testIdeInfo = makeTestIdeInfo(message.getTestInfo());
@@ -157,6 +163,7 @@ public class IdeInfoFromProtobuf {
         goIdeInfo,
         jsIdeInfo,
         tsIdeInfo,
+        dartIdeInfo,
         testIdeInfo,
         protoLibraryLegacyInfo,
         javaToolchainIdeInfo);
@@ -331,6 +338,12 @@ public class IdeInfoFromProtobuf {
 
   private static TsIdeInfo makeTsIdeInfo(IntellijIdeInfo.TsIdeInfo info) {
     return TsIdeInfo.builder().addSources(makeArtifactLocationList(info.getSourcesList())).build();
+  }
+
+  private static DartIdeInfo makeDartIdeInfo(IntellijIdeInfo.DartIdeInfo info) {
+    return DartIdeInfo.builder()
+        .addSources(makeArtifactLocationList(info.getSourcesList()))
+        .build();
   }
 
   private static TestIdeInfo makeTestIdeInfo(IntellijIdeInfo.TestInfo testInfo) {

@@ -32,6 +32,7 @@ import com.intellij.ui.TextFieldWithHistory;
 import icons.BlazeIcons;
 import java.awt.Dimension;
 import java.io.File;
+import javax.annotation.Nullable;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -117,6 +118,7 @@ public class UseExistingBazelWorkspaceOption implements BlazeSelectWorkspaceOpti
   }
 
   @Override
+  @Nullable
   public String getBranchName() {
     return null;
   }

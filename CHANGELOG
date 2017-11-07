@@ -1,3 +1,15 @@
+v2017.11.06
+===========
+* Go support: Better Bazel-specific support for Go import resolution.
+* Suppress test failures showing up in the 'Problems' view
+
+v2017.10.23
+===========
+* CLion: improve performance of the 'Navigate > Related Symbol' action.
+* CLion: resolve file paths in run configuration console.
+* ASwB: add Python support (for AS 3.0+).
+* Fix resolution of python import statements.
+
 v2017.10.09
 ===========
 * Support 'Run with Coverage' for all Bazel test run configurations.
@@ -5,7 +17,6 @@ v2017.10.09
 * Go-lang: Add Bazel run configuration support.
 * CLion: limit freezes when navigating between .cc and .h files.
 * Add support for java_lite_proto_library.
-
 
 v2017.09.25
 ===========

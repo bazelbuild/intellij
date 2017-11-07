@@ -24,14 +24,15 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.debugger.impl.HotSwapProgress;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import java.io.File;
@@ -86,7 +87,7 @@ public class ClassFileManifestBuilder {
 
     BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true);
 
-    ListenableFuture<Void> buildOperation =
+    ListenableFuture<BuildResult> buildOperation =
         BlazeBeforeRunCommandHelper.runBlazeBuild(
             configuration,
             buildResultHelper,
@@ -98,10 +99,13 @@ public class ClassFileManifestBuilder {
     }
     try {
       SaveUtil.saveAllFiles();
-      buildOperation.get();
+      BuildResult result = buildOperation.get();
+      if (result.status != BuildResult.Status.SUCCESS) {
+        throw new ExecutionException("Blaze failure building debug binary");
+      }
     } catch (InterruptedException e) {
       buildOperation.cancel(true);
-      throw new ProcessCanceledException();
+      throw new RunCanceledByUserException();
     } catch (java.util.concurrent.ExecutionException e) {
       throw new ExecutionException(e);
     }

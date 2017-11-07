@@ -99,7 +99,7 @@ public class RunConfigurationSerializer {
   }
 
   /**
-   * Returns true if there's either no matching configuration altready in the project, or the
+   * Returns true if there's either no matching configuration already in the project, or the
    * matching configuration is marked as 'keep in sync'.
    */
   @VisibleForTesting
@@ -111,7 +111,8 @@ public class RunConfigurationSerializer {
     }
     RunConfiguration config = existing.getConfiguration();
     if (!(config instanceof BlazeRunConfiguration)) {
-      return false;
+      // always overwrite non-blaze run configurations
+      return true;
     }
     BlazeRunConfiguration blazeConfig = (BlazeRunConfiguration) config;
     Boolean keepInSync = blazeConfig.getKeepInSync();

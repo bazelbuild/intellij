@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.bazel;
 
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import java.io.File;
 import javax.annotation.Nullable;
@@ -30,7 +30,7 @@ public class BazelWorkspaceRootProvider implements WorkspaceRootProvider {
   /** Checks for the existence of a WORKSPACE file in the given directory. */
   @Override
   public boolean isWorkspaceRoot(File file) {
-    return FileAttributeProvider.getInstance().isFile(new File(file, "WORKSPACE"));
+    return FileOperationProvider.getInstance().isFile(new File(file, "WORKSPACE"));
   }
 
   @Nullable

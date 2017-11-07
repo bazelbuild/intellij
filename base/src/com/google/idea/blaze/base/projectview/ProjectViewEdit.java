@@ -36,7 +36,7 @@ public class ProjectViewEdit {
   private final Project project;
   private final List<Modification> modifications;
 
-  ProjectViewEdit(Project project, List<Modification> modifications) {
+  private ProjectViewEdit(Project project, List<Modification> modifications) {
     this.project = project;
     this.modifications = modifications;
   }
@@ -51,18 +51,7 @@ public class ProjectViewEdit {
   @Nullable
   public static ProjectViewEdit editLocalProjectView(Project project, ProjectViewEditor editor) {
     List<Modification> modifications = Lists.newArrayList();
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (projectData == null) {
-      return null;
-    }
-    ProjectViewSet oldProjectViewSet =
-        Scope.root(
-            (context) -> {
-              SaveUtil.saveAllFiles();
-              return ProjectViewManager.getInstance(project)
-                  .reloadProjectView(context, projectData.workspacePathResolver);
-            });
+    ProjectViewSet oldProjectViewSet = reloadProjectView(project);
     if (oldProjectViewSet == null) {
       return null;
     }
@@ -81,6 +70,21 @@ public class ProjectViewEdit {
       modifications.add(modification);
     }
     return new ProjectViewEdit(project, modifications);
+  }
+
+  @Nullable
+  private static ProjectViewSet reloadProjectView(Project project) {
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectData == null) {
+      return null;
+    }
+    return Scope.root(
+        (context) -> {
+          SaveUtil.saveAllFiles();
+          return ProjectViewManager.getInstance(project)
+              .reloadProjectView(context, projectData.workspacePathResolver);
+        });
   }
 
   public void apply() {
@@ -107,6 +111,8 @@ public class ProjectViewEdit {
             "Edit Failed");
       }
     }
+    // now that we've changed it, reload our in-memory view
+    reloadProjectView(project);
   }
 
   public boolean hasModifications() {

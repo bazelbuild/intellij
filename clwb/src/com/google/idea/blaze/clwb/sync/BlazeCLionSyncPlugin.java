@@ -25,7 +25,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.jetbrains.cidr.cpp.CPPModuleType;
 import javax.annotation.Nullable;
 
-class BlazeCLionSyncPlugin extends BlazeSyncPlugin.Adapter {
+class BlazeCLionSyncPlugin implements BlazeSyncPlugin {
 
   @Override
   public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {

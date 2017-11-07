@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.sync.projectstructure;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
@@ -67,11 +67,11 @@ public class DirectoryStructure {
       ImmutableMap.Builder<WorkspacePath, DirectoryStructure> parent,
       WorkspacePath workspacePath) {
     File file = workspaceRoot.fileForPath(workspacePath);
-    if (!FileAttributeProvider.getInstance().isDirectory(file)) {
+    if (!FileOperationProvider.getInstance().isDirectory(file)) {
       return;
     }
     ImmutableMap.Builder<WorkspacePath, DirectoryStructure> result = ImmutableMap.builder();
-    File[] children = FileAttributeProvider.getInstance().listFiles(file);
+    File[] children = FileOperationProvider.getInstance().listFiles(file);
     if (children != null) {
       for (File child : children) {
         WorkspacePath childWorkspacePath;

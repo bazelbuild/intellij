@@ -36,7 +36,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -98,8 +98,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
-    MockFileAttributeProvider mockFileAttributeProvider = new MockFileAttributeProvider();
-    applicationServices.register(FileAttributeProvider.class, mockFileAttributeProvider);
+    MockFileOperationProvider mockFileOperationProvider = new MockFileOperationProvider();
+    applicationServices.register(FileOperationProvider.class, mockFileOperationProvider);
 
     context = new BlazeContext();
     context.addOutputSink(IssueOutput.class, errorCollector);
@@ -769,7 +769,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
    * Mock provider to satisfy directory listing queries from {@link
    * com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceClassifier}.
    */
-  private static class MockFileAttributeProvider extends FileAttributeProvider {
+  private static class MockFileOperationProvider extends FileOperationProvider {
 
     // Return a few non-translation directories so that directories are considered interesting,
     // or return only-translation directories so that it's considered uninteresting.

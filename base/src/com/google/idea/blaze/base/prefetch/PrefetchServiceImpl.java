@@ -20,7 +20,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -62,7 +62,7 @@ public class PrefetchServiceImpl implements PrefetchService {
               .filter(file -> shouldPrefetch(file, startTime))
               .collect(Collectors.toList());
     }
-    FileAttributeProvider provider = FileAttributeProvider.getInstance();
+    FileOperationProvider provider = FileOperationProvider.getInstance();
     List<ListenableFuture<File>> canonicalFiles =
         files
             .stream()
@@ -85,7 +85,7 @@ public class PrefetchServiceImpl implements PrefetchService {
   }
 
   @Nullable
-  private static File toCanonicalFile(FileAttributeProvider provider, File file) {
+  private static File toCanonicalFile(FileOperationProvider provider, File file) {
     try {
       File canonicalFile = file.getCanonicalFile();
       if (provider.exists(canonicalFile)) {
@@ -117,7 +117,7 @@ public class PrefetchServiceImpl implements PrefetchService {
       return Futures.immediateFuture(null);
     }
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
-    if (!FileAttributeProvider.getInstance().exists(workspaceRoot.directory())) {
+    if (!FileOperationProvider.getInstance().exists(workspaceRoot.directory())) {
       // quick sanity check before trying to prefetch each individual file
       return Futures.immediateFuture(null);
     }

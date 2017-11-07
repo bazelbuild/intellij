@@ -24,15 +24,15 @@ public class FileSizeScanner {
 
   private static final class FileSizeReader implements FileAttributeScanner.AttributeReader<Long> {
 
-    private final FileAttributeProvider attributeProvider;
+    private final FileOperationProvider fileOperationProvider;
 
-    FileSizeReader(FileAttributeProvider attributeProvider) {
-      this.attributeProvider = attributeProvider;
+    FileSizeReader(FileOperationProvider fileOperationProvider) {
+      this.fileOperationProvider = fileOperationProvider;
     }
 
     @Override
     public Long getAttribute(File file) {
-      return attributeProvider.getFileSize(file);
+      return fileOperationProvider.getFileSize(file);
     }
 
     @Override
@@ -42,7 +42,7 @@ public class FileSizeScanner {
   }
 
   public static ImmutableMap<File, Long> readFilesizes(Iterable<File> fileList) throws Exception {
-    final FileSizeReader fileSizeReader = new FileSizeReader(FileAttributeProvider.getInstance());
+    final FileSizeReader fileSizeReader = new FileSizeReader(FileOperationProvider.getInstance());
     return FileAttributeScanner.readAttributes(
         fileList, fileSizeReader, BlazeExecutor.getInstance());
   }

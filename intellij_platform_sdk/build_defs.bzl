@@ -1,24 +1,15 @@
 """Convenience methods for plugin_api."""
 
-# BUILD_VARS for each IDE corresponding to indirect ij_products, eg. "intellij-latest"
-
-
-
-
-
-
-
-
 
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
-    "intellij-latest": "intellij-2017.1.5",
+    "intellij-latest": "intellij-2017.2.3",
     "intellij-beta": "intellij-2017.2.3",
-    "intellij-ue-latest": "intellij-ue-2017.1.5",
+    "intellij-ue-latest": "intellij-ue-2017.2.3",
     "intellij-ue-beta": "intellij-ue-2017.2.3",
-    "android-studio-latest": "android-studio-2.3.1.0",
+    "android-studio-latest": "android-studio-3.0.0.13",
     "android-studio-beta": "android-studio-3.0.0.13",
-    "clion-latest": "clion-2017.1.1",
+    "clion-latest": "clion-2017.2.2",
     "clion-beta": "clion-2017.2.2",
 }
 

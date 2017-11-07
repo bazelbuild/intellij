@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.concurrent.ExecutionException;
 
@@ -56,6 +57,7 @@ public class FutureUtil {
     private final BlazeContext context;
     private final ListenableFuture<T> future;
     private String timingCategory;
+    private EventType eventType;
     private String errorMessage;
     private String progressMessage;
 
@@ -64,8 +66,9 @@ public class FutureUtil {
       this.future = future;
     }
 
-    public Builder<T> timed(String timingCategory) {
+    public Builder<T> timed(String timingCategory, EventType eventType) {
       this.timingCategory = timingCategory;
+      this.eventType = eventType;
       return this;
     }
 
@@ -84,7 +87,7 @@ public class FutureUtil {
           context,
           (childContext) -> {
             if (timingCategory != null) {
-              childContext.push(new TimingScope(timingCategory));
+              childContext.push(new TimingScope(timingCategory, eventType));
             }
             if (progressMessage != null) {
               childContext.output(new StatusOutput(progressMessage));

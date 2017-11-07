@@ -22,6 +22,8 @@
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.python.run.smrunner.BlazePythonTestEventsHandler"/>
     <PyParameterizedNameConverter implementation="com.google.idea.blaze.python.run.smrunner.PyBaseParameterizedNameConverter" order="first"/>
     <BlazeIssueParserProvider implementation="com.google.idea.blaze.python.issueparser.PyIssueParserProvider"/>
+    <PyImportResolverStrategy implementation="com.google.idea.blaze.python.resolve.provider.BazelPyImportResolverStrategy"/>
+    <PyImportResolverStrategy implementation="com.google.idea.blaze.python.resolve.provider.BazelPyGenfilesImportResolverStrategy"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -32,6 +34,12 @@
     <consoleFilterProvider implementation="com.google.idea.blaze.python.run.filter.BlazePyTracebackFilter$BlazePyTracebackFilterProvider"/>
   </extensions>
 
+  <extensions defaultExtensionNs="Pythonid">
+    <importResolver implementation="com.google.idea.blaze.python.resolve.BlazePyOutsideModuleImportResolver"/>
+    <pyReferenceResolveProvider implementation="com.google.idea.blaze.python.resolve.BlazePyBuiltinReferenceResolveProvider"/>
+    <customPackageIdentifier implementation="com.google.idea.blaze.python.resolve.BlazeCustomPackageIdentifier"/>
+  </extensions>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazePyFilterProvider"
       interface="com.google.idea.blaze.python.run.filter.BlazePyFilterProvider"/>
@@ -39,7 +47,15 @@
       interface="com.google.idea.blaze.python.run.BlazePyDebugHelper"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.PyParameterizedNameConverter"
       interface="com.google.idea.blaze.python.run.smrunner.PyParameterizedNameConverter"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.PyImportResolverStrategy"
+        interface="com.google.idea.blaze.python.resolve.provider.PyImportResolverStrategy"/>
   </extensionPoints>
+
+  <application-components>
+    <component>
+      <implementation-class>com.google.idea.blaze.python.resolve.PyDynamicImportResolverInitializer</implementation-class>
+    </component>
+  </application-components>
 
   <project-components>
     <component>

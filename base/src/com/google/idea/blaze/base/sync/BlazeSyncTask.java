@@ -34,8 +34,10 @@ import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
+import com.google.idea.blaze.base.logging.EventLoggingService;
+import com.google.idea.blaze.base.logging.utils.SyncStats;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -62,6 +64,9 @@ import com.google.idea.blaze.base.scope.scopes.NotificationScope;
 import com.google.idea.blaze.base.scope.scopes.PerformanceWarningScope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
+import com.google.idea.blaze.base.scope.scopes.TimingScopeListener;
+import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
@@ -111,6 +116,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -128,6 +134,9 @@ final class BlazeSyncTask implements Progressive {
   private final WorkspaceRoot workspaceRoot;
   private final BlazeSyncParams syncParams;
   private final boolean showPerformanceWarnings;
+  private final SyncStats.Builder syncStats = SyncStats.builder();
+  private final TimingScopeListener timingScopeListener;
+  private final List<TimedEvent> timedEvents = new ArrayList<>();
 
   BlazeSyncTask(
       Project project, BlazeImportSettings importSettings, final BlazeSyncParams syncParams) {
@@ -136,6 +145,16 @@ final class BlazeSyncTask implements Progressive {
     this.workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
     this.syncParams = syncParams;
     this.showPerformanceWarnings = BlazeUserSettings.getInstance().getShowPerformanceWarnings();
+    this.timingScopeListener =
+        new TimingScopeListener() {
+          @Override
+          public void onScopeBegin(String name, EventType eventType) {}
+
+          @Override
+          public void onScopeEnd(TimedEvent event) {
+            timedEvents.add(event);
+          }
+        };
   }
 
   @Override
@@ -146,7 +165,7 @@ final class BlazeSyncTask implements Progressive {
           if (showPerformanceWarnings) {
             context.push(new PerformanceWarningScope());
           }
-          context.push(new ProgressIndicatorScope(indicator)).push(new TimingScope("Sync"));
+          context.push(new ProgressIndicatorScope(indicator));
 
           if (!syncParams.backgroundSync) {
             context
@@ -175,8 +194,7 @@ final class BlazeSyncTask implements Progressive {
       logger.info(e);
       context.output(
           new StatusOutput(
-              String.format(
-                  "Couldn't load previously cached project data; full sync will be needed")));
+              "Couldn't load previously cached project data; full sync will be needed"));
       return null;
     }
   }
@@ -184,8 +202,15 @@ final class BlazeSyncTask implements Progressive {
   /** Returns true if sync successfully completed */
   @VisibleForTesting
   boolean syncProject(BlazeContext context) {
+    TimingScope timingScope = new TimingScope("Sync", EventType.Other);
+    timingScope.addScopeListener(timingScopeListener, true);
+    context.push(timingScope);
+
+    long syncStartTime = System.currentTimeMillis();
     SyncResult syncResult = SyncResult.FAILURE;
     SyncMode syncMode = syncParams.syncMode;
+    syncStats.setStartTimeInEpochTime(System.currentTimeMillis());
+    syncStats.setSyncMode(syncMode);
     try {
       SaveUtil.saveAllFiles();
       BlazeProjectData oldBlazeProjectData =
@@ -197,6 +222,9 @@ final class BlazeSyncTask implements Progressive {
       onSyncStart(project, context, syncMode);
       if (syncMode != SyncMode.STARTUP) {
         syncResult = doSyncProject(context, syncMode, oldBlazeProjectData);
+        if (context.isCancelled()) {
+          syncResult = SyncResult.CANCELLED;
+        }
       } else {
         syncResult = SyncResult.SUCCESS;
       }
@@ -217,6 +245,13 @@ final class BlazeSyncTask implements Progressive {
         IssueOutput.error("Internal error: " + e.getMessage()).submit(context);
       }
     } finally {
+      try {
+        syncStats.setTotalExecTimeMs(System.currentTimeMillis() - syncStartTime);
+        syncStats.setSyncResult(syncResult);
+        EventLoggingService.getInstance().ifPresent(s -> s.log(buildStats(syncStats)));
+      } catch (Exception e) {
+        logger.error(e);
+      }
       afterSync(project, context, syncMode, syncResult);
     }
     return syncResult == SyncResult.SUCCESS || syncResult == SyncResult.PARTIAL_SUCCESS;
@@ -227,7 +262,7 @@ final class BlazeSyncTask implements Progressive {
       BlazeContext context, SyncMode syncMode, @Nullable BlazeProjectData oldBlazeProjectData) {
     long syncStartTime = System.currentTimeMillis();
 
-    if (!FileAttributeProvider.getInstance().exists(workspaceRoot.directory())) {
+    if (!FileOperationProvider.getInstance().exists(workspaceRoot.directory())) {
       IssueOutput.error(String.format("Workspace '%s' doesn't exist.", workspaceRoot.directory()))
           .submit(context);
       return SyncResult.FAILURE;
@@ -247,6 +282,10 @@ final class BlazeSyncTask implements Progressive {
     }
     ProjectViewSet projectViewSet = workspacePathResolverAndProjectView.projectViewSet;
 
+    List<String> syncFlags =
+        BlazeFlags.blazeFlags(
+            project, projectViewSet, BlazeCommandName.INFO, BlazeInvocationContext.Sync);
+    syncStats.setSyncFlags(syncFlags);
     ListenableFuture<BlazeInfo> blazeInfoFuture =
         BlazeInfoRunner.getInstance()
             .runBlazeInfo(
@@ -254,15 +293,14 @@ final class BlazeSyncTask implements Progressive {
                 importSettings.getBuildSystem(),
                 Blaze.getBuildSystemProvider(project).getSyncBinaryPath(),
                 workspaceRoot,
-                BlazeFlags.blazeFlags(
-                    project, projectViewSet, BlazeCommandName.INFO, BlazeInvocationContext.Sync));
+                syncFlags);
 
     ListenableFuture<WorkingSet> workingSetFuture =
         vcsHandler.getWorkingSet(project, context, workspaceRoot, executor);
 
     BlazeInfo blazeInfo =
         FutureUtil.waitForFuture(context, blazeInfoFuture)
-            .timed(Blaze.buildSystemName(project) + "Info")
+            .timed(Blaze.buildSystemName(project) + "Info", EventType.BlazeInvocation)
             .withProgressMessage(
                 String.format("Running %s info...", Blaze.buildSystemName(project)))
             .onError(String.format("Could not run %s info", Blaze.buildSystemName(project)))
@@ -286,6 +324,9 @@ final class BlazeSyncTask implements Progressive {
     WorkspaceLanguageSettings workspaceLanguageSettings =
         LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
 
+    syncStats.setLanguagesActive(new ArrayList<>(workspaceLanguageSettings.activeLanguages));
+    syncStats.setWorkspaceType(workspaceLanguageSettings.getWorkspaceType());
+
     for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
       syncPlugin.installSdks(context);
     }
@@ -299,7 +340,7 @@ final class BlazeSyncTask implements Progressive {
 
     WorkingSet workingSet =
         FutureUtil.waitForFuture(context, workingSetFuture)
-            .timed("WorkingSet")
+            .timed("WorkingSet", EventType.Other)
             .withProgressMessage("Computing VCS working set...")
             .onError("Could not compute working set")
             .run()
@@ -323,6 +364,7 @@ final class BlazeSyncTask implements Progressive {
     if (syncParams.addProjectViewTargets || oldBlazeProjectData == null) {
       Collection<TargetExpression> projectViewTargets = projectViewSet.listItems(TargetSection.KEY);
       if (!projectViewTargets.isEmpty()) {
+        syncStats.setBlazeProjectTargets(new ArrayList<>(projectViewTargets));
         targets.addAll(projectViewTargets);
         printTargets(context, "project view", projectViewTargets);
       }
@@ -332,6 +374,7 @@ final class BlazeSyncTask implements Progressive {
           getWorkingSetTargets(projectViewSet, workingSet);
       if (!workingSetTargets.isEmpty()) {
         targets.addAll(workingSetTargets);
+        syncStats.setWorkingSetTargets(new ArrayList<>(workingSetTargets));
         printTargets(context, "working set", workingSetTargets);
       }
     }
@@ -347,6 +390,8 @@ final class BlazeSyncTask implements Progressive {
       return SyncResult.FAILURE;
     }
     ShardedTargetList shardedTargets = shardedTargetsResult.shardedTargets;
+
+    syncStats.setSyncSharded(shardedTargets.shardedTargets.size() > 1);
 
     BlazeConfigurationHandler configHandler = new BlazeConfigurationHandler(blazeInfo);
     boolean mergeWithOldState = !syncParams.addProjectViewTargets;
@@ -407,7 +452,7 @@ final class BlazeSyncTask implements Progressive {
     Scope.push(
         context,
         (childContext) -> {
-          childContext.push(new TimingScope("UpdateSyncState"));
+          childContext.push(new TimingScope("UpdateSyncState", EventType.Other));
           for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
             syncPlugin.updateSyncState(
                 project,
@@ -427,7 +472,7 @@ final class BlazeSyncTask implements Progressive {
 
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
         FutureUtil.waitForFuture(context, reverseDependenciesFuture)
-            .timed("ReverseDependencies")
+            .timed("ReverseDependencies", EventType.Other)
             .onError("Failed to compute reverse dependency map")
             .run()
             .result();
@@ -453,7 +498,7 @@ final class BlazeSyncTask implements Progressive {
             .prefetchProjectFiles(project, projectViewSet, newBlazeProjectData);
     FutureUtil.waitForFuture(context, prefetch)
         .withProgressMessage("Prefetching files...")
-        .timed("PrefetchFiles")
+        .timed("PrefetchFiles", EventType.Prefetching)
         .onError("Prefetch failed")
         .run();
 
@@ -465,7 +510,7 @@ final class BlazeSyncTask implements Progressive {
     DirectoryStructure directoryStructure =
         FutureUtil.waitForFuture(context, directoryStructureFuture)
             .withProgressMessage("Computing directory structure...")
-            .timed("DirectoryStructure")
+            .timed("DirectoryStructure", EventType.Other)
             .onError("Directory structure computation failed")
             .run()
             .result();
@@ -516,7 +561,7 @@ final class BlazeSyncTask implements Progressive {
             Scope.push(
                 context,
                 (childContext) -> {
-                  childContext.push(new TimingScope("RefreshVirtualFileSystem"));
+                  childContext.push(new TimingScope("RefreshVirtualFileSystem", EventType.Other));
                   for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
                     syncPlugin.refreshVirtualFileSystem(blazeProjectData);
                   }
@@ -527,7 +572,7 @@ final class BlazeSyncTask implements Progressive {
     final WorkspacePathResolver workspacePathResolver;
     final ProjectViewSet projectViewSet;
 
-    public WorkspacePathResolverAndProjectView(
+    WorkspacePathResolverAndProjectView(
         WorkspacePathResolver workspacePathResolver, ProjectViewSet projectViewSet) {
       this.workspacePathResolver = workspacePathResolver;
       this.projectViewSet = projectViewSet;
@@ -547,7 +592,7 @@ final class BlazeSyncTask implements Progressive {
             Scope.push(
                 context,
                 (childContext) -> {
-                  childContext.push(new TimingScope("UpdateVcs"));
+                  childContext.push(new TimingScope("UpdateVcs", EventType.Other));
                   return vcsSyncHandler.update(context, executor);
                 });
         if (!ok) {
@@ -666,7 +711,7 @@ final class BlazeSyncTask implements Progressive {
     return Scope.push(
         parentContext,
         context -> {
-          context.push(new TimingScope("IdeQuery"));
+          context.push(new TimingScope("IdeQuery", EventType.BlazeInvocation));
           context.output(new StatusOutput("Building IDE info files..."));
           context.setPropagatesErrors(false);
 
@@ -698,7 +743,8 @@ final class BlazeSyncTask implements Progressive {
     return Scope.push(
         parentContext,
         context -> {
-          context.push(new TimingScope(Blaze.buildSystemName(project) + "Build"));
+          context.push(
+              new TimingScope(Blaze.buildSystemName(project) + "Build", EventType.BlazeInvocation));
           context.output(new StatusOutput("Building IDE resolve files..."));
 
           // We don't want IDE resolve errors to fail the whole sync
@@ -729,7 +775,7 @@ final class BlazeSyncTask implements Progressive {
     return Scope.push(
         parentContext,
         context -> {
-          context.push(new TimingScope("UpdateProjectStructure"));
+          context.push(new TimingScope("UpdateProjectStructure", EventType.Other));
           context.output(new StatusOutput("Committing project structure..."));
 
           try {
@@ -837,7 +883,7 @@ final class BlazeSyncTask implements Progressive {
     Scope.push(
         parentContext,
         context -> {
-          context.push(new TimingScope("UpdateInMemoryState"));
+          context.push(new TimingScope("UpdateInMemoryState", EventType.Other));
           context.output(new StatusOutput("Updating in-memory state..."));
           ApplicationManager.getApplication()
               .runReadAction(
@@ -918,5 +964,18 @@ final class BlazeSyncTask implements Progressive {
     for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
       syncPlugin.validate(project, context, blazeProjectData);
     }
+  }
+
+  private SyncStats buildStats(SyncStats.Builder stats) {
+    long blazeExecTime = 0L;
+    for (TimedEvent timedEvent : timedEvents) {
+      if (timedEvent.type == EventType.BlazeInvocation) {
+        blazeExecTime += timedEvent.durationMillis;
+      }
+    }
+    stats.setBlazeExecTimeMs(blazeExecTime);
+    stats.setTimedEvents(timedEvents);
+
+    return stats.build();
   }
 }

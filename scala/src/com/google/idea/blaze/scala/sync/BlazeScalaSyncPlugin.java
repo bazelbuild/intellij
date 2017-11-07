@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -48,7 +49,7 @@ import javax.annotation.Nullable;
 import org.jetbrains.plugins.scala.project.ScalaLibraryType;
 
 /** Supports scala. */
-public class BlazeScalaSyncPlugin extends BlazeSyncPlugin.Adapter {
+public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
     if (workspaceType.equals(WorkspaceType.JAVA)) {
@@ -107,7 +108,7 @@ public class BlazeScalaSyncPlugin extends BlazeSyncPlugin.Adapter {
         Scope.push(
             context,
             (childContext) -> {
-              childContext.push(new TimingScope("ScalaWorkspaceImporter"));
+              childContext.push(new TimingScope("ScalaWorkspaceImporter", EventType.Other));
               return blazeScalaWorkspaceImporter.importWorkspace();
             });
     BlazeScalaSyncData syncData = new BlazeScalaSyncData(importResult);

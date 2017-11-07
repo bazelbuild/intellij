@@ -77,30 +77,45 @@ public interface BlazeSyncPlugin {
    * The {@link WorkspaceType}s supported by this plugin. Not used to choose the project's
    * WorkspaceType.
    */
-  ImmutableList<WorkspaceType> getSupportedWorkspaceTypes();
+  default ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
+    return ImmutableList.of();
+  }
 
   /** @return The default workspace type recommended by this plugin. */
   @Nullable
-  WorkspaceType getDefaultWorkspaceType();
+  default WorkspaceType getDefaultWorkspaceType() {
+    return null;
+  }
 
   /** @return The module type for the workspace given the workspace type. */
   @Nullable
-  ModuleType getWorkspaceModuleType(WorkspaceType workspaceType);
+  default ModuleType getWorkspaceModuleType(WorkspaceType workspaceType) {
+    return null;
+  }
 
   /** @return The set of supported languages under this workspace type. */
-  Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType);
+  default Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
+    return ImmutableSet.of();
+  }
+
+  /** IDs for the additional plugins required to support the given languages. */
+  default ImmutableList<String> getRequiredExternalPluginIds(Collection<LanguageClass> languages) {
+    return ImmutableList.of();
+  }
 
   /**
    * @return The set of languages which are always active, regardless of which
    *     'additional_languages' are requested.
    */
-  Set<LanguageClass> getAlwaysActiveLanguages();
+  default Set<LanguageClass> getAlwaysActiveLanguages() {
+    return ImmutableSet.of();
+  }
 
   /** Installs any global SDKs */
-  void installSdks(BlazeContext context);
+  default void installSdks(BlazeContext context) {}
 
   /** Given the rule map, update the sync state for this plugin. Should not have side effects. */
-  void updateSyncState(
+  default void updateSyncState(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
@@ -112,28 +127,30 @@ public interface BlazeSyncPlugin {
       ArtifactLocationDecoder artifactLocationDecoder,
       TargetMap targetMap,
       SyncState.Builder syncStateBuilder,
-      @Nullable SyncState previousSyncState);
+      @Nullable SyncState previousSyncState) {}
 
   /**
    * Refresh any VFS files which may have changed during sync, and aren't covered by file watchers.
    *
    * <p>Called prior to updateProjectSdk and updateProjectStructure, from inside a write action.
    */
-  void refreshVirtualFileSystem(BlazeProjectData blazeProjectData);
+  default void refreshVirtualFileSystem(BlazeProjectData blazeProjectData) {}
 
   /** Updates the sdk for the project. */
-  void updateProjectSdk(
+  default void updateProjectSdk(
       Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
-      BlazeProjectData blazeProjectData);
+      BlazeProjectData blazeProjectData) {}
 
   @Nullable
-  SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData);
+  default SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
+    return null;
+  }
 
   /** Modifies the IDE project structure in accordance with the sync data. */
-  void updateProjectStructure(
+  default void updateProjectStructure(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
@@ -142,152 +159,48 @@ public interface BlazeSyncPlugin {
       @Nullable BlazeProjectData oldBlazeProjectData,
       ModuleEditor moduleEditor,
       Module workspaceModule,
-      ModifiableRootModel workspaceModifiableModel);
+      ModifiableRootModel workspaceModifiableModel) {}
 
   /**
    * Updates in-memory state that isn't serialized by IntelliJ.
    *
    * <p>Called on sync and on startup, after updateProjectStructure. May not do any write actions.
    */
-  void updateInMemoryState(
+  default void updateInMemoryState(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
-      Module workspaceModule);
+      Module workspaceModule) {}
 
   /** Validates the project. */
-  boolean validate(Project project, BlazeContext context, BlazeProjectData blazeProjectData);
+  default boolean validate(
+      Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
+    return true;
+  }
 
   /**
    * Validates the project view.
    *
    * @return True for success, false for fatal error.
    */
-  boolean validateProjectView(
+  default boolean validateProjectView(
       @Nullable Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
-      WorkspaceLanguageSettings workspaceLanguageSettings);
+      WorkspaceLanguageSettings workspaceLanguageSettings) {
+    return true;
+  }
 
   /** Returns any custom sections that this plugin supports. */
-  Collection<SectionParser> getSections();
+  default Collection<SectionParser> getSections() {
+    return ImmutableList.of();
+  }
 
   @Nullable
-  LibrarySource getLibrarySource(ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData);
-
-  /** Convenience adapter to help stubbing out methods. */
-  class Adapter implements BlazeSyncPlugin {
-
-    @Override
-    public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
-      return ImmutableList.of();
-    }
-
-    @Nullable
-    @Override
-    public WorkspaceType getDefaultWorkspaceType() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public ModuleType getWorkspaceModuleType(WorkspaceType workspaceType) {
-      return null;
-    }
-
-    @Override
-    public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
-      return ImmutableSet.of();
-    }
-
-    @Override
-    public Set<LanguageClass> getAlwaysActiveLanguages() {
-      return ImmutableSet.of();
-    }
-
-    @Override
-    public void installSdks(BlazeContext context) {}
-
-    @Override
-    public void updateSyncState(
-        Project project,
-        BlazeContext context,
-        WorkspaceRoot workspaceRoot,
-        ProjectViewSet projectViewSet,
-        WorkspaceLanguageSettings workspaceLanguageSettings,
-        BlazeInfo blazeInfo,
-        @Nullable WorkingSet workingSet,
-        WorkspacePathResolver workspacePathResolver,
-        ArtifactLocationDecoder artifactLocationDecoder,
-        TargetMap targetMap,
-        SyncState.Builder syncStateBuilder,
-        @Nullable SyncState previousSyncState) {}
-
-    @Override
-    public void updateProjectSdk(
-        Project project,
-        BlazeContext context,
-        ProjectViewSet projectViewSet,
-        BlazeVersionData blazeVersionData,
-        BlazeProjectData blazeProjectData) {}
-
-    @Nullable
-    @Override
-    public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
-      return null;
-    }
-
-    @Override
-    public void updateProjectStructure(
-        Project project,
-        BlazeContext context,
-        WorkspaceRoot workspaceRoot,
-        ProjectViewSet projectViewSet,
-        BlazeProjectData blazeProjectData,
-        @Nullable BlazeProjectData oldBlazeProjectData,
-        ModuleEditor moduleEditor,
-        Module workspaceModule,
-        ModifiableRootModel workspaceModifiableModel) {}
-
-    @Override
-    public void refreshVirtualFileSystem(BlazeProjectData blazeProjectData) {}
-
-    @Override
-    public void updateInMemoryState(
-        Project project,
-        BlazeContext context,
-        WorkspaceRoot workspaceRoot,
-        ProjectViewSet projectViewSet,
-        BlazeProjectData blazeProjectData,
-        Module workspaceModule) {}
-
-    @Override
-    public boolean validate(
-        Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
-      return true;
-    }
-
-    @Override
-    public boolean validateProjectView(
-        @Nullable Project project,
-        BlazeContext context,
-        ProjectViewSet projectViewSet,
-        WorkspaceLanguageSettings workspaceLanguageSettings) {
-      return true;
-    }
-
-    @Override
-    public Collection<SectionParser> getSections() {
-      return ImmutableList.of();
-    }
-
-    @Nullable
-    @Override
-    public LibrarySource getLibrarySource(
-        ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
-      return null;
-    }
+  default LibrarySource getLibrarySource(
+      ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
+    return null;
   }
 }

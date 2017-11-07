@@ -60,7 +60,7 @@ public class BlazeGoSyncPluginTest extends BlazeTestCase {
     syncPluginEp.registerExtension(new AlwaysPresentGoSyncPlugin());
     // At least one sync plugin providing a default workspace type must be present
     syncPluginEp.registerExtension(
-        new BlazeSyncPlugin.Adapter() {
+        new BlazeSyncPlugin() {
           @Override
           public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
             return ImmutableList.of(WorkspaceType.JAVA);

@@ -40,6 +40,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.util.PackagePrefixCalculator;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
@@ -91,7 +92,7 @@ public final class SourceDirectoryCalculator {
         Scope.push(
             context,
             (childContext) -> {
-              childContext.push(new TimingScope("ReadPackageManifests"));
+              childContext.push(new TimingScope("ReadPackageManifests", EventType.Other));
               Map<TargetKey, Map<ArtifactLocation, String>> manifestMap =
                   PackageManifestReader.getInstance()
                       .readPackageManifestFiles(
@@ -119,7 +120,7 @@ public final class SourceDirectoryCalculator {
     Scope.push(
         context,
         (childContext) -> {
-          childContext.push(new TimingScope("CalculateSourceDirectories"));
+          childContext.push(new TimingScope("CalculateSourceDirectories", EventType.Other));
           for (WorkspacePath workspacePath : rootDirectories) {
             File contentRoot = workspaceRoot.fileForPath(workspacePath);
             ImmutableList<BlazeSourceDirectory> sourceDirectories =

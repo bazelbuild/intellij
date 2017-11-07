@@ -16,9 +16,11 @@
 package com.google.idea.blaze.java.run.coverage;
 
 import com.intellij.coverage.CoverageDataManager;
+import com.intellij.coverage.CoverageDataManagerImpl;
 import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.coverage.SimpleCoverageAnnotator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -37,7 +39,7 @@ import javax.annotation.Nullable;
 public class BlazeCoverageAnnotator extends SimpleCoverageAnnotator {
 
   /** List of file paths to display coverage data for. Used to filter parent lists. */
-  private List<String> coverageFilePaths = null;
+  private final List<String> coverageFilePaths = new ArrayList<>();
 
   public static BlazeCoverageAnnotator getInstance(Project project) {
     return ServiceManager.getService(project, BlazeCoverageAnnotator.class);
@@ -45,6 +47,12 @@ public class BlazeCoverageAnnotator extends SimpleCoverageAnnotator {
 
   public BlazeCoverageAnnotator(Project project) {
     super(project);
+  }
+
+  @Override
+  public void onSuiteChosen(CoverageSuitesBundle newSuite) {
+    super.onSuiteChosen(newSuite);
+    coverageFilePaths.clear();
   }
 
   @Nullable
@@ -66,8 +74,8 @@ public class BlazeCoverageAnnotator extends SimpleCoverageAnnotator {
   }
 
   private boolean showCoverage(PsiFileSystemItem psiFile) {
-    if (coverageFilePaths == null) {
-      return true;
+    if (coverageFilePaths.isEmpty()) {
+      return false;
     }
     VirtualFile vf = psiFile.getVirtualFile();
     if (vf == null) {
@@ -108,12 +116,21 @@ public class BlazeCoverageAnnotator extends SimpleCoverageAnnotator {
       return null;
     }
     return () -> {
+      coverageFilePaths.clear();
+      coverageFilePaths.addAll(collectRootPaths(suites));
       parentRunnable.run();
-      List<String> roots = collectRootPaths(suites);
-      if (!roots.isEmpty()) {
-        coverageFilePaths = roots;
-      }
+      ApplicationManager.getApplication().invokeLater(() -> rebuildUi(dataManager));
     };
+  }
+
+  /**
+   * The upstream coverage code is racy. Work around that by manually rebuilding the UI after the
+   * coverage data is available.
+   */
+  private static void rebuildUi(CoverageDataManager dataManager) {
+    if (dataManager instanceof CoverageDataManagerImpl) {
+      ((CoverageDataManagerImpl) dataManager).fireAfterSuiteChosen();
+    }
   }
 
   private static List<String> collectRootPaths(CoverageSuitesBundle suites) {

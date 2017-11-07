@@ -1,0 +1,134 @@
+/*
+ * Copyright 2017 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.idea.blaze.base.dependencies;
+
+import com.google.common.base.Preconditions;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.projectview.ProjectView;
+import com.google.idea.blaze.base.projectview.ProjectViewEdit;
+import com.google.idea.blaze.base.projectview.section.ListSection;
+import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
+import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
+import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
+import com.google.idea.blaze.base.settings.ui.OpenLocalProjectViewAction;
+import com.google.idea.blaze.base.sync.BlazeSyncManager;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import java.util.List;
+import javax.swing.event.HyperlinkEvent;
+
+class AddSourceToProjectHelper {
+
+  private static final NotificationGroup NOTIFICATION_GROUP =
+      new NotificationGroup(
+          "Add source to project", NotificationDisplayType.BALLOON, /* logByDefault */ true);
+
+  /**
+   * Adds the parent directory of the specified {@link WorkspacePath}, and the given targets to the
+   * project view.
+   */
+  static void addSourceAndTargetsToProject(
+      Project project, WorkspacePath workspacePath, List<TargetExpression> targets) {
+    ImportRoots roots = ImportRoots.forProjectSafe(project);
+    if (roots == null) {
+      notifyFailed(
+          project, "Couldn't parse existing project view file. Please sync the project and retry.");
+      return;
+    }
+    WorkspacePath parentPath = Preconditions.checkNotNull(workspacePath.getParent());
+
+    boolean addDirectory = !roots.containsWorkspacePath(parentPath);
+    if (targets.isEmpty() && !addDirectory) {
+      return;
+    }
+    ProjectViewEdit edit =
+        ProjectViewEdit.editLocalProjectView(
+            project,
+            builder -> {
+              if (addDirectory) {
+                addDirectory(builder, parentPath);
+              }
+              addTargets(builder, targets);
+              return true;
+            });
+    if (edit == null) {
+      Messages.showErrorDialog(
+          "Could not modify project view. Check for errors in your project view and try again",
+          "Error");
+      return;
+    }
+    edit.apply();
+    BlazeSyncManager.getInstance(project).partialSync(targets);
+    notifySuccess(project, parentPath, targets);
+  }
+
+  private static void addDirectory(ProjectView.Builder builder, WorkspacePath dir) {
+    ListSection<DirectoryEntry> section = builder.getLast(DirectorySection.KEY);
+    builder.replace(
+        section,
+        ListSection.update(DirectorySection.KEY, section).add(DirectoryEntry.include(dir)));
+  }
+
+  private static void addTargets(ProjectView.Builder builder, List<TargetExpression> targets) {
+    if (targets.isEmpty()) {
+      return;
+    }
+    ListSection<TargetExpression> section = builder.getLast(TargetSection.KEY);
+    builder.replace(section, ListSection.update(TargetSection.KEY, section).addAll(targets));
+  }
+
+  private static void notifyFailed(Project project, String message) {
+    Notification notification =
+        NOTIFICATION_GROUP.createNotification(
+            "Failed to add source file to project",
+            message,
+            NotificationType.WARNING,
+            /* listener */ null);
+    notification.notify(project);
+  }
+
+  private static void notifySuccess(
+      Project project, WorkspacePath directory, List<TargetExpression> targets) {
+    StringBuilder builder = new StringBuilder();
+    if (directory != null) {
+      builder.append(String.format("Added directory '%s' to project view", directory));
+    }
+    builder.append("Added targets to project view:\n");
+    targets.forEach(t -> builder.append("  ").append(t).append("\n"));
+    builder.append("<a href='open'>Open project view file</a>");
+
+    Notification notification =
+        NOTIFICATION_GROUP.createNotification(
+            "Updated project view file",
+            builder.toString(),
+            NotificationType.INFORMATION,
+            new NotificationListener.Adapter() {
+              @Override
+              protected void hyperlinkActivated(Notification notification, HyperlinkEvent e) {
+                notification.expire();
+                OpenLocalProjectViewAction.openLocalProjectViewFile(project);
+              }
+            });
+    notification.notify(project);
+  }
+}

@@ -28,7 +28,7 @@ import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.lang.buildfile.validation.GlobPatternValidator;
 import com.intellij.openapi.progress.ProgressManager;
 import java.io.File;
@@ -182,7 +182,7 @@ public final class UnixGlob {
         case '?':
           regexp.append('.');
           break;
-          //escape the regexp special characters that are allowed in wildcards
+          // escape the regexp special characters that are allowed in wildcards
         case '^':
         case '$':
         case '|':
@@ -372,7 +372,7 @@ public final class UnixGlob {
     private final ThreadPoolExecutor executor;
     private final AtomicLong pendingOps = new AtomicLong(0);
     private final AtomicReference<IOException> failure = new AtomicReference<>();
-    private final FileAttributeProvider fileAttributeProvider = FileAttributeProvider.getInstance();
+    private final FileOperationProvider fileOperationProvider = FileOperationProvider.getInstance();
     private volatile boolean canceled = false;
 
     private GlobVisitor(ThreadPoolExecutor executor) {
@@ -414,10 +414,10 @@ public final class UnixGlob {
         File base, Collection<String> patterns, boolean excludeDirectories, Predicate<File> dirPred)
         throws IOException {
 
-      if (!fileAttributeProvider.exists(base) || patterns.isEmpty()) {
+      if (!fileOperationProvider.exists(base) || patterns.isEmpty()) {
         return Futures.immediateFuture(Collections.emptySet());
       }
-      boolean baseIsDirectory = fileAttributeProvider.isDirectory(base);
+      boolean baseIsDirectory = fileOperationProvider.isDirectory(base);
 
       // We do a dumb loop, even though it will likely duplicate work
       // (e.g., readdir calls). In order to optimize, we would need
@@ -558,8 +558,8 @@ public final class UnixGlob {
       if (!pattern.contains("*") && !pattern.contains("?")) {
         // We do not need to do a readdir in this case, just a stat.
         File child = new File(base, pattern);
-        boolean childIsDir = fileAttributeProvider.isDirectory(child);
-        if (!childIsDir && !fileAttributeProvider.isFile(child)) {
+        boolean childIsDir = fileOperationProvider.isDirectory(child);
+        if (!childIsDir && !fileOperationProvider.isFile(child)) {
           // The file is a dangling symlink, fifo, does not exist, etc.
           return;
         }
@@ -574,7 +574,7 @@ public final class UnixGlob {
         return;
       }
       for (File child : children) {
-        boolean childIsDir = fileAttributeProvider.isDirectory(child);
+        boolean childIsDir = fileOperationProvider.isDirectory(child);
 
         if ("**".equals(pattern)) {
           // Recurse without shifting the pattern.
@@ -607,7 +607,7 @@ public final class UnixGlob {
 
     @Nullable
     private File[] getChildren(File file) {
-      return FileAttributeProvider.getInstance().listFiles(file);
+      return FileOperationProvider.getInstance().listFiles(file);
     }
   }
 }
