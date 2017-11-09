@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.scala.lang.parser.ScalaElementTypes;
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScInfixExpr;
 import org.jetbrains.plugins.scala.testingSupport.test.TestConfigurationUtil;
@@ -48,6 +49,9 @@ public class BlazeSpecs2ConfigurationProducer
                                                ConfigurationContext context,
                                                Ref<PsiElement> sourceElement) {
         Pair<PsiClass, Specs2RunConfiguration> pair = getSpecs2Configuration(context);
+        if (pair == null)
+            return false;
+
         PsiClass testClass = pair.first;
         Specs2RunConfiguration specs2Config = pair.second;
 
@@ -89,6 +93,8 @@ public class BlazeSpecs2ConfigurationProducer
     @Override
     protected boolean doIsConfigFromContext(BlazeCommandRunConfiguration configuration, ConfigurationContext context) {
         Pair<PsiClass, Specs2RunConfiguration> pair = getSpecs2Configuration(context);
+        if (pair == null)
+            return false;
 
         BlazeCommandRunConfigurationCommonState handlerState =
                 configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
@@ -149,6 +155,7 @@ public class BlazeSpecs2ConfigurationProducer
         return Optional.empty();
     }
 
+    @Nullable
     private Pair<PsiClass, Specs2RunConfiguration> getSpecs2Configuration(ConfigurationContext context) {
         Option<Tuple2<PsiElement, RunnerAndConfigurationSettings>> c = producer.createConfigurationByLocation(context.getLocation());
         if (c.isEmpty())
