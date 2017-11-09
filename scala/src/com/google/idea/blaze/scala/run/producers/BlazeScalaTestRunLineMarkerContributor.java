@@ -16,7 +16,9 @@
 package com.google.idea.blaze.scala.run.producers;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.execution.PsiLocation;
 import com.intellij.execution.TestStateStorage;
+import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.execution.testframework.TestIconMapper;
@@ -25,18 +27,26 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestRunLineMarkerProvider;
-import java.util.Arrays;
-import java.util.function.Function;
-import javax.annotation.Nullable;
-import javax.swing.Icon;
+import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression;
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScInfixExpr;
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScReferenceExpression;
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass;
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition;
 import org.jetbrains.plugins.scala.testingSupport.test.ScalaTestRunLineMarkerProvider;
+import org.jetbrains.plugins.scala.testingSupport.test.TestConfigurationUtil;
+import org.jetbrains.plugins.scala.testingSupport.test.structureView.TestNodeProvider;
+import scala.Option;
+import scala.Tuple2;
+
+import javax.annotation.Nullable;
+import javax.swing.*;
+import java.util.Arrays;
+import java.util.function.Function;
 
 /**
  * Generates run/debug gutter icons for scala_test, and scala_junit_tests.
@@ -53,14 +63,18 @@ public class BlazeScalaTestRunLineMarkerContributor extends ScalaTestRunLineMark
       PsiElement element = e.getParent();
       if (element instanceof ScClass) {
         return getInfo((ScClass) element, null, super.getInfo(e));
-      } else if (element instanceof ScFunctionDefinition) {
+      }
+      if (element instanceof ScFunctionDefinition) {
         ScClass testClass = PsiTreeUtil.getParentOfType(element, ScClass.class);
         if (testClass != null) {
           return getInfo(testClass, element, super.getInfo(e));
         }
-      } else if (element instanceof ScReferenceExpression) {
-        // TODO: handle infix expressions. E.g., "foo" should "bar" in { baz }
-        return null;
+      }
+    }
+    if (e instanceof ScInfixExpr) {
+      ScClass testClass = PsiTreeUtil.getParentOfType(e, ScClass.class);
+      if (testClass != null) {
+        return getInfo(testClass, e, super.getInfo(e));
       }
     }
     return null;
@@ -86,8 +100,16 @@ public class BlazeScalaTestRunLineMarkerContributor extends ScalaTestRunLineMark
       }
       url = "java:test://" + testClass.getQualifiedName() + "." + method.getName();
     } else if (testCase instanceof ScInfixExpr) {
-      // TODO: handle this case.
-      return null;
+      if (!TestNodeProvider.isSpecs2Expr(testCase)) {
+        return null;
+      }
+      Tuple2<ScTypeDefinition, String> pair = TestConfigurationUtil.specs2ConfigurationProducer()
+              .getLocationClassAndTest(new PsiLocation<>(testCase));
+      if (pair._2 == null) {
+        return null;
+      }
+
+      url = "java:test://" + testClass.getQualifiedName() + "." + pair._2;
     } else {
       return null;
     }

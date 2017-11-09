@@ -12,8 +12,7 @@
     <runConfigurationProducer
         implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaTestClassConfigurationProducer"/>
     <runConfigurationProducer
-            implementation="com.google.idea.blaze.scala.run.producers.BlazeSpecs2ConfigurationProducer"/>
-    <!-- TODO: add configuration producer for infix expression test cases in scalatest and specs2. -->
+        implementation="com.google.idea.blaze.scala.run.producers.BlazeSpecs2ConfigurationProducer"/>
     <!-- Need to come before the one in the scala plugin to override the icon. -->
     <runLineMarkerContributor
         implementationClass="com.google.idea.blaze.scala.run.producers.BlazeScalaRunLineMarkerContributor"
