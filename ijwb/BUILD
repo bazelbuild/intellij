@@ -32,6 +32,7 @@ merged_plugin_xml(
         "//java:plugin_xml",
         "//python:plugin_xml",
         "//scala:plugin_xml",
+        "//kotlin:plugin_xml"
     ],
 )
 
@@ -65,6 +66,7 @@ java_library(
         "//python",
         "//scala",
         "//terminal",
+        "//kotlin"
     ],
     deps = [
         "//base",
