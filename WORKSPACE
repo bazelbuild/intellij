@@ -164,6 +164,21 @@ new_http_archive(
     sha256 = "b58670a3b52584effc6dd3d014e77fe80e2795b5e5e58716548ecc1452eca6cf",
 )
 
+# Kotlin plugin for IntelliJ CE 2017.2. Required at compile-time for kotlin-specific features.
+new_http_archive(
+    name = "kotlin_2017_2",
+    build_file_content = "\n".join([
+       "java_import(",
+       "    name = 'kotlin',",
+       "    jars = [",
+       "      'kotlin/lib/kotlin-plugin.jar',",
+       "    ],",
+       "    visibility = ['//visibility:public']",
+    ")"]),
+    url = "http://download.plugins.jetbrains.com/6954/39011/kotlin-plugin-1.1.50-release-IJ2017.2-1.zip",
+    sha256 = "24ca0246fc55dfa6022510b6e117adcae97a994bb5b2154b6145be38ca84aef1"
+)
+
 # LICENSE: Common Public License 1.0
 maven_jar(
     name = "junit",

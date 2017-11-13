@@ -1,0 +1,32 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.google.idea.blaze">
+        <SyncPlugin implementation="com.google.idea.blaze.kotlin.sync.BlazeKotlinSyncPlugin"/>
+        <JavaLikeLanguage implementation="com.google.idea.blaze.kotlin.sync.source.KotlinJavaLikeLanguage"/>
+    </extensions>
+
+    <!-- SCALA PLUGIN TO KOTLIN PLUGIN PORT TODO -->
+    <!--<extensions defaultExtensionNs="com.intellij">-->
+        <!--<runConfigurationProducer-->
+                <!--implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaMainClassRunConfigurationProducer"/>-->
+        <!--<runConfigurationProducer-->
+                <!--implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaTestClassConfigurationProducer"/>-->
+        <!--&lt;!&ndash; TODO: add configuration producer for infix expression test cases in scalatest and specs2. &ndash;&gt;-->
+        <!--&lt;!&ndash; Need to come before the one in the scala plugin to override the icon. &ndash;&gt;-->
+        <!--<runLineMarkerContributor-->
+                <!--implementationClass="com.google.idea.blaze.scala.run.producers.BlazeScalaRunLineMarkerContributor"-->
+                <!--language="Scala"-->
+                <!--order="first"/>-->
+        <!--<runLineMarkerContributor-->
+                <!--implementationClass="com.google.idea.blaze.scala.run.producers.BlazeScalaTestRunLineMarkerContributor"-->
+                <!--language="Scala"-->
+                <!--order="first"/>-->
+    <!--</extensions>-->
+
+    <!--<project-components>-->
+        <!--<component>-->
+            <!--<implementation-class>com.google.idea.blaze.scala.run.producers.NonBlazeProducerSuppressor-->
+            <!--</implementation-class>-->
+        <!--</component>-->
+    <!--</project-components>-->
+
+</idea-plugin>
