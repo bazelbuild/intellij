@@ -238,7 +238,7 @@ http_archive(
     urls = ["https://github.com/google/protobuf/archive/master.zip"],
 )
 
-rules_scala_version="33fed13f7a2e776e2cd73aabc66ce0d5cb3b0f1f"
+rules_scala_version="8acd086bc2f2682d632e9c7313f3785e943802c8"
 
 # LICENSE: The Apache Software License, Version 2.0
 http_archive(
