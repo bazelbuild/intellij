@@ -33,4 +33,7 @@
     <androidDebugger implementation="com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.android.tools.ndk">
+    <workspaceProvider implementation="com.google.idea.blaze.android.ndk.workspace.BlazeNdkWorkspaceProvider"/>
+  </extensions>
 </idea-plugin>

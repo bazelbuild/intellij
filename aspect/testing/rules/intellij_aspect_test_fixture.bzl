@@ -48,13 +48,14 @@ def _impl(ctx):
 _intellij_aspect_test_fixture = rule(
     _impl,
     attrs = {
-        "deps": attr.label_list(aspects=[intellij_info_aspect]),
-        "output": attr.string(mandatory=True),
+        "deps": attr.label_list(aspects = [intellij_info_aspect]),
+        "output": attr.string(mandatory = True),
         "_intellij_aspect_test_fixture_builder": attr.label(
             default = Label("//aspect/testing/rules:IntellijAspectTestFixtureBuilder"),
             cfg = "host",
             executable = True,
-            allow_files = True),
+            allow_files = True,
+        ),
     },
 )
 

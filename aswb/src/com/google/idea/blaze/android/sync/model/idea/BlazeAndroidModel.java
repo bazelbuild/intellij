@@ -17,12 +17,12 @@ package com.google.idea.blaze.android.sync.model.idea;
 
 import com.android.builder.model.SourceProvider;
 import com.android.sdklib.AndroidVersion;
+import com.android.tools.idea.model.AndroidModel;
 import com.android.tools.idea.model.ClassJarProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.base.actions.BlazeBuildService;
-import com.google.idea.sdkcompat.android.model.AndroidModelAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -46,7 +46,7 @@ import org.jetbrains.android.dom.manifest.Manifest;
  * Contains Android-Blaze related state necessary for configuring an IDEA project based on a
  * user-selected build variant.
  */
-public class BlazeAndroidModel extends AndroidModelAdapter {
+public class BlazeAndroidModel implements AndroidModel {
   private Project project;
   private final File rootDirPath;
   private final SourceProvider sourceProvider;

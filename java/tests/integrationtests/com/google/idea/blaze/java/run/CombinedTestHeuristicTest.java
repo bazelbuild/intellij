@@ -19,9 +19,10 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
@@ -64,7 +65,7 @@ public class CombinedTestHeuristicTest extends BlazeIntegrationTestCase {
 
   @Test
   public void testSizeAndJUnit4Combination() {
-    Collection<TargetIdeInfo> targets =
+    Collection<TargetInfo> targets =
         ImmutableList.of(
             createTarget("//foo:SmallJUnit3Tests", TestSize.SMALL),
             createTarget("//foo:MediumJUnit3Tests", TestSize.MEDIUM),
@@ -100,11 +101,12 @@ public class CombinedTestHeuristicTest extends BlazeIntegrationTestCase {
     assertThat(match).isEqualTo(Label.create("//foo:MediumJUnit4Tests"));
   }
 
-  private static TargetIdeInfo createTarget(String label, TestSize size) {
+  private static TargetInfo createTarget(String label, TestSize size) {
     return TargetIdeInfo.builder()
         .setLabel(label)
         .setKind("java_test")
         .setTestInfo(TestIdeInfo.builder().setTestSize(size))
-        .build();
+        .build()
+        .toTargetInfo();
   }
 }

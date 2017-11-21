@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
@@ -59,10 +60,10 @@ public class PrefetchProjectInitializer extends ApplicationComponent.Adapter {
   }
 
   private static void prefetchProjectFiles(Project project) {
-    BlazeProjectData projectData = getBlazeProjectData(project);
-    if (projectData == null) {
+    if (!Blaze.isBlazeProject(project)) {
       return;
     }
+    BlazeProjectData projectData = getBlazeProjectData(project);
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
     if (projectViewSet == null) {
       return;
@@ -109,7 +110,8 @@ public class PrefetchProjectInitializer extends ApplicationComponent.Adapter {
     try {
       return BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings);
     } catch (IOException e) {
-      // ignore: if we can't load the previous project data, we don't know what to prefetch
+      // ignore: if we can't load the previous project data, we can't fetch dependencies
+      logger.info("Couldn't load project data for prefetcher", e);
       return null;
     }
   }

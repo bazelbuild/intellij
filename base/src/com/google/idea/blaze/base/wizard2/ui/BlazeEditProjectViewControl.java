@@ -98,6 +98,9 @@ public final class BlazeEditProjectViewControl {
       new BoolExperiment("allow.add.project.view.default.values", true);
   private static final String LAST_WORKSPACE_MODE_PROPERTY =
       "blaze.edit.project.view.control.last.workspace.mode";
+  private static final String LAST_VCS_ROOT_PROPERTY = "blaze.edit.project.view.last.vcs.root";
+  private static final String LAST_PROJECT_DATA_PATH_PROPERTY =
+      "blaze.edit.project.view.last.project.data.path";
 
   private final JPanel component;
   private final String buildSystemName;
@@ -383,24 +386,54 @@ public final class BlazeEditProjectViewControl {
     }
   }
 
-  private static String getDefaultProjectDataDirectory(String projectName) {
-    File defaultDataDirectory = new File(getDefaultProjectsDirectory());
-    File desiredLocation = new File(defaultDataDirectory, projectName);
+  private String getDefaultProjectDataDirectory(String projectName) {
+    File desiredLocation = getProjectDataUnderWorkspaceVcs();
+    if (desiredLocation == null) {
+      String lastProjectLocation =
+          RecentProjectsManager.getInstance().getLastProjectCreationLocation();
+      if (lastProjectLocation != null) {
+        // Because RecentProjectsManager uses PathUtil.toSystemIndependentName.
+        lastProjectLocation = lastProjectLocation.replace('/', File.separatorChar);
+        desiredLocation = new File(lastProjectLocation, projectName);
+      } else {
+        desiredLocation = new File(getDefaultProjectsDirectory(), projectName);
+      }
+    }
     return newUniquePath(desiredLocation);
   }
 
-  private static String getDefaultProjectsDirectory() {
-    final String lastProjectLocation =
-        RecentProjectsManager.getInstance().getLastProjectCreationLocation();
-    if (lastProjectLocation != null) {
-      return lastProjectLocation.replace('/', File.separatorChar);
-    }
+  private static File getDefaultProjectsDirectory() {
     final String userHome = SystemProperties.getUserHome();
     String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
-    return userHome.replace('/', File.separatorChar)
-        + File.separator
-        + productName.replace(" ", "")
-        + "Projects";
+    return new File(userHome, productName.replace(" ", "") + "Projects");
+  }
+
+  @Nullable
+  private File getProjectDataUnderWorkspaceVcs() {
+    if (!workspaceOption.allowProjectDataInVcsRoot()) {
+      return null;
+    }
+    String lastVcsRoot = PropertiesComponent.getInstance().getValue(LAST_VCS_ROOT_PROPERTY);
+    String lastProjectPath =
+        PropertiesComponent.getInstance().getValue(LAST_PROJECT_DATA_PATH_PROPERTY);
+    if (lastVcsRoot == null || lastProjectPath == null) {
+      return null;
+    }
+    String lastRelativePath =
+        FileUtil.getRelativePath(lastVcsRoot, lastProjectPath, File.separatorChar);
+    if (lastRelativePath == null) {
+      return null;
+    }
+    File currentVcsRootFile = workspaceOption.getVcsRoot();
+    if (currentVcsRootFile == null) {
+      return null;
+    }
+    String currentVcsRoot = currentVcsRootFile.getPath();
+    if (currentVcsRoot.equals(lastVcsRoot)) {
+      // Weird case where user puts everything under the same repository.
+      return null;
+    }
+    return new File(currentVcsRoot, lastRelativePath);
   }
 
   /** Returns a unique file path by appending numbers until a non-collision is found. */
@@ -602,5 +635,10 @@ public final class BlazeEditProjectViewControl {
       PropertiesComponent.getInstance()
           .setValue(LAST_WORKSPACE_MODE_PROPERTY, inferDefaultNameMode.toString());
     }
+    File vcsRoot = workspaceOption.getVcsRoot();
+    PropertiesComponent.getInstance()
+        .setValue(LAST_VCS_ROOT_PROPERTY, vcsRoot != null ? vcsRoot.getPath() : null);
+    PropertiesComponent.getInstance()
+        .setValue(LAST_PROJECT_DATA_PATH_PROPERTY, projectDataDirField.getText());
   }
 }

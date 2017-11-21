@@ -49,12 +49,11 @@ public class ScalaLibraryTest extends BazelIntellijAspectTest {
                 .stream()
                 .map(IntellijAspectTest::libraryArtifactToString)
                 .collect(Collectors.toList()))
-        .containsExactly(
-            jarString(testRelative("simple.jar"), testRelative("simple_ijar.jar"), null));
+        .containsExactly(jarString(testRelative("simple.jar"), null, null));
     // Also contains ijars for scala-library.
     // Also contains jars + srcjars for liblibrary.
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
-        .containsAllOf(testRelative("simple.jar"), testRelative("simple_ijar.jar"));
+        .contains(testRelative("simple.jar"));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
         .contains(testRelative("simple.intellij-info.txt"));

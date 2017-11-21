@@ -17,7 +17,7 @@ package com.google.idea.blaze.java.plugin;
 
 import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.sdkcompat.transactions.Transactions;
+import com.google.idea.common.transactions.Transactions;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;

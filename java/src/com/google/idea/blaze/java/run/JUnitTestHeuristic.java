@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.java.run;
 
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
 import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags.JUnitVersion;
 import com.intellij.execution.junit.JUnitUtil;
@@ -33,7 +33,7 @@ public class JUnitTestHeuristic implements TestTargetHeuristic {
   @Override
   public boolean matchesSource(
       Project project,
-      TargetIdeInfo target,
+      TargetInfo target,
       @Nullable PsiFile sourcePsiFile,
       File sourceFile,
       @Nullable TestSize testSize) {
@@ -41,7 +41,7 @@ public class JUnitTestHeuristic implements TestTargetHeuristic {
     if (sourceVersion == null) {
       return false;
     }
-    String targetName = target.key.label.targetName().toString().toLowerCase();
+    String targetName = target.label.targetName().toString().toLowerCase();
     switch (sourceVersion) {
       case JUNIT_4:
         return targetName.contains("junit4");

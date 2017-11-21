@@ -98,7 +98,7 @@ public final class ListSection<T> extends Section<T> {
       return this;
     }
 
-    public final Builder<T> addAll(List<T> items) {
+    public final Builder<T> addAll(List<? extends T> items) {
       for (T item : items) {
         add(item);
       }

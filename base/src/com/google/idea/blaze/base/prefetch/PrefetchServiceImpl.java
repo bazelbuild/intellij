@@ -15,9 +15,9 @@
  */
 package com.google.idea.blaze.base.prefetch;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.io.FileOperationProvider;
@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +51,15 @@ public class PrefetchServiceImpl implements PrefetchService {
   @Override
   public ListenableFuture<?> prefetchFiles(
       Project project, Collection<File> files, boolean refetchCachedFiles) {
+    return prefetchFiles(project, ImmutableSet.of(), files, refetchCachedFiles, false);
+  }
+
+  private ListenableFuture<?> prefetchFiles(
+      Project project,
+      Set<File> excludeDirectories,
+      Collection<File> files,
+      boolean refetchCachedFiles,
+      boolean fetchFileTypes) {
     if (files.isEmpty() || !enabled(project)) {
       return Futures.immediateFuture(null);
     }
@@ -70,7 +80,9 @@ public class PrefetchServiceImpl implements PrefetchService {
             .collect(Collectors.toList());
     List<ListenableFuture<?>> futures = Lists.newArrayList();
     for (Prefetcher prefetcher : Prefetcher.EP_NAME.getExtensions()) {
-      futures.add(prefetcher.prefetchFiles(project, canonicalFiles, FetchExecutor.EXECUTOR));
+      futures.add(
+          prefetcher.prefetchFiles(
+              project, excludeDirectories, canonicalFiles, FetchExecutor.EXECUTOR, fetchFileTypes));
     }
     return Futures.allAsList(futures);
   }
@@ -110,7 +122,7 @@ public class PrefetchServiceImpl implements PrefetchService {
 
   @Override
   public ListenableFuture<?> prefetchProjectFiles(
-      Project project, ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
+      Project project, ProjectViewSet projectViewSet, @Nullable BlazeProjectData blazeProjectData) {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     if (importSettings == null) {
@@ -125,14 +137,30 @@ public class PrefetchServiceImpl implements PrefetchService {
         ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
             .add(projectViewSet)
             .build();
-
-    Set<File> files = Sets.newHashSet();
+    Set<File> sourceDirectories = new HashSet<>();
     for (WorkspacePath workspacePath : importRoots.rootDirectories()) {
-      files.add(workspaceRoot.fileForPath(workspacePath));
+      sourceDirectories.add(workspaceRoot.fileForPath(workspacePath));
     }
-    for (PrefetchFileSource fileSource : PrefetchFileSource.EP_NAME.getExtensions()) {
-      fileSource.addFilesToPrefetch(project, projectViewSet, importRoots, blazeProjectData, files);
+    Set<File> excludeDirectories = new HashSet<>();
+    for (WorkspacePath workspacePath : importRoots.excludeDirectories()) {
+      excludeDirectories.add(workspaceRoot.fileForPath(workspacePath));
     }
-    return prefetchFiles(project, files, false);
+    ListenableFuture<?> sourceFilesFuture =
+        prefetchFiles(
+            project,
+            excludeDirectories,
+            sourceDirectories,
+            /* refetchCachedFiles */ false,
+            // PushedFilePropertiesUpdaterImpl will eventually want the file types of module roots.
+            /* fetchFileTypes */ true);
+    Set<File> externalFiles = new HashSet<>();
+    if (blazeProjectData != null) {
+      for (PrefetchFileSource fileSource : PrefetchFileSource.EP_NAME.getExtensions()) {
+        fileSource.addFilesToPrefetch(
+            project, projectViewSet, importRoots, blazeProjectData, externalFiles);
+      }
+    }
+    ListenableFuture<?> externalFilesFuture = prefetchFiles(project, externalFiles, false);
+    return Futures.allAsList(sourceFilesFuture, externalFilesFuture);
   }
 }

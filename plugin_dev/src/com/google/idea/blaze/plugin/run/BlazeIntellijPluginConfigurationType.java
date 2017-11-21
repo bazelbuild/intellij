@@ -21,8 +21,8 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.run.BlazeRunConfigurationFactory;
-import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.plugin.IntellijPluginRule;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.BeforeRunTask;
@@ -94,15 +94,28 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
 
     @Override
     public BlazeIntellijPluginConfiguration createTemplateConfiguration(Project project) {
+
       BlazeIntellijPluginConfiguration config =
           new BlazeIntellijPluginConfiguration(
-              project,
-              this,
-              "Unnamed",
-              TargetFinder.getInstance()
-                  .findFirstTarget(project, IntellijPluginRule::isPluginTarget));
+              project, this, "Unnamed", findExamplePluginTarget(project));
       config.vmParameters = currentVmOptions.getValue();
       return config;
+    }
+
+    private static Label findExamplePluginTarget(Project project) {
+      BlazeProjectData projectData =
+          BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+      if (projectData == null) {
+        return null;
+      }
+      return projectData
+          .targetMap
+          .targets()
+          .stream()
+          .filter(IntellijPluginRule::isPluginTarget)
+          .map(t -> t.key.label)
+          .findFirst()
+          .orElse(null);
     }
 
     @Override

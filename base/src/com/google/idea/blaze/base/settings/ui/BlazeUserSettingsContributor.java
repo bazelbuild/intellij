@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.settings.ui;
 
+import com.google.idea.blaze.base.settings.SearchableOptionsHelper;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import javax.swing.JPanel;
 
@@ -36,10 +37,11 @@ public interface BlazeUserSettingsContributor {
    * Return all components. They will be added to the user settings page.
    *
    * @param panel The panel to add the components to
+   * @param helper Used to make options text searchable.
    * @param rowi The row index to start adding components to.
    * @return The next free row index
    */
-  int addComponents(JPanel panel, int rowi);
+  int addComponents(JPanel panel, SearchableOptionsHelper helper, int rowi);
 
   /** A provider of user settings. Bind one of these to provide settings. */
   interface Provider {

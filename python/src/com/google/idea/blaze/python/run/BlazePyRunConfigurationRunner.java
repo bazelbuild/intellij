@@ -42,6 +42,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -49,6 +50,7 @@ import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -112,10 +114,14 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       nativeConfig.setModule(null);
       nativeConfig.setSdkHome(sdk.getHomePath());
 
-      BlazeCommandRunConfigurationCommonState handlerState =
-          configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+      BlazePyRunConfigState handlerState =
+          configuration.getHandlerStateIfType(BlazePyRunConfigState.class);
       if (handlerState != null) {
         nativeConfig.setScriptParameters(Strings.emptyToNull(getScriptParams(handlerState)));
+
+        EnvironmentVariablesData envState = handlerState.getEnvVarsState().getData();
+        nativeConfig.setPassParentEnvs(envState.isPassParentEnvs());
+        nativeConfig.setEnvs(envState.getEnvs());
       }
       return new PythonScriptCommandLineState(nativeConfig, env) {
         @Override
@@ -129,7 +135,6 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
             throws ExecutionException {
           ConsoleView consoleView = createConsoleBuilder(project, getSdk()).getConsole();
           consoleView.addMessageFilter(createUrlFilter(processHandler));
-          addTracebackFilter(project, consoleView, processHandler);
 
           consoleView.attachToProcess(processHandler);
           return consoleView;
@@ -183,6 +188,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     return ImmutableList.<Filter>builder()
         .addAll(BlazePyFilterProvider.getPyFilters(project))
         .add(new BlazeTargetFilter(project))
+        .add(new UrlFilter())
         .build();
   }
 

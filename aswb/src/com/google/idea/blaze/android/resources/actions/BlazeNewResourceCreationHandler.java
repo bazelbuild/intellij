@@ -20,7 +20,6 @@ import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.android.tools.idea.res.IdeResourceNameValidator;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.sdkcompat.android.resources.actions.NewResourceCreationHandlerAdapter;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -33,10 +32,11 @@ import org.jetbrains.android.actions.CreateResourceDirectoryDialogBase;
 import org.jetbrains.android.actions.CreateResourceFileDialogBase;
 import org.jetbrains.android.actions.CreateTypedResourceFileAction;
 import org.jetbrains.android.actions.CreateXmlResourcePanel;
+import org.jetbrains.android.actions.NewResourceCreationHandler;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Decides which create resource dialogs to use for Blaze projects. */
-public class BlazeNewResourceCreationHandler extends NewResourceCreationHandlerAdapter {
+public class BlazeNewResourceCreationHandler implements NewResourceCreationHandler {
 
   @Override
   public boolean isApplicable(Project project) {
@@ -83,7 +83,7 @@ public class BlazeNewResourceCreationHandler extends NewResourceCreationHandlerA
   }
 
   @Override
-  public CreateXmlResourcePanel createNewResourceValuePanelCompat(
+  public CreateXmlResourcePanel createNewResourceValuePanel(
       Module module,
       ResourceType resourceType,
       ResourceFolderType folderType,

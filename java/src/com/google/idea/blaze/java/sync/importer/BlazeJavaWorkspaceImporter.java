@@ -115,7 +115,7 @@ public final class BlazeJavaWorkspaceImporter {
             context,
             workspaceRoot,
             artifactLocationDecoder,
-            importRoots.rootDirectories(),
+            importRoots,
             workspaceBuilder.sourceArtifacts,
             workspaceBuilder.javaPackageManifests);
 

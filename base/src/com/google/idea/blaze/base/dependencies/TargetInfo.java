@@ -15,18 +15,77 @@
  */
 package com.google.idea.blaze.base.dependencies;
 
-/** Some minimal data about a blaze target. */
-public class TargetInfo {
-  public final String name;
-  public final String kind;
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Label;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
-  public TargetInfo(String name, String kind) {
-    this.name = name;
-    this.kind = kind;
+/**
+ * Some minimal data about a blaze target. This is intended to contain the data common to our aspect
+ * output, and the per-target data provided by a global dependency index.
+ */
+public class TargetInfo {
+  public final Label label;
+  public final String kindString;
+  @Nullable public final TestSize testSize;
+  @Nullable private final ImmutableList<ArtifactLocation> sources;
+
+  private TargetInfo(
+      Label label,
+      String kindString,
+      @Nullable TestSize testSize,
+      @Nullable ImmutableList<ArtifactLocation> sources) {
+    this.label = label;
+    this.kindString = kindString;
+    this.testSize = testSize;
+    this.sources = sources;
+  }
+
+  @Nullable
+  public Kind getKind() {
+    return Kind.fromString(kindString);
+  }
+
+  /** Returns this targets sources, or Optional#empty if they're not known. */
+  public Optional<ImmutableList<ArtifactLocation>> getSources() {
+    return Optional.ofNullable(sources);
   }
 
   @Override
   public String toString() {
-    return String.format("%s (%s)", name, kind);
+    return String.format("%s (%s)", label, kindString);
+  }
+
+  public static Builder builder(Label label, String kindString) {
+    return new Builder(label, kindString);
+  }
+
+  /** Builder class for {@link TargetInfo}. */
+  public static class Builder {
+    private final Label label;
+    private final String kindString;
+    @Nullable private TestSize testSize;
+    @Nullable private ImmutableList<ArtifactLocation> sources;
+
+    private Builder(Label label, String kindString) {
+      this.label = label;
+      this.kindString = kindString;
+    }
+
+    public Builder setTestSize(TestSize testSize) {
+      this.testSize = testSize;
+      return this;
+    }
+
+    public Builder setSources(ImmutableList<ArtifactLocation> sources) {
+      this.sources = sources;
+      return this;
+    }
+
+    public TargetInfo build() {
+      return new TargetInfo(label, kindString, testSize, sources);
+    }
   }
 }

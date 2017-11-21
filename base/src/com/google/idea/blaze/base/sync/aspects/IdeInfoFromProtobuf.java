@@ -23,6 +23,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidSdkIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -348,20 +349,20 @@ public class IdeInfoFromProtobuf {
 
   private static TestIdeInfo makeTestIdeInfo(IntellijIdeInfo.TestInfo testInfo) {
     String size = testInfo.getSize();
-    TestIdeInfo.TestSize testSize = TestIdeInfo.DEFAULT_RULE_TEST_SIZE;
+    TestSize testSize = TestSize.DEFAULT_RULE_TEST_SIZE;
     if (!Strings.isNullOrEmpty(size)) {
       switch (size) {
         case "small":
-          testSize = TestIdeInfo.TestSize.SMALL;
+          testSize = TestSize.SMALL;
           break;
         case "medium":
-          testSize = TestIdeInfo.TestSize.MEDIUM;
+          testSize = TestSize.MEDIUM;
           break;
         case "large":
-          testSize = TestIdeInfo.TestSize.LARGE;
+          testSize = TestSize.LARGE;
           break;
         case "enormous":
-          testSize = TestIdeInfo.TestSize.ENORMOUS;
+          testSize = TestSize.ENORMOUS;
           break;
         default:
           break;

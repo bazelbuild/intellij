@@ -1,50 +1,41 @@
 """Convenience methods for plugin_api."""
 
-
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
-    "intellij-latest": "intellij-2017.2.3",
-    "intellij-beta": "intellij-2017.2.3",
-    "intellij-ue-latest": "intellij-ue-2017.2.3",
-    "intellij-ue-beta": "intellij-ue-2017.2.3",
-    "android-studio-latest": "android-studio-3.0.0.13",
-    "android-studio-beta": "android-studio-3.0.0.13",
-    "clion-latest": "clion-2017.2.2",
-    "clion-beta": "clion-2017.2.2",
+    "intellij-latest": "intellij-2017.2.6",
+    "intellij-beta": "intellij-2017.2.6",
+    "intellij-ue-latest": "intellij-ue-2017.2.6",
+    "intellij-ue-beta": "intellij-ue-2017.2.6",
+    "android-studio-latest": "android-studio-3.0.0.18",
+    "android-studio-beta": "android-studio-3.0.0.18",
+    "clion-latest": "clion-2017.2.3",
+    "clion-beta": "clion-2017.2.3",
 }
 
 DIRECT_IJ_PRODUCTS = {
-    "intellij-2017.2.3": struct(
-        ide="intellij",
-        directory="intellij_ce_2017_2_3",
+    "intellij-2017.2.6": struct(
+        directory = "intellij_ce_2017_2_6",
+        ide = "intellij",
     ),
-    "intellij-ue-2017.2.3": struct(
-        ide="intellij-ue",
-        directory="intellij_ue_2017_2_3",
+    "intellij-2017.3.0": struct(
+        directory = "intellij_ce_2017_3_0",
+        ide = "intellij",
     ),
-    "intellij-2017.1.5": struct(
-        ide="intellij",
-        directory="intellij_ce_2017_1_5",
+    "intellij-ue-2017.2.6": struct(
+        directory = "intellij_ue_2017_2_6",
+        ide = "intellij-ue",
     ),
-    "intellij-ue-2017.1.5": struct(
-        ide="intellij-ue",
-        directory="intellij_ue_2017_1_5",
+    "intellij-ue-2017.3.0": struct(
+        directory = "intellij_ue_2017_3_0",
+        ide = "intellij-ue",
     ),
-    "android-studio-3.0.0.13": struct(
-        ide="android-studio",
-        directory="android_studio_3_0_0_13",
+    "android-studio-3.0.0.18": struct(
+        directory = "android_studio_3_0_0_18",
+        ide = "android-studio",
     ),
-    "android-studio-2.3.1.0": struct(
-        ide="android-studio",
-        directory="android_studio_2_3_1_0",
-    ),
-    "clion-2017.2.2": struct(
-        ide="clion",
-        directory="clion_2017_2_2",
-    ),
-    "clion-2017.1.1": struct(
-        ide="clion",
-        directory="clion_2017_1_1",
+    "clion-2017.2.3": struct(
+        directory = "clion_2017_2_3",
+        ide = "clion",
     ),
 }
 

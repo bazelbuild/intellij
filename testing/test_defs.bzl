@@ -50,16 +50,19 @@ def _generate_test_suite_impl(ctx):
   )
 
 _generate_test_suite = rule(
-    implementation = _generate_test_suite_impl,
     attrs = {
         # srcs for the test classes included in the suite (only keep those ending in Test.java)
-        "srcs": attr.label_list(allow_files=True, mandatory=True),
+        "srcs": attr.label_list(
+            allow_files = True,
+            mandatory = True,
+        ),
         # the package string of the output test suite.
-        "test_package_root": attr.string(mandatory=True),
+        "test_package_root": attr.string(mandatory = True),
         # optional list of classes to instantiate as a @ClassRule in the test suite.
-        "class_rules": attr.string_list()
+        "class_rules": attr.string_list(),
     },
-    outputs={"out": "%{name}.java"},
+    outputs = {"out": "%{name}.java"},
+    implementation = _generate_test_suite_impl,
 )
 
 def intellij_unit_test_suite(name, srcs, test_package_root, **kwargs):

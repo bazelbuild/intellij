@@ -16,7 +16,7 @@
 package com.google.idea.blaze.java.run.producers;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -25,18 +25,18 @@ import javax.annotation.Nullable;
 
 /** Maps method and class annotations to our test size enumeration. */
 public class TestSizeAnnotationMap {
-  private static final ImmutableMap<String, TestIdeInfo.TestSize> ANNOTATION_TO_TEST_SIZE =
-      ImmutableMap.<String, TestIdeInfo.TestSize>builder()
-          .put("com.google.testing.testsize.SmallTest", TestIdeInfo.TestSize.SMALL)
-          .put("com.google.testing.testsize.MediumTest", TestIdeInfo.TestSize.MEDIUM)
-          .put("com.google.testing.testsize.LargeTest", TestIdeInfo.TestSize.LARGE)
-          .put("com.google.testing.testsize.EnormousTest", TestIdeInfo.TestSize.ENORMOUS)
+  private static final ImmutableMap<String, TestSize> ANNOTATION_TO_TEST_SIZE =
+      ImmutableMap.<String, TestSize>builder()
+          .put("com.google.testing.testsize.SmallTest", TestSize.SMALL)
+          .put("com.google.testing.testsize.MediumTest", TestSize.MEDIUM)
+          .put("com.google.testing.testsize.LargeTest", TestSize.LARGE)
+          .put("com.google.testing.testsize.EnormousTest", TestSize.ENORMOUS)
           .build();
 
   @Nullable
-  public static TestIdeInfo.TestSize getTestSize(PsiMethod psiMethod) {
+  public static TestSize getTestSize(PsiMethod psiMethod) {
     PsiAnnotation[] annotations = psiMethod.getModifierList().getAnnotations();
-    TestIdeInfo.TestSize testSize = getTestSize(annotations);
+    TestSize testSize = getTestSize(annotations);
     if (testSize != null) {
       return testSize;
     }
@@ -44,13 +44,13 @@ public class TestSizeAnnotationMap {
   }
 
   @Nullable
-  public static TestIdeInfo.TestSize getTestSize(PsiClass psiClass) {
+  public static TestSize getTestSize(PsiClass psiClass) {
     PsiModifierList psiModifierList = psiClass.getModifierList();
     if (psiModifierList == null) {
       return null;
     }
     PsiAnnotation[] annotations = psiModifierList.getAnnotations();
-    TestIdeInfo.TestSize testSize = getTestSize(annotations);
+    TestSize testSize = getTestSize(annotations);
     if (testSize == null) {
       return null;
     }
@@ -58,10 +58,10 @@ public class TestSizeAnnotationMap {
   }
 
   @Nullable
-  private static TestIdeInfo.TestSize getTestSize(PsiAnnotation[] annotations) {
+  private static TestSize getTestSize(PsiAnnotation[] annotations) {
     for (PsiAnnotation annotation : annotations) {
       String qualifiedName = annotation.getQualifiedName();
-      TestIdeInfo.TestSize testSize = ANNOTATION_TO_TEST_SIZE.get(qualifiedName);
+      TestSize testSize = ANNOTATION_TO_TEST_SIZE.get(qualifiedName);
       if (testSize != null) {
         return testSize;
       }

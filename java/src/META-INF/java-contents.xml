@@ -22,31 +22,15 @@
       id="Blaze.ExcludeLibraryAction"
       text="Exclude Library and Resync">
     </action>
-    <action class="com.google.idea.blaze.java.libraries.AttachSourceJarAction"
-      id="Blaze.AttachSourceJarAction"
-      text="Attach Source Jar">
-    </action>
     <action class="com.google.idea.blaze.java.libraries.AddLibraryTargetDirectoryToProjectViewAction"
       id="Blaze.AddLibraryTargetDirectoryToProjectView"
       text="Add Library Target Directory to Project View">
-    </action>
-    <action class="com.google.idea.blaze.java.libraries.DetachAllSourceJarsAction"
-      id="Blaze.DetachAllSourceJars"
-      text="Detach All Blaze Source Jars">
     </action>
 
     <group id="Blaze.Java.ProjectViewPopupMenu">
       <add-to-group group-id="Blaze.PerFileContextMenu"/>
       <reference id="Blaze.ExcludeLibraryAction"/>
-      <reference id="Blaze.AttachSourceJarAction"/>
       <reference id="Blaze.AddLibraryTargetDirectoryToProjectView"/>
-    </group>
-
-    <group id="Blaze.JavaMenuGroup.Outer">
-      <add-to-group group-id="Blaze.MainMenuActionGroup" relative-to-action="Blaze.MenuFooter" anchor="after"/>
-      <group id="Blaze.JavaMenuGroup" text="Java">
-        <reference id="Blaze.DetachAllSourceJars"/>
-      </group>
     </group>
 
     <!-- IntelliJ specific actions -->
@@ -100,9 +84,6 @@
     <applicationService serviceInterface="com.google.idea.blaze.java.sync.source.PackageManifestReader"
                         serviceImplementation="com.google.idea.blaze.java.sync.source.PackageManifestReader"/>
     <programRunner implementation="com.google.idea.blaze.java.run.BlazeJavaDebuggerRunner"/>
-    <projectService serviceInterface="com.google.idea.blaze.base.ui.BlazeProblemsView"
-                    serviceImplementation="com.google.idea.blaze.java.ui.BlazeIntelliJProblemsView"/>
-    <projectService serviceImplementation="com.google.idea.blaze.java.libraries.SourceJarManager"/>
     <refactoring.safeDeleteProcessor id="build_file_safe_delete" order="before javaProcessor"
                                      implementation="com.google.idea.blaze.java.lang.build.BuildFileSafeDeleteProcessor"/>
     <!--duplicated here in case the Kotlin plugin is present, as it also tries to replace javaProcessor-->
@@ -111,7 +92,6 @@
     <projectService serviceImplementation="com.google.idea.blaze.java.libraries.JarCache"/>
 
     <attachSourcesProvider implementation="com.google.idea.blaze.java.libraries.AddLibraryTargetDirectoryToProjectViewAttachSourcesProvider"/>
-    <attachSourcesProvider implementation="com.google.idea.blaze.java.libraries.BlazeAttachSourceProvider"/>
     <applicationService serviceImplementation="com.google.idea.blaze.java.settings.BlazeJavaUserSettings"/>
     <psi.referenceContributor language="BUILD" implementation="com.google.idea.blaze.java.lang.build.references.JavaClassReferenceContributor"/>
     <useScopeEnlarger implementation="com.google.idea.blaze.java.psi.AutoFactoryUseScopeEnlarger"/>

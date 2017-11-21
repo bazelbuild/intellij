@@ -28,20 +28,23 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
-import com.google.idea.blaze.base.sync.sharding.WildcardTargetPattern;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -50,14 +53,17 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.UserBinaryFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Consumer;
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -74,7 +80,9 @@ public class ExternalFileProjectManagementHelper
   private static final BoolExperiment enabled =
       new BoolExperiment("project.external.source.management.enabled", true);
 
-  private static final Key<EditorNotificationPanel> KEY = Key.create("add source to project");
+  private static final Key<EditorNotificationPanel> KEY = Key.create("add.source.to.project");
+
+  private final Set<File> suppressedFiles = new HashSet<>();
 
   private static final ImmutableList<Class<? extends FileType>> IGNORED_FILE_TYPES =
       ImmutableList.of(
@@ -117,6 +125,10 @@ public class ExternalFileProjectManagementHelper
     if (!enabled.getValue() || !SourceToTargetProvider.hasProvider()) {
       return null;
     }
+    if (!BlazeUserSettings.getInstance().getShowAddFileToProjectNotification()
+        || suppressedFiles.contains(new File(vf.getPath()))) {
+      return null;
+    }
     BlazeProjectData syncData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (syncData == null) {
       return null;
@@ -127,7 +139,7 @@ public class ExternalFileProjectManagementHelper
     }
 
     WorkspacePath workspacePath = getWorkspacePath(file);
-    if (workspacePath == null) {
+    if (workspacePath == null || isBuildSystemOutputArtifact(project, workspacePath)) {
       return null;
     }
     WorkspacePath parent = workspacePath.getParent();
@@ -176,8 +188,24 @@ public class ExternalFileProjectManagementHelper
           addSourceToProject(project, workspacePath, inProjectDirectories, targetsFuture);
           EditorNotifications.getInstance(project).updateNotifications(vf);
         });
-    // TODO(brendandouglas): Add 'help' and/or 'suppress notification' actions
-    // panel.createActionLabel("Don't show again", () -> suppressNotification());
+    panel.createActionLabel(
+        "Hide notification",
+        () -> {
+          // suppressed for this file until the editor is restarted
+          suppressedFiles.add(file);
+          EditorNotifications.getInstance(project).updateNotifications(vf);
+        });
+    panel.createActionLabel(
+        "Don't show again",
+        () -> {
+          // disables the notification permanently, and focuses the relevant setting, so users know
+          // how to turn it back on
+          BlazeUserSettings.getInstance().setShowAddFileToProjectNotification(false);
+          ShowSettingsUtilImpl.showSettingsDialog(
+              project,
+              BlazeUserSettingsConfigurable.ID,
+              BlazeUserSettingsConfigurable.SHOW_ADD_FILE_TO_PROJECT_LABEL_TEXT);
+        });
 
     targetsFuture.addListener(
         () -> {
@@ -209,12 +237,19 @@ public class ExternalFileProjectManagementHelper
   }
 
   private static boolean supportedTargetKind(TargetInfo target) {
-    Kind kind = Kind.fromString(target.kind);
-    return kind == null || supportedLanguage(kind.languageClass);
+    Kind kind = target.getKind();
+    return kind != null && supportedLanguage(kind.languageClass);
   }
 
   private static boolean supportedLanguage(LanguageClass language) {
     return LanguageSupport.languagesSupportedByCurrentIde().contains(language);
+  }
+
+  private static boolean isBuildSystemOutputArtifact(Project project, WorkspacePath path) {
+    return Blaze.getBuildSystemProvider(project)
+        .buildArtifactDirectories(WorkspaceRoot.fromProject(project))
+        .stream()
+        .anyMatch(outDir -> FileUtil.isAncestor(outDir, path.relativePath(), false));
   }
 
   private static boolean sourceInProjectDirectories(
@@ -242,13 +277,9 @@ public class ExternalFileProjectManagementHelper
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
     for (TargetInfo targetInfo : targetsBuildingSource) {
-      TargetExpression target = TargetExpression.fromStringSafe(targetInfo.name);
-      if (target == null) {
-        continue;
-      }
-      if (projectViewTargets.contains(target)
-          || (target instanceof Label
-              && targetMap.contains(TargetKey.forPlainTarget((Label) target)))) {
+      Label label = targetInfo.label;
+      if (projectViewTargets.contains(label)
+          || targetMap.contains(TargetKey.forPlainTarget(label))) {
         return true;
       }
     }
@@ -325,11 +356,8 @@ public class ExternalFileProjectManagementHelper
                 });
   }
 
-  private static List<TargetExpression> convertTargets(List<TargetInfo> targets) {
-    return targets
-        .stream()
-        .map(t -> TargetExpression.fromStringSafe(t.name))
-        .collect(Collectors.toList());
+  private static List<Label> convertTargets(List<TargetInfo> targets) {
+    return targets.stream().map(t -> t.label).collect(Collectors.toList());
   }
 
   @Nullable

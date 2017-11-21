@@ -16,12 +16,12 @@
 package com.google.idea.blaze.python.resolve.provider;
 
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
-import com.google.idea.sdkcompat.python.PyQualifiedNameResolveContextAdapter;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import javax.annotation.Nullable;
 
 /** A strategy for conversion between import strings and blaze artifacts. */
@@ -35,12 +35,11 @@ public interface PyImportResolverStrategy {
    * string. Not limited to .blazeproject source roots.
    */
   @Nullable
-  PsiElement resolveToWorkspaceSource(
-      QualifiedName name, PyQualifiedNameResolveContextAdapter context);
+  PsiElement resolveToWorkspaceSource(QualifiedName name, PyQualifiedNameResolveContext context);
 
   /** Find a python source corresponding to the given name, available during the last blaze sync. */
   @Nullable
-  PsiElement resolveFromSyncData(QualifiedName name, PyQualifiedNameResolveContextAdapter context);
+  PsiElement resolveFromSyncData(QualifiedName name, PyQualifiedNameResolveContext context);
 
   /**
    * Add quick fix import suggestions for a given symbol, searching a symbol index built up during

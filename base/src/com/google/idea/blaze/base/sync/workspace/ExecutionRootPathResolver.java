@@ -55,6 +55,16 @@ public class ExecutionRootPathResolver {
     return provider.buildArtifactDirectories(workspaceRoot);
   }
 
+  public File resolveExecutionRootPath(ExecutionRootPath path) {
+    if (path.isAbsolute()) {
+      return path.getAbsoluteOrRelativeFile();
+    }
+    if (isInWorkspace(path)) {
+      return workspacePathResolver.resolveToFile(path.getAbsoluteOrRelativeFile().getPath());
+    }
+    return path.getFileRootedAt(executionRoot);
+  }
+
   /**
    * This method should be used for directories. Returns all workspace files corresponding to the
    * given execution-root-relative path. If the file does not exist inside the workspace (e.g. for

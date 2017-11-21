@@ -115,7 +115,7 @@ final class BlazeConfigurationResolver {
             project,
             workspaceRoot,
             toolchainLookupMap,
-            blazeProjectData.workspacePathResolver,
+            executionRootPathResolver,
             compilerInfoCache,
             oldResult.compilerSettings);
     BlazeConfigurationResolverResult.Builder builder =

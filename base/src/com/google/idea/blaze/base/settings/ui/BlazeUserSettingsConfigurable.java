@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
+import com.google.idea.blaze.base.settings.SearchableOptionsHelper;
 import com.google.idea.blaze.base.ui.FileSelectorWithStoredHistory;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -44,8 +45,12 @@ import javax.swing.SwingConstants;
 public class BlazeUserSettingsConfigurable extends BaseConfigurable
     implements SearchableConfigurable {
 
+
   private static final String BLAZE_BINARY_PATH_KEY = "blaze.binary.path";
   public static final String BAZEL_BINARY_PATH_KEY = "bazel.binary.path";
+  public static final String ID = "blaze.view";
+  public static final String SHOW_ADD_FILE_TO_PROJECT_LABEL_TEXT =
+      "Show 'Add source to project' editor notifications";
 
   private final BuildSystem defaultBuildSystem;
   private final Collection<BlazeUserSettingsContributor> settingsContributors;
@@ -56,6 +61,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
   private JCheckBox resyncAutomatically;
   private JCheckBox collapseProjectView;
   private JCheckBox formatBuildFilesOnSave;
+  private JCheckBox showAddFileToProjectNotification;
   private FileSelectorWithStoredHistory blazeBinaryPathField;
   private FileSelectorWithStoredHistory bazelBinaryPathField;
 
@@ -90,6 +96,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     settings.setResyncAutomatically(resyncAutomatically.isSelected());
     settings.setCollapseProjectView(collapseProjectView.isSelected());
     settings.setFormatBuildFilesOnSave(formatBuildFilesOnSave.isSelected());
+    settings.setShowAddFileToProjectNotification(showAddFileToProjectNotification.isSelected());
     settings.setBlazeBinaryPath(Strings.nullToEmpty(blazeBinaryPathField.getText()));
     settings.setBazelBinaryPath(Strings.nullToEmpty(bazelBinaryPathField.getText()));
 
@@ -106,6 +113,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     resyncAutomatically.setSelected(settings.getResyncAutomatically());
     collapseProjectView.setSelected(settings.getCollapseProjectView());
     formatBuildFilesOnSave.setSelected(settings.getFormatBuildFilesOnSave());
+    showAddFileToProjectNotification.setSelected(settings.getShowAddFileToProjectNotification());
     blazeBinaryPathField.setTextWithHistory(settings.getBlazeBinaryPath());
     bazelBinaryPathField.setTextWithHistory(settings.getBazelBinaryPath());
 
@@ -129,6 +137,8 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             || resyncAutomatically.isSelected() != settings.getResyncAutomatically()
             || collapseProjectView.isSelected() != settings.getCollapseProjectView()
             || formatBuildFilesOnSave.isSelected() != settings.getFormatBuildFilesOnSave()
+            || showAddFileToProjectNotification.isSelected()
+                != settings.getShowAddFileToProjectNotification()
             || !Objects.equal(
                 Strings.nullToEmpty(blazeBinaryPathField.getText()),
                 Strings.nullToEmpty(settings.getBlazeBinaryPath()))
@@ -147,7 +157,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
 
   @Override
   public String getId() {
-    return "blaze.view.settings";
+    return ID;
   }
 
   @Nullable
@@ -163,13 +173,16 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
       contributorRowCount += contributor.getRowCount();
     }
 
-    final int totalRowSize = 8 + contributorRowCount;
+    final int totalRowSize = 9 + contributorRowCount;
     int rowi = 0;
 
+    SearchableOptionsHelper helper = new SearchableOptionsHelper(this);
     myMainPanel = new JPanel();
     myMainPanel.setLayout(new GridLayoutManager(totalRowSize, 2, new Insets(0, 0, 0, 0), -1, -1));
 
-    JLabel label = new JLabel(String.format("Show %s console on sync:", defaultBuildSystem));
+    JLabel label =
+        helper.createSearchableLabel(
+            String.format("Show %s console on sync:", defaultBuildSystem), true);
     myMainPanel.add(
         label,
         new GridConstraints(
@@ -203,9 +216,10 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             null,
             0,
             false));
+    String text = String.format("Suppress %s console for Run/Debug actions", defaultBuildSystem);
+    helper.registerLabelText(text, true);
     suppressConsoleForRunAction = new JCheckBox();
-    suppressConsoleForRunAction.setText(
-        String.format("Suppress %s console for Run/Debug actions", defaultBuildSystem));
+    suppressConsoleForRunAction.setText(text);
     suppressConsoleForRunAction.setVerticalAlignment(SwingConstants.CENTER);
     myMainPanel.add(
         suppressConsoleForRunAction,
@@ -223,9 +237,11 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             null,
             0,
             false));
+    text = "Automatically re-sync project when BUILD files change";
+    helper.registerLabelText(text, true);
     resyncAutomatically = new JCheckBox();
     resyncAutomatically.setSelected(false);
-    resyncAutomatically.setText("Automatically re-sync project when BUILD files change");
+    resyncAutomatically.setText(text);
     myMainPanel.add(
         resyncAutomatically,
         new GridConstraints(
@@ -242,9 +258,11 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             null,
             0,
             false));
+    text = "Collapse project view directory roots";
+    helper.registerLabelText(text, true);
     collapseProjectView = new JCheckBox();
     collapseProjectView.setSelected(false);
-    collapseProjectView.setText("Collapse project view directory roots");
+    collapseProjectView.setText(text);
     myMainPanel.add(
         collapseProjectView,
         new GridConstraints(
@@ -261,9 +279,11 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             null,
             0,
             false));
+    text = "Automatically format BUILD files on file save";
+    helper.registerLabelText(text, true);
     formatBuildFilesOnSave = new JCheckBox();
     formatBuildFilesOnSave.setSelected(false);
-    formatBuildFilesOnSave.setText("Automatically format BUILD files on file save");
+    formatBuildFilesOnSave.setText(text);
     myMainPanel.add(
         formatBuildFilesOnSave,
         new GridConstraints(
@@ -280,8 +300,28 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             null,
             0,
             false));
+    helper.registerLabelText(SHOW_ADD_FILE_TO_PROJECT_LABEL_TEXT, true);
+    showAddFileToProjectNotification = new JCheckBox();
+    showAddFileToProjectNotification.setSelected(false);
+    showAddFileToProjectNotification.setText(SHOW_ADD_FILE_TO_PROJECT_LABEL_TEXT);
+    myMainPanel.add(
+        showAddFileToProjectNotification,
+        new GridConstraints(
+            rowi++,
+            0,
+            1,
+            2,
+            GridConstraints.ANCHOR_NORTHWEST,
+            GridConstraints.FILL_NONE,
+            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+            GridConstraints.SIZEPOLICY_FIXED,
+            null,
+            null,
+            null,
+            0,
+            false));
     for (BlazeUserSettingsContributor contributor : settingsContributors) {
-      rowi = contributor.addComponents(myMainPanel, rowi);
+      rowi = contributor.addComponents(myMainPanel, helper, rowi);
     }
 
     blazeBinaryPathField =
@@ -292,10 +332,16 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             BAZEL_BINARY_PATH_KEY, "Specify the bazel binary path");
 
     if (BuildSystemProvider.isBuildSystemAvailable(BuildSystem.Blaze)) {
-      addBinaryLocationSetting(new JLabel("Blaze binary location"), blazeBinaryPathField, rowi++);
+      addBinaryLocationSetting(
+          helper.createSearchableLabel("Blaze binary location", true),
+          blazeBinaryPathField,
+          rowi++);
     }
     if (BuildSystemProvider.isBuildSystemAvailable(BuildSystem.Bazel)) {
-      addBinaryLocationSetting(new JLabel("Bazel binary location"), bazelBinaryPathField, rowi++);
+      addBinaryLocationSetting(
+          helper.createSearchableLabel("Bazel binary location", true),
+          bazelBinaryPathField,
+          rowi++);
     }
 
     myMainPanel.add(

@@ -15,15 +15,17 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import java.io.File;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -35,17 +37,22 @@ public class TestTargetSourcesHeuristic implements TestTargetHeuristic {
   @Override
   public boolean matchesSource(
       Project project,
-      TargetIdeInfo target,
+      TargetInfo target,
       @Nullable PsiFile sourcePsiFile,
       File sourceFile,
       @Nullable TestSize testSize) {
+    Optional<ImmutableList<ArtifactLocation>> sources = target.getSources();
+    if (!sources.isPresent()) {
+      return false;
+    }
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null) {
       return false;
     }
+
     ArtifactLocationDecoder decoder = projectData.artifactLocationDecoder;
-    for (ArtifactLocation src : target.sources) {
+    for (ArtifactLocation src : sources.get()) {
       if (decoder.decode(src).equals(sourceFile)) {
         return true;
       }

@@ -17,12 +17,12 @@ package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.sdkcompat.cidr.CidrSwitchBuilderAdapter;
 import com.google.idea.sdkcompat.cidr.OCCompilerSettingsAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
+import com.jetbrains.cidr.lang.toolchains.CidrSwitchBuilder;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
 import com.jetbrains.cidr.lang.toolchains.DefaultCidrToolEnvironment;
 import com.jetbrains.cidr.lang.workspace.compiler.CidrCompilerResult;
@@ -99,7 +99,7 @@ final class BlazeCompilerSettings extends OCCompilerSettingsAdapter {
     if (lang == OCLanguageKind.CPP) {
       return cppCompilerSwitches;
     }
-    return new CidrSwitchBuilderAdapter().build();
+    return new CidrSwitchBuilder().build();
   }
 
   String getCompilerVersion() {
@@ -107,7 +107,7 @@ final class BlazeCompilerSettings extends OCCompilerSettingsAdapter {
   }
 
   private static CidrCompilerSwitches getCompilerSwitches(List<String> allCompilerFlags) {
-    return new CidrSwitchBuilderAdapter().addAllRaw(allCompilerFlags).build();
+    return new CidrSwitchBuilder().addAllRaw(allCompilerFlags).build();
   }
 
   public CidrCompilerResult<Entry> getCompilerInfo(

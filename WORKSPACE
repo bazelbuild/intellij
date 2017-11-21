@@ -5,86 +5,37 @@ workspace(name = "intellij_with_bazel")
 # The plugin api for IntelliJ 2017.2. This is required to build IJwB,
 # and run integration tests.
 new_http_archive(
-    name = "intellij_ce_2017_2_3",
+    name = "intellij_ce_2017_2_6",
     build_file = "intellij_platform_sdk/BUILD.idea",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2017.2.3/ideaIC-2017.2.3.zip",
-    sha256 = "423ae4ae94da7e37807afb859928416965f03c397278b43a251c95212f8a552e",
-)
-
-# The plugin api for IntelliJ 2017.1. This is required to build IJwB,
-# and run integration tests.
-new_http_archive(
-    name = "intellij_ce_2017_1_5",
-    build_file = "intellij_platform_sdk/BUILD.idea",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2017.1.5/ideaIC-2017.1.5.zip",
-    sha256 = "d11beb116f500ecbf75b0a1098dfaad696bc8a15edceae163f53bc511ab79445"
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2017.2.6/ideaIC-2017.2.6.zip",
+    sha256 = "4d1c873c0bcc10ec12a1a13580003846e94b328ad1246601fd41d147340bde6f",
 )
 
 # The plugin api for IntelliJ UE 2017.2. This is required to run UE-specific
 # integration tests.
 new_http_archive(
-    name = "intellij_ue_2017_2_3",
+    name = "intellij_ue_2017_2_6",
     build_file = "intellij_platform_sdk/BUILD.idea",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2017.2.3/ideaIU-2017.2.3.zip",
-    sha256 = "080be11393fc8b64766dc6ecacdf8a3eaa507e55c01b1f63734db441a003f6ea",
-)
-
-# The plugin api for IntelliJ UE 2017.1. This is required to run UE-specific
-# integration tests.
-new_http_archive(
-    name = "intellij_ue_2017_1_5",
-    build_file = "intellij_platform_sdk/BUILD.idea",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2017.1.5/ideaIU-2017.1.5.zip",
-    sha256 = "6d887f79ca7853923060499cac7778b30fc82414f112deb8245d59179892bbad"
-)
-
-# The plugin api for CLion 2017.1.1. This is required to build CLwB,
-# and run integration tests.
-new_http_archive(
-    name = "clion_2017_1_1",
-    build_file = "intellij_platform_sdk/BUILD.clion",
-    url = "https://download.jetbrains.com/cpp/CLion-2017.1.1.tar.gz",
-    sha256 = "9abd6bd38801ae6cf29db2cd133c700e8da11841093de872312fe33ed51309ae",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2017.2.6/ideaIU-2017.2.6.zip",
+    sha256 = "b5876759195be367822e39ba63b07e579713492fbd902137641dec7707602cc0",
 )
 
 # The plugin api for CLion 2017.2.0. This is required to build CLwB,
 # and run integration tests.
 new_http_archive(
-    name = "clion_2017_2_2",
+    name = "clion_2017_2_3",
     build_file = "intellij_platform_sdk/BUILD.clion",
-    url = "https://download.jetbrains.com/cpp/CLion-2017.2.2.tar.gz",
-    sha256 = "a019cd2469ecda7d93f3cd7ad3b8e349f374425783f6b4a54181907f6264d6e6",
+    url = "https://download.jetbrains.com/cpp/CLion-2017.2.3.tar.gz",
+    sha256 = "dd1979947371803a1e11f5bdaf04e3ef2d013b90b56e84495c6e67e67cb31e0a",
 )
 
-# The plugin api for Android Studio 2.3.1. This is required to build ASwB,
+# The plugin api for Android Studio 3.0. This is required to build ASwB,
 # and run integration tests.
 new_http_archive(
-    name = "android_studio_2_3_1_0",
+    name = "android_studio_3_0_0_18",
     build_file = "intellij_platform_sdk/BUILD.android_studio",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2.3.1.0/android-studio-ide-162.3871768-linux.zip",
-    sha256 = "36520f21678f80298b5df5fe5956db17a5984576f895fdcaa36ab0dbfb408433",
-)
-
-# The plugin api for Android Studio 3.0 Beta 5. This is required to build ASwB,
-# and run integration tests.
-new_http_archive(
-    name = "android_studio_3_0_0_13",
-    build_file = "intellij_platform_sdk/BUILD.android_studio",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/3.0.0.13/android-studio-ide-171.4316950-linux.zip",
-    sha256 = "accab8a8270bcc8c273ff980d26195dad3ea77839741e4dcd01cad5bd8ac462a",
-)
-
-# Python plugin for IntelliJ CE 2017.1. Required at compile-time for python-specific features.
-new_http_archive(
-    name = "python_2017_1_4694",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'python',",
-        "    jars = ['python-ce/lib/python-ce.jar'],",
-        "    visibility = ['//visibility:public'],",
-        ")"]),
-    url = "https://download.plugins.jetbrains.com/7322/35756/python-ce-2017.1.171.4694.26.zip",
-    sha256 = "640d116ff01bcc2f87c75d20da642f17fcd86ed69929e4e0247ffc0df8aa780f",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/3.0.0.18/android-studio-ide-171.4408382-linux.zip",
+    sha256 = "7991f95ea1b6c55645a3fc48f1534d4135501a07b9d92dd83672f936d9a9d7a2",
 )
 
 # Python plugin for Android Studio 3.0. Required at compile-time for python-specific features.
@@ -126,19 +77,6 @@ new_http_archive(
     sha256 = "3e5eb5415a05e6c30e79c263135c2937cc05e310e553889bd69eefa819705f9c",
 )
 
-# Go plugin for IntelliJ UE and CLion 2017.1.5. Required at compile-time for Bazel integration.
-new_http_archive(
-    name = "go_2017_1",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'go',",
-        "    jars = glob(['intellij-go/lib/*.jar']),",
-        "    visibility = ['//visibility:public'],",
-        ")"]),
-    url = "https://download.plugins.jetbrains.com/9568/36389/intellij-go-171.4694.61.zip",
-    sha256 = "16bf70045360c1c2a056c9ae540626dffa3680b8283cb89febaff3a9499b7101",
-)
-
 # Scala plugin for IntelliJ CE 2017.2 EAP. Required at compile-time for scala-specific features.
 new_http_archive(
     name = "scala_2017_2",
@@ -156,25 +94,6 @@ new_http_archive(
         ")"]),
    url = "https://download.plugins.jetbrains.com/1347/35283/scala-intellij-bin-2017.2.2.zip",
     sha256 = "1f0eef98da44dbc3f4f22b399a9175897aca448fd80405eca77fd61bd5fb7219",
-)
-
-# Scala plugin for IntelliJ CE 2017.1. Required at compile-time for scala-specific features.
-new_http_archive(
-    name = "scala_2017_1",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'scala',",
-        "    jars = [",
-        "        'Scala/lib/scala-plugin.jar',",
-        "        'Scala/lib/compiler-settings.jar',",
-        "        'Scala/lib/scala-library.jar',",
-        "        'Scala/lib/scalameta120.jar',",
-        "        'Scala/lib/scalatest-finders-patched.jar',",
-        "    ],",
-        "    visibility = ['//visibility:public'],",
-        ")"]),
-    url = "https://plugins.jetbrains.com/files/1347/33637/scala-intellij-bin-2017.1.15.zip",
-    sha256 = "b58670a3b52584effc6dd3d014e77fe80e2795b5e5e58716548ecc1452eca6cf",
 )
 
 # LICENSE: Common Public License 1.0
@@ -251,7 +170,7 @@ http_archive(
     urls = ["https://github.com/google/protobuf/archive/master.zip"],
 )
 
-rules_scala_version="a72dc8bb2033fed96deec39420b99331a2119a4e"
+rules_scala_version="85308acbd316477f3072e033e7744debcba4f054"
 
 # LICENSE: The Apache Software License, Version 2.0
 http_archive(

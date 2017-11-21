@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
-import com.google.idea.sdkcompat.android.sync.BlazeNdkDependencySyncPluginCompat;
 import com.intellij.openapi.project.Project;
 import java.util.stream.Collectors;
 
@@ -49,12 +48,7 @@ public final class BlazeNdkDependencySyncPlugin implements BlazeSyncPlugin {
   }
 
   private static final ImmutableList<PluginNameAndId> REQUIRED_PLUGINS =
-      ImmutableList.copyOf(
-          BlazeNdkDependencySyncPluginCompat.REQUIRED_PLUGINS
-              .entrySet()
-              .stream()
-              .map(e -> new PluginNameAndId(e.getKey(), e.getValue()))
-              .collect(Collectors.toList()));
+      ImmutableList.of(new PluginNameAndId("Android NDK Support", "com.android.tools.ndk"));
 
   /** Returns the IDs of the plugins required for NDK support. */
   @VisibleForTesting

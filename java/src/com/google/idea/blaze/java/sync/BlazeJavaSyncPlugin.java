@@ -58,7 +58,7 @@ import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider;
 import com.google.idea.blaze.java.sync.projectstructure.Jdks;
 import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
-import com.google.idea.sdkcompat.transactions.Transactions;
+import com.google.idea.common.transactions.Transactions;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;

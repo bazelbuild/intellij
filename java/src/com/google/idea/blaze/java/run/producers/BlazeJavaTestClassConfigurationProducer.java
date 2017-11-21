@@ -18,8 +18,8 @@ package com.google.idea.blaze.java.run.producers;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
@@ -35,6 +35,7 @@ import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiModifier;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -68,7 +69,7 @@ public class BlazeJavaTestClassConfigurationProducer
    * {@code null} if something else is selected.
    */
   @Nullable
-  private static TestLocation getSingleJUnitTestClass(ConfigurationContext context) {
+  private TestLocation getSingleJUnitTestClass(ConfigurationContext context) {
     Location<?> location = context.getLocation();
     if (location == null) {
       return null;
@@ -90,13 +91,15 @@ public class BlazeJavaTestClassConfigurationProducer
     }
 
     PsiClass testClass = JUnitUtil.getTestClass(location);
-    if (testClass == null || testClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if (testClass == null
+        || !supportsClass(testClass)
+        || testClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return null;
     }
 
-    TestIdeInfo.TestSize testSize = TestSizeAnnotationMap.getTestSize(testClass);
-    TargetIdeInfo target = RunUtil.targetForTestClass(testClass, testSize);
-    return target != null ? new TestLocation(testClass, target.key.label) : null;
+    TestSize testSize = TestSizeAnnotationMap.getTestSize(testClass);
+    TargetInfo target = RunUtil.targetForTestClass(testClass, testSize);
+    return target != null ? new TestLocation(testClass, target.label) : null;
   }
 
   @Override
@@ -175,5 +178,14 @@ public class BlazeJavaTestClassConfigurationProducer
     Map<PsiClass, Collection<Location<?>>> methodsPerClass =
         innerTestClasses.stream().collect(Collectors.toMap(c -> c, c -> ImmutableList.of()));
     return BlazeJUnitTestFilterFlags.testFilterForClassesAndMethods(methodsPerClass);
+  }
+
+  /**
+   * So we don't unexpectedly create configurations for other languages.
+   *
+   * <p>TODO(b/69622799): remove after fixing {@link #doIsConfigFromContext}
+   */
+  protected boolean supportsClass(PsiClass psiClass) {
+    return psiClass.getContainingFile() instanceof PsiJavaFile;
   }
 }

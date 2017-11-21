@@ -49,7 +49,7 @@ public class AllInPackageBlazeConfigurationProducer
     if (dir == null) {
       return false;
     }
-    WorkspaceRoot root = WorkspaceRoot.fromProject(context.getModule().getProject());
+    WorkspaceRoot root = WorkspaceRoot.fromProject(context.getProject());
     WorkspacePath packagePath = getWorkspaceRelativeDirectoryPath(root, dir);
     if (packagePath == null) {
       return false;
@@ -75,7 +75,7 @@ public class AllInPackageBlazeConfigurationProducer
     if (dir == null) {
       return false;
     }
-    WorkspaceRoot root = WorkspaceRoot.fromProject(context.getModule().getProject());
+    WorkspaceRoot root = WorkspaceRoot.fromProject(context.getProject());
     WorkspacePath packagePath = getWorkspaceRelativeDirectoryPath(root, dir);
     if (packagePath == null) {
       return false;
@@ -92,7 +92,7 @@ public class AllInPackageBlazeConfigurationProducer
 
   @Nullable
   private static PsiDirectory getTestDirectory(ConfigurationContext context) {
-    WorkspaceRoot root = WorkspaceRoot.fromProject(context.getModule().getProject());
+    WorkspaceRoot root = WorkspaceRoot.fromProject(context.getProject());
     PsiElement location = context.getPsiLocation();
     if (!(location instanceof PsiDirectory)) {
       return null;

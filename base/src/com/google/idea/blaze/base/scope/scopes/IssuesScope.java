@@ -19,7 +19,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.ui.BlazeProblemsView;
+import com.google.idea.blaze.base.ui.problems.BlazeProblemsView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -63,7 +63,7 @@ public class IssuesScope implements BlazeScope, OutputSink<IssueOutput> {
 
   private void focusProblemsView() {
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    ToolWindow toolWindow = toolWindowManager.getToolWindow("Problems");
+    ToolWindow toolWindow = toolWindowManager.getToolWindow(BlazeProblemsView.TOOL_WINDOW_ID);
     if (toolWindow != null) {
       toolWindow.activate(null, false, false);
     }

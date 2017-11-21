@@ -26,6 +26,12 @@ public interface BlazeSelectWorkspaceOption extends BlazeWizardOption {
   /** @return The workspace root that will be created after commit. */
   WorkspaceRoot getWorkspaceRoot();
 
+  /** @return The vcs root containing the workspace. */
+  @Nullable
+  File getVcsRoot();
+
+  boolean allowProjectDataInVcsRoot();
+
   /** @return A workspace path resolver to use during wizard validation. */
   WorkspacePathResolver getWorkspacePathResolver();
 

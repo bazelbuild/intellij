@@ -17,9 +17,8 @@ package com.google.idea.blaze.base.run;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
@@ -31,10 +30,8 @@ import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
-import java.util.List;
-import java.util.function.Predicate;
+import javax.annotation.Nullable;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -49,8 +46,7 @@ public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
   private BlazeCommandRunConfiguration configuration;
 
   @Override
-  protected void initTest(
-      @NotNull Container applicationServices, @NotNull Container projectServices) {
+  protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
 
     applicationServices.register(UISettings.class, new UISettings());
@@ -58,7 +54,11 @@ public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
     applicationServices.register(ExperimentService.class, new MockExperimentService());
-    applicationServices.register(TargetFinder.class, new MockTargetFinder());
+
+    ExtensionPointImpl<TargetFinder> targetFinderEp =
+        registerExtensionPoint(TargetFinder.EP_NAME, TargetFinder.class);
+    targetFinderEp.registerExtension(new MockTargetFinder());
+
     ExtensionPointImpl<BlazeCommandRunConfigurationHandlerProvider> handlerProviderEp =
         registerExtensionPoint(
             BlazeCommandRunConfigurationHandlerProvider.EP_NAME,
@@ -93,10 +93,11 @@ public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
     assertThat(readConfiguration.getTarget()).isEqualTo(configuration.getTarget());
   }
 
-  private static class MockTargetFinder extends TargetFinder {
+  private static class MockTargetFinder implements TargetFinder {
+    @Nullable
     @Override
-    public List<TargetIdeInfo> findTargets(Project project, Predicate<TargetIdeInfo> predicate) {
-      return ImmutableList.of();
+    public TargetInfo findTarget(Project project, Label label) {
+      return null;
     }
   }
 }
