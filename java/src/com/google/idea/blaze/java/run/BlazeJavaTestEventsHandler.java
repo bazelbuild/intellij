@@ -45,8 +45,7 @@ public class BlazeJavaTestEventsHandler implements BlazeTestEventsHandler {
           Kind.JAVA_TEST,
           Kind.ANDROID_ROBOLECTRIC_TEST,
           Kind.GWT_TEST,
-          Kind.SCALA_TEST,
-          Kind.SCALA_JUNIT_TEST);
+          Kind.SCALA_TEST);
 
   @Override
   public boolean handlesKind(@Nullable Kind kind) {
