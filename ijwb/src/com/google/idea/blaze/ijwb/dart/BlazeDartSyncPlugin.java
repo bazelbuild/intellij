@@ -27,7 +27,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
-import com.google.idea.sdkcompat.dart.DartSdkCompatUtils;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -68,7 +67,7 @@ public class BlazeDartSyncPlugin implements BlazeSyncPlugin {
       return;
     }
 
-    Library dartSdkLibrary = DartSdkCompatUtils.findDartLibrary(project);
+    Library dartSdkLibrary = DartSdkUtils.findDartLibrary(project);
     if (dartSdkLibrary != null) {
       if (workspaceModifiableModel.findLibraryOrderEntry(dartSdkLibrary) == null) {
         workspaceModifiableModel.addLibraryEntry(dartSdkLibrary);

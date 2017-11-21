@@ -16,11 +16,6 @@ import javax.annotation.Nullable;
 /** Adapter to bridge different SDK versions. */
 public abstract class OCResolveConfigurationAdapter extends UserDataHolderBase
     implements OCResolveConfiguration {
-  /* v162/v163 */
-  public abstract VirtualFile getPrecompiledHeader();
-
-  /* v162/v163 */
-  public abstract OCLanguageKind getPrecompiledLanguageKind();
 
   /* v171 */
   public abstract OCCompilerMacros getCompilerMacros();

@@ -63,7 +63,6 @@ import javax.annotation.Nullable;
 public class JarCache {
   private static final Logger logger = Logger.getInstance(JarCache.class);
 
-  private final Project project;
   private final BlazeImportSettings importSettings;
   private final File cacheDir;
   private boolean enabled;
@@ -74,12 +73,11 @@ public class JarCache {
   }
 
   public JarCache(Project project) {
-    this.project = project;
     this.importSettings = BlazeImportSettingsManager.getInstance(project).getImportSettings();
     this.cacheDir = getCacheDir();
   }
 
-  public void onSync(
+  void onSync(
       BlazeContext context,
       ProjectViewSet projectViewSet,
       BlazeProjectData projectData,
@@ -97,9 +95,6 @@ public class JarCache {
       return;
     }
 
-    boolean attachAllSourceJars = BlazeJavaUserSettings.getInstance().getAttachSourcesByDefault();
-    SourceJarManager sourceJarManager = SourceJarManager.getInstance(project);
-
     List<BlazeJarLibrary> jarLibraries =
         libraries
             .stream()
@@ -114,15 +109,9 @@ public class JarCache {
           artifactLocationDecoder.decode(library.libraryArtifact.jarForIntellijLibrary());
       sourceFileToCacheKey.put(jarFile, cacheKeyForJar(jarFile));
 
-      boolean copySourceJar =
-          attachAllSourceJars
-              || BlazeSourceJarNavigationPolicy.cacheEnabled.getValue()
-              || sourceJarManager.hasSourceJarAttached(library.key);
-      if (copySourceJar) {
-        for (ArtifactLocation sourceJar : library.libraryArtifact.sourceJars) {
-          File srcJarFile = artifactLocationDecoder.decode(sourceJar);
-          sourceFileToCacheKey.put(srcJarFile, cacheKeyForSourceJar(srcJarFile));
-        }
+      for (ArtifactLocation sourceJar : library.libraryArtifact.sourceJars) {
+        File srcJarFile = artifactLocationDecoder.decode(sourceJar);
+        sourceFileToCacheKey.put(srcJarFile, cacheKeyForSourceJar(srcJarFile));
       }
     }
 

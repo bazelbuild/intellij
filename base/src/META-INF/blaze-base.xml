@@ -181,8 +181,6 @@
                         serviceImplementation="com.google.idea.blaze.base.io.VirtualFileSystemProviderImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.buildmodifier.BuildFileModifier"
                         serviceImplementation="com.google.idea.blaze.base.lang.buildfile.actions.BuildFileModifierImpl"/>
-    <applicationService serviceInterface="com.google.idea.blaze.base.run.targetfinder.TargetFinder"
-                        serviceImplementation="com.google.idea.blaze.base.run.targetfinder.TargetFinderImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.command.info.BlazeInfoRunner"
                         serviceImplementation="com.google.idea.blaze.base.command.info.BlazeInfoRunnerImpl"/>
 
@@ -218,7 +216,10 @@
                         serviceImplementation="com.google.idea.blaze.base.wizard2.BazelWizardOptionProvider"/>
     <projectService serviceInterface="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider"
                     serviceImplementation="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProviderImpl"/>
+    <projectService serviceInterface="com.google.idea.blaze.base.sync.workspace.SimpleWorkspacePathResolver$Provider"
+                    serviceImplementation="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProviderImpl"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.sync.SyncCache"/>
+    <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.BlazeProblemsView"/>
     <configurationType implementation="com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.base.run.producers.AllInPackageBlazeConfigurationProducer"
@@ -366,6 +367,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildSystemVersionChecker" interface="com.google.idea.blaze.base.plugin.BuildSystemVersionChecker"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeIssueParserProvider" interface="com.google.idea.blaze.base.issueparser.BlazeIssueParserProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SourceToTargetProvider" interface="com.google.idea.blaze.base.dependencies.SourceToTargetProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.TargetFinder" interface="com.google.idea.blaze.base.run.targetfinder.TargetFinder"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -393,6 +395,7 @@
     <TestUiSessionProvider implementation="com.google.idea.blaze.base.run.smrunner.BazelTestUiSessionProvider"/>
     <BuildSystemVersionChecker implementation="com.google.idea.blaze.base.plugin.BazelVersionChecker"/>
     <BlazeConsoleLineProcessorProvider implementation="com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider$GeneralProvider"/>
+    <TargetFinder implementation="com.google.idea.blaze.base.run.targetfinder.ProjectTargetFinder"/>
   </extensions>
 
 </idea-plugin>

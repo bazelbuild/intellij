@@ -19,8 +19,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
@@ -180,15 +180,15 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
 
   private static void setupContext(
       BlazeCommandRunConfiguration configuration, PsiClass subClass, @Nullable PsiMethod method) {
-    TestIdeInfo.TestSize testSize =
+    TestSize testSize =
         method != null
             ? TestSizeAnnotationMap.getTestSize(method)
             : TestSizeAnnotationMap.getTestSize(subClass);
-    TargetIdeInfo target = RunUtil.targetForTestClass(subClass, testSize);
+    TargetInfo target = RunUtil.targetForTestClass(subClass, testSize);
     if (target == null) {
       return;
     }
-    configuration.setTarget(target.key.label);
+    configuration.setTarget(target.label);
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {

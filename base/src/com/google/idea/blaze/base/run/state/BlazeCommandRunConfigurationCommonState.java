@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run.state;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
@@ -27,21 +28,25 @@ import javax.annotation.Nullable;
  * Shared state common to several {@link
  * com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler} types.
  */
-public final class BlazeCommandRunConfigurationCommonState extends RunConfigurationCompositeState {
+public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCompositeState {
   private static final String USER_BLAZE_FLAG_TAG = "blaze-user-flag";
   private static final String USER_EXE_FLAG_TAG = "blaze-user-exe-flag";
 
-  private final BlazeCommandState command;
-  private final RunConfigurationFlagsState blazeFlags;
-  private final RunConfigurationFlagsState exeFlags;
-  private final BlazeBinaryState blazeBinary;
+  protected final BlazeCommandState command;
+  protected final RunConfigurationFlagsState blazeFlags;
+  protected final RunConfigurationFlagsState exeFlags;
+  protected final BlazeBinaryState blazeBinary;
 
   public BlazeCommandRunConfigurationCommonState(BuildSystem buildSystem) {
     command = new BlazeCommandState();
     blazeFlags = new RunConfigurationFlagsState(USER_BLAZE_FLAG_TAG, buildSystem + " flags:");
     exeFlags = new RunConfigurationFlagsState(USER_EXE_FLAG_TAG, "Executable flags:");
     blazeBinary = new BlazeBinaryState();
-    addStates(command, blazeFlags, exeFlags, blazeBinary);
+  }
+
+  @Override
+  protected ImmutableList<RunConfigurationState> initializeStates() {
+    return ImmutableList.of(command, blazeFlags, exeFlags, blazeBinary);
   }
 
   /** @return The list of blaze flags that the user specified manually. */

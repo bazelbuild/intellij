@@ -110,19 +110,6 @@ class StubOCResolveConfiguration extends OCResolveConfigurationAdapter {
     return OCWorkspaceUtil.compareConfigurations(this, o);
   }
 
-  /* v162/v163 */
-  @Nullable
-  @Override
-  public VirtualFile getPrecompiledHeader() {
-    return null;
-  }
-
-  /* v162/v163 */
-  @Override
-  public OCLanguageKind getPrecompiledLanguageKind() {
-    return getMaximumLanguageKind();
-  }
-
   /* v172 */
   @Nullable
   @Override

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.sync.model.idea;
 
 import com.android.SdkConstants;
+import com.android.tools.idea.model.ClassJarProvider;
 import com.android.tools.idea.res.AppResourceRepository;
 import com.android.tools.idea.res.ResourceClassRegistry;
 import com.google.common.collect.ImmutableList;
@@ -32,8 +33,6 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
-import com.google.idea.sdkcompat.android.res.AppResourceRepositoryAdapter;
-import com.google.idea.sdkcompat.android.sync.model.idea.ClassJarProviderCompat;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
@@ -52,7 +51,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /** Collects class jars from the user's build. */
-public class BlazeClassJarProvider extends ClassJarProviderCompat {
+public class BlazeClassJarProvider extends ClassJarProvider {
 
   private final Project project;
   private final AtomicBoolean pendingJarsRefresh;
@@ -142,7 +141,7 @@ public class BlazeClassJarProvider extends ClassJarProviderCompat {
   }
 
   @Override
-  public List<File> getModuleExternalLibrariesCompat(Module module) {
+  public List<File> getModuleExternalLibraries(Module module) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
 
@@ -160,7 +159,7 @@ public class BlazeClassJarProvider extends ClassJarProviderCompat {
       return ImmutableList.of();
     }
 
-    AppResourceRepository repository = AppResourceRepositoryAdapter.getOrCreateInstance(module);
+    AppResourceRepository repository = AppResourceRepository.getOrCreateInstance(module);
     ImmutableList.Builder<File> results = ImmutableList.builder();
     for (TargetKey dependencyTargetKey :
         TransitiveDependencyMap.getInstance(project).getTransitiveDependencies(target.key)) {

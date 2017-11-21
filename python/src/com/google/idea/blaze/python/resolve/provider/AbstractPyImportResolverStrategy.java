@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.python.resolve.BlazePyResolverUtils;
-import com.google.idea.sdkcompat.python.PyQualifiedNameResolveContextAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -35,6 +34,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
@@ -50,7 +50,7 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
   @Nullable
   @Override
   public final PsiElement resolveFromSyncData(
-      QualifiedName name, PyQualifiedNameResolveContextAdapter context) {
+      QualifiedName name, PyQualifiedNameResolveContext context) {
     PySourcesIndex index = getSourcesIndex(context.getProject());
     if (index == null) {
       return null;

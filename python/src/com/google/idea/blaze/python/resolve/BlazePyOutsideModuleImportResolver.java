@@ -17,9 +17,6 @@ package com.google.idea.blaze.python.resolve;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.python.PySdkUtils;
-import com.google.idea.sdkcompat.python.PyImportResolverAdapter;
-import com.google.idea.sdkcompat.python.PyQualifiedNameResolveContextAdapter;
-import com.google.idea.sdkcompat.python.ResolveImportCompatUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
@@ -28,16 +25,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.impl.PyImportResolver;
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import javax.annotation.Nullable;
 
 /** Resolves python SDK imports in files outside the project (e.g. in bazel-genfiles). */
-public class BlazePyOutsideModuleImportResolver implements PyImportResolverAdapter {
+public class BlazePyOutsideModuleImportResolver implements PyImportResolver {
 
   @Nullable
   @Override
   public PsiElement resolveImportReference(
-      QualifiedName name, PyQualifiedNameResolveContextAdapter context, boolean withRoots) {
+      QualifiedName name, PyQualifiedNameResolveContext context, boolean withRoots) {
     Project project = context.getProject();
     if (!Blaze.isBlazeProject(project)) {
       return null;
@@ -77,7 +77,7 @@ public class BlazePyOutsideModuleImportResolver implements PyImportResolverAdapt
   private static PsiElement resolveModuleAt(
       @Nullable PsiDirectory directory,
       QualifiedName qualifiedName,
-      PyQualifiedNameResolveContextAdapter context) {
+      PyQualifiedNameResolveContext context) {
     if (directory == null || !directory.isValid()) {
       return null;
     }
@@ -87,7 +87,7 @@ public class BlazePyOutsideModuleImportResolver implements PyImportResolverAdapt
         return null;
       }
       seeker =
-          ResolveImportCompatUtils.resolveChild(
+          ResolveImportUtil.resolveChild(
               seeker, name, context.getFootholdFile(), false, true, false);
     }
     return seeker;

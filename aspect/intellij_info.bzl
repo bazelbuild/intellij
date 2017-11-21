@@ -26,10 +26,10 @@ def get_go_import_path(ctx):
   return import_path
 
 semantics = struct(
-    tool_label = tool_label,
     go = struct(
         get_import_path = get_go_import_path,
     ),
+    tool_label = tool_label,
 )
 
 def _aspect_impl(target, ctx):

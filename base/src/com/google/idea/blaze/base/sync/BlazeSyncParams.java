@@ -67,7 +67,7 @@ public final class BlazeSyncParams {
       return this;
     }
 
-    public Builder addTargetExpressions(Collection<TargetExpression> targets) {
+    public Builder addTargetExpressions(Collection<? extends TargetExpression> targets) {
       this.targetExpressions.addAll(targets);
       return this;
     }

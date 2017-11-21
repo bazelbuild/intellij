@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.base.run.filter.BlazeTargetFilter.TARGET_PATTERN;
 
 import java.util.regex.Matcher;
+import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -30,32 +31,53 @@ public class BlazeTargetFilterTest {
   @Test
   public void testSimpleTarget() {
     String line = "Something //package:target_name something else";
-    Matcher matcher = TARGET_PATTERN.matcher(line);
-    assertThat(matcher.find()).isTrue();
-    assertThat(matcher.group()).isEqualTo("//package:target_name");
+    assertThat(findMatch(line)).isEqualTo("//package:target_name");
   }
 
   @Test
   public void testExternalWorkspaceTarget() {
     String line = "Something @ext//package:target_name something else";
-    Matcher matcher = TARGET_PATTERN.matcher(line);
-    assertThat(matcher.find()).isTrue();
-    assertThat(matcher.group()).isEqualTo("@ext//package:target_name");
+    assertThat(findMatch(line)).isEqualTo("@ext//package:target_name");
   }
 
   @Test
   public void testQuotedTarget() {
     String line = "Something '//package:target_name' something else";
-    Matcher matcher = TARGET_PATTERN.matcher(line);
-    assertThat(matcher.find()).isTrue();
-    assertThat(matcher.group()).isEqualTo("//package:target_name");
+    assertThat(findMatch(line)).isEqualTo("//package:target_name");
   }
 
   @Test
   public void testUnusualCharsInTarget() {
     String line = "Something //Package-._$():T0+,=~#target_@name something else";
+    assertThat(findMatch(line)).isEqualTo("//Package-._$():T0+,=~#target_@name");
+  }
+
+  @Test
+  public void testMatchesTargetInSubDirectory() {
+    String line = "Something //package:path/to/file";
+    assertThat(findMatch(line)).isEqualTo("//package:path/to/file");
+  }
+
+  @Test
+  public void testMatchesTargetAtStartOfLine() {
+    String line = "//package:name";
+    assertThat(findMatch(line)).isEqualTo("//package:name");
+  }
+
+  @Test
+  public void testDoesNotMatchMidText() {
+    String line = "text//path/to/package";
+    assertThat(findMatch(line)).isNull();
+  }
+
+  @Nullable
+  private static String findMatch(String line) {
     Matcher matcher = TARGET_PATTERN.matcher(line);
-    assertThat(matcher.find()).isTrue();
-    assertThat(matcher.group()).isEqualTo("//Package-._$():T0+,=~#target_@name");
+    if (!matcher.find()) {
+      return null;
+    }
+    String labelString = matcher.group();
+    String prefix = matcher.group(1);
+    return prefix != null ? labelString.substring(prefix.length()) : labelString;
   }
 }

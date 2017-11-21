@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.run.smrunner;
 
 import com.google.common.base.Strings;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -86,8 +86,8 @@ public interface BlazeTestEventsHandler {
     if (!(target instanceof Label)) {
       return null;
     }
-    TargetIdeInfo targetInfo = TargetFinder.getInstance().targetForLabel(project, (Label) target);
-    return targetInfo != null ? targetInfo.kind : null;
+    TargetInfo targetInfo = TargetFinder.findTargetInfo(project, (Label) target);
+    return targetInfo != null ? targetInfo.getKind() : null;
   }
 
   boolean handlesKind(@Nullable Kind kind);

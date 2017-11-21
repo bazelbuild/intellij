@@ -18,19 +18,16 @@ package com.google.idea.blaze.java.settings;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.SearchableOptionsHelper;
 import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsContributor;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.core.GridConstraints;
 import javax.swing.JCheckBox;
-import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 /** Contributes java-specific settings. */
 public class BlazeJavaUserSettingsContributor implements BlazeUserSettingsContributor {
   private JCheckBox useJarCache;
-  private JCheckBox attachSourcesByDefault;
-  private JCheckBox attachSourcesOnDemand;
-  private final ImmutableList<JComponent> components;
+  private final ImmutableList<JCheckBox> components;
 
   BlazeJavaUserSettingsContributor() {
     useJarCache = new JCheckBox();
@@ -39,58 +36,25 @@ public class BlazeJavaUserSettingsContributor implements BlazeUserSettingsContri
             "Use a local jar cache. More robust, but we can miss %s changes made outside the IDE.",
             Blaze.defaultBuildSystemName()));
 
-    attachSourcesByDefault = new JCheckBox();
-    attachSourcesByDefault.setSelected(false);
-    attachSourcesByDefault.setText(
-        "Automatically attach sources on project sync (WARNING: increases index time by 100%+)");
-
-    attachSourcesByDefault.addActionListener(
-        (event) -> {
-          BlazeJavaUserSettings settings = BlazeJavaUserSettings.getInstance();
-          if (attachSourcesByDefault.isSelected() && !settings.getAttachSourcesByDefault()) {
-            int result =
-                Messages.showOkCancelDialog(
-                    "You are turning on source jars by default. "
-                        + "This setting increases indexing time by "
-                        + ">100%, can cost ~1GB RAM, and will increase "
-                        + "project reopen time significantly. "
-                        + "Are you sure you want to proceed?",
-                    "Turn On Sources By Default?", null);
-            if (result != Messages.OK) {
-              attachSourcesByDefault.setSelected(false);
-            }
-          }
-        });
-
-    attachSourcesOnDemand = new JCheckBox();
-    attachSourcesOnDemand.setSelected(false);
-    attachSourcesOnDemand.setText("Automatically attach sources when you open decompiled source");
-
-    components = ImmutableList.of(useJarCache, attachSourcesOnDemand, attachSourcesByDefault);
+    components = ImmutableList.of(useJarCache);
   }
 
   @Override
   public void apply() {
     BlazeJavaUserSettings settings = BlazeJavaUserSettings.getInstance();
     settings.setUseJarCache(useJarCache.isSelected());
-    settings.setAttachSourcesByDefault(attachSourcesByDefault.isSelected());
-    settings.setAttachSourcesOnDemand(attachSourcesOnDemand.isSelected());
   }
 
   @Override
   public void reset() {
     BlazeJavaUserSettings settings = BlazeJavaUserSettings.getInstance();
     useJarCache.setSelected(settings.getUseJarCache());
-    attachSourcesByDefault.setSelected(settings.getAttachSourcesByDefault());
-    attachSourcesOnDemand.setSelected(settings.getAttachSourcesOnDemand());
   }
 
   @Override
   public boolean isModified() {
     BlazeJavaUserSettings settings = BlazeJavaUserSettings.getInstance();
-    return !Objects.equal(useJarCache.isSelected(), settings.getUseJarCache())
-        || !Objects.equal(attachSourcesByDefault.isSelected(), settings.getAttachSourcesByDefault())
-        || !Objects.equal(attachSourcesOnDemand.isSelected(), settings.getAttachSourcesOnDemand());
+    return !Objects.equal(useJarCache.isSelected(), settings.getUseJarCache());
   }
 
   @Override
@@ -99,8 +63,9 @@ public class BlazeJavaUserSettingsContributor implements BlazeUserSettingsContri
   }
 
   @Override
-  public int addComponents(JPanel panel, int rowi) {
-    for (JComponent contributedComponent : components) {
+  public int addComponents(JPanel panel, SearchableOptionsHelper helper, int rowi) {
+    for (JCheckBox contributedComponent : components) {
+      helper.registerLabelText(contributedComponent.getText(), true);
       panel.add(
           contributedComponent,
           new GridConstraints(

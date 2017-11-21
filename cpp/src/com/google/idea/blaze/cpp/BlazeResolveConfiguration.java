@@ -235,19 +235,6 @@ final class BlazeResolveConfiguration extends OCResolveConfigurationAdapter {
     return configurationData.toolchainIdeInfo;
   }
 
-  /* #api163 */
-  @Nullable
-  @Override
-  public VirtualFile getPrecompiledHeader() {
-    return null;
-  }
-
-  /* #api163 */
-  @Override
-  public OCLanguageKind getPrecompiledLanguageKind() {
-    return getMaximumLanguageKind();
-  }
-
   /* #api171 */
   @Override
   public Set<VirtualFile> getPrecompiledHeaders() {

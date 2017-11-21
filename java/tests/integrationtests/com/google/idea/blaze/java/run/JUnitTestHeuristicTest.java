@@ -18,6 +18,7 @@ package com.google.idea.blaze.java.run;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiFile;
@@ -65,8 +66,12 @@ public class JUnitTestHeuristicTest extends BlazeIntegrationTestCase {
             "  public void testMethod2() {}",
             "}");
     File file = new File(psiFile.getVirtualFile().getPath());
-    TargetIdeInfo target =
-        TargetIdeInfo.builder().setLabel("//foo:AllJUnit4Tests").setKind("java_test").build();
+    TargetInfo target =
+        TargetIdeInfo.builder()
+            .setLabel("//foo:AllJUnit4Tests")
+            .setKind("java_test")
+            .build()
+            .toTargetInfo();
     assertThat(new JUnitTestHeuristic().matchesSource(getProject(), target, psiFile, file, null))
         .isTrue();
   }
@@ -88,8 +93,12 @@ public class JUnitTestHeuristicTest extends BlazeIntegrationTestCase {
             "  public void testMethod2() {}",
             "}");
     File file = new File(psiFile.getVirtualFile().getPath());
-    TargetIdeInfo target =
-        TargetIdeInfo.builder().setLabel("//foo:unrelatedName").setKind("java_test").build();
+    TargetInfo target =
+        TargetIdeInfo.builder()
+            .setLabel("//foo:unrelatedName")
+            .setKind("java_test")
+            .build()
+            .toTargetInfo();
     assertThat(new JUnitTestHeuristic().matchesSource(getProject(), target, psiFile, file, null))
         .isFalse();
   }
@@ -98,8 +107,12 @@ public class JUnitTestHeuristicTest extends BlazeIntegrationTestCase {
   public void testNonJavaFileDoesNotMatch() {
     PsiFile psiFile = workspace.createPsiFile(new WorkspacePath("foo/script_test.py"));
     File file = new File(psiFile.getVirtualFile().getPath());
-    TargetIdeInfo target =
-        TargetIdeInfo.builder().setLabel("//foo:unrelatedName").setKind("py_test").build();
+    TargetInfo target =
+        TargetIdeInfo.builder()
+            .setLabel("//foo:unrelatedName")
+            .setKind("py_test")
+            .build()
+            .toTargetInfo();
     assertThat(new JUnitTestHeuristic().matchesSource(getProject(), target, psiFile, file, null))
         .isFalse();
   }
@@ -107,8 +120,12 @@ public class JUnitTestHeuristicTest extends BlazeIntegrationTestCase {
   @Test
   public void testNullPsiFileDoesNotMatch() {
     File file = new File("foo/script_test.py");
-    TargetIdeInfo target =
-        TargetIdeInfo.builder().setLabel("//foo:unrelatedName").setKind("py_test").build();
+    TargetInfo target =
+        TargetIdeInfo.builder()
+            .setLabel("//foo:unrelatedName")
+            .setKind("py_test")
+            .build()
+            .toTargetInfo();
     assertThat(new JUnitTestHeuristic().matchesSource(getProject(), target, null, file, null))
         .isFalse();
   }
@@ -130,8 +147,12 @@ public class JUnitTestHeuristicTest extends BlazeIntegrationTestCase {
             "  public void testMethod2() {}",
             "}");
     File file = new File(psiFile.getVirtualFile().getPath());
-    TargetIdeInfo target =
-        TargetIdeInfo.builder().setLabel("//foo:AllJUnit3Tests").setKind("java_test").build();
+    TargetInfo target =
+        TargetIdeInfo.builder()
+            .setLabel("//foo:AllJUnit3Tests")
+            .setKind("java_test")
+            .build()
+            .toTargetInfo();
     assertThat(new JUnitTestHeuristic().matchesSource(getProject(), target, psiFile, file, null))
         .isFalse();
   }

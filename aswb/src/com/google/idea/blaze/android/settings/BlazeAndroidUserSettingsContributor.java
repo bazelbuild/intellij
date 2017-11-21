@@ -16,27 +16,30 @@
 package com.google.idea.blaze.android.settings;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.project.BlazeFeatureEnableService;
+import com.google.idea.blaze.base.settings.SearchableOptionsHelper;
 import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsContributor;
 import com.intellij.uiDesigner.core.GridConstraints;
+import java.util.Map.Entry;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 /** Contributes Android-specific settings. */
 public class BlazeAndroidUserSettingsContributor implements BlazeUserSettingsContributor {
-  private final ImmutableList<JComponent> components;
+  private final ImmutableMap<String, JComponent> components;
   private JCheckBox useLayoutEditor;
 
   BlazeAndroidUserSettingsContributor() {
+    String text = "Use the layout editor for layout XML files. May freeze IDE.";
     useLayoutEditor = new JCheckBox();
     useLayoutEditor.setSelected(false);
-    useLayoutEditor.setText("Use the layout editor for layout XML files. May freeze IDE.");
+    useLayoutEditor.setText(text);
 
-    ImmutableList.Builder<JComponent> builder = ImmutableList.builder();
+    ImmutableMap.Builder<String, JComponent> builder = ImmutableMap.builder();
     if (BlazeFeatureEnableService.isLayoutEditorExperimentEnabled()) {
-      builder.add(useLayoutEditor);
+      builder.put(text, useLayoutEditor);
     }
     components = builder.build();
   }
@@ -65,10 +68,11 @@ public class BlazeAndroidUserSettingsContributor implements BlazeUserSettingsCon
   }
 
   @Override
-  public int addComponents(JPanel panel, int rowi) {
-    for (JComponent contributedComponent : components) {
+  public int addComponents(JPanel panel, SearchableOptionsHelper helper, int rowi) {
+    for (Entry<String, JComponent> component : components.entrySet()) {
+      helper.registerLabelText(component.getKey(), true);
       panel.add(
-          contributedComponent,
+          component.getValue(),
           new GridConstraints(
               rowi++,
               0,

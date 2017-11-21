@@ -1,12 +1,12 @@
 package com.google.idea.testing.cidr;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.sdkcompat.cidr.OCWorkspaceAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.OCFileType;
 import com.jetbrains.cidr.lang.symbols.OCSymbol;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
+import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,13 +14,12 @@ import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
-/** A stub {@link com.jetbrains.cidr.lang.workspace.OCWorkspace} to use for testing. */
-class StubOCWorkspace extends OCWorkspaceAdapter {
+/** A stub {@link OCWorkspace} to use for testing. */
+class StubOCWorkspace implements OCWorkspace {
 
   private final List<OCResolveConfiguration> resolveConfigurations;
 
   StubOCWorkspace(Project project) {
-    super(project);
     resolveConfigurations = new ArrayList<>();
     resolveConfigurations.add(new StubOCResolveConfiguration(project));
   }

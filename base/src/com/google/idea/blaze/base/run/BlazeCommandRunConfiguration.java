@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toList;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -207,9 +208,8 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   @Nullable
   private static Kind getKindForTarget(Project project, @Nullable TargetExpression target) {
     if (target instanceof Label) {
-      TargetIdeInfo targetIdeInfo =
-          TargetFinder.getInstance().targetForLabel(project, (Label) target);
-      return targetIdeInfo != null ? targetIdeInfo.kind : null;
+      TargetInfo targetInfo = TargetFinder.findTargetInfo(project, (Label) target);
+      return targetInfo != null ? targetInfo.getKind() : null;
     }
     return null;
   }
@@ -529,6 +529,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
       // finally, update the handler
       config.targetPattern = Strings.emptyToNull(targetField.getText());
+      config.updateHandler();
       updateEditor(config);
       if (config.handlerProvider != handlerProvider) {
         updateHandlerEditor(config);

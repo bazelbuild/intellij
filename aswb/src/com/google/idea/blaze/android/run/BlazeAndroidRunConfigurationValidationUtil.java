@@ -15,16 +15,16 @@
  */
 package com.google.idea.blaze.android.run;
 
+import com.android.tools.idea.project.AndroidProjectInfo;
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.sdkcompat.android.project.AndroidProjectInfoAdapter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -73,7 +73,7 @@ public final class BlazeAndroidRunConfigurationValidationUtil {
       return errors;
     }
     final Project project = module.getProject();
-    if (AndroidProjectInfoAdapter.requiredAndroidModelMissing(project)) {
+    if (AndroidProjectInfo.getInstance(project).requiredAndroidModelMissing()) {
       errors.add(ValidationError.fatal(SYNC_FAILED_ERR_MSG));
     }
     return errors;
@@ -98,12 +98,12 @@ public final class BlazeAndroidRunConfigurationValidationUtil {
       errors.add(ValidationError.fatal("No target selected."));
       return errors;
     }
-    TargetIdeInfo target = TargetFinder.getInstance().targetForLabel(project, label);
+    TargetInfo target = TargetFinder.findTargetInfo(project, label);
     if (target == null) {
       errors.add(
           ValidationError.fatal(
               String.format("No existing %s rule selected.", Blaze.buildSystemName(project))));
-    } else if (!target.kindIsOneOf(kind)) {
+    } else if (!kind.equals(target.getKind())) {
       errors.add(
           ValidationError.fatal(
               String.format(

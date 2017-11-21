@@ -44,7 +44,7 @@ public class ScalaMacroLibraryTest extends BazelIntellijAspectTest {
                 .stream()
                 .map(IntellijAspectTest::libraryArtifactToString)
                 .collect(Collectors.toList()))
-        .containsExactly(jarString(testRelative("simple.jar"), testRelative("simple.jar"), null));
+        .containsExactly(jarString(testRelative("simple.jar"), null, null));
 
     // Also contains ijars for scala-library.
     // Also contains jars + srcjars for liblibrary.

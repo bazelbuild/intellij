@@ -78,6 +78,7 @@ public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
               descriptor,
               uniqueId,
               env.getExecutor().getId(),
+              env.getExecutor().getActionName(),
               InstantRunUtils.isInstantRunEnabled(env));
       processHandler.putUserData(AndroidSessionInfo.KEY, sessionInfo);
     }

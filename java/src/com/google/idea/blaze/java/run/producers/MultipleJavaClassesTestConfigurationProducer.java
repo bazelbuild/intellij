@@ -19,8 +19,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -130,19 +130,19 @@ public class MultipleJavaClassesTestConfigurationProducer
     PsiElement location = context.getPsiLocation();
     if (location instanceof PsiDirectory) {
       PsiDirectory dir = (PsiDirectory) location;
-      TargetIdeInfo target = getTestTargetIfUnique(dir);
-      return target != null ? TestLocation.fromDirectory(target.key.label, dir) : null;
+      Label target = getTestTargetIfUnique(dir);
+      return target != null ? TestLocation.fromDirectory(target, dir) : null;
     }
     Set<PsiClass> testClasses = selectedTestClasses(context);
     if (testClasses.size() < 2) {
       return null;
     }
-    TargetIdeInfo target = getTestTargetIfUnique(testClasses);
+    Label target = getTestTargetIfUnique(testClasses);
     if (target == null) {
       return null;
     }
     testClasses = ProducerUtils.includeInnerTestClasses(testClasses);
-    return TestLocation.fromClasses(target.key.label, testClasses);
+    return TestLocation.fromClasses(target, testClasses);
   }
 
   private static Set<PsiClass> selectedTestClasses(ConfigurationContext context) {
@@ -159,7 +159,7 @@ public class MultipleJavaClassesTestConfigurationProducer
   }
 
   @Nullable
-  private static TargetIdeInfo getTestTargetIfUnique(PsiDirectory directory) {
+  private static Label getTestTargetIfUnique(PsiDirectory directory) {
     if (BlazePackage.hasBlazePackageChild(directory)) {
       return null;
     }
@@ -176,14 +176,14 @@ public class MultipleJavaClassesTestConfigurationProducer
   }
 
   @Nullable
-  private static TargetIdeInfo getTestTargetIfUnique(Set<PsiClass> classes) {
-    TargetIdeInfo testTarget = null;
+  private static Label getTestTargetIfUnique(Set<PsiClass> classes) {
+    Label testTarget = null;
     for (PsiClass psiClass : classes) {
-      TargetIdeInfo target = testTargetForClass(psiClass);
+      Label target = testTargetForClass(psiClass);
       if (target == null) {
         continue;
       }
-      if (testTarget != null && testTarget != target) {
+      if (testTarget != null && !testTarget.equals(target)) {
         return null;
       }
       testTarget = target;
@@ -192,13 +192,14 @@ public class MultipleJavaClassesTestConfigurationProducer
   }
 
   @Nullable
-  private static TargetIdeInfo testTargetForClass(PsiClass psiClass) {
+  private static Label testTargetForClass(PsiClass psiClass) {
     PsiClass testClass = JUnitUtil.getTestClass(psiClass);
     if (testClass == null || testClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return null;
     }
-    TestIdeInfo.TestSize testSize = TestSizeAnnotationMap.getTestSize(psiClass);
-    return RunUtil.targetForTestClass(psiClass, testSize);
+    TestSize testSize = TestSizeAnnotationMap.getTestSize(psiClass);
+    TargetInfo target = RunUtil.targetForTestClass(psiClass, testSize);
+    return target != null ? target.label : null;
   }
 
   private static class TestLocation {

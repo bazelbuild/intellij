@@ -20,7 +20,6 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
-import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.java.run.hotswap.ClassFileManifestBuilder;
@@ -41,16 +40,16 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
   private static final Logger logger = Logger.getInstance(BlazeJavaRunConfigurationHandler.class);
 
   private final String buildSystemName;
-  private final BlazeCommandRunConfigurationCommonState state;
+  private final BlazeJavaRunConfigState state;
 
   public BlazeJavaRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
     BuildSystem buildSystem = Blaze.getBuildSystem(configuration.getProject());
     this.buildSystemName = buildSystem.getName();
-    this.state = new BlazeCommandRunConfigurationCommonState(buildSystem);
+    this.state = new BlazeJavaRunConfigState(buildSystem);
   }
 
   @Override
-  public BlazeCommandRunConfigurationCommonState getState() {
+  public BlazeJavaRunConfigState getState() {
     return state;
   }
 

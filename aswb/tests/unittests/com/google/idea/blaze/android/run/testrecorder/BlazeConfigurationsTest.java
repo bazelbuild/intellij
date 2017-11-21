@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.bazel.WorkspaceRootProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -69,7 +70,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.List;
-import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -84,8 +84,11 @@ public class BlazeConfigurationsTest extends BlazeTestCase {
     super.initTest(applicationServices, projectServices);
 
     mockBlazeImportSettings(projectServices);
-    applicationServices.register(TargetFinder.class, new MockTargetFinder());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
+
+    ExtensionPointImpl<TargetFinder> targetFinderEp =
+        registerExtensionPoint(TargetFinder.EP_NAME, TargetFinder.class);
+    targetFinderEp.registerExtension(new MockTargetFinder());
 
     ExtensionPoint<ConfigurationType> configurationTypeExtensionPoint =
         registerExtensionPoint(ConfigurationType.CONFIGURATION_TYPE_EP, ConfigurationType.class);
@@ -195,21 +198,17 @@ public class BlazeConfigurationsTest extends BlazeTestCase {
         runManager.createConfiguration(blazeAndroidTestConfiguration, configurationFactory), true);
   }
 
-  private static class MockTargetFinder extends TargetFinder {
+  private static class MockTargetFinder implements TargetFinder {
+    @Nullable
     @Override
-    public List<TargetIdeInfo> findTargets(Project project, Predicate<TargetIdeInfo> predicate) {
-      return null;
-    }
-
-    @Override
-    public TargetIdeInfo targetForLabel(Project project, final Label label) {
+    public TargetInfo findTarget(Project project, Label label) {
       TargetIdeInfo.Builder builder = TargetIdeInfo.builder().setLabel(label);
       if (label.equals(Label.create("//label:android_binary_rule"))) {
         builder.setKind(Kind.ANDROID_BINARY);
       } else if (label.equals(Label.create("//label:android_test_rule"))) {
         builder.setKind(Kind.ANDROID_TEST);
       }
-      return builder.build();
+      return builder.build().toTargetInfo();
     }
   }
 

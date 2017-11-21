@@ -21,14 +21,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"
                         serviceImplementation="com.google.idea.blaze.plugin.ClwbPluginId"/>
-    <projectService serviceInterface="com.google.idea.blaze.base.ui.BlazeProblemsView"
-                    serviceImplementation="com.google.idea.blaze.clwb.problemsview.BlazeProblemsViewConsole"/>
-    <toolWindow id="Blaze Problems"
-                anchor="bottom"
-                secondary="false"
-                conditionClass="com.google.idea.blaze.base.settings.IsBlazeProjectCondition"
-                icon="BlazeIcons.BlazeToolWindow"
-                factoryClass="com.google.idea.blaze.clwb.problemsview.BlazeProblemsViewConsoleToolWindowFactory"/>
     <projectService serviceInterface="com.jetbrains.cidr.lang.workspace.OCWorkspaceManager"
                     serviceImplementation="com.google.idea.blaze.clwb.cworkspace.BlazeCWorkspaceManager"
                     overrides="true"/>

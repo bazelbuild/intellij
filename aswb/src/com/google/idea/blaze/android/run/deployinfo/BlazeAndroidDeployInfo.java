@@ -89,13 +89,4 @@ public class BlazeAndroidDeployInfo {
         .map(artifact -> new File(executionRoot, artifact.getExecRootPath()))
         .collect(Collectors.toList());
   }
-
-  /** Returns the full list of data dependencies to deploy, if any. */
-  public List<File> getDataToDeploy() {
-    return deployInfo
-        .getDataToDeployList()
-        .stream()
-        .map(artifact -> new File(executionRoot, artifact.getExecRootPath()))
-        .collect(Collectors.toList());
-  }
 }

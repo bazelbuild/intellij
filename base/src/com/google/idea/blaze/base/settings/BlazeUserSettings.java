@@ -16,13 +16,13 @@
 package com.google.idea.blaze.base.settings;
 
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import javax.annotation.Nullable;
 
@@ -62,6 +62,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private boolean showPerformanceWarnings = false;
   private boolean collapseProjectView = true;
   private boolean formatBuildFilesOnSave = true;
+  private boolean showAddFileToProjectNotification = true;
   private String blazeBinaryPath = "/usr/bin/blaze";
   @Nullable private String bazelBinaryPath;
 
@@ -88,10 +89,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
       return;
     }
     this.resyncAutomatically = resyncAutomatically;
-    ProjectManager projectManager =
-        ApplicationManager.getApplication().getComponent(ProjectManager.class);
-    Project[] openProjects = projectManager.getOpenProjects();
-    for (Project project : openProjects) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       if (Blaze.isBlazeProject(project)) {
         BlazeSyncStatus.getInstance(project).queueAutomaticSyncIfDirty();
       }
@@ -173,5 +171,19 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
 
   public void setFormatBuildFilesOnSave(boolean formatBuildFilesOnSave) {
     this.formatBuildFilesOnSave = formatBuildFilesOnSave;
+  }
+
+  public boolean getShowAddFileToProjectNotification() {
+    return showAddFileToProjectNotification;
+  }
+
+  public void setShowAddFileToProjectNotification(boolean showAddFileToProjectNotification) {
+    if (this.showAddFileToProjectNotification == showAddFileToProjectNotification) {
+      return;
+    }
+    this.showAddFileToProjectNotification = showAddFileToProjectNotification;
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      EditorNotifications.getInstance(project).updateAllNotifications();
+    }
   }
 }

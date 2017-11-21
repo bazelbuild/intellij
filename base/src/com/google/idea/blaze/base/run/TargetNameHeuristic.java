@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.base.run;
 
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiFile;
@@ -29,12 +29,12 @@ public class TargetNameHeuristic implements TestTargetHeuristic {
   @Override
   public boolean matchesSource(
       Project project,
-      TargetIdeInfo target,
+      TargetInfo target,
       @Nullable PsiFile sourcePsiFile,
       File sourceFile,
       @Nullable TestSize testSize) {
     String filePathWithoutExtension = FileUtil.getNameWithoutExtension(sourceFile.getPath());
-    String targetName = target.key.label.targetName().toString();
+    String targetName = target.label.targetName().toString();
     if (!filePathWithoutExtension.endsWith(targetName)) {
       return false;
     }

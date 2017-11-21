@@ -15,12 +15,15 @@
  */
 package com.google.idea.blaze.plugin.run;
 
+import static com.google.idea.common.guava.GuavaHelper.toImmutableSet;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
@@ -29,6 +32,7 @@ import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.google.idea.blaze.plugin.IntellijPluginRule;
 import com.intellij.execution.ExecutionException;
@@ -71,6 +75,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComponent;
@@ -106,19 +111,14 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
   @Nullable private Boolean keepInSync = null;
 
   public BlazeIntellijPluginConfiguration(
-      Project project,
-      ConfigurationFactory factory,
-      String name,
-      @Nullable TargetIdeInfo initialTarget) {
+      Project project, ConfigurationFactory factory, String name, @Nullable Label initialTarget) {
     super(project, factory, name);
     this.buildSystem = Blaze.buildSystemName(project);
     Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (IdeaJdkHelper.isIdeaJdk(projectSdk)) {
       pluginSdk = projectSdk;
     }
-    if (initialTarget != null) {
-      target = initialTarget.key.label;
-    }
+    target = initialTarget;
     blazeFlags = new RunConfigurationFlagsState(USER_BLAZE_FLAG_TAG, buildSystem + " flags:");
     exeFlags = new RunConfigurationFlagsState(USER_EXE_FLAG_TAG, "Executable flags:");
   }
@@ -261,7 +261,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     if (label == null) {
       throw new RuntimeConfigurationError("Select a target to run");
     }
-    TargetIdeInfo target = TargetFinder.getInstance().targetForLabel(getProject(), label);
+    TargetInfo target = TargetFinder.findTargetInfo(getProject(), label);
     if (target == null) {
       throw new RuntimeConfigurationError("The selected target does not exist.");
     }
@@ -346,14 +346,24 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
 
   @Override
   public BlazeIntellijPluginConfigurationSettingsEditor getConfigurationEditor() {
-    List<TargetIdeInfo> javaTargets =
-        TargetFinder.getInstance().findTargets(getProject(), IntellijPluginRule::isPluginTarget);
-    List<Label> javaLabels = Lists.newArrayList();
-    for (TargetIdeInfo target : javaTargets) {
-      javaLabels.add(target.key.label);
-    }
+    Project project = getProject();
     return new BlazeIntellijPluginConfigurationSettingsEditor(
-        javaLabels, blazeFlags.getEditor(getProject()), exeFlags.getEditor(getProject()));
+        findPluginTargets(project), blazeFlags.getEditor(project), exeFlags.getEditor(project));
+  }
+
+  private static Set<Label> findPluginTargets(Project project) {
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectData == null) {
+      return ImmutableSet.of();
+    }
+    return projectData
+        .targetMap
+        .targets()
+        .stream()
+        .filter(IntellijPluginRule::isPluginTarget)
+        .map(t -> t.key.label)
+        .collect(toImmutableSet());
   }
 
   @Override
@@ -383,7 +393,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     private final JBCheckBox keepInSyncCheckBox;
 
     public BlazeIntellijPluginConfigurationSettingsEditor(
-        List<Label> javaLabels,
+        Iterable<Label> javaLabels,
         RunConfigurationStateEditor blazeFlagsEditor,
         RunConfigurationStateEditor exeFlagsEditor) {
       targetCombo =

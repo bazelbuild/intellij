@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.java.run;
 
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -31,14 +31,14 @@ public class QualifiedClassNameHeuristic implements TestTargetHeuristic {
   @Override
   public boolean matchesSource(
       Project project,
-      TargetIdeInfo target,
+      TargetInfo target,
       @Nullable PsiFile sourcePsiFile,
       File sourceFile,
       @Nullable TestSize testSize) {
     if (!(sourcePsiFile instanceof PsiClassOwner)) {
       return false;
     }
-    String targetName = target.key.label.targetName().toString();
+    String targetName = target.label.targetName().toString();
     if (!targetName.contains(".")) {
       return false;
     }

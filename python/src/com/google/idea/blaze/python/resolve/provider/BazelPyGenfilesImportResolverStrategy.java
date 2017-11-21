@@ -18,9 +18,9 @@ package com.google.idea.blaze.python.resolve.provider;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.python.resolve.BlazePyResolverUtils;
-import com.google.idea.sdkcompat.python.PyQualifiedNameResolveContextAdapter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -35,7 +35,7 @@ public class BazelPyGenfilesImportResolverStrategy extends AbstractPyImportResol
   @Nullable
   @Override
   public PsiElement resolveToWorkspaceSource(
-      QualifiedName name, PyQualifiedNameResolveContextAdapter context) {
+      QualifiedName name, PyQualifiedNameResolveContext context) {
     String relativePath = name.join(File.separator);
     return BlazePyResolverUtils.resolveGenfilesPath(context, relativePath);
   }

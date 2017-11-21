@@ -22,13 +22,11 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 
 /** Overrides the built-in hotswap action for Blaze projects */
 public class BlazeHotSwapAction extends AnAction {
 
-  private static final Logger logger = Logger.getInstance(BlazeHotSwapAction.class);
   private static final String ACTION_ID = "Hotswap";
 
   static class Initializer extends ApplicationComponent.Adapter {
@@ -36,7 +34,7 @@ public class BlazeHotSwapAction extends AnAction {
     public void initComponent() {
       AnAction delegate = ActionManager.getInstance().getAction(ACTION_ID);
       if (delegate == null) {
-        logger.warn("No built-in hotswap action found.");
+        // HotSwapAction not registered by default for Android Studio, though still in the classpath
         delegate = new HotSwapAction();
       }
       BlazeActionRemover.replaceAction(ACTION_ID, new BlazeHotSwapAction(delegate));

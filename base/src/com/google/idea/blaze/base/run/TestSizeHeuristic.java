@@ -15,9 +15,8 @@
  */
 package com.google.idea.blaze.base.run;
 
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import java.io.File;
@@ -29,13 +28,13 @@ public class TestSizeHeuristic implements TestTargetHeuristic {
   @Override
   public boolean matchesSource(
       Project project,
-      TargetIdeInfo target,
+      TargetInfo target,
       @Nullable PsiFile sourcePsiFile,
       File sourceFile,
       @Nullable TestSize testSize) {
     // If testSize == null then prefer small
     // Some test runners will assume no size annotation == small and filter on that, others will not
-    TestSize size = testSize != null ? testSize : TestIdeInfo.DEFAULT_NON_ANNOTATED_TEST_SIZE;
-    return TestIdeInfo.getTestSize(target) == size;
+    TestSize size = testSize != null ? testSize : TestSize.DEFAULT_NON_ANNOTATED_TEST_SIZE;
+    return target.testSize == size;
   }
 }

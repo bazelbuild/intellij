@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.python.PySdkUtils;
-import com.google.idea.sdkcompat.python.PyReferenceResolveProviderAdapter;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -30,6 +29,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
+import com.jetbrains.python.psi.resolve.PyReferenceResolveProvider;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -41,7 +41,7 @@ import javax.annotation.Nullable;
  * A copy of {@link com.jetbrains.python.psi.resolve.PythonBuiltinReferenceResolveProvider}, which
  * handles projects without a python SDK (i.e. with a python facet instead).
  */
-public class BlazePyBuiltinReferenceResolveProvider implements PyReferenceResolveProviderAdapter {
+public class BlazePyBuiltinReferenceResolveProvider implements PyReferenceResolveProvider {
 
   @Override
   public List<RatedResolveResult> resolveName(

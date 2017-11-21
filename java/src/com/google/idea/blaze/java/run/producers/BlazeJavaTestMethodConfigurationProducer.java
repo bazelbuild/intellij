@@ -17,8 +17,8 @@ package com.google.idea.blaze.java.run.producers;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
@@ -151,8 +151,8 @@ public class BlazeJavaTestMethodConfigurationProducer
       }
     }
 
-    TestIdeInfo.TestSize testSize = TestSizeAnnotationMap.getTestSize(firstMethod);
-    TargetIdeInfo target = RunUtil.targetForTestClass(containingClass, testSize);
+    TestSize testSize = TestSizeAnnotationMap.getTestSize(firstMethod);
+    TargetInfo target = RunUtil.targetForTestClass(containingClass, testSize);
     if (target == null) {
       return null;
     }
@@ -167,6 +167,6 @@ public class BlazeJavaTestMethodConfigurationProducer
         selectedMethods.stream().map(PsiMethod::getName).sorted().collect(Collectors.toList());
     final String testFilterFlag = BlazeFlags.TEST_FILTER + "=" + testFilter;
     return new TestMethodContext(
-        firstMethod, containingClass, methodNames, testFilterFlag, target.key.label);
+        firstMethod, containingClass, methodNames, testFilterFlag, target.label);
   }
 }

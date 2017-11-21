@@ -24,6 +24,7 @@ PREREQUISITE_DEPS = []
 
 # Dependency type enum
 COMPILE_TIME = 0
+
 RUNTIME = 1
 
 ##### Helpers
@@ -405,14 +406,6 @@ def get_java_provider(target):
     return target[java_common.provider]
   return None
 
-def get_java_jars(outputs):
-  """Handle both Java (java.outputs.jars list) and Scala (single scala.outputs) targets."""
-  if hasattr(outputs, "jars"):
-    return outputs.jars
-  if hasattr(outputs, "class_jar"):
-    return [outputs]
-  return []
-
 def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
   """Updates Java-specific output groups, returns false if not a Java target."""
   java = get_java_provider(target)
@@ -425,10 +418,9 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
 
   ide_info_files = depset()
   sources = sources_from_target(ctx)
-  java_jars = get_java_jars(java.outputs)
-  jars = [library_artifact(output) for output in java_jars]
-  class_jars = [output.class_jar for output in java_jars if output and output.class_jar]
-  output_jars = [jar for output in java_jars for jar in jars_from_output(output)]
+  jars = [library_artifact(output) for output in java.outputs.jars]
+  class_jars = [output.class_jar for output in java.outputs.jars if output and output.class_jar]
+  output_jars = [jar for output in java.outputs.jars for jar in jars_from_output(output)]
   resolve_files = depset(output_jars)
   compile_files = depset(class_jars)
 

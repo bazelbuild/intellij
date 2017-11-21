@@ -19,11 +19,11 @@ import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.sdkcompat.python.PyQualifiedNameResolveContextAdapter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -36,7 +36,7 @@ public class BlazePyResolverUtils {
    */
   @Nullable
   public static PsiElement resolveGenfilesPath(
-      PyQualifiedNameResolveContextAdapter context, String relativePath) {
+      PyQualifiedNameResolveContext context, String relativePath) {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(context.getProject()).getBlazeProjectData();
     if (projectData == null) {
@@ -51,8 +51,7 @@ public class BlazePyResolverUtils {
    * path when looking for py files).
    */
   @Nullable
-  public static PsiElement resolvePath(
-      PyQualifiedNameResolveContextAdapter context, String relativePath) {
+  public static PsiElement resolvePath(PyQualifiedNameResolveContext context, String relativePath) {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(context.getProject()).getBlazeProjectData();
     if (projectData == null) {

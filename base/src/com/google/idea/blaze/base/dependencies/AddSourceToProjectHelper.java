@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.dependencies;
 
 import com.google.common.base.Preconditions;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.ProjectView;
@@ -35,6 +36,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.swing.event.HyperlinkEvent;
 
 class AddSourceToProjectHelper {
@@ -48,7 +50,7 @@ class AddSourceToProjectHelper {
    * project view.
    */
   static void addSourceAndTargetsToProject(
-      Project project, WorkspacePath workspacePath, List<TargetExpression> targets) {
+      Project project, WorkspacePath workspacePath, List<Label> targets) {
     ImportRoots roots = ImportRoots.forProjectSafe(project);
     if (roots == null) {
       notifyFailed(
@@ -79,7 +81,7 @@ class AddSourceToProjectHelper {
     }
     edit.apply();
     BlazeSyncManager.getInstance(project).partialSync(targets);
-    notifySuccess(project, parentPath, targets);
+    notifySuccess(project, addDirectory ? parentPath : null, targets);
   }
 
   private static void addDirectory(ProjectView.Builder builder, WorkspacePath dir) {
@@ -89,7 +91,7 @@ class AddSourceToProjectHelper {
         ListSection.update(DirectorySection.KEY, section).add(DirectoryEntry.include(dir)));
   }
 
-  private static void addTargets(ProjectView.Builder builder, List<TargetExpression> targets) {
+  private static void addTargets(ProjectView.Builder builder, List<Label> targets) {
     if (targets.isEmpty()) {
       return;
     }
@@ -108,15 +110,21 @@ class AddSourceToProjectHelper {
   }
 
   private static void notifySuccess(
-      Project project, WorkspacePath directory, List<TargetExpression> targets) {
+      Project project,
+      @Nullable WorkspacePath directory,
+      List<? extends TargetExpression> targets) {
+    if (directory == null && targets.isEmpty()) {
+      return;
+    }
     StringBuilder builder = new StringBuilder();
     if (directory != null) {
-      builder.append(String.format("Added directory '%s' to project view", directory));
+      builder.append(String.format("Added directory '%s' to project view\n", directory));
     }
-    builder.append("Added targets to project view:\n");
-    targets.forEach(t -> builder.append("  ").append(t).append("\n"));
+    if (!targets.isEmpty()) {
+      builder.append("Added targets to project view:\n");
+      targets.forEach(t -> builder.append("  ").append(t).append("\n"));
+    }
     builder.append("<a href='open'>Open project view file</a>");
-
     Notification notification =
         NOTIFICATION_GROUP.createNotification(
             "Updated project view file",

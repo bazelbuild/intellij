@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
+import java.util.Set;
 
 /** Prefetches files when a project is opened or roots change. */
 public interface Prefetcher {
@@ -31,12 +32,16 @@ public interface Prefetcher {
   /**
    * Prefetches the given list of canonical files.
    *
-   * <p>It is the responsibility of the prefetcher to filter out any files it isn't interested in.
+   * <p>When listing individual files, it is the responsibility of the caller to filter out any
+   * files it isn't interested in. When listing directories, one can supply a set of
+   * excludedDirectories that should not be walked down recursively during prefetch.
    */
   ListenableFuture<?> prefetchFiles(
       Project project,
+      Set<File> excludedDirectories,
       Collection<ListenableFuture<File>> fileFutures,
-      ListeningExecutorService executor);
+      ListeningExecutorService executor,
+      boolean fetchFileTypes);
 
   default boolean enabled(Project project) {
     return Blaze.isBlazeProject(project);

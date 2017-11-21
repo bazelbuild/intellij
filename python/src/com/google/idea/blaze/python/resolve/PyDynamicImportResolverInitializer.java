@@ -17,7 +17,6 @@ package com.google.idea.blaze.python.resolve;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.python.resolve.provider.PyImportResolverStrategy;
-import com.google.idea.sdkcompat.python.PyImportResolverAdapter;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
@@ -45,26 +44,24 @@ public class PyDynamicImportResolverInitializer extends ApplicationComponent.Ada
     // First, look for matches brought in during blaze sync (project-specific resolvers)
     for (PyImportResolverStrategy provider : PyImportResolverStrategy.EP_NAME.getExtensions()) {
       ep.registerExtension(
-          (PyImportResolverAdapter)
-              (qualifiedName, context, withRoots) -> {
-                if (!providerEnabled(context.getProject(), provider)) {
-                  return null;
-                }
-                return provider.resolveFromSyncData(qualifiedName, context);
-              });
+          (qualifiedName, context, withRoots) -> {
+            if (!providerEnabled(context.getProject(), provider)) {
+              return null;
+            }
+            return provider.resolveFromSyncData(qualifiedName, context);
+          });
     }
     // Fall back to a workspace-wide resolver (not limited to the .blazeproject targets).
     // This handles both new packages which weren't in the last sync, and genfiles which weren't
     // explicitly enumerated during the previous sync (i.e. not in the ide-info proto).
     for (PyImportResolverStrategy provider : PyImportResolverStrategy.EP_NAME.getExtensions()) {
       ep.registerExtension(
-          (PyImportResolverAdapter)
-              (qualifiedName, context, withRoots) -> {
-                if (!providerEnabled(context.getProject(), provider)) {
-                  return null;
-                }
-                return provider.resolveToWorkspaceSource(qualifiedName, context);
-              });
+          (qualifiedName, context, withRoots) -> {
+            if (!providerEnabled(context.getProject(), provider)) {
+              return null;
+            }
+            return provider.resolveToWorkspaceSource(qualifiedName, context);
+          });
     }
   }
 

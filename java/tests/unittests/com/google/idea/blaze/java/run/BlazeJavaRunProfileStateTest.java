@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BuildFlagsProvider;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -47,10 +48,7 @@ import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
-import java.util.List;
-import java.util.function.Predicate;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -65,22 +63,25 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
   private BlazeCommandRunConfiguration configuration;
 
   @Override
-  protected void initTest(
-      @NotNull Container applicationServices, @NotNull Container projectServices) {
+  protected void initTest(Container applicationServices, Container projectServices) {
     projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
     ExperimentService experimentService = new MockExperimentService();
     applicationServices.register(ExperimentService.class, experimentService);
-    applicationServices.register(TargetFinder.class, new MockTargetFinder());
     applicationServices.register(BlazeUserSettings.class, new BlazeUserSettings());
     projectServices.register(ProjectViewManager.class, new MockProjectViewManager());
+
+    ExtensionPointImpl<TargetFinder> targetFinderEp =
+        registerExtensionPoint(TargetFinder.EP_NAME, TargetFinder.class);
+    targetFinderEp.registerExtension(new MockTargetFinder());
 
     registerExtensionPoint(BuildFlagsProvider.EP_NAME, BuildFlagsProvider.class);
     ExtensionPointImpl<BlazeCommandRunConfigurationHandlerProvider> handlerProviderEp =
         registerExtensionPoint(
             BlazeCommandRunConfigurationHandlerProvider.EP_NAME,
             BlazeCommandRunConfigurationHandlerProvider.class);
+    handlerProviderEp.registerExtension(new BlazeJavaRunConfigurationHandlerProvider());
     handlerProviderEp.registerExtension(new BlazeCommandGenericRunConfigurationHandlerProvider());
     ExtensionPointImpl<BuildSystemProvider> buildSystemProviderExtensionPoint =
         registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
@@ -132,6 +133,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                 "command",
                 BlazeFlags.getToolTagFlag(),
                 "--java_debug",
+                "--test_arg=--debug=5005",
                 "--",
                 "//label:rule"));
   }
@@ -154,24 +156,20 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                 BlazeFlags.getToolTagFlag(),
                 "--",
                 "//label:java_binary_rule",
-                "--wrapper_script_flag=--debug"));
+                "--wrapper_script_flag=--debug=5005"));
   }
 
-  private static class MockTargetFinder extends TargetFinder {
+  private static class MockTargetFinder implements TargetFinder {
+    @Nullable
     @Override
-    public List<TargetIdeInfo> findTargets(Project project, Predicate<TargetIdeInfo> predicate) {
-      return null;
-    }
-
-    @Override
-    public TargetIdeInfo targetForLabel(Project project, final Label label) {
+    public TargetInfo findTarget(Project project, Label label) {
       TargetIdeInfo.Builder builder = TargetIdeInfo.builder().setLabel(label);
       if (label.targetName().toString().equals("java_binary_rule")) {
         builder.setKind(Kind.JAVA_BINARY);
       } else {
         builder.setKind(Kind.JAVA_TEST);
       }
-      return builder.build();
+      return builder.build().toTargetInfo();
     }
   }
 

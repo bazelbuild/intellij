@@ -93,7 +93,7 @@ public class BlazeSyncManager {
     requestProjectSync(syncParams);
   }
 
-  public void partialSync(List<TargetExpression> targetExpressions) {
+  public void partialSync(List<? extends TargetExpression> targetExpressions) {
     BlazeSyncParams syncParams =
         new BlazeSyncParams.Builder("Partial Sync", BlazeSyncParams.SyncMode.PARTIAL)
             .addTargetExpressions(targetExpressions)

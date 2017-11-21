@@ -40,8 +40,6 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.sdkcompat.android.res.AppResourceRepositoryAdapter;
-import com.google.idea.sdkcompat.android.sync.model.idea.ClassJarProviderCompat;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ApplicationManager;
@@ -265,8 +263,7 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
               model.commit();
             });
 
-    ClassJarProviderCompat providerCompat = (ClassJarProviderCompat) classJarProvider;
-    List<File> externalLibraries = providerCompat.getModuleExternalLibrariesCompat(module);
+    List<File> externalLibraries = classJarProvider.getModuleExternalLibraries(module);
     assertThat(externalLibraries)
         .containsExactly(
             VfsUtilCore.virtualToIoFile(fileSystem.findFile("com/google/example/libimport.jar")),
@@ -277,7 +274,7 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
 
     // Make sure we can generate dynamic classes from all resource packages in dependencies.
     ResourceClassRegistry registry = ResourceClassRegistry.get(getProject());
-    AppResourceRepository repository = AppResourceRepositoryAdapter.findExistingInstance(module);
+    AppResourceRepository repository = AppResourceRepository.findExistingInstance(module);
     assertThat(repository).isNotNull();
     assertThat(registry.findClassDefinition("com.google.example.resource.R", repository))
         .isNotNull();

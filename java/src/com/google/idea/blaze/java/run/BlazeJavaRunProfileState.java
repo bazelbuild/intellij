@@ -72,7 +72,6 @@ import java.util.UUID;
  */
 final class BlazeJavaRunProfileState extends CommandLineState implements RemoteState {
 
-  private static final int DEBUG_PORT = 5005; // default port for java debugging
   private static final String DEBUG_HOST_NAME = "localhost";
 
   private final BlazeCommandRunConfiguration configuration;
@@ -185,8 +184,12 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
     return new RemoteConnection(
         /* useSockets */ true,
         DEBUG_HOST_NAME,
-        Integer.toString(DEBUG_PORT),
+        Integer.toString(getState(configuration).getDebugPortState().port),
         /* serverMode */ false);
+  }
+
+  private static BlazeJavaRunConfigState getState(BlazeCommandRunConfiguration config) {
+    return Preconditions.checkNotNull(config.getHandlerStateIfType(BlazeJavaRunConfigState.class));
   }
 
   @VisibleForTesting
@@ -200,9 +203,7 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
 
     ProjectViewSet projectViewSet =
         Preconditions.checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet());
-    BlazeCommandRunConfigurationCommonState handlerState =
-        Preconditions.checkNotNull(
-            configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class));
+    BlazeJavaRunConfigState handlerState = getState(configuration);
 
     String binaryPath =
         handlerState.getBlazeBinaryState().getBlazeBinary() != null
@@ -227,14 +228,29 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
     if (executorType == ExecutorType.DEBUG) {
       Kind kind = configuration.getKindForTarget();
       boolean isBinary = kind != null && kind.isOneOf(Kind.JAVA_BINARY, Kind.SCALA_BINARY);
+      int debugPort = handlerState.getDebugPortState().port;
       if (isBinary) {
-        command.addExeFlags(BlazeFlags.JAVA_BINARY_DEBUG);
+        command.addExeFlags(debugPortFlag(true, debugPort));
       } else {
         command.addBlazeFlags(BlazeFlags.JAVA_TEST_DEBUG);
+        command.addBlazeFlags(debugPortFlag(false, debugPort));
       }
     }
 
     command.addExeFlags(handlerState.getExeFlagsState().getExpandedFlags());
     return command;
+  }
+
+  private static String debugPortFlag(boolean wrapperScript, int port) {
+    String flag = "--debug=" + port;
+    return wrapperScript ? wrapperScriptFlag(flag) : testArg(flag);
+  }
+
+  private static String wrapperScriptFlag(String flag) {
+    return "--wrapper_script_flag=" + flag;
+  }
+
+  private static String testArg(String flag) {
+    return "--test_arg=" + flag;
   }
 }

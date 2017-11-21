@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.base.util;
 
+import static com.google.idea.common.guava.GuavaHelper.toImmutableSet;
+
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,22 +39,35 @@ public class WorkspacePathUtil {
   /** Removes any duplicates or overlapping directories */
   public static ImmutableSet<WorkspacePath> calculateMinimalWorkspacePaths(
       Collection<WorkspacePath> workspacePaths) {
-    ImmutableSet.Builder<WorkspacePath> minimalWorkspacePaths = ImmutableSet.builder();
-    for (WorkspacePath directory : workspacePaths) {
-      boolean ok = true;
-      for (WorkspacePath otherDirectory : workspacePaths) {
-        if (directory.equals(otherDirectory)) {
-          continue;
-        }
-        if (FileUtil.isAncestor(otherDirectory.relativePath(), directory.relativePath(), true)) {
-          ok = false;
-          break;
-        }
-      }
-      if (ok) {
-        minimalWorkspacePaths.add(directory);
+    return calculateMinimalWorkspacePaths(workspacePaths, ImmutableList.of());
+  }
+
+  /** Removes any duplicates or overlapping or excluded directories. */
+  public static ImmutableSet<WorkspacePath> calculateMinimalWorkspacePaths(
+      Collection<WorkspacePath> workspacePaths, Collection<WorkspacePath> excludedPaths) {
+    return workspacePaths
+        .stream()
+        .filter(path -> includePath(workspacePaths, excludedPaths, path))
+        .collect(toImmutableSet());
+  }
+
+  private static boolean includePath(
+      Collection<WorkspacePath> workspacePaths,
+      Collection<WorkspacePath> excludedPaths,
+      WorkspacePath path) {
+    for (WorkspacePath excluded : excludedPaths) {
+      if (FileUtil.isAncestor(excluded.relativePath(), path.relativePath(), false)) {
+        return false;
       }
     }
-    return minimalWorkspacePaths.build();
+    for (WorkspacePath otherDirectory : workspacePaths) {
+      if (path.equals(otherDirectory)) {
+        continue;
+      }
+      if (FileUtil.isAncestor(otherDirectory.relativePath(), path.relativePath(), true)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

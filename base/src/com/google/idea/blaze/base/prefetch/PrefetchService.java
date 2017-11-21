@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
+import javax.annotation.Nullable;
 
 /** Interface to request prefetching of files */
 public interface PrefetchService {
@@ -32,6 +33,8 @@ public interface PrefetchService {
   /**
    * Instructs all prefetchers to prefetch these files.
    *
+   * <p>It is the responsibility of the caller to filter out any files it isn't interested in.
+   *
    * @param refetchCachedFiles True if all files should be fetched, regardless of whether they were
    *     recently fetched.
    */
@@ -39,5 +42,5 @@ public interface PrefetchService {
       Project project, Collection<File> files, boolean refetchCachedFiles);
 
   ListenableFuture<?> prefetchProjectFiles(
-      Project project, ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData);
+      Project project, ProjectViewSet projectViewSet, @Nullable BlazeProjectData blazeProjectData);
 }

@@ -1,3 +1,10 @@
+v2017.11.20
+===========
+* Reduce indexing time after syncing.
+* Java debugging: allow specifying a different debug port.
+* Support custom environment variables when debugging python and C++ targets.
+* Bazel plugin settings are now searchable.
+
 v2017.11.06
 ===========
 * Go support: Better Bazel-specific support for Go import resolution.
