@@ -7,6 +7,7 @@ import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
+import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.java.run.RunUtil;
 import com.google.idea.blaze.java.run.producers.TestSizeAnnotationMap;
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.scala.lang.parser.ScalaElementTypes;
@@ -113,7 +115,7 @@ public class BlazeSpecs2ConfigurationProducer
     }
 
     private static String getTestFilterFlag(Specs2RunConfiguration specs2Config, ConfigurationContext context) {
-        String scope = getParentScope(context);
+        String scope = Specs2TestConfigurationUtil.getParentScope(context.getLocation().getPsiElement());
 
         String filter = specs2Config.getTestClassPath() + "#" + scope + specs2Config.getTestName();
 
@@ -121,39 +123,7 @@ public class BlazeSpecs2ConfigurationProducer
         return BlazeFlags.TEST_FILTER + "=" + filter;
     }
 
-    @NotNull
-    private static String getParentScope(ConfigurationContext context) {
-        // Extracts the scope name from the "should" block, providing a complete name for test filter.
-        // This is needed so the pattern match in Bazel succeeds against a fully qualified JUnit description
 
-        Optional<PsiElement> parentScope = getParentScopeElement(context.getLocation().getPsiElement());
-        return parentScope
-                .map(element -> extractScope(element))
-                .orElse("");
-    }
-
-    private static String extractScope(PsiElement element) {
-        ScInfixExpr infix = (ScInfixExpr)element;
-        if (infix == null)
-            return null;
-
-        PsiElement shouldExpr = infix.findChildrenByType(ScalaElementTypes.REFERENCE_EXPRESSION()).head();
-        if (shouldExpr == null)
-            return null;
-
-        String scopeName = infix.getNode().getFirstChildNode().getText()
-                .replaceFirst("\"(.*)\"", "$1");
-        String should = shouldExpr.getText();
-        return scopeName + " " + should + "::";
-    }
-
-    private static Optional<PsiElement> getParentScopeElement(PsiElement element) {
-        for (PsiElement elem = element; elem != null; elem = elem.getParent()) {
-            if (TestNodeProvider.isSpecs2ScopeExpr(elem))
-                return Optional.of(elem);
-        }
-        return Optional.empty();
-    }
 
     @Nullable
     private Pair<PsiClass, Specs2RunConfiguration> getSpecs2Configuration(ConfigurationContext context) {

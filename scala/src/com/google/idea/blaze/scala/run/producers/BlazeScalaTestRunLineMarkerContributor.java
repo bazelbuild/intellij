@@ -46,6 +46,7 @@ import scala.Tuple2;
 import javax.annotation.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -103,13 +104,14 @@ public class BlazeScalaTestRunLineMarkerContributor extends ScalaTestRunLineMark
       if (!TestNodeProvider.isSpecs2Expr(testCase)) {
         return null;
       }
-      Tuple2<ScTypeDefinition, String> pair = TestConfigurationUtil.specs2ConfigurationProducer()
-              .getLocationClassAndTest(new PsiLocation<>(testCase));
-      if (pair._2 == null) {
+
+      String testName = Specs2TestConfigurationUtil.getTestName(new PsiLocation<>(testCase));
+      if (testName == null) {
         return null;
       }
+      String scope = Specs2TestConfigurationUtil.getParentScope(testCase);
 
-      url = "java:test://" + testClass.getQualifiedName() + "." + pair._2;
+      url = "java:test://" + testClass.getQualifiedName() + "." + scope + testName;
     } else {
       return null;
     }
