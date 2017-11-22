@@ -17,34 +17,18 @@ package com.google.idea.blaze.base.logging;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.util.Map;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
-/**
- * Forwards the event logs to an applicable receiver extension or discard them if no applicable
- * receivers exist.
- */
+/** Forwards the event logs to any available receivers. */
 public interface EventLogger {
   ExtensionPointName<EventLogger> EP_NAME =
       new ExtensionPointName<>("com.google.idea.blaze.EventLogger");
-
-  static EventLogger getInstance() {
-    for (EventLogger logger : EP_NAME.getExtensions()) {
-      if (logger.isApplicable()) {
-        return logger;
-      }
-    }
-    return NullEventLogger.SINGLETON;
-  }
-
-  boolean isApplicable();
-
-  default void log(Class<?> loggingClass, String eventType, Map<String, String> keyValues) {
-    log(loggingClass, eventType, keyValues, null);
-  }
 
   void log(
       Class<?> loggingClass,
       String eventType,
       Map<String, String> keyValues,
       @Nullable Long durationInNanos);
+
+  void logSerializedProto(byte[] serializedIntellijLogEntry);
 }

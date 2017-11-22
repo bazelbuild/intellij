@@ -41,8 +41,8 @@ import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.common.transactions.Transactions;
 import com.google.idea.sdkcompat.python.PythonFacetUtil;
-import com.google.idea.sdkcompat.transactions.Transactions;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
@@ -69,7 +69,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Allows people to use a python workspace. */
-public class BlazePythonSyncPlugin extends BlazeSyncPlugin.Adapter {
+public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
 
   private static final Logger logger = Logger.getInstance(BlazePythonSyncPlugin.class);
 

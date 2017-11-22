@@ -56,6 +56,9 @@ public class BlazePyTracebackFilter implements Filter {
     if (filePath == null) {
       return null;
     }
+    if (filePath.startsWith("//")) {
+      filePath = filePath.substring(2);
+    }
     VirtualFile file = FileResolver.resolve(project, filePath);
     if (file == null) {
       return null;

@@ -17,13 +17,13 @@ package com.google.idea.blaze.base.buildmodifier;
 
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.DocumentRunnable;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 
 /** Runs the buildifier command on file save. */
 public class FileSaveHandler extends FileDocumentManagerAdapter {
@@ -33,39 +33,25 @@ public class FileSaveHandler extends FileDocumentManagerAdapter {
     if (!BlazeUserSettings.getInstance().getFormatBuildFilesOnSave() || !document.isWritable()) {
       return;
     }
-    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-    VirtualFile file = fileDocumentManager.getFile(document);
-    if (file == null || !file.isValid()) {
-      return;
-    }
-
-    if (!isBuildFile(file)) {
-      return;
-    }
-    int lines = document.getLineCount();
-    if (lines > 0) {
-      String text = document.getText();
-      String formattedText = BuildFileFormatter.formatTextWithTimeout(text);
-      if (formattedText == null) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (psiFile != null) {
+        formatBuildFile(project, psiFile);
         return;
       }
-      updateDocument(document, formattedText);
     }
   }
 
-  private void updateDocument(final Document document, final String formattedContent) {
-    ApplicationManager.getApplication()
-        .runWriteAction(
-            new DocumentRunnable(document, null) {
-              @Override
-              public void run() {
-                CommandProcessor.getInstance()
-                    .runUndoTransparentAction(() -> document.setText(formattedContent));
-              }
-            });
+  private static void formatBuildFile(Project project, PsiFile psiFile) {
+    if (!isBuildFile(psiFile.getName()) || !psiFile.isValid() || !psiFile.isWritable()) {
+      return;
+    }
+    new ReformatCodeProcessor(
+            project, psiFile, /* range */ null, /* processChangedTextOnly */ false)
+        .run();
   }
 
-  private static boolean isBuildFile(VirtualFile file) {
-    return BuildSystemProvider.defaultBuildSystem().isBuildFile(file.getName());
+  private static boolean isBuildFile(String filename) {
+    return BuildSystemProvider.defaultBuildSystem().isBuildFile(filename);
   }
 }

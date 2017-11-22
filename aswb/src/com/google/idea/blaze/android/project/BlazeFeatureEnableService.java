@@ -18,7 +18,7 @@ package com.google.idea.blaze.android.project;
 import com.android.tools.idea.project.FeatureEnableService;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.settings.BlazeAndroidUserSettings;
-import com.google.idea.blaze.base.logging.EventLogger;
+import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.common.experiments.BoolExperiment;
@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 
 /** Enable features supported by the blaze integration. */
 public class BlazeFeatureEnableService extends FeatureEnableService {
-  private static final EventLogger logger = EventLogger.getInstance();
 
   private static final BoolExperiment ENABLE_LAYOUT_EDITOR =
       new BoolExperiment("enable.layout.editor", true);
@@ -42,8 +41,13 @@ public class BlazeFeatureEnableService extends FeatureEnableService {
         isLayoutEditorExperimentEnabled()
             && BlazeAndroidUserSettings.getInstance().getUseLayoutEditor();
     boolean isReady = BlazeProjectDataManager.getInstance(project).getBlazeProjectData() != null;
-    logger.log(
-        getClass(), "layout_editor", ImmutableMap.of("enabled", Boolean.toString(isEnabled)));
+    EventLoggingService.getInstance()
+        .ifPresent(
+            s ->
+                s.logEvent(
+                    getClass(),
+                    "layout_editor",
+                    ImmutableMap.of("enabled", Boolean.toString(isEnabled))));
     return isEnabled && isReady;
   }
 

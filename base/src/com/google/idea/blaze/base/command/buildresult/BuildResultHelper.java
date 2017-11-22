@@ -54,6 +54,17 @@ public interface BuildResultHelper extends Closeable {
   OutputStream stderr(LineProcessor... lineProcessors);
 
   /**
+   * Returns an output stream to be passed to the external task's stderr.
+   *
+   * <p>The user must pipe blaze's stderr to this output stream.
+   *
+   * @param lineProcessors Any additional line processors you want on stderr output.
+   */
+  default OutputStream stderr(ImmutableList<LineProcessor> lineProcessors) {
+    return stderr(lineProcessors.toArray(new LineProcessor[0]));
+  }
+
+  /**
    * Returns the build result. May only be called once the build is complete, or no artifacts will
    * be returned.
    *

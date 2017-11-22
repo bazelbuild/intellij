@@ -28,13 +28,14 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.python.PythonPluginUtils;
 import com.intellij.openapi.project.Project;
+import java.util.Collection;
 import java.util.Set;
 
 /**
  * Unlike most of the python-specific code, will be run even if the JetBrains python plugin isn't
  * enabled.
  */
-public class AlwaysPresentPythonSyncPlugin extends BlazeSyncPlugin.Adapter {
+public class AlwaysPresentPythonSyncPlugin implements BlazeSyncPlugin {
 
   @Override
   public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
@@ -46,6 +47,13 @@ public class AlwaysPresentPythonSyncPlugin extends BlazeSyncPlugin.Adapter {
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
     // retained for backwards-compatibility
     return ImmutableSet.of(LanguageClass.PYTHON);
+  }
+
+  @Override
+  public ImmutableList<String> getRequiredExternalPluginIds(Collection<LanguageClass> languages) {
+    return languages.contains(LanguageClass.PYTHON)
+        ? ImmutableList.of(PythonPluginUtils.getPythonPluginId())
+        : ImmutableList.of();
   }
 
   @Override

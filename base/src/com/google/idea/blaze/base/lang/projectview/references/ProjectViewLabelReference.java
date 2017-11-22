@@ -55,7 +55,8 @@ public class ProjectViewLabelReference extends PsiReferenceBase<ProjectViewPsiSe
   @Nullable
   @Override
   public PsiElement resolve() {
-    if (pathFormat == PathFormat.NonLocalWithoutInitialBackslashes) {
+    if (pathFormat == PathFormat.NonLocalWithoutInitialBackslashes
+        || pathFormat == PathFormat.NonLocalWithoutInitialBackslashesOnlyDirectories) {
       return resolveFile(myElement.getText());
     }
     Label label = getLabel(myElement.getText());
@@ -117,7 +118,8 @@ public class ProjectViewLabelReference extends PsiReferenceBase<ProjectViewPsiSe
   }
 
   private BuildLookupElement[] getFileLookups(String labelString) {
-    if (pathFormat == PathFormat.NonLocalWithoutInitialBackslashes) {
+    if (pathFormat == PathFormat.NonLocalWithoutInitialBackslashes
+        || pathFormat == PathFormat.NonLocalWithoutInitialBackslashesOnlyDirectories) {
       labelString = StringUtil.trimStart(labelString, "-");
     }
     FileLookupData lookupData =

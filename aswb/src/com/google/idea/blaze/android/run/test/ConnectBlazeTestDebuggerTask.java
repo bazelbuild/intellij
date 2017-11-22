@@ -225,6 +225,7 @@ class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTask {
             debugDescriptor,
             uniqueId,
             currentLaunchInfo.executor.getId(),
+            currentLaunchInfo.executor.getActionName(),
             false);
     debugProcessHandler.putUserData(AndroidSessionInfo.KEY, value);
     debugProcessHandler.putUserData(AndroidSessionInfo.ANDROID_DEBUG_CLIENT, client);

@@ -65,7 +65,10 @@ class BlazeCoverageData {
       while ((line = reader.readLine()) != null) {
         if (line.startsWith(SF)) {
           String source = line.substring(SF.length());
-          map.put(source, new FileData(source, parseHits(reader)));
+          TIntIntHashMap hits = parseHits(reader);
+          if (!hits.isEmpty()) {
+            map.put(source, new FileData(source, hits));
+          }
         }
       }
       return new BlazeCoverageData(ImmutableMap.copyOf(map));

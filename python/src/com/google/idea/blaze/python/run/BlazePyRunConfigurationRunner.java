@@ -22,7 +22,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfig
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.python.PySdkUtils;
@@ -41,6 +42,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -48,13 +50,13 @@ import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
@@ -79,8 +81,6 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
   /** Used to store a runner to an {@link ExecutionEnvironment}. */
   private static final Key<AtomicReference<File>> EXECUTABLE_KEY =
       Key.create("blaze.debug.py.executable");
-
-  private static final Logger logger = Logger.getInstance(BlazePyRunConfigurationRunner.class);
 
   /** Converts to the native python plugin debug configuration state */
   static class BlazePyDummyRunProfileState implements RunProfileState {
@@ -114,10 +114,14 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       nativeConfig.setModule(null);
       nativeConfig.setSdkHome(sdk.getHomePath());
 
-      BlazeCommandRunConfigurationCommonState handlerState =
-          configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+      BlazePyRunConfigState handlerState =
+          configuration.getHandlerStateIfType(BlazePyRunConfigState.class);
       if (handlerState != null) {
         nativeConfig.setScriptParameters(Strings.emptyToNull(getScriptParams(handlerState)));
+
+        EnvironmentVariablesData envState = handlerState.getEnvVarsState().getData();
+        nativeConfig.setPassParentEnvs(envState.isPassParentEnvs());
+        nativeConfig.setEnvs(envState.getEnvs());
       }
       return new PythonScriptCommandLineState(nativeConfig, env) {
         @Override
@@ -131,7 +135,6 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
             throws ExecutionException {
           ConsoleView consoleView = createConsoleBuilder(project, getSdk()).getConsole();
           consoleView.addMessageFilter(createUrlFilter(processHandler));
-          addTracebackFilter(project, consoleView, processHandler);
 
           consoleView.attachToProcess(processHandler);
           return consoleView;
@@ -185,6 +188,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     return ImmutableList.<Filter>builder()
         .addAll(BlazePyFilterProvider.getPyFilters(project))
         .add(new BlazeTargetFilter(project))
+        .add(new UrlFilter())
         .build();
   }
 
@@ -214,7 +218,6 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     } catch (ExecutionException e) {
       ExecutionUtil.handleExecutionError(
           env.getProject(), env.getExecutor().getToolWindowId(), env.getRunProfile(), e);
-      logger.info(e);
     }
     return false;
   }
@@ -240,7 +243,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     }
     String workspaceName = root.directory().getName();
     File expectedPath = new File(executable.getPath() + ".runfiles", workspaceName);
-    if (FileAttributeProvider.getInstance().exists(expectedPath)) {
+    if (FileOperationProvider.getInstance().exists(expectedPath)) {
       return expectedPath.getPath();
     }
     return null;
@@ -268,7 +271,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
 
     BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true);
 
-    ListenableFuture<Void> buildOperation =
+    ListenableFuture<BuildResult> buildOperation =
         BlazeBeforeRunCommandHelper.runBlazeBuild(
             configuration,
             buildResultHelper,
@@ -277,7 +280,10 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
 
     try {
       SaveUtil.saveAllFiles();
-      buildOperation.get();
+      BuildResult result = buildOperation.get();
+      if (result.status != BuildResult.Status.SUCCESS) {
+        throw new ExecutionException("Blaze failure building debug binary");
+      }
     } catch (InterruptedException e) {
       buildOperation.cancel(true);
       throw new RunCanceledByUserException();

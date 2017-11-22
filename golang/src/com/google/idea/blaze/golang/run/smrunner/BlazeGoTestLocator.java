@@ -23,6 +23,7 @@ import com.goide.stubs.index.GoFunctionIndex;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -34,13 +35,11 @@ import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.golang.resolve.BlazeGoImportResolver;
-import com.google.idea.blaze.golang.resolve.BlazeVirtualGoPackage;
-import com.google.idea.common.guava.GuavaHelper;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -48,11 +47,10 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope.FilesScope;
 import com.intellij.psi.stubs.StubIndex;
-import java.io.File;
-import java.util.Arrays;
+import com.intellij.util.PathUtil;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Locate go test packages / functions for test UI navigation. */
@@ -126,17 +124,16 @@ public final class BlazeGoTestLocator implements SMTestLocator {
     Collection<GoFunctionDeclaration> functions =
         StubIndex.getElements(
             GoFunctionIndex.KEY, functionName, project, scope, GoFunctionDeclaration.class);
-    return functions.stream().map(PsiLocation::new).collect(GuavaHelper.toImmutableList());
+    return functions.stream().map(PsiLocation::new).collect(Collectors.toList());
   }
 
   @Nullable
   private static TargetIdeInfo getGoTestTarget(Project project, String path) {
-    File pathFile = new File(path);
-    WorkspacePath targetPackage = WorkspacePath.createIfValid(pathFile.getParent());
+    WorkspacePath targetPackage = WorkspacePath.createIfValid(PathUtil.getParentPath(path));
     if (targetPackage == null) {
       return null;
     }
-    TargetName targetName = TargetName.createIfValid(pathFile.getName());
+    TargetName targetName = TargetName.createIfValid(PathUtil.getFileName(path));
     if (targetName == null) {
       return null;
     }
@@ -156,17 +153,21 @@ public final class BlazeGoTestLocator implements SMTestLocator {
   }
 
   private static List<VirtualFile> getGoFiles(Project project, @Nullable TargetIdeInfo target) {
-    if (target == null || target.goIdeInfo == null || target.goIdeInfo.importPath == null) {
+    if (target == null || target.goIdeInfo == null) {
       return ImmutableList.of();
     }
-    Map<String, BlazeVirtualGoPackage> packageMap = BlazeGoImportResolver.getPackageMap(project);
-    if (packageMap == null) {
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    LocalFileSystem lfs = VirtualFileSystemProvider.getInstance().getSystem();
+    if (projectData == null) {
       return ImmutableList.of();
     }
-    BlazeVirtualGoPackage goPackage = packageMap.get(target.goIdeInfo.importPath);
-    if (goPackage == null) {
-      return ImmutableList.of();
-    }
-    return Arrays.asList(goPackage.getGoFiles());
+    return target
+        .goIdeInfo
+        .sources
+        .stream()
+        .map(projectData.artifactLocationDecoder::decode)
+        .map(lfs::findFileByIoFile)
+        .collect(Collectors.toList());
   }
 }

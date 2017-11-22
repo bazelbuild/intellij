@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.projectview;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.ProjectViewSet.ProjectViewFile;
 import com.google.idea.blaze.base.projectview.section.ListSection;
@@ -138,7 +138,7 @@ public class ProjectViewVerifier {
       ProjectViewSet projectViewSet) {
     boolean ok = true;
 
-    FileAttributeProvider fileAttributeProvider = FileAttributeProvider.getInstance();
+    FileOperationProvider fileOperationProvider = FileOperationProvider.getInstance();
 
     for (ProjectViewSet.ProjectViewFile projectViewFile : projectViewSet.getProjectViewFiles()) {
       List<DirectoryEntry> directoryEntries = Lists.newArrayList();
@@ -152,14 +152,14 @@ public class ProjectViewVerifier {
         }
         WorkspacePath workspacePath = entry.directory;
         File file = workspacePathResolver.resolveToFile(workspacePath);
-        if (!fileAttributeProvider.exists(file)) {
+        if (!fileOperationProvider.exists(file)) {
           IssueOutput.error(
                   String.format(
                       "Directory '%s' specified in project view not found.", workspacePath))
               .inFile(projectViewFile.projectViewFile)
               .submit(context);
           ok = false;
-        } else if (!fileAttributeProvider.isDirectory(file)) {
+        } else if (!fileOperationProvider.isDirectory(file)) {
           IssueOutput.error(
                   String.format(
                       "Directory '%s' specified in project view is a file.", workspacePath))

@@ -42,11 +42,14 @@ def _optional_plugin_xml_impl(ctx):
   )
 
 optional_plugin_xml = rule(
-    implementation = _optional_plugin_xml_impl,
     attrs = {
-        "plugin_xml": attr.label(mandatory=True, allow_single_file=[".xml"]),
-        "module": attr.string(mandatory=True),
+        "plugin_xml": attr.label(
+            mandatory = True,
+            allow_single_file = [".xml"],
+        ),
+        "module": attr.string(mandatory = True),
     },
+    implementation = _optional_plugin_xml_impl,
 )
 
 def _merge_optional_plugin_xmls(ctx):
@@ -137,12 +140,17 @@ def _intellij_plugin_jar_impl(ctx):
   )
 
 _intellij_plugin_jar = rule(
-    implementation = _intellij_plugin_jar_impl,
     attrs = {
-        "deploy_jar": attr.label(mandatory=True, allow_single_file=[".jar"]),
-        "plugin_xml": attr.label(mandatory=True, allow_single_file=[".xml"]),
+        "deploy_jar": attr.label(
+            mandatory = True,
+            allow_single_file = [".jar"],
+        ),
+        "plugin_xml": attr.label(
+            mandatory = True,
+            allow_single_file = [".xml"],
+        ),
         "optional_plugin_xmls": attr.label_list(),
-        "jar_name": attr.string(mandatory=True),
+        "jar_name": attr.string(mandatory = True),
         "_merge_xml_binary": attr.label(
             default = Label("//build_defs:merge_xml"),
             executable = True,
@@ -159,6 +167,7 @@ _intellij_plugin_jar = rule(
             cfg = "host",
         ),
     },
+    implementation = _intellij_plugin_jar_impl,
 )
 
 def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls=[], jar_name=None, **kwargs):

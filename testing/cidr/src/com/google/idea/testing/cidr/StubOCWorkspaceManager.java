@@ -1,9 +1,9 @@
 package com.google.idea.testing.cidr;
 
 import com.google.idea.sdkcompat.cidr.OCWorkspaceModificationTrackersCompatUtils;
-import com.google.idea.sdkcompat.transactions.Transactions;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -77,7 +77,7 @@ public class StubOCWorkspaceManager extends OCWorkspaceManager {
   }
 
   private static void rebuildSymbols(Project project, OCWorkspace workspace) {
-    Transactions.submitTransaction(
+    TransactionGuard.submitTransaction(
         project,
         () ->
             ApplicationManager.getApplication()

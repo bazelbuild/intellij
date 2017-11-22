@@ -46,7 +46,7 @@ public class ScalaBinaryTest extends BazelIntellijAspectTest {
                 .stream()
                 .map(IntellijAspectTest::libraryArtifactToString)
                 .collect(Collectors.toList()))
-        .containsExactly(jarString(testRelative("foo.jar"), testRelative("foo.jar"), null));
+        .containsExactly(jarString(testRelative("foo.jar"), null, null));
 
     assertThat(binaryInfo.getJavaIdeInfo().getMainClass()).isEqualTo("com.google.MyMainClass");
 
@@ -54,8 +54,7 @@ public class ScalaBinaryTest extends BazelIntellijAspectTest {
         .containsAllOf(
             testRelative("foolib.intellij-info.txt"), testRelative("foo.intellij-info.txt"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
-        .containsAllOf(
-            testRelative("foolib.jar"), testRelative("foolib_ijar.jar"), testRelative("foo.jar"));
+        .containsAllOf(testRelative("foolib.jar"), testRelative("foo.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
         .containsAllOf(testRelative("foolib.jar"), testRelative("foo.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();

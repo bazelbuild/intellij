@@ -25,15 +25,19 @@ import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
+import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
@@ -112,7 +116,7 @@ public class WildcardTargetExpander {
         PrefetchService.getInstance().prefetchFiles(project, toPrefetch, false);
     if (!FutureUtil.waitForFuture(context, prefetchFuture)
         .withProgressMessage("Prefetching wildcard target pattern directories...")
-        .timed("PrefetchingWildcardTargetDirectories")
+        .timed("PrefetchingWildcardTargetDirectories", EventType.Prefetching)
         .onError("Prefetching wildcard target directories failed")
         .run()
         .success()) {
@@ -125,6 +129,22 @@ public class WildcardTargetExpander {
 
   /** Runs a sharded blaze query to expand wildcard targets to individual blaze targets */
   static ExpandedTargetsResult expandToSingleTargets(
+      Project project,
+      BlazeContext parentContext,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      List<TargetExpression> allTargets) {
+    return Scope.push(
+        parentContext,
+        context -> {
+          context.push(new TimingScope("ExpandTargetsQuery", EventType.BlazeInvocation));
+          context.setPropagatesErrors(false);
+          return doExpandToSingleTargets(
+              project, context, workspaceRoot, projectViewSet, allTargets);
+        });
+  }
+
+  private static ExpandedTargetsResult doExpandToSingleTargets(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
@@ -187,7 +207,8 @@ public class WildcardTargetExpander {
             .stdout(LineProcessingOutputStream.of(new QueryResultLineProcessor(output, filter)))
             .stderr(
                 LineProcessingOutputStream.of(
-                    new IssueOutputLineProcessor(project, context, workspaceRoot)))
+                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
+                        project, context, workspaceRoot)))
             .build()
             .run();
 

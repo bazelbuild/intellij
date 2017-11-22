@@ -55,7 +55,7 @@ public class BlazeJavascriptSyncPluginTest extends BlazeTestCase {
         registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
     ep.registerExtension(new BlazeJavascriptSyncPlugin());
     ep.registerExtension(
-        new BlazeSyncPlugin.Adapter() {
+        new BlazeSyncPlugin() {
           @Override
           public WorkspaceType getDefaultWorkspaceType() {
             return WorkspaceType.JAVA;

@@ -28,9 +28,9 @@ public class BlazeAndroidBinaryLaunchMethodsProviderImpl
     String blaze = Blaze.buildSystemName(project);
     return ImmutableList.of(
         new AndroidBinaryLaunchMethodComboEntry(
-            AndroidBinaryLaunchMethod.NON_BLAZE, String.format("Run without using %s", blaze)),
-        new AndroidBinaryLaunchMethodComboEntry(
             AndroidBinaryLaunchMethod.MOBILE_INSTALL,
-            String.format("Run with %s mobile-install", blaze.toLowerCase())));
+            String.format("Run with %s mobile-install", blaze.toLowerCase())),
+        new AndroidBinaryLaunchMethodComboEntry(
+            AndroidBinaryLaunchMethod.NON_BLAZE, String.format("Run without using %s", blaze)));
   }
 }

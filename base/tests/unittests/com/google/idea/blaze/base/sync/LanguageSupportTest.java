@@ -61,7 +61,7 @@ public class LanguageSupportTest extends BlazeTestCase {
   @Test
   public void testSimpleCase() {
     syncPlugins.registerExtension(
-        new BlazeSyncPlugin.Adapter() {
+        new BlazeSyncPlugin() {
           @Override
           public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
             return ImmutableSet.of(LanguageClass.C);
@@ -97,7 +97,7 @@ public class LanguageSupportTest extends BlazeTestCase {
   @Test
   public void testFailWithUnsupportedWorkspaceType() {
     syncPlugins.registerExtension(
-        new BlazeSyncPlugin.Adapter() {
+        new BlazeSyncPlugin() {
           @Override
           public WorkspaceType getDefaultWorkspaceType() {
             return WorkspaceType.JAVA;
@@ -119,7 +119,7 @@ public class LanguageSupportTest extends BlazeTestCase {
   @Test
   public void testFailWithUnsupportedLanguageType() {
     syncPlugins.registerExtension(
-        new BlazeSyncPlugin.Adapter() {
+        new BlazeSyncPlugin() {
           @Override
           public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
             return ImmutableSet.of(LanguageClass.C);
@@ -156,7 +156,7 @@ public class LanguageSupportTest extends BlazeTestCase {
   @Test
   public void testWorkspaceTypeImpliesLanguages() {
     syncPlugins.registerExtension(
-        new BlazeSyncPlugin.Adapter() {
+        new BlazeSyncPlugin() {
           @Override
           public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
             return ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA, LanguageClass.C);

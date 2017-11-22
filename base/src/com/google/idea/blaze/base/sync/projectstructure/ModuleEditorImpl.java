@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.sync.projectstructure;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -60,7 +60,7 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
     this.moduleModel = ModuleManager.getInstance(project).getModifiableModel();
 
     this.imlDirectory = getImlDirectory(importSettings);
-    if (!FileAttributeProvider.getInstance().exists(imlDirectory)) {
+    if (!FileOperationProvider.getInstance().exists(imlDirectory)) {
       if (!imlDirectory.mkdirs()) {
         logger.error("Could not make directory: " + imlDirectory.getPath());
       }

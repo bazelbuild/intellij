@@ -187,14 +187,18 @@ public class BlazeCoverageEngine extends CoverageEngine {
     if (root == null) {
       return null;
     }
+    Set<File> topLevelDirectories = getTopLevelDirectories(suites);
+    if (topLevelDirectories.isEmpty()) {
+      return null;
+    }
     CoverageAnnotator annotator = getCoverageAnnotator(project);
     return new DirectoryCoverageViewExtension(project, annotator, suites, stateBean) {
       private List<AbstractTreeNode> topLevelNodes;
 
       @Override
       public AbstractTreeNode createRootNode() {
-        if (suites.getSuites().length == 1) {
-          File file = ((BlazeCoverageSuite) suites.getSuites()[0]).getDeepestRootDirectory();
+        if (topLevelDirectories.size() == 1) {
+          File file = topLevelDirectories.iterator().next();
           return new CoverageListRootNode(project, resolveFile(project, file), suites, stateBean);
         }
         return new CoverageListRootNode(
@@ -208,7 +212,7 @@ public class BlazeCoverageEngine extends CoverageEngine {
 
       @Override
       public List<AbstractTreeNode> getChildrenNodes(AbstractTreeNode node) {
-        if (node instanceof CoverageListRootNode && suites.getSuites().length > 1) {
+        if (node instanceof CoverageListRootNode && topLevelDirectories.size() != 1) {
           return getRootChildren((CoverageListRootNode) node);
         }
         return super.getChildrenNodes(node)
@@ -229,10 +233,17 @@ public class BlazeCoverageEngine extends CoverageEngine {
     };
   }
 
-  private static List<AbstractTreeNode> getTopLevelNodes(
-      Project project, CoverageSuitesBundle suites, StateBean stateBean) {
+  private static Set<File> getTopLevelDirectories(CoverageSuitesBundle suites) {
     return Arrays.stream(suites.getSuites())
         .map(s -> ((BlazeCoverageSuite) s).getDeepestRootDirectory())
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+  }
+
+  private static List<AbstractTreeNode> getTopLevelNodes(
+      Project project, CoverageSuitesBundle suites, StateBean stateBean) {
+    return getTopLevelDirectories(suites)
+        .stream()
         .map(file -> resolveFile(project, file))
         .filter(Objects::nonNull)
         .map(psiFile -> new CoverageListNode(project, psiFile, suites, stateBean))

@@ -28,12 +28,14 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
+import com.google.idea.blaze.base.projectview.section.Glob;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
+import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
@@ -256,6 +258,24 @@ public class ProjectViewParserTest extends BlazeTestCase {
   }
 
   @Test
+  public void testTestSources() throws Exception {
+    projectViewStorageManager.add(
+        ".blazeproject",
+        "test_sources:",
+        "  javatests/com/google",
+        "  javatests/com/google/android/*");
+    projectViewParser.parseProjectView(new File(".blazeproject"));
+    errorCollector.assertNoIssues();
+
+    ProjectViewSet projectViewSet = projectViewParser.getResult();
+    Collection<Glob> entries = projectViewSet.listItems(TestSourceSection.KEY);
+    assertThat(entries)
+        .containsExactly(
+            new Glob("javatests/com/google"), new Glob("javatests/com/google/android/*"))
+        .inOrder();
+  }
+
+  @Test
   public void testMinimumIndentRequired() {
     projectViewStorageManager.add(
         ".blazeproject", "directories:", "  java/com/google", "java/com/google2", "");
@@ -307,6 +327,21 @@ public class ProjectViewParserTest extends BlazeTestCase {
     projectViewStorageManager.add(".blazeproject", "directories:", "");
     projectViewParser.parseProjectView(new File(".blazeproject"));
     errorCollector.assertIssues("Empty section: 'directories'");
+  }
+
+  @Test
+  public void testTargetExpressionInGlobSectionResultsInIssue() {
+    projectViewStorageManager.add(".blazeproject", "test_sources:", "  //javatests/com/google:one");
+    projectViewParser.parseProjectView(new File(".blazeproject"));
+    errorCollector.assertIssues("test_sources is a list of file path globs, not target patterns.");
+  }
+
+  @Test
+  public void testUnsupportedWildcardInGlobSectionResultsInIssue() {
+    projectViewStorageManager.add(
+        ".blazeproject", "test_sources:", "  javatests/com/google...", "  javatests/**/google");
+    projectViewParser.parseProjectView(new File(".blazeproject"));
+    errorCollector.assertIssueContaining("wildcard is not supported in test_sources");
   }
 
   @Test

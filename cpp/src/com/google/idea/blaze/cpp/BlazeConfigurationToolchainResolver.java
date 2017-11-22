@@ -35,7 +35,8 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
+import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -69,7 +70,7 @@ final class BlazeConfigurationToolchainResolver {
     return Scope.push(
         context,
         childContext -> {
-          childContext.push(new TimingScope("Build toolchain lookup map"));
+          childContext.push(new TimingScope("Build toolchain lookup map", EventType.Other));
 
           Map<TargetKey, CToolchainIdeInfo> toolchains = Maps.newLinkedHashMap();
           for (TargetIdeInfo target : targetMap.targets()) {
@@ -135,19 +136,19 @@ final class BlazeConfigurationToolchainResolver {
       Project project,
       WorkspaceRoot workspaceRoot,
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
-      WorkspacePathResolver workspacePathResolver,
+      ExecutionRootPathResolver pathResolver,
       CompilerInfoCache compilerInfoCache,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings) {
     return Scope.push(
         context,
         childContext -> {
-          childContext.push(new TimingScope("Build compiler settings map"));
+          childContext.push(new TimingScope("Build compiler settings map", EventType.Other));
           return doBuildCompilerSettingsMap(
               context,
               project,
               workspaceRoot,
               toolchainLookupMap,
-              workspacePathResolver,
+              pathResolver,
               compilerInfoCache,
               oldCompilerSettings);
         });
@@ -158,7 +159,7 @@ final class BlazeConfigurationToolchainResolver {
       Project project,
       WorkspaceRoot workspaceRoot,
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
-      WorkspacePathResolver workspacePathResolver,
+      ExecutionRootPathResolver pathResolver,
       CompilerInfoCache compilerInfoCache,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings) {
     Set<CToolchainIdeInfo> toolchains =
@@ -169,7 +170,7 @@ final class BlazeConfigurationToolchainResolver {
       compilerSettingsFutures.add(
           submit(
               () -> {
-                File cppExecutable = resolveCompilerExecutable(toolchain, workspacePathResolver);
+                File cppExecutable = pathResolver.resolveExecutionRootPath(toolchain.cppExecutable);
                 if (cppExecutable == null) {
                   logger.warn(
                       String.format(
@@ -249,16 +250,6 @@ final class BlazeConfigurationToolchainResolver {
         cppFlagsBuilder.build(),
         compilerVersion,
         compilerInfoCache);
-  }
-
-  @Nullable
-  private static File resolveCompilerExecutable(
-      CToolchainIdeInfo toolchainIdeInfo, WorkspacePathResolver workspacePathResolver) {
-    File cppExecutable = toolchainIdeInfo.cppExecutable.getAbsoluteOrRelativeFile();
-    if (cppExecutable != null && !cppExecutable.isAbsolute()) {
-      cppExecutable = workspacePathResolver.resolveToFile(cppExecutable.getPath());
-    }
-    return cppExecutable;
   }
 
   /**

@@ -20,7 +20,6 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
-import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.execution.Executor;
@@ -34,16 +33,16 @@ import javax.swing.Icon;
 public final class BlazePyRunConfigurationHandler implements BlazeCommandRunConfigurationHandler {
 
   private final String buildSystemName;
-  private final BlazeCommandRunConfigurationCommonState state;
+  private final BlazePyRunConfigState state;
 
   public BlazePyRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
     BuildSystem buildSystem = Blaze.getBuildSystem(configuration.getProject());
     this.buildSystemName = buildSystem.getName();
-    this.state = new BlazeCommandRunConfigurationCommonState(buildSystem);
+    this.state = new BlazePyRunConfigState(buildSystem);
   }
 
   @Override
-  public BlazeCommandRunConfigurationCommonState getState() {
+  public BlazePyRunConfigState getState() {
     return state;
   }
 

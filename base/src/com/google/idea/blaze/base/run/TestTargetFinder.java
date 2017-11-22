@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.run;
 
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -32,6 +32,5 @@ public interface TestTargetFinder {
    * Finds all test rules 'reachable' from source file (i.e. with source included in srcs, deps or
    * runtime_deps).
    */
-  Collection<TargetIdeInfo> testTargetsForSourceFile(File sourceFile);
-
+  Collection<TargetInfo> testTargetsForSourceFile(File sourceFile);
 }

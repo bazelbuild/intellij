@@ -15,7 +15,9 @@
  */
 package com.google.idea.blaze.base.sync;
 
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -23,18 +25,26 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.projectview.SyncDirectoriesWarning;
+import com.google.idea.common.concurrency.ConcurrencyUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 /** Manages syncing and its listeners. */
 public class BlazeSyncManager {
 
+  // a per-project single-threaded executor to run syncs. Ensures only one sync can be run at a time
+  private final ListeningExecutorService syncExecutor;
   private final Project project;
 
   public BlazeSyncManager(Project project) {
     this.project = project;
+    syncExecutor =
+        MoreExecutors.listeningDecorator(
+            Executors.newSingleThreadExecutor(
+                ConcurrencyUtil.namedDaemonThreadPoolFactory(BlazeSyncManager.class)));
   }
 
   public static BlazeSyncManager getInstance(Project project) {
@@ -59,7 +69,9 @@ public class BlazeSyncManager {
 
               final BlazeSyncTask syncTask = new BlazeSyncTask(project, importSettings, syncParams);
 
-              BlazeExecutor.submitTask(project, syncTask);
+              ProgressiveTaskWithProgressIndicator.builder(project)
+                  .setExecutor(syncExecutor)
+                  .submitTask(syncTask);
             });
   }
 
@@ -81,7 +93,7 @@ public class BlazeSyncManager {
     requestProjectSync(syncParams);
   }
 
-  public void partialSync(List<TargetExpression> targetExpressions) {
+  public void partialSync(List<? extends TargetExpression> targetExpressions) {
     BlazeSyncParams syncParams =
         new BlazeSyncParams.Builder("Partial Sync", BlazeSyncParams.SyncMode.PARTIAL)
             .addTargetExpressions(targetExpressions)

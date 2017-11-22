@@ -46,7 +46,9 @@ public class FileLookupData {
     /** a BUILD label with leading '//', which can reference targets in other packages. */
     NonLocal,
     /** a path string which can reference any files, and has no leading '//'. */
-    NonLocalWithoutInitialBackslashes
+    NonLocalWithoutInitialBackslashes,
+    /** a path string referencing only directories, with no leading '//'. */
+    NonLocalWithoutInitialBackslashesOnlyDirectories,
   }
 
   @Nullable
@@ -70,8 +72,10 @@ public class FileLookupData {
     if (relativePath.startsWith("/")) {
       return null;
     }
+    boolean onlyDirectories = pathFormat != PathFormat.NonLocalWithoutInitialBackslashes;
+    VirtualFileFilter filter = vf -> !onlyDirectories || vf.isDirectory();
     return new FileLookupData(
-        originalLabel, containingFile, null, relativePath, pathFormat, quoteType, null);
+        originalLabel, containingFile, null, relativePath, pathFormat, quoteType, filter);
   }
 
   @Nullable
@@ -143,7 +147,7 @@ public class FileLookupData {
       return false;
     }
     if (pathFormat != PathFormat.PackageLocal) {
-      return file.isDirectory();
+      return true;
     }
     if (file.equals(containingFile.getOriginalFile().getVirtualFile())) {
       return false;

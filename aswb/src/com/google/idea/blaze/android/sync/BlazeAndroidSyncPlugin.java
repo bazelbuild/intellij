@@ -44,6 +44,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
@@ -75,7 +76,7 @@ import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** ASwB sync plugin. */
-public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
+public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
 
   @Override
   public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
@@ -155,7 +156,7 @@ public class BlazeAndroidSyncPlugin extends BlazeSyncPlugin.Adapter {
         Scope.push(
             context,
             (childContext) -> {
-              childContext.push(new TimingScope("AndroidWorkspaceImporter"));
+              childContext.push(new TimingScope("AndroidWorkspaceImporter", EventType.Other));
               return workspaceImporter.importWorkspace();
             });
     BlazeAndroidSyncData syncData = new BlazeAndroidSyncData(importResult, androidSdkPlatform);

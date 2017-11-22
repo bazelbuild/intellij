@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.vcs.git;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -105,7 +105,7 @@ public class GitBlazeVcsHandler implements BlazeVcsHandler {
     // TODO: What if the git repo root is a parent directory of the workspace root?
     // Just call 'git rev-parse --is-inside-work-tree' or similar instead?
     File gitDir = new File(workspaceRoot.directory(), ".git");
-    return FileAttributeProvider.getInstance().isDirectory(gitDir);
+    return FileOperationProvider.getInstance().isDirectory(gitDir);
   }
 
   /**

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.project;
 
 import com.android.tools.idea.npw.project.AndroidSourceSet;
+import com.android.tools.idea.project.BuildSystemService;
 import com.google.idea.blaze.android.npw.project.BlazeAndroidProjectPaths;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.base.actions.BlazeBuildService;
@@ -26,7 +27,6 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.sdkcompat.android.project.BuildSystemServiceAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
@@ -39,7 +39,7 @@ import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Blaze implementation of {@link BuildSystemService} for build system specific operations. */
-public class BlazeBuildSystemService extends BuildSystemServiceAdapter {
+public class BlazeBuildSystemService extends BuildSystemService {
   @Override
   public boolean isApplicable(Project project) {
     return Blaze.isBlazeProject(project);

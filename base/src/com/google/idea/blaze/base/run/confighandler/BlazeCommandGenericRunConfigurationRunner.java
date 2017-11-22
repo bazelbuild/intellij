@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
+import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -163,7 +163,8 @@ public final class BlazeCommandGenericRunConfigurationRunner
             public ImmutableList<ProcessListener> createProcessListeners(BlazeContext context) {
               LineProcessingOutputStream outputStream =
                   LineProcessingOutputStream.of(
-                      new IssueOutputLineProcessor(project, context, workspaceRoot));
+                      BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
+                          project, context, workspaceRoot));
               return ImmutableList.of(new LineProcessingProcessAdapter(outputStream));
             }
           });

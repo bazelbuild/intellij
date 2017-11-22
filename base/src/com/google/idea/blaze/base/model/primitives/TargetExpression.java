@@ -15,9 +15,6 @@
  */
 package com.google.idea.blaze.base.model.primitives;
 
-import com.google.common.base.Preconditions;
-import com.google.idea.blaze.base.sync.sharding.WildcardTargetPattern;
-import com.google.idea.common.experiments.BoolExperiment;
 import java.io.Serializable;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -31,11 +28,6 @@ import javax.annotation.Nullable;
  */
 public class TargetExpression implements Serializable, Comparable<TargetExpression> {
   public static final long serialVersionUID = 1L;
-
-  // Additional TargetExpression validation has the potential to break many users, so
-  // roll it out under an experiment.
-  static final BoolExperiment enableValidation =
-      new BoolExperiment("blaze.validate.target.expressions", true);
 
   protected static final Pattern VALID_REPO_NAME = Pattern.compile("@[\\w\\-.]*");
 
@@ -69,9 +61,6 @@ public class TargetExpression implements Serializable, Comparable<TargetExpressi
   }
 
   protected TargetExpression(String expression) {
-    // TODO(brendandouglas): Remove this redundant check when the 'enableValidation' experiment is
-    // removed.
-    Preconditions.checkArgument(!expression.isEmpty(), "Target should be non-empty.");
     this.expression = expression;
   }
 
@@ -119,9 +108,6 @@ public class TargetExpression implements Serializable, Comparable<TargetExpressi
   /** Validate the given target pattern. Returns null on success or an error message otherwise. */
   @Nullable
   public static String validate(String targetPattern) {
-    if (!enableValidation.getValue()) {
-      return null;
-    }
     if (targetPattern.isEmpty()) {
       return "Target should be non-empty.";
     }

@@ -15,9 +15,14 @@
  */
 package com.google.idea.blaze.base.sync.projectstructure;
 
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
@@ -27,6 +32,9 @@ import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Directory structure representation used by {@link ContentEntryEditor}.
@@ -49,41 +57,100 @@ public class DirectoryStructure {
   }
 
   private static DirectoryStructure computeRootDirectoryStructure(
-      Project project, WorkspaceRoot workspaceRoot, ProjectViewSet projectViewSet) {
+      Project project, WorkspaceRoot workspaceRoot, ProjectViewSet projectViewSet)
+      throws ExecutionException, InterruptedException {
+    ListeningExecutorService executorService = FetchExecutor.EXECUTOR;
+    FileOperationProvider fileOperationProvider = FileOperationProvider.getInstance();
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, Blaze.getBuildSystem(project))
             .add(projectViewSet)
             .build();
     Collection<WorkspacePath> rootDirectories = importRoots.rootDirectories();
-    ImmutableMap.Builder<WorkspacePath, DirectoryStructure> result = ImmutableMap.builder();
+    Set<WorkspacePath> excludeDirectories = importRoots.excludeDirectories();
+    List<ListenableFuture<PathStructurePair>> futures =
+        Lists.newArrayListWithExpectedSize(rootDirectories.size());
     for (WorkspacePath rootDirectory : rootDirectories) {
-      walkDirectoryStructure(workspaceRoot, result, rootDirectory);
+      futures.add(
+          walkDirectoryStructure(
+              workspaceRoot,
+              excludeDirectories,
+              fileOperationProvider,
+              executorService,
+              rootDirectory));
+    }
+    ImmutableMap.Builder<WorkspacePath, DirectoryStructure> result = ImmutableMap.builder();
+    for (PathStructurePair pair : Futures.allAsList(futures).get()) {
+      if (pair != null) {
+        result.put(pair.path, pair.directoryStructure);
+      }
     }
     return new DirectoryStructure(result.build());
   }
 
-  private static void walkDirectoryStructure(
+  private static ListenableFuture<PathStructurePair> walkDirectoryStructure(
       WorkspaceRoot workspaceRoot,
-      ImmutableMap.Builder<WorkspacePath, DirectoryStructure> parent,
+      Set<WorkspacePath> excludeDirectories,
+      FileOperationProvider fileOperationProvider,
+      ListeningExecutorService executorService,
       WorkspacePath workspacePath) {
+    if (excludeDirectories.contains(workspacePath)) {
+      return Futures.immediateFuture(null);
+    }
     File file = workspaceRoot.fileForPath(workspacePath);
-    if (!FileAttributeProvider.getInstance().isDirectory(file)) {
-      return;
+    if (!fileOperationProvider.isDirectory(file)) {
+      return Futures.immediateFuture(null);
     }
-    ImmutableMap.Builder<WorkspacePath, DirectoryStructure> result = ImmutableMap.builder();
-    File[] children = FileAttributeProvider.getInstance().listFiles(file);
-    if (children != null) {
-      for (File child : children) {
-        WorkspacePath childWorkspacePath;
-        try {
-          childWorkspacePath = workspaceRoot.workspacePathFor(child);
-        } catch (IllegalArgumentException e) {
-          // stop at directories with unhandled characters.
-          continue;
-        }
-        walkDirectoryStructure(workspaceRoot, result, childWorkspacePath);
-      }
+    ListenableFuture<File[]> childrenFuture =
+        executorService.submit(() -> fileOperationProvider.listFiles(file));
+    return Futures.transformAsync(
+        childrenFuture,
+        children -> {
+          if (children == null) {
+            return Futures.immediateFuture(null);
+          }
+          List<ListenableFuture<PathStructurePair>> futures =
+              Lists.newArrayListWithExpectedSize(children.length);
+          for (File child : children) {
+            WorkspacePath childWorkspacePath;
+            try {
+              childWorkspacePath = workspaceRoot.workspacePathFor(child);
+            } catch (IllegalArgumentException e) {
+              // stop at directories with unhandled characters.
+              continue;
+            }
+            futures.add(
+                walkDirectoryStructure(
+                    workspaceRoot,
+                    excludeDirectories,
+                    fileOperationProvider,
+                    executorService,
+                    childWorkspacePath));
+          }
+          return Futures.transform(
+              Futures.allAsList(futures),
+              (Function<List<PathStructurePair>, PathStructurePair>)
+                  pairs -> {
+                    Builder<WorkspacePath, DirectoryStructure> result = ImmutableMap.builder();
+                    for (PathStructurePair pair : pairs) {
+                      if (pair != null) {
+                        result.put(pair.path, pair.directoryStructure);
+                      }
+                    }
+                    return new PathStructurePair(
+                        workspacePath, new DirectoryStructure(result.build()));
+                  },
+              executorService);
+        },
+        executorService);
+  }
+
+  private static class PathStructurePair {
+    final WorkspacePath path;
+    final DirectoryStructure directoryStructure;
+
+    PathStructurePair(WorkspacePath path, DirectoryStructure directoryStructure) {
+      this.path = path;
+      this.directoryStructure = directoryStructure;
     }
-    parent.put(workspacePath, new DirectoryStructure(result.build()));
   }
 }

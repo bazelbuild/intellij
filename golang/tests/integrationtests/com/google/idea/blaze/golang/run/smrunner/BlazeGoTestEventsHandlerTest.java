@@ -169,6 +169,58 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
   }
 
   @Test
+  public void testTopLevelTestTargetResolves() {
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//:foo_test")
+                    .setKind("go_test")
+                    .setBuildFile(src("BUILD"))
+                    .addSource(src("foo_test.go"))
+                    .setGoInfo(
+                        GoIdeInfo.builder()
+                            .addSources(ImmutableList.of(src("foo_test.go")))
+                            .setImportPath("foo")))
+            .build();
+
+    registerProjectService(
+        BlazeProjectDataManager.class,
+        new MockBlazeProjectDataManager(
+            new BlazeProjectData(
+                0L,
+                targetMap,
+                null,
+                null,
+                new WorkspacePathResolverImpl(workspaceRoot),
+                location ->
+                    workspaceRoot.fileForPath(new WorkspacePath(location.getRelativePath())),
+                null,
+                null,
+                null)));
+
+    GoFile goFile =
+        (GoFile)
+            workspace.createPsiFile(
+                new WorkspacePath("foo_test.go"),
+                "package foo",
+                "import \"testing\"",
+                "func TestFoo(t *testing.T) {}");
+
+    workspace.createFile(
+        new WorkspacePath("BUILD"),
+        "go_test(",
+        "    name = 'foo_test',",
+        "    srcs = ['foo_test.go'],",
+        ")");
+
+    String url = handler.suiteLocationUrl(null, "foo_test");
+    Location<?> location = getLocation(url);
+    assertThat(location).isNotNull();
+    assertThat(location.getPsiElement()).isEqualTo(goFile);
+  }
+
+  @Test
   public void testFunctionLocationResolves() {
     TargetMap targetMap =
         TargetMapBuilder.builder()

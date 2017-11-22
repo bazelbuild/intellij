@@ -17,7 +17,7 @@ package com.google.idea.blaze.scala.run.producers;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.java.run.RunUtil;
-import com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer;
 import com.google.idea.blaze.java.run.producers.TestSizeAnnotationMap;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.JavaExecutionUtil;
@@ -46,7 +45,8 @@ import org.jetbrains.plugins.scala.testingSupport.test.scalatest.ScalaTestTestFr
 /**
  * Producer for run configurations related to Scala test classes (not handled by JUnit) in Blaze.
  * Handles only {@link ScalaTestTestFramework}. Other supported frameworks (junit and specs2) are
- * handled by {@link BlazeJavaTestClassConfigurationProducer}.
+ * handled by {@link BlazeScalaJunitTestClassConfigurationProducer} and {@link
+ * BlazeScalaSpecs2TestExprConfigurationProducer}, respectively.
  */
 public class BlazeScalaTestClassConfigurationProducer
     extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
@@ -65,12 +65,12 @@ public class BlazeScalaTestClassConfigurationProducer
       return false;
     }
     sourceElement.set(testClass);
-    TargetIdeInfo target =
+    TargetInfo target =
         RunUtil.targetForTestClass(testClass, TestSizeAnnotationMap.getTestSize(testClass));
     if (target == null) {
       return false;
     }
-    configuration.setTarget(target.key.label);
+    configuration.setTarget(target.label);
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {
@@ -104,9 +104,9 @@ public class BlazeScalaTestClassConfigurationProducer
         || !Objects.equals(handlerState.getTestFilterFlag(), getTestFilterFlag(testClass))) {
       return false;
     }
-    TargetIdeInfo target =
+    TargetInfo target =
         RunUtil.targetForTestClass(testClass, TestSizeAnnotationMap.getTestSize(testClass));
-    return target != null && Objects.equals(configuration.getTarget(), target.key.label);
+    return target != null && Objects.equals(configuration.getTarget(), target.label);
   }
 
   @Nullable

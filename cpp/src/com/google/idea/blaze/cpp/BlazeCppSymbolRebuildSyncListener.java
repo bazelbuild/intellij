@@ -16,14 +16,15 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.common.transactions.Transactions;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceModificationTrackersCompatUtils;
-import com.google.idea.sdkcompat.transactions.Transactions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.lang.symbols.symtable.OCSymbolTablesBuildingActivity;
@@ -44,6 +45,9 @@ public class BlazeCppSymbolRebuildSyncListener extends SyncListener.Adapter {
       BlazeProjectData blazeProjectData,
       SyncMode syncMode,
       SyncResult syncResult) {
+    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C)) {
+      return;
+    }
     OCWorkspace workspace = OCWorkspaceProvider.getWorkspace(project);
     if (!(workspace instanceof BlazeCWorkspace)) {
       return;
@@ -56,20 +60,21 @@ public class BlazeCppSymbolRebuildSyncListener extends SyncListener.Adapter {
         return;
       }
     }
-    loadOrRebuildSymbolTables(project);
-    if (syncMode == SyncMode.STARTUP && prefillCidrCaches.getValue()) {
-      CidrCacheFiller.prefillCaches(project);
-    }
+    loadOrRebuildSymbolTables(project, syncMode);
   }
 
-  private static void loadOrRebuildSymbolTables(Project project) {
+  private static void loadOrRebuildSymbolTables(Project project, SyncMode syncMode) {
     Transactions.submitTransactionAndWait(
         () ->
             ApplicationManager.getApplication()
                 .runWriteAction(
-                    () ->
-                        OCWorkspaceModificationTrackersCompatUtils.incrementModificationCounts(
-                            project)));
+                    () -> {
+                      OCWorkspaceModificationTrackersCompatUtils.incrementModificationCounts(
+                          project);
+                      if (syncMode == SyncMode.STARTUP && prefillCidrCaches.getValue()) {
+                        CidrCacheFiller.queuePrefillCachesTask(project);
+                      }
+                    }));
   }
 
   private static void incrementallyUpdateSymbolTables(

@@ -24,15 +24,15 @@ public class ModifiedTimeScanner {
 
   private static final class TimestampReader implements FileAttributeScanner.AttributeReader<Long> {
 
-    private final FileAttributeProvider attributeProvider;
+    private final FileOperationProvider fileOperationProvider;
 
-    TimestampReader(FileAttributeProvider attributeProvider) {
-      this.attributeProvider = attributeProvider;
+    TimestampReader(FileOperationProvider fileOperationProvider) {
+      this.fileOperationProvider = fileOperationProvider;
     }
 
     @Override
     public Long getAttribute(File file) {
-      return attributeProvider.getFileModifiedTime(file);
+      return fileOperationProvider.getFileModifiedTime(file);
     }
 
     @Override
@@ -43,7 +43,7 @@ public class ModifiedTimeScanner {
 
   public static ImmutableMap<File, Long> readTimestamps(Iterable<File> fileList) throws Exception {
     final TimestampReader timestampReader =
-        new TimestampReader(FileAttributeProvider.getInstance());
+        new TimestampReader(FileOperationProvider.getInstance());
     return FileAttributeScanner.readAttributes(
         fileList, timestampReader, BlazeExecutor.getInstance());
   }

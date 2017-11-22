@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,7 +61,7 @@ public class GitWorkingSetProvider {
             .stdout(LineProcessingOutputStream.of(processor))
             .stderr(stderr)
             .build()
-            .run(new TimingScope("GitDiff"));
+            .run(new TimingScope("GitDiff", EventType.Other));
     if (retVal != 0) {
       logger.error(stderr);
       return null;

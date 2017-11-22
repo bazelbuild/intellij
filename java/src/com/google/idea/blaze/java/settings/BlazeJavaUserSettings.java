@@ -27,8 +27,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 @State(name = "BlazeJavaUserSettings", storages = @Storage("blaze.java.user.settings.xml"))
 public class BlazeJavaUserSettings implements PersistentStateComponent<BlazeJavaUserSettings> {
   private boolean useJarCache = getDefaultJarCacheValue();
-  private boolean attachSourcesByDefault = false;
-  private boolean attachSourcesOnDemand = false;
 
   public static BlazeJavaUserSettings getInstance() {
     return ServiceManager.getService(BlazeJavaUserSettings.class);
@@ -54,21 +52,5 @@ public class BlazeJavaUserSettings implements PersistentStateComponent<BlazeJava
 
   public void setUseJarCache(boolean useJarCache) {
     this.useJarCache = useJarCache;
-  }
-
-  public boolean getAttachSourcesByDefault() {
-    return attachSourcesByDefault;
-  }
-
-  public void setAttachSourcesByDefault(boolean attachSourcesByDefault) {
-    this.attachSourcesByDefault = attachSourcesByDefault;
-  }
-
-  public boolean getAttachSourcesOnDemand() {
-    return attachSourcesOnDemand;
-  }
-
-  public void setAttachSourcesOnDemand(boolean attachSourcesOnDemand) {
-    this.attachSourcesOnDemand = attachSourcesOnDemand;
   }
 }

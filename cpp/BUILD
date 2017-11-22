@@ -14,13 +14,12 @@ load(
 
 java_library(
     name = "cpp",
-    srcs = glob(
-        ["src/**/*.java"],
-    ),
+    srcs = glob(["src/**/*.java"]),
     visibility = ["//visibility:public"],
     deps = [
         "//base",
         "//common/experiments",
+        "//common/transactions",
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
         "//third_party/auto_value",

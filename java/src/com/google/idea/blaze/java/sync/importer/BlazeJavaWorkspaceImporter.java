@@ -115,7 +115,7 @@ public final class BlazeJavaWorkspaceImporter {
             context,
             workspaceRoot,
             artifactLocationDecoder,
-            importRoots.rootDirectories(),
+            importRoots,
             workspaceBuilder.sourceArtifacts,
             workspaceBuilder.javaPackageManifests);
 
@@ -195,6 +195,9 @@ public final class BlazeJavaWorkspaceImporter {
 
     // Collect jars from jdep references
     for (String jdepsPath : workspaceBuilder.jdeps) {
+      if (sourceFilter.jdepsPathsForExcludedJars.contains(jdepsPath)) {
+        continue;
+      }
       BlazeJarLibrary library = jdepsPathToLibrary.get(jdepsPath);
       if (library == null) {
         // It's in the target's jdeps, but our aspect never attached to the target building it

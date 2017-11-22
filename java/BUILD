@@ -23,6 +23,7 @@ java_library(
         "//base",
         "//common/experiments",
         "//common/guava",
+        "//common/transactions",
         "//intellij_platform_sdk:coverage",
         "//intellij_platform_sdk:junit",
         "//intellij_platform_sdk:plugin_api",

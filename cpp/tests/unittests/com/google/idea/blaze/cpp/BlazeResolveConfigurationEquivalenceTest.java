@@ -632,7 +632,13 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   }
 
   private VirtualFile createVirtualFile(String path) {
-    VirtualFile stub = new StubVirtualFile();
+    VirtualFile stub =
+        new StubVirtualFile() {
+          @Override
+          public boolean isValid() {
+            return true;
+          }
+        };
     when(mockFileSystem.findFileByIoFile(new File(path))).thenReturn(stub);
     return stub;
   }

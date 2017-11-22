@@ -19,7 +19,6 @@ import static com.google.idea.common.guava.GuavaHelper.toImmutableMap;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.google.idea.sdkcompat.java.HotSwapCompatUtils;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.JavaDebugProcess;
@@ -48,7 +47,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
-import java.util.concurrent.Future;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import javax.annotation.Nullable;
@@ -64,17 +62,14 @@ public final class BlazeHotSwapManager {
       return;
     }
     HotSwapProgressImpl progress = new HotSwapProgressImpl(project);
-    @SuppressWarnings("unused") // go/futurereturn-lsc
-    Future<?> possiblyIgnoredError =
-        ApplicationManager.getApplication()
-            .executeOnPooledThread(
-                () -> {
-                  HotSwapCompatUtils.setSessionForActions(progress, session.session);
-                  ProgressManager.getInstance()
-                      .runProcess(
-                          () -> doReloadClasses(session, progress),
-                          progress.getProgressIndicator());
-                });
+    ApplicationManager.getApplication()
+        .executeOnPooledThread(
+            () -> {
+              progress.setSessionForActions(session.session);
+              ProgressManager.getInstance()
+                  .runProcess(
+                      () -> doReloadClasses(session, progress), progress.getProgressIndicator());
+            });
   }
 
   private static void doReloadClasses(HotSwappableDebugSession session, HotSwapProgress progress) {

@@ -24,7 +24,7 @@ import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -38,7 +38,6 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import java.io.File;
 import java.util.Collection;
 import java.util.Set;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -47,7 +46,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BuildTargetFinderTest extends BlazeTestCase {
 
-  private static class MockFileAttributeProvider extends FileAttributeProvider {
+  private static class MockFileOperationProvider extends FileOperationProvider {
     final Set<File> files = Sets.newHashSet();
 
     void addFiles(File... files) {
@@ -65,15 +64,14 @@ public class BuildTargetFinderTest extends BlazeTestCase {
     }
   }
 
-  private final MockFileAttributeProvider fileAttributeProvider = new MockFileAttributeProvider();
+  private final MockFileOperationProvider fileOperationProvider = new MockFileOperationProvider();
   private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
 
   @Override
-  protected void initTest(
-      @NotNull Container applicationServices, @NotNull Container projectServices) {
+  protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
 
-    applicationServices.register(FileAttributeProvider.class, fileAttributeProvider);
+    applicationServices.register(FileOperationProvider.class, fileOperationProvider);
     applicationServices.register(ExperimentService.class, new MockExperimentService());
     applicationServices.register(
         BlazeImportSettingsManager.class, mock(BlazeImportSettingsManager.class));
@@ -96,7 +94,7 @@ public class BuildTargetFinderTest extends BlazeTestCase {
     BuildTargetFinder buildTargetFinder =
         buildTargetFinder(ImmutableList.of(new WorkspacePath(".")));
 
-    fileAttributeProvider.addFiles(
+    fileOperationProvider.addFiles(
         new File("/root/j/c/g/some/BUILD"),
         new File("/root/j/c/g/BUILD"),
         new File("/root/j/c/g/some/dir/File.java"));
@@ -110,7 +108,7 @@ public class BuildTargetFinderTest extends BlazeTestCase {
     BuildTargetFinder buildTargetFinder =
         buildTargetFinder(ImmutableList.of(new WorkspacePath(".")));
 
-    fileAttributeProvider.addFiles(
+    fileOperationProvider.addFiles(
         new File("/root/j/c/g/other/BUILD"), new File("/root/j/c/g/some/dir/File.java"));
 
     assertThat(buildTargetFinder.findTargetForFile(new File("/root/j/c/g/some/dir/File.java")))
@@ -122,7 +120,7 @@ public class BuildTargetFinderTest extends BlazeTestCase {
     BuildTargetFinder buildTargetFinder =
         buildTargetFinder(ImmutableList.of(new WorkspacePath("j/c/g/some")));
 
-    fileAttributeProvider.addFiles(
+    fileOperationProvider.addFiles(
         new File("/root/j/c/g/BUILD"), new File("/root/j/c/g/some/dir/File.java"));
 
     assertThat(buildTargetFinder.findTargetForFile(new File("/root/j/c/g/some/dir/File.java")))
@@ -138,7 +136,7 @@ public class BuildTargetFinderTest extends BlazeTestCase {
                 new WorkspacePath("j/c/g/bar"),
                 new WorkspacePath("j/c/g/baz")));
 
-    fileAttributeProvider.addFiles(
+    fileOperationProvider.addFiles(
         new File("/root/j/c/g/BUILD"),
         new File("/root/j/c/g/foo/BUILD"),
         new File("/root/j/c/g/bar/BUILD"),
@@ -154,7 +152,7 @@ public class BuildTargetFinderTest extends BlazeTestCase {
     BuildTargetFinder buildTargetFinder =
         buildTargetFinder(ImmutableList.of(new WorkspacePath(".")));
 
-    fileAttributeProvider.addFiles(
+    fileOperationProvider.addFiles(
         new File("/root/j/c/g/some/BUILD"), new File("/root/j/c/g/BUILD"));
 
     assertThat(buildTargetFinder.findTargetForFile(new File("/root/j/c/g/some/BUILD")))

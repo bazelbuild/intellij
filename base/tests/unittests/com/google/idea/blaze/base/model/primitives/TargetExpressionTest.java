@@ -21,7 +21,6 @@ import static org.junit.Assert.fail;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -33,8 +32,7 @@ public class TargetExpressionTest extends BlazeTestCase {
   private MockExperimentService experimentService;
 
   @Override
-  protected void initTest(
-      @NotNull Container applicationServices, @NotNull Container projectServices) {
+  protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
     experimentService = new MockExperimentService();
     applicationServices.register(ExperimentService.class, experimentService);
@@ -59,14 +57,6 @@ public class TargetExpressionTest extends BlazeTestCase {
       fail("Empty expressions should not be allowed.");
     } catch (InvalidTargetException expected) {
     }
-  }
-
-  @Test
-  public void testNoValidationWhenExperimentDisabled() {
-    experimentService.setExperiment(TargetExpression.enableValidation, false);
-
-    assertThat(TargetExpression.validate("///")).isNull();
-    assertThat(TargetExpression.validate("../a")).isNull();
   }
 
   @Test

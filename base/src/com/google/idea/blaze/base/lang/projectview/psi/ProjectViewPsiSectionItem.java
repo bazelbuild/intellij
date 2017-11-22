@@ -61,10 +61,13 @@ public abstract class ProjectViewPsiSectionItem extends ProjectViewPsiElement {
     switch (itemType) {
       case Label:
         return PathFormat.NonLocal;
-      case FileSystemItem:
+      case FileItem:
         return PathFormat.NonLocalWithoutInitialBackslashes;
-      default:
+      case DirectoryItem:
+        return PathFormat.NonLocalWithoutInitialBackslashesOnlyDirectories;
+      case Other:
         return null;
     }
+    throw new RuntimeException("Unhandled ItemType enum value: " + itemType);
   }
 }

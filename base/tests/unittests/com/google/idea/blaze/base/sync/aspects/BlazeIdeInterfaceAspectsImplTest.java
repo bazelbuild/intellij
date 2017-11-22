@@ -21,13 +21,12 @@ import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.TestUtils;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
 import java.io.File;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -37,11 +36,10 @@ import org.junit.runners.JUnit4;
 public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
 
   @Override
-  protected void initTest(
-      @NotNull Container applicationServices, @NotNull Container projectServices) {
+  protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(ExperimentService.class, new MockExperimentService());
-    applicationServices.register(FileAttributeProvider.class, new FileAttributeProvider());
+    applicationServices.register(FileOperationProvider.class, new FileOperationProvider());
   }
 
   @Test

@@ -38,30 +38,30 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-2017.2.3",
+    name = "intellij-2017.2.6",
     values = {
-        "define": "ij_product=intellij-2017.2.3",
+        "define": "ij_product=intellij-2017.2.6",
     },
 )
 
 config_setting(
-    name = "intellij-ue-2017.2.3",
+    name = "intellij-2017.3.0",
     values = {
-        "define": "ij_product=intellij-ue-2017.2.3",
+        "define": "ij_product=intellij-2017.3.0",
     },
 )
 
 config_setting(
-    name = "intellij-2017.1.5",
+    name = "intellij-ue-2017.2.6",
     values = {
-        "define": "ij_product=intellij-2017.1.5",
+        "define": "ij_product=intellij-ue-2017.2.6",
     },
 )
 
 config_setting(
-    name = "intellij-ue-2017.1.5",
+    name = "intellij-ue-2017.3.0",
     values = {
-        "define": "ij_product=intellij-ue-2017.1.5",
+        "define": "ij_product=intellij-ue-2017.3.0",
     },
 )
 
@@ -80,16 +80,9 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-3.0.0.13",
+    name = "android-studio-3.0.0.18",
     values = {
-        "define": "ij_product=android-studio-3.0.0.13",
-    },
-)
-
-config_setting(
-    name = "android-studio-2.3.1.0",
-    values = {
-        "define": "ij_product=android-studio-2.3.1.0",
+        "define": "ij_product=android-studio-3.0.0.18",
     },
 )
 
@@ -108,23 +101,15 @@ config_setting(
 )
 
 config_setting(
-    name = "clion-2017.1.1",
+    name = "clion-2017.2.3",
     values = {
-        "define": "ij_product=clion-2017.1.1",
-    },
-)
-
-config_setting(
-    name = "clion-2017.2.2",
-    values = {
-        "define": "ij_product=clion-2017.2.2",
+        "define": "ij_product=clion-2017.2.3",
     },
 )
 
 load(
     ":build_defs.bzl",
     "select_for_ide",
-    "select_for_plugin_api",
     "select_from_plugin_api_directory",
 )
 
@@ -170,7 +155,7 @@ java_library(
 java_library(
     name = "plugin_api_for_grammar_kit",
     visibility = ["//third_party/java/jetbrains/grammar_kit:__pkg__"],
-    exports = ["//intellij_platform_sdk/intellij_ce_2017_2_3:sdk"],
+    exports = ["//intellij_platform_sdk/intellij_ce_2017_2_6:sdk"],
 )
 
 # The version of guava bundled with the IntelliJ plugin API.
@@ -275,22 +260,7 @@ java_library(
         android_studio = [":bundled_plugins"],
         clion = [":bundled_plugins"],
         intellij = [":bundled_plugins"],
-    ) + [":missing_test_classes"],
-)
-
-# Certain plugin API releases don't contain test classes, so any testServiceImplemention
-# in an upstream plugin will cause an error when the plugin is loaded for integration tests.
-# Here we have dummy versions of these missing classes.
-java_library(
-    name = "missing_test_classes",
-    srcs = select_for_plugin_api({
-        "android-studio-2.3.1.0": [
-            "missing/tests/com/jetbrains/cidr/modulemap/resolve/MockModuleMapManagerImpl.java",
-        ],
-        "default": [],
-    }) + ["missing/src/dummy/pkg/DummyClassToAvoidAnEmptyJavaLibrary.java"],
-    tags = ["intellij-missing-test-classes"],
-    deps = [":plugin_api"],
+    ),
 )
 
 filegroup(

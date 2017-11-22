@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.golang.sync;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -42,20 +43,33 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.util.PlatformUtils;
+import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
  * Unlike most of the go-specific code, will be run even if the JetBrains Go plugin isn't enabled.
  */
-public class AlwaysPresentGoSyncPlugin extends BlazeSyncPlugin.Adapter {
+public class AlwaysPresentGoSyncPlugin implements BlazeSyncPlugin {
 
   private static final String GO_PLUGIN_ID = "org.jetbrains.plugins.go";
   private static final String OLD_GO_PLUGIN_ID = "ro.redeul.google.go";
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
-    return ImmutableSet.of(LanguageClass.GO);
+    return isGoPluginSupported() ? ImmutableSet.of(LanguageClass.GO) : ImmutableSet.of();
+  }
+
+  @Override
+  public ImmutableList<String> getRequiredExternalPluginIds(Collection<LanguageClass> languages) {
+    return languages.contains(LanguageClass.GO)
+        ? ImmutableList.of(GO_PLUGIN_ID)
+        : ImmutableList.of();
+  }
+
+  /** Returns true if this is a paid IDE, or if we're in unit testing mode */
+  private static boolean isGoPluginSupported() {
+    return !PlatformUtils.isIdeaCommunity() || ApplicationManager.getApplication().isUnitTestMode();
   }
 
   @Override
@@ -64,14 +78,6 @@ public class AlwaysPresentGoSyncPlugin extends BlazeSyncPlugin.Adapter {
     if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.GO)
         || PluginUtils.isPluginEnabled(GO_PLUGIN_ID)) {
       return true;
-    }
-    if (PlatformUtils.isIdeaCommunity() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      IssueOutput.error(
-              String.format(
-                  "Go is no longer supported by the %s plugin with IntelliJ Community Edition.\n"
-                      + "Please install Ultimate Edition and upgrade to the JetBrains Go plugin",
-                  Blaze.defaultBuildSystemName()))
-          .submit(context);
     }
     if (PluginUtils.isPluginEnabled(OLD_GO_PLUGIN_ID)) {
       String error =
@@ -105,6 +111,15 @@ public class AlwaysPresentGoSyncPlugin extends BlazeSyncPlugin.Adapter {
       BlazeContext context,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings) {
+    if (workspaceLanguageSettings.isLanguageActive(LanguageClass.GO) && !isGoPluginSupported()) {
+      IssueOutput.error(
+              String.format(
+                  "Go is no longer supported by the %s plugin with IntelliJ Community Edition.\n"
+                      + "Please install Ultimate Edition and upgrade to the JetBrains Go plugin",
+                  Blaze.defaultBuildSystemName()))
+          .submit(context);
+      return false;
+    }
     if (!workspaceLanguageSettings.isWorkspaceType(WorkspaceType.GO)) {
       return true;
     }

@@ -3,6 +3,8 @@
     <SyncPlugin implementation="com.google.idea.blaze.scala.sync.BlazeScalaSyncPlugin"/>
     <JavaLikeLanguage
         implementation="com.google.idea.blaze.scala.sync.source.ScalaJavaLikeLanguage"/>
+    <BlazeTestEventsHandler
+        implementation="com.google.idea.blaze.scala.run.smrunner.BlazeScalaTestEventsHandler"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -10,7 +12,10 @@
         implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaMainClassRunConfigurationProducer"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaTestClassConfigurationProducer"/>
-    <!-- TODO: add configuration producer for infix expression test cases in scalatest and specs2. -->
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaJunitTestClassConfigurationProducer"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaSpecs2TestExprConfigurationProducer"/>
     <!-- Need to come before the one in the scala plugin to override the icon. -->
     <runLineMarkerContributor
         implementationClass="com.google.idea.blaze.scala.run.producers.BlazeScalaRunLineMarkerContributor"

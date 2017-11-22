@@ -39,11 +39,11 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
+import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileDiffer;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
 import com.google.idea.blaze.base.lang.AdditionalLanguagesHelper;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
@@ -62,6 +62,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
@@ -183,7 +184,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     ListenableFuture<?> prefetchFuture =
         PrefetchService.getInstance().prefetchFiles(project, updatedFiles, true);
     if (!FutureUtil.waitForFuture(context, prefetchFuture)
-        .timed("FetchAspectOutput")
+        .timed("FetchAspectOutput", EventType.Prefetching)
         .withProgressMessage("Reading IDE info result...")
         .run()
         .success()) {
@@ -237,7 +238,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         parentContext,
         context -> {
           context.push(
-              new TimingScope(String.format("Execute%sCommand", Blaze.buildSystemName(project))));
+              new TimingScope(
+                  String.format("Execute%sCommand", Blaze.buildSystemName(project)),
+                  EventType.BlazeInvocation));
           Set<File> ideInfoFiles = new LinkedHashSet<>();
           Function<Integer, String> progressMessage =
               count ->
@@ -296,7 +299,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .context(context)
             .stderr(
                 buildResultHelper.stderr(
-                    new IssueOutputLineProcessor(project, context, workspaceRoot)))
+                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
+                        project, context, workspaceRoot)))
             .build()
             .run();
 
@@ -336,7 +340,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             parentContext,
             (ScopedFunction<Result<State>>)
                 context -> {
-                  context.push(new TimingScope("UpdateTargetMap"));
+                  context.push(new TimingScope("UpdateTargetMap", EventType.Other));
 
                   // If we're not removing we have to merge the old state
                   // into the new one or we'll miss file removes next time
@@ -634,9 +638,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .context(context)
             .stderr(
                 buildResultHelper.stderr(
-                    new IssueOutputLineProcessor(project, context, workspaceRoot)))
+                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
+                        project, context, workspaceRoot)))
             .build()
-            .run(new TimingScope("ExecuteBlazeCommand"));
+            .run(new TimingScope("ExecuteBlazeCommand", EventType.BlazeInvocation));
 
     BuildResult result = BuildResult.fromExitCode(retVal);
     if (result.status != BuildResult.Status.FATAL_ERROR) {
@@ -675,7 +680,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .context(context)
             .stderr(
                 LineProcessingOutputStream.of(
-                    new IssueOutputLineProcessor(project, context, workspaceRoot)))
+                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
+                        project, context, workspaceRoot)))
             .build()
             .run();
 
@@ -694,7 +700,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     ListenableFuture<?> prefetchFuture =
         PrefetchService.getInstance().prefetchFiles(project, artifacts, false);
     FutureUtil.waitForFuture(context, prefetchFuture)
-        .timed("PrefetchGenfiles")
+        .timed("PrefetchGenfiles", EventType.Prefetching)
         .withProgressMessage("Prefetching genfiles...")
         .run();
   }

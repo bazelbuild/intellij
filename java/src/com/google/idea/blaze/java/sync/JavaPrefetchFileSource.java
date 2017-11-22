@@ -24,8 +24,6 @@ import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.libraries.JarCache;
-import com.google.idea.blaze.java.libraries.SourceJarManager;
-import com.google.idea.blaze.java.settings.BlazeJavaUserSettings;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.intellij.openapi.project.Project;
@@ -50,9 +48,6 @@ public class JavaPrefetchFileSource implements PrefetchFileSource {
     if (JarCache.getInstance(project).isEnabled()) {
       return;
     }
-    boolean attachSourcesByDefault =
-        BlazeJavaUserSettings.getInstance().getAttachSourcesByDefault();
-    SourceJarManager sourceJarManager = SourceJarManager.getInstance(project);
     Collection<BlazeLibrary> libraries =
         BlazeLibraryCollector.getLibraries(projectViewSet, blazeProjectData);
     ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.artifactLocationDecoder;
@@ -62,12 +57,7 @@ public class JavaPrefetchFileSource implements PrefetchFileSource {
       }
       BlazeJarLibrary jarLibrary = (BlazeJarLibrary) library;
       files.add(artifactLocationDecoder.decode(jarLibrary.libraryArtifact.jarForIntellijLibrary()));
-
-      boolean attachSourceJar =
-          attachSourcesByDefault || sourceJarManager.hasSourceJarAttached(jarLibrary.key);
-      if (attachSourceJar) {
-        files.addAll(artifactLocationDecoder.decodeAll(jarLibrary.libraryArtifact.sourceJars));
-      }
+      files.addAll(artifactLocationDecoder.decodeAll(jarLibrary.libraryArtifact.sourceJars));
     }
   }
 

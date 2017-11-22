@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.java.run;
 
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.TestTargetFinder;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
@@ -39,13 +39,13 @@ public final class RunUtil {
    *     containing rules, the first rule sorted alphabetically by label.
    */
   @Nullable
-  public static TargetIdeInfo targetForTestClass(PsiClass testClass, @Nullable TestSize testSize) {
+  public static TargetInfo targetForTestClass(PsiClass testClass, @Nullable TestSize testSize) {
     File testFile = getFileForClass(testClass);
     if (testFile == null) {
       return null;
     }
     Project project = testClass.getProject();
-    Collection<TargetIdeInfo> targets =
+    Collection<TargetInfo> targets =
         TestTargetFinder.getInstance(project).testTargetsForSourceFile(testFile);
     Label testLabel =
         TestTargetHeuristic.chooseTestTargetForSourceFile(
@@ -53,7 +53,7 @@ public final class RunUtil {
     if (testLabel == null) {
       return null;
     }
-    return TargetFinder.getInstance().targetForLabel(project, testLabel);
+    return TargetFinder.findTargetInfo(project, testLabel);
   }
 
   /**

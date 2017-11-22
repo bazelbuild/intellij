@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -52,7 +52,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
   private WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File(FAKE_ROOT));
   private WorkspacePathResolver workspacePathResolver =
       new WorkspacePathResolverImpl(workspaceRoot);
-  private MockFileAttributeProvider fileAttributeProvider;
+  private MockFileOperationProvider fileOperationProvider;
   private ErrorCollector errorCollector = new ErrorCollector();
   private BlazeContext context;
   private WorkspaceLanguageSettings workspaceLanguageSettings =
@@ -65,7 +65,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
     ExtensionPointImpl<BlazeSyncPlugin> ep =
         registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
     ep.registerExtension(
-        new BlazeSyncPlugin.Adapter() {
+        new BlazeSyncPlugin() {
           @Override
           public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
             return ImmutableList.of(WorkspaceType.JAVA);
@@ -77,8 +77,8 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
           }
         });
 
-    fileAttributeProvider = new MockFileAttributeProvider(workspaceRoot);
-    applicationServices.register(FileAttributeProvider.class, fileAttributeProvider);
+    fileOperationProvider = new MockFileOperationProvider(workspaceRoot);
+    applicationServices.register(FileOperationProvider.class, fileOperationProvider);
     context = new BlazeContext();
     context.addOutputSink(IssueOutput.class, errorCollector);
   }
@@ -99,7 +99,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
                                     new WorkspacePath("java/com/google/android/apps/example2"))))
                     .build())
             .build();
-    fileAttributeProvider.addProjectView(projectViewSet);
+    fileOperationProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
         project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
     errorCollector.assertNoIssues();
@@ -121,7 +121,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
                                     new WorkspacePath("java/com/google/android/apps/example"))))
                     .build())
             .build();
-    fileAttributeProvider.addProjectView(projectViewSet);
+    fileOperationProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
         project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
     errorCollector.assertIssues(
@@ -145,7 +145,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
                                     new WorkspacePath("java/com/google/android/apps"))))
                     .build())
             .build();
-    fileAttributeProvider.addProjectView(projectViewSet);
+    fileOperationProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
         project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
     errorCollector.assertIssues(
@@ -170,7 +170,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
                                         "java/com/google/android/apps/example/subdir"))))
                     .build())
             .build();
-    fileAttributeProvider.addProjectView(projectViewSet);
+    fileOperationProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
         project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
     errorCollector.assertNoIssues();
@@ -210,7 +210,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
                                     new WorkspacePath("java/com/google/android/apps/example"))))
                     .build())
             .build();
-    fileAttributeProvider.addFile(new WorkspacePath("java/com/google/android/apps/example"));
+    fileOperationProvider.addFile(new WorkspacePath("java/com/google/android/apps/example"));
     ProjectViewVerifier.verifyProjectView(
         project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
     errorCollector.assertIssues(
@@ -219,47 +219,47 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
             "java/com/google/android/apps/example"));
   }
 
-  static class MockFileAttributeProvider extends FileAttributeProvider {
+  static class MockFileOperationProvider extends FileOperationProvider {
 
     private final WorkspaceRoot workspaceRoot;
     private final Set<File> files = Sets.newHashSet();
     private final Set<File> directories = Sets.newHashSet();
 
-    MockFileAttributeProvider(WorkspaceRoot workspaceRoot) {
+    MockFileOperationProvider(WorkspaceRoot workspaceRoot) {
       this.workspaceRoot = workspaceRoot;
     }
 
-    MockFileAttributeProvider addFile(WorkspacePath file) {
+    MockFileOperationProvider addFile(WorkspacePath file) {
       files.add(workspaceRoot.fileForPath(file));
       return this;
     }
 
-    MockFileAttributeProvider addDirectory(WorkspacePath file) {
+    MockFileOperationProvider addDirectory(WorkspacePath file) {
       addFile(file);
       directories.add(workspaceRoot.fileForPath(file));
       return this;
     }
 
-    MockFileAttributeProvider addPackage(WorkspacePath file) {
+    MockFileOperationProvider addPackage(WorkspacePath file) {
       addFile(new WorkspacePath(file + "/BUILD"));
       addDirectory(file);
       return this;
     }
 
-    MockFileAttributeProvider addPackages(Iterable<WorkspacePath> files) {
+    MockFileOperationProvider addPackages(Iterable<WorkspacePath> files) {
       for (WorkspacePath workspacePath : files) {
         addPackage(workspacePath);
       }
       return this;
     }
 
-    MockFileAttributeProvider addImportRoots(ImportRoots importRoots) {
+    MockFileOperationProvider addImportRoots(ImportRoots importRoots) {
       addPackages(importRoots.rootDirectories());
       addPackages(importRoots.excludeDirectories());
       return this;
     }
 
-    MockFileAttributeProvider addProjectView(ProjectViewSet projectViewSet) {
+    MockFileOperationProvider addProjectView(ProjectViewSet projectViewSet) {
       ImportRoots importRoots =
           ImportRoots.builder(workspaceRoot, BuildSystem.Blaze).add(projectViewSet).build();
       return addImportRoots(importRoots);

@@ -15,26 +15,13 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
+import com.google.idea.blaze.base.dependencies.TestSize;
 import java.io.Serializable;
 import javax.annotation.Nullable;
 
 /** Test info. */
 public class TestIdeInfo implements Serializable {
   private static final long serialVersionUID = 1L;
-
-  /** The "size" attribute from test rules */
-  public enum TestSize {
-    SMALL,
-    MEDIUM,
-    LARGE,
-    ENORMOUS
-  }
-
-  // Rules are "medium" test size by default
-  public static final TestSize DEFAULT_RULE_TEST_SIZE = TestSize.MEDIUM;
-
-  // Non-annotated methods and classes are "small" by default
-  public static final TestSize DEFAULT_NON_ANNOTATED_TEST_SIZE = TestSize.SMALL;
 
   public final TestSize testSize;
 
@@ -57,7 +44,7 @@ public class TestIdeInfo implements Serializable {
 
   /** Builder for test info */
   public static class Builder {
-    private TestSize testSize = DEFAULT_RULE_TEST_SIZE;
+    private TestSize testSize = TestSize.DEFAULT_RULE_TEST_SIZE;
 
     public Builder setTestSize(TestSize testSize) {
       this.testSize = testSize;

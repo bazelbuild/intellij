@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toList;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -63,6 +64,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -71,6 +73,7 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jdom.output.XMLOutputter;
 
 /** A run configuration which executes Blaze commands. */
 public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
@@ -85,6 +88,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   private static final String TARGET_TAG = "blaze-target";
   private static final String KIND_ATTR = "kind";
   private static final String KEEP_IN_SYNC_TAG = "keep-in-sync";
+  private static final String CORRUPTED_DEFAULT_CONFIG_ATTR = "corrupted-config";
 
   /**
    * This tag is actually written by {@link com.intellij.execution.impl.RunManagerImpl}; it
@@ -204,9 +208,8 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   @Nullable
   private static Kind getKindForTarget(Project project, @Nullable TargetExpression target) {
     if (target instanceof Label) {
-      TargetIdeInfo targetIdeInfo =
-          TargetFinder.getInstance().targetForLabel(project, (Label) target);
-      return targetIdeInfo != null ? targetIdeInfo.kind : null;
+      TargetInfo targetInfo = TargetFinder.findTargetInfo(project, (Label) target);
+      return targetInfo != null ? targetInfo.getKind() : null;
     }
     return null;
   }
@@ -253,8 +256,35 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     handler.checkConfiguration();
   }
 
+  /** Returns true if this run configuration was previously both temporary and default. */
+  boolean isCorrupted() {
+    return Objects.equals(elementState.getAttributeValue(CORRUPTED_DEFAULT_CONFIG_ATTR), "true");
+  }
+
+  /**
+   * If the run configuration is both 'default' and 'temporary', we assume it's been corrupted, and
+   * remove the 'default' tag so it doesn't affect newly created run configurations.
+   *
+   * @return true if it was corrupted
+   */
+  private static boolean sanitizeCorruptedDefaultRunConfiguration(Element element) {
+    if (!isCorruptedDefaultRunConfiguration(element)) {
+      return false;
+    }
+    element.setAttribute(CORRUPTED_DEFAULT_CONFIG_ATTR, "true");
+    element.removeAttribute("default");
+    return true;
+  }
+
+  private static boolean isCorruptedDefaultRunConfiguration(Element element) {
+    String isDefault = element.getAttributeValue("default");
+    String isTemporary = element.getAttributeValue("temporary");
+    return Objects.equals(isDefault, "true") && Objects.equals(isTemporary, "true");
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
+    sanitizeCorruptedDefaultRunConfiguration(element);
     super.readExternal(element);
     element = element.clone();
 
@@ -292,6 +322,12 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   @SuppressWarnings("ThrowsUncheckedException")
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
+    if (sanitizeCorruptedDefaultRunConfiguration(element)) {
+      logger.info(
+          "Serializing an apparently corrupted run configuration:\n"
+              + new XMLOutputter().outputString(element),
+          new Exception());
+    }
     if (targetPattern != null) {
       Element targetElement = new Element(TARGET_TAG);
       targetElement.setText(targetPattern);
@@ -493,6 +529,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
       // finally, update the handler
       config.targetPattern = Strings.emptyToNull(targetField.getText());
+      config.updateHandler();
       updateEditor(config);
       if (config.handlerProvider != handlerProvider) {
         updateHandlerEditor(config);

@@ -15,8 +15,11 @@
  */
 package com.google.idea.blaze.base.run.testmap;
 
+import static com.google.idea.common.guava.GuavaHelper.toImmutableList;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -43,14 +46,18 @@ public class TestTargetFilterImpl implements TestTargetFinder {
   }
 
   @Override
-  public Collection<TargetIdeInfo> testTargetsForSourceFile(File sourceFile) {
+  public Collection<TargetInfo> testTargetsForSourceFile(File sourceFile) {
     FilteredTargetMap testMap =
         SyncCache.getInstance(project)
             .get(TestTargetFilterImpl.class, TestTargetFilterImpl::computeTestMap);
     if (testMap == null) {
       return ImmutableList.of();
     }
-    return testMap.targetsForSourceFile(sourceFile);
+    return testMap
+        .targetsForSourceFile(sourceFile)
+        .stream()
+        .map(TargetIdeInfo::toTargetInfo)
+        .collect(toImmutableList());
   }
 
   private static FilteredTargetMap computeTestMap(Project project, BlazeProjectData projectData) {
@@ -64,17 +71,6 @@ public class TestTargetFilterImpl implements TestTargetFinder {
   }
 
   private static boolean isTestTarget(@Nullable TargetIdeInfo target) {
-    return target != null
-        && target.kind != null
-        && target.kind.isOneOf(
-            Kind.ANDROID_ROBOLECTRIC_TEST,
-            Kind.ANDROID_TEST,
-            Kind.JAVA_TEST,
-            Kind.GWT_TEST,
-            Kind.CC_TEST,
-            Kind.PY_TEST,
-            Kind.GO_TEST,
-            Kind.SCALA_TEST,
-            Kind.SCALA_JUNIT_TEST);
+    return target != null && target.kind != null && Kind.isTestRule(target.kind.toString());
   }
 }

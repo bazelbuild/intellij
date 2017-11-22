@@ -15,9 +15,11 @@
  */
 package com.google.idea.blaze.java.sync.importer;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -27,11 +29,15 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
 import com.intellij.openapi.project.Project;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /** Segments java rules into source/libraries */
 public class JavaSourceFilter {
@@ -39,6 +45,8 @@ public class JavaSourceFilter {
   final List<TargetIdeInfo> libraryTargets;
   final List<TargetIdeInfo> protoLibraries;
   final Map<TargetKey, Collection<ArtifactLocation>> targetToJavaSources;
+  /** The set of execution-root-relative paths for excluded library artifacts. */
+  final Set<String> jdepsPathsForExcludedJars = new HashSet<>();
 
   public JavaSourceFilter(
       Project project,
@@ -47,12 +55,17 @@ public class JavaSourceFilter {
       TargetMap targetMap) {
     ProjectViewTargetImportFilter importFilter =
         new ProjectViewTargetImportFilter(project, workspaceRoot, projectViewSet);
-    List<TargetIdeInfo> includedTargets =
+
+    List<TargetIdeInfo> excludedTargets =
         targetMap
             .targets()
             .stream()
-            .filter(target -> !importFilter.excludeTarget(target))
+            .filter(importFilter::excludeTarget)
             .collect(Collectors.toList());
+    excludedTargets.forEach(t -> jdepsPathsForExcludedJars.addAll(relativeArtifactPaths(t)));
+
+    List<TargetIdeInfo> includedTargets = new ArrayList<>(targetMap.targets());
+    includedTargets.removeAll(excludedTargets);
 
     List<TargetIdeInfo> javaTargets =
         includedTargets
@@ -78,6 +91,7 @@ public class JavaSourceFilter {
 
       if (importAsSource) {
         sourceTargets.add(target);
+        jdepsPathsForExcludedJars.addAll(relativeArtifactPaths(target));
       } else {
         libraryTargets.add(target);
       }
@@ -100,5 +114,31 @@ public class JavaSourceFilter {
 
   private boolean anyNonGeneratedSources(Collection<ArtifactLocation> sources) {
     return sources.stream().anyMatch(ArtifactLocation::isSource);
+  }
+
+  private List<String> relativeArtifactPaths(TargetIdeInfo target) {
+    if (target.javaIdeInfo == null) {
+      return ImmutableList.of();
+    }
+    return target
+        .javaIdeInfo
+        .jars
+        .stream()
+        .flatMap(j -> relativeArtifactPaths(j).stream())
+        .collect(Collectors.toList());
+  }
+
+  private List<String> relativeArtifactPaths(LibraryArtifact jar) {
+    List<String> list = new ArrayList<>();
+    addExecRootRelativePath(list, jar.classJar);
+    addExecRootRelativePath(list, jar.interfaceJar);
+    jar.sourceJars.forEach(a -> addExecRootRelativePath(list, a));
+    return list;
+  }
+
+  private void addExecRootRelativePath(List<String> paths, @Nullable ArtifactLocation artifact) {
+    if (artifact != null) {
+      paths.add(artifact.getExecutionRootRelativePath());
+    }
   }
 }

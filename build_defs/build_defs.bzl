@@ -205,11 +205,14 @@ def _repackaged_files_impl(ctx):
   ]
 
 _repackaged_files = rule(
-    implementation = _repackaged_files_impl,
     attrs = {
-        "srcs": attr.label_list(mandatory = True, allow_files = True),
+        "srcs": attr.label_list(
+            mandatory = True,
+            allow_files = True,
+        ),
         "prefix": attr.string(mandatory = True),
     },
+    implementation = _repackaged_files_impl,
 )
 
 def repackaged_files(name, srcs, prefix, **kwargs):
@@ -257,16 +260,19 @@ def _plugin_deploy_zip_impl(ctx):
   )
 
 _plugin_deploy_zip = rule(
-    implementation = _plugin_deploy_zip_impl,
     attrs = {
-        "srcs": attr.label_list(mandatory = True, providers = []),
+        "srcs": attr.label_list(
+            mandatory = True,
+            providers = [],
+        ),
         "zip_filename": attr.string(mandatory = True),
         "_zip_plugin_files": attr.label(
             default = Label("//build_defs:zip_plugin_files"),
             executable = True,
             cfg = "host",
         ),
-    }
+    },
+    implementation = _plugin_deploy_zip_impl,
 )
 
 def plugin_deploy_zip(name, srcs, zip_filename):

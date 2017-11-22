@@ -19,39 +19,64 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /** Prints timing information as output. */
 public class TimingScope implements BlazeScope {
 
-  @NotNull private final String name;
+  /** The type of event for which timing information is being recorded */
+  public enum EventType {
+    BlazeInvocation,
+    Prefetching,
+    Other,
+  }
+
+  private final String name;
+  private final EventType eventType;
 
   private long startTime;
 
   private double duration;
 
+  private final List<TimingScopeListener> scopeListeners = Lists.newArrayList();
+
+  private final List<TimingScopeListener> propagatedScopeListeners = Lists.newArrayList();
+
   @Nullable private TimingScope parentScope;
 
-  @NotNull private List<TimingScope> children = Lists.newArrayList();
+  private final List<TimingScope> children = Lists.newArrayList();
 
-  public TimingScope(@NotNull String name) {
+  public TimingScope(String name, EventType eventType) {
     this.name = name;
+    this.eventType = eventType;
   }
 
   @Override
-  public void onScopeBegin(@NotNull BlazeContext context) {
+  public void onScopeBegin(BlazeContext context) {
     startTime = System.currentTimeMillis();
     parentScope = context.getParentScope(this);
 
     if (parentScope != null) {
       parentScope.children.add(this);
+      propagatedScopeListeners.addAll(parentScope.propagatedScopeListeners);
+    }
+
+    for (TimingScopeListener listener : scopeListeners) {
+      listener.onScopeBegin(name, eventType);
+    }
+
+    for (TimingScopeListener listener : propagatedScopeListeners) {
+      listener.onScopeBegin(name, eventType);
     }
   }
 
   @Override
-  public void onScopeEnd(@NotNull BlazeContext context) {
+  public void onScopeEnd(BlazeContext context) {
     if (context.isCancelled()) {
       return;
     }
@@ -59,18 +84,37 @@ public class TimingScope implements BlazeScope {
     long elapsedTime = System.currentTimeMillis() - startTime;
     duration = (double) elapsedTime / 1000.0;
 
+    TimedEvent event = new TimedEvent(name, eventType, elapsedTime);
+    scopeListeners.forEach(listener -> listener.onScopeEnd(event));
+    propagatedScopeListeners.forEach(listener -> listener.onScopeEnd(event));
+
     if (parentScope == null) {
       outputReport(context);
     }
   }
 
-  private void outputReport(@NotNull BlazeContext context) {
+  /**
+   * Adds a TimingScope listener to its list of listeners. Adds the listener to its children if
+   * propagateToChildren flag is set.
+   *
+   * @param listener TimingScopeListener
+   * @param propagateToChildren flag to specify whether its children should add this listener.
+   */
+  public void addScopeListener(TimingScopeListener listener, boolean propagateToChildren) {
+    if (propagateToChildren) {
+      propagatedScopeListeners.add(listener);
+    } else {
+      scopeListeners.add(listener);
+    }
+  }
+
+  private void outputReport(BlazeContext context) {
     context.output(PrintOutput.log("\n==== TIMING REPORT ====\n"));
-    outputReport(context, this, 0);
+    outputReport(context, this, new TimingReportData(), 0);
   }
 
   private static void outputReport(
-      @NotNull BlazeContext context, @NotNull TimingScope timingScope, int depth) {
+      BlazeContext context, TimingScope timingScope, TimingReportData data, int depth) {
     String selfString = "";
 
     // Self time trivially 100% if no children
@@ -94,7 +138,15 @@ public class TimingScope implements BlazeScope {
                 selfString)));
 
     for (TimingScope child : timingScope.children) {
-      outputReport(context, child, depth + 1);
+      outputReport(context, child, data, depth + 1);
+    }
+
+    if (timingScope.children.isEmpty()) {
+      // sum times for leaf nodes
+      data.addEventTiming(timingScope.eventType, timingScope.duration);
+    }
+    if (depth == 0) {
+      data.outputReport(context);
     }
   }
 
@@ -108,5 +160,27 @@ public class TimingScope implements BlazeScope {
       sb.append("    ");
     }
     return sb.toString();
+  }
+
+  private static class TimingReportData {
+    final Map<EventType, Double> timingPerEvent = new LinkedHashMap<>();
+
+    {
+      Arrays.stream(EventType.values()).forEach(t -> timingPerEvent.put(t, 0d));
+    }
+
+    void addEventTiming(EventType type, double duration) {
+      timingPerEvent.put(type, duration + timingPerEvent.get(type));
+    }
+
+    void outputReport(BlazeContext context) {
+      context.output(PrintOutput.log("\nTiming summary:\n"));
+      for (EventType type : timingPerEvent.keySet()) {
+        double duration = timingPerEvent.get(type);
+        if (duration > 0) {
+          context.output(PrintOutput.log(String.format("%s: %s", type, durationStr(duration))));
+        }
+      }
+    }
   }
 }

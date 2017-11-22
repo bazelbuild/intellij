@@ -65,7 +65,7 @@ public class ImportSection {
 
     @Override
     public ItemType getItemType() {
-      return ItemType.FileSystemItem;
+      return ItemType.FileItem;
     }
 
     @Override

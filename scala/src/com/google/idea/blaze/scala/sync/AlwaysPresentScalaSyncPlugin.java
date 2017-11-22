@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.scala.sync;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -25,6 +26,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.intellij.openapi.project.Project;
+import java.util.Collection;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * Unlike most of the scala-specific code, will be run even if the JetBrains scala plugin isn't
  * enabled.
  */
-public class AlwaysPresentScalaSyncPlugin extends BlazeSyncPlugin.Adapter {
+public class AlwaysPresentScalaSyncPlugin implements BlazeSyncPlugin {
   private static final String SCALA_PLUGIN_ID = "org.intellij.scala";
 
   @Override
@@ -41,6 +43,13 @@ public class AlwaysPresentScalaSyncPlugin extends BlazeSyncPlugin.Adapter {
       return ImmutableSet.of(LanguageClass.SCALA);
     }
     return ImmutableSet.of();
+  }
+
+  @Override
+  public ImmutableList<String> getRequiredExternalPluginIds(Collection<LanguageClass> languages) {
+    return languages.contains(LanguageClass.SCALA)
+        ? ImmutableList.of(SCALA_PLUGIN_ID)
+        : ImmutableList.of();
   }
 
   @Override

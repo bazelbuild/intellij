@@ -18,11 +18,19 @@ package com.google.idea.blaze.base.settings.ui;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.common.actionhelper.ActionPresentationHelper;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
 /** Opens all the user's project views. */
-public class OpenAllProjectViewsAction extends BlazeProjectAction {
+public class OpenAllProjectViewsAction extends BlazeProjectAction implements DumbAware {
+
+  @Override
+  protected void updateForBlazeProject(Project project, AnActionEvent e) {
+    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    ActionPresentationHelper.of(e).disableIf(projectViewSet == null).commit();
+  }
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {

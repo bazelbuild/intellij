@@ -51,6 +51,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
@@ -59,6 +60,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleOrderEntry;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
@@ -69,8 +71,9 @@ import org.jetbrains.android.facet.AndroidFacet;
 
 /** Updates the IDE's project structure. */
 public class BlazeAndroidProjectStructureSyncer {
-
   private static final Logger logger = Logger.getInstance(BlazeAndroidProjectStructureSyncer.class);
+  private static final BoolExperiment cyclicResourceDependency =
+      new BoolExperiment("cyclic.resource.dependency", true);
 
   public static void updateProjectStructure(
       Project project,
@@ -111,6 +114,7 @@ public class BlazeAndroidProjectStructureSyncer {
 
     // Configure android resource modules
     int totalOrderEntries = 0;
+    Set<File> existingRoots = Sets.newHashSet();
     for (AndroidResourceModule androidResourceModule : targetToAndroidResourceModule.values()) {
       TargetIdeInfo target = blazeProjectData.targetMap.get(androidResourceModule.targetKey);
       AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
@@ -123,22 +127,36 @@ public class BlazeAndroidProjectStructureSyncer {
 
       Collection<File> resources =
           blazeProjectData.artifactLocationDecoder.decodeAll(androidResourceModule.resources);
+      if (cyclicResourceDependency.getValue()) {
+        // Remove existing resource roots to silence the duplicate content root error.
+        // We can only do this if we have cyclic resource dependencies, since otherwise we risk
+        // breaking dependencies within this resource module.
+        resources.removeAll(existingRoots);
+        existingRoots.addAll(resources);
+      }
       ResourceModuleContentRootCustomizer.setupContentRoots(modifiableRootModel, resources);
 
-      for (TargetKey resourceDependency : androidResourceModule.transitiveResourceDependencies) {
-        if (!targetToAndroidResourceModule.containsKey(resourceDependency)) {
-          continue;
+      if (cyclicResourceDependency.getValue()) {
+        modifiableRootModel.addModuleOrderEntry(workspaceModule);
+      } else {
+        for (TargetKey resourceDependency : androidResourceModule.transitiveResourceDependencies) {
+          if (!targetToAndroidResourceModule.containsKey(resourceDependency)) {
+            continue;
+          }
+          String dependencyModuleName = moduleNameForAndroidModule(resourceDependency);
+          Module dependency = moduleEditor.findModule(dependencyModuleName);
+          if (dependency == null) {
+            continue;
+          }
+          modifiableRootModel.addModuleOrderEntry(dependency);
+          ++totalOrderEntries;
         }
-        String dependencyModuleName = moduleNameForAndroidModule(resourceDependency);
-        Module dependency = moduleEditor.findModule(dependencyModuleName);
-        if (dependency == null) {
-          continue;
-        }
-        modifiableRootModel.addModuleOrderEntry(dependency);
-        ++totalOrderEntries;
       }
       // Add a dependency from the workspace to the resource module
-      workspaceModifiableModel.addModuleOrderEntry(module);
+      ModuleOrderEntry orderEntry = workspaceModifiableModel.addModuleOrderEntry(module);
+      if (cyclicResourceDependency.getValue()) {
+        orderEntry.setExported(true);
+      }
     }
 
     List<TargetIdeInfo> runConfigurationTargets =

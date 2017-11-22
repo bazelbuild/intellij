@@ -15,38 +15,30 @@
  */
 package com.google.idea.blaze.base.run.targetfinder;
 
-import com.google.common.collect.Iterables;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import java.util.List;
-import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
-/** Searches BlazeProjectData for matching rules. */
-public abstract class TargetFinder {
-  public static TargetFinder getInstance() {
-    return ServiceManager.getService(TargetFinder.class);
-  }
+/** Finds information about targets matching a given label. */
+public interface TargetFinder {
+
+  ExtensionPointName<TargetFinder> EP_NAME =
+      ExtensionPointName.create("com.google.idea.blaze.TargetFinder");
 
   @Nullable
-  public TargetIdeInfo targetForLabel(Project project, final Label label) {
-    return findTarget(project, target -> target.key.label.equals(label) && target.isPlainTarget());
+  static TargetInfo findTargetInfo(Project project, Label label) {
+    for (TargetFinder finder : EP_NAME.getExtensions()) {
+      TargetInfo target = finder.findTarget(project, label);
+      if (target != null) {
+        return target;
+      }
+    }
+    return null;
   }
 
+  /** Returns a {@link TargetInfo} corresponding to the given blaze label. */
   @Nullable
-  public TargetIdeInfo findFirstTarget(Project project, Predicate<TargetIdeInfo> predicate) {
-    return Iterables.getFirst(findTargets(project, predicate), null);
-  }
-
-  @Nullable
-  private TargetIdeInfo findTarget(Project project, Predicate<TargetIdeInfo> predicate) {
-    List<TargetIdeInfo> results = findTargets(project, predicate);
-    assert results.size() <= 1;
-    return Iterables.getFirst(results, null);
-  }
-
-  public abstract List<TargetIdeInfo> findTargets(
-      Project project, Predicate<TargetIdeInfo> predicate);
+  TargetInfo findTarget(Project project, Label label);
 }

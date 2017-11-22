@@ -15,14 +15,12 @@
  */
 package com.google.idea.blaze.base;
 
+import com.google.idea.sdkcompat.plugin.ExtensionsAreaCompatUtils;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
@@ -115,9 +113,6 @@ public class BlazeTestCase {
 
   protected <T> ExtensionPointImpl<T> registerExtensionPoint(
       ExtensionPointName<T> name, Class<T> type) {
-    PluginDescriptor pluginDescriptor =
-        new DefaultPluginDescriptor(PluginId.getId(type.getName()), type.getClassLoader());
-    extensionsArea.registerExtensionPoint(name.getName(), type.getName(), pluginDescriptor);
-    return extensionsArea.getExtensionPoint(name.getName());
+    return ExtensionsAreaCompatUtils.registerExtensionPoint(extensionsArea, name, type);
   }
 }

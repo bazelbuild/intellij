@@ -53,11 +53,20 @@ test_suite(
     ],
 )
 
+test_suite(
+    name = "aswb_python_tests",
+    tests = [
+        "//python:integration_tests",
+        "//python:unit_tests",
+    ],
+)
+
 # CLwB tests, run with a CLion plugin SDK
 test_suite(
     name = "clwb_tests",
     tests = [
         "//base:unit_tests",
+        "//clwb:unit_tests",
         "//cpp:unit_tests",
         "//python:unit_tests",
     ],
