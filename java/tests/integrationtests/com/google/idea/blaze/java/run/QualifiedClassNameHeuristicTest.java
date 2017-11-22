@@ -18,6 +18,7 @@ package com.google.idea.blaze.java.run;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiFile;
@@ -39,15 +40,23 @@ public class QualifiedClassNameHeuristicTest extends BlazeIntegrationTestCase {
             "public class JavaClass {}");
     File file = new File(psiFile.getVirtualFile().getPath());
 
-    TargetIdeInfo target =
-        TargetIdeInfo.builder().setLabel("//foo:lib.JavaClass").setKind("java_test").build();
+    TargetInfo target =
+        TargetIdeInfo.builder()
+            .setLabel("//foo:lib.JavaClass")
+            .setKind("java_test")
+            .build()
+            .toTargetInfo();
     assertThat(
             new QualifiedClassNameHeuristic()
                 .matchesSource(getProject(), target, psiFile, file, null))
         .isTrue();
 
     target =
-        TargetIdeInfo.builder().setLabel("//foo:google.lib.JavaClass").setKind("java_test").build();
+        TargetIdeInfo.builder()
+            .setLabel("//foo:google.lib.JavaClass")
+            .setKind("java_test")
+            .build()
+            .toTargetInfo();
     assertThat(
             new QualifiedClassNameHeuristic()
                 .matchesSource(getProject(), target, psiFile, file, null))
@@ -57,7 +66,8 @@ public class QualifiedClassNameHeuristicTest extends BlazeIntegrationTestCase {
         TargetIdeInfo.builder()
             .setLabel("//foo:com.google.lib.JavaClass")
             .setKind("java_test")
-            .build();
+            .build()
+            .toTargetInfo();
     assertThat(
             new QualifiedClassNameHeuristic()
                 .matchesSource(getProject(), target, psiFile, file, null))
@@ -73,8 +83,12 @@ public class QualifiedClassNameHeuristicTest extends BlazeIntegrationTestCase {
             "public class JavaClass {}");
     File file = new File(psiFile.getVirtualFile().getPath());
 
-    TargetIdeInfo target =
-        TargetIdeInfo.builder().setLabel("//foo:JavaClass").setKind("java_test").build();
+    TargetInfo target =
+        TargetIdeInfo.builder()
+            .setLabel("//foo:JavaClass")
+            .setKind("java_test")
+            .build()
+            .toTargetInfo();
     assertThat(
             new QualifiedClassNameHeuristic()
                 .matchesSource(getProject(), target, psiFile, file, null))
@@ -90,11 +104,12 @@ public class QualifiedClassNameHeuristicTest extends BlazeIntegrationTestCase {
             "public class JavaClass {}");
     File file = new File(psiFile.getVirtualFile().getPath());
 
-    TargetIdeInfo target =
+    TargetInfo target =
         TargetIdeInfo.builder()
             .setLabel("//foo:foo.com.google.lib.JavaClass")
             .setKind("java_test")
-            .build();
+            .build()
+            .toTargetInfo();
     assertThat(
             new QualifiedClassNameHeuristic()
                 .matchesSource(getProject(), target, psiFile, file, null))

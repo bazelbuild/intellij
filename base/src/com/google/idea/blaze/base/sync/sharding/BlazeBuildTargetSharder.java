@@ -17,12 +17,17 @@ package com.google.idea.blaze.base.sync.sharding;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.ShardBlazeBuildsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetShardSizeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.Scope;
+import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.sharding.WildcardTargetExpander.ExpandedTargetsResult;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -105,14 +110,29 @@ public class BlazeBuildTargetSharder {
   /** Expand wildcard target patterns into individual blaze targets. */
   private static ExpandedTargetsResult expandWildcardTargets(
       Project project,
+      BlazeContext parentContext,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      WorkspacePathResolver pathResolver,
+      List<TargetExpression> targets) {
+    return Scope.push(
+        parentContext,
+        context -> {
+          context.push(new TimingScope("ShardSyncTargets", EventType.Other));
+          context.output(new StatusOutput("Sharding: expanding wildcard target patterns..."));
+          context.setPropagatesErrors(false);
+          return doExpandWildcardTargets(
+              project, context, workspaceRoot, projectViewSet, pathResolver, targets);
+        });
+  }
+
+  private static ExpandedTargetsResult doExpandWildcardTargets(
+      Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       WorkspacePathResolver pathResolver,
       List<TargetExpression> targets) {
-    if (!shardingEnabled(projectViewSet)) {
-      return new ExpandedTargetsResult(targets, BuildResult.SUCCESS);
-    }
     List<WildcardTargetPattern> includes = getWildcardPatterns(targets);
     if (includes.isEmpty()) {
       return new ExpandedTargetsResult(targets, BuildResult.SUCCESS);

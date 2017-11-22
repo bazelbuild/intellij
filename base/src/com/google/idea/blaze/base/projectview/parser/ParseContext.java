@@ -129,6 +129,10 @@ public class ParseContext {
   }
 
   public void addError(String error) {
-    IssueOutput.error(error).inFile(file).onLine(currentLineIndex).submit(context);
+    IssueOutput.error(error).inFile(file).onLine(currentLineIndex + 1).submit(context);
+  }
+
+  public void addWarning(String error) {
+    IssueOutput.warn(error).inFile(file).onLine(currentLineIndex + 1).submit(context);
   }
 }

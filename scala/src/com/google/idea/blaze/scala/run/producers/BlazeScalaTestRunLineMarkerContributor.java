@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.scala.run.producers;
 
+import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
+import com.google.idea.blaze.scala.run.Specs2Utils;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.lineMarker.ExecutorAction;
@@ -28,15 +30,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestRunLineMarkerProvider;
+import com.intellij.util.io.URLUtil;
 import java.util.Arrays;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScInfixExpr;
-import org.jetbrains.plugins.scala.lang.psi.api.expr.ScReferenceExpression;
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass;
 import org.jetbrains.plugins.scala.testingSupport.test.ScalaTestRunLineMarkerProvider;
+import org.jetbrains.plugins.scala.testingSupport.test.structureView.TestNodeProvider;
 
 /**
  * Generates run/debug gutter icons for scala_test, and scala_junit_tests.
@@ -44,23 +47,28 @@ import org.jetbrains.plugins.scala.testingSupport.test.ScalaTestRunLineMarkerPro
  * <p>{@link ScalaTestRunLineMarkerProvider} exists in the scala plugin, but it does not currently
  * try to handle scalatest and specs2 at all. For JUnit tests, it has a bug that causes it to not
  * generate icons for a test without run state (i.e., newly written tests).
+ * https://github.com/JetBrains/intellij-scala/pull/381
  */
 public class BlazeScalaTestRunLineMarkerContributor extends ScalaTestRunLineMarkerProvider {
   @Nullable
   @Override
-  public Info getInfo(PsiElement e) {
-    if (isIdentifier(e)) {
-      PsiElement element = e.getParent();
-      if (element instanceof ScClass) {
-        return getInfo((ScClass) element, null, super.getInfo(e));
-      } else if (element instanceof ScFunctionDefinition) {
-        ScClass testClass = PsiTreeUtil.getParentOfType(element, ScClass.class);
+  public Info getInfo(PsiElement element) {
+    if (isIdentifier(element)) {
+      PsiElement testElement = element.getParent();
+      if (testElement instanceof ScClass) {
+        return getInfo((ScClass) testElement, null, super.getInfo(element));
+      }
+      if (testElement instanceof ScFunctionDefinition) {
+        ScClass testClass = PsiTreeUtil.getParentOfType(testElement, ScClass.class);
         if (testClass != null) {
-          return getInfo(testClass, element, super.getInfo(e));
+          return getInfo(testClass, testElement, super.getInfo(element));
         }
-      } else if (element instanceof ScReferenceExpression) {
-        // TODO: handle infix expressions. E.g., "foo" should "bar" in { baz }
-        return null;
+      }
+    }
+    if (element instanceof ScInfixExpr) {
+      ScClass testClass = PsiTreeUtil.getParentOfType(element, ScClass.class);
+      if (testClass != null) {
+        return getInfo(testClass, element, super.getInfo(element));
       }
     }
     return null;
@@ -72,27 +80,66 @@ public class BlazeScalaTestRunLineMarkerContributor extends ScalaTestRunLineMark
     if (framework == null) {
       return null;
     }
-    boolean isClass = testCase == null;
-    String url;
-    if (isClass) {
-      if (!framework.isTestClass(testClass)) {
-        return null;
-      }
-      url = "java:suite://" + testClass.getQualifiedName();
-    } else if (testCase instanceof ScFunctionDefinition) {
-      ScFunctionDefinition method = (ScFunctionDefinition) testCase;
-      if (!framework.isTestMethod(method)) {
-        return null;
-      }
-      url = "java:test://" + testClass.getQualifiedName() + "." + method.getName();
-    } else if (testCase instanceof ScInfixExpr) {
-      // TODO: handle this case.
-      return null;
-    } else {
+    String url = getTestUrl(framework, testClass, testCase);
+    if (url == null) {
       return null;
     }
+    return getInfo(url, testClass.getProject(), testCase == null, toReplace);
+  }
 
-    return getInfo(url, testClass.getProject(), isClass, toReplace);
+  @Nullable
+  private static String getTestUrl(
+      TestFramework framework, ScClass testClass, @Nullable PsiElement testCase) {
+    if (testCase instanceof ScFunctionDefinition) {
+      return getTestMethodUrl(framework, testClass, (ScFunctionDefinition) testCase);
+    } else if (testCase instanceof ScInfixExpr) {
+      return getSpecs2TestUrl(testClass, (ScInfixExpr) testCase);
+    }
+    return getTestClassUrl(framework, testClass);
+  }
+
+  @Nullable
+  private static String getTestClassUrl(TestFramework framework, ScClass testClass) {
+    if (!framework.isTestClass(testClass)) {
+      return null;
+    }
+    return SmRunnerUtils.GENERIC_SUITE_PROTOCOL
+        + URLUtil.SCHEME_SEPARATOR
+        + testClass.getQualifiedName();
+  }
+
+  @Nullable
+  private static String getTestMethodUrl(
+      TestFramework framework, ScClass testClass, ScFunctionDefinition method) {
+    if (!framework.isTestMethod(method)) {
+      return null;
+    }
+    return SmRunnerUtils.GENERIC_TEST_PROTOCOL
+        + URLUtil.SCHEME_SEPARATOR
+        + testClass.getQualifiedName()
+        + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER
+        + method.getName();
+  }
+
+  @Nullable
+  private static String getSpecs2TestUrl(ScClass testClass, ScInfixExpr testCase) {
+    String name = null;
+    String protocol = null;
+    if (TestNodeProvider.isSpecs2ScopeExpr(testCase)) {
+      protocol = SmRunnerUtils.GENERIC_SUITE_PROTOCOL;
+      name = Specs2Utils.getSpecs2ScopeName(testCase);
+    } else if (TestNodeProvider.isSpecs2Expr(testCase)) {
+      protocol = SmRunnerUtils.GENERIC_TEST_PROTOCOL;
+      name = Specs2Utils.getSpecs2ScopedTestName(testCase);
+    }
+    if (name == null) {
+      return null;
+    }
+    return protocol
+        + URLUtil.SCHEME_SEPARATOR
+        + testClass.getQualifiedName()
+        + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER
+        + name;
   }
 
   private static Info getInfo(String url, Project project, boolean isClass, Info toReplace) {
@@ -104,8 +151,13 @@ public class BlazeScalaTestRunLineMarkerContributor extends ScalaTestRunLineMark
         toReplace);
   }
 
-  /** Copied from {@link TestRunLineMarkerProvider#getTestStateIcon(String, Project, boolean)} */
-  private static Icon getTestStateIcon(String url, Project project, boolean isClass) {
+  /**
+   * Copied from {@link TestRunLineMarkerProvider#getTestStateIcon(String, Project, boolean)}.
+   *
+   * <p>As of #api173, this is now visible in RunLineMarkerContributor. Remove when we no longer
+   * support earlier plugin APIs.
+   */
+  protected static Icon getTestStateIcon(String url, Project project, boolean isClass) {
     TestStateStorage.Record state = TestStateStorage.getInstance(project).getState(url);
     if (state != null) {
       TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(state.magnitude);

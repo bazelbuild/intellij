@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.actions;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.base.logging.EventLogger;
+import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 
@@ -24,7 +24,8 @@ class BlazeMakeProjectAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    EventLogger.getInstance().log(getClass(), "make", ImmutableMap.of());
+    EventLoggingService.getInstance()
+        .ifPresent(s -> s.logEvent(getClass(), "make", ImmutableMap.of()));
     BlazeBuildService.getInstance().buildProject(project);
   }
 }

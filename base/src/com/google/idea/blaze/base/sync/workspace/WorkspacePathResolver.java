@@ -26,16 +26,10 @@ import javax.annotation.Nullable;
  * Converts workspace-relative paths to absolute files with a minimum of file system calls
  * (typically none).
  */
-public interface WorkspacePathResolver extends Serializable {
+public interface WorkspacePathResolver extends SimpleWorkspacePathResolver, Serializable {
   /** Resolves a workspace path to an absolute file. */
   default File resolveToFile(WorkspacePath workspacepath) {
     return resolveToFile(workspacepath.relativePath());
-  }
-
-  /** Resolves a workspace relative path to an absolute file. */
-  default File resolveToFile(String workspaceRelativePath) {
-    File packageRoot = findPackageRoot(workspaceRelativePath);
-    return new File(packageRoot, workspaceRelativePath);
   }
 
   /**
@@ -43,9 +37,6 @@ public interface WorkspacePathResolver extends Serializable {
    * given workspace path.
    */
   ImmutableList<File> resolveToIncludeDirectories(WorkspacePath relativePath);
-
-  /** Finds the package root directory that a workspace relative path is in. */
-  File findPackageRoot(String relativePath);
 
   /**
    * Finds the workspace root directory that an absolute file lies under. Returns null if the file

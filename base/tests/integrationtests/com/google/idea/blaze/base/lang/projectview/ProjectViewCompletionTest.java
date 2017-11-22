@@ -147,15 +147,26 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
   }
 
   @Test
-  public void testNonDirectoriesIgnored() {
-    setInput("import <caret>");
+  public void testNonDirectoriesIgnoredForDirectoryOnlySection() {
+    setInput("directories:", "  <caret>");
 
     workspace.createDirectory(new WorkspacePath("java/com/google"));
     workspace.createFile(new WorkspacePath("java/IgnoredFile.java"));
 
     String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).isNull();
-    assertResult("import java/com/google<caret>");
+    assertResult("directories:", "  java/com/google<caret>");
+  }
+
+  @Test
+  public void testNonDirectoriesIncludedForSectionsAcceptingFiles() {
+    setInput("import java<caret>");
+
+    workspace.createFile(new WorkspacePath("java/.blazeproject"));
+
+    String[] completionItems = editorTest.getCompletionItemsAsStrings();
+    assertThat(completionItems).isNull();
+    assertResult("import java/.blazeproject<caret>");
   }
 
   @Test

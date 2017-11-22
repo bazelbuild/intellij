@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
+import javax.annotation.Nullable;
 
 /** Mocks the prefetch service. */
 public class MockPrefetchService implements PrefetchService {
@@ -34,7 +35,7 @@ public class MockPrefetchService implements PrefetchService {
 
   @Override
   public ListenableFuture<?> prefetchProjectFiles(
-      Project project, ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
+      Project project, ProjectViewSet projectViewSet, @Nullable BlazeProjectData blazeProjectData) {
     return Futures.immediateFuture(null);
   }
 }

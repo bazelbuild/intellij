@@ -20,6 +20,7 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
+        "//common/transactions",
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
         "//third_party/python",
@@ -74,6 +75,7 @@ intellij_integration_test_suite(
         ":python_integration_test_plugin",
     ],
     deps = [
+        ":integration_test_utils",
         ":python",
         "//base",
         "//base:integration_test_utils",
@@ -94,6 +96,22 @@ intellij_unit_test_suite(
         "//base",
         "//base:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "@jsr305_annotations//jar",
+        "@junit//jar",
+    ],
+)
+
+java_library(
+    name = "integration_test_utils",
+    testonly = 1,
+    srcs = glob(["tests/utils/integration/**/*.java"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//base",
+        "//base:integration_test_utils",
+        "//base:unit_test_utils",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//third_party/python:python_for_tests",
         "@jsr305_annotations//jar",
         "@junit//jar",
     ],

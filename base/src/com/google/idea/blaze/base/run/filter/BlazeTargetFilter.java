@@ -35,11 +35,14 @@ public class BlazeTargetFilter implements Filter {
 
   // See Bazel's LabelValidator class. Whitespace character intentionally not included here.
   private static final String PACKAGE_NAME_CHARS = "a-zA-Z0-9/\\-\\._$()";
-  private static final String TARGET_CHARS = "a-zA-Z0-9+,=~#()$_@\\-";
+  private static final String TARGET_CHARS = "a-zA-Z0-9+,=~#()$_@\\-/";
 
+  // ignore '//' preceded by text (e.g. https://...)
+  // format: ([@external_workspace]//package:rule)
   private static final String TARGET_REGEX =
       String.format(
-          "(@[%s]*)?//[%s]*(:[%s]*)?", PACKAGE_NAME_CHARS, PACKAGE_NAME_CHARS, TARGET_CHARS);
+          "(^|[ '\"])(@[%s]*)?//[%s]*(:[%s]+)?",
+          PACKAGE_NAME_CHARS, PACKAGE_NAME_CHARS, TARGET_CHARS);
 
   @VisibleForTesting static final Pattern TARGET_PATTERN = Pattern.compile(TARGET_REGEX);
 
@@ -56,6 +59,10 @@ public class BlazeTargetFilter implements Filter {
     List<ResultItem> results = new ArrayList<>();
     while (matcher.find()) {
       String labelString = matcher.group();
+      String prefix = matcher.group(1);
+      if (prefix != null) {
+        labelString = labelString.substring(prefix.length());
+      }
       Label label = LabelUtils.createLabelFromString(null, labelString);
       if (label == null) {
         continue;

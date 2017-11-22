@@ -39,8 +39,6 @@ public final class BlazeFlags {
   // It expands to: --test_arg=--wrapper_script_flag=--debug --test_output=streamed
   //   --test_strategy=exclusive --test_timeout=9999 --nocache_test_results
   public static final String JAVA_TEST_DEBUG = "--java_debug";
-  // Tells the Java wrapper stub to launch JVM in remote debugging mode, waiting for a connection
-  public static final String JAVA_BINARY_DEBUG = "--wrapper_script_flag=--debug";
   // Runs tests locally, in sequence (rather than parallel), and streams their results to stdout.
   public static final String TEST_OUTPUT_STREAMED = "--test_output=streamed";
   public static final String DISABLE_TEST_SHARDING = "--test_sharding_strategy=disabled";

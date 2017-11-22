@@ -26,7 +26,8 @@ public abstract class SectionParser {
 
   /** The type of item(s) in this section */
   public enum ItemType {
-    FileSystemItem, // files, directories, globs
+    DirectoryItem, // directories (no files accepted)
+    FileItem, // files, globs
     Label, // a blaze label
     Other, // anything else
   }

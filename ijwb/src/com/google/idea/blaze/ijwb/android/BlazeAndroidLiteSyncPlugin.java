@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Rudimentary support for android in IntelliJ. */
-public class BlazeAndroidLiteSyncPlugin extends BlazeSyncPlugin.Adapter {
+public class BlazeAndroidLiteSyncPlugin implements BlazeSyncPlugin {
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
     switch (workspaceType) {

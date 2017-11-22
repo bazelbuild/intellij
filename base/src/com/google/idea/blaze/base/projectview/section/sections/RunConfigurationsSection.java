@@ -54,7 +54,7 @@ public class RunConfigurationsSection {
 
     @Override
     public ItemType getItemType() {
-      return ItemType.FileSystemItem;
+      return ItemType.FileItem;
     }
 
     @Override

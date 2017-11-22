@@ -84,18 +84,19 @@ public final class ImportRoots {
     }
 
     public ImportRoots build() {
-      // Remove any duplicates and any overlapping directories
-      ImmutableSet<WorkspacePath> minimalRootDirectories =
-          WorkspacePathUtil.calculateMinimalWorkspacePaths(rootDirectoriesBuilder.build());
-
+      ImmutableCollection<WorkspacePath> rootDirectories = rootDirectoriesBuilder.build();
       // for bazel projects, if we're including the workspace root,
       // we force-exclude the bazel artifact directories
       // (e.g. bazel-bin, bazel-genfiles).
-      if (buildSystem == BuildSystem.Bazel && hasWorkspaceRoot(minimalRootDirectories)) {
+      if (buildSystem == BuildSystem.Bazel && hasWorkspaceRoot(rootDirectories)) {
         excludeBuildSystemArtifacts();
       }
       ImmutableSet<WorkspacePath> minimalExcludes =
           WorkspacePathUtil.calculateMinimalWorkspacePaths(excludeDirectoriesBuilder.build());
+
+      // Remove any duplicates, overlapping, or excluded directories
+      ImmutableSet<WorkspacePath> minimalRootDirectories =
+          WorkspacePathUtil.calculateMinimalWorkspacePaths(rootDirectories, minimalExcludes);
 
       return new ImportRoots(minimalRootDirectories, minimalExcludes);
     }

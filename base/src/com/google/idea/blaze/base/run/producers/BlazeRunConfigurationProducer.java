@@ -21,7 +21,6 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.NullUtils;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -75,10 +74,6 @@ public abstract class BlazeRunConfigurationProducer<T extends RunConfiguration>
   protected abstract boolean doIsConfigFromContext(T configuration, ConfigurationContext context);
 
   private static boolean validContext(ConfigurationContext context) {
-    Module module = context.getModule();
-    if (module == null) {
-      return false;
-    }
     if (!isBlazeContext(context)) {
       return false;
     }

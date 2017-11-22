@@ -39,5 +39,7 @@ public interface BlazeSyncStatus {
 
   void setDirty();
 
+  boolean isDirty();
+
   void queueAutomaticSyncIfDirty();
 }

@@ -26,11 +26,11 @@ import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
-import com.google.idea.sdkcompat.smrunner.SmRunnerCompatUtils;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor;
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
+import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestFinishedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestIgnoredEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
@@ -146,7 +146,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
     String targetName = label.targetName().toString();
     processor.onTestStarted(new TestStartedEvent(targetName, /*locationUrl=*/ null));
     processor.onTestFailure(
-        SmRunnerCompatUtils.getTestFailedEvent(
+        getTestFailedEvent(
             targetName,
             STATUS_EXPLANATIONS.get(status) + " See console output for details",
             /*content=*/ null,
@@ -285,11 +285,16 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
               : !test.errors.isEmpty() ? test.errors : ImmutableList.of(NO_ERROR);
       for (ErrorOrFailureOrSkipped err : errors) {
         processor.onTestFailure(
-            SmRunnerCompatUtils.getTestFailedEvent(
-                displayName, err.message, err.content, parseTimeMillis(test.time)));
+            getTestFailedEvent(displayName, err.message, err.content, parseTimeMillis(test.time)));
       }
     }
     processor.onTestFinished(new TestFinishedEvent(displayName, parseTimeMillis(test.time)));
+  }
+
+  private static TestFailedEvent getTestFailedEvent(
+      String name, @Nullable String message, @Nullable String content, long duration) {
+    return new TestFailedEvent(
+        name, null, message, content, true, null, null, null, null, false, false, duration);
   }
 
   private static long parseTimeMillis(@Nullable String time) {

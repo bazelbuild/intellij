@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.projectview.section;
 
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
-import java.util.regex.PatternSyntaxException;
 import javax.annotation.Nullable;
 
 /** Parses glob sections. */
@@ -31,13 +30,20 @@ public class GlobSectionParser extends ListSectionParser<Glob> {
   @Override
   protected final Glob parseItem(ProjectViewParser parser, ParseContext parseContext) {
     String text = parseContext.current().text;
-    try {
-      Glob glob = new Glob(text);
-      return glob;
-    } catch (PatternSyntaxException e) {
-      parseContext.addError(e.getMessage());
-      return null;
+    if (text.startsWith("//")) {
+      parseContext.addError(
+          String.format("%s is a list of file path globs, not target patterns.", getName()));
     }
+    if (text.contains("...")) {
+      parseContext.addWarning(
+          String.format(
+              "The \"...\" wildcard is not supported in %s. Use '*' instead.", getName()));
+    }
+    if (text.contains("**")) {
+      parseContext.addWarning(
+          String.format("The \"**\" wildcard is not supported in %s. Use '*' instead.", getName()));
+    }
+    return new Glob(text);
   }
 
   @Override
@@ -47,6 +53,6 @@ public class GlobSectionParser extends ListSectionParser<Glob> {
 
   @Override
   public ItemType getItemType() {
-    return ItemType.FileSystemItem;
+    return ItemType.FileItem;
   }
 }

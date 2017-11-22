@@ -15,13 +15,14 @@
  */
 package com.google.idea.blaze.android.cppimpl.debug;
 
+import com.android.tools.ndk.run.editor.AutoAndroidDebugger;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.sdkcompat.android.cppimpl.debug.AutoAndroidDebuggerAdapter;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 
-class BlazeAutoAndroidDebugger extends AutoAndroidDebuggerAdapter {
+class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
   public static final String ID = "BlazeAuto";
 
   @Override
@@ -30,6 +31,11 @@ class BlazeAutoAndroidDebugger extends AutoAndroidDebuggerAdapter {
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     return blazeProjectData != null
         && blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C);
+  }
+
+  @Override
+  protected boolean isNativeDeployment(Project project, Module debuggeeModule) {
+    return isNativeProject(project);
   }
 
   @Override

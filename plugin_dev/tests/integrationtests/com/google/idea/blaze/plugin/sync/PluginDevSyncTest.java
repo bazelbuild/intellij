@@ -72,8 +72,7 @@ public class PluginDevSyncTest extends BlazeSyncIntegrationTestCase {
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("java/com/google/BUILD"))
                     .setLabel("//java/com/google:plugin")
-                    .setKind("java_import")
-                    .addTag("intellij-plugin"))
+                    .setKind("intellij_plugin_debug_target"))
             .build();
 
     setTargetMap(targetMap);

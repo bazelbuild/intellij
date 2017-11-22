@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base;
 
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -33,6 +33,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
@@ -44,7 +45,6 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
-import com.intellij.util.ThrowableRunnable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import org.junit.After;
@@ -96,20 +96,14 @@ public abstract class BlazeIntegrationTestCase {
     testFixture.setUp();
     fileSystem = new TestFileSystem(getProject(), testFixture.getTempDirFixture());
 
-    EdtTestUtil.runInEdtAndWait(
-        (ThrowableRunnable<Throwable>)
-            () ->
-                ApplicationManager.getApplication()
-                    .runWriteAction(
-                        () -> {
-                          ProjectJdkTable.getInstance().addJdk(IdeaTestUtil.getMockJdk18());
-                          VirtualFile workspaceRootVirtualFile =
-                              fileSystem.createDirectory("workspace");
-                          workspaceRoot =
-                              new WorkspaceRoot(new File(workspaceRootVirtualFile.getPath()));
-                          projectDataDirectory = fileSystem.createDirectory("project-data-dir");
-                          workspace = new WorkspaceFileSystem(workspaceRoot, fileSystem);
-                        }));
+    runWriteAction(
+        () -> {
+          ProjectJdkTable.getInstance().addJdk(IdeaTestUtil.getMockJdk18());
+          VirtualFile workspaceRootVirtualFile = fileSystem.createDirectory("workspace");
+          workspaceRoot = new WorkspaceRoot(new File(workspaceRootVirtualFile.getPath()));
+          projectDataDirectory = fileSystem.createDirectory("project-data-dir");
+          workspace = new WorkspaceFileSystem(workspaceRoot, fileSystem);
+        });
 
     BlazeImportSettingsManager.getInstance(getProject())
         .setImportSettings(
@@ -121,7 +115,7 @@ public abstract class BlazeIntegrationTestCase {
                 buildSystem()));
 
     registerApplicationService(
-        FileAttributeProvider.class, new TestFileSystem.TempFileAttributeProvider());
+        FileOperationProvider.class, new TestFileSystem.MockFileOperationProvider());
     registerApplicationService(
         InputStreamProvider.class,
         file -> {
@@ -143,8 +137,20 @@ public abstract class BlazeIntegrationTestCase {
   @After
   public final void tearDown() throws Exception {
     SyncCache.getInstance(getProject()).clear();
+    runWriteAction(
+        () -> {
+          ProjectJdkTable table = ProjectJdkTable.getInstance();
+          for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+            table.removeJdk(sdk);
+          }
+        });
     testFixture.tearDown();
     testFixture = null;
+  }
+
+  private static void runWriteAction(Runnable writeAction) {
+    EdtTestUtil.runInEdtAndWait(
+        () -> ApplicationManager.getApplication().runWriteAction(writeAction));
   }
 
   /** Override to run tests with bazel specified as the project's build system. */

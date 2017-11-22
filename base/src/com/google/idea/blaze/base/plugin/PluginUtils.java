@@ -23,18 +23,31 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdve
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
+import java.util.HashSet;
+import java.util.Set;
 
 /** Utility methods for querying / manipulating other plugins. */
 public final class PluginUtils {
 
   private PluginUtils() {}
 
-  /** If the plugin is already installed, enable it, otherwise both install and enable it. */
+  /** Install and/or enable the given plugin. Does nothing for plugins already enabled. */
   public static void installOrEnablePlugin(String pluginId) {
-    if (isPluginInstalled(pluginId)) {
-      PluginManager.enablePlugin(pluginId);
-    } else {
-      PluginsAdvertiser.installAndEnablePlugins(ImmutableSet.of(pluginId), EmptyRunnable.INSTANCE);
+    installOrEnablePlugins(ImmutableSet.of(pluginId));
+  }
+
+  /** Install and/or enable the given plugins. Does nothing for plugins already enabled. */
+  public static void installOrEnablePlugins(Set<String> pluginIds) {
+    Set<String> toInstall = new HashSet<>();
+    for (String id : pluginIds) {
+      if (isPluginInstalled(id)) {
+        PluginManager.enablePlugin(id);
+      } else {
+        toInstall.add(id);
+      }
+    }
+    if (!toInstall.isEmpty()) {
+      PluginsAdvertiser.installAndEnablePlugins(toInstall, EmptyRunnable.INSTANCE);
     }
   }
 

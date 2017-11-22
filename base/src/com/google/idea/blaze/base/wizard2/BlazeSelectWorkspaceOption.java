@@ -19,11 +19,18 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import java.io.File;
+import javax.annotation.Nullable;
 
 /** Provides an option on the "Select workspace" screen */
 public interface BlazeSelectWorkspaceOption extends BlazeWizardOption {
   /** @return The workspace root that will be created after commit. */
   WorkspaceRoot getWorkspaceRoot();
+
+  /** @return The vcs root containing the workspace. */
+  @Nullable
+  File getVcsRoot();
+
+  boolean allowProjectDataInVcsRoot();
 
   /** @return A workspace path resolver to use during wizard validation. */
   WorkspacePathResolver getWorkspacePathResolver();
@@ -35,6 +42,7 @@ public interface BlazeSelectWorkspaceOption extends BlazeWizardOption {
   String getWorkspaceName();
 
   /** @return the name of the 'branch', if applicable */
+  @Nullable
   String getBranchName();
 
   BuildSystem getBuildSystemForWorkspace();

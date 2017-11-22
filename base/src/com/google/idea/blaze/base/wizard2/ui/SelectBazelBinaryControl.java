@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.wizard2.ui;
 
 import com.google.common.base.Strings;
 import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
@@ -77,7 +77,7 @@ public class SelectBazelBinaryControl {
     if (Strings.isNullOrEmpty(binaryPath)) {
       return BlazeValidationResult.failure("Select a bazel binary");
     }
-    if (!FileAttributeProvider.getInstance().isFile(new File(binaryPath))) {
+    if (!FileOperationProvider.getInstance().isFile(new File(binaryPath))) {
       return BlazeValidationResult.failure("Invalid bazel binary: file does not exist");
     }
     return BlazeValidationResult.success();

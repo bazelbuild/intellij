@@ -16,36 +16,38 @@
 package com.google.idea.blaze.base.run.state;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.JComponent;
 import org.jdom.Element;
 
 /** Helper class for managing composite state. */
-public class RunConfigurationCompositeState implements RunConfigurationState {
-  private final List<RunConfigurationState> states;
+public abstract class RunConfigurationCompositeState implements RunConfigurationState {
 
-  protected RunConfigurationCompositeState() {
-    this.states = Lists.newArrayList();
-  }
+  private ImmutableList<RunConfigurationState> states;
 
-  protected void addStates(RunConfigurationState... states) {
-    Collections.addAll(this.states, states);
-  }
+  /**
+   * Called once prior to (de)serializing the run configuration and/or setting up the UI. Returns
+   * the {@link RunConfigurationState}s comprising this composite state. The order of the states
+   * determines their position in the UI.
+   */
+  protected abstract ImmutableList<RunConfigurationState> initializeStates();
 
+  /** The {@link RunConfigurationState}s comprising this composite state. */
   protected ImmutableList<RunConfigurationState> getStates() {
-    return ImmutableList.copyOf(states);
+    if (states == null) {
+      states = initializeStates();
+    }
+    return states;
   }
 
   @Override
   public final void readExternal(Element element) throws InvalidDataException {
-    for (RunConfigurationState state : states) {
+    for (RunConfigurationState state : getStates()) {
       state.readExternal(element);
     }
   }
@@ -54,7 +56,7 @@ public class RunConfigurationCompositeState implements RunConfigurationState {
   @Override
   @SuppressWarnings("ThrowsUncheckedException")
   public final void writeExternal(Element element) throws WriteExternalException {
-    for (RunConfigurationState state : states) {
+    for (RunConfigurationState state : getStates()) {
       state.writeExternal(element);
     }
   }
@@ -62,7 +64,7 @@ public class RunConfigurationCompositeState implements RunConfigurationState {
   /** @return A {@link RunConfigurationStateEditor} for this state. */
   @Override
   public RunConfigurationStateEditor getEditor(Project project) {
-    return new RunConfigurationCompositeStateEditor(project, states);
+    return new RunConfigurationCompositeStateEditor(project, getStates());
   }
 
   static class RunConfigurationCompositeStateEditor implements RunConfigurationStateEditor {
@@ -77,7 +79,7 @@ public class RunConfigurationCompositeState implements RunConfigurationState {
     public void resetEditorFrom(RunConfigurationState genericState) {
       RunConfigurationCompositeState state = (RunConfigurationCompositeState) genericState;
       for (int i = 0; i < editors.size(); ++i) {
-        editors.get(i).resetEditorFrom(state.states.get(i));
+        editors.get(i).resetEditorFrom(state.getStates().get(i));
       }
     }
 
@@ -85,7 +87,7 @@ public class RunConfigurationCompositeState implements RunConfigurationState {
     public void applyEditorTo(RunConfigurationState genericState) {
       RunConfigurationCompositeState state = (RunConfigurationCompositeState) genericState;
       for (int i = 0; i < editors.size(); ++i) {
-        editors.get(i).applyEditorTo(state.states.get(i));
+        editors.get(i).applyEditorTo(state.getStates().get(i));
       }
     }
 

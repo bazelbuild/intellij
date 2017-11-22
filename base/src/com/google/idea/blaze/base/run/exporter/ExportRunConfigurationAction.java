@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.run.exporter;
 
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
-import com.google.idea.blaze.base.run.BlazeRunConfiguration;
+import com.google.idea.common.actionhelper.ActionPresentationHelper;
 import com.intellij.execution.RunManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -29,14 +29,9 @@ public class ExportRunConfigurationAction extends BlazeProjectAction implements 
 
   @Override
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
-    boolean hasBlazeConfigs =
-        RunManager.getInstance(project)
-            .getAllConfigurationsList()
-            .stream()
-            .anyMatch((config) -> config instanceof BlazeRunConfiguration);
-    if (!hasBlazeConfigs) {
-      e.getPresentation().setEnabled(false);
-    }
+    ActionPresentationHelper.of(e)
+        .disableIf(RunManager.getInstance(project).getAllConfigurationsList().isEmpty())
+        .commit();
   }
 
   @Override

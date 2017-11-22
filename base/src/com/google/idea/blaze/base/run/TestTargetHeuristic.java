@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.base.run;
 
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo.TestSize;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -51,7 +51,7 @@ public interface TestTargetHeuristic {
     if (file == null) {
       return null;
     }
-    Collection<TargetIdeInfo> rules =
+    Collection<TargetInfo> rules =
         TestTargetFinder.getInstance(element.getProject()).testTargetsForSourceFile(file);
     return chooseTestTargetForSourceFile(element.getProject(), psiFile, file, rules, null);
   }
@@ -65,14 +65,14 @@ public interface TestTargetHeuristic {
       Project project,
       @Nullable PsiFile sourcePsiFile,
       File sourceFile,
-      Collection<TargetIdeInfo> targets,
+      Collection<TargetInfo> targets,
       @Nullable TestSize testSize) {
     if (targets.isEmpty()) {
       return null;
     }
-    List<TargetIdeInfo> filteredTargets = new ArrayList<>(targets);
+    List<TargetInfo> filteredTargets = new ArrayList<>(targets);
     for (TestTargetHeuristic filter : EP_NAME.getExtensions()) {
-      List<TargetIdeInfo> matches =
+      List<TargetInfo> matches =
           filteredTargets
               .stream()
               .filter(
@@ -80,7 +80,7 @@ public interface TestTargetHeuristic {
                       filter.matchesSource(project, target, sourcePsiFile, sourceFile, testSize))
               .collect(Collectors.toList());
       if (matches.size() == 1) {
-        return matches.get(0).key.label;
+        return matches.get(0).label;
       }
       if (!matches.isEmpty()) {
         // A higher-priority filter found more than one match -- subsequent filters will only
@@ -88,13 +88,13 @@ public interface TestTargetHeuristic {
         filteredTargets = matches;
       }
     }
-    return filteredTargets.iterator().next().key.label;
+    return filteredTargets.iterator().next().label;
   }
 
   /** Returns true if the rule and source file match, according to this heuristic. */
   boolean matchesSource(
       Project project,
-      TargetIdeInfo target,
+      TargetInfo target,
       @Nullable PsiFile sourcePsiFile,
       File sourceFile,
       @Nullable TestSize testSize);

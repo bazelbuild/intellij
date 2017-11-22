@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationRunner;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
-import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.execution.Executor;
@@ -36,16 +35,16 @@ import javax.swing.Icon;
 public final class BlazeCidrRunConfigurationHandler implements BlazeCommandRunConfigurationHandler {
 
   private final String buildSystemName;
-  private final BlazeCommandRunConfigurationCommonState state;
+  private final BlazeCidrRunConfigState state;
 
   public BlazeCidrRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
     BuildSystem buildSystem = Blaze.getBuildSystem(configuration.getProject());
     this.buildSystemName = buildSystem.getName();
-    this.state = new BlazeCommandRunConfigurationCommonState(buildSystem);
+    this.state = new BlazeCidrRunConfigState(buildSystem);
   }
 
   @Override
-  public BlazeCommandRunConfigurationCommonState getState() {
+  public BlazeCidrRunConfigState getState() {
     return state;
   }
 

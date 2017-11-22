@@ -86,6 +86,8 @@ public enum Kind {
   PINTO_MODULE("pinto_module", LanguageClass.JAVASCRIPT, RuleType.UNKNOWN),
   TS_LIBRARY("ts_library", LanguageClass.TYPESCRIPT, RuleType.UNKNOWN),
   TS_CONFIG("ts_config", LanguageClass.TYPESCRIPT, RuleType.BINARY),
+  DART_PROTO_LIBRARY("dart_proto_library", LanguageClass.DART, RuleType.UNKNOWN),
+  DART_LIBRARY("_dart_library", LanguageClass.DART, RuleType.UNKNOWN),
 
   // any rule exposing java_common.provider which isn't specifically recognized
   GENERIC_JAVA_PROVIDER("generic_java", LanguageClass.JAVA, RuleType.UNKNOWN),

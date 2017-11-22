@@ -40,14 +40,13 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
   public static final String LAUNCH_DEEP_LINK = "launch_deep_link";
 
   private static final String LAUNCH_METHOD_ATTR = "launch-method";
-  @Deprecated private static final String MOBILE_INSTALL_ATTR = "blaze-mobile-install";
   // Remove once v2 becomes default.
   private static final String USE_SPLIT_APKS_IF_POSSIBLE = "use-split-apks-if-possible";
 
   private static final String WORK_PROFILE_ATTR = "use-work-profile-if-present";
   private static final String USER_ID_ATTR = "user-id";
 
-  private AndroidBinaryLaunchMethod launchMethod = AndroidBinaryLaunchMethod.NON_BLAZE;
+  private AndroidBinaryLaunchMethod launchMethod = AndroidBinaryLaunchMethod.MOBILE_INSTALL;
   private boolean useSplitApksIfPossible = false;
   private boolean useWorkProfileIfPresent = false;
   private Integer userId;
@@ -146,11 +145,7 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
     if (launchMethodAttribute != null) {
       launchMethod = AndroidBinaryLaunchMethod.valueOf(launchMethodAttribute);
     } else {
-      if (Boolean.parseBoolean(element.getAttributeValue(MOBILE_INSTALL_ATTR))) {
-        launchMethod = AndroidBinaryLaunchMethod.MOBILE_INSTALL;
-      } else {
-        launchMethod = AndroidBinaryLaunchMethod.NON_BLAZE;
-      }
+      launchMethod = AndroidBinaryLaunchMethod.MOBILE_INSTALL;
     }
     setUseSplitApksIfPossible(
         Boolean.parseBoolean(element.getAttributeValue(USE_SPLIT_APKS_IF_POSSIBLE)));

@@ -110,10 +110,17 @@ class OpenCorrespondingBuildFile extends BlazeProjectAction {
   @Override
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
     Presentation presentation = e.getPresentation();
+
     DataContext dataContext = e.getDataContext();
     VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+    BlazePackage blazePackage = getBuildFile(project, virtualFile);
+    if (blazePackage != null && virtualFile.equals(blazePackage.buildFile.getVirtualFile())) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
+
     boolean visible = virtualFile != null;
-    boolean enabled = getBuildFile(project, virtualFile) != null;
+    boolean enabled = blazePackage != null;
     presentation.setVisible(visible || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));
     presentation.setEnabled(enabled);
   }

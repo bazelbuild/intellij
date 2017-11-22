@@ -21,13 +21,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
-import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -56,10 +56,10 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
   @Override
   public boolean build(
       BlazeContext context, BlazeAndroidDeviceSelector.DeviceSession deviceSession) {
-    final ScopedTask buildTask =
-        new ScopedTask(context) {
+    ScopedTask<Void> buildTask =
+        new ScopedTask<Void>(context) {
           @Override
-          protected void execute(BlazeContext context) {
+          protected Void execute(BlazeContext context) {
             BlazeCommand.Builder command =
                 BlazeCommand.builder(
                     Blaze.getBuildSystemProvider(project).getBinaryPath(), BlazeCommandName.BUILD);
@@ -82,27 +82,28 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
                     .context(context)
                     .stderr(
                         buildResultHelper.stderr(
-                            new IssueOutputLineProcessor(project, context, workspaceRoot)))
+                            BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
+                                project, context, workspaceRoot)))
                     .build()
                     .run();
             FileCaches.refresh(project);
 
             if (retVal != 0) {
               context.setHasError();
-              return;
+              return null;
             }
             deployInfo = deployInfoHelper.readDeployInfo(context);
             if (deployInfo == null) {
               IssueOutput.error("Could not read apk deploy info from build").submit(context);
             }
+            return null;
           }
         };
 
     ListenableFuture<Void> buildFuture =
-        BlazeExecutor.submitTask(
-            project,
-            String.format("Executing %s apk build", Blaze.buildSystemName(project)),
-            buildTask);
+        ProgressiveTaskWithProgressIndicator.builder(project)
+            .setTitle(String.format("Executing %s apk build", Blaze.buildSystemName(project)))
+            .submitTaskWithResult(buildTask);
 
     try {
       Futures.get(buildFuture, ExecutionException.class);

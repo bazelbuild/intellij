@@ -18,7 +18,7 @@ package com.google.idea.blaze.base;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.base.Joiner;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
@@ -151,7 +151,7 @@ public class TestFileSystem {
   }
 
   /** Redirects file system checks via the TempFileSystem used for these tests. */
-  public static class TempFileAttributeProvider extends FileAttributeProvider {
+  public static class MockFileOperationProvider extends FileOperationProvider {
 
     final TempFileSystem fileSystem = TempFileSystem.getInstance();
 

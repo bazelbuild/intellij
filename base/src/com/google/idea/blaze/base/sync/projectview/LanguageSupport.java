@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /** Reads the user's language preferences from the project view. */
 public class LanguageSupport {
@@ -103,6 +104,17 @@ public class LanguageSupport {
       }
     }
     return true;
+  }
+
+  /**
+   * All languages potentially supported by this IDE, possibly requiring custom plugins or a
+   * different {@link WorkspaceType}.
+   */
+  public static Set<LanguageClass> languagesSupportedByCurrentIde() {
+    return supportedWorkspaceTypes()
+        .stream()
+        .flatMap(w -> supportedLanguagesForWorkspaceType(w).stream())
+        .collect(Collectors.toSet());
   }
 
   /** The {@link WorkspaceType}s supported by this plugin */

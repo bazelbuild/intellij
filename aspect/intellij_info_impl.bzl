@@ -24,6 +24,7 @@ PREREQUISITE_DEPS = []
 
 # Dependency type enum
 COMPILE_TIME = 0
+
 RUNTIME = 1
 
 ##### Helpers
@@ -252,15 +253,13 @@ def collect_py_info(target, ctx, ide_info, ide_info_file, output_groups):
       sources = sources_from_target(ctx),
   )
   transitive_sources = target.py.transitive_sources
-  # TODO(brendandouglas): target to python files only
-  compile_files = target.output_group("files_to_compile_INTERNAL_")
 
   update_set_in_dict(output_groups, "intellij-info-py", depset([ide_info_file]))
-  update_set_in_dict(output_groups, "intellij-compile-py", compile_files)
+  update_set_in_dict(output_groups, "intellij-compile-py", transitive_sources)
   update_set_in_dict(output_groups, "intellij-resolve-py", transitive_sources)
 
   # Add to legacy output groups for backwards compatibility
-  update_set_in_dict(output_groups, "intellij-compile", compile_files)
+  update_set_in_dict(output_groups, "intellij-compile", transitive_sources)
   update_set_in_dict(output_groups, "intellij-resolve", transitive_sources)
   return True
 
@@ -407,14 +406,6 @@ def get_java_provider(target):
     return target[java_common.provider]
   return None
 
-def get_java_jars(outputs):
-  """Handle both Java (java.outputs.jars list) and Scala (single scala.outputs) targets."""
-  if hasattr(outputs, "jars"):
-    return outputs.jars
-  if hasattr(outputs, "class_jar"):
-    return [outputs]
-  return []
-
 def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
   """Updates Java-specific output groups, returns false if not a Java target."""
   java = get_java_provider(target)
@@ -427,10 +418,9 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
 
   ide_info_files = depset()
   sources = sources_from_target(ctx)
-  java_jars = get_java_jars(java.outputs)
-  jars = [library_artifact(output) for output in java_jars]
-  class_jars = [output.class_jar for output in java_jars if output and output.class_jar]
-  output_jars = [jar for output in java_jars for jar in jars_from_output(output)]
+  jars = [library_artifact(output) for output in java.outputs.jars]
+  class_jars = [output.class_jar for output in java.outputs.jars if output and output.class_jar]
+  output_jars = [jar for output in java.outputs.jars for jar in jars_from_output(output)]
   resolve_files = depset(output_jars)
   compile_files = depset(class_jars)
 
@@ -796,5 +786,5 @@ def make_intellij_info_aspect(aspect_impl, semantics):
       attr_aspects = attr_aspects,
       fragments = ["cpp"],
       implementation = aspect_impl,
-      required_aspect_providers = [["proto_java"], ["aspect_proto_go_api_info"]],
+      required_aspect_providers = [["proto_java"], ["aspect_proto_go_api_info"], ["dart"]],
   )

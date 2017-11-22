@@ -18,8 +18,6 @@ package com.google.idea.blaze.android.resources.actions;
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.android.tools.idea.res.IdeResourceNameValidator;
-import com.google.idea.sdkcompat.android.resources.actions.CreateXmlResourceDialogAdapter;
-import com.google.idea.sdkcompat.android.resources.actions.CreateXmlResourcePanelAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -49,6 +47,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import org.jetbrains.android.actions.CreateXmlResourceDialog;
+import org.jetbrains.android.actions.CreateXmlResourcePanel;
 import org.jetbrains.android.actions.CreateXmlResourceSubdirPanel;
 import org.jetbrains.android.actions.CreateXmlResourceSubdirPanel.Parent;
 import org.jetbrains.android.util.AndroidResourceUtil;
@@ -57,7 +56,7 @@ import org.jetbrains.android.util.AndroidResourceUtil;
  * Embeddable UI for selecting how to create a new resource value (which XML file and directories to
  * place it).
  */
-public class BlazeCreateXmlResourcePanel extends CreateXmlResourcePanelAdapter implements Parent {
+public class BlazeCreateXmlResourcePanel implements CreateXmlResourcePanel, Parent {
 
   private JPanel myPanel;
   private JTextField myNameField;
@@ -247,7 +246,7 @@ public class BlazeCreateXmlResourcePanel extends CreateXmlResourcePanelAdapter i
       return new ValidationInfo("choose directories", myDirectoriesPanel);
     }
 
-    return CreateXmlResourceDialogAdapter.checkIfResourceAlreadyExists(
+    return CreateXmlResourceDialog.checkIfResourceAlreadyExists(
         myModule.getProject(),
         resourceDir,
         resourceName,
@@ -258,7 +257,7 @@ public class BlazeCreateXmlResourcePanel extends CreateXmlResourcePanelAdapter i
   }
 
   @Override
-  public IdeResourceNameValidator getResourceNameValidatorCompat() {
+  public IdeResourceNameValidator getResourceNameValidator() {
     return myResourceNameValidator;
   }
 

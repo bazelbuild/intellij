@@ -40,6 +40,8 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.util.PackagePrefixCalculator;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
@@ -83,7 +85,7 @@ public final class SourceDirectoryCalculator {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ArtifactLocationDecoder artifactLocationDecoder,
-      Collection<WorkspacePath> rootDirectories,
+      ImportRoots importRoots,
       Collection<SourceArtifact> sources,
       Map<TargetKey, ArtifactLocation> javaPackageManifests) {
 
@@ -91,7 +93,7 @@ public final class SourceDirectoryCalculator {
         Scope.push(
             context,
             (childContext) -> {
-              childContext.push(new TimingScope("ReadPackageManifests"));
+              childContext.push(new TimingScope("ReadPackageManifests", EventType.Other));
               Map<TargetKey, Map<ArtifactLocation, String>> manifestMap =
                   PackageManifestReader.getInstance()
                       .readPackageManifestFiles(
@@ -113,14 +115,14 @@ public final class SourceDirectoryCalculator {
 
     // Sort artifacts and excludes into their respective workspace paths
     Multimap<WorkspacePath, SourceArtifact> sourcesUnderDirectoryRoot =
-        sortArtifactLocationsByRootDirectory(context, rootDirectories, nonGeneratedSources);
+        sortArtifactLocationsByRootDirectory(context, importRoots, nonGeneratedSources);
 
     List<BlazeContentEntry> result = Lists.newArrayList();
     Scope.push(
         context,
         (childContext) -> {
-          childContext.push(new TimingScope("CalculateSourceDirectories"));
-          for (WorkspacePath workspacePath : rootDirectories) {
+          childContext.push(new TimingScope("CalculateSourceDirectories", EventType.Other));
+          for (WorkspacePath workspacePath : importRoots.rootDirectories()) {
             File contentRoot = workspaceRoot.fileForPath(workspacePath);
             ImmutableList<BlazeSourceDirectory> sourceDirectories =
                 calculateSourceDirectoriesForContentRoot(
@@ -148,20 +150,23 @@ public final class SourceDirectoryCalculator {
   }
 
   private static Multimap<WorkspacePath, SourceArtifact> sortArtifactLocationsByRootDirectory(
-      BlazeContext context,
-      Collection<WorkspacePath> rootDirectories,
-      Collection<SourceArtifact> sources) {
+      BlazeContext context, ImportRoots importRoots, Collection<SourceArtifact> sources) {
 
     Multimap<WorkspacePath, SourceArtifact> result = ArrayListMultimap.create();
 
     for (SourceArtifact sourceArtifact : sources) {
+      String sourcePath = sourceArtifact.artifactLocation.getRelativePath();
+      if (importRoots
+          .excludeDirectories()
+          .stream()
+          .anyMatch(excluded -> isUnderRootDirectory(excluded, sourcePath))) {
+        continue;
+      }
       WorkspacePath foundWorkspacePath =
-          rootDirectories
+          importRoots
+              .rootDirectories()
               .stream()
-              .filter(
-                  rootDirectory ->
-                      isUnderRootDirectory(
-                          rootDirectory, sourceArtifact.artifactLocation.getRelativePath()))
+              .filter(rootDirectory -> isUnderRootDirectory(rootDirectory, sourcePath))
               .findFirst()
               .orElse(null);
 

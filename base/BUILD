@@ -13,11 +13,76 @@ java_library(
         "//common/experiments",
         "//common/formatter",
         "//common/guava",
+        "//common/transactions",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//sdkcompat",
         "//third_party/auto_value",
         "@jsr305_annotations//jar",
+    ],
+)
+
+# self-contained label parsing API, exposed so other plugins can optionally depend on it
+java_library(
+    name = "label_api",
+    srcs = [
+        "src/com/google/idea/blaze/base/ideinfo/ArtifactLocation.java",
+        "src/com/google/idea/blaze/base/model/primitives/InvalidTargetException.java",
+        "src/com/google/idea/blaze/base/model/primitives/Kind.java",
+        "src/com/google/idea/blaze/base/model/primitives/Label.java",
+        "src/com/google/idea/blaze/base/model/primitives/LanguageClass.java",
+        "src/com/google/idea/blaze/base/model/primitives/PackagePathValidator.java",
+        "src/com/google/idea/blaze/base/model/primitives/RuleType.java",
+        "src/com/google/idea/blaze/base/model/primitives/TargetExpression.java",
+        "src/com/google/idea/blaze/base/model/primitives/TargetName.java",
+        "src/com/google/idea/blaze/base/model/primitives/WildcardTargetPattern.java",
+        "src/com/google/idea/blaze/base/model/primitives/WorkspacePath.java",
+    ],
+    neverlink = 1,
+    visibility = ["//java/com/google/devtools/intellij/g3plugins:visibility"],
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+        "@jsr305_annotations//jar",
+    ],
+)
+
+# neverlink library exposed so other plugins can optionally depend on it
+java_library(
+    name = "workspace_path_resolver_api",
+    srcs = ["src/com/google/idea/blaze/base/sync/workspace/SimpleWorkspacePathResolver.java"],
+    neverlink = 1,
+    visibility = ["//java/com/google/devtools/intellij/g3plugins:visibility"],
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+        "@jsr305_annotations//jar",
+    ],
+)
+
+# neverlink library exposed so other plugins can optionally depend on it
+java_library(
+    name = "event_logger_api",
+    srcs = ["src/com/google/idea/blaze/base/logging/EventLogger.java"],
+    neverlink = 1,
+    visibility = ["//java/com/google/devtools/intellij/g3plugins:visibility"],
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+        "@jsr305_annotations//jar",
+    ],
+)
+
+# neverlink library exposed so other plugins can provide dependency information
+java_library(
+    name = "source_to_target_api",
+    srcs = [
+        "src/com/google/idea/blaze/base/dependencies/SourceToTargetProvider.java",
+        "src/com/google/idea/blaze/base/dependencies/TargetInfo.java",
+        "src/com/google/idea/blaze/base/dependencies/TestSize.java",
+    ],
+    neverlink = 1,
+    visibility = ["//java/com/google/devtools/intellij/g3plugins:visibility"],
+    deps = [
+        ":label_api",
+        "//intellij_platform_sdk:plugin_api",
     ],
 )
 

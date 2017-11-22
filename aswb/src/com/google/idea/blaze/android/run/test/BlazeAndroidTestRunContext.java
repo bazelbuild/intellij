@@ -46,7 +46,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -172,20 +171,6 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
       throws ExecutionException {
     switch (configState.getLaunchMethod()) {
       case NON_BLAZE:
-        BlazeAndroidDeployInfo deployInfo;
-        try {
-          deployInfo = buildStep.getDeployInfo();
-        } catch (ApkProvisionException e) {
-          throw new ExecutionException(e);
-        }
-        if (!deployInfo.getDataToDeploy().isEmpty()) {
-          throw new ExecutionException(
-              String.format(
-                  "This test target has data dependencies (defined in the 'data' attribute).\n"
-                      + "These can only be installed if the configuration is run through blaze.\n"
-                      + "Choose \"Run with %1$s test\" on your run configuration and try again.",
-                  Blaze.getBuildSystem(project).getLowerCaseName()));
-        }
         // fall through
       case BLAZE_TEST:
         Collection<ApkInfo> apks;

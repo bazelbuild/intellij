@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.sync.projectview;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -38,13 +38,13 @@ public class RelatedWorkspacePathFinderTest {
 
   private static final File WORKSPACE_ROOT = new File("/workspace");
 
-  private MockFileAttributeProvider files;
+  private MockFileOperationProvider files;
   private RelatedWorkspacePathFinder relatedPathFinder;
   private WorkspacePathResolver workspacePathResolver;
 
   @Before
   public void setUp() throws IOException {
-    files = new MockFileAttributeProvider();
+    files = new MockFileOperationProvider();
     relatedPathFinder = new RelatedWorkspacePathFinder(files);
     workspacePathResolver = new WorkspacePathResolverImpl(new WorkspaceRoot(WORKSPACE_ROOT));
   }
@@ -173,7 +173,7 @@ public class RelatedWorkspacePathFinderTest {
     assertThat(relatedPaths).isEmpty();
   }
 
-  private static class MockFileAttributeProvider extends FileAttributeProvider {
+  private static class MockFileOperationProvider extends FileOperationProvider {
 
     private final Set<File> existingFiles = new HashSet<>();
 
@@ -182,11 +182,13 @@ public class RelatedWorkspacePathFinderTest {
       return existingFiles.contains(file);
     }
 
-    void mkdirs(File file) {
+    @Override
+    public boolean mkdirs(File file) {
       while (file != null && !existingFiles.contains(file)) {
         existingFiles.add(file);
         file = file.getParentFile();
       }
+      return true;
     }
   }
 }

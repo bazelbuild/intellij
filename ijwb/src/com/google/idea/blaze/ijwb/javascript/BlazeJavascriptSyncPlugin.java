@@ -40,12 +40,13 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.util.PlatformUtils;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Allows people to use a javascript-only workspace. */
-public class BlazeJavascriptSyncPlugin extends BlazeSyncPlugin.Adapter {
+public class BlazeJavascriptSyncPlugin implements BlazeSyncPlugin {
 
   private static final String JAVASCRIPT_PLUGIN_ID = "JavaScript";
 
@@ -70,6 +71,13 @@ public class BlazeJavascriptSyncPlugin extends BlazeSyncPlugin.Adapter {
     return PlatformUtils.isIdeaUltimate()
         ? ImmutableSet.of(LanguageClass.JAVASCRIPT)
         : ImmutableSet.of();
+  }
+
+  @Override
+  public ImmutableList<String> getRequiredExternalPluginIds(Collection<LanguageClass> languages) {
+    return languages.contains(LanguageClass.JAVASCRIPT)
+        ? ImmutableList.of(JAVASCRIPT_PLUGIN_ID)
+        : ImmutableList.of();
   }
 
   @Nullable
@@ -130,6 +138,24 @@ public class BlazeJavascriptSyncPlugin extends BlazeSyncPlugin.Adapter {
   }
 
   @Override
+  public boolean validate(
+      Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
+    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVASCRIPT)) {
+      return true;
+    }
+    if (!ApplicationManager.getApplication().isUnitTestMode()
+        && !PluginUtils.isPluginEnabled(JAVASCRIPT_PLUGIN_ID)) {
+      IssueOutput.error(
+              "The JavaScript plugin is required for JavaScript support. "
+                  + "Click here to install/enable the plugin and restart")
+          .navigatable(PluginUtils.installOrEnablePluginNavigable(JAVASCRIPT_PLUGIN_ID))
+          .submit(context);
+      return false;
+    }
+    return true;
+  }
+
+  @Override
   public boolean validateProjectView(
       @Nullable Project project,
       BlazeContext context,
@@ -140,14 +166,6 @@ public class BlazeJavascriptSyncPlugin extends BlazeSyncPlugin.Adapter {
     }
     if (!PlatformUtils.isIdeaUltimate()) {
       IssueOutput.error("IntelliJ Ultimate needed for Javascript support.").submit(context);
-      return false;
-    }
-    if (!ApplicationManager.getApplication().isUnitTestMode()
-        && !PluginUtils.isPluginEnabled(JAVASCRIPT_PLUGIN_ID)) {
-      IssueOutput.error(
-              "Javascript support is disabled: please install/enable the JetBrains Javascript "
-                  + "plugin, then restart the IDE")
-          .submit(context);
       return false;
     }
     return true;

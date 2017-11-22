@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
@@ -57,7 +58,7 @@ import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider;
 import com.google.idea.blaze.java.sync.projectstructure.Jdks;
 import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
-import com.google.idea.sdkcompat.transactions.Transactions;
+import com.google.idea.common.transactions.Transactions;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
@@ -70,7 +71,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Sync support for Java. */
-public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
+public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
   private final JdepsFileReader jdepsFileReader = new JdepsFileReader();
 
   @Override
@@ -152,7 +153,7 @@ public class BlazeJavaSyncPlugin extends BlazeSyncPlugin.Adapter {
         Scope.push(
             context,
             (childContext) -> {
-              childContext.push(new TimingScope("JavaWorkspaceImporter"));
+              childContext.push(new TimingScope("JavaWorkspaceImporter", EventType.Other));
               return blazeJavaWorkspaceImporter.importWorkspace(childContext);
             });
     Glob.GlobSet excludedLibraries =

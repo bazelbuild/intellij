@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -44,7 +45,7 @@ import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /** Updates the language specification during the blaze sync process */
-public class BuildLangSyncPlugin extends BlazeSyncPlugin.Adapter {
+public class BuildLangSyncPlugin implements BlazeSyncPlugin {
 
   private static final Logger logger = Logger.getInstance(BuildLangSyncPlugin.class);
 
@@ -86,7 +87,7 @@ public class BuildLangSyncPlugin extends BlazeSyncPlugin.Adapter {
         Scope.push(
             parentContext,
             (context) -> {
-              context.push(new TimingScope("BUILD language spec"));
+              context.push(new TimingScope("BUILD language spec", EventType.BlazeInvocation));
               BuildLanguageSpec spec =
                   parseLanguageSpec(project, workspace, projectViewSet, context);
               if (spec != null) {

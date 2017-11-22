@@ -26,7 +26,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
@@ -55,7 +55,7 @@ class GeneratedResourceClassifier {
       Collection<ArtifactLocation> generatedResourceLocations,
       ArtifactLocationDecoder artifactLocationDecoder,
       ListeningExecutorService executorService) {
-    FileAttributeProvider fileAttributeProvider = FileAttributeProvider.getInstance();
+    FileOperationProvider fileOperationProvider = FileOperationProvider.getInstance();
     List<ListenableFuture<GenResourceClassification>> jobs =
         generatedResourceLocations
             .stream()
@@ -64,7 +64,7 @@ class GeneratedResourceClassifier {
                     executorService.submit(
                         () ->
                             classifyLocation(
-                                location, artifactLocationDecoder, fileAttributeProvider)))
+                                location, artifactLocationDecoder, fileOperationProvider)))
             .collect(Collectors.toList());
 
     ImmutableSortedMap.Builder<ArtifactLocation, Integer> interesting =
@@ -132,9 +132,9 @@ class GeneratedResourceClassifier {
   private static GenResourceClassification classifyLocation(
       ArtifactLocation artifactLocation,
       ArtifactLocationDecoder artifactLocationDecoder,
-      FileAttributeProvider fileAttributeProvider) {
+      FileOperationProvider fileOperationProvider) {
     File resDirectory = artifactLocationDecoder.decode(artifactLocation);
-    File[] children = fileAttributeProvider.listFiles(resDirectory);
+    File[] children = fileOperationProvider.listFiles(resDirectory);
     if (children == null) {
       return GenResourceClassification.uninteresting(artifactLocation, 0);
     }

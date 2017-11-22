@@ -83,6 +83,21 @@ public class WorkspacePath implements Serializable {
     return null;
   }
 
+  /**
+   * Returns the workspace path of this path's parent directory. Returns null if this is the
+   * workspace root.
+   */
+  @Nullable
+  public WorkspacePath getParent() {
+    if (isWorkspaceRoot()) {
+      return null;
+    }
+    int lastSeparatorIndex = relativePath.lastIndexOf('/');
+    String parentPath =
+        lastSeparatorIndex == -1 ? "" : relativePath.substring(0, lastSeparatorIndex);
+    return new WorkspacePath(parentPath);
+  }
+
   public boolean isWorkspaceRoot() {
     return relativePath.isEmpty();
   }

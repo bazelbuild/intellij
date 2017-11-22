@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.sync;
 
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -30,19 +30,19 @@ import javax.annotation.Nullable;
 public class BuildTargetFinder {
   private final WorkspaceRoot workspaceRoot;
   private final ImportRoots importRoots;
-  private final FileAttributeProvider fileAttributeProvider;
+  private final FileOperationProvider fileOperationProvider;
   private final BuildSystemProvider buildSystemProvider;
 
   public BuildTargetFinder(Project project, WorkspaceRoot workspaceRoot, ImportRoots importRoots) {
     this.workspaceRoot = workspaceRoot;
     this.importRoots = importRoots;
-    this.fileAttributeProvider = FileAttributeProvider.getInstance();
+    this.fileOperationProvider = FileOperationProvider.getInstance();
     this.buildSystemProvider = Blaze.getBuildSystemProvider(project);
   }
 
   @Nullable
   public File findBuildFileForFile(File file) {
-    if (fileAttributeProvider.isFile(file)) {
+    if (fileOperationProvider.isFile(file)) {
       file = file.getParentFile();
       if (file == null) {
         return null;

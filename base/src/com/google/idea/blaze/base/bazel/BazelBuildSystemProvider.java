@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.bazel;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -82,7 +82,7 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   @Nullable
   @Override
   public File findBuildFileInDirectory(File directory) {
-    FileAttributeProvider provider = FileAttributeProvider.getInstance();
+    FileOperationProvider provider = FileOperationProvider.getInstance();
     File child = new File(directory, "BUILD");
     if (provider.exists(child)) {
       return child;

@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.sync.workspace;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
@@ -166,7 +166,7 @@ public class WorkspaceHelper {
   @SuppressWarnings("unused")
   private static Map<String, WorkspaceRoot> enumerateExternalWorkspaces(
       Project project, BlazeProjectData blazeProjectData) {
-    FileAttributeProvider provider = FileAttributeProvider.getInstance();
+    FileOperationProvider provider = FileOperationProvider.getInstance();
     File[] children = provider.listFiles(getExternalSourceRoot(blazeProjectData));
     if (children == null) {
       return ImmutableMap.of();

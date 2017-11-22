@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.sync.projectview;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.io.FileAttributeProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.components.ServiceManager;
@@ -27,10 +27,10 @@ import java.nio.file.Paths;
 /** Utility class to find WorkspacePaths that are related */
 public final class RelatedWorkspacePathFinder {
 
-  private final FileAttributeProvider fileAttributeProvider;
+  private final FileOperationProvider fileOperationProvider;
 
-  RelatedWorkspacePathFinder(FileAttributeProvider fileAttributeProvider) {
-    this.fileAttributeProvider = fileAttributeProvider;
+  RelatedWorkspacePathFinder(FileOperationProvider fileOperationProvider) {
+    this.fileOperationProvider = fileOperationProvider;
   }
 
   public static RelatedWorkspacePathFinder getInstance() {
@@ -65,6 +65,6 @@ public final class RelatedWorkspacePathFinder {
   }
 
   private boolean exists(File file) {
-    return fileAttributeProvider.exists(file);
+    return fileOperationProvider.exists(file);
   }
 }

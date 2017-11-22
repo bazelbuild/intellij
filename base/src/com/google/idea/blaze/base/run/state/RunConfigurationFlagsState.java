@@ -21,13 +21,17 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.execution.ParametersListUtil;
+import java.awt.Container;
+import java.awt.Dimension;
 import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JViewport;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.ViewportLayout;
 import org.jdom.Element;
 
 /** State for a list of user-defined flags. */
@@ -92,11 +96,32 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
 
   private static class RunConfigurationFlagsStateEditor implements RunConfigurationStateEditor {
 
-    private final JTextArea flagsField = new JTextArea(10, 1);
+    private final JTextArea flagsField;
     private final String fieldLabel;
 
     RunConfigurationFlagsStateEditor(String fieldLabel) {
       this.fieldLabel = fieldLabel;
+      flagsField = createFlagsField();
+    }
+
+    private JTextArea createFlagsField() {
+      JTextArea field =
+          new JTextArea() {
+            @Override
+            public Dimension getMinimumSize() {
+              // Jetbrains' DefaultScrollBarUI will automatically hide the scrollbar knob
+              // if the viewport height is less than twice the scrollbar's width.
+              // In the default font, 2 rows is slightly taller than this, guaranteeing
+              // that the scrollbar knob is visible when the field is scrollable.
+              return new Dimension(getColumnWidth(), 2 * getRowHeight());
+            }
+          };
+      // This is the preferred number of rows. The field will grow if there is more text,
+      // and shrink if there is not enough room in the dialog.
+      field.setRows(5);
+      field.setLineWrap(true);
+      field.setWrapStyleWord(true);
+      return field;
     }
 
     /** Identical to {@link ParametersListUtil#join}, except args are newline-delimited. */
@@ -140,14 +165,33 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
       state.setRawFlags(ParametersListUtil.parse(Strings.nullToEmpty(flagsField.getText())));
     }
 
+    private JBScrollPane createScrollPane(JTextArea field) {
+      JViewport viewport = new JViewport();
+      viewport.setView(field);
+      viewport.setLayout(
+          new ViewportLayout() {
+            @Override
+            public Dimension preferredLayoutSize(Container parent) {
+              return field.getPreferredSize();
+            }
+
+            @Override
+            public Dimension minimumLayoutSize(Container parent) {
+              return field.getMinimumSize();
+            }
+          });
+
+      JBScrollPane scrollPane =
+          new JBScrollPane(
+              ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+              ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      scrollPane.setViewport(viewport);
+      return scrollPane;
+    }
+
     @Override
     public JComponent createComponent() {
-      return UiUtil.createBox(
-          new JLabel(fieldLabel),
-          new JScrollPane(
-              flagsField,
-              JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-              ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
+      return UiUtil.createBox(new JLabel(fieldLabel), createScrollPane(flagsField));
     }
   }
 }

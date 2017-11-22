@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.repackaged.devtools.build.lib.view.proto.Deps;
 import com.intellij.openapi.diagnostic.Logger;
@@ -87,7 +88,7 @@ public class JdepsFileReader {
         Scope.push(
             parentContext,
             (context) -> {
-              context.push(new TimingScope("LoadJdepsFiles"));
+              context.push(new TimingScope("LoadJdepsFiles", EventType.Other));
               return doLoadJdepsFiles(
                   project, context, artifactLocationDecoder, oldState, targetsToLoad);
             });
@@ -134,7 +135,7 @@ public class JdepsFileReader {
     ListenableFuture<?> fetchFuture =
         PrefetchService.getInstance().prefetchFiles(project, updatedFiles, true);
     if (!FutureUtil.waitForFuture(context, fetchFuture)
-        .timed("FetchJdeps")
+        .timed("FetchJdeps", EventType.Prefetching)
         .withProgressMessage("Reading jdeps files...")
         .run()
         .success()) {

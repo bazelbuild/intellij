@@ -111,6 +111,10 @@ message TsIdeInfo {
   repeated ArtifactLocation sources = 1;
 }
 
+message DartIdeInfo {
+  repeated ArtifactLocation sources = 1;
+}
+
 message CToolchainIdeInfo {
   string target_name = 1;
   repeated string base_compiler_option = 2;
@@ -203,6 +207,7 @@ message TargetIdeInfo {
   GoIdeInfo go_ide_info = 25;
   JsIdeInfo js_ide_info = 26;
   TsIdeInfo ts_ide_info = 27;
+  DartIdeInfo dart_ide_info = 28;
 
-  // Next available: 28
+  // Next available: 29
 }

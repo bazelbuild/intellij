@@ -56,7 +56,7 @@ public interface JavaClasspathAspectStrategy {
     @Override
     public ImmutableList<String> getBuildFlags() {
       return ImmutableList.of(
-          "--aspects=@runtime_classpath//:java_classpath.bzl%java_classpath_aspect",
+          "--aspects=@intellij_aspect//:java_classpath.bzl%java_classpath_aspect",
           getAspectRepositoryOverrideFlag(), "--output_groups=" + OUTPUT_GROUP);
     }
 

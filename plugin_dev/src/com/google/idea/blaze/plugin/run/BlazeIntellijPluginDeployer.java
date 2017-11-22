@@ -69,8 +69,18 @@ class BlazeIntellijPluginDeployer {
     this.pluginTarget = pluginTarget;
   }
 
+  /**
+   * Clear data from the last build -- if this build fails, we don't want to silently launch the
+   * previously built plugin.
+   */
+  void buildStarted() {
+    executionRoot = null;
+    deployInfoFiles.clear();
+  }
+
   void reportBuildComplete(File executionRoot, BuildResultHelper buildResultHelper) {
     this.executionRoot = executionRoot;
+    deployInfoFiles.clear();
     for (File file : buildResultHelper.getBuildArtifactsForTarget(pluginTarget)) {
       if (file.getName().endsWith(".intellij-plugin-debug-target-deploy-info")) {
         deployInfoFiles.add(file);
@@ -82,6 +92,9 @@ class BlazeIntellijPluginDeployer {
    * Returns a list of plugin IDs, and asynchronously copies the corresponding files to the sandbox.
    */
   List<String> deployNonBlocking() throws ExecutionException {
+    if (deployInfoFiles.isEmpty()) {
+      throw new ExecutionException("No plugin files found. Did the build fail?");
+    }
     List<IntellijPluginDeployInfo> deployInfoList = Lists.newArrayList();
     for (File deployInfoFile : deployInfoFiles) {
       deployInfoList.addAll(readDeployInfoFromFile(deployInfoFile));

@@ -54,9 +54,15 @@ public class BlazePyPositionConverter implements PyPositionConverter {
         convertLocalLineToRemote(position.getFile(), position.getLine())) {};
   }
 
+  @SuppressWarnings("MissingOverride") // (briefly) removed in 2017.3
   @Nullable
-  @Override
   public XSourcePosition convertFromPython(PySourcePosition position) {
+    return createXSourcePosition(getVirtualFile(position.getFile()), position.getLine());
+  }
+
+  @SuppressWarnings("MissingOverride") // added in 2017.3
+  @Nullable
+  public XSourcePosition convertFromPython(PySourcePosition position, String frameName) {
     return createXSourcePosition(getVirtualFile(position.getFile()), position.getLine());
   }
 

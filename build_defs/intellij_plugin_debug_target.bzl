@@ -105,8 +105,8 @@ def _intellij_plugin_debug_target_impl(ctx):
   )
 
 intellij_plugin_debug_target = rule(
-    implementation = _intellij_plugin_debug_target_impl,
     attrs = {
         "deps": attr.label_list(aspects = [_intellij_plugin_debug_target_aspect]),
     },
+    implementation = _intellij_plugin_debug_target_impl,
 )

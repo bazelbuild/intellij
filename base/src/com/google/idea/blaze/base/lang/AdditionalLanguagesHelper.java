@@ -15,16 +15,22 @@
  */
 package com.google.idea.blaze.base.lang;
 
+import static com.google.idea.common.guava.GuavaHelper.toImmutableSet;
+
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewEdit;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguagesSection;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
+import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -36,6 +42,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -107,7 +115,9 @@ public class AdditionalLanguagesHelper
 
     String langName = language.getName();
     String message =
-        String.format("Do you want to enable %s support in your project view file?", langName);
+        String.format(
+            "Do you want to enable %s plugin %s support?",
+            Blaze.buildSystemName(project), langName);
 
     EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(message);
@@ -121,6 +131,10 @@ public class AdditionalLanguagesHelper
     return panel;
   }
 
+  /**
+   * Adds the specified languages to the project view's 'additional_languages' section, and
+   * installs/enables any other required plugins.
+   */
   public static void enableLanguageSupport(Project project, List<LanguageClass> languages) {
     ProjectViewEdit edit =
         ProjectViewEdit.editLocalProjectView(
@@ -141,6 +155,13 @@ public class AdditionalLanguagesHelper
       return;
     }
     edit.apply();
+
+    ImmutableSet<String> requiredPlugins =
+        Arrays.stream(BlazeSyncPlugin.EP_NAME.getExtensions())
+            .map(syncPlugin -> syncPlugin.getRequiredExternalPluginIds(languages))
+            .flatMap(Collection::stream)
+            .collect(toImmutableSet());
+    PluginUtils.installOrEnablePlugins(requiredPlugins);
 
     BlazeSyncManager.getInstance(project)
         .requestProjectSync(

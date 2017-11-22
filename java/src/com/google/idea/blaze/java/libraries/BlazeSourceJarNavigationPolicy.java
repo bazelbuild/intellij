@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -66,11 +65,6 @@ import javax.annotation.Nullable;
  */
 final class BlazeSourceJarNavigationPolicy extends ClsCustomNavigationPolicyEx {
 
-  private static final BoolExperiment enabled =
-      new BoolExperiment("blaze.source.jar.navigation.policy", true);
-  static final BoolExperiment cacheEnabled =
-      new BoolExperiment("blaze.source.jar.navigation.policy.cache", true);
-
   private final ConcurrentMap<Project, SimpleModificationTracker> projectSyncTrackers =
       new ConcurrentHashMap<>();
 
@@ -84,10 +78,6 @@ final class BlazeSourceJarNavigationPolicy extends ClsCustomNavigationPolicyEx {
   @Nullable
   @Override
   public PsiFile getFileNavigationElement(ClsFileImpl file) {
-    if (!enabled.getValue()) {
-      return null;
-    }
-
     return CachedValuesManager.getCachedValue(
         file,
         () -> {

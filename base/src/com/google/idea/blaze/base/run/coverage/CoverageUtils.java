@@ -21,6 +21,8 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.WrappingRunConfiguration;
@@ -47,6 +49,11 @@ public class CoverageUtils {
   public static boolean isApplicableTo(RunProfile runProfile) {
     BlazeCommandRunConfiguration config = toBlazeConfig(runProfile);
     if (config == null) {
+      return false;
+    }
+    if (Blaze.getBuildSystem(config.getProject()) != BuildSystem.Blaze) {
+      // temporarily disable coverage for Bazel, until we properly interface with its API and output
+      // file locations
       return false;
     }
     BlazeCommandRunConfigurationCommonState handlerState =

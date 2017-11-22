@@ -29,9 +29,12 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.MockPrefetchService;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
+import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
@@ -94,7 +97,7 @@ public class ScalaSourceDirectoryCalculatorTest extends BlazeTestCase {
             context,
             workspaceRoot,
             decoder,
-            ImmutableList.of(new WorkspacePath("src/main/scala/com/google")),
+            buildImportRoots(new WorkspacePath("src/main/scala/com/google")),
             sourceArtifacts,
             ImmutableMap.of());
     assertThat(result)
@@ -148,7 +151,7 @@ public class ScalaSourceDirectoryCalculatorTest extends BlazeTestCase {
             context,
             workspaceRoot,
             decoder,
-            ImmutableList.of(
+            buildImportRoots(
                 new WorkspacePath("src/main/scala/com/google"),
                 new WorkspacePath("src/main/scala/com/alphabet")),
             sourceArtifacts,
@@ -209,7 +212,7 @@ public class ScalaSourceDirectoryCalculatorTest extends BlazeTestCase {
             context,
             workspaceRoot,
             decoder,
-            ImmutableList.of(
+            buildImportRoots(
                 new WorkspacePath("src/main/java/com/google"),
                 new WorkspacePath("src/main/scala/com/google"),
                 new WorkspacePath("src/main/scala/com/alphabet")),
@@ -236,5 +239,13 @@ public class ScalaSourceDirectoryCalculatorTest extends BlazeTestCase {
                         .build())
                 .build());
     issues.assertNoIssues();
+  }
+
+  private ImportRoots buildImportRoots(WorkspacePath... rootDirectories) {
+    ImportRoots.Builder builder = ImportRoots.builder(workspaceRoot, BuildSystem.Blaze);
+    for (WorkspacePath path : rootDirectories) {
+      builder.add(DirectoryEntry.include(path));
+    }
+    return builder.build();
   }
 }

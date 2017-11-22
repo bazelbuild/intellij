@@ -26,5 +26,5 @@ import com.google.idea.common.experiments.BoolExperiment;
 public class BlazeGoSupport {
 
   public static final BoolExperiment blazeGoSupportEnabled =
-      new BoolExperiment("blaze.go.support.enabled", false);
+      new BoolExperiment("blaze.go.support.enabled", true);
 }

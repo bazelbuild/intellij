@@ -95,20 +95,29 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
     syncInProgress.set(true);
   }
 
-  public void syncEnded(SyncResult syncResult) {
+  public void syncEnded(SyncMode syncMode, SyncResult syncResult) {
     syncInProgress.set(false);
     failedSync = syncResult == SyncResult.FAILURE;
-    if (syncResult == SyncResult.SUCCESS && !syncPending.get()) {
+    if (allTargetsBuild(syncMode) && syncResult == SyncResult.SUCCESS && !syncPending.get()) {
       dirty = false;
     } else if (syncResult == SyncResult.PARTIAL_SUCCESS || syncResult == SyncResult.CANCELLED) {
       dirty = true;
     }
   }
 
+  private static boolean allTargetsBuild(SyncMode mode) {
+    return mode == SyncMode.FULL || mode == SyncMode.INCREMENTAL;
+  }
+
   @Override
   public void setDirty() {
     dirty = true;
     queueIncrementalSync();
+  }
+
+  @Override
+  public boolean isDirty() {
+    return dirty;
   }
 
   @Override
