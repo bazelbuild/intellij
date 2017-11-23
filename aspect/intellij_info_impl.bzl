@@ -543,6 +543,7 @@ def build_filtered_gen_jar(ctx, target, java, gen_java_sources, srcjars):
   if srcjars:
     for source_jar in srcjars:
       args += ["--keep_source_jar", source_jar.path]
+
   ctx.action(
       inputs = jar_artifacts + source_jar_artifacts + gen_java_sources + srcjars,
       outputs = [filtered_jar, filtered_source_jar],
