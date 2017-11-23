@@ -12,17 +12,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.kotlin;
+package com.google.idea.blaze.kotlin.sync.model;
 
+
+import com.google.idea.blaze.base.model.BlazeProjectData;
+
+import javax.annotation.concurrent.Immutable;
 import java.io.Serializable;
 
-/** Sync data for the kotlin plugin. */
+/**
+ * Sync data for the kotlin plugin.
+ */
+@Immutable
 public class BlazeKotlinSyncData implements Serializable {
-  private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-  public final BlazeKotlinImportResult importResult;
+    public final BlazeKotlinImportResult importResult;
 
-  public BlazeKotlinSyncData(BlazeKotlinImportResult importResult) {
-    this.importResult = importResult;
-  }
+    public BlazeKotlinSyncData(BlazeKotlinImportResult importResult) {
+        this.importResult = importResult;
+    }
+
+    public static BlazeKotlinSyncData get(BlazeProjectData blazeProjectData) {
+        return blazeProjectData.syncState.get(BlazeKotlinSyncData.class);
+    }
 }
+
+

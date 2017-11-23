@@ -162,6 +162,53 @@ new_http_archive(
     sha256 = "8e387d459216500ed7f908b66e63dae629a7872bc72eafaa0cd8fb339da00730",
 )
 
+KOTLIN_BUILD_FILE_CONTENT = """
+java_import(
+  name = 'kotlin',
+  jars = ['kotlin/lib/kotlin-plugin.jar'],
+  visibility = ['//visibility:public'],
+)
+java_import(
+  name = 'integration-test-deps',
+  jars = [
+      'kotlin/lib/kotlinx-coroutines-core.jar',
+      'kotlin/lib/kotlinx-coroutines-jdk8.jar',
+      'kotlin/lib/kotlin-script-runtime.jar',
+      'kotlin/lib/kotlin-script-util.jar',
+      'kotlin/lib/sam-with-receiver-ide-plugin.jar',
+      'kotlin/lib/sam-with-receiver-compiler-plugin.jar',
+      'kotlin/lib/allopen-compiler-plugin.jar',
+      'kotlin/lib/allopen-ide-plugin.jar',
+      'kotlin/lib/noarg-compiler-plugin.jar',
+      'kotlin/lib/noarg-ide-plugin.jar',
+  ],
+  visibility = ['//visibility:public'],
+)
+"""
+
+# Kotlin plugin for IntelliJ CE 2017.2. Required at compile-time for kotlin-specific features.
+new_http_archive(
+    name = "kotlin_2017_2",
+    build_file_content = KOTLIN_BUILD_FILE_CONTENT,
+    url = "https://d1n3kg4j1bkixe.cloudfront.net/files/6954/41421/kotlin-plugin-1.2.10-release-IJ2017.2-1.zip",
+    sha256 = "dcb73a44d294ac7a1193b0234dd0c14f343e0217fe6852e0b1e47175b0f93833"
+)
+
+# Kotlin plugin for IntelliJ CE 2017.3. Required at compile-time for kotlin-specific features.
+new_http_archive(
+    name = "kotlin_2017_3",
+    build_file_content = KOTLIN_BUILD_FILE_CONTENT,
+    url = "https://d1n3kg4j1bkixe.cloudfront.net/files/6954/41422/kotlin-plugin-1.2.10-release-IJ2017.3-1.zip",
+    sha256 = "145b8e3382a60ba8416133ca2d64d2b932effb1fec6b7f47f4e895d67dd7360a"
+)
+
+# This will be pointing to a bazel repo soon.
+git_repository(
+    name = "io_bazel_rules_kotlin",
+    remote = "https://github.com/hsyed/rules_kotlin.git",
+    commit="1c0df0b17365ee8d9d89b5acc90e289df0df7cba"
+)
+
 # LICENSE: Common Public License 1.0
 maven_jar(
     name = "junit",
@@ -235,6 +282,9 @@ http_archive(
     strip_prefix = "protobuf-master",
     urls = ["https://github.com/google/protobuf/archive/master.zip"],
 )
+
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
+kotlin_repositories()
 
 rules_scala_version="85308acbd316477f3072e033e7744debcba4f054"
 
