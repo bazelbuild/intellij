@@ -13,7 +13,6 @@ java_library(
     deps = [
         "//base",
         "//intellij_platform_sdk:plugin_api",
-        "//java",
         "@jsr305_annotations//jar",
     ],
 )
