@@ -16,16 +16,15 @@
 package com.google.idea.blaze.scala.run;
 
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
-import com.intellij.execution.PsiLocation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import javax.annotation.Nullable;
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScInfixExpr;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition;
 import org.jetbrains.plugins.scala.testingSupport.test.TestConfigurationUtil;
 import org.jetbrains.plugins.scala.testingSupport.test.structureView.TestNodeProvider;
-import scala.Option;
-import scala.Tuple2;
+
+import javax.annotation.Nullable;
+import java.util.function.Predicate;
 
 /** Common functions for handling specs2 test scopes/cases. */
 public final class Specs2Utils {
@@ -33,27 +32,26 @@ public final class Specs2Utils {
 
   @Nullable
   public static ScInfixExpr getContainingTestScope(PsiElement element) {
-    while (element != null && !TestNodeProvider.isSpecs2ScopeExpr(element)) {
-      element = PsiTreeUtil.getParentOfType(element, ScInfixExpr.class);
-    }
-    return (ScInfixExpr) element;
+    return getContainingExpr(element, TestNodeProvider::isSpecs2ScopeExpr);
+  }
+
+  @Nullable
+  public static ScInfixExpr getContainingTestExpr(PsiElement element) {
+    return getContainingExpr(element, TestNodeProvider::isSpecs2TestExpr);
   }
 
   @Nullable
   public static String getSpecs2ScopeName(ScInfixExpr testScope) {
-    Option<String> scopeName = TestConfigurationUtil.getStaticTestName(testScope.lOp(), false);
-    if (scopeName.isEmpty()) {
+    String scopeName = getElementStaticText(testScope.lOp());
+    if (scopeName == null) {
       return null;
     }
-    return scopeName.get() + " " + testScope.operation().refName();
+    return scopeName + " " + testScope.operation().refName();
   }
 
   @Nullable
   public static String getSpecs2TestName(ScInfixExpr testCase) {
-    Tuple2<ScTypeDefinition, String> pair =
-        TestConfigurationUtil.specs2ConfigurationProducer()
-            .getLocationClassAndTest(new PsiLocation<>(testCase));
-    return pair._2();
+    return getElementStaticText(testCase.lOp());
   }
 
   @Nullable
@@ -97,5 +95,21 @@ public final class Specs2Utils {
               + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER;
     }
     return testClass.qualifiedName() + '#' + testName;
+  }
+
+  @Nullable
+  private static ScInfixExpr getContainingExpr(PsiElement element, Predicate<PsiElement> predicate) {
+    while (element != null && !predicate.test(element)) {
+      element = PsiTreeUtil.getParentOfType(element, ScInfixExpr.class);
+    }
+    return (ScInfixExpr) element;
+  }
+
+  @Nullable
+  private static String getElementStaticText(PsiElement element) {
+    return TestConfigurationUtil.getStaticTestNameOrDefault(
+            element,
+            null,
+            false);
   }
 }
