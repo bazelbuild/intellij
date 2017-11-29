@@ -17,6 +17,7 @@ package com.google.idea.blaze.scala.run.producers;
 
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer;
+import com.google.idea.blaze.scala.run.Specs2Utils;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
@@ -39,14 +40,14 @@ public class BlazeScalaJunitTestClassConfigurationProducer
       BlazeCommandRunConfiguration configuration,
       ConfigurationContext context,
       Ref<PsiElement> sourceElement) {
-    return !(context.getPsiLocation() instanceof ScInfixExpr)
+    return !(Specs2Utils.getContainingTestExpr(context.getPsiLocation()) instanceof ScInfixExpr)
         && super.doSetupConfigFromContext(configuration, context, sourceElement);
   }
 
   @Override
   protected boolean doIsConfigFromContext(
       BlazeCommandRunConfiguration configuration, ConfigurationContext context) {
-    return !(context.getPsiLocation() instanceof ScInfixExpr)
+    return !(Specs2Utils.getContainingTestExpr(context.getPsiLocation()) instanceof ScInfixExpr)
         && super.doIsConfigFromContext(configuration, context);
   }
 
