@@ -34,13 +34,14 @@ import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.plugins.scala.lang.psi.api.expr.ScInfixExpr;
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition;
+
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import javax.annotation.Nullable;
-import org.jetbrains.plugins.scala.lang.psi.api.expr.ScInfixExpr;
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition;
-import org.jetbrains.plugins.scala.testingSupport.test.TestConfigurationUtil;
 
 /**
  * Producer for run configurations related to Scala specs2 test expressions in Blaze. Test class is
@@ -59,10 +60,7 @@ public class BlazeScalaSpecs2TestExprConfigurationProducer
       ConfigurationContext context,
       Ref<PsiElement> sourceElement) {
     PsiElement element = context.getPsiLocation();
-    if (!(element instanceof ScInfixExpr)) {
-      return false;
-    }
-    ScInfixExpr testCase = (ScInfixExpr) element;
+    ScInfixExpr testCase = Specs2Utils.getContainingTestExpr(element);
     ScTypeDefinition testClass = getTestClass(context);
     if (testClass == null) {
       return false;
@@ -92,7 +90,7 @@ public class BlazeScalaSpecs2TestExprConfigurationProducer
 
     String name =
         new BlazeConfigurationNameBuilder(configuration)
-            .setTargetString(Specs2Utils.getSpecs2TestDisplayName(testClass, element))
+            .setTargetString(Specs2Utils.getSpecs2TestDisplayName(testClass, testCase != null ? testCase : element))
             .build();
     configuration.setName(name);
     configuration.setNameChangedByUser(true); // don't revert to generated name
@@ -104,10 +102,7 @@ public class BlazeScalaSpecs2TestExprConfigurationProducer
   protected boolean doIsConfigFromContext(
       BlazeCommandRunConfiguration configuration, ConfigurationContext context) {
     PsiElement element = context.getPsiLocation();
-    if (!(element instanceof ScInfixExpr)) {
-      return false;
-    }
-    ScInfixExpr testCase = (ScInfixExpr) element;
+    ScInfixExpr testCase = Specs2Utils.getContainingTestExpr(element);
     ScTypeDefinition testClass = getTestClass(context);
     if (testClass == null) {
       return false;
@@ -137,9 +132,7 @@ public class BlazeScalaSpecs2TestExprConfigurationProducer
     if (location == null) {
       return null;
     }
-    return TestConfigurationUtil.specs2ConfigurationProducer()
-        .getLocationClassAndTest(location)
-        ._1();
+    return PsiTreeUtil.getParentOfType(location.getPsiElement(), ScTypeDefinition.class, false);
   }
 
   @Nullable
