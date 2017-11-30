@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.kotlin.sync;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -30,6 +31,7 @@ import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.kotlin.KotlinSdkUtils;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 
@@ -65,13 +67,24 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
             return;
         }
 
-        Library kotlinJavaRuntimeLibrary = KotlinSdkUtils.findKotlinJavaRuntime(project);
-        if (kotlinJavaRuntimeLibrary != null) {
-            if (workspaceModifiableModel.findLibraryOrderEntry(kotlinJavaRuntimeLibrary) == null) {
-                workspaceModifiableModel.addLibraryEntry(kotlinJavaRuntimeLibrary);
+        Optional<Library> kotlinJavaRuntimeLibrary = KotlinSdkUtils.findKotlinJavaRuntime(project);
+
+        if (kotlinJavaRuntimeLibrary.isPresent()) {
+            if (workspaceModifiableModel.findLibraryOrderEntry(kotlinJavaRuntimeLibrary.get()) == null) {
+                workspaceModifiableModel.addLibraryEntry(kotlinJavaRuntimeLibrary.get());
             }
         } else {
-            IssueOutput.error("Kotlin JVM runtime libraries not found in workspace libraries, setup the Kotlin plugin.").submit(context);
+            // since the runtime library was not found remove the kotlin-runtime ijar if present -- it prevents the kotlin plugin from kicking in and offering
+            // to setup the kotlin std library.
+            Optional<Library> ijar = KotlinSdkUtils.findKotlinJavaRuntimeIjar(project);
+            if(ijar.isPresent()) {
+                LibraryOrderEntry libraryOrderEntry = workspaceModifiableModel.findLibraryOrderEntry(ijar.get());
+                if(libraryOrderEntry != null) {
+                    workspaceModifiableModel.removeOrderEntry(libraryOrderEntry);
+                }
+            } else {
+                IssueOutput.error("Could not setup the Kotlin JVM runtime library entry.").submit(context);
+            }
         }
     }
 
