@@ -45,7 +45,7 @@ public class BlazeJavaDebuggerRunner extends GenericDebuggerRunner {
     if (executorId.equals(DefaultDebugExecutor.EXECUTOR_ID)
         && profile instanceof BlazeCommandRunConfiguration) {
       BlazeCommandRunConfiguration configuration = (BlazeCommandRunConfiguration) profile;
-      Kind kind = configuration.getKindForTarget();
+      Kind kind = configuration.getTargetKind();
       return kind != null && BlazeJavaRunConfigurationHandlerProvider.supportsKind(kind);
     }
     return false;

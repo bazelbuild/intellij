@@ -45,7 +45,8 @@ import org.jetbrains.plugins.scala.testingSupport.test.scalatest.ScalaTestTestFr
 /**
  * Producer for run configurations related to Scala test classes (not handled by JUnit) in Blaze.
  * Handles only {@link ScalaTestTestFramework}. Other supported frameworks (junit and specs2) are
- * handled by {@link BlazeScalaJunitTestClassConfigurationProducer} and {@link
+ * handled by {@link
+ * com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer} and {@link
  * BlazeScalaSpecs2TestExprConfigurationProducer}, respectively.
  */
 public class BlazeScalaTestClassConfigurationProducer
@@ -70,7 +71,7 @@ public class BlazeScalaTestClassConfigurationProducer
     if (target == null) {
       return false;
     }
-    configuration.setTarget(target.label);
+    configuration.setTargetInfo(target);
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {

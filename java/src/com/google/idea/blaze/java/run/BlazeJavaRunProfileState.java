@@ -226,7 +226,7 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
             .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags());
 
     if (executorType == ExecutorType.DEBUG) {
-      Kind kind = configuration.getKindForTarget();
+      Kind kind = configuration.getTargetKind();
       boolean isBinary = kind != null && kind.isOneOf(Kind.JAVA_BINARY, Kind.SCALA_BINARY);
       int debugPort = handlerState.getDebugPortState().port;
       if (isBinary) {

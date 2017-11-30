@@ -20,6 +20,7 @@ java_library(
     visibility = ["//visibility:public"],
     runtime_deps = ["//common/actionhelper"],
     deps = [
+        ":neverlinked_jpda-jdi",
         "//base",
         "//common/experiments",
         "//common/guava",
@@ -31,6 +32,13 @@ java_library(
         "//sdkcompat",
         "@jsr305_annotations//jar",
     ],
+)
+
+# This is provided by the IDE at runtime
+java_library(
+    name = "neverlinked_jpda-jdi",
+    neverlink = 1,
+    exports = ["//third_party:jpda-jdi"],
 )
 
 filegroup(

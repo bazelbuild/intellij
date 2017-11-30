@@ -17,19 +17,30 @@ package com.google.idea.blaze.base.run.testmap;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.model.primitives.RuleType;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.run.SourceToTargetFinder;
+import com.google.idea.blaze.base.sync.SyncCache;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.io.File;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,24 +49,27 @@ import org.junit.runners.JUnit4;
 /** Tests for the test map */
 @RunWith(JUnit4.class)
 public class TestMapTest extends BlazeTestCase {
-  private TargetMapBuilder targetMapBuilder;
 
-  private final ArtifactLocationDecoder artifactLocationDecoder =
-      (ArtifactLocationDecoder)
-          artifactLocation -> new File("/", artifactLocation.getRelativePath());
+  private MockBlazeProjectDataManager mockBlazeProjectDataManager;
 
   @Override
   protected void initTest(
       @NotNull Container applicationServices, @NotNull Container projectServices) {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(ExperimentService.class, new MockExperimentService());
-    targetMapBuilder = TargetMapBuilder.builder();
+    mockBlazeProjectDataManager = new MockBlazeProjectDataManager();
+    projectServices.register(BlazeProjectDataManager.class, mockBlazeProjectDataManager);
+    projectServices.register(SyncCache.class, new SyncCache(project));
+
+    ExtensionPointImpl<SourceToTargetFinder> ep =
+        registerExtensionPoint(SourceToTargetFinder.EP_NAME, SourceToTargetFinder.class);
+    ep.registerExtension(new ProjectSourceToTargetFinder());
   }
 
   @Test
   public void testTrivialTestMap() throws Exception {
-    TargetMap targetMap =
-        targetMapBuilder
+    mockBlazeProjectDataManager.targetMap =
+        TargetMapBuilder.builder()
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
@@ -64,18 +78,18 @@ public class TestMapTest extends BlazeTestCase {
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
-    FilteredTargetMap testMap =
-        TestTargetFilterImpl.computeTestMap(project, artifactLocationDecoder, targetMap);
-    ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(targetMap);
-    assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
+    Collection<TargetInfo> targets =
+        SourceToTargetFinder.findTargetsForSourceFile(
+            project, new File("/test/Test.java"), Optional.of(RuleType.TEST));
+
+    assertThat(targets.stream().map(t -> t.label).collect(Collectors.toList()))
         .containsExactly(Label.create("//test:test"));
   }
 
   @Test
   public void testOneStepRemovedTestMap() throws Exception {
-    TargetMap targetMap =
-        targetMapBuilder
+    mockBlazeProjectDataManager.targetMap =
+        TargetMapBuilder.builder()
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
@@ -90,18 +104,18 @@ public class TestMapTest extends BlazeTestCase {
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
-    FilteredTargetMap testMap =
-        TestTargetFilterImpl.computeTestMap(project, artifactLocationDecoder, targetMap);
-    ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(targetMap);
-    assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
+    Collection<TargetInfo> targets =
+        SourceToTargetFinder.findTargetsForSourceFile(
+            project, new File("/test/Test.java"), Optional.of(RuleType.TEST));
+
+    assertThat(targets.stream().map(t -> t.label).collect(Collectors.toList()))
         .containsExactly(Label.create("//test:test"));
   }
 
   @Test
   public void testTwoCandidatesTestMap() throws Exception {
-    TargetMap targetMap =
-        targetMapBuilder
+    mockBlazeProjectDataManager.targetMap =
+        TargetMapBuilder.builder()
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
@@ -122,18 +136,18 @@ public class TestMapTest extends BlazeTestCase {
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
-    FilteredTargetMap testMap =
-        TestTargetFilterImpl.computeTestMap(project, artifactLocationDecoder, targetMap);
-    ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(targetMap);
-    assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
+    Collection<TargetInfo> targets =
+        SourceToTargetFinder.findTargetsForSourceFile(
+            project, new File("/test/Test.java"), Optional.of(RuleType.TEST));
+
+    assertThat(targets.stream().map(t -> t.label).collect(Collectors.toList()))
         .containsExactly(Label.create("//test:test"), Label.create("//test:test2"));
   }
 
   @Test
   public void testBfsPreferred() throws Exception {
-    TargetMap targetMap =
-        targetMapBuilder
+    mockBlazeProjectDataManager.targetMap =
+        TargetMapBuilder.builder()
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
@@ -160,19 +174,19 @@ public class TestMapTest extends BlazeTestCase {
                     .addDependency("//test:lib"))
             .build();
 
-    FilteredTargetMap testMap =
-        TestTargetFilterImpl.computeTestMap(project, artifactLocationDecoder, targetMap);
-    ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(targetMap);
-    assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
+    Collection<TargetInfo> targets =
+        SourceToTargetFinder.findTargetsForSourceFile(
+            project, new File("/test/Test.java"), Optional.of(RuleType.TEST));
+
+    assertThat(targets.stream().map(t -> t.label).collect(Collectors.toList()))
         .containsExactly(Label.create("//test:test"), Label.create("//test:test2"))
         .inOrder();
   }
 
   @Test
   public void testSourceIncludedMultipleTimesFindsAll() throws Exception {
-    TargetMap targetMap =
-        targetMapBuilder
+    mockBlazeProjectDataManager.targetMap =
+        TargetMapBuilder.builder()
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
@@ -199,18 +213,18 @@ public class TestMapTest extends BlazeTestCase {
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
-    FilteredTargetMap testMap =
-        TestTargetFilterImpl.computeTestMap(project, artifactLocationDecoder, targetMap);
-    ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(targetMap);
-    assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
+    Collection<TargetInfo> targets =
+        SourceToTargetFinder.findTargetsForSourceFile(
+            project, new File("/test/Test.java"), Optional.of(RuleType.TEST));
+
+    assertThat(targets.stream().map(t -> t.label).collect(Collectors.toList()))
         .containsExactly(Label.create("//test:test"), Label.create("//test:test2"));
   }
 
   @Test
   public void testSourceIncludedMultipleTimesShouldOnlyGiveOneInstanceOfTest() throws Exception {
-    TargetMap targetMap =
-        targetMapBuilder
+    mockBlazeProjectDataManager.targetMap =
+        TargetMapBuilder.builder()
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
@@ -232,15 +246,30 @@ public class TestMapTest extends BlazeTestCase {
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
-    FilteredTargetMap testMap =
-        TestTargetFilterImpl.computeTestMap(project, artifactLocationDecoder, targetMap);
-    ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(targetMap);
-    assertThat(testMap.targetsForSourceFile(reverseDependencies, new File("/test/Test.java")))
+    Collection<TargetInfo> targets =
+        SourceToTargetFinder.findTargetsForSourceFile(
+            project, new File("/test/Test.java"), Optional.of(RuleType.TEST));
+
+    assertThat(targets.stream().map(t -> t.label).collect(Collectors.toList()))
         .containsExactly(Label.create("//test:test"));
   }
 
   private ArtifactLocation sourceRoot(String relativePath) {
     return ArtifactLocation.builder().setRelativePath(relativePath).setIsSource(true).build();
+  }
+
+  private static class MockBlazeProjectDataManager implements BlazeProjectDataManager {
+
+    private TargetMap targetMap = new TargetMap(ImmutableMap.of());
+
+    @Nullable
+    @Override
+    public BlazeProjectData getBlazeProjectData() {
+      return MockBlazeProjectDataBuilder.builder(new WorkspaceRoot(new File("/")))
+          .setTargetMap(targetMap)
+          .setArtifactLocationDecoder(location -> new File("/", location.getRelativePath()))
+          .setReverseDependencies(ReverseDependencyMap.createRdepsMap(targetMap))
+          .build();
+    }
   }
 }

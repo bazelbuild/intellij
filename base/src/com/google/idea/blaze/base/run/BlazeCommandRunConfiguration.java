@@ -40,6 +40,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.ui.UiUtil;
+import com.google.idea.common.concurrency.ConcurrencyUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerIconProvider;
@@ -66,6 +67,7 @@ import com.intellij.util.ui.UIUtil;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.swing.Box;
@@ -158,14 +160,19 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     return parseTarget(targetPattern);
   }
 
-  public void setTarget(@Nullable TargetExpression target) {
-    targetPattern = target != null ? target.toString() : null;
+  public void setTargetInfo(TargetInfo target) {
+    targetPattern = target.label.toString();
+    targetKind = target.getKind();
     updateHandler();
   }
 
-  private void updateHandler() {
-    targetKind = getKindForTarget();
+  /** Sets the target expression and asynchronously kicks off a target kind update. */
+  public void setTarget(@Nullable TargetExpression target) {
+    targetPattern = target != null ? target.toString() : null;
+    updateTargetKindAsync(null);
+  }
 
+  private void updateHandler() {
     BlazeCommandRunConfigurationHandlerProvider handlerProvider =
         BlazeCommandRunConfigurationHandlerProvider.findHandlerProvider(targetKind);
     updateHandlerIfDifferentProvider(handlerProvider);
@@ -197,21 +204,43 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
   /**
    * Returns the {@link Kind} of the single blaze target corresponding to the configuration's target
-   * expression, if it can be determined. Returns null if the target expression points to multiple
+   * expression, if it's currently known. Returns null if the target expression points to multiple
    * blaze targets.
    */
   @Nullable
-  public Kind getKindForTarget() {
-    return getKindForTarget(getProject(), parseTarget(targetPattern));
+  public Kind getTargetKind() {
+    return targetKind;
   }
 
-  @Nullable
-  private static Kind getKindForTarget(Project project, @Nullable TargetExpression target) {
-    if (target instanceof Label) {
-      TargetInfo targetInfo = TargetFinder.findTargetInfo(project, (Label) target);
-      return targetInfo != null ? targetInfo.getKind() : null;
+  /**
+   * Queries the kind of the current target pattern, possibly asynchronously.
+   *
+   * @param callback will be run after the kind is updated (no guarantees whether this happens
+   *     synchronously or not).
+   */
+  public void updateTargetKindAsync(@Nullable Runnable callback) {
+    TargetExpression expr = parseTarget(targetPattern);
+    if (!(expr instanceof Label)) {
+      targetKind = null;
+      if (callback != null) {
+        callback.run();
+      }
+      return;
     }
-    return null;
+    ConcurrencyUtil.getAppExecutorService()
+        .execute(
+            () -> {
+              updateTargetKind((Label) expr);
+              if (callback != null) {
+                callback.run();
+              }
+            });
+  }
+
+  private void updateTargetKind(Label label) {
+    TargetInfo targetInfo = TargetFinder.findTargetInfo(getProject(), label);
+    targetKind = targetInfo != null ? targetInfo.getKind() : null;
+    updateHandler();
   }
 
   /**
@@ -219,12 +248,14 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
    *     is a general {@link TargetExpression}, "unknown rule" if it is a {@link Label} without a
    *     known rule, and "unknown target" if there is no target.
    */
-  public String getTargetKindName() {
-    TargetExpression target = parseTarget(targetPattern);
-    Kind kind = getKindForTarget(getProject(), target);
+  private String getTargetKindName() {
+    Kind kind = targetKind;
     if (kind != null) {
       return kind.toString();
-    } else if (target instanceof Label) {
+    }
+
+    TargetExpression target = parseTarget(targetPattern);
+    if (target instanceof Label) {
       return "unknown rule";
     } else if (target != null) {
       return "target pattern";
@@ -386,11 +417,6 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   @Nullable
   public RunProfileState getState(Executor executor, ExecutionEnvironment environment)
       throws ExecutionException {
-    if (getTarget() != null) {
-      // We need to update the handler manually because it might otherwise be out of date (e.g.
-      // because the target map has changed since the last update).
-      updateHandler();
-    }
     BlazeCommandRunConfigurationRunner runner = handler.createRunner(executor, environment);
     if (runner != null) {
       environment.putCopyableUserData(BlazeCommandRunConfigurationRunner.RUNNER_KEY, runner);
@@ -435,6 +461,8 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     private final JBCheckBox keepInSyncCheckBox;
     private final JBLabel targetExpressionLabel;
     private final TextFieldWithAutoCompletion<String> targetField;
+
+    private final AtomicBoolean updateInProgress = new AtomicBoolean(false);
 
     BlazeCommandRunConfigurationSettingsEditor(BlazeCommandRunConfiguration config) {
       Project project = config.getProject();
@@ -496,8 +524,36 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       return editor;
     }
 
+    /**
+     * Runs the {@link Runnable} on the current thread, then unsets 'updateInProgress'.
+     *
+     * @param onlyUpdateOnThrow if true, only unsets 'updateInProgress if there's an uncaught
+     *     exception
+     */
+    private void runThenUpdateInProgress(Runnable runnable, boolean onlyUpdateOnThrow) {
+      try {
+        runnable.run();
+      } catch (Throwable e) {
+        if (onlyUpdateOnThrow) {
+          updateInProgress.set(false);
+        }
+        throw e;
+      } finally {
+        if (!onlyUpdateOnThrow) {
+          updateInProgress.set(false);
+        }
+      }
+    }
+
     @Override
     protected void resetEditorFrom(BlazeCommandRunConfiguration config) {
+      if (!updateInProgress.compareAndSet(false, true)) {
+        return;
+      }
+      runThenUpdateInProgress(() -> doResetEditorFrom(config), false);
+    }
+
+    private void doResetEditorFrom(BlazeCommandRunConfiguration config) {
       elementState = config.elementState.clone();
       updateEditor(config);
       if (config.handlerProvider != handlerProvider) {
@@ -509,7 +565,13 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
     @Override
     protected void applyEditorTo(BlazeCommandRunConfiguration config) {
-      // update the editor's elementState
+      if (!updateInProgress.compareAndSet(false, true)) {
+        return;
+      }
+      runThenUpdateInProgress(() -> doApplyEditorTo(config), true);
+    }
+
+    private void doApplyEditorTo(BlazeCommandRunConfiguration config) {
       handlerStateEditor.applyEditorTo(handler.getState());
       try {
         handler.getState().writeExternal(elementState);
@@ -529,7 +591,13 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
       // finally, update the handler
       config.targetPattern = Strings.emptyToNull(targetField.getText());
-      config.updateHandler();
+      config.updateTargetKindAsync(
+          () ->
+              UIUtil.invokeLaterIfNeeded(
+                  () -> runThenUpdateInProgress(() -> updateEditorOnEdt(config), false)));
+    }
+
+    private void updateEditorOnEdt(BlazeCommandRunConfiguration config) {
       updateEditor(config);
       if (config.handlerProvider != handlerProvider) {
         updateHandlerEditor(config);

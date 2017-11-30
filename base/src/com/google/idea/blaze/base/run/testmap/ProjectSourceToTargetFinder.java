@@ -15,62 +15,52 @@
  */
 package com.google.idea.blaze.base.run.testmap;
 
-import static com.google.idea.common.guava.GuavaHelper.toImmutableList;
+import static com.google.idea.common.guava.GuavaHelper.toImmutableSet;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.run.TestTargetFinder;
+import com.google.idea.blaze.base.model.primitives.RuleType;
+import com.google.idea.blaze.base.run.SourceToTargetFinder;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 /**
  * Used to locate tests from source files for things like right-clicks.
  *
  * <p>It's essentially a map from source file -> reachable test rules.
  */
-public class TestTargetFilterImpl implements TestTargetFinder {
-
-  private final Project project;
-
-  public TestTargetFilterImpl(Project project) {
-    this.project = project;
-  }
+public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
 
   @Override
-  public Collection<TargetInfo> testTargetsForSourceFile(File sourceFile) {
-    FilteredTargetMap testMap =
+  public Collection<TargetInfo> targetsForSourceFile(
+      Project project, File sourceFile, Optional<RuleType> ruleType) {
+    FilteredTargetMap filteredTargetMap =
         SyncCache.getInstance(project)
-            .get(TestTargetFilterImpl.class, TestTargetFilterImpl::computeTestMap);
-    if (testMap == null) {
+            .get(ProjectSourceToTargetFinder.class, ProjectSourceToTargetFinder::computeTargetMap);
+    if (filteredTargetMap == null) {
       return ImmutableList.of();
     }
-    return testMap
+    return filteredTargetMap
         .targetsForSourceFile(sourceFile)
         .stream()
         .map(TargetIdeInfo::toTargetInfo)
-        .collect(toImmutableList());
+        .filter(target -> !ruleType.isPresent() || target.getRuleType().equals(ruleType.get()))
+        .collect(toImmutableSet());
   }
 
-  private static FilteredTargetMap computeTestMap(Project project, BlazeProjectData projectData) {
-    return computeTestMap(project, projectData.artifactLocationDecoder, projectData.targetMap);
+  private static FilteredTargetMap computeTargetMap(Project project, BlazeProjectData projectData) {
+    return computeTargetMap(project, projectData.artifactLocationDecoder, projectData.targetMap);
   }
 
-  @VisibleForTesting
-  static FilteredTargetMap computeTestMap(
+  private static FilteredTargetMap computeTargetMap(
       Project project, ArtifactLocationDecoder decoder, TargetMap targetMap) {
-    return new FilteredTargetMap(project, decoder, targetMap, TestTargetFilterImpl::isTestTarget);
-  }
-
-  private static boolean isTestTarget(@Nullable TargetIdeInfo target) {
-    return target != null && target.kind != null && Kind.isTestRule(target.kind.toString());
+    return new FilteredTargetMap(project, decoder, targetMap, t -> true);
   }
 }

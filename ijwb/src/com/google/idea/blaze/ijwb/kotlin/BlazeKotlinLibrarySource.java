@@ -13,12 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.model.primitives;
+package com.google.idea.blaze.ijwb.kotlin;
 
-/** The general type of a rule (e.g. test, binary, etc.). */
-public enum RuleType {
-  TEST,
-  BINARY,
-  LIBRARY,
-  UNKNOWN,
+import com.google.idea.blaze.base.sync.libraries.LibrarySource;
+import com.intellij.openapi.roots.libraries.Library;
+import java.util.function.Predicate;
+import javax.annotation.Nullable;
+
+/** Prevents garbage collection of Kotlin libraries. */
+class BlazeKotlinLibrarySource extends LibrarySource.Adapter {
+  @Nullable
+  @Override
+  public Predicate<Library> getGcRetentionFilter() {
+    return library -> {
+      String libraryName = library.getName();
+      return libraryName != null
+          && libraryName.equals(KotlinSdkUtils.KOTLIN_JAVA_RUNTIME_LIBRARY_NAME);
+    };
+  }
 }

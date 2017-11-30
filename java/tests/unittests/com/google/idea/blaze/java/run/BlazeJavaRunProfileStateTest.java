@@ -95,7 +95,8 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
   @Test
   public void flagsShouldBeAppendedIfPresent() {
-    configuration.setTarget(Label.create("//label:rule"));
+    configuration.setTargetInfo(
+        TargetInfo.builder(Label.create("//label:rule"), "java_test").build());
     BlazeCommandRunConfigurationCommonState handlerState =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
     handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
@@ -118,7 +119,8 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
   @Test
   public void debugFlagShouldBeIncludedForJavaTest() {
-    configuration.setTarget(Label.create("//label:rule"));
+    configuration.setTargetInfo(
+        TargetInfo.builder(Label.create("//label:rule"), "java_test").build());
     BlazeCommandRunConfigurationCommonState handlerState =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
     handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
@@ -140,7 +142,8 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
   @Test
   public void debugFlagShouldBeIncludedForJavaBinary() {
-    configuration.setTarget(Label.create("//label:java_binary_rule"));
+    configuration.setTargetInfo(
+        TargetInfo.builder(Label.create("//label:java_binary_rule"), "java_binary").build());
     BlazeCommandRunConfigurationCommonState handlerState =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
     handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));

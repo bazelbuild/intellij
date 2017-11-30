@@ -17,7 +17,7 @@ package com.google.idea.blaze.python.run.producers;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
@@ -105,11 +105,11 @@ public class BlazePyTestConfigurationProducer
     if (!(file instanceof PyFile) || !PyTestUtils.isTestFile((PyFile) file)) {
       return false;
     }
-    Label testTarget = TestTargetHeuristic.testTargetForPsiElement(element);
+    TargetInfo testTarget = TestTargetHeuristic.testTargetForPsiElement(element);
     if (testTarget == null) {
       return false;
     }
-    configuration.setTarget(testTarget);
+    configuration.setTargetInfo(testTarget);
 
     TestLocation testLocation = testLocation(element);
     sourceElement.set(testLocation.sourceElement(file));
@@ -132,8 +132,8 @@ public class BlazePyTestConfigurationProducer
     BlazeConfigurationNameBuilder nameBuilder = new BlazeConfigurationNameBuilder(configuration);
     nameBuilder.setTargetString(
         filter != null
-            ? String.format("%s (%s)", filter, testTarget.toString())
-            : testTarget.toString());
+            ? String.format("%s (%s)", filter, testTarget.label.toString())
+            : testTarget.label.toString());
     configuration.setName(nameBuilder.build());
     configuration.setNameChangedByUser(true); // don't revert to generated name
     return true;
@@ -157,8 +157,8 @@ public class BlazePyTestConfigurationProducer
     if (!(element.getContainingFile() instanceof PyFile)) {
       return false;
     }
-    Label testTarget = TestTargetHeuristic.testTargetForPsiElement(element);
-    if (testTarget == null || !testTarget.equals(configuration.getTarget())) {
+    TargetInfo testTarget = TestTargetHeuristic.testTargetForPsiElement(element);
+    if (testTarget == null || !testTarget.label.equals(configuration.getTarget())) {
       return false;
     }
     String filter = testLocation(element).testFilter();

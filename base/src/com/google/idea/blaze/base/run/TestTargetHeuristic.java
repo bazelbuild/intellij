@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.run;
 
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
-import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,6 +27,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -38,7 +39,7 @@ public interface TestTargetHeuristic {
 
   /** Finds a test rule associated with a given {@link PsiElement}. */
   @Nullable
-  static Label testTargetForPsiElement(@Nullable PsiElement element) {
+  static TargetInfo testTargetForPsiElement(@Nullable PsiElement element) {
     if (element == null) {
       return null;
     }
@@ -51,8 +52,9 @@ public interface TestTargetHeuristic {
     if (file == null) {
       return null;
     }
+    Project project = element.getProject();
     Collection<TargetInfo> rules =
-        TestTargetFinder.getInstance(element.getProject()).testTargetsForSourceFile(file);
+        SourceToTargetFinder.findTargetsForSourceFile(project, file, Optional.of(RuleType.TEST));
     return chooseTestTargetForSourceFile(element.getProject(), psiFile, file, rules, null);
   }
 
@@ -61,7 +63,7 @@ public interface TestTargetHeuristic {
    * available filters, falling back to choosing the first one if there is no match.
    */
   @Nullable
-  static Label chooseTestTargetForSourceFile(
+  static TargetInfo chooseTestTargetForSourceFile(
       Project project,
       @Nullable PsiFile sourcePsiFile,
       File sourceFile,
@@ -80,7 +82,7 @@ public interface TestTargetHeuristic {
                       filter.matchesSource(project, target, sourcePsiFile, sourceFile, testSize))
               .collect(Collectors.toList());
       if (matches.size() == 1) {
-        return matches.get(0).label;
+        return matches.get(0);
       }
       if (!matches.isEmpty()) {
         // A higher-priority filter found more than one match -- subsequent filters will only
@@ -88,7 +90,7 @@ public interface TestTargetHeuristic {
         filteredTargets = matches;
       }
     }
-    return filteredTargets.iterator().next().label;
+    return filteredTargets.get(0);
   }
 
   /** Returns true if the rule and source file match, according to this heuristic. */

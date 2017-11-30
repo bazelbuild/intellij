@@ -22,7 +22,7 @@ import com.goide.runconfig.testing.GoTestFinder;
 import com.goide.runconfig.testing.GoTestFunctionType;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
@@ -49,13 +49,13 @@ public class BlazeGoTestConfigurationProducer
   }
 
   private static class TestLocation {
-    private final Label label;
+    private final TargetInfo target;
     private final GoFile file;
     @Nullable private final GoFunctionOrMethodDeclaration function;
 
     private TestLocation(
-        Label label, GoFile file, @Nullable GoFunctionOrMethodDeclaration function) {
-      this.label = label;
+        TargetInfo target, GoFile file, @Nullable GoFunctionOrMethodDeclaration function) {
+      this.target = target;
       this.file = file;
       this.function = function;
     }
@@ -67,8 +67,8 @@ public class BlazeGoTestConfigurationProducer
 
     private String targetString() {
       return function != null
-          ? String.format("%s (%s)", function.getName(), label.toString())
-          : label.toString();
+          ? String.format("%s (%s)", function.getName(), target.label.toString())
+          : target.label.toString();
     }
 
     PsiElement sourceElement() {
@@ -85,7 +85,7 @@ public class BlazeGoTestConfigurationProducer
     if (testLocation == null) {
       return false;
     }
-    configuration.setTarget(testLocation.label);
+    configuration.setTargetInfo(testLocation.target);
     sourceElement.set(testLocation.sourceElement());
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
@@ -121,7 +121,7 @@ public class BlazeGoTestConfigurationProducer
     }
     TestLocation testlocation = testLocation(context);
     return testlocation != null
-        && testlocation.label.equals(configuration.getTarget())
+        && testlocation.target.label.equals(configuration.getTarget())
         && Objects.equals(handlerState.getTestFilterFlag(), testlocation.testFilter());
   }
 
@@ -135,7 +135,7 @@ public class BlazeGoTestConfigurationProducer
     if (element == null) {
       return null;
     }
-    Label testTarget = TestTargetHeuristic.testTargetForPsiElement(element);
+    TargetInfo testTarget = TestTargetHeuristic.testTargetForPsiElement(element);
     if (testTarget == null) {
       return null;
     }

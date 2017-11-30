@@ -44,11 +44,4 @@ public interface WorkspacePathResolver extends SimpleWorkspacePathResolver, Seri
    */
   @Nullable
   WorkspaceRoot findWorkspaceRoot(File absoluteFile);
-
-  /**
-   * Given a resolved, absolute file, returns the corresponding {@link WorkspacePath}. Returns null
-   * if the file is not in the workspace.
-   */
-  @Nullable
-  WorkspacePath getWorkspacePath(File absoluteFile);
 }

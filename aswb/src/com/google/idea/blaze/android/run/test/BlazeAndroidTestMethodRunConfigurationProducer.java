@@ -81,7 +81,7 @@ public class BlazeAndroidTestMethodRunConfigurationProducer
     if (!Kind.ANDROID_TEST.equals(target.getKind())) {
       return false;
     }
-    configuration.setTarget(target.label);
+    configuration.setTargetInfo(target);
     BlazeAndroidTestRunConfigurationState configState =
         configuration.getHandlerStateIfType(BlazeAndroidTestRunConfigurationState.class);
     if (configState == null) {

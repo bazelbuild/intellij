@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
@@ -76,7 +75,7 @@ public class MultipleJavaClassesTestConfigurationProducer
       return false;
     }
     sourceElement.set(location.psiLocation);
-    configuration.setTarget(location.label);
+    configuration.setTargetInfo(location.target);
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {
@@ -117,7 +116,7 @@ public class MultipleJavaClassesTestConfigurationProducer
       return false;
     }
     return BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand())
-        && location.label.equals(configuration.getTarget())
+        && location.target.label.equals(configuration.getTarget())
         && Objects.equals(location.testFilter, handlerState.getTestFilterFlag());
   }
 
@@ -130,14 +129,14 @@ public class MultipleJavaClassesTestConfigurationProducer
     PsiElement location = context.getPsiLocation();
     if (location instanceof PsiDirectory) {
       PsiDirectory dir = (PsiDirectory) location;
-      Label target = getTestTargetIfUnique(dir);
+      TargetInfo target = getTestTargetIfUnique(dir);
       return target != null ? TestLocation.fromDirectory(target, dir) : null;
     }
     Set<PsiClass> testClasses = selectedTestClasses(context);
     if (testClasses.size() < 2) {
       return null;
     }
-    Label target = getTestTargetIfUnique(testClasses);
+    TargetInfo target = getTestTargetIfUnique(testClasses);
     if (target == null) {
       return null;
     }
@@ -159,7 +158,7 @@ public class MultipleJavaClassesTestConfigurationProducer
   }
 
   @Nullable
-  private static Label getTestTargetIfUnique(PsiDirectory directory) {
+  private static TargetInfo getTestTargetIfUnique(PsiDirectory directory) {
     if (BlazePackage.hasBlazePackageChild(directory)) {
       return null;
     }
@@ -176,10 +175,10 @@ public class MultipleJavaClassesTestConfigurationProducer
   }
 
   @Nullable
-  private static Label getTestTargetIfUnique(Set<PsiClass> classes) {
-    Label testTarget = null;
+  private static TargetInfo getTestTargetIfUnique(Set<PsiClass> classes) {
+    TargetInfo testTarget = null;
     for (PsiClass psiClass : classes) {
-      Label target = testTargetForClass(psiClass);
+      TargetInfo target = testTargetForClass(psiClass);
       if (target == null) {
         continue;
       }
@@ -192,19 +191,18 @@ public class MultipleJavaClassesTestConfigurationProducer
   }
 
   @Nullable
-  private static Label testTargetForClass(PsiClass psiClass) {
+  private static TargetInfo testTargetForClass(PsiClass psiClass) {
     PsiClass testClass = JUnitUtil.getTestClass(psiClass);
     if (testClass == null || testClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return null;
     }
     TestSize testSize = TestSizeAnnotationMap.getTestSize(psiClass);
-    TargetInfo target = RunUtil.targetForTestClass(psiClass, testSize);
-    return target != null ? target.label : null;
+    return RunUtil.targetForTestClass(psiClass, testSize);
   }
 
   private static class TestLocation {
     @Nullable
-    static TestLocation fromClasses(Label label, Set<PsiClass> classes) {
+    static TestLocation fromClasses(TargetInfo target, Set<PsiClass> classes) {
       Map<PsiClass, Collection<Location<?>>> methodsPerClass =
           classes.stream().collect(Collectors.toMap(c -> c, c -> ImmutableList.of()));
       String filter = BlazeJUnitTestFilterFlags.testFilterForClassesAndMethods(methodsPerClass);
@@ -217,11 +215,11 @@ public class MultipleJavaClassesTestConfigurationProducer
       if (classes.size() > 1) {
         name += String.format(" and %s others", classes.size() - 1);
       }
-      return new TestLocation(label, sampleClass, filter, name);
+      return new TestLocation(target, sampleClass, filter, name);
     }
 
     @Nullable
-    static TestLocation fromDirectory(Label label, PsiDirectory dir) {
+    static TestLocation fromDirectory(TargetInfo target, PsiDirectory dir) {
       String packagePrefix =
           ProjectFileIndex.SERVICE
               .getInstance(dir.getProject())
@@ -231,17 +229,20 @@ public class MultipleJavaClassesTestConfigurationProducer
       }
       String description =
           packagePrefix.isEmpty() ? null : String.format("all in directory '%s'", dir.getName());
-      return new TestLocation(label, dir, packagePrefix, description);
+      return new TestLocation(target, dir, packagePrefix, description);
     }
 
-    private final Label label;
+    private final TargetInfo target;
     private final PsiElement psiLocation;
     @Nullable private final String testFilter;
     @Nullable private final String description;
 
     private TestLocation(
-        Label label, PsiElement psiLocation, String testFilter, @Nullable String description) {
-      this.label = label;
+        TargetInfo target,
+        PsiElement psiLocation,
+        String testFilter,
+        @Nullable String description) {
+      this.target = target;
       this.psiLocation = psiLocation;
       this.testFilter = !testFilter.isEmpty() ? BlazeFlags.TEST_FILTER + "=" + testFilter : null;
       this.description = description;

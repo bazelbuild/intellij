@@ -16,24 +16,38 @@
 package com.google.idea.blaze.scala.run;
 
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
-import com.intellij.execution.PsiLocation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScInfixExpr;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition;
 import org.jetbrains.plugins.scala.testingSupport.test.TestConfigurationUtil;
 import org.jetbrains.plugins.scala.testingSupport.test.structureView.TestNodeProvider;
-import scala.Option;
-import scala.Tuple2;
 
 /** Common functions for handling specs2 test scopes/cases. */
 public final class Specs2Utils {
   private Specs2Utils() {}
 
   @Nullable
+  public static ScInfixExpr getContainingTestExprOrScope(PsiElement element) {
+    return getContainingInfixExpr(element, TestNodeProvider::isSpecs2Expr);
+  }
+
+  @Nullable
+  public static ScInfixExpr getContainingTestExpr(PsiElement element) {
+    return getContainingInfixExpr(element, TestNodeProvider::isSpecs2TestExpr);
+  }
+
+  @Nullable
   public static ScInfixExpr getContainingTestScope(PsiElement element) {
-    while (element != null && !TestNodeProvider.isSpecs2ScopeExpr(element)) {
+    return getContainingInfixExpr(element, TestNodeProvider::isSpecs2ScopeExpr);
+  }
+
+  @Nullable
+  private static ScInfixExpr getContainingInfixExpr(
+      PsiElement element, Predicate<PsiElement> predicate) {
+    while (element != null && !predicate.test(element)) {
       element = PsiTreeUtil.getParentOfType(element, ScInfixExpr.class);
     }
     return (ScInfixExpr) element;
@@ -41,19 +55,17 @@ public final class Specs2Utils {
 
   @Nullable
   public static String getSpecs2ScopeName(ScInfixExpr testScope) {
-    Option<String> scopeName = TestConfigurationUtil.getStaticTestName(testScope.lOp(), false);
-    if (scopeName.isEmpty()) {
+    String scopeName =
+        TestConfigurationUtil.getStaticTestNameOrDefault(testScope.lOp(), null, false);
+    if (scopeName == null) {
       return null;
     }
-    return scopeName.get() + " " + testScope.operation().refName();
+    return scopeName + " " + testScope.operation().refName();
   }
 
   @Nullable
   public static String getSpecs2TestName(ScInfixExpr testCase) {
-    Tuple2<ScTypeDefinition, String> pair =
-        TestConfigurationUtil.specs2ConfigurationProducer()
-            .getLocationClassAndTest(new PsiLocation<>(testCase));
-    return pair._2();
+    return TestConfigurationUtil.getStaticTestNameOrDefault(testCase.lOp(), null, false);
   }
 
   @Nullable

@@ -20,7 +20,6 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
@@ -32,12 +31,13 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiModifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -56,9 +56,9 @@ public class BlazeJavaTestClassConfigurationProducer
 
   private static class TestLocation {
     final PsiClass testClass;
-    final Label blazeTarget;
+    final TargetInfo blazeTarget;
 
-    private TestLocation(PsiClass testClass, Label blazeTarget) {
+    private TestLocation(PsiClass testClass, TargetInfo blazeTarget) {
       this.testClass = testClass;
       this.blazeTarget = blazeTarget;
     }
@@ -86,20 +86,18 @@ public class BlazeJavaTestClassConfigurationProducer
     if (JUnitConfigurationUtil.isMultipleElementsSelected(context)) {
       return null;
     }
-    if (TestMethodSelectionUtil.getSelectedMethods(context) != null) {
+    if (JavaTestCaseIdentifier.isAnyTestCase(context)) {
       return null;
     }
 
     PsiClass testClass = JUnitUtil.getTestClass(location);
-    if (testClass == null
-        || !supportsClass(testClass)
-        || testClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if (testClass == null || testClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return null;
     }
 
     TestSize testSize = TestSizeAnnotationMap.getTestSize(testClass);
     TargetInfo target = RunUtil.targetForTestClass(testClass, testSize);
-    return target != null ? new TestLocation(testClass, target.label) : null;
+    return target != null ? new TestLocation(testClass, target) : null;
   }
 
   @Override
@@ -112,7 +110,7 @@ public class BlazeJavaTestClassConfigurationProducer
       return false;
     }
     sourceElement.set(location.testClass);
-    configuration.setTarget(location.blazeTarget);
+    configuration.setTargetInfo(location.blazeTarget);
 
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
@@ -152,7 +150,7 @@ public class BlazeJavaTestClassConfigurationProducer
 
   private boolean checkIfAttributesAreTheSame(
       BlazeCommandRunConfiguration configuration, TestLocation location) {
-    if (!location.blazeTarget.equals(configuration.getTarget())) {
+    if (!location.blazeTarget.label.equals(configuration.getTarget())) {
       return false;
     }
     BlazeCommandRunConfigurationCommonState handlerState =
@@ -181,11 +179,17 @@ public class BlazeJavaTestClassConfigurationProducer
   }
 
   /**
-   * So we don't unexpectedly create configurations for other languages.
-   *
-   * <p>TODO(b/69622799): remove after fixing {@link #doIsConfigFromContext}
+   * Extension point to check if we're in a test case, and prevent generating a test class
+   * configuration if we are.
    */
-  protected boolean supportsClass(PsiClass psiClass) {
-    return psiClass.getContainingFile() instanceof PsiJavaFile;
+  public interface JavaTestCaseIdentifier {
+    ExtensionPointName<JavaTestCaseIdentifier> EP_NAME =
+        ExtensionPointName.create("com.google.idea.blaze.JavaTestCaseIdentifier");
+
+    static boolean isAnyTestCase(ConfigurationContext context) {
+      return Arrays.stream(EP_NAME.getExtensions()).anyMatch(p -> p.isTestCase(context));
+    }
+
+    boolean isTestCase(ConfigurationContext context);
   }
 }

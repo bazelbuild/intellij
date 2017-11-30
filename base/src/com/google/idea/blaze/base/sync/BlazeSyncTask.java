@@ -967,12 +967,12 @@ final class BlazeSyncTask implements Progressive {
   }
 
   private SyncStats buildStats(SyncStats.Builder stats) {
-    long blazeExecTime = 0L;
-    for (TimedEvent timedEvent : timedEvents) {
-      if (timedEvent.type == EventType.BlazeInvocation) {
-        blazeExecTime += timedEvent.durationMillis;
-      }
-    }
+    long blazeExecTime =
+        timedEvents
+            .stream()
+            .filter(e -> e.isLeafEvent && e.type == EventType.BlazeInvocation)
+            .mapToLong(e -> e.durationMillis)
+            .sum();
     stats.setBlazeExecTimeMs(blazeExecTime);
     stats.setTimedEvents(timedEvents);
 

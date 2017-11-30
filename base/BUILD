@@ -49,7 +49,10 @@ java_library(
 # neverlink library exposed so other plugins can optionally depend on it
 java_library(
     name = "workspace_path_resolver_api",
-    srcs = ["src/com/google/idea/blaze/base/sync/workspace/SimpleWorkspacePathResolver.java"],
+    srcs = [
+        "src/com/google/idea/blaze/base/model/primitives/WorkspacePath.java",
+        "src/com/google/idea/blaze/base/sync/workspace/SimpleWorkspacePathResolver.java",
+    ],
     neverlink = 1,
     visibility = ["//java/com/google/devtools/intellij/g3plugins:visibility"],
     deps = [
@@ -72,17 +75,20 @@ java_library(
 
 # neverlink library exposed so other plugins can provide dependency information
 java_library(
-    name = "source_to_target_api",
+    name = "dep_finder_api",
     srcs = [
         "src/com/google/idea/blaze/base/dependencies/SourceToTargetProvider.java",
         "src/com/google/idea/blaze/base/dependencies/TargetInfo.java",
         "src/com/google/idea/blaze/base/dependencies/TestSize.java",
+        "src/com/google/idea/blaze/base/run/SourceToTargetFinder.java",
+        "src/com/google/idea/blaze/base/run/targetfinder/TargetFinder.java",
     ],
     neverlink = 1,
     visibility = ["//java/com/google/devtools/intellij/g3plugins:visibility"],
     deps = [
         ":label_api",
         "//intellij_platform_sdk:plugin_api",
+        "@jsr305_annotations//jar",
     ],
 )
 

@@ -75,7 +75,7 @@ public class BlazeJavaMainClassRunConfigurationProducer
     if (target == null) {
       return false;
     }
-    configuration.setTarget(target.key.label);
+    configuration.setTargetInfo(target.toTargetInfo());
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {

@@ -320,6 +320,7 @@ public class BlazeIssueParser {
     private static final String PATTERN =
         "^ERROR: (?:"
             + "(//.+?: Exit [0-9]+\\.)|"
+            + "(.*: Process exited with status [0-9]+\\.)|"
             + "(build interrupted\\.)|"
             + "(Couldn't start the build. Unable to run tests.)|"
             + "(.*))$";
@@ -330,10 +331,13 @@ public class BlazeIssueParser {
 
     @Override
     protected IssueOutput createIssue(Matcher matcher) {
-      if (matcher.group(1) != null || matcher.group(2) != null || matcher.group(3) != null) {
+      if (matcher.group(1) != null
+          || matcher.group(2) != null
+          || matcher.group(3) != null
+          || matcher.group(4) != null) {
         return null;
       }
-      return IssueOutput.error(matcher.group(4)).build();
+      return IssueOutput.error(matcher.group(5)).build();
     }
   }
 

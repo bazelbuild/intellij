@@ -25,11 +25,13 @@ public interface TimingScopeListener {
     public final String name;
     public final EventType type;
     public final long durationMillis;
+    public final boolean isLeafEvent;
 
-    public TimedEvent(String name, EventType type, long durationMillis) {
+    public TimedEvent(String name, EventType type, long durationMillis, boolean isLeafEvent) {
       this.name = name;
       this.type = type;
       this.durationMillis = durationMillis;
+      this.isLeafEvent = isLeafEvent;
     }
   }
 

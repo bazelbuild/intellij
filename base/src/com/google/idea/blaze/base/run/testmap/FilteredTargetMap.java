@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.run.testmap;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
@@ -28,7 +27,6 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
@@ -38,7 +36,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /** Filters a {@link TargetMap} according to a given filter. */
 public class FilteredTargetMap {
@@ -68,25 +65,13 @@ public class FilteredTargetMap {
     return ImmutableList.of();
   }
 
-  @VisibleForTesting
-  Collection<Label> targetsForSourceFile(
-      ImmutableMultimap<TargetKey, TargetKey> rdepsMap, File sourceFile) {
-    return targetsForSourceFileImpl(rdepsMap, sourceFile)
-        .stream()
-        .filter(TargetIdeInfo::isPlainTarget)
-        .map(target -> target.key.label)
-        .collect(Collectors.toList());
-  }
-
   private Collection<TargetIdeInfo> targetsForSourceFileImpl(
       ImmutableMultimap<TargetKey, TargetKey> rdepsMap, File sourceFile) {
     List<TargetIdeInfo> result = Lists.newArrayList();
     Collection<TargetKey> roots = rootsMap.get(sourceFile);
 
     Queue<TargetKey> todo = Queues.newArrayDeque();
-    for (TargetKey label : roots) {
-      todo.add(label);
-    }
+    todo.addAll(roots);
     Set<TargetKey> seen = Sets.newHashSet();
     while (!todo.isEmpty()) {
       TargetKey targetKey = todo.remove();
@@ -98,9 +83,7 @@ public class FilteredTargetMap {
       if (filter.test(target)) {
         result.add(target);
       }
-      for (TargetKey rdep : rdepsMap.get(targetKey)) {
-        todo.add(rdep);
-      }
+      todo.addAll(rdepsMap.get(targetKey));
     }
     return result;
   }

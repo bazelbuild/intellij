@@ -19,6 +19,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.RuleType;
+import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -53,9 +55,55 @@ public class TargetInfo {
     return Optional.ofNullable(sources);
   }
 
+  public RuleType getRuleType() {
+    Kind kind = getKind();
+    if (kind != null && kind.ruleType != RuleType.UNKNOWN) {
+      return kind.ruleType;
+    }
+    return guessRuleTypeFromKindString(kindString);
+  }
+
+  /**
+   * Guess rule type so that we have some handling of generic rules (e.g. rules providing
+   * java_common that aren't otherwise recognized by name string).
+   */
+  private static RuleType guessRuleTypeFromKindString(String kindString) {
+    if (kindString.endsWith("_test") || isTestSuite(kindString)) {
+      return RuleType.TEST;
+    }
+    if (kindString.endsWith("_binary")) {
+      return RuleType.BINARY;
+    }
+    if (kindString.endsWith("_library")) {
+      return RuleType.LIBRARY;
+    }
+    return RuleType.UNKNOWN;
+  }
+
+  private static boolean isTestSuite(String ruleType) {
+    return "test_suite".equals(ruleType);
+  }
+
   @Override
   public String toString() {
     return String.format("%s (%s)", label, kindString);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof TargetInfo)) {
+      return false;
+    }
+    TargetInfo other = (TargetInfo) o;
+    return label.equals(other.label) && kindString.equals(other.kindString);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(label, kindString);
   }
 
   public static Builder builder(Label label, String kindString) {

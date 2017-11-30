@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.run.producers;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
-import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -27,8 +26,6 @@ import com.google.idea.blaze.base.run.BlazeRunConfigurationFactory;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -39,9 +36,6 @@ import javax.annotation.Nullable;
 /** Creates run configurations from a BUILD file targets. */
 public class BlazeBuildFileRunConfigurationProducer
     extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
-
-  private static final Logger logger =
-      Logger.getInstance(BlazeBuildFileRunConfigurationProducer.class);
 
   private static class BuildTarget {
 
@@ -124,19 +118,6 @@ public class BlazeBuildFileRunConfigurationProducer
             generatedConfiguration.getHandler().getCommandName());
   }
 
-  public static boolean handlesTarget(Project project, Label label) {
-    return buildTargetFromLabel(project, label) != null;
-  }
-
-  @Nullable
-  private static BuildTarget buildTargetFromLabel(Project project, Label label) {
-    PsiElement psiElement = BuildReferenceManager.getInstance(project).resolveLabel(label);
-    if (!(psiElement instanceof FuncallExpression)) {
-      return null;
-    }
-    return targetFromFuncall((FuncallExpression) psiElement);
-  }
-
   @Nullable
   private static BuildTarget getBuildTarget(ConfigurationContext context) {
     return targetFromFuncall(
@@ -154,15 +135,6 @@ public class BlazeBuildFileRunConfigurationProducer
       return null;
     }
     return new BuildTarget(rule, ruleType, label);
-  }
-
-  public static void setupConfiguration(RunConfiguration configuration, Label label) {
-    BuildTarget target = buildTargetFromLabel(configuration.getProject(), label);
-    if (target == null || !(configuration instanceof BlazeCommandRunConfiguration)) {
-      logger.error("Configuration not handled by BUILD file config producer: " + configuration);
-      return;
-    }
-    setupBuildFileConfiguration((BlazeCommandRunConfiguration) configuration, target);
   }
 
   private static void setupConfiguration(

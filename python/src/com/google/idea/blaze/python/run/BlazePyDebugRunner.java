@@ -51,7 +51,7 @@ public class BlazePyDebugRunner extends PyDebugRunner {
         config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     BlazeCommandName command =
         handlerState != null ? handlerState.getCommandState().getCommand() : null;
-    return PyDebugUtils.canUsePyDebugger(config.getKindForTarget())
+    return PyDebugUtils.canUsePyDebugger(config.getTargetKind())
         && (BlazeCommandName.TEST.equals(command) || BlazeCommandName.RUN.equals(command));
   }
 

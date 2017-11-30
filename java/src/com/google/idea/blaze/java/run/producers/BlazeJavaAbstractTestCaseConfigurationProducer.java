@@ -188,7 +188,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
     if (target == null) {
       return;
     }
-    configuration.setTarget(target.label);
+    configuration.setTargetInfo(target);
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {

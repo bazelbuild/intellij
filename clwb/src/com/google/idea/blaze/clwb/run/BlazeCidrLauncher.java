@@ -162,7 +162,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     }
     // Disable colored output, to workaround parsing bug (CPP-10054)
     // Note: cc_test runner currently only supports GUnit tests.
-    if (Kind.CC_TEST.equals(configuration.getKindForTarget())) {
+    if (Kind.CC_TEST.equals(configuration.getTargetKind())) {
       commandLine.addParameter(testPrefix + "_color=no");
     }
 

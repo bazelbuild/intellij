@@ -58,6 +58,7 @@
     <TestTargetHeuristic implementation="com.google.idea.blaze.java.run.QualifiedClassNameHeuristic" order="before TargetNameHeuristic"/>
     <SyncListener implementation="com.google.idea.blaze.java.libraries.BlazeSourceJarNavigationPolicy$SyncTrackerUpdater"/>
     <JavaClasspathAspectStrategy implementation="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy$BazelStrategy"/>
+    <JavaTestCaseIdentifier implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestMethodConfigurationProducer$Identifier"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -98,6 +99,7 @@
     <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.AutoFactoryImplicitUsageProvider"/>
     <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.InjectImplicitUsageProvider"/>
     <psi.clsCustomNavigationPolicy implementation="com.google.idea.blaze.java.libraries.BlazeSourceJarNavigationPolicy"/>
+    <debugger.positionManagerFactory implementation="com.google.idea.blaze.java.run.ExternalFilePositionManager$Factory"/>
   </extensions>
 
   <application-components>
@@ -121,5 +123,7 @@
                     interface="com.google.idea.blaze.java.run.producers.JUnitParameterizedClassHeuristic"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.JavaClasspathAspectStrategy"
                     interface="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.JavaTestCaseIdentifier"
+                    interface="com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer$JavaTestCaseIdentifier"/>
   </extensionPoints>
 </idea-plugin>

@@ -28,7 +28,7 @@ public class RunConfigurationUtils {
   }
 
   static boolean canUseClionRunner(BlazeCommandRunConfiguration config) {
-    Kind kind = config.getKindForTarget();
+    Kind kind = config.getTargetKind();
     BlazeCommandRunConfigurationCommonState handlerState =
         config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {

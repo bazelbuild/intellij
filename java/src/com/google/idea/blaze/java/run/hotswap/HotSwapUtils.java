@@ -44,7 +44,7 @@ public final class HotSwapUtils {
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     return BlazeCommandName.RUN.equals(
             Preconditions.checkNotNull(handlerState).getCommandState().getCommand())
-        && Kind.JAVA_BINARY.equals(configuration.getKindForTarget());
+        && Kind.JAVA_BINARY.equals(configuration.getTargetKind());
   }
 
   private static boolean isDebugging(ExecutionEnvironment environment) {
