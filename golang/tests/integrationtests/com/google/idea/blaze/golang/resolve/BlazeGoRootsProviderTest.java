@@ -191,7 +191,16 @@ public class BlazeGoRootsProviderTest extends BlazeIntegrationTestCase {
     registerProjectService(
         BlazeProjectDataManager.class,
         new MockBlazeProjectDataManager(
-            new BlazeProjectData(0L, targetMap, null, null, null, null, null, null, null)));
+            new BlazeProjectData(
+                0L,
+                targetMap,
+                null,
+                null,
+                null,
+                null,
+                new WorkspaceLanguageSettings(WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)),
+                null,
+                null)));
 
     assertThat(BlazeGoRootsProvider.getPackageToTargetMap(getProject()))
         .containsExactly(

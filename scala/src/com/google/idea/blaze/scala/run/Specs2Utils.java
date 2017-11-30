@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScInfixExpr;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition;
@@ -99,15 +100,20 @@ public final class Specs2Utils {
     return testClass.getName() + "." + testName;
   }
 
+  @Nullable
   public static String getTestFilter(ScTypeDefinition testClass, PsiElement testCase) {
-    String testName = "";
+    String testName = null;
+    String end = null;
     if (TestNodeProvider.isSpecs2TestExpr(testCase)) {
-      testName = Specs2Utils.getSpecs2ScopedTestName((ScInfixExpr) testCase) + '$';
+      testName = Specs2Utils.getSpecs2ScopedTestName((ScInfixExpr) testCase);
+      end = "$";
     } else if (TestNodeProvider.isSpecs2ScopeExpr(testCase)) {
-      testName =
-          Specs2Utils.getSpecs2ScopeName((ScInfixExpr) testCase)
-              + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER;
+      testName = Specs2Utils.getSpecs2ScopeName((ScInfixExpr) testCase);
+      end = SmRunnerUtils.TEST_NAME_PARTS_SPLITTER;
     }
-    return testClass.qualifiedName() + '#' + testName;
+    if (testName == null) {
+      return null;
+    }
+    return testClass.qualifiedName() + '#' + Pattern.quote(testName) + end;
   }
 }

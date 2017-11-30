@@ -62,8 +62,10 @@ public class BlazeScalaSpecs2TestExprConfigurationProducer
       this.testCase = testCase;
     }
 
+    @Nullable
     private String testFilter() {
-      return BlazeFlags.TEST_FILTER + "=" + Specs2Utils.getTestFilter(testClass, testCase);
+      String filter = Specs2Utils.getTestFilter(testClass, testCase);
+      return filter != null ? BlazeFlags.TEST_FILTER + "=" + filter : null;
     }
 
     private String targetString() {
@@ -94,7 +96,10 @@ public class BlazeScalaSpecs2TestExprConfigurationProducer
     // remove old test filter flag if present
     List<String> flags = new ArrayList<>(handlerState.getBlazeFlagsState().getRawFlags());
     flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
-    flags.add(testLocation.testFilter());
+    String filter = testLocation.testFilter();
+    if (filter != null) {
+      flags.add(filter);
+    }
     handlerState.getBlazeFlagsState().setRawFlags(flags);
 
     String name =
