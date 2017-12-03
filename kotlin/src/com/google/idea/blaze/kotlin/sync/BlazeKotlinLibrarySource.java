@@ -15,14 +15,25 @@
  */
 package com.google.idea.blaze.kotlin.sync;
 
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.model.BlazeLibrary;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.kotlin.KotlinSdkUtils;
+import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinSyncData;
 import com.intellij.openapi.roots.libraries.Library;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.function.Predicate;
 
 public class BlazeKotlinLibrarySource extends LibrarySource.Adapter {
+    private final BlazeProjectData blazeProjectData;
+
+    BlazeKotlinLibrarySource(BlazeProjectData blazeProjectData) {
+        this.blazeProjectData = blazeProjectData;
+    }
+
     @Nullable
     @Override
     public Predicate<Library> getGcRetentionFilter() {
@@ -30,5 +41,14 @@ public class BlazeKotlinLibrarySource extends LibrarySource.Adapter {
             String libraryName = library.getName();
             return libraryName != null && libraryName.equals(KotlinSdkUtils.KOTLIN_JAVA_RUNTIME_LIBRARY_NAME);
         };
+    }
+
+    @Override
+    public List<? extends BlazeLibrary> getLibraries() {
+        BlazeKotlinSyncData syncData = blazeProjectData.syncState.get(BlazeKotlinSyncData.class);
+        if (syncData == null) {
+            return ImmutableList.of();
+        }
+        return syncData.importResult.libraries.values().asList();
     }
 }
