@@ -69,8 +69,6 @@
     ],
     "parameters": {
       "targets": ["//aspect:aspect_files"],
-      "build_opts": ["--incompatible_disallow_set_constructor=false"],
-      "test_opts": ["--incompatible_disallow_set_constructor=false"],
       "tests": ["//aspect/testing/..."]
     }
   }
