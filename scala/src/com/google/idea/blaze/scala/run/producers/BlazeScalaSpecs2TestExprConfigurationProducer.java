@@ -65,12 +65,20 @@ public class BlazeScalaSpecs2TestExprConfigurationProducer
     @Nullable
     private String testFilter() {
       String filter = Specs2Utils.getTestFilter(testClass, testCase);
-      return filter != null ? BlazeFlags.TEST_FILTER + "=" + filter : null;
+      return filter != null ? BlazeFlags.TEST_FILTER + "=" + sanitize(filter) : null;
     }
 
     private String targetString() {
       return Specs2Utils.getSpecs2TestDisplayName(testClass, testCase);
     }
+  }
+
+  /** Taken from specs2: replaces () with [] because of JUnit issues */
+  private static String sanitize(String testName) {
+    String sanitized = testName.trim()
+      .replace('(', '[')
+      .replace(')', ']');
+    return sanitized.isEmpty() ? " " : sanitized;
   }
 
   @Override
