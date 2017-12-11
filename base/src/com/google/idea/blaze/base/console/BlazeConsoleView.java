@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.console;
 
+import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.intellij.codeEditor.printing.PrintAction;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -39,7 +40,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
-import org.jetbrains.annotations.NotNull;
 
 class BlazeConsoleView implements Disposable {
 
@@ -50,26 +50,27 @@ class BlazeConsoleView implements Disposable {
     PrintAction.class
   };
 
-  @NotNull private final Project myProject;
-  @NotNull private final ConsoleViewImpl myConsoleView;
+  private final Project project;
+  private final ConsoleViewImpl consoleView;
 
-  private volatile Runnable myStopHandler;
+  private volatile Runnable stopHandler;
 
-  public BlazeConsoleView(@NotNull Project project) {
-    myProject = project;
-    myConsoleView = new ConsoleViewImpl(myProject, false);
-    Disposer.register(this, myConsoleView);
+  public BlazeConsoleView(Project project) {
+    this.project = project;
+    consoleView = new ConsoleViewImpl(this.project, false);
+    consoleView.addMessageFilter(new BlazeTargetFilter(project, false));
+    Disposer.register(this, consoleView);
   }
 
-  public static BlazeConsoleView getInstance(@NotNull Project project) {
+  public static BlazeConsoleView getInstance(Project project) {
     return ServiceManager.getService(project, BlazeConsoleView.class);
   }
 
   public void setStopHandler(@Nullable Runnable stopHandler) {
-    myStopHandler = stopHandler;
+    this.stopHandler = stopHandler;
   }
 
-  private static boolean shouldIgnoreAction(@NotNull AnAction action) {
+  private static boolean shouldIgnoreAction(AnAction action) {
     for (Class<?> actionType : IGNORED_CONSOLE_ACTION_TYPES) {
       if (actionType.isInstance(action)) {
         return true;
@@ -78,14 +79,14 @@ class BlazeConsoleView implements Disposable {
     return false;
   }
 
-  public void createToolWindowContent(@NotNull ToolWindow toolWindow) {
-    //Create runner UI layout
-    RunnerLayoutUi.Factory factory = RunnerLayoutUi.Factory.getInstance(myProject);
-    RunnerLayoutUi layoutUi = factory.create("", "", "session", myProject);
+  public void createToolWindowContent(ToolWindow toolWindow) {
+    // Create runner UI layout
+    RunnerLayoutUi.Factory factory = RunnerLayoutUi.Factory.getInstance(project);
+    RunnerLayoutUi layoutUi = factory.create("", "", "session", project);
 
     Content console =
         layoutUi.createContent(
-            BlazeConsoleToolWindowFactory.ID, myConsoleView.getComponent(), "", null, null);
+            BlazeConsoleToolWindowFactory.ID, consoleView.getComponent(), "", null, null);
     console.setCloseable(false);
     layoutUi.addContent(console, 0, PlaceInGrid.right, false);
 
@@ -93,7 +94,7 @@ class BlazeConsoleView implements Disposable {
     DefaultActionGroup group = new DefaultActionGroup();
     layoutUi.getOptions().setLeftToolbar(group, ActionPlaces.UNKNOWN);
 
-    AnAction[] consoleActions = myConsoleView.createConsoleActions();
+    AnAction[] consoleActions = consoleView.createConsoleActions();
     for (AnAction action : consoleActions) {
       if (!shouldIgnoreAction(action)) {
         group.add(action);
@@ -111,11 +112,11 @@ class BlazeConsoleView implements Disposable {
   }
 
   public void clear() {
-    myConsoleView.clear();
+    consoleView.clear();
   }
 
-  public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
-    myConsoleView.print(text, contentType);
+  public void print(String text, ConsoleViewContentType contentType) {
+    consoleView.print(text, contentType);
   }
 
   @Override
@@ -128,17 +129,17 @@ class BlazeConsoleView implements Disposable {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      Runnable handler = myStopHandler;
+      Runnable handler = stopHandler;
       if (handler != null) {
         handler.run();
-        myStopHandler = null;
+        stopHandler = null;
       }
     }
 
     @Override
     public void update(AnActionEvent event) {
       Presentation presentation = event.getPresentation();
-      boolean isNowVisible = myStopHandler != null;
+      boolean isNowVisible = stopHandler != null;
       if (presentation.isEnabled() != isNowVisible) {
         presentation.setEnabled(isNowVisible);
       }

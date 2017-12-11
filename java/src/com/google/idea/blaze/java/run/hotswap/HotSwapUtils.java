@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.run.hotswap;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -32,8 +33,11 @@ public final class HotSwapUtils {
 
   private HotSwapUtils() {}
 
-  public static final BoolExperiment enableHotSwapping =
+  static final BoolExperiment enableHotSwapping =
       new BoolExperiment("java.hotswapping.enabled", true);
+
+  private static final ImmutableList<Kind> SUPPORTED_BINARIES =
+      ImmutableList.of(Kind.JAVA_BINARY, Kind.SCALA_BINARY);
 
   public static boolean canHotSwap(ExecutionEnvironment env) {
     if (!isDebugging(env) || !enableHotSwapping.getValue()) {
@@ -42,9 +46,11 @@ public final class HotSwapUtils {
     BlazeCommandRunConfiguration configuration = getConfiguration(env);
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    Kind kind = configuration.getTargetKind();
     return BlazeCommandName.RUN.equals(
             Preconditions.checkNotNull(handlerState).getCommandState().getCommand())
-        && Kind.JAVA_BINARY.equals(configuration.getTargetKind());
+        && kind != null
+        && kind.isOneOf(SUPPORTED_BINARIES);
   }
 
   private static boolean isDebugging(ExecutionEnvironment environment) {

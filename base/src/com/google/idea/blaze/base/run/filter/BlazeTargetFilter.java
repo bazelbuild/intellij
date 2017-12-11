@@ -21,9 +21,11 @@ import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.SimpleTextAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -41,15 +43,18 @@ public class BlazeTargetFilter implements Filter {
   // format: ([@external_workspace]//package:rule)
   private static final String TARGET_REGEX =
       String.format(
-          "(^|[ '\"])(@[%s]*)?//[%s]*(:[%s]+)?",
+          "(^|[ '\"=])(@[%s]*)?//[%s]*(:[%s]+)?",
           PACKAGE_NAME_CHARS, PACKAGE_NAME_CHARS, TARGET_CHARS);
 
   @VisibleForTesting static final Pattern TARGET_PATTERN = Pattern.compile(TARGET_REGEX);
 
   private final Project project;
+  @Nullable private final TextAttributes highlightAttributes;
 
-  public BlazeTargetFilter(Project project) {
+  public BlazeTargetFilter(Project project, boolean highlightMatches) {
     this.project = project;
+    this.highlightAttributes =
+        highlightMatches ? null : SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes();
   }
 
   @Nullable
@@ -73,7 +78,9 @@ public class BlazeTargetFilter implements Filter {
       }
       HyperlinkInfo link = project -> ((NavigatablePsiElement) psi).navigate(true);
       int offset = entireLength - line.length();
-      results.add(new ResultItem(matcher.start() + offset, matcher.end() + offset, link));
+      results.add(
+          new ResultItem(
+              matcher.start() + offset, matcher.end() + offset, link, highlightAttributes));
     }
     return results.isEmpty() ? null : new Result(results);
   }

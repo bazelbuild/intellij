@@ -187,7 +187,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
   private static ImmutableList<Filter> getFilters(Project project) {
     return ImmutableList.<Filter>builder()
         .addAll(BlazePyFilterProvider.getPyFilters(project))
-        .add(new BlazeTargetFilter(project))
+        .add(new BlazeTargetFilter(project, true))
         .add(new UrlFilter())
         .build();
   }

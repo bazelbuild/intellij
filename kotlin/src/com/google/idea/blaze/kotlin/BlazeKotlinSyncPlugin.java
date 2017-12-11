@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.ijwb.kotlin;
+package com.google.idea.blaze.kotlin;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -25,10 +25,13 @@ import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import java.util.Collection;
@@ -41,7 +44,9 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
-    return ImmutableSet.of(LanguageClass.KOTLIN);
+    return Blaze.getBuildSystem(null) == BuildSystem.Bazel
+        ? ImmutableSet.of(LanguageClass.KOTLIN)
+        : ImmutableSet.of();
   }
 
   @Override
@@ -72,10 +77,25 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
         workspaceModifiableModel.addLibraryEntry(kotlinJavaRuntimeLibrary);
       }
     } else {
+      // since the runtime library was not found remove the kotlin-runtime ijar if present -- it
+      // prevents the kotlin plugin from kicking in and offering to setup the kotlin std library.
+      removeKotlinRuntimeIjar(project, workspaceModifiableModel);
       IssueOutput.error(
               "Kotlin JVM runtime libraries not found in workspace libraries, setup the Kotlin "
                   + "plugin.")
           .submit(context);
+    }
+  }
+
+  private static void removeKotlinRuntimeIjar(
+      Project project, ModifiableRootModel workspaceModifiableModel) {
+    Library ijar = KotlinSdkUtils.findKotlinJavaRuntimeIjar(project);
+    if (ijar == null) {
+      return;
+    }
+    LibraryOrderEntry entry = workspaceModifiableModel.findLibraryOrderEntry(ijar);
+    if (entry != null) {
+      workspaceModifiableModel.removeOrderEntry(entry);
     }
   }
 
@@ -103,6 +123,6 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
       return null;
     }
-    return new BlazeKotlinLibrarySource();
+    return new BlazeKotlinLibrarySource(blazeProjectData);
   }
 }

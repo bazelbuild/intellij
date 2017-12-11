@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.run;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -30,7 +31,7 @@ import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
-import javax.annotation.Nullable;
+import java.util.concurrent.Future;
 import org.jdom.Element;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -94,10 +95,9 @@ public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
   }
 
   private static class MockTargetFinder implements TargetFinder {
-    @Nullable
     @Override
-    public TargetInfo findTarget(Project project, Label label) {
-      return null;
+    public Future<TargetInfo> findTarget(Project project, Label label) {
+      return Futures.immediateFuture(null);
     }
   }
 }

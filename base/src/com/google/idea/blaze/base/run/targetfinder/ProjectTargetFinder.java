@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run.targetfinder;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -24,17 +25,18 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
 import java.util.Objects;
+import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
 /** Uses the project's {@link TargetMap} to locate targets matching a given label. */
 class ProjectTargetFinder implements TargetFinder {
 
-  @Nullable
   @Override
-  public TargetInfo findTarget(Project project, Label label) {
+  public Future<TargetInfo> findTarget(Project project, Label label) {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    return projectData != null ? findTarget(projectData.targetMap, label) : null;
+    TargetInfo target = projectData != null ? findTarget(projectData.targetMap, label) : null;
+    return Futures.immediateFuture(target);
   }
 
   @Nullable

@@ -17,17 +17,18 @@ java_library(
         android_studio = glob([
             "com/google/idea/sdkcompat/cidr/**",
             "com/google/idea/sdkcompat/java/**",
-            "com/google/idea/sdkcompat/python/*",
+            "com/google/idea/sdkcompat/python/**",
         ]),
         clion = glob([
             "com/google/idea/sdkcompat/cidr/**",
-            "com/google/idea/sdkcompat/python/*",
-            "clion/com/google/idea/sdkcompat/python/*",
+            "com/google/idea/sdkcompat/clion/**",
+            "com/google/idea/sdkcompat/python/**",
+            "clion/com/google/idea/sdkcompat/python/**",
         ]),
         intellij = glob([
             "com/google/idea/sdkcompat/java/**",
-            "com/google/idea/sdkcompat/python/*",
-            "intellij/com/google/idea/sdkcompat/python/*",
+            "com/google/idea/sdkcompat/python/**",
+            "intellij/com/google/idea/sdkcompat/python/**",
         ]),
     ),
     visibility = ["//sdkcompat:__pkg__"],

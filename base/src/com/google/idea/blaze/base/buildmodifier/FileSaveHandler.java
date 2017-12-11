@@ -20,8 +20,10 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 
@@ -43,12 +45,27 @@ public class FileSaveHandler extends FileDocumentManagerAdapter {
   }
 
   private static void formatBuildFile(Project project, PsiFile psiFile) {
-    if (!isBuildFile(psiFile.getName()) || !psiFile.isValid() || !psiFile.isWritable()) {
+    if (!isBuildFile(psiFile.getName())
+        || !isProjectValid(project)
+        || !canWriteToFile(project, psiFile)) {
       return;
     }
     new ReformatCodeProcessor(
             project, psiFile, /* range */ null, /* processChangedTextOnly */ false)
         .run();
+  }
+
+  private static boolean canWriteToFile(Project project, PsiFile psiFile) {
+    VirtualFile vf = psiFile.getVirtualFile();
+    return psiFile.isValid()
+        && psiFile.isWritable()
+        && psiFile.getModificationStamp() != 0
+        && vf != null
+        && NonProjectFileWritingAccessProvider.isWriteAccessAllowed(vf, project);
+  }
+
+  private static boolean isProjectValid(Project project) {
+    return project.isInitialized() && !project.isDisposed();
   }
 
   private static boolean isBuildFile(String filename) {

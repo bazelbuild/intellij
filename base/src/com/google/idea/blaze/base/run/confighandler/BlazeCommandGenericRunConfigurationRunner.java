@@ -96,7 +96,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
       this.consoleFilters =
           ImmutableList.<Filter>builder()
               .addAll(consoleFilters)
-              .add(new BlazeTargetFilter(environment.getProject()))
+              .add(new BlazeTargetFilter(environment.getProject(), true))
               .add(new UrlFilter())
               .build();
     }

@@ -11,6 +11,15 @@ new_http_archive(
     sha256 = "4d1c873c0bcc10ec12a1a13580003846e94b328ad1246601fd41d147340bde6f",
 )
 
+# The plugin api for IntelliJ 2017.3. This is required to build IJwB,
+# and run integration tests.
+new_http_archive(
+    name = "intellij_ce_2017_3_0",
+    build_file = "intellij_platform_sdk/BUILD.idea",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2017.3/ideaIC-2017.3.zip",
+    sha256 = "cb2a420ad5aeeb6a9240b810686bcf44712241e16534425ee815950f8bae660a",
+)
+
 # The plugin api for IntelliJ UE 2017.2. This is required to run UE-specific
 # integration tests.
 new_http_archive(
@@ -20,6 +29,15 @@ new_http_archive(
     sha256 = "b5876759195be367822e39ba63b07e579713492fbd902137641dec7707602cc0",
 )
 
+# The plugin api for IntelliJ UE 2017.3. This is required to run UE-specific
+# integration tests.
+new_http_archive(
+    name = "intellij_ue_2017_3_0",
+    build_file = "intellij_platform_sdk/BUILD.idea",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2017.3/ideaIU-2017.3.zip",
+    sha256 = "e3ab0b6763a4ecd67db8733165f7fdedc1e4e275e405cd617b495b7bdf270c17",
+)
+
 # The plugin api for CLion 2017.2.0. This is required to build CLwB,
 # and run integration tests.
 new_http_archive(
@@ -27,6 +45,15 @@ new_http_archive(
     build_file = "intellij_platform_sdk/BUILD.clion",
     url = "https://download.jetbrains.com/cpp/CLion-2017.2.3.tar.gz",
     sha256 = "dd1979947371803a1e11f5bdaf04e3ef2d013b90b56e84495c6e67e67cb31e0a",
+)
+
+# The plugin api for CLion 2017.2.0. This is required to build CLwB,
+# and run integration tests.
+new_http_archive(
+    name = "clion_2017_3_0",
+    build_file = "intellij_platform_sdk/BUILD.clion",
+    url = "https://download.jetbrains.com/cpp/CLion-2017.3.tar.gz",
+    sha256 = "ce5e9acfae6b885f0204ba53a965a00530dbb986b800a04b97112ee2719e693f",
 )
 
 # The plugin api for Android Studio 3.0. This is required to build ASwB,
@@ -64,7 +91,20 @@ new_http_archive(
     sha256 = "c7ee48c0bafb29f4a18eaac804b113c4dcdfeaaae174d9003c9ad96e44df6fe0",
 )
 
-# Go plugin for IntelliJ UE and CLion. Required at compile-time for Bazel integration.
+# Python plugin for IntelliJ CE 2017.3. Required at compile-time for python-specific features.
+new_http_archive(
+    name = "python_2017_3",
+    build_file_content = "\n".join([
+        "java_import(",
+        "    name = 'python',",
+        "    jars = ['python-ce/lib/python-ce.jar'],",
+        "    visibility = ['//visibility:public'],",
+        ")"]),
+    url = "https://download.plugins.jetbrains.com/7322/41063/python-ce-2017.3.173.3727.131.zip",
+    sha256 = "406c47b5a9f97e5f7ab7e94e62e463beea8cc56da803b56c00801f026b0a559b",
+)
+
+# Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
 new_http_archive(
     name = "go_2017_2",
     build_file_content = "\n".join([
@@ -77,7 +117,20 @@ new_http_archive(
     sha256 = "3e5eb5415a05e6c30e79c263135c2937cc05e310e553889bd69eefa819705f9c",
 )
 
-# Scala plugin for IntelliJ CE 2017.2 EAP. Required at compile-time for scala-specific features.
+# Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
+new_http_archive(
+    name = "go_2017_3",
+    build_file_content = "\n".join([
+        "java_import(",
+        "    name = 'go',",
+        "    jars = glob(['intellij-go/lib/*.jar']),",
+        "    visibility = ['//visibility:public'],",
+        ")"]),
+    url = "https://download.plugins.jetbrains.com/9568/40858/intellij-go-173.3727.96.zip",
+    sha256 = "be3e07d8db9867145f5aa924b2cac06eadd863d1493bff2c62ffc74bb54729e3",
+)
+
+# Scala plugin for IntelliJ CE 2017.2. Required at compile-time for scala-specific features.
 new_http_archive(
     name = "scala_2017_2",
     build_file_content = "\n".join([
@@ -92,8 +145,21 @@ new_http_archive(
         "    ],",
         "    visibility = ['//visibility:public'],",
         ")"]),
-   url = "https://download.plugins.jetbrains.com/1347/35283/scala-intellij-bin-2017.2.2.zip",
+    url = "https://download.plugins.jetbrains.com/1347/35283/scala-intellij-bin-2017.2.2.zip",
     sha256 = "1f0eef98da44dbc3f4f22b399a9175897aca448fd80405eca77fd61bd5fb7219",
+)
+
+# Scala plugin for IntelliJ CE 2017.3. Required at compile-time for scala-specific features.
+new_http_archive(
+    name = "scala_2017_3",
+    build_file_content = "\n".join([
+        "java_import(",
+        "    name = 'scala',",
+        "    jars = glob(['Scala/lib/*.jar']),",
+        "    visibility = ['//visibility:public'],",
+        ")"]),
+    url = "https://download.plugins.jetbrains.com/1347/40959/scala-intellij-bin-2017.3.9.zip",
+    sha256 = "8e387d459216500ed7f908b66e63dae629a7872bc72eafaa0cd8fb339da00730",
 )
 
 # LICENSE: Common Public License 1.0

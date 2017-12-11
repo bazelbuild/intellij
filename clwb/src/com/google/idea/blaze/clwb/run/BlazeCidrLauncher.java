@@ -198,7 +198,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
   }
 
   private ImmutableList<Filter> getConsoleFilters() {
-    return ImmutableList.of(new BlazeTargetFilter(project), new UrlFilter());
+    return ImmutableList.of(new BlazeTargetFilter(project, true), new UrlFilter());
   }
 
   private CidrConsoleBuilder createConsoleBuilder(@Nullable BlazeTestUiSession testUiSession) {

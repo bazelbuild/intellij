@@ -61,6 +61,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
@@ -72,6 +73,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import javax.annotation.Nullable;
+import org.junit.After;
 import org.junit.Before;
 
 /** Sets up mocks required for integration tests of the blaze sync process. */
@@ -97,6 +99,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
 
   private ImmutableList<ContentEntry> workspaceContentEntries = ImmutableList.of();
   private Map<String, ModifiableRootModel> modules = Maps.newHashMap();
+  protected Disposable moduleStructureDisposable;
 
   private class MockModuleEditor extends ModuleEditorImpl {
     public MockModuleEditor(Project project, BlazeImportSettings importSettings) {
@@ -108,7 +111,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
       // don't commit module changes,
       // and make sure they're properly disposed when the test is finished
       for (ModifiableRootModel model : modules.values()) {
-        Disposer.register(getTestRootDisposable(), model::dispose);
+        Disposer.register(moduleStructureDisposable, model::dispose);
         if (model.getModule().getName().equals(BlazeDataStorage.WORKSPACE_MODULE_NAME)) {
           workspaceContentEntries = ImmutableList.copyOf(model.getContentEntries());
         }
@@ -134,6 +137,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
 
   @Before
   public void doSetup() throws Exception {
+    moduleStructureDisposable = Disposer.newDisposable();
     projectViewManager = new MockProjectViewManager();
     vcsHandler = new MockBlazeVcsHandler();
     blazeInfoData = new MockBlazeInfoRunner();
@@ -162,6 +166,11 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
             .put(BlazeInfo.OUTPUT_PATH_KEY, OUTPUT_PATH)
             .put(BlazeInfo.PACKAGE_PATH_KEY, workspaceRoot.toString())
             .build());
+  }
+
+  @After
+  public void doTearDown() {
+    Disposer.dispose(moduleStructureDisposable);
   }
 
   /** The workspace content entries created during sync */

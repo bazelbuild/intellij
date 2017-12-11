@@ -64,6 +64,7 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
     this.userSettings = builder.getUserSettings();
 
     this.buildFilePathField = new TextFieldWithStoredHistory(LAST_WORKSPACE_PATH);
+    buildFilePathField.setName("build-file-path-field");
     buildFilePathField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);
     buildFilePathField.setText(userSettings.get(LAST_WORKSPACE_PATH, ""));
 

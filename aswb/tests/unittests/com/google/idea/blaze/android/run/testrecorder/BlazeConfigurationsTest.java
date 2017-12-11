@@ -22,6 +22,7 @@ import com.android.tools.idea.run.editor.AndroidJavaDebugger;
 import com.android.tools.idea.run.editor.DeployTargetProvider;
 import com.android.tools.idea.run.editor.ShowChooserTargetProvider;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Futures;
 import com.google.gct.testrecorder.run.TestRecorderRunConfigurationProxy;
 import com.google.gct.testrecorder.run.TestRecorderRunConfigurationProxyProvider;
 import com.google.gct.testrecorder.ui.TestRecorderAction;
@@ -70,6 +71,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -199,16 +201,15 @@ public class BlazeConfigurationsTest extends BlazeTestCase {
   }
 
   private static class MockTargetFinder implements TargetFinder {
-    @Nullable
     @Override
-    public TargetInfo findTarget(Project project, Label label) {
+    public Future<TargetInfo> findTarget(Project project, Label label) {
       TargetIdeInfo.Builder builder = TargetIdeInfo.builder().setLabel(label);
       if (label.equals(Label.create("//label:android_binary_rule"))) {
         builder.setKind(Kind.ANDROID_BINARY);
       } else if (label.equals(Label.create("//label:android_test_rule"))) {
         builder.setKind(Kind.ANDROID_TEST);
       }
-      return builder.build().toTargetInfo();
+      return Futures.immediateFuture(builder.build().toTargetInfo());
     }
   }
 

@@ -17,6 +17,7 @@ package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.sdkcompat.cidr.CPPEnvironmentAdapter;
 import com.google.idea.sdkcompat.cidr.OCCompilerSettingsAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,7 +25,6 @@ import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
 import com.jetbrains.cidr.lang.toolchains.CidrSwitchBuilder;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
-import com.jetbrains.cidr.lang.toolchains.DefaultCidrToolEnvironment;
 import com.jetbrains.cidr.lang.workspace.compiler.CidrCompilerResult;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.toolchains.CompilerInfoCache;
@@ -34,7 +34,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 final class BlazeCompilerSettings extends OCCompilerSettingsAdapter {
-  private final CidrToolEnvironment toolEnvironment = new DefaultCidrToolEnvironment();
+  private final CidrToolEnvironment toolEnvironment = new CPPEnvironmentAdapter();
 
   private final Project project;
   @Nullable private final File cCompiler;
@@ -110,6 +110,7 @@ final class BlazeCompilerSettings extends OCCompilerSettingsAdapter {
     return new CidrSwitchBuilder().addAllRaw(allCompilerFlags).build();
   }
 
+  @Override
   public CidrCompilerResult<Entry> getCompilerInfo(
       OCLanguageKind ocLanguageKind, @Nullable VirtualFile virtualFile) {
     return compilerInfoCache.getCompilerInfoCache(project, this, ocLanguageKind, virtualFile);
@@ -117,6 +118,6 @@ final class BlazeCompilerSettings extends OCCompilerSettingsAdapter {
 
   @Override
   public String getCompilerKey(OCLanguageKind ocLanguageKind, @Nullable VirtualFile virtualFile) {
-    return getCompiler(ocLanguageKind).toString();
+    return getCompiler(ocLanguageKind) + "-" + ocLanguageKind.toString();
   }
 }

@@ -29,6 +29,7 @@ public enum Kind {
   ANDROID_LIBRARY("android_library", LanguageClass.ANDROID, RuleType.LIBRARY),
   ANDROID_TEST("android_test", LanguageClass.ANDROID, RuleType.TEST),
   ANDROID_ROBOLECTRIC_TEST("android_robolectric_test", LanguageClass.ANDROID, RuleType.TEST),
+  ANDROID_LOCAL_TEST("android_local_test", LanguageClass.ANDROID, RuleType.TEST),
   ANDROID_SDK("android_sdk", LanguageClass.ANDROID, RuleType.UNKNOWN),
   JAVA_LIBRARY("java_library", LanguageClass.JAVA, RuleType.LIBRARY),
   JAVA_TEST("java_test", LanguageClass.JAVA, RuleType.TEST),
@@ -88,6 +89,9 @@ public enum Kind {
   TS_CONFIG("ts_config", LanguageClass.TYPESCRIPT, RuleType.BINARY),
   DART_PROTO_LIBRARY("dart_proto_library", LanguageClass.DART, RuleType.LIBRARY),
   DART_LIBRARY("_dart_library", LanguageClass.DART, RuleType.LIBRARY),
+  KOTLIN_LIBRARY("kotlin_library", LanguageClass.KOTLIN, RuleType.LIBRARY),
+  KOTLIN_BINARY("kotlin_binary", LanguageClass.KOTLIN, RuleType.BINARY),
+  KOTLIN_TEST("kotlin_test", LanguageClass.KOTLIN, RuleType.TEST),
 
   // any rule exposing java_common.provider which isn't specifically recognized
   GENERIC_JAVA_PROVIDER("generic_java", LanguageClass.JAVA, RuleType.UNKNOWN),

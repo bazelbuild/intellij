@@ -56,10 +56,7 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
   private final AtomicBoolean syncInProgress = new AtomicBoolean(false);
   private final AtomicBoolean syncPending = new AtomicBoolean(false);
 
-  /** has a BUILD file changed since the last sync started */
-  private volatile boolean dirty = false;
-
-  private volatile boolean failedSync = false;
+  private final BlazeSyncStatusStateManager stateManager;
 
   public BlazeSyncStatusImpl(Project project) {
     this.project = project;
@@ -71,6 +68,8 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
         .getMessageBus()
         .connect()
         .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileFocusListener());
+
+    stateManager = BlazeSyncStatusStateManager.getInstance(project);
   }
 
   private static boolean automaticSyncEnabled() {
@@ -79,10 +78,10 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
 
   @Override
   public SyncStatus getStatus() {
-    if (failedSync) {
+    if (stateManager.lastSyncFailed()) {
       return SyncStatus.FAILED;
     }
-    return dirty ? SyncStatus.DIRTY : SyncStatus.CLEAN;
+    return stateManager.isDirty() ? SyncStatus.DIRTY : SyncStatus.CLEAN;
   }
 
   @Override
@@ -97,11 +96,11 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
 
   public void syncEnded(SyncMode syncMode, SyncResult syncResult) {
     syncInProgress.set(false);
-    failedSync = syncResult == SyncResult.FAILURE;
+    stateManager.setLastSyncFailed(syncResult == SyncResult.FAILURE);
     if (allTargetsBuild(syncMode) && syncResult == SyncResult.SUCCESS && !syncPending.get()) {
-      dirty = false;
+      stateManager.setDirty(false);
     } else if (syncResult == SyncResult.PARTIAL_SUCCESS || syncResult == SyncResult.CANCELLED) {
-      dirty = true;
+      stateManager.setDirty(true);
     }
   }
 
@@ -111,18 +110,18 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
 
   @Override
   public void setDirty() {
-    dirty = true;
+    stateManager.setDirty(true);
     queueIncrementalSync();
   }
 
   @Override
   public boolean isDirty() {
-    return dirty;
+    return stateManager.isDirty();
   }
 
   @Override
   public void queueAutomaticSyncIfDirty() {
-    if (dirty) {
+    if (stateManager.isDirty()) {
       queueIncrementalSync();
     }
   }

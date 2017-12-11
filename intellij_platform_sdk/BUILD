@@ -107,6 +107,13 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "clion-2017.3.0",
+    values = {
+        "define": "ij_product=clion-2017.3.0",
+    },
+)
+
 load(
     ":build_defs.bzl",
     "select_for_ide",

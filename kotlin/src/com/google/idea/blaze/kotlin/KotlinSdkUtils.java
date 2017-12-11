@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.ijwb.kotlin;
+package com.google.idea.blaze.kotlin;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
+import java.util.Arrays;
 
 /** Utility methods for Kotlin project library handling. */
 class KotlinSdkUtils {
@@ -26,5 +27,17 @@ class KotlinSdkUtils {
   static Library findKotlinJavaRuntime(Project project) {
     return ProjectLibraryTable.getInstance(project)
         .getLibraryByName(KOTLIN_JAVA_RUNTIME_LIBRARY_NAME);
+  }
+
+  static Library findKotlinJavaRuntimeIjar(Project project) {
+    return Arrays.stream(ProjectLibraryTable.getInstance(project).getLibraries())
+        .filter(KotlinSdkUtils::isKotlinIjarLibrary)
+        .findFirst()
+        .orElse(null);
+  }
+
+  private static boolean isKotlinIjarLibrary(Library library) {
+    String name = library.getName();
+    return name != null && name.startsWith("kotlin-runtime-ijar");
   }
 }

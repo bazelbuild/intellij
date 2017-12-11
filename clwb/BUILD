@@ -55,7 +55,6 @@ java_library(
     name = "clwb_lib",
     srcs = glob(["src/**/*.java"]),
     runtime_deps = [
-        "//golang",
         "//python",
         "//terminal",
     ],
@@ -69,7 +68,6 @@ java_library(
 )
 
 OPTIONAL_PLUGIN_XMLS = [
-    "//golang:optional_xml",
     "//python:optional_xml",
     "//terminal:optional_xml",
 ]

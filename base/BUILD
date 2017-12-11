@@ -81,6 +81,7 @@ java_library(
         "src/com/google/idea/blaze/base/dependencies/TargetInfo.java",
         "src/com/google/idea/blaze/base/dependencies/TestSize.java",
         "src/com/google/idea/blaze/base/run/SourceToTargetFinder.java",
+        "src/com/google/idea/blaze/base/run/targetfinder/FuturesUtil.java",
         "src/com/google/idea/blaze/base/run/targetfinder/TargetFinder.java",
     ],
     neverlink = 1,

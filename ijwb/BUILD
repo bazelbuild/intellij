@@ -30,6 +30,7 @@ merged_plugin_xml(
         "//base:plugin_xml",
         "//golang:plugin_xml",
         "//java:plugin_xml",
+        "//kotlin:plugin_xml",
         "//python:plugin_xml",
         "//scala:plugin_xml",
     ],
@@ -62,6 +63,7 @@ java_library(
     ],
     runtime_deps = [
         "//golang",
+        "//kotlin",
         "//python",
         "//scala",
         "//terminal",

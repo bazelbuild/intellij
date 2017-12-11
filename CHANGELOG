@@ -1,3 +1,7 @@
+v2017.12.04
+===========
+* Scala: Add run configuration support for specs2 tests.
+
 v2017.11.20
 ===========
 * Reduce indexing time after syncing.

@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -116,7 +117,7 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
       blazeCommand =
           getBlazeCommandBuilder(project, configuration, ImmutableList.of(), executorType);
     }
-    addConsoleFilters(new BlazeTargetFilter(project));
+    addConsoleFilters(new BlazeTargetFilter(project, true));
 
     List<String> command =
         HotSwapUtils.canHotSwap(getEnvironment())
@@ -227,13 +228,13 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
 
     if (executorType == ExecutorType.DEBUG) {
       Kind kind = configuration.getTargetKind();
-      boolean isBinary = kind != null && kind.isOneOf(Kind.JAVA_BINARY, Kind.SCALA_BINARY);
+      boolean isBinary = kind != null && kind.ruleType == RuleType.BINARY;
       int debugPort = handlerState.getDebugPortState().port;
       if (isBinary) {
-        command.addExeFlags(debugPortFlag(true, debugPort));
+        command.addExeFlags(debugPortFlag(false, debugPort));
       } else {
         command.addBlazeFlags(BlazeFlags.JAVA_TEST_DEBUG);
-        command.addBlazeFlags(debugPortFlag(false, debugPort));
+        command.addBlazeFlags(debugPortFlag(true, debugPort));
       }
     }
 
@@ -241,13 +242,9 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
     return command;
   }
 
-  private static String debugPortFlag(boolean wrapperScript, int port) {
-    String flag = "--debug=" + port;
-    return wrapperScript ? wrapperScriptFlag(flag) : testArg(flag);
-  }
-
-  private static String wrapperScriptFlag(String flag) {
-    return "--wrapper_script_flag=" + flag;
+  private static String debugPortFlag(boolean isTest, int port) {
+    String flag = "--wrapper_script_flag=--debug=" + port;
+    return isTest ? testArg(flag) : flag;
   }
 
   private static String testArg(String flag) {

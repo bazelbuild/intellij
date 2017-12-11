@@ -13,15 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.ijwb.kotlin;
+package com.google.idea.blaze.kotlin;
 
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.model.BlazeLibrary;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.intellij.openapi.roots.libraries.Library;
+import java.util.List;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /** Prevents garbage collection of Kotlin libraries. */
 class BlazeKotlinLibrarySource extends LibrarySource.Adapter {
+  private final BlazeProjectData blazeProjectData;
+
+  BlazeKotlinLibrarySource(BlazeProjectData blazeProjectData) {
+    this.blazeProjectData = blazeProjectData;
+  }
+
   @Nullable
   @Override
   public Predicate<Library> getGcRetentionFilter() {
@@ -30,5 +40,14 @@ class BlazeKotlinLibrarySource extends LibrarySource.Adapter {
       return libraryName != null
           && libraryName.equals(KotlinSdkUtils.KOTLIN_JAVA_RUNTIME_LIBRARY_NAME);
     };
+  }
+
+  @Override
+  public List<? extends BlazeLibrary> getLibraries() {
+    BlazeKotlinSyncData syncData = blazeProjectData.syncState.get(BlazeKotlinSyncData.class);
+    if (syncData == null) {
+      return ImmutableList.of();
+    }
+    return syncData.importResult.libraries.values().asList();
   }
 }

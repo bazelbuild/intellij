@@ -59,6 +59,7 @@ public class SelectBazelBinaryControl {
         FileSelectorWithStoredHistory.create(
             BlazeUserSettingsConfigurable.BAZEL_BINARY_PATH_KEY, "Specify the bazel binary path");
     bazelBinaryPath.setText(getInitialBinaryPath());
+    bazelBinaryPath.setName("bazel-binary-path-field");
 
     component = new JPanel(new VerticalLayout(4));
     component.add(new JLabel("Select a bazel binary"));

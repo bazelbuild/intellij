@@ -19,6 +19,8 @@ import static java.util.stream.Collectors.toList;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -33,6 +35,7 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
+import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -40,7 +43,6 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.ui.UiUtil;
-import com.google.idea.common.concurrency.ConcurrencyUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerIconProvider;
@@ -67,7 +69,6 @@ import com.intellij.util.ui.UIUtil;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.swing.Box;
@@ -215,30 +216,33 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   /**
    * Queries the kind of the current target pattern, possibly asynchronously.
    *
-   * @param callback will be run after the kind is updated (no guarantees whether this happens
-   *     synchronously or not).
+   * @param asyncCallback if the kind is updated asynchronously, this will be run after the kind is
+   *     updated. If it's updated synchronously, this will not be run.
    */
-  public void updateTargetKindAsync(@Nullable Runnable callback) {
+  void updateTargetKindAsync(@Nullable Runnable asyncCallback) {
     TargetExpression expr = parseTarget(targetPattern);
     if (!(expr instanceof Label)) {
       targetKind = null;
-      if (callback != null) {
-        callback.run();
-      }
       return;
     }
-    ConcurrencyUtil.getAppExecutorService()
-        .execute(
-            () -> {
-              updateTargetKind((Label) expr);
-              if (callback != null) {
-                callback.run();
-              }
-            });
+    Label label = (Label) expr;
+    ListenableFuture<TargetInfo> future = TargetFinder.findTargetInfoFuture(getProject(), label);
+    if (future.isDone()) {
+      updateTargetKind(FuturesUtil.getIgnoringErrors(future));
+    } else {
+      updateTargetKind(null);
+      future.addListener(
+          () -> {
+            updateTargetKind(FuturesUtil.getIgnoringErrors(future));
+            if (asyncCallback != null) {
+              asyncCallback.run();
+            }
+          },
+          MoreExecutors.directExecutor());
+    }
   }
 
-  private void updateTargetKind(Label label) {
-    TargetInfo targetInfo = TargetFinder.findTargetInfo(getProject(), label);
+  private void updateTargetKind(@Nullable TargetInfo targetInfo) {
     targetKind = targetInfo != null ? targetInfo.getKind() : null;
     updateHandler();
   }
@@ -462,8 +466,6 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     private final JBLabel targetExpressionLabel;
     private final TextFieldWithAutoCompletion<String> targetField;
 
-    private final AtomicBoolean updateInProgress = new AtomicBoolean(false);
-
     BlazeCommandRunConfigurationSettingsEditor(BlazeCommandRunConfiguration config) {
       Project project = config.getProject();
       targetField =
@@ -524,36 +526,8 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       return editor;
     }
 
-    /**
-     * Runs the {@link Runnable} on the current thread, then unsets 'updateInProgress'.
-     *
-     * @param onlyUpdateOnThrow if true, only unsets 'updateInProgress if there's an uncaught
-     *     exception
-     */
-    private void runThenUpdateInProgress(Runnable runnable, boolean onlyUpdateOnThrow) {
-      try {
-        runnable.run();
-      } catch (Throwable e) {
-        if (onlyUpdateOnThrow) {
-          updateInProgress.set(false);
-        }
-        throw e;
-      } finally {
-        if (!onlyUpdateOnThrow) {
-          updateInProgress.set(false);
-        }
-      }
-    }
-
     @Override
     protected void resetEditorFrom(BlazeCommandRunConfiguration config) {
-      if (!updateInProgress.compareAndSet(false, true)) {
-        return;
-      }
-      runThenUpdateInProgress(() -> doResetEditorFrom(config), false);
-    }
-
-    private void doResetEditorFrom(BlazeCommandRunConfiguration config) {
       elementState = config.elementState.clone();
       updateEditor(config);
       if (config.handlerProvider != handlerProvider) {
@@ -565,13 +539,6 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
     @Override
     protected void applyEditorTo(BlazeCommandRunConfiguration config) {
-      if (!updateInProgress.compareAndSet(false, true)) {
-        return;
-      }
-      runThenUpdateInProgress(() -> doApplyEditorTo(config), true);
-    }
-
-    private void doApplyEditorTo(BlazeCommandRunConfiguration config) {
       handlerStateEditor.applyEditorTo(handler.getState());
       try {
         handler.getState().writeExternal(elementState);
@@ -591,13 +558,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
       // finally, update the handler
       config.targetPattern = Strings.emptyToNull(targetField.getText());
-      config.updateTargetKindAsync(
-          () ->
-              UIUtil.invokeLaterIfNeeded(
-                  () -> runThenUpdateInProgress(() -> updateEditorOnEdt(config), false)));
-    }
-
-    private void updateEditorOnEdt(BlazeCommandRunConfiguration config) {
+      config.updateTargetKindAsync(() -> UIUtil.invokeLaterIfNeeded(this::fireEditorStateChanged));
       updateEditor(config);
       if (config.handlerProvider != handlerProvider) {
         updateHandlerEditor(config);

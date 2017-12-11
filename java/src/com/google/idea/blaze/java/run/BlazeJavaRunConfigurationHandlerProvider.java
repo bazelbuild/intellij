@@ -28,6 +28,7 @@ public class BlazeJavaRunConfigurationHandlerProvider
   private static final ImmutableSet<Kind> RELEVANT_RULE_KINDS =
       ImmutableSet.of(
           Kind.ANDROID_ROBOLECTRIC_TEST,
+          Kind.ANDROID_LOCAL_TEST,
           Kind.JAVA_TEST,
           Kind.JAVA_BINARY,
           Kind.SCALA_BINARY,

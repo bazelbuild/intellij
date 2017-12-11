@@ -16,8 +16,8 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.cidr.CidrStartupActivitiesToSuppress;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
@@ -31,16 +31,11 @@ import com.intellij.openapi.startup.StartupActivity;
  * configuration has been set up. CLwB/ASwB trigger a symbol rebuild after the startup sync.
  */
 public class CidrSymbolBuilderSuppressor implements ApplicationComponent {
-  private static final ImmutableList<Class<? extends StartupActivity>>
-      STARTUP_ACTIVITIES_TO_SUPPRESS =
-          ImmutableList.of(
-              com.jetbrains.cidr.lang.symbols.symtable.OCInitialTablesBuildingActivity.class,
-              com.jetbrains.cidr.modulemap.resolve.ModuleMapInitialBuildingActivity.class);
-
   private void addFiltersToStartupActivities() {
     ExtensionPoint<StartupActivity> ep =
         Extensions.getRootArea().getExtensionPoint(StartupActivity.POST_STARTUP_ACTIVITY);
-    for (Class<? extends StartupActivity> startupActivity : STARTUP_ACTIVITIES_TO_SUPPRESS) {
+    for (Class<? extends StartupActivity> startupActivity :
+        CidrStartupActivitiesToSuppress.STARTUP_ACTIVITIES_TO_SUPPRESS) {
       StartupActivity startupActivityInstance =
           StartupActivity.POST_STARTUP_ACTIVITY.findExtension(startupActivity);
       Preconditions.checkNotNull(startupActivityInstance);

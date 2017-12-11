@@ -14,5 +14,6 @@ java_library(
         "intellij-2017.3.0": ["//sdkcompat/v173"],
         "intellij-ue-2017.3.0": ["//sdkcompat/v173"],
         "clion-2017.2.3": ["//sdkcompat/v172"],
+        "clion-2017.3.0": ["//sdkcompat/v173"],
     }),
 )

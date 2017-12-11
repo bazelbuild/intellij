@@ -150,21 +150,16 @@ public class ExternalFileProjectManagementHelper
     if (projectViewSet == null) {
       return null;
     }
-    boolean inProjectDirectories =
-        sourceInProjectDirectories(project, projectViewSet, workspacePath);
 
-    if (inProjectDirectories
-        && !SourceToTargetMap.getInstance(project).getRulesForSourceFile(file).isEmpty()) {
-      // early-out if source covered by previously built targets *and* in the source directories
+    if (!SourceToTargetMap.getInstance(project).getRulesForSourceFile(file).isEmpty()) {
+      // early-out if source covered by previously built targets
       return null;
     }
     // early-out if source is trivially covered by project targets (e.g. because there's a wildcard
     // target pattern for the parent package)
     List<TargetExpression> projectTargets = projectViewSet.listItems(TargetSection.KEY);
     WorkspacePath blazePackage = findBlazePackagePath(project, parent);
-    if (inProjectDirectories
-        && (blazePackage == null
-            || packageCoveredByWildcardPattern(projectTargets, blazePackage))) {
+    if (blazePackage == null || packageCoveredByWildcardPattern(projectTargets, blazePackage)) {
       return null;
     }
     // Finally, query the exact targets building this source file.
@@ -178,6 +173,9 @@ public class ExternalFileProjectManagementHelper
                           project, workspacePath.relativePath());
                   return filterTargets(syncData.targetMap, projectTargets, result);
                 });
+
+    boolean inProjectDirectories =
+        sourceInProjectDirectories(project, projectViewSet, workspacePath);
 
     EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setVisible(false); // starts off not visible until we get the query results

@@ -21,6 +21,7 @@ java_library(
         ]),
         clion = glob([
             "com/google/idea/sdkcompat/cidr/**",
+            "com/google/idea/sdkcompat/clion/**",
             "com/google/idea/sdkcompat/python/**",
         ]),
         intellij = glob([
