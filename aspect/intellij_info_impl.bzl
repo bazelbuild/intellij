@@ -366,38 +366,26 @@ def collect_cpp_info(target, ctx, ide_info, ide_info_file, output_groups):
   update_set_in_dict(output_groups, "intellij-resolve", resolve_files)
   return True
 
-def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
+def collect_c_toolchain_info(ctx, ide_info, ide_info_file, output_groups):
   """Updates cc_toolchain-relevant output groups, returns false if not a cc_toolchain target."""
   if ctx.rule.kind != "cc_toolchain":
     return False
 
   # This should exist because we requested it in our aspect definition.
   cc_fragment = ctx.fragments.cpp
-  link_options = cc_fragment.link_options
-  unfiltered_compiler_options = cc_fragment.unfiltered_compiler_options(ctx.features)
-
-  toolchain_provider = target[cc_common.CcToolchainInfo];
-  if hasattr(toolchain_provider, "link_options_do_not_use"):
-    link_options = toolchain_provider.link_options_do_not_use
-  if hasattr(toolchain_provider, "unfiltered_compiler_options_do_not_use"):
-    unfiltered_compiler_options = toolchain_provider.unfiltered_compiler_options_do_not_use(ctx.features)
-
-
-  cpp_options = cc_fragment.cxx_options(ctx.features)
-  if hasattr(semantics, "cc"):
-    cpp_options = semantics.cc.augment_toolchain_cxx_options(cpp_options)
 
   c_toolchain_info = struct_omit_none(
       target_name = cc_fragment.target_gnu_system_name,
       base_compiler_option = cc_fragment.compiler_options(ctx.features),
       c_option = cc_fragment.c_options,
-      cpp_option = cpp_options,
-      link_option = link_options,
-      unfiltered_compiler_option = unfiltered_compiler_options,
+      cpp_option = cc_fragment.cxx_options(ctx.features),
+      link_option = cc_fragment.link_options,
+      unfiltered_compiler_option = cc_fragment.unfiltered_compiler_options(ctx.features),
       preprocessor_executable = replace_empty_path_with_dot(
           str(cc_fragment.preprocessor_executable)),
       cpp_executable = str(cc_fragment.compiler_executable),
-      built_in_include_directory = [str(d) for d in toolchain_provider.built_in_include_directories],
+      built_in_include_directory = [str(d)
+                                    for d in cc_fragment.built_in_include_directories],
   )
   ide_info["c_toolchain_ide_info"] = c_toolchain_info
   update_set_in_dict(output_groups, "intellij-info-cpp", depset([ide_info_file]))
@@ -734,7 +722,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
   handled = False
   handled = collect_py_info(target, ctx, ide_info, ide_info_file, output_groups) or handled
   handled = collect_cpp_info(target, ctx, ide_info, ide_info_file, output_groups) or handled
-  handled = collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
+  handled = collect_c_toolchain_info(ctx, ide_info, ide_info_file, output_groups) or handled
   handled = collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
   handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
   handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
