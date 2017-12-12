@@ -27,6 +27,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestRunLineMarkerProvider;
@@ -125,6 +126,9 @@ public class BlazeScalaTestRunLineMarkerContributor extends ScalaTestRunLineMark
   private static String getSpecs2TestUrl(ScClass testClass, ScInfixExpr testCase) {
     String name = null;
     String protocol = null;
+    if (testClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return null;
+    }
     if (TestNodeProvider.isSpecs2ScopeExpr(testCase)) {
       protocol = SmRunnerUtils.GENERIC_SUITE_PROTOCOL;
       name = Specs2Utils.getSpecs2ScopeName(testCase);
