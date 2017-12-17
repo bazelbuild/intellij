@@ -399,6 +399,10 @@ def get_java_provider(target):
     return target.java
   if hasattr(target, "scala"):
     return target.scala
+  # The seconds condition validates that the kotlin rules are recent enough and contain suitable info.
+  if hasattr(target, "kt") and hasattr(target.kt,"outputs"):
+    return target.kt
+
   # java_common.provider is a work in progress. It will soon expose the information
   # we require (e.g. outputs jars, jdeps), but does not yet do so.
   if java_common.provider in target:

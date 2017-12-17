@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.kotlin.sync.importer;
+package com.google.idea.blaze.kotlin;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -27,12 +27,10 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
-import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinImportResult;
 import com.intellij.openapi.project.Project;
 
 import java.util.List;

@@ -15,20 +15,30 @@
  */
 package com.google.idea.blaze.kotlin;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.WorkingSet;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -56,73 +66,93 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
         : ImmutableList.of();
   }
 
-  @Override
-  public void updateProjectStructure(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData,
-      @Nullable BlazeProjectData oldBlazeProjectData,
-      ModuleEditor moduleEditor,
-      Module workspaceModule,
-      ModifiableRootModel workspaceModifiableModel) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
-      return;
+    @Override
+    public void updateProjectStructure(
+            Project project,
+            BlazeContext context,
+            WorkspaceRoot workspaceRoot,
+            ProjectViewSet projectViewSet,
+            BlazeProjectData blazeProjectData,
+            @Nullable BlazeProjectData oldBlazeProjectData,
+            ModuleEditor moduleEditor,
+            Module workspaceModule,
+            ModifiableRootModel workspaceModifiableModel) {
+        if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
+            return;
+        }
+
+        Optional<Library> kotlinJavaRuntimeLibrary = KotlinSdkUtils.findKotlinJavaRuntime(project);
+
+        if (kotlinJavaRuntimeLibrary.isPresent()) {
+            if (workspaceModifiableModel.findLibraryOrderEntry(kotlinJavaRuntimeLibrary.get()) == null) {
+                workspaceModifiableModel.addLibraryEntry(kotlinJavaRuntimeLibrary.get());
+            }
+        } else {
+            // since the runtime library was not found remove the kotlin-runtime ijar if present -- it prevents the kotlin plugin from kicking in and offering
+            // to setup the kotlin std library.
+            Optional<Library> ijar = KotlinSdkUtils.findKotlinJavaRuntimeIjar(project);
+            if(ijar.isPresent()) {
+                LibraryOrderEntry libraryOrderEntry = workspaceModifiableModel.findLibraryOrderEntry(ijar.get());
+                if(libraryOrderEntry != null) {
+                    workspaceModifiableModel.removeOrderEntry(libraryOrderEntry);
+                }
+            } else {
+                IssueOutput.error("Could not setup the Kotlin JVM runtime library entry.").submit(context);
+            }
+        }
     }
 
-    Library kotlinJavaRuntimeLibrary = KotlinSdkUtils.findKotlinJavaRuntime(project);
-    if (kotlinJavaRuntimeLibrary != null) {
-      if (workspaceModifiableModel.findLibraryOrderEntry(kotlinJavaRuntimeLibrary) == null) {
-        workspaceModifiableModel.addLibraryEntry(kotlinJavaRuntimeLibrary);
-      }
-    } else {
-      // since the runtime library was not found remove the kotlin-runtime ijar if present -- it
-      // prevents the kotlin plugin from kicking in and offering to setup the kotlin std library.
-      removeKotlinRuntimeIjar(project, workspaceModifiableModel);
-      IssueOutput.error(
-              "Kotlin JVM runtime libraries not found in workspace libraries, setup the Kotlin "
-                  + "plugin.")
-          .submit(context);
+    @Override
+    public boolean validate(Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
+        if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
+            return true;
+        }
+        if (!PluginUtils.isPluginEnabled(KOTLIN_PLUGIN_ID)) {
+            IssueOutput.error("The Kotlin plugin is required for Kotlin support. Click here to install/enable the plugin and restart")
+                    .navigatable(PluginUtils.installOrEnablePluginNavigable(KOTLIN_PLUGIN_ID))
+                    .submit(context);
+            return false;
+        }
+        return true;
     }
-  }
 
-  private static void removeKotlinRuntimeIjar(
-      Project project, ModifiableRootModel workspaceModifiableModel) {
-    Library ijar = KotlinSdkUtils.findKotlinJavaRuntimeIjar(project);
-    if (ijar == null) {
-      return;
+    @Nullable
+    @Override
+    public LibrarySource getLibrarySource(ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
+        if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
+            return null;
+        }
+        return new BlazeKotlinLibrarySource(blazeProjectData);
     }
-    LibraryOrderEntry entry = workspaceModifiableModel.findLibraryOrderEntry(ijar);
-    if (entry != null) {
-      workspaceModifiableModel.removeOrderEntry(entry);
-    }
-  }
 
-  @Override
-  public boolean validate(
-      Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
-      return true;
-    }
-    if (!PluginUtils.isPluginEnabled(KOTLIN_PLUGIN_ID)) {
-      IssueOutput.error(
-              "The Kotlin plugin is required for Kotlin support. Click here to install/enable the "
-                  + "plugin and restart")
-          .navigatable(PluginUtils.installOrEnablePluginNavigable(KOTLIN_PLUGIN_ID))
-          .submit(context);
-      return false;
-    }
-    return true;
-  }
+    @Override
+    public void updateSyncState(
+            Project project,
+            BlazeContext context,
+            WorkspaceRoot workspaceRoot,
+            ProjectViewSet projectViewSet,
+            WorkspaceLanguageSettings workspaceLanguageSettings,
+            BlazeInfo blazeInfo,
+            @Nullable WorkingSet workingSet,
+            WorkspacePathResolver workspacePathResolver,
+            ArtifactLocationDecoder artifactLocationDecoder,
+            TargetMap targetMap,
+            SyncState.Builder syncStateBuilder,
+            @Nullable SyncState previousSyncState) {
+        if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
+            return;
+        }
+        BlazeKotlinWorkspaceImporter blazeKotlinWorkspaceImporter =
+                new BlazeKotlinWorkspaceImporter(project, context, workspaceRoot, projectViewSet, targetMap);
+        BlazeKotlinImportResult importResult =
+                Scope.push(
+                        context,
+                        (childContext) -> {
+                            childContext.push(new TimingScope("KotlinWorkspaceImporter", TimingScope.EventType.Other));
+                            return blazeKotlinWorkspaceImporter.importWorkspace();
+                        });
 
-  @Nullable
-  @Override
-  public LibrarySource getLibrarySource(
-      ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
-      return null;
+        BlazeKotlinSyncData syncData = new BlazeKotlinSyncData(importResult);
+        syncStateBuilder.put(BlazeKotlinSyncData.class, syncData);
     }
-    return new BlazeKotlinLibrarySource(blazeProjectData);
-  }
 }
