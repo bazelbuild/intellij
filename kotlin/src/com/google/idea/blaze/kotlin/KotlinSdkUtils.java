@@ -15,29 +15,27 @@
  */
 package com.google.idea.blaze.kotlin;
 
+import com.google.common.base.Optional;
+import com.google.common.collect.Iterators;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
-import java.util.Arrays;
+
+import java.util.Iterator;
 
 /** Utility methods for Kotlin project library handling. */
-class KotlinSdkUtils {
-  static final String KOTLIN_JAVA_RUNTIME_LIBRARY_NAME = "KotlinJavaRuntime";
+public final class KotlinSdkUtils {
+    public static final String KOTLIN_JAVA_RUNTIME_LIBRARY_NAME = "KotlinJavaRuntime";
 
-  static Library findKotlinJavaRuntime(Project project) {
-    return ProjectLibraryTable.getInstance(project)
-        .getLibraryByName(KOTLIN_JAVA_RUNTIME_LIBRARY_NAME);
-  }
+    public static Optional<Library> findKotlinJavaRuntime(Project project) {
+        return Optional.fromNullable(ProjectLibraryTable.getInstance(project).getLibraryByName(KOTLIN_JAVA_RUNTIME_LIBRARY_NAME));
+    }
 
-  static Library findKotlinJavaRuntimeIjar(Project project) {
-    return Arrays.stream(ProjectLibraryTable.getInstance(project).getLibraries())
-        .filter(KotlinSdkUtils::isKotlinIjarLibrary)
-        .findFirst()
-        .orElse(null);
-  }
-
-  private static boolean isKotlinIjarLibrary(Library library) {
-    String name = library.getName();
-    return name != null && name.startsWith("kotlin-runtime-ijar");
-  }
+    public static Optional<Library> findKotlinJavaRuntimeIjar(Project project) {
+        Iterator<Library> libraryIterator = ProjectLibraryTable.getInstance(project).getLibraryIterator();
+        return Iterators.tryFind(libraryIterator, l -> {
+            String libName = l.getName();
+            return libName != null && libName.startsWith("kotlin-runtime-ijar");
+        });
+    }
 }
