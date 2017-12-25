@@ -259,7 +259,7 @@ public final class BuildPluginBeforeRunTaskProvider
                   .submitTaskWithResult(buildTask);
 
           try {
-            Futures.get(buildFuture, ExecutionException.class);
+            Futures.getChecked(buildFuture, ExecutionException.class);
           } catch (ExecutionException e) {
             context.setHasError();
           } catch (CancellationException e) {
