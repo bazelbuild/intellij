@@ -24,6 +24,6 @@ Detailed docs are available [here](http://ij.bazel.build).
 
 ## Building the plugin
 
-Install Bazel, then run `bazel build //ijwb:ijwb_bazel --define=ij_product=intellij-latest`
-from the project root. This will create a plugin jar in
-`bazel-genfiles/ijwb/ijwb_bazel.jar`.
+Install Bazel, then run `bazel build //ijwb:ijwb_bazel_zip --define=ij_product=intellij-latest`
+from the project root. This will create a plugin zip in
+`bazel-bin/ijwb/ijwb_bazel.zip`.
