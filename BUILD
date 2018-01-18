@@ -27,6 +27,8 @@ test_suite(
         "//python:unit_tests",
         "//scala:integration_tests",
         "//scala:unit_tests",
+        "//kotlin:unit_tests",
+        "//kotlin:integration_tests",
     ],
 )
 

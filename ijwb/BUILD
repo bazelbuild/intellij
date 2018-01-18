@@ -30,9 +30,9 @@ merged_plugin_xml(
         "//base:plugin_xml",
         "//golang:plugin_xml",
         "//java:plugin_xml",
-        "//kotlin:plugin_xml",
         "//python:plugin_xml",
         "//scala:plugin_xml",
+        "//kotlin:plugin_xml",
     ],
 )
 
@@ -84,8 +84,9 @@ OPTIONAL_PLUGIN_XMLS = [
     "//java:optional_coverage",
     "//plugin_dev:optional_xml",
     "//python:optional_xml",
-    "//scala:optional_xml",
     "//terminal:optional_xml",
+    "//scala:optional_xml",
+    "//kotlin:optional_xml"
 ]
 
 intellij_plugin(

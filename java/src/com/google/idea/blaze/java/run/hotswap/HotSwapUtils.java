@@ -37,7 +37,7 @@ public final class HotSwapUtils {
       new BoolExperiment("java.hotswapping.enabled", true);
 
   private static final ImmutableList<Kind> SUPPORTED_BINARIES =
-      ImmutableList.of(Kind.JAVA_BINARY, Kind.SCALA_BINARY);
+      ImmutableList.of(Kind.JAVA_BINARY, Kind.SCALA_BINARY, Kind.KOTLIN_BINARY);
 
   public static boolean canHotSwap(ExecutionEnvironment env) {
     if (!isDebugging(env) || !enableHotSwapping.getValue()) {

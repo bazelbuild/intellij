@@ -31,14 +31,14 @@ import com.intellij.psi.PsiFile;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
+
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /** Variant of the built-in position manager which handles files outside the project. */
 class ExternalFilePositionManager extends PositionManagerImpl {
-
   private final Map<String, PsiFile> qualifiedNameToPsiFile = new HashMap<>();
 
   ExternalFilePositionManager(DebugProcessImpl debugProcess) {
@@ -56,11 +56,17 @@ class ExternalFilePositionManager extends PositionManagerImpl {
     return refType != null ? qualifiedNameToPsiFile.get(refType.name()) : null;
   }
 
+
   @Override
   public List<ClassPrepareRequest> createPrepareRequests(
       ClassPrepareRequestor requestor, SourcePosition position) throws NoDataException {
+    List<ClassPrepareRequest> prepareRequests = super.createPrepareRequests(requestor, position);
+    // PrepareRequests returns an empty list for Kotlin sources. Returning this blocks the KotlinManager from contributing.
+    if(prepareRequests.isEmpty()) {
+      throw NoDataException.INSTANCE;
+    }
     indexQualifiedClassNames(position.getFile());
-    return super.createPrepareRequests(requestor, position);
+    return prepareRequests;
   }
 
   @Override

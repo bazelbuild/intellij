@@ -399,6 +399,10 @@ def get_java_provider(target):
     return target.java
   if hasattr(target, "scala"):
     return target.scala
+  # The seconds condition validates that the kotlin rules are recent enough and contain suitable info.
+  if hasattr(target, "kt") and hasattr(target.kt,"outputs"):
+      return target.kt
+
   # java_common.provider is a work in progress. It will soon expose the information
   # we require (e.g. outputs jars, jdeps), but does not yet do so.
   if java_common.provider in target:
@@ -539,6 +543,7 @@ def build_filtered_gen_jar(ctx, target, java, gen_java_sources, srcjars):
   if srcjars:
     for source_jar in srcjars:
       args += ["--keep_source_jar", source_jar.path]
+
   ctx.action(
       inputs = jar_artifacts + source_jar_artifacts + gen_java_sources + srcjars,
       outputs = [filtered_jar, filtered_source_jar],
