@@ -33,7 +33,9 @@ public class BlazeJavaRunConfigurationHandlerProvider
           Kind.JAVA_BINARY,
           Kind.SCALA_BINARY,
           Kind.SCALA_TEST,
-          Kind.SCALA_JUNIT_TEST);
+          Kind.SCALA_JUNIT_TEST,
+          Kind.KOTLIN_BINARY,
+          Kind.KOTLIN_TEST);
 
   static boolean supportsKind(Kind kind) {
     return RELEVANT_RULE_KINDS.contains(kind);

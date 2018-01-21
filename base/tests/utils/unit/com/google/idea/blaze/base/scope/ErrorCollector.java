@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.scope;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import java.util.List;
@@ -33,6 +34,14 @@ public class ErrorCollector implements OutputSink<IssueOutput> {
 
   public void assertNoIssues() {
     assertThat(issues).isEmpty();
+  }
+
+  public List<IssueOutput> issuesOf(IssueOutput.Category category) {
+    return issues.stream().filter(i -> i.getCategory().equals(category)).collect(ImmutableList.toImmutableList());
+  }
+
+  public void assertNoIssuesOf(IssueOutput.Category category) {
+    assertThat(issuesOf(category)).isEmpty();
   }
 
   public void assertIssues(String... requiredMessages) {
