@@ -198,7 +198,7 @@ new_http_archive(
 new_http_archive(
     name = "kotlin_2017_3",
     build_file_content = KOTLIN_BUILD_FILE_CONTENT,
-    url = "https://d1n3kg4j1bkixe.cloudfront.net/files/6954/42315/kotlin-plugin-1.2.20-release-IJ2017.3-1.zip",
+    url = "https://plugins.jetbrains.com/files/6954/42315/kotlin-plugin-1.2.20-release-IJ2017.3-1.zip",
     sha256 = "8625a05170547c4f250c5e78854f7521c93ab3c224d9d32c11851a9c7f8e4aee"
 )
 

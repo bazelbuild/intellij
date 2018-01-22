@@ -139,7 +139,7 @@ public class BlazeKotlinSyncPlugin extends BlazeKotlinBaseSyncPlugin {
 
     @Nullable
     @Override
-    public LibrarySource getLibrarySource(ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
+    public LibrarySource getLibrarySource(ProjectViewSet projectViewSet, final BlazeProjectData blazeProjectData) {
         if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
             return null;
         }
