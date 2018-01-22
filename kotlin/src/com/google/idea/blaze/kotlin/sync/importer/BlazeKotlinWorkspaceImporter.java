@@ -17,106 +17,82 @@ package com.google.idea.blaze.kotlin.sync.importer;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
-import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
-import com.google.idea.blaze.kotlin.sync.BlazeKotlinLibrarySource;
-import com.google.idea.blaze.kotlin.sync.BlazeKotlinSections;
-import com.google.idea.blaze.kotlin.sync.BlazeKotlinStdLib;
 import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinImportResult;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 public class BlazeKotlinWorkspaceImporter {
-    private final Project project;
-    @SuppressWarnings({"unused", "FieldCanBeLocal"})
-    private final BlazeContext context;
-    private final WorkspaceRoot workspaceRoot;
-    private final ProjectViewSet projectViewSet;
     private final TargetMap targetMap;
+    private final ProjectViewTargetImportFilter importFilter;
 
     public BlazeKotlinWorkspaceImporter(
             Project project,
-            BlazeContext context,
             WorkspaceRoot workspaceRoot,
             ProjectViewSet projectViewSet,
             TargetMap targetMap) {
-        this.project = project;
-        this.context = context;
-        this.workspaceRoot = workspaceRoot;
-        this.projectViewSet = projectViewSet;
         this.targetMap = targetMap;
+        importFilter = new ProjectViewTargetImportFilter(project, workspaceRoot, projectViewSet);
     }
 
-    @SuppressWarnings("Duplicates")
     public BlazeKotlinImportResult importWorkspace() {
+        HashMap<LibraryKey, BlazeJarLibrary> libraries = new HashMap<>();
+        HashMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> targetLibraryMap = new HashMap<>();
+
+        collectTransitiveLibsFromKotlinSourceTargets(libraries, targetLibraryMap);
+
         return new BlazeKotlinImportResult(
-                collectLibraryFromKotlinTargets(),
-                compileKotlinStdLibs()
-        );
+                ImmutableList.copyOf(libraries.values()),
+                ImmutableMap.copyOf(targetLibraryMap));
     }
 
-    // JavaLike Language support probably takes care of the work below -- this was a verbatim copy of the scala plugin.
-    // This method might still be needed for turning ijars into jars to get inlining code inteligence working, in this case it would filter more aggressively.
-    @SuppressWarnings("Duplicates")
-    @NotNull
-    private ImmutableMap<LibraryKey, BlazeJarLibrary> collectLibraryFromKotlinTargets() {
-        ProjectViewTargetImportFilter importFilter = new ProjectViewTargetImportFilter(project, workspaceRoot, projectViewSet);
-        List<TargetKey> kotlinSourceTargets =
-                targetMap
-                        .targets().stream()
-                        .filter(target -> target.kind.languageClass.equals(LanguageClass.KOTLIN))
-                        .filter(importFilter::isSourceTarget)
-                        .map(target -> target.key)
-                        .collect(Collectors.toList());
-        Map<LibraryKey, BlazeJarLibrary> libraries = Maps.newHashMap();
+    private void collectTransitiveLibsFromKotlinSourceTargets(
+            HashMap<LibraryKey, BlazeJarLibrary> libraries,
+            HashMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> targetLibraryMap
+    ) {
+        List<BlazeJarLibrary> scratchLibSet = new ArrayList<>();
 
-        // Add every jar in the transitive closure of dependencies.
-        // Direct dependencies of the working set will be double counted by BlazeJavaWorkspaceImporter,
-        // but since they'll all merged into one set, we will end up with exactly one of each.
-        for (TargetKey dependency : TransitiveDependencyMap.getTransitiveDependencies(kotlinSourceTargets, targetMap)) {
-            TargetIdeInfo target = targetMap.get(dependency);
-            if (target == null) {
-                continue;
-            }
-            // Except source targets.
-            if (importFilter.isSourceTarget(target) && JavaSourceFilter.canImportAsSource(target)) {
-                continue;
-            }
-            if (target.javaIdeInfo != null) {
-                target
-                        .javaIdeInfo
-                        .jars.stream()
-                        .map(BlazeJarLibrary::new)
-                        .forEach(library -> libraries.putIfAbsent(library.key, library));
-            }
-        }
-        return ImmutableMap.copyOf(libraries);
+        targetMap
+                .targets().stream()
+                .filter(target -> target.kind.languageClass.equals(LanguageClass.KOTLIN))
+                .filter(importFilter::isSourceTarget)
+                .forEach(ideInfo -> withTransitiveTargets(ideInfo).forEach(depIdeInfo -> {
+                    scratchLibSet.clear();
+                    depIdeInfo.javaIdeInfo.jars.stream().map(BlazeJarLibrary::new).forEach(depJar -> {
+                        libraries.putIfAbsent(depJar.key, depJar);
+                        scratchLibSet.add(depJar);
+                    });
+                    if (depIdeInfo.kind.languageClass == LanguageClass.KOTLIN) {
+                        targetLibraryMap.put(depIdeInfo, ImmutableList.copyOf(scratchLibSet));
+                    }
+                }));
     }
 
-    /**
-     * Returns the mandatory stdlibs merged with any additional stdlibs set by the user. These are the put in the library table and injected into the sync
-     * model via {@link BlazeKotlinLibrarySource}.
-     */
-    // A kotlin toolchain would be a better mechanism for this.
-    private ImmutableList<BlazeKotlinStdLib> compileKotlinStdLibs() {
-        ImmutableList.Builder<BlazeKotlinStdLib> builder = ImmutableList.builder();
-        builder.addAll(BlazeKotlinStdLib.MANDATORY_STDLIBS.values());
-        builder.addAll(BlazeKotlinSections.getAdditionalStdLibs(projectViewSet));
-        return builder.build();
+    @Nonnull
+    private Stream<TargetIdeInfo> withTransitiveTargets(TargetIdeInfo target) {
+        return Stream.concat(
+                Stream.of(target),
+                TransitiveDependencyMap.getTransitiveDependencies(target.key, targetMap).stream()
+                        .map(depTarget -> {
+                            TargetIdeInfo depInfo = targetMap.get(depTarget);
+                            return depInfo != null &&
+                                    depInfo.javaIdeInfo != null ?
+                                    depInfo : null;
+                        }).filter(Objects::nonNull));
     }
 }

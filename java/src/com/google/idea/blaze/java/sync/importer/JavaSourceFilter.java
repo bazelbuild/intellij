@@ -125,7 +125,7 @@ public class JavaSourceFilter {
   }
 
   private static boolean canImportAsSource(TargetIdeInfo target) {
-    return !target.kindIsOneOf(Kind.JAVA_WRAP_CC, Kind.JAVA_IMPORT, Kind.SCALA_IMPORT);
+    return !target.kindIsOneOf(Kind.JAVA_WRAP_CC, Kind.JAVA_IMPORT, Kind.SCALA_IMPORT, Kind.KOTLIN_STDLIB, Kind.KOTLIN_IMPORT);
   }
 
   private static boolean anyNonGeneratedSources(Collection<ArtifactLocation> sources) {

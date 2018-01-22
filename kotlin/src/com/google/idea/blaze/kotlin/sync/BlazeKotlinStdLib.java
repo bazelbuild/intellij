@@ -16,36 +16,31 @@
 package com.google.idea.blaze.kotlin.sync;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.kotlin.BlazeKotlin;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.vfs.VfsUtil;
-import org.jetbrains.kotlin.idea.framework.CommonLibraryKind;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.File;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.google.idea.blaze.kotlin.BlazeKotlin.COMPILER_WORKSPACE_NAME;
 
 
 public enum BlazeKotlinStdLib {
-    STDLIB("stdlib", true),
-    STDLIB_JDK7("stdlib-jdk7", true),
-    STDLIB_JDK8("stdlib-jdk8", true),
-    REFLECT("reflect", false),
-    TEST("test", false);
+    STDLIB("kotlin-stdlib", true),
+    STDLIB_JDK7("kotlin-stdlib-jdk7", true),
+    STDLIB_JDK8("kotlin-stdlib-jdk8", true),
+    REFLECT("kotlin-reflect", false),
+    TEST("kotlin-test", false);
 
     public final String id;
 
@@ -61,49 +56,22 @@ public enum BlazeKotlinStdLib {
         this.mandatory = mandatory;
     }
 
-    static final ImmutableMap<String, BlazeKotlinStdLib> OPTIONAL_STDLIBS =
-            libsMatching(lib -> !lib.mandatory).collect(ImmutableMap.toImmutableMap(lib -> lib.id, lib -> lib));
-
-    public static final ImmutableMap<String, BlazeKotlinStdLib> MANDATORY_STDLIBS =
-            libsMatching(lib -> lib.mandatory).collect(ImmutableMap.toImmutableMap(lib -> lib.id, lib -> lib));
-
-    public static final Predicate<String> isKotlinStdLibIjar =
-            Pattern.compile("kotlin-(?:runtime-|stdlib-)(?:[^-]+-)?(?:\\d+.\\d+.\\d+-)?ijar.*").asPredicate();
-
-    @SuppressWarnings("SameParameterValue")
-    static Library prepareIJLibrarySet(
-            LibraryTable.ModifiableModel modifiableTable,
-            Path root,
-            boolean includeClasses,
-            Collection<BlazeKotlinStdLib> libs
-    ) throws Exception {
-        final Path libRoot = root.resolve("lib");
-        Library libRef = modifiableTable.createLibrary("KotlinJavaRuntime", CommonLibraryKind.INSTANCE);
-        Library.ModifiableModel modifiableLibrary = libRef.getModifiableModel();
-
-        try {
-            libs.stream().map(lib -> lib.id).forEach(libId -> {
-                if (includeClasses) {
-                    validateAddRoot(modifiableLibrary, libRoot, "kotlin-" + libId + ".jar", OrderRootType.CLASSES);
-                }
-                validateAddRoot(modifiableLibrary, libRoot, "kotlin-" + libId + "-sources.jar", OrderRootType.SOURCES);
-            });
-        } catch (RuntimeException rte) {
-            throw new Exception(rte.getMessage());
-        }
-
-        modifiableLibrary.commit();
-        modifiableTable.commit();
-        return libRef;
+    String getClassJarFileName() {
+        return id + ".jar";
     }
 
-    private static void validateAddRoot(Library.ModifiableModel library, Path root, String libFileName, OrderRootType type) throws RuntimeException {
-        File libraryFile = root.resolve(libFileName).toFile();
-        if (!libraryFile.exists() || !libraryFile.isFile()) {
-            throw new RuntimeException("kotlin stdlib " + libFileName + " not available or invalid.");
-        }
-        library.addRoot(VfsUtil.getUrlForLibraryRoot(libraryFile), type);
+    String getSourceJarFileName() {
+        return id + "-sources.jar";
     }
+
+    String externalWorkspaceRelativeLibPath(Supplier<String> jarName) {
+        return Paths.get("lib", jarName.get()).toString();
+    }
+
+    static final String COMPILER_WORKSPACE_PATH = Paths.get("external", COMPILER_WORKSPACE_NAME).toString();
+
+    public static final ImmutableList<BlazeKotlinStdLib> MANDATORY_STDLIBS =
+            libsMatching(lib -> lib.mandatory).collect(ImmutableList.toImmutableList());
 
     private static Stream<BlazeKotlinStdLib> libsMatching(Predicate<BlazeKotlinStdLib> predicate) {
         return Arrays.stream(BlazeKotlinStdLib.values()).filter(predicate);
@@ -115,22 +83,35 @@ public enum BlazeKotlinStdLib {
                 .setIsExternal(true);
     }
 
-    static ImmutableList<BlazeJarLibrary> prepareBlazeLibraries(@Nullable Collection<BlazeKotlinStdLib> libs) {
-        String root = "external/" + COMPILER_WORKSPACE_NAME;
+    public static boolean isStdLib(TargetIdeInfo target) {
+        final Label label = target.key.label;
+        return target.kind == Kind.KOTLIN_STDLIB &&
+                label.externalWorkspaceName() != null &&
+                label.externalWorkspaceName().equals(COMPILER_WORKSPACE_NAME);
+    }
 
+    public static ImmutableList<BlazeJarLibrary> prepareBlazeLibraries(@Nullable Collection<BlazeKotlinStdLib> libs) {
         // for some reason this could be null in the prefetch stage.
-        if(libs == null) {
+        if (libs == null) {
             return ImmutableList.of();
         }
 
         return libs.stream()
-                .map(x -> x.id).map(id -> {
+                .map(lib -> {
                     LibraryArtifact.Builder libBuilder = LibraryArtifact.builder();
-                    libBuilder.setClassJar(createExternalArtifactBuilder(root).setRelativePath("lib/kotlin-" + id + ".jar").setIsSource(false).build());
-                    // RFC: The kotlin plugin is unaware of sources addded this way. This is why we need to build an entry in the library table.
-                    libBuilder.addSourceJar(createExternalArtifactBuilder(root).setRelativePath("lib/kotlin-" + id + "-sources.jar").setIsSource(true).build());
+                    libBuilder.setClassJar(
+                            createExternalArtifactBuilder(COMPILER_WORKSPACE_PATH)
+                                    .setRelativePath(lib.externalWorkspaceRelativeLibPath(lib::getClassJarFileName))
+                                    .setIsSource(false)
+                                    .build()
+                    );
+                    libBuilder.addSourceJar(
+                            createExternalArtifactBuilder(COMPILER_WORKSPACE_PATH)
+                                    .setRelativePath(lib.externalWorkspaceRelativeLibPath(lib::getSourceJarFileName))
+                                    .setIsSource(true)
+                                    .build()
+                    );
                     return new BlazeJarLibrary(libBuilder.build());
-                })
-                .collect(ImmutableList.toImmutableList());
+                }).collect(ImmutableList.toImmutableList());
     }
 }

@@ -97,10 +97,13 @@ public class BlazeKotlinRunConfigurationProducer extends BlazeRunConfigurationPr
                 .findFirst();
     }
 
+    /**
+     * Cached map of candidate binary targets for kotlin. Includes both Java and Kotlin target types.
+     */
     private static Map<Label, TargetIdeInfo> findKotlinBinaryTargets(Project project) {
         return SyncCache.getInstance(project).get(KOTLIN_BINARY_MAP_KEY, (proj, data) ->
                 data.targetMap.targets().stream()
-                        .filter(x -> x.kind == Kind.KOTLIN_BINARY)
+                        .filter(x -> x.kind == Kind.KOTLIN_BINARY || x.kind == Kind.JAVA_BINARY)
                         .collect(Collectors.toMap(x -> x.key.label, x -> x))
         );
     }

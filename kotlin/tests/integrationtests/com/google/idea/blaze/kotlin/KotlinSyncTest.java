@@ -140,6 +140,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
                 new WorkspacePath("src/main/kotlin/com/google/Other.kt"),
                 "package com.google;",
                 "public class Other {}");
+        workspace.createDirectory(new WorkspacePath("external/com_github_jetbrains_kotlin"));
 
         TargetMap targetMap =
                 TargetMapBuilder.builder()
@@ -149,7 +150,8 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
                                         .setLabel("//src/main/kotlin/com/google:lib")
                                         .setKind("kotlin_library")
                                         .addSource(sourceRoot("src/main/kotlin/com/google/Source.kotlin"))
-                                        .addSource(sourceRoot("src/main/kotlin/com/google/Other.kotlin")))
+                                        .addSource(sourceRoot("src/main/kotlin/com/google/Other.kotlin"))
+                                        .setJavaInfo(JavaIdeInfo.builder()))
                         .build();
 
         setTargetMap(targetMap);

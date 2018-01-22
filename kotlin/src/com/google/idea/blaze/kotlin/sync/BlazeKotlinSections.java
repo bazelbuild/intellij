@@ -19,53 +19,19 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
-import com.google.idea.blaze.base.projectview.section.*;
+import com.google.idea.blaze.base.projectview.section.ScalarSection;
+import com.google.idea.blaze.base.projectview.section.ScalarSectionParser;
+import com.google.idea.blaze.base.projectview.section.SectionKey;
+import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.kotlin.BlazeKotlin;
 import org.jetbrains.kotlin.config.LanguageVersion;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.stream.Collectors;
 
 public final class BlazeKotlinSections {
     private static final SectionKey<LanguageVersion, ScalarSection<LanguageVersion>>
             LANGUAGE_VERSION = new SectionKey<>("kotlin_language_version");
-    private static final SectionKey<BlazeKotlinStdLib, ListSection<BlazeKotlinStdLib>>
-            ADDITIONAL_STDLIBS = SectionKey.of("kotlin_additional_stdlibs");
-
-    private static final ListSectionParser<BlazeKotlinStdLib> ADDITIONAL_STDLIBS_PARSER = new ListSectionParser<BlazeKotlinStdLib>(ADDITIONAL_STDLIBS) {
-        final String VALID_LIBS = BlazeKotlinStdLib.OPTIONAL_STDLIBS.keySet().stream().collect(Collectors.joining(",", "(", ")"));
-
-        @Nullable
-        @Override
-        protected BlazeKotlinStdLib parseItem(ProjectViewParser parser, ParseContext parseContext) {
-            String libId = parseContext.current().text.trim();
-            if (libId.isEmpty()) {
-                return null;
-            }
-            BlazeKotlinStdLib blazeKotlinStdLib = BlazeKotlinStdLib.OPTIONAL_STDLIBS.get(libId);
-            if (blazeKotlinStdLib == null) {
-                parseContext.addError(libId + " is not a support stdlib chose from " + VALID_LIBS + ".");
-                return null;
-            }
-            return blazeKotlinStdLib;
-        }
-
-        @Override
-        protected void printItem(BlazeKotlinStdLib item, StringBuilder sb) {
-            sb.append(item.id);
-        }
-
-        @Override
-        public ItemType getItemType() {
-            return ItemType.Other;
-        }
-
-        @Override
-        public String quickDocs() {
-            return "The additional kotlin standard libraries to make available from the kotlin compiler distribution used in the project";
-        }
-    };
 
     private static final ScalarSectionParser<LanguageVersion> LANGUAGE_VERSION_PARSER = new ScalarSectionParser<LanguageVersion>(LANGUAGE_VERSION, ':') {
         @Nullable
@@ -97,16 +63,9 @@ public final class BlazeKotlinSections {
         }
     };
 
-    static final ImmutableList<SectionParser> PARSERS = ImmutableList.of(
-            LANGUAGE_VERSION_PARSER,
-            ADDITIONAL_STDLIBS_PARSER
-    );
+    static final ImmutableList<SectionParser> PARSERS = ImmutableList.of(LANGUAGE_VERSION_PARSER);
 
     public static LanguageVersion getLanguageLevel(ProjectViewSet projectViewSet) {
         return projectViewSet.getScalarValue(LANGUAGE_VERSION).orElse(BlazeKotlin.DEFAULT_LANGUAGE_VERSION);
-    }
-
-    public static ImmutableList<BlazeKotlinStdLib> getAdditionalStdLibs(ProjectViewSet projectViewSet) {
-        return projectViewSet.listItems(ADDITIONAL_STDLIBS).stream().distinct().collect(ImmutableList.toImmutableList());
     }
 }

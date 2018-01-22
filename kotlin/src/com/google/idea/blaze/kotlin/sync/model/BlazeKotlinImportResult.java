@@ -17,9 +17,8 @@ package com.google.idea.blaze.kotlin.sync.model;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.base.model.LibraryKey;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
-import com.google.idea.blaze.kotlin.sync.BlazeKotlinStdLib;
 
 import javax.annotation.concurrent.Immutable;
 import java.io.Serializable;
@@ -31,11 +30,13 @@ import java.io.Serializable;
 public class BlazeKotlinImportResult implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public final ImmutableMap<LibraryKey, BlazeJarLibrary> libraries;
-    public final ImmutableList<BlazeKotlinStdLib> stdLibs;
+    public final ImmutableList<BlazeJarLibrary> libraries;
+    public final ImmutableMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> kotlinTargetToLibraryMap;
 
-    public BlazeKotlinImportResult(ImmutableMap<LibraryKey, BlazeJarLibrary> libraries, ImmutableList<BlazeKotlinStdLib> stdLibs) {
+    public BlazeKotlinImportResult(
+            ImmutableList<BlazeJarLibrary> libraries,
+            ImmutableMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> targetToLibraryMap) {
         this.libraries = libraries;
-        this.stdLibs = stdLibs;
+        this.kotlinTargetToLibraryMap = targetToLibraryMap;
     }
 }

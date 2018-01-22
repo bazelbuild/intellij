@@ -15,11 +15,17 @@
  */
 package com.google.idea.blaze.kotlin.sync;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.plugin.PluginUtils;
@@ -35,6 +41,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.kotlin.BlazeKotlin;
 import com.google.idea.blaze.kotlin.sync.importer.BlazeKotlinWorkspaceImporter;
 import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinImportResult;
@@ -42,16 +49,24 @@ import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinSyncData;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
 import org.jetbrains.kotlin.config.LanguageVersion;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator;
 
 import javax.annotation.Nullable;
-import java.nio.file.Paths;
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.google.idea.blaze.kotlin.BlazeKotlin.COMPILER_WORKSPACE_NAME;
 
@@ -128,7 +143,12 @@ public class BlazeKotlinSyncPlugin extends BlazeKotlinBaseSyncPlugin {
         if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
             return null;
         }
-        return new BlazeKotlinLibrarySource(blazeProjectData);
+        return new LibrarySource.Adapter() {
+            @Override
+            public List<? extends BlazeLibrary> getLibraries() {
+                return BlazeKotlinSyncData.get(blazeProjectData).importResult.libraries;
+            }
+        };
     }
 
     @Override
@@ -149,7 +169,7 @@ public class BlazeKotlinSyncPlugin extends BlazeKotlinBaseSyncPlugin {
             return;
         }
         BlazeKotlinWorkspaceImporter blazeKotlinWorkspaceImporter =
-                new BlazeKotlinWorkspaceImporter(project, context, workspaceRoot, projectViewSet, targetMap);
+                new BlazeKotlinWorkspaceImporter(project, workspaceRoot, projectViewSet, targetMap);
         BlazeKotlinImportResult importResult =
                 Scope.push(
                         context,
@@ -162,7 +182,7 @@ public class BlazeKotlinSyncPlugin extends BlazeKotlinBaseSyncPlugin {
     }
 
     /**
-     * This adds the kotlin sources related to the
+     * Attaches sources to Kotlin external artifacts, add missing mandatory std libraries and perform last bit of Kotlin configuration.
      */
     @Override
     public void updateProjectStructure(
@@ -175,22 +195,51 @@ public class BlazeKotlinSyncPlugin extends BlazeKotlinBaseSyncPlugin {
             ModuleEditor moduleEditor,
             Module workspaceModule,
             ModifiableRootModel workspaceModifiableModel) {
-        // validated in the validate method.
-        if(kotlinRepoExistsInWorkspace(project)) {
-            try {
-                Library library = BlazeKotlinStdLib.prepareIJLibrarySet(
-                        ProjectLibraryTable.getInstance(project).getModifiableModel(),
-                        Paths.get(blazeProjectData.blazeInfo.get(BlazeInfo.EXECUTION_ROOT_KEY), "external", BlazeKotlin.COMPILER_WORKSPACE_NAME),
-                        // The libraries have to be injected into the blaze model via BlazeKotlinLibrarySource. The Kotlin plugin does not need them to be in the library
-                        // table. flip this if there is a need.
-                        false,
-                        BlazeKotlinSyncData.get(blazeProjectData).importResult.stdLibs);
-                workspaceModifiableModel.addLibraryEntry(library);
-            } catch(Exception e) {
-                IssueOutput.error(e.getMessage()).submit(context);
-            } finally {
-                KotlinJavaModuleConfigurator.Companion.getInstance().configureSilently(project);
-            }
+        if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
+            return;
         }
+        // validated in the validate method, so an error shouldn't be raised here.
+        if (!kotlinRepoExistsInWorkspace(project)) {
+            return;
+        }
+        ImmutableMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> targetToLibraryMap = BlazeKotlinSyncData.get(blazeProjectData).importResult.kotlinTargetToLibraryMap;
+
+        Map<String, BlazeKotlinStdLib> mandatoryLibs = BlazeKotlinStdLib.MANDATORY_STDLIBS.stream().collect(Collectors.toMap(x -> x.id, x -> x));
+        ArrayList<BlazeJarLibrary> toProcess = new ArrayList<>();
+        LibraryTable.ModifiableModel libraryTable = ProjectLibraryTable.getInstance(project).getModifiableModel();
+
+        targetToLibraryMap.forEach((ideInfo, libraries) -> {
+            if (ideInfo.kind.isOneOf(Kind.KOTLIN_IMPORT, Kind.KOTLIN_STDLIB)) {
+                if(BlazeKotlinStdLib.isStdLib(ideInfo)) {
+                    mandatoryLibs.remove(ideInfo.key.label.targetName().toString());
+                }
+                toProcess.addAll(libraries);
+            }
+        });
+
+        toProcess.addAll(BlazeKotlinStdLib.prepareBlazeLibraries(mandatoryLibs.values()));
+
+        toProcess.forEach(lib -> {
+            Library library = libraryTable.getLibraryByName(lib.key.getIntelliJLibraryName());
+            if(library == null) {
+                library = libraryTable.createLibrary(lib.key.getIntelliJLibraryName());
+            }
+            Library.ModifiableModel modifiableIjLibrary = library.getModifiableModel();
+
+            if(modifiableIjLibrary.getFiles(OrderRootType.SOURCES).length == 0) {
+                for (ArtifactLocation sourceJar : lib.libraryArtifact.sourceJars) {
+                    File srcJarFile = blazeProjectData.artifactLocationDecoder.decode(sourceJar);
+                    VirtualFile vfSourceJar = VfsUtil.findFileByIoFile(srcJarFile, false);
+                    if(vfSourceJar != null) {
+                        modifiableIjLibrary.addRoot(vfSourceJar, OrderRootType.SOURCES);
+                    }
+                }
+            }
+            modifiableIjLibrary.commit();
+        });
+
+        libraryTable.commit();
+
+        KotlinJavaModuleConfigurator.Companion.getInstance().configureSilently(project);
     }
 }

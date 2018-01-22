@@ -2,7 +2,6 @@
     <extensions defaultExtensionNs="com.google.idea.blaze">
         <SyncPlugin implementation="com.google.idea.blaze.kotlin.sync.BlazeKotlinSyncPlugin"/>
         <JavaLikeLanguage implementation="com.google.idea.blaze.kotlin.sync.source.BlazeKotlinJavaLikeLanguage"/>
-        <BlazeTestEventsHandler implementation="com.google.idea.blaze.kotlin.run.smrunner.BlazeKotlinTestEventsHandler"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">

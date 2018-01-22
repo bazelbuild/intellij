@@ -92,6 +92,8 @@ public enum Kind {
   KOTLIN_LIBRARY("kotlin_library", LanguageClass.KOTLIN, RuleType.LIBRARY),
   KOTLIN_BINARY("kotlin_binary", LanguageClass.KOTLIN, RuleType.BINARY),
   KOTLIN_TEST("kotlin_test", LanguageClass.KOTLIN, RuleType.TEST),
+  KOTLIN_STDLIB("kotlin_stdlib", LanguageClass.KOTLIN, RuleType.UNKNOWN),
+  KOTLIN_IMPORT("kotlin_import", LanguageClass.KOTLIN, RuleType.UNKNOWN),
 
   // any rule exposing java_common.provider which isn't specifically recognized
   GENERIC_JAVA_PROVIDER("generic_java", LanguageClass.JAVA, RuleType.UNKNOWN),

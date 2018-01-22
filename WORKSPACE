@@ -190,23 +190,23 @@ java_import(
 new_http_archive(
     name = "kotlin_2017_2",
     build_file_content = KOTLIN_BUILD_FILE_CONTENT,
-    url = "https://d1n3kg4j1bkixe.cloudfront.net/files/6954/41421/kotlin-plugin-1.2.10-release-IJ2017.2-1.zip",
-    sha256 = "dcb73a44d294ac7a1193b0234dd0c14f343e0217fe6852e0b1e47175b0f93833"
+    url = "https://d1n3kg4j1bkixe.cloudfront.net/files/6954/42314/kotlin-plugin-1.2.20-release-IJ2017.2-1.zip",
+    sha256 = "95808bdfca3ecc54d4d0ef203b0b45088ba746f51627090a8a047c78efd7c937"
 )
 
 # Kotlin plugin for IntelliJ CE 2017.3. Required at compile-time for kotlin-specific features.
 new_http_archive(
     name = "kotlin_2017_3",
     build_file_content = KOTLIN_BUILD_FILE_CONTENT,
-    url = "https://d1n3kg4j1bkixe.cloudfront.net/files/6954/41422/kotlin-plugin-1.2.10-release-IJ2017.3-1.zip",
-    sha256 = "145b8e3382a60ba8416133ca2d64d2b932effb1fec6b7f47f4e895d67dd7360a"
+    url = "https://d1n3kg4j1bkixe.cloudfront.net/files/6954/42315/kotlin-plugin-1.2.20-release-IJ2017.3-1.zip",
+    sha256 = "8625a05170547c4f250c5e78854f7521c93ab3c224d9d32c11851a9c7f8e4aee"
 )
 
 # This will be pointing to a bazel repo soon.
 git_repository(
     name = "io_bazel_rules_kotlin",
     remote = "https://github.com/hsyed/rules_kotlin.git",
-    commit="1c0df0b17365ee8d9d89b5acc90e289df0df7cba"
+    commit="72e07ac25243733650dc52debd5e0206734fabe0"
 )
 
 # LICENSE: Common Public License 1.0
