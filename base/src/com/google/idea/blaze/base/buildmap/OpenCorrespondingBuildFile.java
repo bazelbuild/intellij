@@ -16,13 +16,7 @@
 package com.google.idea.blaze.base.buildmap;
 
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
-import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
-import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -33,10 +27,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiManager;
+
 import java.io.File;
-import javax.annotation.Nullable;
+
+import static com.google.idea.blaze.base.buildmap.BuildFileUtil.*;
 
 class OpenCorrespondingBuildFile extends BlazeProjectAction {
 
@@ -63,48 +57,6 @@ class OpenCorrespondingBuildFile extends BlazeProjectAction {
       return;
     }
     OpenFileAction.openFile(parentPackage.buildFile.getFile().getPath(), project);
-  }
-
-  @Nullable
-  private static BlazePackage getBuildFile(Project project, @Nullable VirtualFile vf) {
-    if (vf == null) {
-      return null;
-    }
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiFileSystemItem psiFile = vf.isDirectory() ? manager.findDirectory(vf) : manager.findFile(vf);
-    if (psiFile == null) {
-      return null;
-    }
-    return BlazePackage.getContainingPackage(psiFile);
-  }
-
-  @Nullable
-  private static PsiElement findBuildTarget(
-      Project project, BlazePackage parentPackage, File file) {
-    BlazeProjectData blazeProjectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (blazeProjectData == null) {
-      return null;
-    }
-    File parentFile = parentPackage.buildFile.getFile().getParentFile();
-    WorkspacePath packagePath =
-        parentFile != null
-            ? blazeProjectData.workspacePathResolver.getWorkspacePath(parentFile)
-            : null;
-    if (packagePath == null) {
-      return null;
-    }
-    Label label =
-        SourceToTargetMap.getInstance(project)
-            .getTargetsToBuildForSourceFile(file)
-            .stream()
-            .filter(l -> l.blazePackage().equals(packagePath))
-            .findFirst()
-            .orElse(null);
-    if (label == null) {
-      return null;
-    }
-    return BuildReferenceManager.getInstance(project).resolveLabel(label);
   }
 
   @Override

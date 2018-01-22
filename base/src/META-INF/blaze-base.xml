@@ -68,6 +68,11 @@
       class="com.google.idea.blaze.base.actions.CopyBlazeTargetPathAction"
       text="Copy BUILD target string">
     </action>
+    <action id="Blaze.CopyBuildTargetFromElement"
+      class="com.google.idea.blaze.base.actions.CopyBuildTargetFromElementAction"
+      text="Copy BUILD target string to Clipboard">
+    </action>
+
     <action id="Blaze.PartialSync"
       class="com.google.idea.blaze.base.sync.actions.PartialSyncAction"
       text="Partially Sync File"
@@ -146,6 +151,7 @@
       <reference ref="Blaze.PartialSync"/>
       <reference ref="Blaze.OpenCorrespondingBuildFile"/>
       <reference ref="Blaze.CopyBlazeTargetPathAction"/>
+      <reference ref="Blaze.CopyBuildTargetFromElement"/>
     </group>
   </actions>
 
