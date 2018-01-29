@@ -18,8 +18,9 @@ package com.google.idea.blaze.golang.run.producers;
 import com.goide.psi.GoFile;
 import com.goide.runconfig.GoRunUtil;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -54,11 +55,11 @@ public class BlazeGoBinaryConfigurationProducer
     if (file == null) {
       return false;
     }
-    Label binaryTarget = getTargetLabel(file);
+    TargetInfo binaryTarget = getTargetLabel(file);
     if (binaryTarget == null) {
       return false;
     }
-    configuration.setTarget(binaryTarget);
+    configuration.setTargetInfo(binaryTarget);
     sourceElement.set(file);
 
     BlazeCommandRunConfigurationCommonState handlerState =
@@ -84,8 +85,8 @@ public class BlazeGoBinaryConfigurationProducer
     if (file == null) {
       return false;
     }
-    Label binaryTarget = getTargetLabel(file);
-    return binaryTarget != null && binaryTarget.equals(configuration.getTarget());
+    TargetInfo binaryTarget = getTargetLabel(file);
+    return binaryTarget != null && binaryTarget.label.equals(configuration.getTarget());
   }
 
   @Nullable
@@ -102,7 +103,7 @@ public class BlazeGoBinaryConfigurationProducer
   }
 
   @Nullable
-  private static Label getTargetLabel(PsiFile psiFile) {
+  private static TargetInfo getTargetLabel(PsiFile psiFile) {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(psiFile.getProject()).getBlazeProjectData();
     if (projectData == null) {
@@ -120,7 +121,7 @@ public class BlazeGoBinaryConfigurationProducer
         .filter(Objects::nonNull)
         .filter(t -> t.kind.languageClass.equals(LanguageClass.GO))
         .filter(t -> t.kind.ruleType.equals(RuleType.BINARY))
-        .map(t -> t.key.label)
+        .map(TargetIdeInfo::toTargetInfo)
         .findFirst()
         .orElse(null);
   }

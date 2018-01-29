@@ -1,6 +1,22 @@
+/*
+ * Copyright 2017 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.google.idea.testing.cidr;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.sdkcompat.cidr.OCCompilerMacrosAdapter;
 import com.google.idea.sdkcompat.cidr.OCResolveConfigurationAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,7 +26,6 @@ import com.jetbrains.cidr.lang.workspace.OCLanguageKindCalculator;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCResolveRootAndConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceUtil;
-import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerMacros;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeaderRoots;
 import java.util.Collection;
@@ -25,7 +40,7 @@ class StubOCResolveConfiguration extends OCResolveConfigurationAdapter {
   private final Project project;
   private final HeaderRoots projectIncludeRoots;
   private final OCCompilerSettings compilerSettings;
-  private final OCCompilerMacros compilerMacros;
+  private final OCCompilerMacrosAdapter compilerMacros;
 
   StubOCResolveConfiguration(Project project) {
     this.project = project;
@@ -90,7 +105,7 @@ class StubOCResolveConfiguration extends OCResolveConfigurationAdapter {
   }
 
   @Override
-  public OCCompilerMacros getCompilerMacros() {
+  public OCCompilerMacrosAdapter getCompilerMacros() {
     return compilerMacros;
   }
 

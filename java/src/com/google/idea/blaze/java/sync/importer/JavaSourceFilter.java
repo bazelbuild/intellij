@@ -84,12 +84,7 @@ public class JavaSourceFilter {
     sourceTargets = Lists.newArrayList();
     libraryTargets = Lists.newArrayList();
     for (TargetIdeInfo target : javaTargets) {
-      boolean importAsSource =
-          importFilter.isSourceTarget(target)
-              && canImportAsSource(target)
-              && (anyNonGeneratedSources(targetToJavaSources.get(target.key)));
-
-      if (importAsSource) {
+      if (importAsSource(importFilter, target, targetToJavaSources.get(target.key))) {
         sourceTargets.add(target);
         jdepsPathsForExcludedJars.addAll(relativeArtifactPaths(target));
       } else {
@@ -108,11 +103,32 @@ public class JavaSourceFilter {
     return sourceTargets;
   }
 
-  public static boolean canImportAsSource(TargetIdeInfo target) {
+  /** Whether the given target should be treated as a source or library target. */
+  public static boolean importAsSource(
+      ProjectViewTargetImportFilter importFilter, TargetIdeInfo target) {
+    Collection<ArtifactLocation> javaSources =
+        target
+            .sources
+            .stream()
+            .filter(JavaLikeLanguage.getSourceFileMatcher())
+            .collect(Collectors.toList());
+    return importAsSource(importFilter, target, javaSources);
+  }
+
+  private static boolean importAsSource(
+      ProjectViewTargetImportFilter importFilter,
+      TargetIdeInfo target,
+      Collection<ArtifactLocation> javaLikeSources) {
+    return importFilter.isSourceTarget(target)
+        && canImportAsSource(target)
+        && anyNonGeneratedSources(javaLikeSources);
+  }
+
+  private static boolean canImportAsSource(TargetIdeInfo target) {
     return !target.kindIsOneOf(Kind.JAVA_WRAP_CC, Kind.JAVA_IMPORT, Kind.SCALA_IMPORT);
   }
 
-  private boolean anyNonGeneratedSources(Collection<ArtifactLocation> sources) {
+  private static boolean anyNonGeneratedSources(Collection<ArtifactLocation> sources) {
     return sources.stream().anyMatch(ArtifactLocation::isSource);
   }
 

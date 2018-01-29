@@ -31,6 +31,7 @@ public enum LanguageClass {
   GO("go", ImmutableSet.of("go")),
   PYTHON("python", ImmutableSet.of("py", "pyw")),
   SCALA("scala", ImmutableSet.of("scala")),
+  KOTLIN("kotlin", ImmutableSet.of("kt")),
   ;
 
   private static final ImmutableMap<String, LanguageClass> RECOGNIZED_EXTENSIONS =

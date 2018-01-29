@@ -36,6 +36,9 @@ public interface BlazeAndroidBinaryLaunchMethodsProvider {
   /** All possible binary launch methods. */
   enum AndroidBinaryLaunchMethod {
     NON_BLAZE,
+    // Both MOBILE_INSTALL methods have merged.
+    // Keep both for backwards compatibility, but in the code both are treated equally.
+    // MOBILE_INSTALL is the correct value to use throughout.
     MOBILE_INSTALL,
     MOBILE_INSTALL_V2,
   }

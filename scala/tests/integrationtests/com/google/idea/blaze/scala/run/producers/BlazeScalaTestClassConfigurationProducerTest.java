@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.producer.BlazeRunConfigurationProducerTestCase;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.psi.PsiClass;
@@ -39,7 +40,7 @@ import org.junit.runners.JUnit4;
 
 /**
  * Integration tests for {@link BlazeScalaTestClassConfigurationProducer} and {@link
- * BlazeScalaJunitTestClassConfigurationProducer}.
+ * BlazeJavaTestClassConfigurationProducer}.
  */
 @RunWith(JUnit4.class)
 public class BlazeScalaTestClassConfigurationProducerTest
@@ -81,8 +82,7 @@ public class BlazeScalaTestClassConfigurationProducerTest
     assertThat(configurations).isNotNull();
     assertThat(configurations).hasSize(1);
     ConfigurationFromContext fromContext = configurations.get(0);
-    assertThat(fromContext.isProducedBy(BlazeScalaJunitTestClassConfigurationProducer.class))
-        .isTrue();
+    assertThat(fromContext.isProducedBy(BlazeJavaTestClassConfigurationProducer.class)).isTrue();
     assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
 
     BlazeCommandRunConfiguration config =

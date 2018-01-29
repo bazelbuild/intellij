@@ -20,17 +20,25 @@ java_library(
     visibility = ["//visibility:public"],
     runtime_deps = ["//common/actionhelper"],
     deps = [
+        ":neverlinked_jpda-jdi",
         "//base",
         "//common/experiments",
         "//common/guava",
         "//common/transactions",
         "//intellij_platform_sdk:coverage",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:junit",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//sdkcompat",
-        "@jsr305_annotations//jar",
     ],
+)
+
+# This is provided by the IDE at runtime
+java_library(
+    name = "neverlinked_jpda-jdi",
+    neverlink = 1,
+    exports = ["//third_party:jpda-jdi"],
 )
 
 filegroup(
@@ -94,9 +102,9 @@ intellij_unit_test_suite(
         "//common/experiments:unit_test_utils",
         "//common/guava",
         "//intellij_platform_sdk:coverage_for_tests",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//proto:proto_deps",
-        "@jsr305_annotations//jar",
         "@junit//jar",
     ],
 )
@@ -114,8 +122,8 @@ intellij_integration_test_suite(
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
-        "@jsr305_annotations//jar",
         "@junit//jar",
     ],
 )

@@ -18,12 +18,14 @@ package com.google.idea.blaze.base.run;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.async.process.ExternalTask;
+import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -80,6 +82,9 @@ public final class BlazeBeforeRunCommandHelper {
                     .push(
                         new BlazeConsoleScope.Builder(project)
                             .setPopupBehavior(consolePopupBehavior)
+                            .addConsoleFilters(
+                                new IssueOutputFilter(
+                                    project, workspaceRoot, BlazeInvocationContext.NonSync, true))
                             .build());
 
                 context.output(new StatusOutput(progressMessage));
@@ -92,7 +97,7 @@ public final class BlazeBeforeRunCommandHelper {
                                 project,
                                 projectViewSet,
                                 BlazeCommandName.BUILD,
-                                BlazeInvocationContext.RunConfiguration))
+                                BlazeInvocationContext.NonSync))
                         .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
                         .addBlazeFlags(extraBlazeFlags)
                         .addBlazeFlags(buildResultHelper.getBuildFlags());
@@ -102,9 +107,9 @@ public final class BlazeBeforeRunCommandHelper {
                         .addBlazeCommand(command.build())
                         .context(context)
                         .stderr(
-                            buildResultHelper.stderr(
+                            LineProcessingOutputStream.of(
                                 BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
-                                    project, context, workspaceRoot)))
+                                    context)))
                         .build()
                         .run();
                 return BuildResult.fromExitCode(exitCode);

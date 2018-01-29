@@ -517,6 +517,53 @@ public class BlazeScalaWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
+  public void testSourceTargetsWithoutNonGeneratedSourcesAddedToLibraries() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("src/main/scala/apps/example")))
+                    .add(DirectoryEntry.include(new WorkspacePath("src/main/scala/some/library"))))
+            .build();
+
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//src/main/scala/apps/example:example")
+                    .setBuildFile(source("src/main/scala/apps/example/BUILD"))
+                    .setKind("scala_binary")
+                    .addSource(source("src/main/scala/apps/example/Main.scala"))
+                    .addSource(source("src/main/scala/apps/example/subdir/SubdirHelper.scala"))
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder()
+                                    .setInterfaceJar(gen("src/main/scala/apps/example/example.jar"))
+                                    .setClassJar(gen("src/main/scala/apps/example/example.jar"))))
+                    .addDependency("//src/main/scala/some/library:library"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//src/main/scala/some/library:library")
+                    .setBuildFile(source("src/main/scala/some/library/BUILD"))
+                    .setKind("scala_library")
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder()
+                                    .setInterfaceJar(
+                                        gen("src/main/scala/some/library/library_ijar.jar"))
+                                    .setClassJar(gen("src/main/scala/some/library/library.jar")))))
+            .build();
+
+    BlazeScalaImportResult scalaImportResult = importScala(projectView, targetMap);
+    errorCollector.assertNoIssues();
+
+    assertThat(scalaImportResult.libraries).hasSize(1);
+    assertThat(hasLibrary(scalaImportResult.libraries, "library_ijar")).isTrue();
+  }
+
+  @Test
   public void testDuplicateScalaLibraries() {
     ProjectView projectView =
         ProjectView.builder()

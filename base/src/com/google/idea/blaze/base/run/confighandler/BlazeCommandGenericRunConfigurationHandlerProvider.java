@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.run.confighandler;
 
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import javax.annotation.Nullable;
 
 /**
  * Generic handler provider for {@link BlazeCommandRunConfiguration}s, used as a fallback in the
@@ -31,7 +32,7 @@ public class BlazeCommandGenericRunConfigurationHandlerProvider
   }
 
   @Override
-  public boolean canHandleKind(Kind kind) {
+  public boolean canHandleKind(@Nullable Kind kind) {
     return true;
   }
 

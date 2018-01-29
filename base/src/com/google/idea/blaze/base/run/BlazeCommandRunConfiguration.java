@@ -19,6 +19,8 @@ import static java.util.stream.Collectors.toList;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -33,6 +35,7 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
+import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -158,14 +161,18 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     return parseTarget(targetPattern);
   }
 
+  public void setTargetInfo(TargetInfo target) {
+    targetPattern = target.label.toString();
+    updateTargetKind(target);
+  }
+
+  /** Sets the target expression and asynchronously kicks off a target kind update. */
   public void setTarget(@Nullable TargetExpression target) {
     targetPattern = target != null ? target.toString() : null;
-    updateHandler();
+    updateTargetKindAsync(null);
   }
 
   private void updateHandler() {
-    targetKind = getKindForTarget();
-
     BlazeCommandRunConfigurationHandlerProvider handlerProvider =
         BlazeCommandRunConfigurationHandlerProvider.findHandlerProvider(targetKind);
     updateHandlerIfDifferentProvider(handlerProvider);
@@ -197,21 +204,46 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
   /**
    * Returns the {@link Kind} of the single blaze target corresponding to the configuration's target
-   * expression, if it can be determined. Returns null if the target expression points to multiple
+   * expression, if it's currently known. Returns null if the target expression points to multiple
    * blaze targets.
    */
   @Nullable
-  public Kind getKindForTarget() {
-    return getKindForTarget(getProject(), parseTarget(targetPattern));
+  public Kind getTargetKind() {
+    return targetKind;
   }
 
-  @Nullable
-  private static Kind getKindForTarget(Project project, @Nullable TargetExpression target) {
-    if (target instanceof Label) {
-      TargetInfo targetInfo = TargetFinder.findTargetInfo(project, (Label) target);
-      return targetInfo != null ? targetInfo.getKind() : null;
+  /**
+   * Queries the kind of the current target pattern, possibly asynchronously.
+   *
+   * @param asyncCallback if the kind is updated asynchronously, this will be run after the kind is
+   *     updated. If it's updated synchronously, this will not be run.
+   */
+  void updateTargetKindAsync(@Nullable Runnable asyncCallback) {
+    TargetExpression expr = parseTarget(targetPattern);
+    if (!(expr instanceof Label)) {
+      updateTargetKind(null);
+      return;
     }
-    return null;
+    Label label = (Label) expr;
+    ListenableFuture<TargetInfo> future = TargetFinder.findTargetInfoFuture(getProject(), label);
+    if (future.isDone()) {
+      updateTargetKind(FuturesUtil.getIgnoringErrors(future));
+    } else {
+      updateTargetKind(null);
+      future.addListener(
+          () -> {
+            updateTargetKind(FuturesUtil.getIgnoringErrors(future));
+            if (asyncCallback != null) {
+              asyncCallback.run();
+            }
+          },
+          MoreExecutors.directExecutor());
+    }
+  }
+
+  private void updateTargetKind(@Nullable TargetInfo targetInfo) {
+    targetKind = targetInfo != null ? targetInfo.getKind() : null;
+    updateHandler();
   }
 
   /**
@@ -219,12 +251,14 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
    *     is a general {@link TargetExpression}, "unknown rule" if it is a {@link Label} without a
    *     known rule, and "unknown target" if there is no target.
    */
-  public String getTargetKindName() {
-    TargetExpression target = parseTarget(targetPattern);
-    Kind kind = getKindForTarget(getProject(), target);
+  private String getTargetKindName() {
+    Kind kind = targetKind;
     if (kind != null) {
       return kind.toString();
-    } else if (target instanceof Label) {
+    }
+
+    TargetExpression target = parseTarget(targetPattern);
+    if (target instanceof Label) {
       return "unknown rule";
     } else if (target != null) {
       return "target pattern";
@@ -386,11 +420,6 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   @Nullable
   public RunProfileState getState(Executor executor, ExecutionEnvironment environment)
       throws ExecutionException {
-    if (getTarget() != null) {
-      // We need to update the handler manually because it might otherwise be out of date (e.g.
-      // because the target map has changed since the last update).
-      updateHandler();
-    }
     BlazeCommandRunConfigurationRunner runner = handler.createRunner(executor, environment);
     if (runner != null) {
       environment.putCopyableUserData(BlazeCommandRunConfigurationRunner.RUNNER_KEY, runner);
@@ -509,7 +538,6 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
     @Override
     protected void applyEditorTo(BlazeCommandRunConfiguration config) {
-      // update the editor's elementState
       handlerStateEditor.applyEditorTo(handler.getState());
       try {
         handler.getState().writeExternal(elementState);
@@ -529,7 +557,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
       // finally, update the handler
       config.targetPattern = Strings.emptyToNull(targetField.getText());
-      config.updateHandler();
+      config.updateTargetKindAsync(() -> UIUtil.invokeLaterIfNeeded(this::fireEditorStateChanged));
       updateEditor(config);
       if (config.handlerProvider != handlerProvider) {
         updateHandlerEditor(config);

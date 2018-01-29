@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -53,7 +54,7 @@ public class JUnitPluginDependencyWarning extends ApplicationComponent.Adapter {
 
   @Override
   public void initComponent() {
-    if (!PluginUtils.isPluginEnabled(JUNIT_PLUGIN_ID)) {
+    if (PlatformUtils.isIntelliJ() && !PluginUtils.isPluginEnabled(JUNIT_PLUGIN_ID)) {
       notifyJUnitNotEnabled();
     }
   }

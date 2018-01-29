@@ -19,15 +19,18 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.Section;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +41,40 @@ import javax.annotation.Nullable;
 
 /** Parses blaze output for compile errors. */
 public class BlazeIssueParser {
+
+  public static ImmutableList<BlazeIssueParser.Parser> defaultIssueParsers(
+      Project project, WorkspaceRoot workspaceRoot, BlazeInvocationContext invocationContext) {
+    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    if (projectViewSet == null) {
+      // some parsers will work regardless, but don't even bother splitting them if there's no
+      // project view available
+      return ImmutableList.of();
+    }
+
+    ImmutableList.Builder<BlazeIssueParser.Parser> parsers =
+        ImmutableList.<BlazeIssueParser.Parser>builder()
+            .add(
+                new BlazeIssueParser.CompileParser(workspaceRoot),
+                new BlazeIssueParser.TracebackParser(),
+                new BlazeIssueParser.BuildParser(),
+                new BlazeIssueParser.SkylarkErrorParser(),
+                new BlazeIssueParser.LinelessBuildParser(),
+                new BlazeIssueParser.ProjectViewLabelParser(projectViewSet),
+                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                    projectViewSet, "no such package '(.*)': BUILD file not found on package path"),
+                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                    projectViewSet, "no targets found beneath '(.*?)'"),
+                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                    projectViewSet, "ERROR: invalid target format '(.*?)'"),
+                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                    projectViewSet, "ERROR: Skipping '(.*?)'"),
+                new BlazeIssueParser.FileNotFoundBuildParser(workspaceRoot))
+            .addAll(BlazeIssueParserProvider.getAllIssueParsers(project));
+    if (invocationContext == BlazeInvocationContext.Sync) {
+      parsers.add(BlazeIssueParser.GenericErrorParser.INSTANCE);
+    }
+    return parsers.build();
+  }
 
   /** Result from parsing the current line */
   public static class ParseResult {
@@ -320,6 +357,7 @@ public class BlazeIssueParser {
     private static final String PATTERN =
         "^ERROR: (?:"
             + "(//.+?: Exit [0-9]+\\.)|"
+            + "(.*: Process exited with status [0-9]+\\.)|"
             + "(build interrupted\\.)|"
             + "(Couldn't start the build. Unable to run tests.)|"
             + "(.*))$";
@@ -330,10 +368,13 @@ public class BlazeIssueParser {
 
     @Override
     protected IssueOutput createIssue(Matcher matcher) {
-      if (matcher.group(1) != null || matcher.group(2) != null || matcher.group(3) != null) {
+      if (matcher.group(1) != null
+          || matcher.group(2) != null
+          || matcher.group(3) != null
+          || matcher.group(4) != null) {
         return null;
       }
-      return IssueOutput.error(matcher.group(4)).build();
+      return IssueOutput.error(matcher.group(5)).build();
     }
   }
 

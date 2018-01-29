@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.java.libraries;
 
-import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
@@ -36,24 +35,24 @@ import org.jetbrains.annotations.NotNull;
 
 class LibraryActionHelper {
 
+  @Nullable
   static BlazeJarLibrary findLibraryFromIntellijLibrary(
       Project project, BlazeProjectData blazeProjectData, Library library) {
-    LibraryKey libraryKey = LibraryKey.fromIntelliJLibrary(library);
+    String libName = library.getName();
+    if (libName == null) {
+      return null;
+    }
+    LibraryKey libraryKey = LibraryKey.fromIntelliJLibraryName(libName);
     BlazeJavaSyncData syncData = blazeProjectData.syncState.get(BlazeJavaSyncData.class);
     if (syncData == null) {
       Messages.showErrorDialog(project, "Project isn't synced. Please resync project.", "Error");
       return null;
     }
-
-    BlazeLibrary blazeLibrary = syncData.importResult.libraries.get(libraryKey);
-    if (!(blazeLibrary instanceof BlazeJarLibrary)) {
-      return null;
-    }
-    return (BlazeJarLibrary) blazeLibrary;
+    return syncData.importResult.libraries.get(libraryKey);
   }
 
   @Nullable
-  public static Library findLibraryForAction(@NotNull AnActionEvent e) {
+  static Library findLibraryForAction(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
       NamedLibraryElementNode node = findLibraryNode(e.getDataContext());

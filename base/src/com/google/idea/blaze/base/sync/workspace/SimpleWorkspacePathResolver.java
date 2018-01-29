@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.workspace;
 
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -28,6 +29,13 @@ public interface SimpleWorkspacePathResolver {
 
   /** Finds the package root directory that a workspace relative path is in. */
   File findPackageRoot(String relativePath);
+
+  /**
+   * Given a resolved, absolute file, returns the corresponding {@link WorkspacePath}. Returns null
+   * if the file is not in the workspace.
+   */
+  @Nullable
+  WorkspacePath getWorkspacePath(File absoluteFile);
 
   /** Resolves a workspace relative path to an absolute file. */
   default File resolveToFile(String workspaceRelativePath) {

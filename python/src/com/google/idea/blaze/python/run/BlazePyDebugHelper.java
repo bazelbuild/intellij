@@ -17,6 +17,7 @@ package com.google.idea.blaze.python.run;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
@@ -35,6 +36,14 @@ public interface BlazePyDebugHelper {
     return builder.build();
   }
 
+  static ImmutableList<String> getAllBlazePydevFlags(BuildSystem buildSystem) {
+    ImmutableList.Builder<String> builder = ImmutableList.builder();
+    for (BlazePyDebugHelper provider : EP_NAME.getExtensions()) {
+      builder.addAll(provider.getBlazePydevFlags(buildSystem));
+    }
+    return builder.build();
+  }
+
   @Nullable
   static String validateDebugTarget(Project project, @Nullable TargetExpression target) {
     for (BlazePyDebugHelper provider : EP_NAME.getExtensions()) {
@@ -47,6 +56,8 @@ public interface BlazePyDebugHelper {
   }
 
   ImmutableList<String> getBlazeDebugFlags();
+
+  ImmutableList<String> getBlazePydevFlags(BuildSystem buildSystem);
 
   /**
    * Attempts to check whether the given target can be debugged by the Blaze plugin. If there's a

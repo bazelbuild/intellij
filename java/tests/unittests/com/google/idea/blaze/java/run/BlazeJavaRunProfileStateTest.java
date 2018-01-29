@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommandName;
@@ -48,6 +49,7 @@ import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
+import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -95,7 +97,8 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
   @Test
   public void flagsShouldBeAppendedIfPresent() {
-    configuration.setTarget(Label.create("//label:rule"));
+    configuration.setTargetInfo(
+        TargetInfo.builder(Label.create("//label:rule"), "java_test").build());
     BlazeCommandRunConfigurationCommonState handlerState =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
     handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
@@ -118,7 +121,8 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
   @Test
   public void debugFlagShouldBeIncludedForJavaTest() {
-    configuration.setTarget(Label.create("//label:rule"));
+    configuration.setTargetInfo(
+        TargetInfo.builder(Label.create("//label:rule"), "java_test").build());
     BlazeCommandRunConfigurationCommonState handlerState =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
     handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
@@ -133,14 +137,15 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                 "command",
                 BlazeFlags.getToolTagFlag(),
                 "--java_debug",
-                "--test_arg=--debug=5005",
+                "--test_arg=--wrapper_script_flag=--debug=5005",
                 "--",
                 "//label:rule"));
   }
 
   @Test
   public void debugFlagShouldBeIncludedForJavaBinary() {
-    configuration.setTarget(Label.create("//label:java_binary_rule"));
+    configuration.setTargetInfo(
+        TargetInfo.builder(Label.create("//label:java_binary_rule"), "java_binary").build());
     BlazeCommandRunConfigurationCommonState handlerState =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
     handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
@@ -160,16 +165,15 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
   }
 
   private static class MockTargetFinder implements TargetFinder {
-    @Nullable
     @Override
-    public TargetInfo findTarget(Project project, Label label) {
+    public Future<TargetInfo> findTarget(Project project, Label label) {
       TargetIdeInfo.Builder builder = TargetIdeInfo.builder().setLabel(label);
       if (label.targetName().toString().equals("java_binary_rule")) {
         builder.setKind(Kind.JAVA_BINARY);
       } else {
         builder.setKind(Kind.JAVA_TEST);
       }
-      return builder.build().toTargetInfo();
+      return Futures.immediateFuture(builder.build().toTargetInfo());
     }
   }
 

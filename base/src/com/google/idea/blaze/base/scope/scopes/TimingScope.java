@@ -84,7 +84,7 @@ public class TimingScope implements BlazeScope {
     long elapsedTime = System.currentTimeMillis() - startTime;
     duration = (double) elapsedTime / 1000.0;
 
-    TimedEvent event = new TimedEvent(name, eventType, elapsedTime);
+    TimedEvent event = new TimedEvent(name, eventType, elapsedTime, children.isEmpty());
     scopeListeners.forEach(listener -> listener.onScopeEnd(event));
     propagatedScopeListeners.forEach(listener -> listener.onScopeEnd(event));
 

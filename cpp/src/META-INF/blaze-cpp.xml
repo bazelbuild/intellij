@@ -34,6 +34,7 @@
     <SyncPlugin implementation="com.google.idea.blaze.cpp.BlazeCSyncPlugin"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.cpp.CPrefetchFileSource"/>
     <SyncListener implementation="com.google.idea.blaze.cpp.BlazeCppSymbolRebuildSyncListener"/>
+    <SyncListener implementation="com.google.idea.blaze.cpp.BulkSymbolTableBuildingChangeListener$WorkspaceTypeSyncListener"/>
   </extensions>
 
   <extensions defaultExtensionNs="cidr.lang">
@@ -50,5 +51,6 @@
 
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerVersionChecker"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>
+    <projectService serviceImplementation="com.google.idea.blaze.cpp.BulkSymbolTableBuildingChangeListener"/>
   </extensions>
 </idea-plugin>

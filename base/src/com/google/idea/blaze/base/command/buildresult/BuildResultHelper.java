@@ -16,11 +16,9 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream.LineProcessor;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.Closeable;
 import java.io.File;
-import java.io.OutputStream;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -43,26 +41,6 @@ public interface BuildResultHelper extends Closeable {
    * <p>The user must add these flags to their build command.
    */
   List<String> getBuildFlags();
-
-  /**
-   * Returns an output stream to be passed to the external task's stderr.
-   *
-   * <p>The user must pipe blaze's stderr to this output stream.
-   *
-   * @param lineProcessors Any additional line processors you want on stderr output.
-   */
-  OutputStream stderr(LineProcessor... lineProcessors);
-
-  /**
-   * Returns an output stream to be passed to the external task's stderr.
-   *
-   * <p>The user must pipe blaze's stderr to this output stream.
-   *
-   * @param lineProcessors Any additional line processors you want on stderr output.
-   */
-  default OutputStream stderr(ImmutableList<LineProcessor> lineProcessors) {
-    return stderr(lineProcessors.toArray(new LineProcessor[0]));
-  }
 
   /**
    * Returns the build result. May only be called once the build is complete, or no artifacts will

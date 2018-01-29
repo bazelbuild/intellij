@@ -108,9 +108,9 @@ public class TestTargetSourcesHeuristicTest extends BlazeTestCase {
                 .setKind("java_test")
                 .build()
                 .toTargetInfo());
-    Label match =
+    TargetInfo match =
         TestTargetHeuristic.chooseTestTargetForSourceFile(project, null, source, rules, null);
-    assertThat(match).isEqualTo(Label.create("//foo:test1"));
+    assertThat(match.label).isEqualTo(Label.create("//foo:test1"));
   }
 
   @Test
@@ -130,9 +130,9 @@ public class TestTargetSourcesHeuristicTest extends BlazeTestCase {
                 .addSource(sourceRoot("java/com/foo/FooTest.java"))
                 .build()
                 .toTargetInfo());
-    Label match =
+    TargetInfo match =
         TestTargetHeuristic.chooseTestTargetForSourceFile(project, null, source, rules, null);
-    assertThat(match).isEqualTo(Label.create("//foo:test2"));
+    assertThat(match.label).isEqualTo(Label.create("//foo:test2"));
   }
 
   private static ArtifactLocation sourceRoot(String relativePath) {

@@ -58,6 +58,9 @@ public class BlazeGoRootsProvider implements GoRootsProvider {
   @Override
   public Collection<VirtualFile> getGoPathSourcesRoots(
       @Nullable Project project, @Nullable Module module) {
+    if (project == null) {
+      return ImmutableList.of();
+    }
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null
@@ -80,9 +83,7 @@ public class BlazeGoRootsProvider implements GoRootsProvider {
     return ImmutableList.of();
   }
 
-  // Not in v171_4694_61
-  // @Override
-  @SuppressWarnings("MissingOverride")
+  @Override
   public boolean isExternal() {
     // This is supposed to add the root as a GOPATH library, but since we put the library
     // under the project data directory, which is already added as a content root, this does
@@ -103,14 +104,10 @@ public class BlazeGoRootsProvider implements GoRootsProvider {
    * Creates the .gopath root under the project data directory. Then {@link #createSymLinks} for
    * each go target discovered in the target map into the root directory.
    */
-  public static synchronized void createGoPathSourceRoot(Project project) {
+  public static synchronized void createGoPathSourceRoot(
+      Project project, BlazeProjectData projectData) {
     File goRoot = getGoRoot(project);
     if (goRoot == null) {
-      return;
-    }
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (projectData == null) {
       return;
     }
     FileOperationProvider provider = FileOperationProvider.getInstance();

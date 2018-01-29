@@ -77,10 +77,14 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
     this.launchMethod = launchMethod;
   }
 
+  // This method is deprecated, as unused by mobile-install v2.
+  // TODO(timpeut): cleanup once ASwB has released and no rollback is required
   public boolean useSplitApksIfPossible() {
     return useSplitApksIfPossible;
   }
 
+  // This method is deprecated, as unused by mobile-install v2.
+  // TODO(timpeut): cleanup once ASwB has released and no rollback is required
   void setUseSplitApksIfPossible(boolean useSplitApksIfPossible) {
     this.useSplitApksIfPossible = useSplitApksIfPossible;
   }

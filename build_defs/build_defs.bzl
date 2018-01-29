@@ -40,7 +40,8 @@ def stamped_plugin_xml(name,
     plugin_id: the plugin ID to stamp
     plugin_name: the plugin name to stamp
     stamp_since_build: Add build number to idea-version since-build.
-    stamp_until_build: Add build number to idea-version until-build.
+    stamp_until_build: Use idea-version until-build to limit plugin to the
+        current major release.
     include_product_code_in_stamp: Whether the product code (eg. "IC")
         is included in since-build and until-build.
     version: A version number to stamp.
@@ -275,7 +276,7 @@ _plugin_deploy_zip = rule(
     implementation = _plugin_deploy_zip_impl,
 )
 
-def plugin_deploy_zip(name, srcs, zip_filename):
+def plugin_deploy_zip(name, srcs, zip_filename, **kwargs):
   """Packages up plugin files into a zip archive.
 
   Args:
@@ -283,8 +284,9 @@ def plugin_deploy_zip(name, srcs, zip_filename):
     srcs: A list of targets of type 'repackaged_files', specifying the input files and relative
         paths to include in the output zip archive.
     zip_filename: The output zip filename.
+    **kwargs: Any further arguments to be passed to the target
   """
-  _plugin_deploy_zip(name = name, zip_filename = zip_filename, srcs = srcs)
+  _plugin_deploy_zip(name = name, zip_filename = zip_filename, srcs = srcs, **kwargs)
 
 def unescape_filenames(name, srcs):
   """Macro to generate files with spaces in their names instead of underscores.

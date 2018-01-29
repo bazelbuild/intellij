@@ -17,6 +17,7 @@ package com.google.idea.blaze.clwb.run.producers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
@@ -67,12 +68,12 @@ public class BlazeCidrTestConfigurationProducer
     if (test == null) {
       return false;
     }
-    Label label = getTestTarget(test.getPsiElement());
-    if (label == null) {
+    TargetInfo target = getTestTarget(test.getPsiElement());
+    if (target == null) {
       return false;
     }
     sourceElement.set(test.getPsiElement());
-    configuration.setTarget(label);
+    configuration.setTargetInfo(target);
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {
@@ -91,7 +92,8 @@ public class BlazeCidrTestConfigurationProducer
     configuration.setName(
         String.format(
             "%s test: %s",
-            Blaze.buildSystemName(configuration.getProject()), getTestName(label, test.gtest)));
+            Blaze.buildSystemName(configuration.getProject()),
+            getTestName(target.label, test.gtest)));
     return true;
   }
 
@@ -114,16 +116,16 @@ public class BlazeCidrTestConfigurationProducer
     if (test == null) {
       return false;
     }
-    Label label = getTestTarget(test.getPsiElement());
-    if (label == null) {
+    TargetInfo target = getTestTarget(test.getPsiElement());
+    if (target == null) {
       return false;
     }
-    return label.equals(configuration.getTarget())
+    return target.label.equals(configuration.getTarget())
         && Objects.equals(handlerState.getTestFilterFlag(), test.getTestFilterFlag());
   }
 
   @Nullable
-  private static Label getTestTarget(PsiElement element) {
+  private static TargetInfo getTestTarget(PsiElement element) {
     return TestTargetHeuristic.testTargetForPsiElement(element);
   }
 

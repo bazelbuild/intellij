@@ -5,9 +5,10 @@ directories:
   -cpp
 
 targets:
-  //ijwb:ijwb_bazel
+  //ijwb:ijwb_bazel_dev
   //ijwb:ijwb_lib
   //:ijwb_tests
+  //:ijwb_ue_tests
 
 workspace_type: intellij_plugin
 

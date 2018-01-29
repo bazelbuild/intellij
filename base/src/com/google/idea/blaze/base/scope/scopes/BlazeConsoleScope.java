@@ -15,9 +15,8 @@
  */
 package com.google.idea.blaze.base.scope.scopes;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.console.BlazeConsoleService;
-import com.google.idea.blaze.base.console.ColoredConsoleStream;
-import com.google.idea.blaze.base.console.ConsoleStream;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.OutputSink;
@@ -25,6 +24,7 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -39,7 +39,7 @@ public class BlazeConsoleScope implements BlazeScope {
     private Project project;
     private ProgressIndicator progressIndicator;
     private BlazeConsolePopupBehavior popupBehavior;
-    private boolean escapeAnsiColorCodes = false;
+    private final ImmutableList.Builder<Filter> filters = ImmutableList.builder();
 
     public Builder(Project project) {
       this(project, null);
@@ -55,24 +55,22 @@ public class BlazeConsoleScope implements BlazeScope {
       return this;
     }
 
-    public Builder escapeAnsiColorcodes(boolean escapeAnsiColorCodes) {
-      this.escapeAnsiColorCodes = escapeAnsiColorCodes;
+    public Builder addConsoleFilters(Filter... filters) {
+      this.filters.add(filters);
       return this;
     }
 
     public BlazeConsoleScope build() {
-      return new BlazeConsoleScope(project, progressIndicator, popupBehavior, escapeAnsiColorCodes);
+      return new BlazeConsoleScope(project, progressIndicator, popupBehavior, filters.build());
     }
   }
 
   private final BlazeConsoleService blazeConsoleService;
-
   @Nullable private final ProgressIndicator progressIndicator;
-
   private final BlazeConsolePopupBehavior popupBehavior;
-  private boolean activated;
+  private final ImmutableList<Filter> customFilters;
 
-  private final ConsoleStream consoleStream;
+  private boolean activated;
 
   private OutputSink<PrintOutput> printSink =
       (output) -> {
@@ -98,18 +96,16 @@ public class BlazeConsoleScope implements BlazeScope {
       Project project,
       @Nullable ProgressIndicator progressIndicator,
       BlazeConsolePopupBehavior popupBehavior,
-      boolean escapeAnsiColorCodes) {
+      ImmutableList<Filter> customFilters) {
     this.blazeConsoleService = BlazeConsoleService.getInstance(project);
     this.progressIndicator = progressIndicator;
     this.popupBehavior = popupBehavior;
-    ConsoleStream sinkConsoleStream = blazeConsoleService::print;
-    this.consoleStream =
-        escapeAnsiColorCodes ? new ColoredConsoleStream(sinkConsoleStream) : sinkConsoleStream;
+    this.customFilters = customFilters;
   }
 
   private void print(String text, ConsoleViewContentType contentType) {
-    consoleStream.print(text, contentType);
-    consoleStream.print("\n", contentType);
+    blazeConsoleService.print(text, contentType);
+    blazeConsoleService.print("\n", contentType);
 
     if (activated) {
       return;
@@ -129,6 +125,7 @@ public class BlazeConsoleScope implements BlazeScope {
     context.addOutputSink(PrintOutput.class, printSink);
     context.addOutputSink(StatusOutput.class, statusSink);
     blazeConsoleService.clear();
+    blazeConsoleService.setCustomFilters(customFilters);
     blazeConsoleService.setStopHandler(
         () -> {
           if (progressIndicator != null) {

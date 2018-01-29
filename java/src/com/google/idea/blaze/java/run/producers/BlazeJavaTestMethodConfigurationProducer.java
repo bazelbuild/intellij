@@ -19,7 +19,6 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
@@ -47,14 +46,14 @@ public class BlazeJavaTestMethodConfigurationProducer
     private final PsiClass containingClass;
     private final List<String> methodNames;
     private final String testFilterFlag;
-    private final Label blazeTarget;
+    private final TargetInfo blazeTarget;
 
     TestMethodContext(
         PsiMethod firstMethod,
         PsiClass containingClass,
         List<String> methodNames,
         String testFilterFlag,
-        Label blazeTarget) {
+        TargetInfo blazeTarget) {
       this.firstMethod = firstMethod;
       this.containingClass = containingClass;
       this.methodNames = methodNames;
@@ -83,7 +82,7 @@ public class BlazeJavaTestMethodConfigurationProducer
     // PatternConfigurationProducer won't override our configuration.
     sourceElement.set(methodContext.firstMethod);
 
-    configuration.setTarget(methodContext.blazeTarget);
+    configuration.setTargetInfo(methodContext.blazeTarget);
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {
@@ -125,7 +124,7 @@ public class BlazeJavaTestMethodConfigurationProducer
     TestMethodContext methodContext = getSelectedMethodContext(context);
     return methodContext != null
         && handlerState.getBlazeFlagsState().getRawFlags().contains(methodContext.testFilterFlag)
-        && methodContext.blazeTarget.equals(configuration.getTarget());
+        && methodContext.blazeTarget.label.equals(configuration.getTarget());
   }
 
   @Nullable
@@ -166,7 +165,18 @@ public class BlazeJavaTestMethodConfigurationProducer
     List<String> methodNames =
         selectedMethods.stream().map(PsiMethod::getName).sorted().collect(Collectors.toList());
     final String testFilterFlag = BlazeFlags.TEST_FILTER + "=" + testFilter;
-    return new TestMethodContext(
-        firstMethod, containingClass, methodNames, testFilterFlag, target.label);
+    return new TestMethodContext(firstMethod, containingClass, methodNames, testFilterFlag, target);
+  }
+
+  /**
+   * Let {@link com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer}
+   * know about junit test methods.
+   */
+  public static class Identifier
+      implements BlazeJavaTestClassConfigurationProducer.JavaTestCaseIdentifier {
+    @Override
+    public boolean isTestCase(ConfigurationContext context) {
+      return TestMethodSelectionUtil.getSelectedMethods(context) != null;
+    }
   }
 }

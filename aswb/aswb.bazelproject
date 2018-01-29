@@ -5,8 +5,9 @@ directories:
   -clwb
 
 targets:
-  //aswb:aswb_bazel
+  //aswb:aswb_bazel_dev
   //:aswb_tests
+  //:aswb_python_tests
 
 workspace_type: intellij_plugin
 

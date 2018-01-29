@@ -74,10 +74,6 @@
     <sdkEventListener implementation="com.google.idea.blaze.android.sdk.AndroidSdkListener"/>
   </extensions>
 
-  <extensions defaultExtensionNs="com.google.idea.blaze">
-    <BlazeUserSettingsContributor implementation="com.google.idea.blaze.android.settings.BlazeAndroidUserSettingsContributor$BlazeAndroidUserSettingsProvider"/>
-  </extensions>
-
   <extensions defaultExtensionNs="com.android.project">
     <buildSystemService implementation="com.google.idea.blaze.android.project.BlazeBuildSystemService"/>
     <featureEnableService implementation="com.google.idea.blaze.android.project.BlazeFeatureEnableService"/>
@@ -94,6 +90,9 @@
   <application-components>
     <component>
       <implementation-class>com.google.idea.blaze.android.plugin.PluginCompatibilityEnforcer</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.google.idea.blaze.android.plugin.InstantRunDisabler</implementation-class>
     </component>
   </application-components>
 

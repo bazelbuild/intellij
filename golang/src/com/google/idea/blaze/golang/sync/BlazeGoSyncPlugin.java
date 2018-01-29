@@ -81,7 +81,7 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
         context,
         (childContext) -> {
           childContext.push(new TimingScope("BuildGoSymbolicLinks", EventType.Other));
-          BlazeGoRootsProvider.createGoPathSourceRoot(project);
+          BlazeGoRootsProvider.createGoPathSourceRoot(project, blazeProjectData);
         });
   }
 

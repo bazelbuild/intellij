@@ -101,20 +101,19 @@ public class BlazeGoGotoDeclarationHandlerTest extends BlazeIntegrationTestCase 
                             .setImportPath("prefix/one/two/library")))
             .build();
 
+    BlazeProjectData projectData =
+        new BlazeProjectData(
+            0L,
+            targetMap,
+            null,
+            null,
+            new WorkspacePathResolverImpl(workspaceRoot),
+            location -> workspaceRoot.fileForPath(new WorkspacePath(location.getRelativePath())),
+            new WorkspaceLanguageSettings(WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)),
+            null,
+            null);
     registerProjectService(
-        BlazeProjectDataManager.class,
-        new MockBlazeProjectDataManager(
-            new BlazeProjectData(
-                0L,
-                targetMap,
-                null,
-                null,
-                new WorkspacePathResolverImpl(workspaceRoot),
-                location ->
-                    workspaceRoot.fileForPath(new WorkspacePath(location.getRelativePath())),
-                new WorkspaceLanguageSettings(WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)),
-                null,
-                null)));
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(projectData));
 
     GoFile fooBarBinary =
         (GoFile)
@@ -148,7 +147,7 @@ public class BlazeGoGotoDeclarationHandlerTest extends BlazeIntegrationTestCase 
     FuncallExpression oneTwoLibraryRule =
         PsiUtils.findFirstChildOfClassRecursive(oneTwoBUILD, FuncallExpression.class);
 
-    BlazeGoRootsProvider.createGoPathSourceRoot(getProject());
+    BlazeGoRootsProvider.createGoPathSourceRoot(getProject(), projectData);
 
     testFixture.configureFromExistingVirtualFile(fooBarBinary.getVirtualFile());
     List<Caret> carets = testFixture.getEditor().getCaretModel().getAllCarets();

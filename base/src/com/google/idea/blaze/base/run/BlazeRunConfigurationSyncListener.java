@@ -54,6 +54,7 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
       BlazeProjectData blazeProjectData,
       SyncMode syncMode,
       SyncResult syncResult) {
+    updateExistingRunConfigurations(project);
     if (syncMode == SyncMode.STARTUP) {
       return;
     }
@@ -79,6 +80,20 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
             maybeAddRunConfiguration(project, blazeProjectData, label);
           }
         });
+  }
+
+  /**
+   * On each sync, re-calculate target kind for all existing run configurations, in case the target
+   * map has changed since the last sync.
+   */
+  private static void updateExistingRunConfigurations(Project project) {
+    RunManager runManager = RunManager.getInstance(project);
+    for (RunConfiguration runConfig :
+        runManager.getConfigurationsList(BlazeCommandRunConfigurationType.getInstance())) {
+      if (runConfig instanceof BlazeCommandRunConfiguration) {
+        ((BlazeCommandRunConfiguration) runConfig).updateTargetKindAsync(null);
+      }
+    }
   }
 
   private static Set<File> getImportedRunConfigurations(
@@ -113,7 +128,7 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
    */
   private static void maybeAddRunConfiguration(
       Project project, BlazeProjectData blazeProjectData, Label label) {
-    final RunManager runManager = RunManager.getInstance(project);
+    RunManager runManager = RunManager.getInstance(project);
 
     for (BlazeRunConfigurationFactory configurationFactory :
         BlazeRunConfigurationFactory.EP_NAME.getExtensions()) {

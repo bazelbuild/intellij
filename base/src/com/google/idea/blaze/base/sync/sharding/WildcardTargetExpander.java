@@ -207,8 +207,7 @@ public class WildcardTargetExpander {
             .stdout(LineProcessingOutputStream.of(new QueryResultLineProcessor(output, filter)))
             .stderr(
                 LineProcessingOutputStream.of(
-                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
-                        project, context, workspaceRoot)))
+                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
             .build()
             .run();
 

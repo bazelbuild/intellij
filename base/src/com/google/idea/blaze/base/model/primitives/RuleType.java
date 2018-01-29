@@ -19,5 +19,6 @@ package com.google.idea.blaze.base.model.primitives;
 public enum RuleType {
   TEST,
   BINARY,
+  LIBRARY,
   UNKNOWN,
 }

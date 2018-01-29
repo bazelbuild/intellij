@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
+import javax.annotation.Nullable;
 
 /** Java-specific handler provider for {@link BlazeCommandRunConfiguration}s. */
 public class BlazeJavaRunConfigurationHandlerProvider
@@ -28,18 +29,19 @@ public class BlazeJavaRunConfigurationHandlerProvider
   private static final ImmutableSet<Kind> RELEVANT_RULE_KINDS =
       ImmutableSet.of(
           Kind.ANDROID_ROBOLECTRIC_TEST,
+          Kind.ANDROID_LOCAL_TEST,
           Kind.JAVA_TEST,
           Kind.JAVA_BINARY,
           Kind.SCALA_BINARY,
           Kind.SCALA_TEST,
           Kind.SCALA_JUNIT_TEST);
 
-  static boolean supportsKind(Kind kind) {
+  static boolean supportsKind(@Nullable Kind kind) {
     return RELEVANT_RULE_KINDS.contains(kind);
   }
 
   @Override
-  public boolean canHandleKind(Kind kind) {
+  public boolean canHandleKind(@Nullable Kind kind) {
     return supportsKind(kind);
   }
 

@@ -26,10 +26,10 @@ import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
+import com.google.idea.sdkcompat.smrunner.OutputToGeneralTestEventsConverterAdapter;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor;
-import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
 import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestFinishedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestIgnoredEvent;
@@ -49,7 +49,7 @@ import javax.annotation.Nullable;
 import jetbrains.buildServer.messages.serviceMessages.TestSuiteStarted;
 
 /** Converts blaze test runner xml logs to smRunner events. */
-public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConverter {
+public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConverterAdapter {
 
   private static final ErrorOrFailureOrSkipped NO_ERROR = new ErrorOrFailureOrSkipped();
 
@@ -68,8 +68,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   }
 
   @Override
-  public void flushBufferBeforeTerminating() {
-    super.flushBufferBeforeTerminating();
+  public void processTestSuites() {
     onStartTesting();
     getProcessor().onTestsReporterAttached();
 

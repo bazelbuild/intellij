@@ -48,6 +48,7 @@ stamped_plugin_xml(
     plugin_name = "Bazel",
     plugin_xml = ":merged_plugin_xml",
     stamp_since_build = True,
+    stamp_until_build = True,
     version = VERSION,
 )
 
@@ -55,21 +56,19 @@ java_library(
     name = "clwb_lib",
     srcs = glob(["src/**/*.java"]),
     runtime_deps = [
-        "//golang",
         "//python",
         "//terminal",
     ],
     deps = [
         "//base",
         "//cpp",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
-        "@jsr305_annotations//jar",
     ],
 )
 
 OPTIONAL_PLUGIN_XMLS = [
-    "//golang:optional_xml",
     "//python:optional_xml",
     "//terminal:optional_xml",
 ]
@@ -118,8 +117,8 @@ intellij_unit_test_suite(
     test_package_root = "com.google.idea.blaze.clwb",
     deps = [
         ":clwb_lib",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
-        "@jsr305_annotations//jar",
         "@junit//jar",
     ],
 )

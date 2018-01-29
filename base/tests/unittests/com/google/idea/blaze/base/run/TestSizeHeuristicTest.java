@@ -118,10 +118,10 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.ENORMOUS))
                 .build()
                 .toTargetInfo());
-    Label match =
+    TargetInfo match =
         TestTargetHeuristic.chooseTestTargetForSourceFile(
             project, null, source, rules, TestSize.SMALL);
-    assertThat(match).isEqualTo(Label.create("//foo:test1"));
+    assertThat(match.label).isEqualTo(Label.create("//foo:test1"));
   }
 
   @Test
@@ -141,10 +141,10 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .build()
                 .toTargetInfo());
-    Label match =
+    TargetInfo match =
         TestTargetHeuristic.chooseTestTargetForSourceFile(
             project, null, source, rules, TestSize.SMALL);
-    assertThat(match).isEqualTo(Label.create("//foo:test2"));
+    assertThat(match.label).isEqualTo(Label.create("//foo:test2"));
   }
 
   @Test
@@ -170,9 +170,9 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .build()
                 .toTargetInfo());
-    Label match =
+    TargetInfo match =
         TestTargetHeuristic.chooseTestTargetForSourceFile(
             project, null, source, rules, TestSize.SMALL);
-    assertThat(match).isEqualTo(Label.create("//foo:test2"));
+    assertThat(match.label).isEqualTo(Label.create("//foo:test2"));
   }
 }

@@ -82,6 +82,11 @@ public class BlazeTestCase {
       this.container.registerComponentInstance(klass.getName(), instance);
       return this;
     }
+
+    // Used by CPPEnvironmentAdapter. Can be removed after #api172
+    public MutablePicoContainer getPicoContainer() {
+      return container;
+    }
   }
 
   @Before

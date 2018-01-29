@@ -81,7 +81,7 @@ public final class BlazeScalaWorkspaceImporter {
         continue;
       }
       // Except source targets.
-      if (importFilter.isSourceTarget(target) && JavaSourceFilter.canImportAsSource(target)) {
+      if (JavaSourceFilter.importAsSource(importFilter, target)) {
         continue;
       }
       if (target.javaIdeInfo != null) {

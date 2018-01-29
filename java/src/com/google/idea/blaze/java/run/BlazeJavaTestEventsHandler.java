@@ -42,7 +42,11 @@ public class BlazeJavaTestEventsHandler implements BlazeTestEventsHandler {
 
   private static final ImmutableSet<Kind> HANDLED_KINDS =
       ImmutableSet.of(
-          Kind.JAVA_TEST, Kind.ANDROID_ROBOLECTRIC_TEST, Kind.GWT_TEST, Kind.SCALA_TEST);
+          Kind.JAVA_TEST,
+          Kind.ANDROID_ROBOLECTRIC_TEST,
+          Kind.ANDROID_LOCAL_TEST,
+          Kind.GWT_TEST,
+          Kind.SCALA_TEST);
 
   @Override
   public boolean handlesKind(@Nullable Kind kind) {

@@ -49,6 +49,7 @@ public class UseExistingBazelWorkspaceOption implements BlazeSelectWorkspaceOpti
 
   public UseExistingBazelWorkspaceOption(BlazeNewProjectBuilder builder) {
     this.directoryField = new TextFieldWithHistory();
+    this.directoryField.setName("workspace-directory-field");
     this.directoryField.setHistory(builder.getWorkspaceHistory(BuildSystem.Bazel));
     this.directoryField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);
     this.directoryField.setText(builder.getLastImportedWorkspace(BuildSystem.Bazel));

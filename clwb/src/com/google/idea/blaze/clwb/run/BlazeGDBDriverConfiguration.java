@@ -19,19 +19,16 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.intellij.execution.ExecutionException;
+import com.google.idea.sdkcompat.clion.BlazeGDBDriverConfigurationBase;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.jetbrains.cidr.cpp.execution.debugger.backend.GDBDriverConfiguration;
-import com.jetbrains.cidr.execution.Installer;
-import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
 import java.io.File;
 import java.io.IOException;
 import javax.annotation.Nullable;
 
-final class BlazeGDBDriverConfiguration extends GDBDriverConfiguration {
+final class BlazeGDBDriverConfiguration extends BlazeGDBDriverConfigurationBase {
   private static final Logger LOG = Logger.getInstance(BlazeGDBDriverConfiguration.class);
 
   private final ImmutableList<String> startupCommands;
@@ -40,22 +37,20 @@ final class BlazeGDBDriverConfiguration extends GDBDriverConfiguration {
 
   BlazeGDBDriverConfiguration(
       Project project, ImmutableList<String> startupCommands, WorkspaceRoot workspaceRoot) {
+    super(project);
     this.project = project;
     this.startupCommands = startupCommands;
     this.workspaceRoot = workspaceRoot;
   }
 
   @Override
-  public GeneralCommandLine createDriverCommandLine(DebuggerDriver driver, Installer installer)
-      throws ExecutionException {
-    GeneralCommandLine driverCommandLine = super.createDriverCommandLine(driver, installer);
-
+  public void modifyCommandLine(GeneralCommandLine commandLine) {
     // Add our GDB commands to run after startup
     for (String command : startupCommands) {
-      driverCommandLine.addParameter("-ex");
-      driverCommandLine.addParameter(command);
+      commandLine.addParameter("-ex");
+      commandLine.addParameter(command);
     }
-    return driverCommandLine;
+    commandLine.setWorkDirectory(workspaceRoot.directory());
   }
 
   @Override

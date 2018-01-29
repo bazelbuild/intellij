@@ -57,6 +57,7 @@ import com.google.idea.blaze.base.wizard2.BlazeSelectProjectViewOption;
 import com.google.idea.blaze.base.wizard2.BlazeSelectWorkspaceOption;
 import com.google.idea.blaze.base.wizard2.ProjectDataDirectoryValidator;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.history.core.Paths;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -149,6 +150,7 @@ public final class BlazeEditProjectViewControl {
     canvas.setPreferredSize(ProjectViewUi.getContainerSize());
 
     projectDataDirField = new TextFieldWithBrowseButton();
+    projectDataDirField.setName("project-data-dir-field");
     projectDataDirField.addBrowseFolderListener(
         "",
         buildSystemName + " project data directory",
@@ -169,6 +171,7 @@ public final class BlazeEditProjectViewControl {
     projectNameField = new JTextField();
     final String projectNameToolTipText = "Project display name.";
     projectNameField.setToolTipText(projectNameToolTipText);
+    projectNameField.setName("project-name-field");
     projectNameLabel.setToolTipText(projectNameToolTipText);
     canvas.add(projectNameLabel, UiUtil.getLabelConstraints(0));
     canvas.add(projectNameField, UiUtil.getFillLineConstraints(0));
@@ -419,8 +422,7 @@ public final class BlazeEditProjectViewControl {
     if (lastVcsRoot == null || lastProjectPath == null) {
       return null;
     }
-    String lastRelativePath =
-        FileUtil.getRelativePath(lastVcsRoot, lastProjectPath, File.separatorChar);
+    String lastRelativePath = Paths.relativeIfUnder(lastVcsRoot, lastProjectPath);
     if (lastRelativePath == null) {
       return null;
     }

@@ -25,7 +25,8 @@ parser.add_argument(
 parser.add_argument(
     "--stamp_until_build",
     action="store_true",
-    help="Stamp until-build with the build number",
+    help="Stamp until-build with the major release component of the build "
+         "number",
 )
 parser.add_argument(
     "--plugin_id",
@@ -92,6 +93,15 @@ def _strip_product_code(api_version):
   return match.group(2) + match.group(3)
 
 
+def _parse_major_version(api_version):
+  """Extracts the major version number from a full api version string."""
+  match = re.match(r"^([A-Z]+-)?([0-9]+)((\.[0-9]+)*)", api_version)
+  if match is None:
+    raise ValueError("Invalid build number: " + api_version)
+
+  return match.group(2)
+
+
 def main():
   args = parser.parse_args()
 
@@ -138,8 +148,8 @@ def main():
       idea_version_element.setAttribute("since-build",
                                         idea_version_build_element)
     if args.stamp_until_build:
-      idea_version_element.setAttribute("until-build",
-                                        idea_version_build_element)
+      until_version = _parse_major_version(api_version) + ".*"
+      idea_version_element.setAttribute("until-build", until_version)
 
   if args.changelog_file:
     if idea_plugin.getElementsByTagName("change-notes"):

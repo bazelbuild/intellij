@@ -17,16 +17,16 @@ package com.google.idea.blaze.java.run;
 
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
-import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.run.TestTargetFinder;
+import com.google.idea.blaze.base.model.primitives.RuleType;
+import com.google.idea.blaze.base.run.SourceToTargetFinder;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
-import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import java.io.File;
 import java.util.Collection;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Utility methods for finding rules and Android facets. */
@@ -46,14 +46,10 @@ public final class RunUtil {
     }
     Project project = testClass.getProject();
     Collection<TargetInfo> targets =
-        TestTargetFinder.getInstance(project).testTargetsForSourceFile(testFile);
-    Label testLabel =
-        TestTargetHeuristic.chooseTestTargetForSourceFile(
-            project, testClass.getContainingFile(), testFile, targets, testSize);
-    if (testLabel == null) {
-      return null;
-    }
-    return TargetFinder.findTargetInfo(project, testLabel);
+        SourceToTargetFinder.findTargetsForSourceFile(
+            project, testFile, Optional.of(RuleType.TEST));
+    return TestTargetHeuristic.chooseTestTargetForSourceFile(
+        project, testClass.getContainingFile(), testFile, targets, testSize);
   }
 
   /**

@@ -16,14 +16,17 @@
 package com.google.idea.blaze.base.actions;
 
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
+import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.actionhelper.ActionPresentationHelper;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import java.awt.datatransfer.StringSelection;
+import java.io.File;
 import javax.annotation.Nullable;
 
 /** Copies a blaze target path into the clipboard */
@@ -31,7 +34,7 @@ public class CopyBlazeTargetPathAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    Label label = getSelectedTarget(e);
+    Label label = findTarget(project, e);
     if (label != null) {
       CopyPasteManager.getInstance().setContents(new StringSelection(label.toString()));
     }
@@ -39,8 +42,29 @@ public class CopyBlazeTargetPathAction extends BlazeProjectAction {
 
   @Override
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
-    Label label = getSelectedTarget(e);
+    Label label = findTarget(project, e);
     ActionPresentationHelper.of(e).hideIf(label == null).commit();
+  }
+
+  @Nullable
+  private static Label findTarget(Project project, AnActionEvent e) {
+    Label target = getSelectedTarget(e);
+    return target != null ? target : getTargetBuildingFile(project, e);
+  }
+
+  /** Find a BUILD target building the selected file, if relevant. */
+  @Nullable
+  private static Label getTargetBuildingFile(Project project, AnActionEvent e) {
+    VirtualFile vf = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    BlazePackage parentPackage = BuildFileUtils.getBuildFile(project, vf);
+    if (parentPackage == null) {
+      return null;
+    }
+    PsiElement target =
+        BuildFileUtils.findBuildTarget(project, parentPackage, new File(vf.getPath()));
+    return target instanceof FuncallExpression
+        ? ((FuncallExpression) target).resolveBuildLabel()
+        : null;
   }
 
   @Nullable

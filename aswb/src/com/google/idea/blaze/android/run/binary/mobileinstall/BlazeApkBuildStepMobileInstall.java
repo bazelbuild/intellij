@@ -29,6 +29,7 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.async.process.ExternalTask;
+import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -45,7 +46,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.concurrent.CancellationException;
@@ -57,29 +57,20 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
   private static final BoolExperiment USE_SDK_ADB = new BoolExperiment("use.sdk.adb", true);
 
   private final Project project;
-  private final ExecutionEnvironment env;
   private final Label label;
   private final ImmutableList<String> blazeFlags;
   private final ImmutableList<String> exeFlags;
-  private final boolean useSplitApksIfPossible;
-  private final boolean mobileInstallV2;
   private BlazeAndroidDeployInfo deployInfo = null;
 
   public BlazeApkBuildStepMobileInstall(
       Project project,
-      ExecutionEnvironment env,
       Label label,
       ImmutableList<String> blazeFlags,
-      ImmutableList<String> exeFlags,
-      boolean useSplitApksIfPossible,
-      boolean mobileInstallV2) {
+      ImmutableList<String> exeFlags) {
     this.project = project;
-    this.env = env;
     this.label = label;
     this.blazeFlags = blazeFlags;
     this.exeFlags = exeFlags;
-    this.useSplitApksIfPossible = useSplitApksIfPossible;
-    this.mobileInstallV2 = mobileInstallV2;
   }
 
   @Override
@@ -89,8 +80,6 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
         new ScopedTask<Void>(context) {
           @Override
           protected Void execute(BlazeContext context) {
-            boolean incrementalInstall = env.getExecutor() instanceof IncrementalInstallExecutor;
-
             DeviceFutures deviceFutures = deviceSession.deviceFutures;
             assert deviceFutures != null;
             IDevice device = resolveDevice(context, deviceFutures);
@@ -102,38 +91,15 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
                     Blaze.getBuildSystemProvider(project).getBinaryPath(),
                     BlazeCommandName.MOBILE_INSTALL);
 
-            if (mobileInstallV2) {
-              // Will become no-op once v2 is default.
-              command.addBlazeFlags("--mode=skylark");
-            }
-
-            if (mobileInstallV2) {
-              command.addExeFlags(BlazeFlags.DEVICE, device.getSerialNumber());
-            } else {
-              command.addBlazeFlags(
-                  BlazeFlags.ADB_ARG + "-s ", BlazeFlags.ADB_ARG + device.getSerialNumber());
-            }
+            command.addExeFlags(BlazeFlags.DEVICE, device.getSerialNumber());
 
             if (USE_SDK_ADB.getValue()) {
               File adb = AndroidSdkUtils.getAdb(project);
               if (adb != null) {
-                if (mobileInstallV2) {
-                  command.addExeFlags(BlazeFlags.ADB_PATH, adb.toString());
-                } else {
-                  command.addBlazeFlags(BlazeFlags.ADB, adb.toString());
-                }
+                command.addExeFlags(BlazeFlags.ADB_PATH, adb.toString());
               }
             }
 
-            // These flags are obsolete in V2.
-            if (!mobileInstallV2) {
-              // split-apks only supported for API level 23 and above
-              if (useSplitApksIfPossible && device.getVersion().getApiLevel() >= 23) {
-                command.addBlazeFlags(BlazeFlags.SPLIT_APKS);
-              } else if (incrementalInstall) {
-                command.addBlazeFlags(BlazeFlags.INCREMENTAL);
-              }
-            }
             WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
             BlazeApkDeployInfoProtoHelper deployInfoHelper =
@@ -152,9 +118,8 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
                     .addBlazeCommand(command.build())
                     .context(context)
                     .stderr(
-                        buildResultHelper.stderr(
-                            BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
-                                project, context, workspaceRoot)))
+                        LineProcessingOutputStream.of(
+                            BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
                     .build()
                     .run();
             FileCaches.refresh(project);

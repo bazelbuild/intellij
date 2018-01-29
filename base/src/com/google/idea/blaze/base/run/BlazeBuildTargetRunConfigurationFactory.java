@@ -17,16 +17,18 @@ package com.google.idea.blaze.base.run;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
+import javax.annotation.Nullable;
 
 /**
  * A factory creating run configurations based on BUILD file targets. Runs last, as a fallback for
@@ -39,9 +41,18 @@ public class BlazeBuildTargetRunConfigurationFactory extends BlazeRunConfigurati
       ImmutableSet.of(RuleType.TEST, RuleType.BINARY);
 
   @Override
-  public boolean handlesTarget(Project project, BlazeProjectData blazeProjectData, Label label) {
-    TargetIdeInfo target = blazeProjectData.targetMap.get(TargetKey.forPlainTarget(label));
-    return target != null && HANDLED_RULE_TYPES.contains(target.kind.ruleType);
+  public boolean handlesTarget(Project project, BlazeProjectData projectData, Label label) {
+    return findProjectTarget(projectData, label) != null;
+  }
+
+  @Nullable
+  private static TargetInfo findProjectTarget(BlazeProjectData projectData, Label label) {
+    TargetIdeInfo target = projectData.targetMap.get(TargetKey.forPlainTarget(label));
+    if (target == null) {
+      return null;
+    }
+    TargetInfo targetInfo = target.toTargetInfo();
+    return HANDLED_RULE_TYPES.contains(targetInfo.getRuleType()) ? targetInfo : null;
   }
 
   @Override
@@ -50,15 +61,23 @@ public class BlazeBuildTargetRunConfigurationFactory extends BlazeRunConfigurati
   }
 
   @Override
-  public void setupConfiguration(RunConfiguration configuration, Label target) {
+  public void setupConfiguration(RunConfiguration configuration, Label label) {
     BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) configuration;
-    blazeConfig.setTarget(target);
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(configuration.getProject()).getBlazeProjectData();
+    if (projectData == null) {
+      return;
+    }
+    TargetInfo target = findProjectTarget(projectData, label);
+    blazeConfig.setTargetInfo(target);
+    if (target == null) {
+      return;
+    }
 
     BlazeCommandRunConfigurationCommonState state =
         blazeConfig.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    Kind kind = blazeConfig.getKindForTarget();
-    if (state != null && kind != null) {
-      state.getCommandState().setCommand(commandForRuleType(kind.ruleType));
+    if (state != null) {
+      state.getCommandState().setCommand(commandForRuleType(target.getRuleType()));
     }
     blazeConfig.setGeneratedName();
   }

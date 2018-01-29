@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
 public class MockCompilerVersionChecker implements CompilerVersionChecker {
 
   private String compilerVersion;
+  private boolean injectFault;
 
   public MockCompilerVersionChecker(String compilerVersion) {
     this.compilerVersion = compilerVersion;
@@ -31,10 +32,17 @@ public class MockCompilerVersionChecker implements CompilerVersionChecker {
   @Nullable
   @Override
   public String checkCompilerVersion(WorkspaceRoot workspaceRoot, File cppExecutable) {
+    if (injectFault) {
+      return null;
+    }
     return compilerVersion;
   }
 
   public void setCompilerVersion(String compilerVersion) {
     this.compilerVersion = compilerVersion;
+  }
+
+  public void setInjectFault(boolean injectFault) {
+    this.injectFault = true;
   }
 }

@@ -72,11 +72,9 @@ public interface BuildSystemProvider {
   BuildSystem buildSystem();
 
   /** @return The location of the blaze/bazel binary. */
-  @Nullable
   String getBinaryPath();
 
   /** @return The location of the blaze/bazel binary to use for syncing. */
-  @Nullable
   default String getSyncBinaryPath() {
     return getBinaryPath();
   }

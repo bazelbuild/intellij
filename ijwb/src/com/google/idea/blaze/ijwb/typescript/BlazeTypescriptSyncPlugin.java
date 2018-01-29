@@ -142,8 +142,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
         .context(context)
         .stderr(
             LineProcessingOutputStream.of(
-                BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
-                    project, context, workspaceRoot)))
+                BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
         .build()
         .run();
   }

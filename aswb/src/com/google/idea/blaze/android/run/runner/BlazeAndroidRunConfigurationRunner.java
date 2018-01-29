@@ -33,7 +33,10 @@ import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
+import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.scope.Scope;
@@ -203,6 +206,12 @@ public final class BlazeAndroidRunConfigurationRunner
               .push(
                   new BlazeConsoleScope.Builder(project)
                       .setPopupBehavior(consolePopupBehavior)
+                      .addConsoleFilters(
+                          new IssueOutputFilter(
+                              project,
+                              WorkspaceRoot.fromProject(project),
+                              BlazeInvocationContext.NonSync,
+                              true))
                       .build())
               .push(new IdeaLogScope());
 

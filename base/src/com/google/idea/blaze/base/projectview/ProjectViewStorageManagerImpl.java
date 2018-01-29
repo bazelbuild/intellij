@@ -15,39 +15,34 @@
  */
 package com.google.idea.blaze.base.projectview;
 
-import com.google.common.base.Charsets;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.CharStreams;
+import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
+import java.io.InputStreamReader;
+import java.io.Writer;
+import java.nio.file.Files;
 
 /** Project view storage implementation. */
 final class ProjectViewStorageManagerImpl extends ProjectViewStorageManager {
 
-  @Nullable
   @Override
-  public String loadProjectView(@NotNull File projectViewFile) throws IOException {
-    FileInputStream fis = new FileInputStream(projectViewFile);
-    byte[] data = new byte[(int) projectViewFile.length()];
-    fis.read(data);
-    fis.close();
-    return new String(data, Charsets.UTF_8);
+  public String loadProjectView(File projectViewFile) throws IOException {
+    try (InputStreamReader reader =
+        new InputStreamReader(InputStreamProvider.getInstance().getFile(projectViewFile), UTF_8)) {
+      return CharStreams.toString(reader);
+    }
   }
 
   @Override
-  public void writeProjectView(@NotNull String projectViewText, @NotNull File projectViewFile)
-      throws IOException {
-    FileWriter fileWriter = new FileWriter(projectViewFile);
-    try {
+  public void writeProjectView(String projectViewText, File projectViewFile) throws IOException {
+    try (Writer fileWriter = Files.newBufferedWriter(projectViewFile.toPath(), UTF_8)) {
       fileWriter.write(projectViewText);
-    } finally {
-      fileWriter.close();
     }
-
     LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(projectViewFile));
   }
 }
