@@ -525,13 +525,13 @@ def build_filtered_gen_jar(ctx, target, java, gen_java_sources, srcjars):
   jar_artifacts = []
   source_jar_artifacts = []
   for jar in java.outputs.jars:
-    if jar.ijar:
+    if hasattr(jar, "ijar") and jar.ijar:
       jar_artifacts.append(jar.ijar)
-    elif jar.class_jar:
+    elif hasattr(jar, "class_jar") and jar.class_jar:
       jar_artifacts.append(jar.class_jar)
-    if jar.source_jars:
+    if hasattr(jar, "source_jars") and jar.source_jars:
       source_jar_artifacts.extend(jar.source_jars)
-    elif jar.source_jar:
+    elif hasattr(jar, "source_jar") and jar.source_jar:
       source_jar_artifacts.append(jar.source_jar)
 
   filtered_jar = ctx.new_file(target.label.name + "-filtered-gen.jar")
