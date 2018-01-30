@@ -16,8 +16,8 @@
 package com.google.idea.blaze.base.run.smrunner;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -42,7 +42,7 @@ public interface TestUiSessionProvider {
       return null;
     }
     return Arrays.stream(EP_NAME.getExtensions())
-        .map(provider -> provider.getTestUiSession(projectData.blazeVersionData))
+        .map(provider -> provider.getTestUiSession(projectData.blazeVersionData.buildSystem()))
         .filter(Objects::nonNull)
         .findFirst()
         .orElse(null);
@@ -53,5 +53,5 @@ public interface TestUiSessionProvider {
    * project.
    */
   @Nullable
-  BlazeTestUiSession getTestUiSession(BlazeVersionData blazeVersion);
+  BlazeTestUiSession getTestUiSession(BuildSystem buildSystem);
 }

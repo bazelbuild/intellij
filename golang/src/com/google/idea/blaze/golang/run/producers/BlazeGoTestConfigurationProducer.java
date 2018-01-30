@@ -19,7 +19,6 @@ import com.goide.psi.GoFile;
 import com.goide.psi.GoFunctionOrMethodDeclaration;
 import com.goide.runconfig.GoRunUtil;
 import com.goide.runconfig.testing.GoTestFinder;
-import com.goide.runconfig.testing.GoTestFunctionType;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -34,7 +33,6 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -141,22 +139,9 @@ public class BlazeGoTestConfigurationProducer
     }
     PsiFile file = element.getContainingFile();
     if (file instanceof GoFile && GoTestFinder.isTestFile(file)) {
-      return new TestLocation(testTarget, (GoFile) file, findTestFunctionInContext(element));
+      return new TestLocation(
+          testTarget, (GoFile) file, GoTestFinder.findTestFunctionInContext(element));
     }
     return null;
-  }
-
-  /**
-   * Copied from {@link GoTestFinder#findTestFunctionInContext(PsiElement)}, since it's not
-   * available in v171_4694_61.
-   */
-  @Nullable
-  private static GoFunctionOrMethodDeclaration findTestFunctionInContext(
-      PsiElement contextElement) {
-    GoFunctionOrMethodDeclaration function =
-        PsiTreeUtil.getNonStrictParentOfType(contextElement, GoFunctionOrMethodDeclaration.class);
-    return function != null && GoTestFunctionType.fromName(function.getName()) != null
-        ? function
-        : null;
   }
 }

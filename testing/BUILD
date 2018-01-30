@@ -19,7 +19,7 @@ java_library(
            ),
     deps = [
         "//intellij_platform_sdk:plugin_api_for_tests",
-        "@jsr305_annotations//jar",
+        "//intellij_platform_sdk:jsr305",
         "@junit//jar",
     ] + select_for_ide(
         android_studio = ["//sdkcompat"],

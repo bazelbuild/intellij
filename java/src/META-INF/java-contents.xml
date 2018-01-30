@@ -97,7 +97,6 @@
     <psi.referenceContributor language="BUILD" implementation="com.google.idea.blaze.java.lang.build.references.JavaClassReferenceContributor"/>
     <useScopeEnlarger implementation="com.google.idea.blaze.java.psi.AutoFactoryUseScopeEnlarger"/>
     <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.AutoFactoryImplicitUsageProvider"/>
-    <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.InjectImplicitUsageProvider"/>
     <psi.clsCustomNavigationPolicy implementation="com.google.idea.blaze.java.libraries.BlazeSourceJarNavigationPolicy"/>
     <debugger.positionManagerFactory implementation="com.google.idea.blaze.java.run.ExternalFilePositionManager$Factory"/>
   </extensions>

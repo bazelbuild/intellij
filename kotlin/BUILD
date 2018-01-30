@@ -12,8 +12,8 @@ java_library(
     visibility = ["//visibility:public"],
     deps = [
         "//base",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//java",
-        "@jsr305_annotations//jar",
     ],
 )

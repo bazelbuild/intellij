@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.async.process.ExternalTask;
+import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -29,6 +30,7 @@ import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
+import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -151,12 +153,16 @@ public final class BuildPluginBeforeRunTaskProvider
             : BlazeConsolePopupBehavior.ALWAYS;
     return Scope.root(
         context -> {
+          WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
           context
               .push(new ExperimentScope())
               .push(new IssuesScope(project))
               .push(
                   new BlazeConsoleScope.Builder(project)
                       .setPopupBehavior(consolePopupBehavior)
+                      .addConsoleFilters(
+                          new IssueOutputFilter(
+                              project, workspaceRoot, BlazeInvocationContext.NonSync, true))
                       .build())
               .push(new IdeaLogScope());
 
@@ -180,7 +186,6 @@ public final class BuildPluginBeforeRunTaskProvider
                 @Override
                 protected Void execute(BlazeContext context) {
                   String binaryPath = Blaze.getBuildSystemProvider(project).getBinaryPath();
-                  WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
                   BlazeIntellijPluginConfiguration config =
                       (BlazeIntellijPluginConfiguration) configuration;
 
@@ -225,7 +230,7 @@ public final class BuildPluginBeforeRunTaskProvider
                                   project,
                                   projectViewSet,
                                   BlazeCommandName.BUILD,
-                                  BlazeInvocationContext.RunConfiguration))
+                                  BlazeInvocationContext.NonSync))
                           .addBlazeFlags(config.getBlazeFlagsState().getExpandedFlags())
                           .addExeFlags(config.getExeFlagsState().getExpandedFlags())
                           .addBlazeFlags(buildResultHelper.getBuildFlags())
@@ -239,9 +244,9 @@ public final class BuildPluginBeforeRunTaskProvider
                           .addBlazeCommand(command)
                           .context(context)
                           .stderr(
-                              buildResultHelper.stderr(
+                              LineProcessingOutputStream.of(
                                   BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
-                                      project, context, workspaceRoot)))
+                                      context)))
                           .build()
                           .run();
                   if (retVal != 0) {
@@ -259,7 +264,7 @@ public final class BuildPluginBeforeRunTaskProvider
                   .submitTaskWithResult(buildTask);
 
           try {
-            Futures.get(buildFuture, ExecutionException.class);
+            Futures.getChecked(buildFuture, ExecutionException.class);
           } catch (ExecutionException e) {
             context.setHasError();
           } catch (CancellationException e) {

@@ -61,12 +61,12 @@
       text="Add Directory To Project...">
     </action>
     <action id="Blaze.OpenCorrespondingBuildFile"
-      class="com.google.idea.blaze.base.buildmap.OpenCorrespondingBuildFile"
+      class="com.google.idea.blaze.base.actions.OpenCorrespondingBuildFile"
       text="Open Corresponding BUILD File">
     </action>
     <action id="Blaze.CopyBlazeTargetPathAction"
       class="com.google.idea.blaze.base.actions.CopyBlazeTargetPathAction"
-      text="Copy BUILD target string">
+      text="Copy BUILD target string to Clipboard">
     </action>
     <action id="Blaze.PartialSync"
       class="com.google.idea.blaze.base.sync.actions.PartialSyncAction"
@@ -217,8 +217,11 @@
                     serviceImplementation="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProviderImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.sync.workspace.SimpleWorkspacePathResolver$Provider"
                     serviceImplementation="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProviderImpl"/>
+    <projectService serviceInterface="com.google.idea.blaze.base.sync.projectview.WorkspaceFileFinder$Provider"
+                    serviceImplementation="com.google.idea.blaze.base.sync.projectview.WorkspaceFileFinderImpl$Provider"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.sync.SyncCache"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.BlazeProblemsView"/>
+    <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.ProblemsViewConfiguration"/>
     <configurationType implementation="com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.base.run.producers.AllInPackageBlazeConfigurationProducer"
@@ -233,6 +236,8 @@
     <applicationService serviceInterface="com.google.idea.blaze.base.help.BlazeHelpHandler"
                         serviceImplementation="com.google.idea.blaze.base.help.BlazeHelpHandlerImpl"/>
     <applicationService serviceImplementation="com.google.idea.blaze.base.actions.BlazeBuildService"/>
+    <applicationService serviceInterface="com.google.idea.blaze.base.async.process.ExternalTaskProvider"
+                        serviceImplementation="com.google.idea.blaze.base.async.process.ExternalTaskProvider$Impl"/>
 
     <additionalTextAttributes scheme="Default" file="base/resources/colorSchemes/BuildDefault.xml"/>
     <typedHandler implementation="com.google.idea.blaze.base.lang.buildfile.completion.BuildCompletionAutoPopupHandler"/>
@@ -373,7 +378,7 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncListener implementation="com.google.idea.blaze.base.sync.SyncCache$ClearSyncCache"/>
     <SyncListener implementation="com.google.idea.blaze.base.run.BlazeRunConfigurationSyncListener"/>
-    <SyncListener implementation="com.google.idea.blaze.base.sync.status.BlazeSyncStatusListener"/>
+    <SyncListener implementation="com.google.idea.blaze.base.sync.status.BlazeSyncStatusListener" order="first"/>
     <SyncPlugin implementation="com.google.idea.blaze.base.lang.buildfile.sync.BuildLangSyncPlugin"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.command.BuildFlagsProviderImpl"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.git.GitBlazeVcsHandler"/>

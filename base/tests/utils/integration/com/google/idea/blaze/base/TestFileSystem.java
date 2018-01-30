@@ -35,6 +35,7 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import javax.annotation.Nullable;
 
 /** Creates temp files for integration tests. */
 public class TestFileSystem {
@@ -122,14 +123,19 @@ public class TestFileSystem {
     }.execute().getResultObject();
   }
 
+  @Nullable
   public VirtualFile findFile(String filePath) {
     VirtualFile vf = TempFileSystem.getInstance().findFileByPath(filePath);
-    if (vf == null) {
-      // this might be a relative path
-      filePath = makePathRelativeToTestFixture(filePath);
-      vf = tempDirTestFixture.getFile(filePath);
+    if (vf != null) {
+      return vf;
     }
-    return vf;
+    File file = new File(filePath);
+    if (file.isAbsolute()) {
+      // try looking for a physical file
+      return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    }
+    filePath = makePathRelativeToTestFixture(filePath);
+    return tempDirTestFixture.getFile(filePath);
   }
 
   public VirtualFile findOrCreateDirectory(String path) throws IOException {

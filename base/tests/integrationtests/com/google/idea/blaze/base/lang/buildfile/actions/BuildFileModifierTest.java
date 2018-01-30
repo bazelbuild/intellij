@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Computable;
 import org.junit.Test;
@@ -43,7 +42,6 @@ public class BuildFileModifierTest extends BuildFileIntegrationTestCase {
                 BuildFileModifier.getInstance()
                     .addRule(
                         getProject(),
-                        new BlazeContext(),
                         Label.create("//:new_target"),
                         Kind.JAVA_TEST));
     assertFileContents(

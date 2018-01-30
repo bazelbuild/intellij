@@ -14,11 +14,11 @@ java_library(
         "//common/formatter",
         "//common/guava",
         "//common/transactions",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//sdkcompat",
         "//third_party/auto_value",
-        "@jsr305_annotations//jar",
     ],
 )
 
@@ -39,10 +39,9 @@ java_library(
         "src/com/google/idea/blaze/base/model/primitives/WorkspacePath.java",
     ],
     neverlink = 1,
-    visibility = ["//java/com/google/devtools/intellij/g3plugins:visibility"],
     deps = [
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
-        "@jsr305_annotations//jar",
     ],
 )
 
@@ -54,10 +53,22 @@ java_library(
         "src/com/google/idea/blaze/base/sync/workspace/SimpleWorkspacePathResolver.java",
     ],
     neverlink = 1,
-    visibility = ["//java/com/google/devtools/intellij/g3plugins:visibility"],
     deps = [
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
-        "@jsr305_annotations//jar",
+    ],
+)
+
+# neverlink library exposed so other plugins can optionally depend on it
+java_library(
+    name = "workspace_file_finder_api",
+    srcs = [
+        "src/com/google/idea/blaze/base/sync/projectview/WorkspaceFileFinder.java",
+    ],
+    neverlink = 1,
+    deps = [
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
     ],
 )
 
@@ -66,10 +77,9 @@ java_library(
     name = "event_logger_api",
     srcs = ["src/com/google/idea/blaze/base/logging/EventLogger.java"],
     neverlink = 1,
-    visibility = ["//java/com/google/devtools/intellij/g3plugins:visibility"],
     deps = [
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
-        "@jsr305_annotations//jar",
     ],
 )
 
@@ -85,11 +95,10 @@ java_library(
         "src/com/google/idea/blaze/base/run/targetfinder/TargetFinder.java",
     ],
     neverlink = 1,
-    visibility = ["//java/com/google/devtools/intellij/g3plugins:visibility"],
     deps = [
         ":label_api",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
-        "@jsr305_annotations//jar",
     ],
 )
 
@@ -106,9 +115,9 @@ java_library(
     visibility = ["//visibility:public"],
     deps = [
         "//base",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//sdkcompat",
-        "@jsr305_annotations//jar",
         "@junit//jar",
     ],
 )
@@ -121,10 +130,10 @@ java_library(
     deps = [
         ":unit_test_utils",
         "//base",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//proto:proto_deps",
         "//testing:lib",
-        "@jsr305_annotations//jar",
         "@junit//jar",
     ],
 )
@@ -167,9 +176,9 @@ intellij_unit_test_suite(
         "//common/experiments",
         "//common/experiments:unit_test_utils",
         "//common/guava",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//proto:proto_deps",
-        "@jsr305_annotations//jar",
         "@junit//jar",
     ],
 )
@@ -186,9 +195,9 @@ intellij_integration_test_suite(
         ":base",
         ":integration_test_utils",
         ":unit_test_utils",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//proto:proto_deps",
-        "@jsr305_annotations//jar",
         "@junit//jar",
     ],
 )

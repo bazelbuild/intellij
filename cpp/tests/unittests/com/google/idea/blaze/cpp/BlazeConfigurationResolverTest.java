@@ -52,6 +52,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
+import com.google.idea.sdkcompat.cidr.CPPEnvironmentAdapter;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -85,6 +86,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(BlazeExecutor.class, new MockBlazeExecutor());
+    CPPEnvironmentAdapter.registerForTest(applicationServices.getPicoContainer());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
     compilerVersionChecker = new MockCompilerVersionChecker("1234");
     applicationServices.register(CompilerVersionChecker.class, compilerVersionChecker);
@@ -559,6 +561,24 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     assertThatResolving(projectView, targetMap2).hasChangedRemovedFiles(ImmutableList.of(), true);
   }
 
+  @Test
+  public void brokenCompiler_collectsIssues() {
+    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:*"));
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(createCcToolchain())
+            .addTarget(
+                createCcTarget(
+                    "//foo/bar:binary", Kind.CC_BINARY, ImmutableList.of(src("foo/bar/binary.cc"))))
+            .build();
+    createVirtualFile("/root/foo/bar/binary.cc");
+
+    compilerVersionChecker.setInjectFault(true);
+
+    computeResolverResult(projectView, targetMap);
+    errorCollector.assertIssueContaining("Unable to determine version of compiler");
+  }
+
   private static ArtifactLocation src(String path) {
     return ArtifactLocation.builder().setRelativePath(path).setIsSource(true).build();
   }
@@ -622,7 +642,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     return mockFile;
   }
 
-  private Subject assertThatResolving(ProjectView projectView, TargetMap targetMap) {
+  private void computeResolverResult(ProjectView projectView, TargetMap targetMap) {
     BlazeProjectData blazeProjectData =
         MockBlazeProjectDataBuilder.builder(workspaceRoot).setTargetMap(targetMap).build();
     resolverResult =
@@ -632,6 +652,10 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             ProjectViewSet.builder().add(projectView).build(),
             blazeProjectData,
             resolverResult);
+  }
+
+  private Subject assertThatResolving(ProjectView projectView, TargetMap targetMap) {
+    computeResolverResult(projectView, targetMap);
     errorCollector.assertNoIssues();
     return new Subject() {
       @Override

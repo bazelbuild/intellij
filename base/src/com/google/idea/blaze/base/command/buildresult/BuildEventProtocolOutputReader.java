@@ -154,6 +154,7 @@ public final class BuildEventProtocolOutputReader {
         .map(fileSets::get)
         .flatMap(List::stream)
         .map(file -> parseFile(file, fileFilter))
+        .filter(Objects::nonNull)
         .collect(toImmutableList());
   }
 
@@ -204,7 +205,11 @@ public final class BuildEventProtocolOutputReader {
       String name = toVisit.remove();
       BuildEventStreamProtos.NamedSetOfFiles fs = fileSets.get(name);
       allFiles.addAll(
-          fs.getFilesList().stream().map(f -> parseFile(f, fileFilter)).collect(toImmutableList()));
+          fs.getFilesList()
+              .stream()
+              .map(f -> parseFile(f, fileFilter))
+              .filter(Objects::nonNull)
+              .collect(toImmutableList()));
       Set<String> children =
           fs.getFileSetsList()
               .stream()

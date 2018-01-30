@@ -102,22 +102,21 @@ public class BlazeGoRootsProviderTest extends BlazeIntegrationTestCase {
                             .setImportPath("prefix/one/two/library")))
             .build();
 
+    BlazeProjectData projectData =
+        new BlazeProjectData(
+            0L,
+            targetMap,
+            null,
+            null,
+            null,
+            location -> workspaceRoot.fileForPath(new WorkspacePath(location.getRelativePath())),
+            new WorkspaceLanguageSettings(WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)),
+            null,
+            null);
     registerProjectService(
-        BlazeProjectDataManager.class,
-        new MockBlazeProjectDataManager(
-            new BlazeProjectData(
-                0L,
-                targetMap,
-                null,
-                null,
-                null,
-                location ->
-                    workspaceRoot.fileForPath(new WorkspacePath(location.getRelativePath())),
-                new WorkspaceLanguageSettings(WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)),
-                null,
-                null)));
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(projectData));
 
-    BlazeGoRootsProvider.createGoPathSourceRoot(getProject());
+    BlazeGoRootsProvider.createGoPathSourceRoot(getProject(), projectData);
     BlazeGoRootsProvider goRootsProvider =
         GoRootsProvider.EP_NAME.findExtension(BlazeGoRootsProvider.class);
     assertThat(goRootsProvider).isNotNull();

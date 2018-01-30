@@ -21,10 +21,10 @@ java_library(
         "//base",
         "//common/experiments",
         "//common/transactions",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
         "//third_party/go",
-        "@jsr305_annotations//jar",
     ],
 )
 
@@ -75,8 +75,8 @@ intellij_unit_test_suite(
         ":golang",
         "//base",
         "//base:unit_test_utils",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
-        "@jsr305_annotations//jar",
         "@junit//jar",
     ],
 )
@@ -97,9 +97,9 @@ intellij_integration_test_suite(
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//third_party/go:go_for_tests",
-        "@jsr305_annotations//jar",
         "@junit//jar",
     ],
 )

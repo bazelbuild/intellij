@@ -55,6 +55,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
+import com.google.idea.sdkcompat.cidr.CPPEnvironmentAdapter;
 import com.intellij.mock.MockPsiManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
@@ -91,6 +92,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(BlazeExecutor.class, new MockBlazeExecutor());
+    CPPEnvironmentAdapter.registerForTest(applicationServices.getPicoContainer());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
     applicationServices.register(
         CompilerVersionChecker.class, new MockCompilerVersionChecker("1234"));

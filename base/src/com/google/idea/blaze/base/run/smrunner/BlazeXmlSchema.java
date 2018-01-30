@@ -39,7 +39,7 @@ public class BlazeXmlSchema {
     }
   }
 
-  static TestSuite parse(InputStream input) {
+  public static TestSuite parse(InputStream input) {
     try {
       Object parsed = CONTEXT.createUnmarshaller().unmarshal(input);
       return parsed instanceof TestSuites
@@ -67,20 +67,20 @@ public class BlazeXmlSchema {
   /** XML output by blaze test runners. */
   @XmlRootElement(name = "testsuite")
   public static class TestSuite {
-    public @XmlAttribute String name;
-    @XmlAttribute String classname;
-    @XmlAttribute int tests;
-    @XmlAttribute int failures;
-    @XmlAttribute int errors;
-    @XmlAttribute int skipped;
-    @XmlAttribute int disabled;
-    @XmlAttribute double time;
+    @XmlAttribute public String name;
+    @XmlAttribute public String classname;
+    @XmlAttribute public int tests;
+    @XmlAttribute public int failures;
+    @XmlAttribute public int errors;
+    @XmlAttribute public int skipped;
+    @XmlAttribute public int disabled;
+    @XmlAttribute public double time;
 
     @XmlAttribute(name = "system-out")
-    String sysOut;
+    public String sysOut;
 
     @XmlAttribute(name = "system-err")
-    String sysErr;
+    public String sysErr;
 
     @XmlElement(name = "error", type = ErrorOrFailureOrSkipped.class)
     ErrorOrFailureOrSkipped error;
@@ -95,7 +95,7 @@ public class BlazeXmlSchema {
     List<TestSuite> testDecorators = Lists.newArrayList();
 
     @XmlElement(name = "testcase")
-    List<TestCase> testCases = Lists.newArrayList();
+    public List<TestCase> testCases = Lists.newArrayList();
 
     /** Used to merge test suites from a single target, split across multiple shards */
     private void addSuite(TestSuite suite) {
@@ -132,12 +132,13 @@ public class BlazeXmlSchema {
     return outer;
   }
 
-  static class TestCase {
-    @XmlAttribute String name;
-    @XmlAttribute String classname;
-    @XmlAttribute String status;
-    @XmlAttribute String result;
-    @XmlAttribute String time;
+  /** Individual test case XML output by blaze test runners. */
+  public static class TestCase {
+    @XmlAttribute public String name;
+    @XmlAttribute public String classname;
+    @XmlAttribute public String status;
+    @XmlAttribute public String result;
+    @XmlAttribute public String time;
 
     @XmlAttribute(name = "system-out")
     String sysOut;
@@ -146,13 +147,13 @@ public class BlazeXmlSchema {
     String sysErr;
 
     @XmlElement(name = "error", type = ErrorOrFailureOrSkipped.class)
-    List<ErrorOrFailureOrSkipped> errors = Lists.newArrayList();
+    public List<ErrorOrFailureOrSkipped> errors = Lists.newArrayList();
 
     @XmlElement(name = "failure", type = ErrorOrFailureOrSkipped.class)
-    List<ErrorOrFailureOrSkipped> failures = Lists.newArrayList();
+    public List<ErrorOrFailureOrSkipped> failures = Lists.newArrayList();
 
     @XmlElement(name = "skipped", type = ErrorOrFailureOrSkipped.class)
-    ErrorOrFailureOrSkipped skipped;
+    public ErrorOrFailureOrSkipped skipped;
   }
 
   static class ErrorOrFailureOrSkipped {

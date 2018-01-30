@@ -17,11 +17,11 @@ java_library(
         "//common/guava",
         "//common/transactions",
         "//intellij_platform_sdk:devkit",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
         "//sdkcompat",
-        "@jsr305_annotations//jar",
     ],
 )
 
@@ -90,8 +90,8 @@ intellij_integration_test_suite(
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
-        "@jsr305_annotations//jar",
         "@junit//jar",
     ],
 )

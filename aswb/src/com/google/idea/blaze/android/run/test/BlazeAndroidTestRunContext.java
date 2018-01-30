@@ -90,8 +90,7 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
     this.configState = configState;
     this.buildStep =
         configState.getLaunchMethod().equals(AndroidTestLaunchMethod.MOBILE_INSTALL)
-            ? new BlazeApkBuildStepMobileInstall(
-                project, env, label, blazeFlags, exeFlags, false, true)
+            ? new BlazeApkBuildStepMobileInstall(project, label, blazeFlags, exeFlags)
             : new BlazeApkBuildStepNormalBuild(project, label, blazeFlags);
     this.applicationIdProvider = new BlazeAndroidTestApplicationIdProvider(buildStep);
     this.apkProvider = new BlazeApkProvider(project, buildStep);

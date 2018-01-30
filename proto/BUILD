@@ -22,3 +22,10 @@ java_proto_library(
     visibility = ["//visibility:public"],
     deps = [":intellij_ide_info_proto"],
 )
+
+java_binary(
+    name = "repackaged_proto_deps",
+    launcher = "//third_party/java/jdk:jdk_launcher",
+    main_class = "None",
+    runtime_deps = [":repackaged_proto_deps_lib"],
+)

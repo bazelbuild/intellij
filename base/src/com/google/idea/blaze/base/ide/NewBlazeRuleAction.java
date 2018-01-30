@@ -53,8 +53,7 @@ class NewBlazeRuleAction extends BlazeProjectAction implements DumbAware {
               .push(new BlazeConsoleScope.Builder(project).build())
               .push(new IssuesScope(project))
               .push(new IdeaLogScope());
-          NewBlazeRuleDialog newBlazeRuleDialog =
-              new NewBlazeRuleDialog(context, project, virtualFile);
+          NewBlazeRuleDialog newBlazeRuleDialog = new NewBlazeRuleDialog(project, virtualFile);
           newBlazeRuleDialog.show();
         });
   }

@@ -298,9 +298,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .addBlazeCommand(builder.build())
             .context(context)
             .stderr(
-                buildResultHelper.stderr(
-                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
-                        project, context, workspaceRoot)))
+                LineProcessingOutputStream.of(
+                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
             .build()
             .run();
 
@@ -637,9 +636,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .addBlazeCommand(blazeCommandBuilder.build())
             .context(context)
             .stderr(
-                buildResultHelper.stderr(
-                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
-                        project, context, workspaceRoot)))
+                LineProcessingOutputStream.of(
+                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
             .build()
             .run(new TimingScope("ExecuteBlazeCommand", EventType.BlazeInvocation));
 
@@ -680,8 +678,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .context(context)
             .stderr(
                 LineProcessingOutputStream.of(
-                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
-                        project, context, workspaceRoot)))
+                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
             .build()
             .run();
 

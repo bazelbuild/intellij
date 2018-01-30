@@ -73,7 +73,15 @@ public abstract class BlazeRunConfigurationProducer<T extends RunConfiguration>
 
   protected abstract boolean doIsConfigFromContext(T configuration, ConfigurationContext context);
 
-  private static boolean validContext(ConfigurationContext context) {
+  /** Returns true if the producer should ignore contexts outside the project. Defaults to false. */
+  protected boolean restrictedToProjectFiles() {
+    return false;
+  }
+
+  private boolean validContext(ConfigurationContext context) {
+    if (restrictedToProjectFiles() && context.getModule() == null) {
+      return false;
+    }
     if (!isBlazeContext(context)) {
       return false;
     }

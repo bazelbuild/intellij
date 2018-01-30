@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -104,7 +105,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
                     project,
                     ProjectViewSet.builder().build(),
                     handlerState.getCommandState().getCommand(),
-                    BlazeInvocationContext.RunConfiguration))
+                    BlazeInvocationContext.NonSync))
             .addBlazeFlags(testHandlerFlags)
             .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
             .addExeFlags(handlerState.getExeFlagsState().getExpandedFlags());
@@ -127,8 +128,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
           public ImmutableList<ProcessListener> createProcessListeners(BlazeContext context) {
             LineProcessingOutputStream outputStream =
                 LineProcessingOutputStream.of(
-                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
-                        project, context, workspaceRoot));
+                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context));
             return ImmutableList.of(new LineProcessingProcessAdapter(outputStream));
           }
         });
@@ -198,7 +198,11 @@ public final class BlazeCidrLauncher extends CidrLauncher {
   }
 
   private ImmutableList<Filter> getConsoleFilters() {
-    return ImmutableList.of(new BlazeTargetFilter(project, true), new UrlFilter());
+    return ImmutableList.of(
+        new BlazeTargetFilter(project, true),
+        new UrlFilter(),
+        new IssueOutputFilter(
+            project, WorkspaceRoot.fromProject(project), BlazeInvocationContext.NonSync, false));
   }
 
   private CidrConsoleBuilder createConsoleBuilder(@Nullable BlazeTestUiSession testUiSession) {

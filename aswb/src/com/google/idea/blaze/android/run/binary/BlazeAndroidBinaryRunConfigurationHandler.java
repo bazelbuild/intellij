@@ -18,32 +18,41 @@ package com.google.idea.blaze.android.run.binary;
 import com.android.annotations.VisibleForTesting;
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationValidationUtil;
+import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProvider.AndroidBinaryLaunchMethod;
 import com.google.idea.blaze.android.run.binary.mobileinstall.BlazeAndroidBinaryMobileInstallRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunner;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
+import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.swing.Icon;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +66,11 @@ public class BlazeAndroidBinaryRunConfigurationHandler
 
   private final BlazeCommandRunConfiguration configuration;
   private final BlazeAndroidBinaryRunConfigurationState configState;
+
+  // Keys to store state for the MI migration prompt
+  private static final String MI_LAST_PROMPT = "MI_MIGRATE_LAST_PROMPT";
+  static final String MI_NEVER_ASK_AGAIN = "MI_MIGRATE_NEVER_AGAIN";
+  private static final Long MI_TIMEOUT_MS = TimeUnit.HOURS.toMillis(20); // 20 hours
 
   @VisibleForTesting
   protected BlazeAndroidBinaryRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
@@ -129,13 +143,19 @@ public class BlazeAndroidBinaryRunConfigurationHandler
       ImmutableList<String> blazeFlags,
       ImmutableList<String> exeFlags) {
     switch (configState.getLaunchMethod()) {
-      case MOBILE_INSTALL:
+      case NON_BLAZE:
+        if (!maybeShowMobileInstallOptIn(project)) {
+          return new BlazeAndroidBinaryNormalBuildRunContext(
+              project, facet, configuration, env, configState, getLabel(), blazeFlags);
+        }
+        // fall through
       case MOBILE_INSTALL_V2:
+        // Standardize on a single mobile-install launch method
+        configState.setLaunchMethod(AndroidBinaryLaunchMethod.MOBILE_INSTALL);
+        // fall through
+      case MOBILE_INSTALL:
         return new BlazeAndroidBinaryMobileInstallRunContext(
             project, facet, configuration, env, configState, getLabel(), blazeFlags, exeFlags);
-      case NON_BLAZE:
-        return new BlazeAndroidBinaryNormalBuildRunContext(
-            project, facet, configuration, env, configState, getLabel(), blazeFlags);
     }
     throw new AssertionError();
   }
@@ -192,5 +212,88 @@ public class BlazeAndroidBinaryRunConfigurationHandler
   @Nullable
   public Icon getExecutorIcon(RunConfiguration configuration, Executor executor) {
     return null;
+  }
+
+  /**
+   * Maybe shows the mobile-install optin dialog, and migrates project as appropriate.
+   *
+   * <p>Will only be shown once per project in a 20 hour window, with the ability to permanently
+   * dismiss for this project.
+   *
+   * <p>If the user selects "Yes", all BlazeAndroidBinaryRunConfigurations in this project will be
+   * migrated to use mobile-install.
+   *
+   * @return true if dialog was shown and user migrated, otherwise false
+   */
+  private boolean maybeShowMobileInstallOptIn(Project project) {
+    long lastPrompt = PropertiesComponent.getInstance(project).getOrInitLong(MI_LAST_PROMPT, 0L);
+    boolean neverAsk =
+        PropertiesComponent.getInstance(project).getBoolean(MI_NEVER_ASK_AGAIN, false);
+    if (neverAsk || (System.currentTimeMillis() - lastPrompt) < MI_TIMEOUT_MS) {
+      return false;
+    }
+    PropertiesComponent.getInstance(project)
+        .setValue(MI_LAST_PROMPT, String.valueOf(System.currentTimeMillis()));
+    int choice =
+        Messages.showYesNoCancelDialog(
+            project,
+            "Blaze mobile-install (go/blaze-mi) introduces fast, incremental builds and deploys "
+                + "for Android development.\nBlaze mobile-install is the default for new Android "
+                + "Studio projects, but you're still using Blaze build.\n\nSwitch all run "
+                + "configurations in this project to use Blaze mobile-install?",
+            "Switch to Blaze mobile-install?",
+            "Yes",
+            "Not now",
+            "Never ask again for this project",
+            Messages.getQuestionIcon());
+    if (choice == Messages.YES) {
+      Messages.showInfoMessage(
+          String.format(
+              "Successfully migrated %d run configuration(s) to mobile-install",
+              doMigrate(project)),
+          "Success!");
+    } else if (choice == Messages.NO) {
+      // Do nothing, dialog will not be shown until the wait period has elapsed
+    } else if (choice == Messages.CANCEL) {
+      PropertiesComponent.getInstance(project).setValue(MI_NEVER_ASK_AGAIN, true);
+    }
+    EventLoggingService.getInstance()
+        .ifPresent(
+            s ->
+                s.logEvent(
+                    getClass(),
+                    "mi_migrate_prompt",
+                    ImmutableMap.of("choice", choiceToString(choice))));
+    return choice == Messages.YES;
+  }
+
+  private int doMigrate(Project project) {
+    int count = 0;
+    for (RunConfiguration runConfig :
+        RunManager.getInstance(project)
+            .getConfigurationsList(BlazeCommandRunConfigurationType.getInstance())) {
+      if (runConfig instanceof BlazeCommandRunConfiguration) {
+        RunConfigurationState state =
+            ((BlazeCommandRunConfiguration) runConfig).getHandler().getState();
+        if (state instanceof BlazeAndroidBinaryRunConfigurationState) {
+          ((BlazeAndroidBinaryRunConfigurationState) state)
+              .setLaunchMethod(AndroidBinaryLaunchMethod.MOBILE_INSTALL);
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
+  private String choiceToString(int choice) {
+    if (choice == Messages.YES) {
+      return "yes";
+    } else if (choice == Messages.NO) {
+      return "not_now";
+    } else if (choice == Messages.CANCEL) {
+      return "never_for_project";
+    } else {
+      return "unknown";
+    }
   }
 }

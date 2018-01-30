@@ -40,6 +40,11 @@ public class AllInPackageBlazeConfigurationProducer
   }
 
   @Override
+  protected boolean restrictedToProjectFiles() {
+    return true;
+  }
+
+  @Override
   protected boolean doSetupConfigFromContext(
       BlazeCommandRunConfiguration configuration,
       ConfigurationContext context,

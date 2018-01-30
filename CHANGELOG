@@ -1,3 +1,16 @@
+v2018.01.29
+===========
+* Copy BUILD target string action now works from any project file.
+
+v2018.01.16
+===========
+* Scala: Fix navigating to generated source files.
+
+v2018.01.02
+===========
+* CLion: reduce freezes after large number of files change (e.g. after 'git pull') by reindexing changed files
+* Be able to navigate from problems view to error line on bazel console.
+
 v2017.12.04
 ===========
 * Scala: Add run configuration support for specs2 tests.

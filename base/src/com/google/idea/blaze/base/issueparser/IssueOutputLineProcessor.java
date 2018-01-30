@@ -17,9 +17,8 @@ package com.google.idea.blaze.base.issueparser;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
@@ -38,32 +37,14 @@ public class IssueOutputLineProcessor implements LineProcessingOutputStream.Line
   private final BlazeIssueParser blazeIssueParser;
 
   public IssueOutputLineProcessor(
-      Project project, BlazeContext context, WorkspaceRoot workspaceRoot) {
+      Project project,
+      WorkspaceRoot workspaceRoot,
+      BlazeContext context,
+      BlazeInvocationContext invocationContext) {
     this.context = context;
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-
-    ImmutableList<BlazeIssueParser.Parser> parsers =
-        ImmutableList.<BlazeIssueParser.Parser>builder()
-            .add(
-                new BlazeIssueParser.CompileParser(workspaceRoot),
-                new BlazeIssueParser.TracebackParser(),
-                new BlazeIssueParser.BuildParser(),
-                new BlazeIssueParser.SkylarkErrorParser(),
-                new BlazeIssueParser.LinelessBuildParser(),
-                new BlazeIssueParser.ProjectViewLabelParser(projectViewSet),
-                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                    projectViewSet, "no such package '(.*)': BUILD file not found on package path"),
-                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                    projectViewSet, "no targets found beneath '(.*?)'"),
-                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                    projectViewSet, "ERROR: invalid target format '(.*?)'"),
-                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                    projectViewSet, "ERROR: Skipping '(.*?)'"),
-                new BlazeIssueParser.FileNotFoundBuildParser(workspaceRoot))
-            .addAll(BlazeIssueParserProvider.getAllIssueParsers(project))
-            .add(BlazeIssueParser.GenericErrorParser.INSTANCE)
-            .build();
-    this.blazeIssueParser = new BlazeIssueParser(parsers);
+    this.blazeIssueParser =
+        new BlazeIssueParser(
+            BlazeIssueParser.defaultIssueParsers(project, workspaceRoot, invocationContext));
   }
 
   public IssueOutputLineProcessor(

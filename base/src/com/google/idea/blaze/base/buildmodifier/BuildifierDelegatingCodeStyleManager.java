@@ -15,112 +15,44 @@
  */
 package com.google.idea.blaze.base.buildmodifier;
 
-import static java.util.Comparator.comparing;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
-import com.google.idea.common.formatter.DelegatingCodeStyleManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.google.idea.common.formatter.ExternalFormatterCodeStyleManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.CheckUtil;
-import com.intellij.util.IncorrectOperationException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * A {@link CodeStyleManager} implementation which runs buildifier on BUILD files, and otherwise
  * delegates to the existing formatter.
  */
-public class BuildifierDelegatingCodeStyleManager extends DelegatingCodeStyleManager {
+public final class BuildifierDelegatingCodeStyleManager extends ExternalFormatterCodeStyleManager {
 
   public BuildifierDelegatingCodeStyleManager(CodeStyleManager original) {
     super(original);
   }
 
   @Override
-  public void reformatText(PsiFile file, int startOffset, int endOffset)
-      throws IncorrectOperationException {
-    if (overrideFormatterForFile(file)) {
-      formatInternal(file, ImmutableList.of(new TextRange(startOffset, endOffset)));
-    } else {
-      super.reformatText(file, startOffset, endOffset);
-    }
-  }
-
-  @Override
-  public void reformatText(PsiFile file, Collection<TextRange> ranges)
-      throws IncorrectOperationException {
-    if (overrideFormatterForFile(file)) {
-      formatInternal(file, ranges);
-    } else {
-      super.reformatText(file, ranges);
-    }
-  }
-
-  @Override
-  public void reformatTextWithContext(PsiFile file, Collection<TextRange> ranges)
-      throws IncorrectOperationException {
-    if (overrideFormatterForFile(file)) {
-      formatInternal(file, ranges);
-    } else {
-      super.reformatTextWithContext(file, ranges);
-    }
-  }
-
-  private static boolean overrideFormatterForFile(PsiFile file) {
+  protected boolean overrideFormatterForFile(PsiFile file) {
     // don't format skylark extensions
     return file instanceof BuildFile
         && ((BuildFile) file).getBlazeFileType() != BlazeFileType.SkylarkExtension;
   }
 
-  private void formatInternal(PsiFile file, Collection<TextRange> ranges) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    CheckUtil.checkWritable(file);
-
-    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-    if (document == null) {
-      return;
-    }
-    Map<TextRange, String> replacements = getFormatReplacements(document.getText(), ranges);
-    TreeMap<TextRange, String> sortedReplacements =
-        new TreeMap<>(comparing(TextRange::getStartOffset));
-    sortedReplacements.putAll(replacements);
-    performReplacements(document, sortedReplacements);
-  }
-
-  private static Map<TextRange, String> getFormatReplacements(
-      String text, Collection<TextRange> ranges) {
-    ImmutableMap.Builder<TextRange, String> output = ImmutableMap.builder();
+  @Override
+  protected void format(PsiFile file, Document document, Collection<TextRange> ranges) {
+    Map<TextRange, String> output = new HashMap<>();
     for (TextRange range : ranges) {
-      String result = BuildFileFormatter.formatTextWithTimeout(range.substring(text));
+      String result = BuildFileFormatter.formatTextWithTimeout(range.substring(document.getText()));
       if (result == null) {
-        return ImmutableMap.of();
+        return;
       }
       output.put(range, result);
     }
-    return output.build();
-  }
-
-  private void performReplacements(
-      final Document document, final Map<TextRange, String> reverseSortedReplacements) {
-    WriteCommandAction.runWriteCommandAction(
-        getProject(),
-        () -> {
-          for (Map.Entry<TextRange, String> replacement : reverseSortedReplacements.entrySet()) {
-            TextRange range = replacement.getKey();
-            document.replaceString(
-                range.getStartOffset(), range.getEndOffset(), replacement.getValue());
-          }
-          PsiDocumentManager.getInstance(getProject()).commitDocument(document);
-        });
+    performReplacements(document, output);
   }
 }

@@ -3,12 +3,9 @@
 This is an early-access version of our Bazel plugins for IntelliJ,
 Android Studio, and CLion.
 
-This code drop is for educational purposes only and is currently
-not kept up-to-date. It may not build correctly for you, and
-we are currently not accepting pull requests.
-
-In the near future the repository will be open for business
-with live, working code and we will start accepting contributions.
+This repository is currently updated semi-regularly. It's generally
+in a state matching the most recently uploaded plugins in the
+JetBrains' plugin repository.
 
 ## Installation
 
@@ -24,6 +21,19 @@ Detailed docs are available [here](http://ij.bazel.build).
 
 ## Building the plugin
 
-Install Bazel, then run `bazel build //ijwb:ijwb_bazel_zip --define=ij_product=intellij-latest`
-from the project root. This will create a plugin zip in
-`bazel-bin/ijwb/ijwb_bazel.zip`.
+Install Bazel, then run
+
+```bazel build //ijwb:ijwb_bazel_zip --define=ij_product=intellij-latest```
+
+from the project root. This will create a plugin zip file at
+`bazel-bin/ijwb/ijwb_bazel.zip`, which can be installed directly
+from the IDE.
+
+## Contributions
+
+We welcome contributions! Some caveats:
+
+  * Please consider filing an issue, and discussing potential changes
+    with the devs, prior to investing a lot of time in a patch.
+  * In general, we prefer contributions that fix bugs or add features
+    (as opposed to stylistic, refactoring, or "cleanup" changes).

@@ -29,7 +29,7 @@ public class BuildFlagsProviderImpl implements BuildFlagsProvider {
       BlazeCommandName command,
       List<String> flags) {
     flags.add("--curses=no");
-    flags.add("--color=no");
+    flags.add("--color=yes");
     flags.add("--experimental_ui=no");
     flags.add("--progress_in_terminal_title=no");
   }

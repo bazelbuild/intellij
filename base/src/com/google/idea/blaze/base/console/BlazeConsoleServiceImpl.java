@@ -15,31 +15,52 @@
  */
 package com.google.idea.blaze.base.console;
 
+import com.intellij.execution.filters.Filter;
+import com.intellij.execution.process.AnsiEscapeDecoder;
+import com.intellij.execution.process.AnsiEscapeDecoder.ColoredTextAcceptor;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import java.util.List;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /** Implementation for BlazeConsoleService */
-public class BlazeConsoleServiceImpl implements BlazeConsoleService {
-  @NotNull private final Project project;
-  @NotNull private final BlazeConsoleView blazeConsoleView;
+public class BlazeConsoleServiceImpl implements BlazeConsoleService, ColoredTextAcceptor {
+  private final Project project;
+  private final BlazeConsoleView blazeConsoleView;
+  private final AnsiEscapeDecoder ansiEscapeDecoder = new AnsiEscapeDecoder();
 
-  BlazeConsoleServiceImpl(@NotNull Project project) {
+  BlazeConsoleServiceImpl(Project project) {
     this.project = project;
     blazeConsoleView = BlazeConsoleView.getInstance(project);
   }
 
   @Override
-  public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
-    blazeConsoleView.print(text, contentType);
+  public void print(String text, ConsoleViewContentType contentType) {
+    Key<?> key =
+        contentType == ConsoleViewContentType.ERROR_OUTPUT
+            ? ProcessOutputTypes.STDERR
+            : ProcessOutputTypes.STDOUT;
+    ansiEscapeDecoder.escapeText(text, key, this);
+  }
+
+  @Override
+  public void coloredTextAvailable(String escapedText, @SuppressWarnings("rawtypes") Key key) {
+    ConsoleViewContentType contentType = ConsoleViewContentType.getConsoleViewType(key);
+    blazeConsoleView.print(escapedText, contentType);
   }
 
   @Override
   public void clear() {
     blazeConsoleView.clear();
+  }
+
+  @Override
+  public void setCustomFilters(List<Filter> filters) {
+    blazeConsoleView.setCustomFilters(filters);
   }
 
   @Override

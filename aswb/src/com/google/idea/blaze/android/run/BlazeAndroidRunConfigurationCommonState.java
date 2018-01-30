@@ -101,8 +101,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
       Project project, ProjectViewSet projectViewSet, BlazeCommandName command) {
     return ImmutableList.<String>builder()
         .addAll(
-            BlazeFlags.blazeFlags(
-                project, projectViewSet, command, BlazeInvocationContext.RunConfiguration))
+            BlazeFlags.blazeFlags(project, projectViewSet, command, BlazeInvocationContext.NonSync))
         .addAll(getBlazeFlagsState().getExpandedFlags())
         .addAll(getNativeDebuggerFlags())
         .build();

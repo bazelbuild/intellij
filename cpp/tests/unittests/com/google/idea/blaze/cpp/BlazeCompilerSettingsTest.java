@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.sdkcompat.cidr.CPPEnvironmentAdapter;
 import com.google.idea.sdkcompat.cidr.CidrCompilerSwitchesAdapter;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
@@ -32,6 +33,11 @@ import org.junit.runners.JUnit4;
 /** Tests for {@link BlazeCompilerSettings}. */
 @RunWith(JUnit4.class)
 public class BlazeCompilerSettingsTest extends BlazeTestCase {
+
+  @Override
+  protected void initTest(Container applicationServices, Container projectServices) {
+    CPPEnvironmentAdapter.registerForTest(applicationServices.getPicoContainer());
+  }
 
   @Test
   public void testCompilerSwitchesSimple() {

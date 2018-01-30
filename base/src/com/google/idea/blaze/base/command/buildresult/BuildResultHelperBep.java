@@ -16,8 +16,6 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream.LineProcessor;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.BufferedInputStream;
@@ -25,7 +23,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -52,11 +49,6 @@ class BuildResultHelperBep implements BuildResultHelper {
   @Override
   public List<String> getBuildFlags() {
     return BuildEventProtocolUtils.getBuildFlags(outputFile);
-  }
-
-  @Override
-  public OutputStream stderr(LineProcessor... lineProcessors) {
-    return LineProcessingOutputStream.of(ImmutableList.copyOf(lineProcessors));
   }
 
   @Override

@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -117,7 +118,10 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
       blazeCommand =
           getBlazeCommandBuilder(project, configuration, ImmutableList.of(), executorType);
     }
-    addConsoleFilters(new BlazeTargetFilter(project, true));
+    addConsoleFilters(
+        new BlazeTargetFilter(project, true),
+        new IssueOutputFilter(
+            project, WorkspaceRoot.fromProject(project), BlazeInvocationContext.NonSync, false));
 
     List<String> command =
         HotSwapUtils.canHotSwap(getEnvironment())
@@ -139,8 +143,7 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
           public ImmutableList<ProcessListener> createProcessListeners(BlazeContext context) {
             LineProcessingOutputStream outputStream =
                 LineProcessingOutputStream.of(
-                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
-                        project, context, workspaceRoot));
+                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context));
             return ImmutableList.of(new LineProcessingProcessAdapter(outputStream));
           }
         });
@@ -222,7 +225,7 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
             .addTargets(configuration.getTarget())
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(
-                    project, projectViewSet, blazeCommand, BlazeInvocationContext.RunConfiguration))
+                    project, projectViewSet, blazeCommand, BlazeInvocationContext.NonSync))
             .addBlazeFlags(blazeFlags)
             .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags());
 
