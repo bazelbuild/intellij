@@ -27,7 +27,7 @@ import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
@@ -216,8 +216,7 @@ final class BlazeSourceJarNavigationPolicy extends ClsCustomNavigationPolicyEx {
     return Result.create(null, projectSyncTrackers.get(file.getProject()));
   }
 
-  // In #api_163 and beyond, this can simply implement ProjectManagerListener
-  private class RemoveSyncTrackerOnProjectClosing extends ProjectManagerAdapter {
+  private class RemoveSyncTrackerOnProjectClosing implements ProjectManagerListener {
 
     @Override
     public void projectClosing(Project project) {

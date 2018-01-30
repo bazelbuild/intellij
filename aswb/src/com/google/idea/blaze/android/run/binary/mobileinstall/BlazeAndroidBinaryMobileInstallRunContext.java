@@ -33,7 +33,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationIdProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLaunchTaskProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryConsoleProvider;
-import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProvider.AndroidBinaryLaunchMethod;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
@@ -78,15 +77,7 @@ public class BlazeAndroidBinaryMobileInstallRunContext implements BlazeAndroidRu
     this.env = env;
     this.configState = configState;
     this.consoleProvider = new BlazeAndroidBinaryConsoleProvider(project);
-    this.buildStep =
-        new BlazeApkBuildStepMobileInstall(
-            project,
-            env,
-            label,
-            blazeFlags,
-            exeFlags,
-            configState.useSplitApksIfPossible(),
-            configState.getLaunchMethod().equals(AndroidBinaryLaunchMethod.MOBILE_INSTALL_V2));
+    this.buildStep = new BlazeApkBuildStepMobileInstall(project, label, blazeFlags, exeFlags);
     this.applicationIdProvider = new BlazeAndroidBinaryApplicationIdProvider(buildStep);
   }
 

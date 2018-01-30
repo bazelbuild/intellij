@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.model;
 
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.io.Serializable;
@@ -39,14 +38,6 @@ public final class LibraryKey implements Serializable {
 
   public static LibraryKey forResourceLibrary() {
     return new LibraryKey("external_resources_library");
-  }
-
-  public static LibraryKey fromIntelliJLibrary(Library library) {
-    String name = library.getName();
-    if (name == null) {
-      throw new IllegalArgumentException("Null library name");
-    }
-    return fromIntelliJLibraryName(name);
   }
 
   public static LibraryKey fromIntelliJLibraryName(String name) {

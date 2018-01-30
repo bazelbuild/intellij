@@ -130,7 +130,7 @@ class NewBlazePackageAction extends BlazeProjectAction implements DumbAware {
             VirtualFile newDirectory = VfsUtil.createDirectories(dir.getPath());
             VirtualFile newFile = newDirectory.createChildData(this, BUILD_FILE_NAME);
             BuildFileModifier buildFileModifier = BuildFileModifier.getInstance();
-            buildFileModifier.addRule(project, context, newRule, ruleKind);
+            buildFileModifier.addRule(project, newRule, ruleKind);
             result.setResult(Optional.of(newFile));
           } catch (IOException e) {
             String errorMessage = "Error creating new package: " + e.getMessage();

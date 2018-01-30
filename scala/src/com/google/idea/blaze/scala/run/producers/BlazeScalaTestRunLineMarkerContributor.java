@@ -58,17 +58,18 @@ public class BlazeScalaTestRunLineMarkerContributor extends ScalaTestRunLineMark
       if (testElement instanceof ScClass) {
         return getInfo((ScClass) testElement, null, super.getInfo(element));
       }
-      if (testElement instanceof ScFunctionDefinition) {
-        ScClass testClass = PsiTreeUtil.getParentOfType(testElement, ScClass.class);
-        if (testClass != null) {
-          return getInfo(testClass, testElement, super.getInfo(element));
-        }
+      ScClass testClass = PsiTreeUtil.getParentOfType(testElement, ScClass.class);
+      if (testClass == null) {
+        return null;
       }
-    }
-    if (element instanceof ScInfixExpr) {
-      ScClass testClass = PsiTreeUtil.getParentOfType(element, ScClass.class);
-      if (testClass != null) {
-        return getInfo(testClass, element, super.getInfo(element));
+      if (testElement instanceof ScFunctionDefinition) {
+        return getInfo(testClass, testElement, super.getInfo(element));
+      }
+      if (testElement.getParent() instanceof ScInfixExpr) {
+        ScInfixExpr infixExpr = (ScInfixExpr) testElement.getParent();
+        if (infixExpr.operation().equals(testElement)) {
+          return getInfo(testClass, infixExpr, super.getInfo(element));
+        }
       }
     }
     return null;

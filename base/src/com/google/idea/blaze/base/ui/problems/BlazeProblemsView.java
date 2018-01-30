@@ -15,19 +15,21 @@
  */
 package com.google.idea.blaze.base.ui.problems;
 
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.GroupingElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -39,12 +41,17 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.UIUtil;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
@@ -60,6 +67,7 @@ public class BlazeProblemsView {
   public static final String TOOL_WINDOW_ID = "Blaze Problems";
   private static final EnumSet<ErrorTreeElementKind> ALL_MESSAGE_KINDS =
       EnumSet.allOf(ErrorTreeElementKind.class);
+  private static final int MAX_ISSUES = 2000;
 
   private final ExecutorService viewUpdater =
       SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BlazeProblemsView pool");
@@ -68,6 +76,10 @@ public class BlazeProblemsView {
 
   private final Project project;
   private final BlazeProblemsViewPanel panel;
+
+  private final Set<String> problems = Collections.synchronizedSet(new HashSet<>());
+  private final AtomicInteger problemCount = new AtomicInteger(0);
+  private volatile UUID currentSessionId = UUID.randomUUID();
 
   public BlazeProblemsView(Project project, ToolWindowManager wm) {
     this.project = project;
@@ -88,21 +100,34 @@ public class BlazeProblemsView {
     updateIcon();
   }
 
-  public void clearOldMessages(UUID currentSessionId) {
+  public void clearOldMessages() {
     viewUpdater.execute(
         () -> {
-          cleanupChildrenRecursively(
-              panel.getErrorViewStructure().getRootElement(), currentSessionId);
+          currentSessionId = UUID.randomUUID();
+          ErrorViewStructure tree = panel.getErrorViewStructure();
+          for (ErrorTreeElement child : tree.getChildElements(tree.getRootElement())) {
+            tree.removeElement(child);
+          }
+          problemCount.set(0);
+          problems.clear();
           updateIcon();
           panel.reload();
         });
   }
 
-  public void addMessage(IssueOutput issue, UUID sessionId) {
-    VirtualFile file =
-        issue.getFile() != null
-            ? VfsUtil.findFileByIoFile(issue.getFile(), /* refresh */ true)
-            : null;
+  public void addMessage(IssueOutput issue, @Nullable Navigatable openInConsole) {
+    if (!problems.add(issue.toString())) {
+      return;
+    }
+    int count = problemCount.incrementAndGet();
+    if (count > MAX_ISSUES) {
+      return;
+    }
+    if (count == MAX_ISSUES) {
+      issue =
+          IssueOutput.warn("Too many problems found. Only showing the first " + MAX_ISSUES).build();
+    }
+    VirtualFile file = issue.getFile() != null ? resolveVirtualFile(issue.getFile()) : null;
     Navigatable navigatable = issue.getNavigatable();
     if (navigatable == null && file != null) {
       navigatable =
@@ -116,10 +141,47 @@ public class BlazeProblemsView {
         type,
         text,
         groupName,
+        file,
         navigatable,
+        openInConsole,
         getExportTextPrefix(issue),
-        getRenderTextPrefix(issue),
-        sessionId);
+        getRenderTextPrefix(issue));
+    if (count == 1) {
+      focusProblemsView();
+    }
+  }
+
+  /**
+   * Finds the virtual file associated with the given file path, resolving symlinks where relevant.
+   */
+  @Nullable
+  private static VirtualFile resolveVirtualFile(File file) {
+    VirtualFile vf = getVirtualFile(file);
+    return vf != null ? resolveSymlinks(vf) : null;
+  }
+
+  @Nullable
+  private static VirtualFile getVirtualFile(File file) {
+    LocalFileSystem fileSystem = VirtualFileSystemProvider.getInstance().getSystem();
+    VirtualFile vf = fileSystem.findFileByPathIfCached(file.getPath());
+    if (vf != null) {
+      return vf;
+    }
+    vf = fileSystem.findFileByIoFile(file);
+    if (vf != null && vf.isValid()) {
+      return vf;
+    }
+    boolean shouldRefresh = ApplicationManager.getApplication().isDispatchThread();
+    return shouldRefresh ? fileSystem.refreshAndFindFileByIoFile(file) : null;
+  }
+
+  /**
+   * Attempts to resolve symlinks in the virtual file path, falling back to returning the original
+   * virtual file if unsuccessful.
+   */
+  private static VirtualFile resolveSymlinks(VirtualFile file) {
+    VirtualFile resolved = file.getCanonicalFile();
+    return resolved != null ? resolved : file;
   }
 
   private static int translateCategory(IssueOutput.Category category) {
@@ -168,13 +230,15 @@ public class BlazeProblemsView {
   }
 
   private void addMessage(
-      final int type,
+      int type,
       String[] text,
       String groupName,
+      @Nullable VirtualFile file,
       @Nullable Navigatable navigatable,
+      @Nullable Navigatable openInConsole,
       String exportTextPrefix,
-      String rendererTextPrefix,
-      UUID sessionId) {
+      String rendererTextPrefix) {
+    UUID sessionId = currentSessionId;
     viewUpdater.execute(
         () -> {
           final ErrorViewStructure structure = panel.getErrorViewStructure();
@@ -182,7 +246,19 @@ public class BlazeProblemsView {
           if (group != null && !sessionId.equals(group.getData())) {
             structure.removeElement(group);
           }
-          if (navigatable != null) {
+          if (openInConsole != null) {
+            structure.addNavigatableMessage(
+                groupName,
+                new ProblemsViewMessageElement(
+                    ErrorTreeElementKind.convertMessageFromCompilerErrorType(type),
+                    structure.getGroupingElement(groupName, sessionId, file),
+                    text,
+                    navigatable != null ? navigatable : openInConsole,
+                    openInConsole,
+                    exportTextPrefix,
+                    rendererTextPrefix));
+            panel.updateTree();
+          } else if (navigatable != null) {
             panel.addMessage(
                 type,
                 text,
@@ -198,21 +274,6 @@ public class BlazeProblemsView {
         });
   }
 
-  private void cleanupChildrenRecursively(Object fromElement, UUID currentSessionId) {
-    final ErrorViewStructure structure = panel.getErrorViewStructure();
-    for (ErrorTreeElement element : structure.getChildElements(fromElement)) {
-      if (element instanceof GroupingElement) {
-        if (!currentSessionId.equals(element.getData())) {
-          structure.removeElement(element);
-        } else {
-          cleanupChildrenRecursively(element, currentSessionId);
-        }
-      } else if (!currentSessionId.equals(element.getData())) {
-        structure.removeElement(element);
-      }
-    }
-  }
-
   private void updateIcon() {
     UIUtil.invokeLaterIfNeeded(
         () -> {
@@ -225,6 +286,16 @@ public class BlazeProblemsView {
           }
           boolean active = panel.getErrorViewStructure().hasMessages(ALL_MESSAGE_KINDS);
           tw.setIcon(active ? activeIcon : passiveIcon);
+        });
+  }
+
+  private void focusProblemsView() {
+    UIUtil.invokeLaterIfNeeded(
+        () -> {
+          ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID);
+          if (tw != null) {
+            tw.activate(null, false, false);
+          }
         });
   }
 }

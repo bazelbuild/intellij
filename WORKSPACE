@@ -14,10 +14,10 @@ new_http_archive(
 # The plugin api for IntelliJ 2017.3. This is required to build IJwB,
 # and run integration tests.
 new_http_archive(
-    name = "intellij_ce_2017_3_0",
+    name = "intellij_ce_2017_3_3",
     build_file = "intellij_platform_sdk/BUILD.idea",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2017.3/ideaIC-2017.3.zip",
-    sha256 = "cb2a420ad5aeeb6a9240b810686bcf44712241e16534425ee815950f8bae660a",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2017.3.3/ideaIC-2017.3.3.zip",
+    sha256 = "81fd7aaa5131a07cc0541909bf667ae50975b720146021136551f6eb752bb7a3",
 )
 
 # The plugin api for IntelliJ UE 2017.2. This is required to run UE-specific
@@ -32,10 +32,10 @@ new_http_archive(
 # The plugin api for IntelliJ UE 2017.3. This is required to run UE-specific
 # integration tests.
 new_http_archive(
-    name = "intellij_ue_2017_3_0",
+    name = "intellij_ue_2017_3_3",
     build_file = "intellij_platform_sdk/BUILD.idea",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2017.3/ideaIU-2017.3.zip",
-    sha256 = "e3ab0b6763a4ecd67db8733165f7fdedc1e4e275e405cd617b495b7bdf270c17",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2017.3.3/ideaIU-2017.3.3.zip",
+    sha256 = "0b268cc77922a3e913d6ba86de41272e13a1596f53a620a3e01e3839911c9499",
 )
 
 # The plugin api for CLion 2017.2.0. This is required to build CLwB,
@@ -47,22 +47,22 @@ new_http_archive(
     sha256 = "dd1979947371803a1e11f5bdaf04e3ef2d013b90b56e84495c6e67e67cb31e0a",
 )
 
-# The plugin api for CLion 2017.2.0. This is required to build CLwB,
+# The plugin api for CLion 2017.3.1. This is required to build CLwB,
 # and run integration tests.
 new_http_archive(
-    name = "clion_2017_3_0",
+    name = "clion_2017_3_2",
     build_file = "intellij_platform_sdk/BUILD.clion",
-    url = "https://download.jetbrains.com/cpp/CLion-2017.3.tar.gz",
-    sha256 = "ce5e9acfae6b885f0204ba53a965a00530dbb986b800a04b97112ee2719e693f",
+    url = "https://download.jetbrains.com/cpp/CLion-2017.3.2.tar.gz",
+    sha256 = "9ce5f022a7e051006298618e8b435d8c9fea49094201087b3d069afa1cb76053",
 )
 
 # The plugin api for Android Studio 3.0. This is required to build ASwB,
 # and run integration tests.
 new_http_archive(
-    name = "android_studio_3_0_0_18",
+    name = "android_studio_3_0_1_0",
     build_file = "intellij_platform_sdk/BUILD.android_studio",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/3.0.0.18/android-studio-ide-171.4408382-linux.zip",
-    sha256 = "7991f95ea1b6c55645a3fc48f1534d4135501a07b9d92dd83672f936d9a9d7a2",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/3.0.1.0/android-studio-ide-171.4443003-linux.zip",
+    sha256 = "ad7110ed2ffc662b7a13efa5064390c8e8e74815d8c688351bd8829331852acf",
 )
 
 # Python plugin for Android Studio 3.0. Required at compile-time for python-specific features.
@@ -74,7 +74,7 @@ new_http_archive(
         "    jars = ['python-ce/lib/python-ce.jar'],",
         "    visibility = ['//visibility:public'],",
         ")"]),
-    url = "https://download.plugins.jetbrains.com/7322/34430/python-ce-2017.1.171.4249.28.zip",
+    url = "https://plugins.jetbrains.com/files/7322/34430/python-ce-2017.1.171.4249.28.zip",
     sha256 = "2192e2248297e85995b647024a66a75b25c27de023b118c51e3d1ea2025a4b32",
 )
 
@@ -87,7 +87,7 @@ new_http_archive(
         "    jars = ['python-ce/lib/python-ce.jar'],",
         "    visibility = ['//visibility:public'],",
         ")"]),
-    url = "https://download.plugins.jetbrains.com/7322/37356/python-ce-2017.2.172.3544.31.zip",
+    url = "https://plugins.jetbrains.com/files/7322/37356/python-ce-2017.2.172.3544.31.zip",
     sha256 = "c7ee48c0bafb29f4a18eaac804b113c4dcdfeaaae174d9003c9ad96e44df6fe0",
 )
 
@@ -100,7 +100,7 @@ new_http_archive(
         "    jars = ['python-ce/lib/python-ce.jar'],",
         "    visibility = ['//visibility:public'],",
         ")"]),
-    url = "https://download.plugins.jetbrains.com/7322/41063/python-ce-2017.3.173.3727.131.zip",
+    url = "https://plugins.jetbrains.com/files/7322/41063/python-ce-2017.3.173.3727.131.zip",
     sha256 = "406c47b5a9f97e5f7ab7e94e62e463beea8cc56da803b56c00801f026b0a559b",
 )
 
@@ -113,7 +113,7 @@ new_http_archive(
         "    jars = glob(['intellij-go/lib/*.jar']),",
         "    visibility = ['//visibility:public'],",
         ")"]),
-    url = "https://download.plugins.jetbrains.com/9568/37740/intellij-go-172.3757.46.zip",
+    url = "https://plugins.jetbrains.com/files/9568/37740/intellij-go-172.3757.46.zip",
     sha256 = "3e5eb5415a05e6c30e79c263135c2937cc05e310e553889bd69eefa819705f9c",
 )
 
@@ -126,8 +126,8 @@ new_http_archive(
         "    jars = glob(['intellij-go/lib/*.jar']),",
         "    visibility = ['//visibility:public'],",
         ")"]),
-    url = "https://download.plugins.jetbrains.com/9568/40858/intellij-go-173.3727.96.zip",
-    sha256 = "be3e07d8db9867145f5aa924b2cac06eadd863d1493bff2c62ffc74bb54729e3",
+    url = "https://plugins.jetbrains.com/files/9568/41097/intellij-go-173.3727.144.zip",
+    sha256 = "faeed37b9b78d3276e6c66a579fd7ef7f8e9c3e3b62cf1a4e6b8fcc25a447f77",
 )
 
 # Scala plugin for IntelliJ CE 2017.2. Required at compile-time for scala-specific features.
@@ -145,7 +145,7 @@ new_http_archive(
         "    ],",
         "    visibility = ['//visibility:public'],",
         ")"]),
-    url = "https://download.plugins.jetbrains.com/1347/35283/scala-intellij-bin-2017.2.2.zip",
+    url = "https://plugins.jetbrains.com/files/1347/35283/scala-intellij-bin-2017.2.2.zip",
     sha256 = "1f0eef98da44dbc3f4f22b399a9175897aca448fd80405eca77fd61bd5fb7219",
 )
 
@@ -158,7 +158,7 @@ new_http_archive(
         "    jars = glob(['Scala/lib/*.jar']),",
         "    visibility = ['//visibility:public'],",
         ")"]),
-    url = "https://download.plugins.jetbrains.com/1347/40959/scala-intellij-bin-2017.3.9.zip",
+    url = "https://plugins.jetbrains.com/files/1347/40959/scala-intellij-bin-2017.3.9.zip",
     sha256 = "8e387d459216500ed7f908b66e63dae629a7872bc72eafaa0cd8fb339da00730",
 )
 

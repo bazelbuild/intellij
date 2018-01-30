@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.util.BuildElementGenerator;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,7 +37,7 @@ public class BuildFileModifierImpl implements BuildFileModifier {
   private static final Logger logger = Logger.getInstance(BuildFileModifierImpl.class);
 
   @Override
-  public boolean addRule(Project project, BlazeContext context, Label newRule, Kind ruleKind) {
+  public boolean addRule(Project project, Label newRule, Kind ruleKind) {
     BuildReferenceManager manager = BuildReferenceManager.getInstance(project);
     File file = manager.resolvePackage(newRule.blazePackage());
     if (file == null) {

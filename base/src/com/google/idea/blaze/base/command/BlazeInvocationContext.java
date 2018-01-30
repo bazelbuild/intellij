@@ -17,6 +17,6 @@ package com.google.idea.blaze.base.command;
 
 /** The context in which a blaze command is invoked. */
 public enum BlazeInvocationContext {
-  RunConfiguration,
   Sync,
+  NonSync,
 }

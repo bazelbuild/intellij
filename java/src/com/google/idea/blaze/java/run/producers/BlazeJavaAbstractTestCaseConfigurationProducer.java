@@ -73,7 +73,8 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
       return false;
     }
     sourceElement.set(location.method != null ? location.method : location.abstractClass);
-    configuration.setName(configName(location.abstractClass, location.method));
+    configuration.setName(
+        "Choose subclass for " + configName(location.abstractClass, location.method));
     configuration.setNameChangedByUser(true);
     return true;
   }
@@ -216,7 +217,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
   }
 
   private static String configName(PsiClass psiClass, @Nullable PsiMethod method) {
-    String classPart = "Choose subclass for " + psiClass.getName();
+    String classPart = psiClass.getName();
     return method == null ? classPart : String.format("%s.%s", classPart, method.getName());
   }
 }

@@ -19,13 +19,14 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
+import javax.annotation.Nullable;
 
 /** Python-specific handler provider for {@link BlazeCommandRunConfiguration}s. */
 public class BlazePyRunConfigurationHandlerProvider
     implements BlazeCommandRunConfigurationHandlerProvider {
 
   @Override
-  public boolean canHandleKind(Kind kind) {
+  public boolean canHandleKind(@Nullable Kind kind) {
     return PyDebugUtils.canUsePyDebugger(kind);
   }
 

@@ -65,4 +65,8 @@ public class IdeaLogScope implements BlazeScope {
 
   @Override
   public void onScopeEnd(@NotNull BlazeContext context) {}
+
+  public static void info(String line) {
+    logger.info(line);
+  }
 }

@@ -163,8 +163,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
   public void setTargetInfo(TargetInfo target) {
     targetPattern = target.label.toString();
-    targetKind = target.getKind();
-    updateHandler();
+    updateTargetKind(target);
   }
 
   /** Sets the target expression and asynchronously kicks off a target kind update. */
@@ -222,7 +221,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   void updateTargetKindAsync(@Nullable Runnable asyncCallback) {
     TargetExpression expr = parseTarget(targetPattern);
     if (!(expr instanceof Label)) {
-      targetKind = null;
+      updateTargetKind(null);
       return;
     }
     Label label = (Label) expr;

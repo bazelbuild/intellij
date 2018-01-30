@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,17 +19,39 @@ import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import org.jetbrains.annotations.Nullable;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
-/** Peforms a transitive reduction on the targets */
+/** Performs a transitive reduction on the targets */
 public abstract class TransitiveAggregator<T> {
   private Map<TargetKey, T> targetKeyToResult;
 
   protected TransitiveAggregator(TargetMap targetMap) {
     this.targetKeyToResult = Maps.newHashMap();
-    for (TargetIdeInfo rule : targetMap.targets()) {
-      aggregate(rule.key, targetMap);
+    Set<TargetIdeInfo> unaggregated = new HashSet<>(targetMap.targets());
+    while (!unaggregated.isEmpty()) {
+      List<TargetIdeInfo> toAggregate =
+          unaggregated
+              .stream()
+              .filter(
+                  t ->
+                      // All dependencies are either
+                      StreamSupport.stream(getDependencies(t).spliterator(), false)
+                          // missing from targetMap, or
+                          .filter(targetMap::contains)
+                          // already aggregated.
+                          .allMatch(targetKeyToResult::containsKey))
+              .collect(Collectors.toList());
+      if (toAggregate.isEmpty()) {
+        // Shouldn't happen unless there is a cyclic dependency.
+        break;
+      }
+      toAggregate.forEach(this::aggregate);
+      unaggregated.removeAll(toAggregate);
     }
   }
 
@@ -38,29 +60,16 @@ public abstract class TransitiveAggregator<T> {
     return result != null ? result : defaultValue;
   }
 
-  @Nullable
-  private T aggregate(TargetKey targetKey, TargetMap targetMap) {
-    T result = targetKeyToResult.get(targetKey);
-    if (result != null) {
-      return result;
-    }
-
-    TargetIdeInfo target = targetMap.get(targetKey);
-    if (target == null) {
-      return null;
-    }
-
-    result = createForTarget(target);
-
+  private void aggregate(TargetIdeInfo target) {
+    T result = createForTarget(target);
     for (TargetKey dep : getDependencies(target)) {
-      T depResult = aggregate(dep, targetMap);
+      // Since we aggregate dependencies first, this should already be in the map.
+      T depResult = targetKeyToResult.get(dep);
       if (depResult != null) {
         result = reduce(result, depResult);
       }
     }
-
-    targetKeyToResult.put(targetKey, result);
-    return result;
+    targetKeyToResult.put(target.key, result);
   }
 
   protected abstract Iterable<TargetKey> getDependencies(TargetIdeInfo target);

@@ -15,16 +15,15 @@
  */
 package com.google.idea.blaze.base.settings;
 
-import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import javax.annotation.Nullable;
 
 /** Stores blaze view settings. */
 @State(
@@ -54,6 +53,9 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
     }
   }
 
+  private static final String DEFAULT_BLAZE_PATH = "/usr/bin/blaze";
+  private static final String DEFAULT_BAZEL_PATH = "bazel";
+
   private BlazeConsolePopupBehavior showBlazeConsoleOnSync = BlazeConsolePopupBehavior.ALWAYS;
   private boolean suppressConsoleForRunAction = false;
   private boolean resyncAutomatically = false;
@@ -63,8 +65,8 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private boolean collapseProjectView = true;
   private boolean formatBuildFilesOnSave = true;
   private boolean showAddFileToProjectNotification = true;
-  private String blazeBinaryPath = "/usr/bin/blaze";
-  @Nullable private String bazelBinaryPath;
+  private String blazeBinaryPath = DEFAULT_BLAZE_PATH;
+  private String bazelBinaryPath = DEFAULT_BAZEL_PATH;
 
   public static BlazeUserSettings getInstance() {
     return ServiceManager.getService(BlazeUserSettings.class);
@@ -80,20 +82,8 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  /**
-   * Also kicks off an incremental sync if we're now syncing automatically, and the project is
-   * currently dirty.
-   */
   public void setResyncAutomatically(boolean resyncAutomatically) {
-    if (this.resyncAutomatically == resyncAutomatically) {
-      return;
-    }
     this.resyncAutomatically = resyncAutomatically;
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (Blaze.isBlazeProject(project)) {
-        BlazeSyncStatus.getInstance(project).queueAutomaticSyncIfDirty();
-      }
-    }
   }
 
   public boolean getResyncAutomatically() {
@@ -141,20 +131,19 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   }
 
   public String getBlazeBinaryPath() {
-    return blazeBinaryPath;
+    return StringUtil.defaultIfEmpty(blazeBinaryPath, DEFAULT_BLAZE_PATH);
   }
 
   public void setBlazeBinaryPath(String blazeBinaryPath) {
-    this.blazeBinaryPath = blazeBinaryPath;
+    this.blazeBinaryPath = StringUtil.defaultIfEmpty(blazeBinaryPath, DEFAULT_BLAZE_PATH);
   }
 
-  @Nullable
   public String getBazelBinaryPath() {
-    return bazelBinaryPath;
+    return StringUtil.defaultIfEmpty(bazelBinaryPath, DEFAULT_BAZEL_PATH);
   }
 
   public void setBazelBinaryPath(String bazelBinaryPath) {
-    this.bazelBinaryPath = bazelBinaryPath;
+    this.bazelBinaryPath = StringUtil.defaultIfEmpty(bazelBinaryPath, DEFAULT_BAZEL_PATH);
   }
 
   public boolean getCollapseProjectView() {

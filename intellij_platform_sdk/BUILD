@@ -45,9 +45,9 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-2017.3.0",
+    name = "intellij-2017.3.3",
     values = {
-        "define": "ij_product=intellij-2017.3.0",
+        "define": "ij_product=intellij-2017.3.3",
     },
 )
 
@@ -59,9 +59,9 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-ue-2017.3.0",
+    name = "intellij-ue-2017.3.3",
     values = {
-        "define": "ij_product=intellij-ue-2017.3.0",
+        "define": "ij_product=intellij-ue-2017.3.3",
     },
 )
 
@@ -80,9 +80,9 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-3.0.0.18",
+    name = "android-studio-3.0.1.0",
     values = {
-        "define": "ij_product=android-studio-3.0.0.18",
+        "define": "ij_product=android-studio-3.0.1.0",
     },
 )
 
@@ -108,15 +108,16 @@ config_setting(
 )
 
 config_setting(
-    name = "clion-2017.3.0",
+    name = "clion-2017.3.2",
     values = {
-        "define": "ij_product=clion-2017.3.0",
+        "define": "ij_product=clion-2017.3.2",
     },
 )
 
 load(
     ":build_defs.bzl",
     "select_for_ide",
+    "select_for_plugin_api",
     "select_from_plugin_api_directory",
 )
 
@@ -173,6 +174,20 @@ java_library(
         clion = [":guava"],
         intellij = [":guava"],
     ),
+)
+
+# Android Studio and IntelliJ include jsr305.jar, but CLion doesn't. Since :plugin_api is marked
+# neverlink, this means that the JSR305 classes (@Nullable, etc.) will /not/ end up in ijwb.jar or
+# aswb.jar, but they will be in clwb.jar.
+java_library(
+    name = "jsr305",
+    # Once UE 2017.2 is no longer supported, this can be switched to a simpler select_for_ide
+    exports = select_for_plugin_api({
+        "default": [":plugin_api"],
+        "intellij-ue-2017.2.6": ["@jsr305_annotations//jar"],
+        "clion-2017.2.3": ["@jsr305_annotations//jar"],
+        "clion-2017.3.2": ["@jsr305_annotations//jar"],
+    }),
 )
 
 # The version of truth bundled with the IntelliJ plugin API.

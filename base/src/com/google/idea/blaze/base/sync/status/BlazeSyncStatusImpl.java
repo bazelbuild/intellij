@@ -111,7 +111,9 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
   @Override
   public void setDirty() {
     stateManager.setDirty(true);
-    queueIncrementalSync();
+    if (automaticSyncEnabled()) {
+      queueIncrementalSync();
+    }
   }
 
   @Override
@@ -119,16 +121,9 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
     return stateManager.isDirty();
   }
 
-  @Override
-  public void queueAutomaticSyncIfDirty() {
-    if (stateManager.isDirty()) {
-      queueIncrementalSync();
-    }
-  }
-
   private void queueIncrementalSync() {
-    if (automaticSyncEnabled() && syncPending.compareAndSet(false, true)) {
-      log.info("Automatic sync started");
+    if (syncPending.compareAndSet(false, true)) {
+      log.info("Automatic sync queued");
       BlazeSyncManager.getInstance(project)
           .requestProjectSync(
               new BlazeSyncParams.Builder("Sync", SyncMode.INCREMENTAL)

@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
+import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
 import com.google.idea.blaze.base.model.BlazeLibrary;
@@ -173,6 +174,9 @@ final class BlazeSyncTask implements Progressive {
                     new BlazeConsoleScope.Builder(project, indicator)
                         .setPopupBehavior(
                             BlazeUserSettings.getInstance().getShowBlazeConsoleOnSync())
+                        .addConsoleFilters(
+                            new IssueOutputFilter(
+                                project, workspaceRoot, BlazeInvocationContext.Sync, true))
                         .build())
                 .push(new IssuesScope(project))
                 .push(new IdeaLogScope())
@@ -236,25 +240,29 @@ final class BlazeSyncTask implements Progressive {
         onSyncComplete(project, context, projectViewSet, blazeProjectData, syncMode, syncResult);
       }
     } catch (Throwable e) {
-      Throwable rootCause = e;
-      while (rootCause.getCause() != null) {
-        rootCause = rootCause.getCause();
-      }
-      if (!(rootCause instanceof ProcessCanceledException)) {
-        logger.error(e);
-        IssueOutput.error("Internal error: " + e.getMessage()).submit(context);
-      }
+      logSyncError(context, e);
     } finally {
       try {
         syncStats.setTotalExecTimeMs(System.currentTimeMillis() - syncStartTime);
         syncStats.setSyncResult(syncResult);
         EventLoggingService.getInstance().ifPresent(s -> s.log(buildStats(syncStats)));
       } catch (Exception e) {
-        logger.error(e);
+        logSyncError(context, e);
       }
       afterSync(project, context, syncMode, syncResult);
     }
     return syncResult == SyncResult.SUCCESS || syncResult == SyncResult.PARTIAL_SUCCESS;
+  }
+
+  private void logSyncError(BlazeContext context, Throwable e) {
+    Throwable rootCause = e;
+    while (rootCause.getCause() != null) {
+      rootCause = rootCause.getCause();
+    }
+    if (!(rootCause instanceof ProcessCanceledException)) {
+      logger.error(e);
+      IssueOutput.error("Internal error: " + e.getMessage()).submit(context);
+    }
   }
 
   /** @return true if sync successfully completed */

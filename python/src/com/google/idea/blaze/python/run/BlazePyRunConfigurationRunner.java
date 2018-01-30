@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfig
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
@@ -44,6 +45,8 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.WrappingRunConfiguration;
@@ -66,10 +69,14 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
+import com.jetbrains.python.run.CommandLinePatcher;
+import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.run.PythonScriptCommandLineState;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -78,6 +85,8 @@ import javax.annotation.Nullable;
 /** Python-specific run configuration runner. */
 public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
 
+  /** This inserts flags provided by any BlazePyDebugHelpers to the pydevd.py invocation */
+
   /** Used to store a runner to an {@link ExecutionEnvironment}. */
   private static final Key<AtomicReference<File>> EXECUTABLE_KEY =
       Key.create("blaze.debug.py.executable");
@@ -85,6 +94,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
   /** Converts to the native python plugin debug configuration state */
   static class BlazePyDummyRunProfileState implements RunProfileState {
     final BlazeCommandRunConfiguration configuration;
+
 
     BlazePyDummyRunProfileState(BlazeCommandRunConfiguration configuration) {
       this.configuration = configuration;
@@ -124,6 +134,37 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
         nativeConfig.setEnvs(envState.getEnvs());
       }
       return new PythonScriptCommandLineState(nativeConfig, env) {
+
+        private final CommandLinePatcher applyHelperPydevFlags =
+            (commandLine) -> {
+              ParametersList parametersList = commandLine.getParametersList();
+              ParamsGroup exeParams =
+                  parametersList.getParamsGroup(PythonCommandLineState.GROUP_DEBUGGER);
+              if (exeParams == null) {
+                return;
+              }
+              // exeParams[0] is the pydevd script - add extra params after it, retaining order
+              int insertionPoint = 1;
+              for (String extraParam :
+                  BlazePyDebugHelper.getAllBlazePydevFlags(
+                      Blaze.getBuildSystem(nativeConfig.getProject()))) {
+                exeParams.addParameterAt(insertionPoint++, extraParam);
+              }
+            };
+
+        @Override
+        protected ProcessHandler startProcess(
+            PythonProcessStarter starter, @Nullable CommandLinePatcher... patchers)
+            throws ExecutionException {
+          // Need to run after the other CommandLinePatchers
+          List<CommandLinePatcher> modifiedPatchers = new ArrayList<>();
+          if (patchers != null) {
+            Collections.addAll(modifiedPatchers, patchers);
+          }
+          modifiedPatchers.add(applyHelperPydevFlags);
+          return super.startProcess(starter, modifiedPatchers.toArray(new CommandLinePatcher[0]));
+        }
+
         @Override
         public boolean isDebug() {
           return true;

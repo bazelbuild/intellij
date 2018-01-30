@@ -5,8 +5,8 @@ java_library(
     srcs = glob(["src/**/*.java"]),
     visibility = ["//visibility:public"],
     deps = [
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
-        "@jsr305_annotations//jar",
     ],
 )

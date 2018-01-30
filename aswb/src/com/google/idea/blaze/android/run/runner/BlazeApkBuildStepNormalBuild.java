@@ -23,6 +23,7 @@ import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.async.process.ExternalTask;
+import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
@@ -81,9 +82,8 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
                     .addBlazeCommand(command.build())
                     .context(context)
                     .stderr(
-                        buildResultHelper.stderr(
-                            BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
-                                project, context, workspaceRoot)))
+                        LineProcessingOutputStream.of(
+                            BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
                     .build()
                     .run();
             FileCaches.refresh(project);

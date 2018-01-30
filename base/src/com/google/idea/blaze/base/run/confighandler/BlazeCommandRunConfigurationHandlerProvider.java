@@ -34,7 +34,7 @@ public interface BlazeCommandRunConfigurationHandlerProvider {
    * Find a BlazeCommandRunConfigurationHandlerProvider applicable to the given kind. If no provider
    * is more relevant, {@link BlazeCommandGenericRunConfigurationHandlerProvider} is returned.
    */
-  static BlazeCommandRunConfigurationHandlerProvider findHandlerProvider(Kind kind) {
+  static BlazeCommandRunConfigurationHandlerProvider findHandlerProvider(@Nullable Kind kind) {
     for (BlazeCommandRunConfigurationHandlerProvider handlerProvider : EP_NAME.getExtensions()) {
       if (handlerProvider.canHandleKind(kind)) {
         return handlerProvider;
@@ -56,7 +56,7 @@ public interface BlazeCommandRunConfigurationHandlerProvider {
   }
 
   /** Whether this extension is applicable to the kind. */
-  boolean canHandleKind(Kind kind);
+  boolean canHandleKind(@Nullable Kind kind);
 
   /** Returns the corresponding {@link BlazeCommandRunConfigurationHandler}. */
   BlazeCommandRunConfigurationHandler createHandler(BlazeCommandRunConfiguration configuration);

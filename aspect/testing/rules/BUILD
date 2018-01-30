@@ -40,8 +40,8 @@ java_library(
     deps = [
         ":intellij_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",
+        "//intellij_platform_sdk:jsr305",
         "//proto:intellij_ide_info_java_proto",
-        "@jsr305_annotations//jar",
         "@junit//jar",
     ],
 )

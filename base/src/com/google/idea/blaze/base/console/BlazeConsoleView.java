@@ -17,7 +17,10 @@ package com.google.idea.blaze.base.console;
 
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.intellij.codeEditor.printing.PrintAction;
+import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
@@ -32,26 +35,34 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
 
-class BlazeConsoleView implements Disposable {
+/** Console view showing blaze output. */
+public class BlazeConsoleView implements Disposable {
 
   private static final Class<?>[] IGNORED_CONSOLE_ACTION_TYPES = {
     PreviousOccurenceToolbarAction.class,
-    NextOccurenceToolbarAction.class,
+    NextOccurenceToolbarAction.class, // NOTYPO
     ConsoleViewImpl.ClearAllAction.class,
     PrintAction.class
   };
 
   private final Project project;
   private final ConsoleViewImpl consoleView;
+  private final CompositeFilter customFilters = new CompositeFilter();
 
   private volatile Runnable stopHandler;
 
@@ -59,6 +70,7 @@ class BlazeConsoleView implements Disposable {
     this.project = project;
     consoleView = new ConsoleViewImpl(this.project, false);
     consoleView.addMessageFilter(new BlazeTargetFilter(project, false));
+    consoleView.addMessageFilter(customFilters);
     Disposer.register(this, consoleView);
   }
 
@@ -66,8 +78,48 @@ class BlazeConsoleView implements Disposable {
     return ServiceManager.getService(project, BlazeConsoleView.class);
   }
 
+  public void setCustomFilters(List<Filter> filters) {
+    customFilters.setCustomFilters(filters);
+  }
+
   public void setStopHandler(@Nullable Runnable stopHandler) {
     this.stopHandler = stopHandler;
+  }
+
+  public void navigateToHyperlink(HyperlinkInfo link, int originalOffset) {
+    RangeHighlighter range = findLinkRange(link, originalOffset);
+    if (range != null) {
+      consoleView.scrollTo(range.getStartOffset());
+    }
+  }
+
+  @Nullable
+  private RangeHighlighter findLinkRange(HyperlinkInfo link, int originalOffset) {
+    // first check if it's still at the same offset
+    Document doc = consoleView.getEditor().getDocument();
+    if (doc.getTextLength() <= originalOffset) {
+      return null;
+    }
+    int lineNumber = doc.getLineNumber(originalOffset);
+    EditorHyperlinkSupport helper = consoleView.getHyperlinks();
+    for (RangeHighlighter range : helper.findAllHyperlinksOnLine(lineNumber)) {
+      if (Objects.equals(EditorHyperlinkSupport.getHyperlinkInfo(range), link)) {
+        return range;
+      }
+    }
+    // fall back to searching all hyperlinks
+    return findRangeForHyperlink(link);
+  }
+
+  @Nullable
+  private RangeHighlighter findRangeForHyperlink(HyperlinkInfo link) {
+    Map<RangeHighlighter, HyperlinkInfo> links = consoleView.getHyperlinks().getHyperlinks();
+    for (Map.Entry<RangeHighlighter, HyperlinkInfo> entry : links.entrySet()) {
+      if (Objects.equals(link, entry.getValue())) {
+        return entry.getKey();
+      }
+    }
+    return null;
   }
 
   private static boolean shouldIgnoreAction(AnAction action) {
@@ -79,7 +131,7 @@ class BlazeConsoleView implements Disposable {
     return false;
   }
 
-  public void createToolWindowContent(ToolWindow toolWindow) {
+  void createToolWindowContent(ToolWindow toolWindow) {
     // Create runner UI layout
     RunnerLayoutUi.Factory factory = RunnerLayoutUi.Factory.getInstance(project);
     RunnerLayoutUi layoutUi = factory.create("", "", "session", project);
@@ -143,6 +195,34 @@ class BlazeConsoleView implements Disposable {
       if (presentation.isEnabled() != isNowVisible) {
         presentation.setEnabled(isNowVisible);
       }
+    }
+  }
+
+  /** A composite filter composed of a modifiable list of custom filters. */
+  private static class CompositeFilter implements Filter {
+    private final List<Filter> customFilters = new ArrayList<>();
+
+    void setCustomFilters(List<Filter> filters) {
+      customFilters.clear();
+      customFilters.addAll(filters);
+    }
+
+    @Nullable
+    @Override
+    public Result applyFilter(String line, int entireLength) {
+      return customFilters
+          .stream()
+          .map(f -> f.applyFilter(line, entireLength))
+          .filter(Objects::nonNull)
+          .reduce(this::combine)
+          .orElse(null);
+    }
+
+    Result combine(Result first, Result second) {
+      List<ResultItem> items = new ArrayList<>();
+      items.addAll(first.getResultItems());
+      items.addAll(second.getResultItems());
+      return new Result(items);
     }
   }
 }

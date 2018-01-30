@@ -15,15 +15,18 @@
  */
 package com.google.idea.blaze.android.cppimpl.debug;
 
+import com.android.ddmlib.Client;
 import com.android.tools.ndk.run.editor.AutoAndroidDebugger;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 
 class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
-  public static final String ID = "BlazeAuto";
+  public static final String ID = Blaze.defaultBuildSystemName();
+  private final BlazeNativeAndroidDebugger nativeDebugger = new BlazeNativeAndroidDebugger();
 
   @Override
   protected boolean isNativeProject(Project project) {
@@ -39,7 +42,21 @@ class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
   }
 
   @Override
+  public void attachToClient(Project project, Client client) {
+    if (isNativeProject(project)) {
+      nativeDebugger.attachToClient(project, client);
+    } else {
+      super.attachToClient(project, client);
+    }
+  }
+
+  @Override
   public String getId() {
+    return ID;
+  }
+
+  @Override
+  public String getDisplayName() {
     return ID;
   }
 }

@@ -19,11 +19,9 @@ import static com.google.idea.common.guava.GuavaHelper.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream.LineProcessor;
-import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
 import java.util.Arrays;
 
 /** Provides output line processors run by default on blaze console output. */
@@ -32,27 +30,13 @@ public interface BlazeConsoleLineProcessorProvider {
   ExtensionPointName<BlazeConsoleLineProcessorProvider> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.BlazeConsoleLineProcessorProvider");
 
-  static ImmutableList<LineProcessor> getAllStdoutLineProcessors(
-      Project project, BlazeContext context, WorkspaceRoot workspaceRoot) {
+  static ImmutableList<LineProcessor> getAllStderrLineProcessors(BlazeContext context) {
     return Arrays.stream(EP_NAME.getExtensions())
-        .flatMap(p -> p.getStdoutLineProcessors(project, context, workspaceRoot).stream())
+        .flatMap(p -> p.getStderrLineProcessors(context).stream())
         .collect(toImmutableList());
   }
 
-  static ImmutableList<LineProcessor> getAllStderrLineProcessors(
-      Project project, BlazeContext context, WorkspaceRoot workspaceRoot) {
-    return Arrays.stream(EP_NAME.getExtensions())
-        .flatMap(p -> p.getStderrLineProcessors(project, context, workspaceRoot).stream())
-        .collect(toImmutableList());
-  }
-
-  default ImmutableList<LineProcessor> getStdoutLineProcessors(
-      Project project, BlazeContext context, WorkspaceRoot workspaceRoot) {
-    return ImmutableList.of();
-  }
-
-  default ImmutableList<LineProcessor> getStderrLineProcessors(
-      Project project, BlazeContext context, WorkspaceRoot workspaceRoot) {
+  default ImmutableList<LineProcessor> getStderrLineProcessors(BlazeContext context) {
     return ImmutableList.of();
   }
 
@@ -60,9 +44,8 @@ public interface BlazeConsoleLineProcessorProvider {
   class GeneralProvider implements BlazeConsoleLineProcessorProvider {
 
     @Override
-    public ImmutableList<LineProcessor> getStderrLineProcessors(
-        Project project, BlazeContext context, WorkspaceRoot workspaceRoot) {
-      return ImmutableList.of(new IssueOutputLineProcessor(project, context, workspaceRoot));
+    public ImmutableList<LineProcessor> getStderrLineProcessors(BlazeContext context) {
+      return ImmutableList.of(new PrintOutputLineProcessor(context));
     }
   }
 }

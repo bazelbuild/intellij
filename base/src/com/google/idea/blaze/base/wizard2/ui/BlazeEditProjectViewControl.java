@@ -57,6 +57,7 @@ import com.google.idea.blaze.base.wizard2.BlazeSelectProjectViewOption;
 import com.google.idea.blaze.base.wizard2.BlazeSelectWorkspaceOption;
 import com.google.idea.blaze.base.wizard2.ProjectDataDirectoryValidator;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.history.core.Paths;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -421,8 +422,7 @@ public final class BlazeEditProjectViewControl {
     if (lastVcsRoot == null || lastProjectPath == null) {
       return null;
     }
-    String lastRelativePath =
-        FileUtil.getRelativePath(lastVcsRoot, lastProjectPath, File.separatorChar);
+    String lastRelativePath = Paths.relativeIfUnder(lastVcsRoot, lastProjectPath);
     if (lastRelativePath == null) {
       return null;
     }

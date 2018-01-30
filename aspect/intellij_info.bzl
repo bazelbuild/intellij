@@ -20,7 +20,9 @@ def get_go_import_path(ctx):
     prefix = ctx.rule.attr._go_prefix.go_prefix
   if not prefix:
     return None
-  import_path = prefix + "/" + ctx.label.package
+  import_path = prefix
+  if ctx.label.package:
+    import_path += "/" + ctx.label.package
   if ctx.label.name != "go_default_library":
     import_path += "/" + ctx.label.name
   return import_path

@@ -19,8 +19,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
+import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -127,7 +129,15 @@ public class BlazeBuildService {
                   public Void execute(BlazeContext context) {
                     context
                         .push(new ExperimentScope())
-                        .push(new BlazeConsoleScope.Builder(project).build())
+                        .push(
+                            new BlazeConsoleScope.Builder(project)
+                                .addConsoleFilters(
+                                    new IssueOutputFilter(
+                                        project,
+                                        WorkspaceRoot.fromProject(project),
+                                        BlazeInvocationContext.Sync,
+                                        true))
+                                .build())
                         .push(new IssuesScope(project))
                         .push(new IdeaLogScope())
                         .push(new TimingScope("Make", EventType.BlazeInvocation))

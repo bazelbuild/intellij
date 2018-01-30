@@ -94,11 +94,11 @@ def intellij_integration_test_suite(
     srcs,
     test_package_root,
     deps,
-    size="medium",
+    size = "medium",
     jvm_flags = [],
     runtime_deps = [],
-    platform_prefix="Idea",
-    required_plugins=None,
+    platform_prefix = "Idea",
+    required_plugins = None,
     **kwargs):
   """Creates a java_test rule comprising all valid test classes in the specified srcs.
 

@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.buildmodifier;
 
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
@@ -34,11 +33,9 @@ public interface BuildFileModifier {
    * file. An example of why it might fail is the build file might already have a rule with the
    * requested name.
    *
-   * @param context Blaze context to operate in
    * @param newRule new rule to create
    * @param ruleKind valid kind of rule (android_library, java_library, etc.)
    * @return true if rule is added to file, false otherwise
    */
-  boolean addRule(
-      Project project, final BlazeContext context, final Label newRule, final Kind ruleKind);
+  boolean addRule(Project project, Label newRule, Kind ruleKind);
 }

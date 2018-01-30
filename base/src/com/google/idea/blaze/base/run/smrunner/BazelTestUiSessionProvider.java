@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.run.smrunner;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolUtils;
-import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.run.testlogs.BuildEventProtocolTestFinderStrategy;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import java.io.File;
@@ -28,8 +27,8 @@ public class BazelTestUiSessionProvider implements TestUiSessionProvider {
 
   @Nullable
   @Override
-  public BlazeTestUiSession getTestUiSession(BlazeVersionData blazeVersion) {
-    if (blazeVersion.buildSystem() != BuildSystem.Bazel) {
+  public BlazeTestUiSession getTestUiSession(BuildSystem buildSystem) {
+    if (buildSystem != BuildSystem.Bazel) {
       return null;
     }
 

@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2018 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,20 +39,21 @@ import java.util.Map;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
-/** Invokes an external process */
-public class ExternalTask {
-  private static final Logger logger = Logger.getInstance(ExternalTask.class);
+/** Invokes an external process. */
+public interface ExternalTask {
 
-  static final OutputStream NULL_STREAM = ByteStreams.nullOutputStream();
+  /** Run the task, attaching the given scopes to the task's {@link BlazeContext}. */
+  int run(BlazeScope... scopes);
 
-  /** Builder for an external task */
-  public static class Builder {
-    private final ImmutableList.Builder<String> command = ImmutableList.builder();
-    private final File workingDirectory;
-    private final Map<String, String> environmentVariables = Maps.newHashMap();
-    @Nullable private BlazeContext context;
-    @Nullable private OutputStream stdout;
-    @Nullable private OutputStream stderr;
+  /** A builder for an external task */
+  class Builder {
+    final ImmutableList.Builder<String> command = ImmutableList.builder();
+    final File workingDirectory;
+    final Map<String, String> environmentVariables = Maps.newHashMap();
+    @Nullable BlazeContext context;
+    @Nullable OutputStream stdout;
+    @Nullable OutputStream stderr;
+    @Nullable BlazeCommand blazeCommand;
     boolean redirectErrorStream = false;
 
     private Builder(WorkspaceRoot workspaceRoot) {
@@ -83,8 +84,9 @@ public class ExternalTask {
       return this;
     }
 
-    public Builder addBlazeCommand(BlazeCommand command) {
-      this.command.addAll(command.toList());
+    public Builder addBlazeCommand(BlazeCommand blazeCommand) {
+      this.blazeCommand = blazeCommand;
+      command.addAll(blazeCommand.toList());
       return this;
     }
 
@@ -126,153 +128,149 @@ public class ExternalTask {
     }
 
     public ExternalTask build() {
-      return new ExternalTask(
-          context,
-          workingDirectory,
-          command.build(),
-          environmentVariables,
-          stdout,
-          stderr,
-          redirectErrorStream);
+      return ExternalTaskProvider.getInstance().build(this);
     }
   }
 
-  private final File workingDirectory;
+  /** The default implementation of {@link ExternalTask}. */
+  class ExternalTaskImpl implements ExternalTask {
+    private static final Logger logger = Logger.getInstance(ExternalTask.class);
+    private static final OutputStream NULL_STREAM = ByteStreams.nullOutputStream();
 
-  private final List<String> command;
+    private final File workingDirectory;
+    private final List<String> command;
+    private final Map<String, String> environmentVariables;
+    @Nullable private final BlazeContext parentContext;
+    private final boolean redirectErrorStream;
+    private final OutputStream stdout;
+    private final OutputStream stderr;
 
-  private final Map<String, String> environmentVariables;
-
-  @Nullable private final BlazeContext parentContext;
-
-  private final boolean redirectErrorStream;
-
-  private final OutputStream stdout;
-
-  private final OutputStream stderr;
-
-  private ExternalTask(
-      @Nullable BlazeContext context,
-      File workingDirectory,
-      List<String> command,
-      Map<String, String> environmentVariables,
-      @Nullable OutputStream stdout,
-      @Nullable OutputStream stderr,
-      boolean redirectErrorStream) {
-    this.workingDirectory = workingDirectory;
-    this.command = command;
-    this.environmentVariables = environmentVariables;
-    this.parentContext = context;
-    this.redirectErrorStream = redirectErrorStream;
-    this.stdout = stdout != null ? stdout : NULL_STREAM;
-    this.stderr = stderr != null ? stderr : NULL_STREAM;
-  }
-
-  public int run(BlazeScope... scopes) {
-    Integer returnValue =
-        Scope.push(
-            parentContext,
-            context -> {
-              for (BlazeScope scope : scopes) {
-                context.push(scope);
-              }
-              try {
-                return invokeCommand(context);
-              } catch (ProcessCanceledException e) {
-                // Logging a ProcessCanceledException is an IJ error - mark context canceled instead
-                context.setCancelled();
-              }
-              return -1;
-            });
-    return returnValue != null ? returnValue : -1;
-  }
-
-  private static void closeQuietly(OutputStream stream) {
-    try {
-      stream.close();
-    } catch (IOException e) {
-      Throwables.propagate(e);
+    ExternalTaskImpl(
+        @Nullable BlazeContext context,
+        File workingDirectory,
+        List<String> command,
+        Map<String, String> environmentVariables,
+        @Nullable OutputStream stdout,
+        @Nullable OutputStream stderr,
+        boolean redirectErrorStream) {
+      this.workingDirectory = workingDirectory;
+      this.command = command;
+      this.environmentVariables = environmentVariables;
+      this.parentContext = context;
+      this.redirectErrorStream = redirectErrorStream;
+      this.stdout = stdout != null ? stdout : NULL_STREAM;
+      this.stderr = stderr != null ? stderr : NULL_STREAM;
     }
-  }
 
-  private int invokeCommand(BlazeContext context) {
-    String executingTasksText =
-        "Command: "
-            + Joiner.on(" ").join(command)
-            + SystemProperties.getLineSeparator()
-            + SystemProperties.getLineSeparator();
+    @Override
+    public int run(BlazeScope... scopes) {
+      Integer returnValue =
+          Scope.push(
+              parentContext,
+              context -> {
+                for (BlazeScope scope : scopes) {
+                  context.push(scope);
+                }
+                try {
+                  return invokeCommand(context);
+                } catch (ProcessCanceledException e) {
+                  // Logging a ProcessCanceledException is an IJ error - mark context canceled
+                  // instead
+                  context.setCancelled();
+                }
+                return -1;
+              });
+      return returnValue != null ? returnValue : -1;
+    }
 
-    context.output(PrintOutput.log(executingTasksText));
-
-    try {
-      if (context.isEnding()) {
-        return -1;
+    private static void closeQuietly(OutputStream stream) {
+      try {
+        stream.close();
+      } catch (IOException e) {
+        Throwables.propagate(e);
       }
-      ProcessBuilder builder =
-          new ProcessBuilder()
-              .command(command)
-              .redirectErrorStream(redirectErrorStream)
-              .directory(workingDirectory);
-      for (Map.Entry<String, String> entry : environmentVariables.entrySet()) {
-        builder.environment().put(entry.getKey(), entry.getValue());
-      }
+    }
+
+    private int invokeCommand(BlazeContext context) {
+      String executingTasksText =
+          "Command: "
+              + Joiner.on(" ").join(command)
+              + SystemProperties.getLineSeparator()
+              + SystemProperties.getLineSeparator();
+
+      context.output(PrintOutput.log(executingTasksText));
 
       try {
-        final Process process = builder.start();
-        Thread shutdownHook = new Thread(process::destroy);
-        try {
-          Runtime.getRuntime().addShutdownHook(shutdownHook);
-          // These tasks are non-interactive, so close the stream connected to the process's input.
-          process.getOutputStream().close();
-          Thread stdoutThread = ProcessUtil.forwardAsync(process.getInputStream(), stdout);
-          Thread stderrThread = null;
-          if (!redirectErrorStream) {
-            stderrThread = ProcessUtil.forwardAsync(process.getErrorStream(), stderr);
-          }
-          process.waitFor();
-          stdoutThread.join();
-          if (!redirectErrorStream) {
-            stderrThread.join();
-          }
-          int exitValue = process.exitValue();
-          if (exitValue != 0) {
-            context.setHasError();
-          }
-          return exitValue;
-        } catch (InterruptedException e) {
-          process.destroy();
-          throw new ProcessCanceledException();
-        } finally {
-          try {
-            Runtime.getRuntime().removeShutdownHook(shutdownHook);
-          } catch (IllegalStateException e) {
-            // we can't remove a shutdown hook if we are shutting down, do nothing about it
-          }
+        if (context.isEnding()) {
+          return -1;
         }
-      } catch (IOException e) {
-        logger.warn(e);
-        IssueOutput.error(e.getMessage()).submit(context);
+        ProcessBuilder builder =
+            new ProcessBuilder()
+                .command(command)
+                .redirectErrorStream(redirectErrorStream)
+                .directory(workingDirectory);
+        for (Map.Entry<String, String> entry : environmentVariables.entrySet()) {
+          builder.environment().put(entry.getKey(), entry.getValue());
+        }
+
+        try {
+          final Process process = builder.start();
+          Thread shutdownHook = new Thread(process::destroy);
+          try {
+            Runtime.getRuntime().addShutdownHook(shutdownHook);
+            // These tasks are non-interactive, so close the stream connected to the process's
+            // input.
+            process.getOutputStream().close();
+            Thread stdoutThread = ProcessUtil.forwardAsync(process.getInputStream(), stdout);
+            Thread stderrThread = null;
+            if (!redirectErrorStream) {
+              stderrThread = ProcessUtil.forwardAsync(process.getErrorStream(), stderr);
+            }
+            process.waitFor();
+            stdoutThread.join();
+            if (!redirectErrorStream) {
+              stderrThread.join();
+            }
+            int exitValue = process.exitValue();
+            if (exitValue != 0) {
+              context.setHasError();
+            }
+            return exitValue;
+          } catch (InterruptedException e) {
+            process.destroy();
+            throw new ProcessCanceledException();
+          } finally {
+            try {
+              Runtime.getRuntime().removeShutdownHook(shutdownHook);
+            } catch (IllegalStateException e) {
+              // we can't remove a shutdown hook if we are shutting down, do nothing about it
+            }
+          }
+        } catch (IOException e) {
+          logger.warn(e);
+          IssueOutput.error(e.getMessage()).submit(context);
+        }
+      } finally {
+        closeQuietly(stdout);
+        closeQuietly(stderr);
       }
-    } finally {
-      closeQuietly(stdout);
-      closeQuietly(stderr);
+      return -1;
     }
-    return -1;
   }
 
-  public static Builder builder() {
+  static Builder builder() {
     return new Builder(new File("/"));
   }
 
-  public static Builder builder(List<String> command) {
+  static Builder builder(List<String> command) {
     return builder().args(command);
   }
 
-  public static Builder builder(File workingDirectory) {
+  static Builder builder(File workingDirectory) {
     return new Builder(workingDirectory);
   }
 
-  public static Builder builder(WorkspaceRoot workspaceRoot) {
+  static Builder builder(WorkspaceRoot workspaceRoot) {
     return new Builder(workspaceRoot);
   }
 }

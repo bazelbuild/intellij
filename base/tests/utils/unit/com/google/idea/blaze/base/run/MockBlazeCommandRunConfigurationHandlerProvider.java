@@ -37,7 +37,7 @@ import org.jdom.Element;
 public class MockBlazeCommandRunConfigurationHandlerProvider
     implements BlazeCommandRunConfigurationHandlerProvider {
   @Override
-  public boolean canHandleKind(Kind kind) {
+  public boolean canHandleKind(@Nullable Kind kind) {
     return true;
   }
 

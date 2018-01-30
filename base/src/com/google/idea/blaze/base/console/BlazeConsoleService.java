@@ -15,21 +15,24 @@
  */
 package com.google.idea.blaze.base.console;
 
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import java.util.List;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /** Prints text to the blaze console. */
 public interface BlazeConsoleService {
-  static BlazeConsoleService getInstance(@NotNull Project project) {
+  static BlazeConsoleService getInstance(Project project) {
     return ServiceManager.getService(project, BlazeConsoleService.class);
   }
 
-  void print(@NotNull String text, @NotNull ConsoleViewContentType contentType);
+  void print(String text, ConsoleViewContentType contentType);
 
   void clear();
+
+  void setCustomFilters(List<Filter> filters);
 
   void setStopHandler(@Nullable Runnable runnable);
 

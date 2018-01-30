@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -93,11 +94,18 @@ public final class BlazeCommandGenericRunConfigurationRunner
       this.configuration = getConfiguration(environment);
       this.handlerState =
           (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
+      Project project = environment.getProject();
       this.consoleFilters =
           ImmutableList.<Filter>builder()
               .addAll(consoleFilters)
-              .add(new BlazeTargetFilter(environment.getProject(), true))
-              .add(new UrlFilter())
+              .add(
+                  new BlazeTargetFilter(project, true),
+                  new UrlFilter(),
+                  new IssueOutputFilter(
+                      project,
+                      WorkspaceRoot.fromProject(project),
+                      BlazeInvocationContext.NonSync,
+                      false))
               .build();
     }
 
@@ -163,8 +171,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
             public ImmutableList<ProcessListener> createProcessListeners(BlazeContext context) {
               LineProcessingOutputStream outputStream =
                   LineProcessingOutputStream.of(
-                      BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
-                          project, context, workspaceRoot));
+                      BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context));
               return ImmutableList.of(new LineProcessingProcessAdapter(outputStream));
             }
           });
@@ -191,7 +198,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
           .addTargets(configuration.getTarget())
           .addBlazeFlags(
               BlazeFlags.blazeFlags(
-                  project, projectViewSet, getCommand(), BlazeInvocationContext.RunConfiguration))
+                  project, projectViewSet, getCommand(), BlazeInvocationContext.NonSync))
           .addBlazeFlags(testHandlerFlags)
           .addBlazeFlags(extraBlazeFlags)
           .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())

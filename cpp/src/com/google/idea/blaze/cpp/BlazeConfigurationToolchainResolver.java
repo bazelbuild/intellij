@@ -172,20 +172,17 @@ final class BlazeConfigurationToolchainResolver {
               () -> {
                 File cppExecutable = pathResolver.resolveExecutionRootPath(toolchain.cppExecutable);
                 if (cppExecutable == null) {
-                  logger.warn(
-                      String.format(
-                          "Unable to find compiler executable: %s for toolchain %s",
-                          toolchain.cppExecutable.toString(), toolchain));
+                  IssueOutput.error(
+                          "Unable to find compiler executable: " + toolchain.cppExecutable)
+                      .submit(context);
                   return null;
                 }
                 String compilerVersion =
                     CompilerVersionChecker.getInstance()
                         .checkCompilerVersion(workspaceRoot, cppExecutable);
                 if (compilerVersion == null) {
-                  logger.warn(
-                      String.format(
-                          "Unable to determine version of compiler: %s for toolchain %s",
-                          cppExecutable, toolchain));
+                  IssueOutput.error("Unable to determine version of compiler " + cppExecutable)
+                      .submit(context);
                   return null;
                 }
                 BlazeCompilerSettings oldSettings = oldCompilerSettings.get(toolchain);
@@ -197,6 +194,8 @@ final class BlazeConfigurationToolchainResolver {
                     createBlazeCompilerSettings(
                         project, toolchain, cppExecutable, compilerVersion, compilerInfoCache);
                 if (settings == null) {
+                  IssueOutput.error("Unable to create compiler wrapper for: " + cppExecutable)
+                      .submit(context);
                   return null;
                 }
                 return new SimpleImmutableEntry<>(toolchain, settings);
@@ -217,7 +216,6 @@ final class BlazeConfigurationToolchainResolver {
       context.setCancelled();
     } catch (ExecutionException e) {
       IssueOutput.error("Could not build C compiler settings map: " + e).submit(context);
-      logger.error("Could not build C compiler settings map", e);
     }
     return compilerSettingsMap.build();
   }

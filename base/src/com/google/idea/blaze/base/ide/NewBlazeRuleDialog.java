@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.history.LocalHistory;
@@ -43,7 +42,6 @@ class NewBlazeRuleDialog extends DialogWrapper {
   private static final int UI_INDENT = 0;
   private static final int TEXT_BOX_WIDTH = 40;
 
-  private final BlazeContext context;
   private final Project project;
   private final VirtualFile buildFile;
   private final String buildSystemName;
@@ -51,9 +49,8 @@ class NewBlazeRuleDialog extends DialogWrapper {
   private JPanel component = new JPanel(new GridBagLayout());
   private final NewRuleUI newRuleUI = new NewRuleUI(TEXT_BOX_WIDTH);
 
-  public NewBlazeRuleDialog(BlazeContext context, Project project, VirtualFile buildFile) {
+  NewBlazeRuleDialog(Project project, VirtualFile buildFile) {
     super(project);
-    this.context = context;
     this.project = project;
     this.buildFile = buildFile;
     this.buildSystemName = Blaze.buildSystemName(project);
@@ -103,7 +100,7 @@ class NewBlazeRuleDialog extends DialogWrapper {
             LocalHistory localHistory = LocalHistory.getInstance();
             LocalHistoryAction action = localHistory.startAction(commandName);
             try {
-              result.setResult(buildFileModifier.addRule(project, context, newRule, ruleKind));
+              result.setResult(buildFileModifier.addRule(project, newRule, ruleKind));
             } finally {
               action.finish();
             }
