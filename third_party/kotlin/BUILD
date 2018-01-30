@@ -9,7 +9,7 @@ java_library(
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
         "intellij-2017.2.6": ["@kotlin_2017_2//:kotlin"],
-        "intellij-2017.3.0": ["@kotlin_2017_3//:kotlin"],
+        "intellij-2017.3.3": ["@kotlin_2017_3//:kotlin"],
     }),
 )
 
@@ -19,7 +19,7 @@ java_library(
     exports = [":kotlin_internal"],
     runtime_deps =  select_for_plugin_api({
         "intellij-2017.2.6": ["@kotlin_2017_2//:integration-test-deps"],
-        "intellij-2017.3.0": ["@kotlin_2017_3//:integration-test-deps"],
+        "intellij-2017.3.3": ["@kotlin_2017_3//:integration-test-deps"],
     }),
 )
 
