@@ -19,7 +19,7 @@ public final class BlazeKotlin {
             COMPILER_WORKSPACE_NAME = "com_github_jetbrains_kotlin",
             KOTLIN_RULES_WORKSPACE_NAME = "io_bazel_rules_kotlin",
             PLUGIN_ID = KotlinPluginUtil.KOTLIN_PLUGIN_ID.getIdString(),
-            RULES_REPO = "https://github.com/hsyed/rules_kotlin";
+            RULES_REPO = "https://github.com/bazelbuild/rules_kotlin";
 
     public static class Issues {
         public static final String
