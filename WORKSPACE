@@ -205,8 +205,8 @@ new_http_archive(
 # This will be pointing to a bazel repo soon.
 git_repository(
     name = "io_bazel_rules_kotlin",
-    remote = "https://github.com/hsyed/rules_kotlin.git",
-    commit="72e07ac25243733650dc52debd5e0206734fabe0"
+    remote = "https://github.com/bazelbuild/rules_kotlin.git",
+    commit="b846341e3e9c9ad71e5d50ecd839562608913c05"
 )
 
 # LICENSE: Common Public License 1.0
