@@ -53,8 +53,10 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
 import org.jetbrains.kotlin.config.LanguageVersion;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
@@ -62,11 +64,11 @@ import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.google.idea.blaze.kotlin.BlazeKotlin.COMPILER_WORKSPACE_NAME;
 
@@ -125,16 +127,16 @@ public class BlazeKotlinSyncPlugin extends BlazeKotlinBaseSyncPlugin {
         if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
             return true;
         }
-        if (!kotlinRepoExistsInWorkspace(project)) {
+        if (kotlinRepoAbsentFromWorkspace(project)) {
             IssueOutput.warn(BlazeKotlin.Issues.RULES_ABSENT_FROM_WORKSPACE).submit(context);
             return false;
         }
         return true;
     }
 
-    private static boolean kotlinRepoExistsInWorkspace(Project project) {
+    private static boolean kotlinRepoAbsentFromWorkspace(Project project) {
         WorkspaceRoot workspaceRoot = WorkspaceHelper.resolveExternalWorkspace(project, COMPILER_WORKSPACE_NAME);
-        return workspaceRoot != null && workspaceRoot.directory().exists();
+        return workspaceRoot == null || !workspaceRoot.directory().exists();
     }
 
     @Nullable
@@ -199,47 +201,52 @@ public class BlazeKotlinSyncPlugin extends BlazeKotlinBaseSyncPlugin {
             return;
         }
         // validated in the validate method, so an error shouldn't be raised here.
-        if (!kotlinRepoExistsInWorkspace(project)) {
+        if (kotlinRepoAbsentFromWorkspace(project)) {
             return;
         }
-        ImmutableMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> targetToLibraryMap = BlazeKotlinSyncData.get(blazeProjectData).importResult.kotlinTargetToLibraryMap;
-
-        Map<String, BlazeKotlinStdLib> mandatoryLibs = BlazeKotlinStdLib.MANDATORY_STDLIBS.stream().collect(Collectors.toMap(x -> x.id, x -> x));
-        ArrayList<BlazeJarLibrary> toProcess = new ArrayList<>();
         LibraryTable.ModifiableModel libraryTable = ProjectLibraryTable.getInstance(project).getModifiableModel();
-
-        targetToLibraryMap.forEach((ideInfo, libraries) -> {
-            if (ideInfo.kind.isOneOf(Kind.KOTLIN_IMPORT, Kind.KOTLIN_STDLIB)) {
-                if(BlazeKotlinStdLib.isStdLib(ideInfo)) {
-                    mandatoryLibs.remove(ideInfo.key.label.targetName().toString());
-                }
-                toProcess.addAll(libraries);
-            }
-        });
-
-        toProcess.addAll(BlazeKotlinStdLib.prepareBlazeLibraries(mandatoryLibs.values()));
-
-        toProcess.forEach(lib -> {
+        externalKotlinLibraries(blazeProjectData).forEach(lib -> {
             Library library = libraryTable.getLibraryByName(lib.key.getIntelliJLibraryName());
-            if(library == null) {
+            if (library == null) {
                 library = libraryTable.createLibrary(lib.key.getIntelliJLibraryName());
             }
             Library.ModifiableModel modifiableIjLibrary = library.getModifiableModel();
+            maybeAttachSourceJars(blazeProjectData.artifactLocationDecoder, lib, modifiableIjLibrary);
+            modifiableIjLibrary.commit();
+        });
+        libraryTable.commit();
+        KotlinJavaModuleConfigurator.Companion.getInstance().configureSilently(project);
+    }
 
-            if(modifiableIjLibrary.getFiles(OrderRootType.SOURCES).length == 0) {
-                for (ArtifactLocation sourceJar : lib.libraryArtifact.sourceJars) {
-                    File srcJarFile = blazeProjectData.artifactLocationDecoder.decode(sourceJar);
-                    VirtualFile vfSourceJar = VfsUtil.findFileByIoFile(srcJarFile, false);
-                    if(vfSourceJar != null) {
-                        modifiableIjLibrary.addRoot(vfSourceJar, OrderRootType.SOURCES);
+    @NotNull
+    private Stream<BlazeJarLibrary> externalKotlinLibraries(BlazeProjectData blazeProjectData) {
+        ImmutableMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> targetToLibraryMap = BlazeKotlinSyncData.get(blazeProjectData).importResult.kotlinTargetToLibraryMap;
+        Map<String, BlazeJarLibrary> tally = new HashMap<>();
+        targetToLibraryMap.forEach((ideInfo, libraries) -> {
+            if (ideInfo.kind.isOneOf(Kind.KOTLIN_IMPORT, Kind.KOTLIN_STDLIB)) {
+                libraries.forEach(lib -> tally.putIfAbsent(lib.key.getIntelliJLibraryName(), lib));
+            }
+        });
+        BlazeKotlinStdLib.prepareBlazeLibraries(BlazeKotlinStdLib.MANDATORY_STDLIBS).forEach(lib -> tally.putIfAbsent(lib.key.getIntelliJLibraryName(), lib));
+        return tally.values().stream();
+    }
+
+    private static void maybeAttachSourceJars(
+            ArtifactLocationDecoder artifactLocationDecoder,
+            BlazeJarLibrary lib,
+            Library.ModifiableModel modifiableIjLibrary
+    ) {
+        if (modifiableIjLibrary.getFiles(OrderRootType.SOURCES).length == 0) {
+            for (ArtifactLocation sourceJar : lib.libraryArtifact.sourceJars) {
+                File srcJarFile = artifactLocationDecoder.decode(sourceJar);
+                VirtualFile vfSourceJar = VfsUtil.findFileByIoFile(srcJarFile, false);
+                if (vfSourceJar != null) {
+                    VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vfSourceJar);
+                    if (jarRoot != null) {
+                        modifiableIjLibrary.addRoot(jarRoot, OrderRootType.SOURCES);
                     }
                 }
             }
-            modifiableIjLibrary.commit();
-        });
-
-        libraryTable.commit();
-
-        KotlinJavaModuleConfigurator.Companion.getInstance().configureSilently(project);
+        }
     }
 }
