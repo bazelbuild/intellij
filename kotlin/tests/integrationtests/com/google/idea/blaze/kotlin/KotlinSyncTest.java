@@ -49,7 +49,7 @@ import static com.google.common.truth.Truth.assertThat;
 @RunWith(JUnit4.class)
 public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
     @Test
-    public void testKotlinClassesPresentInClassPath() throws Exception {
+    public void testKotlinClassesPresentInClassPath() {
         setProjectView(
                 "directories:",
                 "  src/main/kotlin/com/google",
@@ -75,7 +75,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
                                 TargetIdeInfo.builder()
                                         .setBuildFile(sourceRoot("src/main/kotlin/com/google/BUILD"))
                                         .setLabel("//src/main/kotlin/com/google:lib")
-                                        .setKind("kotlin_library")
+                                        .setKind("kt_jvm_library")
                                         .addSource(sourceRoot("src/main/kotlin/com/google/ClassWithUniqueName1.scala"))
                                         .addSource(sourceRoot("src/main/kotlin/com/google/ClassWithUniqueName2.scala"))
                                         .setJavaInfo(JavaIdeInfo.builder()))
@@ -122,7 +122,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
 
 
     @Test
-    public void testSimpleSync() throws Exception {
+    public void testSimpleSync() {
         setProjectView(
                 "directories:",
                 "  src/main/kotlin/com/google",
@@ -148,7 +148,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
                                 TargetIdeInfo.builder()
                                         .setBuildFile(sourceRoot("src/main/kotlin/com/google/BUILD"))
                                         .setLabel("//src/main/kotlin/com/google:lib")
-                                        .setKind("kotlin_library")
+                                        .setKind("kt_jvm_library")
                                         .addSource(sourceRoot("src/main/kotlin/com/google/Source.kotlin"))
                                         .addSource(sourceRoot("src/main/kotlin/com/google/Other.kotlin"))
                                         .setJavaInfo(JavaIdeInfo.builder()))
@@ -175,7 +175,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
     }
 
     @Test
-    public void testDefaultSectionParsing() throws Exception {
+    public void testDefaultSectionParsing() {
         setProjectView(
                 "additional_languages:",
                 "  kotlin");
@@ -184,7 +184,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
     }
 
     @Test
-    public void testSectionParsing() throws Exception {
+    public void testSectionParsing() {
         setProjectView(
                 "kotlin_language_version: " + LanguageVersion.KOTLIN_1_1.getVersionString(),
                 "additional_languages:",
@@ -198,6 +198,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
         assertNoSyncErrors();
 
         ProjectViewSet projectViewSet = ProjectViewManager.getInstance(getProject()).getProjectViewSet();
+        assert projectViewSet != null;
         assertThat(BlazeKotlinSections.getLanguageLevel(projectViewSet)).isEqualTo(languageVersion);
 
         // test the compiler reflect the project view.

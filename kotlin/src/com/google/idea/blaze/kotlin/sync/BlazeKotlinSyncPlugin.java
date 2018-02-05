@@ -223,7 +223,7 @@ public class BlazeKotlinSyncPlugin extends BlazeKotlinBaseSyncPlugin {
         ImmutableMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> targetToLibraryMap = BlazeKotlinSyncData.get(blazeProjectData).importResult.kotlinTargetToLibraryMap;
         Map<String, BlazeJarLibrary> tally = new HashMap<>();
         targetToLibraryMap.forEach((ideInfo, libraries) -> {
-            if (ideInfo.kind.isOneOf(Kind.KOTLIN_IMPORT, Kind.KOTLIN_STDLIB)) {
+            if (ideInfo.kind.isOneOf(Kind.KT_JVM_IMPORT, Kind.KOTLIN_STDLIB)) {
                 libraries.forEach(lib -> tally.putIfAbsent(lib.key.getIntelliJLibraryName(), lib));
             }
         });

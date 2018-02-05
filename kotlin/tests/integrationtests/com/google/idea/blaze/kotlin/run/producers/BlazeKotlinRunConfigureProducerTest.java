@@ -40,13 +40,13 @@ public class BlazeKotlinRunConfigureProducerTest extends BlazeRunConfigurationPr
         builder.setTargetMap(
                 TargetMapBuilder.builder()
                         .addTarget(TargetIdeInfo.builder()
-                                .setKind("kotlin_binary")
+                                .setKind("kt_jvm_binary")
                                 .setJavaInfo(JavaIdeInfo.builder().setMainClass("com.google.binary.MainKt"))
                                 .setLabel("//com/google/binary:main_kt")
                                 .addSource(sourceRoot("com/google/binary/Main.kt"))
                                 .build())
                         .addTarget(TargetIdeInfo.builder()
-                                .setKind("kotlin_binary")
+                                .setKind("kt_jvm_binary")
                                 .setJavaInfo(JavaIdeInfo.builder().setMainClass("com.google.binary.Main"))
                                 .setLabel("//com/google/binary:just_main")
                                 .addSource(sourceRoot("com/google/binary/JustMain.kt"))
@@ -69,7 +69,7 @@ public class BlazeKotlinRunConfigureProducerTest extends BlazeRunConfigurationPr
         builder.setTargetMap(
                 TargetMapBuilder.builder().addTarget(
                         TargetIdeInfo.builder()
-                                .setKind("kotlin_binary")
+                                .setKind("kt_jvm_binary")
                                 .setJavaInfo(JavaIdeInfo.builder().setMainClass("com.google.binary.Main"))
                                 .setLabel("//com/google/binary:just_main")
                                 .addSource(sourceRoot("com/google/binary/JustMain.kt"))
