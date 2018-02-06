@@ -72,7 +72,6 @@ intellij_plugin(
 
 intellij_unit_test_suite(
     name = "unit_tests",
-#    test_class = "com.google.idea.blaze.kotlin.sync.KotlinSdkUtilsTest",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze",
     deps = [
