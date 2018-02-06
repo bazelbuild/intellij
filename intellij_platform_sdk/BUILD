@@ -133,7 +133,10 @@ java_library(
             ":test_recorder",
         ],
         clion = [":sdk"],
-        intellij = [":sdk"],
+        intellij = [
+            ":sdk",
+            ":kotlin_plugin"
+        ],
     ),
 )
 

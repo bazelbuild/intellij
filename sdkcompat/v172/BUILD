@@ -28,6 +28,7 @@ java_library(
         intellij = glob([
             "com/google/idea/sdkcompat/java/**",
             "intellij/com/google/idea/sdkcompat/python/**",
+            "com/google/idea/sdkcompat/kotlin/**",
         ]),
     ),
     visibility = ["//sdkcompat:__pkg__"],

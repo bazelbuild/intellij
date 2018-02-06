@@ -29,6 +29,7 @@ java_library(
         ]),
         intellij = glob([
             "com/google/idea/sdkcompat/java/**",
+            "com/google/idea/sdkcompat/kotlin/**",
             "intellij/com/google/idea/sdkcompat/python/**",
         ]),
     ),

@@ -46,6 +46,7 @@ import com.google.idea.blaze.kotlin.BlazeKotlin;
 import com.google.idea.blaze.kotlin.sync.importer.BlazeKotlinWorkspaceImporter;
 import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinImportResult;
 import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinSyncData;
+import com.google.idea.sdkcompat.kotlin.BlazeKotlinCompilerArgumentsUpdaterCompat;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -57,9 +58,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
 import org.jetbrains.kotlin.config.LanguageVersion;
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator;
 
 import javax.annotation.Nullable;
@@ -105,21 +104,10 @@ public class BlazeKotlinSyncPlugin extends BlazeKotlinBaseSyncPlugin {
      * this project wide is fine. The rules should catch incorrect usage.
      */
     private static void maybeUpdateCompilerConfig(Project project, ProjectViewSet projectViewSet) {
+        BlazeKotlinCompilerArgumentsUpdaterCompat argumentsUpdater = BlazeKotlinCompilerArgumentsUpdaterCompat.build(project);
         LanguageVersion languageLevel = BlazeKotlinSections.getLanguageLevel(projectViewSet);
-        String languageLevelVersionString = languageLevel.getVersionString();
-        CommonCompilerArguments settings = (CommonCompilerArguments) KotlinCommonCompilerArgumentsHolder.Companion.getInstance(project).getSettings().unfrozen();
-        boolean updated = false;
-        if (settings.getApiVersion() == null || !settings.getApiVersion().equals(languageLevelVersionString)) {
-            updated = true;
-            settings.setApiVersion(languageLevelVersionString);
-        }
-        if (settings.getLanguageVersion() == null || !settings.getLanguageVersion().equals(languageLevelVersionString)) {
-            updated = true;
-            settings.setLanguageVersion(languageLevelVersionString);
-        }
-        if (updated) {
-            KotlinCommonCompilerArgumentsHolder.Companion.getInstance(project).setSettings(settings);
-        }
+        argumentsUpdater.updateLanguageVersion(languageLevel);
+        argumentsUpdater.commit();
     }
 
     @Override

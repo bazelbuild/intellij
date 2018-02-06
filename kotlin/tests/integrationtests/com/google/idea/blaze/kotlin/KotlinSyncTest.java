@@ -35,9 +35,8 @@ import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
 import com.google.idea.blaze.kotlin.sync.BlazeKotlinSections;
-import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
+import com.google.idea.sdkcompat.kotlin.BlazeKotlinCompilerArgumentsUpdaterCompat;
 import org.jetbrains.kotlin.config.LanguageVersion;
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -202,9 +201,9 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
         assertThat(BlazeKotlinSections.getLanguageLevel(projectViewSet)).isEqualTo(languageVersion);
 
         // test the compiler reflect the project view.
-        CommonCompilerArguments settings = KotlinCommonCompilerArgumentsHolder.Companion.getInstance(getProject()).getSettings();
-        assertThat(settings.getApiVersion()).isEqualTo(languageVersion.getVersionString());
-        assertThat(settings.getLanguageVersion()).isEqualTo(languageVersion.getVersionString());
+        BlazeKotlinCompilerArgumentsUpdaterCompat updater = BlazeKotlinCompilerArgumentsUpdaterCompat.build(getProject());
+        assertThat(updater.getApiVersion()).isEqualTo(languageVersion.getVersionString());
+        assertThat(updater.getLanguageVersion()).isEqualTo(languageVersion.getVersionString());
     }
 
 

@@ -39,9 +39,9 @@ java_library(
     deps = [
         "//base",
         "//java",
+        "//sdkcompat",
         "//intellij_platform_sdk:plugin_api",
         "@jsr305_annotations//jar",
-        "//third_party/kotlin",
     ],
 )
 
@@ -81,7 +81,7 @@ intellij_unit_test_suite(
         "//base:unit_test_utils",
         "//java",
         "@junit//jar",
-        "//third_party/kotlin:kotlin_for_tests",
+        "//sdkcompat",
         "//intellij_platform_sdk:plugin_api_for_tests",
     ]
 )
@@ -91,14 +91,14 @@ intellij_integration_test_suite(
     srcs = glob(["tests/integrationtests/**/*.java"]),
     required_plugins = "org.jetbrains.kotlin,com.google.idea.blaze.kotlin",
     test_package_root = "com.google.idea.blaze.kotlin",
-    runtime_deps = [":kotlin_integration_test_plugin", "//third_party/kotlin:kotlin_for_tests"],
+    runtime_deps = [":kotlin_integration_test_plugin"],
     deps = [
         ":kotlin",
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
+        "//sdkcompat",
         "//intellij_platform_sdk:plugin_api_for_tests",
-        "//third_party/kotlin:kotlin_for_tests",
         "//java",
         "@junit//jar",
     ],

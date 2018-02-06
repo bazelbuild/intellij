@@ -42,7 +42,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Private utility class for
+ * Private utility class for building Kotlin test configurations.
  */
 final class KotlinTestConfigBuilder {
     public final BlazeCommandName commandName;
