@@ -17,6 +17,7 @@ package com.google.idea.blaze.kotlin.sync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -28,6 +29,7 @@ import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
@@ -35,6 +37,8 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -63,16 +67,27 @@ import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static com.google.idea.blaze.kotlin.BlazeKotlin.COMPILER_WORKSPACE_NAME;
 
 
-public class BlazeKotlinSyncPlugin extends BlazeKotlinBaseSyncPlugin {
+public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
+    @Override
+    public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
+        return Blaze.getBuildSystem(null) == Blaze.BuildSystem.Bazel
+                ? ImmutableSet.of(LanguageClass.KOTLIN)
+                : ImmutableSet.of();
+    }
+
+    @Override
+    public ImmutableList<String> getRequiredExternalPluginIds(Collection<LanguageClass> languages) {
+        return languages.contains(LanguageClass.KOTLIN)
+                ? ImmutableList.of(BlazeKotlin.PLUGIN_ID)
+                : ImmutableList.of();
+    }
+
     @Override
     public Collection<SectionParser> getSections() {
         return BlazeKotlinSections.PARSERS;
