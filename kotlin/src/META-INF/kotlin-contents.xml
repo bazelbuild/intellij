@@ -5,11 +5,7 @@
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
-        <runConfigurationProducer
-                implementation="com.google.idea.blaze.kotlin.run.producers.BlazeKotlinTestClassConfigurationProducer"
-                order="first"/>
-        <runConfigurationProducer
-                implementation="com.google.idea.blaze.kotlin.run.producers.BlazeKotlinRunConfigurationProducer"
-                order="first"/>
+        <runConfigurationProducer implementation="com.google.idea.blaze.kotlin.run.producers.BlazeKotlinTestClassConfigurationProducer"/>
+        <runConfigurationProducer implementation="com.google.idea.blaze.kotlin.run.producers.BlazeKotlinRunConfigurationProducer"/>
     </extensions>
 </idea-plugin>
