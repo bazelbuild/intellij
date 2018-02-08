@@ -189,6 +189,11 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     /**
      * Attaches sources to Kotlin external artifacts, add missing mandatory std libraries and perform last bit of Kotlin configuration.
      */
+    // Most of library table manipulation goes away (source attaching) once the bazel java_common infrastructure leaves kotlin ijars intact. The kotlin rules
+    // will then use java_import instead of kt_jvm_import it will also then be a good time to get rid of kotlin_stdlib. We probably still need to attach the
+    // kotlin stdlibs manually here as they are not discoverable via aspect processing (they are added implicitly inside the rule implementation).
+    // see: https://github.com/bazelbuild/bazel/issues/4549
+    // the issue in the rule repo is: https://github.com/bazelbuild/rules_kotlin/issues/4
     @Override
     public void updateProjectStructure(
             Project project,

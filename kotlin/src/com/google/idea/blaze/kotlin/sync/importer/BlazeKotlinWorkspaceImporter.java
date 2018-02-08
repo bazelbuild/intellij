@@ -28,7 +28,6 @@ import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinImportResult;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -58,7 +57,8 @@ public class BlazeKotlinWorkspaceImporter {
 
         return new BlazeKotlinImportResult(
                 ImmutableList.copyOf(libraries.values()),
-                ImmutableMap.copyOf(targetLibraryMap));
+                ImmutableMap.copyOf(targetLibraryMap)
+        );
     }
 
     private void collectTransitiveLibsFromKotlinSourceTargets(
@@ -67,32 +67,37 @@ public class BlazeKotlinWorkspaceImporter {
     ) {
         List<BlazeJarLibrary> scratchLibSet = new ArrayList<>();
 
-        targetMap
+        transitiveKotlinTargets()
+                .forEach(depIdeInfo -> {
+                    scratchLibSet.clear();
+                    // noinspection ConstantConditions javaIdeInfo has been asserted in ::withTransitiveTargets
+                    depIdeInfo.javaIdeInfo.jars.stream().map(BlazeJarLibrary::new)
+                            .forEach(depJar -> {
+                                libraries.putIfAbsent(depJar.key, depJar);
+                                scratchLibSet.add(depJar);
+                            });
+                    targetLibraryMap.put(depIdeInfo, ImmutableList.copyOf(scratchLibSet));
+                });
+    }
+
+    private Stream<TargetIdeInfo> transitiveKotlinTargets() {
+        return targetMap
                 .targets().stream()
                 .filter(target -> target.kind.languageClass.equals(LanguageClass.KOTLIN))
                 .filter(importFilter::isSourceTarget)
-                .forEach(ideInfo -> withTransitiveTargets(ideInfo).forEach(depIdeInfo -> {
-                    scratchLibSet.clear();
-                    depIdeInfo.javaIdeInfo.jars.stream().map(BlazeJarLibrary::new).forEach(depJar -> {
-                        libraries.putIfAbsent(depJar.key, depJar);
-                        scratchLibSet.add(depJar);
-                    });
-                    if (depIdeInfo.kind.languageClass == LanguageClass.KOTLIN) {
-                        targetLibraryMap.put(depIdeInfo, ImmutableList.copyOf(scratchLibSet));
-                    }
-                }));
+                .flatMap(this::withTransitiveKotlinTargets);
     }
 
     @Nonnull
-    private Stream<TargetIdeInfo> withTransitiveTargets(TargetIdeInfo target) {
+    private Stream<TargetIdeInfo> withTransitiveKotlinTargets(TargetIdeInfo target) {
         return Stream.concat(
                 Stream.of(target),
+                // all transitive targets with a java ide info that are also kotlin providers.
                 TransitiveDependencyMap.getTransitiveDependencies(target.key, targetMap).stream()
-                        .map(depTarget -> {
-                            TargetIdeInfo depInfo = targetMap.get(depTarget);
-                            return depInfo != null &&
-                                    depInfo.javaIdeInfo != null ?
-                                    depInfo : null;
-                        }).filter(Objects::nonNull));
+                        .map(targetMap::get)
+                        .filter(Objects::nonNull)
+                        .filter(info -> info.javaIdeInfo != null)
+                        .filter(depIdeInfo -> depIdeInfo.kind.languageClass == LanguageClass.KOTLIN)
+        );
     }
 }
