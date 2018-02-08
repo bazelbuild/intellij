@@ -30,9 +30,7 @@ import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinImportResult;
 import com.intellij.openapi.project.Project;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -65,19 +63,14 @@ public class BlazeKotlinWorkspaceImporter {
             HashMap<LibraryKey, BlazeJarLibrary> libraries,
             HashMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> targetLibraryMap
     ) {
-        List<BlazeJarLibrary> scratchLibSet = new ArrayList<>();
-
-        transitiveKotlinTargets()
-                .forEach(depIdeInfo -> {
-                    scratchLibSet.clear();
-                    // noinspection ConstantConditions javaIdeInfo has been asserted in ::withTransitiveTargets
-                    depIdeInfo.javaIdeInfo.jars.stream().map(BlazeJarLibrary::new)
-                            .forEach(depJar -> {
-                                libraries.putIfAbsent(depJar.key, depJar);
-                                scratchLibSet.add(depJar);
-                            });
-                    targetLibraryMap.put(depIdeInfo, ImmutableList.copyOf(scratchLibSet));
-                });
+        transitiveKotlinTargets().forEach(depIdeInfo -> {
+            //noinspection ConstantConditions
+            BlazeJarLibrary[] transitiveLibraries = depIdeInfo.javaIdeInfo.jars.stream()
+                    .map(BlazeJarLibrary::new)
+                    .peek(depJar -> libraries.putIfAbsent(depJar.key, depJar))
+                    .toArray(BlazeJarLibrary[]::new);
+            targetLibraryMap.put(depIdeInfo, ImmutableList.copyOf(transitiveLibraries));
+        });
     }
 
     private Stream<TargetIdeInfo> transitiveKotlinTargets() {
@@ -85,11 +78,11 @@ public class BlazeKotlinWorkspaceImporter {
                 .targets().stream()
                 .filter(target -> target.kind.languageClass.equals(LanguageClass.KOTLIN))
                 .filter(importFilter::isSourceTarget)
-                .flatMap(this::withTransitiveKotlinTargets);
+                .flatMap(this::expandWithKotlinTargets);
     }
 
     @Nonnull
-    private Stream<TargetIdeInfo> withTransitiveKotlinTargets(TargetIdeInfo target) {
+    private Stream<TargetIdeInfo> expandWithKotlinTargets(TargetIdeInfo target) {
         return Stream.concat(
                 Stream.of(target),
                 // all transitive targets with a java ide info that are also kotlin providers.
