@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -88,7 +87,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
                         .build();
         runBlazeSync(syncParams);
 
-        assertNoSyncErrors();
+        errorCollector.assertIssueContaining(BlazeKotlin.Issues.RULES_ABSENT_FROM_WORKSPACE);
 
         BlazeProjectData blazeProjectData =
                 BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
@@ -160,7 +159,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
                         .addProjectViewTargets(true)
                         .build());
 
-        assertNoSyncErrors();
+        errorCollector.assertIssueContaining(BlazeKotlin.Issues.RULES_ABSENT_FROM_WORKSPACE);
 
         BlazeProjectData blazeProjectData =
                 BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
@@ -194,7 +193,8 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
 
     private void assertViewConfigState(LanguageVersion languageVersion) {
         runBlazeSync(new BlazeSyncParams.Builder("Sync", BlazeSyncParams.SyncMode.INCREMENTAL).addProjectViewTargets(true).build());
-        assertNoSyncErrors();
+
+        errorCollector.assertIssueContaining(BlazeKotlin.Issues.RULES_ABSENT_FROM_WORKSPACE);
 
         ProjectViewSet projectViewSet = ProjectViewManager.getInstance(getProject()).getProjectViewSet();
         assert projectViewSet != null;
@@ -204,11 +204,5 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
         BlazeKotlinCompilerArgumentsUpdaterCompat updater = BlazeKotlinCompilerArgumentsUpdaterCompat.build(getProject());
         assertThat(updater.getApiVersion()).isEqualTo(languageVersion.getVersionString());
         assertThat(updater.getLanguageVersion()).isEqualTo(languageVersion.getVersionString());
-    }
-
-
-    private void assertNoSyncErrors() {
-        errorCollector.assertIssueContaining(BlazeKotlin.Issues.RULES_ABSENT_FROM_WORKSPACE);
-        errorCollector.assertNoIssuesOf(IssueOutput.Category.ERROR);
     }
 }
