@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /** Test class that collects issues. */
 public class ErrorCollector implements OutputSink<IssueOutput> {
@@ -33,6 +34,14 @@ public class ErrorCollector implements OutputSink<IssueOutput> {
 
   public void assertNoIssues() {
     assertThat(issues).isEmpty();
+  }
+
+  public List<IssueOutput> issuesOf(IssueOutput.Category category) {
+    return issues.stream().filter(i -> i.getCategory().equals(category)).collect(Collectors.toList());
+  }
+
+  public void assertNoIssuesOf(IssueOutput.Category category) {
+    assertThat(issuesOf(category)).isEmpty();
   }
 
   public void assertIssues(String... requiredMessages) {

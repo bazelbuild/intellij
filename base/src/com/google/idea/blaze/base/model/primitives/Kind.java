@@ -89,9 +89,11 @@ public enum Kind {
   TS_CONFIG("ts_config", LanguageClass.TYPESCRIPT, RuleType.BINARY),
   DART_PROTO_LIBRARY("dart_proto_library", LanguageClass.DART, RuleType.LIBRARY),
   DART_LIBRARY("_dart_library", LanguageClass.DART, RuleType.LIBRARY),
-  KOTLIN_LIBRARY("kotlin_library", LanguageClass.KOTLIN, RuleType.LIBRARY),
-  KOTLIN_BINARY("kotlin_binary", LanguageClass.KOTLIN, RuleType.BINARY),
-  KOTLIN_TEST("kotlin_test", LanguageClass.KOTLIN, RuleType.TEST),
+  KT_JVM_LIBRARY("kt_jvm_library", LanguageClass.KOTLIN, RuleType.LIBRARY),
+  KT_JVM_BINARY("kt_jvm_binary", LanguageClass.KOTLIN, RuleType.BINARY),
+  KT_JVM_TEST("kt_jvm_test", LanguageClass.KOTLIN, RuleType.TEST),
+  KT_JVM_IMPORT("kt_jvm_import", LanguageClass.KOTLIN, RuleType.UNKNOWN),
+  KOTLIN_STDLIB("kotlin_stdlib", LanguageClass.KOTLIN, RuleType.UNKNOWN),
 
   // any rule exposing java_common.provider which isn't specifically recognized
   GENERIC_JAVA_PROVIDER("generic_java", LanguageClass.JAVA, RuleType.UNKNOWN),

@@ -247,3 +247,15 @@ http_archive(
 
 load("@io_bazel_rules_scala//scala:scala.bzl", "scala_repositories")
 scala_repositories()
+
+rules_kotlin_version="f8d217ab5c20237ae0d6c934c206fcde2c695317"
+
+# LICENSE: The Apache Software License, Version 2.0
+git_repository(
+    name = "io_bazel_rules_kotlin",
+    remote = "https://github.com/bazelbuild/rules_kotlin.git",
+    commit=rules_kotlin_version
+)
+
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
+kotlin_repositories()

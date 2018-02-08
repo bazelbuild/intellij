@@ -27,6 +27,11 @@ java_import(
 )
 
 java_import(
+    name = "kotlin_plugin",
+    jars =  glob(["plugins/Kotlin/lib/*.jar"])
+)
+
+java_import(
     name = "hg4idea",
     jars = ["plugins/hg4idea/lib/hg4idea.jar"],
 )

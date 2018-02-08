@@ -13,22 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.kotlin;
+package com.google.idea.blaze.kotlin.sync.model;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.base.model.LibraryKey;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
-import java.io.Serializable;
-import javax.annotation.concurrent.Immutable;
 
-/** The result of a blaze import operation. */
+import javax.annotation.concurrent.Immutable;
+import java.io.Serializable;
+
+/**
+ * The result of a blaze import operation.
+ */
 @Immutable
 public class BlazeKotlinImportResult implements Serializable {
-  private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-  public final ImmutableMap<LibraryKey, BlazeJarLibrary> libraries;
+    public final ImmutableList<BlazeJarLibrary> libraries;
+    public final ImmutableMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> kotlinTargetToLibraryMap;
 
-  public BlazeKotlinImportResult(ImmutableMap<LibraryKey, BlazeJarLibrary> libraries) {
-    this.libraries = libraries;
-  }
+    public BlazeKotlinImportResult(
+            ImmutableList<BlazeJarLibrary> libraries,
+            ImmutableMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> targetToLibraryMap) {
+        this.libraries = libraries;
+        this.kotlinTargetToLibraryMap = targetToLibraryMap;
+    }
 }
