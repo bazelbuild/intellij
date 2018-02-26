@@ -24,13 +24,17 @@ import com.google.idea.blaze.base.TestUtils;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.io.FileOperationProvider;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
-import java.io.File;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.io.File;
+
+import static com.google.common.truth.Truth.assertThat;
 
 /** Tests for {@link BlazeIdeInterfaceAspectsImpl}. */
 @RunWith(JUnit4.class)
@@ -72,6 +76,36 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
 
     TargetIdeInfo target = IdeInfoFromProtobuf.makeTargetIdeInfo(ideProto);
     TestUtils.assertIsSerializable(target);
+  }
+
+  @Test
+  public void testKtToolchainIdeInfoRendered() {
+    // not rendered when file not provided -- this should never happen really but don't want to break upstream if it
+    // does
+    IntellijIdeInfo.TargetIdeInfo ideProto =
+        IntellijIdeInfo.TargetIdeInfo.newBuilder()
+            .setLabel("//some:label")
+            .setKindString(Kind.KT_TOOLCHAIN_IDE_INFO.toString())
+            .build();
+    TargetIdeInfo target = IdeInfoFromProtobuf.makeTargetIdeInfo(ideProto);
+    assertThat(target).isNotNull();
+    assertThat(target.ktToolchainIdeInfo).isNull();
+
+    // verify the rendering occurs the file is present
+    ideProto =
+        IntellijIdeInfo.TargetIdeInfo.newBuilder()
+            .setLabel("//some:label")
+            .setKindString(Kind.KT_TOOLCHAIN_IDE_INFO.toString())
+            .setKtToolchainIdeInfo(
+                IntellijIdeInfo.KotlinToolchainIdeInfo.newBuilder()
+                    .setJsonInfoFile(artifactLocation("some/path.json"))
+                    .build())
+            .build();
+
+    target = IdeInfoFromProtobuf.makeTargetIdeInfo(ideProto);
+    assertThat(target).isNotNull();
+    assertThat(target.ktToolchainIdeInfo).isNotNull();
+    assertThat(target.ktToolchainIdeInfo.location.relativePath).isEqualTo("some/path.json");
   }
 
   @Test

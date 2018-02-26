@@ -52,6 +52,7 @@ public final class TargetIdeInfo implements Serializable {
   @Nullable public final DartIdeInfo dartIdeInfo;
   @Nullable public final TestIdeInfo testIdeInfo;
   @Nullable public final JavaToolchainIdeInfo javaToolchainIdeInfo;
+  @Nullable public final KtToolchainIdeInfo ktToolchainIdeInfo;
 
   public TargetIdeInfo(
       TargetKey key,
@@ -72,7 +73,8 @@ public final class TargetIdeInfo implements Serializable {
       @Nullable TsIdeInfo tsIdeInfo,
       @Nullable DartIdeInfo dartIdeInfo,
       @Nullable TestIdeInfo testIdeInfo,
-      @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo) {
+      @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo,
+      @Nullable KtToolchainIdeInfo ktToolchainIdeInfo) {
     this.key = key;
     this.kind = kind;
     this.buildFile = buildFile;
@@ -92,6 +94,7 @@ public final class TargetIdeInfo implements Serializable {
     this.dartIdeInfo = dartIdeInfo;
     this.testIdeInfo = testIdeInfo;
     this.javaToolchainIdeInfo = javaToolchainIdeInfo;
+    this.ktToolchainIdeInfo = ktToolchainIdeInfo;
   }
 
   public TargetInfo toTargetInfo() {
@@ -147,6 +150,7 @@ public final class TargetIdeInfo implements Serializable {
     private DartIdeInfo dartIdeInfo;
     private TestIdeInfo testIdeInfo;
     private JavaToolchainIdeInfo javaToolchainIdeInfo;
+    private KtToolchainIdeInfo ktToolchainIdeInfo;
 
     public Builder setLabel(String label) {
       return setLabel(Label.create(label));
@@ -245,6 +249,11 @@ public final class TargetIdeInfo implements Serializable {
       return this;
     }
 
+    public Builder setKtToolchainIdeInfo(KtToolchainIdeInfo.Builder ktToolchainIdeInfo) {
+      this.ktToolchainIdeInfo = ktToolchainIdeInfo.build();
+      return this;
+    }
+
     public Builder addTag(String s) {
       this.tags.add(s);
       return this;
@@ -290,7 +299,8 @@ public final class TargetIdeInfo implements Serializable {
           tsIdeInfo,
           dartIdeInfo,
           testIdeInfo,
-          javaToolchainIdeInfo);
+          javaToolchainIdeInfo,
+          ktToolchainIdeInfo);
     }
   }
 }

@@ -35,6 +35,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
@@ -46,7 +47,7 @@ import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.kotlin.sync.importer.BlazeKotlinWorkspaceImporter;
 import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinImportResult;
 import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinSyncData;
-import com.google.idea.sdkcompat.kotlin.CommonCompilerArgumentsCompatUtils;
+import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinToolchainIdeInfo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -57,18 +58,14 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
-import javax.annotation.Nullable;
-import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.config.LanguageVersion;
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator;
+
+import javax.annotation.Nullable;
+import java.io.File;
+import java.util.*;
+import java.util.stream.Stream;
 
 /** Supports Kotlin. */
 public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
@@ -111,35 +108,21 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
       return;
     }
     if (PluginUtils.isPluginInstalled(KOTLIN_PLUGIN_ID)) {
-      maybeUpdateCompilerConfig(project, projectViewSet);
+      PluginUtils.installOrEnablePlugin(KOTLIN_PLUGIN_ID);
     }
   }
 
-  /**
-   * Update the compiler settings of the project if needed. The language setting applies to both the
-   * api version and the language version. Blanket setting this project wide is fine. The rules
-   * should catch incorrect usage.
-   */
-  private static void maybeUpdateCompilerConfig(Project project, ProjectViewSet projectViewSet) {
-    LanguageVersion languageLevel =
-        BlazeKotlinLanguageVersionSection.getLanguageLevel(projectViewSet);
-    String languageLevelVersionString = languageLevel.getVersionString();
-    CommonCompilerArguments settings =
-        CommonCompilerArgumentsCompatUtils.getUnfrozenSettings(project);
-    boolean updated = false;
-    String apiVersion = CommonCompilerArgumentsCompatUtils.getApiVersion(settings);
-    String languageVersion = CommonCompilerArgumentsCompatUtils.getLanguageVersion(settings);
-    if (apiVersion == null || !apiVersion.equals(languageLevelVersionString)) {
-      updated = true;
-      CommonCompilerArgumentsCompatUtils.setApiVersion(settings, languageLevelVersionString);
+  @Override
+  public boolean validate(
+      Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
+    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
+      return true;
     }
-    if (languageVersion == null || !languageVersion.equals(languageLevelVersionString)) {
-      updated = true;
-      CommonCompilerArgumentsCompatUtils.setLanguageVersion(settings, languageLevelVersionString);
+    if (KotlinUtils.compilerRepoAbsentFromWorkspace(project)) {
+      KotlinUtils.issueRulesMissingWarning(context);
+      return false;
     }
-    if (updated) {
-      KotlinCommonCompilerArgumentsHolder.Companion.getInstance(project).setSettings(settings);
-    }
+    return true;
   }
 
   @Nullable
@@ -175,17 +158,55 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
       return;
     }
     BlazeKotlinWorkspaceImporter blazeKotlinWorkspaceImporter =
-        new BlazeKotlinWorkspaceImporter(project, workspaceRoot, projectViewSet, targetMap);
+        new BlazeKotlinWorkspaceImporter(
+            project, workspaceRoot, projectViewSet, targetMap, artifactLocationDecoder, context);
     BlazeKotlinImportResult importResult =
         Scope.push(
             context,
             (childContext) -> {
               childContext.push(
                   new TimingScope("KotlinWorkspaceImporter", TimingScope.EventType.Other));
-              return blazeKotlinWorkspaceImporter.importWorkspace();
+              BlazeKotlinImportResult result = blazeKotlinWorkspaceImporter.importWorkspace();
+              syncKotlinProjectSettings(
+                  project, projectViewSet, result.toolchainIdeInfo, childContext);
+              return result;
             });
     BlazeKotlinSyncData syncData = new BlazeKotlinSyncData(importResult);
     syncStateBuilder.put(BlazeKotlinSyncData.class, syncData);
+  }
+
+  private void syncKotlinProjectSettings(
+      Project project,
+      ProjectViewSet projectViewSet,
+      @Nullable BlazeKotlinToolchainIdeInfo toolchainIdeInfo,
+      BlazeContext context) {
+    if (toolchainIdeInfo == null) {
+      KotlinUtils.issueUpdateRulesWarning(
+          context, "The current Kotlin rules do not use toolchains");
+    }
+
+    KotlinSettingsUpdater updater = KotlinSettingsUpdater.create(project);
+    Optional<LanguageVersion> languageLevelFromViewSet =
+        BlazeKotlinLanguageVersionSection.getLanguageLevel(projectViewSet);
+
+    if (toolchainIdeInfo != null) {
+      if (languageLevelFromViewSet.isPresent()) {
+        IssueOutput.issue(
+                IssueOutput.Category.INFORMATION,
+                "The Kotlin rules configure all of the project settings, \"kotlin_language_version\" is ignored")
+            .submit(context);
+      }
+      updater.languageVersion(toolchainIdeInfo.common.languageVersion);
+      updater.apiVersion(toolchainIdeInfo.common.apiVersion);
+      updater.coroutineState(toolchainIdeInfo.common.coroutines);
+      updater.jvmTarget(toolchainIdeInfo.jvm.jvmTarget);
+    } else {
+      LanguageVersion languageVersion =
+          languageLevelFromViewSet.orElse(LanguageVersion.LATEST_STABLE);
+      updater.languageVersion(languageVersion.getVersionString());
+      updater.apiVersion(languageVersion.getVersionString());
+    }
+    updater.commit();
   }
 
   /**
@@ -206,9 +227,17 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
       return;
     }
+    // This is validated and the user is given the option to setup the plugin in the validate
+    // method, it's rechecked here for race conditions that occur when syncing a fresh project. Later updates to the
+    // plugin and rules will pick up the libraries via aspect processing -- this should make it unnecessary to
+    // examine the workspace files.
+    if (KotlinUtils.compilerRepoAbsentFromWorkspace(project)) {
+      return;
+    }
+    BlazeKotlinSyncData syncData = BlazeKotlinSyncData.get(blazeProjectData);
     LibraryTable.ModifiableModel libraryTable =
         ProjectLibraryTable.getInstance(project).getModifiableModel();
-    externalKotlinLibraries(blazeProjectData)
+    librariesWithSourcesToAttach(syncData)
         .forEach(
             lib -> {
               Library library = libraryTable.getLibraryByName(lib.key.getIntelliJLibraryName());
@@ -224,19 +253,34 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     KotlinJavaModuleConfigurator.Companion.getInstance().configureSilently(project);
   }
 
-  private Stream<BlazeJarLibrary> externalKotlinLibraries(BlazeProjectData blazeProjectData) {
+  /**
+   * A stream with the libraries that have sources that need to be attached. This includes
+   * dependencies included via KT_JVM_IMPORT, the libraries that are part of the kotlin standard
+   * distribution and the "srcjar" entries from targets --i.e., targets which have files ending with
+   * ".srcjar" in their "srcs" attribute.
+   */
+  @NotNull
+  private Stream<BlazeJarLibrary> librariesWithSourcesToAttach(
+      BlazeKotlinSyncData blazeProjectData) {
     ImmutableMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> targetToLibraryMap =
-        BlazeKotlinSyncData.get(blazeProjectData).importResult.kotlinTargetToLibraryMap;
+        blazeProjectData.importResult.kotlinTargetToLibraryMap;
     Map<String, BlazeJarLibrary> tally = new HashMap<>();
+    List<BlazeJarLibrary> libsWithSources = new ArrayList<>();
     targetToLibraryMap.forEach(
         (ideInfo, libraries) -> {
           if (ideInfo.kind.isOneOf(Kind.KT_JVM_IMPORT, Kind.KOTLIN_STDLIB)) {
             libraries.forEach(lib -> tally.putIfAbsent(lib.key.getIntelliJLibraryName(), lib));
+          } else {
+            libraries
+                .stream()
+                .filter(it -> !it.libraryArtifact.sourceJars.isEmpty())
+                .forEach(libsWithSources::add);
           }
         });
     BlazeKotlinStdLib.prepareBlazeLibraries(BlazeKotlinStdLib.MANDATORY_STDLIBS)
         .forEach(lib -> tally.putIfAbsent(lib.key.getIntelliJLibraryName(), lib));
-    return tally.values().stream();
+    libsWithSources.addAll(tally.values());
+    return libsWithSources.stream();
   }
 
   private static void maybeAttachSourceJars(

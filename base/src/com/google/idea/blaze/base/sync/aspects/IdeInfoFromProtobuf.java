@@ -44,6 +44,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TsIdeInfo;
+import com.google.idea.blaze.base.ideinfo.KtToolchainIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -145,6 +146,10 @@ public class IdeInfoFromProtobuf {
     if (message.hasJavaToolchainIdeInfo()) {
       javaToolchainIdeInfo = makeJavaToolchainIdeInfo(message.getJavaToolchainIdeInfo());
     }
+    KtToolchainIdeInfo ktToolchainIdeInfo = null;
+    if (message.hasKtToolchainIdeInfo()) {
+      ktToolchainIdeInfo = makeKotlinToolchainIdeInfo(message.getKtToolchainIdeInfo());
+    }
 
     return new TargetIdeInfo(
         key,
@@ -165,7 +170,15 @@ public class IdeInfoFromProtobuf {
         tsIdeInfo,
         dartIdeInfo,
         testIdeInfo,
-        javaToolchainIdeInfo);
+        javaToolchainIdeInfo,
+        ktToolchainIdeInfo);
+  }
+
+  private static KtToolchainIdeInfo makeKotlinToolchainIdeInfo(
+      IntellijIdeInfo.KotlinToolchainIdeInfo info) {
+    return KtToolchainIdeInfo.builder()
+        .location(makeArtifactLocation(info.getJsonInfoFile()))
+        .build();
   }
 
   private static Collection<Dependency> makeDependencyListFromLabelList(

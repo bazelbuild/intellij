@@ -277,10 +277,10 @@ scala_repositories()
 # LICENSE: The Apache Software License, Version 2.0
 git_repository(
     name = "io_bazel_rules_kotlin",
-    commit = "6d8dcd4d6000d0cf3321eb8580d8fc67f8731f8e",
+    commit = "2ab126808329700c6c23df5d571762e77fbd9efc",
     remote = "https://github.com/bazelbuild/rules_kotlin.git",
 )
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
-
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories","kt_register_toolchains")
+kt_register_toolchains()
 kotlin_repositories()

@@ -23,14 +23,19 @@ import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.ScalarSectionParser;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
-import javax.annotation.Nullable;
 import org.jetbrains.kotlin.config.LanguageVersion;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.Optional;
 
 /** Project view sections for Kotlin. */
 public final class BlazeKotlinLanguageVersionSection {
   private static final SectionKey<LanguageVersion, ScalarSection<LanguageVersion>>
       LANGUAGE_VERSION = new SectionKey<>("kotlin_language_version");
 
+  // hsyed: This is not needed any longer. With newer version of the rules the intellij configuration is picked up
+  // from the toolchain info file. I can remove this now or in the next update.
   private static final ScalarSectionParser<LanguageVersion> LANGUAGE_VERSION_PARSER =
       new ScalarSectionParser<LanguageVersion>(LANGUAGE_VERSION, ':') {
         @Nullable
@@ -46,6 +51,13 @@ public final class BlazeKotlinLanguageVersionSection {
           }
         }
 
+        // the language version is now derived from the toolchain info
+        @Override
+        public boolean isDeprecated() {
+          return true;
+        }
+
+        @Nonnull
         @Override
         public String quickDocs() {
           return "The kotlin language and api version.";
@@ -64,7 +76,7 @@ public final class BlazeKotlinLanguageVersionSection {
 
   static final ImmutableList<SectionParser> PARSERS = ImmutableList.of(LANGUAGE_VERSION_PARSER);
 
-  public static LanguageVersion getLanguageLevel(ProjectViewSet projectViewSet) {
-    return projectViewSet.getScalarValue(LANGUAGE_VERSION).orElse(LanguageVersion.LATEST_STABLE);
+  public static Optional<LanguageVersion> getLanguageLevel(ProjectViewSet projectViewSet) {
+    return projectViewSet.getScalarValue(LANGUAGE_VERSION);
   }
 }

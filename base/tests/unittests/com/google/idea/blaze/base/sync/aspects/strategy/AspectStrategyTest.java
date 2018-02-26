@@ -86,7 +86,8 @@ public class AspectStrategyTest extends BlazeTestCase {
             "intellij-info-go",
             "intellij-info-js",
             "intellij-info-ts",
-            "intellij-info-dart");
+            "intellij-info-dart",
+            "intellij-info-kt");
 
     builder = emptyBuilder();
     strategy.addAspectAndOutputGroups(builder, OutputGroup.RESOLVE, activeLanguages);
@@ -99,7 +100,8 @@ public class AspectStrategyTest extends BlazeTestCase {
             "intellij-resolve-go",
             "intellij-resolve-js",
             "intellij-resolve-ts",
-            "intellij-resolve-dart");
+            "intellij-resolve-dart",
+            "intellij-resolve-kt");
 
     builder = emptyBuilder();
     strategy.addAspectAndOutputGroups(builder, OutputGroup.COMPILE, activeLanguages);
@@ -112,7 +114,8 @@ public class AspectStrategyTest extends BlazeTestCase {
             "intellij-compile-go",
             "intellij-compile-js",
             "intellij-compile-ts",
-            "intellij-compile-dart");
+            "intellij-compile-dart",
+            "intellij-compile-kt");
   }
 
   private static BlazeCommand.Builder emptyBuilder() {
