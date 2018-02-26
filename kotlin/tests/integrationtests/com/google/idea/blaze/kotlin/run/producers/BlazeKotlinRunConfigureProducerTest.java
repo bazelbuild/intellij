@@ -15,8 +15,6 @@
  */
 package com.google.idea.blaze.kotlin.run.producers;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
@@ -31,6 +29,8 @@ import com.intellij.psi.PsiFile;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import static com.google.common.truth.Truth.assertThat;
 
 /** Integration tests for {@link BlazeKotlinRunConfigurationProducer}. */
 @RunWith(JUnit4.class)

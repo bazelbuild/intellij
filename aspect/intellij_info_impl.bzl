@@ -22,6 +22,7 @@ DEPS = [
     "_android_sdk",  # from android rules
     "aidl_lib",  # from android_sdk
     "_scala_toolchain",  # From scala rules
+    "_kotlin_toolchain", # From kotlin rules
     "test_app",  # android_instrumentation_test
     "instruments",  # android_instrumentation_test
 ]
@@ -333,6 +334,30 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
   )
   ide_info["c_toolchain_ide_info"] = c_toolchain_info
   update_set_in_dict(output_groups, "intellij-info-cpp", depset([ide_info_file]))
+  return True
+
+def collect_kt_toolchain_info(target, ctx, ide_info, ide_info_file, output_groups):
+  if ctx.rule.kind != "kt_toolchain_ide_info":
+    return False
+
+  fl=target.files.to_list()
+  if len(fl) != 1:
+    print("the kt_toolchain_ide_info did not contain the kt_toolchain_ide_info.json file")
+    return True
+
+  kt_toolchain_ide_info = struct_omit_none(
+      location = artifact_location(fl[0])
+  )
+  ide_info["kt_toolchain_ide_info"] = kt_toolchain_ide_info
+  update_set_in_dict(output_groups, "intellij-info-kt", depset([ide_info_file]))
+  update_set_in_dict(output_groups, "intellij-resolve-kt", target.files)
+
+  # TODO remove this block - currently piggy backing over the java ide_info
+  ide_info["java_ide_info"] = struct_omit_none(
+      sources = [artifact_location(fl[0])],
+  )
+  update_set_in_dict(output_groups, "intellij-info-java", depset([ide_info_file]))
+
   return True
 
 def get_java_provider(target):
@@ -680,6 +705,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
   handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
   handled = collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups) or handled
   handled = collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups) or handled
+  handled = collect_kt_toolchain_info(target, ctx, ide_info, ide_info_file, output_groups) or handled
 
   # Any extra ide info
   if hasattr(semantics, "extra_ide_info"):

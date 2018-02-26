@@ -15,8 +15,6 @@
  */
 package com.google.idea.blaze.kotlin.sync;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
@@ -41,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import static com.google.common.truth.Truth.assertThat;
 
 /** Unit tests for {@link BlazeKotlinSyncPlugin} */
 @RunWith(JUnit4.class)

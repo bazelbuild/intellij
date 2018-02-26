@@ -32,15 +32,16 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.kotlin.name.FqName;
+import org.jetbrains.kotlin.psi.KtClass;
+import org.jetbrains.kotlin.psi.KtNamedFunction;
+
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javax.annotation.Nullable;
-import org.jetbrains.kotlin.name.FqName;
-import org.jetbrains.kotlin.psi.KtClass;
-import org.jetbrains.kotlin.psi.KtNamedFunction;
 
 /** Creates run configurations for Kotlin tests. */
 public class BlazeKotlinTestClassConfigurationProducer
@@ -103,6 +104,11 @@ public class BlazeKotlinTestClassConfigurationProducer
     final KtClass testClass;
     @Nullable final KtNamedFunction testMethod;
 
+    private TestLocation(@Nullable KtNamedFunction testMethod, KtClass testClass) {
+      this.testMethod = testMethod;
+      this.testClass = testClass;
+    }
+
     @Nullable
     static TestLocation from(ConfigurationContext context) {
       Location<?> location = context.getLocation();
@@ -116,11 +122,6 @@ public class BlazeKotlinTestClassConfigurationProducer
         return null;
       }
       return new TestLocation(testMethod, testClass);
-    }
-
-    private TestLocation(@Nullable KtNamedFunction testMethod, KtClass testClass) {
-      this.testMethod = testMethod;
-      this.testClass = testClass;
     }
 
     PsiElement getSourceElement() {

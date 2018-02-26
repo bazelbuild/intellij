@@ -15,8 +15,9 @@
 package com.google.idea.blaze.kotlin.sync.model;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import java.io.Serializable;
+
 import javax.annotation.concurrent.Immutable;
+import java.io.Serializable;
 
 /** Sync data for the kotlin plugin. */
 @Immutable

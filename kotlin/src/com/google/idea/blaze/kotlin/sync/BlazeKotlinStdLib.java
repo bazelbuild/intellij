@@ -19,13 +19,14 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
+
+import javax.annotation.Nullable;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 /** Kotlin standard library. */
 public enum BlazeKotlinStdLib {
@@ -35,8 +36,13 @@ public enum BlazeKotlinStdLib {
   REFLECT("kotlin-reflect", false),
   TEST("kotlin-test", false);
 
+  public static final List<BlazeKotlinStdLib> MANDATORY_STDLIBS =
+      Arrays.stream(BlazeKotlinStdLib.values())
+          .filter(lib -> lib.mandatory)
+          .collect(Collectors.toList());
+  static final String COMPILER_WORKSPACE_PATH =
+      Paths.get("external", "com_github_jetbrains_kotlin").toString();
   public final String id;
-
   /** Mandatory libraries are those that should always be present. */
   public final boolean mandatory;
 
@@ -44,26 +50,6 @@ public enum BlazeKotlinStdLib {
     this.id = id;
     this.mandatory = mandatory;
   }
-
-  String getClassJarFileName() {
-    return id + ".jar";
-  }
-
-  String getSourceJarFileName() {
-    return id + "-sources.jar";
-  }
-
-  String externalWorkspaceRelativeLibPath(Supplier<String> jarName) {
-    return Paths.get("lib", jarName.get()).toString();
-  }
-
-  static final String COMPILER_WORKSPACE_PATH =
-      Paths.get("external", "com_github_jetbrains_kotlin").toString();
-
-  public static final List<BlazeKotlinStdLib> MANDATORY_STDLIBS =
-      Arrays.stream(BlazeKotlinStdLib.values())
-          .filter(lib -> lib.mandatory)
-          .collect(Collectors.toList());
 
   private static ArtifactLocation.Builder createExternalArtifactBuilder(
       String rootExecutionPathFragment) {
@@ -98,5 +84,17 @@ public enum BlazeKotlinStdLib {
               return new BlazeJarLibrary(libBuilder.build());
             })
         .collect(Collectors.toList());
+  }
+
+  String getClassJarFileName() {
+    return id + ".jar";
+  }
+
+  String getSourceJarFileName() {
+    return id + "-sources.jar";
+  }
+
+  String externalWorkspaceRelativeLibPath(Supplier<String> jarName) {
+    return Paths.get("lib", jarName.get()).toString();
   }
 }

@@ -19,9 +19,10 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
-import javax.annotation.Nullable;
 
 /** Wrapper around a string for a blaze kind (android_library, android_test...) */
 public enum Kind {
@@ -96,8 +97,8 @@ public enum Kind {
   KT_JVM_BINARY("kt_jvm_binary", LanguageClass.KOTLIN, RuleType.BINARY),
   KT_JVM_TEST("kt_jvm_test", LanguageClass.KOTLIN, RuleType.TEST),
   KT_JVM_IMPORT("kt_jvm_import", LanguageClass.KOTLIN, RuleType.UNKNOWN),
+  KT_TOOLCHAIN_IDE_INFO("kt_toolchain_ide_info", LanguageClass.KOTLIN, RuleType.UNKNOWN),
   KOTLIN_STDLIB("kotlin_stdlib", LanguageClass.KOTLIN, RuleType.UNKNOWN),
-
   // any rule exposing java_common.provider which isn't specifically recognized
   GENERIC_JAVA_PROVIDER("generic_java", LanguageClass.JAVA, RuleType.UNKNOWN),
   ;

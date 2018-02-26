@@ -34,12 +34,13 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer;
+import org.jetbrains.kotlin.psi.KtDeclarationContainer;
+
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Collection;
 import java.util.Objects;
-import javax.annotation.Nullable;
-import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer;
-import org.jetbrains.kotlin.psi.KtDeclarationContainer;
 
 /** Creates run configurations for Kotlin main methods. */
 public class BlazeKotlinRunConfigurationProducer
@@ -48,44 +49,6 @@ public class BlazeKotlinRunConfigurationProducer
 
   public BlazeKotlinRunConfigurationProducer() {
     super(BlazeCommandRunConfigurationType.getInstance());
-  }
-
-  @Override
-  protected boolean doSetupConfigFromContext(
-      BlazeCommandRunConfiguration configuration,
-      ConfigurationContext context,
-      Ref<PsiElement> sourceElement) {
-    Location<?> location = context.getLocation();
-    if (location == null) {
-      return false;
-    }
-    sourceElement.set(location.getPsiElement());
-    TargetIdeInfo target = getTargetIdeInfo(context);
-    if (target == null) {
-      return false;
-    }
-    BlazeCommandRunConfigurationCommonState handlerState =
-        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    if (handlerState == null) {
-      return false;
-    }
-    handlerState.getCommandState().setCommand(BlazeCommandName.RUN);
-    configuration.setTargetInfo(target.toTargetInfo());
-    configuration.setGeneratedName();
-    return true;
-  }
-
-  @Override
-  protected boolean doIsConfigFromContext(
-      BlazeCommandRunConfiguration configuration, ConfigurationContext context) {
-    TargetIdeInfo target = getTargetIdeInfo(context);
-    BlazeCommandRunConfigurationCommonState handlerState =
-        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    return target != null
-        && handlerState != null
-        && Objects.equals(handlerState.getCommandState().getCommand(), BlazeCommandName.RUN)
-        && configuration.getTarget() != null
-        && Objects.equals(configuration.getTarget(), target.key.label);
   }
 
   @Nullable
@@ -153,5 +116,43 @@ public class BlazeKotlinRunConfigurationProducer
         projectData.artifactLocationDecoder,
         projectData.targetMap,
         (target) -> target.kind == Kind.KT_JVM_BINARY && target.isPlainTarget());
+  }
+
+  @Override
+  protected boolean doSetupConfigFromContext(
+      BlazeCommandRunConfiguration configuration,
+      ConfigurationContext context,
+      Ref<PsiElement> sourceElement) {
+    Location<?> location = context.getLocation();
+    if (location == null) {
+      return false;
+    }
+    sourceElement.set(location.getPsiElement());
+    TargetIdeInfo target = getTargetIdeInfo(context);
+    if (target == null) {
+      return false;
+    }
+    BlazeCommandRunConfigurationCommonState handlerState =
+        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    if (handlerState == null) {
+      return false;
+    }
+    handlerState.getCommandState().setCommand(BlazeCommandName.RUN);
+    configuration.setTargetInfo(target.toTargetInfo());
+    configuration.setGeneratedName();
+    return true;
+  }
+
+  @Override
+  protected boolean doIsConfigFromContext(
+      BlazeCommandRunConfiguration configuration, ConfigurationContext context) {
+    TargetIdeInfo target = getTargetIdeInfo(context);
+    BlazeCommandRunConfigurationCommonState handlerState =
+        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    return target != null
+        && handlerState != null
+        && Objects.equals(handlerState.getCommandState().getCommand(), BlazeCommandName.RUN)
+        && configuration.getTarget() != null
+        && Objects.equals(configuration.getTarget(), target.key.label);
   }
 }

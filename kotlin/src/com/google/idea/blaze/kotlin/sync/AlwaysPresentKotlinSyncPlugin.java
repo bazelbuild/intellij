@@ -26,9 +26,10 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.intellij.openapi.project.Project;
+
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Unlike most of the Kotlin-specific code, will be run even if the JetBrains Kotlin plugin isn't

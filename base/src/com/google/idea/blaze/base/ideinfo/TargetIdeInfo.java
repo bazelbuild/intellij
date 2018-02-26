@@ -23,11 +23,12 @@ import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.Dependency.DependencyType;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+
+import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /** Simple implementation of TargetIdeInfo. */
 public final class TargetIdeInfo implements Serializable {
@@ -53,6 +54,7 @@ public final class TargetIdeInfo implements Serializable {
   @Nullable public final TestIdeInfo testIdeInfo;
   @Nullable public final ProtoLibraryLegacyInfo protoLibraryLegacyInfo;
   @Nullable public final JavaToolchainIdeInfo javaToolchainIdeInfo;
+  @Nullable public final KtToolchainIdeInfo ktToolchainIdeInfo;
 
   public TargetIdeInfo(
       TargetKey key,
@@ -74,7 +76,8 @@ public final class TargetIdeInfo implements Serializable {
       @Nullable DartIdeInfo dartIdeInfo,
       @Nullable TestIdeInfo testIdeInfo,
       @Nullable ProtoLibraryLegacyInfo protoLibraryLegacyInfo,
-      @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo) {
+      @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo,
+      @Nullable KtToolchainIdeInfo ktToolchainIdeInfo) {
     this.key = key;
     this.kind = kind;
     this.buildFile = buildFile;
@@ -95,6 +98,7 @@ public final class TargetIdeInfo implements Serializable {
     this.testIdeInfo = testIdeInfo;
     this.protoLibraryLegacyInfo = protoLibraryLegacyInfo;
     this.javaToolchainIdeInfo = javaToolchainIdeInfo;
+    this.ktToolchainIdeInfo = ktToolchainIdeInfo;
   }
 
   public TargetInfo toTargetInfo() {
@@ -151,6 +155,7 @@ public final class TargetIdeInfo implements Serializable {
     private TestIdeInfo testIdeInfo;
     private ProtoLibraryLegacyInfo protoLibraryLegacyInfo;
     private JavaToolchainIdeInfo javaToolchainIdeInfo;
+    private KtToolchainIdeInfo ktToolchainIdeInfo;
 
     public Builder setLabel(String label) {
       return setLabel(Label.create(label));
@@ -255,6 +260,11 @@ public final class TargetIdeInfo implements Serializable {
       return this;
     }
 
+    public Builder setKtToolchainIdeInfo(KtToolchainIdeInfo.Builder ktToolchainIdeInfo) {
+      this.ktToolchainIdeInfo = ktToolchainIdeInfo.build();
+      return this;
+    }
+
     public Builder addTag(String s) {
       this.tags.add(s);
       return this;
@@ -301,7 +311,8 @@ public final class TargetIdeInfo implements Serializable {
           dartIdeInfo,
           testIdeInfo,
           protoLibraryLegacyInfo,
-          javaToolchainIdeInfo);
+          javaToolchainIdeInfo,
+          ktToolchainIdeInfo);
     }
   }
 }

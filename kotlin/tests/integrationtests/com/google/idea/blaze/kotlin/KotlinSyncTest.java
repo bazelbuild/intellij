@@ -15,8 +15,6 @@
  */
 package com.google.idea.blaze.kotlin;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -35,15 +33,17 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
-import com.google.idea.blaze.kotlin.sync.BlazeKotlinLanguageVersionSection;
-import com.google.idea.sdkcompat.kotlin.CommonCompilerArgumentsCompatUtils;
-import java.util.List;
-import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
+import com.google.idea.blaze.kotlin.sync.BlazeKotlinSections;
+import com.google.idea.sdkcompat.kotlin.BlazeKotlinCompilerArgumentsUpdaterCompat;
 import org.jetbrains.kotlin.config.LanguageVersion;
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.List;
+import java.util.Optional;
+
+import static com.google.common.truth.Truth.assertThat;
 
 /** Kotlin-specific sync integration tests. */
 @RunWith(JUnit4.class)
@@ -175,8 +175,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
   @Test
   public void testDefaultSectionParsing() {
     setProjectView("additional_languages:", "  kotlin");
-
-    assertViewConfigState(LanguageVersion.LATEST_STABLE);
+    assertViewConfigState(Optional.empty());
   }
 
   @Test
@@ -185,28 +184,32 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
         "kotlin_language_version: " + LanguageVersion.KOTLIN_1_1.getVersionString(),
         "additional_languages:",
         "  kotlin");
-
-    assertViewConfigState(LanguageVersion.KOTLIN_1_1);
+    workspace.createDirectory(new WorkspacePath("external/com_github_jetbrains_kotlin"));
+    assertViewConfigState(Optional.of(LanguageVersion.KOTLIN_1_1));
   }
 
-  private void assertViewConfigState(LanguageVersion languageVersion) {
+  private void assertViewConfigState(Optional<LanguageVersion> languageVersion) {
     runBlazeSync(
         new BlazeSyncParams.Builder("Sync", BlazeSyncParams.SyncMode.INCREMENTAL)
             .addProjectViewTargets(true)
             .build());
 
+    errorCollector.assertIssueContaining(BlazeKotlin.Issues.RULES_ABSENT_FROM_WORKSPACE);
+
     ProjectViewSet projectViewSet =
         ProjectViewManager.getInstance(getProject()).getProjectViewSet();
     assert projectViewSet != null;
-    assertThat(BlazeKotlinLanguageVersionSection.getLanguageLevel(projectViewSet))
-        .isEqualTo(languageVersion);
+    if (languageVersion.isPresent()) {
+      assertThat(BlazeKotlinSections.getLanguageLevel(projectViewSet).get())
+          .isEqualTo(languageVersion.get());
 
-    // test the compiler reflect the project view.
-    CommonCompilerArguments settings =
-        KotlinCommonCompilerArgumentsHolder.Companion.getInstance(getProject()).getSettings();
-    assertThat(CommonCompilerArgumentsCompatUtils.getApiVersion(settings))
-        .isEqualTo(languageVersion.getVersionString());
-    assertThat(CommonCompilerArgumentsCompatUtils.getLanguageVersion(settings))
-        .isEqualTo(languageVersion.getVersionString());
+      // test the compiler reflect the project view.
+      BlazeKotlinCompilerArgumentsUpdaterCompat updater =
+          BlazeKotlinCompilerArgumentsUpdaterCompat.build(getProject());
+      assertThat(updater.getApiVersion()).isEqualTo(languageVersion.get().getVersionString());
+      assertThat(updater.getLanguageVersion()).isEqualTo(languageVersion.get().getVersionString());
+    } else {
+      assertThat(BlazeKotlinSections.getLanguageLevel(projectViewSet).isPresent()).isFalse();
+    }
   }
 }

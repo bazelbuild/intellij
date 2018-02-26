@@ -16,8 +16,6 @@
 
 package com.google.idea.blaze.base.sync.aspects;
 
-import static java.util.stream.Collectors.toList;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -25,33 +23,17 @@ import com.google.common.collect.Lists;
 import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
-import com.google.idea.blaze.base.ideinfo.AndroidAarIdeInfo;
-import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
-import com.google.idea.blaze.base.ideinfo.AndroidSdkIdeInfo;
-import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.CIdeInfo;
-import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
-import com.google.idea.blaze.base.ideinfo.DartIdeInfo;
-import com.google.idea.blaze.base.ideinfo.Dependency;
+import com.google.idea.blaze.base.ideinfo.*;
 import com.google.idea.blaze.base.ideinfo.Dependency.DependencyType;
-import com.google.idea.blaze.base.ideinfo.GoIdeInfo;
-import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
-import com.google.idea.blaze.base.ideinfo.JavaToolchainIdeInfo;
-import com.google.idea.blaze.base.ideinfo.JsIdeInfo;
-import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
-import com.google.idea.blaze.base.ideinfo.ProtoLibraryLegacyInfo;
-import com.google.idea.blaze.base.ideinfo.PyIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TsIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+
+import static java.util.stream.Collectors.toList;
 
 /** Conversion functions from new aspect-style Bazel IDE info to ASWB internal classes. */
 public class IdeInfoFromProtobuf {
@@ -151,6 +133,7 @@ public class IdeInfoFromProtobuf {
     if (message.hasJavaToolchainIdeInfo()) {
       javaToolchainIdeInfo = makeJavaToolchainIdeInfo(message.getJavaToolchainIdeInfo());
     }
+    KtToolchainIdeInfo ktToolchainIdeInfo = maybeMakeKtToolchainIdeInfo(message);
 
     return new TargetIdeInfo(
         key,
@@ -172,7 +155,24 @@ public class IdeInfoFromProtobuf {
         dartIdeInfo,
         testIdeInfo,
         protoLibraryLegacyInfo,
-        javaToolchainIdeInfo);
+        javaToolchainIdeInfo,
+        ktToolchainIdeInfo);
+  }
+
+  // TODO wait for upstream update to proto file, currently piggy backing over JavaIdeInfo.
+  @Nullable
+  private static KtToolchainIdeInfo maybeMakeKtToolchainIdeInfo(
+      IntellijIdeInfo.TargetIdeInfo message) {
+    if (!message.getKindString().equals(Kind.KT_TOOLCHAIN_IDE_INFO.toString())) {
+      return null;
+    }
+    ArtifactLocation realKtIdeInfoLocation;
+    if (message.getJavaIdeInfo() == null || message.getJavaIdeInfo().getSourcesCount() == 0) {
+      return null;
+    } else {
+      realKtIdeInfoLocation = makeArtifactLocation(message.getJavaIdeInfo().getSources(0));
+    }
+    return new KtToolchainIdeInfo.Builder().setLocation(realKtIdeInfoLocation).build();
   }
 
   private static Collection<Dependency> makeDependencyListFromLabelList(

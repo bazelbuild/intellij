@@ -158,7 +158,11 @@ message Dependency {
   DependencyType dependency_type = 2;
 }
 
-// Next Available: 30
+// Next Available: 31
+message KtToolchainIdeInfo {
+  ArtifactLocation location = 1;
+}
+
 message TargetIdeInfo {
   string label = 1 [deprecated = true];
   repeated string dependencies = 4 [deprecated = true];
@@ -201,4 +205,5 @@ message TargetIdeInfo {
   DartIdeInfo dart_ide_info = 28;
 
   AndroidAarIdeInfo android_aar_ide_info = 29;
+  KtToolchainIdeInfo kt_toolchain_ide_info = 30;
 }
