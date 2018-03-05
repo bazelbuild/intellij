@@ -282,6 +282,7 @@
     <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.BuiltInSymbolCompletionContributor"/>
     <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.BuiltInFunctionAttributeCompletionContributor"/>
     <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.ArgumentCompletionContributor"/>
+    <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.StructAttributeCompletionContributor"/>
     <langCodeStyleSettingsProvider implementation="com.google.idea.blaze.base.lang.buildfile.formatting.BuildLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.google.idea.blaze.base.lang.buildfile.formatting.BuildCodeStyleSettingsProvider"/>
     <editor.backspaceModeOverride language="BUILD" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
