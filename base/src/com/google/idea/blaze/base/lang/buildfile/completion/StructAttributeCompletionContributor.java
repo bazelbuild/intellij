@@ -40,7 +40,10 @@ public class StructAttributeCompletionContributor extends CompletionContributor 
         protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext processingContext, @NotNull CompletionResultSet result) {
             PsiElement position = parameters.getPosition();
             List<ReferenceExpression> path = buildIdentifierPath(position);
-            ArgumentList argumentList = resolveStructArgumentsFor(path);
+            if(path == null || path.size() < 2)
+                return;
+            // the last element in the path is what we are doing completion for.
+            ArgumentList argumentList = resolveStructArgumentsFor(path.subList(0, path.size()-1));
             if (argumentList != null) for (Argument argument : argumentList.getArguments()) {
                 if (canViewArgument(argument, position))
                     result.addElement(LookupElementBuilder.create(argument.nonNullName()).withIcon(AllIcons.Nodes.Parameter));
@@ -190,11 +193,10 @@ public class StructAttributeCompletionContributor extends CompletionContributor 
      *
      * @return A path of ReferenceExpression in the order the appear in text form.
      */
-    @NotNull
+    @Nullable
     private static List<ReferenceExpression> buildIdentifierPath(PsiElement position) {
         PsiElement outerMostDotExpr = findOutermostDescendantOfType(DotExpression.class, position);
-        List<ReferenceExpression> allChildrenOfClassRecursive = PsiUtils.findAllChildrenOfClassRecursive(outerMostDotExpr, ReferenceExpression.class);
-        return allChildrenOfClassRecursive.subList(0, allChildrenOfClassRecursive.size() - 1);
+        return outerMostDotExpr == null ? null : PsiUtils.findAllChildrenOfClassRecursive(outerMostDotExpr, ReferenceExpression.class);
     }
 
 
