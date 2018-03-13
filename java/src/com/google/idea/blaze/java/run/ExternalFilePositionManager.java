@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.run;
 
+import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.PositionManagerFactory;
@@ -27,6 +28,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiFile;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
@@ -49,11 +51,13 @@ class ExternalFilePositionManager extends PositionManagerImpl {
   @Override
   protected PsiFile getPsiFileByLocation(Project project, Location location) {
     PsiFile psiFile = super.getPsiFileByLocation(project, location);
-    if (psiFile != null) {
-      return psiFile;
+    if (psiFile == null || psiFile instanceof PsiCompiledFile) {
+      ReferenceType refType = location.declaringType();
+      if (refType != null && qualifiedNameToPsiFile.containsKey(refType.name())) {
+        return qualifiedNameToPsiFile.get(refType.name());
+      }
     }
-    ReferenceType refType = location.declaringType();
-    return refType != null ? qualifiedNameToPsiFile.get(refType.name()) : null;
+    return psiFile;
   }
 
   @Override
@@ -88,22 +92,11 @@ class ExternalFilePositionManager extends PositionManagerImpl {
         });
   }
 
-  @Nullable
-  @Override
-  public SourcePosition getSourcePosition(Location location) throws NoDataException {
-    SourcePosition position = super.getSourcePosition(location);
-    if (position != null) {
-      return position;
-    }
-
-    return null;
-  }
-
   static class Factory extends PositionManagerFactory {
     @Nullable
     @Override
     public PositionManager createPositionManager(DebugProcess process) {
-      return process instanceof DebugProcessImpl
+      return process instanceof DebugProcessImpl && Blaze.isBlazeProject(process.getProject())
           ? new ExternalFilePositionManager((DebugProcessImpl) process)
           : null;
     }

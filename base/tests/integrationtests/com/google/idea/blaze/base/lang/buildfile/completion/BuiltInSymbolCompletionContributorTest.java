@@ -85,6 +85,16 @@ public class BuiltInSymbolCompletionContributorTest extends BuildFileIntegration
   }
 
   @Test
+  public void testNoCompletionAfterInteger() {
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "123");
+
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, "123".length());
+
+    assertThat(editorTest.getCompletionItemsAsStrings()).isEmpty();
+  }
+
+  @Test
   public void testNoCompletionInFuncall() {
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "java_library()");
 

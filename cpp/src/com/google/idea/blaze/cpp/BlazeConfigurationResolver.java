@@ -18,7 +18,6 @@ package com.google.idea.blaze.cpp;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -34,7 +33,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.io.FileOperationProvider;
-import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
+import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -51,18 +50,15 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.toolchains.CompilerInfoCache;
 import java.io.File;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -113,7 +109,6 @@ final class BlazeConfigurationResolver {
         BlazeConfigurationToolchainResolver.buildCompilerSettingsMap(
             context,
             project,
-            workspaceRoot,
             toolchainLookupMap,
             executionRootPathResolver,
             compilerInfoCache,
@@ -133,9 +128,6 @@ final class BlazeConfigurationResolver {
         oldResult,
         builder);
     builder.setCompilerSettings(compilerSettings);
-    builder.setResolveDiff(
-        computeConfigurationDiff(
-            blazeProjectData, builder.configurationMap, oldResult.configurationMap));
     return builder.build();
   }
 
@@ -176,7 +168,7 @@ final class BlazeConfigurationResolver {
                   logger.info(String.format("Couldn't resolve include root: %s", path));
                 }
                 for (File file : possibleDirectories) {
-                  VirtualFile vf = getVirtualFile(file);
+                  VirtualFile vf = VfsUtils.resolveVirtualFile(file);
                   if (vf != null) {
                     // Check gen directories to see if they actually contain headers and not just
                     // other random generated files (like .s, .cc, or module maps).
@@ -261,20 +253,6 @@ final class BlazeConfigurationResolver {
       paths.addAll(toolchain.unfilteredToolchainSystemIncludes);
     }
     return paths;
-  }
-
-  @Nullable
-  private static VirtualFile getVirtualFile(File file) {
-    LocalFileSystem fileSystem = VirtualFileSystemProvider.getInstance().getSystem();
-    VirtualFile vf = fileSystem.findFileByPathIfCached(file.getPath());
-    if (vf != null && vf.isValid()) {
-      return vf;
-    }
-    vf = fileSystem.findFileByIoFile(file);
-    if (vf != null && vf.isValid()) {
-      return vf;
-    }
-    return null;
   }
 
   private static boolean containsCompiledSources(TargetIdeInfo target) {
@@ -442,68 +420,5 @@ final class BlazeConfigurationResolver {
         toolchainIdeInfo,
         compilerSettings,
         compilerInfoCache);
-  }
-
-  @Nullable
-  private static BlazeConfigurationResolverDiff computeConfigurationDiff(
-      BlazeProjectData blazeProjectData,
-      ImmutableMap<TargetKey, BlazeResolveConfiguration> newConfigs,
-      ImmutableMap<TargetKey, BlazeResolveConfiguration> oldConfigs) {
-    if (oldConfigs.isEmpty()) {
-      return null;
-    }
-    List<ListenableFuture<List<VirtualFile>>> fileResolveFutures = new ArrayList<>();
-    for (Map.Entry<TargetKey, BlazeResolveConfiguration> entry : newConfigs.entrySet()) {
-      TargetKey targetKey = entry.getKey();
-      BlazeResolveConfiguration newConfiguration = entry.getValue();
-      BlazeResolveConfiguration oldConfiguration = oldConfigs.get(targetKey);
-      if (newConfiguration != oldConfiguration) {
-        fileResolveFutures.add(
-            submit(
-                () ->
-                    changedFilesForTarget(
-                        blazeProjectData.targetMap,
-                        blazeProjectData.artifactLocationDecoder,
-                        targetKey)));
-      }
-    }
-    ImmutableSet.Builder<VirtualFile> changedFiles = ImmutableSet.builder();
-    try {
-      for (List<VirtualFile> changedFilesForTarget : Futures.allAsList(fileResolveFutures).get()) {
-        changedFiles.addAll(changedFilesForTarget);
-      }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      return null;
-    } catch (ExecutionException e) {
-      logger.error("Error getting changed files", e);
-      return null;
-    }
-    return new BlazeConfigurationResolverDiff(
-        changedFiles.build(), hasRemovedTargets(newConfigs, oldConfigs));
-  }
-
-  private static List<VirtualFile> changedFilesForTarget(
-      TargetMap targetMap, ArtifactLocationDecoder locationDecoder, TargetKey targetKey) {
-    List<VirtualFile> changedFilesForTarget = new ArrayList<>();
-    for (ArtifactLocation sourceLocation : targetMap.get(targetKey).sources) {
-      File sourceFile = locationDecoder.decode(sourceLocation);
-      VirtualFile virtualFile = getVirtualFile(sourceFile);
-      if (virtualFile != null) {
-        changedFilesForTarget.add(virtualFile);
-      }
-    }
-    return changedFilesForTarget;
-  }
-
-  private static boolean hasRemovedTargets(
-      Map<TargetKey, BlazeResolveConfiguration> newConfigs,
-      Map<TargetKey, BlazeResolveConfiguration> oldConfigs) {
-    for (TargetKey oldKey : oldConfigs.keySet()) {
-      if (!newConfigs.containsKey(oldKey)) {
-        return true;
-      }
-    }
-    return false;
   }
 }

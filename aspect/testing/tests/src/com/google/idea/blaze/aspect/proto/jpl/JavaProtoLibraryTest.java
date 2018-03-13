@@ -50,8 +50,8 @@ public class JavaProtoLibraryTest extends BazelIntellijAspectTest {
     assertThat(findTarget(testFixture, ":bar_proto")).isNull();
     assertThat(findTarget(testFixture, ":foo_proto")).isNull();
 
-    TargetIdeInfo barProto = findAspectTarget(testFixture, ":bar_proto", "java_proto_library");
-    TargetIdeInfo fooProto = findAspectTarget(testFixture, ":foo_proto", "java_proto_library");
+    TargetIdeInfo barProto = findAspectTarget(testFixture, ":bar_proto", "GoogleJavaProtoAspect");
+    TargetIdeInfo fooProto = findAspectTarget(testFixture, ":foo_proto", "GoogleJavaProtoAspect");
     assertThat(barProto).isNotNull();
     assertThat(fooProto).isNotNull();
 

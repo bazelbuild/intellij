@@ -16,6 +16,7 @@
 package com.google.idea.blaze.python.issueparser;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser.Parser;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser.SingleLineParser;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParserProvider;
@@ -24,6 +25,7 @@ import com.google.idea.blaze.python.PySdkUtils;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
@@ -60,8 +62,13 @@ public class PyIssueParserProvider implements BlazeIssueParserProvider {
       if (fileName == null) {
         return null;
       }
+      TextRange highlightRange =
+          BlazeIssueParser.union(
+              BlazeIssueParser.fileHighlightRange(matcher, 1),
+              BlazeIssueParser.matchedTextRange(matcher, 2, 2));
       return IssueOutput.error(matcher.group(0))
           .navigatable(openFileNavigatable(project, fileName, parseLineNumber(matcher.group(2))))
+          .consoleHyperlinkRange(highlightRange)
           .build();
     }
 

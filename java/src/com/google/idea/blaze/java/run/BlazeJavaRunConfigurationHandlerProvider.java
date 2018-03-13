@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
+import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
 import javax.annotation.Nullable;
 
 /** Java-specific handler provider for {@link BlazeCommandRunConfiguration}s. */
@@ -27,14 +28,7 @@ public class BlazeJavaRunConfigurationHandlerProvider
     implements BlazeCommandRunConfigurationHandlerProvider {
 
   private static final ImmutableSet<Kind> RELEVANT_RULE_KINDS =
-      ImmutableSet.of(
-          Kind.ANDROID_ROBOLECTRIC_TEST,
-          Kind.ANDROID_LOCAL_TEST,
-          Kind.JAVA_TEST,
-          Kind.JAVA_BINARY,
-          Kind.SCALA_BINARY,
-          Kind.SCALA_TEST,
-          Kind.SCALA_JUNIT_TEST);
+      JavaLikeLanguage.getAllDebuggableKinds();
 
   static boolean supportsKind(@Nullable Kind kind) {
     return RELEVANT_RULE_KINDS.contains(kind);

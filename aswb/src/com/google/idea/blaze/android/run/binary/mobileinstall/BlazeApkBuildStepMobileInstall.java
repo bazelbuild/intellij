@@ -96,7 +96,7 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
             if (USE_SDK_ADB.getValue()) {
               File adb = AndroidSdkUtils.getAdb(project);
               if (adb != null) {
-                command.addExeFlags(BlazeFlags.ADB_PATH, adb.toString());
+                command.addExeFlags(BlazeFlags.ADB, adb.toString());
               }
             }
 

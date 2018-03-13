@@ -18,6 +18,7 @@ package com.google.idea.common.transactions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.project.Project;
 
 /** SDK adapter to use transaction guards. */
 public class Transactions {
@@ -27,6 +28,11 @@ public class Transactions {
 
   public static void submitTransaction(Disposable disposable, Runnable runnable) {
     TransactionGuard.submitTransaction(disposable, runnable);
+  }
+
+  /** Runs {@link Runnable} as a write action, inside a transaction. */
+  public static void submitWriteActionTransaction(Project project, Runnable runnable) {
+    submitTransaction(project, () -> ApplicationManager.getApplication().runWriteAction(runnable));
   }
 
   /** Runs {@link Runnable} as a write action, inside a transaction. */

@@ -81,6 +81,7 @@ java_library(
     runtime_deps = ["//python"],
     deps = [
         "//base",
+        "//common/concurrency",
         "//common/experiments",
         "//cpp",
         "//intellij_platform_sdk:jsr305",
@@ -199,6 +200,7 @@ repackaged_files(
     name = "aspect_directory",
     srcs = ["//aspect:aspect_files"],
     prefix = "aswb/aspect",
+    strip_prefix = "/aspect",
 )
 
 intellij_plugin_debug_target(

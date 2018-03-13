@@ -33,11 +33,18 @@ public abstract class ProjectViewManager {
   public abstract ProjectViewSet getProjectViewSet();
 
   /**
+   * Reloads the project view, replacing the current one only if there are no errors. Calculates a
+   * VCS-aware {@link WorkspacePathResolver} if necessary.
+   */
+  @Nullable
+  public abstract ProjectViewSet reloadProjectView(BlazeContext context);
+
+  /**
    * Reloads the project view, replacing the current one only if there are no errors.
-   *
-   * @return Success.
    */
   @Nullable
   public abstract ProjectViewSet reloadProjectView(
       BlazeContext context, WorkspacePathResolver workspacePathResolver);
+
+
 }

@@ -118,13 +118,10 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
     format(file, document, ranges);
   }
 
-  protected void performReplacements(
-      final Document document, final Map<TextRange, String> replacements) {
-
+  protected void performReplacements(Document document, Map<TextRange, String> replacements) {
     if (replacements.isEmpty()) {
       return;
     }
-
     TreeMap<TextRange, String> sorted = new TreeMap<>(comparing(TextRange::getStartOffset));
     sorted.putAll(replacements);
     WriteCommandAction.runWriteCommandAction(

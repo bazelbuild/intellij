@@ -17,11 +17,11 @@ package com.google.idea.blaze.base.sync.workspace;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.sync.aspects.IdeInfoFromProtobuf;
-import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.clwb.run;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
@@ -26,6 +27,7 @@ import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
@@ -38,6 +40,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.CommandLineState;
@@ -95,6 +98,9 @@ public final class BlazeCidrLauncher extends CidrLauncher {
       testHandlerFlags = testUiSession.getBlazeFlags();
     }
 
+    ProjectViewSet projectViewSet =
+        Preconditions.checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet());
+
     BlazeCommand.Builder command =
         BlazeCommand.builder(
                 Blaze.getBuildSystemProvider(project).getBinaryPath(),
@@ -103,7 +109,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(
                     project,
-                    ProjectViewSet.builder().build(),
+                    projectViewSet,
                     handlerState.getCommandState().getCommand(),
                     BlazeInvocationContext.NonSync))
             .addBlazeFlags(testHandlerFlags)
@@ -121,7 +127,9 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
           @Override
           public void onBlazeContextStart(BlazeContext context) {
-            context.push(new IssuesScope(project));
+            context.push(
+                new IssuesScope(
+                    project, BlazeUserSettings.getInstance().getShowProblemsViewForRunAction()));
           }
 
           @Override

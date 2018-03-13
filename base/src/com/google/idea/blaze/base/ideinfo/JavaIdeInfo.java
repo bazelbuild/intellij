@@ -22,7 +22,7 @@ import javax.annotation.Nullable;
 
 /** Ide info specific to java rules. */
 public final class JavaIdeInfo implements Serializable {
-  private static final long serialVersionUID = 2L;
+  private static final long serialVersionUID = 3L;
 
   /**
    * The main jar(s) produced by this java rule.
@@ -49,19 +49,24 @@ public final class JavaIdeInfo implements Serializable {
   /** main_class attribute value for java_binary targets */
   @Nullable public String javaBinaryMainClass;
 
+  /** test_class attribute value for java_test targets */
+  @Nullable public String testClass;
+
   public JavaIdeInfo(
       Collection<LibraryArtifact> jars,
       Collection<LibraryArtifact> generatedJars,
       @Nullable LibraryArtifact filteredGenJar,
       @Nullable ArtifactLocation packageManifest,
       @Nullable ArtifactLocation jdepsFile,
-      @Nullable String javaBinaryMainClass) {
+      @Nullable String javaBinaryMainClass,
+      @Nullable String testClass) {
     this.jars = jars;
     this.generatedJars = generatedJars;
     this.packageManifest = packageManifest;
     this.jdepsFile = jdepsFile;
     this.filteredGenJar = filteredGenJar;
     this.javaBinaryMainClass = javaBinaryMainClass;
+    this.testClass = testClass;
   }
 
   public static Builder builder() {
@@ -74,6 +79,7 @@ public final class JavaIdeInfo implements Serializable {
     ImmutableList.Builder<LibraryArtifact> generatedJars = ImmutableList.builder();
     @Nullable LibraryArtifact filteredGenJar;
     @Nullable String mainClass;
+    @Nullable String testClass;
 
     public Builder addJar(LibraryArtifact.Builder jar) {
       jars.add(jar.build());
@@ -95,9 +101,14 @@ public final class JavaIdeInfo implements Serializable {
       return this;
     }
 
+    public Builder setTestClass(@Nullable String testClass) {
+      this.testClass = testClass;
+      return this;
+    }
+
     public JavaIdeInfo build() {
       return new JavaIdeInfo(
-          jars.build(), generatedJars.build(), filteredGenJar, null, null, mainClass);
+          jars.build(), generatedJars.build(), filteredGenJar, null, null, mainClass, testClass);
     }
   }
 }

@@ -141,6 +141,12 @@ public class BlazeBuildServiceTest extends BlazeTestCase {
 
     @Nullable
     @Override
+    public ProjectViewSet reloadProjectView(BlazeContext context) {
+      return viewSet;
+    }
+
+    @Nullable
+    @Override
     public ProjectViewSet reloadProjectView(
         BlazeContext context, WorkspacePathResolver workspacePathResolver) {
       return viewSet;

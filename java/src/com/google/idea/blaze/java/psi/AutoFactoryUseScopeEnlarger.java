@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
  * <p>Without implementing {@link UseScopeEnlarger}, IntelliJ will not search libraries for usages
  * of symbols defined in the project.
  */
-public class AutoFactoryUseScopeEnlarger extends UseScopeEnlarger {
+class AutoFactoryUseScopeEnlarger extends UseScopeEnlarger {
 
   private static final String AUTO_FACTORY_ANNOTATION = "com.google.auto.factory.AutoFactory";
 

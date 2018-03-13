@@ -201,7 +201,7 @@ public final class BlazeAndroidRunConfigurationRunner
     return Scope.root(
         context -> {
           context
-              .push(new IssuesScope(project))
+              .push(new IssuesScope(project, true))
               .push(new ExperimentScope())
               .push(
                   new BlazeConsoleScope.Builder(project)

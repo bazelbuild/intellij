@@ -138,7 +138,7 @@ public class BlazeBuildService {
                                         BlazeInvocationContext.Sync,
                                         true))
                                 .build())
-                        .push(new IssuesScope(project))
+                        .push(new IssuesScope(project, true))
                         .push(new IdeaLogScope())
                         .push(new TimingScope("Make", EventType.BlazeInvocation))
                         .push(notificationScope);

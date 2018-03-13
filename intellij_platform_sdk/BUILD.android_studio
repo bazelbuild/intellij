@@ -28,6 +28,11 @@ java_import(
 )
 
 java_import(
+    name = "kotlin",
+    jars = glob(["android-studio/plugins/Kotlin/lib/*.jar"]),
+)
+
+java_import(
     name = "junit",
     jars = glob(["android-studio/plugins/junit/lib/*.jar"]),
 )
@@ -40,6 +45,19 @@ java_import(
 java_import(
     name = "coverage",
     jars = glob(["android-studio/plugins/coverage/lib/*.jar"]),
+)
+
+java_import(
+    name = "hg4idea",
+    jars = glob(["clion-*/plugins/hg4idea/lib/hg4idea.jar"]),
+)
+
+java_import(
+    name = "tasks",
+    jars = [
+        "plugins/termins/lib/tasks-api.jar",
+        "plugins/termins/lib/tasks-core.jar",
+    ]
 )
 
 # The plugins required by ASwB. We need to include them

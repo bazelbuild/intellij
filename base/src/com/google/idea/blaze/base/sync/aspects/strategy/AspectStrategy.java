@@ -18,12 +18,12 @@ package com.google.idea.blaze.base.sync.aspects.strategy;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.base.Joiner;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommand.Builder;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
-import com.google.repackaged.protobuf.TextFormat;
+import com.google.protobuf.repackaged.TextFormat;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;

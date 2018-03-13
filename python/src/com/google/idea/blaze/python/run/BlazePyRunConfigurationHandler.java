@@ -32,12 +32,11 @@ import javax.swing.Icon;
 /** Python-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public final class BlazePyRunConfigurationHandler implements BlazeCommandRunConfigurationHandler {
 
-  private final String buildSystemName;
+  private final BuildSystem buildSystem;
   private final BlazePyRunConfigState state;
 
   public BlazePyRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-    BuildSystem buildSystem = Blaze.getBuildSystem(configuration.getProject());
-    this.buildSystemName = buildSystem.getName();
+    this.buildSystem = Blaze.getBuildSystem(configuration.getProject());
     this.state = new BlazePyRunConfigState(buildSystem);
   }
 
@@ -54,7 +53,7 @@ public final class BlazePyRunConfigurationHandler implements BlazeCommandRunConf
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    state.validate(buildSystemName);
+    state.validate(buildSystem);
   }
 
   @Override
@@ -68,9 +67,8 @@ public final class BlazePyRunConfigurationHandler implements BlazeCommandRunConf
 
   @Override
   @Nullable
-  public String getCommandName() {
-    BlazeCommandName command = state.getCommandState().getCommand();
-    return command != null ? command.toString() : null;
+  public BlazeCommandName getCommandName() {
+    return state.getCommandState().getCommand();
   }
 
   @Override

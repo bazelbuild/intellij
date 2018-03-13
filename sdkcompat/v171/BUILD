@@ -9,6 +9,7 @@ java_library(
     srcs = glob([
         "com/google/idea/sdkcompat/codestyle/**",
         "com/google/idea/sdkcompat/plugin/**",
+        "com/google/idea/sdkcompat/psi/**",
         "com/google/idea/sdkcompat/python/**",
         "com/google/idea/sdkcompat/run/**",
         "com/google/idea/sdkcompat/smrunner/**",
@@ -19,6 +20,7 @@ java_library(
         android_studio = glob([
             "com/google/idea/sdkcompat/cidr/**",
             "com/google/idea/sdkcompat/java/**",
+            "com/google/idea/sdkcompat/kotlin/**",
         ]),
         clion = glob([
             "com/google/idea/sdkcompat/cidr/**",
@@ -26,12 +28,14 @@ java_library(
         ]),
         intellij = glob([
             "com/google/idea/sdkcompat/java/**",
+            "com/google/idea/sdkcompat/kotlin/**",
         ]),
     ),
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:junit",
+        "//intellij_platform_sdk:kotlin",
         "//intellij_platform_sdk:plugin_api",
         "//third_party/python",
     ],

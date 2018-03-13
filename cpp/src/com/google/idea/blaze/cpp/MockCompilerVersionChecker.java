@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.cpp;
 
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -31,7 +30,7 @@ public class MockCompilerVersionChecker implements CompilerVersionChecker {
 
   @Nullable
   @Override
-  public String checkCompilerVersion(WorkspaceRoot workspaceRoot, File cppExecutable) {
+  public String checkCompilerVersion(File executionRoot, File cppExecutable) {
     if (injectFault) {
       return null;
     }
@@ -43,6 +42,6 @@ public class MockCompilerVersionChecker implements CompilerVersionChecker {
   }
 
   public void setInjectFault(boolean injectFault) {
-    this.injectFault = true;
+    this.injectFault = injectFault;
   }
 }

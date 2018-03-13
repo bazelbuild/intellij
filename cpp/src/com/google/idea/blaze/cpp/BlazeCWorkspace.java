@@ -97,9 +97,4 @@ public final class BlazeCWorkspace implements OCWorkspace {
     OCResolveConfiguration config = resolverResult.getConfigurationForFile(sourceFile);
     return config == null ? ImmutableList.of() : ImmutableList.of(config);
   }
-
-  @Nullable
-  BlazeConfigurationResolverDiff getConfigurationDiff() {
-    return resolverResult.getConfigurationDiff();
-  }
 }

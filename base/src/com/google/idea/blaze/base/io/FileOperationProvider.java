@@ -48,6 +48,10 @@ public class FileOperationProvider {
     return file.lastModified();
   }
 
+  public boolean setFileModifiedTime(File file, long time) {
+    return file.setLastModified(time);
+  }
+
   public long getFileSize(File file) {
     return file.length();
   }

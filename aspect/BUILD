@@ -4,6 +4,19 @@
 
 licenses(["notice"])  # Apache 2.0
 
+# Files needed at runtime for blaze-invoking integration tests
+filegroup(
+    name = "integration_test_files",
+    srcs = [
+        "intellij_info_impl.bzl",
+        "java_classpath.bzl",
+        ":BUILD.bazel",
+        "//aspect/tools:JarFilter_deploy.jar",
+        "//aspect/tools:PackageParser_deploy.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 # the aspect files that will be bundled with the final plugin zip
 filegroup(
     name = "aspect_files",

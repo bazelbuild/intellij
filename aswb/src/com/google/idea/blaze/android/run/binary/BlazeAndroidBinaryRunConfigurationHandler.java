@@ -182,7 +182,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
     errors.addAll(configState.validate(facet));
     errors.addAll(
         BlazeAndroidRunConfigurationValidationUtil.validateLabel(
-            getLabel(), configuration.getProject(), Kind.ANDROID_BINARY));
+            getLabel(), configuration.getProject(), ImmutableList.of(Kind.ANDROID_BINARY)));
     return errors;
   }
 
@@ -199,8 +199,8 @@ public class BlazeAndroidBinaryRunConfigurationHandler
 
   @Override
   @Nullable
-  public String getCommandName() {
-    return null;
+  public BlazeCommandName getCommandName() {
+    return BlazeCommandName.RUN;
   }
 
   @Override

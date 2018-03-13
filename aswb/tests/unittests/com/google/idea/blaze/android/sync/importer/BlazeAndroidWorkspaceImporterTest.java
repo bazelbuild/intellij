@@ -17,17 +17,21 @@ package com.google.idea.blaze.android.sync.importer;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.android.projectview.GenfilesPath;
 import com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter;
+import com.google.idea.blaze.android.sync.BlazeAndroidLibrarySource;
+import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
 import com.google.idea.blaze.android.sync.model.BlazeResourceLibrary;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
+import com.google.idea.blaze.base.ideinfo.AndroidAarIdeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
@@ -37,11 +41,14 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.io.FileOperationProvider;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
+import com.google.idea.blaze.base.prefetch.MockPrefetchService;
+import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ListSection;
@@ -56,13 +63,25 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.WorkingSet;
+import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
+import com.google.idea.blaze.java.sync.importer.BlazeJavaWorkspaceImporter;
+import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
+import com.google.idea.blaze.java.sync.jdeps.MockJdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
+import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
+import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
+import com.google.idea.blaze.java.sync.source.JavaSourcePackageReader;
+import com.google.idea.blaze.java.sync.source.PackageManifestReader;
+import com.google.idea.blaze.java.sync.source.SourceArtifact;
+import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import java.io.File;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -85,10 +104,18 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
   private BlazeContext context;
   private ErrorCollector errorCollector = new ErrorCollector();
+  private final MockJdepsMap jdepsMap = new MockJdepsMap();
+  private final JavaWorkingSet workingSet =
+      new JavaWorkingSet(
+          workspaceRoot,
+          new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of()),
+          Predicate.isEqual("BUILD"));
+  private final WorkspaceLanguageSettings workspaceLanguageSettings =
+      new WorkspaceLanguageSettings(
+          WorkspaceType.ANDROID, ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA));
 
   @Override
-  protected void initTest(
-      @NotNull Container applicationServices, @NotNull Container projectServices) {
+  protected void initTest(Container applicationServices, Container projectServices) {
     MockExperimentService mockExperimentService = new MockExperimentService();
     applicationServices.register(ExperimentService.class, mockExperimentService);
 
@@ -103,23 +130,70 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     context = new BlazeContext();
     context.addOutputSink(IssueOutput.class, errorCollector);
+
+    registerExtensionPoint(BlazeJavaSyncAugmenter.EP_NAME, BlazeJavaSyncAugmenter.class);
+
+    // For importJavaWorkspace.
+    applicationServices.register(
+        JavaSourcePackageReader.class,
+        new JavaSourcePackageReader() {
+          @Nullable
+          @Override
+          public String getDeclaredPackageOfJavaFile(
+              BlazeContext context,
+              ArtifactLocationDecoder artifactLocationDecoder,
+              SourceArtifact sourceArtifact) {
+            return null;
+          }
+        });
+
+    applicationServices.register(PackageManifestReader.class, new PackageManifestReader());
+    applicationServices.register(PrefetchService.class, new MockPrefetchService());
+
+    registerExtensionPoint(JavaLikeLanguage.EP_NAME, JavaLikeLanguage.class)
+        .registerExtension(new JavaLikeLanguage.Java());
   }
 
-  BlazeAndroidImportResult importWorkspace(
+  private BlazeAndroidImportResult importWorkspace(
       WorkspaceRoot workspaceRoot, TargetMapBuilder targetMapBuilder, ProjectView projectView) {
 
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
-
+    TargetMap targetMap = targetMapBuilder.build();
+    JavaSourceFilter sourceFilter =
+        new JavaSourceFilter(project, workspaceRoot, projectViewSet, targetMap);
     BlazeAndroidWorkspaceImporter workspaceImporter =
         new BlazeAndroidWorkspaceImporter(
             project,
             context,
             workspaceRoot,
             projectViewSet,
-            targetMapBuilder.build(),
+            targetMap,
+            sourceFilter,
             FAKE_ARTIFACT_DECODER);
 
     return workspaceImporter.importWorkspace();
+  }
+
+  private BlazeJavaImportResult importJavaWorkspace(
+      WorkspaceRoot workspaceRoot, TargetMapBuilder targetMapBuilder, ProjectView projectView) {
+
+    ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
+    TargetMap targetMap = targetMapBuilder.build();
+    JavaSourceFilter sourceFilter =
+        new JavaSourceFilter(project, workspaceRoot, projectViewSet, targetMap);
+    BlazeJavaWorkspaceImporter blazeWorkspaceImporter =
+        new BlazeJavaWorkspaceImporter(
+            project,
+            workspaceRoot,
+            projectViewSet,
+            workspaceLanguageSettings,
+            targetMap,
+            sourceFilter,
+            jdepsMap,
+            workingSet,
+            FAKE_ARTIFACT_DECODER);
+
+    return blazeWorkspaceImporter.importWorkspace(context);
   }
 
   /** Test that a two packages use the same un-imported android_library */
@@ -376,9 +450,6 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
             .add(ProjectViewSet.builder().add(projectView).build())
             .build();
-    WorkspaceLanguageSettings workspaceLanguageSettings =
-        new WorkspaceLanguageSettings(
-            WorkspaceType.ANDROID, ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA));
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
     for (TargetIdeInfo target : targetMap.targets()) {
       if (importRoots.importAsSource(target.key.label)) {
@@ -430,9 +501,6 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
             .add(ProjectViewSet.builder().add(projectView).build())
             .build();
-    WorkspaceLanguageSettings workspaceLanguageSettings =
-        new WorkspaceLanguageSettings(
-            WorkspaceType.ANDROID, ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA));
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
     for (TargetIdeInfo target : targetMap.targets()) {
       if (importRoots.importAsSource(target.key.label)) {
@@ -765,6 +833,391 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                 .build());
   }
 
+  @Test
+  public void testAarImport_outsideSources_createsAarLibrary() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example:lib")
+                    .setBuildFile(source("java/example/BUILD"))
+                    .setKind(Kind.ANDROID_LIBRARY)
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/example/AndroidManifest.xml"))
+                            .addResource(source("java/example/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("example"))
+                    .setJavaInfo(JavaIdeInfo.builder())
+                    .addSource(source("java/example/Source.java"))
+                    .addDependency("//third_party/lib:an_aar")
+                    .build())
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//third_party/lib:an_aar")
+                    .setBuildFile(source("third_party/lib/BUILD"))
+                    .setKind(Kind.AAR_IMPORT)
+                    .setAndroidAarInfo(new AndroidAarIdeInfo(source("third_party/lib/lib_aar.aar")))
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder()
+                                    .setClassJar(
+                                        gen(
+                                            "third_party/lib/_aar/an_aar/"
+                                                + "classes_and_libs_merged.jar"))))
+                    .build());
+    jdepsMap.put(
+        TargetKey.forPlainTarget(Label.create("//java/example:lib")),
+        ImmutableList.of(jdepsPath("third_party/lib/_aar/an_aar/classes_and_libs_merged.jar")));
+    BlazeJavaImportResult javaResult =
+        importJavaWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    BlazeAndroidImportResult androidResult =
+        importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+
+    errorCollector.assertNoIssues();
+
+    // We get 2 libraries representing the AAR. One from java and one from android.
+    assertThat(javaResult.libraries).hasSize(1);
+    assertThat(androidResult.aarLibraries).hasSize(1);
+    assertThat(
+            androidResult
+                .aarLibraries
+                .stream()
+                .map(BlazeAndroidWorkspaceImporterTest::aarJarName)
+                .collect(Collectors.toList()))
+        .containsExactly("classes_and_libs_merged.jar");
+    assertThat(
+            androidResult
+                .aarLibraries
+                .stream()
+                .map(BlazeAndroidWorkspaceImporterTest::aarName)
+                .collect(Collectors.toList()))
+        .containsExactly("lib_aar.aar");
+    // Check that BlazeAndroidLibrarySource can filter out the java one, so that only the
+    // android version takes effect.
+    BlazeAndroidLibrarySource.AarJarFilter aarFilter =
+        new BlazeAndroidLibrarySource.AarJarFilter(androidResult.aarLibraries);
+    assertThat(aarFilter.test(javaResult.libraries.values().asList().get(0))).isFalse();
+  }
+
+  @Test
+  public void testAarImport_outsideSourcesAndNoJdeps_keepsAarLibrary() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example:lib")
+                    .setBuildFile(source("java/example/BUILD"))
+                    .setKind(Kind.ANDROID_LIBRARY)
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/example/AndroidManifest.xml"))
+                            .addResource(source("java/example/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("example"))
+                    .setJavaInfo(JavaIdeInfo.builder())
+                    .addSource(source("java/example/Source.java"))
+                    .addDependency("//third_party/lib:an_aar")
+                    .build())
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//third_party/lib:an_aar")
+                    .setBuildFile(source("third_party/lib/BUILD"))
+                    .setKind(Kind.AAR_IMPORT)
+                    .setAndroidAarInfo(new AndroidAarIdeInfo(source("third_party/lib/lib_aar.aar")))
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder()
+                                    .setClassJar(
+                                        gen(
+                                            "third_party/lib/_aar/an_aar/"
+                                                + "classes_and_libs_merged.jar"))))
+                    .build());
+    BlazeJavaImportResult javaResult =
+        importJavaWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    BlazeAndroidImportResult androidResult =
+        importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+
+    errorCollector.assertNoIssues();
+
+    // The java importer performs jdeps optimization, but the android one does not.
+    assertThat(javaResult.libraries).isEmpty();
+    assertThat(
+            androidResult
+                .aarLibraries
+                .stream()
+                .map(BlazeAndroidWorkspaceImporterTest::aarName)
+                .collect(Collectors.toList()))
+        .containsExactly("lib_aar.aar");
+  }
+
+  @Test
+  public void testAarImport_inSources_createsAarLibrary() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example:lib")
+                    .setBuildFile(source("java/example/BUILD"))
+                    .setKind(Kind.ANDROID_LIBRARY)
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/example/AndroidManifest.xml"))
+                            .addResource(source("java/example/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("com.google.android.example"))
+                    .setJavaInfo(JavaIdeInfo.builder())
+                    .addSource(source("java/example/Source.java"))
+                    .addDependency("//java/example:an_aar")
+                    .build())
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example:an_aar")
+                    .setBuildFile(source("java/example/BUILD"))
+                    .setKind(Kind.AAR_IMPORT)
+                    .setAndroidAarInfo(new AndroidAarIdeInfo(source("java/example/an_aar.aar")))
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder()
+                                    .setClassJar(
+                                        gen(
+                                            "java/example/_aar/an_aar/"
+                                                + "classes_and_libs_merged.jar"))))
+                    .build());
+    jdepsMap.put(
+        TargetKey.forPlainTarget(Label.create("//java/example:lib")),
+        ImmutableList.of(jdepsPath("java/example/_aar/an_aar/classes_and_libs_merged.jar")));
+
+    BlazeJavaImportResult javaResult =
+        importJavaWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    BlazeAndroidImportResult androidResult =
+        importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+
+    errorCollector.assertNoIssues();
+
+    assertThat(
+            androidResult
+                .aarLibraries
+                .stream()
+                .map(BlazeAndroidWorkspaceImporterTest::aarJarName)
+                .collect(Collectors.toList()))
+        .containsExactly("classes_and_libs_merged.jar");
+    assertThat(
+            androidResult
+                .aarLibraries
+                .stream()
+                .map(BlazeAndroidWorkspaceImporterTest::aarName)
+                .collect(Collectors.toList()))
+        .containsExactly("an_aar.aar");
+    assertThat(javaResult.libraries).hasSize(1);
+    BlazeAndroidLibrarySource.AarJarFilter aarFilter =
+        new BlazeAndroidLibrarySource.AarJarFilter(androidResult.aarLibraries);
+    assertThat(aarFilter.test(javaResult.libraries.values().asList().get(0))).isFalse();
+  }
+
+  @Test
+  public void testAarImport_inSourcesAndNoJdeps_keepsAarLibrary() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example:lib")
+                    .setBuildFile(source("java/example/BUILD"))
+                    .setKind(Kind.ANDROID_LIBRARY)
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/example/AndroidManifest.xml"))
+                            .addResource(source("java/example/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("com.google.android.example"))
+                    .setJavaInfo(JavaIdeInfo.builder())
+                    .addSource(source("java/example/Source.java"))
+                    .addDependency("//java/example:an_aar")
+                    .build())
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example:an_aar")
+                    .setBuildFile(source("java/example/BUILD"))
+                    .setKind(Kind.AAR_IMPORT)
+                    .setAndroidAarInfo(new AndroidAarIdeInfo(source("java/example/an_aar.aar")))
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder()
+                                    .setClassJar(
+                                        gen(
+                                            "java/example/_aar/an_aar/"
+                                                + "classes_and_libs_merged.jar"))))
+                    .build());
+
+    BlazeJavaImportResult javaResult =
+        importJavaWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    BlazeAndroidImportResult androidResult =
+        importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+
+    errorCollector.assertNoIssues();
+
+    assertThat(javaResult.libraries).isEmpty();
+    assertThat(
+            androidResult
+                .aarLibraries
+                .stream()
+                .map(BlazeAndroidWorkspaceImporterTest::aarName)
+                .collect(Collectors.toList()))
+        .containsExactly("an_aar.aar");
+  }
+
+  @Test
+  public void testAarImport_multipleJarLibraries_aarLibraryOnlyOverridesAarJar() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example:lib")
+                    .setBuildFile(source("java/example/BUILD"))
+                    .setKind(Kind.ANDROID_LIBRARY)
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/example/AndroidManifest.xml"))
+                            .addResource(source("java/example/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("example"))
+                    .setJavaInfo(JavaIdeInfo.builder())
+                    .addSource(source("java/example/Source.java"))
+                    .addDependency("//third_party/lib:consume_export_aar")
+                    .addDependency("//third_party/lib:dep_library")
+                    .build())
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//third_party/lib:consume_export_aar")
+                    .setBuildFile(source("third_party/lib/BUILD"))
+                    .setKind(Kind.AAR_IMPORT)
+                    .setAndroidAarInfo(
+                        new AndroidAarIdeInfo(source("third_party/lib/lib1_aar.aar")))
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder()
+                                    .setClassJar(
+                                        gen(
+                                            "third_party/lib/_aar/consume_export_aar/"
+                                                + "classes_and_libs_merged.jar"))))
+                    .addDependency("//third_party/lib:dep_aar")
+                    .build())
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//third_party/lib:dep_aar")
+                    .setBuildFile(source("third_party/lib/BUILD"))
+                    .setKind(Kind.AAR_IMPORT)
+                    .setAndroidAarInfo(
+                        new AndroidAarIdeInfo(source("third_party/lib/lib2_aar.aar")))
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder()
+                                    .setClassJar(
+                                        gen(
+                                            "third_party/lib/_aar/dep_aar/"
+                                                + "classes_and_libs_merged.jar"))))
+                    .build())
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//third_party/lib:dep_library")
+                    .setBuildFile(source("third_party/lib/BUILD"))
+                    .setKind(Kind.ANDROID_LIBRARY)
+                    .addSource(source("third_party/lib/SharedActivity.java"))
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("third_party/lib/AndroidManifest.xml"))
+                            .addResource(source("third_party/lib/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("com.lib"))
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder()
+                                    .setInterfaceJar(gen("third_party/lib/dep_library.jar"))
+                                    .setClassJar(gen("third_party/lib/dep_library.jar"))))
+                    .build());
+    jdepsMap.put(
+        TargetKey.forPlainTarget(Label.create("//java/example:lib")),
+        ImmutableList.of(
+            jdepsPath("third_party/lib/_aar/dep_aar/classes_and_libs_merged.jar"),
+            jdepsPath("third_party/lib/_aar/consume_export_aar/classes_and_libs_merged.jar"),
+            jdepsPath("third_party/lib/dep_library.jar")));
+    BlazeJavaImportResult javaResult =
+        importJavaWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    BlazeAndroidImportResult androidResult =
+        importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+
+    errorCollector.assertNoIssues();
+
+    assertThat(javaResult.libraries).hasSize(3);
+    assertThat(androidResult.aarLibraries).hasSize(2);
+    assertThat(
+            androidResult
+                .aarLibraries
+                .stream()
+                .map(BlazeAndroidWorkspaceImporterTest::aarJarName)
+                .collect(Collectors.toList()))
+        .containsExactly("classes_and_libs_merged.jar", "classes_and_libs_merged.jar");
+    assertThat(
+            androidResult
+                .aarLibraries
+                .stream()
+                .map(BlazeAndroidWorkspaceImporterTest::aarName)
+                .collect(Collectors.toList()))
+        .containsExactly("lib1_aar.aar", "lib2_aar.aar");
+    BlazeAndroidLibrarySource.AarJarFilter aarFilter =
+        new BlazeAndroidLibrarySource.AarJarFilter(androidResult.aarLibraries);
+    ImmutableList<BlazeJarLibrary> blazeJarLibraries = javaResult.libraries.values().asList();
+    for (BlazeJarLibrary jarLibrary : blazeJarLibraries) {
+      if (libraryJarName(jarLibrary).equals("dep_library.jar")) {
+        assertThat(aarFilter.test(jarLibrary)).isTrue();
+      } else {
+        assertThat(aarFilter.test(jarLibrary)).isFalse();
+      }
+    }
+  }
+
   /**
    * Mock provider to satisfy directory listing queries from {@link
    * com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceClassifier}.
@@ -798,6 +1251,20 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     }
   }
 
+  private static String aarJarName(AarLibrary library) {
+    return new File(library.libraryArtifact.jarForIntellijLibrary().getExecutionRootRelativePath())
+        .getName();
+  }
+
+  private static String aarName(AarLibrary library) {
+    return new File(library.aarArtifact.getExecutionRootRelativePath()).getName();
+  }
+
+  private static String libraryJarName(BlazeJarLibrary library) {
+    return new File(library.libraryArtifact.jarForIntellijLibrary().getExecutionRootRelativePath())
+        .getName();
+  }
+
   private ArtifactLocation source(String relativePath) {
     return ArtifactLocation.builder().setRelativePath(relativePath).setIsSource(true).build();
   }
@@ -808,5 +1275,9 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         .setRelativePath(relativePath)
         .setIsSource(false)
         .build();
+  }
+
+  private static String jdepsPath(String relativePath) {
+    return FAKE_GEN_ROOT_EXECUTION_PATH_FRAGMENT + "/" + relativePath;
   }
 }

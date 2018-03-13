@@ -15,21 +15,19 @@
  */
 package com.google.idea.blaze.base.ui.problems;
 
-import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
+import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.GroupingElement;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -51,6 +49,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
@@ -79,6 +78,8 @@ public class BlazeProblemsView {
 
   private final Set<String> problems = Collections.synchronizedSet(new HashSet<>());
   private final AtomicInteger problemCount = new AtomicInteger(0);
+  private final AtomicBoolean didFocusProblemsView = new AtomicBoolean(false);
+  private volatile boolean focusProblemsViewOnIssue;
   private volatile UUID currentSessionId = UUID.randomUUID();
 
   public BlazeProblemsView(Project project, ToolWindowManager wm) {
@@ -100,7 +101,7 @@ public class BlazeProblemsView {
     updateIcon();
   }
 
-  public void clearOldMessages() {
+  public void newProblemsContext(boolean focusProblemsViewOnIssue) {
     viewUpdater.execute(
         () -> {
           currentSessionId = UUID.randomUUID();
@@ -109,6 +110,8 @@ public class BlazeProblemsView {
             tree.removeElement(child);
           }
           problemCount.set(0);
+          didFocusProblemsView.set(false);
+          this.focusProblemsViewOnIssue = focusProblemsViewOnIssue;
           problems.clear();
           updateIcon();
           panel.reload();
@@ -146,7 +149,8 @@ public class BlazeProblemsView {
         openInConsole,
         getExportTextPrefix(issue),
         getRenderTextPrefix(issue));
-    if (count == 1) {
+    if (focusProblemsViewOnIssue && !didFocusProblemsView.get()) {
+      didFocusProblemsView.set(true);
       focusProblemsView();
     }
   }
@@ -156,23 +160,8 @@ public class BlazeProblemsView {
    */
   @Nullable
   private static VirtualFile resolveVirtualFile(File file) {
-    VirtualFile vf = getVirtualFile(file);
+    VirtualFile vf = VfsUtils.resolveVirtualFile(file);
     return vf != null ? resolveSymlinks(vf) : null;
-  }
-
-  @Nullable
-  private static VirtualFile getVirtualFile(File file) {
-    LocalFileSystem fileSystem = VirtualFileSystemProvider.getInstance().getSystem();
-    VirtualFile vf = fileSystem.findFileByPathIfCached(file.getPath());
-    if (vf != null) {
-      return vf;
-    }
-    vf = fileSystem.findFileByIoFile(file);
-    if (vf != null && vf.isValid()) {
-      return vf;
-    }
-    boolean shouldRefresh = ApplicationManager.getApplication().isDispatchThread();
-    return shouldRefresh ? fileSystem.refreshAndFindFileByIoFile(file) : null;
   }
 
   /**

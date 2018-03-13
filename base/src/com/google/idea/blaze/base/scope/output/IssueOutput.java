@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.scope.output;
 
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Output;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import java.io.File;
 import javax.annotation.Nullable;
@@ -32,7 +33,8 @@ public class IssueOutput implements Output {
   private final int column;
   private final Category category;
   private final String message;
-  @Nullable private Navigatable navigatable;
+  @Nullable private final Navigatable navigatable;
+  @Nullable private final TextRange consoleHyperlinkRange;
 
   /** Issue category */
   public enum Category {
@@ -62,6 +64,7 @@ public class IssueOutput implements Output {
     private int line = NO_LINE;
     private int column = NO_COLUMN;
     @Nullable Navigatable navigatable;
+    @Nullable private TextRange consoleHyperlinkRange;
 
     public Builder(Category category, String message) {
       this.category = category;
@@ -88,8 +91,14 @@ public class IssueOutput implements Output {
       return this;
     }
 
+    public Builder consoleHyperlinkRange(@Nullable TextRange consoleHyperlinkRange) {
+      this.consoleHyperlinkRange = consoleHyperlinkRange;
+      return this;
+    }
+
     public IssueOutput build() {
-      return new IssueOutput(file, line, column, navigatable, category, message);
+      return new IssueOutput(
+          file, line, column, navigatable, consoleHyperlinkRange, category, message);
     }
 
     public void submit(BlazeContext context) {
@@ -105,12 +114,14 @@ public class IssueOutput implements Output {
       int line,
       int column,
       @Nullable Navigatable navigatable,
+      @Nullable TextRange consoleHyperlinkRange,
       Category category,
       String message) {
     this.file = file;
     this.line = line;
     this.column = column;
     this.navigatable = navigatable;
+    this.consoleHyperlinkRange = consoleHyperlinkRange;
     this.category = category;
     this.message = message;
   }
@@ -131,6 +142,11 @@ public class IssueOutput implements Output {
   @Nullable
   public Navigatable getNavigatable() {
     return navigatable;
+  }
+
+  @Nullable
+  public TextRange getConsoleHyperlinkRange() {
+    return consoleHyperlinkRange;
   }
 
   public Category getCategory() {

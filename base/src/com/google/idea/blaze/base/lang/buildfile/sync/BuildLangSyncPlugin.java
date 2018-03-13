@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.lang.buildfile.sync;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.devtools.build.lib.query2.proto.proto2api.Build;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -36,8 +37,7 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.repackaged.devtools.build.lib.query2.proto.proto2api.Build;
-import com.google.repackaged.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.repackaged.InvalidProtocolBufferException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -63,7 +63,9 @@ public class BuildLangSyncPlugin implements BlazeSyncPlugin {
       TargetMap targetMap,
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState) {
-
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     LanguageSpecResult spec =
         getBuildLanguageSpec(project, workspaceRoot, projectViewSet, previousSyncState, context);
     if (spec != null) {

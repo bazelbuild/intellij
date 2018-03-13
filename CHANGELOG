@@ -1,3 +1,17 @@
+v2018.03.12
+===========
+* Convert to/from workspace-relative paths when sharing run configurations
+* Linkify parsed errors in the Bazel Console view
+* Add next/previous error actions to the Bazel Console view
+
+v2018.02.26
+===========
+* Bug fixes and internal cleanup.
+
+v2018.02.13
+===========
+* Bug fixes and internal cleanup.
+
 v2018.01.29
 ===========
 * Copy BUILD target string action now works from any project file.

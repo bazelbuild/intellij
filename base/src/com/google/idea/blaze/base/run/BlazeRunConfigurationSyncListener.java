@@ -29,9 +29,12 @@ import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.common.transactions.Transactions;
+import com.google.idea.sdkcompat.run.RunManagerCompatUtils;
+import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.LinkedHashSet;
@@ -84,16 +87,33 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
 
   /**
    * On each sync, re-calculate target kind for all existing run configurations, in case the target
-   * map has changed since the last sync.
+   * map has changed since the last sync. Also force-enable our before-run task on all
+   * configurations.
    */
   private static void updateExistingRunConfigurations(Project project) {
-    RunManager runManager = RunManager.getInstance(project);
-    for (RunConfiguration runConfig :
-        runManager.getConfigurationsList(BlazeCommandRunConfigurationType.getInstance())) {
-      if (runConfig instanceof BlazeCommandRunConfiguration) {
-        ((BlazeCommandRunConfiguration) runConfig).updateTargetKindAsync(null);
+    RunManagerImpl manager = RunManagerImpl.getInstanceImpl(project);
+    boolean beforeRunTasksChanged = false;
+    for (RunConfiguration config :
+        manager.getConfigurationsList(BlazeCommandRunConfigurationType.getInstance())) {
+      if (config instanceof BlazeCommandRunConfiguration) {
+        ((BlazeCommandRunConfiguration) config).updateTargetKindAsync(null);
+        beforeRunTasksChanged |= enableBlazeBeforeRunTask(config);
       }
     }
+    if (beforeRunTasksChanged) {
+      manager.fireBeforeRunTasksUpdated();
+    }
+  }
+
+  private static boolean enableBlazeBeforeRunTask(RunConfiguration config) {
+    boolean changed = false;
+    for (BeforeRunTask task : RunManagerCompatUtils.getBeforeRunTasks(config)) {
+      if (task.getProviderId().equals(BlazeBeforeRunTaskProvider.ID) && !task.isEnabled()) {
+        changed = true;
+        task.setEnabled(true);
+      }
+    }
+    return changed;
   }
 
   private static Set<File> getImportedRunConfigurations(

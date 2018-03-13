@@ -35,7 +35,7 @@ public final class BlazeJarLibrary extends BlazeLibrary {
   public final LibraryArtifact libraryArtifact;
 
   public BlazeJarLibrary(LibraryArtifact libraryArtifact) {
-    super(LibraryKey.fromJarFile(libraryArtifact.jarForIntellijLibrary()));
+    super(LibraryKey.fromArtifactLocation(libraryArtifact.jarForIntellijLibrary()));
     this.libraryArtifact = libraryArtifact;
   }
 

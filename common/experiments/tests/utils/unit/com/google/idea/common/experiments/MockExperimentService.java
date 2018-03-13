@@ -51,6 +51,10 @@ public class MockExperimentService implements ExperimentService {
     return defaultValue;
   }
 
+  public void setFeatureRolloutExperiment(FeatureRolloutExperiment experiment, int percentage) {
+    experiments.put(experiment.getKey(), percentage);
+  }
+
   public void setExperimentInt(IntExperiment experiment, int value) {
     experiments.put(experiment.getKey(), value);
   }

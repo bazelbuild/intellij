@@ -15,7 +15,6 @@
  */
 package com.google.idea.testing;
 
-
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -80,6 +79,17 @@ public class ServiceHelper {
       Project project, Class<T> key, T implementation, Disposable parentDisposable) {
     registerComponentInstance(
         (MutablePicoContainer) project.getPicoContainer(), key, implementation, parentDisposable);
+  }
+
+  public static <T> void registerProjectComponent(
+      Project project, Class<T> key, T implementation, Disposable parentDisposable) {
+    if (project instanceof ComponentManagerImpl) {
+      replaceComponentInstance(
+          (ComponentManagerImpl) project, key, implementation, parentDisposable);
+    } else {
+      registerComponentInstance(
+          (MutablePicoContainer) project.getPicoContainer(), key, implementation, parentDisposable);
+    }
   }
 
   private static <T> void registerComponentInstance(

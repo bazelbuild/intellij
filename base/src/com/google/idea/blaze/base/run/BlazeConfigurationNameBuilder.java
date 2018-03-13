@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -41,8 +42,8 @@ public class BlazeConfigurationNameBuilder {
   public BlazeConfigurationNameBuilder(BlazeCommandRunConfiguration configuration) {
     setBuildSystemName(configuration.getProject());
 
-    String commandName = configuration.getHandler().getCommandName();
-    setCommandName((commandName == null) ? "command" : commandName);
+    BlazeCommandName commandName = configuration.getHandler().getCommandName();
+    setCommandName(commandName == null ? "command" : commandName.toString());
 
     TargetExpression targetExpression = configuration.getTarget();
     if (targetExpression != null) {

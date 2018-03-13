@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.devtools.build.lib.view.proto.Deps;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.filecache.FileDiffer;
@@ -35,7 +36,6 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.repackaged.devtools.build.lib.view.proto.Deps;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -133,7 +133,7 @@ public class JdepsFileReader {
             removedFiles);
 
     ListenableFuture<?> fetchFuture =
-        PrefetchService.getInstance().prefetchFiles(project, updatedFiles, true);
+        PrefetchService.getInstance().prefetchFiles(project, updatedFiles, true, false);
     if (!FutureUtil.waitForFuture(context, fetchFuture)
         .timed("FetchJdeps", EventType.Prefetching)
         .withProgressMessage("Reading jdeps files...")

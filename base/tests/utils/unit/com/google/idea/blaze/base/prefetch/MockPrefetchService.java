@@ -29,7 +29,7 @@ public class MockPrefetchService implements PrefetchService {
 
   @Override
   public ListenableFuture<?> prefetchFiles(
-      Project project, Collection<File> files, boolean refetchCachedFiles) {
+      Project project, Collection<File> files, boolean refetchCachedFiles, boolean fetchFileTypes) {
     return Futures.immediateFuture(null);
   }
 

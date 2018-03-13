@@ -488,80 +488,6 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   }
 
   @Test
-  public void noChange_testIncrementalUpdateGetChangedFiles() {
-    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
-    TargetMap targetMap =
-        TargetMapBuilder.builder()
-            .addTarget(createCcToolchain())
-            .addTarget(
-                createCcTarget(
-                    "//foo/bar:binary", Kind.CC_BINARY, ImmutableList.of(src("foo/bar/binary.cc"))))
-            .build();
-    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
-
-    assertThatResolving(projectView, targetMap).hasChangedRemovedFiles(ImmutableList.of(), false);
-  }
-
-  @Test
-  public void addFiles_testIncrementalUpdateGetChangedFiles() {
-    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:*"));
-    TargetMapBuilder targetMapBuilder =
-        TargetMapBuilder.builder()
-            .addTarget(createCcToolchain())
-            .addTarget(
-                createCcTarget(
-                    "//foo/bar:binary",
-                    Kind.CC_BINARY,
-                    ImmutableList.of(src("foo/bar/binary.cc"))));
-    TargetMap targetMap = targetMapBuilder.build();
-    createVirtualFile("/root/foo/bar/binary.cc");
-    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
-
-    TargetMap targetMap2 =
-        targetMapBuilder
-            .addTarget(
-                createCcTarget(
-                    "//foo/bar:library",
-                    Kind.CC_LIBRARY,
-                    ImmutableList.of(src("foo/bar/library.cc"))))
-            .build();
-    VirtualFile libraryCc = createVirtualFile("/root/foo/bar/library.cc");
-    assertThatResolving(projectView, targetMap2)
-        .hasChangedRemovedFiles(ImmutableList.of(libraryCc.getPath()), true);
-  }
-
-  @Test
-  public void removeFiles_testIncrementalUpdateGetChangedFiles() {
-    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:*"));
-    TargetMap targetMap =
-        TargetMapBuilder.builder()
-            .addTarget(createCcToolchain())
-            .addTarget(
-                createCcTarget(
-                    "//foo/bar:binary", Kind.CC_BINARY, ImmutableList.of(src("foo/bar/binary.cc"))))
-            .addTarget(
-                createCcTarget(
-                    "//foo/bar:library",
-                    Kind.CC_LIBRARY,
-                    ImmutableList.of(src("foo/bar/library.cc")),
-                    ImmutableList.of("SOME_DEFINE=1")))
-            .build();
-    createVirtualFile("/root/foo/bar/binary.cc");
-    createVirtualFile("/root/foo/bar/library.cc");
-    assertThatResolving(projectView, targetMap)
-        .producesConfigurationsFor("//foo/bar:binary", "//foo/bar:library");
-
-    TargetMap targetMap2 =
-        TargetMapBuilder.builder()
-            .addTarget(createCcToolchain())
-            .addTarget(
-                createCcTarget(
-                    "//foo/bar:binary", Kind.CC_BINARY, ImmutableList.of(src("foo/bar/binary.cc"))))
-            .build();
-    assertThatResolving(projectView, targetMap2).hasChangedRemovedFiles(ImmutableList.of(), true);
-  }
-
-  @Test
   public void brokenCompiler_collectsIssues() {
     ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:*"));
     TargetMap targetMap =
@@ -693,17 +619,6 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
         assertThat(notReusedTargets).containsExactly((Object[]) expectedNotReused);
       }
 
-      @Override
-      public void hasChangedRemovedFiles(
-          ImmutableList<String> expectedChangedFiles, boolean expectedHasChanges) {
-        BlazeConfigurationResolverDiff diff = resolverResult.getConfigurationDiff();
-        assertThat(diff).isNotNull();
-        List<String> changedFileNames =
-            diff.getChangedFiles().stream().map(VirtualFile::getPath).collect(Collectors.toList());
-        assertThat(changedFileNames).containsExactlyElementsIn(expectedChangedFiles);
-        assertThat(diff.hasChanges()).isEqualTo(expectedHasChanges);
-      }
-
       // In newer truth libraries, we could use:
       // assertThat(actual).comparingElementsUsing(IdentityCorrespondence).containsAllIn(expected)
       // but that isn't available in truth 0.30 from older plugin APIs.
@@ -721,8 +636,5 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     void producesNoConfigurations();
 
     void reusedConfigurations(Collection<BlazeResolveConfiguration> reused, String... notReused);
-
-    void hasChangedRemovedFiles(
-        ImmutableList<String> expectedChangedFiles, boolean hasRemovedFiles);
   }
 }

@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.run;
 
 import com.android.tools.idea.project.AndroidProjectInfo;
 import com.android.tools.idea.run.ValidationError;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -32,6 +33,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
@@ -92,7 +94,7 @@ public final class BlazeAndroidRunConfigurationValidationUtil {
   }
 
   public static List<ValidationError> validateLabel(
-      @Nullable Label label, Project project, Kind kind) {
+      @Nullable Label label, Project project, ImmutableList<Kind> kinds) {
     List<ValidationError> errors = Lists.newArrayList();
     if (label == null) {
       errors.add(ValidationError.fatal("No target selected."));
@@ -103,11 +105,13 @@ public final class BlazeAndroidRunConfigurationValidationUtil {
       errors.add(
           ValidationError.fatal(
               String.format("No existing %s rule selected.", Blaze.buildSystemName(project))));
-    } else if (!kind.equals(target.getKind())) {
+    } else if (target.getKind() == null || !target.getKind().isOneOf(kinds)) {
       errors.add(
           ValidationError.fatal(
               String.format(
-                  "Selected %s rule is not %s", Blaze.buildSystemName(project), kind.toString())));
+                  "Selected %s rule is not one of: %s",
+                  Blaze.buildSystemName(project),
+                  kinds.stream().map(Kind::toString).collect(Collectors.joining(", ")))));
     }
     return errors;
   }

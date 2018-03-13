@@ -78,13 +78,13 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
     return null;
   }
 
-  public void validate(String buildSystemName) throws RuntimeConfigurationException {
+  public void validate(BuildSystem buildSystem) throws RuntimeConfigurationException {
     if (getCommandState().getCommand() == null) {
       throw new RuntimeConfigurationError("You must specify a command.");
     }
     String blazeBinaryString = getBlazeBinaryState().getBlazeBinary();
     if (blazeBinaryString != null && !(new File(blazeBinaryString).exists())) {
-      throw new RuntimeConfigurationError(buildSystemName + " binary does not exist");
+      throw new RuntimeConfigurationError(buildSystem.getName() + " binary does not exist");
     }
   }
 
