@@ -156,7 +156,7 @@ public final class BuildPluginBeforeRunTaskProvider
           WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
           context
               .push(new ExperimentScope())
-              .push(new IssuesScope(project))
+              .push(new IssuesScope(project, true))
               .push(
                   new BlazeConsoleScope.Builder(project)
                       .setPopupBehavior(consolePopupBehavior)

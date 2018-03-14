@@ -30,7 +30,10 @@ public enum Kind {
   ANDROID_TEST("android_test", LanguageClass.ANDROID, RuleType.TEST),
   ANDROID_ROBOLECTRIC_TEST("android_robolectric_test", LanguageClass.ANDROID, RuleType.TEST),
   ANDROID_LOCAL_TEST("android_local_test", LanguageClass.ANDROID, RuleType.TEST),
+  ANDROID_INSTRUMENTATION_TEST(
+      "android_instrumentation_test", LanguageClass.ANDROID, RuleType.TEST),
   ANDROID_SDK("android_sdk", LanguageClass.ANDROID, RuleType.UNKNOWN),
+  AAR_IMPORT("aar_import", LanguageClass.ANDROID, RuleType.UNKNOWN),
   JAVA_LIBRARY("java_library", LanguageClass.JAVA, RuleType.LIBRARY),
   JAVA_TEST("java_test", LanguageClass.JAVA, RuleType.TEST),
   JAVA_BINARY("java_binary", LanguageClass.JAVA, RuleType.BINARY),
@@ -89,9 +92,11 @@ public enum Kind {
   TS_CONFIG("ts_config", LanguageClass.TYPESCRIPT, RuleType.BINARY),
   DART_PROTO_LIBRARY("dart_proto_library", LanguageClass.DART, RuleType.LIBRARY),
   DART_LIBRARY("_dart_library", LanguageClass.DART, RuleType.LIBRARY),
-  KOTLIN_LIBRARY("kotlin_library", LanguageClass.KOTLIN, RuleType.LIBRARY),
-  KOTLIN_BINARY("kotlin_binary", LanguageClass.KOTLIN, RuleType.BINARY),
-  KOTLIN_TEST("kotlin_test", LanguageClass.KOTLIN, RuleType.TEST),
+  KT_JVM_LIBRARY("kt_jvm_library", LanguageClass.KOTLIN, RuleType.LIBRARY),
+  KT_JVM_BINARY("kt_jvm_binary", LanguageClass.KOTLIN, RuleType.BINARY),
+  KT_JVM_TEST("kt_jvm_test", LanguageClass.KOTLIN, RuleType.TEST),
+  KT_JVM_IMPORT("kt_jvm_import", LanguageClass.KOTLIN, RuleType.UNKNOWN),
+  KOTLIN_STDLIB("kotlin_stdlib", LanguageClass.KOTLIN, RuleType.UNKNOWN),
 
   // any rule exposing java_common.provider which isn't specifically recognized
   GENERIC_JAVA_PROVIDER("generic_java", LanguageClass.JAVA, RuleType.UNKNOWN),
@@ -157,12 +162,25 @@ public enum Kind {
     return false;
   }
 
-  /** Uses the heuristic that test rules are either 'test_suite', or end in '_test' */
-  public static boolean isTestRule(String ruleType) {
-    return isTestSuite(ruleType) || ruleType.endsWith("_test");
+  /** If rule type isn't recognized, uses a heuristic to guess the rule type. */
+  public static RuleType guessRuleType(String ruleName) {
+    Kind kind = fromString(ruleName);
+    if (kind != null) {
+      return kind.ruleType;
+    }
+    if (isTestSuite(ruleName) || ruleName.endsWith("_test")) {
+      return RuleType.TEST;
+    }
+    if (ruleName.endsWith("_binary")) {
+      return RuleType.BINARY;
+    }
+    if (ruleName.endsWith("_library")) {
+      return RuleType.LIBRARY;
+    }
+    return RuleType.UNKNOWN;
   }
 
-  public static boolean isTestSuite(String ruleType) {
+  private static boolean isTestSuite(String ruleType) {
     return "test_suite".equals(ruleType);
   }
 }

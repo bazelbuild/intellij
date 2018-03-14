@@ -178,7 +178,7 @@ final class BlazeSyncTask implements Progressive {
                             new IssueOutputFilter(
                                 project, workspaceRoot, BlazeInvocationContext.Sync, true))
                         .build())
-                .push(new IssuesScope(project))
+                .push(new IssuesScope(project, true))
                 .push(new IdeaLogScope())
                 .push(
                     new NotificationScope(

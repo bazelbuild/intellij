@@ -19,7 +19,7 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.psi.PsiElement;
 
 /** Suppresses 'unused' warnings for @AutoFactory annotated classes / constructors. */
-public class AutoFactoryImplicitUsageProvider implements ImplicitUsageProvider {
+class AutoFactoryImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
   public boolean isImplicitUsage(PsiElement element) {

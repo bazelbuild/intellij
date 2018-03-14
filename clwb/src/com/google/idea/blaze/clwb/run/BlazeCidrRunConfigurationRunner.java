@@ -36,6 +36,7 @@ import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -93,6 +94,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
             configuration,
             buildResultHelper,
             ImmutableList.of("-c", "dbg", "--copt=-g", "--strip=never"),
+            ImmutableList.of("--dynamic_mode=off"),
             "Building debug binary");
 
     try {
@@ -101,7 +103,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
       if (result.status != BuildResult.Status.SUCCESS) {
         throw new ExecutionException("Blaze failure building debug binary");
       }
-    } catch (InterruptedException e) {
+    } catch (InterruptedException | CancellationException e) {
       buildOperation.cancel(true);
       throw new RunCanceledByUserException();
     } catch (java.util.concurrent.ExecutionException e) {

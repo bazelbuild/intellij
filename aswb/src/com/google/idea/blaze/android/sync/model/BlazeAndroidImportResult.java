@@ -24,18 +24,21 @@ import javax.annotation.concurrent.Immutable;
 /** The result of a blaze import operation. */
 @Immutable
 public class BlazeAndroidImportResult implements Serializable {
-  private static final long serialVersionUID = 4L;
+  private static final long serialVersionUID = 5L;
 
   public final ImmutableCollection<AndroidResourceModule> androidResourceModules;
   @Nullable public final BlazeResourceLibrary resourceLibrary;
   @Nullable public final ArtifactLocation javacJar;
+  public final ImmutableCollection<AarLibrary> aarLibraries;
 
   public BlazeAndroidImportResult(
       ImmutableCollection<AndroidResourceModule> androidResourceModules,
       @Nullable BlazeResourceLibrary resourceLibrary,
+      ImmutableCollection<AarLibrary> aarLibraries,
       @Nullable ArtifactLocation javacJar) {
     this.androidResourceModules = androidResourceModules;
     this.resourceLibrary = resourceLibrary;
+    this.aarLibraries = aarLibraries;
     this.javacJar = javacJar;
   }
 }

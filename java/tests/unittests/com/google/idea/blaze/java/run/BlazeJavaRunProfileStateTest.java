@@ -45,10 +45,14 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
+import com.google.idea.blaze.java.fastbuild.FastBuildService;
+import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
+import java.util.List;
 import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 import org.junit.Test;
@@ -72,11 +76,16 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     ExperimentService experimentService = new MockExperimentService();
     applicationServices.register(ExperimentService.class, experimentService);
     applicationServices.register(BlazeUserSettings.class, new BlazeUserSettings());
+    projectServices.register(FastBuildService.class, new DisabledFastBuildService());
     projectServices.register(ProjectViewManager.class, new MockProjectViewManager());
 
     ExtensionPointImpl<TargetFinder> targetFinderEp =
         registerExtensionPoint(TargetFinder.EP_NAME, TargetFinder.class);
     targetFinderEp.registerExtension(new MockTargetFinder());
+
+    ExtensionPointImpl<JavaLikeLanguage> javaLikeEp =
+        registerExtensionPoint(JavaLikeLanguage.EP_NAME, JavaLikeLanguage.class);
+    javaLikeEp.registerExtension(new JavaLikeLanguage.Java());
 
     registerExtensionPoint(BuildFlagsProvider.EP_NAME, BuildFlagsProvider.class);
     ExtensionPointImpl<BlazeCommandRunConfigurationHandlerProvider> handlerProviderEp =
@@ -185,9 +194,29 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
     @Nullable
     @Override
+    public ProjectViewSet reloadProjectView(BlazeContext context) {
+      return ProjectViewSet.builder().build();
+    }
+
+    @Nullable
+    @Override
     public ProjectViewSet reloadProjectView(
         BlazeContext context, WorkspacePathResolver workspacePathResolver) {
       return ProjectViewSet.builder().build();
+    }
+  }
+
+  private static class DisabledFastBuildService implements FastBuildService {
+
+    @Override
+    public boolean supportsFastBuilds(Kind kind) {
+      return false;
+    }
+
+    @Override
+    public Future<FastBuildInfo> createBuild(
+        Label label, String blazeBinaryPath, List<String> blazeFlags) {
+      throw new UnsupportedOperationException();
     }
   }
 }

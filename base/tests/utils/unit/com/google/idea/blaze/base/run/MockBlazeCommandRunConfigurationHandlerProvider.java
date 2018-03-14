@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
@@ -140,7 +141,7 @@ public class MockBlazeCommandRunConfigurationHandlerProvider
 
     @Nullable
     @Override
-    public String getCommandName() {
+    public BlazeCommandName getCommandName() {
       return null;
     }
 

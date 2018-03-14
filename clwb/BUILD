@@ -92,6 +92,7 @@ repackaged_files(
     name = "aspect_directory",
     srcs = ["//aspect:aspect_files"],
     prefix = "clwb/aspect",
+    strip_prefix = "/aspect",
 )
 
 intellij_plugin_debug_target(

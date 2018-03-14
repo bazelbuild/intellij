@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNotNull;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
@@ -63,7 +62,7 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
-import com.google.idea.blaze.java.sync.jdeps.JdepsMap;
+import com.google.idea.blaze.java.sync.jdeps.MockJdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
@@ -77,7 +76,6 @@ import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.io.File;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -104,24 +102,9 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
       new BlazeImportSettings("", "", "", "", BuildSystem.Blaze);
   private ExtensionPointImpl<BlazeJavaSyncAugmenter> augmenters;
 
-  private static class JdepsMock implements JdepsMap {
-    Map<TargetKey, List<String>> jdeps = Maps.newHashMap();
-
-    @Nullable
-    @Override
-    public List<String> getDependenciesForTarget(TargetKey targetKey) {
-      return jdeps.get(targetKey);
-    }
-
-    JdepsMock put(TargetKey targetKey, List<String> values) {
-      jdeps.put(targetKey, values);
-      return this;
-    }
-  }
-
   private BlazeContext context;
   private final ErrorCollector errorCollector = new ErrorCollector();
-  private final JdepsMock jdepsMap = new JdepsMock();
+  private final MockJdepsMap jdepsMap = new MockJdepsMap();
   private JavaWorkingSet workingSet = null;
   private final WorkspaceLanguageSettings workspaceLanguageSettings =
       new WorkspaceLanguageSettings(WorkspaceType.JAVA, ImmutableSet.of(LanguageClass.JAVA));

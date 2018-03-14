@@ -17,9 +17,6 @@ package com.google.idea.blaze.base.io;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import java.io.File;
-import javax.annotation.Nullable;
 
 /** Provides indirection for virtual file systems. */
 public interface VirtualFileSystemProvider {
@@ -29,20 +26,4 @@ public interface VirtualFileSystemProvider {
   }
 
   LocalFileSystem getSystem();
-
-  /**
-   * Like {@link com.intellij.openapi.vfs.VfsUtil#findFileByIoFile} with refresh set to true.
-   *
-   * <p>Note: there are restrictions on the calling context. See comments for
-   * refreshAndFindFileByIoFile.
-   */
-  @Nullable
-  static VirtualFile findFileByIoFileRefreshIfNeeded(File file) {
-    LocalFileSystem fileSystem = getInstance().getSystem();
-    VirtualFile virtualFile = fileSystem.findFileByIoFile(file);
-    if (virtualFile == null || !virtualFile.isValid()) {
-      virtualFile = fileSystem.refreshAndFindFileByIoFile(file);
-    }
-    return virtualFile;
-  }
 }

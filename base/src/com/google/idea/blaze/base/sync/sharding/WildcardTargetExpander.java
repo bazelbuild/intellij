@@ -113,7 +113,7 @@ public class WildcardTargetExpander {
         PackageLister.getDirectoriesToPrefetch(pathResolver, includes, excludePredicate);
 
     ListenableFuture<?> prefetchFuture =
-        PrefetchService.getInstance().prefetchFiles(project, toPrefetch, false);
+        PrefetchService.getInstance().prefetchFiles(project, toPrefetch, false, false);
     if (!FutureUtil.waitForFuture(context, prefetchFuture)
         .withProgressMessage("Prefetching wildcard target pattern directories...")
         .timed("PrefetchingWildcardTargetDirectories", EventType.Prefetching)

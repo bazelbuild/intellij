@@ -16,7 +16,6 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -27,11 +26,11 @@ public class CompilerVersionCheckerImpl implements CompilerVersionChecker {
   private static final Logger logger = Logger.getInstance(CompilerVersionCheckerImpl.class);
 
   @Override
-  public String checkCompilerVersion(WorkspaceRoot workspaceRoot, File cppExecutable) {
+  public String checkCompilerVersion(File executionRoot, File cppExecutable) {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     ByteArrayOutputStream errStream = new ByteArrayOutputStream();
     int result =
-        ExternalTask.builder(workspaceRoot)
+        ExternalTask.builder(executionRoot)
             .args(cppExecutable.toString())
             // NOTE: this won't work with MSVC if we ever support that (check CToolchainIdeInfo?)
             .args("--version")

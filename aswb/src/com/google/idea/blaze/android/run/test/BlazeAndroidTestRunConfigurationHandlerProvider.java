@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
+import javax.annotation.Nullable;
 
 /** Handler provider for android_test targets. */
 public class BlazeAndroidTestRunConfigurationHandlerProvider
@@ -30,8 +31,8 @@ public class BlazeAndroidTestRunConfigurationHandlerProvider
   }
 
   @Override
-  public boolean canHandleKind(Kind kind) {
-    return kind == Kind.ANDROID_TEST;
+  public boolean canHandleKind(@Nullable Kind kind) {
+    return kind != null && kind.isOneOf(Kind.ANDROID_TEST, Kind.ANDROID_INSTRUMENTATION_TEST);
   }
 
   @Override

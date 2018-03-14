@@ -57,6 +57,7 @@ public class PartialSyncAction extends BlazeProjectAction {
         .disableIf(targets.isEmpty())
         .setTextWithSubject("Partially Sync File", "Partially Sync %s", virtualFile)
         .disableWithoutSubject()
+        .hideInContextMenuIfDisabled()
         .commit();
   }
 

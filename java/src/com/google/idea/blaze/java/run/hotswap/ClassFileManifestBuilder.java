@@ -36,6 +36,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import java.io.File;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
@@ -92,6 +93,7 @@ public class ClassFileManifestBuilder {
             configuration,
             buildResultHelper,
             aspectStrategy.getBuildFlags(),
+            ImmutableList.of(),
             "Building debug binary");
 
     if (progress != null) {
@@ -103,7 +105,7 @@ public class ClassFileManifestBuilder {
       if (result.status != BuildResult.Status.SUCCESS) {
         throw new ExecutionException("Blaze failure building debug binary");
       }
-    } catch (InterruptedException e) {
+    } catch (InterruptedException | CancellationException e) {
       buildOperation.cancel(true);
       throw new RunCanceledByUserException();
     } catch (java.util.concurrent.ExecutionException e) {

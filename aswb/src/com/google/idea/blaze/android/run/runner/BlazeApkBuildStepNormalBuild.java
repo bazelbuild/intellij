@@ -29,12 +29,19 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
+import com.google.idea.blaze.base.ideinfo.Dependency;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.project.Project;
@@ -54,6 +61,31 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
     this.buildFlags = buildFlags;
   }
 
+  /**
+   * In case we're dealing with an {@link Kind#ANDROID_INSTRUMENTATION_TEST}, build the underlying
+   * {@link Kind#ANDROID_BINARY} instead.
+   */
+  private Label getTargetToBuild() {
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectData == null) {
+      return label;
+    }
+    TargetMap targetMap = projectData.targetMap;
+    TargetIdeInfo target = targetMap.get(TargetKey.forPlainTarget(label));
+    if (target == null || target.kind != Kind.ANDROID_INSTRUMENTATION_TEST) {
+      return label;
+    }
+    for (Dependency dependency : target.dependencies) {
+      TargetIdeInfo dependencyInfo = targetMap.get(dependency.targetKey);
+      // Should exist via test_app attribute, and be unique.
+      if (dependencyInfo != null && dependencyInfo.kind == Kind.ANDROID_BINARY) {
+        return dependency.targetKey.label;
+      }
+    }
+    return label;
+  }
+
   @Override
   public boolean build(
       BlazeContext context, BlazeAndroidDeviceSelector.DeviceSession deviceSession) {
@@ -71,7 +103,7 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
             BuildResultHelper buildResultHelper = deployInfoHelper.getBuildResultHelper();
 
             command
-                .addTargets(label)
+                .addTargets(getTargetToBuild())
                 .addBlazeFlags("--output_groups=+android_deploy_info")
                 .addBlazeFlags(buildFlags)
                 .addBlazeFlags(buildResultHelper.getBuildFlags());

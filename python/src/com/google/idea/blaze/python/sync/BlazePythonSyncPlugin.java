@@ -17,7 +17,7 @@ package com.google.idea.blaze.python.sync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
+import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -149,9 +149,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
     // recursive refresh of the blaze execution root. This is required because our blaze aspect
     // can't yet tell us exactly which genfiles are required to resolve the project.
     VirtualFile execRoot =
-        VirtualFileSystemProvider.getInstance()
-            .getSystem()
-            .refreshAndFindFileByIoFile(blazeProjectData.blazeInfo.getExecutionRoot());
+        VfsUtils.resolveVirtualFile(blazeProjectData.blazeInfo.getExecutionRoot());
     if (execRoot != null) {
       VfsUtil.markDirtyAndRefresh(false, true, true, execRoot);
     }

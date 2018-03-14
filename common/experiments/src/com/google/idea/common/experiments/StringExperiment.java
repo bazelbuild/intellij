@@ -26,6 +26,6 @@ public class StringExperiment extends Experiment {
 
   @Nullable
   public String getValue() {
-    return ExperimentService.getInstance().getExperimentString(key, null);
+    return ExperimentService.getInstance().getExperimentString(getKey(), null);
   }
 }

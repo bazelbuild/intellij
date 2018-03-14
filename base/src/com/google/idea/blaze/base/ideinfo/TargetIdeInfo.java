@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 
 /** Simple implementation of TargetIdeInfo. */
 public final class TargetIdeInfo implements Serializable {
-  private static final long serialVersionUID = 17L;
+  private static final long serialVersionUID = 18L;
 
   public final TargetKey key;
   public final Kind kind;
@@ -44,6 +44,7 @@ public final class TargetIdeInfo implements Serializable {
   @Nullable public final JavaIdeInfo javaIdeInfo;
   @Nullable public final AndroidIdeInfo androidIdeInfo;
   @Nullable public final AndroidSdkIdeInfo androidSdkIdeInfo;
+  @Nullable public final AndroidAarIdeInfo androidAarIdeInfo;
   @Nullable public final PyIdeInfo pyIdeInfo;
   @Nullable public final GoIdeInfo goIdeInfo;
   @Nullable public final JsIdeInfo jsIdeInfo;
@@ -65,6 +66,7 @@ public final class TargetIdeInfo implements Serializable {
       @Nullable JavaIdeInfo javaIdeInfo,
       @Nullable AndroidIdeInfo androidIdeInfo,
       @Nullable AndroidSdkIdeInfo androidSdkIdeInfo,
+      @Nullable AndroidAarIdeInfo androidAarIdeInfo,
       @Nullable PyIdeInfo pyIdeInfo,
       @Nullable GoIdeInfo goIdeInfo,
       @Nullable JsIdeInfo jsIdeInfo,
@@ -84,6 +86,7 @@ public final class TargetIdeInfo implements Serializable {
     this.javaIdeInfo = javaIdeInfo;
     this.androidIdeInfo = androidIdeInfo;
     this.androidSdkIdeInfo = androidSdkIdeInfo;
+    this.androidAarIdeInfo = androidAarIdeInfo;
     this.pyIdeInfo = pyIdeInfo;
     this.goIdeInfo = goIdeInfo;
     this.jsIdeInfo = jsIdeInfo;
@@ -139,6 +142,7 @@ public final class TargetIdeInfo implements Serializable {
     private CToolchainIdeInfo cToolchainIdeInfo;
     private JavaIdeInfo javaIdeInfo;
     private AndroidIdeInfo androidIdeInfo;
+    private AndroidAarIdeInfo androidAarIdeInfo;
     private PyIdeInfo pyIdeInfo;
     private GoIdeInfo goIdeInfo;
     private JsIdeInfo jsIdeInfo;
@@ -187,34 +191,27 @@ public final class TargetIdeInfo implements Serializable {
       return this;
     }
 
-    public Builder setCInfo(CIdeInfo cInfo) {
-      this.cIdeInfo = cInfo;
-      this.sources.addAll(cInfo.sources);
-      this.sources.addAll(cInfo.headers);
-      this.sources.addAll(cInfo.textualHeaders);
-      return this;
-    }
-
-    public Builder setCInfo(CIdeInfo.Builder cInfo) {
-      return setCInfo(cInfo.build());
-    }
-
-    public Builder setCToolchainInfo(CToolchainIdeInfo info) {
-      this.cToolchainIdeInfo = info;
+    public Builder setCInfo(CIdeInfo.Builder cInfoBuilder) {
+      this.cIdeInfo = cInfoBuilder.build();
+      this.sources.addAll(cIdeInfo.sources);
+      this.sources.addAll(cIdeInfo.headers);
+      this.sources.addAll(cIdeInfo.textualHeaders);
       return this;
     }
 
     public Builder setCToolchainInfo(CToolchainIdeInfo.Builder info) {
-      return setCToolchainInfo(info.build());
-    }
-
-    public Builder setAndroidInfo(AndroidIdeInfo androidInfo) {
-      this.androidIdeInfo = androidInfo;
+      this.cToolchainIdeInfo = info.build();
       return this;
     }
 
     public Builder setAndroidInfo(AndroidIdeInfo.Builder androidInfo) {
-      return setAndroidInfo(androidInfo.build());
+      this.androidIdeInfo = androidInfo.build();
+      return this;
+    }
+
+    public Builder setAndroidAarInfo(AndroidAarIdeInfo aarInfo) {
+      this.androidAarIdeInfo = aarInfo;
+      return this;
     }
 
     public Builder setPyInfo(PyIdeInfo.Builder pyInfo) {
@@ -296,6 +293,7 @@ public final class TargetIdeInfo implements Serializable {
           javaIdeInfo,
           androidIdeInfo,
           null,
+          androidAarIdeInfo,
           pyIdeInfo,
           goIdeInfo,
           jsIdeInfo,

@@ -202,6 +202,7 @@ def _repackaged_files_impl(ctx):
       repackaged_files_data(
           files = input_files,
           prefix = prefix,
+          strip_prefix = ctx.attr.strip_prefix,
       )
   ]
 
@@ -212,11 +213,12 @@ _repackaged_files = rule(
             allow_files = True,
         ),
         "prefix": attr.string(mandatory = True),
+        "strip_prefix": attr.string(mandatory = True),
     },
     implementation = _repackaged_files_impl,
 )
 
-def repackaged_files(name, srcs, prefix, **kwargs):
+def repackaged_files(name, srcs, prefix, strip_prefix=".", **kwargs):
   """Assembles files together so that they can be packaged as an IntelliJ plugin.
 
   A cut-down version of the internal 'pkgfilegroup' rule.
@@ -225,11 +227,39 @@ def repackaged_files(name, srcs, prefix, **kwargs):
     name: The name of this target
     srcs: A list of targets which are dependencies of this rule. All output files of each of these
         targets will be repackaged.
-    prefix: Where the package should install these files, relative to the 'plugins' directory. The
-        input file path is stripped prior to applying this prefix.
+    prefix: Where the package should install these files, relative to the 'plugins' directory.
+    strip_prefix: Which part of the input file path should be stripped prior to applying 'prefix'.
+        If ".", all subdirectories are stripped. If the empty string, the full package-relative path
+        is used. Default is "."
     **kwargs: Any further arguments to be passed to the target
   """
-  _repackaged_files(name = name, srcs = srcs, prefix = prefix, **kwargs)
+  _repackaged_files(name = name, srcs = srcs, prefix = prefix, strip_prefix = strip_prefix, **kwargs)
+
+def _strip_external_workspace_prefix(short_path):
+  """If this target is sitting in an external workspace, return the workspace-relative path."""
+  if short_path.startswith("../") or short_path.startswith("external/"):
+    return "/".join(short_path.split("/")[2:])
+  return short_path
+
+def output_path(f, repackaged_files_data):
+  """Returns the output path of a file, for a given set of repackaging parameters."""
+  prefix = repackaged_files_data.prefix
+  strip_prefix = repackaged_files_data.strip_prefix
+
+  short_path = _strip_external_workspace_prefix(f.short_path).strip("/")
+
+  if strip_prefix == ".":
+    return prefix + "/" + f.basename
+  if strip_prefix == "":
+    return prefix + "/" + short_path
+
+  strip_prefix = strip_prefix.strip("/")
+  old_path = short_path[:-len(f.basename)].strip("/")
+  if not old_path.startswith(strip_prefix):
+    fail("Invalid strip_prefix '%s': path actually starts with '%s'" % (strip_prefix, old_path))
+
+  stripped = old_path[len(strip_prefix):].strip("/")
+  return "%s/%s/%s" % (prefix, stripped, f.basename)
 
 def _plugin_deploy_zip_impl(ctx):
   zip_name = ctx.attr.zip_filename
@@ -241,7 +271,7 @@ def _plugin_deploy_zip_impl(ctx):
     data = target[repackaged_files_data]
     input_files = input_files | data.files
     for f in data.files:
-      exec_path_to_zip_path[f.path] = data.prefix + "/" + f.basename
+      exec_path_to_zip_path[f.path] = output_path(f, data)
 
   args = []
   args.extend(["--output", zip_file.path])

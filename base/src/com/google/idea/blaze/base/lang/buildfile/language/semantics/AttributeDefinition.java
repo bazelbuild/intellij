@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.lang.buildfile.language.semantics;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.repackaged.devtools.build.lib.query2.proto.proto2api.Build;
+import com.google.devtools.build.lib.query2.proto.proto2api.Build;
 import java.io.Serializable;
 import javax.annotation.Nullable;
 

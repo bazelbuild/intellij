@@ -25,7 +25,9 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.IdeBundle; // common_typos_disable
+import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.openapi.Disposable;
@@ -55,7 +57,7 @@ public class BlazeConsoleView implements Disposable {
 
   private static final Class<?>[] IGNORED_CONSOLE_ACTION_TYPES = {
     PreviousOccurenceToolbarAction.class,
-    NextOccurenceToolbarAction.class, // NOTYPO
+    NextOccurenceToolbarAction.class,
     ConsoleViewImpl.ClearAllAction.class,
     PrintAction.class
   };
@@ -146,6 +148,16 @@ public class BlazeConsoleView implements Disposable {
     DefaultActionGroup group = new DefaultActionGroup();
     layoutUi.getOptions().setLeftToolbar(group, ActionPlaces.UNKNOWN);
 
+    // Initializing prev and next occurrences actions
+    OccurenceNavigator navigator = fromConsoleView(consoleView);
+    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    AnAction prevAction = actionsManager.createPrevOccurenceAction(navigator);
+    prevAction.getTemplatePresentation().setText(navigator.getPreviousOccurenceActionName());
+    AnAction nextAction = actionsManager.createNextOccurenceAction(navigator);
+    nextAction.getTemplatePresentation().setText(navigator.getNextOccurenceActionName());
+
+    group.addAll(prevAction, nextAction);
+
     AnAction[] consoleActions = consoleView.createConsoleActions();
     for (AnAction action : consoleActions) {
       if (!shouldIgnoreAction(action)) {
@@ -224,5 +236,44 @@ public class BlazeConsoleView implements Disposable {
       items.addAll(second.getResultItems());
       return new Result(items);
     }
+  }
+
+  /**
+   * Changes the action text to reference 'problems', not 'stack traces'.
+   *
+   * <p>TODO(brendandouglas): give problem hyperlinks their own class, and skip all others.
+   */
+  private static OccurenceNavigator fromConsoleView(ConsoleViewImpl console) {
+    return new OccurenceNavigator() {
+      @Override
+      public boolean hasNextOccurence() {
+        return console.hasNextOccurence();
+      }
+
+      @Override
+      public boolean hasPreviousOccurence() {
+        return console.hasPreviousOccurence();
+      }
+
+      @Override
+      public OccurenceInfo goNextOccurence() {
+        return console.goNextOccurence();
+      }
+
+      @Override
+      public OccurenceInfo goPreviousOccurence() {
+        return console.goPreviousOccurence();
+      }
+
+      @Override
+      public String getNextOccurenceActionName() {
+        return "Next Problem";
+      }
+
+      @Override
+      public String getPreviousOccurenceActionName() {
+        return "Previous Problem";
+      }
+    };
   }
 }

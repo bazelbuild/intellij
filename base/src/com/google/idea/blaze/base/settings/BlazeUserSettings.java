@@ -58,6 +58,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
 
   private BlazeConsolePopupBehavior showBlazeConsoleOnSync = BlazeConsolePopupBehavior.ALWAYS;
   private boolean suppressConsoleForRunAction = false;
+  private boolean showProblemsViewForRunAction = false;
   private boolean resyncAutomatically = false;
   private boolean syncStatusPopupShown = false;
   private boolean expandSyncToWorkingSet = true;
@@ -104,6 +105,14 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
 
   public void setSuppressConsoleForRunAction(boolean suppressConsoleForRunAction) {
     this.suppressConsoleForRunAction = suppressConsoleForRunAction;
+  }
+
+  public boolean getShowProblemsViewForRunAction() {
+    return showProblemsViewForRunAction;
+  }
+
+  public void setShowProblemsViewForRunAction(boolean showProblemsViewForRunAction) {
+    this.showProblemsViewForRunAction = showProblemsViewForRunAction;
   }
 
   public boolean getSyncStatusPopupShown() {

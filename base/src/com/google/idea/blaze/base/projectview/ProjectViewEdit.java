@@ -16,10 +16,8 @@
 package com.google.idea.blaze.base.projectview;
 
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import com.google.idea.blaze.base.scope.Scope;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -47,6 +45,14 @@ public class ProjectViewEdit {
     File projectViewFile;
   }
 
+  @Nullable
+  private static ProjectViewSet reloadProjectView(Project project) {
+    return Scope.root(
+        context -> {
+          return ProjectViewManager.getInstance(project).reloadProjectView(context);
+        });
+  }
+
   /** Creates a new edit that modifies the local project view only. */
   @Nullable
   public static ProjectViewEdit editLocalProjectView(Project project, ProjectViewEditor editor) {
@@ -70,21 +76,6 @@ public class ProjectViewEdit {
       modifications.add(modification);
     }
     return new ProjectViewEdit(project, modifications);
-  }
-
-  @Nullable
-  private static ProjectViewSet reloadProjectView(Project project) {
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (projectData == null) {
-      return null;
-    }
-    return Scope.root(
-        (context) -> {
-          SaveUtil.saveAllFiles();
-          return ProjectViewManager.getInstance(project)
-              .reloadProjectView(context, projectData.workspacePathResolver);
-        });
   }
 
   public void apply() {

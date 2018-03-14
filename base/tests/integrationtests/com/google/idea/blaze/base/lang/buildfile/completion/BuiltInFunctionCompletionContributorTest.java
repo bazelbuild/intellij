@@ -128,6 +128,18 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
   }
 
   @Test
+  public void testNoCompletionAfterInteger() {
+    setRules("java_library", "android_binary");
+
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "1");
+
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, "1".length());
+
+    assertThat(editorTest.getCompletionItemsAsStrings()).isEmpty();
+  }
+
+  @Test
   public void testGlobalFunctions() {
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "licen");
 

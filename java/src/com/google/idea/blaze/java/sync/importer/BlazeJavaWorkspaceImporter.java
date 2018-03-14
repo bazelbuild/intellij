@@ -202,12 +202,16 @@ public final class BlazeJavaWorkspaceImporter {
       if (library == null) {
         // It's in the target's jdeps, but our aspect never attached to the target building it
         // Perhaps it's an implicit dependency, or not referenced in an attribute we propagate along
-        // Make a best-effort attempt to add it to the project anyway
+        // Or it could be that this is a multi-configuration project, and jdeps refers to a
+        // configuration different from the one we picked for the TargetMap.
+        // Make a best-effort attempt to add it to the project anyway.
+        ExecutionPathFragmentAndRelativePath split =
+            ExecutionPathFragmentAndRelativePath.split(jdepsPath);
         ArtifactLocation location =
             ArtifactLocation.builder()
                 .setIsSource(false)
-                .setRootExecutionPathFragment(jdepsPath)
-                .setRelativePath("")
+                .setRootExecutionPathFragment(split.rootExecutionPathFragment)
+                .setRelativePath(split.relativePath)
                 .build();
         library = new BlazeJarLibrary(new LibraryArtifact(location, null, ImmutableList.of()));
       }
@@ -417,5 +421,38 @@ public final class BlazeJavaWorkspaceImporter {
     List<ArtifactLocation> buildOutputJars = Lists.newArrayList();
     List<SourceArtifact> sourceArtifacts = Lists.newArrayList();
     Map<TargetKey, ArtifactLocation> javaPackageManifests = Maps.newHashMap();
+  }
+
+  private static class ExecutionPathFragmentAndRelativePath {
+    final String rootExecutionPathFragment;
+    final String relativePath;
+
+    private ExecutionPathFragmentAndRelativePath(
+        String rootExecutionPathFragment, String relativePath) {
+      this.rootExecutionPathFragment = rootExecutionPathFragment;
+      this.relativePath = relativePath;
+    }
+
+    /**
+     * Given a path like "bazel-out/config_fragment/bin/relative_path", split out the relative_path
+     * from the prefix that contains the configuration.
+     */
+    private static ExecutionPathFragmentAndRelativePath split(String relativePath) {
+      // Bazel should always use '/' as the file separator char for these paths.
+      int firstSep = relativePath.indexOf('/');
+      if (firstSep < 0) {
+        return new ExecutionPathFragmentAndRelativePath(relativePath, "");
+      }
+      int secondSep = relativePath.indexOf('/', firstSep + 1);
+      if (secondSep < 0) {
+        return new ExecutionPathFragmentAndRelativePath(relativePath, "");
+      }
+      int thirdSep = relativePath.indexOf('/', secondSep + 1);
+      if (thirdSep < 0) {
+        return new ExecutionPathFragmentAndRelativePath(relativePath, "");
+      }
+      return new ExecutionPathFragmentAndRelativePath(
+          relativePath.substring(0, thirdSep), relativePath.substring(thirdSep + 1));
+    }
   }
 }

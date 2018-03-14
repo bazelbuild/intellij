@@ -63,6 +63,7 @@ public class BuiltInFunctionAttributeCompletionContributor extends CompletionCon
             .inside(psiElement(FuncallExpression.class))
             .andNot(psiComment())
             .andNot(psiElement().afterLeaf("."))
+            .andNot(psiElement().afterLeaf(psiElement(BuildToken.fromKind(TokenKind.INT))))
             .andOr(
                 psiElement().withSuperParent(2, FuncallExpression.class),
                 psiElement()

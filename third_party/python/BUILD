@@ -8,13 +8,13 @@ java_library(
     name = "python_internal",
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
-        "intellij-2017.2.6": ["@python_2017_2//:python"],
-        "intellij-ue-2017.2.6": ["@python_2017_2//:python"],
-        "intellij-2017.3.3": ["@python_2017_3//:python"],
-        "intellij-ue-2017.3.3": ["@python_2017_3//:python"],
-        "clion-2017.2.3": ["@clion_2017_2_3//:python"],
-        "clion-2017.3.2": ["@clion_2017_3_2//:python"],
-        "android-studio-3.0.1.0": ["@python_2017_1_4249//:python"],
+        "intellij-2017.3": ["@python_2017_3//:python"],
+        "intellij-ue-2017.3": ["@python_2017_3//:python"],
+        "intellij-2018.1": ["@python_2018_1//:python"],
+        "intellij-ue-2018.1": ["@python_2018_1//:python"],
+        "clion-2017.3": ["@clion_2017_3//:python"],
+        "clion-2018.1": ["@clion_2018_1//:python"],
+        "android-studio-3.0": ["@python_2017_1_4249//:python"],
     }),
 )
 

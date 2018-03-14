@@ -26,15 +26,17 @@ import com.intellij.openapi.project.Project;
 public class IssuesScope implements BlazeScope, OutputSink<IssueOutput> {
 
   private final Project project;
+  private final boolean focusProblemsViewOnIssue;
 
-  public IssuesScope(Project project) {
+  public IssuesScope(Project project, boolean focusProblemsViewOnIssue) {
     this.project = project;
+    this.focusProblemsViewOnIssue = focusProblemsViewOnIssue;
   }
 
   @Override
   public void onScopeBegin(BlazeContext context) {
     context.addOutputSink(IssueOutput.class, this);
-    BlazeProblemsView.getInstance(project).clearOldMessages();
+    BlazeProblemsView.getInstance(project).newProblemsContext(focusProblemsViewOnIssue);
   }
 
   @Override
@@ -45,5 +47,4 @@ public class IssuesScope implements BlazeScope, OutputSink<IssueOutput> {
     BlazeProblemsView.getInstance(project).addMessage(output, null);
     return Propagation.Continue;
   }
-
 }

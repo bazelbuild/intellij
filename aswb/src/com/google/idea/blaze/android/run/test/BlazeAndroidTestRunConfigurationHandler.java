@@ -25,6 +25,11 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunn
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.ideinfo.Dependency;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -34,6 +39,7 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaExecutionUtil;
@@ -43,9 +49,10 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.util.List;
+import java.util.Objects;
+import javax.annotation.Nullable;
 import javax.swing.Icon;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * {@link com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler} for
@@ -85,8 +92,30 @@ public class BlazeAndroidTestRunConfigurationHandler
   }
 
   @Nullable
+  private Label getInstrumentationBinary(Label label) {
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(configuration.getProject()).getBlazeProjectData();
+    if (projectData == null) {
+      return null;
+    }
+    TargetMap targetMap = projectData.targetMap;
+    TargetIdeInfo instrumentationTest = targetMap.get(TargetKey.forPlainTarget(label));
+    for (Dependency dependency : instrumentationTest.dependencies) {
+      TargetIdeInfo dependencyInfo = targetMap.get(dependency.targetKey);
+      // Should exist via test_app attribute, and be unique.
+      if (dependencyInfo != null && dependencyInfo.kind == Kind.ANDROID_BINARY) {
+        return dependency.targetKey.label;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   private Module getModule() {
     Label target = getLabel();
+    if (Objects.equals(configuration.getTargetKind(), Kind.ANDROID_INSTRUMENTATION_TEST)) {
+      target = getInstrumentationBinary(target);
+    }
     return target != null
         ? BlazeAndroidProjectStructureSyncer.ensureRunConfigurationModule(
             configuration.getProject(), target)
@@ -152,7 +181,9 @@ public class BlazeAndroidTestRunConfigurationHandler
     errors.addAll(configState.validate(facet));
     errors.addAll(
         BlazeAndroidRunConfigurationValidationUtil.validateLabel(
-            getLabel(), configuration.getProject(), Kind.ANDROID_TEST));
+            getLabel(),
+            configuration.getProject(),
+            ImmutableList.of(Kind.ANDROID_TEST, Kind.ANDROID_INSTRUMENTATION_TEST)));
     return errors;
   }
 
@@ -186,8 +217,8 @@ public class BlazeAndroidTestRunConfigurationHandler
 
   @Override
   @Nullable
-  public String getCommandName() {
-    return "test";
+  public BlazeCommandName getCommandName() {
+    return BlazeCommandName.TEST;
   }
 
   @Override

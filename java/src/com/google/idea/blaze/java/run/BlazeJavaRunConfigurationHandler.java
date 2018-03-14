@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.java.fastbuild.FastBuildService;
 import com.google.idea.blaze.java.run.hotswap.ClassFileManifestBuilder;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -39,13 +40,14 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
 
   private static final Logger logger = Logger.getInstance(BlazeJavaRunConfigurationHandler.class);
 
-  private final String buildSystemName;
+  private final BuildSystem buildSystem;
   private final BlazeJavaRunConfigState state;
 
   public BlazeJavaRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-    BuildSystem buildSystem = Blaze.getBuildSystem(configuration.getProject());
-    this.buildSystemName = buildSystem.getName();
-    this.state = new BlazeJavaRunConfigState(buildSystem);
+    this.buildSystem = Blaze.getBuildSystem(configuration.getProject());
+    this.state =
+        new BlazeJavaRunConfigState(
+            buildSystem, configuration.getProject(), configuration.getTargetKind());
   }
 
   @Override
@@ -56,12 +58,18 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
   @Override
   public BlazeCommandRunConfigurationRunner createRunner(
       Executor executor, ExecutionEnvironment environment) {
-    return new BlazeJavaRunConfigurationRunner();
+    if (FastBuildService.enabled.getValue()
+        && state.getFastBuildState().useFastBuild()
+        && JavaFastBuildConfigurationRunnerFactory.getInstance(buildSystem).isPresent()) {
+      return JavaFastBuildConfigurationRunnerFactory.getInstance(buildSystem).get().createRunner();
+    } else {
+      return new BlazeJavaRunConfigurationRunner();
+    }
   }
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    state.validate(buildSystemName);
+    state.validate(buildSystem);
   }
 
   @Override
@@ -75,9 +83,8 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
 
   @Override
   @Nullable
-  public String getCommandName() {
-    BlazeCommandName command = state.getCommandState().getCommand();
-    return command != null ? command.toString() : null;
+  public BlazeCommandName getCommandName() {
+    return state.getCommandState().getCommand();
   }
 
   @Override

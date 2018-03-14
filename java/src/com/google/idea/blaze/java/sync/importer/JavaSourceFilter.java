@@ -103,6 +103,10 @@ public class JavaSourceFilter {
     return sourceTargets;
   }
 
+  public Iterable<TargetIdeInfo> getLibraryTargets() {
+    return libraryTargets;
+  }
+
   /** Whether the given target should be treated as a source or library target. */
   public static boolean importAsSource(
       ProjectViewTargetImportFilter importFilter, TargetIdeInfo target) {
@@ -120,12 +124,8 @@ public class JavaSourceFilter {
       TargetIdeInfo target,
       Collection<ArtifactLocation> javaLikeSources) {
     return importFilter.isSourceTarget(target)
-        && canImportAsSource(target)
+        && JavaLikeLanguage.canImportAsSource(target)
         && anyNonGeneratedSources(javaLikeSources);
-  }
-
-  private static boolean canImportAsSource(TargetIdeInfo target) {
-    return !target.kindIsOneOf(Kind.JAVA_WRAP_CC, Kind.JAVA_IMPORT, Kind.SCALA_IMPORT);
   }
 
   private static boolean anyNonGeneratedSources(Collection<ArtifactLocation> sources) {

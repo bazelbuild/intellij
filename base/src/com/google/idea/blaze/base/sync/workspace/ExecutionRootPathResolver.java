@@ -86,6 +86,10 @@ public class ExecutionRootPathResolver {
     return ImmutableList.of(path.getFileRootedAt(executionRoot));
   }
 
+  public File getExecutionRoot() {
+    return executionRoot;
+  }
+
   private boolean isInWorkspace(ExecutionRootPath path) {
     String firstPathComponent = getFirstPathComponent(path.getAbsoluteOrRelativeFile().getPath());
     return !buildArtifactDirectories.contains(firstPathComponent)
