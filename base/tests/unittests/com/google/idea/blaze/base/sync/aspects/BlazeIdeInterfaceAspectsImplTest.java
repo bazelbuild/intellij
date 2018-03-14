@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync.aspects;
 
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.TestUtils;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -25,7 +26,6 @@ import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
-import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
 import java.io.File;
 import org.junit.Test;
 import org.junit.runner.RunWith;

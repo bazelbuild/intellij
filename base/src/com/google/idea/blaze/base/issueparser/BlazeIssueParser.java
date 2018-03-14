@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -191,6 +192,8 @@ public class BlazeIssueParser {
           .inFile(file)
           .onLine(Integer.parseInt(matcher.group(2)))
           .inColumn(parseOptionalInt(matcher.group(3)))
+          .consoleHyperlinkRange(
+              union(fileHighlightRange(matcher, 1), matchedTextRange(matcher, 2, 3)))
           .build();
     }
   }
@@ -243,6 +246,8 @@ public class BlazeIssueParser {
           .inFile(file)
           .onLine(Integer.parseInt(matcher.group(2)))
           .inColumn(parseOptionalInt(matcher.group(3)))
+          .consoleHyperlinkRange(
+              union(fileHighlightRange(matcher, 1), matchedTextRange(matcher, 2, 3)))
           .build();
     }
   }
@@ -259,6 +264,8 @@ public class BlazeIssueParser {
           .inFile(file)
           .onLine(Integer.parseInt(matcher.group(2)))
           .inColumn(parseOptionalInt(matcher.group(3)))
+          .consoleHyperlinkRange(
+              union(fileHighlightRange(matcher, 1), matchedTextRange(matcher, 2, 3)))
           .build();
     }
   }
@@ -270,7 +277,10 @@ public class BlazeIssueParser {
 
     @Override
     protected IssueOutput createIssue(Matcher matcher) {
-      return IssueOutput.error(matcher.group(2)).inFile(new File(matcher.group(1))).build();
+      return IssueOutput.error(matcher.group(2))
+          .inFile(new File(matcher.group(1)))
+          .consoleHyperlinkRange(fileHighlightRange(matcher, 1))
+          .build();
     }
   }
 
@@ -285,7 +295,10 @@ public class BlazeIssueParser {
     @Override
     protected IssueOutput createIssue(Matcher matcher) {
       File file = fileFromTarget(workspaceRoot, matcher.group(1));
-      return IssueOutput.error(matcher.group(2)).inFile(file).build();
+      return IssueOutput.error(matcher.group(2))
+          .inFile(file)
+          .consoleHyperlinkRange(fileHighlightRange(matcher, 1))
+          .build();
     }
   }
 
@@ -313,7 +326,10 @@ public class BlazeIssueParser {
         }
       }
 
-      return IssueOutput.error(matcher.group(0)).inFile(file).build();
+      return IssueOutput.error(matcher.group(0))
+          .inFile(file)
+          .consoleHyperlinkRange(fileHighlightRange(matcher, 1))
+          .build();
     }
   }
 
@@ -432,5 +448,63 @@ public class BlazeIssueParser {
     }
 
     return null;
+  }
+
+  /**
+   * The union of the two ranges. If one of the ranges is null, returns the other. If both are null,
+   * returns null.
+   */
+  @Nullable
+  public static TextRange union(@Nullable TextRange range1, @Nullable TextRange range2) {
+    if (range1 == null) {
+      return range2;
+    }
+    if (range2 == null) {
+      return range1;
+    }
+    return range1.union(range2);
+  }
+
+  /**
+   * The range of a filename to highlight. Attempts to only link the filename + extension. Returns
+   * null if no match can be found.
+   */
+  @Nullable
+  public static TextRange fileHighlightRange(Matcher matcher, int capturingGroup) {
+    String text = matcher.group(capturingGroup);
+    int offset = matcher.start(capturingGroup);
+    if (text == null || offset == -1) {
+      return null;
+    }
+    int start = Math.max(text.lastIndexOf('/'), text.lastIndexOf('\\')) + 1;
+    return TextRange.create(offset + start, offset + text.length());
+  }
+
+  /**
+   * The match range of the given capturing groups. If either group doesn't match anything, will
+   * attempt to match a narrower range, falling back to returning null.
+   */
+  @Nullable
+  public static TextRange matchedTextRange(Matcher matcher, int startGroup, int endGroup) {
+    int start = matcher.start(startGroup);
+    int end = matchEndIndex(matcher, endGroup);
+    if (start == -1 || start >= end) {
+      return null;
+    }
+    return TextRange.create(start, end);
+  }
+
+  /**
+   * The end index of the given capturing group, or if that group didn't match anything, the end
+   * index of the previous matching group. If no such group can be found, returns -1.
+   */
+  private static int matchEndIndex(Matcher matcher, int group) {
+    for (int ix = group; ix >= 0; ix--) {
+      int endIx = matcher.end(ix);
+      if (endIx != -1) {
+        return endIx;
+      }
+    }
+    return -1;
   }
 }

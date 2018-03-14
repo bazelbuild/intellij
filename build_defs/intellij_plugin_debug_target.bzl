@@ -27,17 +27,17 @@ intellij_plugin_debug_target(
 
 """
 
-load("//build_defs:build_defs.bzl", "repackaged_files_data")
+load("//build_defs:build_defs.bzl", "output_path", "repackaged_files_data")
 
 SUFFIX = ".intellij-plugin-debug-target-deploy-info"
 
 def _trim_start(path, prefix):
   return path[len(prefix):] if path.startswith(prefix) else path
 
-def _repackaged_deploy_file(f, prefix):
+def _repackaged_deploy_file(f, repackaging_data):
   return struct(
       src = f,
-      deploy_location = prefix + "/" + f.basename,
+      deploy_location = output_path(f, repackaging_data),
   )
 
 def _flat_deploy_file(f):
@@ -54,9 +54,8 @@ def _intellij_plugin_debug_target_aspect_impl(target, ctx):
     aspect_intellij_plugin_deploy_info = target.intellij_plugin_deploy_info
   elif ctx.rule.kind == "_repackaged_files":
     data = target[repackaged_files_data]
-    prefix = data.prefix
     aspect_intellij_plugin_deploy_info = struct(
-        deploy_files = [_repackaged_deploy_file(f, prefix) for f in data.files],
+        deploy_files = [_repackaged_deploy_file(f, data) for f in data.files],
     )
     # TODO(brendandouglas): Remove when migrating to Bazel 0.5, when DefaultInfo
     # provider can be populated by '_repackaged_files' directly

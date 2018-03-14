@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -134,9 +133,8 @@ final class BlazeConfigurationToolchainResolver {
   static ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> buildCompilerSettingsMap(
       BlazeContext context,
       Project project,
-      WorkspaceRoot workspaceRoot,
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
-      ExecutionRootPathResolver pathResolver,
+      ExecutionRootPathResolver executionRootPathResolver,
       CompilerInfoCache compilerInfoCache,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings) {
     return Scope.push(
@@ -146,9 +144,8 @@ final class BlazeConfigurationToolchainResolver {
           return doBuildCompilerSettingsMap(
               context,
               project,
-              workspaceRoot,
               toolchainLookupMap,
-              pathResolver,
+              executionRootPathResolver,
               compilerInfoCache,
               oldCompilerSettings);
         });
@@ -157,9 +154,8 @@ final class BlazeConfigurationToolchainResolver {
   private static ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> doBuildCompilerSettingsMap(
       BlazeContext context,
       Project project,
-      WorkspaceRoot workspaceRoot,
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
-      ExecutionRootPathResolver pathResolver,
+      ExecutionRootPathResolver executionRootPathResolver,
       CompilerInfoCache compilerInfoCache,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings) {
     Set<CToolchainIdeInfo> toolchains =
@@ -170,7 +166,8 @@ final class BlazeConfigurationToolchainResolver {
       compilerSettingsFutures.add(
           submit(
               () -> {
-                File cppExecutable = pathResolver.resolveExecutionRootPath(toolchain.cppExecutable);
+                File cppExecutable =
+                    executionRootPathResolver.resolveExecutionRootPath(toolchain.cppExecutable);
                 if (cppExecutable == null) {
                   IssueOutput.error(
                           "Unable to find compiler executable: " + toolchain.cppExecutable)
@@ -179,7 +176,8 @@ final class BlazeConfigurationToolchainResolver {
                 }
                 String compilerVersion =
                     CompilerVersionChecker.getInstance()
-                        .checkCompilerVersion(workspaceRoot, cppExecutable);
+                        .checkCompilerVersion(
+                            executionRootPathResolver.getExecutionRoot(), cppExecutable);
                 if (compilerVersion == null) {
                   IssueOutput.error("Unable to determine version of compiler " + cppExecutable)
                       .submit(context);
@@ -192,7 +190,12 @@ final class BlazeConfigurationToolchainResolver {
                 }
                 BlazeCompilerSettings settings =
                     createBlazeCompilerSettings(
-                        project, toolchain, cppExecutable, compilerVersion, compilerInfoCache);
+                        project,
+                        toolchain,
+                        executionRootPathResolver.getExecutionRoot(),
+                        cppExecutable,
+                        compilerVersion,
+                        compilerInfoCache);
                 if (settings == null) {
                   IssueOutput.error("Unable to create compiler wrapper for: " + cppExecutable)
                       .submit(context);
@@ -224,10 +227,11 @@ final class BlazeConfigurationToolchainResolver {
   private static BlazeCompilerSettings createBlazeCompilerSettings(
       Project project,
       CToolchainIdeInfo toolchainIdeInfo,
+      File executionRoot,
       File cppExecutable,
       String compilerVersion,
       CompilerInfoCache compilerInfoCache) {
-    File compilerWrapper = createCompilerExecutableWrapper(cppExecutable);
+    File compilerWrapper = createCompilerExecutableWrapper(executionRoot, cppExecutable);
     if (compilerWrapper == null) {
       return null;
     }
@@ -258,11 +262,13 @@ final class BlazeConfigurationToolchainResolver {
    * wrapper script doesn't handle arguments files, so we need to move the compiler arguments from
    * the file to the command line.
    *
-   * @param blazeCompilerExecutableFile blaze compiler wrapper
+   * @param executionRoot the execution root for running the compiler
+   * @param blazeCompilerExecutableFile the compiler
    * @return The wrapper script that CLion can call.
    */
   @Nullable
-  private static File createCompilerExecutableWrapper(File blazeCompilerExecutableFile) {
+  private static File createCompilerExecutableWrapper(
+      File executionRoot, File blazeCompilerExecutableFile) {
     try {
       File blazeCompilerWrapper =
           FileUtil.createTempFile("blaze_compiler", ".sh", true /* deleteOnExit */);
@@ -293,7 +299,7 @@ final class BlazeConfigurationToolchainResolver {
               "EXE=" + blazeCompilerExecutableFile.getPath(),
               "# Read in the arguments file so we can pass the arguments on the command line.",
               "ARGS=`cat $ARG_FILE`",
-              "$EXE $ARGS $2");
+              String.format("(cd %s && $EXE $ARGS $2)", executionRoot));
 
       try (PrintWriter pw = new PrintWriter(blazeCompilerWrapper, UTF_8.name())) {
         compilerWrapperScriptLines.forEach(pw::println);

@@ -32,8 +32,21 @@ java_import(
 )
 
 java_import(
+    name = "kotlin",
+    jars = glob(["plugins/Kotlin/lib/*.jar"]),
+)
+
+java_import(
     name = "junit",
     jars = glob(["plugins/junit/lib/*.jar"]),
+)
+
+java_import(
+    name = "tasks",
+    jars = [
+        "plugins/termins/lib/tasks-api.jar",
+        "plugins/termins/lib/tasks-core.jar",
+    ]
 )
 
 java_import(

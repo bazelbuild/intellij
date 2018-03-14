@@ -14,7 +14,7 @@ java_binary(
 
 java_import(
     name = "jar_filter_lib",
-    jars = ["JarFilter_deploy.jar"],
+    jars = ["tools/JarFilter_deploy.jar"],
 )
 
 java_binary(
@@ -26,5 +26,5 @@ java_binary(
 
 java_import(
     name = "package_parser_lib",
-    jars = ["PackageParser_deploy.jar"],
+    jars = ["tools/PackageParser_deploy.jar"],
 )

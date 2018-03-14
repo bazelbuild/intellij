@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.sync.projectstructure;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -34,7 +33,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /** Modifies content entries based on project data. */
@@ -59,12 +57,10 @@ public class ContentEntryEditor {
     SourceTestConfig testConfig = new SourceTestConfig(projectViewSet);
     SourceFolderProvider provider = SourceFolderProvider.getSourceFolderProvider(blazeProjectData);
 
-    List<ContentEntry> contentEntries = Lists.newArrayList();
     for (WorkspacePath rootDirectory : rootDirectories) {
       File rootFile = workspaceRoot.fileForPath(rootDirectory);
       ContentEntry contentEntry =
           modifiableRootModel.addContentEntry(UrlUtil.pathToUrl(rootFile.getPath()));
-      contentEntries.add(contentEntry);
 
       for (WorkspacePath exclude : excludesByRootDirectory.get(rootDirectory)) {
         File excludeFolder = workspaceRoot.fileForPath(exclude);

@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
-import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
@@ -27,14 +26,12 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TextFieldWithHistory;
 import icons.BlazeIcons;
 import java.awt.Dimension;
 import java.io.File;
-import java.util.Map;
 import javax.annotation.Nullable;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -45,7 +42,6 @@ public class UseExistingBazelWorkspaceOption implements BlazeSelectWorkspaceOpti
 
   private final JComponent component;
   private final TextFieldWithHistory directoryField;
-  private final Map<String, File> vcsRootCache = Maps.newHashMap();
 
   public UseExistingBazelWorkspaceOption(BlazeNewProjectBuilder builder) {
     this.directoryField = new TextFieldWithHistory();
@@ -114,29 +110,18 @@ public class UseExistingBazelWorkspaceOption implements BlazeSelectWorkspaceOpti
   @Nullable
   @Override
   public File getVcsRoot() {
-    String directory = getDirectory();
-    if (!vcsRootCache.containsKey(directory)) {
-      vcsRootCache.put(directory, doGetVcsRoot(new File(directory)));
-    }
-    return vcsRootCache.get(directory);
-  }
-
-  @Nullable
-  private static File doGetVcsRoot(File file) {
-    for (VcsRootChecker rootChecker : VcsRootChecker.EXTENSION_POINT_NAME.getExtensions()) {
-      for (File root = file; root != null; root = root.getParentFile()) {
-        if (rootChecker.isRoot(root.getPath())) {
-          return root;
-        }
-      }
-    }
     return null;
   }
 
   @Override
-  public boolean allowProjectDataInVcsRoot() {
-    File vcsRoot = getVcsRoot();
-    return vcsRoot != null && !vcsRoot.getPath().equals(getDirectory());
+  public boolean allowProjectDataInVcs() {
+    return true;
+  }
+
+  @Nullable
+  @Override
+  public File getCanonicalProjectDataLocation() {
+    return new File(getDirectory());
   }
 
   @Override

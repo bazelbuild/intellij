@@ -19,12 +19,12 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.common.guava.GuavaHelper.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.TestResultId;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolOutputReader;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.io.MockInputStreamProvider;
-import com.google.repackaged.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
-import com.google.repackaged.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.TestResultId;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import java.io.ByteArrayOutputStream;
 import java.io.File;

@@ -23,11 +23,12 @@ import java.io.File;
 
 /** Defines where we store our blaze project data. */
 public class BlazeDataStorage {
-  private static final String DATA_SUBDIRECTORY = ".blaze";
   public static final String WORKSPACE_MODULE_NAME = ".workspace";
+  public static final String BLAZE_DATA_SUBDIRECTORY = ".blaze";
+  public static final String PROJECT_DATA_SUBDIRECTORY = ".project";
 
   public static File getProjectDataDir(BlazeImportSettings importSettings) {
-    return new File(importSettings.getProjectDataDirectory(), DATA_SUBDIRECTORY);
+    return new File(importSettings.getProjectDataDirectory(), BLAZE_DATA_SUBDIRECTORY);
   }
 
   public static File getProjectCacheDir(Project project, BlazeImportSettings importSettings) {

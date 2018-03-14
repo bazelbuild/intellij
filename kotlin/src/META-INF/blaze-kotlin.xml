@@ -1,5 +1,5 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.google.idea.blaze">
-    <SyncPlugin implementation="com.google.idea.blaze.kotlin.BlazeKotlinSyncPlugin"/>
+    <SyncPlugin implementation="com.google.idea.blaze.kotlin.sync.AlwaysPresentKotlinSyncPlugin"/>
   </extensions>
 </idea-plugin>

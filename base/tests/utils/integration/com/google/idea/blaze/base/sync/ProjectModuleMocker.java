@@ -36,7 +36,7 @@ import javax.annotation.Nullable;
  * Mocks out module editing, committing changes, and finding project modules during sync integration
  * tests.
  */
-public class ProjectModuleMocker implements Disposable {
+class ProjectModuleMocker implements Disposable {
 
   private Map<String, ModifiableRootModel> modules = Maps.newHashMap();
   private ImmutableList<ContentEntry> workspaceContentEntries = ImmutableList.of();

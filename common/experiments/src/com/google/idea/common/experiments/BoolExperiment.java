@@ -25,6 +25,6 @@ public class BoolExperiment extends Experiment {
   }
 
   public boolean getValue() {
-    return ExperimentService.getInstance().getExperiment(key, defaultValue);
+    return ExperimentService.getInstance().getExperiment(getKey(), defaultValue);
   }
 }

@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.lang.buildfile.validation;
 
 import com.google.common.collect.ImmutableList;
+import com.google.devtools.build.lib.query2.proto.proto2api.Build;
+import com.google.devtools.build.lib.query2.proto.proto2api.Build.Attribute.Discriminator;
 import com.google.idea.blaze.base.lang.buildfile.psi.DictionaryLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.GlobExpression;
@@ -24,8 +26,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.ListLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.LiteralExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
-import com.google.repackaged.devtools.build.lib.query2.proto.proto2api.Build;
-import com.google.repackaged.devtools.build.lib.query2.proto.proto2api.Build.Attribute.Discriminator;
 import com.intellij.psi.PsiElement;
 import java.util.EnumSet;
 

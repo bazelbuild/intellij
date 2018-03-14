@@ -25,6 +25,8 @@ import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -180,5 +182,25 @@ public class LabelReferenceTest extends BuildFileIntegrationTestCase {
     FuncallExpression rule = PsiUtils.getParentOfType(element, FuncallExpression.class, true);
     assertThat(rule.getName()).isEqualTo("bar");
     assertThat(rule.getContainingFile()).isEqualTo(referencingFile);
+  }
+
+  @Test
+  public void testNoTargetFoundFromNameAttributeLabel() {
+    // we want 'GoToDeclaration' to trigger 'find usages' from a name attribute, which won't happen
+    // if it's pointing to a target element different from the 'find usages target'
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "java_library(name = \"lib\")",
+            "java_library(name = \"foo\", deps = [\":lib\"])");
+
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, "java_library(name = \"li".length());
+
+    PsiElement target =
+        GotoDeclarationAction.findTargetElement(
+            getProject(), editor, editor.getCaretModel().getOffset());
+
+    assertThat(target).isNull();
   }
 }

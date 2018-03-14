@@ -16,7 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
+import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -87,9 +87,7 @@ final class BlazeCSyncPlugin implements BlazeSyncPlugin {
     // <li>Cidr caches the directory contents as part of symbol building, so we need to do this work
     // up front.
     VirtualFile execRoot =
-        VirtualFileSystemProvider.getInstance()
-            .getSystem()
-            .refreshAndFindFileByIoFile(blazeProjectData.blazeInfo.getExecutionRoot());
+        VfsUtils.resolveVirtualFile(blazeProjectData.blazeInfo.getExecutionRoot());
     if (execRoot != null) {
       VfsUtil.markDirtyAndRefresh(false, true, true, execRoot);
     }

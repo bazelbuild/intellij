@@ -16,13 +16,34 @@
 package com.google.idea.blaze.scala.sync.source;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
-import java.util.Set;
 
 /** Provides Java-like parts of Scala to the Java plugin. */
 public class ScalaJavaLikeLanguage implements JavaLikeLanguage {
   @Override
-  public Set<String> getFileExtensions() {
+  public LanguageClass getLanguageClass() {
+    return LanguageClass.SCALA;
+  }
+
+  @Override
+  public ImmutableSet<String> getFileExtensions() {
     return ImmutableSet.of(".scala");
+  }
+
+  @Override
+  public ImmutableSet<Kind> getDebuggableKinds() {
+    return ImmutableSet.of(Kind.SCALA_BINARY, Kind.SCALA_TEST, Kind.SCALA_JUNIT_TEST);
+  }
+
+  @Override
+  public ImmutableSet<Kind> getHandledTestKinds() {
+    return ImmutableSet.of(Kind.SCALA_TEST);
+  }
+
+  @Override
+  public ImmutableSet<Kind> getNonSourceKinds() {
+    return ImmutableSet.of(Kind.SCALA_IMPORT);
   }
 }

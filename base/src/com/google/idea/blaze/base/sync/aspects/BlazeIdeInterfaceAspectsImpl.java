@@ -28,6 +28,7 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.process.ExternalTask;
@@ -73,7 +74,6 @@ import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -182,7 +182,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 targetCount, updatedFiles.size(), removedCount)));
 
     ListenableFuture<?> prefetchFuture =
-        PrefetchService.getInstance().prefetchFiles(project, updatedFiles, true);
+        PrefetchService.getInstance().prefetchFiles(project, updatedFiles, true, false);
     if (!FutureUtil.waitForFuture(context, prefetchFuture)
         .timed("FetchAspectOutput", EventType.Prefetching)
         .withProgressMessage("Reading IDE info result...")
@@ -695,7 +695,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   private static void prefetchGenfiles(
       Project project, BlazeContext context, ImmutableList<File> artifacts) {
     ListenableFuture<?> prefetchFuture =
-        PrefetchService.getInstance().prefetchFiles(project, artifacts, false);
+        PrefetchService.getInstance().prefetchFiles(project, artifacts, false, false);
     FutureUtil.waitForFuture(context, prefetchFuture)
         .timed("PrefetchGenfiles", EventType.Prefetching)
         .withProgressMessage("Prefetching genfiles...")

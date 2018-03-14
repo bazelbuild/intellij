@@ -15,20 +15,21 @@
  */
 package com.google.idea.blaze.java.libraries;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.filecache.FileCache;
-import com.google.idea.blaze.base.filecache.FileDiffer;
+import com.google.idea.blaze.base.filecache.FileCacheSynchronizer;
+import com.google.idea.blaze.base.filecache.FileCacheSynchronizerTraits;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.io.FileSizeScanner;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
@@ -51,10 +52,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -63,18 +64,19 @@ import javax.annotation.Nullable;
 public class JarCache {
   private static final Logger logger = Logger.getInstance(JarCache.class);
 
-  private final BlazeImportSettings importSettings;
   private final File cacheDir;
+
   private boolean enabled;
-  @Nullable private BiMap<File, String> sourceFileToCacheKey = null;
+  @Nullable private JarCacheSynchronizerTraits traits;
 
   public static JarCache getInstance(Project project) {
     return ServiceManager.getService(project, JarCache.class);
   }
 
   public JarCache(Project project) {
-    this.importSettings = BlazeImportSettingsManager.getInstance(project).getImportSettings();
-    this.cacheDir = getCacheDir();
+    BlazeImportSettings importSettings =
+        BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    this.cacheDir = getCacheDir(importSettings);
   }
 
   void onSync(
@@ -115,7 +117,7 @@ public class JarCache {
       }
     }
 
-    this.sourceFileToCacheKey = sourceFileToCacheKey;
+    this.traits = new JarCacheSynchronizerTraits(cacheDir, sourceFileToCacheKey);
     refresh(context, removeMissingFiles);
   }
 
@@ -131,12 +133,12 @@ public class JarCache {
   }
 
   /** Refreshes any updated files in the cache. Does not add or removes any files */
-  public void refresh() {
+  void refresh() {
     refresh(null, false);
   }
 
   private void refresh(@Nullable BlazeContext context, boolean removeMissingFiles) {
-    if (!enabled || sourceFileToCacheKey == null) {
+    if (!enabled || traits == null) {
       return;
     }
 
@@ -147,104 +149,20 @@ public class JarCache {
         return;
       }
     }
-
-    // Discover state of source jars
-    ImmutableMap<File, Long> sourceFileTimestamps =
-        FileDiffer.readFileState(sourceFileToCacheKey.keySet());
-    if (sourceFileTimestamps == null) {
-      return;
-    }
-    ImmutableMap.Builder<String, Long> sourceFileCacheKeyToTimestamp = ImmutableMap.builder();
-    for (Map.Entry<File, Long> entry : sourceFileTimestamps.entrySet()) {
-      String cacheKey = sourceFileToCacheKey.get(entry.getKey());
-      sourceFileCacheKeyToTimestamp.put(cacheKey, entry.getValue());
-    }
-
-    // Discover current on-disk cache state
-    File[] cacheFiles = cacheDir.listFiles();
-    assert cacheFiles != null;
-    ImmutableMap<File, Long> cacheFileTimestamps =
-        FileDiffer.readFileState(Lists.newArrayList(cacheFiles));
-    if (cacheFileTimestamps == null) {
-      return;
-    }
-    ImmutableMap.Builder<String, Long> cachedFileCacheKeyToTimestamp = ImmutableMap.builder();
-    for (Map.Entry<File, Long> entry : cacheFileTimestamps.entrySet()) {
-      String cacheKey = entry.getKey().getName(); // Cache key == file name
-      cachedFileCacheKeyToTimestamp.put(cacheKey, entry.getValue());
-    }
-
-    List<String> updatedFiles = Lists.newArrayList();
-    List<String> removedFiles = Lists.newArrayList();
-    FileDiffer.diffState(
-        cachedFileCacheKeyToTimestamp.build(),
-        sourceFileCacheKeyToTimestamp.build(),
-        updatedFiles,
-        removedFiles);
-
-    ListeningExecutorService executor = FetchExecutor.EXECUTOR;
-    List<ListenableFuture<?>> futures = Lists.newArrayList();
-    Map<String, File> cacheKeyToSourceFile = sourceFileToCacheKey.inverse();
-    for (String cacheKey : updatedFiles) {
-      File sourceFile = cacheKeyToSourceFile.get(cacheKey);
-      File cacheFile = cacheFileForKey(cacheKey);
-      futures.add(
-          executor.submit(
-              () -> {
-                try {
-                  Files.copy(
-                      Paths.get(sourceFile.getPath()),
-                      Paths.get(cacheFile.getPath()),
-                      StandardCopyOption.REPLACE_EXISTING,
-                      StandardCopyOption.COPY_ATTRIBUTES);
-                } catch (IOException e) {
-                  logger.warn(e);
-                }
-              }));
-    }
-
-    if (removeMissingFiles) {
-      for (String cacheKey : removedFiles) {
-        File cacheFile = cacheFileForKey(cacheKey);
-        futures.add(
-            executor.submit(
-                () -> {
-                  try {
-                    Files.deleteIfExists(Paths.get(cacheFile.getPath()));
-                  } catch (IOException e) {
-                    logger.warn(e);
-                  }
-                }));
-      }
-    }
-
-    try {
-      Futures.allAsList(futures).get();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      logger.warn(e);
-    } catch (ExecutionException e) {
-      logger.error(e);
-    }
-    if (context != null && updatedFiles.size() > 0) {
-      context.output(PrintOutput.log(String.format("Copied %d jars", updatedFiles.size())));
-    }
-    if (context != null && removedFiles.size() > 0 && removeMissingFiles) {
-      context.output(PrintOutput.log(String.format("Removed %d jars", removedFiles.size())));
+    FileCacheSynchronizer synchronizer = new FileCacheSynchronizer(traits);
+    if (!synchronizer.synchronize(context, removeMissingFiles)) {
+      logger.warn("Jar Cache synchronization didn't complete");
     }
     if (context != null) {
       try {
-        File[] finalCacheFiles = cacheDir.listFiles();
-        assert finalCacheFiles != null;
-        ImmutableMap<File, Long> cacheFileSizes =
-            FileSizeScanner.readFilesizes(Lists.newArrayList(finalCacheFiles));
-        Long total =
-            cacheFileSizes.values().stream().reduce((size1, size2) -> size1 + size2).orElse(0L);
+        Collection<File> finalCacheFiles = traits.enumerateCacheFiles();
+        ImmutableMap<File, Long> cacheFileSizes = FileSizeScanner.readFilesizes(finalCacheFiles);
+        Long total = cacheFileSizes.values().stream().mapToLong(x -> x).sum();
         context.output(
             PrintOutput.log(
                 String.format(
                     "Total Jar Cache size: %d kB (%d files)",
-                    total / 1024, finalCacheFiles.length)));
+                    total / 1024, finalCacheFiles.size())));
       } catch (Exception e) {
         logger.warn("Could not determine cache size", e);
       }
@@ -259,34 +177,34 @@ public class JarCache {
         Future<?> possiblyIgnoredError = FileUtil.asyncDelete(Lists.newArrayList(cacheFiles));
       }
     }
-    sourceFileToCacheKey = null;
+    traits = null;
   }
 
   /** Gets the cached file for a jar. If it doesn't exist, we return the file from the library. */
   public File getCachedJar(ArtifactLocationDecoder decoder, BlazeJarLibrary library) {
     File file = decoder.decode(library.libraryArtifact.jarForIntellijLibrary());
-    if (!enabled || sourceFileToCacheKey == null) {
+    if (!enabled || traits == null) {
       return file;
     }
-    String cacheKey = sourceFileToCacheKey.get(file);
+    String cacheKey = traits.sourceFileToCacheKey(file);
     if (cacheKey == null) {
       return file;
     }
-    return cacheFileForKey(cacheKey);
+    return traits.cacheFileForKey(cacheKey);
   }
 
   /** Gets the cached file for a source jar. */
   @Nullable
   public File getCachedSourceJar(ArtifactLocationDecoder decoder, ArtifactLocation sourceJar) {
     File file = decoder.decode(sourceJar);
-    if (!enabled || sourceFileToCacheKey == null) {
+    if (!enabled || traits == null) {
       return file;
     }
-    String cacheKey = sourceFileToCacheKey.get(file);
+    String cacheKey = traits.sourceFileToCacheKey(file);
     if (cacheKey == null) {
       return file;
     }
-    return cacheFileForKey(cacheKey);
+    return traits.cacheFileForKey(cacheKey);
   }
 
   private static String cacheKeyInternal(File jar) {
@@ -302,11 +220,7 @@ public class JarCache {
     return cacheKeyInternal(srcjar) + "-src.jar";
   }
 
-  private File cacheFileForKey(String key) {
-    return new File(cacheDir, key);
-  }
-
-  private File getCacheDir() {
+  private static File getCacheDir(BlazeImportSettings importSettings) {
     return new File(BlazeDataStorage.getProjectDataDir(importSettings), "libraries");
   }
 
@@ -329,6 +243,103 @@ public class JarCache {
     @Override
     public void refreshFiles(Project project) {
       getInstance(project).refresh();
+    }
+  }
+
+  /** Traits to synchronize local cache of the jars referenced by the project. */
+  private static final class JarCacheSynchronizerTraits implements FileCacheSynchronizerTraits {
+    private final File cacheDir;
+    private final BiMap<File, String> sourceFileToCacheKey;
+
+    JarCacheSynchronizerTraits(File cacheDir, BiMap<File, String> sourceFileToCacheKey) {
+      this.cacheDir = cacheDir;
+      this.sourceFileToCacheKey = sourceFileToCacheKey;
+    }
+
+    @Override
+    public Collection<File> sourceFiles() {
+      return sourceFileToCacheKey.keySet();
+    }
+
+    @Override
+    public String sourceFileToCacheKey(File sourceFile) {
+      return sourceFileToCacheKey.get(sourceFile);
+    }
+
+    @Override
+    public Collection<File> enumerateCacheFiles() {
+      File[] cacheFiles = cacheDir.listFiles();
+      Preconditions.checkNotNull(cacheFiles);
+      return ImmutableList.copyOf(cacheFiles);
+    }
+
+    @Override
+    public String cacheFileToCacheKey(File cacheFile) {
+      // Cache key == file name
+      return cacheFile.getName();
+    }
+
+    @Override
+    public File cacheFileForKey(String key) {
+      return new File(cacheDir, key);
+    }
+
+    @Override
+    public Collection<ListenableFuture<?>> updateFiles(
+        Collection<String> cacheKeys, ListeningExecutorService executor) {
+      List<ListenableFuture<?>> futures = new ArrayList<>();
+      Map<String, File> cacheKeyToSourceFile = sourceFileToCacheKey.inverse();
+      for (String cacheKey : cacheKeys) {
+        File sourceFile = cacheKeyToSourceFile.get(cacheKey);
+        File cacheFile = cacheFileForKey(cacheKey);
+        futures.add(
+            executor.submit(
+                () -> {
+                  try {
+                    Files.copy(
+                        Paths.get(sourceFile.getPath()),
+                        Paths.get(cacheFile.getPath()),
+                        StandardCopyOption.REPLACE_EXISTING,
+                        StandardCopyOption.COPY_ATTRIBUTES);
+                  } catch (IOException e) {
+                    logger.warn(e);
+                  }
+                }));
+      }
+      return futures;
+    }
+
+    @Override
+    public Collection<ListenableFuture<?>> removeFiles(
+        Collection<String> cacheKeys, ListeningExecutorService executor) {
+      List<ListenableFuture<?>> futures = new ArrayList<>();
+      for (String cacheKey : cacheKeys) {
+        File cacheFile = cacheFileForKey(cacheKey);
+        futures.add(
+            executor.submit(
+                () -> {
+                  try {
+                    Files.deleteIfExists(Paths.get(cacheFile.getPath()));
+                  } catch (IOException e) {
+                    logger.warn(e);
+                  }
+                }));
+      }
+      return futures;
+    }
+
+    @Override
+    public void logStats(
+        BlazeContext context,
+        int numUpdatedFiles,
+        int numRemovedFiles,
+        boolean removeMissingFiles) {
+      if (numUpdatedFiles > 0) {
+        context.output(PrintOutput.log(String.format("Copied %d jars", numUpdatedFiles)));
+      }
+      if (numRemovedFiles > 0 && removeMissingFiles) {
+        context.output(PrintOutput.log(String.format("Removed %d jars", numRemovedFiles)));
+      }
     }
   }
 }

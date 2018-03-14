@@ -2,43 +2,43 @@
 
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
-    "intellij-latest": "intellij-2017.2.6",
-    "intellij-beta": "intellij-2017.3.3",
-    "intellij-ue-latest": "intellij-ue-2017.2.6",
-    "intellij-ue-beta": "intellij-ue-2017.3.3",
-    "android-studio-latest": "android-studio-3.0.1.0",
-    "android-studio-beta": "android-studio-3.0.1.0",
-    "clion-latest": "clion-2017.2.3",
-    "clion-beta": "clion-2017.3.2",
+    "intellij-latest": "intellij-2017.3",
+    "intellij-beta": "intellij-2017.3",
+    "intellij-ue-latest": "intellij-ue-2017.3",
+    "intellij-ue-beta": "intellij-ue-2017.3",
+    "android-studio-latest": "android-studio-3.0",
+    "android-studio-beta": "android-studio-3.0",
+    "clion-latest": "clion-2017.3",
+    "clion-beta": "clion-2017.3",
 }
 
 DIRECT_IJ_PRODUCTS = {
-    "intellij-2017.2.6": struct(
-        directory = "intellij_ce_2017_2_6",
+    "intellij-2017.3": struct(
+        directory = "intellij_ce_2017_3",
         ide = "intellij",
     ),
-    "intellij-2017.3.3": struct(
-        directory = "intellij_ce_2017_3_3",
+    "intellij-2018.1": struct(
+        directory = "intellij_ce_2018_1",
         ide = "intellij",
     ),
-    "intellij-ue-2017.2.6": struct(
-        directory = "intellij_ue_2017_2_6",
+    "intellij-ue-2017.3": struct(
+        directory = "intellij_ue_2017_3",
         ide = "intellij-ue",
     ),
-    "intellij-ue-2017.3.3": struct(
-        directory = "intellij_ue_2017_3_3",
-        ide = "intellij-ue",
+    "intellij-ue-2018.1": struct(
+        directory = "intellij_ue_2018_1",
+        ide = "intellij",
     ),
-    "android-studio-3.0.1.0": struct(
-        directory = "android_studio_3_0_1_0",
+    "android-studio-3.0": struct(
+        directory = "android_studio_3_0",
         ide = "android-studio",
     ),
-    "clion-2017.2.3": struct(
-        directory = "clion_2017_2_3",
+    "clion-2017.3": struct(
+        directory = "clion_2017_3",
         ide = "clion",
     ),
-    "clion-2017.3.2": struct(
-        directory = "clion_2017_3_2",
+    "clion-2018.1": struct(
+        directory = "clion_2018_1",
         ide = "clion",
     ),
 }

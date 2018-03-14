@@ -15,25 +15,20 @@
  */
 package com.google.idea.blaze.base.prefetch;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbModeTask;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.util.TimeoutUtil;
 import java.io.IOException;
 import javax.annotation.Nullable;
 
@@ -64,40 +59,14 @@ public class PrefetchProjectInitializer extends ApplicationComponent.Adapter {
       return;
     }
     BlazeProjectData projectData = getBlazeProjectData(project);
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    ProjectViewSet projectViewSet = getProjectViewSet(project);
     if (projectViewSet == null) {
       return;
     }
-    long start = System.currentTimeMillis();
-    ListenableFuture<?> future =
-        PrefetchService.getInstance().prefetchProjectFiles(project, projectViewSet, projectData);
-    TransactionGuard.submitTransaction(
+    PrefetchIndexingTask.submitPrefetchingTask(
         project,
-        () -> {
-          DumbService.getInstance(project).queueTask(new PrefetchTask(future, start));
-        });
-  }
-
-  static class PrefetchTask extends DumbModeTask {
-    private final ListenableFuture<?> future;
-    private final long startTimeMillis;
-
-    private PrefetchTask(ListenableFuture<?> future, long startTimeMillis) {
-      this.future = future;
-      this.startTimeMillis = startTimeMillis;
-    }
-
-    @Override
-    public void performInDumbMode(ProgressIndicator indicator) {
-      indicator.setIndeterminate(true);
-      indicator.setText("Prefetching files...");
-      while (!future.isCancelled() && !future.isDone()) {
-        indicator.checkCanceled();
-        TimeoutUtil.sleep(100);
-      }
-      long end = System.currentTimeMillis();
-      logger.info(String.format("Initial prefetching took: %d ms", (end - startTimeMillis)));
-    }
+        PrefetchService.getInstance().prefetchProjectFiles(project, projectViewSet, projectData),
+        "Initial Prefetching");
   }
 
   @Nullable
@@ -114,5 +83,18 @@ public class PrefetchProjectInitializer extends ApplicationComponent.Adapter {
       logger.info("Couldn't load project data for prefetcher", e);
       return null;
     }
+  }
+
+  /** Get the cached {@link ProjectViewSet}, or reload it from source. */
+  @Nullable
+  private static ProjectViewSet getProjectViewSet(Project project) {
+    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    if (projectViewSet != null) {
+      return projectViewSet;
+    }
+    return Scope.root(
+        context -> {
+          return ProjectViewManager.getInstance(project).reloadProjectView(context);
+        });
   }
 }

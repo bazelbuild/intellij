@@ -32,16 +32,19 @@
         implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestMethodRunConfigurationProducer"
         order="first"/>
     <programRunner implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryProgramRunner" order="first"/>
+    <programRunner implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestProgramRunner" order="first"/>
     <executor implementation="com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallRunExecutor" order="last"/>
     <executor implementation="com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallDebugExecutor" order="last"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"
                         serviceImplementation="com.google.idea.blaze.android.plugin.AswbPlugin"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.manifest.ManifestParser"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry"/>
+    <projectService serviceImplementation="com.google.idea.blaze.android.libraries.UnpackedAars"/>
     <applicationService serviceImplementation="com.google.idea.blaze.android.settings.BlazeAndroidUserSettings"/>
     <applicationService serviceInterface="com.google.idea.blaze.android.sdk.BlazeSdkProvider"
       serviceImplementation="com.google.idea.blaze.android.sdk.BlazeSdkProviderImpl"
       testServiceImplementation="com.google.idea.blaze.android.sdk.MockBlazeSdkProvider"/>
+    <dom.fileDescription implementation="com.google.idea.blaze.android.resources.BlazeResourcesDomFileDescription"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.android.actions">
@@ -60,6 +63,7 @@
     <SyncListener implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncListener"/>
     <SyncListener implementation="com.google.idea.blaze.android.manifest.ManifestParser$ClearManifestParser"/>
     <JavaSyncAugmenter implementation="com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter"/>
+    <FileCache implementation="com.google.idea.blaze.android.libraries.UnpackedAars$FileCacheAdapter"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.android.sync.AndroidPrefetchFileSource"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandlerProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationHandlerProvider"/>

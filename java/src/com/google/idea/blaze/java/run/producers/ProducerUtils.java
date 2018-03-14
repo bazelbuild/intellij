@@ -15,24 +15,28 @@
  */
 package com.google.idea.blaze.java.run.producers;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiClassUtil;
+import com.intellij.psi.util.PsiModificationTracker;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /** Utility methods for java test run configuration producers. */
 public class ProducerUtils {
   @Nullable
-  public static Location<PsiMethod> getMethodLocation(@NotNull Location contextLocation) {
+  public static Location<PsiMethod> getMethodLocation(Location<?> contextLocation) {
     Location<PsiMethod> methodLocation = getTestMethod(contextLocation);
     if (methodLocation == null) {
       return null;
@@ -73,7 +77,44 @@ public class ProducerUtils {
 
   static Set<PsiClass> getInnerTestClasses(PsiClass psiClass) {
     return Arrays.stream(psiClass.getInnerClasses())
-        .filter(JUnitUtil::isTestClass)
+        .filter(ProducerUtils::isTestClass)
         .collect(Collectors.toSet());
+  }
+
+  /**
+   * Based on {@link JUnitUtil#isTestClass}. We don't use that directly because it returns true for
+   * all inner classes of a test class, regardless of whether they're also test classes.
+   */
+  public static boolean isTestClass(PsiClass psiClass) {
+    if (psiClass.getQualifiedName() == null) {
+      return false;
+    }
+    if (JUnitUtil.isJUnit5(psiClass) && JUnitUtil.isJUnit5TestClass(psiClass, true)) {
+      return true;
+    }
+    if (!PsiClassUtil.isRunnableClass(psiClass, true, true)) {
+      return false;
+    }
+    if (AnnotationUtil.isAnnotated(psiClass, JUnitUtil.RUN_WITH, true)) {
+      return true;
+    }
+    if (JUnitUtil.isTestCaseInheritor(psiClass)) {
+      return true;
+    }
+    return CachedValuesManager.getCachedValue(
+        psiClass,
+        () ->
+            CachedValueProvider.Result.create(
+                hasTestOrSuiteMethods(psiClass),
+                PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+  }
+
+  private static boolean hasTestOrSuiteMethods(PsiClass psiClass) {
+    for (final PsiMethod method : psiClass.getAllMethods()) {
+      if (JUnitUtil.isSuiteMethod(method) || JUnitUtil.isTestAnnotated(method)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

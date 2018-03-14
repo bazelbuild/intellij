@@ -25,11 +25,13 @@ import com.google.common.collect.Sets;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.android.sync.importer.aggregators.TransitiveResourceMap;
 import com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceWarnings;
+import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
 import com.google.idea.blaze.android.sync.model.BlazeResourceLibrary;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -42,6 +44,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
 import java.util.Collections;
@@ -60,6 +63,7 @@ public final class BlazeAndroidWorkspaceImporter {
   private final TargetMap targetMap;
   private final ProjectViewTargetImportFilter importFilter;
   private final ProjectViewSet projectViewSet;
+  private final JavaSourceFilter sourceFilter;
   private final ArtifactLocationDecoder artifactLocationDecoder;
   private final ImmutableSet<String> whitelistedGenResourcePaths;
 
@@ -69,11 +73,13 @@ public final class BlazeAndroidWorkspaceImporter {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       TargetMap targetMap,
+      JavaSourceFilter sourceFilter,
       ArtifactLocationDecoder artifactLocationDecoder) {
     this.context = context;
     this.targetMap = targetMap;
     this.importFilter = new ProjectViewTargetImportFilter(project, workspaceRoot, projectViewSet);
     this.projectViewSet = projectViewSet;
+    this.sourceFilter = sourceFilter;
     this.artifactLocationDecoder = artifactLocationDecoder;
     this.project = project;
     this.whitelistedGenResourcePaths =
@@ -86,7 +92,7 @@ public final class BlazeAndroidWorkspaceImporter {
   }
 
   public BlazeAndroidImportResult importWorkspace() {
-    List<TargetIdeInfo> targets =
+    List<TargetIdeInfo> sourceTargets =
         targetMap
             .targets()
             .stream()
@@ -100,7 +106,7 @@ public final class BlazeAndroidWorkspaceImporter {
 
     WorkspaceBuilder workspaceBuilder = new WorkspaceBuilder();
 
-    for (TargetIdeInfo target : targets) {
+    for (TargetIdeInfo target : sourceTargets) {
       addSourceTarget(workspaceBuilder, transitiveResourceMap, target);
     }
 
@@ -115,9 +121,10 @@ public final class BlazeAndroidWorkspaceImporter {
     ImmutableList<AndroidResourceModule> androidResourceModules =
         buildAndroidResourceModules(workspaceBuilder);
     BlazeResourceLibrary resourceLibrary = createResourceLibrary(androidResourceModules);
+    ImmutableList<AarLibrary> aarLibraries = createAarLibraries(sourceFilter.getLibraryTargets());
 
     return new BlazeAndroidImportResult(
-        androidResourceModules, resourceLibrary, getJavacJar(targetMap.targets()));
+        androidResourceModules, resourceLibrary, aarLibraries, getJavacJar(targetMap.targets()));
   }
 
   private static ArtifactLocation getJavacJar(Collection<TargetIdeInfo> targets) {
@@ -214,6 +221,24 @@ public final class BlazeAndroidWorkspaceImporter {
           ImmutableList.copyOf(result.stream().sorted().collect(Collectors.toList())));
     }
     return null;
+  }
+
+  private ImmutableList<AarLibrary> createAarLibraries(Iterable<TargetIdeInfo> libraryTargets) {
+    ImmutableList.Builder<AarLibrary> builder = ImmutableList.builder();
+    for (TargetIdeInfo target : libraryTargets) {
+      // NOTE: we are not doing jdeps optimization, even though we have the jdeps data for the AAR's
+      // jar. The aar might still have resources that are used (e.g., @string/foo in .xml), and we
+      // don't have the equivalent of jdeps data.
+      if (target.androidAarIdeInfo == null
+          || target.javaIdeInfo == null
+          || target.javaIdeInfo.jars.isEmpty()) {
+        continue;
+      }
+      // aar_import should only have one jar (a merged jar from the AAR's jars).
+      LibraryArtifact firstJar = target.javaIdeInfo.jars.iterator().next();
+      builder.add(new AarLibrary(firstJar, target.androidAarIdeInfo.aar));
+    }
+    return builder.build();
   }
 
   private ImmutableList<AndroidResourceModule> buildAndroidResourceModules(

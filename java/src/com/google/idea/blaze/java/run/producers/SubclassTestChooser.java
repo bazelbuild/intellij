@@ -16,7 +16,6 @@
 package com.google.idea.blaze.java.run.producers;
 
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiClass;
@@ -72,7 +71,7 @@ public class SubclassTestChooser {
     return ClassInheritorsSearch.search(testClass)
         .findAll()
         .stream()
-        .filter(JUnitUtil::isTestClass)
+        .filter(ProducerUtils::isTestClass)
         .collect(Collectors.toList());
   }
 }

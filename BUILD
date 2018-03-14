@@ -22,6 +22,8 @@ test_suite(
         "//ijwb:unit_tests",
         "//java:integration_tests",
         "//java:unit_tests",
+        "//kotlin:integration_tests",
+        "//kotlin:unit_tests",
         "//plugin_dev:integration_tests",
         "//python:integration_tests",
         "//python:unit_tests",

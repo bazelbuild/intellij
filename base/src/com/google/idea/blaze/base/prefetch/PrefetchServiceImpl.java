@@ -28,8 +28,10 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -37,6 +39,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -45,13 +48,18 @@ public class PrefetchServiceImpl implements PrefetchService {
 
   private static final Logger logger = Logger.getInstance(PrefetchServiceImpl.class);
 
-  private static final long REFETCH_PERIOD_MILLIS = 24 * 60 * 60 * 1000;
+  private static final long REFETCH_PERIOD_MILLIS = TimeUnit.HOURS.toMillis(6);
   private final Map<Integer, Long> fileToLastFetchTimeMillis = Maps.newConcurrentMap();
+
+  private PrefetchServiceImpl() {
+    LowMemoryWatcher.register(
+        fileToLastFetchTimeMillis::clear, ApplicationManager.getApplication());
+  }
 
   @Override
   public ListenableFuture<?> prefetchFiles(
-      Project project, Collection<File> files, boolean refetchCachedFiles) {
-    return prefetchFiles(project, ImmutableSet.of(), files, refetchCachedFiles, false);
+      Project project, Collection<File> files, boolean refetchCachedFiles, boolean fetchFileTypes) {
+    return prefetchFiles(project, ImmutableSet.of(), files, refetchCachedFiles, fetchFileTypes);
   }
 
   private ListenableFuture<?> prefetchFiles(
@@ -160,7 +168,7 @@ public class PrefetchServiceImpl implements PrefetchService {
             project, projectViewSet, importRoots, blazeProjectData, externalFiles);
       }
     }
-    ListenableFuture<?> externalFilesFuture = prefetchFiles(project, externalFiles, false);
+    ListenableFuture<?> externalFilesFuture = prefetchFiles(project, externalFiles, false, false);
     return Futures.allAsList(sourceFilesFuture, externalFilesFuture);
   }
 }

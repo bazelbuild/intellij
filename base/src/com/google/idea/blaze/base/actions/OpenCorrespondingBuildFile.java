@@ -68,9 +68,8 @@ class OpenCorrespondingBuildFile extends BlazeProjectAction {
       return;
     }
 
-    boolean visible = virtualFile != null;
     boolean enabled = blazePackage != null;
-    presentation.setVisible(visible || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));
+    presentation.setVisible(enabled || !ActionPlaces.isPopupPlace(e.getPlace()));
     presentation.setEnabled(enabled);
   }
 }

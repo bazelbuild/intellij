@@ -16,12 +16,14 @@
 package com.google.idea.blaze.base.run.exporter;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeRunConfiguration;
 import com.google.idea.sdkcompat.run.RunnerAndConfigurationSettingsCompatUtils;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -38,12 +40,36 @@ public class RunConfigurationSerializer {
 
   private static final Logger logger = Logger.getInstance(RunConfigurationSerializer.class);
 
+  @VisibleForTesting static final String WORKSPACE_ROOT_VARIABLE_NAME = "WORKSPACE_ROOT";
+
+  private static void setWorkspacePathVariable(Project project) {
+    WorkspaceRoot root = WorkspaceRoot.fromProjectSafe(project);
+    if (root != null) {
+      PathMacros.getInstance().setMacro(WORKSPACE_ROOT_VARIABLE_NAME, root.toString());
+    }
+  }
+
+  private static void clearWorkspacePathVariable() {
+    PathMacros.getInstance().removeMacro(WORKSPACE_ROOT_VARIABLE_NAME);
+  }
+
+  private static synchronized void runWithPathVariableSet(Project project, Runnable runnable) {
+    try {
+      setWorkspacePathVariable(project);
+      runnable.run();
+    } finally {
+      clearWorkspacePathVariable();
+    }
+  }
+
   public static Element writeToXml(RunConfiguration configuration) {
     RunnerAndConfigurationSettings settings =
         RunManagerImpl.getInstanceImpl(configuration.getProject()).getSettings(configuration);
     Element element = new Element("configuration");
     try {
-      ((RunnerAndConfigurationSettingsImpl) settings).writeExternal(element);
+      runWithPathVariableSet(
+          configuration.getProject(),
+          () -> ((RunnerAndConfigurationSettingsImpl) settings).writeExternal(element));
     } catch (WriteExternalException e) {
       logger.warn("Error serializing run configuration to XML", e);
     }
@@ -72,12 +98,16 @@ public class RunConfigurationSerializer {
     if (!shouldLoadConfiguration(project, element)) {
       return;
     }
-    RunnerAndConfigurationSettings settings =
-        RunManagerImpl.getInstanceImpl(project).loadConfiguration(element, false);
-    RunConfiguration config = settings != null ? settings.getConfiguration() : null;
-    if (config instanceof BlazeRunConfiguration) {
-      ((BlazeRunConfiguration) config).setKeepInSync(true);
-    }
+    runWithPathVariableSet(
+        project,
+        () -> {
+          RunnerAndConfigurationSettings settings =
+              RunManagerImpl.getInstanceImpl(project).loadConfiguration(element, false);
+          RunConfiguration config = settings != null ? settings.getConfiguration() : null;
+          if (config instanceof BlazeRunConfiguration) {
+            ((BlazeRunConfiguration) config).setKeepInSync(true);
+          }
+        });
   }
 
   /**

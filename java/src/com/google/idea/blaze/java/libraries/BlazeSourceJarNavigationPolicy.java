@@ -16,26 +16,18 @@
 package com.google.idea.blaze.java.libraries;
 
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
+import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
-import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
-import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
@@ -47,8 +39,6 @@ import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import java.io.File;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nullable;
 
 /**
@@ -64,16 +54,6 @@ import javax.annotation.Nullable;
  * without having that source actually indexed.
  */
 final class BlazeSourceJarNavigationPolicy extends ClsCustomNavigationPolicyEx {
-
-  private final ConcurrentMap<Project, SimpleModificationTracker> projectSyncTrackers =
-      new ConcurrentHashMap<>();
-
-  public BlazeSourceJarNavigationPolicy() {
-    ApplicationManager.getApplication()
-        .getMessageBus()
-        .connect()
-        .subscribe(ProjectManager.TOPIC, new RemoveSyncTrackerOnProjectClosing());
-  }
 
   @Nullable
   @Override
@@ -145,26 +125,11 @@ final class BlazeSourceJarNavigationPolicy extends ClsCustomNavigationPolicyEx {
     if (sourceJar == null) {
       return null;
     }
-    VirtualFile vfsFile = getVirtualFile(sourceJarFile);
+    VirtualFile vfsFile = VfsUtils.resolveVirtualFile(sourceJarFile);
     if (vfsFile == null) {
       return null;
     }
     return JarFileSystem.getInstance().getJarRootForLocalFile(vfsFile);
-  }
-
-  @Nullable
-  private static VirtualFile getVirtualFile(File file) {
-    LocalFileSystem fileSystem = VirtualFileSystemProvider.getInstance().getSystem();
-    VirtualFile vf = fileSystem.findFileByPathIfCached(file.getPath());
-    if (vf != null) {
-      return vf;
-    }
-    vf = fileSystem.findFileByIoFile(file);
-    if (vf != null && vf.isValid()) {
-      return vf;
-    }
-    boolean shouldRefresh = ApplicationManager.getApplication().isDispatchThread();
-    return shouldRefresh ? fileSystem.refreshAndFindFileByIoFile(file) : null;
   }
 
   @Nullable
@@ -212,27 +177,6 @@ final class BlazeSourceJarNavigationPolicy extends ClsCustomNavigationPolicyEx {
     // after the next blaze sync. This means we'll run this check again after every sync for files
     // that don't have source jars, but it's not a huge deal because checking for the source jar
     // only takes a few microseconds.
-    projectSyncTrackers.putIfAbsent(file.getProject(), new SimpleModificationTracker());
-    return Result.create(null, projectSyncTrackers.get(file.getProject()));
-  }
-
-  private class RemoveSyncTrackerOnProjectClosing implements ProjectManagerListener {
-
-    @Override
-    public void projectClosing(Project project) {
-      projectSyncTrackers.remove(project);
-    }
-  }
-
-  class SyncTrackerUpdater extends SyncListener.Adapter {
-
-    @Override
-    public void afterSync(
-        Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {
-      SimpleModificationTracker modificationTracker = projectSyncTrackers.get(project);
-      if (modificationTracker != null) {
-        modificationTracker.incModificationCount();
-      }
-    }
+    return Result.create(null, BlazeSyncModificationTracker.getInstance(file.getProject()));
   }
 }

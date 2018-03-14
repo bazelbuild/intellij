@@ -15,8 +15,12 @@
  */
 package com.google.idea.sdkcompat.run;
 
+import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.RunConfiguration;
+import java.util.List;
 
 /** SDK compatibility bridge for {@link RunManager}. */
 public class RunManagerCompatUtils {
@@ -29,5 +33,15 @@ public class RunManagerCompatUtils {
       RunManager manager, RunnerAndConfigurationSettings settings) {
     // RunManager#removeConfiguration not present in 2017.1 plugin API
     return false;
+  }
+
+  /**
+   * Get before-run tasks associated with this run configuration.
+   *
+   * <p>#api171 remove post 171.
+   */
+  @SuppressWarnings("rawtypes")
+  public static List<BeforeRunTask> getBeforeRunTasks(RunConfiguration config) {
+    return RunManagerEx.getInstanceEx(config.getProject()).getBeforeRunTasks(config);
   }
 }

@@ -41,7 +41,7 @@ public class BlazeAndroidTestEventsHandler implements BlazeTestEventsHandler {
 
   @Override
   public boolean handlesKind(@Nullable Kind kind) {
-    return kind == Kind.ANDROID_TEST;
+    return kind != null && kind.isOneOf(Kind.ANDROID_TEST, Kind.ANDROID_INSTRUMENTATION_TEST);
   }
 
   @Override

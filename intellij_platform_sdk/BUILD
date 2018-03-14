@@ -38,30 +38,30 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-2017.2.6",
+    name = "intellij-2018.1",
     values = {
-        "define": "ij_product=intellij-2017.2.6",
+        "define": "ij_product=intellij-2018.1",
     },
 )
 
 config_setting(
-    name = "intellij-2017.3.3",
+    name = "intellij-ue-2018.1",
     values = {
-        "define": "ij_product=intellij-2017.3.3",
+        "define": "ij_product=intellij-ue-2018.1",
     },
 )
 
 config_setting(
-    name = "intellij-ue-2017.2.6",
+    name = "intellij-2017.3",
     values = {
-        "define": "ij_product=intellij-ue-2017.2.6",
+        "define": "ij_product=intellij-2017.3",
     },
 )
 
 config_setting(
-    name = "intellij-ue-2017.3.3",
+    name = "intellij-ue-2017.3",
     values = {
-        "define": "ij_product=intellij-ue-2017.3.3",
+        "define": "ij_product=intellij-ue-2017.3",
     },
 )
 
@@ -80,9 +80,23 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-3.0.1.0",
+    name = "android-studio-3.2.0.3",
     values = {
-        "define": "ij_product=android-studio-3.0.1.0",
+        "define": "ij_product=android-studio-3.2.0.3",
+    },
+)
+
+config_setting(
+    name = "android-studio-3.1.0.12",
+    values = {
+        "define": "ij_product=android-studio-3.1.0.12",
+    },
+)
+
+config_setting(
+    name = "android-studio-3.0",
+    values = {
+        "define": "ij_product=android-studio-3.0",
     },
 )
 
@@ -101,23 +115,22 @@ config_setting(
 )
 
 config_setting(
-    name = "clion-2017.2.3",
+    name = "clion-2017.3",
     values = {
-        "define": "ij_product=clion-2017.2.3",
+        "define": "ij_product=clion-2017.3",
     },
 )
 
 config_setting(
-    name = "clion-2017.3.2",
+    name = "clion-2018.1",
     values = {
-        "define": "ij_product=clion-2017.3.2",
+        "define": "ij_product=clion-2018.1",
     },
 )
 
 load(
     ":build_defs.bzl",
     "select_for_ide",
-    "select_for_plugin_api",
     "select_from_plugin_api_directory",
 )
 
@@ -157,15 +170,6 @@ java_library(
     ],
 )
 
-# For the grammar-kit binary only (a build time tool). It needs the IJ API for runtime.
-# The clion.jar doesn't work (missing MockEditorFactory, MockProjectEx), so just use
-# an idea.jar. It doesn't affect the generated code.
-java_library(
-    name = "plugin_api_for_grammar_kit",
-    visibility = ["//third_party/java/jetbrains/grammar_kit:__pkg__"],
-    exports = ["//intellij_platform_sdk/intellij_ce_2017_2_6:sdk"],
-)
-
 # The version of guava bundled with the IntelliJ plugin API.
 java_library(
     name = "guava",
@@ -181,13 +185,10 @@ java_library(
 # aswb.jar, but they will be in clwb.jar.
 java_library(
     name = "jsr305",
-    # Once UE 2017.2 is no longer supported, this can be switched to a simpler select_for_ide
-    exports = select_for_plugin_api({
-        "default": [":plugin_api"],
-        "intellij-ue-2017.2.6": ["@jsr305_annotations//jar"],
-        "clion-2017.2.3": ["@jsr305_annotations//jar"],
-        "clion-2017.3.2": ["@jsr305_annotations//jar"],
-    }),
+    exports = select_for_ide(
+        clion = ["@jsr305_annotations//jar"],
+        default = [":plugin_api"],
+    ),
 )
 
 # The version of truth bundled with the IntelliJ plugin API.
@@ -238,6 +239,28 @@ java_library(
         android_studio = [":hg4idea"],
         clion = [":hg4idea"],
         intellij = [":hg4idea"],
+    ),
+)
+
+# IntelliJ Kotlin plugin
+java_library(
+    name = "kotlin",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [":kotlin"],
+        clion = [],
+        intellij = [":kotlin"],
+    ),
+)
+
+# IntelliJ Kotlin plugin
+java_library(
+    name = "kotlin_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [":kotlin"],
+        clion = [],
+        intellij = [":kotlin"],
     ),
 )
 

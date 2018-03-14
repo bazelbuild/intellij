@@ -38,24 +38,21 @@ final class BlazeConfigurationResolverResult {
   private final Project project;
 
   // Multiple target keys may map to the same resolve configuration.
-  final ImmutableMap<TargetKey, BlazeResolveConfiguration> configurationMap;
+  private final ImmutableMap<TargetKey, BlazeResolveConfiguration> configurationMap;
   final ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration>
       uniqueResolveConfigurations;
   final ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings;
-  @Nullable final BlazeConfigurationResolverDiff resolverDiff;
 
   BlazeConfigurationResolverResult(
       Project project,
       ImmutableMap<TargetKey, BlazeResolveConfiguration> configurationMap,
       ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration>
           uniqueResolveConfigurations,
-      ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings,
-      @Nullable BlazeConfigurationResolverDiff resolverDiff) {
+      ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings) {
     this.project = project;
     this.configurationMap = configurationMap;
     this.uniqueResolveConfigurations = uniqueResolveConfigurations;
     this.compilerSettings = compilerSettings;
-    this.resolverDiff = resolverDiff;
   }
 
   static Builder builder(Project project) {
@@ -87,22 +84,12 @@ final class BlazeConfigurationResolverResult {
     return uniqueResolveConfigurations.values().asList();
   }
 
-  /**
-   * The difference between the latest resolver result and the previous one, if known. Returns null
-   * if unknown (or there is no previous result).
-   */
-  @Nullable
-  BlazeConfigurationResolverDiff getConfigurationDiff() {
-    return resolverDiff;
-  }
-
   static class Builder {
     final Project project;
     ImmutableMap<TargetKey, BlazeResolveConfiguration> configurationMap = ImmutableMap.of();
     ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration> uniqueConfigurations =
         ImmutableMap.of();
     ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings = ImmutableMap.of();
-    @Nullable BlazeConfigurationResolverDiff resolverDiff;
 
     public Builder(Project project) {
       this.project = project;
@@ -110,7 +97,7 @@ final class BlazeConfigurationResolverResult {
 
     BlazeConfigurationResolverResult build() {
       return new BlazeConfigurationResolverResult(
-          project, configurationMap, uniqueConfigurations, compilerSettings, resolverDiff);
+          project, configurationMap, uniqueConfigurations, compilerSettings);
     }
 
     void setConfigurationMap(ImmutableMap<TargetKey, BlazeResolveConfiguration> configurationMap) {
@@ -126,10 +113,6 @@ final class BlazeConfigurationResolverResult {
     void setCompilerSettings(
         ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings) {
       this.compilerSettings = compilerSettings;
-    }
-
-    void setResolveDiff(@Nullable BlazeConfigurationResolverDiff resolverDiff) {
-      this.resolverDiff = resolverDiff;
     }
   }
 }

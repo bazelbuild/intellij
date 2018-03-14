@@ -18,13 +18,11 @@ package com.google.idea.blaze.base.run;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
@@ -42,16 +40,15 @@ public class BlazeBuildTargetRunConfigurationFactory extends BlazeRunConfigurati
 
   @Override
   public boolean handlesTarget(Project project, BlazeProjectData projectData, Label label) {
-    return findProjectTarget(projectData, label) != null;
+    return findProjectTarget(project, label) != null;
   }
 
   @Nullable
-  private static TargetInfo findProjectTarget(BlazeProjectData projectData, Label label) {
-    TargetIdeInfo target = projectData.targetMap.get(TargetKey.forPlainTarget(label));
-    if (target == null) {
+  private static TargetInfo findProjectTarget(Project project, Label label) {
+    TargetInfo targetInfo = TargetFinder.findTargetInfo(project, label);
+    if (targetInfo == null) {
       return null;
     }
-    TargetInfo targetInfo = target.toTargetInfo();
     return HANDLED_RULE_TYPES.contains(targetInfo.getRuleType()) ? targetInfo : null;
   }
 
@@ -63,12 +60,7 @@ public class BlazeBuildTargetRunConfigurationFactory extends BlazeRunConfigurati
   @Override
   public void setupConfiguration(RunConfiguration configuration, Label label) {
     BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) configuration;
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(configuration.getProject()).getBlazeProjectData();
-    if (projectData == null) {
-      return;
-    }
-    TargetInfo target = findProjectTarget(projectData, label);
+    TargetInfo target = findProjectTarget(configuration.getProject(), label);
     blazeConfig.setTargetInfo(target);
     if (target == null) {
       return;

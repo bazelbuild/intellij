@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.lang.buildfile.completion;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.devtools.build.lib.query2.proto.proto2api.Build;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.AttributeDefinition;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
@@ -26,7 +27,6 @@ import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefiniti
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.testing.ServiceHelper;
-import com.google.repackaged.devtools.build.lib.query2.proto.proto2api.Build;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -106,6 +106,17 @@ public class BuiltInFunctionAttributeCompletionContributorTest
 
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
     editorTest.setCaretPosition(editor, 0, "sh_binary(#".length());
+    assertThat(editorTest.getCompletionItemsAsStrings()).isEmpty();
+  }
+
+  @Test
+  public void testNoCompletionAfterInteger() {
+    setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
+
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "sh_binary(testonly = 1,");
+
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 0, "sh_binary(testonly = 1".length());
     assertThat(editorTest.getCompletionItemsAsStrings()).isEmpty();
   }
 

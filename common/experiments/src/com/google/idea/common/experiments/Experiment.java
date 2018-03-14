@@ -17,7 +17,7 @@ package com.google.idea.common.experiments;
 
 /** Experiment class. */
 public abstract class Experiment {
-  protected final String key;
+  private final String key;
 
   Experiment(String key) {
     this.key = key;

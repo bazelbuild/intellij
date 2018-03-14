@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
 import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags;
+import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
@@ -40,13 +41,7 @@ import javax.annotation.Nullable;
 /** Provides java-specific methods needed by the SM-runner test UI. */
 public class BlazeJavaTestEventsHandler implements BlazeTestEventsHandler {
 
-  private static final ImmutableSet<Kind> HANDLED_KINDS =
-      ImmutableSet.of(
-          Kind.JAVA_TEST,
-          Kind.ANDROID_ROBOLECTRIC_TEST,
-          Kind.ANDROID_LOCAL_TEST,
-          Kind.GWT_TEST,
-          Kind.SCALA_TEST);
+  private static final ImmutableSet<Kind> HANDLED_KINDS = JavaLikeLanguage.getAllHandledTestKinds();
 
   @Override
   public boolean handlesKind(@Nullable Kind kind) {

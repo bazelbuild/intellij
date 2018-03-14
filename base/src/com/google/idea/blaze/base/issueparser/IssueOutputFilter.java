@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.console.BlazeConsoleToolWindowFactory;
 import com.google.idea.blaze.base.console.BlazeConsoleView;
+import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser.Parser;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -26,11 +27,15 @@ import com.google.idea.blaze.base.ui.problems.BlazeProblemsView;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.SimpleTextAttributes;
+import java.io.File;
 import javax.annotation.Nullable;
 
 /** Parses issues from blaze output, forwarding to {@link BlazeProblemsView}. */
@@ -76,16 +81,69 @@ public class IssueOutputFilter implements Filter {
     ResultItem dummyResult = dummyResult(offset);
     BlazeProblemsView.getInstance(project)
         .addMessage(issue, openConsoleToHyperlink(dummyResult.getHyperlinkInfo(), offset));
-    return new Result(ImmutableList.of(dummyResult));
+
+    ResultItem hyperlink = hyperlinkItem(issue, offset);
+    return hyperlink != null
+        ? new Result(ImmutableList.of(dummyResult, hyperlink))
+        : new Result(ImmutableList.of(dummyResult));
   }
 
-  private ResultItem dummyResult(int offset) {
+  /** A dummy result used for navigating from the problems view to the console. */
+  private static ResultItem dummyResult(int offset) {
     return new ResultItem(
         offset,
         offset,
-        project -> {},
+        (NonProblemHyperlinkInfo) project -> {},
         SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes(),
         SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes());
+  }
+
+  /**
+   * A user-visible hyperlink navigating from the console to the relevant file + line of the issue.
+   */
+  @Nullable
+  private static ResultItem hyperlinkItem(IssueOutput issue, int offset) {
+    TextRange range = issue.getConsoleHyperlinkRange();
+    HyperlinkInfo link = getHyperlinkInfo(issue);
+    if (range == null || link == null) {
+      return null;
+    }
+    return new ResultItem(range.getStartOffset() + offset, range.getEndOffset() + offset, link);
+  }
+
+  @Nullable
+  private static HyperlinkInfo getHyperlinkInfo(IssueOutput issue) {
+    Navigatable navigatable = issue.getNavigatable();
+    if (navigatable != null) {
+      return project -> navigatable.navigate(true);
+    }
+    VirtualFile vf = resolveVirtualFile(issue.getFile());
+    return vf != null
+        ? project ->
+            new OpenFileDescriptor(project, vf, issue.getLine() - 1, issue.getColumn() - 1)
+                .navigate(true)
+        : null;
+  }
+
+  /**
+   * Finds the virtual file associated with the given file path, resolving symlinks where relevant.
+   */
+  @Nullable
+  private static VirtualFile resolveVirtualFile(@Nullable File file) {
+    if (file == null) {
+      return null;
+    }
+    VirtualFile vf = VfsUtils.resolveVirtualFile(file);
+    return vf != null ? resolveSymlinks(vf) : null;
+  }
+
+  /**
+   * Attempts to resolve symlinks in the virtual file path, falling back to returning the original
+   * virtual file if unsuccessful.
+   */
+  private static VirtualFile resolveSymlinks(VirtualFile file) {
+    VirtualFile resolved = file.getCanonicalFile();
+    return resolved != null ? resolved : file;
   }
 
   private Navigatable openConsoleToHyperlink(HyperlinkInfo link, int originalOffset) {

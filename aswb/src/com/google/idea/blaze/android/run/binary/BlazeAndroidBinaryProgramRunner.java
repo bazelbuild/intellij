@@ -32,13 +32,13 @@ import com.intellij.execution.runners.DefaultProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 
-/** Program runner for {@link BlazeAndroidRunConfiguration} */
+/** Program runner for configurations from {@link BlazeAndroidBinaryRunConfigurationHandler}. */
 public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
   @Override
   public boolean canRun(String executorId, RunProfile profile) {
     BlazeAndroidRunConfigurationHandler handler =
         BlazeAndroidRunConfigurationHandler.getHandlerFrom(profile);
-    if (handler == null) {
+    if (!(handler instanceof BlazeAndroidBinaryRunConfigurationHandler)) {
       return false;
     }
     // In practice, the stock runner will probably handle all non-incremental-install configs.
@@ -48,9 +48,6 @@ public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
     }
     // Otherwise, the configuration must be a Blaze incremental install configuration running with
     // an incremental install executor.
-    if (!(handler instanceof BlazeAndroidBinaryRunConfigurationHandler)) {
-      return false;
-    }
     AndroidBinaryLaunchMethod launchMethod =
         ((BlazeAndroidBinaryRunConfigurationHandler) handler).getState().getLaunchMethod();
     return (AndroidBinaryLaunchMethod.MOBILE_INSTALL.equals(launchMethod)
@@ -88,6 +85,6 @@ public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
 
   @Override
   public String getRunnerId() {
-    return "AndroidProgramRunner";
+    return "AndroidBinaryProgramRunner";
   }
 }

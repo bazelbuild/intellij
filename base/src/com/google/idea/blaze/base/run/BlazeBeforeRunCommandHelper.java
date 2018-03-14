@@ -44,7 +44,10 @@ import java.util.List;
 
 /**
  * Runs a blaze build command associated with a {@link BlazeCommandRunConfiguration configuration},
- * typically as a 'before run configuration' task.
+ * typically as a 'before run configuration' task. The flags in requiredExtraBlazeFlags appear in
+ * the command line after flags a user specifies in their configuration and will override those
+ * flags. The flags in overridableExtraBlazeFlags appear before, and can be overridden by
+ * user-specified flags.
  */
 public final class BlazeBeforeRunCommandHelper {
 
@@ -54,7 +57,8 @@ public final class BlazeBeforeRunCommandHelper {
   public static ListenableFuture<BuildResult> runBlazeBuild(
       BlazeCommandRunConfiguration configuration,
       BuildResultHelper buildResultHelper,
-      List<String> extraBlazeFlags,
+      List<String> requiredExtraBlazeFlags,
+      List<String> overridableExtraBlazeFlags,
       String progressMessage) {
     Project project = configuration.getProject();
     BlazeCommandRunConfigurationCommonState handlerState =
@@ -78,7 +82,7 @@ public final class BlazeBeforeRunCommandHelper {
               @Override
               protected BuildResult execute(BlazeContext context) {
                 context
-                    .push(new IssuesScope(project))
+                    .push(new IssuesScope(project, true))
                     .push(
                         new BlazeConsoleScope.Builder(project)
                             .setPopupBehavior(consolePopupBehavior)
@@ -92,6 +96,7 @@ public final class BlazeBeforeRunCommandHelper {
                 BlazeCommand.Builder command =
                     BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
                         .addTargets(configuration.getTarget())
+                        .addBlazeFlags(overridableExtraBlazeFlags)
                         .addBlazeFlags(
                             BlazeFlags.blazeFlags(
                                 project,
@@ -99,7 +104,7 @@ public final class BlazeBeforeRunCommandHelper {
                                 BlazeCommandName.BUILD,
                                 BlazeInvocationContext.NonSync))
                         .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
-                        .addBlazeFlags(extraBlazeFlags)
+                        .addBlazeFlags(requiredExtraBlazeFlags)
                         .addBlazeFlags(buildResultHelper.getBuildFlags());
 
                 int exitCode =
