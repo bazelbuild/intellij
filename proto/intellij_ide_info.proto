@@ -59,6 +59,7 @@ message JavaIdeInfo {
   ArtifactLocation jdeps = 5;
   LibraryArtifact filtered_gen_jar = 6;
   string main_class = 7;
+  string test_class = 8;
 }
 
 message CIdeInfo {
@@ -92,6 +93,10 @@ message AndroidIdeInfo {
 
 message AndroidSdkIdeInfo {
   ArtifactLocation android_jar = 1;
+}
+
+message AndroidAarIdeInfo {
+  ArtifactLocation aar = 1;
 }
 
 message PyIdeInfo {
@@ -171,7 +176,6 @@ message TargetIdeInfo {
   string label = 1 [deprecated = true];
   repeated string dependencies = 4 [deprecated = true];
 
-  // kind is one of {JAVA,ANDROID}_{LIBRARY,BINARY,TEST} and JAVA_IMPORT
   JavaIdeInfo java_ide_info = 7;
   AndroidIdeInfo android_ide_info = 8;
 
@@ -199,6 +203,7 @@ message TargetIdeInfo {
   reserved 21;
 
   AndroidSdkIdeInfo android_sdk_ide_info = 22;
+  AndroidAarIdeInfo android_aar_ide_info = 29;
 
   reserved 23;
 
@@ -209,5 +214,5 @@ message TargetIdeInfo {
   TsIdeInfo ts_ide_info = 27;
   DartIdeInfo dart_ide_info = 28;
 
-  // Next available: 29
+  // Next available: 30
 }

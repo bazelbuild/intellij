@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.BlazeRunConfigurationFactory;
@@ -40,10 +41,10 @@ public class BlazeBuildFileRunConfigurationProducer
   private static class BuildTarget {
 
     private final FuncallExpression rule;
-    private final String ruleType;
+    private final RuleType ruleType;
     private final Label label;
 
-    BuildTarget(FuncallExpression rule, String ruleType, Label label) {
+    BuildTarget(FuncallExpression rule, RuleType ruleType, Label label) {
       this.rule = rule;
       this.ruleType = ruleType;
       this.label = label;
@@ -134,7 +135,7 @@ public class BlazeBuildFileRunConfigurationProducer
     if (ruleType == null || label == null) {
       return null;
     }
-    return new BuildTarget(rule, ruleType, label);
+    return new BuildTarget(rule, Kind.guessRuleType(ruleType), label);
   }
 
   private static void setupConfiguration(
@@ -159,15 +160,22 @@ public class BlazeBuildFileRunConfigurationProducer
   private static void setupBuildFileConfiguration(
       BlazeCommandRunConfiguration configuration, BuildTarget target) {
     configuration.setTarget(target.label);
-    // Try to make it a 'blaze build' command, if applicable.
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState != null) {
-      // TODO move the old test rule functionality to a BlazeRunConfigurationFactory
-      BlazeCommandName command =
-          Kind.isTestRule(target.ruleType) ? BlazeCommandName.TEST : BlazeCommandName.BUILD;
-      handlerState.getCommandState().setCommand(command);
+      handlerState.getCommandState().setCommand(commandForRuleType(target.ruleType));
     }
     configuration.setGeneratedName();
+  }
+
+  private static BlazeCommandName commandForRuleType(RuleType ruleType) {
+    switch (ruleType) {
+      case BINARY:
+        return BlazeCommandName.RUN;
+      case TEST:
+        return BlazeCommandName.TEST;
+      default:
+        return BlazeCommandName.BUILD;
+    }
   }
 }

@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.issueparser.BlazeIssueParserProvider;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.util.TextRange;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -55,5 +56,7 @@ public class PyIssueParserProviderTest extends BlazeTestCase {
     assertThat(issue).isNotNull();
     assertThat(issue.getCategory()).isEqualTo(Category.ERROR);
     assertThat(issue.getNavigatable()).isNotNull();
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(TextRange.create("File \"".length(), "File \"dataset.py\", line 109".length()));
   }
 }

@@ -46,6 +46,7 @@ import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.settings.ui.JPanelProvidingProject;
 import com.google.idea.blaze.base.settings.ui.ProjectViewUi;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -158,9 +159,7 @@ public final class BlazeEditProjectViewControl {
         PROJECT_FOLDER_DESCRIPTOR,
         TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
         false);
-    final String dataDirToolTipText =
-        "Directory in which to store the project's metadata. "
-            + "Choose a directory outside of your workspace.";
+    final String dataDirToolTipText = "Directory in which to store the project's metadata.";
     projectDataDirField.setToolTipText(dataDirToolTipText);
     projectDataDirLabel.setToolTipText(dataDirToolTipText);
 
@@ -390,14 +389,21 @@ public final class BlazeEditProjectViewControl {
   }
 
   private String getDefaultProjectDataDirectory(String projectName) {
+    File canonicalLocation = workspaceOption.getCanonicalProjectDataLocation();
+    if (canonicalLocation != null) {
+      return canonicalLocation.getAbsolutePath();
+    }
     File desiredLocation = getProjectDataUnderWorkspaceVcs();
     if (desiredLocation == null) {
-      String lastProjectLocation =
-          RecentProjectsManager.getInstance().getLastProjectCreationLocation();
-      if (lastProjectLocation != null) {
+      String lastProjectPath = RecentProjectsManager.getInstance().getLastProjectPath();
+      if (lastProjectPath != null) {
         // Because RecentProjectsManager uses PathUtil.toSystemIndependentName.
-        lastProjectLocation = lastProjectLocation.replace('/', File.separatorChar);
-        desiredLocation = new File(lastProjectLocation, projectName);
+        lastProjectPath = lastProjectPath.replace('/', File.separatorChar);
+        File lastProject = new File(lastProjectPath);
+        if (lastProject.getName().equals(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY)) {
+          lastProject = lastProject.getParentFile();
+        }
+        desiredLocation = new File(lastProject.getParentFile(), projectName);
       } else {
         desiredLocation = new File(getDefaultProjectsDirectory(), projectName);
       }
@@ -411,9 +417,34 @@ public final class BlazeEditProjectViewControl {
     return new File(userHome, productName.replace(" ", "") + "Projects");
   }
 
+  /**
+   * If a user had previously placed their project data under the VCS associated with their project,
+   * and is now creating a project with a new project with the same VCS, we will use the same
+   * relative path as the previous project. E.g.,
+   *
+   * <p>previous project:
+   *
+   * <pre>
+   * foo/.git/
+   * foo/project/WORKSPACE
+   * foo/idea/.idea/
+   * </pre>
+   *
+   * current project:
+   *
+   * <pre>
+   * bar/.git/
+   * bar/project/WORKSPACE
+   * bar/idea/.idea/
+   * </pre>
+   *
+   * @deprecated to be replaced by {@link
+   *     BlazeSelectWorkspaceOption#getCanonicalProjectDataLocation()}
+   */
   @Nullable
+  @Deprecated
   private File getProjectDataUnderWorkspaceVcs() {
-    if (!workspaceOption.allowProjectDataInVcsRoot()) {
+    if (!workspaceOption.allowProjectDataInVcs()) {
       return null;
     }
     String lastVcsRoot = PropertiesComponent.getInstance().getValue(LAST_VCS_ROOT_PROPERTY);
@@ -422,17 +453,12 @@ public final class BlazeEditProjectViewControl {
     if (lastVcsRoot == null || lastProjectPath == null) {
       return null;
     }
-    String lastRelativePath = Paths.relativeIfUnder(lastVcsRoot, lastProjectPath);
+    String lastRelativePath = Paths.relativeIfUnder(lastProjectPath, lastVcsRoot);
     if (lastRelativePath == null) {
       return null;
     }
-    File currentVcsRootFile = workspaceOption.getVcsRoot();
-    if (currentVcsRootFile == null) {
-      return null;
-    }
-    String currentVcsRoot = currentVcsRootFile.getPath();
-    if (currentVcsRoot.equals(lastVcsRoot)) {
-      // Weird case where user puts everything under the same repository.
+    File currentVcsRoot = workspaceOption.getVcsRoot();
+    if (currentVcsRoot == null) {
       return null;
     }
     return new File(currentVcsRoot, lastRelativePath);
@@ -482,13 +508,8 @@ public final class BlazeEditProjectViewControl {
       }
     }
     File workspaceRootDirectory = workspaceRoot.directory();
-    if (FileUtil.isAncestor(projectDataDir, workspaceRootDirectory, false)) {
-      return BlazeValidationResult.failure(
-          new BlazeValidationError(
-              "Project data directory must not contain the workspace. "
-                  + "Please choose a directory outside your workspace."));
-    }
-    if (FileUtil.isAncestor(workspaceRootDirectory, projectDataDir, false)) {
+    if (!workspaceOption.allowProjectDataInVcs()
+        && FileUtil.isAncestor(workspaceRootDirectory, projectDataDir, false)) {
       return BlazeValidationResult.failure(
           new BlazeValidationError(
               "Project data directory cannot be inside your workspace. "
@@ -591,7 +612,12 @@ public final class BlazeEditProjectViewControl {
 
   public void updateBuilder(BlazeNewProjectBuilder builder) {
     String projectName = projectNameField.getText().trim();
-    String projectDataDirectory = projectDataDirField.getText().trim();
+    File projectDataDirectoryFile = new File(projectDataDirField.getText().trim());
+    if (workspaceOption.allowProjectDataInVcs()) {
+      projectDataDirectoryFile =
+          new File(projectDataDirectoryFile, BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY);
+    }
+    String projectDataDirectory = projectDataDirectoryFile.getPath();
     File localProjectViewFile =
         ProjectViewStorageManager.getLocalProjectViewFileName(
             builder.getBuildSystem(), new File(projectDataDirectory));

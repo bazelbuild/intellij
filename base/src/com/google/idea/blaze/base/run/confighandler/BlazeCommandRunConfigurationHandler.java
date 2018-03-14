@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run.confighandler;
 
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.intellij.execution.ExecutionException;
@@ -55,11 +56,11 @@ public interface BlazeCommandRunConfigurationHandler {
   String suggestedName(BlazeCommandRunConfiguration configuration);
 
   /**
-   * @return The name of the Blaze command associated with this handler. May be null if no command
-   *     is appropriate.
+   * @return The {@link BlazeCommandName} associated with this state. May be null if no command is
+   *     set.
    */
   @Nullable
-  String getCommandName();
+  BlazeCommandName getCommandName();
 
   /** @return The name of this handler. Shown in the UI. */
   String getHandlerName();

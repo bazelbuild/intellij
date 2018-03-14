@@ -45,7 +45,6 @@ import javax.swing.SwingConstants;
 public class BlazeUserSettingsConfigurable extends BaseConfigurable
     implements SearchableConfigurable {
 
-
   private static final String BLAZE_BINARY_PATH_KEY = "blaze.binary.path";
   public static final String BAZEL_BINARY_PATH_KEY = "bazel.binary.path";
   public static final String ID = "blaze.view";
@@ -58,6 +57,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
   private JPanel myMainPanel;
   private JComboBox<BlazeConsolePopupBehavior> showBlazeConsoleOnSync;
   private JCheckBox suppressConsoleForRunAction;
+  private JCheckBox showProblemsViewForRunAction;
   private JCheckBox resyncAutomatically;
   private JCheckBox collapseProjectView;
   private JCheckBox formatBuildFilesOnSave;
@@ -93,6 +93,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     settings.setShowBlazeConsoleOnSync(
         (BlazeConsolePopupBehavior) showBlazeConsoleOnSync.getSelectedItem());
     settings.setSuppressConsoleForRunAction(suppressConsoleForRunAction.isSelected());
+    settings.setShowProblemsViewForRunAction(showProblemsViewForRunAction.isSelected());
     settings.setResyncAutomatically(resyncAutomatically.isSelected());
     settings.setCollapseProjectView(collapseProjectView.isSelected());
     settings.setFormatBuildFilesOnSave(formatBuildFilesOnSave.isSelected());
@@ -110,6 +111,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     BlazeUserSettings settings = BlazeUserSettings.getInstance();
     showBlazeConsoleOnSync.setSelectedItem(settings.getShowBlazeConsoleOnSync());
     suppressConsoleForRunAction.setSelected(settings.getSuppressConsoleForRunAction());
+    showProblemsViewForRunAction.setSelected(settings.getShowProblemsViewForRunAction());
     resyncAutomatically.setSelected(settings.getResyncAutomatically());
     collapseProjectView.setSelected(settings.getCollapseProjectView());
     formatBuildFilesOnSave.setSelected(settings.getFormatBuildFilesOnSave());
@@ -134,6 +136,8 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     boolean isModified =
         showBlazeConsoleOnSync.getSelectedItem() != settings.getShowBlazeConsoleOnSync()
             || suppressConsoleForRunAction.isSelected() != settings.getSuppressConsoleForRunAction()
+            || showProblemsViewForRunAction.isSelected()
+                != settings.getShowProblemsViewForRunAction()
             || resyncAutomatically.isSelected() != settings.getResyncAutomatically()
             || collapseProjectView.isSelected() != settings.getCollapseProjectView()
             || formatBuildFilesOnSave.isSelected() != settings.getFormatBuildFilesOnSave()
@@ -173,7 +177,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
       contributorRowCount += contributor.getRowCount();
     }
 
-    final int totalRowSize = 9 + contributorRowCount;
+    final int totalRowSize = 10 + contributorRowCount;
     int rowi = 0;
 
     SearchableOptionsHelper helper = new SearchableOptionsHelper(this);
@@ -223,6 +227,27 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     suppressConsoleForRunAction.setVerticalAlignment(SwingConstants.CENTER);
     myMainPanel.add(
         suppressConsoleForRunAction,
+        new GridConstraints(
+            rowi++,
+            0,
+            1,
+            2,
+            GridConstraints.ANCHOR_NORTHWEST,
+            GridConstraints.FILL_NONE,
+            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+            GridConstraints.SIZEPOLICY_FIXED,
+            null,
+            null,
+            null,
+            0,
+            false));
+    text = String.format("Show %s problems view for Run/Debug actions", defaultBuildSystem);
+    helper.registerLabelText(text, true);
+    showProblemsViewForRunAction = new JCheckBox();
+    showProblemsViewForRunAction.setText(text);
+    showProblemsViewForRunAction.setVerticalAlignment(SwingConstants.CENTER);
+    myMainPanel.add(
+        showProblemsViewForRunAction,
         new GridConstraints(
             rowi++,
             0,

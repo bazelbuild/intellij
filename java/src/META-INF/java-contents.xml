@@ -56,7 +56,7 @@
     <JavaLikeLanguage implementation="com.google.idea.blaze.java.sync.source.JavaLikeLanguage$Java"/>
     <TestTargetHeuristic implementation="com.google.idea.blaze.java.run.JUnitTestHeuristic" order="before TestSizeHeuristic"/>
     <TestTargetHeuristic implementation="com.google.idea.blaze.java.run.QualifiedClassNameHeuristic" order="before TargetNameHeuristic"/>
-    <SyncListener implementation="com.google.idea.blaze.java.libraries.BlazeSourceJarNavigationPolicy$SyncTrackerUpdater"/>
+    <SyncListener implementation="com.google.idea.blaze.java.libraries.BlazeSyncModificationTracker$SyncTrackerUpdater"/>
     <JavaClasspathAspectStrategy implementation="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy$BazelStrategy"/>
     <JavaTestCaseIdentifier implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestMethodConfigurationProducer$Identifier"/>
   </extensions>
@@ -97,8 +97,19 @@
     <psi.referenceContributor language="BUILD" implementation="com.google.idea.blaze.java.lang.build.references.JavaClassReferenceContributor"/>
     <useScopeEnlarger implementation="com.google.idea.blaze.java.psi.AutoFactoryUseScopeEnlarger"/>
     <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.AutoFactoryImplicitUsageProvider"/>
+    <useScopeEnlarger implementation="com.google.idea.blaze.java.psi.DaggerUseScopeEnlarger"/>
+    <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.DaggerImplicitUsageProvider"/>
+    <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.GuiceImplicitUsageProvider"/>
+    <projectService serviceImplementation="com.google.idea.blaze.java.libraries.BlazeSyncModificationTracker"/>
     <psi.clsCustomNavigationPolicy implementation="com.google.idea.blaze.java.libraries.BlazeSourceJarNavigationPolicy"/>
-    <debugger.positionManagerFactory implementation="com.google.idea.blaze.java.run.ExternalFilePositionManager$Factory"/>
+    <!-- Need to come first to prevent overriding other position managers. -->
+    <debugger.positionManagerFactory implementation="com.google.idea.blaze.java.run.ExternalFilePositionManager$Factory" order="first"/>
+    <projectService serviceInterface="com.google.idea.blaze.java.fastbuild.FastBuildService"
+                    serviceImplementation="com.google.idea.blaze.java.fastbuild.FastBuildServiceImpl"/>
+    <projectService serviceInterface="com.google.idea.blaze.java.fastbuild.FastBuildCompilerFactory"
+                    serviceImplementation="com.google.idea.blaze.java.fastbuild.FastBuildCompilerFactoryImpl"/>
+    <projectService serviceInterface="com.google.idea.blaze.java.fastbuild.FastBuildIncrementalCompiler"
+        serviceImplementation="com.google.idea.blaze.java.fastbuild.FastBuildIncrementalCompilerImpl"/>
   </extensions>
 
   <application-components>
@@ -124,5 +135,7 @@
                     interface="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.JavaTestCaseIdentifier"
                     interface="com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer$JavaTestCaseIdentifier"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildConfigurationRunnerFactory"
+                    interface="com.google.idea.blaze.java.run.JavaFastBuildConfigurationRunnerFactory"/>
   </extensionPoints>
 </idea-plugin>

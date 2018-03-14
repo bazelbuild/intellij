@@ -8,12 +8,11 @@ java_library(
     name = "sdkcompat",
     visibility = ["//visibility:public"],
     exports = select_for_plugin_api({
-        "android-studio-3.0.1.0": ["//sdkcompat/v171"],
-        "intellij-2017.2.6": ["//sdkcompat/v172"],
-        "intellij-ue-2017.2.6": ["//sdkcompat/v172"],
-        "intellij-2017.3.3": ["//sdkcompat/v173"],
-        "intellij-ue-2017.3.3": ["//sdkcompat/v173"],
-        "clion-2017.2.3": ["//sdkcompat/v172"],
-        "clion-2017.3.2": ["//sdkcompat/v173"],
+        "android-studio-3.0": ["//sdkcompat/v171"],
+        "intellij-2017.3": ["//sdkcompat/v173"],
+        "intellij-ue-2017.3": ["//sdkcompat/v173"],
+        "intellij-2018.1": ["//sdkcompat/v181"],
+        "intellij-ue-2018.1": ["//sdkcompat/v181"],
+        "clion-2017.3": ["//sdkcompat/v173"],
     }),
 )

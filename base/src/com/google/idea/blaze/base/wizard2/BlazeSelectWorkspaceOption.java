@@ -18,19 +18,34 @@ package com.google.idea.blaze.base.wizard2;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.common.experiments.BoolExperiment;
 import java.io.File;
 import javax.annotation.Nullable;
 
 /** Provides an option on the "Select workspace" screen */
 public interface BlazeSelectWorkspaceOption extends BlazeWizardOption {
+  BoolExperiment canonicalProjectDataLocationExperiment =
+      new BoolExperiment("canonical.project.data.location", false);
+
   /** @return The workspace root that will be created after commit. */
   WorkspaceRoot getWorkspaceRoot();
 
-  /** @return The vcs root containing the workspace. */
+  /**
+   * @return The vcs root containing the workspace.
+   * @deprecated to be replaced by {@link #getCanonicalProjectDataLocation()}
+   */
   @Nullable
+  @Deprecated
   File getVcsRoot();
 
-  boolean allowProjectDataInVcsRoot();
+  boolean allowProjectDataInVcs();
+
+  /**
+   * @return The project data directory if the workspace type supports a standard location relative
+   *     to the project, otherwise null.
+   */
+  @Nullable
+  File getCanonicalProjectDataLocation();
 
   /** @return A workspace path resolver to use during wizard validation. */
   WorkspacePathResolver getWorkspacePathResolver();

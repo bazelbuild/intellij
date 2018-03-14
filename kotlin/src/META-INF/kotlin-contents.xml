@@ -1,0 +1,14 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.google.idea.blaze">
+    <SyncPlugin implementation="com.google.idea.blaze.kotlin.sync.BlazeKotlinSyncPlugin"/>
+    <JavaLikeLanguage
+        implementation="com.google.idea.blaze.kotlin.sync.source.BlazeKotlinJavaLikeLanguage"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.kotlin.run.producers.BlazeKotlinTestClassConfigurationProducer"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.kotlin.run.producers.BlazeKotlinRunConfigurationProducer"/>
+  </extensions>
+</idea-plugin>

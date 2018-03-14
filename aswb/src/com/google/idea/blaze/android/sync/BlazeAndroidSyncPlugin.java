@@ -54,6 +54,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
+import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -149,9 +150,18 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
     AndroidSdkPlatform androidSdkPlatform =
         AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
 
+    JavaSourceFilter sourceFilter =
+        new JavaSourceFilter(project, workspaceRoot, projectViewSet, targetMap);
+
     BlazeAndroidWorkspaceImporter workspaceImporter =
         new BlazeAndroidWorkspaceImporter(
-            project, context, workspaceRoot, projectViewSet, targetMap, artifactLocationDecoder);
+            project,
+            context,
+            workspaceRoot,
+            projectViewSet,
+            targetMap,
+            sourceFilter,
+            artifactLocationDecoder);
     BlazeAndroidImportResult importResult =
         Scope.push(
             context,

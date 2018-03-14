@@ -78,6 +78,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -316,7 +317,8 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
         BlazeBeforeRunCommandHelper.runBlazeBuild(
             configuration,
             buildResultHelper,
-            BlazePyDebugHelper.getAllBlazeDebugFlags(),
+            BlazePyDebugHelper.getAllBlazeDebugFlags(Blaze.getBuildSystem(project)),
+            ImmutableList.of(),
             "Building debug binary");
 
     try {
@@ -325,7 +327,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       if (result.status != BuildResult.Status.SUCCESS) {
         throw new ExecutionException("Blaze failure building debug binary");
       }
-    } catch (InterruptedException e) {
+    } catch (InterruptedException | CancellationException e) {
       buildOperation.cancel(true);
       throw new RunCanceledByUserException();
     } catch (java.util.concurrent.ExecutionException e) {

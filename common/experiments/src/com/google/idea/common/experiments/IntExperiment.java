@@ -25,6 +25,6 @@ public class IntExperiment extends Experiment {
   }
 
   public int getValue() {
-    return ExperimentService.getInstance().getExperimentInt(key, defaultValue);
+    return ExperimentService.getInstance().getExperimentInt(getKey(), defaultValue);
   }
 }

@@ -90,7 +90,9 @@ public class BlazeCoverageAnnotator extends SimpleCoverageAnnotator {
     return false;
   }
 
-  private static String normalizeFilePath(String filePath) {
+  // #api173: superclass method visible as of 181. Remove this override when we no longer support
+  // 173 and earlier.
+  protected static String normalizeFilePath(String filePath) {
     if (SystemInfo.isWindows) {
       filePath = filePath.toLowerCase();
     }

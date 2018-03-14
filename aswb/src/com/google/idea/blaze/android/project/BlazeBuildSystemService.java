@@ -21,7 +21,7 @@ import com.google.idea.blaze.android.npw.project.BlazeAndroidProjectPaths;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.base.actions.BlazeBuildService;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
+import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -87,8 +87,7 @@ public class BlazeBuildSystemService extends BuildSystemService {
     } else {
       // If not, just the build file is good enough.
       File buildIoFile = blazeProjectData.artifactLocationDecoder.decode(targetIdeInfo.buildFile);
-      VirtualFile buildVirtualFile =
-          VirtualFileSystemProvider.findFileByIoFileRefreshIfNeeded(buildIoFile);
+      VirtualFile buildVirtualFile = VfsUtils.resolveVirtualFile(buildIoFile);
       if (buildVirtualFile != null) {
         fileEditorManager.openFile(buildVirtualFile, true);
       }

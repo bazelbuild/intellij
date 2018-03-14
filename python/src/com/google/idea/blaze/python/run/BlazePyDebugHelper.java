@@ -28,10 +28,10 @@ public interface BlazePyDebugHelper {
   ExtensionPointName<BlazePyDebugHelper> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.BlazePyDebugFlagsProvider");
 
-  static ImmutableList<String> getAllBlazeDebugFlags() {
+  static ImmutableList<String> getAllBlazeDebugFlags(BuildSystem buildSystem) {
     ImmutableList.Builder<String> builder = ImmutableList.builder();
     for (BlazePyDebugHelper provider : EP_NAME.getExtensions()) {
-      builder.addAll(provider.getBlazeDebugFlags());
+      builder.addAll(provider.getBlazeDebugFlags(buildSystem));
     }
     return builder.build();
   }
@@ -55,7 +55,7 @@ public interface BlazePyDebugHelper {
     return null;
   }
 
-  ImmutableList<String> getBlazeDebugFlags();
+  ImmutableList<String> getBlazeDebugFlags(BuildSystem buildSystem);
 
   ImmutableList<String> getBlazePydevFlags(BuildSystem buildSystem);
 

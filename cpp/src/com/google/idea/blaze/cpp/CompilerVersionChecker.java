@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.cpp;
 
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.components.ServiceManager;
 import java.io.File;
 import javax.annotation.Nullable;
@@ -29,5 +28,5 @@ public interface CompilerVersionChecker {
 
   /** Returns the compiler's version string, or null on failure */
   @Nullable
-  String checkCompilerVersion(WorkspaceRoot workspaceRoot, File cppExecutable);
+  String checkCompilerVersion(File executionRoot, File cppExecutable);
 }

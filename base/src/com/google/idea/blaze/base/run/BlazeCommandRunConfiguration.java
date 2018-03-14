@@ -43,6 +43,8 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.ui.UiUtil;
+import com.google.idea.sdkcompat.run.RunManagerCompatUtils;
+import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerIconProvider;
@@ -286,6 +288,15 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     String error = TargetExpression.validate(targetPattern);
     if (error != null) {
       throw new RuntimeConfigurationError(error);
+    }
+    for (BeforeRunTask task : RunManagerCompatUtils.getBeforeRunTasks(this)) {
+      if (task.getProviderId().equals(BlazeBeforeRunTaskProvider.ID) && !task.isEnabled()) {
+        throw new RuntimeConfigurationError(
+            String.format(
+                "Invalid run configuration: the %s before run task is missing. Please re-run sync "
+                    + "to add it back",
+                Blaze.buildSystemName(getProject())));
+      }
     }
     handler.checkConfiguration();
   }

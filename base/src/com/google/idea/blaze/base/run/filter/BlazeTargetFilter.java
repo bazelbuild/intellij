@@ -16,11 +16,11 @@
 package com.google.idea.blaze.base.run.filter;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.idea.blaze.base.issueparser.NonProblemHyperlinkInfo;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.execution.filters.Filter;
-import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -77,7 +77,7 @@ public class BlazeTargetFilter implements Filter {
       if (!(psi instanceof NavigatablePsiElement)) {
         continue;
       }
-      HyperlinkInfo link = project -> ((NavigatablePsiElement) psi).navigate(true);
+      NonProblemHyperlinkInfo link = project -> ((NavigatablePsiElement) psi).navigate(true);
       int offset = entireLength - line.length();
       results.add(
           new ResultItem(

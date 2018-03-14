@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableSet;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.pom.Navigatable;
@@ -41,7 +42,9 @@ public final class PluginUtils {
     Set<String> toInstall = new HashSet<>();
     for (String id : pluginIds) {
       if (isPluginInstalled(id)) {
-        PluginManager.enablePlugin(id);
+        if (!PluginManager.enablePlugin(id)) {
+          notifyPluginEnableFailed(id);
+        }
       } else {
         toInstall.add(id);
       }
@@ -72,5 +75,14 @@ public final class PluginUtils {
 
   private static IdeaPluginDescriptor getPluginDescriptor(String pluginId) {
     return PluginManager.getPlugin(PluginId.getId(pluginId));
+  }
+
+  private static void notifyPluginEnableFailed(String pluginId) {
+    String msg =
+        String.format(
+            "Failed to enable plugin '%s'. Check for errors in the Event Log, or run 'Help > Check "
+                + "for Updates' to check if the plugin needs updating.",
+            pluginId);
+    Messages.showErrorDialog(msg, "Failed to enable plugin");
   }
 }

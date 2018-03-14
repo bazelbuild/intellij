@@ -33,6 +33,8 @@ public final class PackagePrefixCalculator {
     skipIndex = skipIndex == 0 ? skip(workspacePath, "src/test/java/") : skipIndex;
     skipIndex = skipIndex == 0 ? skip(workspacePath, "src/main/scala/") : skipIndex;
     skipIndex = skipIndex == 0 ? skip(workspacePath, "src/test/scala/") : skipIndex;
+    skipIndex = skipIndex == 0 ? skip(workspacePath, "src/main/kotlin/") : skipIndex;
+    skipIndex = skipIndex == 0 ? skip(workspacePath, "src/test/kotlin/") : skipIndex;
 
     return workspacePath.relativePath().substring(skipIndex).replace('/', '.');
   }

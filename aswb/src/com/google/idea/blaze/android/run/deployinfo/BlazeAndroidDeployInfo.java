@@ -16,8 +16,8 @@
 package com.google.idea.blaze.android.run.deployinfo;
 
 import com.google.common.collect.Lists;
+import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass;
 import com.google.idea.blaze.android.manifest.ManifestParser;
-import com.google.repackaged.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;

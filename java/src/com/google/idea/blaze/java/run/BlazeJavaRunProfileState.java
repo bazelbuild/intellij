@@ -44,6 +44,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.java.run.hotswap.HotSwapUtils;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
@@ -136,7 +137,11 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
         new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
           @Override
           public void onBlazeContextStart(BlazeContext context) {
-            context.push(new IssuesScope(project)).push(new IdeaLogScope());
+            context
+                .push(
+                    new IssuesScope(
+                        project, BlazeUserSettings.getInstance().getShowProblemsViewForRunAction()))
+                .push(new IdeaLogScope());
           }
 
           @Override

@@ -21,13 +21,17 @@ import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
+import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
 import org.jdom.output.Format;
@@ -46,7 +50,6 @@ import org.junit.runners.JUnit4;
 public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
 
   private RunManagerImpl runManager;
-  private BlazeCommandRunConfigurationType type;
   private BlazeCommandRunConfiguration configuration;
 
   @Before
@@ -56,10 +59,10 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
     BlazeProjectDataManager mockProjectDataManager =
         new MockBlazeProjectDataManager(MockBlazeProjectDataBuilder.builder(workspaceRoot).build());
     registerProjectService(BlazeProjectDataManager.class, mockProjectDataManager);
-    type = BlazeCommandRunConfigurationType.getInstance();
 
     RunnerAndConfigurationSettings runnerAndConfigurationSettings =
-        runManager.createConfiguration("Blaze Configuration", type.getFactory());
+        runManager.createConfiguration(
+            "Blaze Configuration", BlazeCommandRunConfigurationType.getInstance().getFactory());
     runManager.addConfiguration(runnerAndConfigurationSettings, false);
     configuration =
         (BlazeCommandRunConfiguration) runnerAndConfigurationSettings.getConfiguration();
@@ -83,7 +86,7 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
     configuration.setTarget(Label.create("//package:rule"));
     configuration.setKeepInSync(true);
 
-    final Element initialElement = runManager.getState();
+    Element initialElement = runManager.getState();
 
     Element element = RunConfigurationSerializer.writeToXml(configuration);
     assertThat(RunConfigurationSerializer.findExisting(getProject(), element)).isNotNull();
@@ -91,8 +94,8 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
     clearRunManager(); // remove configuration from project
     RunConfigurationSerializer.loadFromXmlElementIgnoreExisting(getProject(), element);
 
-    final Element newElement = runManager.getState();
-    final XMLOutputter xmlOutputter = new XMLOutputter(Format.getCompactFormat());
+    Element newElement = runManager.getState();
+    XMLOutputter xmlOutputter = new XMLOutputter(Format.getCompactFormat());
     assertThat(xmlOutputter.outputString(newElement))
         .isEqualTo(xmlOutputter.outputString(initialElement));
   }
@@ -122,5 +125,47 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
 
     configuration.setKeepInSync(true);
     assertThat(RunConfigurationSerializer.shouldLoadConfiguration(getProject(), element)).isTrue();
+  }
+
+  @Test
+  public void testConvertAbsolutePathToWorkspacePathVariableWhenSerializing() {
+    if (isAndroidStudio()) {
+      // #api171: disable for android studio -- path variable substitution isn't working in 2017.1
+      return;
+    }
+    WorkspacePath binaryPath = WorkspacePath.createIfValid("path/to/binary/blaze");
+    String absoluteBinaryPath = workspaceRoot.fileForPath(binaryPath).getPath();
+    setBlazeBinaryPath(configuration, absoluteBinaryPath);
+
+    Element element = RunConfigurationSerializer.writeToXml(configuration);
+    assertThat(element.getAttribute("blaze-binary").getValue())
+        .isEqualTo(
+            String.format(
+                "$%s$/%s", RunConfigurationSerializer.WORKSPACE_ROOT_VARIABLE_NAME, binaryPath));
+
+    clearRunManager(); // remove configuration from project
+    RunConfigurationSerializer.loadFromXmlElementIgnoreExisting(getProject(), element);
+
+    RunConfiguration config = runManager.getAllConfigurations()[0];
+    assertThat(config).isInstanceOf(BlazeCommandRunConfiguration.class);
+    assertThat(getBlazeBinaryPath((BlazeCommandRunConfiguration) config))
+        .isEqualTo(absoluteBinaryPath);
+  }
+
+  private static void setBlazeBinaryPath(BlazeCommandRunConfiguration configuration, String path) {
+    BlazeCommandRunConfigurationCommonState state =
+        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    state.getBlazeBinaryState().setBlazeBinary(path);
+  }
+
+  private static String getBlazeBinaryPath(BlazeCommandRunConfiguration configuration) {
+    BlazeCommandRunConfigurationCommonState state =
+        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    return state.getBlazeBinaryState().getBlazeBinary();
+  }
+
+  private static boolean isAndroidStudio() {
+    return PluginManager.isPluginInstalled(PluginId.getId("org.jetbrains.android"))
+        && PluginManager.isPluginInstalled(PluginId.getId("com.android.tools.ndk"));
   }
 }

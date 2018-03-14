@@ -12,6 +12,8 @@ DEPS = [
     "_android_sdk",  # from android rules
     "aidl_lib",  # from android_sdk
     "_scala_toolchain",  # From scala rules
+    "test_app",  # android_instrumentation_test
+    "instruments",  # android_instrumentation_test
 ]
 
 # Run-time dependency attributes, grouped by type.
@@ -314,12 +316,15 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
       import_path = import_path,
   )
 
+  compile_files = target.output_group("files_to_compile_INTERNAL_")
+  compile_files = depset(generated, transitive = [compile_files])
+
   update_set_in_dict(output_groups, "intellij-info-go", depset([ide_info_file]))
-  update_set_in_dict(output_groups, "intellij-compile-go", depset(generated))
+  update_set_in_dict(output_groups, "intellij-compile-go", compile_files)
   update_set_in_dict(output_groups, "intellij-resolve-go", depset(generated))
   return True
 
-def collect_cpp_info(target, ctx, ide_info, ide_info_file, output_groups):
+def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
   """Updates C++-specific output groups, returns false if not a C++ target."""
   if not hasattr(target, "cc"):
     return False
@@ -336,7 +341,9 @@ def collect_cpp_info(target, ctx, ide_info, ide_info_file, output_groups):
     target_defines = ctx.rule.attr.defines
   target_copts = []
   if hasattr(ctx.rule.attr, "copts"):
-    target_copts = ctx.rule.attr.copts
+    target_copts += ctx.rule.attr.copts
+  if hasattr(semantics, "cc"):
+    target_copts += semantics.cc.get_default_copts(ctx)
 
   cc_provider = target.cc
 
@@ -409,6 +416,8 @@ def get_java_provider(target):
     return target.java
   if hasattr(target, "scala"):
     return target.scala
+  if hasattr(target, "kt") and hasattr(target.kt,"outputs"):
+    return target.kt
   # java_common.provider is a work in progress. It will soon expose the information
   # we require (e.g. outputs jars, jdeps), but does not yet do so.
   if java_common.provider in target:
@@ -478,7 +487,8 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
       generated_jars = gen_jars,
       package_manifest = artifact_location(package_manifest),
       filtered_gen_jar = filtered_gen_jar,
-      main_class = ctx.rule.attr.main_class if hasattr(ctx.rule.attr, "main_class") else None,
+      main_class = getattr(ctx.rule.attr, "main_class", None),
+      test_class = getattr(ctx.rule.attr, "test_class", None),
   )
 
   ide_info["java_ide_info"] = java_info
@@ -529,9 +539,9 @@ def build_filtered_gen_jar(ctx, target, java, gen_java_sources, srcjars):
       jar_artifacts.append(jar.ijar)
     elif jar.class_jar:
       jar_artifacts.append(jar.class_jar)
-    if jar.source_jars:
+    if hasattr(jar, "source_jars") and jar.source_jars:
       source_jar_artifacts.extend(jar.source_jars)
-    elif jar.source_jar:
+    elif hasattr(jar, "source_jar") and jar.source_jar:
       source_jar_artifacts.append(jar.source_jar)
 
   filtered_jar = ctx.new_file(target.label.name + "-filtered-gen.jar")
@@ -626,6 +636,19 @@ def collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups):
   android_jar_file = list(ctx.rule.attr.android_jar.files)[0]
   ide_info["android_sdk_ide_info"] = struct(
       android_jar = artifact_location(android_jar_file),
+  )
+  update_set_in_dict(output_groups, "intellij-info-android", depset([ide_info_file]))
+  return True
+
+def collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups):
+  """Updates android aar_import-relevant groups, returns false if not an aar_import target."""
+  if ctx.rule.kind != "aar_import":
+    return False
+  if not hasattr(ctx.rule.attr, "aar"):
+    return False
+  aar_file = list(ctx.rule.attr.aar.files)[0]
+  ide_info["android_aar_ide_info"] = struct(
+      aar = artifact_location(aar_file),
   )
   update_set_in_dict(output_groups, "intellij-info-android", depset([ide_info_file]))
   return True
@@ -731,13 +754,14 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
   handled = False
   handled = collect_py_info(target, ctx, ide_info, ide_info_file, output_groups) or handled
-  handled = collect_cpp_info(target, ctx, ide_info, ide_info_file, output_groups) or handled
+  handled = collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
   handled = collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
   handled = collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
   handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
   handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
   handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
   handled = collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups) or handled
+  handled = collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups) or handled
 
   # Any extra ide info
   if hasattr(semantics, "extra_ide_info"):

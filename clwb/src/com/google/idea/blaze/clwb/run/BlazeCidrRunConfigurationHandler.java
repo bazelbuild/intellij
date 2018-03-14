@@ -34,12 +34,11 @@ import javax.swing.Icon;
 /** CLion-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public final class BlazeCidrRunConfigurationHandler implements BlazeCommandRunConfigurationHandler {
 
-  private final String buildSystemName;
+  private final BuildSystem buildSystem;
   private final BlazeCidrRunConfigState state;
 
   public BlazeCidrRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-    BuildSystem buildSystem = Blaze.getBuildSystem(configuration.getProject());
-    this.buildSystemName = buildSystem.getName();
+    this.buildSystem = Blaze.getBuildSystem(configuration.getProject());
     this.state = new BlazeCidrRunConfigState(buildSystem);
   }
 
@@ -62,7 +61,7 @@ public final class BlazeCidrRunConfigurationHandler implements BlazeCommandRunCo
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    state.validate(buildSystemName);
+    state.validate(buildSystem);
   }
 
   @Override
@@ -76,9 +75,8 @@ public final class BlazeCidrRunConfigurationHandler implements BlazeCommandRunCo
 
   @Override
   @Nullable
-  public String getCommandName() {
-    BlazeCommandName command = state.getCommandState().getCommand();
-    return command != null ? command.toString() : null;
+  public BlazeCommandName getCommandName() {
+    return state.getCommandState().getCommand();
   }
 
   @Override

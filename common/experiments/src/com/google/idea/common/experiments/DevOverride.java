@@ -25,6 +25,6 @@ public class DevOverride extends Experiment {
   }
 
   public String getValue() {
-    return ExperimentService.getInstance().getExperimentString(key, defaultValue);
+    return ExperimentService.getInstance().getExperimentString(getKey(), defaultValue);
   }
 }

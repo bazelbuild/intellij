@@ -22,6 +22,9 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.JavaSourcePackage;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PackageManifest;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.filecache.FileDiffer;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -31,9 +34,6 @@ import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
-import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo.JavaSourcePackage;
-import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo.PackageManifest;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -79,7 +79,7 @@ public class PackageManifestReader {
         FileDiffer.updateFiles(fileDiffState, fileToLabelMap.keySet(), updatedFiles, removedFiles);
 
     ListenableFuture<?> fetchFuture =
-        PrefetchService.getInstance().prefetchFiles(project, updatedFiles, true);
+        PrefetchService.getInstance().prefetchFiles(project, updatedFiles, true, false);
     if (!FutureUtil.waitForFuture(context, fetchFuture)
         .timed("FetchPackageManifests", EventType.Prefetching)
         .withProgressMessage("Reading package manifests...")

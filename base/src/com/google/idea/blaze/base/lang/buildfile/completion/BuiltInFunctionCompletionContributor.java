@@ -21,6 +21,8 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileLanguage;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuiltInNamesProvider;
+import com.google.idea.blaze.base.lang.buildfile.lexer.BuildToken;
+import com.google.idea.blaze.base.lang.buildfile.lexer.TokenKind;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
@@ -56,6 +58,7 @@ public class BuiltInFunctionCompletionContributor extends CompletionContributor 
         CompletionType.BASIC,
         psiElement()
             .withLanguage(BuildFileLanguage.INSTANCE)
+            .andNot(psiElement().afterLeaf(psiElement(BuildToken.fromKind(TokenKind.INT))))
             .andNot(psiComment())
             .andOr(
                 // Handles only top-level rules, and rules inside a function statement.

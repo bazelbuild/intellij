@@ -66,7 +66,7 @@
     </action>
     <action id="Blaze.CopyBlazeTargetPathAction"
       class="com.google.idea.blaze.base.actions.CopyBlazeTargetPathAction"
-      text="Copy BUILD target string to Clipboard">
+      text="Copy BUILD Target String">
     </action>
     <action id="Blaze.PartialSync"
       class="com.google.idea.blaze.base.sync.actions.PartialSyncAction"
@@ -241,6 +241,7 @@
 
     <additionalTextAttributes scheme="Default" file="base/resources/colorSchemes/BuildDefault.xml"/>
     <typedHandler implementation="com.google.idea.blaze.base.lang.buildfile.completion.BuildCompletionAutoPopupHandler"/>
+    <projectOpenProcessor implementation="com.google.idea.blaze.base.project.BlazeProjectOpenProcessor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -290,6 +291,7 @@
     <editorNotificationProvider implementation="com.google.idea.blaze.base.dependencies.ExternalFileProjectManagementHelper"/>
     <usageTypeProvider implementation="com.google.idea.blaze.base.lang.buildfile.findusages.BuildUsageTypeProvider"/>
     <renameInputValidator implementation="com.google.idea.blaze.base.lang.buildfile.refactor.TargetRenameValidator"/>
+    <completion.confidence language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.BuildFileCompletionConfidence"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.lang">

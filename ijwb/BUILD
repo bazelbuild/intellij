@@ -83,6 +83,7 @@ OPTIONAL_PLUGIN_XMLS = [
     "//golang:optional_xml",
     "//java:optional_java",
     "//java:optional_coverage",
+    "//kotlin:optional_xml",
     "//plugin_dev:optional_xml",
     "//python:optional_xml",
     "//scala:optional_xml",
@@ -108,6 +109,7 @@ repackaged_files(
     name = "aspect_directory",
     srcs = ["//aspect:aspect_files"],
     prefix = "ijwb/aspect",
+    strip_prefix = "/aspect",
 )
 
 intellij_plugin_debug_target(

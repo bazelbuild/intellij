@@ -43,6 +43,7 @@ import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -164,7 +165,12 @@ public final class BlazeCommandGenericRunConfigurationRunner
           new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
             @Override
             public void onBlazeContextStart(BlazeContext context) {
-              context.push(new IssuesScope(project)).push(new IdeaLogScope());
+              context
+                  .push(
+                      new IssuesScope(
+                          project,
+                          BlazeUserSettings.getInstance().getShowProblemsViewForRunAction()))
+                  .push(new IdeaLogScope());
             }
 
             @Override

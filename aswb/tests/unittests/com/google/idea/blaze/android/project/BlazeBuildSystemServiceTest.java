@@ -230,6 +230,12 @@ public class BlazeBuildSystemServiceTest extends BlazeTestCase {
 
     @Nullable
     @Override
+    public ProjectViewSet reloadProjectView(BlazeContext context) {
+      return viewSet;
+    }
+
+    @Nullable
+    @Override
     public ProjectViewSet reloadProjectView(
         BlazeContext context, WorkspacePathResolver workspacePathResolver) {
       return viewSet;
@@ -249,6 +255,11 @@ public class BlazeBuildSystemServiceTest extends BlazeTestCase {
     @Override
     public VirtualFile findFileByPath(String path) {
       return files.get(path);
+    }
+
+    @Override
+    public VirtualFile findFileByPathIfCached(String path) {
+      return findFileByPath(path);
     }
 
     @Override

@@ -205,6 +205,12 @@ public class BlazeAndroidModelTest extends BlazeTestCase {
 
     @Nullable
     @Override
+    public ProjectViewSet reloadProjectView(BlazeContext context) {
+      return null;
+    }
+
+    @Nullable
+    @Override
     public ProjectViewSet reloadProjectView(
         BlazeContext context, WorkspacePathResolver workspacePathResolver) {
       return null;

@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
+import com.intellij.openapi.util.TextRange;
 import java.io.File;
 import java.util.regex.Matcher;
 import org.junit.Test;
@@ -119,6 +120,11 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getMessage())
         .isEqualTo("non-static variable this cannot be referenced from a static context");
     assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(
+            TextRange.create(
+                "java/com/google/android/samples/helloroot/math/".length(),
+                "java/com/google/android/samples/helloroot/math/DivideMath.java:17".length()));
   }
 
   @Test
@@ -133,6 +139,12 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getColumn()).isEqualTo(26);
     assertThat(issue.getMessage()).isEqualTo("'|' is not preceded with whitespace.");
     assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(
+            TextRange.create(
+                "java/com/google/devtools/aswb/pluginrepo/googleplex/".length(),
+                "java/com/google/devtools/aswb/pluginrepo/googleplex/PluginsEndpoint.java:33:26"
+                    .length()));
   }
 
   @Test
@@ -147,6 +159,9 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getColumn()).isEqualTo(10);
     assertThat(issue.getMessage()).isEqualTo("'util/ptr_util2.h' file not found");
     assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(
+            TextRange.create("net/something/".length(), "net/something/foo_bar.cc:29:10".length()));
   }
 
   @Test
@@ -163,6 +178,11 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getMessage())
         .isEqualTo("Target '//java/package_path:helloroot_visibility' failed");
     assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(
+            TextRange.create(
+                "ERROR: /root/javatests/package_path/".length(),
+                "ERROR: /root/javatests/package_path/BUILD:42:12".length()));
   }
 
   @Test
@@ -179,6 +199,11 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getColumn()).isEqualTo(12);
     assertThat(issue.getMessage()).isEqualTo("Variable artifact_location is read only");
     assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(
+            TextRange.create(
+                "ERROR: /root/third_party/bazel/tools/ide/".length(),
+                "ERROR: /root/third_party/bazel/tools/ide/intellij_info_impl.bzl:42:12".length()));
   }
 
   @Test
@@ -192,6 +217,11 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getFile().getPath()).isEqualTo("/path/to/root/java/package_path/BUILD");
     assertThat(issue.getMessage()).isEqualTo("name 'grubber' is not defined");
     assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(
+            TextRange.create(
+                "ERROR: /path/to/root/java/package_path/".length(),
+                "ERROR: /path/to/root/java/package_path/BUILD".length()));
   }
 
   @Test

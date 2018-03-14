@@ -23,7 +23,9 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
+import com.google.idea.blaze.base.ideinfo.AndroidAarIdeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidSdkIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -46,7 +48,6 @@ import com.google.idea.blaze.base.ideinfo.TsIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.repackaged.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import java.util.Collection;
 import java.util.List;
@@ -109,6 +110,10 @@ public class IdeInfoFromProtobuf {
     if (message.hasAndroidSdkIdeInfo()) {
       androidSdkIdeInfo = makeAndroidSdkIdeInfo(message.getAndroidSdkIdeInfo());
     }
+    AndroidAarIdeInfo androidAarIdeInfo = null;
+    if (message.hasAndroidAarIdeInfo()) {
+      androidAarIdeInfo = makeAndroidAarIdeInfo(message.getAndroidAarIdeInfo());
+    }
     PyIdeInfo pyIdeInfo = null;
     if (message.hasPyIdeInfo()) {
       pyIdeInfo = makePyIdeInfo(message.getPyIdeInfo());
@@ -160,6 +165,7 @@ public class IdeInfoFromProtobuf {
         javaIdeInfo,
         androidIdeInfo,
         androidSdkIdeInfo,
+        androidAarIdeInfo,
         pyIdeInfo,
         goIdeInfo,
         jsIdeInfo,
@@ -298,7 +304,8 @@ public class IdeInfoFromProtobuf {
             ? makeArtifactLocation(javaIdeInfo.getPackageManifest())
             : null,
         javaIdeInfo.hasJdeps() ? makeArtifactLocation(javaIdeInfo.getJdeps()) : null,
-        Strings.emptyToNull(javaIdeInfo.getMainClass()));
+        Strings.emptyToNull(javaIdeInfo.getMainClass()),
+        Strings.emptyToNull(javaIdeInfo.getTestClass()));
   }
 
   private static AndroidIdeInfo makeAndroidIdeInfo(IntellijIdeInfo.AndroidIdeInfo androidIdeInfo) {
@@ -320,6 +327,11 @@ public class IdeInfoFromProtobuf {
   private static AndroidSdkIdeInfo makeAndroidSdkIdeInfo(
       IntellijIdeInfo.AndroidSdkIdeInfo androidSdkIdeInfo) {
     return new AndroidSdkIdeInfo(makeArtifactLocation(androidSdkIdeInfo.getAndroidJar()));
+  }
+
+  private static AndroidAarIdeInfo makeAndroidAarIdeInfo(
+      IntellijIdeInfo.AndroidAarIdeInfo androidAarIdeInfo) {
+    return new AndroidAarIdeInfo(makeArtifactLocation(androidAarIdeInfo.getAar()));
   }
 
   private static PyIdeInfo makePyIdeInfo(IntellijIdeInfo.PyIdeInfo info) {

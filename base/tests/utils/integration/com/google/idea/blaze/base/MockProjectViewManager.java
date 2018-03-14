@@ -45,6 +45,12 @@ public class MockProjectViewManager extends ProjectViewManager {
 
   @Nullable
   @Override
+  public ProjectViewSet reloadProjectView(BlazeContext context) {
+    return getProjectViewSet();
+  }
+
+  @Nullable
+  @Override
   public ProjectViewSet reloadProjectView(
       BlazeContext context, WorkspacePathResolver workspacePathResolver) {
     return getProjectViewSet();

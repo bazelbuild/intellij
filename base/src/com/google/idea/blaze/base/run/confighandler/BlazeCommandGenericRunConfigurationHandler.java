@@ -35,12 +35,11 @@ import javax.swing.Icon;
 public final class BlazeCommandGenericRunConfigurationHandler
     implements BlazeCommandRunConfigurationHandler {
 
-  private final String buildSystemName;
+  private final BuildSystem buildSystem;
   private final BlazeCommandRunConfigurationCommonState state;
 
   public BlazeCommandGenericRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-    BuildSystem buildSystem = Blaze.getBuildSystem(configuration.getProject());
-    this.buildSystemName = buildSystem.getName();
+    this.buildSystem = Blaze.getBuildSystem(configuration.getProject());
     this.state = new BlazeCommandRunConfigurationCommonState(buildSystem);
   }
 
@@ -57,7 +56,7 @@ public final class BlazeCommandGenericRunConfigurationHandler
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    state.validate(buildSystemName);
+    state.validate(buildSystem);
   }
 
   @Override
@@ -71,9 +70,8 @@ public final class BlazeCommandGenericRunConfigurationHandler
 
   @Override
   @Nullable
-  public String getCommandName() {
-    BlazeCommandName command = state.getCommandState().getCommand();
-    return command != null ? command.toString() : null;
+  public BlazeCommandName getCommandName() {
+    return state.getCommandState().getCommand();
   }
 
   @Override
