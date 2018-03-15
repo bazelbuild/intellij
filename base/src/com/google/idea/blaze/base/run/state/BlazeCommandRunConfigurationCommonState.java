@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.google.idea.blaze.base.run.state;
+
+import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -31,6 +33,7 @@ import javax.annotation.Nullable;
 public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCompositeState {
   private static final String USER_BLAZE_FLAG_TAG = "blaze-user-flag";
   private static final String USER_EXE_FLAG_TAG = "blaze-user-exe-flag";
+  private static final String TEST_FILTER_FLAG_PREFIX = BlazeFlags.TEST_FILTER + '=';
 
   protected final BlazeCommandState command;
   protected final RunConfigurationFlagsState blazeFlags;
@@ -76,6 +79,17 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
       }
     }
     return null;
+  }
+
+  @Nullable
+  public String getTestFilter() {
+    String testFilterFlag = getTestFilterFlag();
+    if (testFilterFlag == null) {
+      return null;
+    }
+
+    checkState(testFilterFlag.startsWith(TEST_FILTER_FLAG_PREFIX));
+    return testFilterFlag.substring(TEST_FILTER_FLAG_PREFIX.length());
   }
 
   public void validate(BuildSystem buildSystem) throws RuntimeConfigurationException {
