@@ -268,8 +268,6 @@ public class IdeInfoFromProtobuf {
     Collection<ExecutionRootPath> builtInIncludeDirectories =
         makeExecutionRootPathList(cToolchainIdeInfo.getBuiltInIncludeDirectoryList());
     ExecutionRootPath cppExecutable = new ExecutionRootPath(cToolchainIdeInfo.getCppExecutable());
-    ExecutionRootPath preprocessorExecutable =
-        new ExecutionRootPath(cToolchainIdeInfo.getPreprocessorExecutable());
 
     UnfilteredCompilerOptions compilerOptions =
         UnfilteredCompilerOptions.builder()
@@ -281,10 +279,8 @@ public class IdeInfoFromProtobuf {
             .addBaseCompilerOptions(cToolchainIdeInfo.getBaseCompilerOptionList())
             .addCCompilerOptions(cToolchainIdeInfo.getCOptionList())
             .addCppCompilerOptions(cToolchainIdeInfo.getCppOptionList())
-            .addLinkOptions(cToolchainIdeInfo.getLinkOptionList())
             .addBuiltInIncludeDirectories(builtInIncludeDirectories)
             .setCppExecutable(cppExecutable)
-            .setPreprocessorExecutable(preprocessorExecutable)
             .setTargetName(cToolchainIdeInfo.getTargetName())
             .addUnfilteredCompilerOptions(compilerOptions.getUninterpretedOptions())
             .addUnfilteredToolchainSystemIncludes(

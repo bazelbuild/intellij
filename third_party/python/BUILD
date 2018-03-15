@@ -15,6 +15,7 @@ java_library(
         "clion-2017.3": ["@clion_2017_3//:python"],
         "clion-2018.1": ["@clion_2018_1//:python"],
         "android-studio-3.0": ["@python_2017_1_4249//:python"],
+        "android-studio-3.2": ["@python_2018_1//:python"],
     }),
 )
 

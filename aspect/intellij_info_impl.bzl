@@ -159,10 +159,6 @@ def jars_from_output(output):
           for jar in ([output.class_jar, output.ijar] + get_source_jars(output))
           if jar != None and not jar.is_source]
 
-# TODO(salguarnieri) Remove once skylark provides the path safe string from a PathFragment.
-def replace_empty_path_with_dot(path):
-  return path or "."
-
 def sources_from_target(ctx):
   """Get the list of sources from a target as artifact locations."""
   return artifacts_from_target_list_attr(ctx, "srcs")
@@ -381,14 +377,12 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
   # This should exist because we requested it in our aspect definition.
   cc_fragment = ctx.fragments.cpp
   cpp_options = cc_fragment.cxx_options(ctx.features)
-  link_options = cc_fragment.link_options
   unfiltered_compiler_options = cc_fragment.unfiltered_compiler_options(ctx.features)
   built_in_include_directories = [str(d) for d in cc_fragment.built_in_include_directories]
 
   if hasattr(semantics, "cc"):
     cpp_options = semantics.cc.augment_toolchain_cxx_options(cpp_options)
     toolchain_info = semantics.cc.get_toolchain_info(target, ctx)
-    link_options = toolchain_info['link_options']
     unfiltered_compiler_options = toolchain_info['unfiltered_compiler_options']
     built_in_include_directories = toolchain_info['built_in_include_directories']
 
@@ -397,10 +391,7 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
       base_compiler_option = cc_fragment.compiler_options(ctx.features),
       c_option = cc_fragment.c_options,
       cpp_option = cpp_options,
-      link_option = link_options,
       unfiltered_compiler_option = unfiltered_compiler_options,
-      preprocessor_executable = replace_empty_path_with_dot(
-          str(cc_fragment.preprocessor_executable)),
       cpp_executable = str(cc_fragment.compiler_executable),
       built_in_include_directory = [str(d) for d in built_in_include_directories],
   )

@@ -125,9 +125,9 @@ message CToolchainIdeInfo {
   repeated string base_compiler_option = 2;
   repeated string cpp_option = 3;
   repeated string c_option = 4;
-  string preprocessor_executable = 5;
+  reserved 5;
   string cpp_executable = 6;
-  repeated string link_option = 7;
+  reserved 7;
   repeated string built_in_include_directory = 8;
   repeated string unfiltered_compiler_option = 9;
 }
@@ -172,6 +172,7 @@ message Dependency {
   DependencyType dependency_type = 2;
 }
 
+// Next Available: 30
 message TargetIdeInfo {
   string label = 1 [deprecated = true];
   repeated string dependencies = 4 [deprecated = true];
@@ -203,7 +204,6 @@ message TargetIdeInfo {
   reserved 21;
 
   AndroidSdkIdeInfo android_sdk_ide_info = 22;
-  AndroidAarIdeInfo android_aar_ide_info = 29;
 
   reserved 23;
 
@@ -214,5 +214,5 @@ message TargetIdeInfo {
   TsIdeInfo ts_ide_info = 27;
   DartIdeInfo dart_ide_info = 28;
 
-  // Next available: 30
+  AndroidAarIdeInfo android_aar_ide_info = 29;
 }

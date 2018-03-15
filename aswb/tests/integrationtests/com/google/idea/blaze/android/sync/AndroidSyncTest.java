@@ -210,8 +210,6 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
                             .setTargetName("arm-linux-androideabi")
                             .setCppExecutable(
                                 new ExecutionRootPath("bin/arm-linux-androideabi-gcc"))
-                            .setPreprocessorExecutable(
-                                new ExecutionRootPath("bin/arm-linux-androideabi-cpp"))
                             .addBaseCompilerOptions(
                                 ImmutableList.of(
                                     "-DOS_ANDROID",
@@ -224,9 +222,6 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
                                 ImmutableList.of(
                                     new ExecutionRootPath(
                                         "lib/gcc/arm-linux-androideabi/4.8/include")))
-                            .addLinkOptions(
-                                ImmutableList.of(
-                                    "--sysroot=android_ndk_linux/platforms/android-18/arch-arm"))
                             .addUnfilteredCompilerOptions(
                                 ImmutableList.of(
                                     "--sysroot=android_ndk_linux/platforms/android-18/arch-arm"))
@@ -244,8 +239,6 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
                             .setTargetName("aarch64-linux-android")
                             .setCppExecutable(
                                 new ExecutionRootPath("prebuilt/bin/aarch64-linux-android-gcc"))
-                            .setPreprocessorExecutable(
-                                new ExecutionRootPath("prebuilt/bin/aarch64-linux-android-cpp"))
                             .addBaseCompilerOptions(
                                 ImmutableList.of("-DOS_ANDROID", "-mbionic", "-ffunction-sections"))
                             .addCppCompilerOptions(ImmutableList.of("-std=gnu++11"))
@@ -253,9 +246,6 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
                                 ImmutableList.of(
                                     new ExecutionRootPath(
                                         "lib/gcc/aarch64-linux-android/4.9/include")))
-                            .addLinkOptions(
-                                ImmutableList.of(
-                                    "--sysroot=android_ndk_linux/platforms/android-21/arch-arm64"))
                             .addUnfilteredCompilerOptions(
                                 ImmutableList.of(
                                     "--sysroot=android_ndk_linux/platforms/android-21/arch-arm64"))
