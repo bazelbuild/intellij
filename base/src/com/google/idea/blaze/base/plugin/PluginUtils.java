@@ -41,6 +41,9 @@ public final class PluginUtils {
   public static void installOrEnablePlugins(Set<String> pluginIds) {
     Set<String> toInstall = new HashSet<>();
     for (String id : pluginIds) {
+      if (isPluginEnabled(id)) {
+        continue;
+      }
       if (isPluginInstalled(id)) {
         if (!PluginManager.enablePlugin(id)) {
           notifyPluginEnableFailed(id);

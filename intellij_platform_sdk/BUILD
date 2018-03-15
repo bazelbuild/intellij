@@ -80,16 +80,16 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-3.2.0.3",
+    name = "android-studio-3.2",
     values = {
-        "define": "ij_product=android-studio-3.2.0.3",
+        "define": "ij_product=android-studio-3.2",
     },
 )
 
 config_setting(
-    name = "android-studio-3.1.0.12",
+    name = "android-studio-3.1",
     values = {
-        "define": "ij_product=android-studio-3.1.0.12",
+        "define": "ij_product=android-studio-3.1",
     },
 )
 
@@ -97,6 +97,13 @@ config_setting(
     name = "android-studio-3.0",
     values = {
         "define": "ij_product=android-studio-3.0",
+    },
+)
+
+config_setting(
+    name = "android-studio-canary",
+    values = {
+        "define": "ij_product=android-studio-canary",
     },
 )
 

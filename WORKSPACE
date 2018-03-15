@@ -161,14 +161,14 @@ new_http_archive(
 )
 
 new_http_archive(
-    name = "android_studio_3_1_0_12",
+    name = "android_studio_3_1",
     build_file = "intellij_platform_sdk/BUILD.android_studio",
     sha256 = "e2780a02bc50f9e9fa824bf7262ae72b7277ede776379f636ef36c0ecbdbe066",
     url = "https://dl.google.com/dl/android/studio/ide-zips/3.1.0.12/android-studio-ide-173.4615496-linux.zip",
 )
 
 new_http_archive(
-    name = "android_studio_3_2_0_3",
+    name = "android_studio_3_2",
     build_file = "intellij_platform_sdk/BUILD.android_studio",
     sha256 = "84cd417969170586e65f077f87d51d28c317c06429cc7bd32c3435416ab963de",
     url = "https://dl.google.com/dl/android/studio/ide-zips/3.2.0.3/android-studio-ide-173.4615518-linux.zip",

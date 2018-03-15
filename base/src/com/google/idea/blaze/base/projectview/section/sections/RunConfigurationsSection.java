@@ -22,7 +22,12 @@ import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.ListSectionParser;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.intellij.openapi.util.JDOMUtil;
+import java.io.File;
+import java.io.IOException;
 import javax.annotation.Nullable;
+import org.jdom.JDOMException;
 
 /** Allows users to import run configurations from XML files in their workspace. */
 public class RunConfigurationsSection {
@@ -39,12 +44,34 @@ public class RunConfigurationsSection {
     @Override
     protected WorkspacePath parseItem(ProjectViewParser parser, ParseContext parseContext) {
       String text = parseContext.current().text;
-      String error = WorkspacePath.validate(text);
+      String error = validateXml(parseContext.getWorkspacePathResolver(), text);
       if (error != null) {
         parseContext.addError(error);
         return null;
       }
       return new WorkspacePath(text);
+    }
+
+    /**
+     * Checks that the given file contains a valid XML element. Returns an error message if invalid,
+     * or else null.
+     */
+    @Nullable
+    private static String validateXml(WorkspacePathResolver pathResolver, String text) {
+      String error = WorkspacePath.validate(text);
+      if (error != null) {
+        return error;
+      }
+      WorkspacePath path = new WorkspacePath(text);
+      File file = pathResolver.resolveToFile(path);
+      try {
+        JDOMUtil.load(file);
+        return null;
+      } catch (JDOMException e) {
+        return String.format("'%s' doesn't appear to be a valid run configuration XML file", text);
+      } catch (IOException e) {
+        return "Can't find/read run configuration XML file: " + text;
+      }
     }
 
     @Override
