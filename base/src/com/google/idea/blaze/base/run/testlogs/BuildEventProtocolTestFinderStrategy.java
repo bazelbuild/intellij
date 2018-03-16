@@ -53,4 +53,7 @@ public final class BuildEventProtocolTestFinderStrategy implements BlazeTestResu
       }
     }
   }
+
+  @Override
+  public void deleteTemporaryOutputXmlFiles() {}
 }

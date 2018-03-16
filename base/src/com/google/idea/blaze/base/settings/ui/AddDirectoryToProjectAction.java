@@ -52,6 +52,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.SwingHelper;
 import java.awt.Component;
@@ -67,10 +68,14 @@ import javax.swing.SwingConstants;
 
 final class AddDirectoryToProjectAction extends BlazeProjectAction {
 
-  private static final String WARNING_TEXT =
+  private static final String ADD_TARGETS_WARNING_TEXT =
       "This will add all blaze targets below this directory to your project. This could have a "
           + "large impact on your project build times if the directory contains a lot of code or "
           + "expensive genrule targets.";
+
+  private static final String NO_TARGETS_WARNING_TEXT =
+      "Adding a directory without adding targets means that references in the source files may not "
+          + "resolve correctly.";
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
@@ -90,6 +95,7 @@ final class AddDirectoryToProjectAction extends BlazeProjectAction {
     final WorkspacePathResolver workspacePathResolver;
     final JPanel component;
     final FileTextField fileTextField;
+    final JBCheckBox addTargetsCheckBox;
 
     OpenBlazeWorkspaceFileActionDialog(
         Project project, WorkspacePathResolver workspacePathResolver) {
@@ -107,16 +113,28 @@ final class AddDirectoryToProjectAction extends BlazeProjectAction {
       JPanel directoryPanel =
           SwingHelper.newHorizontalPanel(
               Component.TOP_ALIGNMENT, directoryLabel, fileTextField.getField());
-
+      addTargetsCheckBox = new JBCheckBox("Add build targets to the project", true);
       JBLabel warning =
           new JBLabel(
-              "<html>" + WARNING_TEXT + "</html>",
+              "<html>" + ADD_TARGETS_WARNING_TEXT + "</html>",
               AllIcons.General.BalloonWarning,
               SwingConstants.LEFT);
       warning.setPreferredSize(new Dimension(800, 100));
+
+      addTargetsCheckBox.addChangeListener(
+          e -> {
+            String warningText;
+            if (addTargetsCheckBox.isSelected()) {
+              warningText = ADD_TARGETS_WARNING_TEXT;
+            } else {
+              warningText = NO_TARGETS_WARNING_TEXT;
+            }
+            warning.setText("<html>" + warningText + "</html>");
+          });
+
       component =
           SwingHelper.newLeftAlignedVerticalPanel(
-              directoryPanel, warning, Box.createVerticalGlue());
+              directoryPanel, addTargetsCheckBox, warning, Box.createVerticalGlue());
 
       setTitle("Add Directory to Project");
 
@@ -217,11 +235,13 @@ final class AddDirectoryToProjectAction extends BlazeProjectAction {
                 newDirectories.forEach(directoriesUpdater::add);
                 builder.replace(directories, directoriesUpdater);
 
-                ListSection<TargetExpression> targets = builder.getLast(TargetSection.KEY);
-                Builder<TargetExpression> targetsUpdater =
-                    ListSection.update(TargetSection.KEY, targets);
-                newTargets.forEach(targetsUpdater::add);
-                builder.replace(targets, targetsUpdater);
+                if (addTargetsCheckBox.isSelected()) {
+                  ListSection<TargetExpression> targets = builder.getLast(TargetSection.KEY);
+                  Builder<TargetExpression> targetsUpdater =
+                      ListSection.update(TargetSection.KEY, targets);
+                  newTargets.forEach(targetsUpdater::add);
+                  builder.replace(targets, targetsUpdater);
+                }
 
                 return true;
               });

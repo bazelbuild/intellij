@@ -110,6 +110,7 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
                 .addTargets(label)
                 .addBlazeFlags(blazeFlags)
                 .addBlazeFlags(buildResultHelper.getBuildFlags())
+                .addBlazeFlags("--output_groups=android_deploy_info")
                 .addExeFlags(exeFlags);
 
             SaveUtil.saveAllFiles();
