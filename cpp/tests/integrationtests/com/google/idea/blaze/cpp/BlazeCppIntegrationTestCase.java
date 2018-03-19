@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 import static com.jetbrains.cidr.lang.OCLanguage.LANGUAGE_SUPPORT_DISABLED;
 
 import com.google.common.base.Splitter;
@@ -26,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.cidr.lang.psi.OCFile;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceManager;
+import java.util.List;
 import org.junit.Before;
 
 /** Base C++ test class for integration tests. */
@@ -51,8 +53,21 @@ public class BlazeCppIntegrationTestCase extends BlazeIntegrationTestCase {
     }
   }
 
-  protected static void assertText(OCFile file, String... lines) {
-    assertThat(Splitter.on('\n').split(file.getText())).containsExactly((Object[]) lines).inOrder();
+  protected static void assertText(OCFile file, String... expectedLines) {
+    List<String> actualLines = Splitter.on('\n').splitToList(file.getText());
+    int i = 0;
+    for (String actualLine : actualLines) {
+      if (i < expectedLines.length) {
+        assertWithMessage(
+                String.format(
+                    "Diff on line %s\nActual full text:\n%s\nExpected full text:\n%s",
+                    i, file.getText(), String.join("\n", expectedLines)))
+            .that(actualLine)
+            .isEqualTo(expectedLines[i]);
+      }
+      i++;
+    }
+    assertThat(actualLines).hasSize(expectedLines.length);
   }
 
   private class TestOCWorkspaceManager extends OCWorkspaceManager {

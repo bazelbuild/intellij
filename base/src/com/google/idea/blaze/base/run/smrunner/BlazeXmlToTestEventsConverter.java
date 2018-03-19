@@ -76,8 +76,12 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
     if (testResults == null) {
       return;
     }
-    for (Label label : testResults.perTargetResults.keySet()) {
-      processTestSuites(label, testResults.perTargetResults.get(label));
+    try {
+      for (Label label : testResults.perTargetResults.keySet()) {
+        processTestSuites(label, testResults.perTargetResults.get(label));
+      }
+    } finally {
+      testResultFinderStrategy.deleteTemporaryOutputXmlFiles();
     }
   }
 

@@ -31,6 +31,9 @@ public class BlazeAndroidTestLaunchMethodsProviderImpl
             AndroidTestLaunchMethod.NON_BLAZE, String.format("Run without using %s", blaze)),
         new AndroidTestLaunchMethodComboEntry(
             AndroidTestLaunchMethod.BLAZE_TEST,
-            String.format("Run with %s test", blaze.toLowerCase())));
+            String.format("Run with %s test", blaze.toLowerCase())),
+        new AndroidTestLaunchMethodComboEntry(
+            AndroidTestLaunchMethod.MOBILE_INSTALL,
+            String.format("Run with %s mobile-install", blaze.toLowerCase())));
   }
 }
