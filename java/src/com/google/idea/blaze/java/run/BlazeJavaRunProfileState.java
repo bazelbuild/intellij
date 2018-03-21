@@ -101,7 +101,7 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
     BlazeCommand.Builder blazeCommand;
     BlazeTestUiSession testUiSession =
         useTestUi()
-            ? TestUiSessionProvider.createForTarget(project, configuration.getTarget())
+            ? TestUiSessionProvider.getInstance(project).getTestUiSession(configuration.getTarget())
             : null;
     if (testUiSession != null) {
       blazeCommand =

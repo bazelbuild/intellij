@@ -15,43 +15,18 @@
  */
 package com.google.idea.blaze.base.run.smrunner;
 
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import java.util.Arrays;
-import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Provides a {@link BlazeTestUiSession} for a given project. */
 public interface TestUiSessionProvider {
-  ExtensionPointName<TestUiSessionProvider> EP_NAME =
-      ExtensionPointName.create("com.google.idea.blaze.TestUiSessionProvider");
 
-  /** Returns a {@link BlazeTestUiSession} for the given project and blaze target. */
-  @Nullable
-  static BlazeTestUiSession createForTarget(Project project, TargetExpression target) {
-    if (!BlazeTestEventsHandler.targetSupported(project, target)) {
-      return null;
-    }
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (projectData == null) {
-      return null;
-    }
-    return Arrays.stream(EP_NAME.getExtensions())
-        .map(provider -> provider.getTestUiSession(projectData.blazeVersionData.buildSystem()))
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
+  static TestUiSessionProvider getInstance(Project project) {
+    return ServiceManager.getService(project, TestUiSessionProvider.class);
   }
 
-  /**
-   * Returns a {@link BlazeTestUiSession}, or {@code null} if this provider doesn't handle the given
-   * project.
-   */
   @Nullable
-  BlazeTestUiSession getTestUiSession(BuildSystem buildSystem);
+  BlazeTestUiSession getTestUiSession(TargetExpression target);
 }

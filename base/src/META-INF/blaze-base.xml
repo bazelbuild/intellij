@@ -232,6 +232,8 @@
     <runConfigurationProducer
         implementation="com.google.idea.blaze.base.run.producers.BlazeFilterExistingRunConfigurationProducer"
         order="first"/>
+    <projectService serviceInterface="com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider"
+                    serviceImplementation="com.google.idea.blaze.base.run.smrunner.TestUiSessionProviderImpl"/>
     <stepsBeforeRunProvider implementation="com.google.idea.blaze.base.run.BlazeBeforeRunTaskProvider"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.help.BlazeHelpHandler"
                         serviceImplementation="com.google.idea.blaze.base.help.BlazeHelpHandlerImpl"/>
@@ -368,7 +370,6 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.AttributeSpecificStringLiteralReferenceProvider" interface="com.google.idea.blaze.base.lang.buildfile.references.AttributeSpecificStringLiteralReferenceProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.EventLogger" interface="com.google.idea.blaze.base.logging.EventLogger"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ProjectViewDefaultValueProvider" interface="com.google.idea.blaze.base.projectview.section.ProjectViewDefaultValueProvider"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.TestUiSessionProvider" interface="com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeLibrarySorter" interface="com.google.idea.blaze.base.sync.libraries.BlazeLibrarySorter"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildSystemVersionChecker" interface="com.google.idea.blaze.base.plugin.BuildSystemVersionChecker"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeIssueParserProvider" interface="com.google.idea.blaze.base.issueparser.BlazeIssueParserProvider"/>
@@ -399,7 +400,6 @@
     <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.base.projectview.section.sections.TargetSection$TargetsProjectViewDefaultValueProvider"/>
     <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguagesSection$AdditionalLanguagesDefaultValueProvider"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.base.prefetch.ProtoPrefetchFileSource"/>
-    <TestUiSessionProvider implementation="com.google.idea.blaze.base.run.smrunner.BazelTestUiSessionProvider"/>
     <BuildSystemVersionChecker implementation="com.google.idea.blaze.base.plugin.BazelVersionChecker"/>
     <BlazeConsoleLineProcessorProvider implementation="com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider$GeneralProvider"/>
     <TargetFinder implementation="com.google.idea.blaze.base.run.targetfinder.ProjectTargetFinder"/>

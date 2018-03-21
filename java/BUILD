@@ -101,6 +101,11 @@ intellij_unit_test_suite(
         ":javac_lib_deploy.jar",
         ":truth_lib_deploy.jar",
     ],
+    jvm_flags = [
+        "-Dguava.jar=$(location :guava_lib_deploy.jar)",
+        "-Djavac.jar=$(location :javac_lib_deploy.jar)",
+        "-Dtruth.jar=$(location :truth_lib_deploy.jar)",
+    ],
     test_package_root = "com.google.idea.blaze.java",
     deps = [
         ":java",

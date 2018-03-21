@@ -18,6 +18,8 @@ package com.google.idea.common.guava;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collector;
@@ -81,5 +83,11 @@ public final class GuavaHelper {
   /** Replaces {@code Streams::stream} in Guava 21, or {@code Optional::stream} in Java 9. */
   public static <T> Stream<T> stream(Optional<T> optional) {
     return optional.isPresent() ? Stream.of(optional.get()) : Stream.of();
+  }
+
+  /** Replaces {@code ImmutableList#sortedCopyOf}, which isn't available until Guava 21. */
+  public static <T> ImmutableList<T> sortedImmutableListOf(
+      Comparator<? super T> comparator, Collection<? extends T> elements) {
+    return elements.stream().sorted(comparator).collect(toImmutableList());
   }
 }

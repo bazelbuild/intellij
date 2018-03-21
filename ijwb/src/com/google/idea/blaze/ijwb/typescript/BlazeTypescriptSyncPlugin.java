@@ -49,11 +49,14 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.intellij.ide.browsers.BrowserLauncher;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.pom.Navigatable;
+import com.intellij.pom.NavigatableAdapter;
 import com.intellij.util.PlatformUtils;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -217,10 +220,18 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
             + " and the `ts_config_rules` attribute.";
     String documentationUrl =
         buildSystemProvider.getLanguageSupportDocumentationUrl("dynamic-languages-typescript");
+    Navigatable navigatable = null;
     if (documentationUrl != null) {
-      errorNote += String.format("<p>See <a href=\"%1$s\">%1$s</a>.", documentationUrl);
+      errorNote += " Click to open the relevant docs.";
+      navigatable =
+          new NavigatableAdapter() {
+            @Override
+            public void navigate(boolean requestFocus) {
+              BrowserLauncher.getInstance().open(documentationUrl);
+            }
+          };
     }
-    IssueOutput.error(errorNote).submit(context);
+    IssueOutput.error(errorNote).navigatable(navigatable).submit(context);
   }
 
   private static Set<Label> getTsConfigTargets(ProjectViewSet projectViewSet) {
