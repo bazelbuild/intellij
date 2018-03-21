@@ -80,7 +80,6 @@
 
   <extensions defaultExtensionNs="com.android.project">
     <buildSystemService implementation="com.google.idea.blaze.android.project.BlazeBuildSystemService"/>
-    <featureEnableService implementation="com.google.idea.blaze.android.project.BlazeFeatureEnableService"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.rendering">

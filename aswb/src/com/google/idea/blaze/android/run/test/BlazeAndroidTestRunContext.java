@@ -97,7 +97,7 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
 
     BlazeTestUiSession testUiSession =
         canUseTestUi(env.getExecutor())
-            ? TestUiSessionProvider.createForTarget(project, runConfiguration.getTarget())
+            ? TestUiSessionProvider.getInstance(env.getProject()).getTestUiSession(label)
             : null;
     if (testUiSession != null) {
       this.blazeFlags =

@@ -62,6 +62,8 @@ import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess;
 import com.jetbrains.cidr.execution.testing.CidrLauncher;
 import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestConsoleProperties;
 import java.io.File;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -92,7 +94,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     ImmutableList<String> testHandlerFlags = ImmutableList.of();
     BlazeTestUiSession testUiSession =
         useTestUi()
-            ? TestUiSessionProvider.createForTarget(project, configuration.getTarget())
+            ? TestUiSessionProvider.getInstance(project).getTestUiSession(configuration.getTarget())
             : null;
     if (testUiSession != null) {
       testHandlerFlags = testUiSession.getBlazeFlags();
@@ -100,6 +102,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
     ProjectViewSet projectViewSet =
         Preconditions.checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet());
+
+    List<String> fixedBlazeFlags = getFixedBlazeFlags(false);
 
     BlazeCommand.Builder command =
         BlazeCommand.builder(
@@ -113,7 +117,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
                     handlerState.getCommandState().getCommand(),
                     BlazeInvocationContext.NonSync))
             .addBlazeFlags(testHandlerFlags)
-            .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
+            .addBlazeFlags(fixedBlazeFlags)
             .addExeFlags(handlerState.getExeFlagsState().getExpandedFlags());
 
     state.setConsoleBuilder(createConsoleBuilder(testUiSession));
@@ -164,20 +168,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         envState.isPassParentEnvs() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.NONE);
     commandLine.getEnvironment().putAll(envState.getEnvs());
 
-    String testPrefix = "--gtest";
-    if (Blaze.getBuildSystem(project).equals(BuildSystem.Blaze)) {
-      testPrefix = "--gunit";
-    }
-    // Disable colored output, to workaround parsing bug (CPP-10054)
-    // Note: cc_test runner currently only supports GUnit tests.
-    if (Kind.CC_TEST.equals(configuration.getTargetKind())) {
-      commandLine.addParameter(testPrefix + "_color=no");
-    }
-
-    String testFilter = convertToGUnitTestFilter(handlerState.getTestFilterFlag(), testPrefix);
-    if (testFilter != null) {
-      commandLine.addParameter(testFilter);
-    }
+    commandLine.addParameters(getFixedBlazeFlags(true));
 
     TrivialInstaller installer = new TrivialInstaller(commandLine);
     ImmutableList<String> startupCommands = getGdbStartupCommands(workingDir);
@@ -190,14 +181,52 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     return new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder());
   }
 
-  /** Convert Blaze test filter to gunit/gtest test filter */
-  @Nullable
-  private static String convertToGUnitTestFilter(
-      @Nullable String blazeTestFilter, String testPrefix) {
-    if (blazeTestFilter == null || !blazeTestFilter.startsWith(BlazeFlags.TEST_FILTER)) {
-      return null;
+  /**
+   * Get the correct test prefix for blaze/bazel
+   *
+   * @param runningBinaryDirectly True if executing a binary directly, false if running via
+   *     bazel/blaze
+   */
+  private String getTestPrefix(boolean runningBinaryDirectly) {
+    if (Blaze.getBuildSystem(project).equals(BuildSystem.Blaze)) {
+      return "--gunit";
     }
-    return testPrefix + "_filter" + blazeTestFilter.substring(BlazeFlags.TEST_FILTER.length());
+    return runningBinaryDirectly ? "--gtest" : "--test_args=--gtest";
+  }
+
+  /**
+   * Convert test flags to correct gunit/gtest prefix
+   *
+   * @param runningBinaryDirectly True if executing a binary directly, false if running via
+   *     bazel/blaze
+   * @return The list of bazel/blaze flags, fixed for the current execution environment
+   */
+  private List<String> getFixedBlazeFlags(boolean runningBinaryDirectly) {
+    List<String> originalBlazeFlags = handlerState.getBlazeFlagsState().getExpandedFlags();
+
+    // Flags are fine as-is in this case
+    if (!runningBinaryDirectly && Blaze.getBuildSystem(project).equals(BuildSystem.Blaze)) {
+      return originalBlazeFlags;
+    }
+
+    // Only manipulate flags for test configurations
+    if (!Kind.CC_TEST.equals(configuration.getTargetKind())) {
+      return originalBlazeFlags;
+    }
+
+    String testPrefix = getTestPrefix(runningBinaryDirectly);
+    return originalBlazeFlags
+        .stream()
+        // If we're running the binary directly, only allow test filter flags through
+        .filter(flag -> !runningBinaryDirectly || flag.startsWith(BlazeFlags.TEST_FILTER))
+        .map(
+            flag -> {
+              if (flag.startsWith(BlazeFlags.TEST_FILTER)) {
+                flag = testPrefix + "_filter" + flag.substring(BlazeFlags.TEST_FILTER.length());
+              }
+              return flag;
+            })
+        .collect(Collectors.toList());
   }
 
   @Override

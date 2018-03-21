@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.run.testmap;
 import static com.google.idea.common.guava.GuavaHelper.toImmutableSet;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -30,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.concurrent.Future;
 
 /**
  * Used to locate tests from source files for things like right-clicks.
@@ -39,20 +41,21 @@ import java.util.Optional;
 public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
 
   @Override
-  public Collection<TargetInfo> targetsForSourceFile(
+  public Future<Collection<TargetInfo>> targetsForSourceFile(
       Project project, File sourceFile, Optional<RuleType> ruleType) {
     FilteredTargetMap filteredTargetMap =
         SyncCache.getInstance(project)
             .get(ProjectSourceToTargetFinder.class, ProjectSourceToTargetFinder::computeTargetMap);
     if (filteredTargetMap == null) {
-      return ImmutableList.of();
+      return Futures.immediateFuture(ImmutableList.of());
     }
-    return filteredTargetMap
-        .targetsForSourceFile(sourceFile)
-        .stream()
-        .map(TargetIdeInfo::toTargetInfo)
-        .filter(target -> !ruleType.isPresent() || target.getRuleType().equals(ruleType.get()))
-        .collect(toImmutableSet());
+    return Futures.immediateFuture(
+        filteredTargetMap
+            .targetsForSourceFile(sourceFile)
+            .stream()
+            .map(TargetIdeInfo::toTargetInfo)
+            .filter(target -> !ruleType.isPresent() || target.getRuleType().equals(ruleType.get()))
+            .collect(toImmutableSet()));
   }
 
   private static FilteredTargetMap computeTargetMap(Project project, BlazeProjectData projectData) {

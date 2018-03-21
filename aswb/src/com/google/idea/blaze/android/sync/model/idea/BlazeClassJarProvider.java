@@ -19,6 +19,7 @@ import com.android.SdkConstants;
 import com.android.tools.idea.model.ClassJarProvider;
 import com.android.tools.idea.res.AppResourceRepository;
 import com.android.tools.idea.res.ResourceClassRegistry;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
@@ -190,7 +191,9 @@ public class BlazeClassJarProvider extends ClassJarProvider {
       // calls to ask about the name and content of a given resource ID, the repository can just
       // answer what it has already stored.
       AndroidIdeInfo androidIdeInfo = dependencyTarget.androidIdeInfo;
-      if (androidIdeInfo != null && repository != null) {
+      if (androidIdeInfo != null
+          && !Strings.isNullOrEmpty(androidIdeInfo.resourceJavaPackage)
+          && repository != null) {
         ResourceClassRegistry.get(module.getProject())
             .addLibrary(repository, androidIdeInfo.resourceJavaPackage);
       }

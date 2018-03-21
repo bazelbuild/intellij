@@ -138,7 +138,8 @@ public final class BlazeCommandGenericRunConfigurationRunner
       ImmutableList<String> testHandlerFlags = ImmutableList.of();
       BlazeTestUiSession testUiSession =
           canUseTestUi()
-              ? TestUiSessionProvider.createForTarget(project, configuration.getTarget())
+              ? TestUiSessionProvider.getInstance(project)
+                  .getTestUiSession(configuration.getTarget())
               : null;
       if (testUiSession != null) {
         testHandlerFlags = testUiSession.getBlazeFlags();

@@ -133,15 +133,14 @@ public class BlazeGoTestConfigurationProducer
     if (element == null) {
       return null;
     }
-    TargetInfo testTarget = TestTargetHeuristic.testTargetForPsiElement(element);
-    if (testTarget == null) {
+    PsiFile file = element.getContainingFile();
+    if (!(file instanceof GoFile) || !GoTestFinder.isTestFile(file)) {
       return null;
     }
-    PsiFile file = element.getContainingFile();
-    if (file instanceof GoFile && GoTestFinder.isTestFile(file)) {
-      return new TestLocation(
-          testTarget, (GoFile) file, GoTestFinder.findTestFunctionInContext(element));
-    }
-    return null;
+    TargetInfo testTarget = TestTargetHeuristic.testTargetForPsiElement(element);
+    return testTarget != null
+        ? new TestLocation(
+            testTarget, (GoFile) file, GoTestFinder.findTestFunctionInContext(element))
+        : null;
   }
 }

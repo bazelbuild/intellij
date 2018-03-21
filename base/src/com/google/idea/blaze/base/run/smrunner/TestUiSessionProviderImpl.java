@@ -17,21 +17,27 @@ package com.google.idea.blaze.base.run.smrunner;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolUtils;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.testlogs.BuildEventProtocolTestFinderStrategy;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 import javax.annotation.Nullable;
 
 /** Provides a {@link BlazeTestUiSession} for Bazel projects. */
-public class BazelTestUiSessionProvider implements TestUiSessionProvider {
+public class TestUiSessionProviderImpl implements TestUiSessionProvider {
+
+  private final Project project;
+
+  public TestUiSessionProviderImpl(Project project) {
+    this.project = project;
+  }
 
   @Nullable
   @Override
-  public BlazeTestUiSession getTestUiSession(BuildSystem buildSystem) {
-    if (buildSystem != BuildSystem.Bazel) {
+  public BlazeTestUiSession getTestUiSession(TargetExpression target) {
+    if (!BlazeTestEventsHandler.targetSupported(project, target)) {
       return null;
     }
-
     File bepOutputFile = BuildEventProtocolUtils.createTempOutputFile();
     ImmutableList<String> flags =
         ImmutableList.<String>builder()

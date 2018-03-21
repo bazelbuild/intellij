@@ -46,12 +46,9 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public final class FastBuildCompilerFactoryImplTest {
 
-  private static final File JAVAC_JAR =
-      new File("java/javac_lib_deploy.jar");
-  private static final File GUAVA_JAR =
-      new File("java/guava_lib_deploy.jar");
-  private static final File TRUTH_JAR =
-      new File("java/truth_lib_deploy.jar");
+  private static final File JAVAC_JAR = new File(System.getProperty("javac.jar"));
+  private static final File GUAVA_JAR = new File(System.getProperty("guava.jar"));
+  private static final File TRUTH_JAR = new File(System.getProperty("truth.jar"));
 
   private FastBuildCompilerFactoryImpl compilerFactory;
 
