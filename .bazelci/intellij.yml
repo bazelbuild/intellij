@@ -1,0 +1,29 @@
+---
+platforms:
+  ubuntu1404:
+    build_flags:
+    - --define=ij_product=intellij-beta
+    build_targets:
+    - //ijwb:ijwb_bazel
+    test_flags:
+    - --define=ij_product=intellij-beta
+    test_targets:
+    - //:ijwb_tests
+  ubuntu1604:
+    build_flags:
+    - --define=ij_product=intellij-beta
+    build_targets:
+    - //ijwb:ijwb_bazel
+    test_flags:
+    - --define=ij_product=intellij-beta
+    test_targets:
+    - //:ijwb_tests
+  macos:
+    build_flags:
+    - --define=ij_product=intellij-beta
+    build_targets:
+    - //ijwb:ijwb_bazel
+    test_flags:
+    - --define=ij_product=intellij-beta
+    test_targets:
+    - //:ijwb_tests
