@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.clwb.wizard2;
+package com.google.idea.blaze.base.wizard2;
 
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
@@ -42,19 +42,19 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 import javax.swing.SwingUtilities;
 
-class BlazeCProjectCreator {
-  private static final Logger LOG = Logger.getInstance(BlazeCProjectCreator.class);
+class BlazeProjectCreator {
+  private static final Logger LOG = Logger.getInstance(BlazeProjectCreator.class);
 
   private final WizardContext wizardContext;
   private final ProjectBuilder projectBuilder;
 
-  public BlazeCProjectCreator(WizardContext wizardContext, ProjectBuilder projectBuilder) {
+  BlazeProjectCreator(WizardContext wizardContext, ProjectBuilder projectBuilder) {
     this.wizardContext = wizardContext;
     this.projectBuilder = projectBuilder;
   }
 
   @Nullable
-  public Project createFromWizard() {
+  Project createFromWizard() {
     try {
       return doCreate();
     } catch (final IOException e) {

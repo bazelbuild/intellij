@@ -32,16 +32,6 @@
       <reference id="Blaze.ExcludeLibraryAction"/>
       <reference id="Blaze.AddLibraryTargetDirectoryToProjectView"/>
     </group>
-
-    <!-- IntelliJ specific actions -->
-
-    <action id="Blaze.ImportProject2" class="com.google.idea.blaze.java.wizard2.BlazeImportProjectAction" icon="BlazeIcons.Blaze">
-      <add-to-group group-id="WelcomeScreen.QuickStart" />
-      <add-to-group group-id="OpenProjectGroup" relative-to-action="ImportProject" anchor="after"/>
-    </action>
-
-    <!-- End IntelliJ specific actions -->
-
   </actions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -59,6 +49,7 @@
     <SyncListener implementation="com.google.idea.blaze.java.libraries.BlazeSyncModificationTracker$SyncTrackerUpdater"/>
     <JavaClasspathAspectStrategy implementation="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy$BazelStrategy"/>
     <JavaTestCaseIdentifier implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestMethodConfigurationProducer$Identifier"/>
+    <TestComparisonFailureParser implementation="com.google.idea.blaze.java.run.smrunner.JunitTestComparisonFailureParser"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

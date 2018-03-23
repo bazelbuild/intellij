@@ -13,40 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.java.wizard2;
+package com.google.idea.blaze.base.wizard2;
 
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
-import com.google.idea.blaze.base.wizard2.BlazeNewProjectBuilder;
-import com.google.idea.blaze.base.wizard2.ui.SelectBazelBinaryControl;
+import com.google.idea.blaze.base.wizard2.ui.BlazeSelectProjectViewControl;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.projectImport.ProjectImportWizardStep;
 import java.awt.BorderLayout;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import org.jetbrains.annotations.NotNull;
 
-class BlazeSelectBuildSystemBinaryStep extends ProjectImportWizardStep {
+class BlazeSelectProjectViewImportWizardStep extends ProjectImportWizardStep {
 
   private final JPanel component = new JPanel(new BorderLayout());
-  private SelectBazelBinaryControl control;
-  private boolean settingsInitialized = false;
+  private BlazeSelectProjectViewControl control;
+  private boolean settingsInitialised;
 
-  public BlazeSelectBuildSystemBinaryStep(@NotNull WizardContext context) {
+  public BlazeSelectProjectViewImportWizardStep(WizardContext context) {
     super(context);
-  }
-
-  @Override
-  public boolean isStepVisible() {
-    updateStep();
-    if (control.builder.getBuildSystem() != BuildSystem.Bazel) {
-      return false;
-    }
-    String currentBinaryPath = BlazeUserSettings.getInstance().getBazelBinaryPath();
-    return currentBinaryPath == null;
   }
 
   @Override
@@ -56,15 +41,17 @@ class BlazeSelectBuildSystemBinaryStep extends ProjectImportWizardStep {
 
   @Override
   public void updateStep() {
-    if (!settingsInitialized) {
+    if (!settingsInitialised) {
       init();
+    } else {
+      control.update(getProjectBuilder());
     }
   }
 
   private void init() {
-    control = new SelectBazelBinaryControl(getProjectBuilder());
-    component.add(control.getUiComponent());
-    settingsInitialized = true;
+    control = new BlazeSelectProjectViewControl(getProjectBuilder());
+    this.component.add(control.getUiComponent());
+    settingsInitialised = true;
   }
 
   @Override
@@ -77,17 +64,17 @@ class BlazeSelectBuildSystemBinaryStep extends ProjectImportWizardStep {
   }
 
   @Override
-  public void updateDataModel() {}
+  public void updateDataModel() {
+    control.updateBuilder(getProjectBuilder());
+  }
 
   @Override
   public void onWizardFinished() throws CommitStepException {
     control.commit();
   }
 
-  private BlazeNewProjectBuilder getProjectBuilder() {
-    BlazeProjectImportBuilder builder =
-        (BlazeProjectImportBuilder) getWizardContext().getProjectBuilder();
-    assert builder != null;
-    return builder.builder();
+  @Override
+  public String getHelpId() {
+    return "docs/project-views";
   }
 }

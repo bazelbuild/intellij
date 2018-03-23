@@ -8,6 +8,7 @@ load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "merged_plugin_xml",
+    "optional_plugin_xml",
     "plugin_deploy_zip",
     "repackaged_files",
     "stamped_plugin_xml",
@@ -44,10 +45,17 @@ merged_plugin_xml(
     ],
 )
 
+optional_plugin_xml(
+    name = "optional_java",
+    module = "com.intellij.modules.java",
+    plugin_xml = "src/META-INF/java-contents.xml",
+)
+
 stamped_plugin_xml(
     name = "stamped_plugin_xml",
     changelog_file = "//:changelog",
-    include_product_code_in_stamp = True,
+    # Supports multiple IDEs, so no product code included
+    include_product_code_in_stamp = False,
     plugin_id = "com.google.idea.bazel.ijwb",
     plugin_name = "Bazel",
     plugin_xml = ":merged_plugin_xml",
@@ -80,6 +88,7 @@ java_library(
 )
 
 OPTIONAL_PLUGIN_XMLS = [
+    ":optional_java",
     "//golang:optional_xml",
     "//java:optional_java",
     "//java:optional_coverage",

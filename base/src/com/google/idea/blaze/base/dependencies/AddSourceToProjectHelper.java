@@ -15,19 +15,40 @@
  */
 package com.google.idea.blaze.base.dependencies;
 
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewEdit;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.ui.OpenLocalProjectViewAction;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
+import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -35,7 +56,14 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.Consumer;
+import java.io.File;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.swing.event.HyperlinkEvent;
 
@@ -46,11 +74,53 @@ class AddSourceToProjectHelper {
           "Add source to project", NotificationDisplayType.BALLOON, /* logByDefault */ true);
 
   /**
+   * Given the workspace targets building a source file, updates the .blazeproject 'directories' and
+   * 'targets' sections accordingly.
+   */
+  static void addSourceToProject(
+      Project project,
+      WorkspacePath workspacePath,
+      boolean inProjectDirectories,
+      Future<List<TargetInfo>> targetsFuture) {
+    List<TargetInfo> targets;
+    try {
+      targets = targetsFuture.get();
+    } catch (InterruptedException | ExecutionException e) {
+      return;
+    }
+    boolean addDirectory = !inProjectDirectories;
+    boolean addTarget = !targets.isEmpty();
+    if (!addDirectory && !addTarget) {
+      return;
+    }
+    if (targets.size() <= 1) {
+      AddSourceToProjectHelper.addSourceAndTargetsToProject(
+          project, workspacePath, convertTargets(targets));
+      return;
+    }
+    AddSourceToProjectDialog dialog = new AddSourceToProjectDialog(project, targets);
+    dialog
+        .showAndGetOk()
+        .doWhenDone(
+            (Consumer<Boolean>)
+                ok -> {
+                  if (ok) {
+                    AddSourceToProjectHelper.addSourceAndTargetsToProject(
+                        project, workspacePath, convertTargets(dialog.getSelectedTargets()));
+                  }
+                });
+  }
+
+  private static List<Label> convertTargets(List<TargetInfo> targets) {
+    return targets.stream().map(t -> t.label).collect(Collectors.toList());
+  }
+
+  /**
    * Adds the parent directory of the specified {@link WorkspacePath}, and the given targets to the
    * project view.
    */
   static void addSourceAndTargetsToProject(
-      Project project, WorkspacePath workspacePath, List<Label> targets) {
+      Project project, WorkspacePath workspacePath, List<? extends TargetExpression> targets) {
     ImportRoots roots = ImportRoots.forProjectSafe(project);
     if (roots == null) {
       notifyFailed(
@@ -91,7 +161,8 @@ class AddSourceToProjectHelper {
         ListSection.update(DirectorySection.KEY, section).add(DirectoryEntry.include(dir)));
   }
 
-  private static void addTargets(ProjectView.Builder builder, List<Label> targets) {
+  private static void addTargets(
+      ProjectView.Builder builder, List<? extends TargetExpression> targets) {
     if (targets.isEmpty()) {
       return;
     }
@@ -138,5 +209,198 @@ class AddSourceToProjectHelper {
               }
             });
     notification.notify(project);
+  }
+
+  /**
+   * Returns the list of targets building the given source file, which aren't already in the
+   * project. Returns null if this can't be calculated.
+   */
+  @Nullable
+  static ListenableFuture<List<TargetInfo>> getTargetsBuildingSource(LocationContext context) {
+    if (!SourceToTargetProvider.hasProvider()) {
+      return null;
+    }
+    if (!SourceToTargetMap.getInstance(context.project)
+        .getRulesForSourceFile(context.file)
+        .isEmpty()) {
+      // early-out if source covered by previously built targets
+      return null;
+    }
+    // early-out if source is trivially covered by project targets (e.g. because there's a wildcard
+    // target pattern for the parent package)
+    List<TargetExpression> projectTargets = context.projectViewSet.listItems(TargetSection.KEY);
+    if (packageCoveredByWildcardPattern(projectTargets, context.blazePackage)) {
+      return null;
+    }
+    // Finally, query the exact targets building this source file.
+    // This is required to handle project targets which failed to build
+    return Futures.transform(
+        SourceToTargetProvider.findTargetsBuildingSourceFile(
+            context.project, context.workspacePath.relativePath()),
+        (Function<List<TargetInfo>, List<TargetInfo>>)
+            (List<TargetInfo> result) ->
+                filterTargets(context.syncData.targetMap, projectTargets, result),
+        MoreExecutors.directExecutor());
+  }
+
+  /**
+   * Returns the list of targets not already in the project, which aren't known to be of an
+   * unsupported language.
+   */
+  private static List<TargetInfo> filterTargets(
+      TargetMap targetMap, List<TargetExpression> projectViewTargets, List<TargetInfo> targets) {
+    if (sourceInProjectTargets(targetMap, projectViewTargets, targets)) {
+      return ImmutableList.of();
+    }
+    targets.removeIf(t -> !supportedTargetKind(t));
+    return targets;
+  }
+
+  /**
+   * Returns true if the project targets (both included and excluded targets) contain one of the
+   * targets building the source file.
+   */
+  private static boolean sourceInProjectTargets(
+      TargetMap targetMap,
+      List<TargetExpression> projectViewTargets,
+      List<TargetInfo> targetsBuildingSource) {
+    // treat excluded and included project targets identically
+    projectViewTargets =
+        projectViewTargets
+            .stream()
+            .map(AddSourceToProjectHelper::unexclude)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+    for (TargetInfo targetInfo : targetsBuildingSource) {
+      Label label = targetInfo.label;
+      if (projectViewTargets.contains(label)
+          || targetMap.contains(TargetKey.forPlainTarget(label))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static TargetExpression unexclude(TargetExpression target) {
+    return target.isExcluded()
+        ? TargetExpression.fromStringSafe(target.toString().substring(1))
+        : target;
+  }
+
+  /** Returns true if the source is already covered by the current .blazeproject directories. */
+  static boolean sourceInProjectDirectories(LocationContext context) {
+    ImportRoots importRoots =
+        ImportRoots.builder(
+                WorkspaceRoot.fromProject(context.project), Blaze.getBuildSystem(context.project))
+            .add(context.projectViewSet)
+            .build();
+    return importRoots.containsWorkspacePath(context.workspacePath);
+  }
+
+  @Nullable
+  private static WorkspacePath getWorkspacePath(Project project, File file) {
+    WorkspacePathResolver pathResolver =
+        WorkspacePathResolverProvider.getInstance(project).getPathResolver();
+    if (pathResolver == null) {
+      return null;
+    }
+    return pathResolver.getWorkspacePath(file);
+  }
+
+  private static boolean isBuildSystemOutputArtifact(Project project, WorkspacePath path) {
+    return Blaze.getBuildSystemProvider(project)
+        .buildArtifactDirectories(WorkspaceRoot.fromProject(project))
+        .stream()
+        .anyMatch(outDir -> FileUtil.isAncestor(outDir, path.relativePath(), false));
+  }
+
+  @Nullable
+  private static WorkspacePath findBlazePackagePath(Project project, WorkspacePath source) {
+    WorkspacePathResolver pathResolver =
+        WorkspacePathResolverProvider.getInstance(project).getPathResolver();
+    if (pathResolver == null) {
+      return null;
+    }
+    BuildSystemProvider provider = Blaze.getBuildSystemProvider(project);
+    while (source != null) {
+      if (provider.findBuildFileInDirectory(pathResolver.resolveToFile(source)) != null) {
+        return source;
+      }
+      source = source.getParent();
+    }
+    return null;
+  }
+
+  private static boolean supportedTargetKind(TargetInfo target) {
+    Kind kind = target.getKind();
+    return kind != null && supportedLanguage(kind.languageClass);
+  }
+
+  static boolean supportedLanguage(LanguageClass language) {
+    return LanguageSupport.languagesSupportedByCurrentIde().contains(language);
+  }
+
+  static boolean packageCoveredByWildcardPattern(LocationContext context) {
+    List<TargetExpression> projectTargets = context.projectViewSet.listItems(TargetSection.KEY);
+    return packageCoveredByWildcardPattern(projectTargets, context.blazePackage);
+  }
+
+  private static boolean packageCoveredByWildcardPattern(
+      List<TargetExpression> projectTargets, WorkspacePath blazePackage) {
+    return projectTargets
+        .stream()
+        .map(WildcardTargetPattern::fromExpression)
+        .anyMatch(wildcard -> wildcard != null && wildcard.coversPackage(blazePackage));
+  }
+
+  /** Returns the location context related to a source file to be added to the project. */
+  @Nullable
+  static LocationContext getContext(Project project, File file) {
+    BlazeProjectData syncData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (syncData == null) {
+      return null;
+    }
+    WorkspacePath workspacePath = getWorkspacePath(project, file);
+    if (workspacePath == null || isBuildSystemOutputArtifact(project, workspacePath)) {
+      return null;
+    }
+    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    if (projectViewSet == null) {
+      return null;
+    }
+    WorkspacePath parent = workspacePath.getParent();
+    if (parent == null) {
+      return null;
+    }
+    WorkspacePath blazePackage = findBlazePackagePath(project, parent);
+    return blazePackage != null
+        ? new LocationContext(project, syncData, projectViewSet, file, workspacePath, blazePackage)
+        : null;
+  }
+
+  /** Location context related to a source file to be added to the project. */
+  static class LocationContext {
+    final Project project;
+    final BlazeProjectData syncData;
+    final ProjectViewSet projectViewSet;
+    final File file;
+    final WorkspacePath workspacePath;
+    final WorkspacePath blazePackage;
+
+    private LocationContext(
+        Project project,
+        BlazeProjectData syncData,
+        ProjectViewSet projectViewSet,
+        File file,
+        WorkspacePath workspacePath,
+        WorkspacePath blazePackage) {
+      this.project = project;
+      this.syncData = syncData;
+      this.projectViewSet = projectViewSet;
+      this.file = file;
+      this.workspacePath = workspacePath;
+      this.blazePackage = blazePackage;
+    }
   }
 }

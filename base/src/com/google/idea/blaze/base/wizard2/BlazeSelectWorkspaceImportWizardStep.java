@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.clwb.wizard2;
+package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.wizard2.ui.BlazeSelectWorkspaceControl;
@@ -23,7 +23,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import java.awt.BorderLayout;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import org.jetbrains.annotations.NotNull;
 
 class BlazeSelectWorkspaceImportWizardStep extends ProjectImportWizardStep {
 
@@ -31,7 +30,7 @@ class BlazeSelectWorkspaceImportWizardStep extends ProjectImportWizardStep {
   private BlazeSelectWorkspaceControl control;
   private boolean settingsInitialised;
 
-  public BlazeSelectWorkspaceImportWizardStep(@NotNull WizardContext context) {
+  public BlazeSelectWorkspaceImportWizardStep(WizardContext context) {
     super(context);
   }
 

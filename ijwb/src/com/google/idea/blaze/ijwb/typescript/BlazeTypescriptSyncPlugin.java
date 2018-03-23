@@ -72,9 +72,16 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
 
   static final String TSCONFIG_LIBRARY_NAME = "tsconfig$roots";
 
+  private static boolean isLanguageSupportedInIde() {
+    return PlatformUtils.isIdeaUltimate()
+        || PlatformUtils.isWebStorm()
+        || PlatformUtils.isCLion()
+        || PlatformUtils.isGoIde();
+  }
+
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
-    return PlatformUtils.isIdeaUltimate()
+    return isLanguageSupportedInIde()
         ? ImmutableSet.of(LanguageClass.TYPESCRIPT)
         : ImmutableSet.of();
   }

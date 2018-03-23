@@ -34,9 +34,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
-import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.RelatedWorkspacePathFinder;
@@ -66,7 +64,8 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
-final class AddDirectoryToProjectAction extends BlazeProjectAction {
+/** Adds a directory to the project then syncs. */
+public final class AddDirectoryToProjectAction extends BlazeProjectAction {
 
   private static final String ADD_TARGETS_WARNING_TEXT =
       "This will add all blaze targets below this directory to your project. This could have a "
@@ -79,13 +78,24 @@ final class AddDirectoryToProjectAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    BlazeProjectData blazeProjectData =
+    runAction(project, null);
+  }
+
+  /**
+   * Kick off the 'add directory to project' action, with an initial directory optionally selected.
+   */
+  public static void runAction(Project project, @Nullable File initiallySelectedFile) {
+    BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (blazeProjectData == null) {
+    if (projectData == null) {
       return;
     }
-
-    new OpenBlazeWorkspaceFileActionDialog(project, blazeProjectData.workspacePathResolver).show();
+    OpenBlazeWorkspaceFileActionDialog dialog =
+        new OpenBlazeWorkspaceFileActionDialog(project, projectData.workspacePathResolver);
+    if (initiallySelectedFile != null) {
+      dialog.fileTextField.getField().setText(initiallySelectedFile.getAbsolutePath());
+    }
+    dialog.show();
   }
 
   private static class OpenBlazeWorkspaceFileActionDialog extends DialogWrapper {
@@ -225,6 +235,8 @@ final class AddDirectoryToProjectAction extends BlazeProjectAction {
               .filter(entry -> !existingTargets.contains(entry))
               .collect(toCollection(LinkedHashSet::new));
 
+      boolean addTargets = addTargetsCheckBox.isSelected();
+
       ProjectViewEdit edit =
           ProjectViewEdit.editLocalProjectView(
               project,
@@ -235,7 +247,7 @@ final class AddDirectoryToProjectAction extends BlazeProjectAction {
                 newDirectories.forEach(directoriesUpdater::add);
                 builder.replace(directories, directoriesUpdater);
 
-                if (addTargetsCheckBox.isSelected()) {
+                if (addTargets) {
                   ListSection<TargetExpression> targets = builder.getLast(TargetSection.KEY);
                   Builder<TargetExpression> targetsUpdater =
                       ListSection.update(TargetSection.KEY, targets);
@@ -255,13 +267,11 @@ final class AddDirectoryToProjectAction extends BlazeProjectAction {
 
       edit.apply();
 
-      BlazeSyncManager.getInstance(project)
-          .requestProjectSync(
-              new BlazeSyncParams.Builder("Sync", BlazeSyncParams.SyncMode.INCREMENTAL)
-                  .addProjectViewTargets(true)
-                  .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
-                  .build());
-
+      if (addTargets) {
+        BlazeSyncManager.getInstance(project).partialSync(newTargets);
+      } else {
+        BlazeSyncManager.getInstance(project).directoryUpdate();
+      }
       super.doOKAction();
     }
   }

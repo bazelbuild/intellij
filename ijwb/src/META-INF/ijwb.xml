@@ -22,11 +22,9 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
-    <SyncPlugin implementation="com.google.idea.blaze.ijwb.android.BlazeAndroidLiteSyncPlugin"/>
     <SyncPlugin implementation="com.google.idea.blaze.ijwb.javascript.BlazeJavascriptSyncPlugin"/>
     <SyncPlugin implementation="com.google.idea.blaze.ijwb.typescript.BlazeTypescriptSyncPlugin"/>
     <SyncPlugin implementation="com.google.idea.blaze.ijwb.dart.BlazeDartSyncPlugin"/>
-    <JavaSyncAugmenter implementation="com.google.idea.blaze.ijwb.android.BlazeAndroidLiteJavaSyncAugmenter"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.ijwb.javascript.JavascriptPrefetchFileSource"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.ijwb.typescript.TypescriptPrefetchFileSource"/>
   </extensions>

@@ -1,5 +1,0 @@
-This package has the reusable components for the wizard process for
-creating a new project.
-
-Each IDE (eg. IntelliJ v. CLion) has its own project creation framework, so
-for each IDE we have to implement an adapter between that and these classes.

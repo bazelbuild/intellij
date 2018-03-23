@@ -123,8 +123,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(
             TextRange.create(
-                "java/com/google/android/samples/helloroot/math/".length(),
-                "java/com/google/android/samples/helloroot/math/DivideMath.java:17".length()));
+                0, "java/com/google/android/samples/helloroot/math/DivideMath.java:17".length()));
   }
 
   @Test
@@ -142,7 +141,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(
             TextRange.create(
-                "java/com/google/devtools/aswb/pluginrepo/googleplex/".length(),
+                0,
                 "java/com/google/devtools/aswb/pluginrepo/googleplex/PluginsEndpoint.java:33:26"
                     .length()));
   }
@@ -160,8 +159,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getMessage()).isEqualTo("'util/ptr_util2.h' file not found");
     assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
     assertThat(issue.getConsoleHyperlinkRange())
-        .isEqualTo(
-            TextRange.create("net/something/".length(), "net/something/foo_bar.cc:29:10".length()));
+        .isEqualTo(TextRange.create(0, "net/something/foo_bar.cc:29:10".length()));
   }
 
   @Test
@@ -181,8 +179,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(
             TextRange.create(
-                "ERROR: /root/javatests/package_path/".length(),
-                "ERROR: /root/javatests/package_path/BUILD:42:12".length()));
+                "ERROR: ".length(), "ERROR: /root/javatests/package_path/BUILD:42:12".length()));
   }
 
   @Test
@@ -202,7 +199,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(
             TextRange.create(
-                "ERROR: /root/third_party/bazel/tools/ide/".length(),
+                "ERROR: ".length(),
                 "ERROR: /root/third_party/bazel/tools/ide/intellij_info_impl.bzl:42:12".length()));
   }
 
@@ -220,8 +217,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(
             TextRange.create(
-                "ERROR: /path/to/root/java/package_path/".length(),
-                "ERROR: /path/to/root/java/package_path/BUILD".length()));
+                "ERROR: ".length(), "ERROR: /path/to/root/java/package_path/BUILD".length()));
   }
 
   @Test

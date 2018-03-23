@@ -89,6 +89,12 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
 
   @Nullable
   @Override
+  public WorkspaceType getDefaultWorkspaceType() {
+    return PlatformUtils.isPyCharm() ? WorkspaceType.PYTHON : null;
+  }
+
+  @Nullable
+  @Override
   public ModuleType getWorkspaceModuleType(WorkspaceType workspaceType) {
     // left here for backwards compatibility -- python workspace types are deprecated.
     if (workspaceType == WorkspaceType.PYTHON && supportsPythonWorkspaceType()) {

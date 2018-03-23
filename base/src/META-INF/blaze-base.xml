@@ -15,6 +15,10 @@
   -->
 <idea-plugin>
   <actions>
+    <action id="Blaze.ImportProject2" class="com.google.idea.blaze.base.wizard2.BlazeImportProjectAction" icon="BlazeIcons.Blaze">
+      <add-to-group group-id="WelcomeScreen.QuickStart" />
+      <add-to-group group-id="FileOpenGroup" anchor="first"/>
+    </action>
     <action id="MakeBlazeProject"
       class="com.google.idea.blaze.base.actions.BlazeMakeProjectAction"
       text="Compile Project"
@@ -59,6 +63,10 @@
     <action id="Blaze.AddDirectoryToProjectView"
       class="com.google.idea.blaze.base.settings.ui.AddDirectoryToProjectAction"
       text="Add Directory To Project...">
+    </action>
+    <action id="Blaze.AddSourceToProject"
+      class="com.google.idea.blaze.base.dependencies.AddSourceToProjectAction"
+      text="Add Source File To Project...">
     </action>
     <action id="Blaze.OpenCorrespondingBuildFile"
       class="com.google.idea.blaze.base.actions.OpenCorrespondingBuildFile"
@@ -116,6 +124,7 @@
         <reference id="Blaze.EditLocalProjectView"/>
         <reference id="Blaze.EditProjectView"/>
         <reference id="Blaze.AddDirectoryToProjectView"/>
+        <reference id="Blaze.AddSourceToProject"/>
       </group>
       <!--Add popup groups anchored after this bookmark-->
       <group id="Blaze.MenuGroupsBookmark"/>
@@ -144,6 +153,7 @@
       <add-to-group anchor="before" group-id="EditorPopupMenu" relative-to-action="$SearchWeb"/>
       <separator/>
       <reference ref="Blaze.PartialSync"/>
+      <reference ref="Blaze.AddSourceToProject"/>
       <reference ref="Blaze.OpenCorrespondingBuildFile"/>
       <reference ref="Blaze.CopyBlazeTargetPathAction"/>
     </group>
@@ -376,6 +386,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.SourceToTargetProvider" interface="com.google.idea.blaze.base.dependencies.SourceToTargetProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.TargetFinder" interface="com.google.idea.blaze.base.run.targetfinder.TargetFinder"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SourceToTargetFinder" interface="com.google.idea.blaze.base.run.SourceToTargetFinder"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.TestComparisonFailureParser" interface="com.google.idea.blaze.base.run.smrunner.TestComparisonFailureParser"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">

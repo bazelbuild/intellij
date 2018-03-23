@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.clwb.wizard2;
+package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.help.BlazeHelpHandler;
 import com.google.idea.blaze.base.settings.Blaze;

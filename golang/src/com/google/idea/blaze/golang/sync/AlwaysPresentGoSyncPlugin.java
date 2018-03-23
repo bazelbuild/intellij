@@ -67,9 +67,11 @@ public class AlwaysPresentGoSyncPlugin implements BlazeSyncPlugin {
         : ImmutableList.of();
   }
 
-  /** Returns true if this is a paid IDE, or if we're in unit testing mode */
+  /** Go plugin is only supported in IJ UE and GoLand. */
   private static boolean isGoPluginSupported() {
-    return !PlatformUtils.isIdeaCommunity() || ApplicationManager.getApplication().isUnitTestMode();
+    return PlatformUtils.isGoIde()
+        || PlatformUtils.isIdeaUltimate()
+        || ApplicationManager.getApplication().isUnitTestMode();
   }
 
   @Override
@@ -120,7 +122,8 @@ public class AlwaysPresentGoSyncPlugin implements BlazeSyncPlugin {
           .submit(context);
       return false;
     }
-    if (!workspaceLanguageSettings.isWorkspaceType(WorkspaceType.GO)) {
+    if (goWorkspaceTypeSupported()
+        || !workspaceLanguageSettings.isWorkspaceType(WorkspaceType.GO)) {
       return true;
     }
     ProjectViewFile topLevelProjectViewFile = projectViewSet.getTopLevelProjectViewFile();
@@ -172,7 +175,14 @@ public class AlwaysPresentGoSyncPlugin implements BlazeSyncPlugin {
                 .build());
   }
 
+  private static boolean goWorkspaceTypeSupported() {
+    return PlatformUtils.isGoIde();
+  }
+
   private static void removeGoWorkspaceType(ProjectView.Builder builder) {
+    if (goWorkspaceTypeSupported()) {
+      return;
+    }
     ScalarSection<WorkspaceType> section = builder.getLast(WorkspaceTypeSection.KEY);
     if (section != null && section.getValue() == WorkspaceType.GO) {
       builder.remove(section);
