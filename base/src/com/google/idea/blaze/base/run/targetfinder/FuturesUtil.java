@@ -15,9 +15,16 @@
  */
 package com.google.idea.blaze.base.run.targetfinder;
 
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.JdkFutureAdapters;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.openapi.diagnostic.Logger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /** Utilities operating on futures. */
@@ -39,5 +46,33 @@ public class FuturesUtil {
       logger.warn(e);
     }
     return null;
+  }
+
+  /**
+   * Iterates through the futures, returning the first future satisfying the predicate. Future
+   * returns null if there are no non-null results matching the predicate.
+   */
+  public static <T> ListenableFuture<T> getFirstFutureSatisfyingPredicate(
+      Iterable<Future<T>> iterable, Predicate<T> predicate) {
+    List<ListenableFuture<T>> futures = new ArrayList<>();
+    for (Future<T> future : iterable) {
+      if (future.isDone() && futures.isEmpty()) {
+        T result = getIgnoringErrors(future);
+        if (predicate.test(result)) {
+          return Futures.immediateFuture(result);
+        }
+      } else {
+        // we can't return ListenableFuture directly, because implementations are using different
+        // versions of that class...
+        futures.add(JdkFutureAdapters.listenInPoolThread(future));
+      }
+    }
+    if (futures.isEmpty()) {
+      return Futures.immediateFuture(null);
+    }
+    return Futures.transform(
+        Futures.allAsList(futures),
+        (Function<List<T>, T>)
+            list -> list == null ? null : list.stream().filter(predicate).findFirst().orElse(null));
   }
 }

@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.java.wizard2;
+package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
-import com.google.idea.blaze.base.wizard2.BlazeNewProjectBuilder;
-import com.google.idea.blaze.base.wizard2.BlazeProjectCommitException;
 import com.google.idea.blaze.base.wizard2.ui.BlazeEditProjectViewControl;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.projectImport.ProjectImportWizardStep;
 import java.awt.BorderLayout;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import org.jetbrains.annotations.NotNull;
 
 /** Shows the edit project view screen. */
 class BlazeEditProjectViewImportWizardStep extends ProjectImportWizardStep {
@@ -35,7 +31,7 @@ class BlazeEditProjectViewImportWizardStep extends ProjectImportWizardStep {
   private BlazeEditProjectViewControl control;
   private boolean settingsInitialised;
 
-  public BlazeEditProjectViewImportWizardStep(@NotNull WizardContext context) {
+  public BlazeEditProjectViewImportWizardStep(WizardContext context) {
     super(context);
   }
 
@@ -64,8 +60,7 @@ class BlazeEditProjectViewImportWizardStep extends ProjectImportWizardStep {
   public boolean validate() throws ConfigurationException {
     BlazeValidationResult validationResult = control.validate();
     if (validationResult.error != null) {
-      throw new ConfigurationException(
-          "<html><body>" + validationResult.error.getError() + "</body></html>");
+      throw new ConfigurationException(validationResult.error.getError());
     }
     return validationResult.success;
   }
@@ -93,12 +88,5 @@ class BlazeEditProjectViewImportWizardStep extends ProjectImportWizardStep {
   @Override
   public String getHelpId() {
     return "docs/project-views";
-  }
-
-  private BlazeNewProjectBuilder getProjectBuilder() {
-    BlazeProjectImportBuilder builder =
-        (BlazeProjectImportBuilder) getWizardContext().getProjectBuilder();
-    assert builder != null;
-    return builder.builder();
   }
 }

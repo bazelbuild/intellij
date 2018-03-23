@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.ErrorOrFailureOrSkipped;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestCase;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
+import com.google.idea.blaze.base.run.smrunner.TestComparisonFailureParser.BlazeComparisonFailureData;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
@@ -296,8 +297,23 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
 
   private static TestFailedEvent getTestFailedEvent(
       String name, @Nullable String message, @Nullable String content, long duration) {
+    if (message == null) {
+      message = "Test failed (no error message present)";
+    }
+    BlazeComparisonFailureData comparisonFailureData = TestComparisonFailureParser.parse(message);
     return new TestFailedEvent(
-        name, null, message, content, true, null, null, null, null, false, false, duration);
+        name,
+        null,
+        message,
+        content,
+        true,
+        comparisonFailureData.actual,
+        comparisonFailureData.expected,
+        null,
+        null,
+        false,
+        false,
+        duration);
   }
 
   private static long parseTimeMillis(@Nullable String time) {

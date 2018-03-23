@@ -59,16 +59,34 @@ public class BlazeJavascriptSyncPlugin implements BlazeSyncPlugin {
     return null;
   }
 
+  private static boolean isLanguageSupportedInIde() {
+    return PlatformUtils.isIdeaUltimate()
+        || PlatformUtils.isWebStorm()
+        || PlatformUtils.isCLion()
+        || PlatformUtils.isGoIde();
+  }
+
+  private static boolean isWorkspaceTypeSupported() {
+    // still supported in IntelliJ UE for legacy reasons
+    return PlatformUtils.isWebStorm() || PlatformUtils.isIdeaUltimate();
+  }
+
   @Override
   public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
-    return PlatformUtils.isIdeaUltimate()
+    return isWorkspaceTypeSupported()
         ? ImmutableList.of(WorkspaceType.JAVASCRIPT)
         : ImmutableList.of();
   }
 
+  @Nullable
+  @Override
+  public WorkspaceType getDefaultWorkspaceType() {
+    return PlatformUtils.isWebStorm() ? WorkspaceType.JAVASCRIPT : null;
+  }
+
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
-    return PlatformUtils.isIdeaUltimate()
+    return isLanguageSupportedInIde()
         ? ImmutableSet.of(LanguageClass.JAVASCRIPT)
         : ImmutableSet.of();
   }

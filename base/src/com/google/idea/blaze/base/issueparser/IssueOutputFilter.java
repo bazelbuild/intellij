@@ -36,6 +36,8 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.SimpleTextAttributes;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /** Parses issues from blaze output, forwarding to {@link BlazeProblemsView}. */
@@ -73,19 +75,21 @@ public class IssueOutputFilter implements Filter {
       return null;
     }
     logger.warn(issue.toString());
-    if (!linkToBlazeConsole) {
-      BlazeProblemsView.getInstance(project).addMessage(issue, null);
-      return null;
-    }
+    List<ResultItem> links = new ArrayList<>();
     int offset = entireLength - line.length();
-    ResultItem dummyResult = dummyResult(offset);
-    BlazeProblemsView.getInstance(project)
-        .addMessage(issue, openConsoleToHyperlink(dummyResult.getHyperlinkInfo(), offset));
-
+    if (linkToBlazeConsole) {
+      ResultItem dummyResult = dummyResult(offset);
+      BlazeProblemsView.getInstance(project)
+          .addMessage(issue, openConsoleToHyperlink(dummyResult.getHyperlinkInfo(), offset));
+      links.add(dummyResult);
+    } else {
+      BlazeProblemsView.getInstance(project).addMessage(issue, null);
+    }
     ResultItem hyperlink = hyperlinkItem(issue, offset);
-    return hyperlink != null
-        ? new Result(ImmutableList.of(dummyResult, hyperlink))
-        : new Result(ImmutableList.of(dummyResult));
+    if (hyperlink != null) {
+      links.add(hyperlink);
+    }
+    return !links.isEmpty() ? new Result(links) : null;
   }
 
   /** A dummy result used for navigating from the problems view to the console. */

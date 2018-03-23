@@ -7,8 +7,8 @@ workspace(name = "intellij_with_bazel")
 new_http_archive(
     name = "intellij_ce_2017_3",
     build_file = "intellij_platform_sdk/BUILD.idea",
-    sha256 = "98e09417ff7363e415f8f54d682ecd121a7225bf6efb1d3cbea691c1dd6fb614",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2017.3.4/ideaIC-2017.3.4.zip",
+    sha256 = "fcc571a869808776c7e336e301246e2db0f6adcbfaf7244422cb97f8be0e06d1",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2017.3.5/ideaIC-2017.3.5.zip",
 )
 
 # The plugin api for IntelliJ 2018.1. This is required to build IJwB,
@@ -25,8 +25,8 @@ new_http_archive(
 new_http_archive(
     name = "intellij_ue_2017_3",
     build_file = "intellij_platform_sdk/BUILD.idea",
-    sha256 = "8e4152943630002da70125e87fd027e5a243d8183e9265d91a8695cfe916a691",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2017.3.4/ideaIU-2017.3.4.zip",
+    sha256 = "5514e9b84f942621205a1f0588e4f8346362d6e7f81355e4622bb7c1bbce9459",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2017.3.5/ideaIU-2017.3.5.zip",
 )
 
 # The plugin api for IntelliJ UE 2018.1. This is required to run UE-specific
@@ -43,8 +43,8 @@ new_http_archive(
 new_http_archive(
     name = "clion_2017_3",
     build_file = "intellij_platform_sdk/BUILD.clion",
-    sha256 = "6d807282a36f25e922580f1c8b2155705d4a20aa8d4e4c06bf17193f0c020948",
-    url = "https://download.jetbrains.com/cpp/CLion-2017.3.3.tar.gz",
+    sha256 = "8f7d946a71e061b88061e6a00763a026e2b50ec4b4fc05df3b73d684aedeb2fb",
+    url = "https://download.jetbrains.com/cpp/CLion-2017.3.4.tar.gz",
 )
 
 # The plugin api for CLion 2018.1. This is required to build CLwB,

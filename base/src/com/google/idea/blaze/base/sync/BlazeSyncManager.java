@@ -29,7 +29,7 @@ import com.google.idea.common.concurrency.ConcurrencyUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.Executors;
 
 /** Manages syncing and its listeners. */
@@ -93,7 +93,7 @@ public class BlazeSyncManager {
     requestProjectSync(syncParams);
   }
 
-  public void partialSync(List<? extends TargetExpression> targetExpressions) {
+  public void partialSync(Collection<? extends TargetExpression> targetExpressions) {
     BlazeSyncParams syncParams =
         new BlazeSyncParams.Builder("Partial Sync", BlazeSyncParams.SyncMode.PARTIAL)
             .addTargetExpressions(targetExpressions)

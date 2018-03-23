@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.golang.sync;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.io.VfsUtils;
@@ -28,17 +29,22 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
+import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.golang.resolve.BlazeGoRootsProvider;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PlatformUtils;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -56,6 +62,34 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
     return ImmutableSet.of(LanguageClass.GO);
+  }
+
+  @Nullable
+  @Override
+  public WorkspaceType getDefaultWorkspaceType() {
+    return PlatformUtils.isGoIde() ? WorkspaceType.GO : null;
+  }
+
+  @Override
+  public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
+    return PlatformUtils.isGoIde() ? ImmutableList.of(WorkspaceType.GO) : ImmutableList.of();
+  }
+
+  @Nullable
+  @Override
+  public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
+    if (!projectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.GO)) {
+      return null;
+    }
+    return GenericSourceFolderProvider.INSTANCE;
+  }
+
+  @Nullable
+  @Override
+  public ModuleType getWorkspaceModuleType(WorkspaceType workspaceType) {
+    return workspaceType == WorkspaceType.GO
+        ? ModuleTypeManager.getInstance().getDefaultModuleType()
+        : null;
   }
 
   @Override

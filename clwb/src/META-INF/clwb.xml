@@ -44,13 +44,6 @@
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.run.test.BlazeCidrTestEventsHandler"/>
   </extensions>
 
-  <actions>
-    <action id="Blaze.ImportProject2" class="com.google.idea.blaze.clwb.wizard2.BlazeImportProjectAction" icon="BlazeIcons.Blaze">
-      <add-to-group group-id="WelcomeScreen.QuickStart"/>
-      <add-to-group group-id="FileOpenGroup" anchor="first"/>
-    </action>
-  </actions>
-
   <application-components>
     <component>
       <implementation-class>com.google.idea.blaze.plugin.ClwbSpecificInitializer</implementation-class>

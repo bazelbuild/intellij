@@ -15,16 +15,13 @@
  */
 package com.google.idea.blaze.base.run.targetfinder;
 
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.JdkFutureAdapters;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.Future;
 import javax.annotation.Nullable;
@@ -38,32 +35,14 @@ public interface TargetFinder {
   /**
    * Iterates through all {@link TargetFinder}s, returning a {@link Future} representing the first
    * non-null result.
+   *
+   * <p>Future returns null if this no non-null result was found.
    */
   static ListenableFuture<TargetInfo> findTargetInfoFuture(Project project, Label label) {
-    List<ListenableFuture<TargetInfo>> futures = new ArrayList<>();
-    for (TargetFinder finder : EP_NAME.getExtensions()) {
-      Future<TargetInfo> future = finder.findTarget(project, label);
-      if (future.isDone() && futures.isEmpty()) {
-        TargetInfo target = FuturesUtil.getIgnoringErrors(future);
-        if (target != null) {
-          return Futures.immediateFuture(target);
-        }
-      } else {
-        // we can't return ListenableFuture directly, because implementations are using different
-        // versions of that class...
-        futures.add(JdkFutureAdapters.listenInPoolThread(future));
-      }
-    }
-    if (futures.isEmpty()) {
-      return Futures.immediateFuture(null);
-    }
-    return Futures.transform(
-        Futures.allAsList(futures),
-        (Function<List<TargetInfo>, TargetInfo>)
-            list ->
-                list == null
-                    ? null
-                    : list.stream().filter(Objects::nonNull).findFirst().orElse(null));
+    Iterable<Future<TargetInfo>> futures =
+        Iterables.transform(
+            Arrays.asList(EP_NAME.getExtensions()), f -> f.findTarget(project, label));
+    return FuturesUtil.getFirstFutureSatisfyingPredicate(futures, Objects::nonNull);
   }
 
   /**
@@ -72,17 +51,7 @@ public interface TargetFinder {
    */
   @Nullable
   static TargetInfo findTargetInfo(Project project, Label label) {
-    for (TargetFinder finder : EP_NAME.getExtensions()) {
-      Future<TargetInfo> future = finder.findTarget(project, label);
-      if (!future.isDone()) {
-        continue;
-      }
-      TargetInfo target = FuturesUtil.getIgnoringErrors(future);
-      if (target != null) {
-        return target;
-      }
-    }
-    return null;
+    return FuturesUtil.getIgnoringErrors(findTargetInfoFuture(project, label));
   }
 
   /** Returns a future for a {@link TargetInfo} corresponding to the given blaze label. */

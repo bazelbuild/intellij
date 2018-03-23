@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2016 The Bazel Authors. All rights reserved.
+  ~ Copyright 2018 The Bazel Authors. All rights reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -14,20 +14,8 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-
-  <description>
-    <![CDATA[
-      <a href="https://bazel.build">Bazel</a> project support.
-
-      Features:
-        <ul>
-        <li>Import BUILD files into the IDE.</li>
-        <li>BUILD file custom language support.</li>
-        <li>Support for Bazel run configurations for certain rule classes.</li>
-        </ul>
-
-      Usage instructions at <a href="https://ij.bazel.build">ij.bazel.build</a>
-      ]]>
-  </description>
-
+  <extensions defaultExtensionNs="com.google.idea.blaze">
+    <SyncPlugin implementation="com.google.idea.blaze.ijwb.android.BlazeAndroidLiteSyncPlugin"/>
+    <JavaSyncAugmenter implementation="com.google.idea.blaze.ijwb.android.BlazeAndroidLiteJavaSyncAugmenter"/>
+  </extensions>
 </idea-plugin>

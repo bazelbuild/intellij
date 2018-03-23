@@ -87,7 +87,7 @@ public class BlazeIssueParser {
     private boolean needsMoreInput;
     @Nullable private IssueOutput output;
 
-    private ParseResult(boolean needsMoreInput, IssueOutput output) {
+    private ParseResult(boolean needsMoreInput, @Nullable IssueOutput output) {
       this.needsMoreInput = needsMoreInput;
       this.output = output;
     }
@@ -465,19 +465,15 @@ public class BlazeIssueParser {
     return range1.union(range2);
   }
 
-  /**
-   * The range of a filename to highlight. Attempts to only link the filename + extension. Returns
-   * null if no match can be found.
-   */
+  /** The range of a filename to highlight. Links the full file path range. */
   @Nullable
   public static TextRange fileHighlightRange(Matcher matcher, int capturingGroup) {
-    String text = matcher.group(capturingGroup);
-    int offset = matcher.start(capturingGroup);
-    if (text == null || offset == -1) {
+    int start = matcher.start(capturingGroup);
+    int end = matcher.end(capturingGroup);
+    if (start == -1 || start >= end) {
       return null;
     }
-    int start = Math.max(text.lastIndexOf('/'), text.lastIndexOf('\\')) + 1;
-    return TextRange.create(offset + start, offset + text.length());
+    return TextRange.create(start, end);
   }
 
   /**

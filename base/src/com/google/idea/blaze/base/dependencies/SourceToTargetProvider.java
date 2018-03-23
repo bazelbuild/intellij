@@ -15,11 +15,15 @@
  */
 package com.google.idea.blaze.base.dependencies;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
+import java.util.concurrent.Future;
 
 /** Maps a source file to the blaze targets building that source file. */
 public interface SourceToTargetProvider {
@@ -34,24 +38,23 @@ public interface SourceToTargetProvider {
   /**
    * Returns the blaze targets provided by the first available {@link SourceToTargetProvider} able
    * to handle the given source file.
+   *
+   * <p>Future returns null if no provider was able to handle the given source file.
    */
-  static List<TargetInfo> findTargetsBuildingSourceFile(
+  static ListenableFuture<List<TargetInfo>> findTargetsBuildingSourceFile(
       Project project, String workspaceRelativePath) {
-    for (SourceToTargetProvider provider : EP_NAME.getExtensions()) {
-      Optional<List<TargetInfo>> targets =
-          provider.getTargetsBuildingSourceFile(project, workspaceRelativePath);
-      if (targets.isPresent()) {
-        return targets.get();
-      }
-    }
-    return ImmutableList.of();
+    Iterable<Future<List<TargetInfo>>> futures =
+        Iterables.transform(
+            Arrays.asList(EP_NAME.getExtensions()),
+            f -> f.getTargetsBuildingSourceFile(project, workspaceRelativePath));
+    return FuturesUtil.getFirstFutureSatisfyingPredicate(futures, Objects::nonNull);
   }
 
   /**
    * Query the blaze targets building the given source file.
    *
-   * <p>Returns Optional#empty if this provider was unable to query the blaze targets.
+   * <p>Future returns null if this provider was unable to query the blaze targets.
    */
-  Optional<List<TargetInfo>> getTargetsBuildingSourceFile(
+  Future<List<TargetInfo>> getTargetsBuildingSourceFile(
       Project project, String workspaceRelativePath);
 }

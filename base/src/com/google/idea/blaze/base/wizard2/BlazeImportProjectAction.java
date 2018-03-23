@@ -13,24 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.java.wizard2;
+package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.settings.Blaze;
-import com.intellij.ide.impl.NewProjectUtil;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 class BlazeImportProjectAction extends AnAction {
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     BlazeNewProjectWizard wizard =
-        new BlazeNewProjectWizard(
-            new BlazeNewProjectImportProvider(new BlazeProjectImportBuilder()));
+        new BlazeNewProjectWizard() {
+          @Override
+          protected ProjectImportWizardStep[] getSteps(WizardContext context) {
+            return new ProjectImportWizardStep[] {
+              new BlazeSelectWorkspaceImportWizardStep(context),
+              new BlazeSelectBuildSystemBinaryStep(context),
+              new BlazeSelectProjectViewImportWizardStep(context),
+              new BlazeEditProjectViewImportWizardStep(context)
+            };
+          }
+        };
     if (!wizard.showAndGet()) {
       return;
     }
-    //noinspection ConstantConditions
-    NewProjectUtil.createFromWizard(wizard, null);
+    BlazeProjectCreator projectCreator = new BlazeProjectCreator(wizard.context, wizard.builder);
+    projectCreator.createFromWizard();
   }
 
   @Override
