@@ -6,7 +6,8 @@ platforms:
     build_targets:
     - //clwb:clwb_bazel
     test_flags:
-    - --define=ij_product=clion-beta --test_output=errors
+    - --define=ij_product=clion-beta
+    - --test_output=errors
     test_targets:
     - //:clwb_tests
   ubuntu1604:
@@ -15,7 +16,8 @@ platforms:
     build_targets:
     - //clwb:clwb_bazel
     test_flags:
-    - --define=ij_product=clion-beta --test_output=errors
+    - --define=ij_product=clion-beta
+    - --test_output=errors
     test_targets:
     - //:clwb_tests
   macos:
@@ -24,6 +26,7 @@ platforms:
     build_targets:
     - //clwb:clwb_bazel
     test_flags:
-    - --define=ij_product=clion-beta --test_output=errors
+    - --define=ij_product=clion-beta
+    - --test_output=errors
     test_targets:
     - //:clwb_tests
