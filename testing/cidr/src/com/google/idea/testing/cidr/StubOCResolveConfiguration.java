@@ -126,9 +126,9 @@ class StubOCResolveConfiguration extends OCResolveConfigurationAdapter {
   }
 
   /* v172 */
-  @Nullable
+  // Since v173 getPreprocessorDefines has NotNull annotation
   @Override
   public String getPreprocessorDefines(OCLanguageKind kind, VirtualFile virtualFile) {
-    return null;
+    return "";
   }
 }

@@ -17,11 +17,13 @@ package com.google.idea.blaze.base.dependencies;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.dependencies.AddSourceToProjectHelper.LocationContext;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.google.idea.blaze.base.settings.ui.AddDirectoryToProjectAction;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -97,6 +99,17 @@ class AddSourceToProjectAction extends BlazeProjectAction {
     if (targetsFuture == null) {
       return;
     }
+    targetsFuture.addListener(
+        () -> {
+          List<TargetInfo> targets = FuturesUtil.getIgnoringErrors(targetsFuture);
+          if (inProjectDirectories && (targets == null || targets.isEmpty())) {
+            Messages.showWarningDialog(
+                project,
+                "Add source to project action failed",
+                "No targets found building this source file");
+          }
+        },
+        MoreExecutors.directExecutor());
     AddSourceToProjectHelper.addSourceToProject(
         project, context.workspacePath, inProjectDirectories, targetsFuture);
     // update editor notifications, to handle the case where the file is currently open.
