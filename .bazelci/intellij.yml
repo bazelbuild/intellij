@@ -6,7 +6,7 @@ platforms:
     build_targets:
     - //ijwb:ijwb_bazel
     test_flags:
-    - --define=ij_product=intellij-beta
+    - --define=ij_product=intellij-beta --test_output=errors
     test_targets:
     - //:ijwb_tests
   ubuntu1604:
@@ -15,7 +15,7 @@ platforms:
     build_targets:
     - //ijwb:ijwb_bazel
     test_flags:
-    - --define=ij_product=intellij-beta
+    - --define=ij_product=intellij-beta --test_output=errors
     test_targets:
     - //:ijwb_tests
   macos:
@@ -24,6 +24,6 @@ platforms:
     build_targets:
     - //ijwb:ijwb_bazel
     test_flags:
-    - --define=ij_product=intellij-beta
+    - --define=ij_product=intellij-beta --test_output=errors
     test_targets:
     - //:ijwb_tests

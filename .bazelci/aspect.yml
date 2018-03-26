@@ -3,15 +3,21 @@ platforms:
   ubuntu1404:
     build_targets:
     - //aspect:aspect_files
+    test_flags:
+    - --test_output=errors
     test_targets:
     - //aspect/testing/...
   ubuntu1604:
     build_targets:
     - //aspect:aspect_files
+    test_flags:
+    - --test_output=errors
     test_targets:
     - //aspect/testing/...
   macos:
     build_targets:
     - //aspect:aspect_files
+    test_flags:
+    - --test_output=errors
     test_targets:
     - //aspect/testing/...
