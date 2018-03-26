@@ -57,6 +57,10 @@ public class StubOCWorkspaceManager extends OCWorkspaceManager {
   /**
    * Enable C++ language support for testing (a previously registered OCWorkspace which may have
    * disabled language support).
+   *
+   * <p>This function does not work since sdkcompat v173, OCLanguage.LANGUAGE_SUPPORT_DISABLED will
+   * still return true after calling enableCSupportForTesting(). RebuildSymbols may have some
+   * issues, please read BlazeNdkSupportEnabler.doRebuildSymbols for more details.
    */
   public void enableCSupportForTesting() throws Exception {
     OCWorkspace workspace = OCWorkspaceManager.getWorkspace(project);
