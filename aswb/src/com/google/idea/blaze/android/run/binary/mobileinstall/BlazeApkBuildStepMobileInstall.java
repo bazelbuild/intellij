@@ -91,12 +91,16 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
                     Blaze.getBuildSystemProvider(project).getBinaryPath(),
                     BlazeCommandName.MOBILE_INSTALL);
 
-            command.addExeFlags(BlazeFlags.DEVICE, device.getSerialNumber());
+            command.addBlazeFlags(BlazeFlags.DEVICE, device.getSerialNumber());
+            // Redundant, but we need this to get around bug in bazel.
+            // https://github.com/bazelbuild/bazel/issues/4922
+            command.addBlazeFlags(
+                BlazeFlags.ADB_ARG + "-s ", BlazeFlags.ADB_ARG + device.getSerialNumber());
 
             if (USE_SDK_ADB.getValue()) {
               File adb = AndroidSdkUtils.getAdb(project);
               if (adb != null) {
-                command.addExeFlags(BlazeFlags.ADB, adb.toString());
+                command.addBlazeFlags(BlazeFlags.ADB, adb.toString());
               }
             }
 

@@ -59,7 +59,7 @@ public class BlazeApkDeployInfoProtoHelper {
 
   @Nullable
   public BlazeAndroidDeployInfo readDeployInfo(BlazeContext context) {
-    File deployInfoFile = Iterables.getOnlyElement(buildResultHelper.getBuildArtifacts(), null);
+    File deployInfoFile = Iterables.getFirst(buildResultHelper.getBuildArtifacts(), null);
     if (deployInfoFile == null) {
       return null;
     }

@@ -28,7 +28,7 @@ public class UpdateDirectoriesSyncAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    BlazeSyncManager.getInstance(project).directoryUpdate();
+    BlazeSyncManager.getInstance(project).directoryUpdate(/* inBackground */ false);
   }
 
   @Override

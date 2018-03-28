@@ -270,7 +270,7 @@ public final class AddDirectoryToProjectAction extends BlazeProjectAction {
       if (addTargets) {
         BlazeSyncManager.getInstance(project).partialSync(newTargets);
       } else {
-        BlazeSyncManager.getInstance(project).directoryUpdate();
+        BlazeSyncManager.getInstance(project).directoryUpdate(/* inBackground */ true);
       }
       super.doOKAction();
     }

@@ -47,9 +47,27 @@ public final class BlazeSyncParams {
     private boolean addWorkingSet;
     private ImmutableList.Builder<TargetExpression> targetExpressions = ImmutableList.builder();
 
+    public static Builder copy(BlazeSyncParams params) {
+      return new Builder(params.title, params.syncMode)
+          .setBackgroundSync(params.backgroundSync)
+          .addProjectViewTargets(params.addProjectViewTargets)
+          .addTargetExpressions(params.targetExpressions)
+          .addWorkingSet(params.addWorkingSet);
+    }
+
     public Builder(String title, SyncMode syncMode) {
       this.title = title;
       this.syncMode = syncMode;
+    }
+
+    public Builder setSyncMode(SyncMode syncMode) {
+      this.syncMode = syncMode;
+      return this;
+    }
+
+    public Builder setTitle(String title) {
+      this.title = title;
+      return this;
     }
 
     public Builder setBackgroundSync(boolean backgroundSync) {

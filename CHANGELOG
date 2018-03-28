@@ -1,3 +1,7 @@
+v2018.03.26
+===========
+* Add an 'add source to project' action
+
 v2018.03.12
 ===========
 * Convert to/from workspace-relative paths when sharing run configurations

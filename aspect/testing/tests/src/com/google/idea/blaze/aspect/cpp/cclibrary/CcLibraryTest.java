@@ -16,13 +16,17 @@
 package com.google.idea.blaze.aspect.cpp.cclibrary;
 
 import static com.google.common.truth.Truth.assertThat;
+import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.Iterables;
 import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.IntellijAspectTestFixture;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.CIdeInfo;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.CToolchainIdeInfo;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.Dependency;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
 import com.google.idea.blaze.BazelIntellijAspectTest;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,12 +81,70 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
             .stream()
             .filter(target -> target.getKindString().equals("cc_toolchain"))
             .collect(Collectors.toList());
-    TargetIdeInfo toolchainInfo = Iterables.getOnlyElement(toolchains);
-    assertThat(toolchainInfo.hasCToolchainIdeInfo()).isTrue();
+    TargetIdeInfo toolchainTarget = Iterables.getOnlyElement(toolchains);
+    assertThat(toolchainTarget.hasCToolchainIdeInfo()).isTrue();
 
     // Only cc_toolchain has toolchains
     TargetIdeInfo target = findTarget(testFixture, ":simple");
     assertThat(target.hasCToolchainIdeInfo()).isFalse();
+
+    // Check that the library target deps on the toolchain.
+    List<TargetIdeInfo> nativeToolchainDeps =
+        dependenciesForTarget(target)
+            .stream()
+            .map(Dependency::getTarget)
+            .map(targetKey -> findTarget(testFixture, targetKey.getLabel()))
+            .filter(Objects::nonNull)
+            .filter(TargetIdeInfo::hasCToolchainIdeInfo)
+            .collect(toList());
+    assertThat(toolchains).containsExactlyElementsIn(nativeToolchainDeps);
+
+    CToolchainIdeInfo toolchainIdeInfo = toolchainTarget.getCToolchainIdeInfo();
+    assertThat(toolchainIdeInfo.getCppExecutable()).isNotEmpty();
+    // Should at least know the -std level (from some list of flags) to avoid b/70223102, unless the
+    // default is sufficient.
+    assertThat(
+            toolchainIdeInfo
+                .getCppOptionList()
+                .stream()
+                .anyMatch(option -> option.startsWith("-std=")))
+        .isTrue();
+    // There should be several include directories, including:
+    // - from compiler (for xmmintrin.h, etc.) (gcc/.../include, or clang/.../include)
+    // - libc (currently something without gcc or clang and ends with "include",
+    //   which is a bit of a weak check)
+    // - c++ library (usual several directories)
+    //   - if libstdc++, something like .../x86_64-vendor-linux-gnu/include/c++/<version>
+    //   - if libcxx, something like .../include/c++/<version>
+    // This is assuming gcc or clang.
+    assertThat(toolchainIdeInfo.getBuiltInIncludeDirectoryList()).isNotEmpty();
+    assertThat(
+            toolchainIdeInfo
+                .getBuiltInIncludeDirectoryList()
+                .stream()
+                .anyMatch(
+                    dir ->
+                        (dir.contains("gcc/") || dir.contains("clang/"))
+                            && dir.endsWith("include")))
+        .isTrue();
+    assertThat(
+            toolchainIdeInfo
+                .getBuiltInIncludeDirectoryList()
+                .stream()
+                .anyMatch(
+                    dir ->
+                        !dir.contains("gcc/")
+                            && !dir.contains("clang/")
+                            && dir.endsWith("include")))
+        .isTrue();
+    assertThat(
+            toolchainIdeInfo
+                .getBuiltInIncludeDirectoryList()
+                .stream()
+                .anyMatch(dir -> dir.contains("c++")))
+        .isTrue();
+    // Check that we have *some* options. Not everything is portable, so it's hard to be strict.
+    assertThat(toolchainIdeInfo.getBaseCompilerOptionList()).isNotEmpty();
   }
 
   @Test

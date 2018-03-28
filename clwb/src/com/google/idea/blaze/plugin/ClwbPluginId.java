@@ -22,8 +22,8 @@ import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 /** IJwB plugin configuration information. */
 public class ClwbPluginId implements BlazePluginId {
 
-  static final String BLAZE_PLUGIN_ID = "com.google.idea.blaze.clwb";
-  static final String BAZEL_PLUGIN_ID = "com.google.idea.bazel.clwb";
+  private static final String BLAZE_PLUGIN_ID = "com.google.idea.blaze.clwb";
+  private static final String BAZEL_PLUGIN_ID = "com.google.idea.bazel.clwb";
 
   @Override
   public String getPluginId() {

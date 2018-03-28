@@ -58,7 +58,9 @@ public abstract class IntellijAspectTest {
   protected TargetIdeInfo findTarget(
       IntellijAspectTestFixture testFixture, String maybeRelativeLabel) {
     String label =
-        maybeRelativeLabel.startsWith("//") ? maybeRelativeLabel : testRelative(maybeRelativeLabel);
+        isAbsoluteTarget(maybeRelativeLabel)
+            ? maybeRelativeLabel
+            : testRelative(maybeRelativeLabel);
     return testFixture
         .getTargetsList()
         .stream()
@@ -72,7 +74,9 @@ public abstract class IntellijAspectTest {
       String maybeRelativeLabel,
       String... fractionalAspectIds) {
     String label =
-        maybeRelativeLabel.startsWith("//") ? maybeRelativeLabel : testRelative(maybeRelativeLabel);
+        isAbsoluteTarget(maybeRelativeLabel)
+            ? maybeRelativeLabel
+            : testRelative(maybeRelativeLabel);
     return testFixture
         .getTargetsList()
         .stream()
@@ -164,6 +168,11 @@ public abstract class IntellijAspectTest {
     return path.contains(":") ? "//" + relativePath : relativePath;
   }
 
+  /** Returns false for package-relative labels */
+  private boolean isAbsoluteTarget(String labelString) {
+    return labelString.startsWith("//") || labelString.startsWith("@");
+  }
+
   protected Dependency dep(String maybeRelativeLabel) {
     return dep(maybeRelativeLabel, DependencyType.COMPILE_TIME);
   }
@@ -174,7 +183,9 @@ public abstract class IntellijAspectTest {
 
   private Dependency dep(String maybeRelativeLabel, DependencyType dependencyType) {
     String label =
-        maybeRelativeLabel.startsWith("//") ? maybeRelativeLabel : testRelative(maybeRelativeLabel);
+        isAbsoluteTarget(maybeRelativeLabel)
+            ? maybeRelativeLabel
+            : testRelative(maybeRelativeLabel);
     return Dependency.newBuilder()
         .setDependencyType(dependencyType)
         .setTarget(TargetKey.newBuilder().setLabel(label))

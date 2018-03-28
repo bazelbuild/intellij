@@ -37,7 +37,7 @@
   <extensions defaultExtensionNs="Pythonid">
     <importResolver implementation="com.google.idea.blaze.python.resolve.BlazePyOutsideModuleImportResolver"/>
     <pyReferenceResolveProvider implementation="com.google.idea.blaze.python.resolve.BlazePyBuiltinReferenceResolveProvider"/>
-    <customPackageIdentifier implementation="com.google.idea.blaze.python.resolve.BlazeCustomPackageIdentifier"/>
+    <customPackageIdentifier implementation="com.google.idea.blaze.python.resolve.BlazeCustomPackageIdentifier" order="first"/>
   </extensions>
 
   <extensionPoints>

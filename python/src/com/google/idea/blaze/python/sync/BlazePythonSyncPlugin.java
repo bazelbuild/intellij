@@ -33,16 +33,13 @@ import com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguag
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
-import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.transactions.Transactions;
-import com.google.idea.sdkcompat.python.PythonFacetUtil;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
@@ -104,7 +101,9 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
   }
 
   private static boolean supportsPythonWorkspaceType() {
-    return !PlatformUtils.isCLion();
+    // support python workspace type in IntelliJ for historical reasons (this is discouraged for new
+    // projects)
+    return PlatformUtils.isIntelliJ() || PlatformUtils.isPyCharm();
   }
 
   @Override
@@ -166,7 +165,8 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
       BlazeProjectData blazeProjectData,
       Module workspaceModule,
       ModifiableRootModel workspaceModifiableModel) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.PYTHON)
+    if (!PythonFacetUtil.usePythonFacets()
+        || !blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.PYTHON)
         || blazeProjectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.PYTHON)) {
       removeFacet(workspaceModule);
       return;
@@ -217,7 +217,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
       IssueOutput.error(msg).submit(context);
       return null;
     }
-    facet = manager.createFacet(PythonFacetUtil.getTypeInstance(), "Python", null);
+    facet = manager.createFacet(PythonFacetUtil.getFacetType(), "Python", null);
     facetModel.addFacet(facet);
     facetModel.commit();
     return facet;
@@ -339,13 +339,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
       return;
     }
     edit.apply();
-
-    BlazeSyncManager.getInstance(project)
-        .requestProjectSync(
-            new BlazeSyncParams.Builder("Sync", BlazeSyncParams.SyncMode.INCREMENTAL)
-                .addProjectViewTargets(true)
-                .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
-                .build());
+    BlazeSyncManager.getInstance(project).incrementalProjectSync();
   }
 
   private static void removePythonWorkspaceType(ProjectView.Builder builder) {

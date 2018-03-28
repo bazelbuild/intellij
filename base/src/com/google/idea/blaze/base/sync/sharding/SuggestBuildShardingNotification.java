@@ -24,9 +24,7 @@ import com.google.idea.blaze.base.projectview.section.sections.TargetShardSizeSe
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
-import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -153,11 +151,6 @@ public class SuggestBuildShardingNotification {
       return;
     }
     edit.apply();
-    BlazeSyncManager.getInstance(project)
-        .requestProjectSync(
-            new BlazeSyncParams.Builder("Sync", BlazeSyncParams.SyncMode.INCREMENTAL)
-                .addProjectViewTargets(true)
-                .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
-                .build());
+    BlazeSyncManager.getInstance(project).incrementalProjectSync();
   }
 }

@@ -27,13 +27,11 @@ java_library(
             "com/google/idea/sdkcompat/cidr/**",
             "com/google/idea/sdkcompat/clion/**",
             "clion/com/google/idea/sdkcompat/cidr/**",
-            "clion/com/google/idea/sdkcompat/python/**",
         ]),
         intellij = glob([
             "com/google/idea/sdkcompat/golang/**",
             "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/kotlin/**",
-            "intellij/com/google/idea/sdkcompat/python/**",
         ]),
     ),
     visibility = ["//sdkcompat:__pkg__"],
