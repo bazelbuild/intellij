@@ -63,8 +63,17 @@ public interface SourceToTargetFinder {
    */
   static Collection<TargetInfo> findTargetsForSourceFile(
       Project project, File sourceFile, Optional<RuleType> ruleType) {
-    Collection<TargetInfo> targets =
-        FuturesUtil.getIgnoringErrors(findTargetInfoFuture(project, sourceFile, ruleType));
-    return targets != null ? targets : ImmutableList.of();
+    for (SourceToTargetFinder finder : EP_NAME.getExtensions()) {
+      Future<? extends Collection<TargetInfo>> future =
+          finder.targetsForSourceFile(project, sourceFile, ruleType);
+      if (!future.isDone()) {
+        continue;
+      }
+      Collection<TargetInfo> targets = FuturesUtil.getIgnoringErrors(future);
+      if (targets != null && !targets.isEmpty()) {
+        return targets;
+      }
+    }
+    return ImmutableList.of();
   }
 }

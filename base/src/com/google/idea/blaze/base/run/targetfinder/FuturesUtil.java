@@ -50,7 +50,7 @@ public class FuturesUtil {
 
   /**
    * Iterates through the futures, returning the first future satisfying the predicate. Future
-   * returns null if there are no non-null results matching the predicate.
+   * returns null if there are no results matching the predicate.
    */
   public static <T> ListenableFuture<T> getFirstFutureSatisfyingPredicate(
       Iterable<Future<T>> iterable, Predicate<T> predicate) {

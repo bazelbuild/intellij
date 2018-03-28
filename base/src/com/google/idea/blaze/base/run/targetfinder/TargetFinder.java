@@ -51,7 +51,17 @@ public interface TargetFinder {
    */
   @Nullable
   static TargetInfo findTargetInfo(Project project, Label label) {
-    return FuturesUtil.getIgnoringErrors(findTargetInfoFuture(project, label));
+    for (TargetFinder finder : EP_NAME.getExtensions()) {
+      Future<TargetInfo> future = finder.findTarget(project, label);
+      if (!future.isDone()) {
+        continue;
+      }
+      TargetInfo target = FuturesUtil.getIgnoringErrors(future);
+      if (target != null) {
+        return target;
+      }
+    }
+    return null;
   }
 
   /** Returns a future for a {@link TargetInfo} corresponding to the given blaze label. */

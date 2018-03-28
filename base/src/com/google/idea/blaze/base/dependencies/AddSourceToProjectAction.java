@@ -87,7 +87,7 @@ class AddSourceToProjectAction extends BlazeProjectAction {
       AddSourceToProjectHelper.addSourceAndTargetsToProject(
           project,
           context.workspacePath,
-          ImmutableList.of(TargetExpression.allFromPackageNonRecursive(context.workspacePath)));
+          ImmutableList.of(TargetExpression.allFromPackageNonRecursive(context.blazePackage)));
       return;
     }
     if (AddSourceToProjectHelper.packageCoveredByWildcardPattern(context)) {

@@ -133,11 +133,12 @@ final class BlazeSyncTask implements Progressive {
   private final Project project;
   private final BlazeImportSettings importSettings;
   private final WorkspaceRoot workspaceRoot;
-  private final BlazeSyncParams syncParams;
   private final boolean showPerformanceWarnings;
   private final SyncStats.Builder syncStats = SyncStats.builder();
   private final TimingScopeListener timingScopeListener;
   private final List<TimedEvent> timedEvents = new ArrayList<>();
+
+  private BlazeSyncParams syncParams;
 
   BlazeSyncTask(
       Project project, BlazeImportSettings importSettings, final BlazeSyncParams syncParams) {
@@ -196,9 +197,11 @@ final class BlazeSyncTask implements Progressive {
       return BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings);
     } catch (IOException e) {
       logger.info(e);
-      context.output(
-          new StatusOutput(
-              "Couldn't load previously cached project data; full sync will be needed"));
+      if (syncParams.syncMode != SyncMode.NO_BUILD) {
+        context.output(
+            new StatusOutput(
+                "Couldn't load previously cached project data; full sync will be needed"));
+      }
       return null;
     }
   }
@@ -212,20 +215,23 @@ final class BlazeSyncTask implements Progressive {
 
     long syncStartTime = System.currentTimeMillis();
     SyncResult syncResult = SyncResult.FAILURE;
-    SyncMode syncMode = syncParams.syncMode;
     syncStats.setStartTimeInEpochTime(System.currentTimeMillis());
-    syncStats.setSyncMode(syncMode);
     try {
       SaveUtil.saveAllFiles();
       BlazeProjectData oldBlazeProjectData =
-          syncMode != SyncMode.FULL ? getOldProjectData(context) : null;
-      if (oldBlazeProjectData == null) {
-        syncMode = SyncMode.FULL;
+          syncParams.syncMode != SyncMode.FULL ? getOldProjectData(context) : null;
+      if (oldBlazeProjectData == null && syncParams.syncMode != SyncMode.NO_BUILD) {
+        syncParams =
+            BlazeSyncParams.Builder.copy(syncParams)
+                .setSyncMode(SyncMode.FULL)
+                .addProjectViewTargets(true)
+                .build();
       }
+      syncStats.setSyncMode(syncParams.syncMode);
 
-      onSyncStart(project, context, syncMode);
-      if (syncMode != SyncMode.STARTUP) {
-        syncResult = doSyncProject(context, syncMode, oldBlazeProjectData);
+      onSyncStart(project, context, syncParams.syncMode);
+      if (syncParams.syncMode != SyncMode.STARTUP) {
+        syncResult = doSyncProject(context, oldBlazeProjectData);
         if (context.isCancelled()) {
           syncResult = SyncResult.CANCELLED;
         }
@@ -237,7 +243,7 @@ final class BlazeSyncTask implements Progressive {
         BlazeProjectData blazeProjectData =
             BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
         updateInMemoryState(project, context, projectViewSet, blazeProjectData);
-        onSyncComplete(project, context, projectViewSet, blazeProjectData, syncMode, syncResult);
+        onSyncComplete(project, context, projectViewSet, blazeProjectData, syncResult);
       }
     } catch (Throwable e) {
       logSyncError(context, e);
@@ -249,7 +255,7 @@ final class BlazeSyncTask implements Progressive {
       } catch (Exception e) {
         logSyncError(context, e);
       }
-      afterSync(project, context, syncMode, syncResult);
+      afterSync(project, context, syncResult);
     }
     return syncResult == SyncResult.SUCCESS || syncResult == SyncResult.PARTIAL_SUCCESS;
   }
@@ -267,7 +273,7 @@ final class BlazeSyncTask implements Progressive {
 
   /** @return true if sync successfully completed */
   private SyncResult doSyncProject(
-      BlazeContext context, SyncMode syncMode, @Nullable BlazeProjectData oldBlazeProjectData) {
+      BlazeContext context, @Nullable BlazeProjectData oldBlazeProjectData) {
     long syncStartTime = System.currentTimeMillis();
 
     if (!FileOperationProvider.getInstance().exists(workspaceRoot.directory())) {
@@ -369,7 +375,7 @@ final class BlazeSyncTask implements Progressive {
         oldBlazeProjectData != null ? oldBlazeProjectData.syncState : null;
 
     List<TargetExpression> targets = Lists.newArrayList();
-    if (syncParams.addProjectViewTargets || oldBlazeProjectData == null) {
+    if (syncParams.addProjectViewTargets) {
       Collection<TargetExpression> projectViewTargets = projectViewSet.listItems(TargetSection.KEY);
       if (!projectViewTargets.isEmpty()) {
         syncStats.setBlazeProjectTargets(new ArrayList<>(projectViewTargets));
@@ -500,7 +506,7 @@ final class BlazeSyncTask implements Progressive {
             syncStateBuilder.build(),
             reverseDependencies);
 
-    FileCaches.onSync(project, context, projectViewSet, newBlazeProjectData, syncMode);
+    FileCaches.onSync(project, context, projectViewSet, newBlazeProjectData, syncParams.syncMode);
     ListenableFuture<?> prefetch =
         PrefetchService.getInstance()
             .prefetchProjectFiles(project, projectViewSet, newBlazeProjectData);
@@ -943,11 +949,10 @@ final class BlazeSyncTask implements Progressive {
     }
   }
 
-  private static void afterSync(
-      Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {
+  private void afterSync(Project project, BlazeContext context, SyncResult syncResult) {
     final SyncListener[] syncListeners = SyncListener.EP_NAME.getExtensions();
     for (SyncListener syncListener : syncListeners) {
-      syncListener.afterSync(project, context, syncMode, syncResult);
+      syncListener.afterSync(project, context, syncParams.syncMode, syncResult);
     }
   }
 
@@ -956,14 +961,19 @@ final class BlazeSyncTask implements Progressive {
       BlazeContext context,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
-      SyncMode syncMode,
       SyncResult syncResult) {
     validate(project, context, blazeProjectData);
 
     final SyncListener[] syncListeners = SyncListener.EP_NAME.getExtensions();
     for (SyncListener syncListener : syncListeners) {
       syncListener.onSyncComplete(
-          project, context, importSettings, projectViewSet, blazeProjectData, syncMode, syncResult);
+          project,
+          context,
+          importSettings,
+          projectViewSet,
+          blazeProjectData,
+          syncParams.syncMode,
+          syncResult);
     }
   }
 
