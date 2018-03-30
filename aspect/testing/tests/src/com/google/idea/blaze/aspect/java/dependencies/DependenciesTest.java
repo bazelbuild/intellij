@@ -69,30 +69,6 @@ public class DependenciesTest extends BazelIntellijAspectTest {
             testRelative("libsingle_dep.jar"),
             testRelative("libtransitive_dep.jar"));
 
-    assertThat(getOutputGroupFiles(testFixture, "intellij-info-text"))
-        .containsAllOf(
-            testRelative("foo.java-manifest"),
-            testRelative("foo.intellij-info.txt"),
-            testRelative("single_dep.java-manifest"),
-            testRelative("single_dep.intellij-info.txt"),
-            testRelative("transitive_dep.java-manifest"),
-            testRelative("transitive_dep.intellij-info.txt"));
-    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve"))
-        .containsExactly(
-            testRelative("libfoo.jar"),
-            testRelative("libfoo-hjar.jar"),
-            testRelative("libfoo-src.jar"),
-            testRelative("libsingle_dep.jar"),
-            testRelative("libsingle_dep-hjar.jar"),
-            testRelative("libsingle_dep-src.jar"),
-            testRelative("libtransitive_dep.jar"),
-            testRelative("libtransitive_dep-hjar.jar"),
-            testRelative("libtransitive_dep-src.jar"));
-    assertThat(getOutputGroupFiles(testFixture, "intellij-compile"))
-        .containsExactly(
-            testRelative("libfoo.jar"),
-            testRelative("libsingle_dep.jar"),
-            testRelative("libtransitive_dep.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
   }
 
@@ -137,31 +113,6 @@ public class DependenciesTest extends BazelIntellijAspectTest {
             testRelative("libexport_consumer-hjar.jar"),
             testRelative("libexport_consumer-src.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
-        .containsExactly(
-            testRelative("libfoo.jar"),
-            testRelative("libfoo_exporter.jar"),
-            testRelative("libexport_consumer.jar"));
-
-    assertThat(getOutputGroupFiles(testFixture, "intellij-info-text"))
-        .containsAllOf(
-            testRelative("foo.java-manifest"),
-            testRelative("foo.intellij-info.txt"),
-            testRelative("foo_exporter.java-manifest"),
-            testRelative("foo_exporter.intellij-info.txt"),
-            testRelative("export_consumer.java-manifest"),
-            testRelative("export_consumer.intellij-info.txt"));
-    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve"))
-        .containsExactly(
-            testRelative("libfoo.jar"),
-            testRelative("libfoo-hjar.jar"),
-            testRelative("libfoo-src.jar"),
-            testRelative("libfoo_exporter.jar"),
-            testRelative("libfoo_exporter-hjar.jar"),
-            testRelative("libfoo_exporter-src.jar"),
-            testRelative("libexport_consumer.jar"),
-            testRelative("libexport_consumer-hjar.jar"),
-            testRelative("libexport_consumer-src.jar"));
-    assertThat(getOutputGroupFiles(testFixture, "intellij-compile"))
         .containsExactly(
             testRelative("libfoo.jar"),
             testRelative("libfoo_exporter.jar"),

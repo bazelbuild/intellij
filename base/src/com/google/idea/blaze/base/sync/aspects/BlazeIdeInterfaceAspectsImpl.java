@@ -68,6 +68,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProvider;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
@@ -79,9 +80,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.NavigatableAdapter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -95,7 +93,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.zip.GZIPInputStream;
 import javax.annotation.Nullable;
 
 /** Implementation of BlazeIdeInterface based on aspects. */
@@ -135,7 +132,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     }
 
     // If the aspect strategy has changed, redo everything from scratch
-    final AspectStrategy aspectStrategy = getAspectStrategy(blazeVersionData);
+    final AspectStrategy aspectStrategy =
+        AspectStrategyProvider.findAspectStrategy(blazeVersionData);
     if (prevState != null
         && !Objects.equals(prevState.aspectStrategyName, aspectStrategy.getName())) {
       prevState = null;
@@ -276,39 +274,39 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       ImmutableSet<LanguageClass> activeLanguages,
       List<TargetExpression> targets,
       AspectStrategy aspectStrategy) {
-    String fileExtension = aspectStrategy.getAspectOutputFileExtension();
-    String gzFileExtension = fileExtension + ".gz";
-    Predicate<String> fileFilter =
-        fileName -> fileName.endsWith(fileExtension) || fileName.endsWith(gzFileExtension);
-    BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(fileFilter);
+    try (BuildResultHelper buildResultHelper =
+        BuildResultHelper.forFiles(aspectStrategy.getAspectOutputFilePredicate())) {
 
-    BlazeCommand.Builder builder =
-        BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.BUILD)
-            .addTargets(targets)
-            .addBlazeFlags(BlazeFlags.KEEP_GOING)
-            .addBlazeFlags(buildResultHelper.getBuildFlags())
-            .addBlazeFlags(
-                BlazeFlags.blazeFlags(
-                    project, projectViewSet, BlazeCommandName.BUILD, BlazeInvocationContext.Sync));
+      BlazeCommand.Builder builder =
+          BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.BUILD)
+              .addTargets(targets)
+              .addBlazeFlags(BlazeFlags.KEEP_GOING)
+              .addBlazeFlags(buildResultHelper.getBuildFlags())
+              .addBlazeFlags(
+                  BlazeFlags.blazeFlags(
+                      project,
+                      projectViewSet,
+                      BlazeCommandName.BUILD,
+                      BlazeInvocationContext.Sync));
 
-    aspectStrategy.modifyIdeInfoCommand(builder, activeLanguages);
+      aspectStrategy.addAspectAndOutputGroups(builder, OutputGroup.INFO, activeLanguages);
 
-    int retVal =
-        ExternalTask.builder(workspaceRoot)
-            .addBlazeCommand(builder.build())
-            .context(context)
-            .stderr(
-                LineProcessingOutputStream.of(
-                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
-            .build()
-            .run();
+      int retVal =
+          ExternalTask.builder(workspaceRoot)
+              .addBlazeCommand(builder.build())
+              .context(context)
+              .stderr(
+                  LineProcessingOutputStream.of(
+                      BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
+              .build()
+              .run();
 
-    BuildResult buildResult = BuildResult.fromExitCode(retVal);
-    if (buildResult.status == Status.FATAL_ERROR) {
-      buildResultHelper.close();
-      return new IdeInfoResult(ImmutableList.of(), buildResult);
+      BuildResult buildResult = BuildResult.fromExitCode(retVal);
+      if (buildResult.status == Status.FATAL_ERROR) {
+        return new IdeInfoResult(ImmutableList.of(), buildResult);
+      }
+      return new IdeInfoResult(buildResultHelper.getBuildArtifacts(), buildResult);
     }
-    return new IdeInfoResult(buildResultHelper.getBuildArtifacts(), buildResult);
   }
 
   private static class TargetFilePair {
@@ -388,17 +386,15 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                         executor.submit(
                             () -> {
                               totalSizeLoaded.addAndGet(file.length());
-                              try (InputStream inputStream = getAspectInputStream(file)) {
-                                IntellijIdeInfo.TargetIdeInfo message =
-                                    aspectStrategy.readAspectFile(inputStream);
-                                TargetIdeInfo target =
-                                    protoToTarget(
-                                        workspaceLanguageSettings,
-                                        importRoots,
-                                        message,
-                                        ignoredLanguages);
-                                return new TargetFilePair(file, target);
-                              }
+                              IntellijIdeInfo.TargetIdeInfo message =
+                                  aspectStrategy.readAspectFile(file);
+                              TargetIdeInfo target =
+                                  protoToTarget(
+                                      workspaceLanguageSettings,
+                                      importRoots,
+                                      message,
+                                      ignoredLanguages);
+                              return new TargetFilePair(file, target);
                             }));
                   }
 
@@ -511,14 +507,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         .submit(context);
   }
 
-  private static InputStream getAspectInputStream(File file) throws IOException {
-    InputStream inputStream = new FileInputStream(file);
-    if (file.getName().endsWith(".gz")) {
-      inputStream = new GZIPInputStream(inputStream);
-    }
-    return inputStream;
-  }
-
   @Override
   public BuildResult resolveIdeArtifacts(
       Project project,
@@ -615,39 +603,45 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       BlazeVersionData blazeVersionData,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       List<TargetExpression> targets) {
-    BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(getGenfilePrefetchFilter());
+    try (BuildResultHelper buildResultHelper =
+        BuildResultHelper.forFiles(getGenfilePrefetchFilter())) {
 
-    BlazeCommand.Builder blazeCommandBuilder =
-        BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.BUILD)
-            .addTargets(targets)
-            .addBlazeFlags(BlazeFlags.KEEP_GOING)
-            .addBlazeFlags(buildResultHelper.getBuildFlags())
-            .addBlazeFlags(
-                BlazeFlags.blazeFlags(
-                    project, projectViewSet, BlazeCommandName.BUILD, BlazeInvocationContext.Sync));
+      BlazeCommand.Builder blazeCommandBuilder =
+          BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.BUILD)
+              .addTargets(targets)
+              .addBlazeFlags(BlazeFlags.KEEP_GOING)
+              .addBlazeFlags(buildResultHelper.getBuildFlags())
+              .addBlazeFlags(
+                  BlazeFlags.blazeFlags(
+                      project,
+                      projectViewSet,
+                      BlazeCommandName.BUILD,
+                      BlazeInvocationContext.Sync));
 
-    // Request the 'intellij-resolve' aspect output group.
-    getAspectStrategy(blazeVersionData)
-        .modifyIdeResolveCommand(blazeCommandBuilder, workspaceLanguageSettings.activeLanguages);
+      // Request the 'intellij-resolve' aspect output group.
+      AspectStrategyProvider.findAspectStrategy(blazeVersionData)
+          .addAspectAndOutputGroups(
+              blazeCommandBuilder, OutputGroup.RESOLVE, workspaceLanguageSettings.activeLanguages);
 
-    // Run the blaze build command, parsing any output artifacts produced.
-    int retVal =
-        ExternalTask.builder(workspaceRoot)
-            .addBlazeCommand(blazeCommandBuilder.build())
-            .context(context)
-            .stderr(
-                LineProcessingOutputStream.of(
-                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
-            .build()
-            .run(new TimingScope("ExecuteBlazeCommand", EventType.BlazeInvocation));
+      // Run the blaze build command, parsing any output artifacts produced.
+      int retVal =
+          ExternalTask.builder(workspaceRoot)
+              .addBlazeCommand(blazeCommandBuilder.build())
+              .context(context)
+              .stderr(
+                  LineProcessingOutputStream.of(
+                      BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
+              .build()
+              .run(new TimingScope("ExecuteBlazeCommand", EventType.BlazeInvocation));
 
-    BuildResult result = BuildResult.fromExitCode(retVal);
-    if (result.status != BuildResult.Status.FATAL_ERROR) {
-      prefetchGenfiles(project, context, buildResultHelper.getBuildArtifacts());
-    } else {
-      buildResultHelper.close();
+      BuildResult result = BuildResult.fromExitCode(retVal);
+      if (result.status != BuildResult.Status.FATAL_ERROR) {
+        prefetchGenfiles(project, context, buildResultHelper.getBuildArtifacts());
+      } else {
+        buildResultHelper.close();
+      }
+      return result;
     }
-    return result;
   }
 
   /** Blaze build invocation requesting the 'intellij-compile' aspect output group. */
@@ -668,8 +662,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 BlazeFlags.blazeFlags(
                     project, projectViewSet, BlazeCommandName.BUILD, BlazeInvocationContext.Sync));
 
-    getAspectStrategy(blazeVersionData)
-        .modifyIdeCompileCommand(blazeCommandBuilder, workspaceLanguageSettings.activeLanguages);
+    AspectStrategyProvider.findAspectStrategy(blazeVersionData)
+        .addAspectAndOutputGroups(
+            blazeCommandBuilder, OutputGroup.COMPILE, workspaceLanguageSettings.activeLanguages);
 
     // Run the blaze build command.
     int retVal =
@@ -700,17 +695,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         .timed("PrefetchGenfiles", EventType.Prefetching)
         .withProgressMessage("Prefetching genfiles...")
         .run();
-  }
-
-  private static AspectStrategy getAspectStrategy(BlazeVersionData blazeVersionData) {
-    for (AspectStrategyProvider provider : AspectStrategyProvider.EP_NAME.getExtensions()) {
-      AspectStrategy aspectStrategy = provider.getAspectStrategy(blazeVersionData);
-      if (aspectStrategy != null) {
-        return aspectStrategy;
-      }
-    }
-    // Should never get here
-    throw new IllegalStateException("No aspect strategy found.");
   }
 
   private static String getBinaryPath(Project project) {

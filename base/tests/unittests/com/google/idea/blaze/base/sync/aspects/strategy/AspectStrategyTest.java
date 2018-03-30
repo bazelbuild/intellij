@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import java.util.Arrays;
@@ -37,63 +38,44 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class AspectStrategyTest extends BlazeTestCase {
 
+  private static final MockAspectStrategy strategy = new MockAspectStrategy();
+
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
     applicationServices.register(ExperimentService.class, new MockExperimentService());
   }
 
   @Test
-  public void testLegacyOutputGroupsUnchanged() {
-    AspectStrategy strategy = MockAspectStrategy.noPerLanguageOutputGroups();
-    Set<LanguageClass> activeLanguages = ImmutableSet.of(LanguageClass.JAVA, LanguageClass.ANDROID);
-
-    BlazeCommand.Builder builder = emptyBuilder();
-    strategy.modifyIdeInfoCommand(builder, activeLanguages);
-    assertThat(getBlazeFlags(builder)).containsExactly("--output_groups=intellij-info-text");
-
-    builder = emptyBuilder();
-    strategy.modifyIdeResolveCommand(builder, activeLanguages);
-    assertThat(getBlazeFlags(builder)).containsExactly("--output_groups=intellij-resolve");
-
-    builder = emptyBuilder();
-    strategy.modifyIdeCompileCommand(builder, activeLanguages);
-    assertThat(getBlazeFlags(builder)).containsExactly("--output_groups=intellij-compile");
-  }
-
-  @Test
   public void testGenericOutputGroupAlwaysPresent() {
-    AspectStrategy strategy = MockAspectStrategy.withPerLanguageOutputGroups();
     Set<LanguageClass> activeLanguages = ImmutableSet.of();
 
     BlazeCommand.Builder builder = emptyBuilder();
-    strategy.modifyIdeInfoCommand(builder, activeLanguages);
+    strategy.addAspectAndOutputGroups(builder, OutputGroup.INFO, activeLanguages);
     assertThat(getOutputGroups(builder)).containsExactly("intellij-info-generic");
   }
 
   @Test
   public void testNoGenericOutputGroupInResolveOrCompile() {
-    AspectStrategy strategy = MockAspectStrategy.withPerLanguageOutputGroups();
     Set<LanguageClass> activeLanguages = ImmutableSet.of(LanguageClass.JAVA);
 
     BlazeCommand.Builder builder = emptyBuilder();
-    strategy.modifyIdeResolveCommand(builder, activeLanguages);
+    strategy.addAspectAndOutputGroups(builder, OutputGroup.RESOLVE, activeLanguages);
     assertThat(getOutputGroups(builder)).containsExactly("intellij-resolve-java");
 
     builder = emptyBuilder();
-    strategy.modifyIdeCompileCommand(builder, activeLanguages);
+    strategy.addAspectAndOutputGroups(builder, OutputGroup.COMPILE, activeLanguages);
     assertThat(getOutputGroups(builder)).containsExactly("intellij-compile-java");
   }
 
   @Test
   public void testAllPerLanguageOutputGroupsRecognized() {
-    AspectStrategy strategy = MockAspectStrategy.withPerLanguageOutputGroups();
     Set<LanguageClass> activeLanguages =
         Arrays.stream(LanguageOutputGroup.values())
             .map(lang -> lang.languageClass)
             .collect(Collectors.toSet());
 
     BlazeCommand.Builder builder = emptyBuilder();
-    strategy.modifyIdeInfoCommand(builder, activeLanguages);
+    strategy.addAspectAndOutputGroups(builder, OutputGroup.INFO, activeLanguages);
     assertThat(getOutputGroups(builder))
         .containsExactly(
             "intellij-info-generic",
@@ -107,7 +89,7 @@ public class AspectStrategyTest extends BlazeTestCase {
             "intellij-info-dart");
 
     builder = emptyBuilder();
-    strategy.modifyIdeResolveCommand(builder, activeLanguages);
+    strategy.addAspectAndOutputGroups(builder, OutputGroup.RESOLVE, activeLanguages);
     assertThat(getOutputGroups(builder))
         .containsExactly(
             "intellij-resolve-java",
@@ -120,7 +102,7 @@ public class AspectStrategyTest extends BlazeTestCase {
             "intellij-resolve-dart");
 
     builder = emptyBuilder();
-    strategy.modifyIdeCompileCommand(builder, activeLanguages);
+    strategy.addAspectAndOutputGroups(builder, OutputGroup.COMPILE, activeLanguages);
     assertThat(getOutputGroups(builder))
         .containsExactly(
             "intellij-compile-java",
@@ -150,20 +132,7 @@ public class AspectStrategyTest extends BlazeTestCase {
   }
 
   private static class MockAspectStrategy extends AspectStrategy {
-
-    static MockAspectStrategy withPerLanguageOutputGroups() {
-      return new MockAspectStrategy(true);
-    }
-
-    static MockAspectStrategy noPerLanguageOutputGroups() {
-      return new MockAspectStrategy(false);
-    }
-
-    final boolean hasPerLanguageOutputGroups;
-
-    private MockAspectStrategy(boolean hasPerLanguageOutputGroups) {
-      this.hasPerLanguageOutputGroups = hasPerLanguageOutputGroups;
-    }
+    private MockAspectStrategy() {}
 
     @Override
     public String getName() {
@@ -173,11 +142,6 @@ public class AspectStrategyTest extends BlazeTestCase {
     @Override
     protected List<String> getAspectFlags() {
       return ImmutableList.of();
-    }
-
-    @Override
-    protected boolean hasPerLanguageOutputGroups() {
-      return hasPerLanguageOutputGroups;
     }
   }
 }

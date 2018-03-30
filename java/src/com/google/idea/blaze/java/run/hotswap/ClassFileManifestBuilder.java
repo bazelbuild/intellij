@@ -86,41 +86,45 @@ public class ClassFileManifestBuilder {
       return null;
     }
 
-    BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true);
+    try (BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true)) {
 
-    ListenableFuture<BuildResult> buildOperation =
-        BlazeBeforeRunCommandHelper.runBlazeBuild(
-            configuration,
-            buildResultHelper,
-            aspectStrategy.getBuildFlags(),
-            ImmutableList.of(),
-            "Building debug binary");
+      ListenableFuture<BuildResult> buildOperation =
+          BlazeBeforeRunCommandHelper.runBlazeBuild(
+              configuration,
+              buildResultHelper,
+              aspectStrategy.getBuildFlags(),
+              ImmutableList.of(),
+              "Building debug binary");
 
-    if (progress != null) {
-      progress.setCancelWorker(() -> buildOperation.cancel(true));
-    }
-    try {
-      SaveUtil.saveAllFiles();
-      BuildResult result = buildOperation.get();
-      if (result.status != BuildResult.Status.SUCCESS) {
-        throw new ExecutionException("Blaze failure building debug binary");
+      if (progress != null) {
+        progress.setCancelWorker(() -> buildOperation.cancel(true));
       }
-    } catch (InterruptedException | CancellationException e) {
-      buildOperation.cancel(true);
-      throw new RunCanceledByUserException();
-    } catch (java.util.concurrent.ExecutionException e) {
-      throw new ExecutionException(e);
+      try {
+        SaveUtil.saveAllFiles();
+        BuildResult result = buildOperation.get();
+        if (result.status != BuildResult.Status.SUCCESS) {
+          throw new ExecutionException("Blaze failure building debug binary");
+        }
+      } catch (InterruptedException | CancellationException e) {
+        buildOperation.cancel(true);
+        throw new RunCanceledByUserException();
+      } catch (java.util.concurrent.ExecutionException e) {
+        throw new ExecutionException(e);
+      }
+      ImmutableList<File> jars =
+          buildResultHelper
+              .getArtifactsForOutputGroups(
+                  ImmutableSet.of(JavaClasspathAspectStrategy.OUTPUT_GROUP))
+              .stream()
+              .filter(f -> f.getName().endsWith(".jar"))
+              .collect(toImmutableList());
+      ClassFileManifest oldManifest = getManifest(env);
+      ClassFileManifest newManifest = ClassFileManifest.build(jars, oldManifest);
+      env.getCopyableUserData(MANIFEST_KEY).set(newManifest);
+      return oldManifest != null
+          ? ClassFileManifest.modifiedClasses(oldManifest, newManifest)
+          : null;
     }
-    ImmutableList<File> jars =
-        buildResultHelper
-            .getArtifactsForOutputGroups(ImmutableSet.of(JavaClasspathAspectStrategy.OUTPUT_GROUP))
-            .stream()
-            .filter(f -> f.getName().endsWith(".jar"))
-            .collect(toImmutableList());
-    ClassFileManifest oldManifest = getManifest(env);
-    ClassFileManifest newManifest = ClassFileManifest.build(jars, oldManifest);
-    env.getCopyableUserData(MANIFEST_KEY).set(newManifest);
-    return oldManifest != null ? ClassFileManifest.modifiedClasses(oldManifest, newManifest) : null;
   }
 
   private static BlazeCommandRunConfiguration getConfiguration(ExecutionEnvironment environment) {
