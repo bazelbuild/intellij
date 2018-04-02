@@ -23,8 +23,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A {@link CodeStyleManager} implementation which runs buildifier on BUILD files, and otherwise
@@ -45,13 +43,15 @@ public final class BuildifierDelegatingCodeStyleManager extends ExternalFormatte
 
   @Override
   protected void format(PsiFile file, Document document, Collection<TextRange> ranges) {
-    Map<TextRange, String> output = new HashMap<>();
+    Replacements output = new Replacements();
+    String inputText = document.getText();
     for (TextRange range : ranges) {
-      String result = BuildFileFormatter.formatTextWithTimeout(range.substring(document.getText()));
+      String input = range.substring(inputText);
+      String result = BuildFileFormatter.formatTextWithTimeout(input);
       if (result == null) {
         return;
       }
-      output.put(range, result);
+      output.addReplacement(range, input, result);
     }
     performReplacements(document, output);
   }

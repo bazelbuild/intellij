@@ -96,7 +96,6 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
   static class BlazePyDummyRunProfileState implements RunProfileState {
     final BlazeCommandRunConfiguration configuration;
 
-
     BlazePyDummyRunProfileState(BlazeCommandRunConfiguration configuration) {
       this.configuration = configuration;
     }
@@ -311,47 +310,49 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       throw new WithBrowserHyperlinkExecutionException(validationError);
     }
 
-    BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true);
+    try (BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true)) {
 
-    ListenableFuture<BuildResult> buildOperation =
-        BlazeBeforeRunCommandHelper.runBlazeBuild(
-            configuration,
-            buildResultHelper,
-            BlazePyDebugHelper.getAllBlazeDebugFlags(Blaze.getBuildSystem(project)),
-            ImmutableList.of(),
-            "Building debug binary");
+      ListenableFuture<BuildResult> buildOperation =
+          BlazeBeforeRunCommandHelper.runBlazeBuild(
+              configuration,
+              buildResultHelper,
+              BlazePyDebugHelper.getAllBlazeDebugFlags(Blaze.getBuildSystem(project)),
+              ImmutableList.of(),
+              "Building debug binary");
 
-    try {
-      SaveUtil.saveAllFiles();
-      BuildResult result = buildOperation.get();
-      if (result.status != BuildResult.Status.SUCCESS) {
-        throw new ExecutionException("Blaze failure building debug binary");
+      try {
+        SaveUtil.saveAllFiles();
+        BuildResult result = buildOperation.get();
+        if (result.status != BuildResult.Status.SUCCESS) {
+          throw new ExecutionException("Blaze failure building debug binary");
+        }
+      } catch (InterruptedException | CancellationException e) {
+        buildOperation.cancel(true);
+        throw new RunCanceledByUserException();
+      } catch (java.util.concurrent.ExecutionException e) {
+        throw new ExecutionException(e);
       }
-    } catch (InterruptedException | CancellationException e) {
-      buildOperation.cancel(true);
-      throw new RunCanceledByUserException();
-    } catch (java.util.concurrent.ExecutionException e) {
-      throw new ExecutionException(e);
+      List<File> candidateFiles =
+          buildResultHelper
+              .getBuildArtifactsForTarget((Label) configuration.getTarget())
+              .stream()
+              .filter(File::canExecute)
+              .collect(Collectors.toList());
+      if (candidateFiles.isEmpty()) {
+        throw new ExecutionException(
+            String.format("No output artifacts found when building %s", configuration.getTarget()));
+      }
+      File file = findExecutable((Label) configuration.getTarget(), candidateFiles);
+      if (file == null) {
+        throw new ExecutionException(
+            String.format(
+                "More than 1 executable was produced when building %s; "
+                    + "don't know which one to debug",
+                configuration.getTarget()));
+      }
+      LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
+      return file;
     }
-    List<File> candidateFiles =
-        buildResultHelper
-            .getBuildArtifactsForTarget((Label) configuration.getTarget())
-            .stream()
-            .filter(File::canExecute)
-            .collect(Collectors.toList());
-    if (candidateFiles.isEmpty()) {
-      throw new ExecutionException(
-          String.format("No output artifacts found when building %s", configuration.getTarget()));
-    }
-    File file = findExecutable((Label) configuration.getTarget(), candidateFiles);
-    if (file == null) {
-      throw new ExecutionException(
-          String.format(
-              "More than 1 executable was produced when building %s; don't know which one to debug",
-              configuration.getTarget()));
-    }
-    LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
-    return file;
   }
 
   /**

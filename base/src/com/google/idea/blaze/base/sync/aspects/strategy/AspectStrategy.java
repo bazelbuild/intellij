@@ -18,93 +18,106 @@ package com.google.idea.blaze.base.sync.aspects.strategy;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.command.BlazeCommand;
-import com.google.idea.blaze.base.command.BlazeCommand.Builder;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.repackaged.TextFormat;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.TreeSet;
+import java.util.function.Predicate;
+import java.util.zip.GZIPInputStream;
 
 /** Aspect strategy for Skylark. */
 public abstract class AspectStrategy {
 
-  private static final BoolExperiment usePerLanguageOutputGroups =
-      new BoolExperiment("blaze.use.per.language.output.groups", true);
+  private static final Predicate<String> ASPECT_OUTPUT_FILE_PREDICATE =
+      str -> str.endsWith(".intellij-info.txt") || str.endsWith(".intellij-info.txt.gz");
+
+  /** A Blaze output group created by the aspect. */
+  public enum OutputGroup {
+    INFO("intellij-info-"),
+    RESOLVE("intellij-resolve-"),
+    COMPILE("intellij-compile-");
+
+    private final String prefix;
+
+    OutputGroup(String prefix) {
+      this.prefix = prefix;
+    }
+  }
 
   public abstract String getName();
 
   protected abstract List<String> getAspectFlags();
 
-  protected abstract boolean hasPerLanguageOutputGroups();
-
-  private boolean usePerLanguageOutputGroups() {
-    return usePerLanguageOutputGroups.getValue() && hasPerLanguageOutputGroups();
+  /**
+   * Add the aspect to the build and request the given {@code OutputGroup}. This method should only
+   * be called once.
+   */
+  public final void addAspectAndOutputGroups(
+      BlazeCommand.Builder blazeCommandBuilder,
+      OutputGroup outputGroup,
+      Set<LanguageClass> activeLanguages) {
+    addAspectAndOutputGroups(blazeCommandBuilder, getOutputGroups(outputGroup, activeLanguages));
   }
 
-  public final void modifyIdeInfoCommand(
-      BlazeCommand.Builder blazeCommandBuilder, Set<LanguageClass> activeLanguages) {
-    blazeCommandBuilder.addBlazeFlags(getAspectFlags());
-    if (!usePerLanguageOutputGroups()) {
-      blazeCommandBuilder.addBlazeFlags("--output_groups=intellij-info-text");
-      return;
+  /**
+   * Add the aspect to the build and request the given {@code outputGroups}. This method should only
+   * be called once.
+   */
+  public final void addAspectAndOutputGroups(
+      BlazeCommand.Builder blazeCommandBuilder, Collection<String> outputGroups) {
+    blazeCommandBuilder
+        .addBlazeFlags(getAspectFlags())
+        .addBlazeFlags("--output_groups=" + Joiner.on(',').join(outputGroups));
+  }
+
+  /**
+   * Get the names of the output groups created by the aspect for the given {@link OutputGroup} and
+   * languages.
+   */
+  public final ImmutableList<String> getOutputGroups(
+      OutputGroup outputGroup, Set<LanguageClass> activeLanguages) {
+    TreeSet<String> outputGroups = new TreeSet<>();
+    if (outputGroup.equals(OutputGroup.INFO)) {
+      outputGroups.add(outputGroup.prefix + "generic");
     }
-    List<String> outputGroups = getOutputGroups(activeLanguages, "intellij-info-");
-    outputGroups.add("intellij-info-generic");
-    String flag = "--output_groups=" + Joiner.on(',').join(outputGroups);
-    blazeCommandBuilder.addBlazeFlags(flag);
-  }
-
-  public final void modifyIdeResolveCommand(
-      BlazeCommand.Builder blazeCommandBuilder, Set<LanguageClass> activeLanguages) {
-    blazeCommandBuilder.addBlazeFlags(getAspectFlags());
-    if (!usePerLanguageOutputGroups()) {
-      blazeCommandBuilder.addBlazeFlags("--output_groups=intellij-resolve");
-      return;
+    for (LanguageClass langClass : activeLanguages) {
+      LanguageOutputGroup currentGroup = LanguageOutputGroup.forLanguage(langClass);
+      if (currentGroup != null) {
+        outputGroups.add(outputGroup.prefix + currentGroup.suffix);
+      }
     }
-    List<String> outputGroups = getOutputGroups(activeLanguages, "intellij-resolve-");
-    String flag = "--output_groups=" + Joiner.on(',').join(outputGroups);
-    blazeCommandBuilder.addBlazeFlags(flag);
+    return ImmutableList.copyOf(outputGroups);
   }
 
-  public final void modifyIdeCompileCommand(
-      Builder blazeCommandBuilder, Set<LanguageClass> activeLanguages) {
-    blazeCommandBuilder.addBlazeFlags(getAspectFlags());
-    if (!usePerLanguageOutputGroups()) {
-      blazeCommandBuilder.addBlazeFlags("--output_groups=intellij-compile");
-      return;
+  public final Predicate<String> getAspectOutputFilePredicate() {
+    return ASPECT_OUTPUT_FILE_PREDICATE;
+  }
+
+  public final IntellijIdeInfo.TargetIdeInfo readAspectFile(File file) throws IOException {
+    try (InputStream inputStream = getAspectInputStream(file)) {
+      IntellijIdeInfo.TargetIdeInfo.Builder builder = IntellijIdeInfo.TargetIdeInfo.newBuilder();
+      TextFormat.Parser parser = TextFormat.Parser.newBuilder().setAllowUnknownFields(true).build();
+      parser.merge(new InputStreamReader(inputStream, UTF_8), builder);
+      return builder.build();
     }
-    List<String> outputGroups = getOutputGroups(activeLanguages, "intellij-compile-");
-    String flag = "--output_groups=" + Joiner.on(',').join(outputGroups);
-    blazeCommandBuilder.addBlazeFlags(flag);
   }
 
-  private static List<String> getOutputGroups(Set<LanguageClass> activeLanguages, String prefix) {
-    return activeLanguages
-        .stream()
-        .map(LanguageOutputGroup::forLanguage)
-        .filter(Objects::nonNull)
-        .map(lang -> prefix + lang.suffix)
-        .distinct()
-        .sorted()
-        .collect(Collectors.toList());
-  }
-
-  public final String getAspectOutputFileExtension() {
-    return ".intellij-info.txt";
-  }
-
-  public final IntellijIdeInfo.TargetIdeInfo readAspectFile(InputStream inputStream)
-      throws IOException {
-    IntellijIdeInfo.TargetIdeInfo.Builder builder = IntellijIdeInfo.TargetIdeInfo.newBuilder();
-    TextFormat.Parser parser = TextFormat.Parser.newBuilder().setAllowUnknownFields(true).build();
-    parser.merge(new InputStreamReader(inputStream, UTF_8), builder);
-    return builder.build();
+  private static InputStream getAspectInputStream(File file) throws IOException {
+    InputStream inputStream = new BufferedInputStream(new FileInputStream(file));
+    if (file.getName().endsWith(".gz")) {
+      inputStream = new GZIPInputStream(inputStream);
+    }
+    return inputStream;
   }
 }

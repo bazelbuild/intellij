@@ -221,40 +221,42 @@ public final class BuildPluginBeforeRunTaskProvider
                     return null;
                   }
 
-                  BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(f -> true);
-                  BlazeCommand command =
-                      BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
-                          .addTargets(config.getTarget())
-                          .addBlazeFlags(
-                              BlazeFlags.blazeFlags(
-                                  project,
-                                  projectViewSet,
-                                  BlazeCommandName.BUILD,
-                                  BlazeInvocationContext.NonSync))
-                          .addBlazeFlags(config.getBlazeFlagsState().getExpandedFlags())
-                          .addExeFlags(config.getExeFlagsState().getExpandedFlags())
-                          .addBlazeFlags(buildResultHelper.getBuildFlags())
-                          .build();
-                  if (command == null || context.hasErrors() || context.isCancelled()) {
+                  try (BuildResultHelper buildResultHelper =
+                      BuildResultHelper.forFiles(f -> true)) {
+                    BlazeCommand command =
+                        BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
+                            .addTargets(config.getTarget())
+                            .addBlazeFlags(
+                                BlazeFlags.blazeFlags(
+                                    project,
+                                    projectViewSet,
+                                    BlazeCommandName.BUILD,
+                                    BlazeInvocationContext.NonSync))
+                            .addBlazeFlags(config.getBlazeFlagsState().getExpandedFlags())
+                            .addExeFlags(config.getExeFlagsState().getExpandedFlags())
+                            .addBlazeFlags(buildResultHelper.getBuildFlags())
+                            .build();
+                    if (command == null || context.hasErrors() || context.isCancelled()) {
+                      return null;
+                    }
+                    SaveUtil.saveAllFiles();
+                    int retVal =
+                        ExternalTask.builder(workspaceRoot)
+                            .addBlazeCommand(command)
+                            .context(context)
+                            .stderr(
+                                LineProcessingOutputStream.of(
+                                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
+                                        context)))
+                            .build()
+                            .run();
+                    if (retVal != 0) {
+                      context.setHasError();
+                    }
+                    FileCaches.refresh(project);
+                    deployer.reportBuildComplete(new File(executionRoot), buildResultHelper);
                     return null;
                   }
-                  SaveUtil.saveAllFiles();
-                  int retVal =
-                      ExternalTask.builder(workspaceRoot)
-                          .addBlazeCommand(command)
-                          .context(context)
-                          .stderr(
-                              LineProcessingOutputStream.of(
-                                  BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
-                                      context)))
-                          .build()
-                          .run();
-                  if (retVal != 0) {
-                    context.setHasError();
-                  }
-                  FileCaches.refresh(project);
-                  deployer.reportBuildComplete(new File(executionRoot), buildResultHelper);
-                  return null;
                 }
               };
 

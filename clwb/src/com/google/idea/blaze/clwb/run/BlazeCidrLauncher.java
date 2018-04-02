@@ -63,6 +63,7 @@ import com.jetbrains.cidr.execution.testing.CidrLauncher;
 import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestConsoleProperties;
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -103,7 +104,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     ProjectViewSet projectViewSet =
         Preconditions.checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet());
 
-    List<String> fixedBlazeFlags = getFixedBlazeFlags(false);
+    List<String> fixedBlazeFlags = getFixedBlazeFlags();
 
     BlazeCommand.Builder command =
         BlazeCommand.builder(
@@ -168,7 +169,9 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         envState.isPassParentEnvs() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.NONE);
     commandLine.getEnvironment().putAll(envState.getEnvs());
 
-    commandLine.addParameters(getFixedBlazeFlags(true));
+    if (Kind.CC_TEST.equals(configuration.getTargetKind())) {
+      convertBlazeTestFilterToExecutableFlag().ifPresent(commandLine::addParameters);
+    }
 
     TrivialInstaller installer = new TrivialInstaller(commandLine);
     ImmutableList<String> startupCommands = getGdbStartupCommands(workingDir);
@@ -181,31 +184,24 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     return new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder());
   }
 
-  /**
-   * Get the correct test prefix for blaze/bazel
-   *
-   * @param runningBinaryDirectly True if executing a binary directly, false if running via
-   *     bazel/blaze
-   */
-  private String getTestPrefix(boolean runningBinaryDirectly) {
+  /** Get the correct test prefix for blaze/bazel */
+  private String getTestFilterArgument() {
     if (Blaze.getBuildSystem(project).equals(BuildSystem.Blaze)) {
-      return "--gunit";
+      return "--gunit_filter";
     }
-    return runningBinaryDirectly ? "--gtest" : "--test_args=--gtest";
+    return "--gtest_filter";
   }
 
   /**
-   * Convert test flags to correct gunit/gtest prefix
+   * Fix test flags for Bazel which doesn't support --test_filter
    *
-   * @param runningBinaryDirectly True if executing a binary directly, false if running via
-   *     bazel/blaze
    * @return The list of bazel/blaze flags, fixed for the current execution environment
    */
-  private List<String> getFixedBlazeFlags(boolean runningBinaryDirectly) {
+  private List<String> getFixedBlazeFlags() {
     List<String> originalBlazeFlags = handlerState.getBlazeFlagsState().getExpandedFlags();
 
     // Flags are fine as-is in this case
-    if (!runningBinaryDirectly && Blaze.getBuildSystem(project).equals(BuildSystem.Blaze)) {
+    if (Blaze.getBuildSystem(project).equals(BuildSystem.Blaze)) {
       return originalBlazeFlags;
     }
 
@@ -214,19 +210,35 @@ public final class BlazeCidrLauncher extends CidrLauncher {
       return originalBlazeFlags;
     }
 
-    String testPrefix = getTestPrefix(runningBinaryDirectly);
+    // bazel does not support --test_filter so we need to convert to a argument that will be passed
+    // to the binary. Other flags should be passed through as-is
+    String testArgument = "--test_arg=" + getTestFilterArgument();
     return originalBlazeFlags
         .stream()
-        // If we're running the binary directly, only allow test filter flags through
-        .filter(flag -> !runningBinaryDirectly || flag.startsWith(BlazeFlags.TEST_FILTER))
         .map(
             flag -> {
               if (flag.startsWith(BlazeFlags.TEST_FILTER)) {
-                flag = testPrefix + "_filter" + flag.substring(BlazeFlags.TEST_FILTER.length());
+                flag = flag.replaceFirst(BlazeFlags.TEST_FILTER, testArgument);
               }
               return flag;
             })
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Convert blaze/bazel test filter to the equivalent executable flag
+   *
+   * @return An (Optional) flag to append to the executable's flag list
+   */
+  private Optional<String> convertBlazeTestFilterToExecutableFlag() {
+    String testArgument = getTestFilterArgument();
+    String testFilter = handlerState.getTestFilter();
+
+    if (testFilter == null) {
+      return Optional.empty();
+    }
+
+    return Optional.of(testArgument + "=" + testFilter);
   }
 
   @Override

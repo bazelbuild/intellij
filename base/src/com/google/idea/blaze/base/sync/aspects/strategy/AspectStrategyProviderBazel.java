@@ -29,16 +29,13 @@ class AspectStrategyProviderBazel implements AspectStrategyProvider {
     if (blazeVersionData.buildSystem() != BuildSystem.Bazel) {
       return null;
     }
-    return new AspectStrategyBazel(blazeVersionData);
+    return AspectStrategyBazel.INSTANCE;
   }
 
   private static class AspectStrategyBazel extends AspectStrategy {
+    private static final AspectStrategyBazel INSTANCE = new AspectStrategyBazel();
 
-    private final BlazeVersionData blazeVersionData;
-
-    private AspectStrategyBazel(BlazeVersionData blazeVersionData) {
-      this.blazeVersionData = blazeVersionData;
-    }
+    private AspectStrategyBazel() {}
 
     @Override
     public String getName() {
@@ -46,23 +43,10 @@ class AspectStrategyProviderBazel implements AspectStrategyProvider {
     }
 
     @Override
-    protected boolean hasPerLanguageOutputGroups() {
-      return useBundledAspect();
-    }
-
-    @Override
     protected List<String> getAspectFlags() {
-      if (useBundledAspect()) {
-        return ImmutableList.of(
-            "--aspects=@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect",
-            getAspectRepositoryOverrideFlag());
-      }
       return ImmutableList.of(
-          "--aspects=@bazel_tools//tools/ide:intellij_info.bzl%intellij_info_aspect");
-    }
-
-    private boolean useBundledAspect() {
-      return blazeVersionData.bazelIsAtLeastVersion(0, 5, 0);
+          "--aspects=@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect",
+          getAspectRepositoryOverrideFlag());
     }
 
     private static File findAspectDirectory() {

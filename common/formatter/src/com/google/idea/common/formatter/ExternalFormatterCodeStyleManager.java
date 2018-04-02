@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.util.IncorrectOperationException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -38,6 +39,21 @@ import java.util.TreeMap;
  * tool.
  */
 public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeStyleManager {
+
+  /**
+   * A set of replacements to apply. Enforces dropping replacements that don't actually change
+   * anything, avoiding unnecessary write actions and documents committals.
+   */
+  public static class Replacements {
+    public static final Replacements EMPTY = new Replacements();
+    private final Map<TextRange, String> replacements = new HashMap<>();
+
+    public void addReplacement(TextRange range, String before, String after) {
+      if (!before.equals(after)) {
+        replacements.put(range, after);
+      }
+    }
+  }
 
   public ExternalFormatterCodeStyleManager(CodeStyleManager delegate) {
     super(delegate);
@@ -50,7 +66,7 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
    * Format the ranges of the given document.
    *
    * <p>Overriding methods will need to modify the document with the result of the external
-   * formatter (usually using {@link #performReplacements(Document, Map)}.
+   * formatter (usually using {@link #performReplacements}.
    */
   protected abstract void format(PsiFile file, Document document, Collection<TextRange> ranges);
 
@@ -118,12 +134,12 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
     format(file, document, ranges);
   }
 
-  protected void performReplacements(Document document, Map<TextRange, String> replacements) {
-    if (replacements.isEmpty()) {
+  protected void performReplacements(Document document, Replacements replacements) {
+    if (replacements.replacements.isEmpty()) {
       return;
     }
     TreeMap<TextRange, String> sorted = new TreeMap<>(comparing(TextRange::getStartOffset));
-    sorted.putAll(replacements);
+    sorted.putAll(replacements.replacements);
     WriteCommandAction.runWriteCommandAction(
         getProject(),
         () -> {

@@ -93,7 +93,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
         BlazeBeforeRunCommandHelper.runBlazeBuild(
             configuration,
             buildResultHelper,
-            ImmutableList.of("-c", "dbg", "--copt=-g", "--strip=never"),
+            ImmutableList.of("-c", "dbg", "--copt=-O0", "--copt=-g", "--strip=never"),
             ImmutableList.of("--dynamic_mode=off"),
             "Building debug binary");
 

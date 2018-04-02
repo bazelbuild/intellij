@@ -39,11 +39,11 @@ class BuildResultHelperBep implements BuildResultHelper {
   private static final Logger logger = Logger.getInstance(BuildResultHelperBep.class);
   private final File outputFile;
   private final Predicate<String> fileFilter;
-  private ImmutableList<File> result;
 
   BuildResultHelperBep(Predicate<String> fileFilter) {
     this.fileFilter = fileFilter;
     outputFile = BuildEventProtocolUtils.createTempOutputFile();
+    outputFile.deleteOnExit();
   }
 
   @Override
@@ -53,40 +53,26 @@ class BuildResultHelperBep implements BuildResultHelper {
 
   @Override
   public ImmutableList<File> getBuildArtifacts() {
-    if (result == null) {
-      result =
-          readResult(
-                  input ->
-                      BuildEventProtocolOutputReader.parseAllOutputFilenames(input, fileFilter))
-              .orElse(ImmutableList.of());
-    }
-    return result;
+    return readResult(
+            input -> BuildEventProtocolOutputReader.parseAllOutputFilenames(input, fileFilter))
+        .orElse(ImmutableList.of());
   }
 
   @Override
   public ImmutableList<File> getBuildArtifactsForTarget(Label target) {
-    if (result == null) {
-      result =
-          readResult(
-                  input ->
-                      BuildEventProtocolOutputReader.parseArtifactsForTarget(
-                          input, target, fileFilter))
-              .orElse(ImmutableList.of());
-    }
-    return result;
+    return readResult(
+            input ->
+                BuildEventProtocolOutputReader.parseArtifactsForTarget(input, target, fileFilter))
+        .orElse(ImmutableList.of());
   }
 
   @Override
   public ImmutableList<File> getArtifactsForOutputGroups(Set<String> outputGroups) {
-    if (result == null) {
-      result =
-          readResult(
-                  input ->
-                      BuildEventProtocolOutputReader.parseAllOutputGroupFilenames(
-                          input, outputGroups, fileFilter))
-              .orElse(ImmutableList.of());
-    }
-    return result;
+    return readResult(
+            input ->
+                BuildEventProtocolOutputReader.parseAllOutputGroupFilenames(
+                    input, outputGroups, fileFilter))
+        .orElse(ImmutableList.of());
   }
 
   private <V> Optional<V> readResult(BepReader<V> readAction) {
@@ -95,8 +81,6 @@ class BuildResultHelperBep implements BuildResultHelper {
     } catch (IOException e) {
       logger.error(e);
       return Optional.empty();
-    } finally {
-      close();
     }
   }
 

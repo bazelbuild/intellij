@@ -254,10 +254,6 @@ def collect_py_info(target, ctx, ide_info, ide_info_file, output_groups):
   update_set_in_dict(output_groups, "intellij-info-py", depset([ide_info_file]))
   update_set_in_dict(output_groups, "intellij-compile-py", transitive_sources)
   update_set_in_dict(output_groups, "intellij-resolve-py", transitive_sources)
-
-  # Add to legacy output groups for backwards compatibility
-  update_set_in_dict(output_groups, "intellij-compile", transitive_sources)
-  update_set_in_dict(output_groups, "intellij-resolve", transitive_sources)
   return True
 
 def _get_go_proto_info(target):
@@ -363,10 +359,6 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
   update_set_in_dict(output_groups, "intellij-info-cpp", depset([ide_info_file]))
   update_set_in_dict(output_groups, "intellij-compile-cpp", compile_files)
   update_set_in_dict(output_groups, "intellij-resolve-cpp", resolve_files)
-
-  # Add to legacy output groups for backwards compatibility
-  update_set_in_dict(output_groups, "intellij-compile", compile_files)
-  update_set_in_dict(output_groups, "intellij-resolve", resolve_files)
   return True
 
 def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
@@ -487,11 +479,6 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
   update_set_in_dict(output_groups, "intellij-info-java", ide_info_files)
   update_set_in_dict(output_groups, "intellij-compile-java", compile_files)
   update_set_in_dict(output_groups, "intellij-resolve-java", resolve_files)
-
-  # Add to legacy output groups for backwards compatibility
-  update_set_in_dict(output_groups, "intellij-info-text", ide_info_files)
-  update_set_in_dict(output_groups, "intellij-compile", compile_files)
-  update_set_in_dict(output_groups, "intellij-resolve", resolve_files)
   return True
 
 def _package_manifest_file_argument(f):
@@ -615,9 +602,6 @@ def collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output
   ide_info["android_ide_info"] = android_info
   update_set_in_dict(output_groups, "intellij-info-android", depset([ide_info_file]))
   update_set_in_dict(output_groups, "intellij-resolve-android", resolve_files)
-
-  # Add to legacy output groups for backwards compatibility
-  update_set_in_dict(output_groups, "intellij-resolve", resolve_files)
   return True
 
 def collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups):
@@ -761,9 +745,6 @@ def intellij_info_aspect_impl(target, ctx, semantics):
   # Add to generic output group if it's not handled by a language-specific handler
   if not handled:
     update_set_in_dict(output_groups, "intellij-info-generic", depset([ide_info_file]))
-
-  # Add to legacy output group for backwards compatibility
-  update_set_in_dict(output_groups, "intellij-info-text", depset([ide_info_file]))
 
   # Output the ide information file.
   info = struct_omit_none(**ide_info)

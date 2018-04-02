@@ -26,4 +26,15 @@ public interface AspectStrategyProvider {
 
   @Nullable
   AspectStrategy getAspectStrategy(BlazeVersionData blazeVersionData);
+
+  static AspectStrategy findAspectStrategy(BlazeVersionData blazeVersionData) {
+    for (AspectStrategyProvider provider : AspectStrategyProvider.EP_NAME.getExtensions()) {
+      AspectStrategy aspectStrategy = provider.getAspectStrategy(blazeVersionData);
+      if (aspectStrategy != null) {
+        return aspectStrategy;
+      }
+    }
+    // Should never get here
+    throw new IllegalStateException("No aspect strategy found.");
+  }
 }
