@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2017 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.ijwb.dart;
+package com.google.idea.blaze.dart;
 
-import com.google.idea.blaze.base.sync.libraries.LibrarySource;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
-import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
-/** Prevents garbage collection of the Dart SDK library. */
-class BlazeDartLibrarySource extends LibrarySource.Adapter {
+/** Handles changes to the Dart plugin libraries between our supported versions. */
+final class DartSdkUtils {
+
+  static final String DART_SDK_LIBRARY_NAME = "Dart SDK";
 
   @Nullable
-  @Override
-  public Predicate<Library> getGcRetentionFilter() {
-    return library -> {
-      String libraryName = library.getName();
-      return libraryName != null && libraryName.equals(DartSdkUtils.DART_SDK_LIBRARY_NAME);
-    };
+  static Library findDartLibrary(Project project) {
+    return ProjectLibraryTable.getInstance(project).getLibraryByName(DART_SDK_LIBRARY_NAME);
   }
 }

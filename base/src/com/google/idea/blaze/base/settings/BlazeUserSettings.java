@@ -140,19 +140,19 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   }
 
   public String getBlazeBinaryPath() {
-    return StringUtil.defaultIfEmpty(blazeBinaryPath, DEFAULT_BLAZE_PATH);
+    return StringUtil.defaultIfEmpty(blazeBinaryPath, DEFAULT_BLAZE_PATH).trim();
   }
 
   public void setBlazeBinaryPath(String blazeBinaryPath) {
-    this.blazeBinaryPath = StringUtil.defaultIfEmpty(blazeBinaryPath, DEFAULT_BLAZE_PATH);
+    this.blazeBinaryPath = StringUtil.defaultIfEmpty(blazeBinaryPath, DEFAULT_BLAZE_PATH).trim();
   }
 
   public String getBazelBinaryPath() {
-    return StringUtil.defaultIfEmpty(bazelBinaryPath, DEFAULT_BAZEL_PATH);
+    return StringUtil.defaultIfEmpty(bazelBinaryPath, DEFAULT_BAZEL_PATH).trim();
   }
 
   public void setBazelBinaryPath(String bazelBinaryPath) {
-    this.bazelBinaryPath = StringUtil.defaultIfEmpty(bazelBinaryPath, DEFAULT_BAZEL_PATH);
+    this.bazelBinaryPath = StringUtil.defaultIfEmpty(bazelBinaryPath, DEFAULT_BAZEL_PATH).trim();
   }
 
   public boolean getCollapseProjectView() {

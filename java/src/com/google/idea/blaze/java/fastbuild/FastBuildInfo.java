@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.fastbuild;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.File;
 import java.util.List;
@@ -29,7 +30,9 @@ public abstract class FastBuildInfo {
 
   public abstract ImmutableList<File> classpath();
 
-  public static FastBuildInfo create(Label label, List<File> classpath) {
-    return new AutoValue_FastBuildInfo(label, ImmutableList.copyOf(classpath));
+  public abstract TargetMap targetMap();
+
+  public static FastBuildInfo create(Label label, List<File> classpath, TargetMap targetMap) {
+    return new AutoValue_FastBuildInfo(label, ImmutableList.copyOf(classpath), targetMap);
   }
 }

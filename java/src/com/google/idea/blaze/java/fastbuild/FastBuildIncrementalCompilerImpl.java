@@ -23,9 +23,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.console.BlazeConsoleService;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.fastbuild.FastBuildCompiler.CompileInstructions;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
 import com.google.idea.common.concurrency.ConcurrencyUtil;
@@ -53,28 +55,21 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
   @Override
   public ListenableFuture<BuildOutput> compile(Label label, FastBuildState buildState) {
     checkState(buildState.completedBuildOutput().isPresent());
-    checkState(
-        projectDataManager
-            .getBlazeProjectData()
-            .targetMap
-            .contains(TargetKey.forPlainTarget(label)));
+    BuildOutput buildOutput = buildState.completedBuildOutput().get();
+    checkState(buildOutput.targetMap().contains(TargetKey.forPlainTarget(label)));
 
     return ConcurrencyUtil.getAppExecutorService()
         .submit(
             () -> {
-              BuildOutput buildOutput = buildState.completedBuildOutput().get();
               BlazeConsoleWriter writer = new BlazeConsoleWriter(blazeConsoleService);
 
               Stopwatch stopwatch = Stopwatch.createStarted();
-              Set<File> pathsToCompile = getPathsToCompile(label, buildState.modifiedFiles());
+              Set<File> pathsToCompile =
+                  getPathsToCompile(label, buildOutput.targetMap(), buildState.modifiedFiles());
               writer.write("Calculated compilation paths in " + stopwatch + "\n");
               if (!pathsToCompile.isEmpty()) {
                 compilerFactory
-                    .getCompilerFor(
-                        projectDataManager
-                            .getBlazeProjectData()
-                            .targetMap
-                            .get(TargetKey.forPlainTarget(label)))
+                    .getCompilerFor(buildOutput.targetMap().get(TargetKey.forPlainTarget(label)))
                     .compile(
                         CompileInstructions.builder()
                             .outputDirectory(buildState.compilerOutputDirectory())
@@ -90,17 +85,24 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
             });
   }
 
-  private Set<File> getPathsToCompile(Label label, Set<File> modifiedSinceBuild) {
+  private Set<File> getPathsToCompile(
+      Label label, TargetMap targetMap, Set<File> modifiedSinceBuild) {
     BlazeProjectData projectData = projectDataManager.getBlazeProjectData();
     Set<File> sourceFiles = new HashSet<>();
     Set<TargetKey> seenTargets = new HashSet<>();
     recursivelyAddModifiedJavaSources(
-        projectData, TargetKey.forPlainTarget(label), seenTargets, sourceFiles, modifiedSinceBuild);
+        projectData.artifactLocationDecoder,
+        targetMap,
+        TargetKey.forPlainTarget(label),
+        seenTargets,
+        sourceFiles,
+        modifiedSinceBuild);
     return sourceFiles;
   }
 
   private void recursivelyAddModifiedJavaSources(
-      BlazeProjectData projectData,
+      ArtifactLocationDecoder artifactLocationDecoder,
+      TargetMap targetMap,
       TargetKey targetKey,
       Set<TargetKey> seenTargets,
       Set<File> sourceFiles,
@@ -111,12 +113,11 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
 
     seenTargets.add(targetKey);
 
-    TargetIdeInfo targetIdeInfo = projectData.targetMap.get(targetKey);
+    TargetIdeInfo targetIdeInfo = targetMap.get(targetKey);
     if (targetIdeInfo == null) {
       return;
     }
-    projectData
-        .artifactLocationDecoder
+    artifactLocationDecoder
         .decodeAll(targetIdeInfo.sources)
         .stream()
         .filter(file -> file.getName().endsWith(".java"))
@@ -125,7 +126,12 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
     targetIdeInfo.dependencies.forEach(
         dep ->
             recursivelyAddModifiedJavaSources(
-                projectData, dep.targetKey, seenTargets, sourceFiles, modifiedSinceBuild));
+                artifactLocationDecoder,
+                targetMap,
+                dep.targetKey,
+                seenTargets,
+                sourceFiles,
+                modifiedSinceBuild));
   }
 
   private static class BlazeConsoleWriter extends Writer {

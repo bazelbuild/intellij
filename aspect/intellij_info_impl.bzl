@@ -308,8 +308,10 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
       import_path = import_path,
   )
 
-  compile_files = target.output_group("files_to_compile_INTERNAL_")
-  compile_files = depset(generated, transitive = [compile_files])
+  # TODO(brendandouglas): remove once enough Bazel users are on a version with the changed name
+  old_compile_files = target.output_group("files_to_compile_INTERNAL_")
+  compile_files = target.output_group("compilation_outputs")
+  compile_files = depset(generated, transitive = [compile_files, old_compile_files])
 
   update_set_in_dict(output_groups, "intellij-info-go", depset([ide_info_file]))
   update_set_in_dict(output_groups, "intellij-compile-go", compile_files)
@@ -354,7 +356,10 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
   ide_info["c_ide_info"] = c_info
   resolve_files = cc_provider.transitive_headers
   # TODO(brendandouglas): target to cpp files only
-  compile_files = target.output_group("files_to_compile_INTERNAL_")
+  # TODO(brendandouglas): remove once enough Bazel users are on a version with the changed name
+  old_compile_files = target.output_group("files_to_compile_INTERNAL_")
+  compile_files = target.output_group("compilation_outputs")
+  compile_files = depset(transitive = [compile_files, old_compile_files])
 
   update_set_in_dict(output_groups, "intellij-info-cpp", depset([ide_info_file]))
   update_set_in_dict(output_groups, "intellij-compile-cpp", compile_files)
@@ -401,8 +406,7 @@ def get_java_provider(target):
     return target.scala
   if hasattr(target, "kt") and hasattr(target.kt,"outputs"):
     return target.kt
-  # java_common.provider is a work in progress. It will soon expose the information
-  # we require (e.g. outputs jars, jdeps), but does not yet do so.
+  # TODO(brendandouglas): use java_common.provider preferentially
   if java_common.provider in target:
     return target[java_common.provider]
   return None

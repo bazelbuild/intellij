@@ -23,8 +23,6 @@ import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.intellij.openapi.project.Project;
@@ -37,15 +35,14 @@ import javax.annotation.Nullable;
  * enabled.
  */
 public class AlwaysPresentKotlinSyncPlugin implements BlazeSyncPlugin {
+
   private static final String KOTLIN_PLUGIN_ID = "org.jetbrains.kotlin";
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
-    if (Blaze.defaultBuildSystem().equals(BuildSystem.Bazel)
-        && workspaceType.equals(WorkspaceType.JAVA)) {
-      return ImmutableSet.of(LanguageClass.KOTLIN);
-    }
-    return ImmutableSet.of();
+    return KotlinUtils.isKotlinSupportEnabled(workspaceType)
+        ? ImmutableSet.of(LanguageClass.KOTLIN)
+        : ImmutableSet.of();
   }
 
   @Override

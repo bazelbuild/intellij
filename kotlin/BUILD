@@ -53,6 +53,7 @@ java_library(
     visibility = ["//visibility:public"],
     deps = [
         "//base",
+        "//common/experiments",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:kotlin",
         "//intellij_platform_sdk:plugin_api",

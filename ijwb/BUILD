@@ -29,6 +29,7 @@ merged_plugin_xml(
     srcs = [
         "src/META-INF/ijwb.xml",
         "//base:plugin_xml",
+        "//dart:plugin_xml",
         "//golang:plugin_xml",
         "//java:plugin_xml",
         "//kotlin:plugin_xml",
@@ -71,6 +72,7 @@ java_library(
         "//plugin_dev",
     ],
     runtime_deps = [
+        "//dart",
         "//golang",
         "//kotlin",
         "//python",

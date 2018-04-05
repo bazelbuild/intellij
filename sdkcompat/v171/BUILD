@@ -40,3 +40,9 @@ java_library(
         "//third_party/python",
     ],
 )
+
+filegroup(
+    name = "plugin_xml",
+    srcs = ["META_INF/sdkcompat.xml"],
+    visibility = ["//sdkcompat:__pkg__"],
+)
