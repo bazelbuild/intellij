@@ -23,9 +23,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -67,7 +67,7 @@ class BuildResultHelperBep implements BuildResultHelper {
   }
 
   @Override
-  public ImmutableList<File> getArtifactsForOutputGroups(Set<String> outputGroups) {
+  public ImmutableList<File> getArtifactsForOutputGroups(Collection<String> outputGroups) {
     return readResult(
             input ->
                 BuildEventProtocolOutputReader.parseAllOutputGroupFilenames(

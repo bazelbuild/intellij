@@ -18,24 +18,20 @@ package com.google.idea.blaze.base.sync;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
 import com.google.idea.blaze.base.sync.projectview.SyncDirectoriesWarning;
 import com.google.idea.common.concurrency.ConcurrencyUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import javax.annotation.Nullable;
 
 /** Manages syncing and its listeners. */
 public class BlazeSyncManager {
@@ -73,8 +69,7 @@ public class BlazeSyncManager {
                     String.format(
                         "Attempt to sync non-%s project.", Blaze.buildSystemName(project)));
               }
-
-              if (runInitialDirectoryOnlySync(project, importSettings, syncParams)) {
+              if (runInitialDirectoryOnlySync(syncParams)) {
                 BlazeSyncParams params =
                     new BlazeSyncParams.Builder(
                             "Initial directory update", BlazeSyncParams.SyncMode.NO_BUILD)
@@ -93,29 +88,17 @@ public class BlazeSyncManager {
             .submitTask(task);
   }
 
-  private static boolean runInitialDirectoryOnlySync(
-      Project project, BlazeImportSettings importSettings, BlazeSyncParams syncParams) {
+  private static boolean runInitialDirectoryOnlySync(BlazeSyncParams syncParams) {
     switch (syncParams.syncMode) {
       case NO_BUILD:
+      case STARTUP:
         return false;
       case FULL:
       case INCREMENTAL:
       case PARTIAL:
         return true;
-      case STARTUP:
-        return getOldProjectData(project, importSettings) == null;
     }
     throw new AssertionError("Unhandled syncMode: " + syncParams.syncMode);
-  }
-
-  @Nullable
-  private static BlazeProjectData getOldProjectData(
-      Project project, BlazeImportSettings importSettings) {
-    try {
-      return BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings);
-    } catch (IOException e) {
-      return null;
-    }
   }
 
   public void fullProjectSync() {
@@ -130,15 +113,6 @@ public class BlazeSyncManager {
   public void incrementalProjectSync() {
     BlazeSyncParams syncParams =
         new BlazeSyncParams.Builder("Sync", BlazeSyncParams.SyncMode.INCREMENTAL)
-            .addProjectViewTargets(true)
-            .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
-            .build();
-    requestProjectSync(syncParams);
-  }
-
-  public void startupProjectSync() {
-    BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Sync Project", BlazeSyncParams.SyncMode.STARTUP)
             .addProjectViewTargets(true)
             .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
             .build();

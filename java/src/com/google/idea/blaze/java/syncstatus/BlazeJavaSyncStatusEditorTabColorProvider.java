@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 /** Changes the color for unsynced files. */
 public class BlazeJavaSyncStatusEditorTabColorProvider implements EditorTabColorProvider {
   private static final JBColor UNSYNCED_COLOR =
-      new JBColor(new Color(252, 234, 234), new Color(121, 105, 105));
+      new JBColor(new Color(252, 234, 234), new Color(94, 56, 56));
 
   @Nullable
   @Override

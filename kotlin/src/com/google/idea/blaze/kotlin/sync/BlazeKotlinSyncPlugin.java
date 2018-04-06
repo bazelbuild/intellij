@@ -36,8 +36,6 @@ import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -79,11 +77,9 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
-    if (Blaze.defaultBuildSystem().equals(BuildSystem.Bazel)
-        && workspaceType.equals(WorkspaceType.JAVA)) {
-      return ImmutableSet.of(LanguageClass.KOTLIN);
-    }
-    return ImmutableSet.of();
+    return KotlinUtils.isKotlinSupportEnabled(workspaceType)
+        ? ImmutableSet.of(LanguageClass.KOTLIN)
+        : ImmutableSet.of();
   }
 
   @Override

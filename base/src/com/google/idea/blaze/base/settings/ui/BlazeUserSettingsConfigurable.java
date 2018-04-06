@@ -144,10 +144,10 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             || showAddFileToProjectNotification.isSelected()
                 != settings.getShowAddFileToProjectNotification()
             || !Objects.equal(
-                Strings.nullToEmpty(blazeBinaryPathField.getText()),
+                Strings.nullToEmpty(blazeBinaryPathField.getText()).trim(),
                 Strings.nullToEmpty(settings.getBlazeBinaryPath()))
             || !Objects.equal(
-                Strings.nullToEmpty(bazelBinaryPathField.getText()),
+                Strings.nullToEmpty(bazelBinaryPathField.getText()).trim(),
                 Strings.nullToEmpty(settings.getBazelBinaryPath()));
 
     for (BlazeUserSettingsContributor settingsContributor : settingsContributors) {

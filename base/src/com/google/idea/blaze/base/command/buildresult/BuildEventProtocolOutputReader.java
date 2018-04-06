@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -164,7 +165,7 @@ public final class BuildEventProtocolOutputReader {
    * @throws IOException if the BEP output file is incorrectly formatted
    */
   static ImmutableList<File> parseAllOutputGroupFilenames(
-      InputStream inputStream, Set<String> outputGroups, Predicate<String> fileFilter)
+      InputStream inputStream, Collection<String> outputGroups, Predicate<String> fileFilter)
       throws IOException {
     Map<String, BuildEventStreamProtos.NamedSetOfFiles> fileSets = new HashMap<>();
     Set<String> fileSetsForOutputGroups = new HashSet<>();
@@ -173,12 +174,14 @@ public final class BuildEventProtocolOutputReader {
       if (event.getId().hasNamedSet() && event.hasNamedSetOfFiles()) {
         fileSets.put(event.getId().getNamedSet().getId(), event.getNamedSetOfFiles());
       } else if (event.hasCompleted()) {
+        // optimize for #contains()
+        ImmutableSet<String> outputGroupsSet = ImmutableSet.copyOf(outputGroups);
         fileSetsForOutputGroups.addAll(
             event
                 .getCompleted()
                 .getOutputGroupList()
                 .stream()
-                .filter(o -> outputGroups.contains(o.getName()))
+                .filter(o -> outputGroupsSet.contains(o.getName()))
                 .map(OutputGroup::getFileSetsList)
                 .flatMap(List::stream)
                 .map(NamedSetOfFilesId::getId)

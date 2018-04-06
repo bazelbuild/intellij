@@ -29,7 +29,9 @@ merged_plugin_xml(
     srcs = [
         "src/META-INF/aswb.xml",
         "//base:plugin_xml",
+        "//dart:plugin_xml",
         "//java:plugin_xml",
+        "//kotlin:plugin_xml",
         "//python:plugin_xml",
     ],
 )
@@ -47,10 +49,11 @@ optional_plugin_xml(
 )
 
 OPTIONAL_PLUGIN_XMLS = [
-    "//java:optional_java",
-    "//java:optional_coverage",
     ":optional_cpp_xml",
     ":optional_ndk_xml",
+    "//java:optional_java",
+    "//java:optional_coverage",
+    "//kotlin:optional_xml",
     "//python:optional_xml",
 ]
 
@@ -78,7 +81,11 @@ java_library(
     name = "aswb_lib",
     srcs = glob(["src/**/*.java"]),
     resources = glob(["resources/**/*"]),
-    runtime_deps = ["//python"],
+    runtime_deps = [
+        "//dart",
+        "//kotlin",
+        "//python",
+    ],
     deps = [
         "//base",
         "//common/concurrency",

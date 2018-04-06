@@ -24,7 +24,6 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.ijwb.javascript.BlazeJavascriptSyncPlugin"/>
     <SyncPlugin implementation="com.google.idea.blaze.ijwb.typescript.BlazeTypescriptSyncPlugin"/>
-    <SyncPlugin implementation="com.google.idea.blaze.ijwb.dart.BlazeDartSyncPlugin"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.ijwb.javascript.JavascriptPrefetchFileSource"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.ijwb.typescript.TypescriptPrefetchFileSource"/>
   </extensions>

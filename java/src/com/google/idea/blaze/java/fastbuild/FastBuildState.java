@@ -18,6 +18,7 @@ package com.google.idea.blaze.java.fastbuild;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import java.io.File;
 import java.util.Collection;
 import java.util.Optional;
@@ -35,8 +36,10 @@ abstract class FastBuildState {
   abstract static class BuildOutput {
     abstract File deployJar();
 
-    static BuildOutput create(File deployJar) {
-      return new AutoValue_FastBuildState_BuildOutput(deployJar);
+    abstract TargetMap targetMap();
+
+    static BuildOutput create(File deployJar, TargetMap targetMap) {
+      return new AutoValue_FastBuildState_BuildOutput(deployJar, targetMap);
     }
   }
 

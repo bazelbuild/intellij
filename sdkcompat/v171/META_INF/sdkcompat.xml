@@ -1,0 +1,7 @@
+<idea-plugin>
+  <actions>
+    <group id="Vcs.RepositoryChangesBrowserToolbar">
+      <add-to-group group-id="RepositoryChangesBrowserToolbar"/>
+    </group>
+  </actions>
+</idea-plugin>

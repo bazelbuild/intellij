@@ -18,8 +18,10 @@ package com.google.idea.blaze.base.sync;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
+import java.io.IOException;
 import org.jetbrains.annotations.NotNull;
 
 /** Syncs the project upon startup. */
@@ -31,15 +33,31 @@ public class BlazeSyncStartupActivity implements StartupActivity {
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
 
     if (importSettings != null) {
-      runSync(project);
+      runSync(project, importSettings);
     }
   }
 
-  private static void runSync(Project project) {
-    if (BlazeUserSettings.getInstance().getResyncAutomatically()) {
+  private static void runSync(Project project, BlazeImportSettings importSettings) {
+    if (BlazeUserSettings.getInstance().getResyncAutomatically()
+        || !hasProjectData(project, importSettings)) {
       BlazeSyncManager.getInstance(project).incrementalProjectSync();
     } else {
-      BlazeSyncManager.getInstance(project).startupProjectSync();
+      BlazeSyncManager.getInstance(project).requestProjectSync(startupSyncParams());
     }
+  }
+
+  private static boolean hasProjectData(Project project, BlazeImportSettings importSettings) {
+    try {
+      return BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings) != null;
+    } catch (IOException e) {
+      return false;
+    }
+  }
+
+  private static BlazeSyncParams startupSyncParams() {
+    return new BlazeSyncParams.Builder("Sync Project", BlazeSyncParams.SyncMode.STARTUP)
+        .addProjectViewTargets(true)
+        .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
+        .build();
   }
 }

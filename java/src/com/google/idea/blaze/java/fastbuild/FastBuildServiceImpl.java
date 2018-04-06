@@ -17,9 +17,11 @@ package com.google.idea.blaze.java.fastbuild;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.idea.common.guava.GuavaHelper.toImmutableMap;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -35,10 +37,12 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -51,8 +55,13 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
+import com.google.idea.blaze.base.sync.aspects.IdeInfoFromProtobuf;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProvider;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
+import com.google.idea.common.concurrency.ConcurrencyUtil;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -63,7 +72,9 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -125,7 +136,8 @@ final class FastBuildServiceImpl implements FastBuildService {
           buildOutput ->
               FastBuildInfo.create(
                   label,
-                  ImmutableList.of(buildState.compilerOutputDirectory(), buildOutput.deployJar())),
+                  ImmutableList.of(buildState.compilerOutputDirectory(), buildOutput.deployJar()),
+                  buildOutput.targetMap()),
           MoreExecutors.directExecutor());
     } catch (FastBuildTunnelException e) {
       throw e.asFastBuildException();
@@ -262,8 +274,6 @@ final class FastBuildServiceImpl implements FastBuildService {
 
     Label deployJarLabel = createDeployJarLabel(label);
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    BuildResultHelper buildResultHelper =
-        BuildResultHelper.forFiles(file -> file.endsWith(deployJarLabel.targetName().toString()));
 
     // TODO(plumpy): this assumes we're running this build as part of a run action. I try not to
     // make that assumption anywhere else, so this should be supplied by the caller.
@@ -271,6 +281,15 @@ final class FastBuildServiceImpl implements FastBuildService {
         BlazeUserSettings.getInstance().getSuppressConsoleForRunAction()
             ? BlazeConsolePopupBehavior.NEVER
             : BlazeConsolePopupBehavior.ALWAYS;
+
+    AspectStrategy aspectStrategy =
+        AspectStrategyProvider.findAspectStrategy(
+            projectDataManager.getBlazeProjectData().blazeVersionData);
+    BuildResultHelper buildResultHelper =
+        BuildResultHelper.forFiles(
+            file ->
+                file.endsWith(deployJarLabel.targetName().toString())
+                    || aspectStrategy.getAspectOutputFilePredicate().test(file));
 
     ListenableFuture<BuildResult> buildResultFuture =
         ProgressiveTaskWithProgressIndicator.builder(project)
@@ -298,9 +317,17 @@ final class FastBuildServiceImpl implements FastBuildService {
 
                     BlazeCommand.Builder command =
                         BlazeCommand.builder(buildParameters.blazeBinary(), BlazeCommandName.BUILD)
+                            .addTargets(label)
                             .addTargets(deployJarLabel)
                             .addBlazeFlags(buildParameters.blazeFlags())
                             .addBlazeFlags(buildResultHelper.getBuildFlags());
+
+                    List<String> outputGroups = new ArrayList<>();
+                    outputGroups.add("default"); // needed to retrieve the deploy jar
+                    outputGroups.addAll(
+                        aspectStrategy.getOutputGroups(
+                            OutputGroup.INFO, ImmutableSet.of(LanguageClass.JAVA)));
+                    aspectStrategy.addAspectAndOutputGroups(command, outputGroups);
 
                     int exitCode =
                         ExternalTask.builder(workspaceRoot)
@@ -315,19 +342,43 @@ final class FastBuildServiceImpl implements FastBuildService {
                     return BuildResult.fromExitCode(exitCode);
                   }
                 });
-    return transform(
-        buildResultFuture,
-        result -> {
-          if (result.status != Status.SUCCESS) {
-            throw new RuntimeException("Blaze failure building deploy jar");
-          }
-          ImmutableList<File> artifacts =
-              buildResultHelper.getBuildArtifactsForTarget(deployJarLabel);
-          checkState(artifacts.size() == 1);
-          File deployJar = artifacts.get(0);
-          return FastBuildState.BuildOutput.create(deployJar);
-        },
-        MoreExecutors.directExecutor());
+    ListenableFuture<BuildOutput> buildOutputFuture =
+        transform(
+            buildResultFuture,
+            result -> {
+              if (result.status != Status.SUCCESS) {
+                throw new RuntimeException("Blaze failure building deploy jar");
+              }
+              ImmutableList<File> deployJarArtifacts =
+                  buildResultHelper.getBuildArtifactsForTarget(deployJarLabel);
+              checkState(deployJarArtifacts.size() == 1);
+              File deployJar = deployJarArtifacts.get(0);
+
+              ImmutableList<File> ideInfoFiles =
+                  buildResultHelper.getArtifactsForOutputGroups(
+                      aspectStrategy.getOutputGroups(
+                          OutputGroup.INFO, ImmutableSet.of(LanguageClass.JAVA)));
+
+              ImmutableMap<TargetKey, TargetIdeInfo> targetMap =
+                  ideInfoFiles
+                      .stream()
+                      .map(file -> readTargetIdeInfo(aspectStrategy, file))
+                      .filter(Objects::nonNull)
+                      .collect(toImmutableMap(ideInfo -> ideInfo.key, i -> i));
+              return BuildOutput.create(deployJar, new TargetMap(targetMap));
+            },
+            ConcurrencyUtil.getAppExecutorService());
+    buildOutputFuture.addListener(
+        buildResultHelper::close, ConcurrencyUtil.getAppExecutorService());
+    return buildOutputFuture;
+  }
+
+  private static TargetIdeInfo readTargetIdeInfo(AspectStrategy aspectStrategy, File file) {
+    try {
+      return IdeInfoFromProtobuf.makeTargetIdeInfo(aspectStrategy.readAspectFile(file));
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   private Label createDeployJarLabel(Label label) {

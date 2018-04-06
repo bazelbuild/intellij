@@ -17,6 +17,7 @@ test_suite(
     tests = [
         "//base:integration_tests",
         "//base:unit_tests",
+        "//dart:unit_tests",
         "//golang:unit_tests",
         "//ijwb:integration_tests",
         "//ijwb:unit_tests",
@@ -50,6 +51,7 @@ test_suite(
         "//base:unit_tests",
         "//cpp:integration_tests",
         "//cpp:unit_tests",
+        "//dart:unit_tests",
         "//java:integration_tests",
         "//java:unit_tests",
     ],
@@ -70,6 +72,7 @@ test_suite(
         "//base:unit_tests",
         "//clwb:unit_tests",
         "//cpp:unit_tests",
+        "//dart:unit_tests",
         "//python:unit_tests",
     ],
 )
