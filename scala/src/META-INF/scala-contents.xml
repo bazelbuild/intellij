@@ -26,7 +26,9 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationProducer
-        implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaMainClassRunConfigurationProducer"/>
+        implementation="com.google.idea.blaze.scala.run.producers.ScalaBinaryRunConfigurationProducer"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.scala.run.producers.ScalaLibraryRunConfigurationProducer"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaTestClassConfigurationProducer"/>
     <runConfigurationProducer
