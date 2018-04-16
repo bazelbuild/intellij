@@ -40,6 +40,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -65,6 +66,7 @@ import javax.annotation.Nullable;
 public final class BlazeJavaWorkspaceImporter {
   private final Project project;
   private final WorkspaceRoot workspaceRoot;
+  private final BuildSystem buildSystem;
   private final ImportRoots importRoots;
   private final TargetMap targetMap;
   private final JdepsMap jdepsMap;
@@ -88,10 +90,8 @@ public final class BlazeJavaWorkspaceImporter {
       ArtifactLocationDecoder artifactLocationDecoder) {
     this.project = project;
     this.workspaceRoot = workspaceRoot;
-    this.importRoots =
-        ImportRoots.builder(workspaceRoot, Blaze.getBuildSystem(project))
-            .add(projectViewSet)
-            .build();
+    this.buildSystem = Blaze.getBuildSystem(project);
+    this.importRoots = ImportRoots.builder(workspaceRoot, buildSystem).add(projectViewSet).build();
     this.targetMap = targetMap;
     this.sourceFilter = sourceFilter;
     this.jdepsMap = jdepsMap;
@@ -195,25 +195,19 @@ public final class BlazeJavaWorkspaceImporter {
 
     // Collect jars from jdep references
     for (String jdepsPath : workspaceBuilder.jdeps) {
-      if (sourceFilter.jdepsPathsForExcludedJars.contains(jdepsPath)) {
+      ArtifactLocation artifact = ExecutionPathHelper.parse(workspaceRoot, buildSystem, jdepsPath);
+      if (sourceFilter.jdepsPathsForExcludedJars.contains(artifact.relativePath)) {
         continue;
       }
-      BlazeJarLibrary library = jdepsPathToLibrary.get(jdepsPath);
+      BlazeJarLibrary library = jdepsPathToLibrary.get(artifact.relativePath);
       if (library == null) {
-        // It's in the target's jdeps, but our aspect never attached to the target building it
-        // Perhaps it's an implicit dependency, or not referenced in an attribute we propagate along
-        // Or it could be that this is a multi-configuration project, and jdeps refers to a
-        // configuration different from the one we picked for the TargetMap.
-        // Make a best-effort attempt to add it to the project anyway.
-        ExecutionPathFragmentAndRelativePath split =
-            ExecutionPathFragmentAndRelativePath.split(jdepsPath);
-        ArtifactLocation location =
-            ArtifactLocation.builder()
-                .setIsSource(false)
-                .setRootExecutionPathFragment(split.rootExecutionPathFragment)
-                .setRelativePath(split.relativePath)
-                .build();
-        library = new BlazeJarLibrary(new LibraryArtifact(location, null, ImmutableList.of()));
+        // It's in the target's jdeps, but our aspect never attached to the target building it.
+        // Perhaps it's an implicit dependency, or not referenced in an attribute we propagate
+        // along. Make a best-effort attempt to add it to the project anyway.
+        ArtifactLocation srcJar = guessSrcJarLocation(artifact);
+        ImmutableList<ArtifactLocation> srcJars =
+            srcJar != null ? ImmutableList.of(srcJar) : ImmutableList.of();
+        library = new BlazeJarLibrary(new LibraryArtifact(artifact, null, srcJars));
       }
       result.put(library.key, library);
     }
@@ -325,11 +319,11 @@ public final class BlazeJavaWorkspaceImporter {
     LibraryArtifact libraryArtifact = library.libraryArtifact;
     ArtifactLocation interfaceJar = libraryArtifact.interfaceJar;
     if (interfaceJar != null) {
-      jdepsPathToLibrary.put(interfaceJar.getExecutionRootRelativePath(), library);
+      jdepsPathToLibrary.put(interfaceJar.getRelativePath(), library);
     }
     ArtifactLocation classJar = libraryArtifact.classJar;
     if (classJar != null) {
-      jdepsPathToLibrary.put(classJar.getExecutionRootRelativePath(), library);
+      jdepsPathToLibrary.put(classJar.getRelativePath(), library);
     }
   }
 
@@ -423,36 +417,29 @@ public final class BlazeJavaWorkspaceImporter {
     Map<TargetKey, ArtifactLocation> javaPackageManifests = Maps.newHashMap();
   }
 
-  private static class ExecutionPathFragmentAndRelativePath {
-    final String rootExecutionPathFragment;
-    final String relativePath;
-
-    private ExecutionPathFragmentAndRelativePath(
-        String rootExecutionPathFragment, String relativePath) {
-      this.rootExecutionPathFragment = rootExecutionPathFragment;
-      this.relativePath = relativePath;
+  /**
+   * Uses a filename heuristic to guess the location of a source jar corresponding to the given
+   * output jar.
+   */
+  @Nullable
+  private static ArtifactLocation guessSrcJarLocation(ArtifactLocation outputJar) {
+    String srcJarRelPath = guessSrcJarRelativePath(outputJar.relativePath);
+    if (srcJarRelPath == null) {
+      return null;
     }
+    // we don't check whether the source jar actually exists, to avoid unnecessary file system
+    // operations
+    return ArtifactLocation.Builder.copy(outputJar).setRelativePath(srcJarRelPath).build();
+  }
 
-    /**
-     * Given a path like "bazel-out/config_fragment/bin/relative_path", split out the relative_path
-     * from the prefix that contains the configuration.
-     */
-    private static ExecutionPathFragmentAndRelativePath split(String relativePath) {
-      // Bazel should always use '/' as the file separator char for these paths.
-      int firstSep = relativePath.indexOf('/');
-      if (firstSep < 0) {
-        return new ExecutionPathFragmentAndRelativePath(relativePath, "");
-      }
-      int secondSep = relativePath.indexOf('/', firstSep + 1);
-      if (secondSep < 0) {
-        return new ExecutionPathFragmentAndRelativePath(relativePath, "");
-      }
-      int thirdSep = relativePath.indexOf('/', secondSep + 1);
-      if (thirdSep < 0) {
-        return new ExecutionPathFragmentAndRelativePath(relativePath, "");
-      }
-      return new ExecutionPathFragmentAndRelativePath(
-          relativePath.substring(0, thirdSep), relativePath.substring(thirdSep + 1));
+  @Nullable
+  private static String guessSrcJarRelativePath(String relPath) {
+    if (relPath.endsWith("-hjar.jar")) {
+      return relPath.substring(0, relPath.length() - "-hjar.jar".length()) + "-src.jar";
     }
+    if (relPath.endsWith("-ijar.jar")) {
+      return relPath.substring(0, relPath.length() - "-ijar.jar".length()) + "-src.jar";
+    }
+    return null;
   }
 }

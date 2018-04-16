@@ -218,5 +218,8 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
         Label label, String blazeBinaryPath, List<String> blazeFlags) {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public void resetBuild(Label label) {}
   }
 }

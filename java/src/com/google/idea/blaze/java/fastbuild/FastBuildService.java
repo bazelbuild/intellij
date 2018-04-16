@@ -45,4 +45,6 @@ public interface FastBuildService {
 
   Future<FastBuildInfo> createBuild(Label label, String blazeBinaryPath, List<String> blazeFlags)
       throws FastBuildException;
+
+  void resetBuild(Label label);
 }

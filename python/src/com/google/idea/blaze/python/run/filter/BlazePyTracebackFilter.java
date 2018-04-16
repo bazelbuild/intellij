@@ -16,6 +16,7 @@
 package com.google.idea.blaze.python.run.filter;
 
 import com.google.idea.blaze.base.run.filter.FileResolver;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
@@ -32,7 +33,9 @@ public class BlazePyTracebackFilter implements Filter {
   public static class BlazePyTracebackFilterProvider implements ConsoleFilterProvider {
     @Override
     public Filter[] getDefaultFilters(Project project) {
-      return new Filter[] {new BlazePyTracebackFilter(project)};
+      return Blaze.isBlazeProject(project)
+          ? new Filter[] {new BlazePyTracebackFilter(project)}
+          : new Filter[0];
     }
   }
 

@@ -23,6 +23,7 @@ import com.google.common.base.Splitter;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.cidr.lang.psi.OCFile;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
@@ -41,6 +42,14 @@ public class BlazeCppIntegrationTestCase extends BlazeIntegrationTestCase {
 
   protected OCFile createFile(String relativePath, String... contentLines) {
     PsiFile file = workspace.createPsiFile(new WorkspacePath(relativePath), contentLines);
+    assertThat(file).isInstanceOf(OCFile.class);
+    return (OCFile) file;
+  }
+
+  protected OCFile createFileWithEditor(String relativePath, String... contentLines) {
+    VirtualFile virtualFile = workspace.createFile(new WorkspacePath(relativePath), contentLines);
+    testFixture.configureFromExistingVirtualFile(virtualFile);
+    PsiFile file = testFixture.getFile();
     assertThat(file).isInstanceOf(OCFile.class);
     return (OCFile) file;
   }

@@ -122,6 +122,14 @@ final class FastBuildServiceImpl implements FastBuildService {
   }
 
   @Override
+  public void resetBuild(Label label) {
+    FastBuildState build = builds.remove(label);
+    if (build != null) {
+      FileUtil.delete(build.compilerOutputDirectory());
+    }
+  }
+
+  @Override
   public Future<FastBuildInfo> createBuild(
       Label label, String blazeBinaryPath, List<String> blazeFlags) throws FastBuildException {
 
@@ -182,8 +190,7 @@ final class FastBuildServiceImpl implements FastBuildService {
     if (existingBuildState == null) {
       CleanupFastBuildData cleanup = new CleanupFastBuildData(label);
       projectManager.addProjectManagerListener(project, cleanup);
-      Runtime.getRuntime()
-          .addShutdownHook(new Thread(() -> cleanup.projectClosed(/* project */ null)));
+      Runtime.getRuntime().addShutdownHook(new Thread(() -> resetBuild(label)));
     }
 
     BuildOutput completedBuildOutput = getCompletedBuild(existingBuildState);
@@ -220,10 +227,7 @@ final class FastBuildServiceImpl implements FastBuildService {
 
     @Override
     public void projectClosed(Project project) {
-      FastBuildState build = builds.remove(label);
-      if (build != null) {
-        FileUtil.delete(build.compilerOutputDirectory());
-      }
+      resetBuild(label);
     }
   }
 

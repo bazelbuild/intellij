@@ -298,7 +298,7 @@ java_library(
     name = "terminal",
     neverlink = 1,
     exports = select_from_plugin_api_directory(
-        android_studio = [],
+        android_studio = [":terminal"],
         clion = [":terminal"],
         intellij = [":terminal"],
     ),

@@ -15,20 +15,8 @@
  */
 package com.google.idea.testing.cidr;
 
-import com.google.idea.sdkcompat.cidr.OCWorkspaceModificationTrackersCompatUtils;
-import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.android.tools.ndk.NdkHelper;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.file.impl.FileManager;
-import com.intellij.util.ui.UIUtil;
-import com.jetbrains.cidr.lang.OCLanguage;
-import com.jetbrains.cidr.lang.preprocessor.OCInclusionContextUtil;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceManager;
 
@@ -57,53 +45,8 @@ public class StubOCWorkspaceManager extends OCWorkspaceManager {
   /**
    * Enable C++ language support for testing (a previously registered OCWorkspace which may have
    * disabled language support).
-   *
-   * <p>This function does not work since sdkcompat v173, OCLanguage.LANGUAGE_SUPPORT_DISABLED will
-   * still return true after calling enableCSupportForTesting(). RebuildSymbols may have some
-   * issues, please read BlazeNdkSupportEnabler.doRebuildSymbols for more details.
    */
-  public void enableCSupportForTesting() throws Exception {
-    OCWorkspace workspace = OCWorkspaceManager.getWorkspace(project);
-    Boolean isCurrentlyEnabled = !OCLanguage.LANGUAGE_SUPPORT_DISABLED.get(project, false);
-    if (!isCurrentlyEnabled) {
-      enableLanguageSupport(project);
-      rebuildSymbols(project, workspace);
-    }
-  }
-
-  private static void enableLanguageSupport(Project project) {
-    OCLanguage.LANGUAGE_SUPPORT_DISABLED.set(project, false);
-    UIUtil.invokeLaterIfNeeded(
-        () ->
-            ApplicationManager.getApplication()
-                .runWriteAction(
-                    () -> {
-                      if (project.isDisposed()) {
-                        return;
-                      }
-                      Language langToReset = PlainTextLanguage.INSTANCE;
-                      FileManager fileManager =
-                          ((PsiManagerEx) PsiManager.getInstance(project)).getFileManager();
-                      for (PsiFile file : fileManager.getAllCachedFiles()) {
-                        if (file.getLanguage() == langToReset) {
-                          VirtualFile vf = OCInclusionContextUtil.getVirtualFile(file);
-                          if (vf != null) {
-                            fileManager.setViewProvider(vf, null);
-                          }
-                        }
-                      }
-                    }));
-  }
-
-  private static void rebuildSymbols(Project project, OCWorkspace workspace) {
-    TransactionGuard.submitTransaction(
-        project,
-        () ->
-            ApplicationManager.getApplication()
-                .runReadAction(
-                    () ->
-                        OCWorkspaceModificationTrackersCompatUtils.getTrackers(project)
-                            .getBuildSettingsChangesTracker()
-                            .incModificationCount()));
+  public void enableCSupportForTesting() {
+    NdkHelper.disableCppLanguageSupport(project, false);
   }
 }

@@ -49,6 +49,8 @@
       interface="com.google.idea.blaze.python.run.smrunner.PyParameterizedNameConverter"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.PyImportResolverStrategy"
         interface="com.google.idea.blaze.python.resolve.provider.PyImportResolverStrategy"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.PySdkSuggester"
+        interface="com.google.idea.blaze.python.sync.PySdkSuggester"/>
   </extensionPoints>
 
   <application-components>

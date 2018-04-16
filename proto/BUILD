@@ -22,3 +22,13 @@ java_proto_library(
     visibility = ["//visibility:public"],
     deps = [":intellij_ide_info_proto"],
 )
+
+proto_library(
+    name = "intellij_plugin_target_deploy_info_proto",
+    srcs = ["intellij_plugin_target_deploy_info.proto"],
+)
+
+java_proto_library(
+    name = "intellij_plugin_target_deploy_info_java_proto",
+    deps = [":intellij_plugin_target_deploy_info_proto"],
+)

@@ -50,11 +50,6 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.CommandLineState;
-import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.configurations.RemoteState;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.filters.TextConsoleBuilderImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
@@ -73,51 +68,38 @@ import java.util.UUID;
  * be executed. This class creates a command line for Blaze and exposes debug connection information
  * when using a debug executor.
  */
-final class BlazeJavaRunProfileState extends CommandLineState implements RemoteState {
+final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState {
 
-  private static final String DEBUG_HOST_NAME = "localhost";
-
-  private final BlazeCommandRunConfiguration configuration;
-  private final ExecutorType executorType;
-
-  public BlazeJavaRunProfileState(ExecutionEnvironment environment) {
+  BlazeJavaRunProfileState(ExecutionEnvironment environment) {
     super(environment);
-    this.configuration = getConfiguration(environment);
-    this.executorType = ExecutorType.fromExecutor(environment.getExecutor());
-  }
-
-  private static BlazeCommandRunConfiguration getConfiguration(ExecutionEnvironment environment) {
-    RunProfile runProfile = environment.getRunProfile();
-    if (runProfile instanceof WrappingRunConfiguration) {
-      runProfile = ((WrappingRunConfiguration) runProfile).getPeer();
-    }
-    return (BlazeCommandRunConfiguration) runProfile;
   }
 
   @Override
   protected ProcessHandler startProcess() throws ExecutionException {
-    Project project = configuration.getProject();
+    Project project = getConfiguration().getProject();
 
     BlazeCommand.Builder blazeCommand;
     BlazeTestUiSession testUiSession =
         useTestUi()
-            ? TestUiSessionProvider.getInstance(project).getTestUiSession(configuration.getTarget())
+            ? TestUiSessionProvider.getInstance(project)
+                .getTestUiSession(getConfiguration().getTarget())
             : null;
     if (testUiSession != null) {
       blazeCommand =
           getBlazeCommandBuilder(
-              project, configuration, testUiSession.getBlazeFlags(), executorType);
+              project, getConfiguration(), testUiSession.getBlazeFlags(), getExecutorType());
       setConsoleBuilder(
           new TextConsoleBuilderImpl(project) {
             @Override
             protected ConsoleView createConsole() {
               return SmRunnerUtils.getConsoleView(
-                  project, configuration, getEnvironment().getExecutor(), testUiSession);
+                  project, getConfiguration(), getEnvironment().getExecutor(), testUiSession);
             }
           });
     } else {
       blazeCommand =
-          getBlazeCommandBuilder(project, configuration, ImmutableList.of(), executorType);
+          getBlazeCommandBuilder(
+              project, getConfiguration(), ImmutableList.of(), getExecutorType());
     }
     addConsoleFilters(
         new BlazeTargetFilter(project, true),
@@ -181,20 +163,8 @@ final class BlazeJavaRunProfileState extends CommandLineState implements RemoteS
 
   private boolean useTestUi() {
     BlazeCommandRunConfigurationCommonState state =
-        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+        getConfiguration().getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     return state != null && BlazeCommandName.TEST.equals(state.getCommandState().getCommand());
-  }
-
-  @Override
-  public RemoteConnection getRemoteConnection() {
-    if (executorType != ExecutorType.DEBUG) {
-      return null;
-    }
-    return new RemoteConnection(
-        /* useSockets */ true,
-        DEBUG_HOST_NAME,
-        Integer.toString(getState(configuration).getDebugPortState().port),
-        /* serverMode */ false);
   }
 
   private static BlazeJavaRunConfigState getState(BlazeCommandRunConfiguration config) {

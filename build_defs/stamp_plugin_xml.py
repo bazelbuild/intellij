@@ -102,6 +102,15 @@ def _parse_major_version(api_version):
   return match.group(2)
 
 
+def _strip_build_number(api_version):
+  """Removes the build number component from a full api version string."""
+  match = re.match(r"^([A-Z]+-)?([0-9]+)(\.[0-9]+){2}$", api_version)
+  if match:
+    return api_version[:match.start(3)]
+  # if there aren't exactly 3 version number components, just leave it unchanged
+  return api_version
+
+
 def main():
   args = parser.parse_args()
 
@@ -137,9 +146,10 @@ def main():
     if idea_plugin.getElementsByTagName("idea-version"):
       raise ValueError("idea-version element already present")
 
-    idea_version_build_element = (api_version
-                                  if args.include_product_code_in_stamp else
-                                  _strip_product_code(api_version))
+    idea_version_build_element = (
+        api_version
+        if args.include_product_code_in_stamp else _strip_build_number(
+            _strip_product_code(api_version)))
 
     idea_version_element = dom.createElement("idea-version")
     new_elements.append(idea_version_element)

@@ -23,10 +23,10 @@ java_import(
 
 java_import(
     name = "tasks",
-    jars = [
-        "plugins/termins/lib/tasks-api.jar",
-        "plugins/termins/lib/tasks-core.jar",
-    ]
+    jars = glob([
+        "clion-*/plugins/tasks/lib/tasks-api.jar",
+        "clion-*/plugins/tasks/lib/tasks-core.jar",
+    ]),
 )
 
 java_import(

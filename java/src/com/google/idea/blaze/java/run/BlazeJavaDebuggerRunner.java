@@ -72,10 +72,10 @@ public class BlazeJavaDebuggerRunner extends GenericDebuggerRunner {
   @Nullable
   public RunContentDescriptor createContentDescriptor(
       RunProfileState state, ExecutionEnvironment environment) throws ExecutionException {
-    if (!(state instanceof BlazeJavaRunProfileState)) {
+    if (!(state instanceof BlazeJavaDebuggableRunProfileState)) {
       return null;
     }
-    BlazeJavaRunProfileState blazeState = (BlazeJavaRunProfileState) state;
+    BlazeJavaDebuggableRunProfileState blazeState = (BlazeJavaDebuggableRunProfileState) state;
     RemoteConnection connection = blazeState.getRemoteConnection();
     return attachVirtualMachine(state, environment, connection, POLL_TIMEOUT_MILLIS);
   }
