@@ -91,27 +91,31 @@ public class ScalaGeneratedBinaryTargetRunTaskProvider
     @NotNull RunConfiguration configuration,
     @NotNull ExecutionEnvironment env,
     @NotNull Task task) {
-    BlazeCommandRunConfiguration runConfiguration = (BlazeCommandRunConfiguration)configuration;
+    BlazeCommandRunConfiguration runConfiguration = (BlazeCommandRunConfiguration) configuration;
     writeFileToDisk(project,
       Label.create(runConfiguration.getTarget().toString()),
-      runConfiguration.getTargetKind());
+      Kind.SCALA_BINARY);
     return true;
   }
 
   private void writeFileToDisk(
     Project project, Label newRule, Kind ruleKind) {
 
+    new WriteCommandAction<Optional<VirtualFile>>(project, "Create temporary BUILD file.") {
+      @Override
+      protected void run(@NotNull Result<Optional<VirtualFile>> result) {
+        WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+        File dir = workspaceRoot.fileForPath(newRule.blazePackage());
+        try {
+          VirtualFile newDirectory = VfsUtil.createDirectories(dir.getPath());
+          newDirectory.findOrCreateChildData(this, "BUILD");
 
-    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    File dir = workspaceRoot.fileForPath(newRule.blazePackage());
-    try {
-      VirtualFile newDirectory = VfsUtil.createDirectories(dir.getPath());
-      newDirectory.findOrCreateChildData(this, "BUILD");
-
-      BuildFileModifier buildFileModifier = BuildFileModifier.getInstance();
-      buildFileModifier.addRule(project, newRule, ruleKind);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+          BuildFileModifier buildFileModifier = BuildFileModifier.getInstance();
+          buildFileModifier.addRule(project, newRule, ruleKind);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+    }.execute();
   }
 }
