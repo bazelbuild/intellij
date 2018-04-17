@@ -170,9 +170,10 @@ public class IdeInfoFromProtobuf {
     if (message.getJavaIdeInfo() == null || message.getJavaIdeInfo().getSourcesCount() == 0) {
       return null;
     } else {
-      realKtIdeInfoLocation = makeArtifactLocation(message.getJavaIdeInfo().getSources(0));
+      ArtifactLocation artifactLocation =
+          makeArtifactLocation(message.getJavaIdeInfo().getSources(0));
+      return new KtToolchainIdeInfo.Builder().location(artifactLocation).build();
     }
-    return new KtToolchainIdeInfo.Builder().setLocation(realKtIdeInfoLocation).build();
   }
 
   private static Collection<Dependency> makeDependencyListFromLabelList(

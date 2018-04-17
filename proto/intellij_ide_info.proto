@@ -158,11 +158,11 @@ message Dependency {
   DependencyType dependency_type = 2;
 }
 
-// Next Available: 31
 message KtToolchainIdeInfo {
   ArtifactLocation location = 1;
 }
 
+// Next Available: 31
 message TargetIdeInfo {
   string label = 1 [deprecated = true];
   repeated string dependencies = 4 [deprecated = true];

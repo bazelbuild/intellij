@@ -27,7 +27,7 @@ public class KtToolchainIdeInfo {
   public static class Builder {
     ArtifactLocation location;
 
-    public Builder setLocation(ArtifactLocation location) {
+    public Builder location(ArtifactLocation location) {
       this.location = location;
       return this;
     }
