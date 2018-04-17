@@ -53,7 +53,7 @@ public class BlazeCppTestLocator implements SMTestLocator {
     if (SmRunnerUtils.GENERIC_SUITE_PROTOCOL.equals(protocol)) {
       location = getLocation(project, path, null);
     } else if (SmRunnerUtils.GENERIC_TEST_PROTOCOL.equals(protocol)) {
-      String[] components = path.split(SmRunnerUtils.TEST_NAME_PARTS_SPLITTER);
+      String[] components = path.split(SmRunnerUtils.TEST_NAME_PARTS_SPLITTER, -1);
       location = components.length != 2 ? null : getLocation(project, components[0], components[1]);
     }
     return location != null ? ImmutableList.of(location) : ImmutableList.of();
