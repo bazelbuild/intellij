@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.golang.resolve.BlazeGoRootsProvider;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -53,6 +54,10 @@ import javax.annotation.Nullable;
 public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
 
   private static final Logger logger = Logger.getInstance(BlazeGoSyncPlugin.class);
+
+  /** From {@link com.goide.inspections.WrongSdkConfigurationNotificationProvider}. */
+  private static final String DO_NOT_SHOW_NOTIFICATION_ABOUT_EMPTY_GOPATH =
+      "DO_NOT_SHOW_NOTIFICATION_ABOUT_EMPTY_GOPATH";
 
   private static final BoolExperiment refreshExecRoot =
       new BoolExperiment("refresh.exec.root.golang", true);
@@ -117,6 +122,7 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
           childContext.push(new TimingScope("BuildGoSymbolicLinks", EventType.Other));
           BlazeGoRootsProvider.createGoPathSourceRoot(project, blazeProjectData);
         });
+    PropertiesComponent.getInstance().setValue(DO_NOT_SHOW_NOTIFICATION_ABOUT_EMPTY_GOPATH, true);
   }
 
   private static List<Library> getGoLibraries(Project project) {

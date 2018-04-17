@@ -60,6 +60,7 @@ import com.intellij.pom.NavigatableAdapter;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.LibraryContributingFacet;
+import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.sdk.PythonSdkType;
 import java.util.List;
 import java.util.Set;
@@ -133,7 +134,8 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
       ModuleEditor moduleEditor,
       Module workspaceModule,
       ModifiableRootModel workspaceModifiableModel) {
-    updatePythonFacet(context, blazeProjectData, workspaceModule, workspaceModifiableModel);
+    updatePythonFacet(
+        project, context, blazeProjectData, workspaceModule, workspaceModifiableModel);
   }
 
   @Override
@@ -161,6 +163,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
   }
 
   private static void updatePythonFacet(
+      Project project,
       BlazeContext context,
       BlazeProjectData blazeProjectData,
       Module workspaceModule,
@@ -174,7 +177,8 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
     if (ModuleType.get(workspaceModule) instanceof PythonModuleTypeBase) {
       return;
     }
-    LibraryContributingFacet<?> pythonFacet = getOrCreatePythonFacet(context, workspaceModule);
+    LibraryContributingFacet<?> pythonFacet =
+        getOrCreatePythonFacet(project, context, workspaceModule);
     if (pythonFacet == null) {
       return;
     }
@@ -196,7 +200,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
 
   @Nullable
   private static LibraryContributingFacet<?> getOrCreatePythonFacet(
-      BlazeContext context, Module module) {
+      Project project, BlazeContext context, Module module) {
     LibraryContributingFacet<?> facet = findPythonFacet(module);
     if (facet != null && facetHasSdk(facet)) {
       return facet;
@@ -208,7 +212,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
       // a new facet.
       facetModel.removeFacet(facet);
     }
-    Sdk sdk = getOrCreatePythonSdk();
+    Sdk sdk = getOrCreatePythonSdk(project);
     if (sdk == null) {
       String msg =
           "Unable to find a Python SDK installed.\n"
@@ -217,7 +221,13 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
       IssueOutput.error(msg).submit(context);
       return null;
     }
+
     facet = manager.createFacet(PythonFacetUtil.getFacetType(), "Python", null);
+    // This is ugly like this to get around PythonFacet related classes being in different package
+    // paths in different IDEs. Thankfully, PythonFacetSettings is in the same packackage path.
+    if (facet.getConfiguration() instanceof PythonFacetSettings) {
+      ((PythonFacetSettings) facet.getConfiguration()).setSdk(sdk);
+    }
     facetModel.addFacet(facet);
     facetModel.commit();
     return facet;
@@ -267,14 +277,21 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
     if (currentSdk != null && currentSdk.getSdkType() instanceof PythonSdkType) {
       return;
     }
-    Sdk sdk = getOrCreatePythonSdk();
+    Sdk sdk = getOrCreatePythonSdk(project);
     if (sdk != null) {
       setProjectSdk(project, sdk);
     }
   }
 
   @Nullable
-  private static Sdk getOrCreatePythonSdk() {
+  private static Sdk getOrCreatePythonSdk(Project project) {
+    for (PySdkSuggester suggester : PySdkSuggester.EP_NAME.getExtensions()) {
+      Sdk s = suggester.suggestSdk(project);
+      if (s != null) {
+        return s;
+      }
+    }
+
     List<Sdk> sdk = PythonSdkType.getAllSdks();
     if (!sdk.isEmpty()) {
       return sdk.get(0);

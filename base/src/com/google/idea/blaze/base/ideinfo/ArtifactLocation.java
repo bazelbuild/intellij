@@ -94,6 +94,14 @@ public final class ArtifactLocation implements Serializable, Comparable<Artifact
       return this;
     }
 
+    public static Builder copy(ArtifactLocation artifact) {
+      return new Builder()
+          .setRelativePath(artifact.relativePath)
+          .setRootExecutionPathFragment(artifact.rootExecutionPathFragment)
+          .setIsSource(artifact.isSource)
+          .setIsExternal(artifact.isExternal);
+    }
+
     public ArtifactLocation build() {
       return new ArtifactLocation(rootExecutionPathFragment, relativePath, isSource, isExternal);
     }

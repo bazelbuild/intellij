@@ -24,6 +24,8 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
+import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
@@ -92,14 +94,14 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
   private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File(FAKE_WORKSPACE_ROOT));
 
   private static final String FAKE_GEN_ROOT_EXECUTION_PATH_FRAGMENT =
-      "blaze-out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
+      "bazel-out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
 
   private static final ArtifactLocationDecoder FAKE_ARTIFACT_DECODER =
       (ArtifactLocationDecoder)
           artifactLocation -> new File("/", artifactLocation.getRelativePath());
 
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
-      new BlazeImportSettings("", "", "", "", BuildSystem.Blaze);
+      new BlazeImportSettings("", "", "", "", BuildSystem.Bazel);
   private ExtensionPointImpl<BlazeJavaSyncAugmenter> augmenters;
 
   private BlazeContext context;
@@ -143,6 +145,9 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     registerExtensionPoint(JavaLikeLanguage.EP_NAME, JavaLikeLanguage.class)
         .registerExtension(new JavaLikeLanguage.Java());
+
+    registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
+        .registerExtension(new BazelBuildSystemProvider());
   }
 
   private BlazeJavaImportResult importWorkspace(

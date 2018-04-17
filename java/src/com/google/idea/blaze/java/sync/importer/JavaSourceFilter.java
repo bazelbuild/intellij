@@ -45,7 +45,7 @@ public class JavaSourceFilter {
   final List<TargetIdeInfo> libraryTargets;
   final List<TargetIdeInfo> protoLibraries;
   final Map<TargetKey, Collection<ArtifactLocation>> targetToJavaSources;
-  /** The set of execution-root-relative paths for excluded library artifacts. */
+  /** The set of workspace-relative paths for excluded library artifacts. */
   final Set<String> jdepsPathsForExcludedJars = new HashSet<>();
 
   public JavaSourceFilter(
@@ -146,15 +146,15 @@ public class JavaSourceFilter {
 
   private List<String> relativeArtifactPaths(LibraryArtifact jar) {
     List<String> list = new ArrayList<>();
-    addExecRootRelativePath(list, jar.classJar);
-    addExecRootRelativePath(list, jar.interfaceJar);
-    jar.sourceJars.forEach(a -> addExecRootRelativePath(list, a));
+    addRelativePath(list, jar.classJar);
+    addRelativePath(list, jar.interfaceJar);
+    jar.sourceJars.forEach(a -> addRelativePath(list, a));
     return list;
   }
 
-  private void addExecRootRelativePath(List<String> paths, @Nullable ArtifactLocation artifact) {
+  private void addRelativePath(List<String> paths, @Nullable ArtifactLocation artifact) {
     if (artifact != null) {
-      paths.add(artifact.getExecutionRootRelativePath());
+      paths.add(artifact.getRelativePath());
     }
   }
 }

@@ -28,7 +28,7 @@ DIRECT_IJ_PRODUCTS = {
     ),
     "intellij-ue-2018.1": struct(
         directory = "intellij_ue_2018_1",
-        ide = "intellij",
+        ide = "intellij-ue",
     ),
     "android-studio-3.0": struct(
         directory = "android_studio_3_0",
@@ -103,7 +103,10 @@ def select_for_plugin_api(params):
     else:
       select_params["//intellij_platform_sdk:" + ij_product] = value
 
-  return select(select_params)
+  return select(
+      select_params,
+      no_match_error = "define an intellij product version, e.g. --define=ij_product=intellij-latest",
+  )
 
 def select_for_ide(intellij=None, intellij_ue=None, android_studio=None, clion=None, default=[]):
   """Selects for the supported IDEs.
