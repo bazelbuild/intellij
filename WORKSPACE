@@ -16,8 +16,8 @@ new_http_archive(
 new_http_archive(
     name = "intellij_ce_2018_1",
     build_file = "intellij_platform_sdk/BUILD.idea",
-    sha256 = "c1a4274b1e2eb139efaf9304e876e72045c4fd0b0823d6441de072b9c774decd",
-    url = "https://download.jetbrains.com/idea/ideaIC-181.3986.9.tar.gz",
+    sha256 = "459b13635185d7bbbc32388161b8df43c232ba1d434732f0dc599e5b49135645",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2018.1/ideaIC-2018.1.zip",
 )
 
 # The plugin api for IntelliJ UE 2017.3. This is required to run UE-specific
