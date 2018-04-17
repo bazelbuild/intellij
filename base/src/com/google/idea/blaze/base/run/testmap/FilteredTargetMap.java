@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
@@ -60,18 +61,26 @@ public class FilteredTargetMap {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData != null) {
-      return targetsForSourceFileImpl(blazeProjectData.reverseDependencies, sourceFile);
+      return targetsFromKeys(blazeProjectData.reverseDependencies, rootsMap.get(sourceFile));
     }
     return ImmutableList.of();
   }
 
-  private Collection<TargetIdeInfo> targetsForSourceFileImpl(
-      ImmutableMultimap<TargetKey, TargetKey> rdepsMap, File sourceFile) {
+  public Collection<TargetIdeInfo> targetsForLabel(Label label) {
+    BlazeProjectData blazeProjectData =
+      BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (blazeProjectData != null) {
+      return targetsFromKeys(blazeProjectData.reverseDependencies, ImmutableList.of(TargetKey.forPlainTarget(label)));
+    }
+    return ImmutableList.of();
+  }
+
+  private Collection<TargetIdeInfo> targetsFromKeys(
+    ImmutableMultimap<TargetKey, TargetKey> rdepsMap, Collection<TargetKey> targetKeys) {
     List<TargetIdeInfo> result = Lists.newArrayList();
-    Collection<TargetKey> roots = rootsMap.get(sourceFile);
 
     Queue<TargetKey> todo = Queues.newArrayDeque();
-    todo.addAll(roots);
+    todo.addAll(targetKeys);
     Set<TargetKey> seen = Sets.newHashSet();
     while (!todo.isEmpty()) {
       TargetKey targetKey = todo.remove();

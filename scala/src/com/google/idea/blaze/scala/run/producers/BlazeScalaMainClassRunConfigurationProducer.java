@@ -20,7 +20,6 @@ import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
@@ -36,6 +35,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScObject;
 import org.jetbrains.plugins.scala.runner.ScalaMainMethodUtil;
@@ -107,7 +107,7 @@ public abstract class BlazeScalaMainClassRunConfigurationProducer
   }
 
   @Nullable
-  private static ScObject getMainObject(ConfigurationContext context) {
+  protected static ScObject getMainObject(ConfigurationContext context) {
     Location location = context.getLocation();
     if (location == null) {
       return null;
@@ -159,7 +159,7 @@ public abstract class BlazeScalaMainClassRunConfigurationProducer
   }
 
   @Nullable
-  private TargetIdeInfo getTarget(Project project, ScObject mainObject) {
+  protected TargetIdeInfo getTarget(Project project, ScObject mainObject) {
     File mainObjectFile = RunUtil.getFileForClass(mainObject);
     if (mainObjectFile == null) {
       return null;

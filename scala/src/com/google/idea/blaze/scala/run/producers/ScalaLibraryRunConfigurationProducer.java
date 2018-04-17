@@ -3,6 +3,7 @@ package com.google.idea.blaze.scala.run.producers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -18,14 +19,16 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScObject;
 
 import java.util.List;
 
 public class ScalaLibraryRunConfigurationProducer
   extends BlazeScalaMainClassRunConfigurationProducer {
-  private static final String SCALA_BINARY_FOR_LIBS_MAP_KEY = "BlazeScalaBinaryForLibsMap";
+  public static final String SCALA_BINARY_FOR_LIBS_MAP_KEY = "BlazeScalaBinaryForLibsMap";
 
   protected ScalaLibraryRunConfigurationProducer() {
     super(SCALA_BINARY_FOR_LIBS_MAP_KEY);
@@ -56,15 +59,15 @@ public class ScalaLibraryRunConfigurationProducer
     handlerState.getBlazeFlagsState().setRawFlags(
       ImmutableList.of(BlazeFlags.NOCHECK_VISIBILITY));
 
-    PsiMethod targetMethod = (PsiMethod)sourceElement.get();
-    if (targetMethod == null)
+    ScObject mainObject = getMainObject(context);
+    if (mainObject == null) {
       return false;
-
-    String targetName = targetMethod.getContainingClass().getName() + "." + targetMethod.getName();
+    }
+    setTargetMainClass(context, mainObject);
 
     String name =
       new BlazeConfigurationNameBuilder(configuration)
-        .setTargetString(targetName)
+        .setTargetString(mainObject.name())
         .build();
     configuration.setName(name);
     configuration.setNameChangedByUser(true); // don't revert to generated name
@@ -74,10 +77,20 @@ public class ScalaLibraryRunConfigurationProducer
     return result;
   }
 
+  private void setTargetMainClass(ConfigurationContext context, ScObject mainObject) {
+    TargetIdeInfo target = getTarget(context.getProject(), mainObject);
+    if (target == null || target.javaIdeInfo == null) {
+      return;
+    }
+
+    target.javaIdeInfo.javaBinaryMainClass = mainObject.getTruncedQualifiedName();
+  }
+
   private void setTempBinaryTargetGeneratorTask(BlazeCommandRunConfiguration config) {
-    RunManagerEx runManager = RunManagerEx.getInstanceEx(config.getProject());
+    Project project = config.getProject();
+    RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
     List<BeforeRunTask> beforeRunTasks = runManager.getBeforeRunTasks(config);
-    beforeRunTasks.add(new ScalaGeneratedBinaryTargetRunTaskProvider.Task());
+    beforeRunTasks.add(new ScalaGeneratedBinaryTargetRunTaskProvider(project).createTask(config));
     runManager.setBeforeRunTasks(config, beforeRunTasks);
   }
 
@@ -95,10 +108,11 @@ public class ScalaLibraryRunConfigurationProducer
   }
 
   private TargetIdeInfo toBinaryTarget(TargetIdeInfo targetIdeInfo) {
-    System.out.println(targetIdeInfo);
     TargetIdeInfo.Builder builder = TargetIdeInfo.builder()
       .setLabel(createLabel(targetIdeInfo.key))
-      .setKind(Kind.SCALA_BINARY);
+      .setKind(Kind.SCALA_BINARY)
+      .addRuntimeDep(targetIdeInfo.key.label)
+      .setJavaInfo(new JavaIdeInfo.Builder());
 
     targetIdeInfo.sources.forEach(builder::addSource);
 
