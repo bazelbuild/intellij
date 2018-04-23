@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -31,6 +32,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.stream.Collectors;
+
+import static com.google.idea.blaze.scala.run.producers.ScalaLibraryRunConfigurationProducer.*;
 
 public class ScalaGeneratedBinaryTargetRunTaskProvider
   extends BeforeRunTaskProvider<ScalaGeneratedBinaryTargetRunTaskProvider.Task> {
@@ -105,9 +108,8 @@ public class ScalaGeneratedBinaryTargetRunTaskProvider
   private TargetIdeInfo getTargetInfo(TargetExpression targetExpression) {
     FilteredTargetMap map =
       SyncCache.getInstance(project)
-        .get(ScalaLibraryRunConfigurationProducer.SCALA_BINARY_FOR_LIBS_MAP_KEY, (p, pd) -> null);
-    if (map == null)
-      return null;
+        .get(SCALA_BINARY_FOR_LIBS_MAP_KEY,
+             ScalaLibraryRunConfigurationProducer::createBinaryTargetsMap);
 
     Label label = Label.create(targetExpression.toString());
     Collection<TargetIdeInfo> targets = map.targetsForLabel(label);
@@ -116,23 +118,20 @@ public class ScalaGeneratedBinaryTargetRunTaskProvider
   }
 
   private boolean writeTargetToDisk(TargetIdeInfo target) {
-    TargetInfo targetInfo = target.toTargetInfo();
-
-    return new WriteCommandAction<Boolean>(project, "Create temporary BUILD file.") {
-      @Override
-      protected void run(@NotNull Result<Boolean> result) {
-        WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-        File dir = workspaceRoot.fileForPath(targetInfo.label.blazePackage());
-        try {
-          VirtualFile tempDir = VfsUtil.createDirectories(dir.getPath());
-          VirtualFile buildFile = tempDir.findOrCreateChildData(this, "BUILD");
-          result.setResult(writeRawContent(buildFile, target));
-        } catch (IOException e) {
-          e.printStackTrace();
-          result.setResult(false);
-        }
-      }
-    }.execute().getResultObject();
+    return WriteCommandAction.runWriteCommandAction(project,
+      (Computable<Boolean>)
+        () -> {
+          WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+          File dir = workspaceRoot.fileForPath(target.key.label.blazePackage());
+          try {
+            VirtualFile tempDir = VfsUtil.createDirectories(dir.getPath());
+            VirtualFile buildFile = tempDir.findOrCreateChildData(this, "BUILD");
+            return writeRawContent(buildFile, target);
+          } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+          }
+        });
   }
 
   private boolean writeRawContent(VirtualFile buildFile, TargetIdeInfo target) throws IOException {
@@ -143,17 +142,23 @@ public class ScalaGeneratedBinaryTargetRunTaskProvider
         "",
         "scala_binary(",
         "    main_class='%s',",
-        "    name='main',",
+        "    name='%s',",
         "    runtime_deps=['%s'],",
-        "    tags=['no-ide'],",
         ")");
 
-    String dependency = Iterables.getFirst(
+    Label dependencyLabel = Iterables.getFirst(
       target.dependencies.stream()
-        .map(d -> d.targetKey.label.toString())
-        .collect(Collectors.toList()), "");
+        .map(d -> d.targetKey.label)
+        .collect(Collectors.toList()), null);
 
-    String text = String.format(template, target.javaIdeInfo.javaBinaryMainClass, dependency);
+    if (dependencyLabel == null) {
+      return false;
+    }
+
+    assert target.javaIdeInfo != null;
+    String mainClass = target.javaIdeInfo.javaBinaryMainClass;
+    String targetName = dependencyLabel.targetName() + "-main";
+    String text = String.format(template, mainClass, targetName, dependencyLabel.toString());
 
     buildFile.setBinaryContent(text.getBytes(CharsetToolkit.UTF8_CHARSET));
     return true;

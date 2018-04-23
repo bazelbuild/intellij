@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScObject;
 
 import java.util.List;
@@ -36,6 +37,11 @@ public class ScalaLibraryRunConfigurationProducer
 
   @Override
   protected FilteredTargetMap computeTargetMap(Project project, BlazeProjectData projectData) {
+    return createBinaryTargetsMap(project, projectData);
+  }
+
+  @NotNull
+  public static FilteredTargetMap createBinaryTargetsMap(Project project, BlazeProjectData projectData) {
     return new FilteredTargetMap(
       project,
       projectData.artifactLocationDecoder,
@@ -57,7 +63,9 @@ public class ScalaLibraryRunConfigurationProducer
     }
 
     handlerState.getBlazeFlagsState().setRawFlags(
-      ImmutableList.of(BlazeFlags.NOCHECK_VISIBILITY));
+      ImmutableList.of(
+        BlazeFlags.NOCHECK_VISIBILITY,
+        BlazeFlags.DELETED_PACKAGES));
 
     ScObject mainObject = getMainObject(context);
     if (mainObject == null) {
@@ -94,7 +102,7 @@ public class ScalaLibraryRunConfigurationProducer
     runManager.setBeforeRunTasks(config, beforeRunTasks);
   }
 
-  private TargetMap toBinaryTargetMap(TargetMap targetMap) {
+  private static TargetMap toBinaryTargetMap(TargetMap targetMap) {
     ImmutableMap<TargetKey, TargetIdeInfo> binaryTargets =
       targetMap.targets()
         .stream()
@@ -107,7 +115,7 @@ public class ScalaLibraryRunConfigurationProducer
     return new TargetMap(binaryTargets);
   }
 
-  private TargetIdeInfo toBinaryTarget(TargetIdeInfo targetIdeInfo) {
+  private static TargetIdeInfo toBinaryTarget(TargetIdeInfo targetIdeInfo) {
     TargetIdeInfo.Builder builder = TargetIdeInfo.builder()
       .setLabel(createLabel(targetIdeInfo.key))
       .setKind(Kind.SCALA_BINARY)
@@ -120,8 +128,7 @@ public class ScalaLibraryRunConfigurationProducer
   }
 
   private static Label createLabel(TargetKey key) {
-    return Label.create(String.format("//ijwb_tmp/%d-%s:main",
-      key.label.hashCode(),
+    return Label.create(String.format("//ijwb_tmp:%s-main",
       key.label.targetName()
     ));
   }
