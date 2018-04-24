@@ -36,10 +36,10 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
+import com.google.idea.sdkcompat.cidr.CompilerInfoCacheAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.jetbrains.cidr.toolchains.CompilerInfoCache;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -135,7 +135,7 @@ final class BlazeConfigurationToolchainResolver {
       Project project,
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
       ExecutionRootPathResolver executionRootPathResolver,
-      CompilerInfoCache compilerInfoCache,
+      CompilerInfoCacheAdapter compilerInfoCache,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings) {
     return Scope.push(
         context,
@@ -156,7 +156,7 @@ final class BlazeConfigurationToolchainResolver {
       Project project,
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
       ExecutionRootPathResolver executionRootPathResolver,
-      CompilerInfoCache compilerInfoCache,
+      CompilerInfoCacheAdapter compilerInfoCache,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings) {
     Set<CToolchainIdeInfo> toolchains =
         toolchainLookupMap.values().stream().distinct().collect(Collectors.toSet());
@@ -230,7 +230,7 @@ final class BlazeConfigurationToolchainResolver {
       File executionRoot,
       File cppExecutable,
       String compilerVersion,
-      CompilerInfoCache compilerInfoCache) {
+      CompilerInfoCacheAdapter compilerInfoCache) {
     File compilerWrapper = createCompilerExecutableWrapper(executionRoot, cppExecutable);
     if (compilerWrapper == null) {
       return null;

@@ -21,8 +21,8 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
+import com.google.idea.blaze.clwb.BlazeCppModuleType;
 import com.intellij.openapi.module.ModuleType;
-import com.jetbrains.cidr.cpp.CPPModuleType;
 import javax.annotation.Nullable;
 
 class BlazeCLionSyncPlugin implements BlazeSyncPlugin {
@@ -42,7 +42,7 @@ class BlazeCLionSyncPlugin implements BlazeSyncPlugin {
   @Override
   public ModuleType getWorkspaceModuleType(WorkspaceType workspaceType) {
     if (workspaceType == WorkspaceType.C) {
-      return CPPModuleType.getInstance();
+      return BlazeCppModuleType.getInstance();
     }
     return null;
   }

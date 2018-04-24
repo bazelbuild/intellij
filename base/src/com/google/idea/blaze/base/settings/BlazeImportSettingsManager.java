@@ -22,7 +22,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /** Manages storage for the project's {@link BlazeImportSettings}. */
 @State(name = "BlazeImportSettings", storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE))
@@ -52,7 +51,7 @@ public class BlazeImportSettingsManager implements PersistentStateComponent<Blaz
     return importSettings;
   }
 
-  public void setImportSettings(@NotNull BlazeImportSettings importSettings) {
+  public void setImportSettings(BlazeImportSettings importSettings) {
     this.importSettings = importSettings;
   }
 }

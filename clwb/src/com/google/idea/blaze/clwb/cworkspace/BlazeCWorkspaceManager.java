@@ -17,18 +17,18 @@ package com.google.idea.blaze.clwb.cworkspace;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.cpp.BlazeCWorkspace;
+import com.google.idea.sdkcompat.cidr.OCWorkspaceManagerAdapter;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.cidr.lang.CPPWorkspaceManager;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
-import com.jetbrains.cidr.lang.workspace.OCWorkspaceManager;
 
-class BlazeCWorkspaceManager extends OCWorkspaceManager {
+/** #api173 Once pre-181 does not need to be supported, BlazeCWorkspaceManager can be removed */
+class BlazeCWorkspaceManager extends OCWorkspaceManagerAdapter {
   private final Project project;
-  private final OCWorkspaceManager delegate;
+  private final OCWorkspaceManagerWrapper delegate;
 
   public BlazeCWorkspaceManager(Project project) {
     this.project = project;
-    this.delegate = new CPPWorkspaceManager(project);
+    this.delegate = getDelegate(project);
   }
 
   @Override
@@ -37,8 +37,9 @@ class BlazeCWorkspaceManager extends OCWorkspaceManager {
       return BlazeCWorkspace.getInstance(project);
     }
     // this is a gross hack, necessitated by OCWorkspaceManager being a service, rather than
-    // using extension points. We don't actually know which OCWorkspaceManager would be used
-    // if this one wasn't overriding -- but we'll guess that it was CPPWorkspaceManager...
-    return delegate.getWorkspace();
+    // using extension points. We can return for a Blaze workspace, but need to delegate for
+    // non-Blaze. On v171, this goes via NdkWorkspaceProvider. On v173, this goes via
+    // CPPWorkspaceManager. on v181, there is no Manager layer.
+    return delegate.getWorkspace(project);
   }
 }

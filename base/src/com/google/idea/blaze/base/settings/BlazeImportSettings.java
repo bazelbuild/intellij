@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.settings;
 
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -32,8 +31,8 @@ public final class BlazeImportSettings {
 
   private String projectViewFile;
 
-  private BuildSystem buildSystem =
-      BuildSystem.Blaze; // default for backwards compatibility with existing projects.
+  // default for backwards compatibility with existing projects
+  private BuildSystem buildSystem = BuildSystem.Blaze;
 
   // Used by bean serialization
   @SuppressWarnings("unused")

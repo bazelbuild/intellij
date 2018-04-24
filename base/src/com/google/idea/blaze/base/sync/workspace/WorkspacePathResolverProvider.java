@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
 /** Provides a WorkspacePathResolver. */
-public interface WorkspacePathResolverProvider extends SimpleWorkspacePathResolver.Provider {
+public interface WorkspacePathResolverProvider {
 
   static WorkspacePathResolverProvider getInstance(Project project) {
     return ServiceManager.getService(project, WorkspacePathResolverProvider.class);

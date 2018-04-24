@@ -20,7 +20,7 @@ import static java.util.stream.Collectors.toList;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.IntellijAspectTestFixture;
 import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.OutputGroup;
-import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.ArtifactLocation;
+import com.google.devtools.intellij.aspect.Common.ArtifactLocation;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.Dependency;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.Dependency.DependencyType;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.LibraryArtifact;

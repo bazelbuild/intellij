@@ -80,6 +80,10 @@ public class TypescriptPrefetchFileSource implements PrefetchFileSource {
 
   @Override
   public Set<String> prefetchFileExtensions() {
+    return getTypescriptExtensions();
+  }
+
+  public static Set<String> getTypescriptExtensions() {
     return ImmutableSet.of("ts", "tsx");
   }
 

@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.android.sync.importer.model.idea;
 
-import static com.google.common.truth.Truth.THROW_ASSERTION_ERROR;
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
@@ -98,7 +98,7 @@ public class AndroidResourceModuleRegistryTest extends BlazeTestCase {
     registry.put(moduleOne, resourceModule);
     try {
       registry.put(moduleTwo, resourceModule);
-      THROW_ASSERTION_ERROR.fail("Expected IllegalArgumentException");
+      fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException ignored) {
       // ignored
     }

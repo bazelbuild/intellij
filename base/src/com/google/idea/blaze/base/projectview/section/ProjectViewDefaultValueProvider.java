@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.projectview.section;
 
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
 /** Allows the adding default values to sections. Used during the wizard. */

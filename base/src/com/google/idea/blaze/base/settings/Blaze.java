@@ -25,22 +25,6 @@ import javax.swing.SwingUtilities;
 /** Blaze project utilities. */
 public class Blaze {
 
-  /** Build system enum */
-  public enum BuildSystem {
-    Blaze,
-    Bazel;
-
-    /** The build system name, capitalized. */
-    public String getName() {
-      return name();
-    }
-
-    /** The build system name, lower case. */
-    public String getLowerCaseName() {
-      return name().toLowerCase();
-    }
-  }
-
   private Blaze() {}
 
   public static boolean isBlazeProjectOpen() {

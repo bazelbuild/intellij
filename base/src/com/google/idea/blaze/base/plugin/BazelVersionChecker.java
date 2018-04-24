@@ -19,7 +19,7 @@ import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystem;
 
 /** Verifies that the available Bazel version is supported by this plugin. */
 public class BazelVersionChecker implements BuildSystemVersionChecker {

@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.model.primitives;
 
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.intellij.openapi.project.Project;
@@ -52,10 +51,9 @@ public class WorkspaceRoot implements Serializable {
    */
   @Nullable
   public static WorkspaceRoot fromProjectSafe(Project project) {
-    if (Blaze.isBlazeProject(project)) {
-      return fromProject(project);
-    }
-    return null;
+    BlazeImportSettings importSettings =
+        BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    return importSettings != null ? fromImportSettings(importSettings) : null;
   }
 
   /**

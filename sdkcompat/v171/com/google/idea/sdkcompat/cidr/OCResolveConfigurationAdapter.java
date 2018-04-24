@@ -15,10 +15,17 @@
  */
 package com.google.idea.sdkcompat.cidr;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
+import com.jetbrains.cidr.lang.workspace.OCResolveRootAndConfiguration;
+import com.jetbrains.cidr.lang.workspace.headerRoots.HeaderRoots;
+import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
+import com.jetbrains.cidr.toolchains.CompilerInfoCache;
+import java.util.List;
+import javax.annotation.Nullable;
 
 /** Adapter to bridge different SDK versions. */
 public abstract class OCResolveConfigurationAdapter extends UserDataHolderBase
@@ -26,4 +33,38 @@ public abstract class OCResolveConfigurationAdapter extends UserDataHolderBase
 
   /* v172 */
   public abstract String getPreprocessorDefines(OCLanguageKind kind, VirtualFile virtualFile);
+
+  /* #api181 */
+  public abstract List<HeadersSearchRoot> getProjectHeadersRootsInternal();
+
+  @Override
+  public HeaderRoots getProjectHeadersRoots() {
+    return new HeaderRoots(getProjectHeadersRootsInternal());
+  }
+
+  public abstract List<HeadersSearchRoot> getLibraryHeadersRootsInternal(
+      OCLanguageKind kind, @Nullable VirtualFile virtualFile);
+
+  public HeaderRoots getLibraryHeadersRoots(
+      OCLanguageKind languageKind, @Nullable VirtualFile sourceFile) {
+    return new HeaderRoots(getLibraryHeadersRootsInternal(languageKind, sourceFile));
+  }
+
+  @Override
+  public HeaderRoots getLibraryHeadersRoots(OCResolveRootAndConfiguration rootAndConfiguration) {
+    OCLanguageKind languageKind = rootAndConfiguration.getKind();
+    VirtualFile sourceFile = rootAndConfiguration.getRootFile();
+    return new HeaderRoots(getLibraryHeadersRootsInternal(languageKind, sourceFile));
+  }
+
+  protected List<HeadersSearchRoot> getHeadersSearchRootFromCompilerInfo(
+      OCCompilerSettingsAdapter compilerSettings, OCLanguageKind kind, VirtualFile virtualFile) {
+    CompilerInfoCache.Entry entry = compilerSettings.getCompilerInfo(kind, virtualFile).getResult();
+    if (entry == null) {
+      return ImmutableList.of();
+    }
+    return entry.headerSearchPaths;
+  }
+
+  public abstract OCCompilerSettingsAdapter getCompilerSettingsAdapter();
 }

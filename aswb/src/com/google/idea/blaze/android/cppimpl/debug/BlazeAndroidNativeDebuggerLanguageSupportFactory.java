@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.cppimpl.debug;
 
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
+import com.google.idea.sdkcompat.cidr.OCDebuggerLanguageSupportFactoryAdapter;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -30,15 +31,14 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.jetbrains.cidr.execution.debugger.OCDebuggerLanguageSupportFactory;
 import com.jetbrains.cidr.execution.debugger.OCDebuggerTypesHelper;
 import com.jetbrains.cidr.lang.OCFileType;
 import com.jetbrains.cidr.lang.OCLanguage;
 import com.jetbrains.cidr.lang.util.OCElementFactory;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
-class BlazeAndroidNativeDebuggerLanguageSupportFactory extends OCDebuggerLanguageSupportFactory {
+class BlazeAndroidNativeDebuggerLanguageSupportFactory
+    extends OCDebuggerLanguageSupportFactoryAdapter {
   @Override
   public XDebuggerEditorsProvider createEditor(RunProfile profile) {
     if (profile == null) {
@@ -53,13 +53,11 @@ class BlazeAndroidNativeDebuggerLanguageSupportFactory extends OCDebuggerLanguag
   }
 
   private static class DebuggerEditorsProvider extends XDebuggerEditorsProvider {
-    @NotNull
     @Override
     public FileType getFileType() {
       return OCFileType.INSTANCE;
     }
 
-    @NotNull
     @Override
     public Document createDocument(
         final Project project,
@@ -70,7 +68,7 @@ class BlazeAndroidNativeDebuggerLanguageSupportFactory extends OCDebuggerLanguag
       if (context != null && context.getLanguage() == OCLanguage.getInstance()) {
         return new WriteAction<Document>() {
           @Override
-          protected void run(Result<Document> result) throws Throwable {
+          protected void run(Result<Document> result) {
             PsiFile fragment =
                 mode == EvaluationMode.EXPRESSION
                     ? OCElementFactory.expressionCodeFragment(text, project, context, true, false)

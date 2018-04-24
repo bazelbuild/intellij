@@ -12,9 +12,33 @@ java_import(
 )
 
 proto_library(
+    name = "common_proto",
+    srcs = ["common.proto"],
+    visibility = ["//visibility:private"],
+)
+
+java_proto_library(
+    name = "common_java_proto",
+    visibility = ["//visibility:public"],
+    deps = [":common_proto"],
+)
+
+proto_library(
+    name = "fast_build_info_proto",
+    srcs = ["fast_build_info.proto"],
+    deps = [":common_proto"],
+)
+
+java_proto_library(
+    name = "fast_build_info_java_proto",
+    deps = [":fast_build_info_proto"],
+)
+
+proto_library(
     name = "intellij_ide_info_proto",
     srcs = ["intellij_ide_info.proto"],
     visibility = ["//visibility:public"],
+    deps = [":common_proto"],
 )
 
 java_proto_library(

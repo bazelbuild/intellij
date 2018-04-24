@@ -29,6 +29,11 @@
       </implementation-class>
     </component>
   </application-components>
+  <project-components>
+    <component>
+      <implementation-class>com.google.idea.blaze.cpp.BlazeCWorkspace</implementation-class>
+    </component>
+  </project-components>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.cpp.BlazeCSyncPlugin"/>
@@ -43,7 +48,6 @@
     <customHeaderProvider implementation="com.google.idea.blaze.cpp.BlazeCustomHeaderProvider"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="com.google.idea.blaze.cpp.BlazeCWorkspace"/>
     <projectViewNodeDecorator implementation="com.google.idea.blaze.cpp.syncstatus.BlazeCppSyncStatusFileNodeDecorator"/>
     <editorTabColorProvider implementation="com.google.idea.blaze.cpp.syncstatus.BlazeCppSyncStatusEditorTabColorProvider"/>
     <editorTabTitleProvider implementation="com.google.idea.blaze.cpp.syncstatus.BlazeCppSyncStatusEditorTabTitleProvider"/>

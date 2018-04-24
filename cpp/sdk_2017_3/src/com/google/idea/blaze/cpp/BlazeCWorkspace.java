@@ -21,18 +21,18 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.intellij.openapi.components.ServiceManager;
+import com.google.idea.sdkcompat.cidr.OCWorkspaceAdapter;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.symbols.OCSymbol;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
-import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /** Main entry point for C/CPP configuration data. */
-public final class BlazeCWorkspace implements OCWorkspace {
+public final class BlazeCWorkspace extends OCWorkspaceAdapter implements ProjectComponent {
   private final BlazeConfigurationResolver configurationResolver;
   private BlazeConfigurationResolverResult resolverResult;
 
@@ -42,7 +42,7 @@ public final class BlazeCWorkspace implements OCWorkspace {
   }
 
   public static BlazeCWorkspace getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeCWorkspace.class);
+    return project.getComponent(BlazeCWorkspace.class);
   }
 
   public void update(
@@ -96,5 +96,22 @@ public final class BlazeCWorkspace implements OCWorkspace {
     }
     OCResolveConfiguration config = resolverResult.getConfigurationForFile(sourceFile);
     return config == null ? ImmutableList.of() : ImmutableList.of(config);
+  }
+
+  @Override
+  public void projectOpened() {}
+
+  @Override
+  public void projectClosed() {}
+
+  @Override
+  public void initComponent() {}
+
+  @Override
+  public void disposeComponent() {}
+
+  @Override
+  public String getComponentName() {
+    return this.getClass().getName();
   }
 }

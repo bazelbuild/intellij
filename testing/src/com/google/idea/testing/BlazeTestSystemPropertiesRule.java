@@ -53,6 +53,10 @@ public class BlazeTestSystemPropertiesRule extends ExternalResource {
     setSandboxPath("idea.home.path", new File(sandbox, "home"));
     setSandboxPath("idea.config.path", new File(sandbox, "config"));
     setSandboxPath("idea.system.path", new File(sandbox, "system"));
+
+    setSandboxPath("java.util.prefs.userRoot", new File(sandbox, "userRoot"));
+    setSandboxPath("java.util.prefs.systemRoot", new File(sandbox, "systemRoot"));
+
     setIfEmpty(PlatformUtils.PLATFORM_PREFIX_KEY, "Idea");
     setIfEmpty("idea.classpath.index.enabled", "false");
 

@@ -15,12 +15,13 @@
  */
 package com.google.idea.blaze.cpp;
 
+import com.google.idea.sdkcompat.cidr.OCDefaultAutoImportHelperAdapter;
+import com.google.idea.sdkcompat.cidr.OCResolveRootAndConfigurationAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
-import com.jetbrains.cidr.lang.autoImport.OCDefaultAutoImportHelper;
-import com.jetbrains.cidr.lang.workspace.OCResolveRootAndConfiguration;
+import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import com.jetbrains.cidr.lang.workspace.headerRoots.IncludedHeadersRoot;
 import java.util.List;
@@ -32,10 +33,10 @@ import javax.annotation.Nullable;
  * blaze/bazel package path). Presumably this will be fixed in a future CLion release, but in the
  * meantime, fix it ourselves.
  */
-public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelper {
+public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelperAdapter {
 
   @Override
-  public boolean supports(OCResolveRootAndConfiguration rootAndConfiguration) {
+  public boolean supports(OCResolveRootAndConfigurationAdapter rootAndConfiguration) {
     return rootAndConfiguration.getConfiguration() instanceof BlazeResolveConfiguration;
   }
 
@@ -48,14 +49,20 @@ public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelper {
       Project project,
       @Nullable VirtualFile targetFile,
       VirtualFile fileToImport,
-      OCResolveRootAndConfiguration rootAndConfiguration,
+      OCResolveRootAndConfigurationAdapter rootAndConfiguration,
       Processor<ImportSpecification> processor) {
     // Check system headers of library roots first. Project roots may include the workspace root,
     // and the system headers might be under the workspace root as well.
+    OCResolveConfiguration resolveConfiguration = rootAndConfiguration.getConfiguration();
+    if (!(resolveConfiguration instanceof BlazeResolveConfiguration)) {
+      return false;
+    }
+    BlazeResolveConfiguration blazeResolveConfiguration =
+        (BlazeResolveConfiguration) resolveConfiguration;
     ImportSpecification specification =
         findMatchingRoot(
             fileToImport,
-            rootAndConfiguration.getLibraryHeadersRoots().getRoots(),
+            blazeResolveConfiguration.getLibraryHeadersRootsInternal(null, targetFile),
             /* asUserHeader= */ false);
     if (specification != null && !processor.process(specification)) {
       return false;
@@ -63,7 +70,7 @@ public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelper {
     specification =
         findMatchingRoot(
             fileToImport,
-            rootAndConfiguration.getProjectHeadersRoots().getRoots(),
+            blazeResolveConfiguration.getProjectHeadersRootsInternal(),
             /* asUserHeader= */ true);
     return specification == null || processor.process(specification);
   }

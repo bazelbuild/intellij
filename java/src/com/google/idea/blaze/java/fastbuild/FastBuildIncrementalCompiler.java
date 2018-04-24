@@ -18,6 +18,7 @@ package com.google.idea.blaze.java.fastbuild;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
+import java.util.Map;
 
 /**
  * Given a base deploy jar and some target, perform a series of javac compilations that allows an
@@ -29,5 +30,6 @@ interface FastBuildIncrementalCompiler {
    * Compile the label using the previous FastBuildState. The {@code completedBuildOutput} field of
    * {@code buildState} must be present.
    */
-  ListenableFuture<BuildOutput> compile(Label label, FastBuildState buildState);
+  ListenableFuture<BuildOutput> compile(
+      Label label, FastBuildState buildState, Map<String, String> loggingData);
 }

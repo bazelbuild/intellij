@@ -52,11 +52,11 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.sdkcompat.cidr.CompilerInfoCacheAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.cidr.toolchains.CompilerInfoCache;
 import java.io.File;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -104,7 +104,7 @@ final class BlazeConfigurationResolver {
     ImmutableMap<File, VirtualFile> headerRoots =
         collectHeaderRoots(
             context, blazeProjectData, toolchainLookupMap, executionRootPathResolver);
-    CompilerInfoCache compilerInfoCache = new CompilerInfoCache();
+    CompilerInfoCacheAdapter compilerInfoCache = new CompilerInfoCacheAdapter();
     ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings =
         BlazeConfigurationToolchainResolver.buildCompilerSettingsMap(
             context,
@@ -273,7 +273,7 @@ final class BlazeConfigurationResolver {
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
       ImmutableMap<File, VirtualFile> headerRoots,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings,
-      CompilerInfoCache compilerInfoCache,
+      CompilerInfoCacheAdapter compilerInfoCache,
       ExecutionRootPathResolver executionRootPathResolver,
       BlazeConfigurationResolverResult oldConfigurationData,
       BlazeConfigurationResolverResult.Builder builder) {
@@ -397,7 +397,7 @@ final class BlazeConfigurationResolver {
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
       ImmutableMap<File, VirtualFile> headerRoots,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettingsMap,
-      CompilerInfoCache compilerInfoCache,
+      CompilerInfoCacheAdapter compilerInfoCache,
       ExecutionRootPathResolver executionRootPathResolver) {
     TargetKey targetKey = target.key;
     CIdeInfo cIdeInfo = target.cIdeInfo;

@@ -64,7 +64,9 @@ public class BlazeCidrTestConfigurationProducer
     if (element == null) {
       return false;
     }
-    GoogleTestLocation test = GoogleTestLocation.findGoogleTest(element);
+
+    GoogleTestLocation test =
+        GoogleTestLocation.findGoogleTest(element, configuration.getProject());
     if (test == null) {
       return false;
     }
@@ -112,7 +114,8 @@ public class BlazeCidrTestConfigurationProducer
     if (element == null) {
       return false;
     }
-    GoogleTestLocation test = GoogleTestLocation.findGoogleTest(element);
+    GoogleTestLocation test =
+        GoogleTestLocation.findGoogleTest(element, configuration.getProject());
     if (test == null) {
       return false;
     }

@@ -15,39 +15,29 @@
  */
 package com.google.idea.blaze.plugin;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.plugin.BlazeActionRemover;
+import com.google.idea.blaze.clwb.BlazeCppModuleType;
+import com.google.idea.sdkcompat.clion.CMakeActionsToManipulate;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.jetbrains.cidr.cpp.cmake.actions.ChangeCMakeProjectContentRootAction;
-import com.jetbrains.cidr.cpp.cmake.actions.ClearCMakeCacheAndReloadAction;
-import com.jetbrains.cidr.cpp.cmake.actions.ReloadCMakeProjectAction;
-import com.jetbrains.cidr.cpp.cmake.actions.ToggleCMakeAutoReloadAction;
+import com.intellij.openapi.module.ModuleTypeManager;
 
 /** Runs on startup. */
 public class ClwbSpecificInitializer implements ApplicationComponent {
 
-  public static final ImmutableSet<String> CMAKE_ACTION_IDS =
-      ImmutableSet.of(
-          ChangeCMakeProjectContentRootAction.ID,
-          ClearCMakeCacheAndReloadAction.ID,
-          // 'CMake' -> 'CMake Settings' action: com.cidr.cpp.cmake.actions.OpenCMakeSettingsAction
-          "CMake.OpenCMakeSettings",
-          ReloadCMakeProjectAction.ID,
-          ToggleCMakeAutoReloadAction.ID,
-          // 'CMake' > 'Show Generated CMake Files' action:
-          //   com.cidr.cpp.cmake.actions.ShowCMakeGeneratedDirAction
-          "CMake.ShowCMakeGeneratedDir");
-
   @Override
   public void initComponent() {
     hideCMakeActions();
+    ModuleTypeManager.getInstance().registerModuleType(new BlazeCppModuleType());
   }
 
   // The original actions will be visible only on plain IDEA projects.
   private static void hideCMakeActions() {
-    for (String actionId : CMAKE_ACTION_IDS) {
+    for (String actionId : CMakeActionsToManipulate.CMAKE_ACTION_IDS_TO_REMOVE) {
       BlazeActionRemover.hideAction(actionId);
     }
-    BlazeActionRemover.replaceAction("OpenCPPProject", new CMakeOpenProjectActionOverride());
+    for (CMakeActionsToManipulate.ActionPair actionPair :
+        CMakeActionsToManipulate.CMAKE_ACTION_IDS_TO_REPLACE) {
+      BlazeActionRemover.replaceAction(actionPair.id, actionPair.replacement.get());
+    }
   }
 }

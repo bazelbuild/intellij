@@ -45,7 +45,6 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
@@ -53,7 +52,7 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
+import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider;
@@ -199,11 +198,9 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
       return;
     }
 
-    LanguageLevel defaultLanguageLevel =
-        BuildSystemAndroidJdkProvider.languageLevel(
-            Blaze.getBuildSystem(project), blazeVersionData);
     LanguageLevel javaLanguageLevel =
-        JavaLanguageLevelSection.getLanguageLevel(projectViewSet, defaultLanguageLevel);
+        JavaLanguageLevelHelper.getJavaLanguageLevel(
+            projectViewSet, blazeProjectData, LanguageLevel.JDK_1_8);
     setProjectSdkAndLanguageLevel(project, sdk, javaLanguageLevel);
   }
 

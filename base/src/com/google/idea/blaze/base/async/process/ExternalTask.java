@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import java.io.File;
 import java.io.IOException;
@@ -191,6 +192,12 @@ public interface ExternalTask {
       }
     }
 
+    /** See GeneralCommandLine#ParentEnvironmentType for an explanation of why we do this. */
+    private static void initializeEnvironment(Map<String, String> envMap) {
+      envMap.clear();
+      envMap.putAll(EnvironmentUtil.getEnvironmentMap());
+    }
+
     private int invokeCommand(BlazeContext context) {
       String executingTasksText =
           "Command: "
@@ -209,8 +216,11 @@ public interface ExternalTask {
                 .command(command)
                 .redirectErrorStream(redirectErrorStream)
                 .directory(workingDirectory);
+
+        Map<String, String> env = builder.environment();
+        initializeEnvironment(env);
         for (Map.Entry<String, String> entry : environmentVariables.entrySet()) {
-          builder.environment().put(entry.getKey(), entry.getValue());
+          env.put(entry.getKey(), entry.getValue());
         }
 
         try {

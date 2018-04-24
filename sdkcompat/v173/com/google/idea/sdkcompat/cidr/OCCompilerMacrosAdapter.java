@@ -15,12 +15,21 @@
  */
 package com.google.idea.sdkcompat.cidr;
 
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.preprocessor.OCCompilerMacros;
 import com.jetbrains.cidr.lang.preprocessor.OCInclusionContext;
+import com.jetbrains.cidr.lang.preprocessor.OCInclusionContextUtil;
+import com.jetbrains.cidr.lang.workspace.compiler.CidrCompilerResult;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerFeatures;
+import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerSettings;
+import com.jetbrains.cidr.toolchains.CompilerInfoCache;
 import java.util.Map;
 
 /** Adapter to bridge different SDK versions. */
@@ -44,4 +53,61 @@ public abstract class OCCompilerMacrosAdapter extends OCCompilerMacros {
 
   // v172
   public abstract String getAllDefines(OCLanguageKind kind, VirtualFile vf);
+
+  // v173
+  protected String getAllDefinesInternal(
+      Project project,
+      OCCompilerSettings compilerSettings,
+      CompilerInfoCacheAdapter compilerInfoCache,
+      OCLanguageKind kind,
+      VirtualFile vf,
+      ImmutableCollection<String> globalDefines) {
+    CidrCompilerResult<CompilerInfoCache.Entry> compilerInfoProvider =
+        compilerInfoCache.getCompilerInfoCache(project, compilerSettings, kind, vf);
+    CompilerInfoCache.Entry compilerInfo = compilerInfoProvider.getResult();
+    // Combine the info we got from Blaze with the info we get from IntelliJ's methods.
+    ImmutableSet.Builder<String> allDefinesBuilder = ImmutableSet.builder();
+    // IntelliJ expects a string of "#define [VAR_NAME] [VALUE]\n#define [VAR_NAME2] [VALUE]\n...",
+    // where VALUE is optional.
+    for (String globalDefine : globalDefines) {
+      String[] split = globalDefine.split("=", 2);
+      if (split.length == 1) {
+        allDefinesBuilder.add("#define " + split[0]);
+      } else {
+        allDefinesBuilder.add("#define " + split[0] + " " + split[1]);
+      }
+    }
+    String allDefines = String.join("\n", allDefinesBuilder.build());
+    if (compilerInfo != null) {
+      allDefines += "\n" + compilerInfo.defines;
+    }
+
+    return allDefines;
+  }
+
+  protected void fillFileMacrosInternal(
+      Project project,
+      OCCompilerSettings compilerSettings,
+      OCInclusionContext context,
+      PsiFile sourceFile,
+      CompilerInfoCacheAdapter compilerInfoCache,
+      ImmutableMap<String, String> globalFeatures) {
+    // Get the default compiler info for this file.
+    VirtualFile vf = OCInclusionContextUtil.getVirtualFile(sourceFile);
+
+    CidrCompilerResult<CompilerInfoCache.Entry> compilerInfoProvider =
+        compilerInfoCache.getCompilerInfoCache(
+            project, compilerSettings, context.getLanguageKind(), vf);
+    CompilerInfoCache.Entry compilerInfo = compilerInfoProvider.getResult();
+
+    Map<String, String> allFeatures = Maps.newHashMap();
+    allFeatures.putAll(globalFeatures);
+    if (compilerInfo != null) {
+      addAllFeatures(allFeatures, compilerInfo.features);
+    }
+
+    fillSubstitutions(context, getAllDefines(context.getLanguageKind(), vf));
+    enableClangFeatures(context, allFeatures);
+    enableClangExtensions(context, allFeatures);
+  }
 }

@@ -16,8 +16,11 @@
 package com.google.idea.blaze.clwb.run.test;
 
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.sdkcompat.cidr.CidrGoogleTestUtilAdapter;
+import com.google.idea.sdkcompat.cidr.OCSymbolAdapter;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -54,15 +57,15 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
   }
 
   @Nullable
-  public static GoogleTestLocation findGoogleTest(Location<?> location) {
+  public static GoogleTestLocation findGoogleTest(Location<?> location, Project project) {
     if (location instanceof GoogleTestLocation) {
       return (GoogleTestLocation) location;
     }
-    return findGoogleTest(location.getPsiElement());
+    return findGoogleTest(location.getPsiElement(), project);
   }
 
   @Nullable
-  public static GoogleTestLocation findGoogleTest(PsiElement element) {
+  public static GoogleTestLocation findGoogleTest(PsiElement element, Project project) {
     // Copied from on CidrGoogleTestRunConfigurationProducer::findTestObject.
     // Precedence order (decreasing): class/function, macro, file
     PsiElement parent =
@@ -71,8 +74,8 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
     OCStructSymbol parentSymbol;
     if (parent instanceof OCStruct
         && ((parentSymbol = ((OCStruct) parent).getSymbol()) != null)
-        && CidrGoogleTestUtil.isGoogleTestClass(parentSymbol)) {
-      Couple<String> name = CidrGoogleTestUtil.extractGoogleTestName(parentSymbol);
+        && CidrGoogleTestUtilAdapter.isGoogleTestClass(parentSymbol, project)) {
+      Couple<String> name = CidrGoogleTestUtilAdapter.extractGoogleTestName(parentSymbol, project);
       if (name != null) {
         return createFromClassAndMethod(parent, name.first, name.second);
       }
@@ -81,13 +84,15 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
     } else if (parent instanceof OCFunctionDefinition) {
       OCFunctionSymbol symbol = ((OCFunctionDefinition) parent).getSymbol();
       if (symbol != null) {
-        OCSymbolWithQualifiedName<?> resolvedOwner = symbol.getResolvedOwner();
+        OCSymbolWithQualifiedName<?> resolvedOwner =
+            OCSymbolAdapter.getResolvedOwner(symbol, project);
         if (resolvedOwner != null) {
-          OCSymbol<?> owner = resolvedOwner.getDefinitionSymbol();
+          OCSymbol<?> owner = OCSymbolAdapter.getDefinitionSymbol(resolvedOwner, project);
           if (owner instanceof OCStructSymbol
-              && CidrGoogleTestUtil.isGoogleTestClass((OCStructSymbol) owner)) {
-            OCStruct struct = (OCStruct) owner.locateDefinition();
-            Couple<String> name = CidrGoogleTestUtil.extractGoogleTestName((OCStructSymbol) owner);
+              && CidrGoogleTestUtilAdapter.isGoogleTestClass((OCStructSymbol) owner, project)) {
+            OCStruct struct = (OCStruct) OCSymbolAdapter.locateDefinition(owner, project);
+            Couple<String> name =
+                CidrGoogleTestUtilAdapter.extractGoogleTestName((OCStructSymbol) owner, project);
             if (name != null) {
               return createFromClassAndMethod(struct, name.first, name.second);
             }
@@ -117,7 +122,7 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
           OCStructSymbol symbol =
               CidrGoogleTestUtil.findGoogleTestSymbol(element.getProject(), suiteName, testName);
           if (symbol != null) {
-            OCStruct targetElement = (OCStruct) symbol.locateDefinition();
+            OCStruct targetElement = (OCStruct) OCSymbolAdapter.locateDefinition(symbol, project);
             return createFromClassAndMethod(targetElement, suiteName, isSuite ? null : testName);
           }
         }
@@ -127,8 +132,9 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
         Collection<OCStructSymbol> res =
             CidrGoogleTestUtil.findGoogleTestSymbolsForSuiteRandomly(
                 element.getProject(), suite.first, true);
-        if (res.size() != 0) {
-          OCStruct struct = (OCStruct) res.iterator().next().locateDefinition();
+        if (!res.isEmpty()) {
+          OCStruct struct =
+              (OCStruct) OCSymbolAdapter.locateDefinition(res.iterator().next(), project);
           GoogleTestSpecification gtest =
               new GoogleTestSpecification.FromPsiElement(suite.first, null, suite.second, null);
           return new GoogleTestLocation(struct, gtest);
@@ -144,7 +150,7 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
     OCMacroCall macroCall = PsiTreeUtil.getParentOfType(element, OCMacroCall.class);
     if (macroCall != null) {
       List<OCMacroCallArgument> arguments = macroCall.getArguments();
-      return arguments.size() > 0 && arguments.get(0).equals(element);
+      return !arguments.isEmpty() && arguments.get(0).equals(element);
     }
     return false;
   }

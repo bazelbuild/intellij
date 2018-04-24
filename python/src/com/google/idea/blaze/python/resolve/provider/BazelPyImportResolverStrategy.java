@@ -16,7 +16,7 @@
 package com.google.idea.blaze.python.resolve.provider;
 
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.python.resolve.BlazePyResolverUtils;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;

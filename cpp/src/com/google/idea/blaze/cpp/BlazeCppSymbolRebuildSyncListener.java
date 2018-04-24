@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.common.transactions.Transactions;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceModificationTrackersCompatUtils;
+import com.google.idea.sdkcompat.cidr.OCWorkspaceProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
@@ -47,7 +48,9 @@ public class BlazeCppSymbolRebuildSyncListener extends SyncListener.Adapter {
     if (!(workspace instanceof BlazeCWorkspace)) {
       return;
     }
-    loadOrRebuildSymbolTables(project);
+    if (syncMode != SyncMode.NO_BUILD) {
+      loadOrRebuildSymbolTables(project);
+    }
   }
 
   private static void loadOrRebuildSymbolTables(Project project) {

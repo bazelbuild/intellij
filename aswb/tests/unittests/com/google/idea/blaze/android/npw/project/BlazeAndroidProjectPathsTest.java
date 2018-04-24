@@ -27,9 +27,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.project.BlazeBuildSystemService;
 import com.google.idea.blaze.android.sync.model.idea.SourceProviderImpl;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.facet.impl.FacetTypeRegistryImpl;
@@ -162,7 +162,7 @@ public class BlazeAndroidProjectPathsTest extends BlazeTestCase {
   private void mockBlazeImportSettings(Container projectServices) {
     BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager();
     importSettingsManager.setImportSettings(
-        new BlazeImportSettings("", "", "", "", Blaze.BuildSystem.Blaze));
+        new BlazeImportSettings("", "", "", "", BuildSystem.Blaze));
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
   }
 

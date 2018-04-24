@@ -67,13 +67,15 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
 import org.jetbrains.kotlin.config.LanguageVersion;
-import org.jetbrains.kotlin.idea.KotlinPluginUtil;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator;
 
 /** Supports Kotlin. */
 public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
-  private static final String KOTLIN_PLUGIN_ID = KotlinPluginUtil.KOTLIN_PLUGIN_ID.getIdString();
+  // we don't get the plugin ID from org.jetbrains.kotlin.idea.KotlinPluginUtil because that
+  // requires some integration testing setup (e.g. will throw an exception if idea.home.path isn't
+  // set).
+  private static final String KOTLIN_PLUGIN_ID = "org.jetbrains.kotlin";
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {

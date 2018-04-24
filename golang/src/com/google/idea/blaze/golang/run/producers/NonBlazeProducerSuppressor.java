@@ -16,23 +16,14 @@
 package com.google.idea.blaze.golang.run.producers;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.golang.GoConfigurationProducerList;
 import com.intellij.execution.RunConfigurationProducerService;
-import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
 public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
-
-  private static final ImmutableList<Class<? extends RunConfigurationProducer<?>>>
-      PRODUCERS_TO_SUPPRESS =
-          ImmutableList.of(
-              com.goide.runconfig.application.GoApplicationRunConfigurationProducer.class,
-              com.goide.runconfig.testing.frameworks.gotest.GotestRunConfigurationProducer.class,
-              com.goide.runconfig.testing.frameworks.gobench.GobenchRunConfigurationProducer.class,
-              com.goide.runconfig.testing.frameworks.gocheck.GocheckRunConfigurationProducer.class);
 
   public NonBlazeProducerSuppressor(Project project) {
     super(project);
@@ -49,6 +40,6 @@ public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
   static void suppressProducers(Project project) {
     RunConfigurationProducerService producerService =
         RunConfigurationProducerService.getInstance(project);
-    PRODUCERS_TO_SUPPRESS.forEach(producerService::addIgnoredProducer);
+    GoConfigurationProducerList.PRODUCERS_TO_SUPPRESS.forEach(producerService::addIgnoredProducer);
   }
 }

@@ -1,5 +1,15 @@
 """Implementation of IntelliJ-specific information collecting aspect."""
 
+load(
+    "//aspect:artifacts.bzl",
+    "artifact_location",
+    "artifacts_from_target_list_attr",
+    "is_external_artifact",
+    "sources_from_target",
+    "struct_omit_none",
+    "to_artifact_location",
+)
+
 # Compile-time dependency attributes, grouped by type.
 DEPS = [
     "_cc_toolchain",  # From cc rules
@@ -29,67 +39,6 @@ COMPILE_TIME = 0
 RUNTIME = 1
 
 ##### Helpers
-
-def struct_omit_none(**kwargs):
-  """A replacement for standard `struct` function that omits the fields with None value."""
-  d = {name: kwargs[name] for name in kwargs if kwargs[name] != None}
-  return struct(**d)
-
-def artifact_location(f):
-  """Creates an ArtifactLocation proto from a File."""
-  if f == None:
-    return None
-
-  return to_artifact_location(
-      f.path,
-      f.root.path if not f.is_source else "",
-      f.is_source,
-      is_external_artifact(f.owner),
-  )
-
-def to_artifact_location(exec_path, root_exec_path_fragment, is_source, is_external):
-  """Derives workspace path from other path fragments, and creates an ArtifactLocation proto."""
-  # Bazel 0.4.4 has directory structure:
-  # exec_path = (root_fragment)? + (external/repo_name)? + relative_path
-  # Bazel 0.4.5 has planned directory structure:
-  # exec_path = (../repo_name)? + (root_fragment)? + relative_path
-  # Handle both cases by trying to strip the external workspace prefix before and after removing
-  # root_exec_path_fragment.
-  relative_path = strip_external_workspace_prefix(exec_path)
-  relative_path = strip_root_exec_path_fragment(relative_path, root_exec_path_fragment)
-  # Remove this line when Bazel 0.4.4 and earlier no longer need to be supported.
-  relative_path = strip_external_workspace_prefix(relative_path)
-
-  root_exec_path_fragment = exec_path[:-(len("/" + relative_path))]
-
-  return struct_omit_none(
-      relative_path = relative_path,
-      is_source = is_source,
-      is_external = is_external,
-      root_execution_path_fragment = root_exec_path_fragment,
-      is_new_external_version = True,
-  )
-
-def strip_root_exec_path_fragment(path, root_fragment):
-  if root_fragment and path.startswith(root_fragment + "/"):
-    return path[len(root_fragment + "/"):]
-  return path
-
-def strip_external_workspace_prefix(path):
-  """Either 'external/workspace_name/' or '../workspace_name/'."""
-  # Label.EXTERNAL_PATH_PREFIX is due to change from 'external' to '..' in Bazel 0.4.5.
-  # This code is for forwards and backwards compatibility.
-  # Remove the 'external/' check when Bazel 0.4.4 and earlier no longer need to be supported.
-  if path.startswith("../") or path.startswith("external/"):
-    return "/".join(path.split("/")[2:])
-  return path
-
-def is_external_artifact(label):
-  """Determines whether a label corresponds to an external artifact."""
-  # Label.EXTERNAL_PATH_PREFIX is due to change from 'external' to '..' in Bazel 0.4.5.
-  # This code is for forwards and backwards compatibility.
-  # Remove the 'external' check when Bazel 0.4.4 and earlier no longer need to be supported.
-  return label.workspace_root.startswith("external") or label.workspace_root.startswith("..")
 
 def source_directory_tuple(resource_file):
   """Creates a tuple of (exec_path, root_exec_path_fragment, is_source, is_external)."""
@@ -158,16 +107,6 @@ def jars_from_output(output):
   return [jar
           for jar in ([output.class_jar, output.ijar] + get_source_jars(output))
           if jar != None and not jar.is_source]
-
-def sources_from_target(ctx):
-  """Get the list of sources from a target as artifact locations."""
-  return artifacts_from_target_list_attr(ctx, "srcs")
-
-def artifacts_from_target_list_attr(ctx, attr_name):
-  """Converts a list of targets to a list of artifact locations."""
-  return [artifact_location(f)
-          for target in getattr(ctx.rule.attr, attr_name, [])
-          for f in target.files]
 
 def _collect_target_from_attr(rule_attrs, attr_name, result):
   """Collects the targets from the given attr into the result."""

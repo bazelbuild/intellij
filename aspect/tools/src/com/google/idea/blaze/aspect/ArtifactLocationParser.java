@@ -18,7 +18,7 @@ package com.google.idea.blaze.aspect;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.ArtifactLocation;
+import com.google.devtools.intellij.aspect.Common.ArtifactLocation;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Iterator;

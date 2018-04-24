@@ -17,7 +17,7 @@ package com.google.idea.blaze.cpp.syncstatus;
 
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.cpp.BlazeCWorkspace;
-import com.google.idea.blaze.cpp.OCWorkspaceProvider;
+import com.google.idea.sdkcompat.cidr.OCWorkspaceProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VfsUtilCore;

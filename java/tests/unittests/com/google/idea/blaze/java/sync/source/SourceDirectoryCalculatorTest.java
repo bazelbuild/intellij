@@ -20,7 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.JavaSourcePackage;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PackageManifest;
 import com.google.idea.blaze.base.BlazeTestCase;
@@ -41,7 +41,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
@@ -988,7 +988,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     setNewFormatPackageManifest(
         "/root/java/com/test.manifest",
         ImmutableList.of(
-            IntellijIdeInfo.ArtifactLocation.newBuilder()
+            Common.ArtifactLocation.newBuilder()
                 .setRelativePath("java/com/google/Bla.java")
                 .setIsSource(true)
                 .build()),
@@ -1169,8 +1169,8 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     PackageManifest.Builder manifest = PackageManifest.newBuilder();
     for (int i = 0; i < sourceRelativePaths.size(); i++) {
       String sourceRelativePath = sourceRelativePaths.get(i);
-      IntellijIdeInfo.ArtifactLocation source =
-          IntellijIdeInfo.ArtifactLocation.newBuilder()
+      Common.ArtifactLocation source =
+          Common.ArtifactLocation.newBuilder()
               .setRelativePath(sourceRelativePath)
               .setIsSource(true)
               .build();
@@ -1183,7 +1183,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   private void setNewFormatPackageManifest(
-      String manifestPath, List<IntellijIdeInfo.ArtifactLocation> sources, List<String> packages) {
+      String manifestPath, List<Common.ArtifactLocation> sources, List<String> packages) {
     PackageManifest.Builder manifest = PackageManifest.newBuilder();
     for (int i = 0; i < sources.size(); i++) {
       manifest.addSources(

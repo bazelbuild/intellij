@@ -26,6 +26,7 @@ import com.google.idea.blaze.android.sdk.MockBlazeSdkProvider;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
+import com.google.idea.blaze.base.ideinfo.JavaToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
@@ -46,11 +47,15 @@ import com.google.idea.blaze.cpp.CompilerVersionChecker;
 import com.google.idea.blaze.cpp.MockCompilerVersionChecker;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.sdkcompat.cidr.CidrCompilerSwitchesAdapter;
+import com.google.idea.sdkcompat.cidr.OCWorkspaceManagerAdapter;
+import com.google.idea.sdkcompat.cidr.OCWorkspaceProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
@@ -127,6 +132,8 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
                     .setBuildFile(sourceRoot("java/com/google/BUILD"))
                     .setLabel("//java/com/google:lib")
                     .setKind("android_library")
+                    .setJavaToolchainIdeInfo(
+                        JavaToolchainIdeInfo.builder().setSourceVersion("8").setTargetVersion("8"))
                     .setAndroidInfo(
                         AndroidIdeInfo.builder()
                             .setManifestFile(sourceRoot("java/com/google/AndroidManifest.xml"))
@@ -170,6 +177,10 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
         ModuleFinder.getInstance(getProject()).findModuleByName("java.com.google.lib");
     assertThat(resourceModule).isNotNull();
     assertThat(AndroidFacet.getInstance(resourceModule)).isNotNull();
+
+    // The default language level should be whatever is specified in the toolchain info
+    assertThat(LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel())
+        .isEqualTo(LanguageLevel.JDK_1_8);
   }
 
   @Test
@@ -367,7 +378,7 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
                 .getPath());
 
     List<? extends OCResolveConfiguration> resolveConfigurations =
-        OCWorkspaceManager.getWorkspace(getProject()).getConfigurationsForFile(nativeCc);
+        OCWorkspaceProvider.getWorkspace(getProject()).getConfigurationsForFile(nativeCc);
     assertThat(resolveConfigurations).hasSize(1);
     OCCompilerSettings compilerSettings = resolveConfigurations.get(0).getCompilerSettings();
     List<String> compilerSwitches =
@@ -377,7 +388,7 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
         .contains("--sysroot=android_ndk_linux/platforms/android-21/arch-arm64");
 
     resolveConfigurations =
-        OCWorkspaceManager.getWorkspace(getProject()).getConfigurationsForFile(nativeCc2);
+        OCWorkspaceProvider.getWorkspace(getProject()).getConfigurationsForFile(nativeCc2);
     assertThat(resolveConfigurations).hasSize(1);
     compilerSettings = resolveConfigurations.get(0).getCompilerSettings();
     compilerSwitches =
@@ -387,7 +398,7 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
         .contains("--sysroot=android_ndk_linux/platforms/android-18/arch-arm");
   }
 
-  private class MockOCWorkspaceManager extends OCWorkspaceManager {
+  private class MockOCWorkspaceManager extends OCWorkspaceManagerAdapter {
 
     @Override
     public OCWorkspace getWorkspace() {

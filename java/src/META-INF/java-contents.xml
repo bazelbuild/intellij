@@ -128,5 +128,7 @@
                     interface="com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer$JavaTestCaseIdentifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildConfigurationRunnerFactory"
                     interface="com.google.idea.blaze.java.run.JavaFastBuildConfigurationRunnerFactory"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildAspectStrategyProvider"
+                    interface="com.google.idea.blaze.java.fastbuild.FastBuildAspectStrategyProvider"/>
   </extensionPoints>
 </idea-plugin>

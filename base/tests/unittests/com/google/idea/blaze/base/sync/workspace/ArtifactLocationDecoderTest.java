@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.sync.workspace;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.devtools.intellij.aspect.Common;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -59,7 +59,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
   public void testExternalSourceArtifactOldFormat() throws Exception {
     ArtifactLocation artifactLocation =
         IdeInfoFromProtobuf.makeArtifactLocation(
-            IntellijIdeInfo.ArtifactLocation.newBuilder()
+            Common.ArtifactLocation.newBuilder()
                 .setRelativePath("external/repo_name/com/google/Bla.java")
                 .setIsSource(true)
                 .setIsExternal(true)
@@ -86,7 +86,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
   public void testExternalDerivedArtifactOldFormat() throws Exception {
     ArtifactLocation artifactLocation =
         IdeInfoFromProtobuf.makeArtifactLocation(
-            IntellijIdeInfo.ArtifactLocation.newBuilder()
+            Common.ArtifactLocation.newBuilder()
                 .setRelativePath("external/repo_name/com/google/Bla.java")
                 .setRootExecutionPathFragment("blaze-out/crosstool/bin")
                 .setIsSource(false)
@@ -115,7 +115,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
   public void testExternalSourceArtifactNewFormat() throws Exception {
     ArtifactLocation artifactLocation =
         IdeInfoFromProtobuf.makeArtifactLocation(
-            IntellijIdeInfo.ArtifactLocation.newBuilder()
+            Common.ArtifactLocation.newBuilder()
                 .setRelativePath("com/google/Bla.java")
                 .setRootExecutionPathFragment("../repo_name")
                 .setIsSource(true)
@@ -144,7 +144,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
   public void testExternalDerivedArtifactNewFormat() throws Exception {
     ArtifactLocation artifactLocation =
         IdeInfoFromProtobuf.makeArtifactLocation(
-            IntellijIdeInfo.ArtifactLocation.newBuilder()
+            Common.ArtifactLocation.newBuilder()
                 .setRelativePath("com/google/Bla.java")
                 .setRootExecutionPathFragment("../repo_name/blaze-out/crosstool/bin")
                 .setIsSource(false)

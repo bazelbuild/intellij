@@ -25,15 +25,13 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public class FeatureRolloutExperiment extends Experiment {
 
-  private static final String INTERNAL_DEV_SYSTEM_PROPERTY = "blaze.internal.plugin.dev";
-
   public FeatureRolloutExperiment(String key) {
     super(key);
   }
 
   /** Returns true if the feature should be enabled for this user. */
   public boolean isEnabled() {
-    if (isInternalDev()) {
+    if (InternalDevFlag.isInternalDev()) {
       return true;
     }
     int rolloutPercentage = getRolloutPercentage();
@@ -70,12 +68,5 @@ public class FeatureRolloutExperiment extends Experiment {
     return Math.abs(hash) % 100;
   }
 
-  /** Set a system property marking the current user as an internal plugin dev. */
-  public static void markUserAsInternalDev(boolean isInternalDev) {
-    System.setProperty(INTERNAL_DEV_SYSTEM_PROPERTY, isInternalDev ? "true" : "false");
-  }
 
-  private static boolean isInternalDev() {
-    return System.getProperty(INTERNAL_DEV_SYSTEM_PROPERTY, "false").equals("true");
-  }
 }

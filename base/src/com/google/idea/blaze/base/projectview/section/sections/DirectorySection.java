@@ -25,7 +25,7 @@ import com.google.idea.blaze.base.projectview.section.ListSectionParser;
 import com.google.idea.blaze.base.projectview.section.ProjectViewDefaultValueProvider;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.util.PathUtil;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;

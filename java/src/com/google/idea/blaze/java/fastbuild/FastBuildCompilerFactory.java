@@ -15,9 +15,11 @@
  */
 package com.google.idea.blaze.java.fastbuild;
 
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.model.primitives.Label;
+import java.util.Map;
 
 interface FastBuildCompilerFactory {
 
-  FastBuildCompiler getCompilerFor(TargetIdeInfo targetIdeInfo) throws FastBuildException;
+  FastBuildCompiler getCompilerFor(Label label, Map<Label, FastBuildBlazeData> blazeData)
+      throws FastBuildException;
 }

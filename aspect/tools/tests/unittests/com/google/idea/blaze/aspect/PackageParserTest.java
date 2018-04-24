@@ -22,7 +22,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.ArtifactLocation;
+import com.google.devtools.intellij.aspect.Common.ArtifactLocation;
 import com.google.protobuf.repackaged.MessageLite;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;

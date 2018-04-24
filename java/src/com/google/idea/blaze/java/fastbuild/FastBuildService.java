@@ -17,7 +17,7 @@ package com.google.idea.blaze.java.fastbuild;
 
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.common.experiments.DeveloperFlag;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.util.List;
@@ -35,7 +35,7 @@ import java.util.concurrent.Future;
  */
 public interface FastBuildService {
 
-  DeveloperFlag enabled = new DeveloperFlag("fast.build.service.enabled");
+  BoolExperiment enabled = new BoolExperiment("fast.build.service.enabled", true);
 
   static FastBuildService getInstance(Project project) {
     return ServiceManager.getService(project, FastBuildService.class);

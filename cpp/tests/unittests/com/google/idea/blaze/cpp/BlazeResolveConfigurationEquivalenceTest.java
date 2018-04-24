@@ -65,7 +65,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.cidr.lang.OCLanguageKind;
-import com.jetbrains.cidr.lang.workspace.OCResolveRootAndConfiguration;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import com.jetbrains.cidr.lang.workspace.headerRoots.IncludedHeadersRoot;
 import java.io.File;
@@ -154,7 +153,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     assertThat(configurations).hasSize(1);
     assertThat(get(configurations, "//foo/bar:one and 2 other target(s)")).isNotNull();
     for (BlazeResolveConfiguration configuration : configurations) {
-      assertThat(configuration.getProjectHeadersRoots().getRoots()).isEmpty();
+      assertThat(configuration.getProjectHeadersRootsInternal()).isEmpty();
       assertThat(getHeaders(configuration, OCLanguageKind.CPP)).isEmpty();
       assertThat(configuration.getCompilerMacros()).isEqualTo(macros());
     }
@@ -197,7 +196,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     assertThat(get(configurations, "//foo/bar:three").getCompilerMacros())
         .isEqualTo(macros("DIFFERENT=1"));
     for (BlazeResolveConfiguration configuration : configurations) {
-      assertThat(configuration.getProjectHeadersRoots().getRoots()).isEmpty();
+      assertThat(configuration.getProjectHeadersRootsInternal()).isEmpty();
       assertThat(getHeaders(configuration, OCLanguageKind.CPP)).isEmpty();
     }
   }
@@ -243,7 +242,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     assertThat(getHeaders(get(configurations, "//foo/bar:three"), OCLanguageKind.CPP))
         .containsExactly(header(includeDifferent));
     for (BlazeResolveConfiguration configuration : configurations) {
-      assertThat(configuration.getProjectHeadersRoots().getRoots()).isEmpty();
+      assertThat(configuration.getProjectHeadersRootsInternal()).isEmpty();
       assertThat(configuration.getCompilerMacros()).isEqualTo(macros());
     }
   }
@@ -628,9 +627,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
 
   private static List<HeadersSearchRoot> getHeaders(
       BlazeResolveConfiguration configuration, OCLanguageKind languageKind) {
-    return configuration
-        .getLibraryHeadersRoots(new OCResolveRootAndConfiguration(configuration, languageKind))
-        .getRoots();
+    return configuration.getLibraryHeadersRootsInternal(languageKind, null);
   }
 
   private VirtualFile createVirtualFile(String path) {

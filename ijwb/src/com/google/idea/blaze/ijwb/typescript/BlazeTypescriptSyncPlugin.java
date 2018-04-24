@@ -260,6 +260,6 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
     if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)) {
       return null;
     }
-    return new BlazeTypescriptLibrarySource();
+    return new BlazeTypescriptLibrarySource(blazeProjectData);
   }
 }
