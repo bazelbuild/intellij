@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.idea.common.guava.GuavaHelper.toImmutableMap;
 
 import com.google.common.base.Function;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -37,12 +38,10 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -55,10 +54,6 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
-import com.google.idea.blaze.base.sync.aspects.IdeInfoFromProtobuf;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProvider;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
 import com.google.idea.common.concurrency.ConcurrencyUtil;
@@ -72,11 +67,11 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -84,6 +79,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -133,19 +129,24 @@ final class FastBuildServiceImpl implements FastBuildService {
   public Future<FastBuildInfo> createBuild(
       Label label, String blazeBinaryPath, List<String> blazeFlags) throws FastBuildException {
 
+    // Use a LinkedHashMap so that we preserve the order of the entries.
+    Map<String, String> loggingData = new LinkedHashMap<>();
+
     try {
       checkLabelIsSupported(label);
       FastBuildParameters buildParameters = generateBuildParameters(blazeBinaryPath, blazeFlags);
       FastBuildState buildState =
           builds.compute(
-              label, (unused, buildInfo) -> updateBuild(label, buildParameters, buildInfo));
+              label,
+              (unused, buildInfo) -> updateBuild(label, buildParameters, buildInfo, loggingData));
       return transform(
           buildState.newBuildOutput(),
           buildOutput ->
               FastBuildInfo.create(
                   label,
                   ImmutableList.of(buildState.compilerOutputDirectory(), buildOutput.deployJar()),
-                  buildOutput.targetMap()),
+                  buildOutput.blazeData(),
+                  loggingData),
           MoreExecutors.directExecutor());
     } catch (FastBuildTunnelException e) {
       throw e.asFastBuildException();
@@ -180,9 +181,14 @@ final class FastBuildServiceImpl implements FastBuildService {
   private FastBuildState updateBuild(
       Label label,
       FastBuildParameters buildParameters,
-      @Nullable FastBuildState existingBuildState) {
+      @Nullable FastBuildState existingBuildState,
+      Map<String, String> loggingData) {
+
+    loggingData.put("label", label.toString());
+
     if (existingBuildState != null && !existingBuildState.newBuildOutput().isDone()) {
       // Don't start a new build if an existing one is still running.
+      loggingData.put("reused_existing_build_future", "true");
       return existingBuildState;
     }
 
@@ -194,18 +200,26 @@ final class FastBuildServiceImpl implements FastBuildService {
     }
 
     BuildOutput completedBuildOutput = getCompletedBuild(existingBuildState);
+
+    Stopwatch timer = Stopwatch.createStarted();
     Set<File> modifiedFiles = getVcsModifiedFiles();
+    loggingData.put(
+        "retrieve_modified_files_time_ms", Long.toString(timer.elapsed(TimeUnit.MILLISECONDS)));
+
     if (completedBuildOutput == null) {
       File compileDirectory = createCompilerOutputDirectory();
       return FastBuildState.create(
-          buildDeployJar(label, buildParameters), compileDirectory, buildParameters, modifiedFiles);
+          buildDeployJar(label, buildParameters, loggingData),
+          compileDirectory,
+          buildParameters,
+          modifiedFiles);
     } else {
       existingBuildState =
           existingBuildState
               .withAdditionalModifiedFiles(modifiedFiles)
               .withCompletedBuildOutput(completedBuildOutput);
       return existingBuildState.withNewBuildOutput(
-          incrementalCompiler.compile(label, existingBuildState));
+          incrementalCompiler.compile(label, existingBuildState, loggingData));
     }
   }
 
@@ -274,7 +288,7 @@ final class FastBuildServiceImpl implements FastBuildService {
   }
 
   private ListenableFuture<FastBuildState.BuildOutput> buildDeployJar(
-      Label label, FastBuildParameters buildParameters) {
+      Label label, FastBuildParameters buildParameters, Map<String, String> loggingData) {
 
     Label deployJarLabel = createDeployJarLabel(label);
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
@@ -286,14 +300,16 @@ final class FastBuildServiceImpl implements FastBuildService {
             ? BlazeConsolePopupBehavior.NEVER
             : BlazeConsolePopupBehavior.ALWAYS;
 
-    AspectStrategy aspectStrategy =
-        AspectStrategyProvider.findAspectStrategy(
+    FastBuildAspectStrategy aspectStrategy =
+        FastBuildAspectStrategyProvider.findAspectStrategy(
             projectDataManager.getBlazeProjectData().blazeVersionData);
     BuildResultHelper buildResultHelper =
         BuildResultHelper.forFiles(
             file ->
                 file.endsWith(deployJarLabel.targetName().toString())
                     || aspectStrategy.getAspectOutputFilePredicate().test(file));
+
+    Stopwatch timer = Stopwatch.createUnstarted();
 
     ListenableFuture<BuildResult> buildResultFuture =
         ProgressiveTaskWithProgressIndicator.builder(project)
@@ -326,13 +342,10 @@ final class FastBuildServiceImpl implements FastBuildService {
                             .addBlazeFlags(buildParameters.blazeFlags())
                             .addBlazeFlags(buildResultHelper.getBuildFlags());
 
-                    List<String> outputGroups = new ArrayList<>();
-                    outputGroups.add("default"); // needed to retrieve the deploy jar
-                    outputGroups.addAll(
-                        aspectStrategy.getOutputGroups(
-                            OutputGroup.INFO, ImmutableSet.of(LanguageClass.JAVA)));
-                    aspectStrategy.addAspectAndOutputGroups(command, outputGroups);
+                    aspectStrategy.addAspectAndOutputGroups(
+                        command, /* additionalOutputGroups */ "default");
 
+                    timer.start();
                     int exitCode =
                         ExternalTask.builder(workspaceRoot)
                             .addBlazeCommand(command.build())
@@ -350,6 +363,9 @@ final class FastBuildServiceImpl implements FastBuildService {
         transform(
             buildResultFuture,
             result -> {
+              loggingData.put("deploy_jar_build_result", result.status.toString());
+              loggingData.put(
+                  "deploy_jar_build_time_ms", Long.toString(timer.elapsed(TimeUnit.MILLISECONDS)));
               if (result.status != Status.SUCCESS) {
                 throw new RuntimeException("Blaze failure building deploy jar");
               }
@@ -360,29 +376,19 @@ final class FastBuildServiceImpl implements FastBuildService {
 
               ImmutableList<File> ideInfoFiles =
                   buildResultHelper.getArtifactsForOutputGroups(
-                      aspectStrategy.getOutputGroups(
-                          OutputGroup.INFO, ImmutableSet.of(LanguageClass.JAVA)));
+                      ImmutableSet.of(aspectStrategy.getAspectOutputGroup()));
 
-              ImmutableMap<TargetKey, TargetIdeInfo> targetMap =
+              ImmutableMap<Label, FastBuildBlazeData> blazeData =
                   ideInfoFiles
                       .stream()
-                      .map(file -> readTargetIdeInfo(aspectStrategy, file))
-                      .filter(Objects::nonNull)
-                      .collect(toImmutableMap(ideInfo -> ideInfo.key, i -> i));
-              return BuildOutput.create(deployJar, new TargetMap(targetMap));
+                      .map(aspectStrategy::readFastBuildBlazeData)
+                      .collect(toImmutableMap(FastBuildBlazeData::label, i -> i));
+              return BuildOutput.create(deployJar, blazeData);
             },
             ConcurrencyUtil.getAppExecutorService());
     buildOutputFuture.addListener(
         buildResultHelper::close, ConcurrencyUtil.getAppExecutorService());
     return buildOutputFuture;
-  }
-
-  private static TargetIdeInfo readTargetIdeInfo(AspectStrategy aspectStrategy, File file) {
-    try {
-      return IdeInfoFromProtobuf.makeTargetIdeInfo(aspectStrategy.readAspectFile(file));
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
   }
 
   private Label createDeployJarLabel(Label label) {

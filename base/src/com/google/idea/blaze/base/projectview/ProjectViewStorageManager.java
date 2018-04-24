@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.projectview;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.openapi.components.ServiceManager;
 import java.io.File;
 import java.io.IOException;

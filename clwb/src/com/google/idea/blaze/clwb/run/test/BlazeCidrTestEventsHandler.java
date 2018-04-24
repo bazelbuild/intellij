@@ -44,7 +44,7 @@ public class BlazeCidrTestEventsHandler implements BlazeTestEventsHandler {
   public String getTestFilter(Project project, List<Location<?>> testLocations) {
     List<String> filters = new ArrayList<>();
     for (Location<?> location : testLocations) {
-      GoogleTestLocation test = GoogleTestLocation.findGoogleTest(location);
+      GoogleTestLocation test = GoogleTestLocation.findGoogleTest(location, project);
       if (test != null && test.testFilter != null) {
         filters.add(test.testFilter);
       }

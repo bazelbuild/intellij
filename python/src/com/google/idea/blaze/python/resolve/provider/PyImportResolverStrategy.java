@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.python.resolve.provider;
 
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;

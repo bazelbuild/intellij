@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.run.state.EnvironmentVariablesState;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystem;
 
 /** A version of the common state allowing environment variables to be set when debugging. */
 final class BlazeCidrRunConfigState extends BlazeCommandRunConfigurationCommonState {

@@ -18,9 +18,10 @@ package com.google.idea.blaze.java.fastbuild;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.File;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.CheckReturnValue;
 
@@ -36,10 +37,10 @@ abstract class FastBuildState {
   abstract static class BuildOutput {
     abstract File deployJar();
 
-    abstract TargetMap targetMap();
+    abstract Map<Label, FastBuildBlazeData> blazeData();
 
-    static BuildOutput create(File deployJar, TargetMap targetMap) {
-      return new AutoValue_FastBuildState_BuildOutput(deployJar, targetMap);
+    static BuildOutput create(File deployJar, Map<Label, FastBuildBlazeData> blazeData) {
+      return new AutoValue_FastBuildState_BuildOutput(deployJar, blazeData);
     }
   }
 

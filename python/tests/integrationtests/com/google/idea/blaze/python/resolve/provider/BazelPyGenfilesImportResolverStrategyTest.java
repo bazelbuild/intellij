@@ -19,7 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyFile;

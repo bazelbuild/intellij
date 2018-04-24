@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync.aspects;
 
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
+import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.TestUtils;
@@ -87,7 +88,7 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
     TestUtils.assertIsSerializable(state);
   }
 
-  static IntellijIdeInfo.ArtifactLocation artifactLocation(String relativePath) {
-    return IntellijIdeInfo.ArtifactLocation.newBuilder().setRelativePath(relativePath).build();
+  static Common.ArtifactLocation artifactLocation(String relativePath) {
+    return Common.ArtifactLocation.newBuilder().setRelativePath(relativePath).build();
   }
 }

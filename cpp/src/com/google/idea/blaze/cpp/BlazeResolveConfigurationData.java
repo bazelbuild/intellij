@@ -23,12 +23,11 @@ import com.google.idea.blaze.base.ideinfo.CIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
+import com.google.idea.sdkcompat.cidr.CompilerInfoCacheAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.cidr.lang.workspace.headerRoots.HeaderRoots;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import com.jetbrains.cidr.lang.workspace.headerRoots.IncludedHeadersRoot;
-import com.jetbrains.cidr.toolchains.CompilerInfoCache;
 import java.io.File;
 import java.util.Objects;
 
@@ -39,7 +38,7 @@ final class BlazeResolveConfigurationData {
 
   final ImmutableList<HeadersSearchRoot> cLibraryIncludeRoots;
   final ImmutableList<HeadersSearchRoot> cppLibraryIncludeRoots;
-  final HeaderRoots projectIncludeRoots;
+  final ImmutableList<HeadersSearchRoot> projectIncludeRoots;
   final BlazeCompilerMacros compilerMacros;
   final CToolchainIdeInfo toolchainIdeInfo;
 
@@ -50,7 +49,7 @@ final class BlazeResolveConfigurationData {
       CIdeInfo cIdeInfo,
       CToolchainIdeInfo toolchainIdeInfo,
       BlazeCompilerSettings compilerSettings,
-      CompilerInfoCache compilerInfoCache) {
+      CompilerInfoCacheAdapter compilerInfoCache) {
     ImmutableSet.Builder<ExecutionRootPath> systemIncludesBuilder = ImmutableSet.builder();
     systemIncludesBuilder.addAll(cIdeInfo.transitiveSystemIncludeDirectories);
     systemIncludesBuilder.addAll(toolchainIdeInfo.builtInIncludeDirectories);
@@ -97,7 +96,7 @@ final class BlazeResolveConfigurationData {
       ImmutableCollection<String> defines,
       ImmutableMap<String, String> features,
       BlazeCompilerSettings compilerSettings,
-      CompilerInfoCache compilerInfoCache,
+      CompilerInfoCacheAdapter compilerInfoCache,
       CToolchainIdeInfo toolchainIdeInfo) {
     this.toolchainIdeInfo = toolchainIdeInfo;
 
@@ -120,7 +119,7 @@ final class BlazeResolveConfigurationData {
     ImmutableList.Builder<HeadersSearchRoot> quoteIncludeRootsBuilder = ImmutableList.builder();
     headerRootsCollector.collectHeaderRoots(
         quoteIncludeRootsBuilder, quoteIncludeDirs, true /* isUserHeader */);
-    this.projectIncludeRoots = new HeaderRoots(quoteIncludeRootsBuilder.build());
+    this.projectIncludeRoots = quoteIncludeRootsBuilder.build();
 
     this.compilerSettings = compilerSettings;
     this.compilerMacros =

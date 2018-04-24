@@ -19,20 +19,20 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.JavaToolchainIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
+import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaToolchainInfo;
+import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.ProviderInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildCompiler.CompileInstructions;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,24 +50,36 @@ public final class FastBuildCompilerFactoryImplTest {
   private static final File GUAVA_JAR = new File(System.getProperty("guava.jar"));
   private static final File TRUTH_JAR = new File(System.getProperty("truth.jar"));
 
-  private FastBuildCompilerFactoryImpl compilerFactory;
+  private static final ProviderInfo JAVA_TOOLCHAIN =
+      ProviderInfo.ofJavaToolchainInfo(
+          JavaToolchainInfo.create(
+              ArtifactLocation.builder().setRelativePath(JAVAC_JAR.getPath()).build(),
+              /* sourceVersion */ "8",
+              /* targetVersion */ "8"));
+  private static final ProviderInfo JAVA_LIBRARY_WITHOUT_SOURCES =
+      ProviderInfo.ofJavaInfo(
+          JavaInfo.create(
+              /*sources*/ ImmutableSet.of(),
+              /*testClass*/ null,
+              /* annotationProcessorClassNames */ ImmutableList.of(),
+              /* annotationProcessorClassPath */ ImmutableList.of()));
 
   @Test
   public void testNoJavaToolchain() {
-    Map<TargetKey, TargetIdeInfo> targetMap = new HashMap<>();
-    TargetIdeInfo buildTargetInfo =
-        TargetIdeInfo.builder()
-            .setLabel(Label.create("//our/build:target"))
-            .addDependency(Label.create("//some/package:javalibs"))
-            .build();
-    targetMap.put(TargetKey.forPlainTarget(Label.create("//our/build:target")), buildTargetInfo);
-    targetMap.put(
-        TargetKey.forPlainTarget(Label.create("//some/package:javalibs")),
-        TargetIdeInfo.builder().build());
-    configureTestForTargetMap(targetMap);
+    Map<Label, FastBuildBlazeData> blazeData = new HashMap<>();
+    Label targetLabel = Label.create("//our/build:target");
+    Label dependencyLabel = Label.create("//some/package:javalibs");
+    FastBuildBlazeData targetData =
+        FastBuildBlazeData.create(
+            targetLabel, ImmutableSet.of(dependencyLabel), JAVA_LIBRARY_WITHOUT_SOURCES);
+    FastBuildBlazeData dependencyData =
+        FastBuildBlazeData.create(
+            targetLabel, /*dependencies*/ ImmutableSet.of(), JAVA_LIBRARY_WITHOUT_SOURCES);
+    blazeData.put(targetLabel, targetData);
+    blazeData.put(dependencyLabel, dependencyData);
 
     try {
-      compilerFactory.getCompilerFor(buildTargetInfo);
+      createCompilerFactory().getCompilerFor(targetLabel, blazeData);
       fail("Should have thrown FastBuildException");
     } catch (FastBuildException e) {
       assertThat(e.getMessage()).contains("Java toolchain");
@@ -76,34 +88,25 @@ public final class FastBuildCompilerFactoryImplTest {
 
   @Test
   public void testMultipleJavaToolchains() {
-    Map<TargetKey, TargetIdeInfo> targetMap = new HashMap<>();
-    TargetIdeInfo buildTargetInfo =
-        TargetIdeInfo.builder()
-            .setLabel(Label.create("//our/build:target"))
-            .addDependency(Label.create("//some/jdk:langtools"))
-            .addDependency(Label.create("//other/jdk:langtools"))
-            .build();
-    targetMap.put(TargetKey.forPlainTarget(Label.create("//our/build:target")), buildTargetInfo);
-    targetMap.put(
-        TargetKey.forPlainTarget(Label.create("//some/jdk:langtools")),
-        TargetIdeInfo.builder()
-            .setJavaToolchainIdeInfo(
-                JavaToolchainIdeInfo.builder()
-                    .setJavacJar(
-                        ArtifactLocation.builder().setRelativePath(JAVAC_JAR.getPath()).build()))
-            .build());
-    targetMap.put(
-        TargetKey.forPlainTarget(Label.create("//other/jdk:langtools")),
-        TargetIdeInfo.builder()
-            .setJavaToolchainIdeInfo(
-                JavaToolchainIdeInfo.builder()
-                    .setJavacJar(
-                        ArtifactLocation.builder().setRelativePath(JAVAC_JAR.getPath()).build()))
-            .build());
-    configureTestForTargetMap(targetMap);
+    Map<Label, FastBuildBlazeData> blazeData = new HashMap<>();
+    Label targetLabel = Label.create("//our/build:target");
+    Label jdkOneLabel = Label.create("//some/jdk:langtools");
+    Label jdkTwoLabel = Label.create("//other/jdk:langtools");
+    FastBuildBlazeData targetData =
+        FastBuildBlazeData.create(
+            targetLabel,
+            /*dependencies*/ ImmutableSet.of(jdkOneLabel, jdkTwoLabel),
+            JAVA_LIBRARY_WITHOUT_SOURCES);
+    FastBuildBlazeData jdkOneData =
+        FastBuildBlazeData.create(jdkOneLabel, /*dependencies*/ ImmutableSet.of(), JAVA_TOOLCHAIN);
+    FastBuildBlazeData jdkTwoData =
+        FastBuildBlazeData.create(jdkTwoLabel, /*dependencies*/ ImmutableSet.of(), JAVA_TOOLCHAIN);
+    blazeData.put(targetLabel, targetData);
+    blazeData.put(jdkOneLabel, jdkOneData);
+    blazeData.put(jdkTwoLabel, jdkTwoData);
 
     try {
-      compilerFactory.getCompilerFor(buildTargetInfo);
+      createCompilerFactory().getCompilerFor(targetLabel, blazeData);
       fail("Should have thrown FastBuildException");
     } catch (FastBuildException e) {
       assertThat(e.getMessage()).contains("Java toolchain");
@@ -121,18 +124,9 @@ public final class FastBuildCompilerFactoryImplTest {
             + "    System.out.println(\"success\");\n"
             + "  }\n"
             + "}\n";
-    Path outputDirectory = createOutputDirectory();
-    Path javaFile = createJavaFile(java);
-    FastBuildCompiler compiler = getCompiler();
     StringWriter javacOutput = new StringWriter();
     try {
-      compiler.compile(
-          CompileInstructions.builder()
-              .outputDirectory(outputDirectory.toFile())
-              .filesToCompile(ImmutableList.of(javaFile.toFile()))
-              .classpath(ImmutableList.of())
-              .outputWriter(javacOutput)
-              .build());
+      compile(java, javacOutput);
     } catch (FastBuildCompileException e) {
       throw new AssertionError("Compilation failed:\n" + javacOutput, e);
     }
@@ -152,18 +146,9 @@ public final class FastBuildCompilerFactoryImplTest {
             + "    System.out.println(\"success\");\n"
             + "  }\n"
             + "}\n";
-    Path outputDirectory = createOutputDirectory();
-    Path javaFile = createJavaFile(java);
-    FastBuildCompiler compiler = getCompiler();
     StringWriter javacOutput = new StringWriter();
     try {
-      compiler.compile(
-          CompileInstructions.builder()
-              .outputDirectory(outputDirectory.toFile())
-              .filesToCompile(ImmutableList.of(javaFile.toFile()))
-              .classpath(ImmutableList.of(GUAVA_JAR, TRUTH_JAR))
-              .outputWriter(javacOutput)
-              .build());
+      compile(java, javacOutput, GUAVA_JAR, TRUTH_JAR);
     } catch (FastBuildCompileException e) {
       throw new AssertionError("Compilation failed:\n" + javacOutput, e);
     }
@@ -183,23 +168,60 @@ public final class FastBuildCompilerFactoryImplTest {
             + "    System.out.println(\"success\");\n"
             + "  }\n"
             + "}\n";
-    Path outputDirectory = createOutputDirectory();
-    Path javaFile = createJavaFile(java);
-    FastBuildCompiler compiler = getCompiler();
     StringWriter javacOutput = new StringWriter();
     try {
-      compiler.compile(
-          CompileInstructions.builder()
-              .outputDirectory(outputDirectory.toFile())
-              .filesToCompile(ImmutableList.of(javaFile.toFile()))
-              .classpath(ImmutableList.of())
-              .outputWriter(javacOutput)
-              .build());
+      compile(java, javacOutput);
       fail("Should have thrown FastBuildCompileException");
     } catch (FastBuildCompileException e) {
       assertThat(javacOutput.toString()).contains("ImmutableSet");
       assertThat(javacOutput.toString()).contains("Truth");
     }
+  }
+
+  @Test
+  public void errorOnTooNewSource() throws IOException, FastBuildException {
+    String java =
+        ""
+            + "package com.google.idea.blaze.java.fastbuild;\n"
+            + "\n"
+            + "import java.util.ArrayList;\n"
+            + "\n"
+            + "final class Main {\n"
+            + "  private static void main(String[] args) {\n"
+            + "    Runnable r = () -> {};\n"
+            + "  }\n"
+            + "}\n";
+    StringWriter javacOutput = new StringWriter();
+    try {
+      getCompiler(
+              JavaToolchainInfo.create(
+                  ArtifactLocation.builder().setRelativePath(JAVAC_JAR.getPath()).build(),
+                  /* sourceVersion */ "7",
+                  /* targetVersion */ "8"))
+          .compile(createCompileInstructions(java, javacOutput).build(), new HashMap<>());
+      fail("Should have thrown FastBuildCompileException");
+    } catch (FastBuildCompileException e) {
+      assertThat(javacOutput.toString()).contains("lambda");
+      assertThat(javacOutput.toString()).contains("-source");
+    }
+  }
+
+  private void compile(String source, Writer javacOutput, File... classpath)
+      throws IOException, FastBuildException {
+    getCompiler()
+        .compile(
+            createCompileInstructions(source, javacOutput, classpath).build(), new HashMap<>());
+  }
+
+  private CompileInstructions.Builder createCompileInstructions(
+      String source, Writer javacOutput, File... classpath) throws IOException {
+    Path outputDirectory = createOutputDirectory();
+    Path javaFile = createJavaFile(source);
+    return CompileInstructions.builder()
+        .outputDirectory(outputDirectory.toFile())
+        .filesToCompile(ImmutableList.of(javaFile.toFile()))
+        .classpath(ImmutableList.copyOf(classpath))
+        .outputWriter(javacOutput);
   }
 
   private Path createJavaFile(String java) throws IOException {
@@ -216,30 +238,32 @@ public final class FastBuildCompilerFactoryImplTest {
   }
 
   public FastBuildCompiler getCompiler() throws FastBuildException {
-    Map<TargetKey, TargetIdeInfo> targetMap = new HashMap<>();
-    TargetIdeInfo buildTargetInfo =
-        TargetIdeInfo.builder()
-            .setLabel(Label.create("//our/build:target"))
-            .addDependency(Label.create("//third_party/java/jdk:langtools"))
-            .build();
-    targetMap.put(TargetKey.forPlainTarget(Label.create("//our/build:target")), buildTargetInfo);
-    targetMap.put(
-        TargetKey.forPlainTarget(Label.create("//third_party/java/jdk:langtools")),
-        TargetIdeInfo.builder()
-            .setJavaToolchainIdeInfo(
-                JavaToolchainIdeInfo.builder()
-                    .setJavacJar(
-                        ArtifactLocation.builder().setRelativePath(JAVAC_JAR.getPath()).build()))
-            .build());
-    configureTestForTargetMap(targetMap);
-    return compilerFactory.getCompilerFor(buildTargetInfo);
+    return getCompiler(JAVA_TOOLCHAIN.javaToolchainInfo());
   }
 
-  private void configureTestForTargetMap(Map<TargetKey, TargetIdeInfo> targetMap) {
+  private FastBuildCompiler getCompiler(JavaToolchainInfo javaToolchain) throws FastBuildException {
+    Map<Label, FastBuildBlazeData> blazeData = new HashMap<>();
+    Label targetLabel = Label.create("//our/build:target");
+    Label jdkLabel = Label.create("//some/jdk:langtools");
+    FastBuildBlazeData targetData =
+        FastBuildBlazeData.create(
+            targetLabel, /*dependencies*/ ImmutableSet.of(jdkLabel), JAVA_LIBRARY_WITHOUT_SOURCES);
+    FastBuildBlazeData jdkData =
+        FastBuildBlazeData.create(
+            jdkLabel, /*dependencies*/
+            ImmutableSet.of(),
+            ProviderInfo.ofJavaToolchainInfo(javaToolchain));
+    blazeData.put(targetLabel, targetData);
+    blazeData.put(jdkLabel, jdkData);
+
+    return createCompilerFactory().getCompilerFor(targetLabel, blazeData);
+  }
+
+  private static FastBuildCompilerFactoryImpl createCompilerFactory() {
     BlazeProjectData projectData =
         new BlazeProjectData(
             0,
-            new TargetMap(ImmutableMap.copyOf(targetMap)),
+            null,
             null,
             null,
             null,
@@ -248,6 +272,6 @@ public final class FastBuildCompilerFactoryImplTest {
             null,
             null);
     BlazeProjectDataManager projectDataManager = new MockBlazeProjectDataManager(projectData);
-    compilerFactory = new FastBuildCompilerFactoryImpl(projectDataManager);
+    return new FastBuildCompilerFactoryImpl(projectDataManager);
   }
 }

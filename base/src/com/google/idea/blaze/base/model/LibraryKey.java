@@ -44,7 +44,7 @@ public final class LibraryKey implements Serializable {
     return new LibraryKey(name);
   }
 
-  LibraryKey(String name) {
+  public LibraryKey(String name) {
     this.name = name;
   }
 

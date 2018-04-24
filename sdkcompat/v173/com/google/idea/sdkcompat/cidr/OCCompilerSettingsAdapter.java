@@ -15,7 +15,37 @@
  */
 package com.google.idea.sdkcompat.cidr;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.cidr.lang.OCLanguageKind;
+import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
+import com.jetbrains.cidr.lang.workspace.compiler.CidrCompilerResult;
+import com.jetbrains.cidr.toolchains.CompilerInfoCache.Entry;
 import com.jetbrains.cidr.toolchains.OCCompilerSettingsBackedByCompilerCache;
+import javax.annotation.Nullable;
 
 /** Adapter to bridge different SDK versions. */
-public abstract class OCCompilerSettingsAdapter extends OCCompilerSettingsBackedByCompilerCache {}
+public abstract class OCCompilerSettingsAdapter extends OCCompilerSettingsBackedByCompilerCache {
+  public abstract Project getProject();
+
+  public abstract CompilerInfoCacheAdapter getCompilerInfo();
+
+  @Override
+  public CidrCompilerResult<Entry> getCompilerInfo(
+      OCLanguageKind ocLanguageKind, @Nullable VirtualFile virtualFile) {
+    return getCompilerInfo().getCompilerInfoCache(getProject(), this, ocLanguageKind, virtualFile);
+  }
+
+  public abstract String getCompilerKeyString(
+      OCLanguageKind ocLanguageKind, @Nullable VirtualFile virtualFile);
+
+  @Override
+  public String getCompilerKey(OCLanguageKind kind, VirtualFile sourcefile) {
+    return getCompilerKeyString(kind, sourcefile);
+  }
+
+  @Override
+  public CidrToolEnvironment getEnvironment() {
+    return new CPPEnvironmentAdapter();
+  }
+}

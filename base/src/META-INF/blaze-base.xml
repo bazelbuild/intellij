@@ -225,8 +225,6 @@
                         serviceImplementation="com.google.idea.blaze.base.wizard2.BazelWizardOptionProvider"/>
     <projectService serviceInterface="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider"
                     serviceImplementation="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProviderImpl"/>
-    <projectService serviceInterface="com.google.idea.blaze.base.sync.workspace.SimpleWorkspacePathResolver$Provider"
-                    serviceImplementation="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProviderImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.sync.projectview.WorkspaceFileFinder$Provider"
                     serviceImplementation="com.google.idea.blaze.base.sync.projectview.WorkspaceFileFinderImpl$Provider"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.sync.SyncCache"/>

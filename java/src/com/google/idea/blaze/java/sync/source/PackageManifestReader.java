@@ -22,7 +22,7 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.JavaSourcePackage;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PackageManifest;
 import com.google.idea.blaze.base.async.FutureUtil;
@@ -133,7 +133,7 @@ public class PackageManifestReader {
     }
   }
 
-  private static ArtifactLocation fromProto(IntellijIdeInfo.ArtifactLocation location) {
+  private static ArtifactLocation fromProto(Common.ArtifactLocation location) {
     String relativePath = location.getRelativePath();
     String rootExecutionPathFragment = location.getRootExecutionPathFragment();
     if (!location.getIsNewExternalVersion() && location.getIsExternal()) {

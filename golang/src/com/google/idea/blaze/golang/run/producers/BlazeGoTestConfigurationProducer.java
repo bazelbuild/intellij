@@ -17,8 +17,6 @@ package com.google.idea.blaze.golang.run.producers;
 
 import com.goide.psi.GoFile;
 import com.goide.psi.GoFunctionOrMethodDeclaration;
-import com.goide.runconfig.GoRunUtil;
-import com.goide.runconfig.testing.GoTestFinder;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -29,6 +27,7 @@ import com.google.idea.blaze.base.run.TestTargetHeuristic;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.sdkcompat.golang.GoTestFinderCompatUtils;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -129,18 +128,18 @@ public class BlazeGoTestConfigurationProducer
     if (!SmRunnerUtils.getSelectedSmRunnerTreeElements(context).isEmpty()) {
       return null;
     }
-    PsiElement element = GoRunUtil.getContextElement(context);
+    PsiElement element = context.getPsiLocation();
     if (element == null) {
       return null;
     }
     PsiFile file = element.getContainingFile();
-    if (!(file instanceof GoFile) || !GoTestFinder.isTestFile(file)) {
+    if (!(file instanceof GoFile) || !GoTestFinderCompatUtils.isTestFile(file)) {
       return null;
     }
     TargetInfo testTarget = TestTargetHeuristic.testTargetForPsiElement(element);
     return testTarget != null
         ? new TestLocation(
-            testTarget, (GoFile) file, GoTestFinder.findTestFunctionInContext(element))
+            testTarget, (GoFile) file, GoTestFinderCompatUtils.findTestFunctionInContext(element))
         : null;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Bazel Authors. All rights reserved.
+ * Copyright 2018 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.cpp;
+package com.google.idea.sdkcompat.cidr;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 /**
  * An Android-Studio-safe version of {@link OCWorkspaceManager}, which handles the case where no
  * such manager is available (e.g. because the 'NDK WorkspaceManager Support' plugin isn't enabled).
+ * #api173 once pre-2018.1 apis are not needed this can be removed
  */
 public final class OCWorkspaceProvider {
 

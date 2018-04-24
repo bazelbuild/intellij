@@ -15,13 +15,28 @@
  */
 package com.google.idea.blaze.ijwb.typescript;
 
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.model.BlazeLibrary;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.intellij.openapi.roots.libraries.Library;
+import java.util.List;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
-/** Prevents garbage collection of "tsconfig$roots" */
+/** Prevents garbage collection of "tsconfig$roots" and produces {@link BlazeTypescriptLibrary}. */
 class BlazeTypescriptLibrarySource extends LibrarySource.Adapter {
+  private final BlazeTypescriptLibrary library;
+
+  BlazeTypescriptLibrarySource(BlazeProjectData blazeProjectData) {
+    library = new BlazeTypescriptLibrary(blazeProjectData);
+  }
+
+  @Override
+  public List<? extends BlazeLibrary> getLibraries() {
+    return ImmutableList.of(library);
+  }
+
   @Nullable
   @Override
   public Predicate<Library> getGcRetentionFilter() {

@@ -43,9 +43,9 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -167,7 +167,7 @@ public class BlazeBuildSystemServiceTest extends BlazeTestCase {
   private void mockBlazeImportSettings(Container projectServices) {
     BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager();
     importSettingsManager.setImportSettings(
-        new BlazeImportSettings("", "", "", "", Blaze.BuildSystem.Blaze));
+        new BlazeImportSettings("", "", "", "", BuildSystem.Blaze));
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
   }
 

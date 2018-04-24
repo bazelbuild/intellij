@@ -17,10 +17,11 @@ package com.google.idea.blaze.java.fastbuild;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /** Information about a completed build. */
 @AutoValue
@@ -30,9 +31,19 @@ public abstract class FastBuildInfo {
 
   public abstract ImmutableList<File> classpath();
 
-  public abstract TargetMap targetMap();
+  public abstract ImmutableMap<Label, FastBuildBlazeData> blazeData();
 
-  public static FastBuildInfo create(Label label, List<File> classpath, TargetMap targetMap) {
-    return new AutoValue_FastBuildInfo(label, ImmutableList.copyOf(classpath), targetMap);
+  public abstract ImmutableMap<String, String> loggingData();
+
+  public static FastBuildInfo create(
+      Label label,
+      List<File> classpath,
+      Map<Label, FastBuildBlazeData> blazeData,
+      Map<String, String> loggingData) {
+    return new AutoValue_FastBuildInfo(
+        label,
+        ImmutableList.copyOf(classpath),
+        ImmutableMap.copyOf(blazeData),
+        ImmutableMap.copyOf(loggingData));
   }
 }

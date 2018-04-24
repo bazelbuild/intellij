@@ -16,7 +16,7 @@
 package com.google.idea.blaze.java.settings;
 
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
-import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -33,7 +33,7 @@ public class BlazeJavaUserSettings implements PersistentStateComponent<BlazeJava
   }
 
   private static boolean getDefaultJarCacheValue() {
-    return BuildSystemProvider.defaultBuildSystem().buildSystem() == Blaze.BuildSystem.Blaze;
+    return BuildSystemProvider.defaultBuildSystem().buildSystem() == BuildSystem.Blaze;
   }
 
   @Override

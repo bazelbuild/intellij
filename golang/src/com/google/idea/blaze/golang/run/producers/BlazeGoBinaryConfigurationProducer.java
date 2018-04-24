@@ -16,7 +16,6 @@
 package com.google.idea.blaze.golang.run.producers;
 
 import com.goide.psi.GoFile;
-import com.goide.runconfig.GoRunUtil;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -29,6 +28,7 @@ import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
+import com.google.idea.sdkcompat.golang.GoRunUtilCompatUtils;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -91,12 +91,12 @@ public class BlazeGoBinaryConfigurationProducer
 
   @Nullable
   private static PsiFile getMainFile(ConfigurationContext context) {
-    PsiElement element = GoRunUtil.getContextElement(context);
+    PsiElement element = context.getPsiLocation();
     if (element == null) {
       return null;
     }
     PsiFile file = element.getContainingFile();
-    if (file instanceof GoFile && GoRunUtil.isMainGoFile(file)) {
+    if (file instanceof GoFile && GoRunUtilCompatUtils.isMainGoFile(file)) {
       return file;
     }
     return null;

@@ -23,10 +23,12 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 interface FastBuildCompiler {
 
-  void compile(CompileInstructions compileInstructions) throws FastBuildCompileException;
+  void compile(CompileInstructions instructions, Map<String, String> loggingData)
+      throws FastBuildException;
 
   @AutoValue
   abstract class CompileInstructions {
@@ -38,8 +40,11 @@ interface FastBuildCompiler {
 
     abstract PrintWriter outputWriter();
 
+    abstract ImmutableList<String> annotationProcessorClassNames();
+
     static Builder builder() {
-      return new AutoValue_FastBuildCompiler_CompileInstructions.Builder();
+      return new AutoValue_FastBuildCompiler_CompileInstructions.Builder()
+          .annotationProcessorClassNames(ImmutableList.of());
     }
 
     @AutoValue.Builder
@@ -55,6 +60,9 @@ interface FastBuildCompiler {
       Builder outputWriter(Writer writer) {
         return this.outputWriter(new PrintWriter(writer));
       }
+
+      abstract Builder annotationProcessorClassNames(
+          Collection<String> annotationProcessorClassNames);
 
       abstract CompileInstructions build();
     }

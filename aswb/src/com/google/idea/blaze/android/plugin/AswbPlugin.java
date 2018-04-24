@@ -17,7 +17,7 @@ package com.google.idea.blaze.android.plugin;
 
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.plugin.BlazePluginId;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystem;
 
 /** ASwB plugin configuration information. */
 public class AswbPlugin implements BlazePluginId {

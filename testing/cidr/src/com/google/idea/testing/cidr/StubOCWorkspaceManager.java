@@ -16,9 +16,9 @@
 package com.google.idea.testing.cidr;
 
 import com.android.tools.ndk.NdkHelper;
+import com.google.idea.sdkcompat.cidr.OCWorkspaceManagerAdapter;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
-import com.jetbrains.cidr.lang.workspace.OCWorkspaceManager;
 
 /**
  * A stub {@link OCWorkspaceManager} to use for testing. Also allows toggling on C++ support (which
@@ -27,7 +27,7 @@ import com.jetbrains.cidr.lang.workspace.OCWorkspaceManager;
  * <p>Once the plugin API ships with a more official OCWorkspaceManager-for-testing, we may be able
  * to switch over to those classes. See: b/32420569
  */
-public class StubOCWorkspaceManager extends OCWorkspaceManager {
+public class StubOCWorkspaceManager extends OCWorkspaceManagerAdapter {
 
   private final Project project;
   private final OCWorkspace workspace;

@@ -17,6 +17,7 @@ package com.google.idea.testing.cidr;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.sdkcompat.cidr.OCCompilerMacrosAdapter;
+import com.google.idea.sdkcompat.cidr.OCCompilerSettingsAdapter;
 import com.google.idea.sdkcompat.cidr.OCResolveConfigurationAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,10 +25,9 @@ import com.jetbrains.cidr.lang.OCFileTypeHelpers;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.workspace.OCLanguageKindCalculator;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
-import com.jetbrains.cidr.lang.workspace.OCResolveRootAndConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceUtil;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerSettings;
-import com.jetbrains.cidr.lang.workspace.headerRoots.HeaderRoots;
+import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -38,13 +38,13 @@ import javax.annotation.Nullable;
 class StubOCResolveConfiguration extends OCResolveConfigurationAdapter {
 
   private final Project project;
-  private final HeaderRoots projectIncludeRoots;
-  private final OCCompilerSettings compilerSettings;
+  private final List<HeadersSearchRoot> projectIncludeRoots;
+  private final OCCompilerSettingsAdapter compilerSettings;
   private final OCCompilerMacrosAdapter compilerMacros;
 
   StubOCResolveConfiguration(Project project) {
     this.project = project;
-    this.projectIncludeRoots = new HeaderRoots(ImmutableList.of());
+    this.projectIncludeRoots = ImmutableList.of();
     this.compilerMacros = new StubOCCompilerMacros();
     this.compilerSettings = new StubOCCompilerSettings(project);
   }
@@ -95,13 +95,19 @@ class StubOCResolveConfiguration extends OCResolveConfigurationAdapter {
   }
 
   @Override
-  public HeaderRoots getProjectHeadersRoots() {
+  public List<HeadersSearchRoot> getProjectHeadersRootsInternal() {
     return projectIncludeRoots;
   }
 
   @Override
-  public HeaderRoots getLibraryHeadersRoots(OCResolveRootAndConfiguration headerContext) {
+  public List<HeadersSearchRoot> getLibraryHeadersRootsInternal(
+      OCLanguageKind languageKind, @Nullable VirtualFile sourceFile) {
     return projectIncludeRoots;
+  }
+
+  @Override
+  public OCCompilerSettingsAdapter getCompilerSettingsAdapter() {
+    return compilerSettings;
   }
 
   @Override

@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.command.info;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
 import java.io.Serializable;

@@ -17,14 +17,17 @@ package com.google.idea.blaze.java.fastbuild;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.transform;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
-import com.google.common.base.Joiner;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.ideinfo.Dependency;
-import com.google.idea.blaze.base.ideinfo.JavaToolchainIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaToolchainInfo;
+import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.ProviderInfo.Type;
+import com.google.idea.blaze.java.fastbuild.FastBuildCompiler.CompileInstructions;
 import java.io.File;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
@@ -32,7 +35,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
 
@@ -45,41 +51,50 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
   }
 
   @Override
-  public FastBuildCompiler getCompilerFor(TargetIdeInfo targetIdeInfo) throws FastBuildException {
-    File javacJar = getJavacJar(targetIdeInfo);
-    return createCompiler(javacJar);
-  }
+  public FastBuildCompiler getCompilerFor(Label label, Map<Label, FastBuildBlazeData> blazeData)
+      throws FastBuildException {
 
-  private File getJavacJar(TargetIdeInfo targetIdeInfo) throws FastBuildException {
+    JavaToolchainInfo javaToolchain = getJavaToolchain(label, blazeData);
+
     BlazeProjectData projectData = projectDataManager.getBlazeProjectData();
     checkState(projectData != null, "not a blaze project");
+    return createCompiler(
+        projectData.artifactLocationDecoder.decode(javaToolchain.javacJar()),
+        javaToolchain.sourceVersion(),
+        javaToolchain.targetVersion());
+  }
 
-    List<JavaToolchainIdeInfo> javaToolchains = new ArrayList<>();
-    for (Dependency dependency : targetIdeInfo.dependencies) {
-      TargetIdeInfo depInfo = projectData.targetMap.get(dependency.targetKey);
-      if (depInfo != null && depInfo.javaToolchainIdeInfo != null) {
-        javaToolchains.add(depInfo.javaToolchainIdeInfo);
+  private JavaToolchainInfo getJavaToolchain(Label label, Map<Label, FastBuildBlazeData> blazeData)
+      throws FastBuildException {
+    FastBuildBlazeData targetData = blazeData.get(label);
+    List<JavaToolchainInfo> javaToolchains = new ArrayList<>();
+    for (Label dependency : targetData.dependencies()) {
+      FastBuildBlazeData depInfo = blazeData.get(dependency);
+      if (depInfo != null && depInfo.providerInfo().type().equals(Type.JAVA_TOOLCHAIN_INFO)) {
+        javaToolchains.add(depInfo.providerInfo().javaToolchainInfo());
       }
     }
     if (javaToolchains.isEmpty()) {
       throw new FastBuildException(
-          "Couldn't find a Java toolchain for target " + targetIdeInfo.key.label);
+          "Couldn't find a Java toolchain for target " + targetData.label());
     }
     if (javaToolchains.size() > 1) {
       throw new FastBuildException(
-          "Found multiple Java toolchains for target " + targetIdeInfo.key.label);
+          "Found multiple Java toolchains for target " + targetData.label());
     }
-    return projectData.artifactLocationDecoder.decode(javaToolchains.get(0).javacJar);
+
+    return javaToolchains.get(0);
   }
 
-  private FastBuildCompiler createCompiler(File javacJar) throws FastBuildException {
+  private FastBuildCompiler createCompiler(
+      File javacJar, String sourceVersion, String targetVersion) throws FastBuildException {
     try {
       URL url = javacJar.toURI().toURL();
       URLClassLoader urlClassLoader = new URLClassLoader(new URL[] {new URL("jar:" + url + "!/")});
       Class<?> javacClass = urlClassLoader.loadClass(JAVAC_CLASS);
       Object javacMain = javacClass.getDeclaredConstructor().newInstance();
       Method compileMethod = javacClass.getMethod("compile", String[].class, PrintWriter.class);
-      return new ReflectiveJavac(javacMain, compileMethod);
+      return new ReflectiveJavac(javacMain, compileMethod, sourceVersion, targetVersion);
     } catch (MalformedURLException | ReflectiveOperationException e) {
       throw new FastBuildException(e);
     }
@@ -89,33 +104,109 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
 
     private final Object javacObject;
     private final Method compileMethod;
+    private final String sourceVersion;
+    private final String targetVersion;
 
-    private ReflectiveJavac(Object javacObject, Method compileMethod) {
+    private ReflectiveJavac(
+        Object javacObject, Method compileMethod, String sourceVersion, String targetVersion) {
       this.javacObject = javacObject;
       this.compileMethod = compileMethod;
+      this.sourceVersion = sourceVersion;
+      this.targetVersion = targetVersion;
     }
 
     @Override
-    public void compile(CompileInstructions compileInstructions) throws FastBuildCompileException {
-      List<String> args =
+    public void compile(CompileInstructions instructions, Map<String, String> loggingData)
+        throws FastBuildException {
+      ImmutableList.Builder<String> argsBuilder =
           ImmutableList.<String>builder()
               .add("-d")
-              .add(compileInstructions.outputDirectory().getPath())
+              .add(instructions.outputDirectory().getPath())
+              .add("-source")
+              .add(sourceVersion)
+              .add("-target")
+              .add(targetVersion)
               .add("-cp")
-              .add(Joiner.on(':').join(transform(compileInstructions.classpath(), File::getPath)))
-              .addAll(transform(compileInstructions.filesToCompile(), File::getPath))
-              .build();
+              .add(instructions.classpath().stream().map(File::getPath).collect(joining(":")));
+      if (instructions.annotationProcessorClassNames().isEmpty()) {
+        // Without this, it will find all the annotation processors in the classpath and run them.
+        // We only want to run them if the BUILD file asked for it.
+        argsBuilder.add("-proc:none");
+      } else {
+        argsBuilder
+            .add("-processor")
+            .add(instructions.annotationProcessorClassNames().stream().collect(joining(",")));
+      }
+      List<String> args =
+          argsBuilder.addAll(transform(instructions.filesToCompile(), File::getPath)).build();
+      writeCompilationStartedMessage(instructions);
       try {
+        Stopwatch timer = Stopwatch.createStarted();
         Integer result =
             (Integer)
                 compileMethod.invoke(
-                    javacObject, args.toArray(new String[0]), compileInstructions.outputWriter());
+                    javacObject, args.toArray(new String[0]), instructions.outputWriter());
+        timer.stop();
+        writeCompilationFinishedMessage(instructions, result, timer, loggingData);
         if (result != 0) {
-          throw new FastBuildCompileException("javac exited with code " + result);
+          throw new FastBuildCompileException("javac exited with code " + result, loggingData);
         }
       } catch (ReflectiveOperationException e) {
-        throw new FastBuildCompileException(e);
+        throw new FastBuildException(e);
       }
     }
+  }
+
+  private static void writeCompilationStartedMessage(CompileInstructions instructions) {
+    if (instructions.annotationProcessorClassNames().isEmpty()) {
+      instructions
+          .outputWriter()
+          .printf("Running javac on files %s%n", getSourceFileNames(instructions.filesToCompile()));
+    } else {
+      instructions
+          .outputWriter()
+          .printf(
+              "Running javac on %s with annotation processors %s%n",
+              getSourceFileNames(instructions.filesToCompile()),
+              getProcessorNames(instructions.annotationProcessorClassNames()));
+    }
+  }
+
+  private static void writeCompilationFinishedMessage(
+      CompileInstructions instructions,
+      Integer result,
+      Stopwatch timer,
+      Map<String, String> loggingData) {
+    instructions.outputWriter().printf("Compilation finished in %s%n", timer);
+    loggingData.put("javac_success", Boolean.toString(result == 0));
+    loggingData.put("javac_result", result.toString());
+    loggingData.put(
+        "javac_source_file_count", Integer.toString(instructions.filesToCompile().size()));
+    loggingData.put("javac_source_files", instructions.filesToCompile().toString());
+    loggingData.put(
+        "javac_annotation_processor_count",
+        Integer.toString(instructions.annotationProcessorClassNames().size()));
+    loggingData.put(
+        "javac_annotation_processors", instructions.annotationProcessorClassNames().toString());
+    loggingData.put("javac_time_ms", Long.toString(timer.elapsed(TimeUnit.MILLISECONDS)));
+  }
+
+  private static List<String> getSourceFileNames(Collection<File> sourceFiles) {
+    return sourceFiles.stream().map(File::getName).collect(toList());
+  }
+
+  private static List<String> getProcessorNames(Collection<String> classNames) {
+    return classNames
+        .stream()
+        .map(
+            className -> {
+              int lastDot = className.lastIndexOf('.');
+              if (lastDot > -1 && lastDot < className.length() - 1) {
+                return className.substring(lastDot + 1);
+              } else {
+                return className;
+              }
+            })
+        .collect(toList());
   }
 }

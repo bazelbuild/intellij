@@ -17,32 +17,26 @@ package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.sdkcompat.cidr.CPPEnvironmentAdapter;
+import com.google.idea.sdkcompat.cidr.CompilerInfoCacheAdapter;
 import com.google.idea.sdkcompat.cidr.OCCompilerSettingsAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
 import com.jetbrains.cidr.lang.toolchains.CidrSwitchBuilder;
-import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
-import com.jetbrains.cidr.lang.workspace.compiler.CidrCompilerResult;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
-import com.jetbrains.cidr.toolchains.CompilerInfoCache;
-import com.jetbrains.cidr.toolchains.CompilerInfoCache.Entry;
 import java.io.File;
 import java.util.List;
 import javax.annotation.Nullable;
 
 final class BlazeCompilerSettings extends OCCompilerSettingsAdapter {
-  private final CidrToolEnvironment toolEnvironment = new CPPEnvironmentAdapter();
-
   private final Project project;
   @Nullable private final File cCompiler;
   @Nullable private final File cppCompiler;
   private final CidrCompilerSwitches cCompilerSwitches;
   private final CidrCompilerSwitches cppCompilerSwitches;
   private final String compilerVersion;
-  private final CompilerInfoCache compilerInfoCache;
+  private final CompilerInfoCacheAdapter compilerInfoCache;
 
   BlazeCompilerSettings(
       Project project,
@@ -51,7 +45,7 @@ final class BlazeCompilerSettings extends OCCompilerSettingsAdapter {
       ImmutableList<String> cFlags,
       ImmutableList<String> cppFlags,
       String compilerVersion,
-      CompilerInfoCache compilerInfoCache) {
+      CompilerInfoCacheAdapter compilerInfoCache) {
     this.project = project;
     this.cCompiler = cCompiler;
     this.cppCompiler = cppCompiler;
@@ -86,11 +80,6 @@ final class BlazeCompilerSettings extends OCCompilerSettingsAdapter {
   }
 
   @Override
-  public CidrToolEnvironment getEnvironment() {
-    return toolEnvironment;
-  }
-
-  @Override
   public CidrCompilerSwitches getCompilerSwitches(
       OCLanguageKind lang, @Nullable VirtualFile sourceFile) {
     if (lang == OCLanguageKind.C) {
@@ -102,22 +91,27 @@ final class BlazeCompilerSettings extends OCCompilerSettingsAdapter {
     return new CidrSwitchBuilder().build();
   }
 
-  String getCompilerVersion() {
-    return compilerVersion;
-  }
-
   private static CidrCompilerSwitches getCompilerSwitches(List<String> allCompilerFlags) {
     return new CidrSwitchBuilder().addAllRaw(allCompilerFlags).build();
   }
 
-  @Override
-  public CidrCompilerResult<Entry> getCompilerInfo(
-      OCLanguageKind ocLanguageKind, @Nullable VirtualFile virtualFile) {
-    return compilerInfoCache.getCompilerInfoCache(project, this, ocLanguageKind, virtualFile);
+  String getCompilerVersion() {
+    return compilerVersion;
   }
 
   @Override
-  public String getCompilerKey(OCLanguageKind ocLanguageKind, @Nullable VirtualFile virtualFile) {
-    return getCompiler(ocLanguageKind) + "-" + ocLanguageKind.toString();
+  public Project getProject() {
+    return project;
+  }
+
+  @Override
+  public CompilerInfoCacheAdapter getCompilerInfo() {
+    return compilerInfoCache;
+  }
+
+  @Override
+  public String getCompilerKeyString(
+      OCLanguageKind ocLanguageKind, @Nullable VirtualFile virtualFile) {
+    return getCompiler(ocLanguageKind) + "-" + ocLanguageKind;
   }
 }

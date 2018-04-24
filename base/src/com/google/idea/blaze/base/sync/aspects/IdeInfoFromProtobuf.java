@@ -19,10 +19,10 @@ package com.google.idea.blaze.base.sync.aspects;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.ideinfo.AndroidAarIdeInfo;
@@ -48,7 +48,6 @@ import com.google.idea.blaze.base.ideinfo.TsIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.intellij.openapi.util.text.StringUtil;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -457,9 +456,9 @@ public class IdeInfoFromProtobuf {
   }
 
   private static List<ArtifactLocation> makeArtifactLocationList(
-      List<IntellijIdeInfo.ArtifactLocation> sourcesList) {
+      List<Common.ArtifactLocation> sourcesList) {
     ImmutableList.Builder<ArtifactLocation> builder = ImmutableList.builder();
-    for (IntellijIdeInfo.ArtifactLocation pbArtifactLocation : sourcesList) {
+    for (Common.ArtifactLocation pbArtifactLocation : sourcesList) {
       ArtifactLocation loc = makeArtifactLocation(pbArtifactLocation);
       if (loc != null) {
         builder.add(loc);
@@ -470,30 +469,11 @@ public class IdeInfoFromProtobuf {
 
   @VisibleForTesting
   @Nullable
-  public static ArtifactLocation makeArtifactLocation(
-      @Nullable IntellijIdeInfo.ArtifactLocation location) {
+  public static ArtifactLocation makeArtifactLocation(@Nullable Common.ArtifactLocation location) {
     if (location == null) {
       return null;
     }
-    String relativePath = location.getRelativePath();
-    String rootExecutionPathFragment = location.getRootExecutionPathFragment();
-    if (!location.getIsNewExternalVersion() && location.getIsExternal()) {
-      // fix up incorrect paths created with older aspect version
-      // Note: bazel always uses the '/' separator here, even on windows.
-      List<String> components = StringUtil.split(relativePath, "/");
-      if (components.size() > 2) {
-        relativePath = Joiner.on('/').join(components.subList(2, components.size()));
-        String prefix = components.get(0) + "/" + components.get(1);
-        rootExecutionPathFragment =
-            rootExecutionPathFragment.isEmpty() ? prefix : rootExecutionPathFragment + "/" + prefix;
-      }
-    }
-    return ArtifactLocation.builder()
-        .setRootExecutionPathFragment(rootExecutionPathFragment)
-        .setRelativePath(relativePath)
-        .setIsSource(location.getIsSource())
-        .setIsExternal(location.getIsExternal())
-        .build();
+    return ArtifactLocationFromProtobuf.makeArtifactLocation(location);
   }
 
   @Nullable

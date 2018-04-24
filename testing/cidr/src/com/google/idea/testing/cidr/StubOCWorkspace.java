@@ -44,22 +44,18 @@ class StubOCWorkspace implements OCWorkspace {
     return ImmutableList.of();
   }
 
-  @Override
   public boolean areFromSameProject(@Nullable VirtualFile a, @Nullable VirtualFile b) {
     return Objects.equals(a, b);
   }
 
-  @Override
   public boolean areFromSamePackage(@Nullable VirtualFile a, @Nullable VirtualFile b) {
     return Objects.equals(a, b);
   }
 
-  @Override
   public boolean isInSDK(@Nullable VirtualFile file) {
     return false;
   }
 
-  @Override
   public boolean isFromWrongSDK(OCSymbol symbol, @Nullable VirtualFile contextFile) {
     return false;
   }

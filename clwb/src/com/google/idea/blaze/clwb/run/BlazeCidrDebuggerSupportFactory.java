@@ -16,16 +16,16 @@
 package com.google.idea.blaze.clwb.run;
 
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.sdkcompat.cidr.OCDebuggerLanguageSupportFactoryAdapter;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.jetbrains.cidr.execution.debugger.OCDebuggerLanguageSupportFactory;
 import javax.annotation.Nullable;
 
 /**
- * A version of {@link OCDebuggerLanguageSupportFactory} which can accept {@link
+ * A version of {@link OCDebuggerLanguageSupportFactoryAdapter} which can accept {@link
  * BlazeCommandRunConfiguration} when appropriate.
  */
-public class BlazeCidrDebuggerSupportFactory extends OCDebuggerLanguageSupportFactory {
+public class BlazeCidrDebuggerSupportFactory extends OCDebuggerLanguageSupportFactoryAdapter {
   @Nullable
   @Override
   public XDebuggerEditorsProvider createEditor(RunProfile profile) {

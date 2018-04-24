@@ -42,7 +42,7 @@ public class FeatureRolloutExperimentTest {
   public void setUp() {
     initialUserName = System.getProperty(USERNAME_PROPERTY);
     mockExperiment = spy(new FeatureRolloutExperiment("feature.name.for.canary.rollout"));
-    FeatureRolloutExperiment.markUserAsInternalDev(false);
+    InternalDevFlag.markUserAsInternalDev(false);
   }
 
   @After
@@ -112,7 +112,7 @@ public class FeatureRolloutExperimentTest {
             .limit(10000)
             .collect(Collectors.toList());
 
-    FeatureRolloutExperiment.markUserAsInternalDev(true);
+    InternalDevFlag.markUserAsInternalDev(true);
     setFeatureRolloutPercentage(0);
     assertThat(userNames.stream().allMatch(this::isEnabled)).isTrue();
 

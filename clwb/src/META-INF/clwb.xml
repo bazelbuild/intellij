@@ -21,9 +21,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"
                         serviceImplementation="com.google.idea.blaze.plugin.ClwbPluginId"/>
-    <projectService serviceInterface="com.jetbrains.cidr.lang.workspace.OCWorkspaceManager"
-                    serviceImplementation="com.google.idea.blaze.clwb.cworkspace.BlazeCWorkspaceManager"
-                    overrides="true"/>
 
     <consoleFilterProvider implementation="com.google.idea.blaze.clwb.run.BlazeCppPathConsoleFilter$Provider"/>
 
@@ -32,10 +29,7 @@
     <runConfigurationProducer
         implementation="com.google.idea.blaze.clwb.run.producers.BlazeCidrTestConfigurationProducer"
         order="first"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="cidr.debugger">
-    <languageSupportFactory implementation="com.google.idea.blaze.clwb.run.BlazeCidrDebuggerSupportFactory"/>
+    <editorNotificationProvider implementation="com.google.idea.blaze.plugin.CMakeNotificationFilter" />
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -56,11 +50,6 @@
     </component>
     <component>
       <implementation-class>com.google.idea.blaze.clwb.run.producers.NonBlazeProducerSuppressor</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.jetbrains.cidr.cpp.cmake.workspace.CMakeWorkspace</interface-class>
-      <implementation-class>com.google.idea.blaze.plugin.CMakeWorkspaceOverride</implementation-class>
-      <option name="overrides" value="true"/>
     </component>
   </project-components>
 

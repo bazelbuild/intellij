@@ -18,24 +18,19 @@ package com.google.idea.blaze.cpp;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
+import com.google.idea.sdkcompat.cidr.CompilerInfoCacheAdapter;
 import com.google.idea.sdkcompat.cidr.OCCompilerMacrosAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.preprocessor.OCInclusionContext;
-import com.jetbrains.cidr.lang.preprocessor.OCInclusionContextUtil;
-import com.jetbrains.cidr.lang.workspace.compiler.CidrCompilerResult;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerSettings;
-import com.jetbrains.cidr.toolchains.CompilerInfoCache;
-import java.util.Map;
 
 final class BlazeCompilerMacros extends OCCompilerMacrosAdapter {
   private final Project project;
 
-  private final CompilerInfoCache compilerInfoCache;
+  private final CompilerInfoCacheAdapter compilerInfoCache;
   private final OCCompilerSettings compilerSettings;
 
   private final ImmutableCollection<String> globalDefines;
@@ -43,7 +38,7 @@ final class BlazeCompilerMacros extends OCCompilerMacrosAdapter {
 
   BlazeCompilerMacros(
       Project project,
-      CompilerInfoCache compilerInfoCache,
+      CompilerInfoCacheAdapter compilerInfoCache,
       OCCompilerSettings compilerSettings,
       ImmutableCollection<String> defines,
       ImmutableMap<String, String> features) {
@@ -54,50 +49,17 @@ final class BlazeCompilerMacros extends OCCompilerMacrosAdapter {
     this.globalFeatures = features;
   }
 
-  @Override
-  public String getAllDefines(OCLanguageKind kind, VirtualFile vf) {
-    CidrCompilerResult<CompilerInfoCache.Entry> compilerInfoProvider =
-        compilerInfoCache.getCompilerInfoCache(project, compilerSettings, kind, vf);
-    CompilerInfoCache.Entry compilerInfo = compilerInfoProvider.getResult();
-    // Combine the info we got from Blaze with the info we get from IntelliJ's methods.
-    ImmutableSet.Builder<String> allDefinesBuilder = ImmutableSet.builder();
-    // IntelliJ expects a string of "#define [VAR_NAME] [VALUE]\n#define [VAR_NAME2] [VALUE]\n...",
-    // where VALUE is optional.
-    for (String globalDefine : globalDefines) {
-      String[] split = globalDefine.split("=", 2);
-      if (split.length == 1) {
-        allDefinesBuilder.add("#define " + split[0]);
-      } else {
-        allDefinesBuilder.add("#define " + split[0] + " " + split[1]);
-      }
-    }
-    String allDefines = String.join("\n", allDefinesBuilder.build());
-    if (compilerInfo != null) {
-      allDefines += "\n" + compilerInfo.defines;
-    }
-
-    return allDefines;
-  }
 
   @Override
   protected void fillFileMacros(OCInclusionContext context, PsiFile sourceFile) {
-    // Get the default compiler info for this file.
-    VirtualFile vf = OCInclusionContextUtil.getVirtualFile(sourceFile);
+    fillFileMacrosInternal(
+        project, compilerSettings, context, sourceFile, compilerInfoCache, globalFeatures);
+  }
 
-    CidrCompilerResult<CompilerInfoCache.Entry> compilerInfoProvider =
-        compilerInfoCache.getCompilerInfoCache(
-            project, compilerSettings, context.getLanguageKind(), vf);
-    CompilerInfoCache.Entry compilerInfo = compilerInfoProvider.getResult();
-
-    Map<String, String> allFeatures = Maps.newHashMap();
-    allFeatures.putAll(globalFeatures);
-    if (compilerInfo != null) {
-      addAllFeatures(allFeatures, compilerInfo.features);
-    }
-
-    fillSubstitutions(context, getAllDefines(context.getLanguageKind(), vf));
-    enableClangFeatures(context, allFeatures);
-    enableClangExtensions(context, allFeatures);
+  @Override
+  public String getAllDefines(OCLanguageKind kind, VirtualFile vf) {
+    return getAllDefinesInternal(
+        project, compilerSettings, compilerInfoCache, kind, vf, globalDefines);
   }
 
   @Override

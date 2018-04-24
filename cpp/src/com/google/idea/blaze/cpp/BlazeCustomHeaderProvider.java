@@ -16,13 +16,12 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
+import com.google.idea.sdkcompat.cidr.CustomHeaderProviderAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.cidr.lang.CustomHeaderProvider;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
-import com.jetbrains.cidr.lang.workspace.OCResolveRootAndConfiguration;
 import java.io.File;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /**
  * Provides a quick path to resolving non-generated includes, without file-system operations.
@@ -33,14 +32,12 @@ import org.jetbrains.annotations.Nullable;
  * <p>Ideally our aspect would record which generated files are used, and we could avoid FS
  * operations entirely.
  */
-public class BlazeCustomHeaderProvider extends CustomHeaderProvider {
+public class BlazeCustomHeaderProvider extends CustomHeaderProviderAdapter {
 
   @Override
-  public boolean accepts(@Nullable OCResolveRootAndConfiguration configuration) {
-    return configuration != null
-        && configuration.getConfiguration() instanceof BlazeResolveConfiguration;
+  public boolean accepts(@Nullable OCResolveConfiguration resolveConfiguration) {
+    return resolveConfiguration instanceof BlazeResolveConfiguration;
   }
-
   @Nullable
   @Override
   public VirtualFile getCustomHeaderFile(

@@ -16,6 +16,7 @@ load(
     "//build_defs:intellij_plugin_debug_target.bzl",
     "intellij_plugin_debug_target",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 load("//:version.bzl", "VERSION")
 load(
     "//testing:test_defs.bzl",
@@ -30,7 +31,10 @@ merged_plugin_xml(
         "//cpp:plugin_xml",
         "//dart:plugin_xml",
         "//python:plugin_xml",
-    ],
+    ] + select_for_plugin_api({
+        "clion-2018.1": ["src/META-INF/clwb_2018_1.xml"],
+        "clion-2017.3": ["src/META-INF/clwb_2017_3.xml"],
+    }),
 )
 
 merged_plugin_xml(

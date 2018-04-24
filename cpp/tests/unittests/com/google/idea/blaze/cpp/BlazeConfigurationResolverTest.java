@@ -53,14 +53,13 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.google.idea.sdkcompat.cidr.CPPEnvironmentAdapter;
+import com.google.idea.sdkcompat.cidr.OCResolveConfigurationAdapter;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.cidr.lang.OCLanguageKind;
-import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
-import com.jetbrains.cidr.lang.workspace.OCResolveRootAndConfiguration;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
@@ -395,9 +394,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     // Make sure that if we *query* the configuration in some way, it doesn't affect its
     // compatibility / reusability. There may be caches attached to the configuration and those
     // should not be compared when checking equivalence.
-    OCResolveConfiguration firstConfiguration = initialConfigurations.iterator().next();
-    firstConfiguration.getLibraryHeadersRoots(
-        new OCResolveRootAndConfiguration(firstConfiguration, OCLanguageKind.CPP));
+    OCResolveConfigurationAdapter firstConfiguration = initialConfigurations.iterator().next();
+    firstConfiguration.getLibraryHeadersRoots(OCLanguageKind.CPP, null);
 
     targetMapBuilder.addTarget(
         createCcTarget(

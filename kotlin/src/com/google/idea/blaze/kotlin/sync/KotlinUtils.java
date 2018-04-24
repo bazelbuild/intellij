@@ -18,7 +18,7 @@ package com.google.idea.blaze.kotlin.sync;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.Blaze.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.util.PlatformUtils;
 

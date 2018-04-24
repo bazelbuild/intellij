@@ -15,7 +15,7 @@
  */
 package com.google.idea.testing.cidr;
 
-import com.google.idea.sdkcompat.cidr.CPPEnvironmentAdapter;
+import com.google.idea.sdkcompat.cidr.CompilerInfoCacheAdapter;
 import com.google.idea.sdkcompat.cidr.OCCompilerSettingsAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -23,11 +23,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
 import com.jetbrains.cidr.lang.toolchains.CidrSwitchBuilder;
-import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
-import com.jetbrains.cidr.lang.workspace.compiler.CidrCompilerResult;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerSettings;
-import com.jetbrains.cidr.toolchains.CompilerInfoCache.Entry;
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -58,19 +55,24 @@ class StubOCCompilerSettings extends OCCompilerSettingsAdapter {
   }
 
   @Override
-  public CidrToolEnvironment getEnvironment() {
-    return new CPPEnvironmentAdapter();
-  }
-
-  @Override
   public CidrCompilerSwitches getCompilerSwitches(
       OCLanguageKind languageKind, @Nullable VirtualFile sourceFile) {
     return new CidrSwitchBuilder().build();
   }
 
   @Override
-  public CidrCompilerResult<Entry> getCompilerInfo(
-      OCLanguageKind languageKind, @Nullable VirtualFile file) {
-    return CidrCompilerResult.create(Entry.EMPTY);
+  public String getCompilerKeyString(
+      OCLanguageKind ocLanguageKind, @Nullable VirtualFile virtualFile) {
+    return getCompiler(ocLanguageKind) + "-" + ocLanguageKind.toString();
+  }
+
+  @Override
+  public CompilerInfoCacheAdapter getCompilerInfo() {
+    return new CompilerInfoCacheAdapter();
+  }
+
+  @Override
+  public Project getProject() {
+    return project;
   }
 }

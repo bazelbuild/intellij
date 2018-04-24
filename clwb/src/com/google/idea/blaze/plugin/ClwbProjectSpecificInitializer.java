@@ -36,5 +36,6 @@ public class ClwbProjectSpecificInitializer extends AbstractProjectComponent {
     if (tw != null) {
       tw.setAvailable(false, null);
     }
+    CMakeNotificationFilter.overrideProjectExtension(myProject);
   }
 }

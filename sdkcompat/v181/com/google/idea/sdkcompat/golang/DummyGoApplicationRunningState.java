@@ -15,8 +15,8 @@
  */
 package com.google.idea.sdkcompat.golang;
 
-import com.goide.runconfig.application.GoApplicationConfiguration;
-import com.goide.runconfig.application.GoApplicationRunningState;
+import com.goide.execution.application.GoApplicationConfiguration;
+import com.goide.execution.application.GoApplicationRunningState;
 import com.goide.util.GoExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;

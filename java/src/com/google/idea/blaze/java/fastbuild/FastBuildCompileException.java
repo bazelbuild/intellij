@@ -15,14 +15,20 @@
  */
 package com.google.idea.blaze.java.fastbuild;
 
+import com.google.common.collect.ImmutableMap;
+import java.util.Map;
+
 /** An exception compiling code using the {@link FastBuildService}. */
 public class FastBuildCompileException extends FastBuildException {
 
-  FastBuildCompileException(String message) {
+  private final ImmutableMap<String, String> loggingData;
+
+  FastBuildCompileException(String message, Map<String, String> loggingData) {
     super(message);
+    this.loggingData = ImmutableMap.copyOf(loggingData);
   }
 
-  FastBuildCompileException(Throwable cause) {
-    super(cause);
+  public ImmutableMap<String, String> getLoggingData() {
+    return loggingData;
   }
 }

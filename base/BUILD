@@ -50,7 +50,12 @@ java_library(
     name = "workspace_path_resolver_api",
     srcs = [
         "src/com/google/idea/blaze/base/model/primitives/WorkspacePath.java",
-        "src/com/google/idea/blaze/base/sync/workspace/SimpleWorkspacePathResolver.java",
+        "src/com/google/idea/blaze/base/model/primitives/WorkspaceRoot.java",
+        "src/com/google/idea/blaze/base/settings/BlazeImportSettings.java",
+        "src/com/google/idea/blaze/base/settings/BlazeImportSettingsManager.java",
+        "src/com/google/idea/blaze/base/settings/BuildSystem.java",
+        "src/com/google/idea/blaze/base/sync/workspace/WorkspacePathResolver.java",
+        "src/com/google/idea/blaze/base/sync/workspace/WorkspacePathResolverProvider.java",
     ],
     neverlink = 1,
     deps = [

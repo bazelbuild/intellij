@@ -19,7 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import com.google.common.base.Joiner;
-import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.ArtifactLocation;
+import com.google.devtools.intellij.aspect.Common.ArtifactLocation;
 import java.nio.file.Paths;
 import org.junit.Test;
 import org.junit.runner.RunWith;

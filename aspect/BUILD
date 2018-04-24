@@ -8,6 +8,7 @@ licenses(["notice"])  # Apache 2.0
 filegroup(
     name = "integration_test_files",
     srcs = [
+        "artifacts.bzl",
         "intellij_info_impl.bzl",
         "java_classpath.bzl",
         ":BUILD.bazel",
@@ -22,6 +23,7 @@ filegroup(
     name = "aspect_files",
     srcs = [
         "WORKSPACE",
+        "artifacts.bzl",
         "intellij_info_bundled.bzl",
         "intellij_info_impl.bzl",
         "java_classpath.bzl",

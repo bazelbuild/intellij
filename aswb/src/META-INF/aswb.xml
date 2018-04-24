@@ -53,7 +53,6 @@
   </extensions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.google.idea.blaze.BuildSystemAndroidJdkProvider" interface="com.google.idea.blaze.android.sync.BuildSystemAndroidJdkProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AndroidBinaryLaunchMethodsProvider" interface="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AndroidTestLaunchMethodsProvider" interface="com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider"/>
   </extensionPoints>
@@ -67,7 +66,6 @@
     <PrefetchFileSource implementation="com.google.idea.blaze.android.sync.AndroidPrefetchFileSource"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandlerProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationHandlerProvider"/>
-    <BuildSystemAndroidJdkProvider implementation="com.google.idea.blaze.android.sync.BazelAndroidJdkProvider"/>
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.android.run.test.smrunner.BlazeAndroidTestEventsHandler"/>
     <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection$AndroidSdkPlatformProjectViewDefaultValueProvider"/>
     <AndroidBinaryLaunchMethodsProvider implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProviderImpl"/>

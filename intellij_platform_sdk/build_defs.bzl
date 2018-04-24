@@ -3,14 +3,14 @@
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
     "intellij-latest": "intellij-2017.3",
-    "intellij-beta": "intellij-2017.3",
+    "intellij-beta": "intellij-2018.1",
     "intellij-ue-latest": "intellij-ue-2017.3",
-    "intellij-ue-beta": "intellij-ue-2017.3",
+    "intellij-ue-beta": "intellij-ue-2018.1",
     "android-studio-latest": "android-studio-3.0",
     "android-studio-beta": "android-studio-3.0",
     "android-studio-canary": "android-studio-3.2",
     "clion-latest": "clion-2017.3",
-    "clion-beta": "clion-2017.3",
+    "clion-beta": "clion-2018.1",
 }
 
 DIRECT_IJ_PRODUCTS = {

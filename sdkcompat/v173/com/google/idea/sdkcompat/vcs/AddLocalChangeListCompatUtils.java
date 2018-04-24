@@ -37,7 +37,7 @@ public final class AddLocalChangeListCompatUtils {
 
   /**
    * Determines whether the given list was created for an existing remote changelist, even if it has
-   * not been mapped in the changelist synchronizer yet.
+   * not been mapped in the ChangeListMappingsManager yet.
    */
   public static boolean wasCreatedForRemoteChangeList(LocalChangeList localChangeList) {
     return localChangeList.getData() instanceof RemoteChangeListData;
