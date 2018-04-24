@@ -59,7 +59,7 @@ public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestC
   }
 
   protected void assertFileContents(PsiFile file, String... contentLines) {
-    String contents = Joiner.on("\n").join(contentLines);
+    String contents = Joiner.on(System.lineSeparator()).join(contentLines);
     assertThat(file.getText()).isEqualTo(contents);
   }
 }

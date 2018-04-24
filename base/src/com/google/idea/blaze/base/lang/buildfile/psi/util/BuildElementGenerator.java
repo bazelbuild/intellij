@@ -83,11 +83,15 @@ public class BuildElementGenerator {
   }
 
   public Expression createExpressionFromText(String text) {
-    PsiFile dummyFile = createDummyFile(text);
-    PsiElement element = dummyFile.getFirstChild();
+    PsiElement element = createElementFromText(text);
     if (element instanceof Expression) {
       return (Expression) element;
     }
     throw new RuntimeException("Could not parse text as expression: '" + text + "'");
+  }
+
+  public PsiElement createElementFromText(String text) {
+    PsiFile dummyFile = createDummyFile(text);
+    return dummyFile.getFirstChild();
   }
 }
