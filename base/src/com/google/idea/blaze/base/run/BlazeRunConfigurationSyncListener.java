@@ -58,7 +58,7 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
       SyncMode syncMode,
       SyncResult syncResult) {
     updateExistingRunConfigurations(project);
-    if (syncMode == SyncMode.STARTUP) {
+    if (syncMode == SyncMode.STARTUP || syncMode == SyncMode.NO_BUILD) {
       return;
     }
 

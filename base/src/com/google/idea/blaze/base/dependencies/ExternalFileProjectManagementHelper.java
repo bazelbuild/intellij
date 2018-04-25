@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable;
+import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -110,6 +111,13 @@ public class ExternalFileProjectManagementHelper
     }
     LocationContext context = AddSourceToProjectHelper.getContext(project, file);
     if (context == null) {
+      return null;
+    }
+    if (!SourceToTargetMap.getInstance(context.project)
+        .getRulesForSourceFile(context.file)
+        .isEmpty()) {
+      // don't show notification for sources covered by project targets + libraries:
+      // early-out if source covered by previously built targets
       return null;
     }
     ListenableFuture<List<TargetInfo>> targetsFuture =

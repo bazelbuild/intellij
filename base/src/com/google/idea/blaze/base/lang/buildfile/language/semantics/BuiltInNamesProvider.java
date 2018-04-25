@@ -21,28 +21,26 @@ import com.intellij.openapi.project.Project;
 /**
  * The built-in names available in the BUILD language. This is not a complete list, and is only
  * intended to be used for syntax highlighting.
+ *
+ * <p>See https://docs.bazel.build/versions/master/skylark/lib/skylark-overview.html
  */
 public class BuiltInNamesProvider {
 
-  // https://www.bazel.io/versions/master/docs/skylark/lib/globals.html
   public static final ImmutableSet<String> GLOBALS =
       ImmutableSet.of(
           "Actions",
-          "DATA_CFG",
-          "False",
-          "HOST_CFG",
-          "None",
-          "PACKAGE_NAME",
-          "REPOSITORY_NAME",
-          "True",
           "all",
           "any",
           "aspect",
           "bool",
+          "configuration_field",
+          "DefaultInfo",
+          "depset",
           "dict",
           "dir",
           "enumerate",
           "fail",
+          "False",
           "getattr",
           "hasattr",
           "hash",
@@ -51,22 +49,27 @@ public class BuiltInNamesProvider {
           "list",
           "max",
           "min",
+          "None",
+          "OutputGroupInfo",
+          "PACKAGE_NAME",
           "print",
           "provider",
           "range",
+          "register_execution_platforms",
+          "register_toolchains",
+          "REPOSITORY_NAME",
           "repository_rule",
           "repr",
           "reversed",
           "rule",
-          "select",
-          "set",
           "sorted",
           "str",
           "struct",
+          "True",
+          "tuple",
           "type",
           "zip");
 
-  // https://www.bazel.io/versions/master/docs/be/functions.html
   private static final ImmutableSet<String> FUNCTIONS =
       ImmutableSet.of(
           "load",

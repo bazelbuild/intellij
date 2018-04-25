@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.google.idea.blaze.base.settings.ui.AddDirectoryToProjectAction;
-import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -90,7 +89,7 @@ class AddSourceToProjectAction extends BlazeProjectAction {
           ImmutableList.of(TargetExpression.allFromPackageNonRecursive(context.blazePackage)));
       return;
     }
-    if (AddSourceToProjectHelper.packageCoveredByWildcardPattern(context)) {
+    if (AddSourceToProjectHelper.sourceCoveredByProjectTargets(context)) {
       return;
     }
     // otherwise find the targets building this source file, then add them to the project
@@ -143,11 +142,7 @@ class AddSourceToProjectAction extends BlazeProjectAction {
     if (!SourceToTargetProvider.hasProvider()) {
       return null;
     }
-    if (!SourceToTargetMap.getInstance(project).getRulesForSourceFile(file).isEmpty()) {
-      // early-out if source covered by previously built targets
-      return null;
-    }
-    if (AddSourceToProjectHelper.packageCoveredByWildcardPattern(context)) {
+    if (AddSourceToProjectHelper.sourceCoveredByProjectTargets(context)) {
       return null;
     }
     return "Add source file to project";
