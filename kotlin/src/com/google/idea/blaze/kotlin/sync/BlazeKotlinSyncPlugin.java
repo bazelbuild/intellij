@@ -265,7 +265,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     BlazeKotlinSyncData syncData = BlazeKotlinSyncData.get(blazeProjectData);
     LibraryTable.ModifiableModel libraryTable =
         ProjectLibraryTable.getInstance(project).getModifiableModel();
-    externalKotlinLibraries(syncData)
+    librariesWithSourcesToAttach(syncData)
         .forEach(
             lib -> {
               Library library = libraryTable.getLibraryByName(lib.key.getIntelliJLibraryName());
@@ -281,19 +281,34 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     KotlinJavaModuleConfigurator.Companion.getInstance().configureSilently(project);
   }
 
+  /**
+   * A stream with the libraries that have sources that need to be attached. This includes
+   * dependencies included via KT_JVM_IMPORT, the libraries that are part of the kotlin standard
+   * distribution and source libraries that have srcjars.
+   */
   @NotNull
-  private Stream<BlazeJarLibrary> externalKotlinLibraries(BlazeKotlinSyncData syncData) {
+  private Stream<BlazeJarLibrary> librariesWithSourcesToAttach(BlazeKotlinSyncData syncData) {
     ImmutableMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> targetToLibraryMap =
         syncData.importResult.kotlinTargetToLibraryMap;
     Map<String, BlazeJarLibrary> tally = new HashMap<>();
+    List<BlazeJarLibrary> libsWithSources = new ArrayList<>();
+
     targetToLibraryMap.forEach(
         (ideInfo, libraries) -> {
           if (ideInfo.kind.isOneOf(Kind.KT_JVM_IMPORT, Kind.KOTLIN_STDLIB)) {
             libraries.forEach(lib -> tally.putIfAbsent(lib.key.getIntelliJLibraryName(), lib));
+          } else {
+            libraries
+                .stream()
+                .filter(it -> !it.libraryArtifact.sourceJars.isEmpty())
+                .forEach(libsWithSources::add);
           }
         });
+
     BlazeKotlinStdLib.prepareBlazeLibraries(BlazeKotlinStdLib.MANDATORY_STDLIBS)
         .forEach(lib -> tally.putIfAbsent(lib.key.getIntelliJLibraryName(), lib));
-    return tally.values().stream();
+
+    libsWithSources.addAll(tally.values());
+    return libsWithSources.stream();
   }
 }
