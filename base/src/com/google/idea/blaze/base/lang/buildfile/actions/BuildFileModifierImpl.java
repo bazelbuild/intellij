@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.lang.buildfile.actions;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.buildmodifier.BuildFileModifier;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.Expression;
@@ -27,7 +28,6 @@ import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManage
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -46,24 +46,22 @@ public class BuildFileModifierImpl implements BuildFileModifier {
 
   @Override
   public boolean addRule(Project project, Label newRule, Kind ruleKind) {
+    return addRule(project, newRule, ruleKind, ImmutableMap.of());
+  }
+
+  @Override
+  public boolean addRule(Project project, Label newRule, Kind ruleKind, ImmutableMap<String, String> arguments) {
     BuildFile buildFile = getBuildFile(project, newRule.blazePackage());
     if (buildFile == null) {
       return false;
     }
-    buildFile.add(createRule(project, ruleKind, newRule.targetName().toString()));
+    buildFile.add(createRule(project, ruleKind, newRule.targetName().toString(), arguments));
     return true;
   }
 
   @Override
   public boolean addLoadStatement(Project project, WorkspacePath packagePath, Label label, String... symbols) {
-    BuildReferenceManager manager = BuildReferenceManager.getInstance(project);
-    File file = manager.resolvePackage(packagePath);
-    Label buildLabel = WorkspaceHelper.getBuildLabel(project, file);
-    if (buildLabel == null) {
-      return false;
-    }
-
-    BuildFile buildFile = getBuildFile(project, buildLabel.blazePackage());
+    BuildFile buildFile = getBuildFile(project, packagePath);
     if (buildFile == null) {
       return false;
     }
@@ -75,20 +73,20 @@ public class BuildFileModifierImpl implements BuildFileModifier {
       .orElse(null);
 
     if (statement == null) {
-      buildFile.add(createLoadStatement(project, label, Arrays.asList(symbols)));
+      buildFile.add(createLoadStatement(project, label, Arrays.asList(symbols), true));
     } else {
       List<String> combinedSymbols =
         Stream.of(statement.getVisibleSymbolNames(), symbols)
         .flatMap(Arrays::stream)
         .distinct()
         .collect(Collectors.toList());
-      statement.replace(createLoadStatement(project, label, combinedSymbols));
+      statement.replace(createLoadStatement(project, label, combinedSymbols, false));
     }
 
     return true;
   }
 
-  private static BuildFile getBuildFile(Project project, WorkspacePath packagePath) {
+  public static BuildFile getBuildFile(Project project, WorkspacePath packagePath) {
     BuildReferenceManager manager = BuildReferenceManager.getInstance(project);
     File file = manager.resolvePackage(packagePath);
     if (file == null) {
@@ -105,22 +103,42 @@ public class BuildFileModifierImpl implements BuildFileModifier {
     return buildFile;
   }
 
-  private PsiElement createRule(Project project, Kind ruleKind, String ruleName) {
+  private PsiElement createRule(Project project, Kind ruleKind, String ruleName, ImmutableMap<String, String> args) {
+    ImmutableMap allArgs =
+      ImmutableMap.builder()
+         .putAll(ImmutableMap.of("name", "\"" + ruleName + "\""))
+         .putAll(args)
+         .build();
     String text =
-        Joiner.on(System.lineSeparator())
-          .join(ruleKind.toString() + "(", "    name = \"" + ruleName + "\"", ")");
-    Expression expr = BuildElementGenerator.getInstance(project).createExpressionFromText(text);
+      Joiner.on(System.lineSeparator())
+        .join(ruleKind.toString() + "(",
+          buildString(allArgs),
+          ")");
+    BuildElementGenerator generator = BuildElementGenerator.getInstance(project);
+    Expression expr = generator.createExpressionFromText(text);
     assert (expr instanceof FuncallExpression);
+
+    expr.add(generator.createNewline());
     return expr;
   }
 
-  private PsiElement createLoadStatement(Project project, Label label, List<String> symbols) {
+  private String buildString(ImmutableMap<String, String> args) {
+    return args.entrySet().stream()
+      .map(e -> "    " + e.getKey() + "=" + e.getValue() + ",")
+      .collect(Collectors.joining(System.lineSeparator()));
+  }
+
+  private PsiElement createLoadStatement(Project project, Label label, List<String> symbols, boolean newLine) {
     String symbolsString =
       symbols.stream().collect(Collectors.joining("','", "'", "'"));
     String text =
       String.format("load('%s', %s)", label.toString(), symbolsString);
-    PsiElement expr = BuildElementGenerator.getInstance(project).createElementFromText(text);
+    BuildElementGenerator generator = BuildElementGenerator.getInstance(project);
+    PsiElement expr = generator.createElementFromText(text);
     assert (expr instanceof LoadStatement);
+
+    if (newLine) expr.add(generator.createNewline());
+
     return expr;
   }
 }

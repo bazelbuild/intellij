@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.buildmodifier;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -39,6 +40,19 @@ public interface BuildFileModifier {
    * @return true if rule is added to file, false otherwise
    */
   boolean addRule(Project project, Label newRule, Kind ruleKind);
+
+  /**
+   * Add a new rule to a build file. The rule name and rule kind must be validated before this
+   * method, but no guarantees are made about actually being able to add this rule to the build
+   * file. An example of why it might fail is the build file might already have a rule with the
+   * requested name.
+   *
+   * @param newRule  new rule to create
+   * @param ruleKind valid kind of rule (android_library, java_library, etc.)
+   * @param arguments additional arguments to the rule
+   * @return true if rule is added to file, false otherwise
+   */
+  boolean addRule(Project project, Label newRule, Kind ruleKind, ImmutableMap<String, String> arguments);
 
   /**
    * Add a new load statement to a build file, if a matching statement with same label and symbols doesn't exist.

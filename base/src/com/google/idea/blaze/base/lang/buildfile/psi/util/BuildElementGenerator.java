@@ -19,9 +19,7 @@ import com.google.idea.blaze.base.lang.buildfile.language.BuildFileLanguage;
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
 import com.google.idea.blaze.base.lang.buildfile.lexer.BuildToken;
 import com.google.idea.blaze.base.lang.buildfile.lexer.TokenKind;
-import com.google.idea.blaze.base.lang.buildfile.psi.Argument;
 import com.google.idea.blaze.base.lang.buildfile.psi.Expression;
-import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -76,12 +74,6 @@ public class BuildElementGenerator {
     return stringNode;
   }
 
-  public Argument.Keyword createKeywordArgument(String keyword, String value) {
-    String dummyText = String.format("foo(%s = \"%s\")", keyword, value);
-    FuncallExpression funcall = (FuncallExpression) createExpressionFromText(dummyText);
-    return (Argument.Keyword) funcall.getArguments()[0];
-  }
-
   public Expression createExpressionFromText(String text) {
     PsiElement element = createElementFromText(text);
     if (element instanceof Expression) {
@@ -93,5 +85,9 @@ public class BuildElementGenerator {
   public PsiElement createElementFromText(String text) {
     PsiFile dummyFile = createDummyFile(text);
     return dummyFile.getFirstChild();
+  }
+
+  public PsiElement createNewline() {
+    return createElementFromText("\n");
   }
 }
