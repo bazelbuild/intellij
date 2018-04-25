@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 The Bazel Authors. All rights reserved.
+ * Copyright 2018 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,7 +37,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -73,34 +72,22 @@ import java.util.stream.Stream;
 
 import static com.google.idea.blaze.kotlin.BlazeKotlin.COMPILER_WORKSPACE_NAME;
 
+/** Supports Kotlin. */
 public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
+  // we don't get the plugin ID from org.jetbrains.kotlin.idea.KotlinPluginUtil because that
+  // requires some integration testing setup (e.g. will throw an exception if idea.home.path isn't
+  // set).
+  private static final String KOTLIN_PLUGIN_ID = "org.jetbrains.kotlin";
+
   private static boolean kotlinRepoAbsentFromWorkspace(Project project) {
     WorkspaceRoot workspaceRoot =
         WorkspaceHelper.resolveExternalWorkspace(project, COMPILER_WORKSPACE_NAME);
     return workspaceRoot == null || !workspaceRoot.directory().exists();
   }
 
-  private static void maybeAttachSourceJars(
-      ArtifactLocationDecoder artifactLocationDecoder,
-      BlazeJarLibrary lib,
-      Library.ModifiableModel modifiableIjLibrary) {
-    if (modifiableIjLibrary.getFiles(OrderRootType.SOURCES).length == 0) {
-      for (ArtifactLocation sourceJar : lib.libraryArtifact.sourceJars) {
-        File srcJarFile = artifactLocationDecoder.decode(sourceJar);
-        VirtualFile vfSourceJar = VfsUtil.findFileByIoFile(srcJarFile, false);
-        if (vfSourceJar != null) {
-          VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vfSourceJar);
-          if (jarRoot != null) {
-            modifiableIjLibrary.addRoot(jarRoot, OrderRootType.SOURCES);
-          }
-        }
-      }
-    }
-  }
-
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
-    return Blaze.getBuildSystem(null) == Blaze.BuildSystem.Bazel
+    return KotlinUtils.isKotlinSupportEnabled(workspaceType)
         ? ImmutableSet.of(LanguageClass.KOTLIN)
         : ImmutableSet.of();
   }
@@ -108,7 +95,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
   @Override
   public ImmutableList<String> getRequiredExternalPluginIds(Collection<LanguageClass> languages) {
     return languages.contains(LanguageClass.KOTLIN)
-        ? ImmutableList.of(BlazeKotlin.PLUGIN_ID)
+        ? ImmutableList.of(KOTLIN_PLUGIN_ID)
         : ImmutableList.of();
   }
 
@@ -287,9 +274,10 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
    * distribution and source libraries that have srcjars.
    */
   @NotNull
-  private Stream<BlazeJarLibrary> librariesWithSourcesToAttach(BlazeKotlinSyncData syncData) {
+  private Stream<BlazeJarLibrary> librariesWithSourcesToAttach(
+      BlazeKotlinSyncData blazeProjectData) {
     ImmutableMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> targetToLibraryMap =
-        syncData.importResult.kotlinTargetToLibraryMap;
+        blazeProjectData.importResult.kotlinTargetToLibraryMap;
     Map<String, BlazeJarLibrary> tally = new HashMap<>();
     List<BlazeJarLibrary> libsWithSources = new ArrayList<>();
 
@@ -310,5 +298,23 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
 
     libsWithSources.addAll(tally.values());
     return libsWithSources.stream();
+  }
+
+  private static void maybeAttachSourceJars(
+      ArtifactLocationDecoder artifactLocationDecoder,
+      BlazeJarLibrary lib,
+      Library.ModifiableModel modifiableIjLibrary) {
+    if (modifiableIjLibrary.getFiles(OrderRootType.SOURCES).length == 0) {
+      for (ArtifactLocation sourceJar : lib.libraryArtifact.sourceJars) {
+        File srcJarFile = artifactLocationDecoder.decode(sourceJar);
+        VirtualFile vfSourceJar = VfsUtil.findFileByIoFile(srcJarFile, false);
+        if (vfSourceJar != null) {
+          VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vfSourceJar);
+          if (jarRoot != null) {
+            modifiableIjLibrary.addRoot(jarRoot, OrderRootType.SOURCES);
+          }
+        }
+      }
+    }
   }
 }

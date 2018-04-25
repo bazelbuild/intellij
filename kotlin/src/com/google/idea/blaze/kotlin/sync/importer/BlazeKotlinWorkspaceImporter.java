@@ -39,7 +39,6 @@ import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinImportResult;
 import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinToolchainIdeInfo;
 import com.intellij.openapi.project.Project;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -54,6 +53,7 @@ public class BlazeKotlinWorkspaceImporter {
       new GsonBuilder()
           .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
           .create();
+
   private final TargetMap targetMap;
   private final ProjectViewTargetImportFilter importFilter;
   private final ArtifactLocationDecoder artifactLocationDecoder;
@@ -115,7 +115,6 @@ public class BlazeKotlinWorkspaceImporter {
             });
   }
 
-  @Nonnull
   private Stream<TargetIdeInfo> expandWithKotlinTargets(TargetIdeInfo target) {
     return Stream.concat(
         Stream.of(target),
