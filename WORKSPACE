@@ -16,11 +16,11 @@ new_http_archive(
 new_http_archive(
     name = "intellij_ce_2018_1",
     build_file = "intellij_platform_sdk/BUILD.idea",
-    sha256 = "a5a4f948d259734ac5649122d0c2f7e885b48162cde78e43415638cbfd7a7aa3",
+    sha256 = "2fbbc2ad29082ccdda0422fa082556c180eb80f0d7238865604a49855e5bbb68",
     # TODO: remove this and change BUILD.idea to glob idea-*/ like we do in
     # BUILD.clion once 2017.3 goes away.
-    strip_prefix = "idea-IC-181.4445.78",
-    url = "https://download.jetbrains.com/idea/ideaIC-2018.1.1.tar.gz",
+    strip_prefix = "idea-IC-181.4668.68",
+    url = "https://download.jetbrains.com/idea/ideaIC-2018.1.2.tar.gz",
 )
 
 # The plugin api for IntelliJ UE 2017.3. This is required to run UE-specific
@@ -37,9 +37,9 @@ new_http_archive(
 new_http_archive(
     name = "intellij_ue_2018_1",
     build_file = "intellij_platform_sdk/BUILD.idea",
-    sha256 = "259ede8f233bdde5435ac2c800423428a4692e489fe4d764667c90a246ab0629",
+    sha256 = "c0a8f0fdd9c80bec62320fc26bdf3546ee513f51d990e0cf6d66b3d998e23a10",
     # TODO: see intellij_ce_2018_1
-    strip_prefix = "idea-IU-181.4445.78",
+    strip_prefix = "idea-IU-181.4668.68",
     url = "https://download.jetbrains.com/idea/ideaIU-2018.1.1.tar.gz",
 )
 

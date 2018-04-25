@@ -1,7 +1,7 @@
 """An aspect to gather info needed by the FastBuildService."""
 
 load(
-    "//aspect:artifacts.bzl",
+    ":artifacts.bzl",
     "artifact_location",
     "sources_from_target",
     "struct_omit_none",

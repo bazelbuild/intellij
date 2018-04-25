@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.dependencies;
 
+import static com.google.idea.common.guava.GuavaHelper.toImmutableList;
+
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -23,7 +25,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -59,6 +60,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Consumer;
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -220,12 +222,6 @@ class AddSourceToProjectHelper {
     if (!SourceToTargetProvider.hasProvider()) {
       return null;
     }
-    if (!SourceToTargetMap.getInstance(context.project)
-        .getRulesForSourceFile(context.file)
-        .isEmpty()) {
-      // early-out if source covered by previously built targets
-      return null;
-    }
     // early-out if source is trivially covered by project targets (e.g. because there's a wildcard
     // target pattern for the parent package)
     List<TargetExpression> projectTargets = context.projectViewSet.listItems(TargetSection.KEY);
@@ -238,8 +234,7 @@ class AddSourceToProjectHelper {
         SourceToTargetProvider.findTargetsBuildingSourceFile(
             context.project, context.workspacePath.relativePath()),
         (Function<List<TargetInfo>, List<TargetInfo>>)
-            (List<TargetInfo> result) ->
-                filterTargets(context.syncData.targetMap, projectTargets, result),
+            (List<TargetInfo> result) -> filterTargets(projectTargets, result),
         MoreExecutors.directExecutor());
   }
 
@@ -248,8 +243,8 @@ class AddSourceToProjectHelper {
    * unsupported language.
    */
   private static List<TargetInfo> filterTargets(
-      TargetMap targetMap, List<TargetExpression> projectViewTargets, List<TargetInfo> targets) {
-    if (sourceInProjectTargets(targetMap, projectViewTargets, targets)) {
+      List<TargetExpression> projectViewTargets, List<TargetInfo> targets) {
+    if (sourceInProjectTargets(projectViewTargets, fromTargetInfo(targets))) {
       return ImmutableList.of();
     }
     targets.removeIf(t -> !supportedTargetKind(t));
@@ -257,13 +252,30 @@ class AddSourceToProjectHelper {
   }
 
   /**
-   * Returns true if the project targets (both included and excluded targets) contain one of the
-   * targets building the source file.
+   * Returns true if the project view targets (both included and excluded targets) trivially contain
+   * one of the targets building the source file.
+   */
+  static boolean sourceCoveredByProjectTargets(LocationContext context) {
+    List<TargetExpression> projectTargets = context.projectViewSet.listItems(TargetSection.KEY);
+    Collection<TargetKey> targetsBuildingSource =
+        SourceToTargetMap.getInstance(context.project).getRulesForSourceFile(context.file);
+    return !targetsBuildingSource.isEmpty()
+        && sourceInProjectTargets(projectTargets, targetsBuildingSource);
+  }
+
+  private static Collection<TargetKey> fromTargetInfo(Collection<TargetInfo> targetInfos) {
+    return targetInfos
+        .stream()
+        .map(t -> TargetKey.forPlainTarget(t.label))
+        .collect(toImmutableList());
+  }
+
+  /**
+   * Returns true if the project view targets (both included and excluded targets) contain one of
+   * the targets building the source file.
    */
   private static boolean sourceInProjectTargets(
-      TargetMap targetMap,
-      List<TargetExpression> projectViewTargets,
-      List<TargetInfo> targetsBuildingSource) {
+      List<TargetExpression> projectViewTargets, Collection<TargetKey> targetsBuildingSource) {
     // treat excluded and included project targets identically
     projectViewTargets =
         projectViewTargets
@@ -271,14 +283,22 @@ class AddSourceToProjectHelper {
             .map(AddSourceToProjectHelper::unexclude)
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
-    for (TargetInfo targetInfo : targetsBuildingSource) {
-      Label label = targetInfo.label;
+    for (TargetKey target : targetsBuildingSource) {
+      Label label = target.label;
       if (projectViewTargets.contains(label)
-          || targetMap.contains(TargetKey.forPlainTarget(label))) {
+          || packageCoveredByWildcardPattern(projectViewTargets, label.blazePackage())) {
         return true;
       }
     }
     return false;
+  }
+
+  private static boolean packageCoveredByWildcardPattern(
+      List<TargetExpression> projectTargets, WorkspacePath blazePackage) {
+    return projectTargets
+        .stream()
+        .map(WildcardTargetPattern::fromExpression)
+        .anyMatch(wildcard -> wildcard != null && wildcard.coversPackage(blazePackage));
   }
 
   @Nullable
@@ -339,19 +359,6 @@ class AddSourceToProjectHelper {
 
   static boolean supportedLanguage(LanguageClass language) {
     return LanguageSupport.languagesSupportedByCurrentIde().contains(language);
-  }
-
-  static boolean packageCoveredByWildcardPattern(LocationContext context) {
-    List<TargetExpression> projectTargets = context.projectViewSet.listItems(TargetSection.KEY);
-    return packageCoveredByWildcardPattern(projectTargets, context.blazePackage);
-  }
-
-  private static boolean packageCoveredByWildcardPattern(
-      List<TargetExpression> projectTargets, WorkspacePath blazePackage) {
-    return projectTargets
-        .stream()
-        .map(WildcardTargetPattern::fromExpression)
-        .anyMatch(wildcard -> wildcard != null && wildcard.coversPackage(blazePackage));
   }
 
   /** Returns the location context related to a source file to be added to the project. */

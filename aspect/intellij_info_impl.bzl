@@ -1,7 +1,7 @@
 """Implementation of IntelliJ-specific information collecting aspect."""
 
 load(
-    "//aspect:artifacts.bzl",
+    ":artifacts.bzl",
     "artifact_location",
     "artifacts_from_target_list_attr",
     "is_external_artifact",
