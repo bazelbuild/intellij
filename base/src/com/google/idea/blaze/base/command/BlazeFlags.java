@@ -51,7 +51,6 @@ public final class BlazeFlags {
   public static final String EXPERIMENTAL_SHOW_ARTIFACTS = "--experimental_show_artifacts";
 
   public static final String DELETED_PACKAGES = "--deleted_packages";
-  public static final String NOCHECK_VISIBILITY = "--nocheck_visibility";
 
   public static List<String> blazeFlags(
       Project project,

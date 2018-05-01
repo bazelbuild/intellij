@@ -20,6 +20,7 @@ import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
@@ -35,7 +36,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScObject;
 import org.jetbrains.plugins.scala.runner.ScalaMainMethodUtil;
@@ -47,14 +47,12 @@ import java.util.Collection;
 import java.util.Objects;
 
 /** Creates run configurations for Scala main classes sourced by scala_binary targets. */
-public abstract class BlazeScalaMainClassRunConfigurationProducer
+public class BlazeScalaMainClassRunConfigurationProducer
   extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
+  private static final String SCALA_BINARY_MAP_KEY = "BlazeScalaBinaryMap";
 
-  private final String cacheKey;
-
-  protected BlazeScalaMainClassRunConfigurationProducer(String cacheKey) {
+  protected BlazeScalaMainClassRunConfigurationProducer() {
     super(BlazeCommandRunConfigurationType.getInstance());
-    this.cacheKey = cacheKey;
   }
 
   @Override
@@ -210,10 +208,16 @@ public abstract class BlazeScalaMainClassRunConfigurationProducer
     FilteredTargetMap map =
       SyncCache.getInstance(project)
         .get(
-          cacheKey,
+          SCALA_BINARY_MAP_KEY,
           this::computeTargetMap);
     return map != null ? map.targetsForSourceFile(mainClassFile) : ImmutableList.of();
   }
 
-  protected abstract FilteredTargetMap computeTargetMap(Project project, BlazeProjectData projectData);
+  private FilteredTargetMap computeTargetMap(Project project, BlazeProjectData projectData) {
+    return new FilteredTargetMap(
+      project,
+      projectData.artifactLocationDecoder,
+      projectData.targetMap,
+      (target) -> target.kind == Kind.SCALA_BINARY && target.isPlainTarget());
+  }
 }

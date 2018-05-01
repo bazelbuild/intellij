@@ -26,9 +26,9 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationProducer
-        implementation="com.google.idea.blaze.scala.run.producers.ScalaBinaryRunConfigurationProducer"/>
+        implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaMainClassRunConfigurationProducer"/>
     <runConfigurationProducer
-        implementation="com.google.idea.blaze.scala.run.producers.ScalaLibraryRunConfigurationProducer"/>
+            implementation="com.google.idea.blaze.scala.run.producers.DeployableJarRunConfigurationProducer"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaTestClassConfigurationProducer"/>
     <runConfigurationProducer
@@ -42,7 +42,7 @@
         implementationClass="com.google.idea.blaze.scala.run.producers.BlazeScalaTestRunLineMarkerContributor"
         language="Scala"
         order="first"/>
-    <stepsBeforeRunProvider implementation="com.google.idea.blaze.scala.run.producers.ScalaGeneratedBinaryTargetRunTaskProvider"/>
+    <stepsBeforeRunProvider implementation="com.google.idea.blaze.scala.run.producers.GenerateExecutableDeployableJarProviderTaskProvider"/>
   </extensions>
 
   <project-components>
