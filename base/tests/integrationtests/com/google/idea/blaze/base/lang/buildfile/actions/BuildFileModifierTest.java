@@ -21,10 +21,8 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -52,23 +50,5 @@ public class BuildFileModifierTest extends BuildFileIntegrationTestCase {
         "java_test(",
         "    name = \"new_target\"",
         ")");
-  }
-
-  @Test
-  public void testAddNewLoadStatement() {
-    WorkspacePath workspacePath = new WorkspacePath("BUILD");
-    BuildFile buildFile = createBuildFile(workspacePath);
-
-    WriteCommandAction.runWriteCommandAction(
-        getProject(),
-        (Computable<Boolean>)
-            () -> BuildFileModifier.getInstance()
-                .addLoadStatement(
-                    getProject(),
-                    workspacePath,
-                    Label.create("@io_bazel_rules_scala//scala:scala.bzl"), "scala_binary"));
-    assertFileContents(
-      buildFile,
-      "load('@io_bazel_rules_scala//scala:scala.bzl', 'scala_binary')");
   }
 }

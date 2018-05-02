@@ -36,22 +36,22 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import java.io.File;
+import java.util.Collection;
+import java.util.Objects;
+import javax.annotation.Nullable;
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScObject;
 import org.jetbrains.plugins.scala.runner.ScalaMainMethodUtil;
 import scala.Option;
 
-import javax.annotation.Nullable;
-import java.io.File;
-import java.util.Collection;
-import java.util.Objects;
-
 /** Creates run configurations for Scala main classes sourced by scala_binary targets. */
 public class BlazeScalaMainClassRunConfigurationProducer
-  extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
+    extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
+
   private static final String SCALA_BINARY_MAP_KEY = "BlazeScalaBinaryMap";
 
-  protected BlazeScalaMainClassRunConfigurationProducer() {
+  public BlazeScalaMainClassRunConfigurationProducer() {
     super(BlazeCommandRunConfigurationType.getInstance());
   }
 
@@ -105,7 +105,7 @@ public class BlazeScalaMainClassRunConfigurationProducer
   }
 
   @Nullable
-  protected static ScObject getMainObject(ConfigurationContext context) {
+  static ScObject getMainObject(ConfigurationContext context) {
     Location location = context.getLocation();
     if (location == null) {
       return null;
@@ -157,7 +157,7 @@ public class BlazeScalaMainClassRunConfigurationProducer
   }
 
   @Nullable
-  protected TargetIdeInfo getTarget(Project project, ScObject mainObject) {
+  private static TargetIdeInfo getTarget(Project project, ScObject mainObject) {
     File mainObjectFile = RunUtil.getFileForClass(mainObject);
     if (mainObjectFile == null) {
       return null;
@@ -204,20 +204,21 @@ public class BlazeScalaMainClassRunConfigurationProducer
   }
 
   /** Returns all scala_binary targets reachable from the given source file. */
-  private Collection<TargetIdeInfo> findScalaBinaryTargets(Project project, File mainClassFile) {
+  private static Collection<TargetIdeInfo> findScalaBinaryTargets(
+      Project project, File mainClassFile) {
     FilteredTargetMap map =
-      SyncCache.getInstance(project)
-        .get(
-          SCALA_BINARY_MAP_KEY,
-          this::computeTargetMap);
+        SyncCache.getInstance(project)
+            .get(
+                SCALA_BINARY_MAP_KEY,
+                BlazeScalaMainClassRunConfigurationProducer::computeTargetMap);
     return map != null ? map.targetsForSourceFile(mainClassFile) : ImmutableList.of();
   }
 
-  private FilteredTargetMap computeTargetMap(Project project, BlazeProjectData projectData) {
+  private static FilteredTargetMap computeTargetMap(Project project, BlazeProjectData projectData) {
     return new FilteredTargetMap(
-      project,
-      projectData.artifactLocationDecoder,
-      projectData.targetMap,
-      (target) -> target.kind == Kind.SCALA_BINARY && target.isPlainTarget());
+        project,
+        projectData.artifactLocationDecoder,
+        projectData.targetMap,
+        (target) -> target.kind == Kind.SCALA_BINARY && target.isPlainTarget());
   }
 }
