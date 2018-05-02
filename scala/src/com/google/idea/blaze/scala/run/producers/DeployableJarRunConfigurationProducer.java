@@ -14,8 +14,8 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.run.RunUtil;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.jar.JarApplicationConfiguration;
-import com.intellij.execution.jar.JarApplicationConfigurationType;
+import com.intellij.execution.application.ApplicationConfiguration;
+import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -28,20 +28,18 @@ import java.util.Collection;
 import static com.google.idea.blaze.scala.run.producers.BlazeScalaMainClassRunConfigurationProducer.getMainObject;
 
 public class DeployableJarRunConfigurationProducer
-  extends BlazeRunConfigurationProducer<JarApplicationConfiguration> {
+  extends BlazeRunConfigurationProducer<ApplicationConfiguration> {
 
-  static final Key<String> CALLING_MAIN_CLASS =
-    Key.create("blaze.scala.library.main.class");
   public static final Key<Label> TARGET_LABEL =
     Key.create("blaze.scala.library.target.label");
 
   protected DeployableJarRunConfigurationProducer() {
-    super(JarApplicationConfigurationType.getInstance());
+    super(ApplicationConfigurationType.getInstance());
   }
 
   @Override
   protected boolean doSetupConfigFromContext(
-    JarApplicationConfiguration configuration,
+    ApplicationConfiguration configuration,
     ConfigurationContext context,
     Ref<PsiElement> sourceElement) {
 
@@ -61,13 +59,13 @@ public class DeployableJarRunConfigurationProducer
     }
 
     Label label = target.key.label;
-    WorkspaceRoot root = WorkspaceRoot.fromProject(context.getProject());
-    String jarPath = String.format("bazel-bin/%s_deploy.jar", label.targetName());
-    File jarFile = root.fileForPath(WorkspacePath.createIfValid(jarPath));
+    File jarFile = getDeployJarFile(label, context.getProject());
 
-    configuration.setJarPath(jarFile.getAbsolutePath());
+    configuration.setVMParameters("-cp " + jarFile.getPath());
+    configuration.setMainClassName(mainObject.getTruncedQualifiedName());
+    configuration.setModule(context.getModule());
+
     configuration.putUserData(TARGET_LABEL, label);
-    configuration.putUserData(CALLING_MAIN_CLASS, mainObject.getTruncedQualifiedName());
     configuration.setName(mainObject.name());
     configuration.setNameChangedByUser(true); // don't revert to generated name
 
@@ -77,8 +75,36 @@ public class DeployableJarRunConfigurationProducer
   }
 
   @Override
-  protected boolean doIsConfigFromContext(JarApplicationConfiguration configuration, ConfigurationContext context) {
-    return false;
+  protected boolean doIsConfigFromContext(
+    ApplicationConfiguration configuration,
+    ConfigurationContext context) {
+    ScObject mainObject = getMainObject(context);
+    if (mainObject == null) {
+      return false;
+    }
+
+    File mainObjectFile = RunUtil.getFileForClass(mainObject);
+    if (mainObjectFile == null) {
+      return false;
+    }
+
+    TargetIdeInfo target = findTarget(context.getProject(), mainObjectFile);
+    if (target == null) {
+      return false;
+    }
+
+    if (configuration.getMainClass() == null) {
+      return false;
+    }
+    if (configuration.getVMParameters() == null) {
+      return false;
+    }
+
+    Label label = target.key.label;
+    File jarFile = getDeployJarFile(label, context.getProject());
+
+    return configuration.getMainClass().getQualifiedName().equals(mainObject.getTruncedQualifiedName()) &&
+           configuration.getVMParameters().contains("-cp " + jarFile.getPath());
   }
 
   private TargetIdeInfo findTarget(Project project, File sourceFile) {
@@ -99,10 +125,16 @@ public class DeployableJarRunConfigurationProducer
     return Iterables.getFirst(targets, null);
   }
 
-  private void setDeployableJarGeneratorTask(JarApplicationConfiguration config) {
+  private void setDeployableJarGeneratorTask(ApplicationConfiguration config) {
     Project project = config.getProject();
     RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
     runManager.setBeforeRunTasks(config,
-      ImmutableList.of(new GenerateExecutableDeployableJarProviderTaskProvider(project).createTask(config)));
+      ImmutableList.of(new GenerateExecutableDeployableJarProviderTaskProvider.Task()));
+  }
+
+  public File getDeployJarFile(Label target, Project project) {
+    WorkspaceRoot root = WorkspaceRoot.fromProject(project);
+    return root.fileForPath(WorkspacePath.createIfValid(
+      String.format("bazel-bin/%s_deploy.jar", target.targetName())));
   }
 }
