@@ -2,10 +2,16 @@ Plugin to sync settings for the [protostuff intellij proto plugin](https://githu
 
 ## Behavior
 
-If the plugin is available in the workspace: and If the canonical
-`com_google_protobuf` workspace is found add it to the import path so
-that the WKT's may be discovered.
+if any `proto_import_roots` sections are found and the plugin is missing
+add an information issue to install the plugin.
 
-Provide a `proto_import_roots` directory section to add additional
-import paths. If the view set contains any such entries offer to install
-the plugin.
+Add workspace directories to the protobuf plugin so that it may resolve
+types correctly.
+
+valid `proto_import_roots`:
+```
+proto_import_roots:
+  @com_google_protobuf//src
+  proto/axsy
+  //proto/axsy
+```

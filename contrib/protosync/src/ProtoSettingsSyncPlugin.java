@@ -43,9 +43,7 @@ public class ProtoSettingsSyncPlugin implements BlazeSyncPlugin {
       BlazeContext context,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings) {
-    if (ProtoSettingsSyncSections.getProtoImportRoots(project, projectViewSet)
-            .findFirst()
-            .isPresent()
+    if (ProtoSettingsSyncSections.hasProtoEntries(projectViewSet)
         && !PluginUtils.isPluginInstalled(PLUGIN_ID)) {
       IssueOutput.issue(
               IssueOutput.Category.INFORMATION,
@@ -72,7 +70,7 @@ public class ProtoSettingsSyncPlugin implements BlazeSyncPlugin {
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState) {
     if (PluginUtils.isPluginInstalled(PLUGIN_ID)) {
-      ProtoSettingsSyncUpdater.syncSettings(project, projectViewSet);
+      ProtoSettingsSyncUpdater.syncSettings(project, projectViewSet, context);
     }
   }
 
