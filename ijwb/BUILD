@@ -28,6 +28,7 @@ merged_plugin_xml(
     name = "merged_plugin_xml_common",
     srcs = [
         "src/META-INF/ijwb.xml",
+        "//contrib:plugin_xml",
         "//base:plugin_xml",
         "//dart:plugin_xml",
         "//golang:plugin_xml",
@@ -84,6 +85,7 @@ java_library(
         "//scala",
         "//skylark",
         "//terminal",
+        "//contrib"
     ],
     deps = [
         "//base",
