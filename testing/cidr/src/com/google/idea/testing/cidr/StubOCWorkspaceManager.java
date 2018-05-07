@@ -21,8 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 
 /**
- * A stub {@link OCWorkspaceManager} to use for testing. Also allows toggling on C++ support (which
- * may have been disabled by other OCWorkspaceManagers.
+ * A stub {@link OCWorkspaceManagerAdapter} to use for testing. Also allows toggling on C++ support
+ * (which may have been disabled by other OCWorkspaceManagers.
  *
  * <p>Once the plugin API ships with a more official OCWorkspaceManager-for-testing, we may be able
  * to switch over to those classes. See: b/32420569

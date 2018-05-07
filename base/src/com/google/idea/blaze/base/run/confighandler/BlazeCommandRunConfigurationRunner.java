@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.Key;
 
@@ -42,4 +43,9 @@ public interface BlazeCommandRunConfigurationRunner {
    *     if the task either failed or was cancelled.
    */
   boolean executeBeforeRunTask(ExecutionEnvironment environment);
+
+  static boolean isDebugging(ExecutionEnvironment environment) {
+    Executor executor = environment.getExecutor();
+    return executor instanceof DefaultDebugExecutor;
+  }
 }

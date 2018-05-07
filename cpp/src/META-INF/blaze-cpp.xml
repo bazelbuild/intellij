@@ -46,6 +46,7 @@
     <languageKindHelper implementation="com.google.idea.blaze.cpp.BlazeLanguageKindCalculatorHelper"/>
     <autoImportHelper implementation="com.google.idea.blaze.cpp.BlazeCppAutoImportHelper"/>
     <customHeaderProvider implementation="com.google.idea.blaze.cpp.BlazeCustomHeaderProvider"/>
+    <includeHelper implementation="com.google.idea.blaze.cpp.BlazeIncludeHelper"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <projectViewNodeDecorator implementation="com.google.idea.blaze.cpp.syncstatus.BlazeCppSyncStatusFileNodeDecorator"/>

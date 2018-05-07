@@ -19,10 +19,13 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import icons.BlazeIcons;
 import javax.annotation.Nullable;
@@ -34,6 +37,8 @@ import javax.swing.Icon;
  */
 public final class BlazeBeforeRunTaskProvider
     extends BeforeRunTaskProvider<BlazeBeforeRunTaskProvider.Task> {
+
+  private static final Logger logger = Logger.getInstance(BlazeBeforeRunTaskProvider.class);
 
   public static final Key<Task> ID = Key.create("Blaze.BeforeRunTask");
 
@@ -109,6 +114,14 @@ public final class BlazeBeforeRunTaskProvider
     }
     BlazeCommandRunConfigurationRunner runner =
         env.getCopyableUserData(BlazeCommandRunConfigurationRunner.RUNNER_KEY);
-    return runner.executeBeforeRunTask(env);
+    try {
+      return runner.executeBeforeRunTask(env);
+    } catch (RuntimeException e) {
+      // An uncaught exception here means IntelliJ never cleans up and the configuration is always
+      // considered to be already running, so you can't start it ever again.
+      logger.warn("Uncaught exception in Blaze before run task", e);
+      ExecutionUtil.handleExecutionError(env, new ExecutionException(e));
+      return false;
+    }
   }
 }

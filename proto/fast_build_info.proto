@@ -23,6 +23,7 @@ import "proto/common.proto";
 message FastBuildBlazeData {
   string label = 1;
   repeated string dependencies = 2;
+  string workspace_name = 3;
 
   oneof provider_info {
     JavaInfo java_info = 8;

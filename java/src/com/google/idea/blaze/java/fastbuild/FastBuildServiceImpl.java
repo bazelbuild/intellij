@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.java.fastbuild;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.idea.common.guava.GuavaHelper.toImmutableMap;
 
@@ -36,10 +35,7 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -133,7 +129,6 @@ final class FastBuildServiceImpl implements FastBuildService {
     Map<String, String> loggingData = new LinkedHashMap<>();
 
     try {
-      checkLabelIsSupported(label);
       FastBuildParameters buildParameters = generateBuildParameters(blazeBinaryPath, blazeFlags);
       FastBuildState buildState =
           builds.compute(
@@ -144,6 +139,7 @@ final class FastBuildServiceImpl implements FastBuildService {
           buildOutput ->
               FastBuildInfo.create(
                   label,
+                  buildOutput.deployJar(),
                   ImmutableList.of(buildState.compilerOutputDirectory(), buildOutput.deployJar()),
                   buildOutput.blazeData(),
                   loggingData),
@@ -151,17 +147,6 @@ final class FastBuildServiceImpl implements FastBuildService {
     } catch (FastBuildTunnelException e) {
       throw e.asFastBuildException();
     }
-  }
-
-  private void checkLabelIsSupported(Label label) {
-    BlazeProjectData blazeProjectData = projectDataManager.getBlazeProjectData();
-    checkState(blazeProjectData != null, "this is not a blaze project");
-    TargetIdeInfo ideInfo = blazeProjectData.targetMap.get(TargetKey.forPlainTarget(label));
-    checkArgument(ideInfo != null, "label %s is not found, run a blaze sync?", label);
-    checkArgument(
-        supportsFastBuilds(ideInfo.kind),
-        "fast builds are not supported for %s targets",
-        ideInfo.kind);
   }
 
   private FastBuildParameters generateBuildParameters(

@@ -15,9 +15,11 @@
  */
 package com.google.idea.blaze.java.run;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
+import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationRunner.BlazeCommandRunProfileState;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -58,13 +60,10 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
   @Override
   public BlazeCommandRunConfigurationRunner createRunner(
       Executor executor, ExecutionEnvironment environment) {
-    if (FastBuildService.enabled.getValue()
-        && state.getFastBuildState().useFastBuild()
-        && JavaFastBuildConfigurationRunnerFactory.getInstance(buildSystem).isPresent()) {
-      return JavaFastBuildConfigurationRunnerFactory.getInstance(buildSystem).get().createRunner();
-    } else {
-      return new BlazeJavaRunConfigurationRunner();
+    if (FastBuildService.enabled.getValue() && state.getFastBuildState().useFastBuild()) {
+      return new FastBuildConfigurationRunner();
     }
+    return new BlazeJavaRunConfigurationRunner();
   }
 
   @Override
@@ -103,6 +102,9 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
 
     @Override
     public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment env) {
+      if (!BlazeCommandRunConfigurationRunner.isDebugging(env)) {
+        return new BlazeCommandRunProfileState(env, ImmutableList.of());
+      }
       ClassFileManifestBuilder.initState(env);
       return new BlazeJavaRunProfileState(env);
     }

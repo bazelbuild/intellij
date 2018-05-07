@@ -19,6 +19,7 @@ java_library(
         "clion-2018.1": glob(["sdk_2018_1/src/**/*.java"]),
         "clion-2017.3": glob(["sdk_2017_3/src/**/*.java"]),
         "android-studio-3.0": glob(["sdk_2017_3/src/**/*.java"]),
+        "android-studio-3.2": glob(["sdk_2018_1/src/**/*.java"]),
     }),
     visibility = ["//visibility:public"],
     deps = [

@@ -61,13 +61,12 @@ class StubOCWorkspace implements OCWorkspace {
   }
 
   @Override
-  public List<? extends OCResolveConfiguration> getConfigurations() {
+  public List<OCResolveConfiguration> getConfigurations() {
     return resolveConfigurations;
   }
 
   @Override
-  public List<? extends OCResolveConfiguration> getConfigurationsForFile(
-      @Nullable VirtualFile sourceFile) {
+  public List<OCResolveConfiguration> getConfigurationsForFile(@Nullable VirtualFile sourceFile) {
     if (sourceFile == null) {
       return Collections.emptyList();
     }

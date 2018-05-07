@@ -261,14 +261,16 @@ final class BlazeSyncTask implements Progressive {
   }
 
   private void logSyncError(BlazeContext context, Throwable e) {
-    Throwable rootCause = e;
-    while (rootCause.getCause() != null) {
-      rootCause = rootCause.getCause();
+    // ignore ProcessCanceledException
+    Throwable cause = e;
+    while (cause != null) {
+      if (cause instanceof ProcessCanceledException) {
+        return;
+      }
+      cause = cause.getCause();
     }
-    if (!(rootCause instanceof ProcessCanceledException)) {
-      logger.error(e);
-      IssueOutput.error("Internal error: " + e.getMessage()).submit(context);
-    }
+    logger.error(e);
+    IssueOutput.error("Internal error: " + e.getMessage()).submit(context);
   }
 
   /** @return true if sync successfully completed */

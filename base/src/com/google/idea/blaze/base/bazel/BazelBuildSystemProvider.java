@@ -39,7 +39,6 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
     return BuildSystem.Bazel;
   }
 
-  @Nullable
   @Override
   public String getBinaryPath() {
     BlazeUserSettings settings = BlazeUserSettings.getInstance();

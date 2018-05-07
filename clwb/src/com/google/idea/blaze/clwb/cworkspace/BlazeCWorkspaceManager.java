@@ -24,22 +24,16 @@ import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 /** #api173 Once pre-181 does not need to be supported, BlazeCWorkspaceManager can be removed */
 class BlazeCWorkspaceManager extends OCWorkspaceManagerAdapter {
   private final Project project;
-  private final OCWorkspaceManagerWrapper delegate;
 
   public BlazeCWorkspaceManager(Project project) {
     this.project = project;
-    this.delegate = getDelegate(project);
   }
 
   @Override
   public OCWorkspace getWorkspace() {
     if (Blaze.isBlazeProject(project)) {
-      return BlazeCWorkspace.getInstance(project);
+      return BlazeCWorkspace.getInstance(project).getWorkspace();
     }
-    // this is a gross hack, necessitated by OCWorkspaceManager being a service, rather than
-    // using extension points. We can return for a Blaze workspace, but need to delegate for
-    // non-Blaze. On v171, this goes via NdkWorkspaceProvider. On v173, this goes via
-    // CPPWorkspaceManager. on v181, there is no Manager layer.
-    return delegate.getWorkspace(project);
+    return getWorkspaceFallback(project);
   }
 }

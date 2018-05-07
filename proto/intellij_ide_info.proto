@@ -143,6 +143,10 @@ message JavaToolchainIdeInfo {
   ArtifactLocation javac_jar = 3;
 }
 
+message KotlinToolchainIdeInfo {
+  ArtifactLocation json_info_file = 1;
+}
+
 message TargetKey {
   string label = 1;
   repeated string aspect_ids = 3;
@@ -158,7 +162,7 @@ message Dependency {
   DependencyType dependency_type = 2;
 }
 
-// Next Available: 30
+// Next Available: 31
 message TargetIdeInfo {
   string label = 1 [deprecated = true];
   repeated string dependencies = 4 [deprecated = true];
@@ -199,6 +203,6 @@ message TargetIdeInfo {
   JsIdeInfo js_ide_info = 26;
   TsIdeInfo ts_ide_info = 27;
   DartIdeInfo dart_ide_info = 28;
-
   AndroidAarIdeInfo android_aar_ide_info = 29;
+  KotlinToolchainIdeInfo kt_toolchain_ide_info = 30;
 }

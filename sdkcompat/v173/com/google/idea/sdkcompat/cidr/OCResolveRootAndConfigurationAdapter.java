@@ -24,7 +24,21 @@ import javax.annotation.Nullable;
 /** Adapter to bridge different SDK versions. */
 public class OCResolveRootAndConfigurationAdapter extends OCResolveRootAndConfiguration {
 
-  public OCResolveRootAndConfigurationAdapter(
+  public static OCResolveRootAndConfigurationAdapter safelyConstruct(
+      @Nullable OCResolveConfiguration configuration,
+      @Nullable OCLanguageKind kind,
+      @Nullable VirtualFile rootFile) {
+    if (kind == null && configuration != null && rootFile != null) {
+      kind = configuration.getDeclaredLanguageKind(rootFile);
+    }
+    if (kind == null) {
+      // Reasonable guess
+      kind = OCLanguageKind.CPP;
+    }
+    return new OCResolveRootAndConfigurationAdapter(configuration, kind, rootFile);
+  }
+
+  private OCResolveRootAndConfigurationAdapter(
       @Nullable OCResolveConfiguration configuration,
       OCLanguageKind kind,
       @Nullable VirtualFile rootFile) {

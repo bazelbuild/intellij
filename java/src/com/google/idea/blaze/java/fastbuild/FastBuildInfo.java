@@ -29,6 +29,8 @@ public abstract class FastBuildInfo {
 
   public abstract Label label();
 
+  public abstract File deployJar();
+
   public abstract ImmutableList<File> classpath();
 
   public abstract ImmutableMap<Label, FastBuildBlazeData> blazeData();
@@ -37,11 +39,13 @@ public abstract class FastBuildInfo {
 
   public static FastBuildInfo create(
       Label label,
+      File deployJar,
       List<File> classpath,
       Map<Label, FastBuildBlazeData> blazeData,
       Map<String, String> loggingData) {
     return new AutoValue_FastBuildInfo(
         label,
+        deployJar,
         ImmutableList.copyOf(classpath),
         ImmutableMap.copyOf(blazeData),
         ImmutableMap.copyOf(loggingData));

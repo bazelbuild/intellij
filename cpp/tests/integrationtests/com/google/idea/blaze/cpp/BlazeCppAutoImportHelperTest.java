@@ -18,6 +18,7 @@ package com.google.idea.blaze.cpp;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.CIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
@@ -39,6 +40,8 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.psi.OCFile;
 import com.jetbrains.cidr.lang.psi.OCReferenceElement;
 import com.jetbrains.cidr.lang.quickfixes.OCImportSymbolFix;
@@ -57,6 +60,8 @@ import org.junit.runners.JUnit4;
  */
 @RunWith(JUnit4.class)
 public class BlazeCppAutoImportHelperTest extends BlazeCppIntegrationTestCase {
+
+  private VirtualFile genfilesRoot;
 
   @Before
   public void setup() {
@@ -98,11 +103,10 @@ public class BlazeCppAutoImportHelperTest extends BlazeCppIntegrationTestCase {
         testFixture.findElementByText("std::vector<int>", OCReferenceElement.class);
     OCImportSymbolFix fix = new OCImportSymbolFix(referenceElement);
     assertThat(fix.isAvailable(getProject(), testFixture.getEditor(), file)).isTrue();
-    assertThat(fix.getAutoImportItems()).hasSize(1);
-    assertThat(fix.getAutoImportItems().get(0).getTitleAndLocation().getFirst())
-        .isEqualTo("class 'std::vector'");
-    assertThat(fix.getAutoImportItems().get(0).getTitleAndLocation().getSecond())
-        .isEqualTo("<vector.h>");
+    OCImportSymbolFix.AutoImportItem importItem =
+        Iterables.getOnlyElement(fix.getAutoImportItems());
+    assertThat(importItem.getTitleAndLocation().getFirst()).isEqualTo("class 'std::vector'");
+    assertThat(importItem.getTitleAndLocation().getSecond()).isEqualTo("<vector.h>");
   }
 
   @Test
@@ -128,11 +132,10 @@ public class BlazeCppAutoImportHelperTest extends BlazeCppIntegrationTestCase {
         testFixture.findElementByText("SomeClass*", OCReferenceElement.class);
     OCImportSymbolFix fix = new OCImportSymbolFix(referenceElement);
     assertThat(fix.isAvailable(getProject(), testFixture.getEditor(), file)).isTrue();
-    assertThat(fix.getAutoImportItems()).hasSize(1);
-    assertThat(fix.getAutoImportItems().get(0).getTitleAndLocation().getFirst())
-        .isEqualTo("class 'SomeClass'");
-    assertThat(fix.getAutoImportItems().get(0).getTitleAndLocation().getSecond())
-        .isEqualTo("\"foo/bar/test.h\"");
+    OCImportSymbolFix.AutoImportItem importItem =
+        Iterables.getOnlyElement(fix.getAutoImportItems());
+    assertThat(importItem.getTitleAndLocation().getFirst()).isEqualTo("class 'SomeClass'");
+    assertThat(importItem.getTitleAndLocation().getSecond()).isEqualTo("\"foo/bar/test.h\"");
   }
 
   @Test
@@ -158,11 +161,37 @@ public class BlazeCppAutoImportHelperTest extends BlazeCppIntegrationTestCase {
         testFixture.findElementByText("SomeClass*", OCReferenceElement.class);
     OCImportSymbolFix fix = new OCImportSymbolFix(referenceElement);
     assertThat(fix.isAvailable(getProject(), testFixture.getEditor(), file)).isTrue();
-    assertThat(fix.getAutoImportItems()).hasSize(1);
-    assertThat(fix.getAutoImportItems().get(0).getTitleAndLocation().getFirst())
-        .isEqualTo("class 'SomeClass'");
-    assertThat(fix.getAutoImportItems().get(0).getTitleAndLocation().getSecond())
-        .isEqualTo("\"baz/test.h\"");
+    OCImportSymbolFix.AutoImportItem importItem =
+        Iterables.getOnlyElement(fix.getAutoImportItems());
+    assertThat(importItem.getTitleAndLocation().getFirst()).isEqualTo("class 'SomeClass'");
+    assertThat(importItem.getTitleAndLocation().getSecond()).isEqualTo("\"baz/test.h\"");
+  }
+
+  @Test
+  public void importGenfile_relativeToOutputBase() {
+    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:bar"));
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(createCcToolchain())
+            .addTarget(
+                createCcTarget(
+                    "//foo/bar:bar", Kind.CC_LIBRARY, sources("foo/bar/bar.cc"), sources()))
+            .build();
+    OCFile header =
+        createNonWorkspaceFile("output/genfiles/foo/bar/test.proto.h", "class SomeClass {};");
+    OCFile file = createFile("foo/bar/bar.cc", "SomeClass* my_class = new SomeClass();");
+
+    resolve(projectView, targetMap, file, header);
+
+    testFixture.openFileInEditor(file.getVirtualFile());
+    OCReferenceElement referenceElement =
+        testFixture.findElementByText("SomeClass*", OCReferenceElement.class);
+    OCImportSymbolFix fix = new OCImportSymbolFix(referenceElement);
+    assertThat(fix.isAvailable(getProject(), testFixture.getEditor(), file)).isTrue();
+    OCImportSymbolFix.AutoImportItem importItem =
+        Iterables.getOnlyElement(fix.getAutoImportItems());
+    assertThat(importItem.getTitleAndLocation().getFirst()).isEqualTo("class 'SomeClass'");
+    assertThat(importItem.getTitleAndLocation().getSecond()).isEqualTo("\"foo/bar/test.proto.h\"");
   }
 
   private static List<ArtifactLocation> sources(String... paths) {
@@ -172,7 +201,7 @@ public class BlazeCppAutoImportHelperTest extends BlazeCppIntegrationTestCase {
   }
 
   private void createHeaderRoots() {
-    workspace.createDirectory(new WorkspacePath("output/genfiles"));
+    genfilesRoot = fileSystem.createDirectory("output/genfiles");
     workspace.createDirectory(new WorkspacePath("include/third_party/libxml/_/libxml"));
     workspace.createDirectory(new WorkspacePath("third_party/stl"));
     workspace.createDirectory(new WorkspacePath("third_party/lib_that_expects_angle_include"));
@@ -192,7 +221,8 @@ public class BlazeCppAutoImportHelperTest extends BlazeCppIntegrationTestCase {
                 ImmutableList.of(new ExecutionRootPath("include/third_party/libxml/_/libxml")))
             .addTransitiveQuoteIncludeDirectories(
                 ImmutableList.of(
-                    new ExecutionRootPath("."), new ExecutionRootPath("output/genfiles")))
+                    new ExecutionRootPath("."),
+                    new ExecutionRootPath(VfsUtilCore.virtualToIoFile(genfilesRoot))))
             .addTransitiveSystemIncludeDirectories(
                 ImmutableList.of(
                     new ExecutionRootPath("third_party/stl"),

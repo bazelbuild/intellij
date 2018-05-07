@@ -15,17 +15,20 @@
  */
 package com.google.idea.sdkcompat.cidr;
 
+import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.lang.CustomHeaderProvider;
-import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCResolveRootAndConfiguration;
 import javax.annotation.Nullable;
 
 /** Adapter to bridge different SDK versions. */
 public abstract class CustomHeaderProviderAdapter extends CustomHeaderProvider {
-  public abstract boolean accepts(@Nullable OCResolveConfiguration resolveConfiguration);
+  public abstract boolean accepts(Project project);
 
   @Override
-  public boolean accepts(@Nullable OCResolveRootAndConfiguration configuration) {
-    return configuration != null && this.accepts(configuration.getConfiguration());
+  public boolean accepts(@Nullable OCResolveRootAndConfiguration rootAndConfig) {
+    if (rootAndConfig == null || rootAndConfig.getProject() == null) {
+      return false;
+    }
+    return accepts(rootAndConfig.getProject());
   }
 }

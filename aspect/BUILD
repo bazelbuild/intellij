@@ -24,6 +24,7 @@ filegroup(
     srcs = [
         "WORKSPACE",
         "artifacts.bzl",
+        "fast_build_info.bzl",
         "intellij_info_bundled.bzl",
         "intellij_info_impl.bzl",
         "java_classpath.bzl",

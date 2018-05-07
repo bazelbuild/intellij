@@ -51,7 +51,6 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.sdkcompat.cidr.CompilerInfoCacheAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -330,7 +329,6 @@ final class BlazeConfigurationResolver {
               findEquivalenceClasses(
                   context,
                   project,
-                  blazeProjectData.workspacePathResolver,
                   targetToData,
                   oldConfigurationData,
                   builder);
@@ -340,7 +338,6 @@ final class BlazeConfigurationResolver {
   private static void findEquivalenceClasses(
       BlazeContext context,
       Project project,
-      WorkspacePathResolver workspacePathResolver,
       Map<TargetKey, BlazeResolveConfigurationData> targetToData,
       BlazeConfigurationResolverResult oldConfigurationData,
       BlazeConfigurationResolverResult.Builder builder) {
@@ -359,8 +356,7 @@ final class BlazeConfigurationResolver {
           reused++;
         } else {
           configuration =
-              BlazeResolveConfiguration.createForTargets(
-                  project, workspacePathResolver, data, ImmutableList.of(target));
+              BlazeResolveConfiguration.createForTargets(project, data, ImmutableList.of(target));
         }
         dataToConfiguration.put(data, configuration);
       }
