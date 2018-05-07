@@ -18,14 +18,10 @@ package com.google.idea.blaze.scala.run;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression;
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScInfixExpr;
-import org.jetbrains.plugins.scala.lang.psi.api.expr.ScInfixExpr$;
-import org.jetbrains.plugins.scala.lang.psi.api.expr.ScReferenceExpression;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition;
 import org.jetbrains.plugins.scala.testingSupport.test.TestConfigurationUtil;
 import org.jetbrains.plugins.scala.testingSupport.test.structureView.TestNodeProvider;
-import scala.Tuple3;
 
 import javax.annotation.Nullable;
 import java.util.function.Predicate;
@@ -62,7 +58,8 @@ public final class Specs2Utils {
   @Nullable
   public static String getSpecs2ScopeName(ScInfixExpr testScope) {
     String scopeName =
-        TestConfigurationUtil.getStaticTestNameOrDefault(leftOperand(testScope), null, false);
+        TestConfigurationUtil.getStaticTestNameOrDefault(
+                getLiteralElement(testScope), null, false);
     if (scopeName == null) {
       return null;
     }
@@ -71,7 +68,8 @@ public final class Specs2Utils {
 
   @Nullable
   public static String getSpecs2TestName(ScInfixExpr testCase) {
-    return TestConfigurationUtil.getStaticTestNameOrDefault(leftOperand(testCase), null, false);
+    return TestConfigurationUtil.getStaticTestNameOrDefault(
+            getLiteralElement(testCase), null, false);
   }
 
   @Nullable
@@ -126,8 +124,7 @@ public final class Specs2Utils {
     return testClass.qualifiedName() + '#' + testName + end;
   }
 
-  private static PsiElement leftOperand(ScInfixExpr expr) {
-    Tuple3<ScExpression, ScReferenceExpression, ScExpression> tuple = ScInfixExpr$.MODULE$.unapply(expr).get();
-    return tuple._1();
+  private static PsiElement getLiteralElement(ScInfixExpr infixExpr) {
+    return infixExpr.getFirstChild();
   }
 }
