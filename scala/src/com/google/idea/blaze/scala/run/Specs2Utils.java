@@ -18,13 +18,14 @@ package com.google.idea.blaze.scala.run;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScInfixExpr;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition;
 import org.jetbrains.plugins.scala.testingSupport.test.TestConfigurationUtil;
 import org.jetbrains.plugins.scala.testingSupport.test.structureView.TestNodeProvider;
+
+import javax.annotation.Nullable;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 /** Common functions for handling specs2 test scopes/cases. */
 public final class Specs2Utils {
@@ -57,7 +58,8 @@ public final class Specs2Utils {
   @Nullable
   public static String getSpecs2ScopeName(ScInfixExpr testScope) {
     String scopeName =
-        TestConfigurationUtil.getStaticTestNameOrDefault(testScope.lOp(), null, false);
+        TestConfigurationUtil.getStaticTestNameOrDefault(
+                getLiteralElement(testScope), null, false);
     if (scopeName == null) {
       return null;
     }
@@ -66,7 +68,8 @@ public final class Specs2Utils {
 
   @Nullable
   public static String getSpecs2TestName(ScInfixExpr testCase) {
-    return TestConfigurationUtil.getStaticTestNameOrDefault(testCase.lOp(), null, false);
+    return TestConfigurationUtil.getStaticTestNameOrDefault(
+            getLiteralElement(testCase), null, false);
   }
 
   @Nullable
@@ -119,5 +122,9 @@ public final class Specs2Utils {
     // https://github.com/bazelbuild/intellij/issues/169
     testName = Pattern.quote(testName);
     return testClass.qualifiedName() + '#' + testName + end;
+  }
+
+  private static PsiElement getLiteralElement(ScInfixExpr infixExpr) {
+    return infixExpr.getFirstChild();
   }
 }
