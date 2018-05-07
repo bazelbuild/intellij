@@ -25,7 +25,6 @@ import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.jar.JarApplicationConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -81,7 +80,7 @@ public class GenerateExecutableDeployableJarProviderTaskProvider
   }
 
   private boolean isValidConfiguration(RunConfiguration runConfiguration) {
-    return runConfiguration instanceof JarApplicationConfiguration;
+    return runConfiguration instanceof ApplicationConfiguration;
   }
 
   @Nullable
