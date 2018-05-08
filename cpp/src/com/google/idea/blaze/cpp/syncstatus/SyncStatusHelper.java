@@ -15,8 +15,11 @@
  */
 package com.google.idea.blaze.cpp.syncstatus;
 
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
-import com.google.idea.blaze.cpp.BlazeCWorkspace;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -29,17 +32,28 @@ final class SyncStatusHelper {
   private SyncStatusHelper() {}
 
   static boolean isUnsynced(Project project, VirtualFile virtualFile) {
+    if (!Blaze.isBlazeProject(project)) {
+      return false;
+    }
     if (!virtualFile.isInLocalFileSystem()) {
       return false;
     }
     if (ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile) == null) {
       return false;
     }
-    OCWorkspace workspace = OCWorkspaceProvider.getWorkspace(project);
-    if (!(workspace instanceof BlazeCWorkspace)) {
-      // Skip if the project isn't a Blaze project or doesn't have C support enabled anyway.
+
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if ((blazeProjectData == null)
+        || !blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C)) {
       return false;
     }
+
+    OCWorkspace workspace = OCWorkspaceProvider.getWorkspace(project);
+    if (workspace == null) {
+      return false;
+    }
+
     if (workspace.getConfigurations().isEmpty()) {
       // The workspace configurations may not have been loaded yet.
       return false;

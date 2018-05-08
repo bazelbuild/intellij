@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.sdkcompat.cidr;
+package com.google.idea.blaze.java.run;
 
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.cidr.lang.CustomHeaderProvider;
-import com.jetbrains.cidr.lang.preprocessor.OCResolveRootAndConfiguration;
-import javax.annotation.Nullable;
 
-/** Adapter to bridge different SDK versions. */
-public abstract class CustomHeaderProviderAdapter extends CustomHeaderProvider {
-  public abstract boolean accepts(Project project);
+final class BazelFastBuildTestEnvironmentCreatorFactory
+    implements FastBuildTestEnvironmentCreatorFactory {
 
   @Override
-  public boolean accepts(@Nullable OCResolveRootAndConfiguration rootAndConfig) {
-    if (rootAndConfig == null || rootAndConfig.getConfiguration() == null) {
-      return false;
-    }
-    return accepts(rootAndConfig.getConfiguration().getProject());
+  public boolean appliesTo(BuildSystem buildSystem) {
+    return buildSystem.equals(BuildSystem.Bazel);
+  }
+
+  @Override
+  public FastBuildTestEnvironmentCreator getTestEnvironmentCreator(Project project) {
+    return new FastBuildTestEnvironmentCreator(
+        project,
+        /* testClassProperty */ "bazel.test_suite",
+        /* testRunner */ "com.google.testing.junit.runner.BazelTestRunner");
   }
 }

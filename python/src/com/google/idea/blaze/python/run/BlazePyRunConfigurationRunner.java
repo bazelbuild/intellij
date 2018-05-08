@@ -50,7 +50,6 @@ import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.WrappingRunConfiguration;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.UrlFilter;
@@ -234,10 +233,9 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
   }
 
   @Override
-  public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment environment)
-      throws ExecutionException {
+  public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment environment) {
     BlazeCommandRunConfiguration configuration = getConfiguration(environment);
-    if (isDebugging(environment)) {
+    if (BlazeCommandRunConfigurationRunner.isDebugging(environment)) {
       environment.putCopyableUserData(EXECUTABLE_KEY, new AtomicReference<>());
       return new BlazePyDummyRunProfileState(configuration);
     }
@@ -246,7 +244,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
 
   @Override
   public boolean executeBeforeRunTask(ExecutionEnvironment env) {
-    if (!isDebugging(env)) {
+    if (!BlazeCommandRunConfigurationRunner.isDebugging(env)) {
       return true;
     }
     env.getCopyableUserData(EXECUTABLE_KEY).set(null);
@@ -261,11 +259,6 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
           env.getProject(), env.getExecutor().getToolWindowId(), env.getRunProfile(), e);
     }
     return false;
-  }
-
-  private static boolean isDebugging(ExecutionEnvironment environment) {
-    Executor executor = environment.getExecutor();
-    return executor instanceof DefaultDebugExecutor;
   }
 
   private static BlazeCommandRunConfiguration getConfiguration(ExecutionEnvironment environment) {

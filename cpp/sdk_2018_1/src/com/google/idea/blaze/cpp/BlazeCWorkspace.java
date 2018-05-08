@@ -23,8 +23,9 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.sdkcompat.cidr.OCCompilerSettingsAdapter;
-import com.google.idea.sdkcompat.cidr.OCWorkspaceAdapter;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -35,20 +36,18 @@ import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
 import com.jetbrains.cidr.lang.toolchains.CidrSwitchBuilder;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
-import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
+import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceImpl;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import java.io.File;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 
 /** Main entry point for C/CPP configuration data. */
-public final class BlazeCWorkspace extends OCWorkspaceAdapter implements ProjectComponent {
+public final class BlazeCWorkspace implements ProjectComponent {
   private final BlazeConfigurationResolver configurationResolver;
   private BlazeConfigurationResolverResult resolverResult;
 
@@ -74,6 +73,12 @@ public final class BlazeCWorkspace extends OCWorkspaceAdapter implements Project
         configurationResolver.update(
             context, workspaceRoot, projectViewSet, blazeProjectData, oldResult);
     CidrToolEnvironment environment = new CidrToolEnvironment();
+    ExecutionRootPathResolver executionRootPathResolver =
+        new ExecutionRootPathResolver(
+            Blaze.getBuildSystem(project),
+            workspaceRoot,
+            blazeProjectData.blazeInfo.getExecutionRoot(),
+            blazeProjectData.workspacePathResolver);
 
     NullableFunction<File, VirtualFile> fileMapper = OCWorkspaceImpl.createFileMapper();
     ImmutableList<OCLanguageKind> supportedLanguages =
@@ -131,7 +136,10 @@ public final class BlazeCWorkspace extends OCWorkspaceAdapter implements Project
                     targetIdeInfo.cIdeInfo.transitiveIncludeDirectories.stream())
                 .map(
                     executionRootPath ->
-                        "-I" + executionRootPath.getAbsoluteOrRelativeFile().getPath())
+                        "-I"
+                            + executionRootPathResolver
+                                .resolveExecutionRootPath(executionRootPath)
+                                .getAbsolutePath())
                 .collect(Collectors.toList());
         // transitiveQuoteIncludeDirectories are sourced from
         // CcSkylarkApiProvider.quote_include_directories
@@ -143,7 +151,10 @@ public final class BlazeCWorkspace extends OCWorkspaceAdapter implements Project
                 .stream()
                 .map(
                     executionRootPath ->
-                        "-iquote" + executionRootPath.getAbsoluteOrRelativeFile().getPath())
+                        "-iquote"
+                            + executionRootPathResolver
+                                .resolveExecutionRootPath(executionRootPath)
+                                .getAbsolutePath())
                 .collect(Collectors.toList());
         // transitiveQuoteIncludeDirectories are sourced from
         // CcSkylarkApiProvider.system_include_directories
@@ -155,7 +166,10 @@ public final class BlazeCWorkspace extends OCWorkspaceAdapter implements Project
                 .stream()
                 .map(
                     executionRootPath ->
-                        "-isystem" + executionRootPath.getAbsoluteOrRelativeFile().getPath())
+                        "-isystem"
+                            + executionRootPathResolver
+                                .resolveExecutionRootPath(executionRootPath)
+                                .getAbsolutePath())
                 .collect(Collectors.toList());
 
         for (VirtualFile vf : resolveConfiguration.getSources(blazeProjectData, targetKey)) {
@@ -192,20 +206,7 @@ public final class BlazeCWorkspace extends OCWorkspaceAdapter implements Project
     workspaceModifiable.commit();
   }
 
-  @Override
-  public Collection<VirtualFile> getLibraryFilesToBuildSymbols() {
-    // This method should return all the header files themselves, not the head file directories.
-    // (And not header files in the project; just the ones in the SDK and in any dependencies)
-    return ImmutableList.of();
-  }
-
-  @Override
-  public List<OCResolveConfiguration> getConfigurations() {
-    return OCWorkspaceImpl.getInstanceImpl(project).getConfigurations();
-  }
-
-  @Override
-  public List<OCResolveConfiguration> getConfigurationsForFile(@Nullable VirtualFile sourceFile) {
-    return OCWorkspaceImpl.getInstanceImpl(project).getConfigurationsForFile(sourceFile);
+  public OCWorkspace getWorkspace() {
+    return OCWorkspace.getInstance(project);
   }
 }

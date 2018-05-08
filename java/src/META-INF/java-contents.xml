@@ -50,6 +50,8 @@
     <JavaClasspathAspectStrategy implementation="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy$BazelStrategy"/>
     <JavaTestCaseIdentifier implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestMethodConfigurationProducer$Identifier"/>
     <TestComparisonFailureParser implementation="com.google.idea.blaze.java.run.smrunner.JunitTestComparisonFailureParser"/>
+    <FastBuildAspectStrategyProvider implementation="com.google.idea.blaze.java.fastbuild.BazelFastBuildAspectStrategyProvider"/>
+    <FastBuildTestEnvironmentCreatorFactory implementation="com.google.idea.blaze.java.run.BazelFastBuildTestEnvironmentCreatorFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -126,8 +128,8 @@
                     interface="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.JavaTestCaseIdentifier"
                     interface="com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer$JavaTestCaseIdentifier"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildConfigurationRunnerFactory"
-                    interface="com.google.idea.blaze.java.run.JavaFastBuildConfigurationRunnerFactory"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildTestEnvironmentCreatorFactory"
+                    interface="com.google.idea.blaze.java.run.FastBuildTestEnvironmentCreatorFactory"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildAspectStrategyProvider"
                     interface="com.google.idea.blaze.java.fastbuild.FastBuildAspectStrategyProvider"/>
   </extensionPoints>

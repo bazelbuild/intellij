@@ -49,6 +49,7 @@ public final class FastBuildCompilerFactoryImplTest {
   private static final File JAVAC_JAR = new File(System.getProperty("javac.jar"));
   private static final File GUAVA_JAR = new File(System.getProperty("guava.jar"));
   private static final File TRUTH_JAR = new File(System.getProperty("truth.jar"));
+  private static final String WORKSPACE_NAME = "io_bazel";
 
   private static final ProviderInfo JAVA_TOOLCHAIN =
       ProviderInfo.ofJavaToolchainInfo(
@@ -71,10 +72,16 @@ public final class FastBuildCompilerFactoryImplTest {
     Label dependencyLabel = Label.create("//some/package:javalibs");
     FastBuildBlazeData targetData =
         FastBuildBlazeData.create(
-            targetLabel, ImmutableSet.of(dependencyLabel), JAVA_LIBRARY_WITHOUT_SOURCES);
+            targetLabel,
+            WORKSPACE_NAME,
+            ImmutableSet.of(dependencyLabel),
+            JAVA_LIBRARY_WITHOUT_SOURCES);
     FastBuildBlazeData dependencyData =
         FastBuildBlazeData.create(
-            targetLabel, /*dependencies*/ ImmutableSet.of(), JAVA_LIBRARY_WITHOUT_SOURCES);
+            targetLabel,
+            WORKSPACE_NAME,
+            /*dependencies*/ ImmutableSet.of(),
+            JAVA_LIBRARY_WITHOUT_SOURCES);
     blazeData.put(targetLabel, targetData);
     blazeData.put(dependencyLabel, dependencyData);
 
@@ -95,12 +102,15 @@ public final class FastBuildCompilerFactoryImplTest {
     FastBuildBlazeData targetData =
         FastBuildBlazeData.create(
             targetLabel,
+            WORKSPACE_NAME,
             /*dependencies*/ ImmutableSet.of(jdkOneLabel, jdkTwoLabel),
             JAVA_LIBRARY_WITHOUT_SOURCES);
     FastBuildBlazeData jdkOneData =
-        FastBuildBlazeData.create(jdkOneLabel, /*dependencies*/ ImmutableSet.of(), JAVA_TOOLCHAIN);
+        FastBuildBlazeData.create(
+            jdkOneLabel, WORKSPACE_NAME, /*dependencies*/ ImmutableSet.of(), JAVA_TOOLCHAIN);
     FastBuildBlazeData jdkTwoData =
-        FastBuildBlazeData.create(jdkTwoLabel, /*dependencies*/ ImmutableSet.of(), JAVA_TOOLCHAIN);
+        FastBuildBlazeData.create(
+            jdkTwoLabel, WORKSPACE_NAME, /*dependencies*/ ImmutableSet.of(), JAVA_TOOLCHAIN);
     blazeData.put(targetLabel, targetData);
     blazeData.put(jdkOneLabel, jdkOneData);
     blazeData.put(jdkTwoLabel, jdkTwoData);
@@ -247,11 +257,15 @@ public final class FastBuildCompilerFactoryImplTest {
     Label jdkLabel = Label.create("//some/jdk:langtools");
     FastBuildBlazeData targetData =
         FastBuildBlazeData.create(
-            targetLabel, /*dependencies*/ ImmutableSet.of(jdkLabel), JAVA_LIBRARY_WITHOUT_SOURCES);
+            targetLabel,
+            WORKSPACE_NAME,
+            /*dependencies*/ ImmutableSet.of(jdkLabel),
+            JAVA_LIBRARY_WITHOUT_SOURCES);
     FastBuildBlazeData jdkData =
         FastBuildBlazeData.create(
-            jdkLabel, /*dependencies*/
-            ImmutableSet.of(),
+            jdkLabel,
+            WORKSPACE_NAME,
+            /*dependencies*/ ImmutableSet.of(),
             ProviderInfo.ofJavaToolchainInfo(javaToolchain));
     blazeData.put(targetLabel, targetData);
     blazeData.put(jdkLabel, jdkData);

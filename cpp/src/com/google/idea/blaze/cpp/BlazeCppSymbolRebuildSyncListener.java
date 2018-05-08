@@ -23,11 +23,9 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.common.transactions.Transactions;
-import com.google.idea.sdkcompat.cidr.OCWorkspaceModificationTrackersCompatUtils;
-import com.google.idea.sdkcompat.cidr.OCWorkspaceProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.cidr.lang.workspace.OCWorkspace;
+import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackers;
 
 /** Runs after sync, triggering a rebuild of the symbol tables. */
 public class BlazeCppSymbolRebuildSyncListener extends SyncListener.Adapter {
@@ -44,10 +42,6 @@ public class BlazeCppSymbolRebuildSyncListener extends SyncListener.Adapter {
     if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C)) {
       return;
     }
-    OCWorkspace workspace = OCWorkspaceProvider.getWorkspace(project);
-    if (!(workspace instanceof BlazeCWorkspace)) {
-      return;
-    }
     if (syncMode != SyncMode.NO_BUILD) {
       loadOrRebuildSymbolTables(project);
     }
@@ -59,8 +53,12 @@ public class BlazeCppSymbolRebuildSyncListener extends SyncListener.Adapter {
             ApplicationManager.getApplication()
                 .runWriteAction(
                     () -> {
-                      OCWorkspaceModificationTrackersCompatUtils.incrementModificationCounts(
-                          project);
+                      OCWorkspaceModificationTrackers modTrackers =
+                          OCWorkspaceModificationTrackers.getInstance(project);
+                      modTrackers.getProjectFilesListTracker().incModificationCount();
+                      modTrackers.getSourceFilesListTracker().incModificationCount();
+                      modTrackers.getSelectedResolveConfigurationTracker().incModificationCount();
+                      modTrackers.getBuildSettingsChangesTracker().incModificationCount();
                     }));
   }
 }

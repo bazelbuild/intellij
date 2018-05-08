@@ -16,10 +16,8 @@
 package com.google.idea.blaze.plugin;
 
 import com.google.idea.blaze.base.plugin.BlazeActionRemover;
-import com.google.idea.blaze.clwb.BlazeCppModuleType;
 import com.google.idea.sdkcompat.clion.CMakeActionsToManipulate;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.module.ModuleTypeManager;
 
 /** Runs on startup. */
 public class ClwbSpecificInitializer implements ApplicationComponent {
@@ -27,7 +25,6 @@ public class ClwbSpecificInitializer implements ApplicationComponent {
   @Override
   public void initComponent() {
     hideCMakeActions();
-    ModuleTypeManager.getInstance().registerModuleType(new BlazeCppModuleType());
   }
 
   // The original actions will be visible only on plain IDEA projects.

@@ -43,6 +43,12 @@ public interface FastBuildService {
 
   boolean supportsFastBuilds(Kind kind);
 
+  /**
+   * Create a fast build.
+   *
+   * <p>Clients should make sure {@link #supportsFastBuilds} returns true for label's {@link Kind}
+   * first.
+   */
   Future<FastBuildInfo> createBuild(Label label, String blazeBinaryPath, List<String> blazeFlags)
       throws FastBuildException;
 

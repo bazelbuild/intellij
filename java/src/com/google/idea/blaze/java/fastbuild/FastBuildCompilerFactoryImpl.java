@@ -127,7 +127,8 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
               .add("-target")
               .add(targetVersion)
               .add("-cp")
-              .add(instructions.classpath().stream().map(File::getPath).collect(joining(":")));
+              .add(instructions.classpath().stream().map(File::getPath).collect(joining(":")))
+              .add("-g");
       if (instructions.annotationProcessorClassNames().isEmpty()) {
         // Without this, it will find all the annotation processors in the classpath and run them.
         // We only want to run them if the BUILD file asked for it.

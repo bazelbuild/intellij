@@ -38,8 +38,7 @@ public class BlazeJavaRunConfigState extends BlazeCommandRunConfigurationCommonS
     fastBuildState =
         new FastBuildState(
             FastBuildService.enabled.getValue()
-                && FastBuildService.getInstance(project).supportsFastBuilds(kind)
-                && JavaFastBuildConfigurationRunnerFactory.getInstance(buildSystem).isPresent());
+                && FastBuildService.getInstance(project).supportsFastBuilds(kind));
   }
 
   @Override

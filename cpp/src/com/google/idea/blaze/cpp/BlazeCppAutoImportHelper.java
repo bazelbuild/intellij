@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.cpp;
 
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.sdkcompat.cidr.OCDefaultAutoImportHelperAdapter;
 import com.google.idea.sdkcompat.cidr.OCResolveRootAndConfigurationAdapter;
 import com.intellij.openapi.project.Project;
@@ -36,8 +37,8 @@ import javax.annotation.Nullable;
 public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelperAdapter {
 
   @Override
-  public boolean supports(OCResolveRootAndConfigurationAdapter rootAndConfiguration) {
-    return rootAndConfiguration.getConfiguration() instanceof BlazeResolveConfiguration;
+  public boolean supports(Project project) {
+    return Blaze.isBlazeProject(project);
   }
 
   /**
@@ -51,27 +52,23 @@ public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelperAdapter {
       VirtualFile fileToImport,
       OCResolveRootAndConfigurationAdapter rootAndConfiguration,
       Processor<ImportSpecification> processor) {
-    // Check system headers of library roots first. Project roots may include the workspace root,
-    // and the system headers might be under the workspace root as well.
+    // Check "system" roots first. "user" roots may include the workspace root, and the system
+    // headers might be checked into source control, which would make it under the workspace root
+    // as well. NOTE: this is a bit backward compared to the actual #include search roots priority,
+    // where system search roots are checked later.
     OCResolveConfiguration resolveConfiguration = rootAndConfiguration.getConfiguration();
-    if (!(resolveConfiguration instanceof BlazeResolveConfiguration)) {
+    if (resolveConfiguration == null) {
       return false;
     }
-    BlazeResolveConfiguration blazeResolveConfiguration =
-        (BlazeResolveConfiguration) resolveConfiguration;
     ImportSpecification specification =
         findMatchingRoot(
-            fileToImport,
-            blazeResolveConfiguration.getLibraryHeadersRootsInternal(null, targetFile),
-            /* asUserHeader= */ false);
+            fileToImport, getSystemHeaderRoots(rootAndConfiguration), /* asUserHeader= */ false);
     if (specification != null && !processor.process(specification)) {
       return false;
     }
     specification =
         findMatchingRoot(
-            fileToImport,
-            blazeResolveConfiguration.getProjectHeadersRootsInternal(),
-            /* asUserHeader= */ true);
+            fileToImport, getUserHeaderRoots(rootAndConfiguration), /* asUserHeader= */ true);
     return specification == null || processor.process(specification);
   }
 

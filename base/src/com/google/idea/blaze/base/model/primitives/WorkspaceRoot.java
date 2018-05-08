@@ -85,15 +85,19 @@ public class WorkspaceRoot implements Serializable {
   }
 
   /**
-   * Returns the WorkspacePath for the given absolute file, if it's a child of this WorkspaceRoot.
-   * Otherwise returns null.
+   * Returns the WorkspacePath for the given absolute file, if it's a child of this WorkspaceRoot
+   * and a valid WorkspacePath. Otherwise returns null.
    */
   @Nullable
   public WorkspacePath workspacePathForSafe(File absoluteFile) {
-    if (isInWorkspace(absoluteFile)) {
-      return workspacePathFor(absoluteFile);
+    if (!isInWorkspace(absoluteFile)) {
+      return null;
     }
-    return null;
+    String path = absoluteFile.getPath();
+    if (directory.getPath().length() == path.length()) {
+      return new WorkspacePath("");
+    }
+    return WorkspacePath.createIfValid(path.substring(directory.getPath().length() + 1));
   }
 
   public WorkspacePath workspacePathFor(File file) {

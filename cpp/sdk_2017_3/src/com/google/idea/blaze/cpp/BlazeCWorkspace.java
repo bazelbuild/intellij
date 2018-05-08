@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.symbols.OCSymbol;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
+import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -113,5 +114,9 @@ public final class BlazeCWorkspace extends OCWorkspaceAdapter implements Project
   @Override
   public String getComponentName() {
     return this.getClass().getName();
+  }
+
+  public OCWorkspace getWorkspace() {
+    return this;
   }
 }

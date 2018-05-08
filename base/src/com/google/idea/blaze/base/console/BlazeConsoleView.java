@@ -17,6 +17,9 @@ package com.google.idea.blaze.base.console;
 
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.intellij.codeEditor.printing.PrintAction;
+import com.intellij.execution.filters.ConsoleDependentFilterProvider;
+import com.intellij.execution.filters.ConsoleFilterProvider;
+import com.intellij.execution.filters.ConsoleFilterProviderEx;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -43,9 +46,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -70,9 +75,15 @@ public class BlazeConsoleView implements Disposable {
 
   public BlazeConsoleView(Project project) {
     this.project = project;
-    consoleView = new ConsoleViewImpl(this.project, false);
+    consoleView =
+        new ConsoleViewImpl(
+            this.project,
+            GlobalSearchScope.allScope(project),
+            /* viewer */ false,
+            /* usePredefinedFilters */ false);
     consoleView.addMessageFilter(new BlazeTargetFilter(project, false));
     consoleView.addMessageFilter(customFilters);
+    addWrappedPredefinedFilters();
     Disposer.register(this, consoleView);
   }
 
@@ -238,10 +249,28 @@ public class BlazeConsoleView implements Disposable {
     }
   }
 
+  /** Add the global filters, wrapped to separate them from blaze problems. */
+  private void addWrappedPredefinedFilters() {
+    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    for (ConsoleFilterProvider provider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
+      Arrays.stream(getFilters(scope, provider))
+          .forEach(f -> consoleView.addMessageFilter(NonProblemFilterWrapper.wrap(f)));
+    }
+  }
+
+  private Filter[] getFilters(GlobalSearchScope scope, ConsoleFilterProvider provider) {
+    if (provider instanceof ConsoleDependentFilterProvider) {
+      return ((ConsoleDependentFilterProvider) provider)
+          .getDefaultFilters(consoleView, project, scope);
+    }
+    if (provider instanceof ConsoleFilterProviderEx) {
+      return ((ConsoleFilterProviderEx) provider).getDefaultFilters(project, scope);
+    }
+    return provider.getDefaultFilters(project);
+  }
+
   /**
    * Changes the action text to reference 'problems', not 'stack traces'.
-   *
-   * <p>TODO(brendandouglas): give problem hyperlinks their own class, and skip all others.
    */
   private static OccurenceNavigator fromConsoleView(ConsoleViewImpl console) {
     return new OccurenceNavigator() {
@@ -255,11 +284,13 @@ public class BlazeConsoleView implements Disposable {
         return console.hasPreviousOccurence();
       }
 
+      @Nullable
       @Override
       public OccurenceInfo goNextOccurence() {
         return console.goNextOccurence();
       }
 
+      @Nullable
       @Override
       public OccurenceInfo goPreviousOccurence() {
         return console.goPreviousOccurence();

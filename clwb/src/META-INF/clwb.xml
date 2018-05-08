@@ -30,6 +30,7 @@
         implementation="com.google.idea.blaze.clwb.run.producers.BlazeCidrTestConfigurationProducer"
         order="first"/>
     <editorNotificationProvider implementation="com.google.idea.blaze.plugin.CMakeNotificationFilter" />
+    <moduleType id="BLAZE_CPP_MODULE" implementationClass="com.google.idea.blaze.clwb.BlazeCppModuleType"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">

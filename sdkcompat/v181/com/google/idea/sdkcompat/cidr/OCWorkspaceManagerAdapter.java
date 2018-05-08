@@ -20,19 +20,9 @@ import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 
 /** Adapter to bridge different SDK versions. */
 public abstract class OCWorkspaceManagerAdapter {
-  public OCWorkspaceManagerWrapper getDelegate(Project project) {
-    return new OCWorkspaceManagerWrapper();
-  }
-
   public abstract OCWorkspace getWorkspace();
 
-  /**
-   * Wrap this up because we need a consistent API for other sdkcompat versions and
-   * OCWorkspaceManager does not exist from 2018.1
-   */
-  public static class OCWorkspaceManagerWrapper {
-    public OCWorkspace getWorkspace(Project project) {
-      return OCWorkspace.getInstance(project);
-    }
+  protected OCWorkspace getWorkspaceFallback(Project project) {
+    return OCWorkspace.getInstance(project);
   }
 }

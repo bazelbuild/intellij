@@ -47,6 +47,12 @@ public class BlazeCppIntegrationTestCase extends BlazeIntegrationTestCase {
     return (OCFile) file;
   }
 
+  protected OCFile createNonWorkspaceFile(String relativePath, String... contentLines) {
+    PsiFile file = fileSystem.createPsiFile(relativePath, contentLines);
+    assertThat(file).isInstanceOf(OCFile.class);
+    return (OCFile) file;
+  }
+
   protected OCFile createFileWithEditor(String relativePath, String... contentLines) {
     VirtualFile virtualFile = workspace.createFile(new WorkspacePath(relativePath), contentLines);
     testFixture.configureFromExistingVirtualFile(virtualFile);

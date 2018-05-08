@@ -15,11 +15,13 @@
  */
 package com.google.idea.blaze.java.fastbuild;
 
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Strings.emptyToNull;
 import static java.util.stream.Collectors.toSet;
 
 import com.google.auto.value.AutoOneOf;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.aspect.FastBuildInfo;
@@ -35,18 +37,28 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class FastBuildBlazeData {
 
+  private static final String MISSING_WORKSPACE_NAME_ERROR =
+      "Error reading workspace name from fast build aspect.";
+
   public abstract Label label();
+
+  public abstract String workspaceName();
 
   public abstract ImmutableSet<Label> dependencies();
 
   public abstract ProviderInfo providerInfo();
 
   static FastBuildBlazeData create(
-      Label label, Collection<Label> dependencies, ProviderInfo providerInfo) {
-    return new AutoValue_FastBuildBlazeData(label, ImmutableSet.copyOf(dependencies), providerInfo);
+      Label label,
+      String workspaceName,
+      Collection<Label> dependencies,
+      ProviderInfo providerInfo) {
+    return new AutoValue_FastBuildBlazeData(
+        label, workspaceName, ImmutableSet.copyOf(dependencies), providerInfo);
   }
 
   static FastBuildBlazeData fromProto(FastBuildInfo.FastBuildBlazeData proto) {
+    checkState(!Strings.isNullOrEmpty(proto.getWorkspaceName()), MISSING_WORKSPACE_NAME_ERROR);
     ProviderInfo providerInfo = null;
     switch (proto.getProviderInfoCase()) {
       case JAVA_INFO:
@@ -58,10 +70,11 @@ public abstract class FastBuildBlazeData {
                 JavaToolchainInfo.fromProto(proto.getJavaToolchainInfo()));
         break;
       case PROVIDERINFO_NOT_SET:
-        throw new IllegalStateException("Unknown provider info type");
+        throw new IllegalStateException("Unknown ProviderInfo type for label " + proto.getLabel());
     }
     return create(
         Label.create(proto.getLabel()),
+        proto.getWorkspaceName(),
         proto.getDependenciesList().stream().map(Label::create).collect(toSet()),
         providerInfo);
   }

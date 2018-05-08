@@ -10,40 +10,43 @@ load(
 )
 
 def _impl(ctx):
-  """Implementation method for _intellij_aspect_test_fixture."""
-  output_groups = dict()
-  inputs = depset()
-  deps = [dep for dep in ctx.attr.deps if hasattr(dep, "intellij_info")]
-  for dep in deps:
-    for k, v in dep.intellij_info.output_groups.items():
-      update_set_in_dict(output_groups, k, v)
-      inputs = inputs | depset([f for f in v if f.short_path.endswith(".intellij-info.txt")])
+    """Implementation method for _intellij_aspect_test_fixture."""
+    output_groups = dict()
+    inputs = depset()
+    deps = [dep for dep in ctx.attr.deps if hasattr(dep, "intellij_info")]
+    for dep in deps:
+        for k, v in dep.intellij_info.output_groups.items():
+            update_set_in_dict(output_groups, k, v)
+            inputs = inputs | depset([f for f in v if f.short_path.endswith(".intellij-info.txt")])
 
-  output_name = ctx.attr.output
-  output = ctx.new_file(output_name)
+    output_name = ctx.attr.output
+    output = ctx.new_file(output_name)
 
-  args = [output.path]
-  args += [":".join([f.path for f in inputs])]
-  for k, v in output_groups.items():
-    args.append(k)
-    args.append(":".join([f.short_path for f in v]))
-  argfile = ctx.new_file(ctx.configuration.bin_dir,
-                         output_name + ".params")
+    args = [output.path]
+    args += [":".join([f.path for f in inputs])]
+    for k, v in output_groups.items():
+        args.append(k)
+        args.append(":".join([f.short_path for f in v]))
+    argfile = ctx.new_file(
+        ctx.configuration.bin_dir,
+        output_name + ".params",
+    )
 
-  ctx.file_action(output=argfile, content="\n".join(args))
-  ctx.action(
-      inputs = inputs.to_list() + [argfile],
-      outputs = [output],
-      executable = ctx.executable._intellij_aspect_test_fixture_builder,
-      arguments = ["@" + argfile.path],
-      mnemonic = "IntellijAspectTestFixtureBuilder",
-      progress_message = "Building Intellij Aspect Test Fixture",
-  )
-  return struct(
-      files = depset([output]),
-      runfiles = ctx.runfiles(
-          files = [output],
-      ))
+    ctx.file_action(output = argfile, content = "\n".join(args))
+    ctx.action(
+        inputs = inputs.to_list() + [argfile],
+        outputs = [output],
+        executable = ctx.executable._intellij_aspect_test_fixture_builder,
+        arguments = ["@" + argfile.path],
+        mnemonic = "IntellijAspectTestFixtureBuilder",
+        progress_message = "Building Intellij Aspect Test Fixture",
+    )
+    return struct(
+        files = depset([output]),
+        runfiles = ctx.runfiles(
+            files = [output],
+        ),
+    )
 
 _intellij_aspect_test_fixture = rule(
     _impl,
@@ -60,9 +63,9 @@ _intellij_aspect_test_fixture = rule(
 )
 
 def intellij_aspect_test_fixture(name, deps):
-  _intellij_aspect_test_fixture(
-      name = name,
-      output = name + ".intellij-aspect-test-fixture",
-      deps = deps,
-      testonly = 1,
-  )
+    _intellij_aspect_test_fixture(
+        name = name,
+        output = name + ".intellij-aspect-test-fixture",
+        deps = deps,
+        testonly = 1,
+    )

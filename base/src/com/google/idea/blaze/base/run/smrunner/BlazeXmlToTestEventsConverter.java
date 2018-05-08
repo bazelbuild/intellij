@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.run.smrunner;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.ErrorOrFailureOrSkipped;
@@ -27,6 +28,10 @@ import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.sdkcompat.smrunner.OutputToGeneralTestEventsConverterAdapter;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -38,6 +43,8 @@ import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -53,6 +60,8 @@ import jetbrains.buildServer.messages.serviceMessages.TestSuiteStarted;
 public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConverterAdapter {
 
   private static final ErrorOrFailureOrSkipped NO_ERROR = new ErrorOrFailureOrSkipped();
+  private static final BoolExperiment removeZeroRunTimeCheck =
+      new BoolExperiment("remove.zero.run.time.check", true);
 
   {
     NO_ERROR.message = "No message"; // cannot be null
@@ -238,11 +247,17 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   }
 
   private static boolean wasRun(TestCase test) {
-    // 'status' is not always set. In cases where it's not, tests which aren't run have a 0 runtime.
     if (test.status != null) {
       return test.status.equals("run");
     }
-    return parseTimeMillis(test.time) != 0;
+    // 'status' is not always set. In cases where it's not,
+    if (removeZeroRunTimeCheck.getValue() && bazelIsAtLeastVersion(0, 13, 0)) {
+      // bazel 0.13.0 and after, tests which aren't run are skipped from the XML entirely.
+      return true;
+    } else {
+      // before 0.13.0, tests which aren't run have a 0 runtime.
+      return parseTimeMillis(test.time) != 0;
+    }
   }
 
   private static boolean isIgnored(TestCase test) {
@@ -329,5 +344,22 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
     } catch (NumberFormatException e) {
       return -1;
     }
+  }
+
+  /**
+   * @return true if bazel version is at least major.minor.bugfix, or if bazel version is not
+   *     applicable (i.e., is blaze, or bazel developmental version).
+   */
+  private static boolean bazelIsAtLeastVersion(int major, int minor, int bugfix) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      if (Blaze.getBuildSystem(project) == BuildSystem.Bazel) {
+        BlazeProjectData projectData =
+            BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+        if (projectData != null) {
+          return projectData.blazeVersionData.bazelIsAtLeastVersion(major, minor, bugfix);
+        }
+      }
+    }
+    return true; // assume recent bazel by default.
   }
 }

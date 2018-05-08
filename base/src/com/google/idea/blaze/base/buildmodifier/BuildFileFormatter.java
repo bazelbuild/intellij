@@ -15,15 +15,16 @@
  */
 package com.google.idea.blaze.base.buildmodifier;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -70,50 +71,36 @@ public class BuildFileFormatter {
     }
   }
 
+  /**
+   * Passes the input text to buildifier, returning the formatted output text, or null if formatting
+   * failed.
+   */
   @Nullable
-  private static String formatText(String text) {
+  private static String formatText(String inputText) {
+    File buildifierBinary = getBuildifierBinary();
+    if (buildifierBinary == null) {
+      return null;
+    }
+    ProcessBuilder builder = new ProcessBuilder(buildifierBinary.getPath());
     try {
-      File buildifierBinary = getBuildifierBinary();
-      if (buildifierBinary == null) {
+      Process process = builder.start();
+      process.getOutputStream().write(inputText.getBytes(UTF_8));
+      process.getOutputStream().close();
+      process.waitFor();
+
+      int exitValue = process.exitValue();
+      if (exitValue != 0) {
         return null;
       }
-      File file = createTempFile(text);
-      formatFile(file, buildifierBinary.getPath());
-      String formattedFile = readFile(file);
-      file.delete();
-      return formattedFile;
+      BufferedReader reader =
+          new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8));
+      return CharStreams.toString(reader);
+
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
     } catch (IOException e) {
       logger.warn(e);
     }
     return null;
-  }
-
-  private static void formatFile(File file, String buildifierBinaryPath) throws IOException {
-    ProcessBuilder builder = new ProcessBuilder(buildifierBinaryPath, file.getAbsolutePath());
-    try {
-      builder.start().waitFor();
-    } catch (InterruptedException e) {
-      throw new IOException("buildifier execution failed", e);
-    }
-  }
-
-  private static String readFile(File file) throws IOException {
-    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-      StringBuilder formattedFile = new StringBuilder();
-      char[] buf = new char[1024];
-      int numRead;
-      while ((numRead = reader.read(buf)) >= 0) {
-        formattedFile.append(buf, 0, numRead);
-      }
-      return formattedFile.toString();
-    }
-  }
-
-  private static File createTempFile(String text) throws IOException {
-    File file = File.createTempFile("ijwb", ".tmp");
-    try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-      writer.write(text);
-    }
-    return file;
   }
 }

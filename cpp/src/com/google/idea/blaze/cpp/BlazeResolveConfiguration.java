@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.sdkcompat.cidr.OCCompilerMacrosAdapter;
 import com.google.idea.sdkcompat.cidr.OCCompilerSettingsAdapter;
 import com.google.idea.sdkcompat.cidr.OCResolveConfigurationAdapter;
@@ -54,7 +53,6 @@ final class BlazeResolveConfiguration extends OCResolveConfigurationAdapter {
   private final Project project;
   private final ConcurrentMap<Pair<OCLanguageKind, VirtualFile>, List<HeadersSearchRoot>>
       libraryIncludeRootsCache = new ConcurrentHashMap<>();
-  private final WorkspacePathResolver workspacePathResolver;
 
   private final BlazeResolveConfigurationData configurationData;
 
@@ -64,22 +62,18 @@ final class BlazeResolveConfiguration extends OCResolveConfigurationAdapter {
 
   private BlazeResolveConfiguration(
       Project project,
-      WorkspacePathResolver workspacePathResolver,
       BlazeResolveConfigurationData configurationData,
       Collection<TargetKey> targets) {
     this.project = project;
-    this.workspacePathResolver = workspacePathResolver;
     this.configurationData = configurationData;
     representMultipleTargets(targets);
   }
 
   static BlazeResolveConfiguration createForTargets(
       Project project,
-      WorkspacePathResolver workspacePathResolver,
       BlazeResolveConfigurationData configurationData,
       Collection<TargetKey> targets) {
-    return new BlazeResolveConfiguration(
-        project, workspacePathResolver, configurationData, targets);
+    return new BlazeResolveConfiguration(project, configurationData, targets);
   }
 
   public Collection<TargetKey> getTargets() {
@@ -107,10 +101,6 @@ final class BlazeResolveConfiguration extends OCResolveConfigurationAdapter {
   @Override
   public Project getProject() {
     return project;
-  }
-
-  public WorkspacePathResolver getWorkspacePathResolver() {
-    return workspacePathResolver;
   }
 
   @Override

@@ -15,25 +15,28 @@
  */
 package com.google.idea.sdkcompat.cidr;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.autoImport.OCDefaultAutoImportHelper;
+import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCResolveRootAndConfiguration;
+import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /** Adapter to bridge different SDK versions. */
 public abstract class OCDefaultAutoImportHelperAdapter extends OCDefaultAutoImportHelper {
 
-  public abstract boolean supports(OCResolveRootAndConfigurationAdapter rootAndConfiguration);
+  public abstract boolean supports(Project project);
 
   public boolean supports(OCResolveRootAndConfiguration rootAndConfiguration) {
-    OCResolveRootAndConfigurationAdapter adapter =
-        new OCResolveRootAndConfigurationAdapter(
-            rootAndConfiguration.getConfiguration(),
-            rootAndConfiguration.getKind(),
-            rootAndConfiguration.getRootFile());
-    return supports(adapter);
+    if (rootAndConfiguration.getProject() == null) {
+      return false;
+    }
+    return supports(rootAndConfiguration.getProject());
   }
 
   public abstract boolean processPathSpecificationToInclude(
@@ -49,11 +52,29 @@ public abstract class OCDefaultAutoImportHelperAdapter extends OCDefaultAutoImpo
       final VirtualFile fileToImport,
       OCResolveRootAndConfiguration rootAndConfiguration,
       Processor<ImportSpecification> processor) {
+    OCLanguageKind kind = rootAndConfiguration.getKind();
+    OCResolveConfiguration configuration = rootAndConfiguration.getConfiguration();
+    VirtualFile rootFile = rootAndConfiguration.getRootFile();
     OCResolveRootAndConfigurationAdapter adapter =
-        new OCResolveRootAndConfigurationAdapter(
-            rootAndConfiguration.getConfiguration(),
-            rootAndConfiguration.getKind(),
-            rootAndConfiguration.getRootFile());
+        OCResolveRootAndConfigurationAdapter.safelyConstruct(configuration, kind, rootFile);
     return processPathSpecificationToInclude(project, targetFile, fileToImport, adapter, processor);
+  }
+
+  /** Return roots that could be used for angle-bracket includes */
+  protected List<HeadersSearchRoot> getSystemHeaderRoots(
+      OCResolveRootAndConfigurationAdapter rootAndConfig) {
+    if (rootAndConfig.getConfiguration() == null) {
+      return ImmutableList.of();
+    }
+    return rootAndConfig.getConfiguration().getLibraryHeadersRoots(rootAndConfig).getRoots();
+  }
+
+  /** Return roots that could be used for quote includes */
+  protected List<HeadersSearchRoot> getUserHeaderRoots(
+      OCResolveRootAndConfigurationAdapter rootAndConfig) {
+    if (rootAndConfig.getConfiguration() == null) {
+      return ImmutableList.of();
+    }
+    return rootAndConfig.getConfiguration().getProjectHeadersRoots().getRoots();
   }
 }
