@@ -2,6 +2,7 @@ package com.google.idea.blaze.scala.run.producers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -10,6 +11,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
 import com.google.idea.blaze.base.run.testmap.FilteredTargetMap;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.run.RunUtil;
 import com.intellij.execution.RunManagerEx;
@@ -135,6 +137,8 @@ public class DeployableJarRunConfigurationProducer
   public File getDeployJarFile(Label target, Project project) {
     WorkspaceRoot root = WorkspaceRoot.fromProject(project);
     return root.fileForPath(WorkspacePath.createIfValid(
-      String.format("bazel-bin/%s_deploy.jar", target.targetName())));
+            String.format("%s/%s_deploy.jar",
+                    BlazeInfo.blazeBinKey(Blaze.BuildSystem.Bazel),
+                    target.targetName())));
   }
 }
