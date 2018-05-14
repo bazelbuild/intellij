@@ -16,21 +16,20 @@
 package com.google.idea.blaze.base.settings.ui;
 
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.common.actionhelper.ActionPresentationHelper;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import java.io.File;
+import java.util.Optional;
 
 /** Opens the user's local project view file. */
 public class OpenLocalProjectViewAction extends BlazeProjectAction implements DumbAware {
-
-  @Override
-  protected void updateForBlazeProject(Project project, AnActionEvent e) {
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    ActionPresentationHelper.of(e).disableIf(projectViewSet == null).commit();
-  }
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
@@ -39,10 +38,18 @@ public class OpenLocalProjectViewAction extends BlazeProjectAction implements Du
 
   /** Opens the user's local project view file. */
   public static void openLocalProjectViewFile(Project project) {
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    if (projectViewSet == null) {
-      return;
+    Optional<VirtualFile> projectViewFile = getLocalProjectViewFile(project);
+    if (projectViewFile.isPresent()) {
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, projectViewFile.get());
+      FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
     }
-    ProjectViewHelper.openProjectViewFile(project, projectViewSet.getTopLevelProjectViewFile());
+  }
+
+  private static Optional<VirtualFile> getLocalProjectViewFile(Project project) {
+    BlazeImportSettings importSettings =
+        BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    File projectViewFile = new File(importSettings.getProjectViewFile());
+    VirtualFile virtualFile = VfsUtil.findFileByIoFile(projectViewFile, true);
+    return Optional.ofNullable(virtualFile);
   }
 }

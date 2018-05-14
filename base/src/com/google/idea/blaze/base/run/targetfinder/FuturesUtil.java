@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.run.targetfinder;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.JdkFutureAdapters;
@@ -73,6 +75,7 @@ public class FuturesUtil {
     return Futures.transform(
         Futures.allAsList(futures),
         (Function<List<T>, T>)
-            list -> list == null ? null : list.stream().filter(predicate).findFirst().orElse(null));
+            list -> list == null ? null : list.stream().filter(predicate).findFirst().orElse(null),
+        directExecutor());
   }
 }

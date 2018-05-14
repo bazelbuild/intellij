@@ -76,7 +76,11 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
             .getTestEnvironmentCreator(project);
     return JavaCommandLineStateUtil.startProcess(
         testEnvironmentCreator.createCommandLine(
-            getFastBuildInfo(), outputFile, handlerState.getTestFilter(), debugPort));
+            getConfiguration().getTargetKind(),
+            getFastBuildInfo(),
+            outputFile,
+            handlerState.getTestFilter(),
+            debugPort));
   }
 
   private File createOutputFile() throws ExecutionException {

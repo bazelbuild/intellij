@@ -39,7 +39,7 @@ public interface PrefetchService {
    *     recently fetched.
    */
   ListenableFuture<?> prefetchFiles(
-      Project project, Collection<File> files, boolean refetchCachedFiles, boolean fetchFileTypes);
+      Collection<File> files, boolean refetchCachedFiles, boolean fetchFileTypes);
 
   ListenableFuture<?> prefetchProjectFiles(
       Project project, ProjectViewSet projectViewSet, @Nullable BlazeProjectData blazeProjectData);

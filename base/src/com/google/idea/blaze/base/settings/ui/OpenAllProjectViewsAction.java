@@ -18,10 +18,16 @@ package com.google.idea.blaze.base.settings.ui;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.ProjectViewSet.ProjectViewFile;
 import com.google.idea.common.actionhelper.ActionPresentationHelper;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import java.io.File;
 
 /** Opens all the user's project views. */
 public class OpenAllProjectViewsAction extends BlazeProjectAction implements DumbAware {
@@ -38,8 +44,17 @@ public class OpenAllProjectViewsAction extends BlazeProjectAction implements Dum
     if (projectViewSet == null) {
       return;
     }
-    projectViewSet
-        .getProjectViewFiles()
-        .forEach(f -> ProjectViewHelper.openProjectViewFile(project, f));
+    projectViewSet.getProjectViewFiles().forEach(f -> openProjectViewFile(project, f));
+  }
+
+  private static void openProjectViewFile(Project project, ProjectViewFile projectViewFile) {
+    File file = projectViewFile.projectViewFile;
+    if (file != null) {
+      VirtualFile virtualFile = VfsUtil.findFileByIoFile(file, true);
+      if (virtualFile != null) {
+        OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile);
+        FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+      }
+    }
   }
 }

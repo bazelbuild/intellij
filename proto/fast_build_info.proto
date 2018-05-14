@@ -25,10 +25,14 @@ message FastBuildBlazeData {
   repeated string dependencies = 2;
   string workspace_name = 3;
 
-  oneof provider_info {
-    JavaInfo java_info = 8;
-    JavaToolchainInfo java_toolchain_info = 9;
-  }
+  AndroidInfo android_info = 8;
+  JavaInfo java_info = 9;
+  JavaToolchainInfo java_toolchain_info = 10;
+}
+
+message AndroidInfo {
+  ArtifactLocation aar = 1;
+  ArtifactLocation merged_manifest = 2;
 }
 
 message JavaInfo {

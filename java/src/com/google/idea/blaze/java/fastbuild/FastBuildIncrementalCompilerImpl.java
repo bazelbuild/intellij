@@ -28,7 +28,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
-import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.ProviderInfo.Type;
 import com.google.idea.blaze.java.fastbuild.FastBuildCompiler.CompileInstructions;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
 import com.google.idea.common.concurrency.ConcurrencyUtil;
@@ -150,11 +149,11 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
     seenTargets.add(label);
 
     FastBuildBlazeData targetIdeInfo = blazeData.get(label);
-    if (targetIdeInfo == null || !targetIdeInfo.providerInfo().type().equals(Type.JAVA_INFO)) {
+    if (targetIdeInfo == null || !targetIdeInfo.javaInfo().isPresent()) {
       return;
     }
 
-    JavaInfo javaInfo = targetIdeInfo.providerInfo().javaInfo();
+    JavaInfo javaInfo = targetIdeInfo.javaInfo().get();
 
     boolean addedSources = false;
     for (ArtifactLocation sourceArtifact : javaInfo.sources()) {

@@ -56,16 +56,16 @@ public class WorkspaceRootNode extends PsiDirectoryNode {
   @Override
   public Collection<AbstractTreeNode> getChildrenImpl() {
     if (!BlazeUserSettings.getInstance().getCollapseProjectView()) {
-      return super.getChildrenImpl();
+      return getWrappedChildren();
     }
     Project project = getProject();
     if (project == null) {
-      return super.getChildrenImpl();
+      return getWrappedChildren();
     }
     List<AbstractTreeNode> children = Lists.newArrayList();
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
     if (projectViewSet == null) {
-      return super.getChildrenImpl();
+      return getWrappedChildren();
     }
 
     ImportRoots importRoots =
@@ -73,7 +73,7 @@ public class WorkspaceRootNode extends PsiDirectoryNode {
             .add(projectViewSet)
             .build();
     if (importRoots.rootDirectories().stream().anyMatch(WorkspacePath::isWorkspaceRoot)) {
-      return super.getChildrenImpl();
+      return getWrappedChildren();
     }
     for (WorkspacePath workspacePath : importRoots.rootDirectories()) {
       VirtualFile virtualFile =
@@ -88,9 +88,13 @@ public class WorkspaceRootNode extends PsiDirectoryNode {
       children.add(new BlazePsiDirectoryRootNode(project, psiDirectory, getSettings()));
     }
     if (children.isEmpty()) {
-      return super.getChildrenImpl();
+      return getWrappedChildren();
     }
     return children;
+  }
+
+  private Collection<AbstractTreeNode> getWrappedChildren() {
+    return BlazePsiDirectoryNode.wrapChildren(super.getChildrenImpl());
   }
 
   @Override

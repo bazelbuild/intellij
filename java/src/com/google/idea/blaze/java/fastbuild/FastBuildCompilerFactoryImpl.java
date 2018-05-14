@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaToolchainInfo;
-import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.ProviderInfo.Type;
 import com.google.idea.blaze.java.fastbuild.FastBuildCompiler.CompileInstructions;
 import java.io.File;
 import java.io.PrintWriter;
@@ -70,8 +69,8 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
     List<JavaToolchainInfo> javaToolchains = new ArrayList<>();
     for (Label dependency : targetData.dependencies()) {
       FastBuildBlazeData depInfo = blazeData.get(dependency);
-      if (depInfo != null && depInfo.providerInfo().type().equals(Type.JAVA_TOOLCHAIN_INFO)) {
-        javaToolchains.add(depInfo.providerInfo().javaToolchainInfo());
+      if (depInfo != null && depInfo.javaToolchainInfo().isPresent()) {
+        javaToolchains.add(depInfo.javaToolchainInfo().get());
       }
     }
     if (javaToolchains.isEmpty()) {

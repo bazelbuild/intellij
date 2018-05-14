@@ -64,7 +64,6 @@ public class JavaProtoLibraryTest extends BazelIntellijAspectTest {
                 .build());
 
     // Make sure we suppress the proto_library legacy provider info
-    assertThat(barProto.hasProtoLibraryLegacyJavaIdeInfo()).isFalse();
 
     assertThat(barProto.hasJavaIdeInfo()).isTrue();
     List<String> jarStrings =

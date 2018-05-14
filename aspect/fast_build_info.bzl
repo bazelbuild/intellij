@@ -7,7 +7,7 @@ load(
     "struct_omit_none",
 )
 
-_DEP_ATTRS = ["deps", "runtime_deps", "_java_toolchain"]
+_DEP_ATTRS = ["deps", "exports", "runtime_deps", "_java_toolchain"]
 
 def _fast_build_info_impl(target, ctx):
     dep_targets = _get_all_dep_targets(target, ctx)
@@ -30,7 +30,7 @@ def _fast_build_info_impl(target, ctx):
             source_version = toolchain.source_version,
             target_version = toolchain.target_version,
         )
-    elif JavaInfo in target:
+    if JavaInfo in target:
         write_output = True
         java_info = {
             "sources": sources_from_target(ctx),
@@ -44,6 +44,13 @@ def _fast_build_info_impl(target, ctx):
                 for t in annotation_processing.processor_classpath
             ]
         info["java_info"] = struct_omit_none(**java_info)
+    if hasattr(target, "android"):
+        write_output = True
+        android_info = struct_omit_none(
+            aar = artifact_location(target.android.aar),
+            merged_manifest = artifact_location(target.android.merged_manifest),
+        )
+        info["android_info"] = android_info
 
     if write_output:
         output_file = ctx.actions.declare_file(target.label.name + ".ide-fast-build-info.txt")

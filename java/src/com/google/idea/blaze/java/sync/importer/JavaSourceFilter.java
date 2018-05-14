@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
@@ -43,7 +42,6 @@ import javax.annotation.Nullable;
 public class JavaSourceFilter {
   final List<TargetIdeInfo> sourceTargets;
   final List<TargetIdeInfo> libraryTargets;
-  final List<TargetIdeInfo> protoLibraries;
   final Map<TargetKey, Collection<ArtifactLocation>> targetToJavaSources;
   /** The set of workspace-relative paths for excluded library artifacts. */
   final Set<String> jdepsPathsForExcludedJars = new HashSet<>();
@@ -91,12 +89,6 @@ public class JavaSourceFilter {
         libraryTargets.add(target);
       }
     }
-
-    protoLibraries =
-        includedTargets
-            .stream()
-            .filter(target -> target.kind == Kind.PROTO_LIBRARY)
-            .collect(Collectors.toList());
   }
 
   public Iterable<TargetIdeInfo> getSourceTargets() {

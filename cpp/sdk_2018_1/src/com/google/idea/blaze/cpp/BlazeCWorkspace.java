@@ -16,6 +16,7 @@
 
 package com.google.idea.blaze.cpp;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -26,7 +27,11 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.sdkcompat.cidr.OCCompilerSettingsAdapter;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
@@ -38,6 +43,7 @@ import com.jetbrains.cidr.lang.toolchains.CidrSwitchBuilder;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceImpl;
+import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackers;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import java.io.File;
 import java.util.HashMap;
@@ -45,13 +51,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 /** Main entry point for C/CPP configuration data. */
 public final class BlazeCWorkspace implements ProjectComponent {
   private final BlazeConfigurationResolver configurationResolver;
   private BlazeConfigurationResolverResult resolverResult;
+  private ImmutableList<OCLanguageKind> supportedLanguages =
+      ImmutableList.of(OCLanguageKind.C, OCLanguageKind.CPP);
 
   private final Project project;
+  private CidrToolEnvironment toolEnvironment = new CidrToolEnvironment();
 
   private BlazeCWorkspace(Project project) {
     this.configurationResolver = new BlazeConfigurationResolver(project);
@@ -68,11 +78,52 @@ public final class BlazeCWorkspace implements ProjectComponent {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData) {
+
+    ProgressManager.getInstance()
+        .run(
+            new Task.Backgroundable(project, "Configuration Sync", false) {
+              @Override
+              public void run(ProgressIndicator indicator) {
+
+                indicator.setIndeterminate(false);
+                indicator.setText("Resolving Configurations...");
+                indicator.setFraction(0.0);
+                BlazeConfigurationResolverResult newResult =
+                    resolveConfigurations(
+                        context, workspaceRoot, projectViewSet, blazeProjectData, indicator);
+                indicator.setText("Updating Configurations...");
+                indicator.setFraction(0.0);
+                CommitableConfiguration config =
+                    calculateConfigurations(blazeProjectData, workspaceRoot, newResult, indicator);
+                commitConfigurations(config);
+                incModificationTrackers();
+              }
+            });
+  }
+
+  @VisibleForTesting
+  BlazeConfigurationResolverResult resolveConfigurations(
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      @Nullable ProgressIndicator indicator) {
     BlazeConfigurationResolverResult oldResult = resolverResult;
-    resolverResult =
-        configurationResolver.update(
-            context, workspaceRoot, projectViewSet, blazeProjectData, oldResult);
-    CidrToolEnvironment environment = new CidrToolEnvironment();
+    return configurationResolver.update(
+        context, workspaceRoot, projectViewSet, blazeProjectData, oldResult);
+  }
+
+  @VisibleForTesting
+  CommitableConfiguration calculateConfigurations(
+      BlazeProjectData blazeProjectData,
+      WorkspaceRoot workspaceRoot,
+      BlazeConfigurationResolverResult newResult,
+      ProgressIndicator indicator) {
+    NullableFunction<File, VirtualFile> fileMapper = OCWorkspaceImpl.createFileMapper();
+
+    OCWorkspaceImpl.ModifiableModel workspaceModifiable =
+        OCWorkspaceImpl.getInstanceImpl(project).getModifiableModel();
+    ImmutableList<BlazeResolveConfiguration> configurations = newResult.getAllConfigurations();
     ExecutionRootPathResolver executionRootPathResolver =
         new ExecutionRootPathResolver(
             Blaze.getBuildSystem(project),
@@ -80,14 +131,10 @@ public final class BlazeCWorkspace implements ProjectComponent {
             blazeProjectData.blazeInfo.getExecutionRoot(),
             blazeProjectData.workspacePathResolver);
 
-    NullableFunction<File, VirtualFile> fileMapper = OCWorkspaceImpl.createFileMapper();
-    ImmutableList<OCLanguageKind> supportedLanguages =
-        ImmutableList.of(OCLanguageKind.C, OCLanguageKind.CPP);
-
-    OCWorkspaceImpl.ModifiableModel workspaceModifiable =
-        OCWorkspaceImpl.getInstanceImpl(project).getModifiableModel();
-
-    for (BlazeResolveConfiguration resolveConfiguration : resolverResult.getAllConfigurations()) {
+    int progress = 0;
+    for (BlazeResolveConfiguration resolveConfiguration : configurations) {
+      indicator.setText2(resolveConfiguration.getDisplayName(true));
+      indicator.setFraction(((double) progress) / configurations.size());
       Map<OCLanguageKind, Trinity<OCCompilerKind, File, CidrCompilerSwitches>> configLanguages =
           new HashMap<>();
       OCCompilerSettingsAdapter compilerSettingsAdapter =
@@ -200,13 +247,49 @@ public final class BlazeCWorkspace implements ProjectComponent {
           workspaceRoot.directory(),
           configLanguages,
           configSourceFiles,
-          environment,
+          toolEnvironment,
           fileMapper);
+      progress++;
     }
-    workspaceModifiable.commit();
+
+    return new CommitableConfiguration(newResult, workspaceModifiable);
+  }
+
+  @VisibleForTesting
+  void commitConfigurations(CommitableConfiguration config) {
+    resolverResult = config.result;
+    config.model.commit();
+  }
+
+  private void incModificationTrackers() {
+    TransactionGuard.submitTransaction(
+        project,
+        () -> {
+          if (project.isDisposed()) {
+            return;
+          }
+          OCWorkspaceModificationTrackers modTrackers =
+              OCWorkspaceModificationTrackers.getInstance(project);
+          modTrackers.getProjectFilesListTracker().incModificationCount();
+          modTrackers.getSourceFilesListTracker().incModificationCount();
+          modTrackers.getSelectedResolveConfigurationTracker().incModificationCount();
+          modTrackers.getBuildSettingsChangesTracker().incModificationCount();
+        });
   }
 
   public OCWorkspace getWorkspace() {
     return OCWorkspace.getInstance(project);
+  }
+
+  /** Contains the configuration to be committed all-at-once */
+  public static class CommitableConfiguration {
+    private final BlazeConfigurationResolverResult result;
+    private final OCWorkspaceImpl.ModifiableModel model;
+
+    CommitableConfiguration(
+        BlazeConfigurationResolverResult result, OCWorkspaceImpl.ModifiableModel model) {
+      this.result = result;
+      this.model = model;
+    }
   }
 }

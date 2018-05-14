@@ -58,17 +58,16 @@ public class PrefetchServiceImpl implements PrefetchService {
 
   @Override
   public ListenableFuture<?> prefetchFiles(
-      Project project, Collection<File> files, boolean refetchCachedFiles, boolean fetchFileTypes) {
-    return prefetchFiles(project, ImmutableSet.of(), files, refetchCachedFiles, fetchFileTypes);
+      Collection<File> files, boolean refetchCachedFiles, boolean fetchFileTypes) {
+    return prefetchFiles(ImmutableSet.of(), files, refetchCachedFiles, fetchFileTypes);
   }
 
   private ListenableFuture<?> prefetchFiles(
-      Project project,
       Set<File> excludeDirectories,
       Collection<File> files,
       boolean refetchCachedFiles,
       boolean fetchFileTypes) {
-    if (files.isEmpty() || !enabled(project)) {
+    if (files.isEmpty()) {
       return Futures.immediateFuture(null);
     }
     if (!refetchCachedFiles) {
@@ -90,18 +89,9 @@ public class PrefetchServiceImpl implements PrefetchService {
     for (Prefetcher prefetcher : Prefetcher.EP_NAME.getExtensions()) {
       futures.add(
           prefetcher.prefetchFiles(
-              project, excludeDirectories, canonicalFiles, FetchExecutor.EXECUTOR, fetchFileTypes));
+              excludeDirectories, canonicalFiles, FetchExecutor.EXECUTOR, fetchFileTypes));
     }
     return Futures.allAsList(futures);
-  }
-
-  private static boolean enabled(Project project) {
-    for (Prefetcher prefetcher : Prefetcher.EP_NAME.getExtensions()) {
-      if (prefetcher.enabled(project)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Nullable
@@ -155,7 +145,6 @@ public class PrefetchServiceImpl implements PrefetchService {
     }
     ListenableFuture<?> sourceFilesFuture =
         prefetchFiles(
-            project,
             excludeDirectories,
             sourceDirectories,
             /* refetchCachedFiles */ false,
@@ -168,7 +157,7 @@ public class PrefetchServiceImpl implements PrefetchService {
             project, projectViewSet, importRoots, blazeProjectData, externalFiles);
       }
     }
-    ListenableFuture<?> externalFilesFuture = prefetchFiles(project, externalFiles, false, false);
+    ListenableFuture<?> externalFilesFuture = prefetchFiles(externalFiles, false, false);
     return Futures.allAsList(sourceFilesFuture, externalFilesFuture);
   }
 }

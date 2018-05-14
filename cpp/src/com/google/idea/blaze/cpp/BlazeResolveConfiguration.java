@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.sdkcompat.cidr.OCCompilerMacrosAdapter;
@@ -28,7 +29,6 @@ import com.google.idea.sdkcompat.cidr.OCCompilerSettingsAdapter;
 import com.google.idea.sdkcompat.cidr.OCResolveConfigurationAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.OCFileTypeHelpers;
 import com.jetbrains.cidr.lang.OCLanguageKind;
@@ -38,6 +38,7 @@ import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceUtil;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -267,9 +268,8 @@ final class BlazeResolveConfiguration extends OCResolveConfigurationAdapter {
     }
 
     for (ArtifactLocation sourceArtifact : targetIdeInfo.sources) {
-      VirtualFile vf =
-          VfsUtil.findFileByIoFile(
-              blazeProjectData.artifactLocationDecoder.decode(sourceArtifact), false);
+      File file = blazeProjectData.artifactLocationDecoder.decode(sourceArtifact);
+      VirtualFile vf = VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(file);
       if (vf == null) {
         continue;
       }

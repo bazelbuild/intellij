@@ -113,7 +113,7 @@ public class WildcardTargetExpander {
         PackageLister.getDirectoriesToPrefetch(pathResolver, includes, excludePredicate);
 
     ListenableFuture<?> prefetchFuture =
-        PrefetchService.getInstance().prefetchFiles(project, toPrefetch, false, false);
+        PrefetchService.getInstance().prefetchFiles(toPrefetch, false, false);
     if (!FutureUtil.waitForFuture(context, prefetchFuture)
         .withProgressMessage("Prefetching wildcard target pattern directories...")
         .timed("PrefetchingWildcardTargetDirectories", EventType.Prefetching)
@@ -188,7 +188,7 @@ public class WildcardTargetExpander {
         BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.QUERY)
             .addBlazeFlags(BlazeFlags.KEEP_GOING)
             .addBlazeFlags("--output=label_kind")
-            .addBlazeFlags(queryString(targetPatterns));
+            .addBlazeFlags(query);
 
     ImmutableList.Builder<TargetExpression> output = ImmutableList.builder();
 
@@ -232,20 +232,25 @@ public class WildcardTargetExpander {
         if (excluded) {
           continue; // an excluded target at the start of the list has no effect
         }
-        builder.append(target);
+        builder.append("'").append(target).append("'");
       } else {
         if (excluded) {
           builder.append(" - ");
           // trim leading '-'
           String excludedTarget = target.toString();
-          builder.append(excludedTarget, 1, excludedTarget.length());
+          builder.append("'").append(excludedTarget, 1, excludedTarget.length()).append("'");
         } else {
           builder.append(" + ");
-          builder.append(target);
+          builder.append("'").append(target).append("'");
         }
       }
     }
-    return builder.toString();
+    String targetList = builder.toString();
+    if (targetList.isEmpty()) {
+      return targetList;
+    }
+    // exclude 'manual' targets, which shouldn't be built when expanding wildcard target patterns
+    return String.format("attr('tags', '^((?!manual).)*$', %s)", targetList);
   }
 
   private static String getBinaryPath(Project project) {

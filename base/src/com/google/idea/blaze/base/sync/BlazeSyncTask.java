@@ -242,7 +242,9 @@ final class BlazeSyncTask implements Progressive {
         ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
         BlazeProjectData blazeProjectData =
             BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-        updateInMemoryState(project, context, projectViewSet, blazeProjectData);
+        if (syncParams.syncMode != SyncMode.NO_BUILD) {
+          updateInMemoryState(project, context, projectViewSet, blazeProjectData);
+        }
         onSyncComplete(project, context, projectViewSet, blazeProjectData, syncResult);
       }
     } catch (Throwable e) {

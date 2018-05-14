@@ -19,7 +19,6 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -29,7 +28,6 @@ import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.Dependency.DependencyType;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
-import com.google.idea.blaze.base.ideinfo.ProtoLibraryLegacyInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -126,8 +124,7 @@ public final class BlazeJavaWorkspaceImporter {
     context.output(PrintOutput.log("Java content entry count: " + totalContentEntryCount));
 
     ImmutableMap<LibraryKey, BlazeJarLibrary> libraries =
-        buildLibraries(
-            workspaceBuilder, targetMap, sourceFilter.libraryTargets, sourceFilter.protoLibraries);
+        buildLibraries(workspaceBuilder, sourceFilter.libraryTargets);
 
     duplicateSourceDetector.reportDuplicates(context);
 
@@ -143,10 +140,7 @@ public final class BlazeJavaWorkspaceImporter {
   }
 
   private ImmutableMap<LibraryKey, BlazeJarLibrary> buildLibraries(
-      WorkspaceBuilder workspaceBuilder,
-      TargetMap targetMap,
-      List<TargetIdeInfo> libraryTargets,
-      List<TargetIdeInfo> protoLibraries) {
+      WorkspaceBuilder workspaceBuilder, List<TargetIdeInfo> libraryTargets) {
     // Build library maps
     Multimap<TargetKey, BlazeJarLibrary> targetKeyToLibrary = ArrayListMultimap.create();
     Map<String, BlazeJarLibrary> jdepsPathToLibrary = Maps.newHashMap();
@@ -173,21 +167,6 @@ public final class BlazeJavaWorkspaceImporter {
       targetKeyToLibrary.putAll(target.key, libraries);
       for (BlazeJarLibrary library : libraries) {
         addLibraryToJdeps(jdepsPathToLibrary, library);
-      }
-    }
-
-    // proto legacy jdeps support
-    for (TargetIdeInfo target : protoLibraries) {
-      ProtoLibraryLegacyInfo protoLibraryLegacyInfo = target.protoLibraryLegacyInfo;
-      if (protoLibraryLegacyInfo == null) {
-        continue;
-      }
-      for (LibraryArtifact libraryArtifact :
-          Iterables.concat(
-              protoLibraryLegacyInfo.jarsV1,
-              protoLibraryLegacyInfo.jarsMutable,
-              protoLibraryLegacyInfo.jarsImmutable)) {
-        addLibraryToJdeps(jdepsPathToLibrary, new BlazeJarLibrary(libraryArtifact));
       }
     }
 
@@ -219,99 +198,12 @@ public final class BlazeJavaWorkspaceImporter {
       }
     }
 
-    // Collect legacy proto libraries from direct deps
-    addProtoLegacyLibrariesFromDirectDeps(workspaceBuilder, targetMap, result);
-
     // Collect generated jars from source rules
     for (BlazeJarLibrary library : workspaceBuilder.generatedJarsFromSourceTargets) {
       result.put(library.key, library);
     }
 
     return ImmutableMap.copyOf(result);
-  }
-
-  private void addProtoLegacyLibrariesFromDirectDeps(
-      WorkspaceBuilder workspaceBuilder,
-      TargetMap targetMap,
-      Map<LibraryKey, BlazeJarLibrary> result) {
-    List<TargetKey> version1Targets = Lists.newArrayList();
-    List<TargetKey> immutableTargets = Lists.newArrayList();
-    List<TargetKey> mutableTargets = Lists.newArrayList();
-    for (TargetKey targetKey : workspaceBuilder.directDeps) {
-      TargetIdeInfo target = targetMap.get(targetKey);
-      if (target == null) {
-        continue;
-      }
-      ProtoLibraryLegacyInfo protoLibraryLegacyInfo = target.protoLibraryLegacyInfo;
-      if (protoLibraryLegacyInfo == null) {
-        continue;
-      }
-      switch (protoLibraryLegacyInfo.apiFlavor) {
-        case VERSION_1:
-          version1Targets.add(targetKey);
-          break;
-        case IMMUTABLE:
-          immutableTargets.add(targetKey);
-          break;
-        case MUTABLE:
-          mutableTargets.add(targetKey);
-          break;
-        case BOTH:
-          mutableTargets.add(targetKey);
-          immutableTargets.add(targetKey);
-          break;
-        default:
-          // Can't happen
-          break;
-      }
-    }
-
-    addProtoLegacyLibrariesFromDirectDepsForFlavor(
-        targetMap, ProtoLibraryLegacyInfo.ApiFlavor.VERSION_1, version1Targets, result);
-    addProtoLegacyLibrariesFromDirectDepsForFlavor(
-        targetMap, ProtoLibraryLegacyInfo.ApiFlavor.IMMUTABLE, immutableTargets, result);
-    addProtoLegacyLibrariesFromDirectDepsForFlavor(
-        targetMap, ProtoLibraryLegacyInfo.ApiFlavor.MUTABLE, mutableTargets, result);
-  }
-
-  private void addProtoLegacyLibrariesFromDirectDepsForFlavor(
-      TargetMap targetMap,
-      ProtoLibraryLegacyInfo.ApiFlavor apiFlavor,
-      List<TargetKey> targetKeys,
-      Map<LibraryKey, BlazeJarLibrary> result) {
-    for (TargetKey key : targetKeys) {
-      TargetIdeInfo target = targetMap.get(key);
-      if (target == null) {
-        continue;
-      }
-      ProtoLibraryLegacyInfo protoLibraryLegacyInfo = target.protoLibraryLegacyInfo;
-      if (protoLibraryLegacyInfo == null) {
-        continue;
-      }
-      final Collection<LibraryArtifact> libraries;
-      switch (apiFlavor) {
-        case VERSION_1:
-          libraries = protoLibraryLegacyInfo.jarsV1;
-          break;
-        case MUTABLE:
-          libraries = protoLibraryLegacyInfo.jarsMutable;
-          break;
-        case IMMUTABLE:
-          libraries = protoLibraryLegacyInfo.jarsImmutable;
-          break;
-        default:
-          // Can't happen
-          libraries = null;
-          break;
-      }
-
-      if (libraries != null) {
-        for (LibraryArtifact libraryArtifact : libraries) {
-          BlazeJarLibrary library = new BlazeJarLibrary(libraryArtifact);
-          result.put(library.key, library);
-        }
-      }
-    }
   }
 
   private void addLibraryToJdeps(
