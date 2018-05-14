@@ -46,7 +46,7 @@ final class KotlinSettingsUpdater {
                 .unfrozen();
   }
 
-  public static KotlinSettingsUpdater create(Project project) {
+  static KotlinSettingsUpdater create(Project project) {
     return new KotlinSettingsUpdater(project);
   }
 
@@ -54,7 +54,7 @@ final class KotlinSettingsUpdater {
     return this.commonArguments.getApiVersion();
   }
 
-  public void apiVersion(String apiVersion) {
+  void apiVersion(String apiVersion) {
     commonSetting(apiVersion, this::apiVersion, commonArguments::setApiVersion);
   }
 
@@ -62,7 +62,7 @@ final class KotlinSettingsUpdater {
     return this.commonArguments.getLanguageVersion();
   }
 
-  public void languageVersion(String languageVersion) {
+  void languageVersion(String languageVersion) {
     commonSetting(languageVersion, this::languageVersion, commonArguments::setLanguageVersion);
   }
 
@@ -70,7 +70,7 @@ final class KotlinSettingsUpdater {
     return this.commonArguments.getCoroutinesState();
   }
 
-  public void coroutineState(String coroutines) {
+  void coroutineState(String coroutines) {
     commonSetting(coroutines, this::coroutineState, commonArguments::setCoroutinesState);
   }
 
@@ -78,13 +78,13 @@ final class KotlinSettingsUpdater {
     return this.jvmCompilerArguments.getJvmTarget();
   }
 
-  public void jvmTarget(String jvmTarget) {
+  void jvmTarget(String jvmTarget) {
     jvmSetting(jvmTarget, this::jvmTarget, jvmCompilerArguments::setJvmTarget);
   }
 
   private <T> void commonSetting(T value, Supplier<T> settingProvider, Consumer<T> updater) {
     T current = settingProvider.get();
-    if(current == null || !current.equals(value)) {
+    if (current == null || !current.equals(value)) {
       commonUpdated = true;
       updater.accept(value);
     }
@@ -92,13 +92,13 @@ final class KotlinSettingsUpdater {
 
   private <T> void jvmSetting(T value, Supplier<T> settingProvider, Consumer<T> updater) {
     T current = settingProvider.get();
-    if(current == null || !current.equals(value)) {
+    if (current == null || !current.equals(value)) {
       jvmUpdated = true;
       updater.accept(value);
     }
   }
 
-  public void commit() {
+  void commit() {
     if (commonUpdated) {
       KotlinCommonCompilerArgumentsHolder.Companion.getInstance(project)
           .setSettings(commonArguments);

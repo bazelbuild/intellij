@@ -48,7 +48,7 @@ final class KotlinUtils {
       COMPILER_WORKSPACE_NAME = "com_github_jetbrains_kotlin";
 
   /**
-   * The presence of the kotlin compiler repo is validated. See {@link
+   * This validates the presence of the kotlin compiler repo in the workspace. See {@link
    * BlazeKotlinSyncPlugin#updateProjectStructure} for more details.
    */
   static boolean compilerRepoAbsentFromWorkspace(Project project) {
