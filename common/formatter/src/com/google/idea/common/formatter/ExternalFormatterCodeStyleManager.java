@@ -18,8 +18,11 @@ package com.google.idea.common.formatter;
 import static java.util.Comparator.comparing;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -33,12 +36,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /**
  * A CodeStyleManager that handles only the methods that can be processed by an external format
  * tool.
  */
 public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeStyleManager {
+
+  private static final Logger logger =
+      Logger.getInstance("com.google.idea.common.formatter.ExternalFormatterCodeStyleManager");
 
   /**
    * A set of replacements to apply. Enforces dropping replacements that don't actually change
@@ -135,13 +143,19 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
   }
 
   protected void performReplacements(Document document, Replacements replacements) {
+    performReplacements(document.getText(), document, replacements);
+  }
+
+  private void performReplacements(
+      String originalText, Document document, Replacements replacements) {
     if (replacements.replacements.isEmpty()) {
       return;
     }
     TreeMap<TextRange, String> sorted = new TreeMap<>(comparing(TextRange::getStartOffset));
     sorted.putAll(replacements.replacements);
-    WriteCommandAction.runWriteCommandAction(
-        getProject(),
+    runWriteActionIfUnchanged(
+        document,
+        originalText,
         () -> {
           for (Entry<TextRange, String> entry : sorted.descendingMap().entrySet()) {
             document.replaceString(
@@ -149,5 +163,90 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
           }
           PsiDocumentManager.getInstance(getProject()).commitDocument(document);
         });
+  }
+
+  protected void performReplacementsAsync(
+      PsiFile file, String originalText, ListenableFuture<Replacements> future) {
+    future.addListener(
+        () -> {
+          Document document = getDocument(file);
+          if (document == null || !canApplyChanges(document, originalText)) {
+            return;
+          }
+          Replacements replacements = getFormattingFuture(future);
+          if (replacements != null) {
+            performReplacements(originalText, document, replacements);
+          }
+        },
+        MoreExecutors.directExecutor());
+  }
+
+  protected void formatAsync(PsiFile file, String originalText, ListenableFuture<String> future) {
+    future.addListener(
+        () -> {
+          Document document = getDocument(file);
+          if (document == null || !canApplyChanges(document, originalText)) {
+            return;
+          }
+          String formattedFile = getFormattingFuture(future);
+          if (formattedFile == null || formattedFile.equals(getCurrentText(file))) {
+            return;
+          }
+          runWriteActionIfUnchanged(
+              document,
+              originalText,
+              () -> {
+                document.setText(formattedFile);
+                PsiDocumentManager.getInstance(getProject()).commitDocument(document);
+              });
+        },
+        MoreExecutors.directExecutor());
+  }
+
+  /** Calls the runnable inside a write action iff the document's text hasn't changed. */
+  private void runWriteActionIfUnchanged(Document document, String inputText, Runnable action) {
+    WriteCommandAction.runWriteCommandAction(
+        getProject(),
+        () -> {
+          if (inputText.equals(document.getText())) {
+            action.run();
+          }
+        });
+  }
+
+  /**
+   * Checks whether the {@link Document} is still writable, and hasn't changed since {@code
+   * originalText} was calculated.
+   */
+  private boolean canApplyChanges(Document document, String originalText) {
+    if (PsiDocumentManager.getInstance(getProject()).isDocumentBlockedByPsi(document)) {
+      return false;
+    }
+    String currentText = document.getText();
+    return originalText.equals(currentText);
+  }
+
+  @Nullable
+  private static Document getDocument(PsiFile file) {
+    return PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+  }
+
+  @Nullable
+  private static String getCurrentText(PsiFile file) {
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
+    Document document = documentManager.getDocument(file);
+    return document == null ? null : document.getText();
+  }
+
+  @Nullable
+  private static <V> V getFormattingFuture(ListenableFuture<V> future) {
+    try {
+      return future.get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } catch (ExecutionException e) {
+      logger.warn(e);
+    }
+    return null;
   }
 }

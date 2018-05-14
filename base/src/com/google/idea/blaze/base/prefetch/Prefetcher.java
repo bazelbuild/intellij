@@ -17,9 +17,7 @@ package com.google.idea.blaze.base.prefetch;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
 import java.util.Set;
@@ -37,13 +35,8 @@ public interface Prefetcher {
    * excludedDirectories that should not be walked down recursively during prefetch.
    */
   ListenableFuture<?> prefetchFiles(
-      Project project,
       Set<File> excludedDirectories,
       Collection<ListenableFuture<File>> fileFutures,
       ListeningExecutorService executor,
       boolean fetchFileTypes);
-
-  default boolean enabled(Project project) {
-    return Blaze.isBlazeProject(project);
-  }
 }

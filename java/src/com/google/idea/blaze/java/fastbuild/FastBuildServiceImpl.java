@@ -81,7 +81,8 @@ import javax.annotation.Nullable;
 
 final class FastBuildServiceImpl implements FastBuildService {
 
-  private static final ImmutableSet<Kind> SUPPORTED_KINDS = ImmutableSet.of(Kind.JAVA_TEST);
+  private static final ImmutableSet<Kind> SUPPORTED_KINDS =
+      ImmutableSet.of(Kind.ANDROID_ROBOLECTRIC_TEST, Kind.JAVA_TEST);
 
   private final Project project;
   private final ProjectViewManager projectViewManager;

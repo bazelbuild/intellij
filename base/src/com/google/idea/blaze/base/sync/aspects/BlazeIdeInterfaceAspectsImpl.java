@@ -180,7 +180,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 targetCount, updatedFiles.size(), removedCount)));
 
     ListenableFuture<?> prefetchFuture =
-        PrefetchService.getInstance().prefetchFiles(project, updatedFiles, true, false);
+        PrefetchService.getInstance().prefetchFiles(updatedFiles, true, false);
     if (!FutureUtil.waitForFuture(context, prefetchFuture)
         .timed("FetchAspectOutput", EventType.Prefetching)
         .withProgressMessage("Reading IDE info result...")
@@ -636,7 +636,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
       BuildResult result = BuildResult.fromExitCode(retVal);
       if (result.status != BuildResult.Status.FATAL_ERROR) {
-        prefetchGenfiles(project, context, buildResultHelper.getBuildArtifacts());
+        prefetchGenfiles(context, buildResultHelper.getBuildArtifacts());
       } else {
         buildResultHelper.close();
       }
@@ -687,10 +687,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   }
 
   /** Prefetch a list of blaze output artifacts, blocking until complete. */
-  private static void prefetchGenfiles(
-      Project project, BlazeContext context, ImmutableList<File> artifacts) {
+  private static void prefetchGenfiles(BlazeContext context, ImmutableList<File> artifacts) {
     ListenableFuture<?> prefetchFuture =
-        PrefetchService.getInstance().prefetchFiles(project, artifacts, false, false);
+        PrefetchService.getInstance().prefetchFiles(artifacts, false, false);
     FutureUtil.waitForFuture(context, prefetchFuture)
         .timed("PrefetchGenfiles", EventType.Prefetching)
         .withProgressMessage("Prefetching genfiles...")

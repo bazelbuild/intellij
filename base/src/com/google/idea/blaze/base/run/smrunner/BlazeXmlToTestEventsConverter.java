@@ -17,13 +17,17 @@ package com.google.idea.blaze.base.run.smrunner;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.ErrorOrFailureOrSkipped;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestCase;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
 import com.google.idea.blaze.base.run.smrunner.TestComparisonFailureParser.BlazeComparisonFailureData;
+import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
@@ -87,9 +91,13 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
       return;
     }
     try {
+      List<ListenableFuture<?>> futures = new ArrayList<>();
       for (Label label : testResults.perTargetResults.keySet()) {
-        processTestSuites(label, testResults.perTargetResults.get(label));
+        futures.add(
+            FetchExecutor.EXECUTOR.submit(
+                () -> processTestSuites(label, testResults.perTargetResults.get(label))));
       }
+      FuturesUtil.getIgnoringErrors(Futures.allAsList(futures));
     } finally {
       testResultFinderStrategy.deleteTemporaryOutputXmlFiles();
     }

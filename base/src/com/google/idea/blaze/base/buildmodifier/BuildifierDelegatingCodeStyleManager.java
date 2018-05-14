@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.buildmodifier;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.common.formatter.ExternalFormatterCodeStyleManager;
@@ -28,9 +29,9 @@ import java.util.Collection;
  * A {@link CodeStyleManager} implementation which runs buildifier on BUILD files, and otherwise
  * delegates to the existing formatter.
  */
-public final class BuildifierDelegatingCodeStyleManager extends ExternalFormatterCodeStyleManager {
+final class BuildifierDelegatingCodeStyleManager extends ExternalFormatterCodeStyleManager {
 
-  public BuildifierDelegatingCodeStyleManager(CodeStyleManager original) {
+  BuildifierDelegatingCodeStyleManager(CodeStyleManager original) {
     super(original);
   }
 
@@ -43,16 +44,9 @@ public final class BuildifierDelegatingCodeStyleManager extends ExternalFormatte
 
   @Override
   protected void format(PsiFile file, Document document, Collection<TextRange> ranges) {
-    Replacements output = new Replacements();
     String inputText = document.getText();
-    for (TextRange range : ranges) {
-      String input = range.substring(inputText);
-      String result = BuildFileFormatter.formatTextWithTimeout(input);
-      if (result == null) {
-        return;
-      }
-      output.addReplacement(range, input, result);
-    }
-    performReplacements(document, output);
+    ListenableFuture<Replacements> formattedFileFuture =
+        BuildFileFormatter.formatTextWithProgressDialog(getProject(), inputText, ranges);
+    performReplacementsAsync(file, inputText, formattedFileFuture);
   }
 }

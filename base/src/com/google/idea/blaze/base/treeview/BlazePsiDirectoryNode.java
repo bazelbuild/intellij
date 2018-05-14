@@ -15,12 +15,14 @@
  */
 package com.google.idea.blaze.base.treeview;
 
-import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.ui.SimpleTextAttributes;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 /** A PsiDirectoryNode that doesn't render module names or source roots. */
 public class BlazePsiDirectoryNode extends PsiDirectoryNode {
@@ -40,15 +42,34 @@ public class BlazePsiDirectoryNode extends PsiDirectoryNode {
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
-    super.updateImpl(data);
-    PsiDirectory psiDirectory = getValue();
-    assert psiDirectory != null;
-    String text = psiDirectory.getName();
+  public Collection<AbstractTreeNode> getChildrenImpl() {
+    return wrapChildren(super.getChildrenImpl());
+  }
 
-    data.setPresentableText(text);
-    data.clearText();
-    data.addText(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    data.setLocationString("");
+  static Collection<AbstractTreeNode> wrapChildren(Collection<AbstractTreeNode> children) {
+    return children.stream().map(n -> wrap(n)).collect(Collectors.toList());
+  }
+
+  private static AbstractTreeNode wrap(AbstractTreeNode node) {
+    if (!(node instanceof PsiDirectoryNode)) {
+      return node;
+    }
+    PsiDirectoryNode dir = (PsiDirectoryNode) node;
+    return dir instanceof BlazePsiDirectoryNode
+        ? dir
+        : new BlazePsiDirectoryNode(dir.getProject(), dir.getValue(), dir.getSettings());
+  }
+
+  @Override
+  public boolean isValid() {
+    PsiDirectory psi = getValue();
+    if (!psi.isValid()) {
+      return false;
+    }
+    return super.isValid() || (getSettings().isHideEmptyMiddlePackages() && isSourceRoot(psi));
+  }
+
+  private static boolean isSourceRoot(PsiDirectory psi) {
+    return ProjectRootsUtil.isModuleSourceRoot(psi.getVirtualFile(), psi.getProject());
   }
 }

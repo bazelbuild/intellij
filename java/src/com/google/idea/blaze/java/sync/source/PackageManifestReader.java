@@ -79,7 +79,7 @@ public class PackageManifestReader {
         FileDiffer.updateFiles(fileDiffState, fileToLabelMap.keySet(), updatedFiles, removedFiles);
 
     ListenableFuture<?> fetchFuture =
-        PrefetchService.getInstance().prefetchFiles(project, updatedFiles, true, false);
+        PrefetchService.getInstance().prefetchFiles(updatedFiles, true, false);
     if (!FutureUtil.waitForFuture(context, fetchFuture)
         .timed("FetchPackageManifests", EventType.Prefetching)
         .withProgressMessage("Reading package manifests...")

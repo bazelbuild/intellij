@@ -45,7 +45,6 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
     assertThat(target.hasJavaIdeInfo()).isFalse();
     assertThat(target.hasAndroidIdeInfo()).isFalse();
     assertThat(target.hasPyIdeInfo()).isFalse();
-    assertThat(target.hasProtoLibraryLegacyJavaIdeInfo()).isFalse();
 
     assertThat(relativePathsForArtifacts(target.getCIdeInfo().getSourceList()))
         .containsExactly(testRelative("simple/simple.cc"));

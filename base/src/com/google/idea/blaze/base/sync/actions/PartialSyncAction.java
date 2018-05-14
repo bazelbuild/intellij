@@ -35,45 +35,58 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
-import javax.annotation.Nullable;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /** Allows a partial sync of the project depending on what's been selected. */
 public class PartialSyncAction extends BlazeProjectAction {
-
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    VirtualFile virtualFile = getSelectedFile(e);
-    List<TargetExpression> targets = getTargets(project, virtualFile);
+    List<VirtualFile> virtualFiles = getSelectedFiles(e);
+    Set<TargetExpression> targets = getSelectedTargets(project, virtualFiles);
     BlazeSyncManager.getInstance(project).partialSync(targets);
   }
 
   @Override
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
-    VirtualFile virtualFile = getSelectedFile(e);
-    List<TargetExpression> targets = getTargets(project, virtualFile);
+    List<VirtualFile> virtualFiles = getSelectedFiles(e);
+    Set<TargetExpression> targets = getSelectedTargets(project, virtualFiles);
     ActionPresentationHelper.of(e)
         .disableIf(BlazeSyncStatus.getInstance(project).syncInProgress())
         .disableIf(targets.isEmpty())
-        .setTextWithSubject("Partially Sync File", "Partially Sync %s", virtualFile)
+        .setTextWithSubjects(
+            "Partially Sync File",
+            "Partially Sync %s",
+            "Partially Sync Selected Files",
+            virtualFiles)
         .disableWithoutSubject()
         .hideInContextMenuIfDisabled()
         .commit();
   }
 
-  private VirtualFile getSelectedFile(AnActionEvent e) {
-    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (virtualFile == null || !virtualFile.isInLocalFileSystem()) {
-      return null;
-    }
-    return virtualFile;
-  }
-
-  private static List<TargetExpression> getTargets(
-      Project project, @Nullable VirtualFile virtualFile) {
-    if (virtualFile == null) {
+  private List<VirtualFile> getSelectedFiles(AnActionEvent e) {
+    VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    if (virtualFiles == null) {
       return ImmutableList.of();
     }
+    return Arrays.stream(virtualFiles)
+        .filter(VirtualFile::isInLocalFileSystem)
+        .collect(Collectors.toList());
+  }
+
+  private Set<TargetExpression> getSelectedTargets(
+      Project project, List<VirtualFile> virtualFiles) {
+    return virtualFiles
+        .stream()
+        .map(vf -> getTargets(project, vf))
+        .flatMap(Collection::stream)
+        .collect(Collectors.toSet());
+  }
+
+  private static List<TargetExpression> getTargets(Project project, VirtualFile virtualFile) {
     List<TargetExpression> targets = Lists.newArrayList();
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     SourceToTargetMap.getInstance(project);

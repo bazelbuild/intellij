@@ -16,14 +16,18 @@
 package com.google.idea.blaze.java.run;
 
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.idea.common.guava.GuavaHelper.stream;
+import static java.util.stream.Collectors.joining;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData;
-import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.ProviderInfo.Type;
+import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.AndroidInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -40,6 +44,10 @@ import com.intellij.psi.PsiManager;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 final class FastBuildTestEnvironmentCreator {
@@ -54,15 +62,18 @@ final class FastBuildTestEnvironmentCreator {
   private final String testClassProperty;
   private final String testRunner;
 
-  FastBuildTestEnvironmentCreator(
-      Project project, String testClassProperty, String testRunner) {
+  FastBuildTestEnvironmentCreator(Project project, String testClassProperty, String testRunner) {
     this.project = project;
     this.testClassProperty = testClassProperty;
     this.testRunner = testRunner;
   }
 
   GeneralCommandLine createCommandLine(
-      FastBuildInfo fastBuildInfo, File outputFile, @Nullable String testFilter, int debugPort)
+      Kind kind,
+      FastBuildInfo fastBuildInfo,
+      File outputFile,
+      @Nullable String testFilter,
+      int debugPort)
       throws ExecutionException {
 
     // To emulate 'blaze test', the binary should be launched from something like
@@ -84,6 +95,10 @@ final class FastBuildTestEnvironmentCreator {
 
     commandLine.withParameters(
         "-cp", createClasspath(fastBuildInfo), getTestSuiteParameter(fastBuildInfo), testRunner);
+
+    if (kind.equals(Kind.ANDROID_ROBOLECTRIC_TEST)) {
+      addAndroidLibraries(commandLine, fastBuildInfo, workingDir);
+    }
 
     commandLine
         .withEnvironment(OUTPUT_FILE_VARIABLE, outputFile.getAbsolutePath())
@@ -119,9 +134,9 @@ final class FastBuildTestEnvironmentCreator {
 
   private String getTestClass(FastBuildInfo fastBuildInfo) throws ExecutionException {
     FastBuildBlazeData targetData = fastBuildInfo.blazeData().get(fastBuildInfo.label());
-    checkState(targetData.providerInfo().type().equals(Type.JAVA_INFO));
-    if (targetData.providerInfo().javaInfo().testClass().isPresent()) {
-      return targetData.providerInfo().javaInfo().testClass().get();
+    checkState(targetData.javaInfo().isPresent());
+    if (targetData.javaInfo().get().testClass().isPresent()) {
+      return targetData.javaInfo().get().testClass().get();
     } else {
       return determineTestClassFromSources(fastBuildInfo.label(), targetData);
     }
@@ -136,8 +151,7 @@ final class FastBuildTestEnvironmentCreator {
     String targetName = label.targetName().toString();
     PsiManager psiManager = PsiManager.getInstance(project);
     for (File source :
-        blazeProjectData.artifactLocationDecoder.decodeAll(
-            targetData.providerInfo().javaInfo().sources())) {
+        blazeProjectData.artifactLocationDecoder.decodeAll(targetData.javaInfo().get().sources())) {
       VirtualFile virtualFile = VfsUtils.resolveVirtualFile(source);
       if (virtualFile == null) {
         continue;
@@ -157,5 +171,79 @@ final class FastBuildTestEnvironmentCreator {
       }
     }
     throw new ExecutionException("Couldn't determine test class");
+  }
+
+  private void addAndroidLibraries(
+      GeneralCommandLine commandLine, FastBuildInfo fastBuildInfo, Path workingDir) {
+
+    ImmutableMap<Label, FastBuildBlazeData> blazeData = fastBuildInfo.blazeData();
+    FastBuildBlazeData testBlazeData = blazeData.get(fastBuildInfo.label());
+
+    // First, any libraries that are direct dependencies of the test target go into
+    // --strict_libraries
+    String strictLibraries =
+        testBlazeData
+            .dependencies()
+            .stream()
+            .filter(blazeData::containsKey)
+            .map(blazeData::get)
+            .flatMap(d -> stream(d.androidInfo()))
+            .flatMap(ai -> stream(getAndroidResource(ai, workingDir)))
+            .collect(joining(","));
+    if (!strictLibraries.isEmpty()) {
+      commandLine.withParameters("--strict_libraries", strictLibraries);
+    }
+
+    // Now, add the entire list of libraries to --android_libraries. (Those in --strict_libraries
+    // will be duplicated here, but that's okay; Blaze does the same thing.)
+    Set<String> libraries = new HashSet<>();
+    Set<Label> processedLabels = new HashSet<>();
+    recursivelyAddAndroidLibraries(
+        fastBuildInfo.label(), blazeData, libraries, processedLabels, workingDir);
+    if (!libraries.isEmpty()) {
+      commandLine.withParameters("--android_libraries", libraries.stream().collect(joining(",")));
+    }
+  }
+
+  private void recursivelyAddAndroidLibraries(
+      Label label,
+      Map<Label, FastBuildBlazeData> blazeData,
+      Set<String> libraries,
+      Set<Label> processedLabels,
+      Path workingDir) {
+    processedLabels.add(label);
+    if (!blazeData.containsKey(label)) {
+      return;
+    }
+    FastBuildBlazeData currentData = blazeData.get(label);
+    if (currentData.androidInfo().isPresent()) {
+      getAndroidResource(currentData.androidInfo().get(), workingDir).ifPresent(libraries::add);
+    }
+    currentData
+        .dependencies()
+        .stream()
+        .filter(d -> !processedLabels.contains(d))
+        .forEach(
+            d ->
+                recursivelyAddAndroidLibraries(
+                    d, blazeData, libraries, processedLabels, workingDir));
+  }
+
+  // Returns a string like
+  //   java/com/google/android/lib/AndroidManifest.xml:java/com/google/android/lib/lib.aar
+  private Optional<String> getAndroidResource(AndroidInfo androidInfo, Path workingDir) {
+    if (!androidInfo.mergedManifest().isPresent() || !androidInfo.aar().isPresent()) {
+      return Optional.empty();
+    }
+    // Very occasionally (<1% of the time in my tests) these files won't exist. I'm not really sure
+    // why that is. There must be something telling Blaze that they aren't needed for the build even
+    // though it's listed as a dependency.
+    if (!workingDir.resolve(androidInfo.mergedManifest().get().relativePath).toFile().exists()) {
+      return Optional.empty();
+    }
+    return Optional.of(
+        androidInfo.mergedManifest().get().getRelativePath()
+            + ":"
+            + androidInfo.aar().get().getRelativePath());
   }
 }

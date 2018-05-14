@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Strings.emptyToNull;
 import static java.util.stream.Collectors.toSet;
 
-import com.google.auto.value.AutoOneOf;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -46,60 +45,74 @@ public abstract class FastBuildBlazeData {
 
   public abstract ImmutableSet<Label> dependencies();
 
-  public abstract ProviderInfo providerInfo();
+  public abstract Optional<AndroidInfo> androidInfo();
 
-  static FastBuildBlazeData create(
-      Label label,
-      String workspaceName,
-      Collection<Label> dependencies,
-      ProviderInfo providerInfo) {
-    return new AutoValue_FastBuildBlazeData(
-        label, workspaceName, ImmutableSet.copyOf(dependencies), providerInfo);
+  public abstract Optional<JavaInfo> javaInfo();
+
+  public abstract Optional<JavaToolchainInfo> javaToolchainInfo();
+
+  static Builder builder() {
+    return new AutoValue_FastBuildBlazeData.Builder().setDependencies(ImmutableList.of());
+  }
+
+  @AutoValue.Builder
+  abstract static class Builder {
+    abstract Builder setLabel(Label label);
+
+    abstract Builder setWorkspaceName(String workspaceName);
+
+    abstract Builder setDependencies(Collection<Label> dependencies);
+
+    abstract Builder setAndroidInfo(AndroidInfo androidInfo);
+
+    abstract Builder setJavaInfo(JavaInfo javaInfo);
+
+    abstract Builder setJavaToolchainInfo(JavaToolchainInfo javaToolchainInfo);
+
+    abstract FastBuildBlazeData build();
   }
 
   static FastBuildBlazeData fromProto(FastBuildInfo.FastBuildBlazeData proto) {
     checkState(!Strings.isNullOrEmpty(proto.getWorkspaceName()), MISSING_WORKSPACE_NAME_ERROR);
-    ProviderInfo providerInfo = null;
-    switch (proto.getProviderInfoCase()) {
-      case JAVA_INFO:
-        providerInfo = ProviderInfo.ofJavaInfo(JavaInfo.fromProto(proto.getJavaInfo()));
-        break;
-      case JAVA_TOOLCHAIN_INFO:
-        providerInfo =
-            ProviderInfo.ofJavaToolchainInfo(
-                JavaToolchainInfo.fromProto(proto.getJavaToolchainInfo()));
-        break;
-      case PROVIDERINFO_NOT_SET:
-        throw new IllegalStateException("Unknown ProviderInfo type for label " + proto.getLabel());
+    FastBuildBlazeData.Builder builder =
+        FastBuildBlazeData.builder()
+            .setLabel(Label.create(proto.getLabel()))
+            .setWorkspaceName(proto.getWorkspaceName())
+            .setDependencies(
+                proto.getDependenciesList().stream().map(Label::create).collect(toSet()));
+    if (proto.hasAndroidInfo()) {
+      builder.setAndroidInfo(AndroidInfo.fromProto(proto.getAndroidInfo()));
     }
-    return create(
-        Label.create(proto.getLabel()),
-        proto.getWorkspaceName(),
-        proto.getDependenciesList().stream().map(Label::create).collect(toSet()),
-        providerInfo);
+    if (proto.hasJavaInfo()) {
+      builder.setJavaInfo(JavaInfo.fromProto(proto.getJavaInfo()));
+    }
+    if (proto.hasJavaToolchainInfo()) {
+      builder.setJavaToolchainInfo(JavaToolchainInfo.fromProto(proto.getJavaToolchainInfo()));
+    }
+    return builder.build();
   }
 
-  /** Provider-specific data about this target. */
-  @AutoOneOf(ProviderInfo.Type.class)
-  public abstract static class ProviderInfo {
-    /** The type of provider info contained within. */
-    public enum Type {
-      JAVA_INFO,
-      JAVA_TOOLCHAIN_INFO
+  /** Data about an Android rule (android_library, android_roboelectric_test, etc.) */
+  @AutoValue
+  public abstract static class AndroidInfo {
+    public abstract Optional<ArtifactLocation> aar();
+
+    public abstract Optional<ArtifactLocation> mergedManifest();
+
+    static AndroidInfo create(
+        @Nullable ArtifactLocation aar, @Nullable ArtifactLocation mergedManifest) {
+      return new AutoValue_FastBuildBlazeData_AndroidInfo(
+          Optional.ofNullable(aar), Optional.ofNullable(mergedManifest));
     }
 
-    public abstract Type type();
-
-    public abstract JavaInfo javaInfo();
-
-    public abstract JavaToolchainInfo javaToolchainInfo();
-
-    static ProviderInfo ofJavaInfo(JavaInfo javaInfo) {
-      return AutoOneOf_FastBuildBlazeData_ProviderInfo.javaInfo(javaInfo);
-    }
-
-    static ProviderInfo ofJavaToolchainInfo(JavaToolchainInfo javaToolchainInfo) {
-      return AutoOneOf_FastBuildBlazeData_ProviderInfo.javaToolchainInfo(javaToolchainInfo);
+    static AndroidInfo fromProto(FastBuildInfo.AndroidInfo proto) {
+      ArtifactLocation aar =
+          proto.hasAar() ? ArtifactLocationFromProtobuf.makeArtifactLocation(proto.getAar()) : null;
+      ArtifactLocation manifest =
+          proto.hasMergedManifest()
+              ? ArtifactLocationFromProtobuf.makeArtifactLocation(proto.getMergedManifest())
+              : null;
+      return create(aar, manifest);
     }
   }
 

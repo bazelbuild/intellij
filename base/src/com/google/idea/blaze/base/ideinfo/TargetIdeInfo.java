@@ -51,7 +51,6 @@ public final class TargetIdeInfo implements Serializable {
   @Nullable public final TsIdeInfo tsIdeInfo;
   @Nullable public final DartIdeInfo dartIdeInfo;
   @Nullable public final TestIdeInfo testIdeInfo;
-  @Nullable public final ProtoLibraryLegacyInfo protoLibraryLegacyInfo;
   @Nullable public final JavaToolchainIdeInfo javaToolchainIdeInfo;
 
   public TargetIdeInfo(
@@ -73,7 +72,6 @@ public final class TargetIdeInfo implements Serializable {
       @Nullable TsIdeInfo tsIdeInfo,
       @Nullable DartIdeInfo dartIdeInfo,
       @Nullable TestIdeInfo testIdeInfo,
-      @Nullable ProtoLibraryLegacyInfo protoLibraryLegacyInfo,
       @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo) {
     this.key = key;
     this.kind = kind;
@@ -93,7 +91,6 @@ public final class TargetIdeInfo implements Serializable {
     this.tsIdeInfo = tsIdeInfo;
     this.dartIdeInfo = dartIdeInfo;
     this.testIdeInfo = testIdeInfo;
-    this.protoLibraryLegacyInfo = protoLibraryLegacyInfo;
     this.javaToolchainIdeInfo = javaToolchainIdeInfo;
   }
 
@@ -149,7 +146,6 @@ public final class TargetIdeInfo implements Serializable {
     private TsIdeInfo tsIdeInfo;
     private DartIdeInfo dartIdeInfo;
     private TestIdeInfo testIdeInfo;
-    private ProtoLibraryLegacyInfo protoLibraryLegacyInfo;
     private JavaToolchainIdeInfo javaToolchainIdeInfo;
 
     public Builder setLabel(String label) {
@@ -244,12 +240,6 @@ public final class TargetIdeInfo implements Serializable {
       return this;
     }
 
-    public Builder setProtoLibraryLegacyInfo(
-        ProtoLibraryLegacyInfo.Builder protoLibraryLegacyInfo) {
-      this.protoLibraryLegacyInfo = protoLibraryLegacyInfo.build();
-      return this;
-    }
-
     public Builder setJavaToolchainIdeInfo(JavaToolchainIdeInfo.Builder javaToolchainIdeInfo) {
       this.javaToolchainIdeInfo = javaToolchainIdeInfo.build();
       return this;
@@ -300,7 +290,6 @@ public final class TargetIdeInfo implements Serializable {
           tsIdeInfo,
           dartIdeInfo,
           testIdeInfo,
-          protoLibraryLegacyInfo,
           javaToolchainIdeInfo);
     }
   }

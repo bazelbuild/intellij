@@ -18,7 +18,9 @@ package com.google.idea.blaze.base.wizard2;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.plugin.dependency.PluginDependencyHelper;
 import com.google.idea.blaze.base.projectview.ProjectView;
@@ -209,8 +211,13 @@ public final class BlazeNewProjectBuilder {
    * Commits the project data. This method mustn't fail, because the project has already been
    * created.
    */
-  public void commitToProject(Project project) {
+  void commitToProject(Project project) {
     BlazeWizardUserSettingsStorage.getInstance().commit(userSettings);
+    EventLoggingService.getInstance()
+        .ifPresent(
+            s ->
+                s.logEvent(
+                    getClass(), "blaze-project-created", ImmutableMap.copyOf(userSettings.values)));
 
     BlazeImportSettings importSettings =
         new BlazeImportSettings(

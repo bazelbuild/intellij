@@ -40,7 +40,6 @@ public class JavaLibraryTest extends BazelIntellijAspectTest {
     assertThat(target.hasCIdeInfo()).isFalse();
     assertThat(target.hasAndroidIdeInfo()).isFalse();
     assertThat(target.hasPyIdeInfo()).isFalse();
-    assertThat(target.hasProtoLibraryLegacyJavaIdeInfo()).isFalse();
 
     assertThat(relativePathsForArtifacts(target.getJavaIdeInfo().getSourcesList()))
         .containsExactly(testRelative("Foo.java"));

@@ -31,7 +31,6 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.JavaToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
-import com.google.idea.blaze.base.ideinfo.ProtoLibraryLegacyInfo;
 import com.google.idea.blaze.base.ideinfo.Tags;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -1221,125 +1220,6 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     errorCollector.assertNoIssues();
 
     assertThat(result.javaSourceFiles).isEmpty();
-  }
-
-  /** Test legacy proto_library jars, complete with overrides and everything. */
-  @Test
-  public void testLegacyProtoLibraryInfo() {
-    ProjectView projectView =
-        ProjectView.builder()
-            .add(
-                ListSection.builder(DirectorySection.KEY)
-                    .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
-            .build();
-
-    TargetMapBuilder targetMapBuilder =
-        TargetMapBuilder.builder()
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setLabel("//java/example:liba")
-                    .setBuildFile(source("java/example/BUILD"))
-                    .setKind("java_library")
-                    .addSource(source("java/example/Liba.java"))
-                    .setJavaInfo(JavaIdeInfo.builder())
-                    .addDependency("//thirdparty/proto/a:a"))
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setLabel("//java/example:libb")
-                    .setBuildFile(source("java/example/BUILD"))
-                    .setKind("java_library")
-                    .addSource(source("java/example/Libb.java"))
-                    .setJavaInfo(JavaIdeInfo.builder())
-                    .addDependency("//thirdparty/proto/b:b"))
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setLabel("//thirdparty/proto/a:a")
-                    .setBuildFile(source("/thirdparty/a/BUILD"))
-                    .setKind("proto_library")
-                    .setProtoLibraryLegacyInfo(
-                        ProtoLibraryLegacyInfo.builder(ProtoLibraryLegacyInfo.ApiFlavor.IMMUTABLE)
-                            .addJarV1(
-                                LibraryArtifact.builder()
-                                    .setInterfaceJar(gen("thirdparty/proto/a/liba-1-ijar.jar")))
-                            .addJarImmutable(
-                                LibraryArtifact.builder()
-                                    .setInterfaceJar(gen("thirdparty/proto/a/liba-ijar.jar"))))
-                    .addDependency("//thirdparty/proto/b:b")
-                    .addDependency("//thirdparty/proto/c:c"))
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setLabel("//thirdparty/proto/b:b")
-                    .setBuildFile(source("/thirdparty/b/BUILD"))
-                    .setKind("proto_library")
-                    .setProtoLibraryLegacyInfo(
-                        ProtoLibraryLegacyInfo.builder(ProtoLibraryLegacyInfo.ApiFlavor.VERSION_1)
-                            .addJarV1(
-                                LibraryArtifact.builder()
-                                    .setInterfaceJar(gen("thirdparty/proto/b/libb-ijar.jar")))
-                            .addJarImmutable(
-                                LibraryArtifact.builder()
-                                    .setInterfaceJar(gen("thirdparty/proto/b/libb-2-ijar.jar"))))
-                    .addDependency("//thirdparty/proto/d:d"))
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setLabel("//thirdparty/proto/c:c")
-                    .setBuildFile(source("/thirdparty/c/BUILD"))
-                    .setKind("proto_library")
-                    .setProtoLibraryLegacyInfo(
-                        ProtoLibraryLegacyInfo.builder(ProtoLibraryLegacyInfo.ApiFlavor.IMMUTABLE)
-                            .addJarV1(
-                                LibraryArtifact.builder()
-                                    .setInterfaceJar(gen("thirdparty/proto/c/libc-1-ijar.jar")))
-                            .addJarImmutable(
-                                LibraryArtifact.builder()
-                                    .setInterfaceJar(gen("thirdparty/proto/c/libc-ijar.jar"))))
-                    .addDependency("//thirdparty/proto/d:d"))
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setLabel("//thirdparty/proto/d:d")
-                    .setBuildFile(source("/thirdparty/d/BUILD"))
-                    .setKind("proto_library")
-                    .setProtoLibraryLegacyInfo(
-                        ProtoLibraryLegacyInfo.builder(ProtoLibraryLegacyInfo.ApiFlavor.VERSION_1)
-                            .addJarV1(
-                                LibraryArtifact.builder()
-                                    .setInterfaceJar(gen("thirdparty/proto/d/libd-ijar.jar")))
-                            .addJarImmutable(
-                                LibraryArtifact.builder()
-                                    .setInterfaceJar(gen("thirdparty/proto/d/libd-2-ijar.jar")))));
-
-    workingSet =
-        new JavaWorkingSet(
-            workspaceRoot,
-            new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of()),
-            Predicate.isEqual("BUILD"));
-
-    // First test - make sure that jdeps is working
-    jdepsMap.put(
-        TargetKey.forPlainTarget(Label.create("//java/example:liba")),
-        Lists.newArrayList(jdepsPath("thirdparty/proto/a/liba-ijar.jar")));
-    BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
-    errorCollector.assertNoIssues();
-    assertThat(result.libraries).hasSize(1);
-    assertThat(findLibrary(result.libraries, "liba-ijar.jar")).isNotNull();
-
-    // Second test
-    // Put everything in the working set, which should expand to include the direct deps
-    workingSet =
-        new JavaWorkingSet(
-            workspaceRoot,
-            new WorkingSet(
-                ImmutableList.of(new WorkspacePath("java/example/BUILD")),
-                ImmutableList.of(),
-                ImmutableList.of()),
-            Predicate.isEqual("BUILD"));
-
-    result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
-    errorCollector.assertNoIssues();
-
-    assertThat(result.libraries).hasSize(2);
-    assertThat(findLibrary(result.libraries, "liba-ijar.jar")).isNotNull();
-    assertThat(findLibrary(result.libraries, "libb-ijar.jar")).isNotNull();
   }
 
   /** Test that the non-android libraries can be imported. */

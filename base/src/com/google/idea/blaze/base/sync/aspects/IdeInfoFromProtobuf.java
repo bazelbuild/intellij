@@ -39,7 +39,6 @@ import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.JavaToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.JsIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
-import com.google.idea.blaze.base.ideinfo.ProtoLibraryLegacyInfo;
 import com.google.idea.blaze.base.ideinfo.PyIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -142,11 +141,6 @@ public class IdeInfoFromProtobuf {
     if (message.hasTestInfo()) {
       testIdeInfo = makeTestIdeInfo(message.getTestInfo());
     }
-    ProtoLibraryLegacyInfo protoLibraryLegacyInfo = null;
-    if (message.hasProtoLibraryLegacyJavaIdeInfo()) {
-      protoLibraryLegacyInfo =
-          makeProtoLibraryLegacyInfo(message.getProtoLibraryLegacyJavaIdeInfo());
-    }
     JavaToolchainIdeInfo javaToolchainIdeInfo = null;
     if (message.hasJavaToolchainIdeInfo()) {
       javaToolchainIdeInfo = makeJavaToolchainIdeInfo(message.getJavaToolchainIdeInfo());
@@ -171,7 +165,6 @@ public class IdeInfoFromProtobuf {
         tsIdeInfo,
         dartIdeInfo,
         testIdeInfo,
-        protoLibraryLegacyInfo,
         javaToolchainIdeInfo);
   }
 
@@ -376,34 +369,6 @@ public class IdeInfoFromProtobuf {
       }
     }
     return new TestIdeInfo(testSize);
-  }
-
-  private static ProtoLibraryLegacyInfo makeProtoLibraryLegacyInfo(
-      IntellijIdeInfo.ProtoLibraryLegacyJavaIdeInfo protoLibraryLegacyJavaIdeInfo) {
-    final ProtoLibraryLegacyInfo.ApiFlavor apiFlavor;
-    if (protoLibraryLegacyJavaIdeInfo.getApiVersion() == 1) {
-      apiFlavor = ProtoLibraryLegacyInfo.ApiFlavor.VERSION_1;
-    } else {
-      switch (protoLibraryLegacyJavaIdeInfo.getApiFlavor()) {
-        case MUTABLE:
-          apiFlavor = ProtoLibraryLegacyInfo.ApiFlavor.MUTABLE;
-          break;
-        case IMMUTABLE:
-          apiFlavor = ProtoLibraryLegacyInfo.ApiFlavor.IMMUTABLE;
-          break;
-        case BOTH:
-          apiFlavor = ProtoLibraryLegacyInfo.ApiFlavor.BOTH;
-          break;
-        default:
-          apiFlavor = ProtoLibraryLegacyInfo.ApiFlavor.NONE;
-          break;
-      }
-    }
-    return new ProtoLibraryLegacyInfo(
-        apiFlavor,
-        makeLibraryArtifactList(protoLibraryLegacyJavaIdeInfo.getJars1List()),
-        makeLibraryArtifactList(protoLibraryLegacyJavaIdeInfo.getJarsMutableList()),
-        makeLibraryArtifactList(protoLibraryLegacyJavaIdeInfo.getJarsImmutableList()));
   }
 
   private static JavaToolchainIdeInfo makeJavaToolchainIdeInfo(

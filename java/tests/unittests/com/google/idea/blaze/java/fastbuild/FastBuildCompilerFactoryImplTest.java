@@ -27,7 +27,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaToolchainInfo;
-import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.ProviderInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildCompiler.CompileInstructions;
 import java.io.File;
 import java.io.IOException;
@@ -51,19 +50,17 @@ public final class FastBuildCompilerFactoryImplTest {
   private static final File TRUTH_JAR = new File(System.getProperty("truth.jar"));
   private static final String WORKSPACE_NAME = "io_bazel";
 
-  private static final ProviderInfo JAVA_TOOLCHAIN =
-      ProviderInfo.ofJavaToolchainInfo(
-          JavaToolchainInfo.create(
-              ArtifactLocation.builder().setRelativePath(JAVAC_JAR.getPath()).build(),
-              /* sourceVersion */ "8",
-              /* targetVersion */ "8"));
-  private static final ProviderInfo JAVA_LIBRARY_WITHOUT_SOURCES =
-      ProviderInfo.ofJavaInfo(
-          JavaInfo.create(
-              /*sources*/ ImmutableSet.of(),
-              /*testClass*/ null,
-              /* annotationProcessorClassNames */ ImmutableList.of(),
-              /* annotationProcessorClassPath */ ImmutableList.of()));
+  private static final JavaToolchainInfo JAVA_TOOLCHAIN =
+      JavaToolchainInfo.create(
+          ArtifactLocation.builder().setRelativePath(JAVAC_JAR.getPath()).build(),
+          /* sourceVersion */ "8",
+          /* targetVersion */ "8");
+  private static final JavaInfo JAVA_LIBRARY_WITHOUT_SOURCES =
+      JavaInfo.create(
+          /*sources*/ ImmutableSet.of(),
+          /*testClass*/ null,
+          /* annotationProcessorClassNames */ ImmutableList.of(),
+          /* annotationProcessorClassPath */ ImmutableList.of());
 
   @Test
   public void testNoJavaToolchain() {
@@ -71,17 +68,18 @@ public final class FastBuildCompilerFactoryImplTest {
     Label targetLabel = Label.create("//our/build:target");
     Label dependencyLabel = Label.create("//some/package:javalibs");
     FastBuildBlazeData targetData =
-        FastBuildBlazeData.create(
-            targetLabel,
-            WORKSPACE_NAME,
-            ImmutableSet.of(dependencyLabel),
-            JAVA_LIBRARY_WITHOUT_SOURCES);
+        FastBuildBlazeData.builder()
+            .setLabel(targetLabel)
+            .setWorkspaceName(WORKSPACE_NAME)
+            .setDependencies(ImmutableSet.of(dependencyLabel))
+            .setJavaInfo(JAVA_LIBRARY_WITHOUT_SOURCES)
+            .build();
     FastBuildBlazeData dependencyData =
-        FastBuildBlazeData.create(
-            targetLabel,
-            WORKSPACE_NAME,
-            /*dependencies*/ ImmutableSet.of(),
-            JAVA_LIBRARY_WITHOUT_SOURCES);
+        FastBuildBlazeData.builder()
+            .setLabel(dependencyLabel)
+            .setWorkspaceName(WORKSPACE_NAME)
+            .setJavaInfo(JAVA_LIBRARY_WITHOUT_SOURCES)
+            .build();
     blazeData.put(targetLabel, targetData);
     blazeData.put(dependencyLabel, dependencyData);
 
@@ -100,17 +98,24 @@ public final class FastBuildCompilerFactoryImplTest {
     Label jdkOneLabel = Label.create("//some/jdk:langtools");
     Label jdkTwoLabel = Label.create("//other/jdk:langtools");
     FastBuildBlazeData targetData =
-        FastBuildBlazeData.create(
-            targetLabel,
-            WORKSPACE_NAME,
-            /*dependencies*/ ImmutableSet.of(jdkOneLabel, jdkTwoLabel),
-            JAVA_LIBRARY_WITHOUT_SOURCES);
+        FastBuildBlazeData.builder()
+            .setLabel(targetLabel)
+            .setWorkspaceName(WORKSPACE_NAME)
+            .setDependencies(ImmutableSet.of(jdkOneLabel, jdkTwoLabel))
+            .setJavaInfo(JAVA_LIBRARY_WITHOUT_SOURCES)
+            .build();
     FastBuildBlazeData jdkOneData =
-        FastBuildBlazeData.create(
-            jdkOneLabel, WORKSPACE_NAME, /*dependencies*/ ImmutableSet.of(), JAVA_TOOLCHAIN);
+        FastBuildBlazeData.builder()
+            .setLabel(jdkOneLabel)
+            .setWorkspaceName(WORKSPACE_NAME)
+            .setJavaInfo(JAVA_LIBRARY_WITHOUT_SOURCES)
+            .build();
     FastBuildBlazeData jdkTwoData =
-        FastBuildBlazeData.create(
-            jdkTwoLabel, WORKSPACE_NAME, /*dependencies*/ ImmutableSet.of(), JAVA_TOOLCHAIN);
+        FastBuildBlazeData.builder()
+            .setLabel(jdkTwoLabel)
+            .setWorkspaceName(WORKSPACE_NAME)
+            .setJavaInfo(JAVA_LIBRARY_WITHOUT_SOURCES)
+            .build();
     blazeData.put(targetLabel, targetData);
     blazeData.put(jdkOneLabel, jdkOneData);
     blazeData.put(jdkTwoLabel, jdkTwoData);
@@ -248,7 +253,7 @@ public final class FastBuildCompilerFactoryImplTest {
   }
 
   public FastBuildCompiler getCompiler() throws FastBuildException {
-    return getCompiler(JAVA_TOOLCHAIN.javaToolchainInfo());
+    return getCompiler(JAVA_TOOLCHAIN);
   }
 
   private FastBuildCompiler getCompiler(JavaToolchainInfo javaToolchain) throws FastBuildException {
@@ -256,17 +261,18 @@ public final class FastBuildCompilerFactoryImplTest {
     Label targetLabel = Label.create("//our/build:target");
     Label jdkLabel = Label.create("//some/jdk:langtools");
     FastBuildBlazeData targetData =
-        FastBuildBlazeData.create(
-            targetLabel,
-            WORKSPACE_NAME,
-            /*dependencies*/ ImmutableSet.of(jdkLabel),
-            JAVA_LIBRARY_WITHOUT_SOURCES);
+        FastBuildBlazeData.builder()
+            .setLabel(targetLabel)
+            .setWorkspaceName(WORKSPACE_NAME)
+            .setDependencies(ImmutableSet.of(jdkLabel))
+            .setJavaInfo(JAVA_LIBRARY_WITHOUT_SOURCES)
+            .build();
     FastBuildBlazeData jdkData =
-        FastBuildBlazeData.create(
-            jdkLabel,
-            WORKSPACE_NAME,
-            /*dependencies*/ ImmutableSet.of(),
-            ProviderInfo.ofJavaToolchainInfo(javaToolchain));
+        FastBuildBlazeData.builder()
+            .setLabel(jdkLabel)
+            .setWorkspaceName(WORKSPACE_NAME)
+            .setJavaToolchainInfo(javaToolchain)
+            .build();
     blazeData.put(targetLabel, targetData);
     blazeData.put(jdkLabel, jdkData);
 

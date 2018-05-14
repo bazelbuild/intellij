@@ -19,23 +19,28 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.idea.common.formatter.ExternalFormatterCodeStyleManager.Replacements;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.Collection;
 import javax.annotation.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 /** Formats BUILD files using 'buildifier' */
 public class BuildFileFormatter {
 
   private static final Logger logger = Logger.getInstance(BuildFileFormatter.class);
-  // 10 seconds ought to be enough for formatting a BUILD file...
-  private static final long TIMEOUT_SECS = 10;
 
   @Nullable
   private static File getBuildifierBinary() {
@@ -49,52 +54,70 @@ public class BuildFileFormatter {
   }
 
   /**
-   * Format the BUILD file with a timeout. The tool may be fetched from a network filesystem, and we
-   * don't want to block the UI if there is a network issue.
+   * Calls buildifier for a given text and list of line ranges, and returns the formatted text, or
+   * null if the formatting failed.
    *
-   * @return formatted text, or null if there is an error or timeout
+   * <p>buildifier can be very slow, so this runs with a progress dialog, giving the user some
+   * indication that their IDE hasn't died.
    */
-  @Nullable
-  static String formatTextWithTimeout(String text) {
-    BlazeExecutor executor = BlazeExecutor.getInstance();
-    ListenableFuture<String> result = executor.submit(() -> formatText(text));
-    try {
-      return result.get(TIMEOUT_SECS, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      result.cancel(true);
-      return null;
-    } catch (ExecutionException | TimeoutException e) {
-      logger.warn(e);
-      result.cancel(true);
-      return null;
-    }
+  static ListenableFuture<Replacements> formatTextWithProgressDialog(
+      Project project, String text, Collection<TextRange> ranges) {
+    ListenableFuture<Replacements> future =
+        MoreExecutors.listeningDecorator(PooledThreadExecutor.INSTANCE)
+            .submit(() -> getReplacements(text, ranges));
+    ProgressWindow progressWindow =
+        new BackgroundableProcessIndicator(
+            project,
+            "Running buildifier",
+            PerformInBackgroundOption.DEAF,
+            "Cancel",
+            "Cancel",
+            true);
+    progressWindow.setIndeterminate(true);
+    progressWindow.start();
+    progressWindow.addStateDelegate(
+        new AbstractProgressIndicatorExBase() {
+          @Override
+          public void cancel() {
+            super.cancel();
+            future.cancel(true);
+          }
+        });
+    future.addListener(
+        () ->
+            ApplicationManager.getApplication()
+                .invokeLater(
+                    () -> {
+                      if (progressWindow.isRunning()) {
+                        progressWindow.stop();
+                        progressWindow.processFinish();
+                      }
+                    }),
+        MoreExecutors.directExecutor());
+    return future;
   }
 
   /**
-   * Passes the input text to buildifier, returning the formatted output text, or null if formatting
-   * failed.
+   * Calls buildifier for a given text and list of line ranges, and returns the formatted text, or
+   * null if the formatting failed.
    */
   @Nullable
-  private static String formatText(String inputText) {
+  private static Replacements getReplacements(String text, Collection<TextRange> ranges) {
     File buildifierBinary = getBuildifierBinary();
     if (buildifierBinary == null) {
       return null;
     }
-    ProcessBuilder builder = new ProcessBuilder(buildifierBinary.getPath());
+    Replacements output = new Replacements();
     try {
-      Process process = builder.start();
-      process.getOutputStream().write(inputText.getBytes(UTF_8));
-      process.getOutputStream().close();
-      process.waitFor();
-
-      int exitValue = process.exitValue();
-      if (exitValue != 0) {
-        return null;
+      for (TextRange range : ranges) {
+        String input = range.substring(text);
+        String result = formatText(buildifierBinary, input);
+        if (result == null) {
+          return null;
+        }
+        output.addReplacement(range, input, result);
       }
-      BufferedReader reader =
-          new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8));
-      return CharStreams.toString(reader);
+      return output;
 
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -102,5 +125,25 @@ public class BuildFileFormatter {
       logger.warn(e);
     }
     return null;
+  }
+
+  /**
+   * Passes the input text to buildifier, returning the formatted output text, or null if formatting
+   * failed.
+   */
+  @Nullable
+  private static String formatText(File buildifierBinary, String inputText)
+      throws InterruptedException, IOException {
+    Process process = new ProcessBuilder(buildifierBinary.getPath()).start();
+    process.getOutputStream().write(inputText.getBytes(UTF_8));
+    process.getOutputStream().close();
+    process.waitFor();
+
+    if (process.exitValue() != 0) {
+      return null;
+    }
+    BufferedReader reader =
+        new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8));
+    return CharStreams.toString(reader);
   }
 }

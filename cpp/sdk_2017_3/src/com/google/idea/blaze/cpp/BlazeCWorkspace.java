@@ -16,18 +16,25 @@
 
 package com.google.idea.blaze.cpp;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceAdapter;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.progress.DumbProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.symbols.OCSymbol;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
+import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackers;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -36,10 +43,12 @@ import javax.annotation.Nullable;
 public final class BlazeCWorkspace extends OCWorkspaceAdapter implements ProjectComponent {
   private final BlazeConfigurationResolver configurationResolver;
   private BlazeConfigurationResolverResult resolverResult;
+  private final Project project;
 
   private BlazeCWorkspace(Project project) {
     this.configurationResolver = new BlazeConfigurationResolver(project);
     this.resolverResult = BlazeConfigurationResolverResult.empty(project);
+    this.project = project;
   }
 
   public static BlazeCWorkspace getInstance(Project project) {
@@ -51,10 +60,67 @@ public final class BlazeCWorkspace extends OCWorkspaceAdapter implements Project
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData) {
+    ProgressManager.getInstance()
+        .run(
+            new Task.Backgroundable(project, "Configuration Sync", false) {
+              @Override
+              public void run(ProgressIndicator indicator) {
+                indicator.setIndeterminate(true);
+                BlazeConfigurationResolverResult newResult =
+                    resolveConfigurations(
+                        context, workspaceRoot, projectViewSet, blazeProjectData, indicator);
+                CommitableConfiguration config =
+                    calculateConfigurations(blazeProjectData, workspaceRoot, newResult, indicator);
+                commitConfigurations(config);
+                incModificationTrackers();
+              }
+            });
+  }
+
+  @VisibleForTesting
+  BlazeConfigurationResolverResult resolveConfigurations(
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      @Nullable ProgressIndicator indicator) {
+    if (indicator == null) {
+      indicator = new DumbProgressIndicator();
+    }
     BlazeConfigurationResolverResult oldResult = resolverResult;
-    resolverResult =
-        configurationResolver.update(
-            context, workspaceRoot, projectViewSet, blazeProjectData, oldResult);
+    indicator.setText2("Resolving Configurations...");
+    return configurationResolver.update(
+        context, workspaceRoot, projectViewSet, blazeProjectData, oldResult);
+  }
+
+  @VisibleForTesting
+  CommitableConfiguration calculateConfigurations(
+      BlazeProjectData blazeProjectData,
+      WorkspaceRoot workspaceRoot,
+      BlazeConfigurationResolverResult newResult,
+      ProgressIndicator indicator) {
+    return new CommitableConfiguration(newResult);
+  }
+
+  @VisibleForTesting
+  void commitConfigurations(CommitableConfiguration config) {
+    resolverResult = config.result;
+  }
+
+  private void incModificationTrackers() {
+    TransactionGuard.submitTransaction(
+        project,
+        () -> {
+          if (project.isDisposed()) {
+            return;
+          }
+          OCWorkspaceModificationTrackers modTrackers =
+              OCWorkspaceModificationTrackers.getInstance(project);
+          modTrackers.getProjectFilesListTracker().incModificationCount();
+          modTrackers.getSourceFilesListTracker().incModificationCount();
+          modTrackers.getSelectedResolveConfigurationTracker().incModificationCount();
+          modTrackers.getBuildSettingsChangesTracker().incModificationCount();
+        });
   }
 
   @Override
@@ -118,5 +184,14 @@ public final class BlazeCWorkspace extends OCWorkspaceAdapter implements Project
 
   public OCWorkspace getWorkspace() {
     return this;
+  }
+
+  /** Contains the configuration to be committed all-at-once */
+  public static class CommitableConfiguration {
+    final BlazeConfigurationResolverResult result;
+
+    CommitableConfiguration(BlazeConfigurationResolverResult result) {
+      this.result = result;
+    }
   }
 }

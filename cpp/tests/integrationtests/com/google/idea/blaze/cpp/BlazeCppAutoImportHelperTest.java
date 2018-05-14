@@ -273,12 +273,18 @@ public class BlazeCppAutoImportHelperTest extends BlazeCppIntegrationTestCase {
     BlazeProjectData blazeProjectData = projectDataBuilder().setTargetMap(targetMap).build();
     registerProjectService(
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(blazeProjectData));
-    BlazeCWorkspace.getInstance(getProject())
-        .update(
+    BlazeCWorkspace workspace = BlazeCWorkspace.getInstance(getProject());
+    BlazeConfigurationResolverResult newResult =
+        workspace.resolveConfigurations(
             new BlazeContext(),
             workspaceRoot,
             ProjectViewSet.builder().add(projectView).build(),
-            blazeProjectData);
+            blazeProjectData,
+            null);
+    BlazeCWorkspace.CommitableConfiguration config =
+        workspace.calculateConfigurations(blazeProjectData, workspaceRoot, newResult, null);
+    workspace.commitConfigurations(config);
+
     for (OCFile file : files) {
       resetFileSymbols(file);
     }

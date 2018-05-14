@@ -128,7 +128,6 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
 
     JdepsMap jdepsMap =
         jdepsFileReader.loadJdepsFiles(
-            project,
             context,
             artifactLocationDecoder,
             sourceFilter.getSourceTargets(),

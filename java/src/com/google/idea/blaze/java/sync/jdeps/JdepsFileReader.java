@@ -37,7 +37,6 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -76,7 +75,6 @@ public class JdepsFileReader {
   /** Loads any updated jdeps files since the last invocation of this method. */
   @Nullable
   public JdepsMap loadJdepsFiles(
-      Project project,
       BlazeContext parentContext,
       ArtifactLocationDecoder artifactLocationDecoder,
       Iterable<TargetIdeInfo> targetsToLoad,
@@ -89,8 +87,7 @@ public class JdepsFileReader {
             parentContext,
             (context) -> {
               context.push(new TimingScope("LoadJdepsFiles", EventType.Other));
-              return doLoadJdepsFiles(
-                  project, context, artifactLocationDecoder, oldState, targetsToLoad);
+              return doLoadJdepsFiles(context, artifactLocationDecoder, oldState, targetsToLoad);
             });
     if (jdepsState == null) {
       return null;
@@ -100,7 +97,6 @@ public class JdepsFileReader {
   }
 
   private JdepsState doLoadJdepsFiles(
-      Project project,
       BlazeContext context,
       ArtifactLocationDecoder artifactLocationDecoder,
       @Nullable JdepsState oldState,
@@ -133,7 +129,7 @@ public class JdepsFileReader {
             removedFiles);
 
     ListenableFuture<?> fetchFuture =
-        PrefetchService.getInstance().prefetchFiles(project, updatedFiles, true, false);
+        PrefetchService.getInstance().prefetchFiles(updatedFiles, true, false);
     if (!FutureUtil.waitForFuture(context, fetchFuture)
         .timed("FetchJdeps", EventType.Prefetching)
         .withProgressMessage("Reading jdeps files...")
