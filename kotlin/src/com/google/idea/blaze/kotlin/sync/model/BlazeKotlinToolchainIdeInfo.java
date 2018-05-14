@@ -16,9 +16,12 @@
 package com.google.idea.blaze.kotlin.sync.model;
 
 import javax.annotation.Nonnull;
+import java.io.Serializable;
 import java.util.Objects;
 
-public final class BlazeKotlinToolchainIdeInfo {
+public final class BlazeKotlinToolchainIdeInfo implements Serializable {
+  public static final long serialVersionUID = 2L;
+
   @Nonnull public final String label;
   @Nonnull public final CommonInfo common;
   @Nonnull public final JvmInfo jvm;
@@ -30,7 +33,9 @@ public final class BlazeKotlinToolchainIdeInfo {
     this.jvm = Objects.requireNonNull(jvm);
   }
 
-  public static final class CommonInfo {
+  public static final class CommonInfo implements Serializable {
+    public static final long serialVersionUID = 2L;
+
     @Nonnull public final String languageVersion;
     @Nonnull public final String apiVersion;
     @Nonnull public final String coroutines;
@@ -43,7 +48,9 @@ public final class BlazeKotlinToolchainIdeInfo {
     }
   }
 
-  public static final class JvmInfo {
+  public static final class JvmInfo implements Serializable {
+    public static final long serialVersionUID = 2L;
+
     @Nonnull public final String jvmTarget;
 
     JvmInfo(@Nonnull String jvmTarget) {
