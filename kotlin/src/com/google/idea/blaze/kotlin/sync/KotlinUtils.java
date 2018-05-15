@@ -16,13 +16,18 @@
 package com.google.idea.blaze.kotlin.sync;
 
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformUtils;
 
-class KotlinUtils {
+final class KotlinUtils {
 
   // whether kotlin language support is enabled for internal users
   private static final BoolExperiment blazeKotlinSupport =
@@ -36,5 +41,35 @@ class KotlinUtils {
     return Blaze.defaultBuildSystem().equals(BuildSystem.Bazel)
         || (blazeKotlinSupport.getValue()
             && PlatformUtils.getPlatformPrefix().equals("AndroidStudio"));
+  }
+
+  private static final String
+      RULES_REPO_PROJECT_PAGE = "https://github.com/bazelbuild/rules_kotlin",
+      COMPILER_WORKSPACE_NAME = "com_github_jetbrains_kotlin";
+
+  /**
+   * This validates the presence of the kotlin compiler repo in the workspace. See {@link
+   * BlazeKotlinSyncPlugin#updateProjectStructure} for more details.
+   */
+  static boolean compilerRepoAbsentFromWorkspace(Project project) {
+    WorkspaceRoot workspaceRoot =
+        WorkspaceHelper.resolveExternalWorkspace(project, COMPILER_WORKSPACE_NAME);
+    return workspaceRoot == null || !workspaceRoot.directory().exists();
+  }
+
+  static void issueUpdateRulesWarning(
+      BlazeContext context, @SuppressWarnings("SameParameterValue") String because) {
+    IssueOutput.issue(
+            IssueOutput.Category.WARNING,
+            because + ". Please update the rules by visiting " + RULES_REPO_PROJECT_PAGE + ".")
+        .submit(context);
+  }
+
+  static void issueRulesMissingWarning(BlazeContext context) {
+    IssueOutput.warn(
+            "The Kotlin workspace has not been setup in this workspace. Visit "
+                + RULES_REPO_PROJECT_PAGE
+                + " , or remove the Kotlin language from the project view.")
+        .submit(context);
   }
 }

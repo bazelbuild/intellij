@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.sync.aspects.strategy;
 
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+
 import javax.annotation.Nullable;
 
 /** Enumerates the sets of aspect output groups corresponding to each language */
@@ -27,7 +28,8 @@ public enum LanguageOutputGroup {
   GO(LanguageClass.GO, "go"),
   JAVASCRIPT(LanguageClass.JAVASCRIPT, "js"),
   TYPESCRIPT(LanguageClass.TYPESCRIPT, "ts"),
-  DART(LanguageClass.DART, "dart");
+  DART(LanguageClass.DART, "dart"),
+  KOTLIN(LanguageClass.KOTLIN, "kt");
 
   public final LanguageClass languageClass;
   public final String suffix;

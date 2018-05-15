@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import java.io.Serializable;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /** The result of a blaze import operation. */
@@ -29,11 +30,15 @@ public class BlazeKotlinImportResult implements Serializable {
 
   public final ImmutableList<BlazeJarLibrary> libraries;
   public final ImmutableMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> kotlinTargetToLibraryMap;
+  @Nullable
+  public final BlazeKotlinToolchainIdeInfo toolchainIdeInfo;
 
   public BlazeKotlinImportResult(
       ImmutableList<BlazeJarLibrary> libraries,
-      ImmutableMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> targetToLibraryMap) {
+      ImmutableMap<TargetIdeInfo, ImmutableList<BlazeJarLibrary>> targetToLibraryMap,
+      @Nullable BlazeKotlinToolchainIdeInfo toolchainIdeInfo) {
     this.libraries = libraries;
     this.kotlinTargetToLibraryMap = targetToLibraryMap;
+    this.toolchainIdeInfo = toolchainIdeInfo;
   }
 }
