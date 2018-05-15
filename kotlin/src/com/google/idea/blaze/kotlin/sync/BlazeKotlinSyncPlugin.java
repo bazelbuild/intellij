@@ -46,7 +46,6 @@ import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.kotlin.sync.importer.BlazeKotlinWorkspaceImporter;
 import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinImportResult;
 import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinSyncData;
-import com.google.idea.blaze.kotlin.sync.model.BlazeKotlinToolchainIdeInfo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -166,8 +165,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
               childContext.push(
                   new TimingScope("KotlinWorkspaceImporter", TimingScope.EventType.Other));
               BlazeKotlinImportResult result = blazeKotlinWorkspaceImporter.importWorkspace();
-              syncKotlinProjectSettings(
-                  project, projectViewSet, result.toolchainIdeInfo, childContext);
+              syncKotlinProjectSettings(project, projectViewSet, result, context);
               return result;
             });
     BlazeKotlinSyncData syncData = new BlazeKotlinSyncData(importResult);
@@ -177,20 +175,21 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
   private void syncKotlinProjectSettings(
       Project project,
       ProjectViewSet projectViewSet,
-      @Nullable BlazeKotlinToolchainIdeInfo toolchainIdeInfo,
+      BlazeKotlinImportResult importResult,
       BlazeContext context) {
-    if (toolchainIdeInfo == null) {
+    // if there are no kotlin targets in the library map then the toolchain info would not have been
+    // injected. Do not generate a warning in this case.
+    if (!importResult.kotlinTargetToLibraryMap.isEmpty() && importResult.toolchainIdeInfo == null) {
       KotlinUtils.issueUpdateRulesWarning(
           context, "The current Kotlin rules do not use toolchains");
     }
-
     KotlinSettingsUpdater updater = KotlinSettingsUpdater.create(project);
 
-    if (toolchainIdeInfo != null) {
-      updater.languageVersion(toolchainIdeInfo.common.languageVersion);
-      updater.apiVersion(toolchainIdeInfo.common.apiVersion);
-      updater.coroutineState(toolchainIdeInfo.common.coroutines);
-      updater.jvmTarget(toolchainIdeInfo.jvm.jvmTarget);
+    if (importResult.toolchainIdeInfo != null) {
+      updater.languageVersion(importResult.toolchainIdeInfo.common.languageVersion);
+      updater.apiVersion(importResult.toolchainIdeInfo.common.apiVersion);
+      updater.coroutineState(importResult.toolchainIdeInfo.common.coroutines);
+      updater.jvmTarget(importResult.toolchainIdeInfo.jvm.jvmTarget);
     } else {
       LanguageVersion languageVersion =
           BlazeKotlinLanguageVersionSection.getLanguageLevel(projectViewSet)
