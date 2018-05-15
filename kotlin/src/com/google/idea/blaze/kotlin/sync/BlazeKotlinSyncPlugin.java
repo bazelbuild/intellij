@@ -35,7 +35,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
-import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
@@ -186,23 +185,16 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     }
 
     KotlinSettingsUpdater updater = KotlinSettingsUpdater.create(project);
-    Optional<LanguageVersion> languageLevelFromViewSet =
-        BlazeKotlinLanguageVersionSection.getLanguageLevel(projectViewSet);
 
     if (toolchainIdeInfo != null) {
-      if (languageLevelFromViewSet.isPresent()) {
-        IssueOutput.issue(
-                IssueOutput.Category.INFORMATION,
-                "The Kotlin rules configure all of the project settings, \"kotlin_language_version\" is ignored")
-            .submit(context);
-      }
       updater.languageVersion(toolchainIdeInfo.common.languageVersion);
       updater.apiVersion(toolchainIdeInfo.common.apiVersion);
       updater.coroutineState(toolchainIdeInfo.common.coroutines);
       updater.jvmTarget(toolchainIdeInfo.jvm.jvmTarget);
     } else {
       LanguageVersion languageVersion =
-          languageLevelFromViewSet.orElse(LanguageVersion.LATEST_STABLE);
+          BlazeKotlinLanguageVersionSection.getLanguageLevel(projectViewSet)
+              .orElse(LanguageVersion.LATEST_STABLE);
       updater.languageVersion(languageVersion.getVersionString());
       updater.apiVersion(languageVersion.getVersionString());
     }
@@ -228,9 +220,9 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
       return;
     }
     // This is validated and the user is given the option to setup the plugin in the validate
-    // method, it's rechecked here for race conditions that occur when syncing a fresh project. Later updates to the
-    // plugin and rules will pick up the libraries via aspect processing -- this should make it unnecessary to
-    // examine the workspace files.
+    // method, it's rechecked here for race conditions that occur when syncing a fresh project.
+    // Later updates to the plugin and rules will pick up the libraries via aspect processing --
+    // this should make it unnecessary to examine the workspace files.
     if (KotlinUtils.compilerRepoAbsentFromWorkspace(project)) {
       return;
     }
