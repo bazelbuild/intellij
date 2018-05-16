@@ -105,7 +105,7 @@ public class BlazeScalaMainClassRunConfigurationProducer
   }
 
   @Nullable
-  private static ScObject getMainObject(ConfigurationContext context) {
+  static ScObject getMainObject(ConfigurationContext context) {
     Location location = context.getLocation();
     if (location == null) {
       return null;
