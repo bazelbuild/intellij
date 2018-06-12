@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -110,6 +111,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       BlazeInfo blazeInfo,
+      BlazeVersionData blazeVersionData,
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
@@ -171,7 +173,11 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
             .addTargets(target)
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(
-                    project, projectViewSet, BlazeCommandName.RUN, BlazeInvocationContext.Sync))
+                    project,
+                    projectViewSet,
+                    BlazeCommandName.RUN,
+                    BlazeInvocationContext.Sync,
+                    null))
             .build();
     return ExternalTask.builder(workspaceRoot)
         .addBlazeCommand(command)

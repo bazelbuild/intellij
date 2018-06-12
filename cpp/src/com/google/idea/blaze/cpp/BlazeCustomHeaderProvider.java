@@ -42,10 +42,6 @@ import javax.annotation.Nullable;
  *
  * <p>Ideally our aspect would record which generated files are used, and we could avoid FS
  * operations entirely.
- *
- * <p>Finally, this makes the workspace root a fallback search root for "unsynced" files (e.g.,
- * brand new files). In CLion 2018.1, "unsynced" files do not have a valid {@link
- * OCResolveConfiguration} so may be missing the header search roots.
  */
 public class BlazeCustomHeaderProvider extends CustomHeaderProviderAdapter {
 
@@ -80,7 +76,11 @@ public class BlazeCustomHeaderProvider extends CustomHeaderProviderAdapter {
     if (!workspaceRoot.isPresent()) {
       return null;
     }
-    return workspaceRoot.get().findFileByRelativePath(includeString);
+    VirtualFile file = workspaceRoot.get().findFileByRelativePath(includeString);
+    if (file == null || file.isDirectory()) {
+      return null;
+    }
+    return file;
   }
 
   private Optional<VirtualFile> getWorkspaceRoot(

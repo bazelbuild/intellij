@@ -65,7 +65,7 @@ public class BlazeGoTestConfigurationProducer
     private String targetString() {
       return function != null
           ? String.format("%s (%s)", function.getName(), target.label.toString())
-          : target.label.toString();
+          : BlazeConfigurationNameBuilder.getTextForLabel(target.label);
     }
 
     PsiElement sourceElement() {

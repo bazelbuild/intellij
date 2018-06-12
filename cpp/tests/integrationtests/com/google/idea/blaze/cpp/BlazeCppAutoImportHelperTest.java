@@ -194,6 +194,40 @@ public class BlazeCppAutoImportHelperTest extends BlazeCppIntegrationTestCase {
     assertThat(importItem.getTitleAndLocation().getSecond()).isEqualTo("\"foo/bar/test.proto.h\"");
   }
 
+  @Test
+  public void importGenfileInNewFile_relativeToOutputBase() {
+    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:bar"));
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(createCcToolchain())
+            .addTarget(
+                createCcTarget(
+                    "//foo/bar:bar", Kind.CC_LIBRARY, sources("foo/bar/bar.cc"), sources()))
+            .build();
+    OCFile header =
+        createNonWorkspaceFile("output/genfiles/foo/bar/test.proto.h", "class SomeClass {};");
+    // Create some .cc file to create a config...
+    OCFile fileWithConfig =
+        createFile(
+            "foo/bar/bar.cc",
+            "#include \"foo/bar/test.proto.h\"",
+            "SomeClass* my_class = new SomeClass();");
+    resolve(projectView, targetMap, fileWithConfig, header);
+
+    // But test against a new .cc file, which hopefully falls back to an existing config, and
+    // will have some basic header search roots (like genfiles).
+    OCFile newFile = createFile("foo/bar/new_file.cc", "SomeClass* my_class = new SomeClass();");
+    testFixture.openFileInEditor(newFile.getVirtualFile());
+    OCReferenceElement referenceElement =
+        testFixture.findElementByText("SomeClass*", OCReferenceElement.class);
+    OCImportSymbolFix fix = new OCImportSymbolFix(referenceElement);
+    assertThat(fix.isAvailable(getProject(), testFixture.getEditor(), fileWithConfig)).isTrue();
+    OCImportSymbolFix.AutoImportItem importItem =
+        Iterables.getOnlyElement(fix.getAutoImportItems());
+    assertThat(importItem.getTitleAndLocation().getFirst()).isEqualTo("class 'SomeClass'");
+    assertThat(importItem.getTitleAndLocation().getSecond()).isEqualTo("\"foo/bar/test.proto.h\"");
+  }
+
   private static List<ArtifactLocation> sources(String... paths) {
     return Arrays.stream(paths)
         .map(path -> ArtifactLocation.builder().setRelativePath(path).setIsSource(true).build())

@@ -15,15 +15,15 @@
  */
 package com.google.idea.blaze.base.sync.actions;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BuildTargetFinder;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
@@ -34,82 +34,127 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Objects;
+import javax.annotation.Nullable;
 
 /** Allows a partial sync of the project depending on what's been selected. */
 public class PartialSyncAction extends BlazeProjectAction {
+
+  private static class PartialSyncData {
+    final String description;
+    final ImmutableSet<TargetExpression> targets;
+
+    PartialSyncData(String description, ImmutableSet<TargetExpression> targets) {
+      this.description = description;
+      this.targets = targets;
+    }
+
+    static PartialSyncData merge(PartialSyncData first, PartialSyncData second) {
+      return new PartialSyncData(
+          "Selected Files",
+          ImmutableSet.<TargetExpression>builder()
+              .addAll(first.targets)
+              .addAll(second.targets)
+              .build());
+    }
+  }
+
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    List<VirtualFile> virtualFiles = getSelectedFiles(e);
-    Set<TargetExpression> targets = getSelectedTargets(project, virtualFiles);
-    BlazeSyncManager.getInstance(project).partialSync(targets);
+    PartialSyncData data = fromContext(project, e);
+    if (data != null) {
+      BlazeSyncManager.getInstance(project).partialSync(data.targets);
+    }
   }
 
   @Override
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
-    List<VirtualFile> virtualFiles = getSelectedFiles(e);
-    Set<TargetExpression> targets = getSelectedTargets(project, virtualFiles);
+    PartialSyncData data = fromContext(project, e);
     ActionPresentationHelper.of(e)
         .disableIf(BlazeSyncStatus.getInstance(project).syncInProgress())
-        .disableIf(targets.isEmpty())
-        .setTextWithSubjects(
-            "Partially Sync File",
-            "Partially Sync %s",
-            "Partially Sync Selected Files",
-            virtualFiles)
-        .disableWithoutSubject()
+        .disableIf(data == null)
+        .setText(data == null ? "Partially Sync File" : "Partially Sync " + data.description)
         .hideInContextMenuIfDisabled()
         .commit();
   }
 
-  private List<VirtualFile> getSelectedFiles(AnActionEvent e) {
+  @Nullable
+  private static PartialSyncData fromContext(Project project, AnActionEvent e) {
+    PartialSyncData data = fromSelectedBuildTarget(e);
+    return data != null ? data : fromSelectedFiles(project, e);
+  }
+
+  @Nullable
+  private static PartialSyncData fromSelectedBuildTarget(AnActionEvent e) {
+    PsiElement psi = e.getData(CommonDataKeys.PSI_ELEMENT);
+    FuncallExpression target = PsiTreeUtil.getNonStrictParentOfType(psi, FuncallExpression.class);
+    if (target == null) {
+      return null;
+    }
+    Label label = target.resolveBuildLabel();
+    return label != null
+        ? new PartialSyncData(":" + label.targetName().toString(), ImmutableSet.of(label))
+        : null;
+  }
+
+  @Nullable
+  private static PartialSyncData fromSelectedFiles(Project project, AnActionEvent e) {
     VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles == null) {
-      return ImmutableList.of();
+      return null;
     }
     return Arrays.stream(virtualFiles)
         .filter(VirtualFile::isInLocalFileSystem)
-        .collect(Collectors.toList());
+        .map(vf -> fromFiles(project, vf))
+        .filter(Objects::nonNull)
+        .reduce(PartialSyncData::merge)
+        .orElse(null);
   }
 
-  private Set<TargetExpression> getSelectedTargets(
-      Project project, List<VirtualFile> virtualFiles) {
-    return virtualFiles
-        .stream()
-        .map(vf -> getTargets(project, vf))
-        .flatMap(Collection::stream)
-        .collect(Collectors.toSet());
+  @Nullable
+  private static PartialSyncData fromFiles(Project project, VirtualFile vf) {
+    WorkspaceRoot root = WorkspaceRoot.fromProject(project);
+    WorkspacePath path = root.workspacePathForSafe(new File(vf.getPath()));
+    if (vf.isDirectory()) {
+      return path == null
+          ? null
+          : new PartialSyncData(
+              vf.getName() + "/...:all",
+              ImmutableSet.of(TargetExpression.allFromPackageRecursive(path)));
+    }
+    if (isBuildFile(project, vf)) {
+      return path == null || path.getParent() == null
+          ? null
+          : new PartialSyncData(
+              vf.getParent().getName() + ":all",
+              ImmutableSet.of(TargetExpression.allFromPackageNonRecursive(path.getParent())));
+    }
+
+    List<TargetExpression> targets =
+        new ArrayList<>(
+            SourceToTargetMap.getInstance(project)
+                .getTargetsToBuildForSourceFile(new File(vf.getPath())));
+    if (!targets.isEmpty()) {
+      return new PartialSyncData(vf.getName(), ImmutableSet.copyOf(targets));
+    }
+    ImportRoots importRoots = ImportRoots.forProjectSafe(project);
+    if (importRoots == null) {
+      return null;
+    }
+    BuildTargetFinder buildTargetFinder = new BuildTargetFinder(project, root, importRoots);
+    TargetExpression target = buildTargetFinder.findTargetForFile(new File(vf.getPath()));
+    return target == null ? null : new PartialSyncData(vf.getName(), ImmutableSet.of(target));
   }
 
-  private static List<TargetExpression> getTargets(Project project, VirtualFile virtualFile) {
-    List<TargetExpression> targets = Lists.newArrayList();
-    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    SourceToTargetMap.getInstance(project);
-    if (!virtualFile.isDirectory()) {
-      targets.addAll(
-          SourceToTargetMap.getInstance(project)
-              .getTargetsToBuildForSourceFile(new File(virtualFile.getPath())));
-    }
-    if (targets.isEmpty()) {
-      ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-      if (projectViewSet != null) {
-        BuildSystem buildSystem = Blaze.getBuildSystem(project);
-        ImportRoots importRoots =
-            ImportRoots.builder(workspaceRoot, buildSystem).add(projectViewSet).build();
-        BuildTargetFinder buildTargetFinder =
-            new BuildTargetFinder(project, workspaceRoot, importRoots);
-        TargetExpression targetExpression =
-            buildTargetFinder.findTargetForFile(new File(virtualFile.getPath()));
-        if (targetExpression != null) {
-          targets.add(targetExpression);
-        }
-      }
-    }
-    return targets;
+  private static boolean isBuildFile(Project project, VirtualFile vf) {
+    BuildSystemProvider provider =
+        BuildSystemProvider.getBuildSystemProvider(Blaze.getBuildSystem(project));
+    return provider != null && provider.isBuildFile(vf.getName());
   }
 }

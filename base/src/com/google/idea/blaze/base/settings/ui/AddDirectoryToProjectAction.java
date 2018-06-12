@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
@@ -82,9 +83,10 @@ public final class AddDirectoryToProjectAction extends BlazeProjectAction {
   }
 
   /**
-   * Kick off the 'add directory to project' action, with an initial directory optionally selected.
+   * Kick off the 'add directory to project' action. If {@code fixedDirectory} is set, the user
+   * won't be able to change which directory is being added.
    */
-  public static void runAction(Project project, @Nullable File initiallySelectedFile) {
+  public static void runAction(Project project, @Nullable File fixedDirectory) {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null) {
@@ -92,8 +94,9 @@ public final class AddDirectoryToProjectAction extends BlazeProjectAction {
     }
     OpenBlazeWorkspaceFileActionDialog dialog =
         new OpenBlazeWorkspaceFileActionDialog(project, projectData.workspacePathResolver);
-    if (initiallySelectedFile != null) {
-      dialog.fileTextField.getField().setText(initiallySelectedFile.getAbsolutePath());
+    if (fixedDirectory != null) {
+      dialog.fileTextField.getField().setText(fixedDirectory.getAbsolutePath());
+      dialog.fileTextField.getField().setEnabled(false);
     }
     dialog.show();
   }
@@ -160,7 +163,7 @@ public final class AddDirectoryToProjectAction extends BlazeProjectAction {
     @Nullable
     @Override
     public JComponent getPreferredFocusedComponent() {
-      return fileTextField.getField();
+      return fileTextField.getField().isEnabled() ? fileTextField.getField() : null;
     }
 
     @Nullable
@@ -185,6 +188,13 @@ public final class AddDirectoryToProjectAction extends BlazeProjectAction {
       BlazeImportSettings importSettings =
           BlazeImportSettingsManager.getInstance(project).getImportSettings();
       checkState(importSettings != null);
+      if (importSettings.getBuildSystem() == BuildSystem.Blaze && workspacePath.isWorkspaceRoot()) {
+        return new ValidationInfo(
+            String.format(
+                "Cannot add the workspace root '%s' to the project.\n"
+                    + "This will destroy performance.",
+                selectedFile.getPath()));
+      }
 
       ImportRoots importRoots =
           ImportRoots.builder(

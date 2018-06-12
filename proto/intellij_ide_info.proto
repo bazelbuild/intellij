@@ -65,16 +65,16 @@ message CIdeInfo {
 
 message AndroidIdeInfo {
   repeated ArtifactLocation resources = 1;
-  ArtifactLocation apk = 3;
-  repeated ArtifactLocation dependency_apk = 4;
-  ArtifactLocation manifest = 5;
-  string java_package = 7;
-  bool has_idl_sources = 8;
-  LibraryArtifact idl_jar = 9;
-  bool generate_resource_class = 10;
-  string legacy_resources = 11;
-  LibraryArtifact resource_jar = 12;
-  string idl_import_root = 13;
+  ArtifactLocation apk = 2;
+  repeated ArtifactLocation dependency_apk = 3;
+  ArtifactLocation manifest = 4;
+  string java_package = 5;
+  bool has_idl_sources = 6;
+  LibraryArtifact idl_jar = 7;
+  bool generate_resource_class = 8;
+  string legacy_resources = 9;
+  LibraryArtifact resource_jar = 10;
+  string idl_import_root = 11;
 }
 
 message AndroidSdkIdeInfo {
@@ -111,11 +111,9 @@ message CToolchainIdeInfo {
   repeated string base_compiler_option = 2;
   repeated string cpp_option = 3;
   repeated string c_option = 4;
-  reserved 5;
-  string cpp_executable = 6;
-  reserved 7;
-  repeated string built_in_include_directory = 8;
-  repeated string unfiltered_compiler_option = 9;
+  string cpp_executable = 5;
+  repeated string built_in_include_directory = 6;
+  repeated string unfiltered_compiler_option = 7;
 }
 
 message TestInfo {
@@ -129,7 +127,8 @@ message JavaToolchainIdeInfo {
 }
 
 message KotlinToolchainIdeInfo {
-  ArtifactLocation json_info_file = 1;
+  string language_version = 1;
+  repeated string sdk_library_targets = 2;
 }
 
 message TargetKey {
@@ -147,47 +146,29 @@ message Dependency {
   DependencyType dependency_type = 2;
 }
 
-// Next Available: 31
 message TargetIdeInfo {
-  string label = 1 [deprecated = true];
-  repeated string dependencies = 4 [deprecated = true];
+  string kind_string = 1;
+  TargetKey key = 2;
+  ArtifactLocation build_file_artifact_location = 3;
+  repeated Dependency deps = 4;
+  repeated string tags = 5;
+  repeated string features = 6;
+  TestInfo test_info = 7;
 
-  JavaIdeInfo java_ide_info = 7;
-  AndroidIdeInfo android_ide_info = 8;
+  JavaIdeInfo java_ide_info = 100;
+  JavaToolchainIdeInfo java_toolchain_ide_info = 101;
 
-  repeated string tags = 9;
-  repeated string runtime_deps = 10 [deprecated = true];
+  AndroidIdeInfo android_ide_info = 110;
+  AndroidAarIdeInfo android_aar_ide_info = 111;
+  AndroidSdkIdeInfo android_sdk_ide_info = 112;
 
-  ArtifactLocation build_file_artifact_location = 11;
+  CIdeInfo c_ide_info = 120;
+  CToolchainIdeInfo c_toolchain_ide_info = 121;
 
-  CIdeInfo c_ide_info = 12;
-  CToolchainIdeInfo c_toolchain_ide_info = 13;
-
-  string kind_string = 14;
-
-  TestInfo test_info = 15;
-
-  reserved 16;
-  JavaToolchainIdeInfo java_toolchain_ide_info = 17;
-
-  PyIdeInfo py_ide_info = 18;
-
-  TargetKey key = 19;
-
-  repeated Dependency deps = 20;
-
-  reserved 21;
-
-  AndroidSdkIdeInfo android_sdk_ide_info = 22;
-
-  reserved 23;
-
-  repeated string features = 24;
-
-  GoIdeInfo go_ide_info = 25;
-  JsIdeInfo js_ide_info = 26;
-  TsIdeInfo ts_ide_info = 27;
-  DartIdeInfo dart_ide_info = 28;
-  AndroidAarIdeInfo android_aar_ide_info = 29;
-  KotlinToolchainIdeInfo kt_toolchain_ide_info = 30;
+  PyIdeInfo py_ide_info = 130;
+  GoIdeInfo go_ide_info = 140;
+  JsIdeInfo js_ide_info = 150;
+  TsIdeInfo ts_ide_info = 160;
+  DartIdeInfo dart_ide_info = 170;
+  KotlinToolchainIdeInfo kt_toolchain_ide_info = 180;
 }

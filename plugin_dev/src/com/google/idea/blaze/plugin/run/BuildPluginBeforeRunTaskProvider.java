@@ -35,6 +35,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedTask;
@@ -231,7 +232,8 @@ public final class BuildPluginBeforeRunTaskProvider
                                     project,
                                     projectViewSet,
                                     BlazeCommandName.BUILD,
-                                    BlazeInvocationContext.NonSync))
+                                    BlazeInvocationContext.NonSync,
+                                    ExecutorType.fromExecutor(env.getExecutor())))
                             .addBlazeFlags(config.getBlazeFlagsState().getExpandedFlags())
                             .addExeFlags(config.getExeFlagsState().getExpandedFlags())
                             .addBlazeFlags(buildResultHelper.getBuildFlags())

@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
-import com.google.idea.blaze.base.run.coverage.CoverageUtils;
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
 import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
@@ -62,7 +61,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -74,7 +72,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
 
   @Override
   public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment environment) {
-    return new BlazeCommandRunProfileState(environment, ImmutableList.of());
+    return new BlazeCommandRunProfileState(environment);
   }
 
   @Override
@@ -89,8 +87,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
     private final BlazeCommandRunConfigurationCommonState handlerState;
     private final ImmutableList<Filter> consoleFilters;
 
-    public BlazeCommandRunProfileState(
-        ExecutionEnvironment environment, Collection<Filter> consoleFilters) {
+    public BlazeCommandRunProfileState(ExecutionEnvironment environment) {
       super(environment);
       this.configuration = getConfiguration(environment);
       this.handlerState =
@@ -98,7 +95,6 @@ public final class BlazeCommandGenericRunConfigurationRunner
       Project project = environment.getProject();
       this.consoleFilters =
           ImmutableList.<Filter>builder()
-              .addAll(consoleFilters)
               .add(
                   new BlazeTargetFilter(project, true),
                   new UrlFilter(),
@@ -193,7 +189,6 @@ public final class BlazeCommandGenericRunConfigurationRunner
       BlazeCommandName command = getCommand();
       if (executorType == ExecutorType.COVERAGE) {
         command = BlazeCommandName.COVERAGE;
-        extraBlazeFlags.addAll(CoverageUtils.getBlazeFlags());
       }
 
       String binaryPath =
@@ -205,8 +200,11 @@ public final class BlazeCommandGenericRunConfigurationRunner
           .addTargets(configuration.getTarget())
           .addBlazeFlags(
               BlazeFlags.blazeFlags(
-                  project, projectViewSet, getCommand(), BlazeInvocationContext.NonSync))
-          .addBlazeFlags(testHandlerFlags)
+                  project,
+                  projectViewSet,
+                  getCommand(),
+                  BlazeInvocationContext.NonSync,
+                  executorType))
           .addBlazeFlags(extraBlazeFlags)
           .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
           .addExeFlags(handlerState.getExeFlagsState().getExpandedFlags())

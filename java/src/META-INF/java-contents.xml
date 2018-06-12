@@ -22,6 +22,14 @@
       id="Blaze.ExcludeLibraryAction"
       text="Exclude Library and Resync">
     </action>
+    <action class="com.google.idea.blaze.java.libraries.AttachSourceJarAction"
+      id="Blaze.AttachSourceJarAction"
+      text="Attach Source Jar">
+    </action>
+    <action class="com.google.idea.blaze.java.libraries.DetachAllSourceJarsAction"
+      id="Blaze.DetachAllSourceJars"
+      text="Detach All Blaze Source Jars">
+    </action>
     <action class="com.google.idea.blaze.java.libraries.AddLibraryTargetDirectoryToProjectViewAction"
       id="Blaze.AddLibraryTargetDirectoryToProjectView"
       text="Add Library Target Directory to Project View">
@@ -30,6 +38,7 @@
     <group id="Blaze.Java.ProjectViewPopupMenu">
       <add-to-group group-id="Blaze.PerFileContextMenu"/>
       <reference id="Blaze.ExcludeLibraryAction"/>
+      <reference id="Blaze.AttachSourceJarAction"/>
       <reference id="Blaze.AddLibraryTargetDirectoryToProjectView"/>
     </group>
   </actions>
@@ -47,11 +56,13 @@
     <TestTargetHeuristic implementation="com.google.idea.blaze.java.run.JUnitTestHeuristic" order="before TestSizeHeuristic"/>
     <TestTargetHeuristic implementation="com.google.idea.blaze.java.run.QualifiedClassNameHeuristic" order="before TargetNameHeuristic"/>
     <SyncListener implementation="com.google.idea.blaze.java.libraries.BlazeSyncModificationTracker$SyncTrackerUpdater"/>
+    <SyncListener implementation="com.google.idea.blaze.java.libraries.DetachAllSourceJarsAction$DetachAllOnSync"/>
     <JavaClasspathAspectStrategy implementation="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy$BazelStrategy"/>
     <JavaTestCaseIdentifier implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestMethodConfigurationProducer$Identifier"/>
     <TestComparisonFailureParser implementation="com.google.idea.blaze.java.run.smrunner.JunitTestComparisonFailureParser"/>
     <FastBuildAspectStrategyProvider implementation="com.google.idea.blaze.java.fastbuild.BazelFastBuildAspectStrategyProvider"/>
     <FastBuildTestEnvironmentCreatorFactory implementation="com.google.idea.blaze.java.run.BazelFastBuildTestEnvironmentCreatorFactory"/>
+    <SyncStatusContributor implementation="com.google.idea.blaze.java.syncstatus.JavaSyncStatusContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -70,14 +81,12 @@
     <runConfigurationProducer
         implementation="com.google.idea.blaze.java.run.producers.MultipleJavaClassesTestConfigurationProducer"
         order="first"/>
-    <projectViewNodeDecorator implementation="com.google.idea.blaze.java.syncstatus.BlazeJavaSyncStatusClassNodeDecorator"/>
-    <editorTabColorProvider implementation="com.google.idea.blaze.java.syncstatus.BlazeJavaSyncStatusEditorTabColorProvider"/>
-    <editorTabTitleProvider implementation="com.google.idea.blaze.java.syncstatus.BlazeJavaSyncStatusEditorTabTitleProvider"/>
     <applicationService serviceInterface="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"
                         serviceImplementation="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"/>
     <applicationService serviceInterface="com.google.idea.blaze.java.sync.source.PackageManifestReader"
                         serviceImplementation="com.google.idea.blaze.java.sync.source.PackageManifestReader"/>
     <programRunner implementation="com.google.idea.blaze.java.run.BlazeJavaDebuggerRunner"/>
+    <projectService serviceImplementation="com.google.idea.blaze.java.libraries.AttachedSourceJarManager"/>
     <refactoring.safeDeleteProcessor id="build_file_safe_delete" order="before javaProcessor"
                                      implementation="com.google.idea.blaze.java.lang.build.BuildFileSafeDeleteProcessor"/>
     <!--duplicated here in case the Kotlin plugin is present, as it also tries to replace javaProcessor-->
@@ -86,6 +95,7 @@
     <projectService serviceImplementation="com.google.idea.blaze.java.libraries.JarCache"/>
 
     <attachSourcesProvider implementation="com.google.idea.blaze.java.libraries.AddLibraryTargetDirectoryToProjectViewAttachSourcesProvider"/>
+    <attachSourcesProvider implementation="com.google.idea.blaze.java.libraries.BlazeAttachSourceProvider"/>
     <applicationService serviceImplementation="com.google.idea.blaze.java.settings.BlazeJavaUserSettings"/>
     <psi.referenceContributor language="BUILD" implementation="com.google.idea.blaze.java.lang.build.references.JavaClassReferenceContributor"/>
     <useScopeEnlarger implementation="com.google.idea.blaze.java.psi.AutoFactoryUseScopeEnlarger"/>

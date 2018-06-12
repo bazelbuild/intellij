@@ -152,7 +152,7 @@ public class BlazeJavascriptSyncPlugin implements BlazeSyncPlugin {
     if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVASCRIPT)) {
       return null;
     }
-    return new BlazeJavascriptLibrarySource();
+    return new BlazeJavascriptLibrarySource(blazeProjectData);
   }
 
   @Override

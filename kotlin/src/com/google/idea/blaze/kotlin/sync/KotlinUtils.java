@@ -20,21 +20,18 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.util.PlatformUtils;
 
 class KotlinUtils {
 
   // whether kotlin language support is enabled for internal users
   private static final BoolExperiment blazeKotlinSupport =
-      new BoolExperiment("blaze.kotlin.support", false);
+      new BoolExperiment("blaze.kotlin.support", true);
 
   static boolean isKotlinSupportEnabled(WorkspaceType workspaceType) {
     if (!workspaceType.getLanguages().contains(LanguageClass.JAVA)) {
       return false;
     }
-    // enable kotlin support for internal AS users, and all external users
-    return Blaze.defaultBuildSystem().equals(BuildSystem.Bazel)
-        || (blazeKotlinSupport.getValue()
-            && PlatformUtils.getPlatformPrefix().equals("AndroidStudio"));
+    // enable for all external users, behind an experiment for internal users
+    return Blaze.defaultBuildSystem().equals(BuildSystem.Bazel) || blazeKotlinSupport.getValue();
   }
 }

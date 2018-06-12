@@ -9,9 +9,9 @@ load(
 def _generate_test_suite_impl(ctx):
     """Generates a JUnit4 test suite pulling in all the referenced classes.
 
-  Args:
-    ctx: the rule context
-  """
+    Args:
+      ctx: the rule context
+    """
     suite_class_name = ctx.label.name
     lines = []
     lines.append("package %s;" % ctx.attr.test_package_root)
@@ -65,14 +65,14 @@ _generate_test_suite = rule(
 def intellij_unit_test_suite(name, srcs, test_package_root, **kwargs):
     """Creates a java_test rule comprising all valid test classes in the specified srcs.
 
-  Only classes ending in "Test.java" will be recognized.
+    Only classes ending in "Test.java" will be recognized.
 
-  Args:
-    name: name of this rule.
-    srcs: the test classes.
-    test_package_root: only tests under this package root will be run.
-    **kwargs: Any other args to be passed to the java_test.
-  """
+    Args:
+      name: name of this rule.
+      srcs: the test classes.
+      test_package_root: only tests under this package root will be run.
+      **kwargs: Any other args to be passed to the java_test.
+    """
     suite_class_name = name + "TestSuite"
     suite_class = test_package_root + "." + suite_class_name
     _generate_test_suite(
@@ -100,25 +100,25 @@ def intellij_integration_test_suite(
         **kwargs):
     """Creates a java_test rule comprising all valid test classes in the specified srcs.
 
-  Only classes ending in "Test.java" will be recognized.
+    Only classes ending in "Test.java" will be recognized.
 
-  All test classes must be located in the blaze package calling this function.
+    All test classes must be located in the blaze package calling this function.
 
-  Args:
-    name: name of this rule.
-    srcs: the test classes.
-    test_package_root: only tests under this package root will be run.
-    deps: the required deps.
-    size: the test size.
-    jvm_flags: extra flags to be passed to the test vm.
-    runtime_deps: the required runtime_deps.
-    platform_prefix: Specifies the JetBrains product these tests are run against. Examples are
-        'Idea' (IJ CE), 'idea' (IJ UE), 'CLion', 'AndroidStudio'. See
-        com.intellij.util.PlatformUtils for other options.
-    required_plugins: optional comma-separated list of plugin IDs. Integration tests will fail if
-        these plugins aren't loaded at runtime.
-    **kwargs: Any other args to be passed to the java_test.
-  """
+    Args:
+      name: name of this rule.
+      srcs: the test classes.
+      test_package_root: only tests under this package root will be run.
+      deps: the required deps.
+      size: the test size.
+      jvm_flags: extra flags to be passed to the test vm.
+      runtime_deps: the required runtime_deps.
+      platform_prefix: Specifies the JetBrains product these tests are run against. Examples are
+          'Idea' (IJ CE), 'idea' (IJ UE), 'CLion', 'AndroidStudio'. See
+          com.intellij.util.PlatformUtils for other options.
+      required_plugins: optional comma-separated list of plugin IDs. Integration tests will fail if
+          these plugins aren't loaded at runtime.
+      **kwargs: Any other args to be passed to the java_test.
+    """
     suite_class_name = name + "TestSuite"
     suite_class = test_package_root + "." + suite_class_name
     _generate_test_suite(

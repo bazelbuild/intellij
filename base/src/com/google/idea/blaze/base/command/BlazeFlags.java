@@ -20,11 +20,13 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformUtils;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /** The collection of all the Bazel flag strings we use. */
 public final class BlazeFlags {
@@ -52,14 +54,21 @@ public final class BlazeFlags {
 
   public static final String DELETED_PACKAGES = "--deleted_packages";
 
+  /**
+   * Flags to add to blaze/bazel invocations of the given type.
+   *
+   * @param executorType the run configuration {@link ExecutorType}, or null if not associated with
+   *     a run configuration.
+   */
   public static List<String> blazeFlags(
       Project project,
       ProjectViewSet projectViewSet,
       BlazeCommandName command,
-      BlazeInvocationContext context) {
+      BlazeInvocationContext context,
+      @Nullable ExecutorType executorType) {
     List<String> flags = Lists.newArrayList();
     for (BuildFlagsProvider buildFlagsProvider : BuildFlagsProvider.EP_NAME.getExtensions()) {
-      buildFlagsProvider.addBuildFlags(project, projectViewSet, command, flags);
+      buildFlagsProvider.addBuildFlags(project, projectViewSet, command, executorType, flags);
     }
     flags.addAll(expandBuildFlags(projectViewSet.listItems(BuildFlagsSection.KEY)));
     if (context == BlazeInvocationContext.Sync) {

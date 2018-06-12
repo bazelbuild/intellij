@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.cpp.navigation;
 
-import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.cpp.PartnerFilePatterns;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -27,9 +27,6 @@ import java.io.File;
 import javax.annotation.Nullable;
 
 class SwitchToHeaderOrSourceSearch {
-
-  private static final ImmutableList<String> TEST_SUFFIXES =
-      ImmutableList.of("_test", "-test", "_unittest", "-unittest");
 
   private SwitchToHeaderOrSourceSearch() {}
 
@@ -49,7 +46,7 @@ class SwitchToHeaderOrSourceSearch {
     // foo.h -> foo.cc instead of back to foo_test.cc.
     PsiManager psiManager = PsiManager.getInstance(file.getProject());
     String pathWithoutExtension = FileUtil.getNameWithoutExtension(file.getVirtualFile().getPath());
-    for (String testSuffix : TEST_SUFFIXES) {
+    for (String testSuffix : PartnerFilePatterns.DEFAULT_PARTNER_SUFFIXES) {
       if (pathWithoutExtension.endsWith(testSuffix)) {
         String possibleHeaderName = StringUtil.trimEnd(pathWithoutExtension, testSuffix) + ".h";
         VirtualFile virtualFile = VfsUtil.findFileByIoFile(new File(possibleHeaderName), false);

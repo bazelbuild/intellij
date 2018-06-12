@@ -36,23 +36,23 @@ def stamped_plugin_xml(
         **kwargs):
     """Stamps a plugin xml file with the IJ build number.
 
-  Args:
-    name: name of this target
-    plugin_xml: target plugin_xml to stamp
-    plugin_id: the plugin ID to stamp
-    plugin_name: the plugin name to stamp
-    stamp_since_build: Add build number to idea-version since-build.
-    stamp_until_build: Use idea-version until-build to limit plugin to the
-        current major release.
-    include_product_code_in_stamp: Whether the product code (eg. "IC")
-        is included in since-build and until-build.
-    version: A version number to stamp.
-    version_file: A file with the version number to be included.
-    changelog_file: A file with the changelog to be included.
-    description_file: A file containing a plugin description to be included.
-    vendor_file: A file containing the vendor info to be included.
-    **kwargs: Any additional arguments to pass to the final target.
-  """
+    Args:
+      name: name of this target
+      plugin_xml: target plugin_xml to stamp
+      plugin_id: the plugin ID to stamp
+      plugin_name: the plugin name to stamp
+      stamp_since_build: Add build number to idea-version since-build.
+      stamp_until_build: Use idea-version until-build to limit plugin to the
+          current major release.
+      include_product_code_in_stamp: Whether the product code (eg. "IC")
+          is included in since-build and until-build.
+      version: A version number to stamp.
+      version_file: A file with the version number to be included.
+      changelog_file: A file with the changelog to be included.
+      description_file: A file containing a plugin description to be included.
+      vendor_file: A file containing the vendor info to be included.
+      **kwargs: Any additional arguments to pass to the final target.
+    """
     stamp_tool = "//build_defs:stamp_plugin_xml"
 
     api_version_txt_name = name + "_api_version"
@@ -132,10 +132,10 @@ def stamped_plugin_xml(
 def product_build_txt(name, **kwargs):
     """Produces a product-build.txt file with the build number.
 
-  Args:
-    name: name of this target
-    **kwargs: Any additional arguments to pass to the final target.
-  """
+    Args:
+      name: name of this target
+      **kwargs: Any additional arguments to pass to the final target.
+    """
     application_info_jar = "//intellij_platform_sdk:application_info_jar"
     application_info_name = "//intellij_platform_sdk:application_info_name"
     product_build_txt_tool = "//build_defs:product_build_txt"
@@ -162,10 +162,10 @@ def product_build_txt(name, **kwargs):
 def api_version_txt(name, **kwargs):
     """Produces an api_version.txt file with the api version, including the product code.
 
-  Args:
-    name: name of this target
-    **kwargs: Any additional arguments to pass to the final target.
-  """
+    Args:
+      name: name of this target
+      **kwargs: Any additional arguments to pass to the final target.
+    """
     application_info_jar = "//intellij_platform_sdk:application_info_jar"
     application_info_name = "//intellij_platform_sdk:application_info_name"
     api_version_txt_tool = "//build_defs:api_version_txt"
@@ -228,18 +228,18 @@ _repackaged_files = rule(
 def repackaged_files(name, srcs, prefix, strip_prefix = ".", **kwargs):
     """Assembles files together so that they can be packaged as an IntelliJ plugin.
 
-  A cut-down version of the internal 'pkgfilegroup' rule.
+    A cut-down version of the internal 'pkgfilegroup' rule.
 
-  Args:
-    name: The name of this target
-    srcs: A list of targets which are dependencies of this rule. All output files of each of these
-        targets will be repackaged.
-    prefix: Where the package should install these files, relative to the 'plugins' directory.
-    strip_prefix: Which part of the input file path should be stripped prior to applying 'prefix'.
-        If ".", all subdirectories are stripped. If the empty string, the full package-relative path
-        is used. Default is "."
-    **kwargs: Any further arguments to be passed to the target
-  """
+    Args:
+      name: The name of this target
+      srcs: A list of targets which are dependencies of this rule. All output files of each of these
+          targets will be repackaged.
+      prefix: Where the package should install these files, relative to the 'plugins' directory.
+      strip_prefix: Which part of the input file path should be stripped prior to applying 'prefix'.
+          If ".", all subdirectories are stripped. If the empty string, the full package-relative path
+          is used. Default is "."
+      **kwargs: Any further arguments to be passed to the target
+    """
     _repackaged_files(name = name, srcs = srcs, prefix = prefix, strip_prefix = strip_prefix, **kwargs)
 
 def _strip_external_workspace_prefix(short_path):
@@ -256,9 +256,9 @@ def output_path(f, repackaged_files_data):
     short_path = _strip_external_workspace_prefix(f.short_path).strip("/")
 
     if strip_prefix == ".":
-        return (prefix + "/" + f.basename)
+        return prefix + "/" + f.basename
     if strip_prefix == "":
-        return (prefix + "/" + short_path)
+        return prefix + "/" + short_path
 
     strip_prefix = strip_prefix.strip("/")
     old_path = short_path[:-len(f.basename)].strip("/")
@@ -266,7 +266,7 @@ def output_path(f, repackaged_files_data):
         fail("Invalid strip_prefix '%s': path actually starts with '%s'" % (strip_prefix, old_path))
 
     stripped = old_path[len(strip_prefix):].strip("/")
-    return ("%s/%s/%s" % (prefix, stripped, f.basename))
+    return "%s/%s/%s" % (prefix, stripped, f.basename)
 
 def _plugin_deploy_zip_impl(ctx):
     zip_name = ctx.attr.zip_filename
@@ -313,25 +313,25 @@ _plugin_deploy_zip = rule(
 def plugin_deploy_zip(name, srcs, zip_filename, **kwargs):
     """Packages up plugin files into a zip archive.
 
-  Args:
-    name: The name of this target
-    srcs: A list of targets of type 'repackaged_files', specifying the input files and relative
-        paths to include in the output zip archive.
-    zip_filename: The output zip filename.
-    **kwargs: Any further arguments to be passed to the target
-  """
+    Args:
+      name: The name of this target
+      srcs: A list of targets of type 'repackaged_files', specifying the input files and relative
+          paths to include in the output zip archive.
+      zip_filename: The output zip filename.
+      **kwargs: Any further arguments to be passed to the target
+    """
     _plugin_deploy_zip(name = name, zip_filename = zip_filename, srcs = srcs, **kwargs)
 
 def unescape_filenames(name, srcs):
     """Macro to generate files with spaces in their names instead of underscores.
 
-  For each file in the srcs, a file will be generated with the same name but with all underscores
-  replaced with spaces.
+    For each file in the srcs, a file will be generated with the same name but with all underscores
+    replaced with spaces.
 
-  Args:
-    name: The name of the generator rule
-    srcs: A list of source files to process
-  """
+    Args:
+      name: The name of the generator rule
+      srcs: A list of source files to process
+    """
     outs = [s.replace("_", " ") for s in srcs]
     cmd = "&&".join(["cp \"{}\" $(@D)/\"{}\"".format(s, d) for (s, d) in zip(srcs, outs)])
     native.genrule(

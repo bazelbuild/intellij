@@ -15,17 +15,34 @@
  */
 package com.google.idea.blaze.ijwb.javascript;
 
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.model.BlazeLibrary;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryKind;
+import java.util.List;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
-/** Prevents garbage collection of javascript libraries. */
+/**
+ * Prevents garbage collection of javascript libraries and produces {@link BlazeJavascriptLibrary}.
+ */
 class BlazeJavascriptLibrarySource extends LibrarySource.Adapter {
 
   @Nullable static final LibraryKind JS_LIBRARY_KIND = LibraryKind.findById("javaScript");
+
+  private final BlazeJavascriptLibrary library;
+
+  BlazeJavascriptLibrarySource(BlazeProjectData blazeProjectData) {
+    library = new BlazeJavascriptLibrary(blazeProjectData);
+  }
+
+  @Override
+  public List<? extends BlazeLibrary> getLibraries() {
+    return ImmutableList.of(library);
+  }
 
   @Nullable
   @Override

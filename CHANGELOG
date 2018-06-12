@@ -1,3 +1,12 @@
+v2018.06.11
+===========
+* Bug fixes and internal cleanup.
+
+v2018.05.21
+===========
+* Run iterative tests faster using javac to compile instead of Bazel.
+  For instructions and caveats, see https://ij.bazel.build/docs/fast-builds.html
+
 v2018.05.07
 ===========
 * Bug fixes and internal cleanup.

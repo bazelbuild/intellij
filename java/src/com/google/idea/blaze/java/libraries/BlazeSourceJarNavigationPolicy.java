@@ -15,12 +15,15 @@
  */
 package com.google.idea.blaze.java.libraries;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.io.VfsUtils;
+import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
@@ -102,6 +105,8 @@ final class BlazeSourceJarNavigationPolicy extends ClsCustomNavigationPolicyEx {
       return null;
     }
 
+    attachSourcesAsynchronously(project, blazeProjectData, blazeLibrary);
+
     // TODO: If there are multiple source jars, search for one containing this PsiJavaFile.
     for (ArtifactLocation jar : blazeLibrary.libraryArtifact.sourceJars) {
       VirtualFile root = getSourceJarRoot(project, blazeProjectData.artifactLocationDecoder, jar);
@@ -110,6 +115,18 @@ final class BlazeSourceJarNavigationPolicy extends ClsCustomNavigationPolicyEx {
       }
     }
     return null;
+  }
+
+  private static void attachSourcesAsynchronously(
+      Project project, BlazeProjectData projectData, BlazeLibrary library) {
+    if (!BlazeAttachSourceProvider.attachAutomatically.getValue()) {
+      return;
+    }
+    ApplicationManager.getApplication()
+        .invokeLater(
+            () ->
+                BlazeAttachSourceProvider.attachSources(
+                    project, projectData, ImmutableList.of(library)));
   }
 
   @Nullable

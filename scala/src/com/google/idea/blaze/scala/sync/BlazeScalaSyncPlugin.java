@@ -19,8 +19,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
-import com.google.idea.blaze.base.model.SyncState.Builder;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -93,11 +93,12 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       BlazeInfo blazeInfo,
+      BlazeVersionData blazeVersionData,
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
       TargetMap targetMap,
-      Builder syncStateBuilder,
+      SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState) {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.SCALA)) {
       return;

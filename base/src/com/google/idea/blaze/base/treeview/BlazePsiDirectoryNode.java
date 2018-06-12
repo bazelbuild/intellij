@@ -63,7 +63,7 @@ public class BlazePsiDirectoryNode extends PsiDirectoryNode {
   @Override
   public boolean isValid() {
     PsiDirectory psi = getValue();
-    if (!psi.isValid()) {
+    if (psi == null || !psi.isValid()) {
       return false;
     }
     return super.isValid() || (getSettings().isHideEmptyMiddlePackages() && isSourceRoot(psi));

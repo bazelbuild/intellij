@@ -19,6 +19,11 @@ import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.AndroidIdeInfo;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.Dependency;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.JavaIdeInfo;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.LibraryArtifact;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetKey;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.TestUtils;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -47,23 +52,22 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
   public void testTargetIdeInfoIsSerializable() {
     IntellijIdeInfo.TargetIdeInfo ideProto =
         IntellijIdeInfo.TargetIdeInfo.newBuilder()
-            .setLabel("//test:test")
+            .setKey(TargetKey.newBuilder().setLabel("//test:test").build())
             .setKindString("android_binary")
-            .addDependencies("//test:dep")
+            .addDeps(
+                Dependency.newBuilder()
+                    .setTarget(TargetKey.newBuilder().setLabel("//test:dep"))
+                    .build())
             .addTags("tag")
             .setJavaIdeInfo(
-                IntellijIdeInfo.JavaIdeInfo.newBuilder()
+                JavaIdeInfo.newBuilder()
                     .addJars(
-                        IntellijIdeInfo.LibraryArtifact.newBuilder()
-                            .setJar(artifactLocation("jar.jar"))
-                            .build())
+                        LibraryArtifact.newBuilder().setJar(artifactLocation("jar.jar")).build())
                     .addGeneratedJars(
-                        IntellijIdeInfo.LibraryArtifact.newBuilder()
-                            .setJar(artifactLocation("jar.jar"))
-                            .build())
+                        LibraryArtifact.newBuilder().setJar(artifactLocation("jar.jar")).build())
                     .addSources(artifactLocation("source.java")))
             .setAndroidIdeInfo(
-                IntellijIdeInfo.AndroidIdeInfo.newBuilder()
+                AndroidIdeInfo.newBuilder()
                     .addResources(artifactLocation("res"))
                     .setApk(artifactLocation("apk"))
                     .addDependencyApk(artifactLocation("apk"))

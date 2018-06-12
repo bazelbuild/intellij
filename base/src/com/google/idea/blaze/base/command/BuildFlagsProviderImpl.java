@@ -16,8 +16,10 @@
 package com.google.idea.blaze.base.command;
 
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.intellij.openapi.project.Project;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /** Flags added to blaze/bazel build commands. */
 public class BuildFlagsProviderImpl implements BuildFlagsProvider {
@@ -27,6 +29,7 @@ public class BuildFlagsProviderImpl implements BuildFlagsProvider {
       Project project,
       ProjectViewSet projectViewSet,
       BlazeCommandName command,
+      @Nullable ExecutorType executorType,
       List<String> flags) {
     flags.add("--curses=no");
     flags.add("--color=yes");

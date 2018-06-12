@@ -23,6 +23,7 @@ public enum LanguageOutputGroup {
   ANDROID(LanguageClass.ANDROID, "android"),
   C(LanguageClass.C, "cpp"),
   JAVA(LanguageClass.JAVA, "java"),
+  KOTLIN(LanguageClass.KOTLIN, "kt"),
   PYTHON(LanguageClass.PYTHON, "py"),
   GO(LanguageClass.GO, "go"),
   JAVASCRIPT(LanguageClass.JAVASCRIPT, "js"),

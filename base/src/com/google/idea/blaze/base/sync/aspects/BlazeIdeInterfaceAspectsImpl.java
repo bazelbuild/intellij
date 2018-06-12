@@ -287,7 +287,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                       project,
                       projectViewSet,
                       BlazeCommandName.BUILD,
-                      BlazeInvocationContext.Sync));
+                      BlazeInvocationContext.Sync,
+                      null));
 
       aspectStrategy.addAspectAndOutputGroups(builder, OutputGroup.INFO, activeLanguages);
 
@@ -478,7 +479,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     if (languageSettings.isLanguageActive(kind.languageClass)) {
       return IdeInfoFromProtobuf.makeTargetIdeInfo(message);
     }
-    if (importRoots.importAsSource(IdeInfoFromProtobuf.getKey(message).label)) {
+    TargetKey key = IdeInfoFromProtobuf.getKey(message);
+    if (key != null && importRoots.importAsSource(key.label)) {
       ignoredLanguages.add(kind.languageClass);
     }
     return null;
@@ -616,7 +618,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                       project,
                       projectViewSet,
                       BlazeCommandName.BUILD,
-                      BlazeInvocationContext.Sync));
+                      BlazeInvocationContext.Sync,
+                      null));
 
       // Request the 'intellij-resolve' aspect output group.
       AspectStrategyProvider.findAspectStrategy(blazeVersionData)
@@ -660,7 +663,11 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .addBlazeFlags(BlazeFlags.KEEP_GOING)
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(
-                    project, projectViewSet, BlazeCommandName.BUILD, BlazeInvocationContext.Sync));
+                    project,
+                    projectViewSet,
+                    BlazeCommandName.BUILD,
+                    BlazeInvocationContext.Sync,
+                    null));
 
     AspectStrategyProvider.findAspectStrategy(blazeVersionData)
         .addAspectAndOutputGroups(

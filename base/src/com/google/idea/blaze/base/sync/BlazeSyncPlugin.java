@@ -122,6 +122,7 @@ public interface BlazeSyncPlugin {
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       BlazeInfo blazeInfo,
+      BlazeVersionData blazeVersionData,
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,

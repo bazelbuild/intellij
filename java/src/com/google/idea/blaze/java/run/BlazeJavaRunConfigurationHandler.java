@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.java.run;
 
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
@@ -102,8 +101,9 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
 
     @Override
     public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment env) {
-      if (!BlazeCommandRunConfigurationRunner.isDebugging(env)) {
-        return new BlazeCommandRunProfileState(env, ImmutableList.of());
+      if (!BlazeCommandRunConfigurationRunner.isDebugging(env)
+          || BlazeCommandRunConfigurationRunner.getBlazeCommand(env) == BlazeCommandName.BUILD) {
+        return new BlazeCommandRunProfileState(env);
       }
       ClassFileManifestBuilder.initState(env);
       return new BlazeJavaRunProfileState(env);

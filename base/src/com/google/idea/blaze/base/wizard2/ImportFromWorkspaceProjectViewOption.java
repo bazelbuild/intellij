@@ -51,6 +51,7 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
     this.userSettings = builder.getUserSettings();
 
     this.projectViewPathField = new TextFieldWithStoredHistory(LAST_WORKSPACE_PATH);
+    projectViewPathField.setName("projectview-file-path-field");
     projectViewPathField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);
     projectViewPathField.setText(userSettings.get(LAST_WORKSPACE_PATH, ""));
 

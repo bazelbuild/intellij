@@ -28,6 +28,8 @@
     <runConfigurationProducer
         implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaMainClassRunConfigurationProducer"/>
     <runConfigurationProducer
+        implementation="com.google.idea.blaze.scala.run.producers.DeployableJarRunConfigurationProducer"/>
+    <runConfigurationProducer
         implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaTestClassConfigurationProducer"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaSpecs2TestExprConfigurationProducer"/>
@@ -40,6 +42,8 @@
         implementationClass="com.google.idea.blaze.scala.run.producers.BlazeScalaTestRunLineMarkerContributor"
         language="Scala"
         order="first"/>
+    <stepsBeforeRunProvider
+        implementation="com.google.idea.blaze.scala.run.producers.GenerateExecutableDeployableJarProviderTaskProvider"/>
   </extensions>
 
   <project-components>

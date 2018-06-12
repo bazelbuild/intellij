@@ -11,7 +11,11 @@ def sources_from_target(ctx):
 
 def artifacts_from_target_list_attr(ctx, attr_name):
     """Converts a list of targets to a list of artifact locations."""
-    return [artifact_location(f) for target in getattr(ctx.rule.attr, attr_name, []) for f in target.files]
+    return [
+        artifact_location(f)
+        for target in getattr(ctx.rule.attr, attr_name, [])
+        for f in target.files
+    ]
 
 def artifact_location(f):
     """Creates an ArtifactLocation proto from a File."""
@@ -56,7 +60,7 @@ def is_external_artifact(label):
     # Label.EXTERNAL_PATH_PREFIX is due to change from 'external' to '..' in Bazel 0.4.5.
     # This code is for forwards and backwards compatibility.
     # Remove the 'external' check when Bazel 0.4.4 and earlier no longer need to be supported.
-    return (label.workspace_root.startswith("external") or label.workspace_root.startswith(".."))
+    return label.workspace_root.startswith("external") or label.workspace_root.startswith("..")
 
 def _strip_root_exec_path_fragment(path, root_fragment):
     if root_fragment and path.startswith(root_fragment + "/"):

@@ -234,8 +234,11 @@ public final class BlazeJavaWorkspaceImporter {
       workspaceBuilder.jdeps.addAll(jars);
     }
 
-    // Add all deps if this rule is in the current working set
-    if (workingSet == null || workingSet.isTargetInWorkingSet(target)) {
+    // Add all deps if this target is in the current working set, or if jdeps minimization should be
+    // skipped for this target.
+    if (workingSet == null
+        || workingSet.isTargetInWorkingSet(target)
+        || ignoreJdepsForTarget(target)) {
       // Add self, so we pick up our own gen jars if in working set
       workspaceBuilder.directDeps.add(targetKey);
       for (Dependency dep : target.dependencies) {
@@ -286,6 +289,12 @@ public final class BlazeJavaWorkspaceImporter {
           workspaceBuilder.outputJarsFromSourceTargets.get(targetKey),
           workspaceBuilder.generatedJarsFromSourceTargets);
     }
+  }
+
+  private boolean ignoreJdepsForTarget(TargetIdeInfo target) {
+    return augmenters
+        .stream()
+        .anyMatch(aug -> aug.ignoreJdepsForTarget(workspaceLanguageSettings, target));
   }
 
   @Nullable

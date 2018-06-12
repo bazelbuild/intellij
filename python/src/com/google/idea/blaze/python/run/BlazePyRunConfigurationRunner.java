@@ -20,6 +20,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.io.FileOperationProvider;
@@ -28,25 +29,22 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.WithBrowserHyperlinkExecutionException;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationRunner.BlazeCommandRunProfileState;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.python.PySdkUtils;
-import com.google.idea.blaze.python.run.filter.BlazePyFilterProvider;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.ParametersList;
-import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.WrappingRunConfiguration;
@@ -69,7 +67,6 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.run.CommandLinePatcher;
-import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.run.PythonScriptCommandLineState;
@@ -136,19 +133,8 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
 
         private final CommandLinePatcher applyHelperPydevFlags =
             (commandLine) -> {
-              ParametersList parametersList = commandLine.getParametersList();
-              ParamsGroup exeParams =
-                  parametersList.getParamsGroup(PythonCommandLineState.GROUP_DEBUGGER);
-              if (exeParams == null) {
-                return;
-              }
-              // exeParams[0] is the pydevd script - add extra params after it, retaining order
-              int insertionPoint = 1;
-              for (String extraParam :
-                  BlazePyDebugHelper.getAllBlazePydevFlags(
-                      Blaze.getBuildSystem(nativeConfig.getProject()))) {
-                exeParams.addParameterAt(insertionPoint++, extraParam);
-              }
+              BlazePyDebugHelper.doBlazeDebugCommandlinePatching(
+                  nativeConfig.getProject(), configuration.getTarget(), commandLine);
             };
 
         @Override
@@ -226,20 +212,20 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
 
   private static ImmutableList<Filter> getFilters(Project project) {
     return ImmutableList.<Filter>builder()
-        .addAll(BlazePyFilterProvider.getPyFilters(project))
         .add(new BlazeTargetFilter(project, true))
         .add(new UrlFilter())
         .build();
   }
 
   @Override
-  public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment environment) {
-    BlazeCommandRunConfiguration configuration = getConfiguration(environment);
-    if (BlazeCommandRunConfigurationRunner.isDebugging(environment)) {
-      environment.putCopyableUserData(EXECUTABLE_KEY, new AtomicReference<>());
-      return new BlazePyDummyRunProfileState(configuration);
+  public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment env) {
+    BlazeCommandRunConfiguration configuration = getConfiguration(env);
+    if (!BlazeCommandRunConfigurationRunner.isDebugging(env)
+        || BlazeCommandRunConfigurationRunner.getBlazeCommand(env) == BlazeCommandName.BUILD) {
+      return new BlazeCommandRunProfileState(env);
     }
-    return new BlazeCommandRunProfileState(environment, getFilters(environment.getProject()));
+    env.putCopyableUserData(EXECUTABLE_KEY, new AtomicReference<>());
+    return new BlazePyDummyRunProfileState(configuration);
   }
 
   @Override
@@ -309,8 +295,10 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
           BlazeBeforeRunCommandHelper.runBlazeBuild(
               configuration,
               buildResultHelper,
-              BlazePyDebugHelper.getAllBlazeDebugFlags(Blaze.getBuildSystem(project)),
+              BlazePyDebugHelper.getAllBlazeDebugFlags(
+                  configuration.getProject(), configuration.getTarget()),
               ImmutableList.of(),
+              ExecutorType.fromExecutor(env.getExecutor()),
               "Building debug binary");
 
       try {

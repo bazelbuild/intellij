@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toList;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -69,16 +70,11 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import java.util.Collection;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.swing.Box;
 import javax.swing.Icon;
 import javax.swing.JComponent;
-import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jdom.output.XMLOutputter;
 
 /** A run configuration which executes Blaze commands. */
 public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
@@ -89,21 +85,42 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
   private static final Logger logger = Logger.getInstance(BlazeCommandRunConfiguration.class);
 
+  /**
+   * Attributes or tags which are common to all run configuration types. We don't want to interfere
+   * with the (de)serialization of these.
+   *
+   * <p>TODO(brendandouglas): remove once we are fully migrated to serializing blaze-specific
+   * settings under a common parent.
+   */
+  private static final ImmutableSet<String> COMMON_SETTINGS =
+      ImmutableSet.of(
+          "name",
+          "nameIsGenerated",
+          "default",
+          "temporary",
+          "method",
+          "type",
+          "factoryName",
+          "selected",
+          "option",
+          "folderName",
+          "editBeforeRun",
+          "activateToolWindowBeforeRun",
+          "tempConfiguration");
+
+  /**
+   * All blaze-specific settings are serialized under this tag, to distinguish them from common
+   * settings.
+   */
+  private static final String BLAZE_SETTINGS_TAG = "blaze-settings";
+
   private static final String HANDLER_ATTR = "handler-id";
   private static final String TARGET_TAG = "blaze-target";
   private static final String KIND_ATTR = "kind";
   private static final String KEEP_IN_SYNC_TAG = "keep-in-sync";
-  private static final String CORRUPTED_DEFAULT_CONFIG_ATTR = "corrupted-config";
 
-  /**
-   * This tag is actually written by {@link com.intellij.execution.impl.RunManagerImpl}; it
-   * represents the before-run tasks of the configuration. We need to know about it to avoid writing
-   * it ourselves.
-   */
-  private static final String METHOD_TAG = "method";
-
-  /** The last serialized state of the configuration. */
-  private Element elementState = new Element("dummy");
+  /** The blaze-specific parts of the last serialized state of the configuration. */
+  private Element blazeElementState = new Element(BLAZE_SETTINGS_TAG);
 
   @Nullable private String targetPattern;
   // Null if the target is null, not a Label, or not a known rule.
@@ -121,7 +138,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     handlerProvider = BlazeCommandRunConfigurationHandlerProvider.findHandlerProvider(null);
     handler = handlerProvider.createHandler(this);
     try {
-      handler.getState().readExternal(elementState);
+      handler.getState().readExternal(blazeElementState);
     } catch (InvalidDataException e) {
       logger.error(e);
     }
@@ -186,14 +203,14 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       return;
     }
     try {
-      handler.getState().writeExternal(elementState);
+      handler.getState().writeExternal(blazeElementState);
     } catch (WriteExternalException e) {
       logger.error(e);
     }
     handlerProvider = newProvider;
     handler = newProvider.createHandler(this);
     try {
-      handler.getState().readExternal(elementState);
+      handler.getState().readExternal(blazeElementState);
     } catch (InvalidDataException e) {
       logger.error(e);
     }
@@ -301,37 +318,26 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     handler.checkConfiguration();
   }
 
-  /** Returns true if this run configuration was previously both temporary and default. */
-  boolean isCorrupted() {
-    return Objects.equals(elementState.getAttributeValue(CORRUPTED_DEFAULT_CONFIG_ATTR), "true");
-  }
-
-  /**
-   * If the run configuration is both 'default' and 'temporary', we assume it's been corrupted, and
-   * remove the 'default' tag so it doesn't affect newly created run configurations.
-   *
-   * @return true if it was corrupted
-   */
-  private static boolean sanitizeCorruptedDefaultRunConfiguration(Element element) {
-    if (!isCorruptedDefaultRunConfiguration(element)) {
-      return false;
+  private static Element getBlazeSettingsCopy(Element element) {
+    Element blazeSettings = element.getChild(BLAZE_SETTINGS_TAG);
+    if (blazeSettings != null) {
+      return blazeSettings.clone();
     }
-    element.setAttribute(CORRUPTED_DEFAULT_CONFIG_ATTR, "true");
-    element.removeAttribute("default");
-    return true;
-  }
-
-  private static boolean isCorruptedDefaultRunConfiguration(Element element) {
-    String isDefault = element.getAttributeValue("default");
-    String isTemporary = element.getAttributeValue("temporary");
-    return Objects.equals(isDefault, "true") && Objects.equals(isTemporary, "true");
+    // migrate an old-style run configuration
+    blazeSettings = element.clone();
+    blazeSettings.setName(BLAZE_SETTINGS_TAG);
+    for (String common : COMMON_SETTINGS) {
+      blazeSettings.removeChildren(common);
+      blazeSettings.removeAttribute(common);
+    }
+    return blazeSettings;
   }
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    sanitizeCorruptedDefaultRunConfiguration(element);
     super.readExternal(element);
-    element = element.clone();
+
+    element = getBlazeSettingsCopy(element);
 
     String keepInSyncString = element.getAttributeValue(KEEP_IN_SYNC_TAG);
     keepInSync = keepInSyncString != null ? Boolean.parseBoolean(keepInSyncString) : null;
@@ -352,74 +358,47 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       updateHandlerIfDifferentProvider(handlerProvider);
     }
 
-    element.removeAttribute(KIND_ATTR);
-    element.removeAttribute(HANDLER_ATTR);
-    element.removeChildren(TARGET_TAG);
-    element.removeAttribute(KEEP_IN_SYNC_TAG);
-    // remove legacy attribute, if present
-    element.removeAttribute(TARGET_TAG);
-
-    this.elementState = element;
-    handler.getState().readExternal(elementState);
+    blazeElementState = element;
+    handler.getState().readExternal(blazeElementState);
   }
 
   @Override
   @SuppressWarnings("ThrowsUncheckedException")
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    if (sanitizeCorruptedDefaultRunConfiguration(element)) {
-      logger.info(
-          "Serializing an apparently corrupted run configuration:\n"
-              + new XMLOutputter().outputString(element),
-          new Exception());
-    }
+
+    blazeElementState.removeChildren(TARGET_TAG);
     if (targetPattern != null) {
       Element targetElement = new Element(TARGET_TAG);
       targetElement.setText(targetPattern);
       if (targetKind != null) {
         targetElement.setAttribute(KIND_ATTR, targetKind.toString());
       }
-      element.addContent(targetElement);
+      blazeElementState.addContent(targetElement);
     }
     if (keepInSync != null) {
-      element.setAttribute(KEEP_IN_SYNC_TAG, Boolean.toString(keepInSync));
+      blazeElementState.setAttribute(KEEP_IN_SYNC_TAG, Boolean.toString(keepInSync));
+    } else {
+      blazeElementState.removeAttribute(KEEP_IN_SYNC_TAG);
     }
-    element.setAttribute(HANDLER_ATTR, handlerProvider.getId());
+    blazeElementState.setAttribute(HANDLER_ATTR, handlerProvider.getId());
 
-    handler.getState().writeExternal(elementState);
-
-    // copy our internal state to the provided Element, skipping items already present
-    Set<String> baseAttributes =
-        element.getAttributes().stream().map(Attribute::getName).collect(Collectors.toSet());
-    for (Attribute attribute : elementState.getAttributes()) {
-      if (!baseAttributes.contains(attribute.getName())) {
-        element.setAttribute(attribute.clone());
-      }
-    }
-    Set<String> baseChildren =
-        element.getChildren().stream().map(Element::getName).collect(Collectors.toSet());
-    // The method tag is written by RunManagerImpl *after* this writeExternal call,
-    // so it isn't already present.
-    // We still have to avoid writing it ourselves, or we wind up duplicating it.
-    baseChildren.add(METHOD_TAG);
-    for (Element child : elementState.getChildren()) {
-      if (!baseChildren.contains(child.getName())) {
-        element.addContent(child.clone());
-      }
-    }
+    handler.getState().writeExternal(blazeElementState);
+    // copy our internal state to the provided Element
+    element.addContent(blazeElementState.clone());
   }
 
   @Override
   public BlazeCommandRunConfiguration clone() {
     final BlazeCommandRunConfiguration configuration = (BlazeCommandRunConfiguration) super.clone();
-    configuration.elementState = elementState.clone();
+    configuration.blazeElementState = blazeElementState.clone();
     configuration.targetPattern = targetPattern;
     configuration.targetKind = targetKind;
     configuration.keepInSync = keepInSync;
     configuration.handlerProvider = handlerProvider;
     configuration.handler = handlerProvider.createHandler(this);
     try {
-      configuration.handler.getState().readExternal(configuration.elementState);
+      configuration.handler.getState().readExternal(configuration.blazeElementState);
     } catch (InvalidDataException e) {
       logger.error(e);
     }
@@ -481,7 +460,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       targetField =
           new TextFieldWithAutoCompletion<>(
               project, new TargetCompletionProvider(project), true, null);
-      elementState = config.elementState.clone();
+      elementState = config.blazeElementState.clone();
       targetExpressionLabel = new JBLabel(UIUtil.ComponentStyle.LARGE);
       keepInSyncCheckBox = new JBCheckBox("Keep in sync with source XML");
       editorWithoutSyncCheckBox = UiUtil.createBox(targetExpressionLabel, targetField);
@@ -518,7 +497,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       handlerProvider = config.handlerProvider;
       handler = handlerProvider.createHandler(config);
       try {
-        handler.getState().readExternal(config.elementState);
+        handler.getState().readExternal(config.blazeElementState);
       } catch (InvalidDataException e) {
         logger.error(e);
       }
@@ -538,7 +517,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
     @Override
     protected void resetEditorFrom(BlazeCommandRunConfiguration config) {
-      elementState = config.elementState.clone();
+      elementState = config.blazeElementState.clone();
       updateEditor(config);
       if (config.handlerProvider != handlerProvider) {
         updateHandlerEditor(config);
@@ -559,9 +538,9 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
       // now set the config's state, based on the editor's (possibly out of date) handler
       config.updateHandlerIfDifferentProvider(handlerProvider);
-      config.elementState = elementState.clone();
+      config.blazeElementState = elementState.clone();
       try {
-        config.handler.getState().readExternal(config.elementState);
+        config.handler.getState().readExternal(config.blazeElementState);
       } catch (InvalidDataException e) {
         logger.error(e);
       }

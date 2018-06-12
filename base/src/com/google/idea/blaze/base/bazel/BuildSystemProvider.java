@@ -16,12 +16,16 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
+import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
@@ -101,15 +105,29 @@ public interface BuildSystemProvider {
   @Nullable
   String getLanguageSupportDocumentationUrl(String relativeDocName);
 
+  /** The BUILD filenames supported by this build system. */
+  ImmutableSet<String> possibleBuildFileNames();
+
   /** Check if the given filename is a valid BUILD file name. */
-  boolean isBuildFile(String fileName);
+  default boolean isBuildFile(String fileName) {
+    return possibleBuildFileNames().contains(fileName);
+  }
 
   /**
    * Check if the given directory has a child with a valid BUILD file name, and if so, returns the
    * first such file.
    */
   @Nullable
-  File findBuildFileInDirectory(File directory);
+  default File findBuildFileInDirectory(File directory) {
+    FileOperationProvider provider = FileOperationProvider.getInstance();
+    for (String filename : possibleBuildFileNames()) {
+      File child = new File(directory, filename);
+      if (provider.exists(child)) {
+        return child;
+      }
+    }
+    return null;
+  }
 
   /**
    * Check if the given directory has a child with a valid BUILD file name, and if so, returns the
@@ -117,13 +135,22 @@ public interface BuildSystemProvider {
    */
   @Nullable
   default VirtualFile findBuildFileInDirectory(VirtualFile directory) {
-    File file = new File(directory.getPath());
-    File buildFile = findBuildFileInDirectory(file);
-    return buildFile != null ? directory.getFileSystem().findFileByPath(buildFile.getPath()) : null;
+    for (String filename : possibleBuildFileNames()) {
+      VirtualFile child = directory.findChild(filename);
+      if (child != null) {
+        return child;
+      }
+    }
+    return null;
   }
 
   /** Returns the list of file types recognized as build system files. */
-  ImmutableList<FileNameMatcher> buildLanguageFileTypeMatchers();
+  default ImmutableList<FileNameMatcher> buildLanguageFileTypeMatchers() {
+    ImmutableList.Builder<FileNameMatcher> list = ImmutableList.builder();
+    possibleBuildFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
+    list.add(new ExtensionFileNameMatcher("bzl"), new ExactFileNameMatcher("WORKSPACE"));
+    return list.build();
+  }
 
   /** Populates the passed builder with version data. */
   void populateBlazeVersionData(

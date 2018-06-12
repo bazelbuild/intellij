@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.util.SaveUtil;
@@ -64,7 +65,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
       return true;
     }
     try {
-      File executable = getExecutableToDebug();
+      File executable = getExecutableToDebug(env);
       if (executable != null) {
         executableToDebug = executable;
         return true;
@@ -86,15 +87,21 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
    *
    * @throws ExecutionException if no unique output artifact was found.
    */
-  private File getExecutableToDebug() throws ExecutionException {
+  private File getExecutableToDebug(ExecutionEnvironment env) throws ExecutionException {
     BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true);
 
     ListenableFuture<BuildResult> buildOperation =
         BlazeBeforeRunCommandHelper.runBlazeBuild(
             configuration,
             buildResultHelper,
-            ImmutableList.of("-c", "dbg", "--copt=-O0", "--copt=-g", "--strip=never"),
-            ImmutableList.of("--dynamic_mode=off"),
+            ImmutableList.of(),
+            ImmutableList.of(
+                "--compilation_mode=dbg",
+                "--copt=-O0",
+                "--copt=-g",
+                "--strip=never",
+                "--dynamic_mode=off"),
+            ExecutorType.fromExecutor(env.getExecutor()),
             "Building debug binary");
 
     try {

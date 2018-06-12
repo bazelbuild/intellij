@@ -17,10 +17,13 @@ package com.google.idea.blaze.java.run;
 
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildService;
-import com.intellij.icons.AllIcons.Actions;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.LayeredIcon;
+import icons.BlazeIcons;
+import javax.swing.Icon;
 
 final class ResetFastBuildAction extends AnAction {
 
@@ -29,9 +32,13 @@ final class ResetFastBuildAction extends AnAction {
 
   ResetFastBuildAction(Project project, FastBuildInfo fastBuildInfo) {
     super(
-        "Reset build", "Discard the build and create a new one using Blaze", Actions.ForceRefresh);
+        "Reset build", "Discard the cached build (next build will be from scratch)", createIcon());
     this.project = project;
     this.fastBuildInfo = fastBuildInfo;
+  }
+
+  private static Icon createIcon() {
+    return new LayeredIcon(BlazeIcons.Blaze, AllIcons.Nodes.ExcludedFromCompile);
   }
 
   @Override

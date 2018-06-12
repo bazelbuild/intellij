@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
 import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
@@ -77,16 +78,16 @@ public final class BlazeCidrLauncher extends CidrLauncher {
   private final BlazeCommandRunConfiguration configuration;
   private final BlazeCidrRunConfigState handlerState;
   private final BlazeCidrRunConfigurationRunner runner;
-  private final ExecutionEnvironment executionEnvironment;
+  private final ExecutionEnvironment env;
 
   BlazeCidrLauncher(
       BlazeCommandRunConfiguration configuration,
       BlazeCidrRunConfigurationRunner runner,
-      ExecutionEnvironment environment) {
+      ExecutionEnvironment env) {
     this.configuration = configuration;
     this.handlerState = (BlazeCidrRunConfigState) configuration.getHandler().getState();
     this.runner = runner;
-    this.executionEnvironment = environment;
+    this.env = env;
     this.project = configuration.getProject();
   }
 
@@ -116,7 +117,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
                     project,
                     projectViewSet,
                     handlerState.getCommandState().getCommand(),
-                    BlazeInvocationContext.NonSync))
+                    BlazeInvocationContext.NonSync,
+                    ExecutorType.fromExecutor(env.getExecutor())))
             .addBlazeFlags(testHandlerFlags)
             .addBlazeFlags(fixedBlazeFlags)
             .addExeFlags(handlerState.getExeFlagsState().getExpandedFlags());
@@ -291,18 +293,13 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     protected ConsoleView createConsole() {
       if (testUiSession != null) {
         return SmRunnerUtils.getConsoleView(
-            configuration.getProject(),
-            configuration,
-            executionEnvironment.getExecutor(),
-            testUiSession);
+            configuration.getProject(), configuration, env.getExecutor(), testUiSession);
       }
       // When debugging, we run gdb manually on the debug binary, so the blaze test runners aren't
       // involved.
       CidrGoogleTestConsoleProperties consoleProperties =
           new CidrGoogleTestConsoleProperties(
-              configuration,
-              executionEnvironment.getExecutor(),
-              executionEnvironment.getExecutionTarget());
+              configuration, env.getExecutor(), env.getExecutionTarget());
       return createConsole(configuration.getType(), consoleProperties);
     }
   }

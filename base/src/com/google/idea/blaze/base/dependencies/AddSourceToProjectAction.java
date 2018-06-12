@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.google.idea.blaze.base.settings.ui.AddDirectoryToProjectAction;
+import com.google.idea.blaze.base.syncstatus.SyncStatusContributor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -63,8 +64,7 @@ class AddSourceToProjectAction extends BlazeProjectAction {
     if (vf == null) {
       return;
     }
-    File file = new File(vf.getPath());
-    LocationContext context = AddSourceToProjectHelper.getContext(project, file);
+    LocationContext context = AddSourceToProjectHelper.getContext(project, vf);
     if (context == null) {
       return;
     }
@@ -89,7 +89,8 @@ class AddSourceToProjectAction extends BlazeProjectAction {
           ImmutableList.of(TargetExpression.allFromPackageNonRecursive(context.blazePackage)));
       return;
     }
-    if (AddSourceToProjectHelper.sourceCoveredByProjectTargets(context)) {
+    if (AddSourceToProjectHelper.sourceCoveredByProjectViewTargets(context)
+        || (inProjectDirectories && SyncStatusContributor.isUnsynced(project, context.file))) {
       return;
     }
     // otherwise find the targets building this source file, then add them to the project
@@ -124,8 +125,7 @@ class AddSourceToProjectAction extends BlazeProjectAction {
     if (vf == null) {
       return null;
     }
-    File file = new File(vf.getPath());
-    LocationContext context = AddSourceToProjectHelper.getContext(project, file);
+    LocationContext context = AddSourceToProjectHelper.getContext(project, vf);
     if (context == null) {
       return null;
     }
@@ -136,13 +136,15 @@ class AddSourceToProjectAction extends BlazeProjectAction {
     }
     if (psiFile instanceof BuildFile
         && ((BuildFile) psiFile).getBlazeFileType() == BlazeFileType.BuildPackage) {
-      // always enabled for directories and BUILD files
-      return "Add BUILD package to project";
+      return AddSourceToProjectHelper.packageCoveredByProjectTargets(context)
+          ? null
+          : "Add BUILD package to project";
     }
     if (!SourceToTargetProvider.hasProvider()) {
       return null;
     }
-    if (AddSourceToProjectHelper.sourceCoveredByProjectTargets(context)) {
+    if (AddSourceToProjectHelper.sourceCoveredByProjectViewTargets(context)
+        || (inProjectDirectories && !SyncStatusContributor.isUnsynced(project, context.file))) {
       return null;
     }
     return "Add source file to project";

@@ -107,12 +107,11 @@ public abstract class IntellijAspectTest {
   }
 
   private static boolean matchTarget(TargetIdeInfo target, String label) {
-    if (target.hasKey()) {
-      TargetKey targetKey = target.getKey();
-      return targetKey.getLabel().equals(label) && targetKey.getAspectIdsList().isEmpty();
-    } else {
-      return target.getLabel().equals(label);
+    if (!target.hasKey()) {
+      return false;
     }
+    TargetKey targetKey = target.getKey();
+    return targetKey.getLabel().equals(label) && targetKey.getAspectIdsList().isEmpty();
   }
 
   private static boolean matchTarget(
@@ -139,23 +138,6 @@ public abstract class IntellijAspectTest {
   protected static List<Dependency> dependenciesForTarget(TargetIdeInfo target) {
     if (!target.getDepsList().isEmpty()) {
       return target.getDepsList();
-    } else if (!target.getDependenciesList().isEmpty() || !target.getRuntimeDepsList().isEmpty()) {
-      ImmutableList.Builder<Dependency> result = ImmutableList.builder();
-      for (String label : target.getDependenciesList()) {
-        result.add(
-            Dependency.newBuilder()
-                .setDependencyType(DependencyType.COMPILE_TIME)
-                .setTarget(TargetKey.newBuilder().setLabel(label).build())
-                .build());
-      }
-      for (String label : target.getRuntimeDepsList()) {
-        result.add(
-            Dependency.newBuilder()
-                .setDependencyType(DependencyType.RUNTIME)
-                .setTarget(TargetKey.newBuilder().setLabel(label).build())
-                .build());
-      }
-      return result.build();
     }
     return ImmutableList.of();
   }
@@ -193,13 +175,9 @@ public abstract class IntellijAspectTest {
   }
 
   protected Dependency dep(TargetIdeInfo targetIdeInfo) {
-    TargetKey targetKey =
-        targetIdeInfo.hasKey()
-            ? targetIdeInfo.getKey()
-            : TargetKey.newBuilder().setLabel(targetIdeInfo.getLabel()).build();
     return Dependency.newBuilder()
         .setDependencyType(DependencyType.COMPILE_TIME)
-        .setTarget(targetKey)
+        .setTarget(targetIdeInfo.getKey())
         .build();
   }
 

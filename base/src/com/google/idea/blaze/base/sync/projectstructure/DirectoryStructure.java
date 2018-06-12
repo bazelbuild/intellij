@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -35,6 +36,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Directory structure representation used by {@link ContentEntryEditor}.
@@ -52,14 +54,27 @@ public class DirectoryStructure {
 
   public static ListenableFuture<DirectoryStructure> getRootDirectoryStructure(
       Project project, WorkspaceRoot workspaceRoot, ProjectViewSet projectViewSet) {
-    return FetchExecutor.EXECUTOR.submit(
-        () -> computeRootDirectoryStructure(project, workspaceRoot, projectViewSet));
+    AtomicBoolean cancelled = new AtomicBoolean(false);
+    try {
+      ListenableFuture<DirectoryStructure> future =
+          FetchExecutor.EXECUTOR.submit(
+              () ->
+                  computeRootDirectoryStructure(project, workspaceRoot, projectViewSet, cancelled));
+      future.addListener(() -> cancelled.set(true), MoreExecutors.directExecutor());
+      return future;
+
+    } catch (Throwable e) {
+      cancelled.set(true);
+      return Futures.immediateFailedFuture(e);
+    }
   }
 
   private static DirectoryStructure computeRootDirectoryStructure(
-      Project project, WorkspaceRoot workspaceRoot, ProjectViewSet projectViewSet)
+      Project project,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      AtomicBoolean cancelled)
       throws ExecutionException, InterruptedException {
-    ListeningExecutorService executorService = FetchExecutor.EXECUTOR;
     FileOperationProvider fileOperationProvider = FileOperationProvider.getInstance();
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, Blaze.getBuildSystem(project))
@@ -75,8 +90,9 @@ public class DirectoryStructure {
               workspaceRoot,
               excludeDirectories,
               fileOperationProvider,
-              executorService,
-              rootDirectory));
+              FetchExecutor.EXECUTOR,
+              rootDirectory,
+              cancelled));
     }
     ImmutableMap.Builder<WorkspacePath, DirectoryStructure> result = ImmutableMap.builder();
     for (PathStructurePair pair : Futures.allAsList(futures).get()) {
@@ -92,8 +108,9 @@ public class DirectoryStructure {
       Set<WorkspacePath> excludeDirectories,
       FileOperationProvider fileOperationProvider,
       ListeningExecutorService executorService,
-      WorkspacePath workspacePath) {
-    if (excludeDirectories.contains(workspacePath)) {
+      WorkspacePath workspacePath,
+      AtomicBoolean cancelled) {
+    if (cancelled.get() || excludeDirectories.contains(workspacePath)) {
       return Futures.immediateFuture(null);
     }
     File file = workspaceRoot.fileForPath(workspacePath);
@@ -105,7 +122,7 @@ public class DirectoryStructure {
     return Futures.transformAsync(
         childrenFuture,
         children -> {
-          if (children == null) {
+          if (cancelled.get() || children == null) {
             return Futures.immediateFuture(null);
           }
           List<ListenableFuture<PathStructurePair>> futures =
@@ -124,7 +141,8 @@ public class DirectoryStructure {
                     excludeDirectories,
                     fileOperationProvider,
                     executorService,
-                    childWorkspacePath));
+                    childWorkspacePath,
+                    cancelled));
           }
           return Futures.transform(
               Futures.allAsList(futures),

@@ -26,11 +26,6 @@ optional_plugin_xml(
     visibility = ["//visibility:public"],
 )
 
-OPTIONAL_PLUGIN_XMLS = [
-    ":optional_xml",
-    "//java:optional_java",
-]
-
 merged_plugin_xml(
     name = "merged_plugin_xml",
     srcs = [
@@ -65,7 +60,10 @@ java_library(
 intellij_plugin(
     name = "kotlin_integration_test_plugin",
     testonly = 1,
-    optional_plugin_xmls = OPTIONAL_PLUGIN_XMLS,
+    optional_plugin_xmls = [
+        ":optional_xml",
+        "//java:optional_java",
+    ],
     plugin_xml = ":kotlin_plugin_xml",
     deps = [":kotlin"],
 )

@@ -17,7 +17,7 @@ package com.google.idea.blaze.python.run;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
@@ -28,20 +28,19 @@ public interface BlazePyDebugHelper {
   ExtensionPointName<BlazePyDebugHelper> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.BlazePyDebugFlagsProvider");
 
-  static ImmutableList<String> getAllBlazeDebugFlags(BuildSystem buildSystem) {
+  static ImmutableList<String> getAllBlazeDebugFlags(Project project, TargetExpression target) {
     ImmutableList.Builder<String> builder = ImmutableList.builder();
     for (BlazePyDebugHelper provider : EP_NAME.getExtensions()) {
-      builder.addAll(provider.getBlazeDebugFlags(buildSystem));
+      builder.addAll(provider.getBlazeDebugFlags(project, target));
     }
     return builder.build();
   }
 
-  static ImmutableList<String> getAllBlazePydevFlags(BuildSystem buildSystem) {
-    ImmutableList.Builder<String> builder = ImmutableList.builder();
+  static void doBlazeDebugCommandlinePatching(
+      Project project, TargetExpression target, GeneralCommandLine commandLine) {
     for (BlazePyDebugHelper provider : EP_NAME.getExtensions()) {
-      builder.addAll(provider.getBlazePydevFlags(buildSystem));
+      provider.patchBlazeDebugCommandline(project, target, commandLine);
     }
-    return builder.build();
   }
 
   @Nullable
@@ -55,9 +54,10 @@ public interface BlazePyDebugHelper {
     return null;
   }
 
-  ImmutableList<String> getBlazeDebugFlags(BuildSystem buildSystem);
+  ImmutableList<String> getBlazeDebugFlags(Project project, TargetExpression target);
 
-  ImmutableList<String> getBlazePydevFlags(BuildSystem buildSystem);
+  void patchBlazeDebugCommandline(
+      Project project, TargetExpression target, GeneralCommandLine commandLine);
 
   /**
    * Attempts to check whether the given target can be debugged by the Blaze plugin. If there's a
