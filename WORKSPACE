@@ -266,7 +266,7 @@ http_archive(
 # LICENSE: The Apache Software License, Version 2.0
 git_repository(
     name = "io_bazel_rules_scala",
-    commit = "85308acbd316477f3072e033e7744debcba4f054",
+    commit = "40151843d9be877048f187fd2f627c1eccfb3b5c",
     remote = "https://github.com/bazelbuild/rules_scala.git",
 )
 
