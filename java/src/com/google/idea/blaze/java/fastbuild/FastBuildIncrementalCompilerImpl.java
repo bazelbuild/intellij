@@ -158,7 +158,9 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
     boolean addedSources = false;
     for (ArtifactLocation sourceArtifact : javaInfo.sources()) {
       File sourceFile = artifactLocationDecoder.decode(sourceArtifact);
-      if (sourceFile.getName().endsWith(".java") && modifiedSinceBuild.contains(sourceFile)) {
+      if (sourceFile.getName().endsWith(".java")
+          && modifiedSinceBuild.contains(sourceFile)
+          && sourceFile.exists()) {
         sourceFiles.add(sourceFile);
         addedSources = true;
       }

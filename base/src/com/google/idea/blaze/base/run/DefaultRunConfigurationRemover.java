@@ -24,33 +24,44 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import org.jdom.Element;
 
-class CorruptedRunConfigurationRemover extends AbstractProjectComponent {
+class DefaultRunConfigurationRemover extends AbstractProjectComponent {
 
-  private static final BoolExperiment deleteCorruptedConfigs =
-      new BoolExperiment("delete.corrupted.blaze.run.configurations", false);
+  private static final BoolExperiment deleteDuplicatedDefaultConfigs =
+      new BoolExperiment("delete.duplicated.default.blaze.run.configurations", true);
 
-  protected CorruptedRunConfigurationRemover(Project project) {
+  protected DefaultRunConfigurationRemover(Project project) {
     super(project);
   }
 
   @Override
   public void projectOpened() {
-    if (!Blaze.isBlazeProject(myProject) || !deleteCorruptedConfigs.getValue()) {
+    if (!Blaze.isBlazeProject(myProject) || !deleteDuplicatedDefaultConfigs.getValue()) {
       return;
     }
     RunManager manager = RunManager.getInstance(myProject);
-    List<RunnerAndConfigurationSettings> blazeConfigs =
-        manager.getConfigurationSettingsList(BlazeCommandRunConfigurationType.getInstance());
-    for (RunnerAndConfigurationSettings config : blazeConfigs) {
-      if (isCorrupted(config.getConfiguration())) {
-        RunManagerCompatUtils.removeConfiguration(manager, config);
-      }
+    List<RunnerAndConfigurationSettings> defaults =
+        manager
+            .getConfigurationSettingsList(BlazeCommandRunConfigurationType.getInstance())
+            .stream()
+            .filter(r -> isDefault(r.getConfiguration()))
+            .collect(Collectors.toList());
+    if (defaults.size() <= 1) {
+      return;
     }
+    // if there's more than one template configuration, the state has been corrupted; remove them
+    // all
+    defaults.forEach(c -> RunManagerCompatUtils.removeConfiguration(manager, c));
   }
 
-  private static boolean isCorrupted(RunConfiguration config) {
-    return config instanceof BlazeCommandRunConfiguration
-        && ((BlazeCommandRunConfiguration) config).isCorrupted();
+  private static boolean isDefault(RunConfiguration config) {
+    Element element = new Element("dummy");
+    config.writeExternal(element);
+
+    String isDefault = element.getAttributeValue("default");
+    return Objects.equals(isDefault, "true");
   }
 }

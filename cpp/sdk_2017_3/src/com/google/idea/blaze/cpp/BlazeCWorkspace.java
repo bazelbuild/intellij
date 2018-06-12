@@ -55,6 +55,11 @@ public final class BlazeCWorkspace extends OCWorkspaceAdapter implements Project
     return project.getComponent(BlazeCWorkspace.class);
   }
 
+  @Override
+  public void projectOpened() {
+    CMakeWorkspaceOverride.undoCMakeModifications(project);
+  }
+
   public void update(
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
@@ -164,9 +169,6 @@ public final class BlazeCWorkspace extends OCWorkspaceAdapter implements Project
     OCResolveConfiguration config = resolverResult.getConfigurationForFile(sourceFile);
     return config == null ? ImmutableList.of() : ImmutableList.of(config);
   }
-
-  @Override
-  public void projectOpened() {}
 
   @Override
   public void projectClosed() {}

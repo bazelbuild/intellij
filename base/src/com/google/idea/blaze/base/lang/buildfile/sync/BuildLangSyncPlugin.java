@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -57,6 +58,7 @@ public class BuildLangSyncPlugin implements BlazeSyncPlugin {
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       BlazeInfo blazeInfo,
+      BlazeVersionData blazeVersionData,
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
@@ -114,7 +116,11 @@ public class BuildLangSyncPlugin implements BlazeSyncPlugin {
                   Blaze.getBuildSystemProvider(project).getSyncBinaryPath(),
                   workspace,
                   BlazeFlags.blazeFlags(
-                      project, projectViewSet, BlazeCommandName.INFO, BlazeInvocationContext.Sync),
+                      project,
+                      projectViewSet,
+                      BlazeCommandName.INFO,
+                      BlazeInvocationContext.Sync,
+                      null),
                   BlazeInfo.BUILD_LANGUAGE);
 
       return BuildLanguageSpec.fromProto(Build.BuildLanguage.parseFrom(future.get()));

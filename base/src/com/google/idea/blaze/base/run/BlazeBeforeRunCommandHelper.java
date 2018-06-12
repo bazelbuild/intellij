@@ -59,6 +59,7 @@ public final class BlazeBeforeRunCommandHelper {
       BuildResultHelper buildResultHelper,
       List<String> requiredExtraBlazeFlags,
       List<String> overridableExtraBlazeFlags,
+      ExecutorType executorType,
       String progressMessage) {
     Project project = configuration.getProject();
     BlazeCommandRunConfigurationCommonState handlerState =
@@ -102,7 +103,8 @@ public final class BlazeBeforeRunCommandHelper {
                                 project,
                                 projectViewSet,
                                 BlazeCommandName.BUILD,
-                                BlazeInvocationContext.NonSync))
+                                BlazeInvocationContext.NonSync,
+                                executorType))
                         .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
                         .addBlazeFlags(requiredExtraBlazeFlags)
                         .addBlazeFlags(buildResultHelper.getBuildFlags());

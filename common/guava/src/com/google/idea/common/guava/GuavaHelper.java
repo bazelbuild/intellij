@@ -15,14 +15,18 @@
  */
 package com.google.idea.common.guava;
 
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Optional;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Adds a few methods that aren't available until Guava 21. #api172 */
@@ -63,6 +67,16 @@ public final class GuavaHelper {
         (builder, input) -> builder.put(keyFunction.apply(input), valueFunction.apply(input)),
         GuavaHelper::combineMap,
         ImmutableMap.Builder::build);
+  }
+
+  /** Replaces {@code ImmutableMap#toImmutableMap}, which isn't available until Guava 21. */
+  public static <T, K, V> Collector<T, ?, ImmutableMap<K, V>> toImmutableMap(
+      Function<? super T, ? extends K> keyFunction,
+      Function<? super T, ? extends V> valueFunction,
+      BinaryOperator<V> mergeFunction) {
+    return Collectors.collectingAndThen(
+        Collectors.toMap(keyFunction, valueFunction, mergeFunction, LinkedHashMap::new),
+        ImmutableMap::copyOf);
   }
 
   private static <T> ImmutableSet.Builder<T> combineSet(

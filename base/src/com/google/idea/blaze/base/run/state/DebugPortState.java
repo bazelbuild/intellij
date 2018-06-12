@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.java.run;
+package com.google.idea.blaze.base.run.state;
 
-import com.google.idea.blaze.base.run.state.RunConfigurationState;
-import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -25,13 +23,19 @@ import com.intellij.util.ui.FormBuilder;
 import javax.swing.JComponent;
 import org.jdom.Element;
 
-/** User-defined java debug port. */
+/** User-defined debug port. */
 public class DebugPortState implements RunConfigurationState {
 
-  private static final int DEFAULT_PORT = 5005;
   private static final String ATTRIBUTE_TAG = "debug_port";
 
-  public int port = DEFAULT_PORT;
+  private final int defaultPort;
+
+  public int port;
+
+  public DebugPortState(int defaultPort) {
+    this.defaultPort = defaultPort;
+    port = defaultPort;
+  }
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
@@ -48,7 +52,7 @@ public class DebugPortState implements RunConfigurationState {
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    if (port != DEFAULT_PORT) {
+    if (port != defaultPort) {
       element.setAttribute(ATTRIBUTE_TAG, Integer.toString(port));
     } else {
       element.removeAttribute(ATTRIBUTE_TAG);
@@ -60,8 +64,8 @@ public class DebugPortState implements RunConfigurationState {
     return new Editor();
   }
 
-  private static class Editor implements RunConfigurationStateEditor {
-    private final PortField portField = new PortField(DEFAULT_PORT);
+  private class Editor implements RunConfigurationStateEditor {
+    private final PortField portField = new PortField(defaultPort);
 
     @Override
     public void resetEditorFrom(RunConfigurationState genericState) {

@@ -194,7 +194,6 @@ public class JarCache {
   }
 
   /** Gets the cached file for a source jar. */
-  @Nullable
   public File getCachedSourceJar(ArtifactLocationDecoder decoder, ArtifactLocation sourceJar) {
     File file = decoder.decode(sourceJar);
     if (!enabled || traits == null) {

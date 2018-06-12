@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.java.syncstatus;
+package com.google.idea.blaze.base.syncstatus;
 
 import com.intellij.openapi.fileEditor.impl.EditorTabColorProvider;
 import com.intellij.openapi.project.Project;
@@ -23,14 +23,14 @@ import java.awt.Color;
 import javax.annotation.Nullable;
 
 /** Changes the color for unsynced files. */
-public class BlazeJavaSyncStatusEditorTabColorProvider implements EditorTabColorProvider {
+public class SyncStatusEditorTabColorProvider implements EditorTabColorProvider {
   private static final JBColor UNSYNCED_COLOR =
       new JBColor(new Color(252, 234, 234), new Color(94, 56, 56));
 
   @Nullable
   @Override
   public Color getEditorTabColor(Project project, VirtualFile file) {
-    if (file.getName().endsWith(".java") && SyncStatusHelper.isUnsynced(project, file)) {
+    if (SyncStatusContributor.isUnsynced(project, file)) {
       return UNSYNCED_COLOR;
     }
     return null;

@@ -180,10 +180,12 @@ final class BlazeSyncTask implements Progressive {
                                 project, workspaceRoot, BlazeInvocationContext.Sync, true))
                         .build())
                 .push(new IssuesScope(project, true))
-                .push(new IdeaLogScope())
-                .push(
-                    new NotificationScope(
-                        project, "Sync", "Sync project", "Sync successful", "Sync failed"));
+                .push(new IdeaLogScope());
+            if (syncParams.syncMode != SyncMode.NO_BUILD) {
+              context.push(
+                  new NotificationScope(
+                      project, "Sync", "Sync project", "Sync successful", "Sync failed"));
+            }
           }
 
           context.output(new StatusOutput(String.format("Syncing project: %s...", syncParams)));
@@ -302,7 +304,7 @@ final class BlazeSyncTask implements Progressive {
 
     List<String> syncFlags =
         BlazeFlags.blazeFlags(
-            project, projectViewSet, BlazeCommandName.INFO, BlazeInvocationContext.Sync);
+            project, projectViewSet, BlazeCommandName.INFO, BlazeInvocationContext.Sync, null);
     syncStats.setSyncFlags(syncFlags);
     ListenableFuture<BlazeInfo> blazeInfoFuture =
         BlazeInfoRunner.getInstance()
@@ -479,6 +481,7 @@ final class BlazeSyncTask implements Progressive {
                 projectViewSet,
                 workspaceLanguageSettings,
                 blazeInfo,
+                blazeVersionData,
                 workingSet,
                 workspacePathResolver,
                 artifactLocationDecoder,

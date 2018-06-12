@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.sdkcompat.cidr.OCCompilerSettingsAdapter;
+import com.google.idea.sdkcompat.cidr.OCWorkspaceModifiableModelAdapter;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -55,6 +56,10 @@ import javax.annotation.Nullable;
 
 /** Main entry point for C/CPP configuration data. */
 public final class BlazeCWorkspace implements ProjectComponent {
+  // Required by OCWorkspaceImpl.ModifiableModel::commit
+  // This component is never actually serialized, and this should not ever need to change
+  private static final int SERIALIZATION_VERSION = 1;
+
   private final BlazeConfigurationResolver configurationResolver;
   private BlazeConfigurationResolverResult resolverResult;
   private ImmutableList<OCLanguageKind> supportedLanguages =
@@ -71,6 +76,11 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
   public static BlazeCWorkspace getInstance(Project project) {
     return project.getComponent(BlazeCWorkspace.class);
+  }
+
+  @Override
+  public void projectOpened() {
+    CMakeWorkspaceOverride.undoCMakeModifications(project);
   }
 
   public void update(
@@ -135,17 +145,10 @@ public final class BlazeCWorkspace implements ProjectComponent {
     for (BlazeResolveConfiguration resolveConfiguration : configurations) {
       indicator.setText2(resolveConfiguration.getDisplayName(true));
       indicator.setFraction(((double) progress) / configurations.size());
-      Map<OCLanguageKind, Trinity<OCCompilerKind, File, CidrCompilerSwitches>> configLanguages =
-          new HashMap<>();
       OCCompilerSettingsAdapter compilerSettingsAdapter =
           resolveConfiguration.getCompilerSettingsAdapter();
-      for (OCLanguageKind language : supportedLanguages) {
-        OCCompilerKind kind = compilerSettingsAdapter.getCompiler(language);
-        File executable = compilerSettingsAdapter.getCompilerExecutable(language);
-        CidrCompilerSwitches switches = compilerSettingsAdapter.getCompilerSwitches(language, null);
-        configLanguages.put(language, Trinity.create(kind, executable, switches));
-      }
-
+      Map<OCLanguageKind, Trinity<OCCompilerKind, File, CidrCompilerSwitches>> configLanguages =
+          new HashMap<>();
       Map<VirtualFile, Pair<OCLanguageKind, CidrCompilerSwitches>> configSourceFiles =
           new HashMap<>();
       for (TargetKey targetKey : resolveConfiguration.getTargets()) {
@@ -235,8 +238,25 @@ public final class BlazeCWorkspace implements ProjectComponent {
           fileSpecificSwitchBuilder.addAllRaw(localDefineOptions);
           fileSpecificSwitchBuilder.addAllRaw(transitiveDefineOptions);
           configSourceFiles.put(vf, Pair.create(kind, fileSpecificSwitchBuilder.build()));
+          if (!configLanguages.containsKey(kind)) {
+            addConfigLanguageSwitches(
+                configLanguages, compilerSettingsAdapter,
+                // If a file isn't found in configSourceFiles (newly created files), CLion uses the
+                // configLanguages switches. We want some basic header search roots (genfiles),
+                // which are part of every target's iquote directories. See:
+                // https://github.com/bazelbuild/bazel/blob/2c493e8a2132d54f4b2fb8046f6bcef11e92cd22/src/main/java/com/google/devtools/build/lib/rules/cpp/CcCompilationHelper.java#L911
+                iquoteOptionIncludeDirectories, kind);
+          }
         }
       }
+
+      for (OCLanguageKind language : supportedLanguages) {
+        if (!configLanguages.containsKey(language)) {
+          addConfigLanguageSwitches(
+              configLanguages, compilerSettingsAdapter, ImmutableList.of(), language);
+        }
+      }
+
       String id = resolveConfiguration.getDisplayName(false);
       String shortDisplayName = resolveConfiguration.getDisplayName(true);
 
@@ -258,7 +278,21 @@ public final class BlazeCWorkspace implements ProjectComponent {
   @VisibleForTesting
   void commitConfigurations(CommitableConfiguration config) {
     resolverResult = config.result;
-    config.model.commit();
+    OCWorkspaceModifiableModelAdapter.commit(config.model, SERIALIZATION_VERSION);
+  }
+
+  private void addConfigLanguageSwitches(
+      Map<OCLanguageKind, Trinity<OCCompilerKind, File, CidrCompilerSwitches>> configLanguages,
+      OCCompilerSettingsAdapter compilerSettingsAdapter,
+      List<String> additionalSwitches,
+      OCLanguageKind language) {
+    OCCompilerKind compilerKind = compilerSettingsAdapter.getCompiler(language);
+    File executable = compilerSettingsAdapter.getCompilerExecutable(language);
+    CidrSwitchBuilder switchBuilder = new CidrSwitchBuilder();
+    CidrCompilerSwitches switches = compilerSettingsAdapter.getCompilerSwitches(language, null);
+    switchBuilder.addAll(switches);
+    switchBuilder.addAllRaw(additionalSwitches);
+    configLanguages.put(language, Trinity.create(compilerKind, executable, switchBuilder.build()));
   }
 
   private void incModificationTrackers() {

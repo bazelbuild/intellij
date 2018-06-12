@@ -52,6 +52,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import java.io.File;
 import java.util.Collection;
@@ -311,9 +312,12 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
                       if (buildTargetPsi == null) {
                         return -1;
                       }
+                      PsiFile psiFile = buildTargetPsi.getContainingFile();
+                      if (psiFile == null) {
+                        return -1;
+                      }
                       return StringUtil.offsetToLineNumber(
-                          buildTargetPsi.getContainingFile().getText(),
-                          buildTargetPsi.getTextOffset());
+                          psiFile.getText(), buildTargetPsi.getTextOffset());
                     });
     String url = HtmlLinkManager.createFilePositionUrl(buildFile, line, 0);
     if (url != null) {

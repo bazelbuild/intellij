@@ -81,9 +81,11 @@ public class BlazeConsoleView implements Disposable {
             GlobalSearchScope.allScope(project),
             /* viewer */ false,
             /* usePredefinedFilters */ false);
-    consoleView.addMessageFilter(new BlazeTargetFilter(project, false));
+
     consoleView.addMessageFilter(customFilters);
     addWrappedPredefinedFilters();
+    // add target filter last, so it doesn't override other links containing a target string
+    consoleView.addMessageFilter(new BlazeTargetFilter(project, false));
     Disposer.register(this, consoleView);
   }
 

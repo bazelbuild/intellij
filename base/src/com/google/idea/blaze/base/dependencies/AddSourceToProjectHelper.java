@@ -58,6 +58,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import java.io.File;
 import java.util.Collection;
@@ -234,7 +235,7 @@ class AddSourceToProjectHelper {
         SourceToTargetProvider.findTargetsBuildingSourceFile(
             context.project, context.workspacePath.relativePath()),
         (Function<List<TargetInfo>, List<TargetInfo>>)
-            (List<TargetInfo> result) -> filterTargets(projectTargets, result),
+            (List<TargetInfo> result) -> filterTargets(context, result),
         MoreExecutors.directExecutor());
   }
 
@@ -242,9 +243,8 @@ class AddSourceToProjectHelper {
    * Returns the list of targets not already in the project, which aren't known to be of an
    * unsupported language.
    */
-  private static List<TargetInfo> filterTargets(
-      List<TargetExpression> projectViewTargets, List<TargetInfo> targets) {
-    if (sourceInProjectTargets(projectViewTargets, fromTargetInfo(targets))) {
+  private static List<TargetInfo> filterTargets(LocationContext context, List<TargetInfo> targets) {
+    if (sourceInProjectTargets(context, fromTargetInfo(targets))) {
       return ImmutableList.of();
     }
     targets.removeIf(t -> !supportedTargetKind(t));
@@ -255,12 +255,12 @@ class AddSourceToProjectHelper {
    * Returns true if the project view targets (both included and excluded targets) trivially contain
    * one of the targets building the source file.
    */
-  static boolean sourceCoveredByProjectTargets(LocationContext context) {
-    List<TargetExpression> projectTargets = context.projectViewSet.listItems(TargetSection.KEY);
+  static boolean sourceCoveredByProjectViewTargets(LocationContext context) {
     Collection<TargetKey> targetsBuildingSource =
-        SourceToTargetMap.getInstance(context.project).getRulesForSourceFile(context.file);
+        SourceToTargetMap.getInstance(context.project)
+            .getRulesForSourceFile(new File(context.file.getPath()));
     return !targetsBuildingSource.isEmpty()
-        && sourceInProjectTargets(projectTargets, targetsBuildingSource);
+        && sourceInProjectTargets(context, targetsBuildingSource);
   }
 
   private static Collection<TargetKey> fromTargetInfo(Collection<TargetInfo> targetInfos) {
@@ -271,11 +271,15 @@ class AddSourceToProjectHelper {
   }
 
   /**
-   * Returns true if the project view targets (both included and excluded targets) contain one of
+   * Returns true if the project view, or targets indexed during the previous sync, contains one of
    * the targets building the source file.
    */
   private static boolean sourceInProjectTargets(
-      List<TargetExpression> projectViewTargets, Collection<TargetKey> targetsBuildingSource) {
+      LocationContext context, Collection<TargetKey> targetsBuildingSource) {
+    if (targetsBuildingSource.stream().anyMatch(context.syncData.targetMap::contains)) {
+      return true;
+    }
+    List<TargetExpression> projectViewTargets = context.projectViewSet.listItems(TargetSection.KEY);
     // treat excluded and included project targets identically
     projectViewTargets =
         projectViewTargets
@@ -291,6 +295,11 @@ class AddSourceToProjectHelper {
       }
     }
     return false;
+  }
+
+  static boolean packageCoveredByProjectTargets(LocationContext context) {
+    List<TargetExpression> projectTargets = context.projectViewSet.listItems(TargetSection.KEY);
+    return packageCoveredByWildcardPattern(projectTargets, context.blazePackage);
   }
 
   private static boolean packageCoveredByWildcardPattern(
@@ -363,12 +372,12 @@ class AddSourceToProjectHelper {
 
   /** Returns the location context related to a source file to be added to the project. */
   @Nullable
-  static LocationContext getContext(Project project, File file) {
+  static LocationContext getContext(Project project, VirtualFile file) {
     BlazeProjectData syncData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (syncData == null) {
       return null;
     }
-    WorkspacePath workspacePath = getWorkspacePath(project, file);
+    WorkspacePath workspacePath = getWorkspacePath(project, new File(file.getPath()));
     if (workspacePath == null || isBuildSystemOutputArtifact(project, workspacePath)) {
       return null;
     }
@@ -391,7 +400,7 @@ class AddSourceToProjectHelper {
     final Project project;
     final BlazeProjectData syncData;
     final ProjectViewSet projectViewSet;
-    final File file;
+    final VirtualFile file;
     final WorkspacePath workspacePath;
     final WorkspacePath blazePackage;
 
@@ -399,7 +408,7 @@ class AddSourceToProjectHelper {
         Project project,
         BlazeProjectData syncData,
         ProjectViewSet projectViewSet,
-        File file,
+        VirtualFile file,
         WorkspacePath workspacePath,
         WorkspacePath blazePackage) {
       this.project = project;

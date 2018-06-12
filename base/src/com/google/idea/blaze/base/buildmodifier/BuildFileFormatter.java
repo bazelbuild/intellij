@@ -20,6 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.common.formatter.ExternalFormatterCodeStyleManager.Replacements;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,10 +62,10 @@ public class BuildFileFormatter {
    * indication that their IDE hasn't died.
    */
   static ListenableFuture<Replacements> formatTextWithProgressDialog(
-      Project project, String text, Collection<TextRange> ranges) {
+      Project project, BlazeFileType fileType, String text, Collection<TextRange> ranges) {
     ListenableFuture<Replacements> future =
         MoreExecutors.listeningDecorator(PooledThreadExecutor.INSTANCE)
-            .submit(() -> getReplacements(text, ranges));
+            .submit(() -> getReplacements(fileType, text, ranges));
     ProgressWindow progressWindow =
         new BackgroundableProcessIndicator(
             project,
@@ -102,7 +103,8 @@ public class BuildFileFormatter {
    * null if the formatting failed.
    */
   @Nullable
-  private static Replacements getReplacements(String text, Collection<TextRange> ranges) {
+  private static Replacements getReplacements(
+      BlazeFileType fileType, String text, Collection<TextRange> ranges) {
     File buildifierBinary = getBuildifierBinary();
     if (buildifierBinary == null) {
       return null;
@@ -111,7 +113,7 @@ public class BuildFileFormatter {
     try {
       for (TextRange range : ranges) {
         String input = range.substring(text);
-        String result = formatText(buildifierBinary, input);
+        String result = formatText(buildifierBinary, fileType, input);
         if (result == null) {
           return null;
         }
@@ -132,18 +134,20 @@ public class BuildFileFormatter {
    * failed.
    */
   @Nullable
-  private static String formatText(File buildifierBinary, String inputText)
+  private static String formatText(File buildifierBinary, BlazeFileType fileType, String inputText)
       throws InterruptedException, IOException {
-    Process process = new ProcessBuilder(buildifierBinary.getPath()).start();
+    Process process = new ProcessBuilder(buildifierBinary.getPath(), fileTypeArg(fileType)).start();
     process.getOutputStream().write(inputText.getBytes(UTF_8));
     process.getOutputStream().close();
-    process.waitFor();
 
-    if (process.exitValue() != 0) {
-      return null;
-    }
     BufferedReader reader =
         new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8));
-    return CharStreams.toString(reader);
+    String formattedText = CharStreams.toString(reader);
+    process.waitFor();
+    return process.exitValue() != 0 ? null : formattedText;
+  }
+
+  private static String fileTypeArg(BlazeFileType fileType) {
+    return fileType == BlazeFileType.SkylarkExtension ? "--type=bzl" : "--type=build";
   }
 }

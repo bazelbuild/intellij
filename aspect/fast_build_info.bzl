@@ -84,7 +84,7 @@ def _get_all_dep_targets(target, ctx):
     return targets
 
 def _has_ide_fast_build(target):
-    return (OutputGroupInfo in target and "ide-fast-build" in target[OutputGroupInfo])
+    return OutputGroupInfo in target and "ide-fast-build" in target[OutputGroupInfo]
 
 fast_build_info_aspect = aspect(
     attr_aspects = _DEP_ATTRS,

@@ -21,6 +21,7 @@ import com.intellij.coverage.CoverageFileProvider;
 import com.intellij.coverage.CoverageRunner;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.rt.coverage.data.ProjectData;
 import java.io.File;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -58,8 +59,12 @@ public class BlazeCoverageSuite extends BaseCoverageSuite {
    */
   @Nullable
   File getDeepestRootDirectory() {
+    ProjectData data = getCoverageData();
+    if (data == null) {
+      return null;
+    }
     @SuppressWarnings("unchecked")
-    Set<String> files = getCoverageData().getClasses().keySet();
+    Set<String> files = data.getClasses().keySet();
     File root = null;
     for (String path : files) {
       if (root == null) {

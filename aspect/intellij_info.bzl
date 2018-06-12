@@ -2,8 +2,8 @@
 
 load(
     ":intellij_info_impl.bzl",
-    "make_intellij_info_aspect",
     "intellij_info_aspect_impl",
+    "make_intellij_info_aspect",
 )
 
 def tool_label(tool_name):

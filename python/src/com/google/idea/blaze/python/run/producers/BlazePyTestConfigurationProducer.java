@@ -130,10 +130,11 @@ public class BlazePyTestConfigurationProducer
     handlerState.getBlazeFlagsState().setRawFlags(flags);
 
     BlazeConfigurationNameBuilder nameBuilder = new BlazeConfigurationNameBuilder(configuration);
-    nameBuilder.setTargetString(
-        filter != null
-            ? String.format("%s (%s)", filter, testTarget.label.toString())
-            : testTarget.label.toString());
+    if (filter != null) {
+      nameBuilder.setTargetString(String.format("%s (%s)", filter, testTarget.label.toString()));
+    } else {
+      nameBuilder.setTargetString(testTarget.label);
+    }
     configuration.setName(nameBuilder.build());
     configuration.setNameChangedByUser(true); // don't revert to generated name
     return true;

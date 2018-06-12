@@ -32,7 +32,9 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import javax.annotation.Nullable;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
@@ -138,7 +140,7 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
     setBlazeBinaryPath(configuration, absoluteBinaryPath);
 
     Element element = RunConfigurationSerializer.writeToXml(configuration);
-    assertThat(element.getAttribute("blaze-binary").getValue())
+    assertThat(getBlazeBinaryPath(getProject(), element))
         .isEqualTo(
             String.format(
                 "$%s$/%s", RunConfigurationSerializer.WORKSPACE_ROOT_VARIABLE_NAME, binaryPath));
@@ -158,10 +160,21 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
     state.getBlazeBinaryState().setBlazeBinary(path);
   }
 
+  @Nullable
+  private static String getBlazeBinaryPath(Project project, Element element) {
+    BlazeCommandRunConfiguration config =
+        BlazeCommandRunConfigurationType.getInstance()
+            .getFactory()
+            .createTemplateConfiguration(project);
+    config.readExternal(element);
+    return getBlazeBinaryPath(config);
+  }
+
+  @Nullable
   private static String getBlazeBinaryPath(BlazeCommandRunConfiguration configuration) {
     BlazeCommandRunConfigurationCommonState state =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    return state.getBlazeBinaryState().getBlazeBinary();
+    return state != null ? state.getBlazeBinaryState().getBlazeBinary() : null;
   }
 
   private static boolean isAndroidStudio() {

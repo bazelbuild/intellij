@@ -41,6 +41,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
@@ -156,7 +157,11 @@ final class FastBuildServiceImpl implements FastBuildService {
     ProjectViewSet projectViewSet = projectViewManager.getProjectViewSet();
     List<String> projectBlazeFlags =
         BlazeFlags.blazeFlags(
-            project, projectViewSet, BlazeCommandName.BUILD, BlazeInvocationContext.NonSync);
+            project,
+            projectViewSet,
+            BlazeCommandName.BUILD,
+            BlazeInvocationContext.NonSync,
+            ExecutorType.DEBUG);
     return FastBuildParameters.builder()
         .setBlazeBinary(blazeBinaryPath)
         .addBlazeFlags(projectBlazeFlags)

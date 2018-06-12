@@ -80,6 +80,7 @@ public class AspectStrategyTest extends BlazeTestCase {
         .containsExactly(
             "intellij-info-generic",
             "intellij-info-java",
+            "intellij-info-kt",
             "intellij-info-cpp",
             "intellij-info-android",
             "intellij-info-py",
@@ -93,6 +94,7 @@ public class AspectStrategyTest extends BlazeTestCase {
     assertThat(getOutputGroups(builder))
         .containsExactly(
             "intellij-resolve-java",
+            "intellij-resolve-kt",
             "intellij-resolve-cpp",
             "intellij-resolve-android",
             "intellij-resolve-py",
@@ -106,6 +108,7 @@ public class AspectStrategyTest extends BlazeTestCase {
     assertThat(getOutputGroups(builder))
         .containsExactly(
             "intellij-compile-java",
+            "intellij-compile-kt",
             "intellij-compile-cpp",
             "intellij-compile-android",
             "intellij-compile-py",

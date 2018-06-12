@@ -45,6 +45,12 @@ public class BlazeTypescriptLibrary extends BlazeLibrary {
 
   BlazeTypescriptLibrary(BlazeProjectData projectData) {
     super(new LibraryKey("blaze_typescript_library"));
+    Set<String> typescriptExtensions = TypescriptPrefetchFileSource.getTypescriptExtensions();
+    Predicate<ArtifactLocation> hasTsExtensions =
+        (location) -> {
+          String extension = Files.getFileExtension(location.getRelativePath());
+          return typescriptExtensions.contains(extension);
+        };
     librarySources =
         projectData
             .targetMap
@@ -53,6 +59,7 @@ public class BlazeTypescriptLibrary extends BlazeLibrary {
             .filter(target -> target.tsIdeInfo != null)
             .map(target -> target.tsIdeInfo.sources)
             .flatMap(Collection::stream)
+            .filter(hasTsExtensions)
             .collect(ImmutableList.toImmutableList());
   }
 
@@ -68,11 +75,6 @@ public class BlazeTypescriptLibrary extends BlazeLibrary {
     LocalFileSystem lfs = VirtualFileSystemProvider.getInstance().getSystem();
     Predicate<ArtifactLocation> isTypescriptSourceOutsideProject =
         (location) -> {
-          Set<String> typescriptExtensions = TypescriptPrefetchFileSource.getTypescriptExtensions();
-          String extension = Files.getFileExtension(location.getRelativePath());
-          if (!typescriptExtensions.contains(extension)) {
-            return false;
-          }
           if (!location.isSource) {
             return true;
           }
@@ -85,7 +87,7 @@ public class BlazeTypescriptLibrary extends BlazeLibrary {
         .map(artifactLocationDecoder::decode)
         .map(lfs::findFileByIoFile)
         .filter(java.util.Objects::nonNull)
-        .forEach(vf -> libraryModel.addRoot(vf, OrderRootType.SOURCES));
+        .forEach(vf -> libraryModel.addRoot(vf, OrderRootType.CLASSES));
   }
 
   @Override

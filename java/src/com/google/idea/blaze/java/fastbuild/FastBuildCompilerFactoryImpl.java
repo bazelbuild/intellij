@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaToolchainInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildCompiler.CompileInstructions;
+import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
@@ -40,6 +41,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
+
+  private static final Logger logger = Logger.getInstance(FastBuildCompilerFactoryImpl.class);
 
   private static final String JAVAC_CLASS = "com.sun.tools.javac.Main";
 
@@ -141,6 +144,7 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
           argsBuilder.addAll(transform(instructions.filesToCompile(), File::getPath)).build();
       writeCompilationStartedMessage(instructions);
       try {
+        logger.info("Running javac with options: " + args);
         Stopwatch timer = Stopwatch.createStarted();
         Integer result =
             (Integer)

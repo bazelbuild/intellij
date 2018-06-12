@@ -56,12 +56,15 @@ def all_unique_source_directories(resources):
     # Sets can contain tuples, but cannot contain structs.
     # Use set of tuples to unquify source directories.
     source_directory_tuples = depset([source_directory_tuple(f) for f in resources])
-    return [to_artifact_location(
-        exec_path,
-        root_path_fragment,
-        is_source,
-        is_external,
-    ) for (exec_path, root_path_fragment, is_source, is_external) in source_directory_tuples]
+    return [
+        to_artifact_location(
+            exec_path,
+            root_path_fragment,
+            is_source,
+            is_external,
+        )
+        for (exec_path, root_path_fragment, is_source, is_external) in source_directory_tuples
+    ]
 
 def build_file_artifact_location(ctx):
     """Creates an ArtifactLocation proto representing a location of a given BUILD file."""
@@ -104,7 +107,11 @@ def jars_from_output(output):
     """Collect jars for intellij-resolve-files from Java output."""
     if output == None:
         return []
-    return [jar for jar in ([output.class_jar, output.ijar] + get_source_jars(output)) if jar != None and not jar.is_source]
+    return [
+        jar
+        for jar in ([output.class_jar, output.ijar] + get_source_jars(output))
+        if jar != None and not jar.is_source
+    ]
 
 def _collect_target_from_attr(rule_attrs, attr_name, result):
     """Collects the targets from the given attr into the result."""
@@ -176,7 +183,7 @@ def update_set_in_dict(input_dict, key, other_set):
     """Updates depset in dict, merging it with another depset."""
     input_dict[key] = input_dict.get(key, depset()) | other_set
 
-    ##### Builders for individual parts of the aspect output
+##### Builders for individual parts of the aspect output
 
 def collect_py_info(target, ctx, ide_info, ide_info_file, output_groups):
     """Updates Python-specific output groups, returns false if not a Python target."""
@@ -275,7 +282,7 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     target_copts = []
     if hasattr(ctx.rule.attr, "copts"):
         target_copts += ctx.rule.attr.copts
-    if hasattr(semantics, "cc"):
+    if hasattr(semantics, "cc") and hasattr(semantics.cc, "get_default_copts"):
         target_copts += semantics.cc.get_default_copts(ctx)
 
     cc_provider = target.cc
@@ -308,29 +315,35 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
 
 def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates cc_toolchain-relevant output groups, returns false if not a cc_toolchain target."""
-    if ctx.rule.kind != "cc_toolchain":
+    if ctx.rule.kind != "cc_toolchain" or cc_common.CcToolchainInfo not in target:
         return False
 
-        # This should exist because we requested it in our aspect definition.
+    # TODO(brendandouglas): remove cc_fragment dependency once we no longer have to support bazel
+    # versions prior to 0.13
+    # This should exist because we requested it in our aspect definition.
     cc_fragment = ctx.fragments.cpp
     cpp_options = cc_fragment.cxx_options(ctx.features)
+    c_options = cc_fragment.c_options
+    compiler_options = cc_fragment.compiler_options(ctx.features)
     unfiltered_compiler_options = cc_fragment.unfiltered_compiler_options(ctx.features)
-    built_in_include_directories = [str(d) for d in cc_fragment.built_in_include_directories]
 
+    cpp_toolchain = target[cc_common.CcToolchainInfo]
+
+    #  cpp_options = cpp_toolchain.cxx_options()
+    #  compiler_options = cpp_toolchain.compiler_options()
+    #  c_options = cpp_toolchain.c_options()
+    #  unfiltered_compiler_options = cpp_toolchain.unfiltered_compiler_options([])
     if hasattr(semantics, "cc"):
         cpp_options = semantics.cc.augment_toolchain_cxx_options(cpp_options)
-        toolchain_info = semantics.cc.get_toolchain_info(target, ctx)
-        unfiltered_compiler_options = toolchain_info["unfiltered_compiler_options"]
-        built_in_include_directories = toolchain_info["built_in_include_directories"]
 
     c_toolchain_info = struct_omit_none(
-        target_name = cc_fragment.target_gnu_system_name,
-        base_compiler_option = cc_fragment.compiler_options(ctx.features),
-        c_option = cc_fragment.c_options,
+        target_name = cpp_toolchain.target_gnu_system_name,
+        base_compiler_option = compiler_options,
+        c_option = c_options,
         cpp_option = cpp_options,
         unfiltered_compiler_option = unfiltered_compiler_options,
-        cpp_executable = str(cc_fragment.compiler_executable),
-        built_in_include_directory = [str(d) for d in built_in_include_directories],
+        cpp_executable = str(cpp_toolchain.compiler_executable),
+        built_in_include_directory = [str(d) for d in cpp_toolchain.built_in_include_directories],
     )
     ide_info["c_toolchain_ide_info"] = c_toolchain_info
     update_set_in_dict(output_groups, "intellij-info-cpp", depset([ide_info_file]))
@@ -346,8 +359,8 @@ def get_java_provider(target):
         return target.scala
     if hasattr(target, "kt") and hasattr(target.kt, "outputs"):
         return target.kt
-        # TODO(brendandouglas): use java_common.provider preferentially
 
+    # TODO(brendandouglas): use java_common.provider preferentially
     if java_common.provider in target:
         return target[java_common.provider]
     return None
@@ -435,7 +448,7 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
 def _package_manifest_file_argument(f):
     artifact = artifact_location(f)
     is_external = "1" if is_external_artifact(f.owner) else "0"
-    return (artifact.root_execution_path_fragment + "," + artifact.relative_path + "," + is_external)
+    return artifact.root_execution_path_fragment + "," + artifact.relative_path + "," + is_external
 
 def build_java_package_manifest(ctx, target, source_files, suffix):
     """Builds the java package manifest for the given source files."""
@@ -607,7 +620,7 @@ def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
     update_set_in_dict(output_groups, "intellij-info-java", depset([ide_info_file]))
     return True
 
-    ##### Main aspect function
+##### Main aspect function
 
 def intellij_info_aspect_impl(target, ctx, semantics):
     """Aspect implementation function."""
@@ -629,7 +642,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     for dep in direct_dep_targets:
         exported_deps_from_deps = exported_deps_from_deps + dep.intellij_info.export_deps
 
-        # Combine into all compile time deps
+    # Combine into all compile time deps
     compiletime_deps = direct_deps + exported_deps_from_deps
 
     # Propagate my own exports
@@ -665,9 +678,8 @@ def intellij_info_aspect_impl(target, ctx, semantics):
         for k, v in dep.intellij_info.output_groups.items():
             update_set_in_dict(output_groups, k, v)
 
-            # Initialize the ide info dict, and corresponding output file
-            # This will be passed to each language-specific handler to fill in as required
-
+    # Initialize the ide info dict, and corresponding output file
+    # This will be passed to each language-specific handler to fill in as required
     file_name = target.label.name
     aspect_ids = get_aspect_ids(ctx, target)
     if aspect_ids:
@@ -704,11 +716,11 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     if hasattr(semantics, "extra_ide_info"):
         handled = semantics.extra_ide_info(target, ctx, ide_info, ide_info_file, output_groups) or handled
 
-        # Add to generic output group if it's not handled by a language-specific handler
+    # Add to generic output group if it's not handled by a language-specific handler
     if not handled:
         update_set_in_dict(output_groups, "intellij-info-generic", depset([ide_info_file]))
 
-        # Output the ide information file.
+    # Output the ide information file.
     info = struct_omit_none(**ide_info)
     ctx.file_action(ide_info_file, info.to_proto())
 
@@ -726,7 +738,7 @@ def semantics_extra_deps(base, semantics, name):
     if not hasattr(semantics, name):
         return base
     extra_deps = getattr(semantics, name)
-    return (base + extra_deps)
+    return base + extra_deps
 
 def make_intellij_info_aspect(aspect_impl, semantics):
     """Creates the aspect given the semantics."""

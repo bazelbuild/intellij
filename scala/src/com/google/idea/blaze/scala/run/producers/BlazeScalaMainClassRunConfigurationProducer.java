@@ -105,7 +105,7 @@ public class BlazeScalaMainClassRunConfigurationProducer
   }
 
   @Nullable
-  private static ScObject getMainObject(ConfigurationContext context) {
+  static ScObject getMainObject(ConfigurationContext context) {
     Location location = context.getLocation();
     if (location == null) {
       return null;
@@ -204,8 +204,7 @@ public class BlazeScalaMainClassRunConfigurationProducer
   }
 
   /** Returns all scala_binary targets reachable from the given source file. */
-  private static Collection<TargetIdeInfo> findScalaBinaryTargets(
-      Project project, File mainClassFile) {
+  static Collection<TargetIdeInfo> findScalaBinaryTargets(Project project, File mainClassFile) {
     FilteredTargetMap map =
         SyncCache.getInstance(project)
             .get(

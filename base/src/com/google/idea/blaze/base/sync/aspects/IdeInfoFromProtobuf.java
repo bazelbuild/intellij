@@ -38,6 +38,7 @@ import com.google.idea.blaze.base.ideinfo.GoIdeInfo;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.JavaToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.JsIdeInfo;
+import com.google.idea.blaze.base.ideinfo.KotlinToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.PyIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -47,6 +48,7 @@ import com.google.idea.blaze.base.ideinfo.TsIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.common.guava.GuavaHelper;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -62,22 +64,13 @@ public class IdeInfoFromProtobuf {
       return null;
     }
     TargetKey key = getKey(message);
+    if (key == null) {
+      return null;
+    }
     ArtifactLocation buildFile = getBuildFile(message);
 
-    final Collection<Dependency> dependencies;
-    if (message.getDepsCount() > 0) {
-      dependencies =
-          message.getDepsList().stream().map(IdeInfoFromProtobuf::makeDependency).collect(toList());
-    } else {
-      dependencies =
-          Lists.newArrayListWithCapacity(
-              message.getDependenciesCount() + message.getRuntimeDepsCount());
-      dependencies.addAll(
-          makeDependencyListFromLabelList(
-              message.getDependenciesList(), DependencyType.COMPILE_TIME));
-      dependencies.addAll(
-          makeDependencyListFromLabelList(message.getRuntimeDepsList(), DependencyType.RUNTIME));
-    }
+    Collection<Dependency> dependencies =
+        message.getDepsList().stream().map(IdeInfoFromProtobuf::makeDependency).collect(toList());
 
     Collection<String> tags = ImmutableList.copyOf(message.getTagsList());
 
@@ -145,6 +138,10 @@ public class IdeInfoFromProtobuf {
     if (message.hasJavaToolchainIdeInfo()) {
       javaToolchainIdeInfo = makeJavaToolchainIdeInfo(message.getJavaToolchainIdeInfo());
     }
+    KotlinToolchainIdeInfo kotlinToolchain =
+        message.hasKtToolchainIdeInfo()
+            ? makeKotlinToolchainIdeInfo(message.getKtToolchainIdeInfo())
+            : null;
 
     return new TargetIdeInfo(
         key,
@@ -165,15 +162,8 @@ public class IdeInfoFromProtobuf {
         tsIdeInfo,
         dartIdeInfo,
         testIdeInfo,
-        javaToolchainIdeInfo);
-  }
-
-  private static Collection<Dependency> makeDependencyListFromLabelList(
-      List<String> dependencyList, Dependency.DependencyType dependencyType) {
-    return dependencyList
-        .stream()
-        .map(dep -> new Dependency(TargetKey.forPlainTarget(Label.create(dep)), dependencyType))
-        .collect(toList());
+        javaToolchainIdeInfo,
+        kotlinToolchain);
   }
 
   private static TargetKey makeTargetKey(IntellijIdeInfo.TargetKey key) {
@@ -381,6 +371,17 @@ public class IdeInfoFromProtobuf {
         javaToolchainIdeInfo.getSourceVersion(), javaToolchainIdeInfo.getTargetVersion(), javacJar);
   }
 
+  private static KotlinToolchainIdeInfo makeKotlinToolchainIdeInfo(
+      IntellijIdeInfo.KotlinToolchainIdeInfo ktToolchainIdeInfo) {
+    ImmutableList<Label> sdkTargets =
+        ktToolchainIdeInfo
+            .getSdkLibraryTargetsList()
+            .stream()
+            .map(Label::create)
+            .collect(GuavaHelper.toImmutableList());
+    return new KotlinToolchainIdeInfo(ktToolchainIdeInfo.getLanguageVersion(), sdkTargets);
+  }
+
   private static Collection<LibraryArtifact> makeLibraryArtifactList(
       List<IntellijIdeInfo.LibraryArtifact> jarsList) {
     ImmutableList.Builder<LibraryArtifact> builder = ImmutableList.builder();
@@ -453,9 +454,8 @@ public class IdeInfoFromProtobuf {
     return null;
   }
 
+  @Nullable
   static TargetKey getKey(IntellijIdeInfo.TargetIdeInfo message) {
-    return message.hasKey()
-        ? makeTargetKey(message.getKey())
-        : TargetKey.forPlainTarget(Label.create(message.getLabel()));
+    return message.hasKey() ? makeTargetKey(message.getKey()) : null;
   }
 }

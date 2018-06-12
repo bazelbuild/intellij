@@ -20,9 +20,15 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.dependencies.AddSourceToProjectHelper.LocationContext;
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable;
+import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
+import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
@@ -109,13 +115,11 @@ public class ExternalFileProjectManagementHelper
     if (!supportedFileType(file)) {
       return null;
     }
-    LocationContext context = AddSourceToProjectHelper.getContext(project, file);
+    LocationContext context = AddSourceToProjectHelper.getContext(project, vf);
     if (context == null) {
       return null;
     }
-    if (!SourceToTargetMap.getInstance(context.project)
-        .getRulesForSourceFile(context.file)
-        .isEmpty()) {
+    if (!SourceToTargetMap.getInstance(context.project).getRulesForSourceFile(file).isEmpty()) {
       // don't show notification for sources covered by project targets + libraries:
       // early-out if source covered by previously built targets
       return null;
@@ -171,5 +175,23 @@ public class ExternalFileProjectManagementHelper
         MoreExecutors.directExecutor());
 
     return panel;
+  }
+
+  static class UpdateNotificationsAfterSync extends SyncListener.Adapter {
+
+    @Override
+    public void onSyncComplete(
+        Project project,
+        BlazeContext context,
+        BlazeImportSettings importSettings,
+        ProjectViewSet projectViewSet,
+        BlazeProjectData blazeProjectData,
+        SyncMode syncMode,
+        SyncResult syncResult) {
+      // update the editor notifications if the target map might have changed
+      if (SyncMode.involvesBlazeBuild(syncMode) && syncResult.successful()) {
+        EditorNotifications.getInstance(project).updateAllNotifications();
+      }
+    }
   }
 }

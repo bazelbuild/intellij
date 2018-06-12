@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 
 /** Simple implementation of TargetIdeInfo. */
 public final class TargetIdeInfo implements Serializable {
-  private static final long serialVersionUID = 18L;
+  private static final long serialVersionUID = 19L;
 
   public final TargetKey key;
   public final Kind kind;
@@ -52,6 +52,7 @@ public final class TargetIdeInfo implements Serializable {
   @Nullable public final DartIdeInfo dartIdeInfo;
   @Nullable public final TestIdeInfo testIdeInfo;
   @Nullable public final JavaToolchainIdeInfo javaToolchainIdeInfo;
+  @Nullable public final KotlinToolchainIdeInfo kotlinToolchainIdeInfo;
 
   public TargetIdeInfo(
       TargetKey key,
@@ -72,7 +73,8 @@ public final class TargetIdeInfo implements Serializable {
       @Nullable TsIdeInfo tsIdeInfo,
       @Nullable DartIdeInfo dartIdeInfo,
       @Nullable TestIdeInfo testIdeInfo,
-      @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo) {
+      @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo,
+      @Nullable KotlinToolchainIdeInfo kotlinToolchainIdeInfo) {
     this.key = key;
     this.kind = kind;
     this.buildFile = buildFile;
@@ -92,6 +94,7 @@ public final class TargetIdeInfo implements Serializable {
     this.dartIdeInfo = dartIdeInfo;
     this.testIdeInfo = testIdeInfo;
     this.javaToolchainIdeInfo = javaToolchainIdeInfo;
+    this.kotlinToolchainIdeInfo = kotlinToolchainIdeInfo;
   }
 
   public TargetInfo toTargetInfo() {
@@ -147,6 +150,7 @@ public final class TargetIdeInfo implements Serializable {
     private DartIdeInfo dartIdeInfo;
     private TestIdeInfo testIdeInfo;
     private JavaToolchainIdeInfo javaToolchainIdeInfo;
+    private KotlinToolchainIdeInfo kotlinToolchainIdeInfo;
 
     public Builder setLabel(String label) {
       return setLabel(Label.create(label));
@@ -245,6 +249,11 @@ public final class TargetIdeInfo implements Serializable {
       return this;
     }
 
+    public Builder setKotlinToolchainIdeInfo(KotlinToolchainIdeInfo.Builder toolchain) {
+      this.kotlinToolchainIdeInfo = toolchain.build();
+      return this;
+    }
+
     public Builder addTag(String s) {
       this.tags.add(s);
       return this;
@@ -290,7 +299,8 @@ public final class TargetIdeInfo implements Serializable {
           tsIdeInfo,
           dartIdeInfo,
           testIdeInfo,
-          javaToolchainIdeInfo);
+          javaToolchainIdeInfo,
+          kotlinToolchainIdeInfo);
     }
   }
 }

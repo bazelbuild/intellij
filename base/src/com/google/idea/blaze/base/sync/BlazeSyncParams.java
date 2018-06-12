@@ -35,7 +35,20 @@ public final class BlazeSyncParams {
     /** Full sync, can invalidate/redo work that an incremental sync does not */
     FULL,
     /** A partial sync, without any blaze build (i.e. updates directories / in-memory state only) */
-    NO_BUILD,
+    NO_BUILD;
+
+    public static boolean involvesBlazeBuild(SyncMode mode) {
+      switch (mode) {
+        case STARTUP:
+        case NO_BUILD:
+          return false;
+        case PARTIAL:
+        case INCREMENTAL:
+        case FULL:
+          return true;
+      }
+      throw new AssertionError("SyncMode not handled: " + mode);
+    }
   }
 
   /** Builder for sync params */

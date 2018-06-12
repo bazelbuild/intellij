@@ -46,8 +46,13 @@ public class BlazeConfigurationNameBuilder {
     setCommandName(commandName == null ? "command" : commandName.toString());
 
     TargetExpression targetExpression = configuration.getTarget();
+
     if (targetExpression != null) {
-      setTargetString(targetExpression);
+      String text =
+          targetExpression instanceof Label
+              ? getTextForLabel((Label) targetExpression)
+              : targetExpression.toString();
+      setTargetString(text);
     }
   }
 
@@ -84,15 +89,12 @@ public class BlazeConfigurationNameBuilder {
   }
 
   /**
-   * If {@code targetExpression} is a {@link Label}, this is equivalent to {@link
-   * #setTargetString(Label)}. Otherwise, the target string is set to the string value of {@code
-   * targetExpression}.
+   * Returns a ui-friendly label description, or the form "{package}:{target}", where 'target' is
+   * {@code label}'s target, and the 'package' is the containing package. For example, the {@link
+   * Label} "//javatests/com/google/foo/bar/baz:FooTest" will return "baz:FooTest".
    */
-  public BlazeConfigurationNameBuilder setTargetString(TargetExpression targetExpression) {
-    if (targetExpression instanceof Label) {
-      return setTargetString((Label) targetExpression);
-    }
-    return setTargetString(targetExpression.toString());
+  public static String getTextForLabel(Label label) {
+    return String.format("%s:%s", getImmediatePackage(label), label.targetName().toString());
   }
 
   /**

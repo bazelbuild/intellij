@@ -142,7 +142,8 @@ public class ClassFileManifest {
             file,
             jar.stream()
                 .filter(e -> e.getName().endsWith(".class"))
-                .collect(toImmutableMap(JarEntry::getName, ZipEntry::getCrc)));
+                .collect(
+                    toImmutableMap(JarEntry::getName, ZipEntry::getCrc, (first, second) -> first)));
       } catch (IOException e) {
         logger.warn("Error reading jar file: " + file, e);
         return null;

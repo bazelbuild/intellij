@@ -38,7 +38,7 @@ public class BlazeConsoleScope implements BlazeScope {
   public static class Builder {
     private Project project;
     private ProgressIndicator progressIndicator;
-    private BlazeConsolePopupBehavior popupBehavior;
+    private BlazeConsolePopupBehavior popupBehavior = BlazeConsolePopupBehavior.ON_ERROR;
     private final ImmutableList.Builder<Filter> filters = ImmutableList.builder();
 
     public Builder(Project project) {

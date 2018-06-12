@@ -60,7 +60,7 @@ def _merge_optional_plugin_xmls(ctx):
             plugin_xmls = module_to_xmls.setdefault(module, [])
             plugin_xmls.append(xml.plugin_xml)
 
-            # Merge xmls with the same module dependency
+    # Merge xmls with the same module dependency
     module_to_merged_xmls = {}
     for module, plugin_xmls in module_to_xmls.items():
         merged_name = "merged_xml_for_" + module + "_" + ctx.label.name + ".xml"
@@ -81,7 +81,7 @@ def _add_optional_dependencies_to_plugin_xml(ctx, modules):
     if not modules:
         return input_plugin_xml_file
 
-        # Add optional dependencies into the plugin xml
+    # Add optional dependencies into the plugin xml
     args = []
     final_plugin_xml_file = ctx.new_file("final_plugin_xml_" + ctx.label.name + ".xml")
     args.extend(["--plugin_xml", input_plugin_xml_file.path])
@@ -104,7 +104,7 @@ def _only_file(target):
 
 def _filename_for_module_dependency(module):
     """A unique filename for the optional xml dependency for a given module."""
-    return ("optional-" + module + ".xml")
+    return "optional-" + module + ".xml"
 
 def _package_meta_inf_files(ctx, final_plugin_xml_file, module_to_merged_xmls):
     jar_name = ctx.attr.jar_name
@@ -164,14 +164,14 @@ _intellij_plugin_jar = rule(
 def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name = None, **kwargs):
     """Creates an intellij plugin from the given deps and plugin.xml.
 
-  Args:
-    name: The name of the target
-    deps: Any java dependencies rolled up into the plugin jar.
-    plugin_xml: An xml file to be placed in META-INF/plugin.jar
-    optional_plugin_xmls: A list of optional_plugin_xml targets.
-    jar_name: The name of the final plugin jar, or <name>.jar if None
-    **kwargs: Any further arguments to be passed to the final target
-  """
+    Args:
+      name: The name of the target
+      deps: Any java dependencies rolled up into the plugin jar.
+      plugin_xml: An xml file to be placed in META-INF/plugin.jar
+      optional_plugin_xmls: A list of optional_plugin_xml targets.
+      jar_name: The name of the final plugin jar, or <name>.jar if None
+      **kwargs: Any further arguments to be passed to the final target
+    """
     binary_name = name + "_binary"
     deploy_jar = binary_name + "_deploy.jar"
     native.java_binary(
@@ -208,7 +208,7 @@ def _append_optional_dependencies(name, plugin_xml, module_to_merged_xml):
     cmd = " ".join(args).format(
         append_elements_tool = append_elements_tool,
         plugin_xml = plugin_xml,
-        merged_optional_xml_files = "\"%s\"" % str(dictionary).replace("\"", "\\\""),
+        merged_optional_xml_files = '"%s"' % str(dictionary).replace('"', '\\"'),
     ) + "> $@"
 
     srcs = module_to_merged_xml.values() + [plugin_xml]

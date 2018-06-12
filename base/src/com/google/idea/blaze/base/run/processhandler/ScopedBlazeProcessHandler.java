@@ -26,9 +26,7 @@ import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import java.util.List;
 
 /**
@@ -79,7 +77,10 @@ public final class ScopedBlazeProcessHandler extends KillableColoredProcessHandl
       WorkspaceRoot workspaceRoot,
       ScopedProcessHandlerDelegate scopedProcessHandlerDelegate)
       throws ExecutionException {
-    super(new GeneralCommandLine(command).withWorkDirectory(workspaceRoot.directory().getPath()));
+    super(
+        new GeneralCommandLine(command)
+            .withWorkDirectory(workspaceRoot.directory().getPath())
+            .withRedirectErrorStream(true));
 
     this.scopedProcessHandlerDelegate = scopedProcessHandlerDelegate;
     this.context = new BlazeContext();
@@ -91,17 +92,6 @@ public final class ScopedBlazeProcessHandler extends KillableColoredProcessHandl
       addProcessListener(processListener);
     }
     addProcessListener(new ScopedProcessHandlerListener(project));
-  }
-
-  @Override
-  public void coloredTextAvailable(String text, Key attributes) {
-    // Change blaze's stderr output to normal color, otherwise
-    // test output looks red
-    if (attributes == ProcessOutputTypes.STDERR) {
-      attributes = ProcessOutputTypes.STDOUT;
-    }
-
-    super.coloredTextAvailable(text, attributes);
   }
 
   /**

@@ -18,7 +18,6 @@ package com.google.idea.blaze.java.run;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -70,7 +69,7 @@ final class FastBuildConfigurationRunner implements BlazeCommandRunConfiguration
   @Override
   public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment env) {
     if (!useFastBuild(env)) {
-      return new BlazeCommandRunProfileState(env, ImmutableList.of());
+      return new BlazeCommandRunProfileState(env);
     }
     return new FastBuildRunProfileState(env);
   }

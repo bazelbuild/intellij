@@ -32,7 +32,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
-import com.google.idea.blaze.base.run.coverage.CoverageUtils;
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
 import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
@@ -193,14 +192,17 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
         Preconditions.checkNotNull(handlerState.getCommandState().getCommand());
     if (executorType == ExecutorType.COVERAGE) {
       blazeCommand = BlazeCommandName.COVERAGE;
-      blazeFlags.addAll(CoverageUtils.getBlazeFlags());
     }
     BlazeCommand.Builder command =
         BlazeCommand.builder(binaryPath, blazeCommand)
             .addTargets(configuration.getTarget())
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(
-                    project, projectViewSet, blazeCommand, BlazeInvocationContext.NonSync))
+                    project,
+                    projectViewSet,
+                    blazeCommand,
+                    BlazeInvocationContext.NonSync,
+                    executorType))
             .addBlazeFlags(blazeFlags)
             .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags());
 

@@ -37,6 +37,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -124,8 +125,8 @@ public class BlazeAndroidTestRunConfigurationHandler
 
   @Override
   public BlazeCommandRunConfigurationRunner createRunner(
-      Executor executor, ExecutionEnvironment environment) throws ExecutionException {
-    Project project = environment.getProject();
+      Executor executor, ExecutionEnvironment env) throws ExecutionException {
+    Project project = env.getProject();
 
     Module module = getModule();
     AndroidFacet facet = module != null ? AndroidFacet.getInstance(module) : null;
@@ -135,11 +136,14 @@ public class BlazeAndroidTestRunConfigurationHandler
     ImmutableList<String> blazeFlags =
         configState
             .getCommonState()
-            .getExpandedBuildFlags(project, projectViewSet, BlazeCommandName.TEST);
+            .getExpandedBuildFlags(
+                project,
+                projectViewSet,
+                BlazeCommandName.TEST,
+                ExecutorType.fromExecutor(env.getExecutor()));
     ImmutableList<String> exeFlags =
         ImmutableList.copyOf(configState.getCommonState().getExeFlagsState().getExpandedFlags());
-    BlazeAndroidRunContext runContext =
-        createRunContext(project, facet, environment, blazeFlags, exeFlags);
+    BlazeAndroidRunContext runContext = createRunContext(project, facet, env, blazeFlags, exeFlags);
 
     return new BlazeAndroidRunConfigurationRunner(
         module,

@@ -83,6 +83,10 @@ public class JavascriptPrefetchFileSource implements PrefetchFileSource {
 
   @Override
   public Set<String> prefetchFileExtensions() {
+    return getJavascriptExtensions();
+  }
+
+  public static Set<String> getJavascriptExtensions() {
     return ImmutableSet.of("js", "html", "css", "gss");
   }
 

@@ -21,7 +21,8 @@ import java.util.function.Supplier;
 
 /** Adapter to bridge different SDK versions. */
 public class CMakeActionsToManipulate {
-  public static final ImmutableSet<String> CMAKE_ACTION_IDS_TO_REMOVE = ImmutableSet.of();
+  public static final ImmutableSet<String> CMAKE_ACTION_IDS_TO_REMOVE =
+      ImmutableSet.of("CPP.NewCMakeListsFile");
   public static final ImmutableSet<ActionPair> CMAKE_ACTION_IDS_TO_REPLACE = ImmutableSet.of();
 
   /** Bundle up AnAction ids and AnActions to override the default handler with */

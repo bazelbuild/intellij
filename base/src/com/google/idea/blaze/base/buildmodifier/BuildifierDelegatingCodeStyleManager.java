@@ -37,16 +37,18 @@ final class BuildifierDelegatingCodeStyleManager extends ExternalFormatterCodeSt
 
   @Override
   protected boolean overrideFormatterForFile(PsiFile file) {
-    // don't format skylark extensions
-    return file instanceof BuildFile
-        && ((BuildFile) file).getBlazeFileType() != BlazeFileType.SkylarkExtension;
+    return file instanceof BuildFile;
   }
 
   @Override
   protected void format(PsiFile file, Document document, Collection<TextRange> ranges) {
+    if (!(file instanceof BuildFile)) {
+      return;
+    }
+    BlazeFileType type = ((BuildFile) file).getBlazeFileType();
     String inputText = document.getText();
     ListenableFuture<Replacements> formattedFileFuture =
-        BuildFileFormatter.formatTextWithProgressDialog(getProject(), inputText, ranges);
+        BuildFileFormatter.formatTextWithProgressDialog(getProject(), type, inputText, ranges);
     performReplacementsAsync(file, inputText, formattedFileFuture);
   }
 }

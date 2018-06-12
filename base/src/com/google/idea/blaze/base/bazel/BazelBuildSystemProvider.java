@@ -16,23 +16,21 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystem;
-import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
-import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
-import com.intellij.openapi.fileTypes.FileNameMatcher;
-import java.io.File;
-import javax.annotation.Nullable;
 
 /** Provides the bazel build system name string. */
 public class BazelBuildSystemProvider implements BuildSystemProvider {
 
   private static final String BAZEL_DOC_SITE = "https://ij.bazel.build/docs";
+
+  private static final ImmutableSet<String> BUILD_FILE_NAMES =
+      ImmutableSet.of("BUILD", "BUILD.bazel");
 
   @Override
   public BuildSystem buildSystem() {
@@ -74,30 +72,8 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   }
 
   @Override
-  public boolean isBuildFile(String fileName) {
-    return fileName.equals("BUILD") || fileName.equals("BUILD.bazel");
-  }
-
-  @Nullable
-  @Override
-  public File findBuildFileInDirectory(File directory) {
-    FileOperationProvider provider = FileOperationProvider.getInstance();
-    File child = new File(directory, "BUILD");
-    if (provider.exists(child)) {
-      return child;
-    }
-    child = new File(directory, "BUILD.bazel");
-    if (provider.exists(child)) {
-      return child;
-    }
-    return null;
-  }
-
-  @Override
-  public ImmutableList<FileNameMatcher> buildLanguageFileTypeMatchers() {
-    return ImmutableList.of(
-        new ExactFileNameMatcher("BUILD"), new ExactFileNameMatcher("BUILD.bazel"),
-        new ExtensionFileNameMatcher("bzl"), new ExactFileNameMatcher("WORKSPACE"));
+  public ImmutableSet<String> possibleBuildFileNames() {
+    return BUILD_FILE_NAMES;
   }
 
   @Override

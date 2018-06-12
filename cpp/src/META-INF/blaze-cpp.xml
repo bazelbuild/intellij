@@ -39,6 +39,7 @@
     <SyncPlugin implementation="com.google.idea.blaze.cpp.BlazeCSyncPlugin"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.cpp.CPrefetchFileSource"/>
     <SyncListener implementation="com.google.idea.blaze.cpp.BulkSymbolTableBuildingChangeListener$WorkspaceTypeSyncListener"/>
+    <SyncStatusContributor implementation="com.google.idea.blaze.cpp.syncstatus.CppSyncStatusContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="cidr.lang">
@@ -48,9 +49,6 @@
     <includeHelper implementation="com.google.idea.blaze.cpp.BlazeIncludeHelper"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
-    <projectViewNodeDecorator implementation="com.google.idea.blaze.cpp.syncstatus.BlazeCppSyncStatusFileNodeDecorator"/>
-    <editorTabColorProvider implementation="com.google.idea.blaze.cpp.syncstatus.BlazeCppSyncStatusEditorTabColorProvider"/>
-    <editorTabTitleProvider implementation="com.google.idea.blaze.cpp.syncstatus.BlazeCppSyncStatusEditorTabTitleProvider"/>
     <gotoRelatedProvider implementation="com.google.idea.blaze.cpp.navigation.DelegatingSwitchToHeaderOrSourceProvider"/>
 
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerVersionChecker"

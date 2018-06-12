@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -33,16 +32,12 @@ import javax.annotation.Nullable;
 /** Helper methods for coverage integration. */
 public class CoverageUtils {
 
-  public static final BoolExperiment enableCoverage =
-      new BoolExperiment("blaze.coverage.enabled", true);
-
   public static boolean coverageEnabled(ExecutionEnvironment env) {
     return coverageEnabled(env.getExecutor().getId(), env.getRunProfile());
   }
 
   public static boolean coverageEnabled(String executorId, RunProfile profile) {
-    return enableCoverage.getValue()
-        && ExecutorType.fromExecutorId(executorId) == ExecutorType.COVERAGE
+    return ExecutorType.fromExecutorId(executorId) == ExecutorType.COVERAGE
         && isApplicableTo(profile);
   }
 

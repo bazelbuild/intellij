@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.libraries;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryKey;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode;
@@ -31,7 +32,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 class LibraryActionHelper {
 
@@ -52,7 +52,20 @@ class LibraryActionHelper {
   }
 
   @Nullable
-  static Library findLibraryForAction(@NotNull AnActionEvent e) {
+  static BlazeJarLibrary findBlazeLibraryForAction(Project project, AnActionEvent e) {
+    Library library = findLibraryForAction(e);
+    if (library == null) {
+      return null;
+    }
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    return projectData != null
+        ? findLibraryFromIntellijLibrary(project, projectData, library)
+        : null;
+  }
+
+  @Nullable
+  static Library findLibraryForAction(AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
       NamedLibraryElementNode node = findLibraryNode(e.getDataContext());
@@ -68,7 +81,7 @@ class LibraryActionHelper {
   }
 
   @Nullable
-  private static NamedLibraryElementNode findLibraryNode(@NotNull DataContext dataContext) {
+  private static NamedLibraryElementNode findLibraryNode(DataContext dataContext) {
     Navigatable[] navigatables = CommonDataKeys.NAVIGATABLE_ARRAY.getData(dataContext);
     if (navigatables != null && navigatables.length == 1) {
       Navigatable navigatable = navigatables[0];

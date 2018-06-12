@@ -15,13 +15,18 @@
  */
 package com.google.idea.blaze.base.run.confighandler;
 
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.Key;
+import javax.annotation.Nullable;
 
 /**
  * Supports the execution of {@link BlazeCommandRunConfiguration}s.
@@ -47,5 +52,21 @@ public interface BlazeCommandRunConfigurationRunner {
   static boolean isDebugging(ExecutionEnvironment environment) {
     Executor executor = environment.getExecutor();
     return executor instanceof DefaultDebugExecutor;
+  }
+
+  static BlazeCommandRunConfiguration getConfiguration(ExecutionEnvironment environment) {
+    RunProfile runProfile = environment.getRunProfile();
+    if (runProfile instanceof WrappingRunConfiguration) {
+      runProfile = ((WrappingRunConfiguration) runProfile).getPeer();
+    }
+    return (BlazeCommandRunConfiguration) runProfile;
+  }
+
+  @Nullable
+  static BlazeCommandName getBlazeCommand(ExecutionEnvironment environment) {
+    BlazeCommandRunConfiguration config = getConfiguration(environment);
+    BlazeCommandRunConfigurationCommonState commonState =
+        config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    return commonState == null ? null : commonState.getCommandState().getCommand();
   }
 }
