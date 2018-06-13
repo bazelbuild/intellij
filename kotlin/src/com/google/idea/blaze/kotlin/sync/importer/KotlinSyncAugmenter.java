@@ -50,15 +50,4 @@ class KotlinSyncAugmenter implements BlazeJavaSyncAugmenter {
     // TODO(brendandouglas): remove when kotlin rules expose JavaGenJarsProvider
     javaInfo.jars.forEach(jar -> genJars.add(new BlazeJarLibrary(jar)));
   }
-
-  @Override
-  public boolean ignoreJdepsForTarget(
-      WorkspaceLanguageSettings languageSettings, TargetIdeInfo target) {
-    if (!languageSettings.isLanguageActive(LanguageClass.KOTLIN)
-        || target.kind.languageClass != LanguageClass.KOTLIN) {
-      return false;
-    }
-    JavaIdeInfo javaInfo = target.javaIdeInfo;
-    return javaInfo != null && javaInfo.jdepsFile == null;
-  }
 }

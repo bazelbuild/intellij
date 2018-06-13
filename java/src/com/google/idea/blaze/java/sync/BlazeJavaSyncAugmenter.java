@@ -39,13 +39,4 @@ public interface BlazeJavaSyncAugmenter {
       TargetIdeInfo target,
       Collection<BlazeJarLibrary> jars,
       Collection<BlazeJarLibrary> genJars);
-
-  /**
-   * If true, jdeps optimization will be ignored for this target, and all direct deps will be added
-   * to the project libraries.
-   */
-  default boolean ignoreJdepsForTarget(
-      WorkspaceLanguageSettings languageSettings, TargetIdeInfo target) {
-    return false;
-  }
 }
