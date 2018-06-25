@@ -49,7 +49,7 @@ public final class Specs2Utils {
   @Nullable
   private static ScInfixExpr getContainingInfixExpr(
       PsiElement element, Predicate<PsiElement> predicate) {
-    while (element != null && !predicate.test(element)) {
+    if (element != null && !predicate.test(element)) {
       element = PsiTreeUtil.getParentOfType(element, ScInfixExpr.class);
     }
     return (ScInfixExpr) element;

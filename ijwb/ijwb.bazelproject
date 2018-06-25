@@ -14,7 +14,9 @@ targets:
 workspace_type: intellij_plugin
 
 build_flags:
-  --define=ij_product=intellij-latest
+  --define=ij_product=intellij-beta
+  --spawn_strategy=standalone
+  --genrule_strategy=standalone
 
 test_sources:
   */tests/unittests*
