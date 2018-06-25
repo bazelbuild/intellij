@@ -90,17 +90,26 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
   private File getExecutableToDebug(ExecutionEnvironment env) throws ExecutionException {
     BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true);
 
+    List<String> extraDebugFlags;
+    if (!BlazeCidrLauncher.useRemoteDebugging.getValue()) {
+      extraDebugFlags =
+          ImmutableList.of(
+              "--compilation_mode=dbg",
+              "--copt=-O0",
+              "--copt=-g",
+              "--strip=never",
+              "--dynamic_mode=off");
+    } else {
+      extraDebugFlags =
+          BlazeCidrLauncher.getExtraFlagsForDebugging(configuration.getHandler().getCommandName());
+    }
+
     ListenableFuture<BuildResult> buildOperation =
         BlazeBeforeRunCommandHelper.runBlazeBuild(
             configuration,
             buildResultHelper,
             ImmutableList.of(),
-            ImmutableList.of(
-                "--compilation_mode=dbg",
-                "--copt=-O0",
-                "--copt=-g",
-                "--strip=never",
-                "--dynamic_mode=off"),
+            extraDebugFlags,
             ExecutorType.fromExecutor(env.getExecutor()),
             "Building debug binary");
 

@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.logging;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
 import com.intellij.openapi.components.ServiceManager;
 import java.util.Map;
@@ -32,6 +33,10 @@ public interface EventLoggingService {
   }
 
   void log(SyncStats syncStats);
+
+  default void logEvent(Class<?> loggingClass, String eventType) {
+    logEvent(loggingClass, eventType, ImmutableMap.of());
+  }
 
   void logEvent(Class<?> loggingClass, String eventType, Map<String, String> keyValues);
 

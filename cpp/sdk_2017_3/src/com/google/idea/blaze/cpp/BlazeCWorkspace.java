@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceAdapter;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -71,9 +70,9 @@ public final class BlazeCWorkspace extends OCWorkspaceAdapter implements Project
               @Override
               public void run(ProgressIndicator indicator) {
                 indicator.setIndeterminate(true);
+                indicator.setText2("Resolving Configurations...");
                 BlazeConfigurationResolverResult newResult =
-                    resolveConfigurations(
-                        context, workspaceRoot, projectViewSet, blazeProjectData, indicator);
+                    resolveConfigurations(context, workspaceRoot, projectViewSet, blazeProjectData);
                 CommitableConfiguration config =
                     calculateConfigurations(blazeProjectData, workspaceRoot, newResult, indicator);
                 commitConfigurations(config);
@@ -87,13 +86,8 @@ public final class BlazeCWorkspace extends OCWorkspaceAdapter implements Project
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData,
-      @Nullable ProgressIndicator indicator) {
-    if (indicator == null) {
-      indicator = new DumbProgressIndicator();
-    }
+      BlazeProjectData blazeProjectData) {
     BlazeConfigurationResolverResult oldResult = resolverResult;
-    indicator.setText2("Resolving Configurations...");
     return configurationResolver.update(
         context, workspaceRoot, projectViewSet, blazeProjectData, oldResult);
   }

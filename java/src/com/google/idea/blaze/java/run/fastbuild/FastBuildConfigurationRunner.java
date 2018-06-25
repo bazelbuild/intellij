@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.java.run;
+package com.google.idea.blaze.java.run.fastbuild;
 
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.base.Stopwatch;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.console.BlazeConsoleService;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -27,28 +28,33 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.util.SaveUtil;
-import com.google.idea.blaze.java.fastbuild.FastBuildCompileException;
 import com.google.idea.blaze.java.fastbuild.FastBuildException;
+import com.google.idea.blaze.java.fastbuild.FastBuildIncrementalCompileException;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildService;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyWithDefaultValue;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-final class FastBuildConfigurationRunner implements BlazeCommandRunConfigurationRunner {
+/** Supports the execution of {@link BlazeCommandRunConfiguration}s in fast build mode. */
+public final class FastBuildConfigurationRunner implements BlazeCommandRunConfigurationRunner {
 
   private static final Logger logger = Logger.getInstance(FastBuildConfigurationRunner.class);
 
@@ -58,17 +64,16 @@ final class FastBuildConfigurationRunner implements BlazeCommandRunConfiguration
       KeyWithDefaultValue.create("blaze.java.fastRun.loggingData", new AtomicReference<>());
 
   /** Returns false if this isn't a 'blaze test' invocation. */
-  private static boolean useFastBuild(ExecutionEnvironment env) {
-    BlazeCommandRunConfiguration configuration = (BlazeCommandRunConfiguration) env.getRunProfile();
-    BlazeCommandName command =
-        ((BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState())
-            .getCommandState()
-            .getCommand();
-    return BlazeCommandName.TEST.equals(command);
+  static boolean canRun(RunProfile runProfile) {
+    return runProfile instanceof BlazeCommandRunConfiguration
+        && Objects.equals(
+            ((BlazeCommandRunConfiguration) runProfile).getHandler().getCommandName(),
+            BlazeCommandName.TEST);
   }
+
   @Override
   public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment env) {
-    if (!useFastBuild(env)) {
+    if (!canRun(env.getRunProfile())) {
       return new BlazeCommandRunProfileState(env);
     }
     return new FastBuildRunProfileState(env);
@@ -76,7 +81,7 @@ final class FastBuildConfigurationRunner implements BlazeCommandRunConfiguration
 
   @Override
   public boolean executeBeforeRunTask(ExecutionEnvironment env) {
-    if (!useFastBuild(env)) {
+    if (!canRun(env.getRunProfile())) {
       return true;
     }
     Project project = env.getProject();
@@ -93,12 +98,13 @@ final class FastBuildConfigurationRunner implements BlazeCommandRunConfiguration
             : Blaze.getBuildSystemProvider(project).getBinaryPath();
 
     SaveUtil.saveAllFiles();
+    FastBuildService buildService = FastBuildService.getInstance(project);
     Future<FastBuildInfo> buildFuture = null;
     FastBuildLoggingData loggingData = new FastBuildLoggingData();
     try {
       buildFuture =
-          FastBuildService.getInstance(project)
-              .createBuild(label, binaryPath, handlerState.getBlazeFlagsState().getExpandedFlags());
+          buildService.createBuild(
+              label, binaryPath, handlerState.getBlazeFlagsState().getExpandedFlags());
       FastBuildInfo fastBuildInfo = buildFuture.get();
       env.getUserData(BUILD_INFO_KEY).set(fastBuildInfo);
       loggingData.data.putAll(fastBuildInfo.loggingData());
@@ -118,8 +124,18 @@ final class FastBuildConfigurationRunner implements BlazeCommandRunConfiguration
       ExecutionUtil.handleExecutionError(env, new ExecutionException(e));
     } catch (java.util.concurrent.ExecutionException e) {
       logger.warn(e);
-      if (e.getCause() instanceof FastBuildCompileException) {
-        loggingData.data.putAll(((FastBuildCompileException) e.getCause()).getLoggingData());
+      if (e.getCause() instanceof FastBuildIncrementalCompileException) {
+        loggingData.data.putAll(
+            ((FastBuildIncrementalCompileException) e.getCause()).getLoggingData());
+        BlazeConsoleService console = BlazeConsoleService.getInstance(project);
+        console.print(
+            "Error performing incremental compilation: " + e.getCause().getMessage() + '\n',
+            ConsoleViewContentType.ERROR_OUTPUT);
+        console.printHyperlink(
+            "Click here to run the tests again with a fresh "
+                + Blaze.getBuildSystem(project)
+                + " build.\n",
+            new RerunTestsWithBlazeHyperlink(buildService, label, env));
       }
       ExecutionUtil.handleExecutionError(env, new ExecutionException(e.getCause()));
     }
@@ -145,6 +161,31 @@ final class FastBuildConfigurationRunner implements BlazeCommandRunConfiguration
                       "fast_build",
                       data,
                       timer.elapsed(TimeUnit.NANOSECONDS)));
+    }
+  }
+
+  private static class RerunTestsWithBlazeHyperlink implements HyperlinkInfo {
+
+    final FastBuildService buildService;
+    final Label label;
+    final ExecutionEnvironment env;
+
+    private RerunTestsWithBlazeHyperlink(
+        FastBuildService buildService, Label label, ExecutionEnvironment env) {
+      this.buildService = buildService;
+      this.label = label;
+      this.env = env;
+    }
+
+    @Override
+    public void navigate(Project project) {
+      buildService.resetBuild(label);
+      ExecutionUtil.restart(env);
+      EventLoggingService.getInstance()
+          .ifPresent(
+              service ->
+                  service.logEvent(
+                      FastBuildConfigurationRunner.class, "rerun_tests_with_blaze_link_clicked"));
     }
   }
 }

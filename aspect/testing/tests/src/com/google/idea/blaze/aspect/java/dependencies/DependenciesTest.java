@@ -53,7 +53,7 @@ public class DependenciesTest extends BazelIntellijAspectTest {
             testRelative("transitive_dep.java-manifest"),
             testRelative("transitive_dep.intellij-info.txt"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
-        .containsExactly(
+        .containsAllOf(
             testRelative("libfoo.jar"),
             testRelative("libfoo-hjar.jar"),
             testRelative("libfoo-src.jar"),
@@ -64,7 +64,7 @@ public class DependenciesTest extends BazelIntellijAspectTest {
             testRelative("libtransitive_dep-hjar.jar"),
             testRelative("libtransitive_dep-src.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
-        .containsExactly(
+        .containsAllOf(
             testRelative("libfoo.jar"),
             testRelative("libsingle_dep.jar"),
             testRelative("libtransitive_dep.jar"));
@@ -102,7 +102,7 @@ public class DependenciesTest extends BazelIntellijAspectTest {
             testRelative("export_consumer.java-manifest"),
             testRelative("export_consumer.intellij-info.txt"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
-        .containsExactly(
+        .containsAllOf(
             testRelative("libfoo.jar"),
             testRelative("libfoo-hjar.jar"),
             testRelative("libfoo-src.jar"),
@@ -113,7 +113,7 @@ public class DependenciesTest extends BazelIntellijAspectTest {
             testRelative("libexport_consumer-hjar.jar"),
             testRelative("libexport_consumer-src.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
-        .containsExactly(
+        .containsAllOf(
             testRelative("libfoo.jar"),
             testRelative("libfoo_exporter.jar"),
             testRelative("libexport_consumer.jar"));

@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.base.run.state.DebugPortState;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.settings.BuildSystem;
-import com.google.idea.blaze.java.fastbuild.FastBuildService;
 import com.intellij.openapi.project.Project;
 
 /** A java-specific version of the common state, allowing the debug port to be customized. */
@@ -31,30 +30,17 @@ public class BlazeJavaRunConfigState extends BlazeCommandRunConfigurationCommonS
 
   private final DebugPortState debugPortState;
 
-  // TODO(plumpy): when FastBuildService#enabled is removed, this can be @Nullable. Currently,
-  // you'll get exceptions if the experiment value is changed and we use a @Nullable here.
-  private final FastBuildState fastBuildState;
-
   BlazeJavaRunConfigState(BuildSystem buildSystem, Project project, Kind kind) {
     super(buildSystem);
     debugPortState = new DebugPortState(DEFAULT_DEBUG_PORT);
-    fastBuildState =
-        new FastBuildState(
-            FastBuildService.enabled.getValue()
-                && FastBuildService.getInstance(project).supportsFastBuilds(kind));
   }
 
   @Override
   protected ImmutableList<RunConfigurationState> initializeStates() {
-    return ImmutableList.of(
-        command, blazeFlags, exeFlags, debugPortState, fastBuildState, blazeBinary);
+    return ImmutableList.of(command, blazeFlags, exeFlags, debugPortState, blazeBinary);
   }
 
-  DebugPortState getDebugPortState() {
+  public DebugPortState getDebugPortState() {
     return debugPortState;
-  }
-
-  public FastBuildState getFastBuildState() {
-    return fastBuildState;
   }
 }

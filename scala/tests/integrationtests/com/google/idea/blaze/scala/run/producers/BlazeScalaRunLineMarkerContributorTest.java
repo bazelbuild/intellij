@@ -68,9 +68,7 @@ public class BlazeScalaRunLineMarkerContributorTest extends BlazeRunConfiguratio
     Info objectInfo = markerContributor.getInfo(objectIdentifier);
     assertThat(objectInfo).isNotNull();
     assertThat(objectInfo.icon).isEqualTo(AllIcons.RunConfigurations.TestState.Run);
-    assertThat(objectInfo.actions).hasLength(2);
-    assertThat(objectInfo.actions[0].getTemplatePresentation().getText()).startsWith("Run ");
-    assertThat(objectInfo.actions[1].getTemplatePresentation().getText()).startsWith("Debug ");
+
 
     // Main object info replaces the one from the scala plugin
     Info replacedObjectInfo = replacedContributor.getInfo(objectIdentifier);
@@ -81,9 +79,6 @@ public class BlazeScalaRunLineMarkerContributorTest extends BlazeRunConfiguratio
     Info methodInfo = markerContributor.getInfo(methodIdentifier);
     assertThat(methodInfo).isNotNull();
     assertThat(methodInfo.icon).isEqualTo(AllIcons.RunConfigurations.TestState.Run);
-    assertThat(methodInfo.actions).hasLength(2);
-    assertThat(methodInfo.actions[0].getTemplatePresentation().getText()).startsWith("Run ");
-    assertThat(methodInfo.actions[1].getTemplatePresentation().getText()).startsWith("Debug ");
 
     // Main method info replaces the one from the scala plugin
     Info replacedMethodInfo = replacedContributor.getInfo(methodIdentifier);

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.java.run;
+package com.google.idea.blaze.java.run.fastbuild;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
@@ -24,7 +24,7 @@ import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
-import com.google.idea.blaze.java.run.FastBuildConfigurationRunner.FastBuildLoggingData;
+import com.google.idea.blaze.java.run.fastbuild.FastBuildConfigurationRunner.FastBuildLoggingData;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 

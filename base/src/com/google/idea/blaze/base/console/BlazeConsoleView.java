@@ -196,6 +196,10 @@ public class BlazeConsoleView implements Disposable {
     consoleView.print(text, contentType);
   }
 
+  public void printHyperlink(String text, HyperlinkInfo hyperlinkInfo) {
+    consoleView.printHyperlink(text, hyperlinkInfo);
+  }
+
   @Override
   public void dispose() {}
 
@@ -271,9 +275,7 @@ public class BlazeConsoleView implements Disposable {
     return provider.getDefaultFilters(project);
   }
 
-  /**
-   * Changes the action text to reference 'problems', not 'stack traces'.
-   */
+  /** Changes the action text to reference 'problems', not 'stack traces'. */
   private static OccurenceNavigator fromConsoleView(ConsoleViewImpl console) {
     return new OccurenceNavigator() {
       @Override

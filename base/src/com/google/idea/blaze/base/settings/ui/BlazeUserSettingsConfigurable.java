@@ -21,24 +21,27 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
+import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.settings.SearchableOptionsHelper;
 import com.google.idea.blaze.base.ui.FileSelectorWithStoredHistory;
 import com.intellij.openapi.options.BaseConfigurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
-import java.awt.Insets;
+import com.intellij.util.ui.JBFont;
+import com.intellij.util.ui.JBUI;
 import java.util.Collection;
 import javax.annotation.Nullable;
+import javax.swing.Box;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 
 /** Blaze console view settings */
@@ -53,11 +56,17 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
 
   private final BuildSystem defaultBuildSystem;
   private final Collection<BlazeUserSettingsContributor> settingsContributors;
+  private final SearchableOptionsHelper helper;
 
-  private JPanel myMainPanel;
-  private JComboBox<BlazeConsolePopupBehavior> showBlazeConsoleOnSync;
-  private JCheckBox suppressConsoleForRunAction;
-  private JCheckBox showProblemsViewForRunAction;
+  private JPanel mainPanel;
+  private final ComboBox<FocusBehavior> showBlazeConsoleOnSync =
+      new ComboBox<>(FocusBehavior.values());
+  private final ComboBox<FocusBehavior> showProblemsViewOnSync =
+      new ComboBox<>(FocusBehavior.values());
+  private final ComboBox<FocusBehavior> showBlazeConsoleOnRun =
+      new ComboBox<>(FocusBehavior.values());
+  private final ComboBox<FocusBehavior> showProblemsViewOnRun =
+      new ComboBox<>(FocusBehavior.values());
   private JCheckBox resyncAutomatically;
   private JCheckBox collapseProjectView;
   private JCheckBox formatBuildFilesOnSave;
@@ -68,6 +77,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
   public BlazeUserSettingsConfigurable() {
     this.defaultBuildSystem = Blaze.defaultBuildSystem();
     this.settingsContributors = Lists.newArrayList();
+    this.helper = new SearchableOptionsHelper(this);
     for (BlazeUserSettingsContributor.Provider provider :
         BlazeUserSettingsContributor.Provider.EP_NAME.getExtensions()) {
       settingsContributors.add(provider.getContributor());
@@ -88,12 +98,12 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     BlazeUserSettings settings = BlazeUserSettings.getInstance();
-    settings.setShowBlazeConsoleOnSync(
-        (BlazeConsolePopupBehavior) showBlazeConsoleOnSync.getSelectedItem());
-    settings.setSuppressConsoleForRunAction(suppressConsoleForRunAction.isSelected());
-    settings.setShowProblemsViewForRunAction(showProblemsViewForRunAction.isSelected());
+    settings.setShowBlazeConsoleOnSync((FocusBehavior) showBlazeConsoleOnSync.getSelectedItem());
+    settings.setShowProblemsViewOnSync((FocusBehavior) showProblemsViewOnSync.getSelectedItem());
+    settings.setShowBlazeConsoleOnRun((FocusBehavior) showBlazeConsoleOnRun.getSelectedItem());
+    settings.setShowProblemsViewOnRun((FocusBehavior) showProblemsViewOnRun.getSelectedItem());
     settings.setResyncAutomatically(resyncAutomatically.isSelected());
     settings.setCollapseProjectView(collapseProjectView.isSelected());
     settings.setFormatBuildFilesOnSave(formatBuildFilesOnSave.isSelected());
@@ -110,8 +120,9 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
   public void reset() {
     BlazeUserSettings settings = BlazeUserSettings.getInstance();
     showBlazeConsoleOnSync.setSelectedItem(settings.getShowBlazeConsoleOnSync());
-    suppressConsoleForRunAction.setSelected(settings.getSuppressConsoleForRunAction());
-    showProblemsViewForRunAction.setSelected(settings.getShowProblemsViewForRunAction());
+    showProblemsViewOnSync.setSelectedItem(settings.getShowProblemsViewOnSync());
+    showBlazeConsoleOnRun.setSelectedItem(settings.getShowBlazeConsoleOnRun());
+    showProblemsViewOnRun.setSelectedItem(settings.getShowProblemsViewOnRun());
     resyncAutomatically.setSelected(settings.getResyncAutomatically());
     collapseProjectView.setSelected(settings.getCollapseProjectView());
     formatBuildFilesOnSave.setSelected(settings.getFormatBuildFilesOnSave());
@@ -127,7 +138,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
   @Nullable
   @Override
   public JComponent createComponent() {
-    return myMainPanel;
+    return mainPanel;
   }
 
   @Override
@@ -135,9 +146,9 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     BlazeUserSettings settings = BlazeUserSettings.getInstance();
     boolean isModified =
         showBlazeConsoleOnSync.getSelectedItem() != settings.getShowBlazeConsoleOnSync()
-            || suppressConsoleForRunAction.isSelected() != settings.getSuppressConsoleForRunAction()
-            || showProblemsViewForRunAction.isSelected()
-                != settings.getShowProblemsViewForRunAction()
+            || showProblemsViewOnSync.getSelectedItem() != settings.getShowProblemsViewOnSync()
+            || showBlazeConsoleOnRun.getSelectedItem() != settings.getShowBlazeConsoleOnRun()
+            || showProblemsViewOnRun.getSelectedItem() != settings.getShowProblemsViewOnRun()
             || resyncAutomatically.isSelected() != settings.getResyncAutomatically()
             || collapseProjectView.isSelected() != settings.getCollapseProjectView()
             || formatBuildFilesOnSave.isSelected() != settings.getFormatBuildFilesOnSave()
@@ -177,97 +188,38 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
       contributorRowCount += contributor.getRowCount();
     }
 
-    final int totalRowSize = 10 + contributorRowCount;
+    final int totalRowSize = 9 + contributorRowCount;
     int rowi = 0;
 
     SearchableOptionsHelper helper = new SearchableOptionsHelper(this);
-    myMainPanel = new JPanel();
-    myMainPanel.setLayout(new GridLayoutManager(totalRowSize, 2, new Insets(0, 0, 0, 0), -1, -1));
+    mainPanel = new JPanel();
+    mainPanel.setLayout(new GridLayoutManager(totalRowSize, 2, JBUI.emptyInsets(), -1, -1));
 
-    JLabel label =
-        helper.createSearchableLabel(
-            String.format("Show %s console on sync:", defaultBuildSystem), true);
-    myMainPanel.add(
-        label,
-        new GridConstraints(
-            rowi,
-            0,
-            1,
-            1,
-            GridConstraints.ANCHOR_WEST,
-            GridConstraints.FILL_NONE,
-            GridConstraints.SIZEPOLICY_FIXED,
-            GridConstraints.SIZEPOLICY_FIXED,
-            null,
-            null,
-            null,
-            0,
-            false));
-    showBlazeConsoleOnSync = new JComboBox<>(BlazeConsolePopupBehavior.values());
-    myMainPanel.add(
-        showBlazeConsoleOnSync,
+    mainPanel.add(
+        getFocusBehaviorSettingsUi(),
         new GridConstraints(
             rowi++,
+            0,
             1,
-            1,
-            1,
-            GridConstraints.ANCHOR_WEST,
+            2,
+            GridConstraints.ANCHOR_NORTHWEST,
             GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED,
+            GridConstraints.SIZEPOLICY_CAN_GROW,
             null,
             null,
             null,
             0,
             false));
-    String text = String.format("Suppress %s console for Run/Debug actions", defaultBuildSystem);
-    helper.registerLabelText(text, true);
-    suppressConsoleForRunAction = new JCheckBox();
-    suppressConsoleForRunAction.setText(text);
-    suppressConsoleForRunAction.setVerticalAlignment(SwingConstants.CENTER);
-    myMainPanel.add(
-        suppressConsoleForRunAction,
-        new GridConstraints(
-            rowi++,
-            0,
-            1,
-            2,
-            GridConstraints.ANCHOR_NORTHWEST,
-            GridConstraints.FILL_NONE,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED,
-            null,
-            null,
-            null,
-            0,
-            false));
-    text = String.format("Show %s problems view for Run/Debug actions", defaultBuildSystem);
-    helper.registerLabelText(text, true);
-    showProblemsViewForRunAction = new JCheckBox();
-    showProblemsViewForRunAction.setText(text);
-    showProblemsViewForRunAction.setVerticalAlignment(SwingConstants.CENTER);
-    myMainPanel.add(
-        showProblemsViewForRunAction,
-        new GridConstraints(
-            rowi++,
-            0,
-            1,
-            2,
-            GridConstraints.ANCHOR_NORTHWEST,
-            GridConstraints.FILL_NONE,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED,
-            null,
-            null,
-            null,
-            0,
-            false));
-    text = "Automatically re-sync project when BUILD files change";
+    mainPanel.add(
+        new JSeparator(SwingConstants.HORIZONTAL), defaultNoGrowConstraints(rowi++, 0, 1, 2));
+
+    String text = "Automatically re-sync project when BUILD files change";
     helper.registerLabelText(text, true);
     resyncAutomatically = new JCheckBox();
     resyncAutomatically.setSelected(false);
     resyncAutomatically.setText(text);
-    myMainPanel.add(
+    mainPanel.add(
         resyncAutomatically,
         new GridConstraints(
             rowi++,
@@ -288,7 +240,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     collapseProjectView = new JCheckBox();
     collapseProjectView.setSelected(false);
     collapseProjectView.setText(text);
-    myMainPanel.add(
+    mainPanel.add(
         collapseProjectView,
         new GridConstraints(
             rowi++,
@@ -309,7 +261,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     formatBuildFilesOnSave = new JCheckBox();
     formatBuildFilesOnSave.setSelected(false);
     formatBuildFilesOnSave.setText(text);
-    myMainPanel.add(
+    mainPanel.add(
         formatBuildFilesOnSave,
         new GridConstraints(
             rowi++,
@@ -329,7 +281,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     showAddFileToProjectNotification = new JCheckBox();
     showAddFileToProjectNotification.setSelected(false);
     showAddFileToProjectNotification.setText(SHOW_ADD_FILE_TO_PROJECT_LABEL_TEXT);
-    myMainPanel.add(
+    mainPanel.add(
         showAddFileToProjectNotification,
         new GridConstraints(
             rowi++,
@@ -346,7 +298,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             0,
             false));
     for (BlazeUserSettingsContributor contributor : settingsContributors) {
-      rowi = contributor.addComponents(myMainPanel, helper, rowi);
+      rowi = contributor.addComponents(mainPanel, helper, rowi);
     }
 
     blazeBinaryPathField =
@@ -369,7 +321,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
           rowi++);
     }
 
-    myMainPanel.add(
+    mainPanel.add(
         new Spacer(),
         new GridConstraints(
             rowi,
@@ -387,9 +339,89 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             false));
   }
 
+  private static GridConstraints defaultNoGrowConstraints(
+      int rowIndex, int columnIndex, int rowSpan, int columnSpan) {
+    return new GridConstraints(
+        rowIndex,
+        columnIndex,
+        rowSpan,
+        columnSpan,
+        GridConstraints.ANCHOR_WEST,
+        GridConstraints.FILL_NONE,
+        GridConstraints.SIZEPOLICY_FIXED,
+        GridConstraints.SIZEPOLICY_FIXED,
+        null,
+        null,
+        null,
+        0,
+        false);
+  }
+
+  private JComponent getFocusBehaviorSettingsUi() {
+    JPanel panel = new JPanel();
+    panel.setBorder(IdeBorderFactory.createTitledBorder("Tool window popup behavior", false));
+    panel.setLayout(new GridLayoutManager(3, 6, JBUI.emptyInsets(), -1, -1));
+
+    // blaze console settings
+    JLabel label =
+        helper.createSearchableLabel(String.format("%s Console", defaultBuildSystem), true);
+    label.setFont(JBFont.create(label.getFont()).asBold());
+    panel.add(label, defaultNoGrowConstraints(0, 0, 1, 3));
+    panel.add(helper.createSearchableLabel("On Sync:", true), defaultNoGrowConstraints(1, 0, 1, 1));
+    panel.add(
+        helper.createSearchableLabel("For Run/Debug actions:", true),
+        defaultNoGrowConstraints(2, 0, 1, 1));
+    panel.add(showBlazeConsoleOnSync, defaultNoGrowConstraints(1, 1, 1, 1));
+    panel.add(showBlazeConsoleOnRun, defaultNoGrowConstraints(2, 1, 1, 1));
+    panel.add(
+        Box.createHorizontalGlue(),
+        new GridConstraints(
+            1,
+            2,
+            2,
+            1,
+            GridConstraints.ANCHOR_WEST,
+            GridConstraints.FILL_BOTH,
+            GridConstraints.SIZEPOLICY_CAN_GROW,
+            GridConstraints.SIZEPOLICY_CAN_GROW,
+            null,
+            null,
+            null,
+            0,
+            false));
+
+    // problems view settings
+    label = helper.createSearchableLabel("Problems View", true);
+    label.setFont(JBFont.create(label.getFont()).asBold());
+    panel.add(label, defaultNoGrowConstraints(0, 3, 1, 3));
+    panel.add(helper.createSearchableLabel("On Sync:", true), defaultNoGrowConstraints(1, 3, 1, 1));
+    panel.add(
+        helper.createSearchableLabel("For Run/Debug actions:", true),
+        defaultNoGrowConstraints(2, 3, 1, 1));
+    panel.add(showProblemsViewOnSync, defaultNoGrowConstraints(1, 4, 1, 1));
+    panel.add(showProblemsViewOnRun, defaultNoGrowConstraints(2, 4, 1, 1));
+    panel.add(
+        Box.createHorizontalGlue(),
+        new GridConstraints(
+            1,
+            5,
+            2,
+            1,
+            GridConstraints.ANCHOR_WEST,
+            GridConstraints.FILL_BOTH,
+            GridConstraints.SIZEPOLICY_CAN_GROW,
+            GridConstraints.SIZEPOLICY_CAN_GROW,
+            null,
+            null,
+            null,
+            0,
+            false));
+    return panel;
+  }
+
   private void addBinaryLocationSetting(JLabel pathLabel, JComponent pathPanel, int rowIndex) {
     pathLabel.setLabelFor(pathPanel);
-    myMainPanel.add(
+    mainPanel.add(
         pathLabel,
         new GridConstraints(
             rowIndex,
@@ -405,7 +437,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             null,
             0,
             false));
-    myMainPanel.add(
+    mainPanel.add(
         pathPanel,
         new GridConstraints(
             rowIndex,

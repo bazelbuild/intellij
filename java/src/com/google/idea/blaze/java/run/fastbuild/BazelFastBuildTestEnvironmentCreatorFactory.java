@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.java.run;
+package com.google.idea.blaze.java.run.fastbuild;
 
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.openapi.project.Project;

@@ -142,7 +142,7 @@ public final class FastBuildCompilerFactoryImplTest {
     StringWriter javacOutput = new StringWriter();
     try {
       compile(java, javacOutput);
-    } catch (FastBuildCompileException e) {
+    } catch (FastBuildIncrementalCompileException e) {
       throw new AssertionError("Compilation failed:\n" + javacOutput, e);
     }
   }
@@ -164,7 +164,7 @@ public final class FastBuildCompilerFactoryImplTest {
     StringWriter javacOutput = new StringWriter();
     try {
       compile(java, javacOutput, GUAVA_JAR, TRUTH_JAR);
-    } catch (FastBuildCompileException e) {
+    } catch (FastBuildIncrementalCompileException e) {
       throw new AssertionError("Compilation failed:\n" + javacOutput, e);
     }
   }
@@ -186,8 +186,8 @@ public final class FastBuildCompilerFactoryImplTest {
     StringWriter javacOutput = new StringWriter();
     try {
       compile(java, javacOutput);
-      fail("Should have thrown FastBuildCompileException");
-    } catch (FastBuildCompileException e) {
+      fail("Should have thrown FastBuildIncrementalCompileException");
+    } catch (FastBuildIncrementalCompileException e) {
       assertThat(javacOutput.toString()).contains("ImmutableSet");
       assertThat(javacOutput.toString()).contains("Truth");
     }
@@ -214,8 +214,8 @@ public final class FastBuildCompilerFactoryImplTest {
                   /* sourceVersion */ "7",
                   /* targetVersion */ "8"))
           .compile(createCompileInstructions(java, javacOutput).build(), new HashMap<>());
-      fail("Should have thrown FastBuildCompileException");
-    } catch (FastBuildCompileException e) {
+      fail("Should have thrown FastBuildIncrementalCompileException");
+    } catch (FastBuildIncrementalCompileException e) {
       assertThat(javacOutput.toString()).contains("lambda");
       assertThat(javacOutput.toString()).contains("-source");
     }

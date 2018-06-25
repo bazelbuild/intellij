@@ -13,36 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.java.run;
+package com.google.idea.blaze.java.run.fastbuild;
 
-import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
+import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.java.fastbuild.FastBuildService;
-import com.intellij.icons.AllIcons;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.LayeredIcon;
 import icons.BlazeIcons;
-import javax.swing.Icon;
 
-final class ResetFastBuildAction extends AnAction {
+final class RerunFastBuildConfigurationWithBlazeAction extends AnAction {
 
   private final Project project;
-  private final FastBuildInfo fastBuildInfo;
+  private final Label label;
+  private final ExecutionEnvironment env;
 
-  ResetFastBuildAction(Project project, FastBuildInfo fastBuildInfo) {
+  RerunFastBuildConfigurationWithBlazeAction(
+      Project project, Label label, ExecutionEnvironment env) {
     super(
-        "Reset build", "Discard the cached build (next build will be from scratch)", createIcon());
+        "Rerun tests with clean build from " + getBuildSystem(project),
+        "Rerun the tests after generating a new build with " + getBuildSystem(project),
+        BlazeIcons.BlazeRerun);
     this.project = project;
-    this.fastBuildInfo = fastBuildInfo;
-  }
-
-  private static Icon createIcon() {
-    return new LayeredIcon(BlazeIcons.Blaze, AllIcons.Nodes.ExcludedFromCompile);
+    this.label = label;
+    this.env = env;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    FastBuildService.getInstance(project).resetBuild(fastBuildInfo.label());
+    FastBuildService.getInstance(project).resetBuild(label);
+    ExecutionUtil.restart(env);
+  }
+
+  private static String getBuildSystem(Project project) {
+    return Blaze.getBuildSystem(project).getName();
   }
 }

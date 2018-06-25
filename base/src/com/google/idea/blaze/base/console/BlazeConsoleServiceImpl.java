@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.console;
 
 import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.AnsiEscapeDecoder.ColoredTextAcceptor;
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -45,6 +46,11 @@ public class BlazeConsoleServiceImpl implements BlazeConsoleService, ColoredText
             ? ProcessOutputTypes.STDERR
             : ProcessOutputTypes.STDOUT;
     ansiEscapeDecoder.escapeText(text, key, this);
+  }
+
+  @Override
+  public void printHyperlink(String hyperlinkText, @Nullable HyperlinkInfo hyperlinkInfo) {
+    blazeConsoleView.printHyperlink(hyperlinkText, hyperlinkInfo);
   }
 
   @Override

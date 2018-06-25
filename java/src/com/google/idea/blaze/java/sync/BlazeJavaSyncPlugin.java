@@ -265,6 +265,9 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
       BlazeJarLibrary jarLibrary = (BlazeJarLibrary) library;
       LibraryArtifact libraryArtifact = jarLibrary.libraryArtifact;
       ArtifactLocation artifactLocation = libraryArtifact.jarForIntellijLibrary();
+      if (artifactLocation.isExternal) {
+        return;
+      }
       if (artifactLocation.getRelativePath().endsWith("deploy.jar")
           || artifactLocation.getRelativePath().endsWith("deploy-ijar.jar")
           || artifactLocation.getRelativePath().endsWith("deploy-hjar.jar")) {

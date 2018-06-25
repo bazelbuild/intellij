@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -51,7 +52,7 @@ class NewBlazeRuleAction extends BlazeProjectAction implements DumbAware {
           context
               .push(new ExperimentScope())
               .push(new BlazeConsoleScope.Builder(project).build())
-              .push(new IssuesScope(project, true))
+              .push(new IssuesScope(project, FocusBehavior.ON_ERROR))
               .push(new IdeaLogScope());
           NewBlazeRuleDialog newBlazeRuleDialog = new NewBlazeRuleDialog(project, virtualFile);
           newBlazeRuleDialog.show();

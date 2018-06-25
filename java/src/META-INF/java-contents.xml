@@ -61,7 +61,7 @@
     <JavaTestCaseIdentifier implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestMethodConfigurationProducer$Identifier"/>
     <TestComparisonFailureParser implementation="com.google.idea.blaze.java.run.smrunner.JunitTestComparisonFailureParser"/>
     <FastBuildAspectStrategyProvider implementation="com.google.idea.blaze.java.fastbuild.BazelFastBuildAspectStrategyProvider"/>
-    <FastBuildTestEnvironmentCreatorFactory implementation="com.google.idea.blaze.java.run.BazelFastBuildTestEnvironmentCreatorFactory"/>
+    <FastBuildTestEnvironmentCreatorFactory implementation="com.google.idea.blaze.java.run.fastbuild.BazelFastBuildTestEnvironmentCreatorFactory"/>
     <SyncStatusContributor implementation="com.google.idea.blaze.java.syncstatus.JavaSyncStatusContributor"/>
   </extensions>
 
@@ -113,6 +113,10 @@
                     serviceImplementation="com.google.idea.blaze.java.fastbuild.FastBuildCompilerFactoryImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.java.fastbuild.FastBuildIncrementalCompiler"
         serviceImplementation="com.google.idea.blaze.java.fastbuild.FastBuildIncrementalCompilerImpl"/>
+    <executor implementation="com.google.idea.blaze.java.run.fastbuild.FastBuildRunExecutor"/>
+    <executor implementation="com.google.idea.blaze.java.run.fastbuild.FastBuildDebugExecutor"/>
+    <programRunner implementation="com.google.idea.blaze.java.run.fastbuild.FastBuildProgramRunner"/>
+    <programRunner implementation="com.google.idea.blaze.java.run.fastbuild.FastBuildDebuggerRunner"/>
   </extensions>
 
   <application-components>
@@ -139,7 +143,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.JavaTestCaseIdentifier"
                     interface="com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer$JavaTestCaseIdentifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildTestEnvironmentCreatorFactory"
-                    interface="com.google.idea.blaze.java.run.FastBuildTestEnvironmentCreatorFactory"/>
+                    interface="com.google.idea.blaze.java.run.fastbuild.FastBuildTestEnvironmentCreatorFactory"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildAspectStrategyProvider"
                     interface="com.google.idea.blaze.java.fastbuild.FastBuildAspectStrategyProvider"/>
   </extensionPoints>

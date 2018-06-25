@@ -94,6 +94,7 @@ public enum Kind {
   TS_CONFIG("ts_config", LanguageClass.TYPESCRIPT, RuleType.BINARY),
   DART_PROTO_LIBRARY("dart_proto_library", LanguageClass.DART, RuleType.LIBRARY),
   DART_LIBRARY("_dart_library", LanguageClass.DART, RuleType.LIBRARY),
+  DART_VM_TEST("dart_vm_test", LanguageClass.DART, RuleType.TEST),
   KT_JVM_LIBRARY("kt_jvm_library", LanguageClass.KOTLIN, RuleType.LIBRARY),
   KT_JVM_TOOLCHAIN("kt_jvm_toolchain", LanguageClass.KOTLIN, RuleType.UNKNOWN),
   // TODO(brendandouglas): remove this once kotlin rules expose jdeps and genjars

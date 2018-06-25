@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.java.run;
+package com.google.idea.blaze.java.run.fastbuild;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
-import com.google.idea.blaze.java.run.FastBuildConfigurationRunner.FastBuildLoggingData;
+import com.google.idea.blaze.java.run.BlazeJavaDebuggableRunProfileState;
+import com.google.idea.blaze.java.run.BlazeJavaRunConfigState;
+import com.google.idea.blaze.java.run.fastbuild.FastBuildConfigurationRunner.FastBuildLoggingData;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -67,7 +68,7 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
         (BlazeJavaRunConfigState) getConfiguration().getHandler().getState();
 
     int debugPort = -1;
-    if (getExecutorType() == ExecutorType.DEBUG) {
+    if (getExecutorType().isDebugType()) {
       debugPort = handlerState.getDebugPortState().port;
     }
 
@@ -107,7 +108,8 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
       throws ExecutionException {
     DefaultExecutionResult result = (DefaultExecutionResult) super.execute(executor, runner);
     result.setActions(
-        new ResetFastBuildAction(getConfiguration().getProject(), getFastBuildInfo()));
+        new RerunFastBuildConfigurationWithBlazeAction(
+            getConfiguration().getProject(), getFastBuildInfo().label(), getEnvironment()));
     return result;
   }
 

@@ -42,6 +42,8 @@ import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.sdkcompat.clion.ToolchainUtils;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.CommandLineState;
@@ -56,12 +58,19 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.cidr.cpp.execution.CLionRunParameters;
+import com.jetbrains.cidr.cpp.execution.debugger.backend.GDBDriverConfiguration;
+import com.jetbrains.cidr.cpp.toolchains.CPPToolSet;
+import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
 import com.jetbrains.cidr.execution.CidrConsoleBuilder;
 import com.jetbrains.cidr.execution.TrivialInstaller;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
 import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess;
+import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration;
+import com.jetbrains.cidr.execution.debugger.remote.CidrRemoteDebugParameters;
+import com.jetbrains.cidr.execution.debugger.remote.CidrRemotePathMapping;
 import com.jetbrains.cidr.execution.testing.CidrLauncher;
 import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestConsoleProperties;
+import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment.PrepareFor;
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
@@ -80,6 +89,25 @@ public final class BlazeCidrLauncher extends CidrLauncher {
   private final BlazeCidrRunConfigurationRunner runner;
   private final ExecutionEnvironment env;
 
+  static final BoolExperiment useRemoteDebugging = new BoolExperiment("cc.remote.debugging", true);
+
+  private static final ImmutableList<String> extraFlagsForDebugRun =
+      ImmutableList.of(
+          "--strip=never",
+          "--copt=-g",
+          "--dynamic_mode=off",
+          "--run_under=gdbserver localhost:5556");
+
+  private static final ImmutableList<String> extraFlagsForDebugTest =
+      ImmutableList.of(
+          "--strip=never",
+          "--copt=-g",
+          "--dynamic_mode=off",
+          "--run_under=gdbserver localhost:5556",
+          "--test_timeout=3600",
+          "--nocache_test_results",
+          "--test_strategy=local");
+
   BlazeCidrLauncher(
       BlazeCommandRunConfiguration configuration,
       BlazeCidrRunConfigurationRunner runner,
@@ -93,9 +121,15 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
   @Override
   public ProcessHandler createProcess(CommandLineState state) throws ExecutionException {
+    return createProcess(state, ImmutableList.of(), false);
+  }
+
+  private ProcessHandler createProcess(
+      CommandLineState state, List<String> extraBlazeFlags, boolean isInferiorProcess)
+      throws ExecutionException {
     ImmutableList<String> testHandlerFlags = ImmutableList.of();
     BlazeTestUiSession testUiSession =
-        useTestUi()
+        !isInferiorProcess && useTestUi()
             ? TestUiSessionProvider.getInstance(project).getTestUiSession(configuration.getTarget())
             : null;
     if (testUiSession != null) {
@@ -107,11 +141,12 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
     List<String> fixedBlazeFlags = getFixedBlazeFlags();
 
-    BlazeCommand.Builder command =
+    BlazeCommand.Builder commandBuilder =
         BlazeCommand.builder(
                 Blaze.getBuildSystemProvider(project).getBinaryPath(),
                 handlerState.getCommandState().getCommand())
             .addTargets(configuration.getTarget())
+            .addBlazeFlags(extraBlazeFlags)
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(
                     project,
@@ -127,16 +162,18 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     state.addConsoleFilters(getConsoleFilters().toArray(new Filter[0]));
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+    final BlazeCommand command = commandBuilder.build();
+
     return new ScopedBlazeProcessHandler(
         project,
-        command.build(),
+        command,
         workspaceRoot,
         new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
           @Override
           public void onBlazeContextStart(BlazeContext context) {
             context.push(
                 new IssuesScope(
-                    project, BlazeUserSettings.getInstance().getShowProblemsViewForRunAction()));
+                    project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()));
           }
 
           @Override
@@ -149,6 +186,16 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         });
   }
 
+  static ImmutableList<String> getExtraFlagsForDebugging(BlazeCommandName commandName) {
+    if (BlazeCommandName.RUN.equals(commandName)) {
+      return extraFlagsForDebugRun;
+    }
+    if (BlazeCommandName.TEST.equals(commandName)) {
+      return extraFlagsForDebugTest;
+    }
+    return ImmutableList.of();
+  }
+
   @Override
   public CidrDebugProcess createDebugProcess(CommandLineState state, XDebugSession session)
       throws ExecutionException {
@@ -159,31 +206,129 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     if (runner.executableToDebug == null) {
       throw new ExecutionException("No debug binary found.");
     }
+
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
-    GeneralCommandLine commandLine = new GeneralCommandLine(runner.executableToDebug.getPath());
     File workingDir = workspaceRoot.directory();
-    commandLine.setWorkDirectory(workingDir);
-    commandLine.addParameters(handlerState.getExeFlagsState().getExpandedFlags());
 
-    EnvironmentVariablesData envState = handlerState.getEnvVarsState().getData();
-    commandLine.withParentEnvironmentType(
-        envState.isPassParentEnvs() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.NONE);
-    commandLine.getEnvironment().putAll(envState.getEnvs());
+    if (!useRemoteDebugging.getValue()) {
+      GeneralCommandLine commandLine = new GeneralCommandLine(runner.executableToDebug.getPath());
 
-    if (Kind.CC_TEST.equals(configuration.getTargetKind())) {
-      convertBlazeTestFilterToExecutableFlag().ifPresent(commandLine::addParameters);
+      commandLine.setWorkDirectory(workingDir);
+      commandLine.addParameters(handlerState.getExeFlagsState().getExpandedFlags());
+
+      EnvironmentVariablesData envState = handlerState.getEnvVarsState().getData();
+      commandLine.withParentEnvironmentType(
+          envState.isPassParentEnvs() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.NONE);
+      commandLine.getEnvironment().putAll(envState.getEnvs());
+
+      if (Kind.CC_TEST.equals(configuration.getTargetKind())) {
+        convertBlazeTestFilterToExecutableFlag().ifPresent(commandLine::addParameters);
+      }
+
+      TrivialInstaller installer = new TrivialInstaller(commandLine);
+      ImmutableList<String> startupCommands = getGdbStartupCommands(workingDir);
+      CLionRunParameters parameters =
+          new CLionRunParameters(
+              new BlazeGDBDriverConfiguration(project, startupCommands, workspaceRoot), installer);
+
+      state.setConsoleBuilder(createConsoleBuilder(null));
+      state.addConsoleFilters(getConsoleFilters().toArray(new Filter[0]));
+      return new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder());
     }
 
-    TrivialInstaller installer = new TrivialInstaller(commandLine);
-    ImmutableList<String> startupCommands = getGdbStartupCommands(workingDir);
-    CLionRunParameters parameters =
-        new CLionRunParameters(
-            new BlazeGDBDriverConfiguration(project, startupCommands, workspaceRoot), installer);
+    List<String> extraDebugFlags =
+        getExtraFlagsForDebugging(handlerState.getCommandState().getCommand());
 
-    state.setConsoleBuilder(createConsoleBuilder(null));
-    state.addConsoleFilters(getConsoleFilters().toArray(new Filter[0]));
-    return new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder());
+    ProcessHandler targetProcess = createProcess(state, extraDebugFlags, true);
+
+    configProcessHandler(state, targetProcess, false, true);
+
+    targetProcess.startNotify();
+
+    CidrRemoteDebugParameters parameters =
+        new CidrRemoteDebugParameters(
+            "tcp:localhost:5556",
+            runner.executableToDebug.getPath(),
+            workingDir.getPath(),
+            ImmutableList.of(new CidrRemotePathMapping("/proc/self/cwd", workingDir.getParent())));
+
+    CPPToolchains.Toolchain toolchainForDebugger =
+        new ToolchainUtils.ToolchainCompat() {
+          private final CPPToolSet blazeToolSet = new BlazeToolSet(workingDir);
+
+          @Override
+          public CPPToolSet getToolSet() {
+            return blazeToolSet;
+          }
+        };
+
+    ToolchainUtils.setDebuggerToDefault(toolchainForDebugger);
+
+    DebuggerDriverConfiguration debuggerDriverConfiguration =
+        new GDBDriverConfiguration(project, toolchainForDebugger);
+
+    return new BlazeCidrRemoteDebugProcess(
+        targetProcess,
+        debuggerDriverConfiguration,
+        parameters,
+        session,
+        // Ignore console builder attached to commandline state and use a regular one
+        new CidrConsoleBuilder(getProject(), null, null));
+  }
+
+  /**
+   * There is currently no way to override the working directory for the debug process when we
+   * create it. By creating a CPPToolSet, we have an opportunity to alter the commandline before it
+   * launches. See https://youtrack.jetbrains.com/issue/CPP-8362
+   */
+  private static class BlazeToolSet extends CPPToolSet {
+    private static final char[] separators = {'/'};
+
+    private BlazeToolSet(File workingDirectory) {
+      super(Kind.MINGW, workingDirectory);
+    }
+
+    @Override
+    public String readVersion() {
+      return "no version";
+    }
+
+    @Override
+    public String checkVersion(String s) {
+      return null;
+    }
+
+    @Override
+    public char[] getSupportedFileSeparators() {
+      return separators;
+    }
+
+    @Override
+    public File getGDBPath() {
+      return ToolchainUtils.getDebuggerFile(ToolchainUtils.getToolchain());
+    }
+
+    @SuppressWarnings("MissingOverride")
+    public boolean isBundledGdbCompatible() {
+      return false;
+    }
+
+    @Override
+    public void prepareEnvironment(
+        GeneralCommandLine cl, PrepareFor prepareFor, List<CPPToolSet.Option> options)
+        throws ExecutionException {
+      super.prepareEnvironment(cl, prepareFor, options);
+      if (prepareFor.equals(PrepareFor.RUN)) {
+        cl.setWorkDirectory(super.getHome());
+      }
+    }
+
+    // This was renamed to 'isBundledGdbCompatible' in 2018.1 #api173
+    @SuppressWarnings("MissingOverride")
+    public boolean forceToolSetGDB() {
+      return isBundledGdbCompatible();
+    }
   }
 
   /** Get the correct test prefix for blaze/bazel */

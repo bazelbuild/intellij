@@ -48,7 +48,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
+import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -112,7 +112,7 @@ final class FastBuildServiceImpl implements FastBuildService {
 
   @Override
   public boolean supportsFastBuilds(Kind kind) {
-    return FastBuildService.enabled.getValue() && SUPPORTED_KINDS.contains(kind);
+    return SUPPORTED_KINDS.contains(kind);
   }
 
   @Override
@@ -286,10 +286,8 @@ final class FastBuildServiceImpl implements FastBuildService {
 
     // TODO(plumpy): this assumes we're running this build as part of a run action. I try not to
     // make that assumption anywhere else, so this should be supplied by the caller.
-    BlazeConsolePopupBehavior consolePopupBehavior =
-        BlazeUserSettings.getInstance().getSuppressConsoleForRunAction()
-            ? BlazeConsolePopupBehavior.NEVER
-            : BlazeConsolePopupBehavior.ALWAYS;
+    FocusBehavior consolePopupBehavior = BlazeUserSettings.getInstance().getShowBlazeConsoleOnRun();
+    FocusBehavior problemsViewFocus = BlazeUserSettings.getInstance().getShowProblemsViewOnRun();
 
     FastBuildAspectStrategy aspectStrategy =
         FastBuildAspectStrategyProvider.findAspectStrategy(
@@ -309,7 +307,7 @@ final class FastBuildServiceImpl implements FastBuildService {
                   @Override
                   protected BuildResult execute(BlazeContext context) {
                     context
-                        .push(new IssuesScope(project, /* focusProblemsViewOnIssue */ true))
+                        .push(new IssuesScope(project, problemsViewFocus))
                         .push(
                             new BlazeConsoleScope.Builder(project)
                                 .setPopupBehavior(consolePopupBehavior)

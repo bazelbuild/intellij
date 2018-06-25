@@ -52,7 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 
 /** Main entry point for C/CPP configuration data. */
 public final class BlazeCWorkspace implements ProjectComponent {
@@ -99,8 +98,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 indicator.setText("Resolving Configurations...");
                 indicator.setFraction(0.0);
                 BlazeConfigurationResolverResult newResult =
-                    resolveConfigurations(
-                        context, workspaceRoot, projectViewSet, blazeProjectData, indicator);
+                    resolveConfigurations(context, workspaceRoot, projectViewSet, blazeProjectData);
                 indicator.setText("Updating Configurations...");
                 indicator.setFraction(0.0);
                 CommitableConfiguration config =
@@ -116,8 +114,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData,
-      @Nullable ProgressIndicator indicator) {
+      BlazeProjectData blazeProjectData) {
     BlazeConfigurationResolverResult oldResult = resolverResult;
     return configurationResolver.update(
         context, workspaceRoot, projectViewSet, blazeProjectData, oldResult);
@@ -184,13 +181,14 @@ public final class BlazeCWorkspace implements ProjectComponent {
             Stream.concat(
                     targetIdeInfo.cIdeInfo.localIncludeDirectories.stream(),
                     targetIdeInfo.cIdeInfo.transitiveIncludeDirectories.stream())
-                .map(
+                .flatMap(
                     executionRootPath ->
-                        "-I"
-                            + executionRootPathResolver
-                                .resolveExecutionRootPath(executionRootPath)
-                                .getAbsolutePath())
+                        executionRootPathResolver
+                            .resolveToIncludeDirectories(executionRootPath)
+                            .stream())
+                .map(file -> "-I" + file.getAbsolutePath())
                 .collect(Collectors.toList());
+
         // transitiveQuoteIncludeDirectories are sourced from
         // CcSkylarkApiProvider.quote_include_directories
         // [see CcCompilationContextInfo::getQuoteIncludeDirs]
@@ -199,14 +197,14 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 .cIdeInfo
                 .transitiveQuoteIncludeDirectories
                 .stream()
-                .map(
+                .flatMap(
                     executionRootPath ->
-                        "-iquote"
-                            + executionRootPathResolver
-                                .resolveExecutionRootPath(executionRootPath)
-                                .getAbsolutePath())
+                        executionRootPathResolver
+                            .resolveToIncludeDirectories(executionRootPath)
+                            .stream())
+                .map(file -> "-iquote" + file.getAbsolutePath())
                 .collect(Collectors.toList());
-        // transitiveQuoteIncludeDirectories are sourced from
+        // transitiveSystemIncludeDirectories are sourced from
         // CcSkylarkApiProvider.system_include_directories
         // [see CcCompilationContextInfo::getSystemIncludeDirs]
         List<String> isystemOptionIncludeDirectories =
@@ -214,12 +212,12 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 .cIdeInfo
                 .transitiveSystemIncludeDirectories
                 .stream()
-                .map(
+                .flatMap(
                     executionRootPath ->
-                        "-isystem"
-                            + executionRootPathResolver
-                                .resolveExecutionRootPath(executionRootPath)
-                                .getAbsolutePath())
+                        executionRootPathResolver
+                            .resolveToIncludeDirectories(executionRootPath)
+                            .stream())
+                .map(file -> "-isystem" + file.getAbsolutePath())
                 .collect(Collectors.toList());
 
         for (VirtualFile vf : resolveConfiguration.getSources(blazeProjectData, targetKey)) {

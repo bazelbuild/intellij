@@ -19,13 +19,11 @@ import static com.google.idea.blaze.scala.run.producers.BlazeScalaMainClassRunCo
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
-import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.run.RunUtil;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -66,6 +64,9 @@ class DeployableJarRunConfigurationProducer
 
     Label label = target.key.label;
     File jarFile = getDeployJarFile(label, context.getProject());
+    if (jarFile == null) {
+      return false;
+    }
 
     configuration.setVMParameters("-cp " + jarFile.getPath());
     configuration.setMainClassName(mainObject.getTruncedQualifiedName());
@@ -100,7 +101,9 @@ class DeployableJarRunConfigurationProducer
     }
     Label label = target.key.label;
     File jarFile = getDeployJarFile(label, context.getProject());
-
+    if (jarFile == null) {
+      return false;
+    }
     return mainClass.getQualifiedName().equals(mainObject.getTruncedQualifiedName())
         && configuration.getVMParameters().contains("-cp " + jarFile.getPath());
   }
@@ -124,12 +127,14 @@ class DeployableJarRunConfigurationProducer
         config, ImmutableList.of(new GenerateExecutableDeployableJarProviderTaskProvider.Task()));
   }
 
+  @Nullable
   private File getDeployJarFile(Label target, Project project) {
-    WorkspaceRoot root = WorkspaceRoot.fromProject(project);
-    return root.fileForPath(
-        WorkspacePath.createIfValid(
-            String.format(
-                "%s/%s_deploy.jar",
-                BlazeInfo.blazeBinKey(Blaze.getBuildSystem(project)), target.targetName())));
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectData == null) {
+      return null;
+    }
+    File blazeBin = projectData.blazeInfo.getBlazeBinDirectory();
+    return new File(blazeBin, String.format("%s_deploy.jar", target.targetName()));
   }
 }

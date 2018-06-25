@@ -45,7 +45,6 @@ import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.execution.BeforeRunTask;
@@ -148,19 +147,16 @@ public final class BuildPluginBeforeRunTaskProvider
     if (!canExecuteTask(configuration, task)) {
       return false;
     }
-    BlazeConsolePopupBehavior consolePopupBehavior =
-        BlazeUserSettings.getInstance().getSuppressConsoleForRunAction()
-            ? BlazeConsolePopupBehavior.NEVER
-            : BlazeConsolePopupBehavior.ALWAYS;
+    BlazeUserSettings userSettings = BlazeUserSettings.getInstance();
     return Scope.root(
         context -> {
           WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
           context
               .push(new ExperimentScope())
-              .push(new IssuesScope(project, true))
+              .push(new IssuesScope(project, userSettings.getShowProblemsViewOnRun()))
               .push(
                   new BlazeConsoleScope.Builder(project)
-                      .setPopupBehavior(consolePopupBehavior)
+                      .setPopupBehavior(userSettings.getShowBlazeConsoleOnRun())
                       .addConsoleFilters(
                           new IssueOutputFilter(
                               project, workspaceRoot, BlazeInvocationContext.NonSync, true))

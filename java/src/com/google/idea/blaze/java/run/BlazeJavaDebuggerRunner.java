@@ -55,7 +55,7 @@ public class BlazeJavaDebuggerRunner extends GenericDebuggerRunner {
     return canDebug(configuration.getHandler().getCommandName());
   }
 
-  private static boolean canDebug(@Nullable BlazeCommandName command) {
+  protected boolean canDebug(@Nullable BlazeCommandName command) {
     return BlazeCommandName.TEST.equals(command) || BlazeCommandName.RUN.equals(command);
   }
 
