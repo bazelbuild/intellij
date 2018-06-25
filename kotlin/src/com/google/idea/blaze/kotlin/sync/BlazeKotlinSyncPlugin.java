@@ -32,10 +32,16 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SyncListener;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.sdkcompat.kotlin.CommonCompilerArgumentsCompatUtils;
+import com.google.idea.sdkcompat.kotlin.KotlinLibraryConfigurator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,7 +53,6 @@ import javax.annotation.Nullable;
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
 import org.jetbrains.kotlin.config.LanguageVersion;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
-import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator;
 
 /** Supports Kotlin. */
 public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
@@ -169,10 +174,27 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     @Override
     public void afterSync(
         Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {
+      BlazeProjectData blazeProjectData =
+          BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+      if (blazeProjectData == null
+          || !blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
+        return;
+      }
+      Module workspaceModule = getWorkspaceModule(project);
+      if (workspaceModule == null) {
+        return;
+      }
       ApplicationManager.getApplication()
           .invokeLater(
-              () ->
-                  KotlinJavaModuleConfigurator.Companion.getInstance().configureSilently(project));
+              () -> KotlinLibraryConfigurator.INSTANCE.configureModule(project, workspaceModule));
     }
+  }
+
+  @Nullable
+  private static Module getWorkspaceModule(Project project) {
+    return ReadAction.compute(
+        () ->
+            ModuleManager.getInstance(project)
+                .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME));
   }
 }

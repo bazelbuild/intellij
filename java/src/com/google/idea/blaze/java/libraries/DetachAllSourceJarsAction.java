@@ -27,8 +27,8 @@ import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibraryEditor;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
+import com.google.idea.common.transactions.Transactions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
@@ -65,27 +65,27 @@ class DetachAllSourceJarsAction extends BlazeProjectAction {
     if (librariesToDetach.isEmpty()) {
       return;
     }
-    ApplicationManager.getApplication()
-        .runWriteAction(
-            () -> {
-              LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
-              LibraryTable.ModifiableModel libraryTableModel = libraryTable.getModifiableModel();
-              for (Library library : librariesToDetach) {
-                BlazeJarLibrary blazeLibrary =
-                    LibraryActionHelper.findLibraryFromIntellijLibrary(
-                        project, blazeProjectData, library);
-                if (blazeLibrary == null) {
-                  continue;
-                }
-                LibraryEditor.updateLibrary(
-                    project,
-                    blazeProjectData.artifactLocationDecoder,
-                    libraryTable,
-                    libraryTableModel,
-                    blazeLibrary);
-              }
-              libraryTableModel.commit();
-            });
+    Transactions.submitWriteActionTransaction(
+        project,
+        () -> {
+          LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
+          LibraryTable.ModifiableModel libraryTableModel = libraryTable.getModifiableModel();
+          for (Library library : librariesToDetach) {
+            BlazeJarLibrary blazeLibrary =
+                LibraryActionHelper.findLibraryFromIntellijLibrary(
+                    project, blazeProjectData, library);
+            if (blazeLibrary == null) {
+              continue;
+            }
+            LibraryEditor.updateLibrary(
+                project,
+                blazeProjectData.artifactLocationDecoder,
+                libraryTable,
+                libraryTableModel,
+                blazeLibrary);
+          }
+          libraryTableModel.commit();
+        });
   }
 
   static class DetachAllOnSync extends SyncListener.Adapter {
@@ -102,9 +102,6 @@ class DetachAllSourceJarsAction extends BlazeProjectAction {
       if (syncMode == SyncMode.FULL) {
         detachAll(project);
       }
-
-      super.onSyncComplete(
-          project, context, importSettings, projectViewSet, blazeProjectData, syncMode, syncResult);
     }
   }
 }

@@ -169,17 +169,17 @@ final class BlazeSyncTask implements Progressive {
           }
           context.push(new ProgressIndicatorScope(indicator));
 
+          BlazeUserSettings userSettings = BlazeUserSettings.getInstance();
           if (!syncParams.backgroundSync) {
             context
                 .push(
                     new BlazeConsoleScope.Builder(project, indicator)
-                        .setPopupBehavior(
-                            BlazeUserSettings.getInstance().getShowBlazeConsoleOnSync())
+                        .setPopupBehavior(userSettings.getShowBlazeConsoleOnSync())
                         .addConsoleFilters(
                             new IssueOutputFilter(
                                 project, workspaceRoot, BlazeInvocationContext.Sync, true))
                         .build())
-                .push(new IssuesScope(project, true))
+                .push(new IssuesScope(project, userSettings.getShowProblemsViewOnSync()))
                 .push(new IdeaLogScope());
             if (syncParams.syncMode != SyncMode.NO_BUILD) {
               context.push(

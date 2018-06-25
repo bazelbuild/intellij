@@ -39,7 +39,8 @@ public class NoIdeTest extends BazelIntellijAspectTest {
         .containsExactly(
             testRelative("libfoo.jar"),
             testRelative("libfoo-hjar.jar"),
-            testRelative("libfoo-src.jar"));
+            testRelative("libfoo-src.jar"),
+            testRelative("libfoo.jdeps"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
         .containsExactly(testRelative("libfoo.jar"));
   }

@@ -202,7 +202,6 @@ public interface ExternalTask {
       String executingTasksText =
           "Command: "
               + Joiner.on(" ").join(command)
-              + SystemProperties.getLineSeparator()
               + SystemProperties.getLineSeparator();
 
       context.output(PrintOutput.log(executingTasksText));

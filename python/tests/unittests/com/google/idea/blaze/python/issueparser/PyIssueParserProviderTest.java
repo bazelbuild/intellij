@@ -21,8 +21,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParserProvider;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.util.TextRange;
 import org.junit.Test;
@@ -33,11 +38,19 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class PyIssueParserProviderTest extends BlazeTestCase {
 
+  private static final BlazeImportSettings DUMMY_SETTINGS =
+      new BlazeImportSettings("root", "", "", "", BuildSystem.Bazel);
+  private static final WorkspaceRoot ROOT = WorkspaceRoot.fromImportSettings(DUMMY_SETTINGS);
   private ImmutableList<BlazeIssueParser.Parser> parsers;
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
+
+    projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
+    BlazeImportSettings importSettings =
+        new BlazeImportSettings("root", "", "", "", BuildSystem.Bazel);
+    BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(importSettings);
 
     ExtensionPointImpl<BlazeIssueParserProvider> ep =
         registerExtensionPoint(BlazeIssueParserProvider.EP_NAME, BlazeIssueParserProvider.class);
@@ -58,5 +71,16 @@ public class PyIssueParserProviderTest extends BlazeTestCase {
     assertThat(issue.getNavigatable()).isNotNull();
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(TextRange.create("File \"".length(), "File \"dataset.py\", line 109".length()));
+  }
+
+  @Test
+  public void testParseWorkspaceRelativePath() {
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    IssueOutput issue =
+        blazeIssueParser.parseIssue(
+            "File \"path/to/file.py\", line 109, in File: "
+                + "Name 'function' is not defined [name-error]");
+    assertThat(issue.getFile()).isEqualTo(ROOT.fileForPath(new WorkspacePath("path/to/file.py")));
+    assertThat(issue.getLine()).isEqualTo(109);
   }
 }

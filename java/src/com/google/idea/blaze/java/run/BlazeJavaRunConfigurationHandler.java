@@ -18,12 +18,13 @@ package com.google.idea.blaze.java.run;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationRunner.BlazeCommandRunProfileState;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
-import com.google.idea.blaze.java.fastbuild.FastBuildService;
+import com.google.idea.blaze.java.run.fastbuild.FastBuildConfigurationRunner;
 import com.google.idea.blaze.java.run.hotswap.ClassFileManifestBuilder;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -59,7 +60,7 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
   @Override
   public BlazeCommandRunConfigurationRunner createRunner(
       Executor executor, ExecutionEnvironment environment) {
-    if (FastBuildService.enabled.getValue() && state.getFastBuildState().useFastBuild()) {
+    if (ExecutorType.fromExecutor(executor).isFastBuildType()) {
       return new FastBuildConfigurationRunner();
     }
     return new BlazeJavaRunConfigurationRunner();

@@ -165,8 +165,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
               context
                   .push(
                       new IssuesScope(
-                          project,
-                          BlazeUserSettings.getInstance().getShowProblemsViewForRunAction()))
+                          project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))
                   .push(new IdeaLogScope());
             }
 

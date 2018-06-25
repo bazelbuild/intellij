@@ -19,6 +19,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains.DebuggerKind;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains.Toolchain;
+import com.jetbrains.cidr.execution.debugger.CidrDebuggerPathManager;
+import java.io.File;
 
 /** Handles changes to toolchains between different api versions */
 public class ToolchainUtils {
@@ -60,6 +62,12 @@ public class ToolchainUtils {
             });
   }
 
+  public static void setDebuggerToDefault(CPPToolchains.Toolchain toolchain) {
+    Toolchain defaultToolchain = getToolchain();
+    toolchain.setCustomGDBExecutablePath(defaultToolchain.getCustomGDBExecutablePath());
+    toolchain.setDebuggerKind(defaultToolchain.getDebuggerKind());
+  }
+
   /**
    * Used to register an instance of this class for unit tests. This needs to be in sdkcompat
    * because CPPToolchains changed packages between 2017.2 and 2017.3. #api173
@@ -74,5 +82,28 @@ public class ToolchainUtils {
    */
   public static CPPToolchains createCppToolchainsInstance() {
     return new CPPToolchains();
+  }
+
+  /** Used to abstract away different between CPPToolchains.Toolchain #api173 */
+  public static class ToolchainCompat extends Toolchain {
+    public ToolchainCompat() {
+      super(CPPToolchains.OSType.getCurrent());
+    }
+  }
+
+  /** Get the GDB file. Return the bundled one rather than null #api173 */
+  public static File getDebuggerFile(CPPToolchains.Toolchain toolchain) {
+    if (toolchain.getDebuggerKind() == DebuggerKind.BUNDLED_GDB) {
+      return CidrDebuggerPathManager.getBundledGDBBinary();
+    }
+    String gdbPath = toolchain.getCustomGDBExecutablePath();
+    if (gdbPath == null) {
+      return CidrDebuggerPathManager.getBundledGDBBinary();
+    }
+    File gdbFile = new File(gdbPath);
+    if (!gdbFile.exists()) {
+      return CidrDebuggerPathManager.getBundledGDBBinary();
+    }
+    return gdbFile;
   }
 }

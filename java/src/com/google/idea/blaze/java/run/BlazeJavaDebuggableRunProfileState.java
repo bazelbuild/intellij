@@ -30,14 +30,15 @@ import com.intellij.execution.runners.ExecutionEnvironment;
  * A {@code RunProfileState} to go with {@link BlazeJavaRunConfigState}, providing debugging
  * support.
  */
-abstract class BlazeJavaDebuggableRunProfileState extends CommandLineState implements RemoteState {
+public abstract class BlazeJavaDebuggableRunProfileState extends CommandLineState
+    implements RemoteState {
 
   private static final String DEBUG_HOST_NAME = "localhost";
 
   private final BlazeCommandRunConfiguration cfg;
   private final ExecutorType executorType;
 
-  BlazeJavaDebuggableRunProfileState(ExecutionEnvironment environment) {
+  protected BlazeJavaDebuggableRunProfileState(ExecutionEnvironment environment) {
     super(environment);
     this.cfg = getConfiguration(environment);
     this.executorType = ExecutorType.fromExecutor(environment.getExecutor());
@@ -51,17 +52,17 @@ abstract class BlazeJavaDebuggableRunProfileState extends CommandLineState imple
     return (BlazeCommandRunConfiguration) runProfile;
   }
 
-  BlazeCommandRunConfiguration getConfiguration() {
+  protected BlazeCommandRunConfiguration getConfiguration() {
     return cfg;
   }
 
-  ExecutorType getExecutorType() {
+  protected ExecutorType getExecutorType() {
     return executorType;
   }
 
   @Override
   public RemoteConnection getRemoteConnection() {
-    if (executorType != ExecutorType.DEBUG) {
+    if (!executorType.isDebugType()) {
       return null;
     }
     BlazeJavaRunConfigState state = cfg.getHandlerStateIfType(BlazeJavaRunConfigState.class);

@@ -36,7 +36,7 @@ import org.junit.Before;
 public class BlazeCppIntegrationTestCase extends BlazeIntegrationTestCase {
 
   @Before
-  public void enableCppLanguageSupport() throws Throwable {
+  public void enableCppLanguageSupport() {
     registerProjectService(OCWorkspaceManager.class, new TestOCWorkspaceManager());
     enableCSupportInIde(getProject());
   }

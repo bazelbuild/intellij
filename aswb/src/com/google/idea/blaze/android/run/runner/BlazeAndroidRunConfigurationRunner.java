@@ -45,7 +45,6 @@ import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -194,18 +193,15 @@ public final class BlazeAndroidRunConfigurationRunner
   @Override
   public boolean executeBeforeRunTask(ExecutionEnvironment env) {
     final Project project = env.getProject();
-    BlazeConsolePopupBehavior consolePopupBehavior =
-        BlazeUserSettings.getInstance().getSuppressConsoleForRunAction()
-            ? BlazeConsolePopupBehavior.NEVER
-            : BlazeConsolePopupBehavior.ALWAYS;
+    BlazeUserSettings settings = BlazeUserSettings.getInstance();
     return Scope.root(
         context -> {
           context
-              .push(new IssuesScope(project, true))
+              .push(new IssuesScope(project, settings.getShowProblemsViewOnRun()))
               .push(new ExperimentScope())
               .push(
                   new BlazeConsoleScope.Builder(project)
-                      .setPopupBehavior(consolePopupBehavior)
+                      .setPopupBehavior(settings.getShowBlazeConsoleOnRun())
                       .addConsoleFilters(
                           new IssueOutputFilter(
                               project,

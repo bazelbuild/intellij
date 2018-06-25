@@ -39,6 +39,8 @@ import com.google.idea.blaze.base.scope.scopes.NotificationScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -119,6 +121,7 @@ public class BlazeBuildService {
     if (blazeProjectData == null) {
       return;
     }
+    FocusBehavior problemsViewFocus = BlazeUserSettings.getInstance().getShowProblemsViewOnRun();
     @SuppressWarnings("unused") // go/futurereturn-lsc
     Future<?> possiblyIgnoredError =
         ProgressiveTaskWithProgressIndicator.builder(project)
@@ -138,7 +141,7 @@ public class BlazeBuildService {
                                         BlazeInvocationContext.Sync,
                                         true))
                                 .build())
-                        .push(new IssuesScope(project, true))
+                        .push(new IssuesScope(project, problemsViewFocus))
                         .push(new IdeaLogScope())
                         .push(new TimingScope("Make", EventType.BlazeInvocation))
                         .push(notificationScope);

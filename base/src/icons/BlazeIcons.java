@@ -28,6 +28,9 @@ public class BlazeIcons {
   public static final Icon BlazeDirty = load("base/resources/icons/blaze_dirty.png"); // 16x16
   public static final Icon BlazeClean = load("base/resources/icons/blaze_clean.png"); // 16x16
   public static final Icon BlazeFailed = load("base/resources/icons/blaze_failed.png"); // 16x16
+
+  public static final Icon BlazeRerun = load("base/resources/icons/blazeRerun.png"); // 16x16
+
   // This is just the Blaze icon scaled down to the size IJ wants for tool windows.
   public static final Icon BlazeToolWindow =
       load("base/resources/icons/blazeToolWindow.png"); // 13x13
@@ -37,6 +40,9 @@ public class BlazeIcons {
   // Build file support icons
   public static final Icon BuildFile = load("base/resources/icons/build_file.png"); // 16x16
   public static final Icon BuildRule = load("base/resources/icons/build_rule.png"); // 16x16
+
+  public static final Icon LightningOverlay =
+      load("base/resources/icons/lightningOverlay.png"); // 16x16
 
   private static Icon load(String path) {
     return IconLoader.getIcon(BASE + path, BlazeIcons.class);

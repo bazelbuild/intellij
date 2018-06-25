@@ -153,7 +153,8 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
         timer.stop();
         writeCompilationFinishedMessage(instructions, result, timer, loggingData);
         if (result != 0) {
-          throw new FastBuildCompileException("javac exited with code " + result, loggingData);
+          throw new FastBuildIncrementalCompileException(
+              "javac exited with code " + result, loggingData);
         }
       } catch (ReflectiveOperationException e) {
         throw new FastBuildException(e);

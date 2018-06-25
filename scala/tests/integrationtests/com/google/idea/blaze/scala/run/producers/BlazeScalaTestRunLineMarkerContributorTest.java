@@ -83,16 +83,10 @@ public class BlazeScalaTestRunLineMarkerContributorTest
     Info classInfo = markerContributor.getInfo(classIdentifier);
     assertThat(classInfo).isNotNull();
     assertThat(classInfo.icon).isEqualTo(AllIcons.RunConfigurations.TestState.Run_run);
-    assertThat(classInfo.actions).hasLength(2);
-    assertThat(classInfo.actions[0].getTemplatePresentation().getText()).startsWith("Run ");
-    assertThat(classInfo.actions[1].getTemplatePresentation().getText()).startsWith("Debug ");
 
     Info methodInfo = markerContributor.getInfo(methodIdentifier);
     assertThat(methodInfo).isNotNull();
     assertThat(methodInfo.icon).isEqualTo(AllIcons.RunConfigurations.TestState.Run);
-    assertThat(methodInfo.actions).hasLength(2);
-    assertThat(methodInfo.actions[0].getTemplatePresentation().getText()).startsWith("Run ");
-    assertThat(methodInfo.actions[1].getTemplatePresentation().getText()).startsWith("Debug ");
 
     elements
         .stream()
@@ -154,9 +148,6 @@ public class BlazeScalaTestRunLineMarkerContributorTest
     Info info = markerContributor.getInfo(classIdentifier);
     assertThat(info).isNotNull();
     assertThat(info.icon).isEqualTo(AllIcons.RunConfigurations.TestState.Run_run);
-    assertThat(info.actions).hasLength(2);
-    assertThat(info.actions[0].getTemplatePresentation().getText()).startsWith("Run ");
-    assertThat(info.actions[1].getTemplatePresentation().getText()).startsWith("Debug ");
 
     elements
         .stream()
@@ -191,9 +182,6 @@ public class BlazeScalaTestRunLineMarkerContributorTest
     Info info = markerContributor.getInfo(classIdentifier);
     assertThat(info).isNotNull();
     assertThat(info.icon).isEqualTo(AllIcons.RunConfigurations.TestState.Run_run);
-    assertThat(info.actions).hasLength(2);
-    assertThat(info.actions[0].getTemplatePresentation().getText()).startsWith("Run ");
-    assertThat(info.actions[1].getTemplatePresentation().getText()).startsWith("Debug ");
 
     elements
         .stream()

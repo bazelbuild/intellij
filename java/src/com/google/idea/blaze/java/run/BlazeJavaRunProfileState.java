@@ -121,7 +121,7 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
             context
                 .push(
                     new IssuesScope(
-                        project, BlazeUserSettings.getInstance().getShowProblemsViewForRunAction()))
+                        project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))
                 .push(new IdeaLogScope());
           }
 

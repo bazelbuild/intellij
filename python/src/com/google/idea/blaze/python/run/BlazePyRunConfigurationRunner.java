@@ -219,11 +219,11 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
 
   @Override
   public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment env) {
-    BlazeCommandRunConfiguration configuration = getConfiguration(env);
     if (!BlazeCommandRunConfigurationRunner.isDebugging(env)
         || BlazeCommandRunConfigurationRunner.getBlazeCommand(env) == BlazeCommandName.BUILD) {
       return new BlazeCommandRunProfileState(env);
     }
+    BlazeCommandRunConfiguration configuration = getConfiguration(env);
     env.putCopyableUserData(EXECUTABLE_KEY, new AtomicReference<>());
     return new BlazePyDummyRunProfileState(configuration);
   }

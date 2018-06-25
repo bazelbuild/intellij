@@ -403,8 +403,9 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
         ])
 
     jdeps = None
-    if hasattr(java.outputs, "jdeps"):
+    if hasattr(java.outputs, "jdeps") and java.outputs.jdeps:
         jdeps = artifact_location(java.outputs.jdeps)
+        resolve_files = depset([java.outputs.jdeps], transitive = [resolve_files])
 
     java_sources, gen_java_sources, srcjars = divide_java_sources(ctx)
 

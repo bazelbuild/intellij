@@ -23,7 +23,7 @@ import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
-import com.google.idea.blaze.base.settings.BlazeUserSettings.BlazeConsolePopupBehavior;
+import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +38,7 @@ public class BlazeConsoleScope implements BlazeScope {
   public static class Builder {
     private Project project;
     private ProgressIndicator progressIndicator;
-    private BlazeConsolePopupBehavior popupBehavior = BlazeConsolePopupBehavior.ON_ERROR;
+    private FocusBehavior popupBehavior = FocusBehavior.ON_ERROR;
     private final ImmutableList.Builder<Filter> filters = ImmutableList.builder();
 
     public Builder(Project project) {
@@ -50,7 +50,7 @@ public class BlazeConsoleScope implements BlazeScope {
       this.progressIndicator = progressIndicator;
     }
 
-    public Builder setPopupBehavior(BlazeConsolePopupBehavior popupBehavior) {
+    public Builder setPopupBehavior(FocusBehavior popupBehavior) {
       this.popupBehavior = popupBehavior;
       return this;
     }
@@ -67,7 +67,7 @@ public class BlazeConsoleScope implements BlazeScope {
 
   private final BlazeConsoleService blazeConsoleService;
   @Nullable private final ProgressIndicator progressIndicator;
-  private final BlazeConsolePopupBehavior popupBehavior;
+  private final FocusBehavior popupBehavior;
   private final ImmutableList<Filter> customFilters;
 
   private boolean activated;
@@ -95,7 +95,7 @@ public class BlazeConsoleScope implements BlazeScope {
   private BlazeConsoleScope(
       Project project,
       @Nullable ProgressIndicator progressIndicator,
-      BlazeConsolePopupBehavior popupBehavior,
+      FocusBehavior popupBehavior,
       ImmutableList<Filter> customFilters) {
     this.blazeConsoleService = BlazeConsoleService.getInstance(project);
     this.progressIndicator = progressIndicator;
@@ -111,8 +111,8 @@ public class BlazeConsoleScope implements BlazeScope {
       return;
     }
     boolean activate =
-        popupBehavior == BlazeConsolePopupBehavior.ALWAYS
-            || (popupBehavior == BlazeConsolePopupBehavior.ON_ERROR
+        popupBehavior == FocusBehavior.ALWAYS
+            || (popupBehavior == FocusBehavior.ON_ERROR
                 && contentType == ConsoleViewContentType.ERROR_OUTPUT);
     if (activate) {
       activated = true;

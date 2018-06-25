@@ -41,7 +41,11 @@ class BlazeJavascriptLibrarySource extends LibrarySource.Adapter {
 
   @Override
   public List<? extends BlazeLibrary> getLibraries() {
-    return ImmutableList.of(library);
+    if (BlazeJavascriptLibrary.useJavascriptLibrary.getValue()) {
+      return ImmutableList.of(library);
+    } else {
+      return ImmutableList.of();
+    }
   }
 
   @Nullable

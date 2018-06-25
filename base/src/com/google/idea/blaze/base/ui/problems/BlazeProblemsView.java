@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.ui.problems;
 
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
@@ -49,7 +50,6 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
@@ -78,8 +78,8 @@ public class BlazeProblemsView {
 
   private final Set<String> problems = Collections.synchronizedSet(new HashSet<>());
   private final AtomicInteger problemCount = new AtomicInteger(0);
-  private final AtomicBoolean didFocusProblemsView = new AtomicBoolean(false);
-  private volatile boolean focusProblemsViewOnIssue;
+  private volatile boolean didFocusProblemsView = false;
+  private volatile FocusBehavior focusBehavior;
   private volatile UUID currentSessionId = UUID.randomUUID();
 
   public BlazeProblemsView(Project project, ToolWindowManager wm) {
@@ -101,7 +101,7 @@ public class BlazeProblemsView {
     updateIcon();
   }
 
-  public void newProblemsContext(boolean focusProblemsViewOnIssue) {
+  public void newProblemsContext(FocusBehavior focusBehavior) {
     viewUpdater.execute(
         () -> {
           currentSessionId = UUID.randomUUID();
@@ -110,8 +110,8 @@ public class BlazeProblemsView {
             tree.removeElement(child);
           }
           problemCount.set(0);
-          didFocusProblemsView.set(false);
-          this.focusProblemsViewOnIssue = focusProblemsViewOnIssue;
+          didFocusProblemsView = false;
+          this.focusBehavior = focusBehavior;
           problems.clear();
           updateIcon();
           panel.reload();
@@ -149,8 +149,15 @@ public class BlazeProblemsView {
         openInConsole,
         getExportTextPrefix(issue),
         getRenderTextPrefix(issue));
-    if (focusProblemsViewOnIssue && !didFocusProblemsView.get()) {
-      didFocusProblemsView.set(true);
+
+    if (didFocusProblemsView) {
+      return;
+    }
+    boolean focus =
+        focusBehavior == FocusBehavior.ALWAYS
+            || (focusBehavior == FocusBehavior.ON_ERROR && category == IssueOutput.Category.ERROR);
+    if (focus) {
+      didFocusProblemsView = true;
       focusProblemsView();
     }
   }

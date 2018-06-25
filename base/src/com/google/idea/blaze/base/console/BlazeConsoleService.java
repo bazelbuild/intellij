@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.console;
 
 import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -29,6 +30,8 @@ public interface BlazeConsoleService {
   }
 
   void print(String text, ConsoleViewContentType contentType);
+
+  void printHyperlink(String hyperlinkText, @Nullable HyperlinkInfo info);
 
   void clear();
 

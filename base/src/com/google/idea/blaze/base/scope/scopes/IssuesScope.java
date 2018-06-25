@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.ui.problems.BlazeProblemsView;
 import com.intellij.openapi.project.Project;
 
@@ -26,17 +27,17 @@ import com.intellij.openapi.project.Project;
 public class IssuesScope implements BlazeScope, OutputSink<IssueOutput> {
 
   private final Project project;
-  private final boolean focusProblemsViewOnIssue;
+  private final FocusBehavior problemsViewFocusBehavior;
 
-  public IssuesScope(Project project, boolean focusProblemsViewOnIssue) {
+  public IssuesScope(Project project, FocusBehavior problemsViewFocusBehavior) {
     this.project = project;
-    this.focusProblemsViewOnIssue = focusProblemsViewOnIssue;
+    this.problemsViewFocusBehavior = problemsViewFocusBehavior;
   }
 
   @Override
   public void onScopeBegin(BlazeContext context) {
     context.addOutputSink(IssueOutput.class, this);
-    BlazeProblemsView.getInstance(project).newProblemsContext(focusProblemsViewOnIssue);
+    BlazeProblemsView.getInstance(project).newProblemsContext(problemsViewFocusBehavior);
   }
 
   @Override

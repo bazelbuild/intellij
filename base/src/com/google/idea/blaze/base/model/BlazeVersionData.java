@@ -41,6 +41,10 @@ public class BlazeVersionData implements Serializable {
     this.bazelVersion = bazelVersion;
   }
 
+  public boolean blazeVersionIsKnown() {
+    return blazeCl != null;
+  }
+
   public boolean blazeContainsCl(long cl) {
     return blazeCl != null && blazeCl >= cl;
   }

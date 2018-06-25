@@ -25,7 +25,6 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
-        "//common/transactions",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
@@ -84,12 +83,16 @@ intellij_plugin(
 java_library(
     name = "integration_test_utils",
     testonly = 1,
-    srcs = ["tests/integrationtests/com/google/idea/blaze/cpp/BlazeCppIntegrationTestCase.java"],
+    srcs = [
+        "tests/integrationtests/com/google/idea/blaze/cpp/BlazeCppIntegrationTestCase.java",
+        "tests/integrationtests/com/google/idea/blaze/cpp/BlazeCppResolvingTestCase.java",
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":cpp",
         "//base",
         "//base:integration_test_utils",
+        "//base:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//sdkcompat",
         "@junit//jar",
@@ -100,7 +103,10 @@ intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(
         ["tests/integrationtests/**/*.java"],
-        exclude = ["tests/integrationtests/com/google/idea/blaze/cpp/BlazeCppIntegrationTestCase.java"],
+        exclude = [
+            "tests/integrationtests/com/google/idea/blaze/cpp/BlazeCppIntegrationTestCase.java",
+            "tests/integrationtests/com/google/idea/blaze/cpp/BlazeCppResolvingTestCase.java",
+        ],
     ),
     required_plugins = "com.google.idea.bazel.cpp",
     test_package_root = "com.google.idea.blaze.cpp",
