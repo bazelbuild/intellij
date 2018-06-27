@@ -29,7 +29,6 @@ java_library(
             "clion/com/google/idea/sdkcompat/cidr/**",
         ]),
         intellij = glob([
-            "com/google/idea/sdkcompat/golang/**",
             "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/kotlin/**",
         ]),
@@ -40,7 +39,6 @@ java_library(
         "//intellij_platform_sdk:junit",
         "//intellij_platform_sdk:kotlin",
         "//intellij_platform_sdk:plugin_api",
-        "//third_party/go",
         "//third_party/python",
     ],
 )

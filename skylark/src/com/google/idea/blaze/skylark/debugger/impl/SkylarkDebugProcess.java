@@ -20,18 +20,17 @@ import static com.google.common.base.Preconditions.checkState;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos;
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.Breakpoint;
 import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.ContinueExecutionRequest;
 import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.DebugEvent;
 import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.DebugEvent.PayloadCase;
 import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.DebugRequest;
 import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.EvaluateRequest;
 import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.Location;
+import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.PauseReason;
 import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.PauseThreadRequest;
 import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.SetBreakpointsRequest;
 import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.StartDebuggingRequest;
 import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.Stepping;
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.ThreadPausedState;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -43,11 +42,9 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
@@ -56,10 +53,8 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.frame.XValue;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
@@ -82,7 +77,7 @@ public class SkylarkDebugProcess extends XDebugProcess {
   // state shared with debug server
   private final ConcurrentMap<Location, XLineBreakpoint<XBreakpointProperties>> lineBreakpoints =
       new ConcurrentHashMap<>();
-  private final Map<Long, ThreadInfo> threads = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Long, ThreadInfo> threads = new ConcurrentHashMap<>();
   // the currently-stepping thread gets priority in the UI -- we always grab focus when it's paused
   private volatile long currentlySteppingThreadId = 0;
 
@@ -130,8 +125,10 @@ public class SkylarkDebugProcess extends XDebugProcess {
 
   @Override
   public void stop() {
-    // resume all threads prior to stopping debugger
-    startStepping(null, Stepping.NONE);
+    if (transport.isConnected()) {
+      // resume all threads prior to stopping debugger
+      startStepping(null, Stepping.NONE);
+    }
     transport.close();
   }
 
@@ -166,11 +163,28 @@ public class SkylarkDebugProcess extends XDebugProcess {
 
   private void registerBreakpoints() {
     SetBreakpointsRequest.Builder request = SetBreakpointsRequest.newBuilder();
-    lineBreakpoints.forEach(
-        (l, b) -> request.addBreakpoint(Breakpoint.newBuilder().setLocation(l)));
+    lineBreakpoints.forEach((l, b) -> request.addBreakpoint(getBreakpointProto(l, b)));
     assertResponseType(
         transport.sendRequest(DebugRequest.newBuilder().setSetBreakpoints(request)),
         PayloadCase.SET_BREAKPOINTS);
+  }
+
+  private static SkylarkDebuggingProtos.Breakpoint getBreakpointProto(
+      Location location, XLineBreakpoint<XBreakpointProperties> breakpoint) {
+    SkylarkDebuggingProtos.Breakpoint.Builder builder =
+        SkylarkDebuggingProtos.Breakpoint.newBuilder().setLocation(location);
+    String condition = getConditionExpression(breakpoint);
+    if (condition != null) {
+      builder.setExpression(condition);
+    }
+    return builder.build();
+  }
+
+  @Nullable
+  private static String getConditionExpression(XBreakpoint<?> breakpoint) {
+    return breakpoint.getConditionExpression() == null
+        ? null
+        : breakpoint.getConditionExpression().getExpression();
   }
 
   /** If the response doesn't match the expected type, or is an error event, log an error. */
@@ -203,13 +217,6 @@ public class SkylarkDebugProcess extends XDebugProcess {
         .setLineNumber(breakpoint.getLine() + 1)
         .setPath(breakpoint.getPresentableFilePath())
         .build();
-  }
-
-  @Nullable
-  private static String getConditionExpression(XBreakpoint<?> breakpoint) {
-    return breakpoint.getConditionExpression() == null
-        ? null
-        : breakpoint.getConditionExpression().getExpression();
   }
 
   @Override
@@ -382,20 +389,13 @@ public class SkylarkDebugProcess extends XDebugProcess {
       case ERROR:
         handleError(event.getError());
         return;
-      case THREAD_STARTED:
-        addOrUpdateThread(event.getThreadStarted().getThread());
-        return;
       case THREAD_PAUSED:
         handleThreadPausedEvent(event.getThreadPaused().getThread());
         return;
       case THREAD_CONTINUED:
-        addOrUpdateThread(event.getThreadContinued().getThread());
+        // TODO(brendandouglas): retain/cache stack information while stepping?
+        threads.remove(event.getThreadContinued().getThreadId());
         return;
-      case THREAD_ENDED:
-        threads.remove(event.getThreadEnded().getThread().getId());
-        wakeUpUiIfNecessary();
-        return;
-      case LIST_THREADS:
       case LIST_FRAMES:
       case EVALUATE:
       case SET_BREAKPOINTS:
@@ -432,62 +432,33 @@ public class SkylarkDebugProcess extends XDebugProcess {
         .ifPresent(t -> notifyThreadPaused(t, true));
   }
 
-  private ThreadInfo toThreadInfo(SkylarkDebuggingProtos.Thread thread) {
-    return new ThreadInfo(
-        thread.getId(),
-        thread.getName(),
-        thread.hasThreadPausedState() ? thread.getThreadPausedState() : null);
+  private ThreadInfo toThreadInfo(SkylarkDebuggingProtos.PausedThread thread) {
+    return new ThreadInfo(thread.getId(), thread.getName(), thread);
   }
 
-  private ThreadInfo addOrUpdateThread(SkylarkDebuggingProtos.Thread thread) {
+  private ThreadInfo addOrUpdateThread(SkylarkDebuggingProtos.PausedThread thread) {
     ThreadInfo info = threads.computeIfAbsent(thread.getId(), id -> toThreadInfo(thread));
-    info.updatePausedState(thread.hasThreadPausedState() ? thread.getThreadPausedState() : null);
+    info.updatePausedState(thread);
     return info;
   }
 
-  private void handleThreadPausedEvent(SkylarkDebuggingProtos.Thread thread) {
-    ThreadPausedState pausedState = Preconditions.checkNotNull(thread.getThreadPausedState());
-    if (pausedState.getPauseReason() != SkylarkDebuggingProtos.PauseReason.HIT_BREAKPOINT) {
+  private void handleThreadPausedEvent(SkylarkDebuggingProtos.PausedThread thread) {
+    if (thread.getPauseReason() != PauseReason.CONDITIONAL_BREAKPOINT_ERROR) {
       notifyThreadPaused(addOrUpdateThread(thread), false);
       return;
     }
     XLineBreakpoint<XBreakpointProperties> breakpoint =
-        lineBreakpoints.get(pausedState.getLocation().toBuilder().setColumnNumber(0).build());
+        lineBreakpoints.get(thread.getLocation().toBuilder().setColumnNumber(0).build());
     if (breakpoint == null) {
       notifyThreadPaused(addOrUpdateThread(thread), false);
     } else {
-      pauseIfConditionSatisfied(thread, breakpoint);
+      handleConditionalBreakpointError(breakpoint, thread);
     }
-  }
-
-  /**
-   * The thread is paused server-side. Check whether the breakpoint conditional is satisfied, if
-   * present, and either notify the UI that the thread is paused, or instruct the server to resume
-   * the thread.
-   *
-   * <p>TODO(brendandouglas): if this is too slow, go back to doing this on the server side
-   */
-  private void pauseIfConditionSatisfied(
-      SkylarkDebuggingProtos.Thread thread, XLineBreakpoint<XBreakpointProperties> breakpoint) {
-    XExpression xExpression = breakpoint.getConditionExpression();
-    String expr = xExpression == null ? null : xExpression.getExpression();
-    if (StringUtil.isEmptyOrSpaces(expr)) {
-      notifyThreadPaused(addOrUpdateThread(thread), false);
-      return;
-    }
-    // a little hacky, but lets Skylark handle the 'toBoolean' logic (see EvalUtils#toBoolean)
-    String wrappedExpr = String.format("True if (%s) else False", expr);
-    ApplicationManager.getApplication()
-        .executeOnPooledThread(
-            () ->
-                evaluate(
-                    thread.getId(),
-                    wrappedExpr,
-                    new ConditionalBreakpointCallback(breakpoint, thread)));
   }
 
   private void notifyThreadPaused(ThreadInfo info, boolean alwaysNotify) {
-    ThreadPausedState pausedState = Preconditions.checkNotNull(info.getPausedState());
+    SkylarkDebuggingProtos.PausedThread pausedState =
+        Preconditions.checkNotNull(info.getPausedState());
     XLineBreakpoint<XBreakpointProperties> breakpoint =
         lineBreakpoints.get(pausedState.getLocation().toBuilder().setColumnNumber(0).build());
     SkylarkSuspendContext suspendContext = new SkylarkSuspendContext(this, info);
@@ -506,6 +477,7 @@ public class SkylarkDebugProcess extends XDebugProcess {
       case STEPPING:
       case PAUSE_THREAD_REQUEST:
       case HIT_BREAKPOINT:
+      case CONDITIONAL_BREAKPOINT_ERROR:
         return true;
       case ALL_THREADS_PAUSED:
       case UNSET:
@@ -518,63 +490,34 @@ public class SkylarkDebugProcess extends XDebugProcess {
     return true;
   }
 
-  private class ConditionalBreakpointCallback implements XEvaluationCallback {
-
-    private final XLineBreakpoint<XBreakpointProperties> breakpoint;
-    private final SkylarkDebuggingProtos.Thread thread;
-
-    ConditionalBreakpointCallback(
-        XLineBreakpoint<XBreakpointProperties> breakpoint, SkylarkDebuggingProtos.Thread thread) {
-      this.breakpoint = breakpoint;
-      this.thread = thread;
-    }
-
-    @Override
-    public void evaluated(XValue result) {
-      if (isTrue((SkylarkDebugValue) result)) {
-        stopAtBreakpoint();
-      } else {
-        resumeThread();
-      }
-    }
-
-    private void stopAtBreakpoint() {
+  private void handleConditionalBreakpointError(
+      XLineBreakpoint<XBreakpointProperties> breakpoint,
+      SkylarkDebuggingProtos.PausedThread thread) {
+    // TODO(brendandouglas): also navigate to the problematic breakpoint
+    String error = Preconditions.checkNotNull(thread.getConditionalBreakpointError().getMessage());
+    String title = "Breakpoint Condition Error";
+    String message =
+        String.format(
+            "Breakpoint: %s\nError: %s\nWould you like to stop at the breakpoint?",
+            breakpoint.getType().getDisplayText(breakpoint), error);
+    Ref<Boolean> stop = new Ref<>(true);
+    ApplicationManager.getApplication()
+        .invokeAndWait(
+            () ->
+                stop.set(
+                    Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon())
+                        == Messages.YES));
+    if (stop.get()) {
       notifyThreadPaused(addOrUpdateThread(thread), false);
+      return;
     }
-
-    private void resumeThread() {
-      transport.sendRequest(
-          DebugRequest.newBuilder()
-              .setContinueExecution(
-                  ContinueExecutionRequest.newBuilder()
-                      .setThreadId(thread.getId())
-                      .setStepping(Stepping.NONE)
-                      .build()));
-    }
-
-    private boolean isTrue(SkylarkDebugValue result) {
-      return "True".equals(result.value.getDescription());
-    }
-
-    @Override
-    public void errorOccurred(String errorMessage) {
-      String title = "Breakpoint Condition Error";
-      String message =
-          String.format(
-              "Breakpoint: %s\nError: %s\nWould you like to stop at the breakpoint?",
-              breakpoint.getType().getDisplayText(breakpoint), errorMessage);
-      Ref<Boolean> stop = new Ref<>(true);
-      ApplicationManager.getApplication()
-          .invokeAndWait(
-              () ->
-                  stop.set(
-                      Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon())
-                          == Messages.YES));
-      if (stop.get()) {
-        stopAtBreakpoint();
-      } else {
-        resumeThread();
-      }
-    }
+    // else resume the thread
+    transport.sendRequest(
+        DebugRequest.newBuilder()
+            .setContinueExecution(
+                ContinueExecutionRequest.newBuilder()
+                    .setThreadId(thread.getId())
+                    .setStepping(Stepping.NONE)
+                    .build()));
   }
 }

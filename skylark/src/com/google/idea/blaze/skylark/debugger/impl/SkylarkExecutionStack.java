@@ -16,7 +16,7 @@
 package com.google.idea.blaze.skylark.debugger.impl;
 
 import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.PauseReason;
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.ThreadPausedState;
+import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.PausedThread;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.frame.XExecutionStack;
@@ -71,8 +71,10 @@ class SkylarkExecutionStack extends XExecutionStack {
   }
 
   private static Icon getThreadIcon(ThreadInfo threadInfo) {
-    ThreadPausedState pausedState = threadInfo.getPausedState();
-    if (pausedState != null && pausedState.getPauseReason() == PauseReason.HIT_BREAKPOINT) {
+    PausedThread pausedState = threadInfo.getPausedState();
+    if (pausedState != null
+        && (pausedState.getPauseReason() == PauseReason.HIT_BREAKPOINT
+            || pausedState.getPauseReason() == PauseReason.CONDITIONAL_BREAKPOINT_ERROR)) {
       return AllIcons.Debugger.ThreadAtBreakpoint;
     }
     return AllIcons.Debugger.ThreadSuspended;

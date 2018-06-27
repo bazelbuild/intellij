@@ -18,18 +18,13 @@ package com.google.idea.blaze.scala.run.producers;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.scala.run.Specs2Utils;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
-import com.intellij.execution.testframework.TestIconMapper;
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
-import com.intellij.testIntegration.TestRunLineMarkerProvider;
 import com.intellij.util.io.URLUtil;
 import java.util.Arrays;
 import java.util.function.Function;
@@ -150,33 +145,6 @@ public class BlazeScalaTestRunLineMarkerContributor extends ScalaTestRunLineMark
         ExecutorAction.getActions(1),
         RunLineMarkerContributor.RUN_TEST_TOOLTIP_PROVIDER,
         toReplace);
-  }
-
-  /**
-   * Copied from {@link TestRunLineMarkerProvider#getTestStateIcon(String, Project, boolean)}.
-   *
-   * <p>As of #api173, this is now visible in RunLineMarkerContributor. Remove when we no longer
-   * support earlier plugin APIs.
-   */
-  protected static Icon getTestStateIcon(String url, Project project, boolean isClass) {
-    TestStateStorage.Record state = TestStateStorage.getInstance(project).getState(url);
-    if (state != null) {
-      TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(state.magnitude);
-      if (magnitude != null) {
-        switch (magnitude) {
-          case ERROR_INDEX:
-          case FAILED_INDEX:
-            return AllIcons.RunConfigurations.TestState.Red2;
-          case PASSED_INDEX:
-          case COMPLETE_INDEX:
-            return AllIcons.RunConfigurations.TestState.Green2;
-          default:
-        }
-      }
-    }
-    return isClass
-        ? AllIcons.RunConfigurations.TestState.Run_run
-        : AllIcons.RunConfigurations.TestState.Run;
   }
 
   private static class ReplacementInfo extends Info {
