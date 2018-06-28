@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 class SkylarkDebugBuildFlagsProvider implements BuildFlagsProvider {
 
   private static final String ENABLE_DEBUGGING_FLAG = "--experimental_skylark_debug=true";
-  private static final String SERVER_PORT_FLAG = "--experimental_debug_server_port";
+  private static final String SERVER_PORT_FLAG = "--experimental_skylark_debug_server_port";
 
   // TODO(brendandouglas): allow users to customize port?
   static final int SERVER_PORT = 7300;

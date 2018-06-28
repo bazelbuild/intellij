@@ -2,9 +2,9 @@
 
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
-    "intellij-latest": "intellij-2017.3",
+    "intellij-latest": "intellij-2018.1",
     "intellij-beta": "intellij-2018.1",
-    "intellij-ue-latest": "intellij-ue-2017.3",
+    "intellij-ue-latest": "intellij-ue-2018.1",
     "intellij-ue-beta": "intellij-ue-2018.1",
     "android-studio-latest": "android-studio-3.0",
     "android-studio-beta": "android-studio-3.0",
@@ -14,10 +14,6 @@ INDIRECT_IJ_PRODUCTS = {
 }
 
 DIRECT_IJ_PRODUCTS = {
-    "intellij-2017.3": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2017_3",
-    ),
     "intellij-2018.1": struct(
         ide = "intellij",
         directory = "intellij_ce_2018_1",
@@ -25,10 +21,6 @@ DIRECT_IJ_PRODUCTS = {
     "intellij-2018.2": struct(
         ide = "intellij",
         directory = "intellij_ce_2018_2",
-    ),
-    "intellij-ue-2017.3": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2017_3",
     ),
     "intellij-ue-2018.1": struct(
         ide = "intellij-ue",

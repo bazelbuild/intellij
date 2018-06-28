@@ -15,26 +15,26 @@
  */
 package com.google.idea.blaze.skylark.debugger.impl;
 
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.ThreadPausedState;
+import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.PausedThread;
 import javax.annotation.Nullable;
 
 class ThreadInfo {
   final long id;
   final String name;
-  @Nullable private volatile ThreadPausedState pausedState;
+  @Nullable private volatile PausedThread pausedState;
 
-  ThreadInfo(long id, String name, @Nullable ThreadPausedState pausedState) {
+  ThreadInfo(long id, String name, @Nullable PausedThread pausedState) {
     this.id = id;
     this.name = name;
     this.pausedState = pausedState;
   }
 
-  void updatePausedState(@Nullable ThreadPausedState pausedState) {
+  void updatePausedState(@Nullable PausedThread pausedState) {
     this.pausedState = pausedState;
   }
 
   @Nullable
-  ThreadPausedState getPausedState() {
+  PausedThread getPausedState() {
     return pausedState;
   }
 }

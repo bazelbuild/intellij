@@ -17,30 +17,16 @@ java_library(
         "com/google/idea/sdkcompat/ui/**",
         "com/google/idea/sdkcompat/vcs/**",
     ]) + select_for_ide(
-        android_studio = glob([
-            "com/google/idea/sdkcompat/cidr/**",
-            "com/google/idea/sdkcompat/java/**",
-            "com/google/idea/sdkcompat/kotlin/**",
-            "studio/com/google/idea/sdkcompat/cidr/**",
-        ]),
         clion = glob([
             "com/google/idea/sdkcompat/cidr/**",
             "com/google/idea/sdkcompat/clion/**",
             "clion/com/google/idea/sdkcompat/cidr/**",
         ]),
-        intellij = glob([
-            "com/google/idea/sdkcompat/golang/**",
-            "com/google/idea/sdkcompat/java/**",
-            "com/google/idea/sdkcompat/kotlin/**",
-        ]),
     ),
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
         "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:junit",
-        "//intellij_platform_sdk:kotlin",
         "//intellij_platform_sdk:plugin_api",
-        "//third_party/go",
         "//third_party/python",
     ],
 )

@@ -27,7 +27,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.golang.BlazeGoSupport;
-import com.google.idea.sdkcompat.golang.GoImportSpecCompatUtils;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
@@ -134,7 +133,7 @@ public class BlazeGoGotoDeclarationHandler implements GotoDeclarationHandler {
     if (resolvedImportPath == null) {
       return null;
     }
-    PsiDirectory goPackage = GoImportSpecCompatUtils.resolve(importSpec, ResolveState.initial());
+    PsiDirectory goPackage = importSpec.resolve(ResolveState.initial());
     if (goPackage == null) {
       return new PsiElement[] {resolvedImportPath};
     }

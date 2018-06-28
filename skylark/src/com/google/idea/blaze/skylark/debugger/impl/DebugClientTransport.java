@@ -136,7 +136,9 @@ class DebugClientTransport implements Closeable {
       return waitForResponse(seq);
 
     } catch (IOException e) {
-      logger.error("Error sending request to Skylark debugger", e);
+      if (isConnected()) {
+        logger.error("Error sending request to Skylark debugger", e);
+      }
       return null;
     }
   }

@@ -35,8 +35,10 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import java.util.Collection;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Supports an 'attach sources' editor butter bar when navigating to .class files with associated
@@ -134,10 +136,18 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
     ApplicationManager.getApplication()
         .invokeLater(
             () -> {
-              if (psiFile.canNavigate()) {
-                psiFile.navigate(false);
+              PsiFile psi = refreshPsiFile(psiFile);
+              if (psi != null && psi.canNavigate()) {
+                psi.navigate(false);
               }
             });
+  }
+
+  /** The previous {@link PsiFile} can be invalidated when source jars are attached. */
+  @Nullable
+  private static PsiFile refreshPsiFile(PsiFile psiFile) {
+    return PsiManager.getInstance(psiFile.getProject())
+        .findFile(psiFile.getViewProvider().getVirtualFile());
   }
 
   static void attachSources(

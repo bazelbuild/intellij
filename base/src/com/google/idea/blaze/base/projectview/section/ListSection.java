@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -107,6 +108,11 @@ public final class ListSection<T> extends Section<T> {
 
     public final Builder<T> add(TextBlock textBlock) {
       items.add(new ItemOrTextBlock<T>(textBlock));
+      return this;
+    }
+
+    public final Builder<T> removeMatches(Predicate<ItemOrTextBlock<T>> predicate) {
+      items.removeIf(predicate);
       return this;
     }
 
