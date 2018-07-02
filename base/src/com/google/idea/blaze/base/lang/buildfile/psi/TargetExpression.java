@@ -15,10 +15,14 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.psi;
 
+import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.TargetReference;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
+
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
@@ -32,6 +36,28 @@ public class TargetExpression extends NamedBuildElement implements Expression {
   @Override
   protected void acceptVisitor(BuildElementVisitor visitor) {
     visitor.visitTargetExpression(this);
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getNavigationElement() {
+    PsiElement referencedElement = getReferencedElement();
+    if(referencedElement != null) {
+      return referencedElement.getNavigationElement();
+    }
+    return super.getNavigationElement();
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getReferencedElement() {
+    if(PsiUtils.getParentOfType(this, LoadStatement.class, true) != null ) {
+      PsiElement lastChild = getParent().getLastChild();
+      if (lastChild.getClass().equals(StringLiteral.class)) {
+        return ((StringLiteral) lastChild).getReferencedElement();
+      }
+    }
+    return super.getReferencedElement();
   }
 
   @Override
