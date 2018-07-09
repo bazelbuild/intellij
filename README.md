@@ -9,8 +9,11 @@ JetBrains' plugin repository.
 
 ## Installation
 
-You can find our plugin in the Jetbrains plugin repository by going to
+1. You can find our plugin in the Jetbrains plugin repository by going to
 `Settings -> Browse Repositories`, and searching for `Bazel`.
+2. Optional: Choose the right Bazel binary by going to 
+`Settings -> Other Settings -> Bazel Settings` and select the location
+of your Bazel binary.
 
 ## Usage
 
