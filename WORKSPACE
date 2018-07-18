@@ -225,7 +225,8 @@ http_archive(
 # LICENSE: The Apache Software License, Version 2.0
 git_repository(
     name = "io_bazel_rules_scala",
-    commit = "40151843d9be877048f187fd2f627c1eccfb3b5c",
+    commit = "57661fa1ebbdc1359147d573e0ba4306dc6b9b98", # Fixed on this commit (unmerged branch: https://github.com/bazelbuild/rules_scala/pull/562)
+#    commit = "64faf06a4932a9a1d3378b6ba1a6d77479cefef3", # Broken on this commit (master)
     remote = "https://github.com/bazelbuild/rules_scala.git",
 )
 
@@ -233,6 +234,8 @@ load("@io_bazel_rules_scala//scala:scala.bzl", "scala_repositories")
 scala_repositories()
 load("@io_bazel_rules_scala//scala:toolchains.bzl", "scala_register_toolchains")
 scala_register_toolchains()
+load("@io_bazel_rules_scala//twitter_scrooge:twitter_scrooge.bzl", "twitter_scrooge")
+twitter_scrooge()
 # END-EXTERNAL-SCALA
 
 # BEGIN-EXTERNAL-KOTLIN
