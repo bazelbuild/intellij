@@ -225,8 +225,7 @@ http_archive(
 # LICENSE: The Apache Software License, Version 2.0
 git_repository(
     name = "io_bazel_rules_scala",
-    commit = "57661fa1ebbdc1359147d573e0ba4306dc6b9b98", # Fixed on this commit (unmerged branch: https://github.com/bazelbuild/rules_scala/pull/562)
-#    commit = "64faf06a4932a9a1d3378b6ba1a6d77479cefef3", # Broken on this commit (master)
+    commit = "8359fc6781cf3102e918c84cb1638a1b1e050ce0",
     remote = "https://github.com/bazelbuild/rules_scala.git",
 )
 
