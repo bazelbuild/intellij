@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.plugin;
 
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.common.actions.ReplaceActionHelper;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.components.ApplicationComponent;
 
@@ -29,15 +31,17 @@ public class BlazeSpecificInitializer extends ApplicationComponent.Adapter {
   // The original actions will be visible only on plain IDEA projects.
   private static void hideMakeActions() {
     // 'Build' > 'Make Project' action
-    BlazeActionRemover.hideAction("CompileDirty");
+    ReplaceActionHelper.conditionallyHideAction("CompileDirty", Blaze::isBlazeProject);
 
     // 'Build' > 'Make Modules' action
-    BlazeActionRemover.hideAction(IdeActions.ACTION_MAKE_MODULE);
+    ReplaceActionHelper.conditionallyHideAction(
+        IdeActions.ACTION_MAKE_MODULE, Blaze::isBlazeProject);
 
     // 'Build' > 'Rebuild' action
-    BlazeActionRemover.hideAction(IdeActions.ACTION_COMPILE_PROJECT);
+    ReplaceActionHelper.conditionallyHideAction(
+        IdeActions.ACTION_COMPILE_PROJECT, Blaze::isBlazeProject);
 
     // 'Build' > 'Compile Modules' action
-    BlazeActionRemover.hideAction(IdeActions.ACTION_COMPILE);
+    ReplaceActionHelper.conditionallyHideAction(IdeActions.ACTION_COMPILE, Blaze::isBlazeProject);
   }
 }

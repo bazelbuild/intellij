@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.lang.buildfile.completion;
 
 import static com.intellij.patterns.PlatformPatterns.psiComment;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.PlatformPatterns.psiFile;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileLanguage;
@@ -24,6 +25,7 @@ import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuiltInNames
 import com.google.idea.blaze.base.lang.buildfile.lexer.BuildToken;
 import com.google.idea.blaze.base.lang.buildfile.lexer.TokenKind;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.lang.buildfile.psi.BuildFileWithCustomCompletion;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.StatementList;
@@ -73,7 +75,8 @@ public class BuiltInFunctionCompletionContributor extends CompletionContributor 
                     .inside(
                         psiElement(StatementList.class).inside(psiElement(FunctionStatement.class)))
                     .afterLeaf(
-                        psiElement().withText(".").afterLeaf(psiElement().withText("native")))),
+                        psiElement().withText(".").afterLeaf(psiElement().withText("native"))))
+            .andNot(psiElement().inFile(psiFile(BuildFileWithCustomCompletion.class))),
         new CompletionProvider<CompletionParameters>() {
           @Override
           protected void addCompletions(

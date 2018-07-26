@@ -209,7 +209,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
   private static class DisabledFastBuildService implements FastBuildService {
 
     @Override
-    public boolean supportsFastBuilds(Kind kind) {
+    public boolean supportsFastBuilds(BuildSystem buildSystem, Kind kind) {
       return false;
     }
 

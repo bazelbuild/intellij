@@ -15,7 +15,6 @@
  */
 package com.google.idea.testing.cidr;
 
-import com.android.tools.ndk.NdkHelper;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceManagerAdapter;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
@@ -29,24 +28,14 @@ import com.jetbrains.cidr.lang.workspace.OCWorkspace;
  */
 public class StubOCWorkspaceManager extends OCWorkspaceManagerAdapter {
 
-  private final Project project;
   private final OCWorkspace workspace;
 
   public StubOCWorkspaceManager(Project project) {
-    this.project = project;
     this.workspace = new StubOCWorkspace(project);
   }
 
   @Override
   public OCWorkspace getWorkspace() {
     return workspace;
-  }
-
-  /**
-   * Enable C++ language support for testing (a previously registered OCWorkspace which may have
-   * disabled language support).
-   */
-  public void enableCSupportForTesting() {
-    NdkHelper.disableCppLanguageSupport(project, false);
   }
 }

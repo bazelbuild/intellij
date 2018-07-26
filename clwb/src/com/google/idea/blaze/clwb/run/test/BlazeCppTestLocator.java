@@ -96,7 +96,9 @@ public class BlazeCppTestLocator implements SMTestLocator {
     if (suite == null) {
       return null;
     }
-    OCSymbol<?> symbol;
+    // #api182 change
+    @SuppressWarnings("rawtypes")
+    OCSymbol symbol;
     if (method != null) {
       symbol = CidrGoogleTestUtil.findGoogleTestSymbol(project, suite, method);
     } else if (instantiation != null) {

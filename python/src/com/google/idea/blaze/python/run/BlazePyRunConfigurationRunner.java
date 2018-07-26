@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -298,7 +299,8 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
               BlazePyDebugHelper.getAllBlazeDebugFlags(
                   configuration.getProject(), configuration.getTarget()),
               ImmutableList.of(),
-              ExecutorType.fromExecutor(env.getExecutor()),
+              BlazeInvocationContext.runConfigContext(
+                  ExecutorType.fromExecutor(env.getExecutor()), configuration.getType()),
               "Building debug binary");
 
       try {

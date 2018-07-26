@@ -50,6 +50,7 @@ public class ProjectCloseScope implements ProjectManagerListener, BlazeScope {
   @Override
   public void projectOpened(Project project) {}
 
+  // TODO(grl): Deprecated after #api171; switch to VetoableProjectManagerListener.canClose()
   @Override
   public boolean canCloseProject(Project project) {
     if (!project.equals(this.project)) {

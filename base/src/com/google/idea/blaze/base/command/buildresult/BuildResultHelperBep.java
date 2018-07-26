@@ -43,7 +43,6 @@ class BuildResultHelperBep implements BuildResultHelper {
   BuildResultHelperBep(Predicate<String> fileFilter) {
     this.fileFilter = fileFilter;
     outputFile = BuildEventProtocolUtils.createTempOutputFile();
-    outputFile.deleteOnExit();
   }
 
   @Override

@@ -127,16 +127,20 @@ public abstract class FastBuildBlazeData {
 
     public abstract ImmutableList<ArtifactLocation> annotationProcessorClasspath();
 
+    public abstract ImmutableList<String> jvmFlags();
+
     static JavaInfo create(
         Collection<ArtifactLocation> sources,
         @Nullable String testClass,
         Collection<String> annotationProcessorClassNames,
-        Collection<ArtifactLocation> annotationProcessorClassPath) {
+        Collection<ArtifactLocation> annotationProcessorClassPath,
+        Collection<String> jvmFlags) {
       return new AutoValue_FastBuildBlazeData_JavaInfo(
           ImmutableSet.copyOf(sources),
           Optional.ofNullable(testClass),
           ImmutableList.copyOf(annotationProcessorClassNames),
-          ImmutableList.copyOf(annotationProcessorClassPath));
+          ImmutableList.copyOf(annotationProcessorClassPath),
+          ImmutableList.copyOf(jvmFlags));
     }
 
     static JavaInfo fromProto(FastBuildInfo.JavaInfo proto) {
@@ -156,7 +160,8 @@ public abstract class FastBuildBlazeData {
           sources,
           emptyToNull(proto.getTestClass()),
           proto.getAnnotationProcessorClassNamesList(),
-          annotationProcessorClasspath);
+          annotationProcessorClasspath,
+          proto.getJvmFlagsList());
     }
   }
 

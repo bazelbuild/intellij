@@ -256,7 +256,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             null,
             0,
             false));
-    text = "Automatically format BUILD files on file save";
+    text = "Automatically format BUILD/Skylark files on file save";
     helper.registerLabelText(text, true);
     formatBuildFilesOnSave = new JCheckBox();
     formatBuildFilesOnSave.setSelected(false);

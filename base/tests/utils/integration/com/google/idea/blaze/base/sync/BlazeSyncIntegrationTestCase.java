@@ -83,7 +83,6 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   private ProjectModuleMocker moduleMocker;
 
   protected ErrorCollector errorCollector;
-  protected BlazeContext context;
 
   @Before
   public void doSetup() throws Exception {
@@ -98,8 +97,6 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     registerApplicationService(BlazeIdeInterface.class, blazeIdeInterface);
 
     errorCollector = new ErrorCollector();
-    context = new BlazeContext();
-    context.addOutputSink(IssueOutput.class, errorCollector);
 
     fileSystem.createDirectory(projectDataDirectory.getPath() + "/.blaze/modules");
 
@@ -140,6 +137,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   }
 
   protected void setProjectView(String... contents) {
+    BlazeContext context = new BlazeContext();
+    context.addOutputSink(IssueOutput.class, errorCollector);
     ProjectViewParser projectViewParser =
         new ProjectViewParser(context, new WorkspacePathResolverImpl(workspaceRoot));
     projectViewParser.parseProjectView(Joiner.on("\n").join(contents));
@@ -165,6 +164,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
             project,
             BlazeImportSettingsManager.getInstance(project).getImportSettings(),
             syncParams);
+    BlazeContext context = new BlazeContext();
+    context.addOutputSink(IssueOutput.class, errorCollector);
 
     // We need to run sync off EDT to keep IntelliJ's transaction system happy
     // Because the sync task itself wants to run occasional EDT tasks, we'll have

@@ -15,12 +15,14 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.editor;
 
+import com.google.idea.blaze.base.lang.buildfile.formatting.BuildCodeStyleSettings;
 import com.google.idea.blaze.base.lang.buildfile.lexer.BuildToken;
 import com.google.idea.blaze.base.lang.buildfile.psi.Argument;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildListType;
 import com.google.idea.blaze.base.lang.buildfile.psi.Parameter;
+import com.google.idea.blaze.base.lang.buildfile.psi.ParameterList;
 import com.google.idea.blaze.base.lang.buildfile.psi.PassStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.ReturnStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.StatementListContainer;
@@ -82,10 +84,9 @@ public class BuildEnterHandler extends EnterHandlerDelegateAdapter {
     Document doc = editor.getDocument();
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(doc);
 
-    CodeStyleSettings currentSettings = CodeStyleSettingsManager.getSettings(file.getProject());
-    IndentOptions indentOptions = currentSettings.getIndentOptions(file.getFileType());
-
-    Integer indent = determineIndent(file, editor, offset, indentOptions);
+    // #api173: get file, language specific settings instead
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
+    Integer indent = determineIndent(file, editor, offset, settings);
     if (indent == null) {
       return Result.Continue;
     }
@@ -97,7 +98,7 @@ public class BuildEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Stop;
     }
     if (position.column > indent) {
-      //default enter handler has added too many spaces -- remove them
+      // default enter handler has added too many spaces -- remove them
       int excess = position.column - indent;
       doc.deleteString(
           editor.getCaretModel().getOffset() - excess, editor.getCaretModel().getOffset());
@@ -142,7 +143,7 @@ public class BuildEnterHandler extends EnterHandlerDelegateAdapter {
    */
   @Nullable
   private static Integer determineIndent(
-      PsiFile file, Editor editor, int offset, IndentOptions indentOptions) {
+      PsiFile file, Editor editor, int offset, CodeStyleSettings settings) {
     if (offset == 0) {
       return null;
     }
@@ -152,6 +153,9 @@ public class BuildEnterHandler extends EnterHandlerDelegateAdapter {
     if (parent == null) {
       return null;
     }
+
+    IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
+    BuildCodeStyleSettings buildSettings = settings.getCustomSettings(BuildCodeStyleSettings.class);
     if (endsBlock(element)) {
       // current line indent subtract block indent
       return Math.max(0, getIndent(doc, element) - indentOptions.INDENT_SIZE);
@@ -173,15 +177,20 @@ public class BuildEnterHandler extends EnterHandlerDelegateAdapter {
       if (firstChild != null && firstChild.getNode().getStartOffset() < offset) {
         return getIndent(doc, firstChild);
       }
-      return lineIndent(doc, listStart.line) + additionalIndent(parent, indentOptions);
+      return lineIndent(doc, listStart.line)
+          + additionalIndent(parent, buildSettings, indentOptions);
     }
     if (parent instanceof StatementListContainer && afterColon(doc, offset)) {
-      return getIndent(doc, parent) + additionalIndent(parent, indentOptions);
+      return getIndent(doc, parent) + additionalIndent(parent, buildSettings, indentOptions);
     }
     return null;
   }
 
-  private static int additionalIndent(PsiElement parent, IndentOptions indentOptions) {
+  private static int additionalIndent(
+      PsiElement parent, BuildCodeStyleSettings buildSettings, IndentOptions indentOptions) {
+    if (parent instanceof ParameterList) {
+      return buildSettings.declarationParameterIndent;
+    }
     return parent instanceof StatementListContainer
         ? indentOptions.INDENT_SIZE
         : indentOptions.CONTINUATION_INDENT_SIZE;

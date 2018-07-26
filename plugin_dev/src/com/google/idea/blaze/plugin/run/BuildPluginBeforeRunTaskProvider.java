@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
@@ -159,7 +160,7 @@ public final class BuildPluginBeforeRunTaskProvider
                       .setPopupBehavior(userSettings.getShowBlazeConsoleOnRun())
                       .addConsoleFilters(
                           new IssueOutputFilter(
-                              project, workspaceRoot, BlazeInvocationContext.NonSync, true))
+                              project, workspaceRoot, ContextType.RunConfiguration, true))
                       .build())
               .push(new IdeaLogScope());
 
@@ -228,8 +229,9 @@ public final class BuildPluginBeforeRunTaskProvider
                                     project,
                                     projectViewSet,
                                     BlazeCommandName.BUILD,
-                                    BlazeInvocationContext.NonSync,
-                                    ExecutorType.fromExecutor(env.getExecutor())))
+                                    BlazeInvocationContext.runConfigContext(
+                                        ExecutorType.fromExecutor(env.getExecutor()),
+                                        config.getType())))
                             .addBlazeFlags(config.getBlazeFlagsState().getExpandedFlags())
                             .addExeFlags(config.getExeFlagsState().getExpandedFlags())
                             .addBlazeFlags(buildResultHelper.getBuildFlags())

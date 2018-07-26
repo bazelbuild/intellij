@@ -138,7 +138,7 @@ public class BlazeBuildService {
                                     new IssueOutputFilter(
                                         project,
                                         WorkspaceRoot.fromProject(project),
-                                        BlazeInvocationContext.Sync,
+                                        BlazeInvocationContext.ContextType.Sync,
                                         true))
                                 .build())
                         .push(new IssuesScope(project, problemsViewFocus))

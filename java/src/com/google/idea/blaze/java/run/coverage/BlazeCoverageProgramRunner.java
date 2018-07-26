@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.run.coverage;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
+import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.coverage.CoverageUtils;
@@ -77,6 +78,7 @@ public class BlazeCoverageProgramRunner extends DefaultProgramRunner {
     if (result == null) {
       return null;
     }
+    EventLoggingService.getInstance().ifPresent(s -> s.logEvent(getClass(), "run-with-coverage"));
     // remove any old copy of the coverage data
 
     // retrieve coverage data and copy locally

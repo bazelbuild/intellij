@@ -40,7 +40,7 @@ public class IssueOutputLineProcessor implements LineProcessingOutputStream.Line
       Project project,
       WorkspaceRoot workspaceRoot,
       BlazeContext context,
-      BlazeInvocationContext invocationContext) {
+      BlazeInvocationContext.ContextType invocationContext) {
     this.context = context;
     this.blazeIssueParser =
         new BlazeIssueParser(

@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.fastbuild;
 
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -41,7 +42,7 @@ public interface FastBuildService {
     return ServiceManager.getService(project, FastBuildService.class);
   }
 
-  boolean supportsFastBuilds(Kind kind);
+  boolean supportsFastBuilds(BuildSystem buildSystem, Kind kind);
 
   /**
    * Create a fast build.

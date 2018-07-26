@@ -26,8 +26,7 @@ import java.util.UUID;
 public final class BuildEventProtocolUtils {
 
   // Instructs BEP to use local file paths (file://...) rather than objfs blobids.
-  private static final String LOCAL_FILE_PATHS =
-      "--noexperimental_build_event_binary_file_path_conversion";
+  private static final String LOCAL_FILE_PATHS = "--nobuild_event_binary_file_path_conversion";
 
   private BuildEventProtocolUtils() {}
 
@@ -48,7 +47,6 @@ public final class BuildEventProtocolUtils {
 
   /** Returns a build flag instructing blaze to write build events to the given output file. */
   public static ImmutableList<String> getBuildFlags(File outputFile) {
-    return ImmutableList.of(
-        "--experimental_build_event_binary_file=" + outputFile.getPath(), LOCAL_FILE_PATHS);
+    return ImmutableList.of("--build_event_binary_file=" + outputFile.getPath(), LOCAL_FILE_PATHS);
   }
 }

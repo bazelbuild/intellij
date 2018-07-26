@@ -44,7 +44,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.KeyWithDefaultValue;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -59,16 +58,20 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
   private static final Logger logger = Logger.getInstance(FastBuildConfigurationRunner.class);
 
   static final Key<AtomicReference<FastBuildInfo>> BUILD_INFO_KEY =
-      KeyWithDefaultValue.create("blaze.java.fastRun.buildInfo", new AtomicReference<>());
+      Key.create("blaze.java.fastRun.buildInfo");
   static final Key<AtomicReference<FastBuildLoggingData>> LOGGING_DATA_KEY =
-      KeyWithDefaultValue.create("blaze.java.fastRun.loggingData", new AtomicReference<>());
+      Key.create("blaze.java.fastRun.loggingData");
 
   /** Returns false if this isn't a 'blaze test' invocation. */
   static boolean canRun(RunProfile runProfile) {
-    return runProfile instanceof BlazeCommandRunConfiguration
-        && Objects.equals(
-            ((BlazeCommandRunConfiguration) runProfile).getHandler().getCommandName(),
-            BlazeCommandName.TEST);
+    if (!(runProfile instanceof BlazeCommandRunConfiguration)) {
+      return false;
+    }
+    BlazeCommandRunConfiguration blazeCfg = (BlazeCommandRunConfiguration) runProfile;
+    return Objects.equals(blazeCfg.getHandler().getCommandName(), BlazeCommandName.TEST)
+        && FastBuildService.getInstance(blazeCfg.getProject())
+            .supportsFastBuilds(
+                Blaze.getBuildSystem(blazeCfg.getProject()), blazeCfg.getTargetKind());
   }
 
   @Override
@@ -76,6 +79,8 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
     if (!canRun(env.getRunProfile())) {
       return new BlazeCommandRunProfileState(env);
     }
+    env.putCopyableUserData(BUILD_INFO_KEY, new AtomicReference<>());
+    env.putCopyableUserData(LOGGING_DATA_KEY, new AtomicReference<>());
     return new FastBuildRunProfileState(env);
   }
 
@@ -106,9 +111,9 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
           buildService.createBuild(
               label, binaryPath, handlerState.getBlazeFlagsState().getExpandedFlags());
       FastBuildInfo fastBuildInfo = buildFuture.get();
-      env.getUserData(BUILD_INFO_KEY).set(fastBuildInfo);
+      env.getCopyableUserData(BUILD_INFO_KEY).set(fastBuildInfo);
       loggingData.data.putAll(fastBuildInfo.loggingData());
-      env.getUserData(LOGGING_DATA_KEY).set(loggingData);
+      env.getCopyableUserData(LOGGING_DATA_KEY).set(loggingData);
       return true;
     } catch (InterruptedException e) {
       buildFuture.cancel(/* mayInterruptIfRunning */ true);

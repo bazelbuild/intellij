@@ -27,7 +27,6 @@ def stamped_plugin_xml(
         plugin_name = None,
         stamp_since_build = False,
         stamp_until_build = False,
-        include_product_code_in_stamp = False,
         version = None,
         version_file = None,
         changelog_file = None,
@@ -44,8 +43,6 @@ def stamped_plugin_xml(
       stamp_since_build: Add build number to idea-version since-build.
       stamp_until_build: Use idea-version until-build to limit plugin to the
           current major release.
-      include_product_code_in_stamp: Whether the product code (eg. "IC")
-          is included in since-build and until-build.
       version: A version number to stamp.
       version_file: A file with the version number to be included.
       changelog_file: A file with the changelog to be included.
@@ -66,7 +63,6 @@ def stamped_plugin_xml(
         "--api_version_txt=$(location {api_version_txt_name})",
         "{stamp_since_build}",
         "{stamp_until_build}",
-        "{include_product_code_in_stamp}",
     ]
     srcs = [plugin_xml, api_version_txt_name]
 
@@ -109,10 +105,6 @@ def stamped_plugin_xml(
         stamp_until_build = _optstr(
             "stamp_until_build",
             stamp_until_build,
-        ),
-        include_product_code_in_stamp = _optstr(
-            "include_product_code_in_stamp",
-            include_product_code_in_stamp,
         ),
         version_file = version_file,
         changelog_file = changelog_file,

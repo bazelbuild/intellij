@@ -84,7 +84,7 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
                   + "    xmlns:android=\"http://schemas.android.com/apk/res/android\">\n"
                   + "\n"
                   + "    <instrumentation\n"
-                  + "        android:name=\"android.support.test.runner.AndroidJUnitRunner\"\n"
+                  + "        android:name=\"androidx.test.runner.AndroidJUnitRunner\"\n"
                   + "        android:targetPackage=\"%1$s\">\n"
                   + "    </instrumentation>\n"
                   + "\n"

@@ -12,13 +12,30 @@ java_import(
 )
 
 java_import(
+    name = "guava",
+    jars = glob(["clion-*/lib/guava-*.jar"]),
+)
+
+java_import(
     name = "hg4idea",
     jars = glob(["clion-*/plugins/hg4idea/lib/hg4idea.jar"]),
 )
 
 java_import(
-    name = "guava",
-    jars = glob(["clion-*/lib/guava-*.jar"]),
+    name = "javascript",
+    data = [":javascript_data"],
+    jars = glob(["clion-*/plugins/JavaScriptLanguage/lib/*.jar"]),
+)
+
+filegroup(
+    name = "javascript_data",
+    srcs = glob(["clion-*/plugins/JavaScriptLanguage/jsLanguageServicesImpl/external/*"]),
+    visibility = ["//visibility:private"],
+)
+
+java_import(
+    name = "css",
+    jars = glob(["clion-*/plugins/CSS/lib/*.jar"]),
 )
 
 java_import(

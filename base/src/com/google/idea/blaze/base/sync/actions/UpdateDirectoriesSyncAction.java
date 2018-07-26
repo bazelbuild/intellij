@@ -19,7 +19,7 @@ import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
-import com.google.idea.common.actionhelper.ActionPresentationHelper;
+import com.google.idea.common.actions.ActionPresentationHelper;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 

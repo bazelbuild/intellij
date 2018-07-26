@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.lang.buildfile.completion;
 
 import static com.intellij.patterns.PlatformPatterns.psiComment;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.PlatformPatterns.psiFile;
 
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileLanguage;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
@@ -25,6 +26,7 @@ import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefiniti
 import com.google.idea.blaze.base.lang.buildfile.lexer.BuildToken;
 import com.google.idea.blaze.base.lang.buildfile.lexer.TokenKind;
 import com.google.idea.blaze.base.lang.buildfile.psi.Argument;
+import com.google.idea.blaze.base.lang.buildfile.psi.BuildFileWithCustomCompletion;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.intellij.codeInsight.completion.AutoCompletionContext;
@@ -73,7 +75,8 @@ public class BuiltInFunctionAttributeCompletionContributor extends CompletionCon
                     .andNot(psiElement().afterLeaf("="))
                     .andNot(
                         psiElement()
-                            .afterLeaf(psiElement(BuildToken.fromKind(TokenKind.IDENTIFIER))))),
+                            .afterLeaf(psiElement(BuildToken.fromKind(TokenKind.IDENTIFIER)))))
+            .andNot(psiElement().inFile(psiFile(BuildFileWithCustomCompletion.class))),
         new CompletionProvider<CompletionParameters>() {
           @Override
           protected void addCompletions(

@@ -40,6 +40,7 @@ message JavaInfo {
   string test_class = 2;
   repeated string annotation_processor_class_names = 3;
   repeated ArtifactLocation annotation_processor_classpath = 4;
+  repeated string jvm_flags = 5;
 }
 
 message JavaToolchainInfo {

@@ -16,7 +16,6 @@ load(
     "//build_defs:intellij_plugin_debug_target.bzl",
     "intellij_plugin_debug_target",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 load("//:version.bzl", "VERSION")
 load(
     "//testing:test_defs.bzl",
@@ -31,10 +30,7 @@ merged_plugin_xml(
         "//cpp:plugin_xml",
         "//dart:plugin_xml",
         "//python:plugin_xml",
-    ] + select_for_plugin_api({
-        "clion-2018.1": ["src/META-INF/clwb_2018_1.xml"],
-        "clion-2017.3": ["src/META-INF/clwb_2017_3.xml"],
-    }),
+    ],
 )
 
 merged_plugin_xml(
@@ -48,7 +44,6 @@ merged_plugin_xml(
 stamped_plugin_xml(
     name = "stamped_plugin_xml",
     changelog_file = "//:changelog",
-    include_product_code_in_stamp = True,
     plugin_id = "com.google.idea.bazel.clwb",
     plugin_name = "Bazel",
     plugin_xml = ":merged_plugin_xml",
@@ -67,6 +62,7 @@ java_library(
     ],
     deps = [
         "//base",
+        "//common/actions",
         "//common/experiments",
         "//cpp",
         "//intellij_platform_sdk:jsr305",

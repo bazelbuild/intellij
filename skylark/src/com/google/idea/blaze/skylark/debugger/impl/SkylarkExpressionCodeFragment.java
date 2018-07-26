@@ -17,9 +17,9 @@ package com.google.idea.blaze.skylark.debugger.impl;
 
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.lang.buildfile.psi.BuildFileWithCustomCompletion;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
@@ -29,17 +29,17 @@ import com.intellij.testFramework.LightVirtualFile;
 import javax.annotation.Nullable;
 
 /**
- * TODO(brendandouglas): inject bindings from debug frame directly (see example in
- * XsltDebuggerEditorsProvider)
+ * An in-memory {@link BuildFile} context used in the debugger's evaluate dialog. It has custom
+ * completion suggestions provided by the debugger.
  */
-class SkylarkExpressionCodeFragment extends BuildFile {
+class SkylarkExpressionCodeFragment extends BuildFile implements BuildFileWithCustomCompletion {
 
-  @Nullable private PsiElement context;
   private boolean isPhysical;
   @Nullable private FileViewProvider viewProvider;
 
-  public SkylarkExpressionCodeFragment(
-      Project project, String fileName, String text, boolean isPhysical) {
+  volatile SkylarkSourcePosition debugEvaluationContext = null;
+
+  SkylarkExpressionCodeFragment(Project project, String fileName, String text, boolean isPhysical) {
     super(
         PsiManagerEx.getInstanceEx(project)
             .getFileManager()
@@ -65,10 +65,6 @@ class SkylarkExpressionCodeFragment extends BuildFile {
     return clone;
   }
 
-  public PsiElement getContext() {
-    return context != null && context.isValid() ? context : super.getContext();
-  }
-
   @Override
   public FileViewProvider getViewProvider() {
     return viewProvider != null ? viewProvider : super.getViewProvider();
@@ -79,7 +75,7 @@ class SkylarkExpressionCodeFragment extends BuildFile {
     return isPhysical;
   }
 
-  public void setContext(@Nullable PsiElement context) {
-    this.context = context;
+  void setDebugEvaluationContext(SkylarkSourcePosition debugEvaluationContext) {
+    this.debugEvaluationContext = debugEvaluationContext;
   }
 }

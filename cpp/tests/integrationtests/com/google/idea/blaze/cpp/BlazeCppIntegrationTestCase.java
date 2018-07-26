@@ -17,18 +17,14 @@ package com.google.idea.blaze.cpp;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-import static com.jetbrains.cidr.lang.OCLanguage.LANGUAGE_SUPPORT_DISABLED;
 
+import com.android.tools.ndk.NdkHelper;
 import com.google.common.base.Splitter;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.sdkcompat.cidr.OCWorkspaceProvider;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.cidr.lang.psi.OCFile;
-import com.jetbrains.cidr.lang.workspace.OCWorkspace;
-import com.jetbrains.cidr.lang.workspace.OCWorkspaceManager;
 import java.util.List;
 import org.junit.Before;
 
@@ -37,8 +33,7 @@ public class BlazeCppIntegrationTestCase extends BlazeIntegrationTestCase {
 
   @Before
   public void enableCppLanguageSupport() {
-    registerProjectService(OCWorkspaceManager.class, new TestOCWorkspaceManager());
-    enableCSupportInIde(getProject());
+    NdkHelper.disableCppLanguageSupport(getProject(), false);
   }
 
   protected OCFile createFile(String relativePath, String... contentLines) {
@@ -61,14 +56,6 @@ public class BlazeCppIntegrationTestCase extends BlazeIntegrationTestCase {
     return (OCFile) file;
   }
 
-  private static void enableCSupportInIde(Project project) {
-    OCWorkspace workspace = OCWorkspaceProvider.getWorkspace(project);
-    assertThat(workspace).isNotNull();
-    if (LANGUAGE_SUPPORT_DISABLED.get(project, false)) {
-      LANGUAGE_SUPPORT_DISABLED.set(project, false);
-    }
-  }
-
   protected static void assertText(OCFile file, String... expectedLines) {
     List<String> actualLines = Splitter.on('\n').splitToList(file.getText());
     int i = 0;
@@ -84,12 +71,5 @@ public class BlazeCppIntegrationTestCase extends BlazeIntegrationTestCase {
       i++;
     }
     assertThat(actualLines).hasSize(expectedLines.length);
-  }
-
-  private class TestOCWorkspaceManager extends OCWorkspaceManager {
-    @Override
-    public OCWorkspace getWorkspace() {
-      return BlazeCWorkspace.getInstance(getProject());
-    }
   }
 }

@@ -52,7 +52,7 @@ public class IssueOutputFilter implements Filter {
   public IssueOutputFilter(
       Project project,
       WorkspaceRoot workspaceRoot,
-      BlazeInvocationContext invocationContext,
+      BlazeInvocationContext.ContextType invocationContext,
       boolean linkToBlazeConsole) {
     this(
         project,

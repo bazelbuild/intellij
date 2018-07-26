@@ -25,9 +25,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.Scope;
-import com.google.idea.blaze.base.scope.scopes.TimingScope;
-import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
@@ -116,12 +113,7 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
         workspaceModifiableModel.addLibraryEntry(lib);
       }
     }
-    Scope.push(
-        context,
-        (childContext) -> {
-          childContext.push(new TimingScope("BuildGoSymbolicLinks", EventType.Other));
-          BlazeGoRootsProvider.createGoPathSourceRoot(project, blazeProjectData);
-        });
+    BlazeGoRootsProvider.handleGoSymlinks(context, project, blazeProjectData);
     PropertiesComponent.getInstance().setValue(DO_NOT_SHOW_NOTIFICATION_ABOUT_EMPTY_GOPATH, true);
   }
 

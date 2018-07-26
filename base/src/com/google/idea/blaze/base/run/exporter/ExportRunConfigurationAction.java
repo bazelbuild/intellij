@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.run.exporter;
 
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
-import com.google.idea.common.actionhelper.ActionPresentationHelper;
+import com.google.idea.common.actions.ActionPresentationHelper;
 import com.intellij.execution.RunManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;

@@ -11,9 +11,9 @@ java_library(
         "com/google/idea/sdkcompat/plugin/**",
         "com/google/idea/sdkcompat/psi/**",
         "com/google/idea/sdkcompat/python/**",
+        "com/google/idea/sdkcompat/query/**",
         "com/google/idea/sdkcompat/run/**",
         "com/google/idea/sdkcompat/smrunner/**",
-        "com/google/idea/sdkcompat/transactions/**",
         "com/google/idea/sdkcompat/ui/**",
         "com/google/idea/sdkcompat/vcs/**",
     ]) + select_for_ide(
@@ -21,6 +21,7 @@ java_library(
             "com/google/idea/sdkcompat/cidr/**",
             "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/kotlin/**",
+            "studio/**",
         ]),
         clion = glob([
             "com/google/idea/sdkcompat/cidr/**",

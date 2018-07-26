@@ -18,12 +18,14 @@ package com.google.idea.blaze.skylark.debugger.impl;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.XValuePlace;
+import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
@@ -32,11 +34,16 @@ import javax.swing.Icon;
  */
 class SkylarkDebugValue extends XNamedValue {
 
-  static SkylarkDebugValue fromProto(SkylarkDebuggingProtos.Value value) {
-    return new SkylarkDebugValue(value);
+  static SkylarkDebugValue fromProto(
+      SkylarkStackFrame frameContext, SkylarkDebuggingProtos.Value value) {
+    return new SkylarkDebugValue(frameContext, value);
   }
 
-  private static Type parseType(SkylarkDebuggingProtos.Value value) {
+  static Icon getIcon(SkylarkDebuggingProtos.Value value) {
+    return parseType(value).icon;
+  }
+
+  static Type parseType(SkylarkDebuggingProtos.Value value) {
     String typeString = value.getType();
     if (ARRAY_TYPES.contains(typeString)) {
       return Type.ARRAY;
@@ -71,13 +78,15 @@ class SkylarkDebugValue extends XNamedValue {
     }
   }
 
-  final SkylarkDebuggingProtos.Value value;
+  private SkylarkStackFrame frameContext;
+  private final SkylarkDebuggingProtos.Value value;
   private final Type type;
 
-  private SkylarkDebugValue(SkylarkDebuggingProtos.Value value) {
+  private SkylarkDebugValue(SkylarkStackFrame frameContext, SkylarkDebuggingProtos.Value value) {
     super(value.getLabel());
     this.value = value;
     this.type = parseType(value);
+    this.frameContext = frameContext;
   }
 
   @Override
@@ -91,7 +100,7 @@ class SkylarkDebugValue extends XNamedValue {
         type.icon,
         getTypeString(),
         truncateToMaxLength(value.getDescription()),
-        /* hasChildren */ value.getChildCount() > 0);
+        /* hasChildren */ value.getHasChildren());
     if (value.getDescription().length() > XValueNode.MAX_VALUE_LENGTH) {
       node.setFullValueEvaluator(
           new XFullValueEvaluator() {
@@ -120,8 +129,22 @@ class SkylarkDebugValue extends XNamedValue {
     if (node.isObsolete()) {
       return;
     }
-    XValueChildrenList children = new XValueChildrenList(value.getChildCount());
-    value.getChildList().forEach(v -> children.add(SkylarkDebugValue.fromProto(v)));
-    node.addChildren(children, true);
+    if (!value.getHasChildren()) {
+      node.addChildren(XValueChildrenList.EMPTY, true);
+      return;
+    }
+    ApplicationManager.getApplication()
+        .executeOnPooledThread(
+            () -> {
+              List<SkylarkDebuggingProtos.Value> response =
+                  frameContext.debugProcess.getChildren(frameContext.threadId, value);
+              if (response == null) {
+                node.setErrorMessage("Error querying children.");
+                return;
+              }
+              XValueChildrenList children = new XValueChildrenList(response.size());
+              response.forEach(v -> children.add(SkylarkDebugValue.fromProto(frameContext, v)));
+              node.addChildren(children, true);
+            });
   }
 }

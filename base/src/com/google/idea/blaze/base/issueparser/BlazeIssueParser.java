@@ -44,7 +44,9 @@ import javax.annotation.Nullable;
 public class BlazeIssueParser {
 
   public static ImmutableList<BlazeIssueParser.Parser> defaultIssueParsers(
-      Project project, WorkspaceRoot workspaceRoot, BlazeInvocationContext invocationContext) {
+      Project project,
+      WorkspaceRoot workspaceRoot,
+      BlazeInvocationContext.ContextType invocationContext) {
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
     if (projectViewSet == null) {
       // some parsers will work regardless, but don't even bother splitting them if there's no
@@ -71,7 +73,7 @@ public class BlazeIssueParser {
                     projectViewSet, "ERROR: Skipping '(.*?)'"),
                 new BlazeIssueParser.FileNotFoundBuildParser(workspaceRoot))
             .addAll(BlazeIssueParserProvider.getAllIssueParsers(project));
-    if (invocationContext == BlazeInvocationContext.Sync) {
+    if (invocationContext == BlazeInvocationContext.ContextType.Sync) {
       parsers.add(BlazeIssueParser.GenericErrorParser.INSTANCE);
     }
     return parsers.build();
@@ -177,24 +179,35 @@ public class BlazeIssueParser {
     private final WorkspaceRoot workspaceRoot;
 
     CompileParser(WorkspaceRoot workspaceRoot) {
-      super("^([^/].*?):([0-9]+):(?:([0-9]+):)? (fatal error|error|warning): (.*)$");
+      super("^([^/].*?):([0-9]+):(?:([0-9]+):)? (fatal error|error|warning|note): (.*)$");
       this.workspaceRoot = workspaceRoot;
     }
 
     @Override
     protected IssueOutput createIssue(Matcher matcher) {
       final File file = fileFromRelativePath(workspaceRoot, matcher.group(1));
-      IssueOutput.Category type =
-          matcher.group(4).equals("warning")
-              ? IssueOutput.Category.WARNING
-              : IssueOutput.Category.ERROR;
-      return IssueOutput.issue(type, matcher.group(5))
+      IssueOutput.Category category = messageCategory(matcher.group(4));
+      return IssueOutput.issue(category, matcher.group(5))
           .inFile(file)
           .onLine(Integer.parseInt(matcher.group(2)))
           .inColumn(parseOptionalInt(matcher.group(3)))
           .consoleHyperlinkRange(
               union(fileHighlightRange(matcher, 1), matchedTextRange(matcher, 2, 3)))
           .build();
+    }
+
+    private static IssueOutput.Category messageCategory(String messageType) {
+      switch (messageType) {
+        case "warning":
+          return IssueOutput.Category.WARNING;
+        case "note":
+          return IssueOutput.Category.NOTE;
+        case "error":
+        case "fatal error":
+          return IssueOutput.Category.ERROR;
+        default: // fall out
+      }
+      return IssueOutput.Category.ERROR;
     }
   }
 

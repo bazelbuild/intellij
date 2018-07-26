@@ -27,10 +27,10 @@ import javax.swing.Icon;
 class SkylarkExecutionStack extends XExecutionStack {
 
   private final SkylarkDebugProcess debugProcess;
-  private final ThreadInfo threadInfo;
+  private final PausedThreadState threadInfo;
 
-  SkylarkExecutionStack(SkylarkDebugProcess debugProcess, ThreadInfo threadInfo) {
-    super(threadInfo.name, getThreadIcon(threadInfo));
+  SkylarkExecutionStack(SkylarkDebugProcess debugProcess, PausedThreadState threadInfo) {
+    super(threadInfo.thread.getName(), getThreadIcon(threadInfo.thread));
     this.debugProcess = debugProcess;
     this.threadInfo = threadInfo;
   }
@@ -43,15 +43,19 @@ class SkylarkExecutionStack extends XExecutionStack {
 
   @Override
   public void computeStackFrames(int firstFrameIndex, XStackFrameContainer container) {
+    if (firstFrameIndex != 0) {
+      // already computed
+      return;
+    }
     ApplicationManager.getApplication()
         .executeOnPooledThread(
             () -> {
-              debugProcess.listFrames(threadInfo.id, container);
+              debugProcess.listFrames(threadInfo.thread.getId(), container);
             });
   }
 
   long getThreadId() {
-    return threadInfo.id;
+    return threadInfo.thread.getId();
   }
 
   @Override
@@ -62,19 +66,17 @@ class SkylarkExecutionStack extends XExecutionStack {
     if (!(obj instanceof SkylarkExecutionStack)) {
       return false;
     }
-    return threadInfo.equals(((SkylarkExecutionStack) obj).threadInfo);
+    return threadInfo.thread.getId() == ((SkylarkExecutionStack) obj).threadInfo.thread.getId();
   }
 
   @Override
   public int hashCode() {
-    return threadInfo.hashCode();
+    return (int) threadInfo.thread.getId();
   }
 
-  private static Icon getThreadIcon(ThreadInfo threadInfo) {
-    PausedThread pausedState = threadInfo.getPausedState();
-    if (pausedState != null
-        && (pausedState.getPauseReason() == PauseReason.HIT_BREAKPOINT
-            || pausedState.getPauseReason() == PauseReason.CONDITIONAL_BREAKPOINT_ERROR)) {
+  private static Icon getThreadIcon(PausedThread threadInfo) {
+    if (threadInfo.getPauseReason() == PauseReason.HIT_BREAKPOINT
+        || threadInfo.getPauseReason() == PauseReason.CONDITIONAL_BREAKPOINT_ERROR) {
       return AllIcons.Debugger.ThreadAtBreakpoint;
     }
     return AllIcons.Debugger.ThreadSuspended;

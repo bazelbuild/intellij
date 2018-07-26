@@ -131,8 +131,10 @@ class DebugClientTransport implements Closeable {
     long seq = sequence.getAndIncrement();
     DebugRequest request = builder.setSequenceNumber(seq).build();
     try {
-      request.writeDelimitedTo(requestStream);
-      requestStream.flush();
+      synchronized (requestStream) {
+        request.writeDelimitedTo(requestStream);
+        requestStream.flush();
+      }
       return waitForResponse(seq);
 
     } catch (IOException e) {

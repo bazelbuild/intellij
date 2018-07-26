@@ -37,8 +37,9 @@ public class Blaze {
   }
 
   /** Returns whether this project was imported from blaze. */
-  public static boolean isBlazeProject(Project project) {
-    return BlazeImportSettingsManager.getInstance(project).getImportSettings() != null;
+  public static boolean isBlazeProject(@Nullable Project project) {
+    return project != null
+        && BlazeImportSettingsManager.getInstance(project).getImportSettings() != null;
   }
 
   /**

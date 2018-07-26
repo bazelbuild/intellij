@@ -20,6 +20,7 @@ import static com.google.idea.common.guava.GuavaHelper.toImmutableList;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
@@ -95,7 +96,8 @@ public class ClassFileManifestBuilder {
               buildResultHelper,
               aspectStrategy.getBuildFlags(),
               ImmutableList.of(),
-              ExecutorType.fromExecutor(env.getExecutor()),
+              BlazeInvocationContext.runConfigContext(
+                  ExecutorType.fromExecutor(env.getExecutor()), configuration.getType()),
               "Building debug binary");
 
       if (progress != null) {

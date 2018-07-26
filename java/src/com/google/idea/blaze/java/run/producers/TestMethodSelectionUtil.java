@@ -19,6 +19,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiElement;
@@ -103,7 +104,7 @@ public class TestMethodSelectionUtil {
   public static List<PsiMethod> getDirectlySelectedMethods(
       @NotNull ConfigurationContext context, boolean allMustMatch) {
     final DataContext dataContext = context.getDataContext();
-    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    PsiElement[] elements = getSelectedPsiElements(dataContext);
     if (elements == null) {
       return null;
     }
@@ -111,7 +112,7 @@ public class TestMethodSelectionUtil {
     for (PsiElement element : elements) {
       if (element instanceof PsiMethod) {
         PsiMethod method = (PsiMethod) element;
-        if (JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(method))) {
+        if (JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(method), /* checkAbstract */ false)) {
           methods.add(method);
         } else if (allMustMatch) {
           return null;
@@ -121,6 +122,16 @@ public class TestMethodSelectionUtil {
       }
     }
     return methods;
+  }
+
+  @Nullable
+  private static PsiElement[] getSelectedPsiElements(DataContext context) {
+    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context);
+    if (elements != null) {
+      return elements;
+    }
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(context);
+    return element != null ? new PsiElement[] {element} : null;
   }
 
   /**

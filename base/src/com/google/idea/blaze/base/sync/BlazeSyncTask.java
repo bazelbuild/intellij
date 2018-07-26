@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.sync;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -27,6 +29,7 @@ import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
@@ -136,6 +139,11 @@ final class BlazeSyncTask implements Progressive {
   private final boolean showPerformanceWarnings;
   private final SyncStats.Builder syncStats = SyncStats.builder();
   private final TimingScopeListener timingScopeListener;
+
+  // Either all access to timedEvents happen on same thread, or if other threads create
+  // TimingScope one takes special care to ensure that the sync thread waits for other thread
+  // TimingScopes to end. For now, ensure same thread.
+  private final ThreadLocal<Boolean> isSyncThread = new ThreadLocal<>();
   private final List<TimedEvent> timedEvents = new ArrayList<>();
 
   private BlazeSyncParams syncParams;
@@ -154,6 +162,7 @@ final class BlazeSyncTask implements Progressive {
 
           @Override
           public void onScopeEnd(TimedEvent event) {
+            Preconditions.checkState(isSyncThread.get());
             timedEvents.add(event);
           }
         };
@@ -176,8 +185,7 @@ final class BlazeSyncTask implements Progressive {
                     new BlazeConsoleScope.Builder(project, indicator)
                         .setPopupBehavior(userSettings.getShowBlazeConsoleOnSync())
                         .addConsoleFilters(
-                            new IssueOutputFilter(
-                                project, workspaceRoot, BlazeInvocationContext.Sync, true))
+                            new IssueOutputFilter(project, workspaceRoot, ContextType.Sync, true))
                         .build())
                 .push(new IssuesScope(project, userSettings.getShowProblemsViewOnSync()))
                 .push(new IdeaLogScope());
@@ -211,6 +219,7 @@ final class BlazeSyncTask implements Progressive {
   /** Returns true if sync successfully completed */
   @VisibleForTesting
   boolean syncProject(BlazeContext context) {
+    isSyncThread.set(true);
     TimingScope timingScope = new TimingScope("Sync", EventType.Other);
     timingScope.addScopeListener(timingScopeListener, true);
     context.push(timingScope);
@@ -304,7 +313,7 @@ final class BlazeSyncTask implements Progressive {
 
     List<String> syncFlags =
         BlazeFlags.blazeFlags(
-            project, projectViewSet, BlazeCommandName.INFO, BlazeInvocationContext.Sync, null);
+            project, projectViewSet, BlazeCommandName.INFO, BlazeInvocationContext.SYNC_CONTEXT);
     syncStats.setSyncFlags(syncFlags);
     ListenableFuture<BlazeInfo> blazeInfoFuture =
         BlazeInfoRunner.getInstance()
@@ -577,16 +586,17 @@ final class BlazeSyncTask implements Progressive {
 
   private static void refreshVirtualFileSystem(
       BlazeContext context, BlazeProjectData blazeProjectData) {
-    Transactions.submitWriteActionTransactionAndWait(
-        () ->
-            Scope.push(
-                context,
-                (childContext) -> {
-                  childContext.push(new TimingScope("RefreshVirtualFileSystem", EventType.Other));
-                  for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-                    syncPlugin.refreshVirtualFileSystem(blazeProjectData);
-                  }
-                }));
+    Scope.push(
+        context,
+        (childContext) -> {
+          childContext.push(new TimingScope("RefreshVirtualFileSystem", EventType.Other));
+          Transactions.submitWriteActionTransactionAndWait(
+              () -> {
+                for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
+                  syncPlugin.refreshVirtualFileSystem(blazeProjectData);
+                }
+              });
+        });
   }
 
   static class WorkspacePathResolverAndProjectView {
@@ -999,7 +1009,7 @@ final class BlazeSyncTask implements Progressive {
             .mapToLong(e -> e.durationMillis)
             .sum();
     stats.setBlazeExecTimeMs(blazeExecTime);
-    stats.setTimedEvents(timedEvents);
+    stats.setTimedEvents(ImmutableList.copyOf(timedEvents));
 
     return stats.build();
   }

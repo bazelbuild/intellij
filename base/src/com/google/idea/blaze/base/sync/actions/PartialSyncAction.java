@@ -29,7 +29,7 @@ import com.google.idea.blaze.base.sync.BuildTargetFinder;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
-import com.google.idea.common.actionhelper.ActionPresentationHelper;
+import com.google.idea.common.actions.ActionPresentationHelper;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;

@@ -48,8 +48,8 @@ import javax.annotation.Nullable;
  */
 public class BlazeAttachSourceProvider implements AttachSourcesProvider {
 
-  static final BoolExperiment attachAutomatically =
-      new BoolExperiment("blaze.attach.source.jars.automatically", true);
+  private static final BoolExperiment attachAutomatically =
+      new BoolExperiment("blaze.attach.source.jars.automatically.2", true);
 
   @Override
   public Collection<AttachSourcesAction> getActions(
@@ -150,7 +150,7 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
         .findFile(psiFile.getViewProvider().getVirtualFile());
   }
 
-  static void attachSources(
+  private static void attachSources(
       Project project,
       BlazeProjectData blazeProjectData,
       Collection<BlazeLibrary> librariesToAttachSourceTo) {

@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.AndroidInfo;
+import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -61,11 +62,17 @@ final class FastBuildTestEnvironmentCreator {
   private final Project project;
   private final String testClassProperty;
   private final String testRunner;
+  private final RobolectricDepsPropertiesFinder robolectricDepsPropertiesFinder;
 
-  FastBuildTestEnvironmentCreator(Project project, String testClassProperty, String testRunner) {
+  FastBuildTestEnvironmentCreator(
+      Project project,
+      String testClassProperty,
+      String testRunner,
+      RobolectricDepsPropertiesFinder robolectricDepsPropertiesFinder) {
     this.project = project;
     this.testClassProperty = testClassProperty;
     this.testRunner = testRunner;
+    this.robolectricDepsPropertiesFinder = robolectricDepsPropertiesFinder;
   }
 
   GeneralCommandLine createCommandLine(
@@ -76,9 +83,15 @@ final class FastBuildTestEnvironmentCreator {
       int debugPort)
       throws ExecutionException {
 
+    FastBuildBlazeData targetData = fastBuildInfo.blazeData().get(fastBuildInfo.label());
+    checkState(targetData != null, "Couldn't find blaze data for %s", fastBuildInfo.label());
+    checkState(
+        targetData.javaInfo().isPresent(), "Couldn't find Java info for %s", fastBuildInfo.label());
+    JavaInfo targetJavaInfo = targetData.javaInfo().get();
+
     // To emulate 'blaze test', the binary should be launched from something like
     // blaze-out/k8-opt/bin/path/to/package/MyLabel.runfiles/io_bazel
-    String workspaceName = fastBuildInfo.blazeData().get(fastBuildInfo.label()).workspaceName();
+    String workspaceName = targetData.workspaceName();
     Path runfilesDir =
         Paths.get(
             fastBuildInfo.deployJar().getParent(),
@@ -93,11 +106,21 @@ final class FastBuildTestEnvironmentCreator {
           "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
     }
 
+    targetJavaInfo.jvmFlags().forEach(commandLine::addParameter);
+
     commandLine.withParameters(
-        "-cp", createClasspath(fastBuildInfo), getTestSuiteParameter(fastBuildInfo), testRunner);
+        "-cp",
+        createClasspath(fastBuildInfo),
+        getTestSuiteParameter(fastBuildInfo.label(), targetJavaInfo));
+
+    if (kind.equals(Kind.ANDROID_LOCAL_TEST)) {
+      addAndroidLocalTestParameters(commandLine, fastBuildInfo);
+    }
+
+    commandLine.withParameters(testRunner);
 
     if (kind.equals(Kind.ANDROID_ROBOLECTRIC_TEST)) {
-      addAndroidLibraries(commandLine, fastBuildInfo, workingDir);
+      addAndroidRobolectricTestParameters(commandLine, fastBuildInfo, workingDir);
     }
 
     commandLine
@@ -128,21 +151,20 @@ final class FastBuildTestEnvironmentCreator {
     return Joiner.on(':').join(fastBuildInfo.classpath());
   }
 
-  private String getTestSuiteParameter(FastBuildInfo fastBuildInfo) throws ExecutionException {
-    return "-D" + testClassProperty + "=" + getTestClass(fastBuildInfo);
+  private String getTestSuiteParameter(Label label, JavaInfo targetJavaInfo)
+      throws ExecutionException {
+    return "-D" + testClassProperty + "=" + getTestClass(label, targetJavaInfo);
   }
 
-  private String getTestClass(FastBuildInfo fastBuildInfo) throws ExecutionException {
-    FastBuildBlazeData targetData = fastBuildInfo.blazeData().get(fastBuildInfo.label());
-    checkState(targetData.javaInfo().isPresent());
-    if (targetData.javaInfo().get().testClass().isPresent()) {
-      return targetData.javaInfo().get().testClass().get();
+  private String getTestClass(Label label, JavaInfo targetJavaInfo) throws ExecutionException {
+    if (targetJavaInfo.testClass().isPresent()) {
+      return targetJavaInfo.testClass().get();
     } else {
-      return determineTestClassFromSources(fastBuildInfo.label(), targetData);
+      return determineTestClassFromSources(label, targetJavaInfo);
     }
   }
 
-  private String determineTestClassFromSources(Label label, FastBuildBlazeData targetData)
+  private String determineTestClassFromSources(Label label, JavaInfo targetJavaInfo)
       throws ExecutionException {
 
     BlazeProjectData blazeProjectData =
@@ -151,7 +173,7 @@ final class FastBuildTestEnvironmentCreator {
     String targetName = label.targetName().toString();
     PsiManager psiManager = PsiManager.getInstance(project);
     for (File source :
-        blazeProjectData.artifactLocationDecoder.decodeAll(targetData.javaInfo().get().sources())) {
+        blazeProjectData.artifactLocationDecoder.decodeAll(targetJavaInfo.sources())) {
       VirtualFile virtualFile = VfsUtils.resolveVirtualFile(source);
       if (virtualFile == null) {
         continue;
@@ -173,7 +195,7 @@ final class FastBuildTestEnvironmentCreator {
     throw new ExecutionException("Couldn't determine test class");
   }
 
-  private void addAndroidLibraries(
+  private void addAndroidRobolectricTestParameters(
       GeneralCommandLine commandLine, FastBuildInfo fastBuildInfo, Path workingDir) {
 
     ImmutableMap<Label, FastBuildBlazeData> blazeData = fastBuildInfo.blazeData();
@@ -203,6 +225,18 @@ final class FastBuildTestEnvironmentCreator {
     if (!libraries.isEmpty()) {
       commandLine.withParameters("--android_libraries", libraries.stream().collect(joining(",")));
     }
+  }
+
+  private void addAndroidLocalTestParameters(
+      GeneralCommandLine commandLine, FastBuildInfo fastBuildInfo) throws ExecutionException {
+    commandLine
+        .withParameters("-Drobolectric.offline=true")
+        .withParameters(
+            "-Drobolectric-deps.properties="
+                + robolectricDepsPropertiesFinder.getPropertiesLocation(fastBuildInfo))
+        .withParameters("-Duse_framework_manifest_parser=true")
+        .withParameters(
+            "-Dorg.robolectric.packagesToNotAcquire=com.google.testing.junit.runner.util");
   }
 
   private void recursivelyAddAndroidLibraries(

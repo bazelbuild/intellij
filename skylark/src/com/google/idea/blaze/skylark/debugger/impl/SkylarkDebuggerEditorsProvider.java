@@ -16,26 +16,53 @@
 package com.google.idea.blaze.skylark.debugger.impl;
 
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
-import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
-import com.google.idea.blaze.base.lang.buildfile.psi.StatementList;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.xdebugger.evaluation.XDebuggerEditorsProviderBase;
+import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import javax.annotation.Nullable;
 
 /** Provides the editor environment used for debugger evaluation. */
-class SkylarkDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
+class SkylarkDebuggerEditorsProvider extends XDebuggerEditorsProvider {
 
   @Override
-  protected PsiFile createExpressionCodeFragment(
-      Project project, String text, @Nullable PsiElement context, boolean isPhysical) {
+  public Document createDocument(
+      Project project,
+      XExpression expression,
+      @Nullable XSourcePosition sourcePosition,
+      EvaluationMode mode) {
+    PsiElement context = null;
+    if (sourcePosition != null) {
+      context = getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project);
+    }
+    PsiFile codeFragment =
+        createExpressionCodeFragment(project, expression.getExpression(), sourcePosition, context);
+    Document document = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+    assert document != null;
+    return document;
+  }
+
+  private PsiFile createExpressionCodeFragment(
+      Project project,
+      String text,
+      @Nullable XSourcePosition sourcePosition,
+      @Nullable PsiElement context) {
     text = text.trim();
     SkylarkExpressionCodeFragment fragment =
-        new SkylarkExpressionCodeFragment(project, codeFragmentFileName(context), text, isPhysical);
-    fragment.setContext(getStatement(context));
+        new SkylarkExpressionCodeFragment(
+            project, codeFragmentFileName(context), text, /* isPhysical */ true);
+    // inject the debug frame context into the file
+    if (sourcePosition instanceof SkylarkSourcePosition) {
+      fragment.setDebugEvaluationContext((SkylarkSourcePosition) sourcePosition);
+    }
     return fragment;
   }
 
@@ -44,45 +71,17 @@ class SkylarkDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
     return BuildFileType.INSTANCE;
   }
 
+  @Nullable
+  private static PsiElement getContextElement(
+      VirtualFile virtualFile, int offset, Project project) {
+    return XDebuggerUtil.getInstance().findContextElement(virtualFile, offset, project, false);
+  }
+
   private static String codeFragmentFileName(@Nullable PsiElement context) {
     if (context == null) {
       return "fragment.bzl";
     }
     PsiFile contextFile = context.getContainingFile();
     return contextFile != null ? contextFile.getName() : "fragment.bzl";
-  }
-
-  /** Find the correct context for completion suggestions: the start of the containing statement. */
-  @Nullable
-  private static PsiElement getStatement(@Nullable PsiElement element) {
-    if (element == null) {
-      return null;
-    }
-    PsiElement statementList = getStatementList(element);
-    if (statementList == null) {
-      return element;
-    }
-    PsiElement context = getParentRightBefore(element, statementList);
-    return context == null ? element : context;
-  }
-
-  @Nullable
-  private static PsiElement getStatementList(PsiElement element) {
-    if (element instanceof BuildFile || element instanceof StatementList) {
-      return element;
-    }
-    return PsiTreeUtil.getParentOfType(element, BuildFile.class, StatementList.class);
-  }
-
-  /**
-   * Returns ancestor of the element that is also direct child of the given super parent.
-   *
-   * @param element element to start search from
-   * @param superParent direct parent of the desired ancestor
-   */
-  @Nullable
-  private static PsiElement getParentRightBefore(PsiElement element, PsiElement superParent) {
-    return PsiTreeUtil.findFirstParent(
-        element, false, element1 -> element1.getParent() == superParent);
   }
 }

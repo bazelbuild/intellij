@@ -16,12 +16,13 @@
 package com.google.idea.blaze.base.run.coverage;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.BlazeInvocationContext.RunConfigurationContext;
 import com.google.idea.blaze.base.command.BuildFlagsProvider;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.intellij.openapi.project.Project;
 import java.util.List;
-import javax.annotation.Nullable;
 
 class CoverageBuildFlagsProvider implements BuildFlagsProvider {
 
@@ -30,9 +31,10 @@ class CoverageBuildFlagsProvider implements BuildFlagsProvider {
       Project project,
       ProjectViewSet projectViewSet,
       BlazeCommandName command,
-      @Nullable ExecutorType executorType,
+      BlazeInvocationContext context,
       List<String> flags) {
-    if (executorType == ExecutorType.COVERAGE) {
+    if (context instanceof RunConfigurationContext
+        && ((RunConfigurationContext) context).executorType == ExecutorType.COVERAGE) {
       flags.addAll(CoverageUtils.getBlazeFlags());
     }
   }

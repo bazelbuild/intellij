@@ -103,7 +103,10 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
     addConsoleFilters(
         new BlazeTargetFilter(project, true),
         new IssueOutputFilter(
-            project, WorkspaceRoot.fromProject(project), BlazeInvocationContext.NonSync, false));
+            project,
+            WorkspaceRoot.fromProject(project),
+            BlazeInvocationContext.ContextType.RunConfiguration,
+            false));
 
     List<String> command =
         HotSwapUtils.canHotSwap(getEnvironment())
@@ -201,8 +204,7 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
                     project,
                     projectViewSet,
                     blazeCommand,
-                    BlazeInvocationContext.NonSync,
-                    executorType))
+                    BlazeInvocationContext.runConfigContext(executorType, configuration.getType())))
             .addBlazeFlags(blazeFlags)
             .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags());
 

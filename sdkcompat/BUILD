@@ -23,10 +23,13 @@ java_library(
     exports = select_for_plugin_api({
         "android-studio-3.0": ["//sdkcompat/v171"],
         "android-studio-3.2": ["//sdkcompat/v181"],
+        "android-studio-3.3": ["//sdkcompat/v181"],
         "intellij-2018.1": ["//sdkcompat/v181"],
         "intellij-ue-2018.1": ["//sdkcompat/v181"],
-        "clion-2017.3": ["//sdkcompat/v173"],
+        "intellij-2018.2": ["//sdkcompat/v182"],
+        "intellij-ue-2018.2": ["//sdkcompat/v182"],
         "clion-2018.1": ["//sdkcompat/v181"],
+        "clion-2018.2": ["//sdkcompat/v182"],
     }),
 )
 

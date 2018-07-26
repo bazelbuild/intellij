@@ -38,6 +38,7 @@ test_suite(
     name = "ijwb_ue_tests",
     tests = [
         "//golang:integration_tests",
+        "//ijwb:typescript_integration_tests",
     ],
 )
 
@@ -49,12 +50,18 @@ test_suite(
         "//aswb:unit_tests",
         "//base:integration_tests",
         "//base:unit_tests",
-        "//cpp:integration_tests",
         "//cpp:unit_tests",
         "//dart:unit_tests",
         "//java:integration_tests",
         "//java:unit_tests",
     ],
+)
+
+# temporarily separate C++ integration tests from aswb_tests, as they're
+# currently disabled for 3.0
+test_suite(
+    name = "cpp_integration_tests",
+    tests = ["//cpp:integration_tests"],
 )
 
 test_suite(

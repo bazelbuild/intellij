@@ -16,17 +16,22 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.intellij.openapi.diagnostic.Logger;
+import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException.IssueKind;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 
 /** Runs a compiler to check its version. */
 public class CompilerVersionCheckerImpl implements CompilerVersionChecker {
 
-  private static final Logger logger = Logger.getInstance(CompilerVersionCheckerImpl.class);
-
   @Override
-  public String checkCompilerVersion(File executionRoot, File cppExecutable) {
+  public String checkCompilerVersion(File executionRoot, File cppExecutable)
+      throws VersionCheckException {
+    if (!executionRoot.exists()) {
+      throw new VersionCheckException(IssueKind.MISSING_EXEC_ROOT, "");
+    }
+    if (!cppExecutable.exists()) {
+      throw new VersionCheckException(IssueKind.MISSING_COMPILER, "");
+    }
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     ByteArrayOutputStream errStream = new ByteArrayOutputStream();
     int result =
@@ -39,8 +44,9 @@ public class CompilerVersionCheckerImpl implements CompilerVersionChecker {
             .build()
             .run();
     if (result != 0) {
-      logger.warn(String.format("Error getting compiler version: \"%s\"", errStream));
-      return null;
+      throw new VersionCheckException(
+          IssueKind.GENERIC_FAILURE,
+          String.format("stderr: \"%s\"\nstdout: \"%s\"", errStream, outputStream));
     }
     return outputStream.toString();
   }

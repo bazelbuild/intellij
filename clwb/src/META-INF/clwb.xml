@@ -21,6 +21,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"
                         serviceImplementation="com.google.idea.blaze.plugin.ClwbPluginId"/>
+    <projectService serviceInterface="com.google.idea.sdkcompat.cidr.OCWorkspaceManagerAdapter"
+        serviceImplementation="com.google.idea.blaze.clwb.cworkspace.BlazeCWorkspaceManager"/>
 
     <consoleFilterProvider implementation="com.google.idea.blaze.clwb.run.BlazeCppPathConsoleFilter$Provider"/>
 
@@ -31,6 +33,10 @@
         order="first"/>
     <editorNotificationProvider implementation="com.google.idea.blaze.plugin.CMakeNotificationFilter" />
     <moduleType id="BLAZE_CPP_MODULE" implementationClass="com.google.idea.blaze.clwb.BlazeCppModuleType"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="cidr.debugger">
+    <languageSupport language="" implementationClass="com.google.idea.blaze.clwb.run.BlazeCidrDebuggerSupportFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">

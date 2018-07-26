@@ -78,6 +78,7 @@ java_import(
             "android-studio/plugins/ndk-workspace/lib/*.jar",
             "android-studio/plugins/properties/lib/*.jar",
             "android-studio/plugins/smali/lib/*.jar",
+            "android-studio/plugins/IntelliLang/lib/*.jar",
         ],
         exclude = [
             # Conflict with lib/guava-*.jar

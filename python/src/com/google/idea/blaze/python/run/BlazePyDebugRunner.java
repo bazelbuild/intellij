@@ -16,6 +16,7 @@
 package com.google.idea.blaze.python.run;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.python.run.BlazePyRunConfigurationRunner.BlazePyDummyRunProfileState;
@@ -74,6 +75,7 @@ public class BlazePyDebugRunner extends PyDebugRunner {
     if (!(state instanceof BlazePyDummyRunProfileState)) {
       return null;
     }
+    EventLoggingService.getInstance().ifPresent(s -> s.logEvent(getClass(), "debugging-python"));
     try {
       state = ((BlazePyDummyRunProfileState) state).toNativeState(environment);
       return super.doExecute(state, environment);
