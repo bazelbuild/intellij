@@ -16,11 +16,9 @@
 package com.google.idea.blaze.base.command;
 
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.run.ExecutorType;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /** Provides additional flags for bazel/blaze commands. */
 public interface BuildFlagsProvider {
@@ -28,16 +26,11 @@ public interface BuildFlagsProvider {
   ExtensionPointName<BuildFlagsProvider> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.BuildFlagsProvider");
 
-  /**
-   * Flags to add to blaze/bazel invocations of the given type.
-   *
-   * @param executorType the run configuration {@link ExecutorType}, or null if not associated with
-   *     a run configuration.
-   */
+  /** Flags to add to blaze/bazel invocations of the given type. */
   void addBuildFlags(
       Project project,
       ProjectViewSet projectViewSet,
       BlazeCommandName command,
-      @Nullable ExecutorType executorType,
+      BlazeInvocationContext invocationContext,
       List<String> flags);
 }

@@ -500,7 +500,10 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     compilerVersionChecker.setInjectFault(true);
 
     computeResolverResult(projectView, targetMap);
-    errorCollector.assertIssueContaining("Unable to determine version of compiler");
+    errorCollector.assertIssueContaining(
+        "Unable to check compiler version for \"/root/cc\".\n"
+            + "injected fault\n"
+            + "Check if running the compiler with --version works on the cmdline.");
   }
 
   private static ArtifactLocation src(String path) {

@@ -119,8 +119,7 @@ public class BuildLangSyncPlugin implements BlazeSyncPlugin {
                       project,
                       projectViewSet,
                       BlazeCommandName.INFO,
-                      BlazeInvocationContext.Sync,
-                      null),
+                      BlazeInvocationContext.SYNC_CONTEXT),
                   BlazeInfo.BUILD_LANGUAGE);
 
       return BuildLanguageSpec.fromProto(Build.BuildLanguage.parseFrom(future.get()));

@@ -22,7 +22,6 @@ import com.jetbrains.cidr.lang.OCFileType;
 import com.jetbrains.cidr.lang.symbols.OCSymbol;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -30,13 +29,17 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** A stub {@link OCWorkspace} to use for testing. */
-class StubOCWorkspace implements OCWorkspace {
+public class StubOCWorkspace implements OCWorkspace {
 
-  private final List<OCResolveConfiguration> resolveConfigurations;
+  private final ImmutableList<OCResolveConfiguration> resolveConfigurations;
 
-  StubOCWorkspace(Project project) {
-    resolveConfigurations = new ArrayList<>();
-    resolveConfigurations.add(new StubOCResolveConfiguration(project));
+  public StubOCWorkspace(Project project) {
+    // For now, every source file gets the same resolve configuration.
+    resolveConfigurations = ImmutableList.of(new StubOCResolveConfiguration(project));
+  }
+
+  public StubOCResolveConfiguration getModifiableStubConfiguration() {
+    return (StubOCResolveConfiguration) resolveConfigurations.get(0);
   }
 
   @Override

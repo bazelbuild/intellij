@@ -15,14 +15,13 @@
  */
 package com.google.idea.blaze.java.run.hotswap;
 
-import com.google.idea.blaze.base.plugin.BlazeActionRemover;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.common.actions.ReplaceActionHelper;
 import com.intellij.debugger.actions.HotSwapAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.project.Project;
 
 /** Overrides the built-in hotswap action for Blaze projects */
 public class BlazeHotSwapAction extends AnAction {
@@ -37,43 +36,28 @@ public class BlazeHotSwapAction extends AnAction {
         // HotSwapAction not registered by default for Android Studio, though still in the classpath
         delegate = new HotSwapAction();
       }
-      BlazeActionRemover.replaceAction(ACTION_ID, new BlazeHotSwapAction(delegate));
+      ReplaceActionHelper.conditionallyReplaceAction(
+          ACTION_ID, new BlazeHotSwapAction(delegate), Blaze::isBlazeProject);
     }
   }
-
-  private final AnAction delegate;
 
   private BlazeHotSwapAction(AnAction delegate) {
     super(
         delegate.getTemplatePresentation().getTextWithMnemonic(),
         delegate.getTemplatePresentation().getDescription(),
         delegate.getTemplatePresentation().getIcon());
-    this.delegate = delegate;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    if (!isBlazeProject(e)) {
-      delegate.actionPerformed(e);
-      return;
-    }
     BlazeHotSwapManager.reloadChangedClasses(e.getProject());
   }
 
   @Override
   public void update(AnActionEvent e) {
-    if (!isBlazeProject(e)) {
-      delegate.update(e);
-      return;
-    }
     boolean canHotSwap =
         HotSwapUtils.enableHotSwapping.getValue()
             && BlazeHotSwapManager.findHotSwappableBlazeDebuggerSession(e.getProject()) != null;
     e.getPresentation().setEnabled(canHotSwap);
-  }
-
-  private static boolean isBlazeProject(AnActionEvent e) {
-    Project project = e.getProject();
-    return project != null && Blaze.isBlazeProject(project);
   }
 }

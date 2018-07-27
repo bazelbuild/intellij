@@ -15,7 +15,8 @@
  */
 package com.google.idea.blaze.plugin;
 
-import com.google.idea.blaze.base.plugin.BlazeActionRemover;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.common.actions.ReplaceActionHelper;
 import com.google.idea.sdkcompat.clion.CMakeActionsToManipulate;
 import com.intellij.openapi.components.ApplicationComponent;
 
@@ -30,11 +31,12 @@ public class ClwbSpecificInitializer implements ApplicationComponent {
   // The original actions will be visible only on plain IDEA projects.
   private static void hideCMakeActions() {
     for (String actionId : CMakeActionsToManipulate.CMAKE_ACTION_IDS_TO_REMOVE) {
-      BlazeActionRemover.hideAction(actionId);
+      ReplaceActionHelper.conditionallyHideAction(actionId, Blaze::isBlazeProject);
     }
     for (CMakeActionsToManipulate.ActionPair actionPair :
         CMakeActionsToManipulate.CMAKE_ACTION_IDS_TO_REPLACE) {
-      BlazeActionRemover.replaceAction(actionPair.id, actionPair.replacement.get());
+      ReplaceActionHelper.conditionallyReplaceAction(
+          actionPair.id, actionPair.replacement.get(), Blaze::isBlazeProject);
     }
   }
 }

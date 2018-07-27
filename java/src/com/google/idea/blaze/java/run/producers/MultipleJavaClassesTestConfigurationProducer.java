@@ -32,6 +32,7 @@ import com.google.idea.blaze.java.run.RunUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -151,7 +152,7 @@ public class MultipleJavaClassesTestConfigurationProducer
 
   private static Set<PsiClass> selectedTestClasses(ConfigurationContext context) {
     DataContext dataContext = context.getDataContext();
-    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    PsiElement[] elements = getSelectedPsiElements(dataContext);
     if (elements == null) {
       return ImmutableSet.of();
     }
@@ -160,6 +161,16 @@ public class MultipleJavaClassesTestConfigurationProducer
         .filter(Objects::nonNull)
         .filter(testClass -> !testClass.hasModifierProperty(PsiModifier.ABSTRACT))
         .collect(Collectors.toSet());
+  }
+
+  @Nullable
+  private static PsiElement[] getSelectedPsiElements(DataContext context) {
+    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context);
+    if (elements != null) {
+      return elements;
+    }
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(context);
+    return element != null ? new PsiElement[] {element} : null;
   }
 
   @Nullable

@@ -23,14 +23,12 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ArrayUtil;
 import java.io.File;
 import java.util.Collection;
@@ -92,10 +90,6 @@ public class ManifestParser {
 
     VfsUtil.markDirtyAndRefresh(
         false, false, false, ArrayUtil.toObjectArray(manifestVirtualFiles, VirtualFile.class));
-    ApplicationManager.getApplication()
-        .invokeAndWait(
-            () -> PsiDocumentManager.getInstance(project).commitAllDocuments(),
-            ModalityState.any());
   }
 
   static class ClearManifestParser extends SyncListener.Adapter {

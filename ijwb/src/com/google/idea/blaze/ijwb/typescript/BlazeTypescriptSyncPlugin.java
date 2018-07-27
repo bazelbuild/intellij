@@ -176,8 +176,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
                     project,
                     projectViewSet,
                     BlazeCommandName.RUN,
-                    BlazeInvocationContext.Sync,
-                    null))
+                    BlazeInvocationContext.SYNC_CONTEXT))
             .build();
     return ExternalTask.builder(workspaceRoot)
         .addBlazeCommand(command)

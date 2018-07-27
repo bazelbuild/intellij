@@ -19,6 +19,7 @@ import java.text.FieldPosition;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
+import javax.annotation.Nullable;
 import javax.swing.JFormattedTextField;
 import javax.swing.text.NumberFormatter;
 
@@ -77,14 +78,25 @@ public class IntegerTextField extends JFormattedTextField {
       super.setValue(value);
       return;
     }
-    Integer integer;
-    try {
-      integer = Integer.parseInt(getFormatter().valueToString(value));
-
-    } catch (ParseException | NumberFormatException e) {
+    Integer integer = parseValue(value);
+    if (integer == null) {
       return; // retain existing value if invalid
     }
     super.setValue(integer < minValue ? minValue : integer > maxValue ? maxValue : integer);
+  }
+
+  @Nullable
+  public Integer getIntValue() {
+    return parseValue(getValue());
+  }
+
+  @Nullable
+  private Integer parseValue(@Nullable Object value) {
+    try {
+      return value == null ? null : Integer.parseInt(getFormatter().valueToString(value));
+    } catch (ParseException | NumberFormatException e) {
+      return null;
+    }
   }
 
   public IntegerTextField setMinValue(int minValue) {

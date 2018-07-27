@@ -55,11 +55,6 @@ parser.add_argument(
     "--vendor_file",
     help="File with vendor element data to add to plugin.xml",
 )
-parser.add_argument(
-    "--include_product_code_in_stamp",
-    action="store_true",
-    help="Include the product code in the stamp",
-)
 
 
 def _read_changelog(changelog_file):
@@ -146,10 +141,8 @@ def main():
     if idea_plugin.getElementsByTagName("idea-version"):
       raise ValueError("idea-version element already present")
 
-    idea_version_build_element = (
-        api_version
-        if args.include_product_code_in_stamp else _strip_build_number(
-            _strip_product_code(api_version)))
+    idea_version_build_element = _strip_build_number(
+        _strip_product_code(api_version))
 
     idea_version_element = dom.createElement("idea-version")
     new_elements.append(idea_version_element)

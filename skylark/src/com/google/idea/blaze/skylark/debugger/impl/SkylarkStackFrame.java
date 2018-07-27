@@ -16,13 +16,18 @@
 package com.google.idea.blaze.skylark.debugger.impl;
 
 import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos;
+import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.Location;
+import com.google.idea.blaze.base.io.VfsUtils;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueGroup;
+import java.io.File;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
@@ -30,9 +35,9 @@ class SkylarkStackFrame extends XStackFrame {
 
   private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
 
+  final SkylarkDebugProcess debugProcess;
   final long threadId;
-  private final SkylarkDebuggingProtos.Frame frame;
-  private final SkylarkDebugProcess debugProcess;
+  final SkylarkDebuggingProtos.Frame frame;
 
   SkylarkStackFrame(
       SkylarkDebugProcess debugProcess, long threadId, SkylarkDebuggingProtos.Frame frame) {
@@ -54,7 +59,18 @@ class SkylarkStackFrame extends XStackFrame {
   @Nullable
   @Override
   public XSourcePosition getSourcePosition() {
-    return SourcePositionConverter.fromLocationProto(frame.getLocation());
+    XSourcePosition base = fromLocationProto(frame.getLocation());
+    return new SkylarkSourcePosition(base, this);
+  }
+
+  /** Converts between source location formats used by the IDE and the Skylark debug server. */
+  @Nullable
+  static XSourcePosition fromLocationProto(Location location) {
+    VirtualFile vf = VfsUtils.resolveVirtualFile(new File(location.getPath()));
+    if (vf == null) {
+      return null;
+    }
+    return XDebuggerUtil.getInstance().createPosition(vf, location.getLineNumber() - 1);
   }
 
   @Override
@@ -71,7 +87,7 @@ class SkylarkStackFrame extends XStackFrame {
   }
 
   /** A group of variables in the debugger tree representing a single scope of a frame. */
-  private static class SkylarkFrameScope extends XValueGroup {
+  private class SkylarkFrameScope extends XValueGroup {
 
     private final boolean autoExpand;
     private final SkylarkDebuggingProtos.Scope scope;
@@ -105,7 +121,9 @@ class SkylarkStackFrame extends XStackFrame {
     @Override
     public void computeChildren(XCompositeNode node) {
       XValueChildrenList children = new XValueChildrenList(scope.getBindingCount());
-      scope.getBindingList().forEach(v -> children.add(SkylarkDebugValue.fromProto(v)));
+      scope
+          .getBindingList()
+          .forEach(v -> children.add(SkylarkDebugValue.fromProto(SkylarkStackFrame.this, v)));
       node.addChildren(children, true);
     }
   }

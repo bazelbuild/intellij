@@ -115,7 +115,7 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
 
   private FastBuildInfo getFastBuildInfo() throws ExecutionException {
     AtomicReference<FastBuildInfo> userData =
-        getConfiguration().getUserData(FastBuildConfigurationRunner.BUILD_INFO_KEY);
+        getEnvironment().getCopyableUserData(FastBuildConfigurationRunner.BUILD_INFO_KEY);
     if (userData == null || userData.get() == null) {
       throw new ExecutionException(
           "No deploy jar stored in environment; before-run tasks weren't executed?");
@@ -125,7 +125,7 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
 
   private FastBuildLoggingData getLoggingData() throws ExecutionException {
     AtomicReference<FastBuildLoggingData> userData =
-        getConfiguration().getUserData(FastBuildConfigurationRunner.LOGGING_DATA_KEY);
+        getEnvironment().getCopyableUserData(FastBuildConfigurationRunner.LOGGING_DATA_KEY);
     if (userData == null || userData.get() == null) {
       throw new ExecutionException(
           "No logging data stored in environment; before-run tasks weren't executed?");

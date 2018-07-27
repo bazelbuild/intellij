@@ -21,17 +21,11 @@
         implementation="com.google.idea.blaze.golang.run.smrunner.BlazeGoTestEventsHandler"/>
   </extensions>
 
-  <extensions defaultExtensionNs="com.goide">
-    <rootsProvider implementation="com.google.idea.blaze.golang.resolve.BlazeGoRootsProvider"/>
-  </extensions>
-
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationProducer
         implementation="com.google.idea.blaze.golang.run.producers.BlazeGoBinaryConfigurationProducer"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.golang.run.producers.BlazeGoTestConfigurationProducer"/>
-    <gotoDeclarationHandler
-        implementation="com.google.idea.blaze.golang.resolve.BlazeGoGotoDeclarationHandler"/>
   </extensions>
 
   <project-components>

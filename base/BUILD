@@ -7,7 +7,7 @@ java_library(
     resources = glob(["resources/**/*"]),
     visibility = ["//visibility:public"],
     deps = [
-        "//common/actionhelper",
+        "//common/actions",
         "//common/binaryhelper",
         "//common/concurrency",
         "//common/experiments",

@@ -17,12 +17,11 @@ package com.google.idea.blaze.base.lang.buildfile.formatting;
 
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileLanguage;
 import com.intellij.application.options.IndentOptionsEditor;
-import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /** Allows BUILD language-specific code style settings */
 public class BuildLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
@@ -34,11 +33,18 @@ public class BuildLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSet
 
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
-    return new SmartIndentOptionsEditor();
+    return new BuildIndentOptionsEditor();
+    // TODO(brendandouglas): use upstream API directly, once it's implemented
+    // return new SmartIndentOptionsEditor().withDeclarationParameterIndent();
   }
 
   @Override
-  public String getCodeSample(@NotNull SettingsType settingsType) {
+  public void customizeSettings(CodeStyleSettingsCustomizable consumer, SettingsType settingsType) {
+    super.customizeSettings(consumer, settingsType);
+  }
+
+  @Override
+  public String getCodeSample(SettingsType settingsType) {
     return "";
   }
 
@@ -48,9 +54,11 @@ public class BuildLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSet
     CommonCodeStyleSettings defaultSettings =
         new CommonCodeStyleSettings(BuildFileLanguage.INSTANCE);
     CommonCodeStyleSettings.IndentOptions indentOptions = defaultSettings.initIndentOptions();
-    indentOptions.TAB_SIZE = 2;
-    indentOptions.INDENT_SIZE = 2;
+    indentOptions.TAB_SIZE = 4;
+    indentOptions.INDENT_SIZE = 4;
     indentOptions.CONTINUATION_INDENT_SIZE = 4;
+    // TODO(brendandouglas): use upstream API directly, once it's implemented
+    // indentOptions.DECLARATION_PARAMETER_INDENT = 8;
     return defaultSettings;
   }
 }

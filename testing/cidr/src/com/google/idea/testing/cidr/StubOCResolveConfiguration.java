@@ -18,7 +18,7 @@ package com.google.idea.testing.cidr;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.sdkcompat.cidr.OCCompilerMacrosAdapter;
 import com.google.idea.sdkcompat.cidr.OCCompilerSettingsAdapter;
-import com.google.idea.sdkcompat.cidr.OCResolveConfigurationAdapter;
+import com.google.idea.sdkcompat.cidr.StubOCResolveConfigurationAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.OCFileTypeHelpers;
@@ -35,18 +35,24 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Stub {@link OCResolveConfiguration} for testing. */
-class StubOCResolveConfiguration extends OCResolveConfigurationAdapter {
+public class StubOCResolveConfiguration extends StubOCResolveConfigurationAdapter {
 
   private final Project project;
   private final List<HeadersSearchRoot> projectIncludeRoots;
+  private List<HeadersSearchRoot> libraryIncludeRoots;
   private final OCCompilerSettingsAdapter compilerSettings;
   private final OCCompilerMacrosAdapter compilerMacros;
 
   StubOCResolveConfiguration(Project project) {
     this.project = project;
     this.projectIncludeRoots = ImmutableList.of();
+    this.libraryIncludeRoots = ImmutableList.of();
     this.compilerMacros = new StubOCCompilerMacros();
     this.compilerSettings = new StubOCCompilerSettings(project);
+  }
+
+  public void setLibraryIncludeRoots(List<HeadersSearchRoot> searchRoots) {
+    this.libraryIncludeRoots = searchRoots;
   }
 
   @Override
@@ -102,7 +108,7 @@ class StubOCResolveConfiguration extends OCResolveConfigurationAdapter {
   @Override
   public List<HeadersSearchRoot> getLibraryHeadersRootsInternal(
       OCLanguageKind languageKind, @Nullable VirtualFile sourceFile) {
-    return projectIncludeRoots;
+    return libraryIncludeRoots;
   }
 
   @Override

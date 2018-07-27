@@ -21,10 +21,6 @@
   <depends>com.google.gct.test.recorder</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <java.elementFinder implementation="com.google.idea.blaze.android.resources.AndroidResourceClassFinder"
-        order="first, before java"/>
-    <java.elementFinder implementation="com.google.idea.blaze.android.resources.AndroidResourcePackageFinder"/>
-    <projectService serviceImplementation="com.google.idea.blaze.android.resources.LightResourceClassService"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestClassRunConfigurationProducer"
         order="first"/>
@@ -53,6 +49,7 @@
   </extensions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="com.google.idea.blaze.MavenArtifactLocator" interface="com.google.idea.blaze.android.projectsystem.MavenArtifactLocator"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AndroidBinaryLaunchMethodsProvider" interface="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AndroidTestLaunchMethodsProvider" interface="com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider"/>
   </extensionPoints>
@@ -76,10 +73,6 @@
     <sdkEventListener implementation="com.google.idea.blaze.android.sdk.AndroidSdkListener"/>
   </extensions>
 
-  <extensions defaultExtensionNs="com.android.project">
-    <buildSystemService implementation="com.google.idea.blaze.android.project.BlazeBuildSystemService"/>
-  </extensions>
-
   <extensions defaultExtensionNs="com.android.rendering">
     <renderErrorContributor implementation="com.google.idea.blaze.android.rendering.BlazeRenderErrorContributor$BlazeProvider"/>
   </extensions>
@@ -91,9 +84,6 @@
   <application-components>
     <component>
       <implementation-class>com.google.idea.blaze.android.plugin.PluginCompatibilityEnforcer</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.google.idea.blaze.android.plugin.InstantRunDisabler</implementation-class>
     </component>
   </application-components>
 

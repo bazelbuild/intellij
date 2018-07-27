@@ -17,11 +17,13 @@ package com.google.idea.blaze.base.lang.buildfile.completion;
 
 import static com.intellij.patterns.PlatformPatterns.psiComment;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.PlatformPatterns.psiFile;
 
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileLanguage;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuiltInNamesProvider;
 import com.google.idea.blaze.base.lang.buildfile.lexer.BuildToken;
 import com.google.idea.blaze.base.lang.buildfile.lexer.TokenKind;
+import com.google.idea.blaze.base.lang.buildfile.psi.BuildFileWithCustomCompletion;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
 import com.intellij.codeInsight.completion.AutoCompletionContext;
@@ -57,7 +59,8 @@ public class BuiltInSymbolCompletionContributor extends CompletionContributor {
             .andNot(psiComment())
             .andNot(psiElement().afterLeaf(psiElement(BuildToken.fromKind(TokenKind.INT))))
             .andNot(psiElement().inside(FuncallExpression.class))
-            .andNot(psiElement().afterLeaf(psiElement().withText("."))),
+            .andNot(psiElement().afterLeaf(psiElement().withText(".")))
+            .andNot(psiElement().inFile(psiFile(BuildFileWithCustomCompletion.class))),
         new CompletionProvider<CompletionParameters>() {
           @Override
           protected void addCompletions(

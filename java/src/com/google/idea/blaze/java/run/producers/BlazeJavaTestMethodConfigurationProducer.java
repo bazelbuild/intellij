@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -141,7 +142,7 @@ public class BlazeJavaTestMethodConfigurationProducer
     final PsiMethod firstMethod = selectedMethods.get(0);
 
     final PsiClass containingClass = firstMethod.getContainingClass();
-    if (containingClass == null) {
+    if (containingClass == null || containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return null;
     }
     for (PsiMethod method : selectedMethods) {

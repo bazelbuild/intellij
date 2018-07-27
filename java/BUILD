@@ -18,10 +18,11 @@ java_library(
     srcs = glob(["src/**/*.java"]),
     javacopts = ["-Xep:FutureReturnValueIgnored:OFF"],
     visibility = ["//visibility:public"],
-    runtime_deps = ["//common/actionhelper"],
+    runtime_deps = ["//common/actions"],
     deps = [
         ":neverlinked_jpda-jdi",
         "//base",
+        "//common/actions",
         "//common/concurrency",
         "//common/experiments",
         "//common/guava",

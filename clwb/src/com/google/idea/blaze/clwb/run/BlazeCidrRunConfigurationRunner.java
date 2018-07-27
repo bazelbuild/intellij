@@ -17,6 +17,7 @@ package com.google.idea.blaze.clwb.run;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
@@ -110,7 +111,8 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
             buildResultHelper,
             ImmutableList.of(),
             extraDebugFlags,
-            ExecutorType.fromExecutor(env.getExecutor()),
+            BlazeInvocationContext.runConfigContext(
+                ExecutorType.fromExecutor(env.getExecutor()), configuration.getType()),
             "Building debug binary");
 
     try {

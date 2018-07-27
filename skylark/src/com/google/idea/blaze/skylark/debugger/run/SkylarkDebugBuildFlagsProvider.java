@@ -16,13 +16,15 @@
 package com.google.idea.blaze.skylark.debugger.run;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.BlazeInvocationContext.RunConfigurationContext;
 import com.google.idea.blaze.base.command.BuildFlagsProvider;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.skylark.debugger.SkylarkDebuggingUtils;
 import com.intellij.openapi.project.Project;
 import java.util.List;
-import javax.annotation.Nullable;
 
 class SkylarkDebugBuildFlagsProvider implements BuildFlagsProvider {
 
@@ -37,14 +39,23 @@ class SkylarkDebugBuildFlagsProvider implements BuildFlagsProvider {
       Project project,
       ProjectViewSet projectViewSet,
       BlazeCommandName command,
-      @Nullable ExecutorType executorType,
+      BlazeInvocationContext invocationContext,
       List<String> flags) {
     if (!SkylarkDebuggingUtils.debuggingEnabled(project)) {
       return;
     }
-    if (executorType == ExecutorType.DEBUG && command == BlazeCommandName.BUILD) {
+    if (command == BlazeCommandName.BUILD && skylarkDebuggingContext(invocationContext)) {
       flags.add(ENABLE_DEBUGGING_FLAG);
       flags.add(SERVER_PORT_FLAG + "=" + SERVER_PORT);
     }
+  }
+
+  private static boolean skylarkDebuggingContext(BlazeInvocationContext context) {
+    if (!(context instanceof RunConfigurationContext)) {
+      return false;
+    }
+    RunConfigurationContext runConfigContext = (RunConfigurationContext) context;
+    return runConfigContext.configurationType instanceof BlazeCommandRunConfigurationType
+        && runConfigContext.executorType == ExecutorType.DEBUG;
   }
 }

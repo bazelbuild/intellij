@@ -24,7 +24,7 @@ class SkylarkSuspendContext extends XSuspendContext {
   private final SkylarkExecutionStack activeStack;
   private final SkylarkDebugProcess debugProcess;
 
-  public SkylarkSuspendContext(SkylarkDebugProcess debugProcess, ThreadInfo threadInfo) {
+  SkylarkSuspendContext(SkylarkDebugProcess debugProcess, PausedThreadState threadInfo) {
     this.debugProcess = debugProcess;
     activeStack = new SkylarkExecutionStack(debugProcess, threadInfo);
   }
@@ -36,13 +36,13 @@ class SkylarkSuspendContext extends XSuspendContext {
 
   @Override
   public XExecutionStack[] getExecutionStacks() {
-    final Collection<ThreadInfo> threads = debugProcess.getThreads();
+    final Collection<PausedThreadState> threads = debugProcess.getPausedThreads();
     if (threads.isEmpty()) {
       return XExecutionStack.EMPTY_ARRAY;
     }
     XExecutionStack[] stacks = new XExecutionStack[threads.size()];
     int i = 0;
-    for (ThreadInfo thread : threads) {
+    for (PausedThreadState thread : threads) {
       stacks[i++] = new SkylarkExecutionStack(debugProcess, thread);
     }
     return stacks;

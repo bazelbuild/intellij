@@ -27,7 +27,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
@@ -54,18 +53,14 @@ public class DartPrefetchFileSource implements PrefetchFileSource {
         || !prefetchAllDartSources.getValue()) {
       return;
     }
-    // Prefetch all non-project dart source files found during sync
-    Predicate<ArtifactLocation> shouldPrefetch =
+    // Prefetch all non-project sources declared by dart targets during sync
+    Predicate<ArtifactLocation> outsideProject =
         location -> {
-          if (!location.isSource) {
-            return false;
+          if (location.isGenerated()) {
+            return true;
           }
           WorkspacePath path = WorkspacePath.createIfValid(location.relativePath);
-          if (path == null || importRoots.containsWorkspacePath(path)) {
-            return false;
-          }
-          String extension = FileUtil.getExtension(path.relativePath());
-          return FILE_EXTENSIONS.contains(extension);
+          return path != null && !importRoots.containsWorkspacePath(path);
         };
     List<File> sourceFiles =
         blazeProjectData
@@ -74,7 +69,7 @@ public class DartPrefetchFileSource implements PrefetchFileSource {
             .stream()
             .map(DartPrefetchFileSource::getDartSources)
             .flatMap(Collection::stream)
-            .filter(shouldPrefetch)
+            .filter(outsideProject)
             .map(blazeProjectData.artifactLocationDecoder::decode)
             .collect(Collectors.toList());
     files.addAll(sourceFiles);

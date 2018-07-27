@@ -15,9 +15,14 @@
  */
 package com.google.idea.blaze.java.run.fastbuild;
 
+import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.java.run.BlazeJavaDebuggerRunner;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.RunContentDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 /* A runner for {@link FastBuildDebugExecutor} executions. */
@@ -30,5 +35,13 @@ final class FastBuildDebuggerRunner extends BlazeJavaDebuggerRunner {
       return false;
     }
     return FastBuildConfigurationRunner.canRun(profile);
+  }
+
+  @Override
+  protected RunContentDescriptor doExecute(RunProfileState state, ExecutionEnvironment env)
+      throws ExecutionException {
+    EventLoggingService.getInstance()
+        .ifPresent(s -> s.logEvent(getClass(), "debugging-java-fastbuild"));
+    return super.doExecute(state, env);
   }
 }

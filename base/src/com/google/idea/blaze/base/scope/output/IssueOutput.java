@@ -40,8 +40,9 @@ public class IssueOutput implements Output {
   public enum Category {
     ERROR,
     WARNING,
+    NOTE,
     STATISTICS,
-    INFORMATION
+    INFORMATION,
   }
 
   public static Builder issue(Category category, String message) {

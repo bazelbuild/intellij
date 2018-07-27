@@ -18,10 +18,6 @@ package com.google.idea.blaze.cpp;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.Iterables;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
-import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.projectview.ProjectView;
 import com.jetbrains.cidr.lang.psi.OCFile;
 import com.jetbrains.cidr.lang.psi.OCReferenceElement;
 import com.jetbrains.cidr.lang.quickfixes.OCImportSymbolFix;
@@ -39,20 +35,6 @@ public class BlazeCppAutoImportHelperTest extends BlazeCppResolvingTestCase {
 
   @Test
   public void stlPathsUnderWorkspaceRoot_importStlHeader() {
-    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:bar"));
-    TargetMap targetMap =
-        TargetMapBuilder.builder()
-            .addTarget(createCcToolchain())
-            .addTarget(
-                createCcTarget(
-                    "//foo/bar:bar", Kind.CC_LIBRARY, sources("foo/bar/bar.cc"), sources()))
-            .addTarget(
-                createCcTarget(
-                    "//third_party/stl:stl",
-                    Kind.CC_LIBRARY,
-                    sources(),
-                    sources("third_party/stl/vector.h")))
-            .build();
     // Normally this is <vector> without .h, but we need to trick the file type detector into
     // realizing that this is an OCFile.
     OCFile header =
@@ -63,7 +45,7 @@ public class BlazeCppAutoImportHelperTest extends BlazeCppResolvingTestCase {
             "}");
     OCFile file = createFile("foo/bar/bar.cc", "std::vector<int> my_vector;");
 
-    resolve(projectView, targetMap, file, header);
+    buildSymbols(file, header);
 
     AutoImportItem importItem = getAutoImportItem(file, "std::vector<int>");
     assertThat(importItem.getTitleAndLocation().getFirst()).isEqualTo("class 'std::vector'");
@@ -72,21 +54,10 @@ public class BlazeCppAutoImportHelperTest extends BlazeCppResolvingTestCase {
 
   @Test
   public void sameDirectory_importUserHeader() {
-    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:bar"));
-    TargetMap targetMap =
-        TargetMapBuilder.builder()
-            .addTarget(createCcToolchain())
-            .addTarget(
-                createCcTarget(
-                    "//foo/bar:bar",
-                    Kind.CC_LIBRARY,
-                    sources("foo/bar/bar.cc"),
-                    sources("foo/bar/test.h")))
-            .build();
     OCFile header = createFile("foo/bar/test.h", "class SomeClass {};");
     OCFile file = createFile("foo/bar/bar.cc", "SomeClass* my_class = new SomeClass();");
 
-    resolve(projectView, targetMap, file, header);
+    buildSymbols(file, header);
 
     AutoImportItem importItem = getAutoImportItem(file, "SomeClass*");
     assertThat(importItem.getTitleAndLocation().getFirst()).isEqualTo("class 'SomeClass'");
@@ -95,21 +66,10 @@ public class BlazeCppAutoImportHelperTest extends BlazeCppResolvingTestCase {
 
   @Test
   public void differentDirectory_importUserHeader() {
-    ProjectView projectView =
-        projectView(directories("foo/bar", "baz"), targets("//foo/bar", "//baz"));
-    TargetMap targetMap =
-        TargetMapBuilder.builder()
-            .addTarget(createCcToolchain())
-            .addTarget(
-                createCcTarget(
-                    "//foo/bar:bar", Kind.CC_LIBRARY, sources("foo/bar/bar.cc"), sources()))
-            .addTarget(
-                createCcTarget("//baz:baz", Kind.CC_LIBRARY, sources(""), sources("baz/test.h")))
-            .build();
     OCFile header = createFile("baz/test.h", "class SomeClass {};");
     OCFile file = createFile("foo/bar/bar.cc", "SomeClass* my_class = new SomeClass();");
 
-    resolve(projectView, targetMap, file, header);
+    buildSymbols(file, header);
 
     AutoImportItem importItem = getAutoImportItem(file, "SomeClass*");
     assertThat(importItem.getTitleAndLocation().getFirst()).isEqualTo("class 'SomeClass'");
@@ -118,19 +78,11 @@ public class BlazeCppAutoImportHelperTest extends BlazeCppResolvingTestCase {
 
   @Test
   public void importGenfile_relativeToOutputBase() {
-    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:bar"));
-    TargetMap targetMap =
-        TargetMapBuilder.builder()
-            .addTarget(createCcToolchain())
-            .addTarget(
-                createCcTarget(
-                    "//foo/bar:bar", Kind.CC_LIBRARY, sources("foo/bar/bar.cc"), sources()))
-            .build();
     OCFile header =
         createNonWorkspaceFile("output/genfiles/foo/bar/test.proto.h", "class SomeClass {};");
     OCFile file = createFile("foo/bar/bar.cc", "SomeClass* my_class = new SomeClass();");
 
-    resolve(projectView, targetMap, file, header);
+    buildSymbols(file, header);
 
     AutoImportItem importItem = getAutoImportItem(file, "SomeClass*");
     assertThat(importItem.getTitleAndLocation().getFirst()).isEqualTo("class 'SomeClass'");
@@ -138,32 +90,17 @@ public class BlazeCppAutoImportHelperTest extends BlazeCppResolvingTestCase {
   }
 
   @Test
-  public void importGenfileInNewFile_relativeToOutputBase() {
-    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:bar"));
-    TargetMap targetMap =
-        TargetMapBuilder.builder()
-            .addTarget(createCcToolchain())
-            .addTarget(
-                createCcTarget(
-                    "//foo/bar:bar", Kind.CC_LIBRARY, sources("foo/bar/bar.cc"), sources()))
-            .build();
-    OCFile header =
-        createNonWorkspaceFile("output/genfiles/foo/bar/test.proto.h", "class SomeClass {};");
-    // Create some .cc file to create a config...
-    OCFile fileWithConfig =
-        createFile(
-            "foo/bar/bar.cc",
-            "#include \"foo/bar/test.proto.h\"",
-            "SomeClass* my_class = new SomeClass();");
-    resolve(projectView, targetMap, fileWithConfig, header);
+  public void underReadonly_importUserHeader() {
+    // This is not much more test coverage than "importGenfile_relativeToOutputBase"
+    // but just a reminder that the workspace can also have a READONLY root.
+    OCFile header = createNonWorkspaceFile("READONLY/workspace/baz/test.h", "class SomeClass {};");
+    OCFile file = createFile("foo/bar/bar.cc", "SomeClass* my_class = new SomeClass();");
 
-    // But test against a new .cc file, which hopefully falls back to an existing config, and
-    // will have some basic header search roots (like genfiles).
-    OCFile newFile = createFile("foo/bar/new_file.cc", "SomeClass* my_class = new SomeClass();");
+    buildSymbols(file, header);
 
-    AutoImportItem importItem = getAutoImportItem(newFile, "SomeClass*");
+    AutoImportItem importItem = getAutoImportItem(file, "SomeClass*");
     assertThat(importItem.getTitleAndLocation().getFirst()).isEqualTo("class 'SomeClass'");
-    assertThat(importItem.getTitleAndLocation().getSecond()).isEqualTo("\"foo/bar/test.proto.h\"");
+    assertThat(importItem.getTitleAndLocation().getSecond()).isEqualTo("\"baz/test.h\"");
   }
 
   private AutoImportItem getAutoImportItem(OCFile file, String referenceText) {

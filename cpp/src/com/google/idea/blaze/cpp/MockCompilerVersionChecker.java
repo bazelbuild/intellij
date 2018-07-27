@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.cpp;
 
+import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException.IssueKind;
 import java.io.File;
-import javax.annotation.Nullable;
 
 /** {@link CompilerVersionChecker} for tests. */
 public class MockCompilerVersionChecker implements CompilerVersionChecker {
@@ -28,11 +28,11 @@ public class MockCompilerVersionChecker implements CompilerVersionChecker {
     this.compilerVersion = compilerVersion;
   }
 
-  @Nullable
   @Override
-  public String checkCompilerVersion(File executionRoot, File cppExecutable) {
+  public String checkCompilerVersion(File executionRoot, File cppExecutable)
+      throws VersionCheckException {
     if (injectFault) {
-      return null;
+      throw new VersionCheckException(IssueKind.GENERIC_FAILURE, "injected fault");
     }
     return compilerVersion;
   }

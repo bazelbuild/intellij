@@ -256,6 +256,7 @@
     <projectViewNodeDecorator implementation="com.google.idea.blaze.base.syncstatus.SyncStatusNodeDecorator"/>
     <editorTabColorProvider implementation="com.google.idea.blaze.base.syncstatus.SyncStatusEditorTabColorProvider"/>
     <editorTabTitleProvider implementation="com.google.idea.blaze.base.syncstatus.SyncStatusEditorTabTitleProvider"/>
+    <macro implementation="com.google.idea.blaze.base.actions.WorkspaceRootMacro"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

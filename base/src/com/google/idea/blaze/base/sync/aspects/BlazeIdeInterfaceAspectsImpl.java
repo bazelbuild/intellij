@@ -287,8 +287,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                       project,
                       projectViewSet,
                       BlazeCommandName.BUILD,
-                      BlazeInvocationContext.Sync,
-                      null));
+                      BlazeInvocationContext.SYNC_CONTEXT));
 
       aspectStrategy.addAspectAndOutputGroups(builder, OutputGroup.INFO, activeLanguages);
 
@@ -618,8 +617,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                       project,
                       projectViewSet,
                       BlazeCommandName.BUILD,
-                      BlazeInvocationContext.Sync,
-                      null));
+                      BlazeInvocationContext.SYNC_CONTEXT));
 
       // Request the 'intellij-resolve' aspect output group.
       AspectStrategyProvider.findAspectStrategy(blazeVersionData)
@@ -640,8 +638,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       BuildResult result = BuildResult.fromExitCode(retVal);
       if (result.status != BuildResult.Status.FATAL_ERROR) {
         prefetchGenfiles(context, buildResultHelper.getBuildArtifacts());
-      } else {
-        buildResultHelper.close();
       }
       return result;
     }
@@ -666,8 +662,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                     project,
                     projectViewSet,
                     BlazeCommandName.BUILD,
-                    BlazeInvocationContext.Sync,
-                    null));
+                    BlazeInvocationContext.SYNC_CONTEXT));
 
     AspectStrategyProvider.findAspectStrategy(blazeVersionData)
         .addAspectAndOutputGroups(

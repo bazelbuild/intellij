@@ -60,7 +60,8 @@ public final class FastBuildCompilerFactoryImplTest {
           /*sources*/ ImmutableSet.of(),
           /*testClass*/ null,
           /* annotationProcessorClassNames */ ImmutableList.of(),
-          /* annotationProcessorClassPath */ ImmutableList.of());
+          /* annotationProcessorClassPath */ ImmutableList.of(),
+          /* jvmFlags */ ImmutableList.of());
 
   @Test
   public void testNoJavaToolchain() {

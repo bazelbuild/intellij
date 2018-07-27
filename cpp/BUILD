@@ -17,9 +17,10 @@ java_library(
     name = "cpp",
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
         "clion-2018.1": glob(["sdk_2018_1/src/**/*.java"]),
-        "clion-2017.3": glob(["sdk_2017_3/src/**/*.java"]),
-        "android-studio-3.0": glob(["sdk_2017_3/src/**/*.java"]),
+        "clion-2018.2": glob(["sdk_2018_1/src/**/*.java"]),
+        "android-studio-3.0": glob(["sdk_2017_1/src/**/*.java"]),
         "android-studio-3.2": glob(["sdk_2018_1/src/**/*.java"]),
+        "android-studio-3.3": glob(["sdk_2018_1/src/**/*.java"]),
     }),
     visibility = ["//visibility:public"],
     deps = [
@@ -89,12 +90,12 @@ java_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        ":cpp",
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//sdkcompat",
+        "//testing:lib",
         "@junit//jar",
     ],
 )

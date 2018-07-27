@@ -171,7 +171,7 @@ public class BuildIndentOnEnterTest extends BuildFileIntegrationTestCase {
   @Test
   public void testEmptyParamIndent() {
     setInput("def fn(<caret>)");
-    pressEnterAndAssertResult("def fn(", "    <caret>", ")");
+    pressEnterAndAssertResult("def fn(", "        <caret>", ")");
   }
 
   @Test
@@ -183,10 +183,9 @@ public class BuildIndentOnEnterTest extends BuildFileIntegrationTestCase {
   @Test
   public void testFunctionDefAfterColon() {
     setInput("def fn():<caret>");
-    pressEnterAndAssertResult("def fn():", "  <caret>");
+    pressEnterAndAssertResult("def fn():", "    <caret>");
   }
 
-  // def fn():stmt* (THIS IS CURRENTLY BROKEN -- shouldn't indent but does)
   @Test
   public void testFunctionDefSingleStatement() {
     setInput("def fn():stmt<caret>");
@@ -208,7 +207,7 @@ public class BuildIndentOnEnterTest extends BuildFileIntegrationTestCase {
   @Test
   public void testIndentAfterIf() {
     setInput("if condition:<caret>");
-    pressEnterAndAssertResult("if condition:", "  <caret>");
+    pressEnterAndAssertResult("if condition:", "    <caret>");
   }
 
   @Test
@@ -219,32 +218,32 @@ public class BuildIndentOnEnterTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testIndentAfterElseIf() {
-    setInput("if condition:", "  stmt", "elif:<caret>");
-    pressEnterAndAssertResult("if condition:", "  stmt", "elif:", "  <caret>");
+    setInput("if condition:", "    stmt", "elif:<caret>");
+    pressEnterAndAssertResult("if condition:", "    stmt", "elif:", "    <caret>");
   }
 
   @Test
   public void testNoIndentAfterElseIfPlusStatement() {
-    setInput("if condition:", "  stmt", "elif:stmt<caret>");
-    pressEnterAndAssertResult("if condition:", "  stmt", "elif:stmt", "<caret>");
+    setInput("if condition:", "    stmt", "elif:stmt<caret>");
+    pressEnterAndAssertResult("if condition:", "    stmt", "elif:stmt", "<caret>");
   }
 
   @Test
   public void testIndentAfterElse() {
-    setInput("if condition:", "  stmt", "else:<caret>");
-    pressEnterAndAssertResult("if condition:", "  stmt", "else:", "  <caret>");
+    setInput("if condition:", "    stmt", "else:<caret>");
+    pressEnterAndAssertResult("if condition:", "    stmt", "else:", "    <caret>");
   }
 
   @Test
   public void testNoIndentAfterElsePlusStatement() {
-    setInput("if condition:", "  stmt", "else:stmt<caret>");
-    pressEnterAndAssertResult("if condition:", "  stmt", "else:stmt", "<caret>");
+    setInput("if condition:", "    stmt", "else:stmt<caret>");
+    pressEnterAndAssertResult("if condition:", "    stmt", "else:stmt", "<caret>");
   }
 
   @Test
   public void testIndentAfterForColon() {
     setInput("for x in list:<caret>");
-    pressEnterAndAssertResult("for x in list:", "  <caret>");
+    pressEnterAndAssertResult("for x in list:", "    <caret>");
   }
 
   @Test
@@ -312,8 +311,8 @@ public class BuildIndentOnEnterTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testDedentAfterPassInLoop() {
-    setInput("def fn():", "  for a in (1,2,3):", "    pass<caret>");
-    pressEnterAndAssertResult("def fn():", "  for a in (1,2,3):", "    pass", "  <caret>");
+    setInput("def fn():", "    for a in (1,2,3):", "        pass<caret>");
+    pressEnterAndAssertResult("def fn():", "    for a in (1,2,3):", "        pass", "    <caret>");
   }
 
   // regression test for b/29564041

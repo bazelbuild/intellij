@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.buildmodifier;
 
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.openapi.editor.Document;
@@ -45,9 +46,7 @@ public class FileSaveHandler extends FileDocumentManagerAdapter {
   }
 
   private static void formatBuildFile(Project project, PsiFile psiFile) {
-    if (!isBuildFile(psiFile.getName())
-        || !isProjectValid(project)
-        || !canWriteToFile(project, psiFile)) {
+    if (!isBuildFile(psiFile) || !isProjectValid(project) || !canWriteToFile(project, psiFile)) {
       return;
     }
     new ReformatCodeProcessor(
@@ -68,7 +67,8 @@ public class FileSaveHandler extends FileDocumentManagerAdapter {
     return project.isInitialized() && !project.isDisposed();
   }
 
-  private static boolean isBuildFile(String filename) {
-    return BuildSystemProvider.defaultBuildSystem().isBuildFile(filename);
+  private static boolean isBuildFile(PsiFile psiFile) {
+    return psiFile instanceof BuildFile
+        || BuildSystemProvider.defaultBuildSystem().isBuildFile(psiFile.getName());
   }
 }

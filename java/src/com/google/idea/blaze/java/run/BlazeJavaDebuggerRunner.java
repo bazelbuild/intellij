@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.run;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
@@ -78,5 +79,12 @@ public class BlazeJavaDebuggerRunner extends GenericDebuggerRunner {
     BlazeJavaDebuggableRunProfileState blazeState = (BlazeJavaDebuggableRunProfileState) state;
     RemoteConnection connection = blazeState.getRemoteConnection();
     return attachVirtualMachine(state, environment, connection, POLL_TIMEOUT_MILLIS);
+  }
+
+  @Override
+  protected RunContentDescriptor doExecute(RunProfileState state, ExecutionEnvironment env)
+      throws ExecutionException {
+    EventLoggingService.getInstance().ifPresent(s -> s.logEvent(getClass(), "debugging-java"));
+    return super.doExecute(state, env);
   }
 }

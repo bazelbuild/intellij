@@ -17,11 +17,16 @@ package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.openapi.project.Project;
 import java.io.File;
+import javax.annotation.Nullable;
 
 /**
  * Converts execution-root-relative paths to absolute files with a minimum of file system calls
@@ -44,6 +49,20 @@ public class ExecutionRootPathResolver {
     this.buildArtifactDirectories = buildArtifactDirectories(buildSystem, workspaceRoot);
     this.executionRoot = executionRoot;
     this.workspacePathResolver = workspacePathResolver;
+  }
+
+  @Nullable
+  public static ExecutionRootPathResolver fromProject(Project project) {
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectData == null) {
+      return null;
+    }
+    return new ExecutionRootPathResolver(
+        Blaze.getBuildSystem(project),
+        WorkspaceRoot.fromProject(project),
+        projectData.blazeInfo.getExecutionRoot(),
+        projectData.workspacePathResolver);
   }
 
   private static ImmutableList<String> buildArtifactDirectories(

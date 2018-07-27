@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
+import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -43,6 +44,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.sdkcompat.cidr.CidrLauncherCompat;
 import com.google.idea.sdkcompat.clion.ToolchainUtils;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
@@ -55,10 +57,13 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.cidr.cpp.execution.CLionRunParameters;
 import com.jetbrains.cidr.cpp.execution.debugger.backend.GDBDriverConfiguration;
+import com.jetbrains.cidr.cpp.toolchains.CPPDebugger;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolSet;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
 import com.jetbrains.cidr.execution.CidrConsoleBuilder;
@@ -68,20 +73,19 @@ import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemoteDebugParameters;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemotePathMapping;
-import com.jetbrains.cidr.execution.testing.CidrLauncher;
 import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestConsoleProperties;
+import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestUtil;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment.PrepareFor;
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
  * Handles running/debugging cc_test and cc_binary targets in CLion. Sets up gdb when debugging, and
  * uses the Google Test infrastructure for presenting test results.
  */
-public final class BlazeCidrLauncher extends CidrLauncher {
+public final class BlazeCidrLauncher extends CidrLauncherCompat {
 
   private final Project project;
   private final BlazeCommandRunConfiguration configuration;
@@ -89,7 +93,10 @@ public final class BlazeCidrLauncher extends CidrLauncher {
   private final BlazeCidrRunConfigurationRunner runner;
   private final ExecutionEnvironment env;
 
-  static final BoolExperiment useRemoteDebugging = new BoolExperiment("cc.remote.debugging", true);
+  private static final String DISABLE_BAZEL_GOOGLETEST_FILTER_WARNING =
+      "bazel.test_filter.googletest_update";
+
+  static final BoolExperiment useRemoteDebugging = new BoolExperiment("cc.remote.debugging", false);
 
   private static final ImmutableList<String> extraFlagsForDebugRun =
       ImmutableList.of(
@@ -139,7 +146,28 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     ProjectViewSet projectViewSet =
         Preconditions.checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet());
 
-    List<String> fixedBlazeFlags = getFixedBlazeFlags();
+    if (shouldDisplayBazelTestFilterWarning()) {
+      String messageContents =
+          "<html>The Google Test framework did not apply test filtering correctly before "
+              + "git commit <a href='https://github.com/google/googletest/commit/"
+              + "ba96d0b1161f540656efdaed035b3c062b60e006"
+              + "'>ba96d0b<a>.<br/>"
+              + "Please ensure you are past this commit if you are using it.<br/><br/>"
+              + "More information on the bazel <a href='https://github.com/bazelbuild/bazel/issues/"
+              + "4411'>issue</a></html>";
+
+      int selectedOption =
+          Messages.showDialog(
+              getProject(),
+              messageContents,
+              "Please update 'Google Test' past ba96d0b...",
+              new String[] {"Close", "Don't show again"},
+              0, // Default to "Close"
+              Messages.getWarningIcon());
+      if (selectedOption == 1) {
+        PropertiesComponent.getInstance().setValue(DISABLE_BAZEL_GOOGLETEST_FILTER_WARNING, "true");
+      }
+    }
 
     BlazeCommand.Builder commandBuilder =
         BlazeCommand.builder(
@@ -152,10 +180,10 @@ public final class BlazeCidrLauncher extends CidrLauncher {
                     project,
                     projectViewSet,
                     handlerState.getCommandState().getCommand(),
-                    BlazeInvocationContext.NonSync,
-                    ExecutorType.fromExecutor(env.getExecutor())))
+                    BlazeInvocationContext.runConfigContext(
+                        ExecutorType.fromExecutor(env.getExecutor()), configuration.getType())))
             .addBlazeFlags(testHandlerFlags)
-            .addBlazeFlags(fixedBlazeFlags)
+            .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
             .addExeFlags(handlerState.getExeFlagsState().getExpandedFlags());
 
     state.setConsoleBuilder(createConsoleBuilder(testUiSession));
@@ -206,6 +234,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     if (runner.executableToDebug == null) {
       throw new ExecutionException("No debug binary found.");
     }
+    EventLoggingService.getInstance().ifPresent(s -> s.logEvent(getClass(), "debugging-cpp"));
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
@@ -309,6 +338,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
       return ToolchainUtils.getDebuggerFile(ToolchainUtils.getToolchain());
     }
 
+    // This was converted to 'supportsDebugger' in 2018.2 #api181
     @SuppressWarnings("MissingOverride")
     public boolean isBundledGdbCompatible() {
       return false;
@@ -324,10 +354,9 @@ public final class BlazeCidrLauncher extends CidrLauncher {
       }
     }
 
-    // This was renamed to 'isBundledGdbCompatible' in 2018.1 #api173
     @SuppressWarnings("MissingOverride")
-    public boolean forceToolSetGDB() {
-      return isBundledGdbCompatible();
+    public boolean supportsDebugger(CPPDebugger.Kind kind) {
+      return kind == CPPDebugger.Kind.CUSTOM_GDB;
     }
   }
 
@@ -339,37 +368,14 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     return "--gtest_filter";
   }
 
-  /**
-   * Fix test flags for Bazel which doesn't support --test_filter
-   *
-   * @return The list of bazel/blaze flags, fixed for the current execution environment
-   */
-  private List<String> getFixedBlazeFlags() {
-    List<String> originalBlazeFlags = handlerState.getBlazeFlagsState().getExpandedFlags();
-
-    // Flags are fine as-is in this case
-    if (Blaze.getBuildSystem(project).equals(BuildSystem.Blaze)) {
-      return originalBlazeFlags;
-    }
-
-    // Only manipulate flags for test configurations
-    if (!Kind.CC_TEST.equals(configuration.getTargetKind())) {
-      return originalBlazeFlags;
-    }
-
-    // bazel does not support --test_filter so we need to convert to a argument that will be passed
-    // to the binary. Other flags should be passed through as-is
-    String testArgument = "--test_arg=" + getTestFilterArgument();
-    return originalBlazeFlags
-        .stream()
-        .map(
-            flag -> {
-              if (flag.startsWith(BlazeFlags.TEST_FILTER)) {
-                flag = flag.replaceFirst(BlazeFlags.TEST_FILTER, testArgument);
-              }
-              return flag;
-            })
-        .collect(Collectors.toList());
+  private boolean shouldDisplayBazelTestFilterWarning() {
+    return Blaze.getBuildSystem(getProject()).equals(BuildSystem.Bazel)
+        && Kind.CC_TEST.equals(configuration.getTargetKind())
+        && handlerState.getTestFilterFlag() != null
+        && !PropertiesComponent.getInstance()
+            .getBoolean(DISABLE_BAZEL_GOOGLETEST_FILTER_WARNING, false)
+        && !CidrGoogleTestUtil.findGoogleTestSymbolsForSuiteRandomly(getProject(), null, true)
+            .isEmpty();
   }
 
   /**
@@ -398,7 +404,10 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         new BlazeTargetFilter(project, true),
         new UrlFilter(),
         new IssueOutputFilter(
-            project, WorkspaceRoot.fromProject(project), BlazeInvocationContext.NonSync, false));
+            project,
+            WorkspaceRoot.fromProject(project),
+            BlazeInvocationContext.ContextType.RunConfiguration,
+            false));
   }
 
   private CidrConsoleBuilder createConsoleBuilder(@Nullable BlazeTestUiSession testUiSession) {

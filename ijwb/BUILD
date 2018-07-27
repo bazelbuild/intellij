@@ -53,11 +53,15 @@ optional_plugin_xml(
     plugin_xml = "src/META-INF/java-contents.xml",
 )
 
+optional_plugin_xml(
+    name = "optional_typescript",
+    module = "JavaScript",
+    plugin_xml = "src/META-INF/typescript-contents.xml",
+)
+
 stamped_plugin_xml(
     name = "stamped_plugin_xml",
     changelog_file = "//:changelog",
-    # Supports multiple IDEs, so no product code included
-    include_product_code_in_stamp = False,
     plugin_id = "com.google.idea.bazel.ijwb",
     plugin_name = "Bazel",
     plugin_xml = ":merged_plugin_xml",
@@ -88,11 +92,13 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//java",
         "//sdkcompat",
+        "//third_party/javascript",
     ],
 )
 
 OPTIONAL_PLUGIN_XMLS = [
     ":optional_java",
+    ":optional_typescript",
     "//golang:optional_xml",
     "//java:optional_java",
     "//java:optional_coverage",
@@ -173,6 +179,25 @@ intellij_integration_test_suite(
         "//base:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "@junit//jar",
+    ],
+)
+
+intellij_integration_test_suite(
+    name = "typescript_integration_tests",
+    srcs = glob(["tests/typescript_integration_tests/**/*.java"]),
+    platform_prefix = "",
+    required_plugins = "com.google.idea.bazel.ijwb,JavaScript",
+    test_package_root = "com.google.idea.blaze.ijwb",
+    runtime_deps = [":ijwb_bazel"],
+    deps = [
+        ":ijwb_lib",
+        "//base",
+        "//base:integration_test_utils",
+        "//base:unit_test_utils",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//third_party/javascript:javascript_for_tests",
         "@junit//jar",
     ],
 )

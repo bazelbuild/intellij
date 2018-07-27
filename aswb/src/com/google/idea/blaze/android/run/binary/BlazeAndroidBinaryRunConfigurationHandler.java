@@ -29,6 +29,7 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunn
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -127,7 +128,8 @@ public class BlazeAndroidBinaryRunConfigurationHandler
                 project,
                 projectViewSet,
                 BlazeCommandName.RUN,
-                ExecutorType.fromExecutor(env.getExecutor()));
+                BlazeInvocationContext.runConfigContext(
+                    ExecutorType.fromExecutor(env.getExecutor()), configuration.getType()));
     ImmutableList<String> exeFlags =
         ImmutableList.copyOf(configState.getCommonState().getExeFlagsState().getExpandedFlags());
     BlazeAndroidRunContext runContext = createRunContext(project, facet, env, blazeFlags, exeFlags);

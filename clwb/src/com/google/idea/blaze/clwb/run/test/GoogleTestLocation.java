@@ -16,24 +16,35 @@
 package com.google.idea.blaze.clwb.run.test;
 
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.syncstatus.SyncStatusContributor;
 import com.google.idea.sdkcompat.cidr.CidrGoogleTestUtilAdapter;
 import com.google.idea.sdkcompat.cidr.OCSymbolAdapter;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestUtil;
+import com.jetbrains.cidr.lang.OCFileTypeHelpers;
+import com.jetbrains.cidr.lang.psi.OCCppNamespace;
 import com.jetbrains.cidr.lang.psi.OCFile;
 import com.jetbrains.cidr.lang.psi.OCFunctionDefinition;
 import com.jetbrains.cidr.lang.psi.OCMacroCall;
 import com.jetbrains.cidr.lang.psi.OCMacroCallArgument;
 import com.jetbrains.cidr.lang.psi.OCStruct;
+import com.jetbrains.cidr.lang.psi.visitors.OCVisitor;
 import com.jetbrains.cidr.lang.symbols.OCSymbol;
 import com.jetbrains.cidr.lang.symbols.cpp.OCFunctionSymbol;
 import com.jetbrains.cidr.lang.symbols.cpp.OCStructSymbol;
 import com.jetbrains.cidr.lang.symbols.cpp.OCSymbolWithQualifiedName;
+import com.jetbrains.cidr.lang.symbols.symtable.FileSymbolTablesCache;
+import com.jetbrains.cidr.lang.ui.OCLongActionUtil;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -84,10 +95,13 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
     } else if (parent instanceof OCFunctionDefinition) {
       OCFunctionSymbol symbol = ((OCFunctionDefinition) parent).getSymbol();
       if (symbol != null) {
-        OCSymbolWithQualifiedName<?> resolvedOwner =
-            OCSymbolAdapter.getResolvedOwner(symbol, project);
+        // #api182 change
+        @SuppressWarnings("rawtypes")
+        OCSymbolWithQualifiedName resolvedOwner = OCSymbolAdapter.getResolvedOwner(symbol, project);
         if (resolvedOwner != null) {
-          OCSymbol<?> owner = OCSymbolAdapter.getDefinitionSymbol(resolvedOwner, project);
+          // #api182 change
+          @SuppressWarnings("rawtypes")
+          OCSymbol owner = OCSymbolAdapter.getDefinitionSymbol(resolvedOwner, project);
           if (owner instanceof OCStructSymbol
               && CidrGoogleTestUtilAdapter.isGoogleTestClass((OCStructSymbol) owner, project)) {
             OCStruct struct = (OCStruct) OCSymbolAdapter.locateDefinition(owner, project);
@@ -140,7 +154,7 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
           return new GoogleTestLocation(struct, gtest);
         }
       }
-    } else if (parent instanceof OCFile) {
+    } else if (parent instanceof OCFile && mayBeGoogleTestFile((OCFile) parent)) {
       return createFromFile(parent);
     }
     return null;
@@ -153,6 +167,71 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
       return !arguments.isEmpty() && arguments.get(0).equals(element);
     }
     return false;
+  }
+
+  /** Returns true if a file may contain googletest cases. */
+  private static boolean mayBeGoogleTestFile(OCFile file) {
+    // googletest files should be cc files since it eventually needs to compile+link into a binary
+    if (OCFileTypeHelpers.isHeaderFile(file.getName())) {
+      return false;
+    }
+    if (!areSymbolsPrecalculated(file.getProject())) {
+      // If symbols are not up to date, fileIncludesGoogleTest might block on our "friend"
+      // ensurePendingFilesProcessed(), which would freeze the AWT, so just say "maybe".
+      return true;
+    }
+    boolean transitivelyIncludesGtestHeader =
+        CachedValuesManager.getCachedValue(
+            file,
+            () -> {
+              // We're not 100% sure this won't block since we don't have access to
+              // "FileSymbolTablesCache.getInstance(project).isUpToDate()", so wrap in timeout.
+              // Throws ProcessCanceledException if timed out or canceled.
+              Boolean doesInclude =
+                  OCLongActionUtil.execWithTimeoutProgressInDispatch(
+                      "progressbar.long.resolve.description",
+                      OCLongActionUtil.TIMEOUT_PROPERTY,
+                      file.getProject(),
+                      () -> CidrGoogleTestUtil.fileIncludesGoogleTest(file));
+              return CachedValueProvider.Result.create(
+                  doesInclude, PsiModificationTracker.MODIFICATION_COUNT);
+            });
+    if (transitivelyIncludesGtestHeader) {
+      return true;
+    }
+    // Symbols and the import graph may not be accurate for unsynced files or files outside
+    // of source roots. Just do a heuristic search on the AST for minimal support.
+    return unsyncedFileContainsGtestMacroCalls(file);
+  }
+
+  private static boolean unsyncedFileContainsGtestMacroCalls(OCFile file) {
+    return CachedValuesManager.getCachedValue(
+        file,
+        () ->
+            CachedValueProvider.Result.create(
+                computeUnsyncedFileContainsGtestMacroCalls(file),
+                PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  private static boolean computeUnsyncedFileContainsGtestMacroCalls(OCFile file) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) {
+      return false;
+    }
+    if (ProjectFileIndex.getInstance(file.getProject()).isInSource(virtualFile)) {
+      if (!SyncStatusContributor.isUnsynced(file.getProject(), virtualFile)) {
+        return false;
+      }
+    }
+    MacroCallLocator locator = new MacroCallLocator();
+    file.accept(locator);
+    return locator.foundGtestMacroCall;
+  }
+
+  /** Are symbols ready to be used without blocking? */
+  private static boolean areSymbolsPrecalculated(Project project) {
+    return FileSymbolTablesCache.areSymbolsLoaded(project);
+    // #api182: also check "&& FileSymbolTablesCache.getInstance(project).isUpToDate()";
   }
 
   @Nullable
@@ -175,5 +254,43 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
     GoogleTestSpecification gtest =
         new GoogleTestSpecification.FromPsiElement(classOrSuiteName, testName, null, null);
     return new GoogleTestLocation(element, gtest);
+  }
+
+  /**
+   * Searches a file for usages of googletest macros as a hint that this is a googletest file. Does
+   * not do any resolving and does not use symbol tables, so we aren't necessarily sure that the
+   * macro is defined by googletest headers -- we only know the name matches.
+   */
+  private static class MacroCallLocator extends OCVisitor {
+    boolean foundGtestMacroCall = false;
+
+    @Override
+    public void visitOCFile(OCFile file) {
+      visitRecursively(file);
+    }
+
+    @Override
+    public void visitMacroCall(OCMacroCall macroCall) {
+      if (CidrGoogleTestUtil.findGoogleTestMacros(macroCall) != null) {
+        foundGtestMacroCall = true;
+      }
+      visitRecursively(macroCall);
+    }
+
+    @Override
+    public void visitNamespace(OCCppNamespace namespace) {
+      visitRecursively(namespace);
+    }
+
+    // The macros generate class definitions, and it's not clear that anyone would actually
+    // generate classes in odd places like inside other classes or within functions (though legal)
+    // so only recurse into namespaces and other macro calls for now.
+    private void visitRecursively(PsiElement element) {
+      PsiElement child = element.getFirstChild();
+      while (child != null && !foundGtestMacroCall) {
+        child.accept(this);
+        child = child.getNextSibling();
+      }
+    }
   }
 }

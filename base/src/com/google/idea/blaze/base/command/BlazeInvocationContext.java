@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Bazel Authors. All rights reserved.
+ * Copyright 2018 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,55 @@
  */
 package com.google.idea.blaze.base.command;
 
-/** The context in which a blaze command is invoked. */
-public enum BlazeInvocationContext {
-  Sync,
-  NonSync,
+import com.google.idea.blaze.base.run.ExecutorType;
+import com.intellij.execution.configurations.ConfigurationType;
+
+/**
+ * The context in which a blaze command is invoked. Depending on the {@link ContextType}, may
+ * include additional information, such as the run configuration type.
+ */
+public interface BlazeInvocationContext {
+
+  /** The context in which a blaze command is invoked. */
+  enum ContextType {
+    Sync,
+    RunConfiguration,
+    Other,
+  }
+
+  ContextType type();
+
+  SyncContext SYNC_CONTEXT = new SyncContext();
+
+  static RunConfigurationContext runConfigContext(
+      ExecutorType executorType, ConfigurationType configurationType) {
+    return new RunConfigurationContext(executorType, configurationType);
+  }
+
+  /** Invocation context for sync-related build actions. */
+  final class SyncContext implements BlazeInvocationContext {
+    private SyncContext() {}
+
+    @Override
+    public final ContextType type() {
+      return ContextType.Sync;
+    }
+  }
+
+  /** Invocation context for run configuration build actions. */
+  final class RunConfigurationContext implements BlazeInvocationContext {
+    public final ExecutorType executorType;
+    public final ConfigurationType configurationType;
+
+    private RunConfigurationContext(
+        ExecutorType executorType, ConfigurationType configurationType) {
+      this.executorType = executorType;
+      this.configurationType = configurationType;
+    }
+
+    @Override
+    public final ContextType type() {
+      return ContextType.RunConfiguration;
+    }
+  }
 }

@@ -163,6 +163,24 @@ public class BlazeIssueParserTest extends BlazeTestCase {
   }
 
   @Test
+  public void testParseCompileNoteWithColumn() {
+    // Clang also has a 'note' category.
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    IssueOutput issue =
+        blazeIssueParser.parseIssue(
+            "net/something/foo_bar.cc:30:11: note: in instantiation of member function "
+                + "foo<bar>::baz() requested here ...");
+    assertThat(issue).isNotNull();
+    assertThat(issue.getLine()).isEqualTo(30);
+    assertThat(issue.getColumn()).isEqualTo(11);
+    assertThat(issue.getMessage())
+        .isEqualTo("in instantiation of member function foo<bar>::baz() requested here ...");
+    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.NOTE);
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(TextRange.create(0, "net/something/foo_bar.cc:30:11".length()));
+  }
+
+  @Test
   public void testParseBuildError() {
     BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     IssueOutput issue =

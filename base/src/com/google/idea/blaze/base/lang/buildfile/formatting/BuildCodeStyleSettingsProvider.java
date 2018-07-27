@@ -23,7 +23,7 @@ import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import javax.annotation.Nullable;
 
 /** Separate configurable code-style settings for BUILD language. */
@@ -40,8 +40,6 @@ public class BuildCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
             BuildFileLanguage.INSTANCE, getCurrentSettings(), settings) {
           @Override
           protected void initTabs(CodeStyleSettings settings) {
-            LanguageCodeStyleSettingsProvider provider =
-                LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
             addIndentOptionsTab(settings);
           }
         };
@@ -52,6 +50,12 @@ public class BuildCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
         return null;
       }
     };
+  }
+
+  @Nullable
+  @Override
+  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+    return new BuildCodeStyleSettings(settings);
   }
 
   @Nullable

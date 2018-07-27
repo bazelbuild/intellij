@@ -24,7 +24,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.NamedBuildElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.intellij.openapi.application.QueryExecutorBase;
+import com.google.idea.sdkcompat.query.QueryExecutorBaseAdapter;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -39,14 +39,15 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /** String search for references in BUILD files */
-public class BuildReferenceSearcher extends QueryExecutorBase<PsiReference, SearchParameters> {
+public class BuildReferenceSearcher
+    extends QueryExecutorBaseAdapter<PsiReference, SearchParameters> {
 
   public BuildReferenceSearcher() {
     super(true);
   }
 
   @Override
-  public void processQuery(SearchParameters params, Processor<PsiReference> consumer) {
+  public void processQueryImpl(SearchParameters params, Processor<? super PsiReference> consumer) {
     PsiElement element = params.getElementToSearch();
     if (element instanceof NamedBuildElement) {
       String fnName = ((NamedBuildElement) element).getName();

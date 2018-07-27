@@ -68,7 +68,8 @@ import javax.annotation.Nullable;
  * <ul>
  *   <li>the res/ folder
  *   <li>the R.txt file adjacent to the res/ folder
- *   <li>See {@link com.android.tools.idea.res.FileResourceRepository} for the dependency on R.txt.
+ *   <li>See {@link com.android.tools.idea.res.aar.AarSourceResourceRepository} for the dependency
+ *       on R.txt.
  *   <li>jars: we use the merged output jar from Bazel instead of taking jars from the AAR. It
  *       should be placed in a jars/ folder adjacent to the res/ folder. See {@link
  *       org.jetbrains.android.uipreview.ModuleClassLoader}, for that possible assumption.
@@ -76,7 +77,6 @@ import javax.annotation.Nullable;
  * </ul>
  */
 public class UnpackedAars {
-
   private static final Logger logger = Logger.getInstance(UnpackedAars.class);
 
   private final File cacheDir;

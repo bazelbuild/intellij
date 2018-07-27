@@ -18,6 +18,7 @@ load(
     "intellij_plugin_debug_target",
 )
 load("//:version.bzl", "VERSION")
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
@@ -33,7 +34,11 @@ merged_plugin_xml(
         "//java:plugin_xml",
         "//kotlin:plugin_xml",
         "//python:plugin_xml",
-    ],
+    ] + select_for_plugin_api({
+        "android-studio-3.0": ["src/META-INF/aswb_3_0.xml"],
+        "android-studio-3.2": ["src/META-INF/aswb_3_2.xml"],
+        "android-studio-3.3": ["src/META-INF/aswb_3_2.xml"],
+    }),
 )
 
 optional_plugin_xml(
@@ -45,7 +50,11 @@ optional_plugin_xml(
 optional_plugin_xml(
     name = "optional_ndk_xml",
     module = "com.android.tools.ndk",
-    plugin_xml = "src/META-INF/ndk-contents.xml",
+    plugin_xml = select_for_plugin_api({
+        "android-studio-3.0": "src/META-INF/ndk_contents_3_0.xml",
+        "android-studio-3.2": "src/META-INF/ndk_contents_3_2.xml",
+        "android-studio-3.3": "src/META-INF/ndk_contents_3_2.xml",
+    }),
 )
 
 OPTIONAL_PLUGIN_XMLS = [
@@ -68,7 +77,6 @@ merged_plugin_xml(
 stamped_plugin_xml(
     name = "stamped_plugin_xml",
     changelog_file = "//:changelog",
-    include_product_code_in_stamp = True,
     plugin_id = "com.google.idea.bazel.aswb",
     plugin_name = "Bazel",
     plugin_xml = ":merged_plugin_xml",
@@ -79,7 +87,11 @@ stamped_plugin_xml(
 
 java_library(
     name = "aswb_lib",
-    srcs = glob(["src/**/*.java"]),
+    srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
+        "android-studio-3.0": glob(["src_3_0/**/*.java"]),
+        "android-studio-3.2": glob(["src_3_2/**/*.java"]),
+        "android-studio-3.3": glob(["src_3_3/**/*.java"]),
+    }),
     resources = glob(["resources/**/*"]),
     runtime_deps = [
         "//dart",
@@ -111,7 +123,11 @@ java_library(
 
 intellij_unit_test_suite(
     name = "unit_tests",
-    srcs = glob(["tests/unittests/**/*.java"]),
+    srcs = glob(["tests/unittests/**/*.java"]) + select_for_plugin_api({
+        "android-studio-3.0": glob(["tests/unittests_3_0/**/*.java"]),
+        "android-studio-3.2": glob(["tests/unittests_3_2/**/*.java"]),
+        "android-studio-3.3": glob(["tests/unittests_3_2/**/*.java"]),
+    }),
     test_package_root = "com.google.idea.blaze.android",
     deps = [
         ":aswb_lib",
@@ -140,7 +156,11 @@ intellij_integration_test_suite(
     srcs = glob(
         ["tests/integrationtests/**/*.java"],
         exclude = ["tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java"],
-    ),
+    ) + select_for_plugin_api({
+        "android-studio-3.0": glob(["tests/integrationtests_3_0/**/*.java"]),
+        "android-studio-3.2": glob(["tests/integrationtests_3_2/**/*.java"]),
+        "android-studio-3.3": glob(["tests/integrationtests_3_2/**/*.java"]),
+    }),
     platform_prefix = "AndroidStudio",
     required_plugins = "com.google.idea.bazel.aswb",
     test_package_root = "com.google.idea.blaze.android",

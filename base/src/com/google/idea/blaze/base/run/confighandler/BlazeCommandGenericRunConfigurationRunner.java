@@ -101,7 +101,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
                   new IssueOutputFilter(
                       project,
                       WorkspaceRoot.fromProject(project),
-                      BlazeInvocationContext.NonSync,
+                      BlazeInvocationContext.ContextType.RunConfiguration,
                       false))
               .build();
     }
@@ -202,8 +202,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
                   project,
                   projectViewSet,
                   getCommand(),
-                  BlazeInvocationContext.NonSync,
-                  executorType))
+                  BlazeInvocationContext.runConfigContext(executorType, configuration.getType())))
           .addBlazeFlags(extraBlazeFlags)
           .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
           .addExeFlags(handlerState.getExeFlagsState().getExpandedFlags())

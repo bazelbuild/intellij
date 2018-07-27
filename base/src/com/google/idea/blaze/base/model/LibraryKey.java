@@ -29,11 +29,14 @@ public final class LibraryKey implements Serializable {
   private final String name;
 
   public static LibraryKey fromArtifactLocation(ArtifactLocation artifactLocation) {
+    return new LibraryKey(libraryNameFromArtifactLocation(artifactLocation));
+  }
+
+  public static String libraryNameFromArtifactLocation(ArtifactLocation artifactLocation) {
     File file = new File(artifactLocation.getExecutionRootRelativePath());
     String parent = file.getParent();
     int parentHash = parent != null ? parent.hashCode() : file.hashCode();
-    String name = FileUtil.getNameWithoutExtension(file) + "_" + Integer.toHexString(parentHash);
-    return new LibraryKey(name);
+    return FileUtil.getNameWithoutExtension(file) + "_" + Integer.toHexString(parentHash);
   }
 
   public static LibraryKey forResourceLibrary() {

@@ -35,11 +35,14 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
+import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
+import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException;
 import com.google.idea.sdkcompat.cidr.CompilerInfoCacheAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.pom.NavigatableAdapter;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -175,12 +178,8 @@ final class BlazeConfigurationToolchainResolver {
                   return null;
                 }
                 String compilerVersion =
-                    CompilerVersionChecker.getInstance()
-                        .checkCompilerVersion(
-                            executionRootPathResolver.getExecutionRoot(), cppExecutable);
+                    getCompilerVersion(project, context, executionRootPathResolver, cppExecutable);
                 if (compilerVersion == null) {
-                  IssueOutput.error("Unable to determine version of compiler " + cppExecutable)
-                      .submit(context);
                   return null;
                 }
                 BlazeCompilerSettings oldSettings = oldCompilerSettings.get(toolchain);
@@ -221,6 +220,54 @@ final class BlazeConfigurationToolchainResolver {
       IssueOutput.error("Could not build C compiler settings map: " + e).submit(context);
     }
     return compilerSettingsMap.build();
+  }
+
+  @Nullable
+  private static String getCompilerVersion(
+      Project project,
+      BlazeContext context,
+      ExecutionRootPathResolver executionRootPathResolver,
+      File cppExecutable) {
+    File executionRoot = executionRootPathResolver.getExecutionRoot();
+    try {
+      return CompilerVersionChecker.getInstance()
+          .checkCompilerVersion(executionRoot, cppExecutable);
+    } catch (VersionCheckException e) {
+      switch (e.kind) {
+        case MISSING_EXEC_ROOT:
+          IssueOutput.error(
+                  String.format(
+                      "Missing execution root %s (checking compiler).\n"
+                          + "Double-click to run sync and create the execution root.",
+                      executionRoot.getAbsolutePath()))
+              .navigatable(
+                  new NavigatableAdapter() {
+                    @Override
+                    public void navigate(boolean requestFocus) {
+                      BlazeSyncManager.getInstance(project).incrementalProjectSync();
+                    }
+                  })
+              .submit(context);
+          return null;
+        case MISSING_COMPILER:
+          IssueOutput.error(
+                  String.format(
+                      "Unable to access compiler executable \"%s\".\n"
+                          + "Check if it is accessible from the cmdline.",
+                      cppExecutable.getAbsolutePath()))
+              .submit(context);
+          return null;
+        case GENERIC_FAILURE:
+          IssueOutput.error(
+                  String.format(
+                      "Unable to check compiler version for \"%s\".\n%s\n"
+                          + "Check if running the compiler with --version works on the cmdline.",
+                      cppExecutable.getAbsolutePath(), e.getMessage()))
+              .submit(context);
+          return null;
+      }
+      return null;
+    }
   }
 
   @Nullable

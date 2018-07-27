@@ -16,7 +16,6 @@
 
 package com.google.idea.blaze.cpp;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -87,18 +86,16 @@ public final class BlazeCWorkspace implements ProjectComponent {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData) {
-
+    BlazeConfigurationResolverResult oldResult = resolverResult;
+    BlazeConfigurationResolverResult newResult =
+        configurationResolver.update(
+            context, workspaceRoot, projectViewSet, blazeProjectData, oldResult);
+    // calculateConfigurations is expensive, so run async without a read lock (b/78570947)
     ProgressManager.getInstance()
         .run(
             new Task.Backgroundable(project, "Configuration Sync", false) {
               @Override
               public void run(ProgressIndicator indicator) {
-
-                indicator.setIndeterminate(false);
-                indicator.setText("Resolving Configurations...");
-                indicator.setFraction(0.0);
-                BlazeConfigurationResolverResult newResult =
-                    resolveConfigurations(context, workspaceRoot, projectViewSet, blazeProjectData);
                 indicator.setText("Updating Configurations...");
                 indicator.setFraction(0.0);
                 CommitableConfiguration config =
@@ -109,19 +106,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
             });
   }
 
-  @VisibleForTesting
-  BlazeConfigurationResolverResult resolveConfigurations(
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData) {
-    BlazeConfigurationResolverResult oldResult = resolverResult;
-    return configurationResolver.update(
-        context, workspaceRoot, projectViewSet, blazeProjectData, oldResult);
-  }
-
-  @VisibleForTesting
-  CommitableConfiguration calculateConfigurations(
+  private CommitableConfiguration calculateConfigurations(
       BlazeProjectData blazeProjectData,
       WorkspaceRoot workspaceRoot,
       BlazeConfigurationResolverResult newResult,
@@ -273,8 +258,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
     return new CommitableConfiguration(newResult, workspaceModifiable);
   }
 
-  @VisibleForTesting
-  void commitConfigurations(CommitableConfiguration config) {
+  private void commitConfigurations(CommitableConfiguration config) {
     resolverResult = config.result;
     OCWorkspaceModifiableModelAdapter.commit(config.model, SERIALIZATION_VERSION);
   }
@@ -314,7 +298,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
   }
 
   /** Contains the configuration to be committed all-at-once */
-  public static class CommitableConfiguration {
+  private static class CommitableConfiguration {
     private final BlazeConfigurationResolverResult result;
     private final OCWorkspaceImpl.ModifiableModel model;
 

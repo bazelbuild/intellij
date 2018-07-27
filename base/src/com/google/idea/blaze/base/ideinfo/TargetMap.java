@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.ideinfo;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import java.io.Serializable;
+import javax.annotation.Nullable;
 
 /** Map of configured targets (and soon aspects). */
 public class TargetMap implements Serializable {
@@ -29,6 +30,7 @@ public class TargetMap implements Serializable {
     this.targetMap = targetMap;
   }
 
+  @Nullable
   public TargetIdeInfo get(TargetKey key) {
     return targetMap.get(key);
   }

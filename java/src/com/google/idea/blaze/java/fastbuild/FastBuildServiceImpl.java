@@ -23,6 +23,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -41,6 +42,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedTask;
@@ -49,6 +51,7 @@ import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -82,8 +85,15 @@ import javax.annotation.Nullable;
 
 final class FastBuildServiceImpl implements FastBuildService {
 
-  private static final ImmutableSet<Kind> SUPPORTED_KINDS =
-      ImmutableSet.of(Kind.ANDROID_ROBOLECTRIC_TEST, Kind.JAVA_TEST);
+  private static final ImmutableSetMultimap<BuildSystem, Kind> SUPPORTED_KINDS =
+      ImmutableSetMultimap.<BuildSystem, Kind>builder()
+          .putAll(BuildSystem.Bazel, Kind.JAVA_TEST)
+          .putAll(
+              BuildSystem.Blaze,
+              Kind.ANDROID_ROBOLECTRIC_TEST,
+              Kind.ANDROID_LOCAL_TEST,
+              Kind.JAVA_TEST)
+          .build();
 
   private final Project project;
   private final ProjectViewManager projectViewManager;
@@ -111,8 +121,8 @@ final class FastBuildServiceImpl implements FastBuildService {
   }
 
   @Override
-  public boolean supportsFastBuilds(Kind kind) {
-    return SUPPORTED_KINDS.contains(kind);
+  public boolean supportsFastBuilds(BuildSystem buildSystem, Kind kind) {
+    return SUPPORTED_KINDS.get(buildSystem).contains(kind);
   }
 
   @Override
@@ -160,8 +170,8 @@ final class FastBuildServiceImpl implements FastBuildService {
             project,
             projectViewSet,
             BlazeCommandName.BUILD,
-            BlazeInvocationContext.NonSync,
-            ExecutorType.DEBUG);
+            BlazeInvocationContext.runConfigContext(
+                ExecutorType.FAST_BUILD_RUN, BlazeCommandRunConfigurationType.getInstance()));
     return FastBuildParameters.builder()
         .setBlazeBinary(blazeBinaryPath)
         .addBlazeFlags(projectBlazeFlags)
@@ -259,7 +269,7 @@ final class FastBuildServiceImpl implements FastBuildService {
 
   @Nullable
   private static BuildOutput getCompletedBuild(@Nullable FastBuildState buildState) {
-    if (buildState == null) {
+    if (buildState == null || !buildState.compilerOutputDirectory().exists()) {
       return null;
     }
 
@@ -315,7 +325,7 @@ final class FastBuildServiceImpl implements FastBuildService {
                                     new IssueOutputFilter(
                                         project,
                                         workspaceRoot,
-                                        BlazeInvocationContext.NonSync,
+                                        BlazeInvocationContext.ContextType.RunConfiguration,
                                         true))
                                 .build());
 

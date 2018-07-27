@@ -27,10 +27,10 @@ public final class SkylarkDebuggingUtils {
   private SkylarkDebuggingUtils() {}
 
   // the most recent backwards-incompatible change to the protocol
-  private static final long EARLIEST_SUPPORTED_BLAZE_CL = 201957138L;
+  private static final long EARLIEST_SUPPORTED_BLAZE_CL = 202705882L;
 
   private static final BoolExperiment debuggingEnabled =
-      new BoolExperiment("skylark.debugging.enabled", false);
+      new BoolExperiment("skylark.debugging.enabled", true);
 
   public static boolean debuggingEnabled(Project project) {
     BlazeProjectData projectData =

@@ -17,7 +17,6 @@ package com.google.idea.blaze.cpp;
 
 import com.intellij.openapi.components.ServiceManager;
 import java.io.File;
-import javax.annotation.Nullable;
 
 /** Runs a compiler to check its version. */
 public interface CompilerVersionChecker {
@@ -26,7 +25,23 @@ public interface CompilerVersionChecker {
     return ServiceManager.getService(CompilerVersionChecker.class);
   }
 
-  /** Returns the compiler's version string, or null on failure */
-  @Nullable
-  String checkCompilerVersion(File executionRoot, File cppExecutable);
+  /** Indicates failure to check compiler version */
+  class VersionCheckException extends Exception {
+
+    final IssueKind kind;
+
+    enum IssueKind {
+      MISSING_EXEC_ROOT,
+      MISSING_COMPILER,
+      GENERIC_FAILURE
+    }
+
+    VersionCheckException(IssueKind kind, String message) {
+      super(message);
+      this.kind = kind;
+    }
+  }
+
+  /** Returns the compiler's version string */
+  String checkCompilerVersion(File executionRoot, File cppExecutable) throws VersionCheckException;
 }
