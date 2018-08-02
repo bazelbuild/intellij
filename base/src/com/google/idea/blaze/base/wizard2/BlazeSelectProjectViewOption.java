@@ -41,6 +41,4 @@ public interface BlazeSelectProjectViewOption extends BlazeWizardOption {
   default String getImportDirectory() {
     return null;
   }
-
-  void commit();
 }

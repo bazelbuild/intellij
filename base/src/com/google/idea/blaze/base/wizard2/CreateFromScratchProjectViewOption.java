@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
-import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
 
@@ -27,7 +26,7 @@ public class CreateFromScratchProjectViewOption implements BlazeSelectProjectVie
   }
 
   @Override
-  public String getOptionText() {
+  public String getDescription() {
     return "Create from scratch";
   }
 
@@ -51,7 +50,5 @@ public class CreateFromScratchProjectViewOption implements BlazeSelectProjectVie
   public void commit() {}
 
   @Override
-  public BlazeValidationResult validate() {
-    return BlazeValidationResult.success();
-  }
+  public void validateAndUpdateBuilder(BlazeNewProjectBuilder builder) {}
 }

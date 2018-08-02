@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
+import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.module.Module;
@@ -54,7 +55,8 @@ final class BlazeCSyncPlugin implements BlazeSyncPlugin {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
-      Module workspaceModule) {
+      Module workspaceModule,
+      SyncMode syncMode) {
     if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C)) {
       return;
     }
@@ -65,7 +67,8 @@ final class BlazeCSyncPlugin implements BlazeSyncPlugin {
           childContext.push(new TimingScope("Setup C Workspace", EventType.Other));
 
           BlazeCWorkspace blazeCWorkspace = BlazeCWorkspace.getInstance(project);
-          blazeCWorkspace.update(childContext, workspaceRoot, projectViewSet, blazeProjectData);
+          blazeCWorkspace.update(
+              childContext, workspaceRoot, projectViewSet, blazeProjectData, syncMode);
         });
   }
 

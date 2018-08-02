@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
+import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -99,7 +100,8 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
       ArtifactLocationDecoder artifactLocationDecoder,
       TargetMap targetMap,
       SyncState.Builder syncStateBuilder,
-      @Nullable SyncState previousSyncState) {
+      @Nullable SyncState previousSyncState,
+      SyncMode syncMode) {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.SCALA)) {
       return;
     }

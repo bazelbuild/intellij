@@ -112,7 +112,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
             ImmutableList.of(),
             extraDebugFlags,
             BlazeInvocationContext.runConfigContext(
-                ExecutorType.fromExecutor(env.getExecutor()), configuration.getType()),
+                ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
             "Building debug binary");
 
     try {

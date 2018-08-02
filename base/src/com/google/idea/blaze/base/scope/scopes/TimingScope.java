@@ -20,14 +20,18 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Prints timing information as output. */
 public class TimingScope implements BlazeScope {
+
+  private static final Logger logger = Logger.getInstance(TimingScope.class);
 
   /** The type of event for which timing information is being recorded */
   public enum EventType {
@@ -41,7 +45,7 @@ public class TimingScope implements BlazeScope {
 
   private long startTime;
 
-  private double duration;
+  private Optional<Double> duration = Optional.empty();
 
   private final List<TimingScopeListener> scopeListeners = Lists.newArrayList();
 
@@ -78,11 +82,12 @@ public class TimingScope implements BlazeScope {
   @Override
   public void onScopeEnd(BlazeContext context) {
     if (context.isCancelled()) {
+      duration = Optional.of(0.0);
       return;
     }
 
     long elapsedTime = System.currentTimeMillis() - startTime;
-    duration = (double) elapsedTime / 1000.0;
+    duration = Optional.of((double) elapsedTime / 1000.0);
 
     TimedEvent event = new TimedEvent(name, eventType, elapsedTime, children.isEmpty());
     scopeListeners.forEach(listener -> listener.onScopeEnd(event));
@@ -120,9 +125,9 @@ public class TimingScope implements BlazeScope {
     // Self time trivially 100% if no children
     if (timingScope.children.size() > 0) {
       // Calculate self time as <my duration> - <sum child duration>
-      double selfTime = timingScope.duration;
+      double selfTime = timingScope.getDuration();
       for (TimingScope child : timingScope.children) {
-        selfTime -= child.duration;
+        selfTime -= child.getDuration();
       }
 
       selfString = selfTime > 0.1 ? String.format(" (%s)", durationStr(selfTime)) : "";
@@ -134,7 +139,7 @@ public class TimingScope implements BlazeScope {
                 "%s%s: %s%s",
                 getIndentation(depth),
                 timingScope.name,
-                durationStr(timingScope.duration),
+                durationStr(timingScope.getDuration()),
                 selfString)));
 
     for (TimingScope child : timingScope.children) {
@@ -143,11 +148,21 @@ public class TimingScope implements BlazeScope {
 
     if (timingScope.children.isEmpty()) {
       // sum times for leaf nodes
-      data.addEventTiming(timingScope.eventType, timingScope.duration);
+      data.addEventTiming(timingScope.eventType, timingScope.getDuration());
     }
     if (depth == 0) {
       data.outputReport(context);
     }
+  }
+
+  private double getDuration() {
+    if (duration.isPresent()) {
+      return duration.get();
+    }
+    // Could happen if a TimingScope outlives the root context (e.g., from BlazeSyncTask), so the
+    // actual duration is not yet known.
+    logger.warn(String.format("Duration not computed for TimingScope %s", name));
+    return 0;
   }
 
   private static String durationStr(double time) {

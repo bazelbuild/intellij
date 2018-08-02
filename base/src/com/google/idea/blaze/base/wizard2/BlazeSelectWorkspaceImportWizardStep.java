@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
-import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.wizard2.ui.BlazeSelectWorkspaceControl;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.CommitStepException;
@@ -30,7 +29,7 @@ class BlazeSelectWorkspaceImportWizardStep extends ProjectImportWizardStep {
   private BlazeSelectWorkspaceControl control;
   private boolean settingsInitialised;
 
-  public BlazeSelectWorkspaceImportWizardStep(WizardContext context) {
+  BlazeSelectWorkspaceImportWizardStep(WizardContext context) {
     super(context);
   }
 
@@ -54,22 +53,17 @@ class BlazeSelectWorkspaceImportWizardStep extends ProjectImportWizardStep {
   }
 
   @Override
-  public boolean validate() throws ConfigurationException {
-    BlazeValidationResult result = control.validate();
-    if (!result.success) {
-      throw new ConfigurationException(result.error.getError());
-    }
-    return true;
-  }
-
-  @Override
-  public void updateDataModel() {
-    control.updateBuilder(getProjectBuilder());
+  public void validateAndUpdateModel() throws ConfigurationException {
+    control.validateAndUpdateBuilder();
   }
 
   @Override
   public void onWizardFinished() throws CommitStepException {
-    control.commit();
+    try {
+      control.commit();
+    } catch (BlazeProjectCommitException e) {
+      throw new CommitStepException(e.getMessage());
+    }
   }
 
   @Override

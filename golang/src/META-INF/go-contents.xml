@@ -19,6 +19,7 @@
     <SyncListener implementation="com.google.idea.blaze.golang.sync.BlazeGoSdkUpdater"/>
     <BlazeTestEventsHandler
         implementation="com.google.idea.blaze.golang.run.smrunner.BlazeGoTestEventsHandler"/>
+    <PrefetchFileSource implementation="com.google.idea.blaze.golang.sync.GoPrefetchFileSource"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

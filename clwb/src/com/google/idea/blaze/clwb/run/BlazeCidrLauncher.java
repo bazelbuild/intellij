@@ -181,7 +181,9 @@ public final class BlazeCidrLauncher extends CidrLauncherCompat {
                     projectViewSet,
                     handlerState.getCommandState().getCommand(),
                     BlazeInvocationContext.runConfigContext(
-                        ExecutorType.fromExecutor(env.getExecutor()), configuration.getType())))
+                        ExecutorType.fromExecutor(env.getExecutor()),
+                        configuration.getType(),
+                        false)))
             .addBlazeFlags(testHandlerFlags)
             .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
             .addExeFlags(handlerState.getExeFlagsState().getExpandedFlags());

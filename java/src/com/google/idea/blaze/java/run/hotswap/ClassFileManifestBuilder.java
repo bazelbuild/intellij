@@ -97,7 +97,7 @@ public class ClassFileManifestBuilder {
               aspectStrategy.getBuildFlags(),
               ImmutableList.of(),
               BlazeInvocationContext.runConfigContext(
-                  ExecutorType.fromExecutor(env.getExecutor()), configuration.getType()),
+                  ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
               "Building debug binary");
 
       if (progress != null) {

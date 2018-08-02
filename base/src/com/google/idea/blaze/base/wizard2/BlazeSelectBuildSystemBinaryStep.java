@@ -33,7 +33,7 @@ class BlazeSelectBuildSystemBinaryStep extends ProjectImportWizardStep {
   private SelectBazelBinaryControl control;
   private boolean settingsInitialized = false;
 
-  public BlazeSelectBuildSystemBinaryStep(WizardContext context) {
+  BlazeSelectBuildSystemBinaryStep(WizardContext context) {
     super(context);
   }
 
@@ -66,16 +66,12 @@ class BlazeSelectBuildSystemBinaryStep extends ProjectImportWizardStep {
   }
 
   @Override
-  public boolean validate() throws ConfigurationException {
+  public void validateAndUpdateModel() throws ConfigurationException {
     BlazeValidationResult result = control.validate();
     if (!result.success) {
       throw new ConfigurationException(result.error.getError());
     }
-    return true;
   }
-
-  @Override
-  public void updateDataModel() {}
 
   @Override
   public void onWizardFinished() throws CommitStepException {

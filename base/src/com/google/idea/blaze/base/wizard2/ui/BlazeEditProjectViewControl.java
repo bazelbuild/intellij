@@ -55,10 +55,9 @@ import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.google.idea.blaze.base.wizard2.BlazeNewProjectBuilder;
 import com.google.idea.blaze.base.wizard2.BlazeSelectProjectViewOption;
-import com.google.idea.blaze.base.wizard2.BlazeSelectWorkspaceOption;
 import com.google.idea.blaze.base.wizard2.ProjectDataDirectoryValidator;
+import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.history.core.Paths;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -68,7 +67,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.SystemProperties;
@@ -87,7 +85,6 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import org.jetbrains.annotations.NotNull;
 
 /** The UI control to collect project settings when importing a Blaze project. */
 public final class BlazeEditProjectViewControl {
@@ -100,9 +97,6 @@ public final class BlazeEditProjectViewControl {
       new BoolExperiment("allow.add.project.view.default.values", true);
   private static final String LAST_WORKSPACE_MODE_PROPERTY =
       "blaze.edit.project.view.control.last.workspace.mode";
-  private static final String LAST_VCS_ROOT_PROPERTY = "blaze.edit.project.view.last.vcs.root";
-  private static final String LAST_PROJECT_DATA_PATH_PROPERTY =
-      "blaze.edit.project.view.last.project.data.path";
 
   private final JPanel component;
   private final String buildSystemName;
@@ -114,9 +108,8 @@ public final class BlazeEditProjectViewControl {
   private JRadioButton branchDefaultNameOption;
   private JRadioButton importDirectoryDefaultNameOption;
   private HashCode paramsHash;
-  private WorkspaceRoot workspaceRoot;
   private WorkspacePathResolver workspacePathResolver;
-  private BlazeSelectWorkspaceOption workspaceOption;
+  private WorkspaceTypeData workspaceData;
   private BlazeSelectProjectViewOption projectViewOption;
   private boolean isInitialising;
   private boolean defaultWorkspaceNameModeExplicitlySet;
@@ -203,15 +196,15 @@ public final class BlazeEditProjectViewControl {
   }
 
   public void update(BlazeNewProjectBuilder builder) {
-    this.workspaceOption = builder.getWorkspaceOption();
+    this.workspaceData = builder.getWorkspaceData();
     this.projectViewOption = builder.getProjectViewOption();
-    WorkspaceRoot workspaceRoot = workspaceOption.getWorkspaceRoot();
+    WorkspaceRoot workspaceRoot = workspaceData.workspaceRoot();
     WorkspacePath workspacePath = projectViewOption.getSharedProjectView();
     String initialProjectViewText = projectViewOption.getInitialProjectViewText();
     boolean allowAddDefaultValues =
         projectViewOption.allowAddDefaultProjectViewValues()
             && allowAddprojectViewDefaultValues.getValue();
-    WorkspacePathResolver workspacePathResolver = workspaceOption.getWorkspacePathResolver();
+    WorkspacePathResolver workspacePathResolver = workspaceData.workspacePathResolver();
 
     HashCode hashCode =
         Hashing.md5()
@@ -227,8 +220,7 @@ public final class BlazeEditProjectViewControl {
       this.paramsHash = hashCode;
       this.isInitialising = true;
       init(
-          workspaceOption.getBuildSystemForWorkspace(),
-          workspaceRoot,
+          workspaceData.buildSystem(),
           workspacePathResolver,
           workspacePath,
           initialProjectViewText,
@@ -267,7 +259,6 @@ public final class BlazeEditProjectViewControl {
 
   private void init(
       BuildSystem buildSystem,
-      WorkspaceRoot workspaceRoot,
       WorkspacePathResolver workspacePathResolver,
       @Nullable WorkspacePath sharedProjectView,
       @Nullable String initialProjectViewText,
@@ -276,14 +267,13 @@ public final class BlazeEditProjectViewControl {
       initialProjectViewText =
           modifyInitialProjectView(buildSystem, initialProjectViewText, workspacePathResolver);
     }
-    this.workspaceRoot = workspaceRoot;
     this.workspacePathResolver = workspacePathResolver;
 
     updateDefaultProjectNameUiState();
     updateDefaultProjectName();
 
     String projectViewText = "";
-    File sharedProjectViewFile = null;
+    File sharedProjectViewFile;
 
     if (sharedProjectView != null) {
       sharedProjectViewFile = workspacePathResolver.resolveToFile(sharedProjectView);
@@ -314,7 +304,7 @@ public final class BlazeEditProjectViewControl {
 
   private void updateDefaultProjectNameUiState() {
     workspaceDefaultNameOption.setEnabled(true);
-    branchDefaultNameOption.setEnabled(workspaceOption.getBranchName() != null);
+    branchDefaultNameOption.setEnabled(workspaceData.branchName() != null);
     importDirectoryDefaultNameOption.setEnabled(projectViewOption.getImportDirectory() != null);
 
     InferDefaultNameMode inferDefaultNameMode = InferDefaultNameMode.FromImportDirectory;
@@ -332,7 +322,7 @@ public final class BlazeEditProjectViewControl {
         workspaceDefaultNameOption.setSelected(true);
         break;
       case FromBranch:
-        if (workspaceOption.getBranchName() != null) {
+        if (workspaceData.branchName() != null) {
           branchDefaultNameOption.setSelected(true);
         } else {
           workspaceDefaultNameOption.setSelected(true);
@@ -378,9 +368,9 @@ public final class BlazeEditProjectViewControl {
   private String getDefaultName(InferDefaultNameMode inferDefaultNameMode) {
     switch (inferDefaultNameMode) {
       case FromWorkspace:
-        return workspaceOption.getWorkspaceName();
+        return workspaceData.workspaceName();
       case FromBranch:
-        return workspaceOption.getBranchName();
+        return workspaceData.branchName();
       case FromImportDirectory:
         return projectViewOption.getImportDirectory();
       default:
@@ -389,79 +379,26 @@ public final class BlazeEditProjectViewControl {
   }
 
   private String getDefaultProjectDataDirectory(String projectName) {
-    File canonicalLocation = workspaceOption.getCanonicalProjectDataLocation();
-    if (canonicalLocation != null) {
-      return canonicalLocation.getAbsolutePath();
+    if (workspaceData.canonicalProjectDataLocation() != null) {
+      return newUniquePath(workspaceData.canonicalProjectDataLocation());
     }
-    File desiredLocation = getProjectDataUnderWorkspaceVcs();
-    if (desiredLocation == null) {
-      String lastProjectPath = RecentProjectsManager.getInstance().getLastProjectPath();
-      if (lastProjectPath != null) {
-        // Because RecentProjectsManager uses PathUtil.toSystemIndependentName.
-        lastProjectPath = lastProjectPath.replace('/', File.separatorChar);
-        File lastProject = new File(lastProjectPath);
-        if (lastProject.getName().equals(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY)) {
-          lastProject = lastProject.getParentFile();
-        }
-        desiredLocation = new File(lastProject.getParentFile(), projectName);
-      } else {
-        desiredLocation = new File(getDefaultProjectsDirectory(), projectName);
-      }
+    String lastProjectPath = RecentProjectsManager.getInstance().getLastProjectPath();
+    if (lastProjectPath == null) {
+      return newUniquePath(new File(getDefaultProjectsDirectory(), projectName));
     }
-    return newUniquePath(desiredLocation);
+    // Because RecentProjectsManager uses PathUtil.toSystemIndependentName.
+    lastProjectPath = lastProjectPath.replace('/', File.separatorChar);
+    File lastProject = new File(lastProjectPath);
+    if (lastProject.getName().equals(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY)) {
+      lastProject = lastProject.getParentFile();
+    }
+    return newUniquePath(new File(lastProject.getParentFile(), projectName));
   }
 
   private static File getDefaultProjectsDirectory() {
     final String userHome = SystemProperties.getUserHome();
     String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
     return new File(userHome, productName.replace(" ", "") + "Projects");
-  }
-
-  /**
-   * If a user had previously placed their project data under the VCS associated with their project,
-   * and is now creating a project with a new project with the same VCS, we will use the same
-   * relative path as the previous project. E.g.,
-   *
-   * <p>previous project:
-   *
-   * <pre>
-   * foo/.git/
-   * foo/project/WORKSPACE
-   * foo/idea/.idea/
-   * </pre>
-   *
-   * current project:
-   *
-   * <pre>
-   * bar/.git/
-   * bar/project/WORKSPACE
-   * bar/idea/.idea/
-   * </pre>
-   *
-   * @deprecated to be replaced by {@link
-   *     BlazeSelectWorkspaceOption#getCanonicalProjectDataLocation()}
-   */
-  @Nullable
-  @Deprecated
-  private File getProjectDataUnderWorkspaceVcs() {
-    if (!workspaceOption.allowProjectDataInVcs()) {
-      return null;
-    }
-    String lastVcsRoot = PropertiesComponent.getInstance().getValue(LAST_VCS_ROOT_PROPERTY);
-    String lastProjectPath =
-        PropertiesComponent.getInstance().getValue(LAST_PROJECT_DATA_PATH_PROPERTY);
-    if (lastVcsRoot == null || lastProjectPath == null) {
-      return null;
-    }
-    String lastRelativePath = Paths.relativeIfUnder(lastProjectPath, lastVcsRoot);
-    if (lastRelativePath == null) {
-      return null;
-    }
-    File currentVcsRoot = workspaceOption.getVcsRoot();
-    if (currentVcsRoot == null) {
-      return null;
-    }
-    return new File(currentVcsRoot, lastRelativePath);
   }
 
   /** Returns a unique file path by appending numbers until a non-collision is found. */
@@ -507,15 +444,6 @@ public final class BlazeEditProjectViewControl {
         return result;
       }
     }
-    File workspaceRootDirectory = workspaceRoot.directory();
-    if (!workspaceOption.allowProjectDataInVcs()
-        && FileUtil.isAncestor(workspaceRootDirectory, projectDataDir, false)) {
-      return BlazeValidationResult.failure(
-          new BlazeValidationError(
-              "Project data directory cannot be inside your workspace. "
-                  + "Please choose a directory outside your workspace."));
-    }
-
     List<IssueOutput> issues = Lists.newArrayList();
 
     ProjectViewSet projectViewSet = projectViewUi.parseProjectView(issues);
@@ -570,7 +498,6 @@ public final class BlazeEditProjectViewControl {
       success = Scope.root(this::validateProjectView);
     }
 
-    @NotNull
     private Boolean validateProjectView(BlazeContext context) {
       context.addOutputSink(
           IssueOutput.class,
@@ -613,7 +540,7 @@ public final class BlazeEditProjectViewControl {
   public void updateBuilder(BlazeNewProjectBuilder builder) {
     String projectName = projectNameField.getText().trim();
     File projectDataDirectoryFile = new File(projectDataDirField.getText().trim());
-    if (workspaceOption.allowProjectDataInVcs()) {
+    if (workspaceData.canonicalProjectDataLocation() != null) {
       projectDataDirectoryFile =
           new File(projectDataDirectoryFile, BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY);
     }
@@ -663,10 +590,5 @@ public final class BlazeEditProjectViewControl {
       PropertiesComponent.getInstance()
           .setValue(LAST_WORKSPACE_MODE_PROPERTY, inferDefaultNameMode.toString());
     }
-    File vcsRoot = workspaceOption.getVcsRoot();
-    PropertiesComponent.getInstance()
-        .setValue(LAST_VCS_ROOT_PROPERTY, vcsRoot != null ? vcsRoot.getPath() : null);
-    PropertiesComponent.getInstance()
-        .setValue(LAST_PROJECT_DATA_PATH_PROPERTY, projectDataDirField.getText());
   }
 }

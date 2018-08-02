@@ -17,6 +17,7 @@ package com.google.idea.blaze.skylark.debugger.run;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.RunConfigurationContext;
 import com.google.idea.blaze.base.command.BuildFlagsProvider;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -51,7 +52,8 @@ class SkylarkDebugBuildFlagsProvider implements BuildFlagsProvider {
   }
 
   private static boolean skylarkDebuggingContext(BlazeInvocationContext context) {
-    if (!(context instanceof RunConfigurationContext)) {
+    if (!(context instanceof RunConfigurationContext)
+        || context.type() != ContextType.RunConfiguration) {
       return false;
     }
     RunConfigurationContext runConfigContext = (RunConfigurationContext) context;

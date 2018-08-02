@@ -31,11 +31,11 @@ import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
 import com.google.idea.blaze.base.sync.projectview.RelatedWorkspacePathFinder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -86,7 +86,7 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
   }
 
   @Override
-  public String getOptionText() {
+  public String getDescription() {
     return "Generate from BUILD file";
   }
 
@@ -96,39 +96,38 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
   }
 
   @Override
-  public BlazeValidationResult validate() {
+  public void validateAndUpdateBuilder(BlazeNewProjectBuilder builder)
+      throws ConfigurationException {
     String buildFilePath = getBuildFilePath();
     if (buildFilePath.isEmpty()) {
-      return BlazeValidationResult.failure("BUILD file field cannot be empty.");
+      throw new ConfigurationException("BUILD file field cannot be empty.");
     }
     if (!WorkspacePath.isValid(buildFilePath)) {
-      return BlazeValidationResult.failure(
+      throw new ConfigurationException(
           "Invalid BUILD file path: specify a path relative to the workspace root.");
     }
     WorkspacePathResolver workspacePathResolver =
-        builder.getWorkspaceOption().getWorkspacePathResolver();
+        builder.getWorkspaceData().workspacePathResolver();
     File file = workspacePathResolver.resolveToFile(new WorkspacePath(buildFilePath));
     if (!file.exists()) {
-      return BlazeValidationResult.failure("BUILD file does not exist.");
+      throw new ConfigurationException("BUILD file does not exist.");
     }
     if (file.isDirectory()) {
-      return BlazeValidationResult.failure("Specified path is a directory, not a file");
+      throw new ConfigurationException("Specified path is a directory, not a file");
     }
     BuildSystemProvider buildSystemProvider =
         BuildSystemProvider.getBuildSystemProvider(builder.getBuildSystem());
     checkState(buildSystemProvider != null);
     if (!buildSystemProvider.isBuildFile(file.getName())) {
-      return BlazeValidationResult.failure("File must be a BUILD file.");
+      throw new ConfigurationException("File must be a BUILD file.");
     }
-
-    return BlazeValidationResult.success();
   }
 
   @Nullable
   @Override
   public String getInitialProjectViewText() {
     WorkspacePathResolver workspacePathResolver =
-        builder.getWorkspaceOption().getWorkspacePathResolver();
+        builder.getWorkspaceData().workspacePathResolver();
     WorkspacePath workspacePath =
         new WorkspacePath(Strings.nullToEmpty(new File(getBuildFilePath()).getParent()));
     return guessProjectViewFromLocation(workspacePathResolver, workspacePath);
@@ -198,9 +197,9 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
         FileChooserFactory.getInstance().createFileChooser(descriptor, null, null);
 
     WorkspacePathResolver workspacePathResolver =
-        builder.getWorkspaceOption().getWorkspacePathResolver();
+        builder.getWorkspaceData().workspacePathResolver();
 
-    File fileBrowserRoot = builder.getWorkspaceOption().getFileBrowserRoot();
+    File fileBrowserRoot = builder.getWorkspaceData().fileBrowserRoot();
     File startingLocation = fileBrowserRoot;
     String buildFilePath = getBuildFilePath();
     if (!buildFilePath.isEmpty() && WorkspacePath.isValid(buildFilePath)) {

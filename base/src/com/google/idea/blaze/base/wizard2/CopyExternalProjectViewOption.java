@@ -16,11 +16,11 @@
 package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
-import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TextFieldWithStoredHistory;
@@ -68,7 +68,7 @@ public class CopyExternalProjectViewOption implements BlazeSelectProjectViewOpti
   }
 
   @Override
-  public String getOptionText() {
+  public String getDescription() {
     return "Copy external";
   }
 
@@ -78,18 +78,18 @@ public class CopyExternalProjectViewOption implements BlazeSelectProjectViewOpti
   }
 
   @Override
-  public BlazeValidationResult validate() {
+  public void validateAndUpdateBuilder(BlazeNewProjectBuilder builder)
+      throws ConfigurationException {
     if (getProjectViewPath().isEmpty()) {
-      return BlazeValidationResult.failure("Path to project view file cannot be empty.");
+      throw new ConfigurationException("Path to project view file cannot be empty.");
     }
     File file = new File(getProjectViewPath());
     if (!file.exists()) {
-      return BlazeValidationResult.failure("Project view file does not exist.");
+      throw new ConfigurationException("Project view file does not exist.");
     }
     if (file.isDirectory()) {
-      return BlazeValidationResult.failure("Specified path is a directory, not a file");
+      throw new ConfigurationException("Specified path is a directory, not a file");
     }
-    return BlazeValidationResult.success();
   }
 
   @Nullable

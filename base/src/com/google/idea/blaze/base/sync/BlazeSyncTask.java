@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.sync;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
@@ -127,6 +126,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.GuardedBy;
 
 /** Syncs the project with blaze. */
 final class BlazeSyncTask implements Progressive {
@@ -140,10 +140,7 @@ final class BlazeSyncTask implements Progressive {
   private final SyncStats.Builder syncStats = SyncStats.builder();
   private final TimingScopeListener timingScopeListener;
 
-  // Either all access to timedEvents happen on same thread, or if other threads create
-  // TimingScope one takes special care to ensure that the sync thread waits for other thread
-  // TimingScopes to end. For now, ensure same thread.
-  private final ThreadLocal<Boolean> isSyncThread = new ThreadLocal<>();
+  @GuardedBy("this")
   private final List<TimedEvent> timedEvents = new ArrayList<>();
 
   private BlazeSyncParams syncParams;
@@ -162,8 +159,9 @@ final class BlazeSyncTask implements Progressive {
 
           @Override
           public void onScopeEnd(TimedEvent event) {
-            Preconditions.checkState(isSyncThread.get());
-            timedEvents.add(event);
+            synchronized (BlazeSyncTask.this) {
+              timedEvents.add(event);
+            }
           }
         };
   }
@@ -219,7 +217,6 @@ final class BlazeSyncTask implements Progressive {
   /** Returns true if sync successfully completed */
   @VisibleForTesting
   boolean syncProject(BlazeContext context) {
-    isSyncThread.set(true);
     TimingScope timingScope = new TimingScope("Sync", EventType.Other);
     timingScope.addScopeListener(timingScopeListener, true);
     context.push(timingScope);
@@ -254,7 +251,8 @@ final class BlazeSyncTask implements Progressive {
         BlazeProjectData blazeProjectData =
             BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
         if (syncParams.syncMode != SyncMode.NO_BUILD) {
-          updateInMemoryState(project, context, projectViewSet, blazeProjectData);
+          updateInMemoryState(
+              project, context, projectViewSet, blazeProjectData, syncParams.syncMode);
         }
         onSyncComplete(project, context, projectViewSet, blazeProjectData, syncResult);
       }
@@ -496,7 +494,8 @@ final class BlazeSyncTask implements Progressive {
                 artifactLocationDecoder,
                 targetMap,
                 syncStateBuilder,
-                previousSyncState);
+                previousSyncState,
+                syncParams.syncMode);
           }
         });
 
@@ -910,7 +909,8 @@ final class BlazeSyncTask implements Progressive {
       Project project,
       BlazeContext parentContext,
       ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData) {
+      BlazeProjectData blazeProjectData,
+      SyncMode syncMode) {
     Scope.push(
         parentContext,
         context -> {
@@ -930,7 +930,8 @@ final class BlazeSyncTask implements Progressive {
                           workspaceRoot,
                           projectViewSet,
                           blazeProjectData,
-                          workspaceModule);
+                          workspaceModule,
+                          syncMode);
                     }
                   });
         });
@@ -1002,15 +1003,16 @@ final class BlazeSyncTask implements Progressive {
   }
 
   private SyncStats buildStats(SyncStats.Builder stats) {
-    long blazeExecTime =
-        timedEvents
-            .stream()
-            .filter(e -> e.isLeafEvent && e.type == EventType.BlazeInvocation)
-            .mapToLong(e -> e.durationMillis)
-            .sum();
-    stats.setBlazeExecTimeMs(blazeExecTime);
-    stats.setTimedEvents(ImmutableList.copyOf(timedEvents));
-
+    synchronized (this) {
+      long blazeExecTime =
+          timedEvents
+              .stream()
+              .filter(e -> e.isLeafEvent && e.type == EventType.BlazeInvocation)
+              .mapToLong(e -> e.durationMillis)
+              .sum();
+      stats.setBlazeExecTimeMs(blazeExecTime);
+      stats.setTimedEvents(ImmutableList.copyOf(timedEvents));
+    }
     return stats.build();
   }
 }
