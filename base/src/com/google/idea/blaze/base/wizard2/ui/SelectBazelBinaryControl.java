@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.ui.FileSelectorWithStoredHistory;
 import com.google.idea.blaze.base.wizard2.BlazeNewProjectBuilder;
 import com.intellij.ui.components.panels.VerticalLayout;
+import com.intellij.util.ui.JBUI.Borders;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import javax.annotation.Nullable;
@@ -31,7 +32,6 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
-import javax.swing.border.EmptyBorder;
 
 /** UI for selecting the build system binary during the import process. */
 public class SelectBazelBinaryControl {
@@ -66,7 +66,7 @@ public class SelectBazelBinaryControl {
     component.add(new JSeparator());
 
     JPanel content = new JPanel(new VerticalLayout(12));
-    content.setBorder(new EmptyBorder(50, 100, 0, 100));
+    content.setBorder(Borders.empty(50, 100, 0, 100));
     component.add(content);
 
     content.add(new JLabel("Specify a bazel binary to be used for all bazel projects"));

@@ -202,7 +202,8 @@ public final class BlazeCommandGenericRunConfigurationRunner
                   project,
                   projectViewSet,
                   getCommand(),
-                  BlazeInvocationContext.runConfigContext(executorType, configuration.getType())))
+                  BlazeInvocationContext.runConfigContext(
+                      executorType, configuration.getType(), false)))
           .addBlazeFlags(extraBlazeFlags)
           .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
           .addExeFlags(handlerState.getExeFlagsState().getExpandedFlags())

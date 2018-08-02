@@ -94,13 +94,7 @@ abstract class BlazeNewProjectWizard extends AbstractWizard<ProjectImportWizardS
   protected final void doOKAction() {
     final Ref<Boolean> result = Ref.create(false);
     DumbService.allowStartingDumbModeInside(
-        DumbModePermission.MAY_START_BACKGROUND,
-        new Runnable() {
-          @Override
-          public void run() {
-            result.set(doFinishAction());
-          }
-        });
+        DumbModePermission.MAY_START_BACKGROUND, () -> result.set(doFinishAction()));
     if (!result.get()) {
       return;
     }
@@ -147,15 +141,12 @@ abstract class BlazeNewProjectWizard extends AbstractWizard<ProjectImportWizardS
 
   private boolean commitStepData(ProjectImportWizardStep step) {
     try {
-      if (!step.validate()) {
-        return false;
-      }
+      step.validateAndUpdateModel();
+      return true;
     } catch (ConfigurationException e) {
       Messages.showErrorDialog(myContentPanel, e.getMessage(), e.getTitle());
       return false;
     }
-    step.updateDataModel();
-    return true;
   }
 
   @Override

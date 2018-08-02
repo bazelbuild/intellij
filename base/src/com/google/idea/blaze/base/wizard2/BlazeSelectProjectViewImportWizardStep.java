@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
-import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.wizard2.ui.BlazeSelectProjectViewControl;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.CommitStepException;
@@ -55,17 +54,8 @@ class BlazeSelectProjectViewImportWizardStep extends ProjectImportWizardStep {
   }
 
   @Override
-  public boolean validate() throws ConfigurationException {
-    BlazeValidationResult result = control.validate();
-    if (!result.success) {
-      throw new ConfigurationException(result.error.getError());
-    }
-    return true;
-  }
-
-  @Override
-  public void updateDataModel() {
-    control.updateBuilder(getProjectBuilder());
+  public void validateAndUpdateModel() throws ConfigurationException {
+    control.validateAndUpdateModel(getProjectBuilder());
   }
 
   @Override

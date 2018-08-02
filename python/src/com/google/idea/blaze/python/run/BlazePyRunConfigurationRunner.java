@@ -300,7 +300,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
                   configuration.getProject(), configuration.getTarget()),
               ImmutableList.of(),
               BlazeInvocationContext.runConfigContext(
-                  ExecutorType.fromExecutor(env.getExecutor()), configuration.getType()),
+                  ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
               "Building debug binary");
 
       try {

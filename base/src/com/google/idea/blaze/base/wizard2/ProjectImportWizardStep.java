@@ -26,7 +26,7 @@ import javax.swing.Icon;
 abstract class ProjectImportWizardStep extends StepAdapter {
   private final WizardContext myContext;
 
-  public ProjectImportWizardStep(WizardContext context) {
+  ProjectImportWizardStep(WizardContext context) {
     myContext = context;
   }
 
@@ -39,7 +39,7 @@ abstract class ProjectImportWizardStep extends StepAdapter {
     return myContext.getProjectBuilder();
   }
 
-  protected WizardContext getWizardContext() {
+  WizardContext getWizardContext() {
     return myContext;
   }
 
@@ -53,10 +53,12 @@ abstract class ProjectImportWizardStep extends StepAdapter {
   /** Update UI from BlazeNewProjectBuilder and WizardContext */
   public abstract void updateStep();
 
-  public abstract boolean validate() throws ConfigurationException;
-
-  /** Commits data from UI into BlazeNewProjectBuilder and WizardContext */
-  public abstract void updateDataModel();
+  /**
+   * Validates the current selection. If there are no problems, commits data from UI into
+   * BlazeNewProjectBuilder and WizardContext, else throws {@ConfigurationException} with an error
+   * message for the user.
+   */
+  public abstract void validateAndUpdateModel() throws ConfigurationException;
 
   public abstract void onWizardFinished() throws CommitStepException;
 

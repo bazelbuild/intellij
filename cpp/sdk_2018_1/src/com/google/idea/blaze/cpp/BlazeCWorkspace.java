@@ -16,6 +16,7 @@
 
 package com.google.idea.blaze.cpp;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -24,11 +25,13 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.sdkcompat.cidr.OCCompilerSettingsAdapter;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceModifiableModelAdapter;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -49,6 +52,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -57,6 +61,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
   // Required by OCWorkspaceImpl.ModifiableModel::commit
   // This component is never actually serialized, and this should not ever need to change
   private static final int SERIALIZATION_VERSION = 1;
+  private static final Logger logger = Logger.getInstance(BlazeCWorkspace.class);
 
   private final BlazeConfigurationResolver configurationResolver;
   private BlazeConfigurationResolverResult resolverResult;
@@ -85,7 +90,16 @@ public final class BlazeCWorkspace implements ProjectComponent {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData) {
+      BlazeProjectData blazeProjectData,
+      SyncMode syncMode) {
+    if (syncMode.equals(SyncMode.STARTUP)
+        && !OCWorkspace.getInstance(project).getConfigurations().isEmpty()) {
+      logger.info(
+          String.format(
+              "OCWorkspace already loaded %d configurations -- skipping update",
+              OCWorkspace.getInstance(project).getConfigurations().size()));
+      return;
+    }
     BlazeConfigurationResolverResult oldResult = resolverResult;
     BlazeConfigurationResolverResult newResult =
         configurationResolver.update(
@@ -96,11 +110,16 @@ public final class BlazeCWorkspace implements ProjectComponent {
             new Task.Backgroundable(project, "Configuration Sync", false) {
               @Override
               public void run(ProgressIndicator indicator) {
+                Stopwatch s = Stopwatch.createStarted();
+                indicator.setIndeterminate(false);
                 indicator.setText("Updating Configurations...");
                 indicator.setFraction(0.0);
                 CommitableConfiguration config =
                     calculateConfigurations(blazeProjectData, workspaceRoot, newResult, indicator);
                 commitConfigurations(config);
+                logger.info(
+                    String.format(
+                        "Update configurations took %dms", s.elapsed(TimeUnit.MILLISECONDS)));
                 incModificationTrackers();
               }
             });

@@ -26,7 +26,7 @@ import java.util.Map;
  *
  * <p>It's the user's responsibility to appropriately namespace the keys.
  */
-public class BlazeWizardUserSettings {
+public final class BlazeWizardUserSettings {
   Map<String, String> values = Maps.newHashMap();
 
   public BlazeWizardUserSettings() {}

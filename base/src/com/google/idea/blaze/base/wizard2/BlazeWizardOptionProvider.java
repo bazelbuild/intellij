@@ -15,16 +15,18 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import java.util.Collection;
 
 /** Provides options during the import process. */
 public interface BlazeWizardOptionProvider {
-  Collection<BlazeSelectWorkspaceOption> getSelectWorkspaceOptions(
+
+  /** Returns an ordered list of client/workspace type options for the user to choose from. */
+  ImmutableList<TopLevelSelectWorkspaceOption> getSelectWorkspaceOptions(
       BlazeNewProjectBuilder builder, Disposable parentDisposable);
 
-  Collection<BlazeSelectProjectViewOption> getSelectProjectViewOptions(
+  ImmutableList<BlazeSelectProjectViewOption> getSelectProjectViewOptions(
       BlazeNewProjectBuilder builder);
 
   static BlazeWizardOptionProvider getInstance() {

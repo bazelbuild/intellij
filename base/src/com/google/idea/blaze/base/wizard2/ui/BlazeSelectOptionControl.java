@@ -18,14 +18,14 @@ package com.google.idea.blaze.base.wizard2.ui;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.settings.ui.ProjectViewUi;
-import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.wizard2.BlazeNewProjectBuilder;
 import com.google.idea.blaze.base.wizard2.BlazeWizardOption;
 import com.google.idea.blaze.base.wizard2.BlazeWizardUserSettings;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.VerticalLayout;
-import java.awt.BorderLayout;
+import com.intellij.util.ui.JBUI.Borders;
 import java.util.Collection;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -35,16 +35,13 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
-import javax.swing.border.EmptyBorder;
 
 /** UI for selecting a client during the import process. */
 public abstract class BlazeSelectOptionControl<T extends BlazeWizardOption> {
-  private static final Logger logger = Logger.getInstance(BlazeSelectOptionControl.class);
-
   private final BlazeWizardUserSettings userSettings;
   private final JPanel canvas;
   private final JLabel titleLabel;
-  private final Collection<OptionUiEntry<T>> optionUiEntryList;
+  final Collection<OptionUiEntry<T>> optionUiEntryList;
 
   static class OptionUiEntry<T> {
     final T option;
@@ -57,13 +54,9 @@ public abstract class BlazeSelectOptionControl<T extends BlazeWizardOption> {
   }
 
   BlazeSelectOptionControl(BlazeNewProjectBuilder builder, Collection<T> options) {
-    if (options == null) {
-      logger.error("No options on select screen '" + getTitle() + "'");
-    }
-
     this.userSettings = builder.getUserSettings();
 
-    JPanel canvas = new JPanel(new BorderLayout(0, 4));
+    JPanel canvas = new JPanel(new VerticalLayout(4));
 
     canvas.setPreferredSize(ProjectViewUi.getContainerSize());
 
@@ -72,8 +65,8 @@ public abstract class BlazeSelectOptionControl<T extends BlazeWizardOption> {
     canvas.add(new JSeparator());
 
     JPanel content = new JPanel(new VerticalLayout(12));
-    content.setBorder(new EmptyBorder(20, 100, 0, 0));
-    JScrollPane scrollPane = new JScrollPane(content);
+    content.setBorder(Borders.empty(20, 100, 0, 0));
+    JScrollPane scrollPane = new JBScrollPane(content);
     scrollPane.setBorder(BorderFactory.createEmptyBorder());
     canvas.add(scrollPane);
 
@@ -82,13 +75,13 @@ public abstract class BlazeSelectOptionControl<T extends BlazeWizardOption> {
     for (T option : options) {
       JPanel vertical = new JPanel(new VerticalLayout(10));
       JRadioButton radioButton = new JRadioButton();
-      radioButton.setText(option.getOptionText());
+      radioButton.setText(option.getDescription());
       vertical.add(radioButton);
 
       JComponent optionComponent = option.getUiComponent();
       if (optionComponent != null) {
         JPanel horizontal = new JPanel(new HorizontalLayout(0));
-        horizontal.setBorder(new EmptyBorder(0, 25, 0, 0));
+        horizontal.setBorder(Borders.emptyLeft(25));
         horizontal.add(optionComponent);
         vertical.add(horizontal);
 
@@ -129,12 +122,12 @@ public abstract class BlazeSelectOptionControl<T extends BlazeWizardOption> {
     this.optionUiEntryList = optionUiEntryList;
   }
 
-  public BlazeValidationResult validate() {
+  void validateAndUpdateModel(BlazeNewProjectBuilder builder) throws ConfigurationException {
     T option = getSelectedOption();
     if (option == null) {
-      return BlazeValidationResult.failure("No option selected.");
+      throw new ConfigurationException("No option selected.");
     }
-    return option.validate();
+    option.validateAndUpdateBuilder(builder);
   }
 
   public JComponent getUiComponent() {
@@ -162,7 +155,7 @@ public abstract class BlazeSelectOptionControl<T extends BlazeWizardOption> {
     titleLabel.setText(newTitle);
   }
 
-  abstract String getTitle();
+  protected abstract String getTitle();
 
-  abstract String getOptionKey();
+  protected abstract String getOptionKey();
 }

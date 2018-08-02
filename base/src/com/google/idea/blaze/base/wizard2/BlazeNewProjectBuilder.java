@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /** Contains the state to build a new project throughout the new project wizard process. */
 public final class BlazeNewProjectBuilder {
@@ -65,7 +66,7 @@ public final class BlazeNewProjectBuilder {
   }
 
   private final BlazeWizardUserSettings userSettings;
-  private BlazeSelectWorkspaceOption workspaceOption;
+  @Nullable private WorkspaceTypeData workspaceData;
   private BlazeSelectProjectViewOption projectViewOption;
   private File projectViewFile;
   private ProjectView projectView;
@@ -73,7 +74,6 @@ public final class BlazeNewProjectBuilder {
   private String projectName;
   private String projectDataDirectory;
   private WorkspaceRoot workspaceRoot;
-  private BuildSystem buildSystem;
 
   public BlazeNewProjectBuilder() {
     this.userSettings = BlazeWizardUserSettingsStorage.getInstance().copyUserSettings();
@@ -106,8 +106,9 @@ public final class BlazeNewProjectBuilder {
         lastImportedWorkspaceKey(buildSystem), Joiner.on(HISTORY_SEPARATOR).join(history));
   }
 
-  public BlazeSelectWorkspaceOption getWorkspaceOption() {
-    return workspaceOption;
+  @Nullable
+  public WorkspaceTypeData getWorkspaceData() {
+    return workspaceData;
   }
 
   public BlazeSelectProjectViewOption getProjectViewOption() {
@@ -130,20 +131,18 @@ public final class BlazeNewProjectBuilder {
     return projectDataDirectory;
   }
 
+  @Nullable
   public BuildSystem getBuildSystem() {
-    return buildSystem;
+    return workspaceData != null ? workspaceData.buildSystem() : null;
   }
 
   public String getBuildSystemName() {
-    if (buildSystem != null) {
-      return buildSystem.getName();
-    }
-    return Blaze.defaultBuildSystemName();
+    BuildSystem buildSystem = getBuildSystem();
+    return buildSystem != null ? buildSystem.getName() : Blaze.defaultBuildSystemName();
   }
 
-  public BlazeNewProjectBuilder setWorkspaceOption(BlazeSelectWorkspaceOption workspaceOption) {
-    this.workspaceOption = workspaceOption;
-    this.buildSystem = workspaceOption.getBuildSystemForWorkspace();
+  public BlazeNewProjectBuilder setWorkspaceData(WorkspaceTypeData workspaceData) {
+    this.workspaceData = workspaceData;
     return this;
   }
 
@@ -180,12 +179,11 @@ public final class BlazeNewProjectBuilder {
 
   /** Commits the project. May report errors. */
   public void commit() throws BlazeProjectCommitException {
-    this.workspaceRoot = workspaceOption.getWorkspaceRoot();
+    this.workspaceRoot = workspaceData.workspaceRoot();
 
-    workspaceOption.commit();
     projectViewOption.commit();
 
-    BuildSystem buildSystem = workspaceOption.getBuildSystemForWorkspace();
+    BuildSystem buildSystem = workspaceData.buildSystem();
     writeWorkspaceHistory(buildSystem, workspaceRoot.toString());
 
     if (!StringUtil.isEmpty(projectDataDirectory)) {
@@ -225,7 +223,7 @@ public final class BlazeNewProjectBuilder {
             projectName,
             projectDataDirectory,
             projectViewFile.getPath(),
-            buildSystem);
+            getBuildSystem());
 
     BlazeImportSettingsManager.getInstance(project).setImportSettings(importSettings);
     PluginDependencyHelper.addDependencyOnSyncPlugin(project);

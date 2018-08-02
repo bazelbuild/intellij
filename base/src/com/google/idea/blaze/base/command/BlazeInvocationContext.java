@@ -27,6 +27,7 @@ public interface BlazeInvocationContext {
   /** The context in which a blaze command is invoked. */
   enum ContextType {
     Sync,
+    BeforeRunTask,
     RunConfiguration,
     Other,
   }
@@ -36,8 +37,11 @@ public interface BlazeInvocationContext {
   SyncContext SYNC_CONTEXT = new SyncContext();
 
   static RunConfigurationContext runConfigContext(
-      ExecutorType executorType, ConfigurationType configurationType) {
-    return new RunConfigurationContext(executorType, configurationType);
+      ExecutorType executorType, ConfigurationType configurationType, boolean beforeRunTask) {
+    return new RunConfigurationContext(
+        executorType,
+        configurationType,
+        beforeRunTask ? ContextType.BeforeRunTask : ContextType.RunConfiguration);
   }
 
   /** Invocation context for sync-related build actions. */
@@ -54,16 +58,18 @@ public interface BlazeInvocationContext {
   final class RunConfigurationContext implements BlazeInvocationContext {
     public final ExecutorType executorType;
     public final ConfigurationType configurationType;
+    private final ContextType type;
 
     private RunConfigurationContext(
-        ExecutorType executorType, ConfigurationType configurationType) {
+        ExecutorType executorType, ConfigurationType configurationType, ContextType type) {
       this.executorType = executorType;
       this.configurationType = configurationType;
+      this.type = type;
     }
 
     @Override
     public final ContextType type() {
-      return ContextType.RunConfiguration;
+      return type;
     }
   }
 }

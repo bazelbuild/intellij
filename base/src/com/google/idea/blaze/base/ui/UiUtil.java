@@ -22,9 +22,9 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import javax.annotation.Nullable;
 import javax.swing.Box;
 import javax.swing.JComponent;
-import org.jetbrains.annotations.NotNull;
 
 /** A collection of UI utility methods. */
 public final class UiUtil {
@@ -33,12 +33,12 @@ public final class UiUtil {
 
   private UiUtil() {}
 
-  public static Box createBox(@NotNull Component... components) {
+  public static Box createBox(Component... components) {
     return createBox(Lists.newArrayList(components));
   }
 
   /** Puts all the given components in order in a box, aligned left. */
-  public static Box createBox(@NotNull Iterable<? extends Component> components) {
+  public static Box createBox(Iterable<? extends Component> components) {
     Box box = Box.createVerticalBox();
     box.setAlignmentX(0);
     for (Component component : components) {
@@ -51,11 +51,11 @@ public final class UiUtil {
   }
 
   /** Puts all the given components in order in a horizontal box. */
-  public static Box createHorizontalBox(int gap, @NotNull Component... components) {
+  public static Box createHorizontalBox(int gap, Component... components) {
     return createHorizontalBox(gap, Lists.newArrayList(components));
   }
 
-  public static Box createHorizontalBox(int gap, @NotNull Iterable<Component> components) {
+  public static Box createHorizontalBox(int gap, Iterable<Component> components) {
     Box box = Box.createHorizontalBox();
     for (Component component : components) {
       box.add(component);
@@ -64,13 +64,13 @@ public final class UiUtil {
     return box;
   }
 
-  @NotNull
+  
   public static GridBag getLabelConstraints(int indentLevel) {
     Insets insets = new Insets(INSETS, INSETS + INSETS * indentLevel, 0, INSETS);
     return new GridBag().anchor(GridBagConstraints.WEST).weightx(0).insets(insets);
   }
 
-  @NotNull
+  
   public static GridBag getFillLineConstraints(int indentLevel) {
     Insets insets = new Insets(INSETS, INSETS + INSETS * indentLevel, 0, INSETS);
     return new GridBag()
@@ -81,12 +81,15 @@ public final class UiUtil {
         .insets(insets);
   }
 
-  public static void fillBottom(@NotNull JComponent component) {
+  public static void fillBottom(JComponent component) {
     component.add(
         Box.createVerticalGlue(), new GridBag().weightx(1).weighty(1).fillCell().coverLine());
   }
 
-  public static void setEnabledRecursive(Component component, boolean enabled) {
+  public static void setEnabledRecursive(@Nullable Component component, boolean enabled) {
+    if (component == null) {
+      return;
+    }
     component.setEnabled(enabled);
     if (component instanceof Container) {
       for (Component child : ((Container) component).getComponents()) {

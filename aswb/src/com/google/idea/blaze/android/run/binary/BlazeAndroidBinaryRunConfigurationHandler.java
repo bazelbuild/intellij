@@ -129,7 +129,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
                 projectViewSet,
                 BlazeCommandName.RUN,
                 BlazeInvocationContext.runConfigContext(
-                    ExecutorType.fromExecutor(env.getExecutor()), configuration.getType()));
+                    ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), false));
     ImmutableList<String> exeFlags =
         ImmutableList.copyOf(configState.getCommonState().getExeFlagsState().getExpandedFlags());
     BlazeAndroidRunContext runContext = createRunContext(project, facet, env, blazeFlags, exeFlags);

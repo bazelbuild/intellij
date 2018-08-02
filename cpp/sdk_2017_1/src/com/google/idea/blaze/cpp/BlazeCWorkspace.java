@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
@@ -58,7 +59,8 @@ public final class BlazeCWorkspace implements OCWorkspace, ProjectComponent {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData) {
+      BlazeProjectData blazeProjectData,
+      SyncMode syncMode) {
     BlazeConfigurationResolverResult oldResult = resolverResult;
     resolverResult =
         configurationResolver.update(

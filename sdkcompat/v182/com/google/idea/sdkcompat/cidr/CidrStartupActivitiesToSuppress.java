@@ -19,13 +19,11 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.startup.StartupActivity;
 
 /**
- * cidr-lang usually registers some StartupActivity instances that get run on project open to
- * rebuild symbols. This causes problems with blaze projects because this happens before the project
- * configuration has been set up. CLwB/ASwB trigger a symbol rebuild after the startup sync.
+ * #api173 -- After 2018.1, can remove along with CidrSymbolBuilderSuppressor. Configurations are
+ * serialized/deserialized by OCWorkspace, so configs should be ready by the time
+ * OCInitialTablesBuildingActivity wants to run.
  */
 public class CidrStartupActivitiesToSuppress {
   public static final ImmutableList<Class<? extends StartupActivity>>
-      STARTUP_ACTIVITIES_TO_SUPPRESS =
-          ImmutableList.of(
-              com.jetbrains.cidr.lang.symbols.symtable.OCInitialTablesBuildingActivity.class);
+      STARTUP_ACTIVITIES_TO_SUPPRESS = ImmutableList.of();
 }

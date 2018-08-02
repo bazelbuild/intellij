@@ -18,11 +18,11 @@ package com.google.idea.blaze.base.wizard2;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -73,7 +73,7 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
   }
 
   @Override
-  public String getOptionText() {
+  public String getDescription() {
     return "Import project view file";
   }
 
@@ -83,25 +83,24 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
   }
 
   @Override
-  public BlazeValidationResult validate() {
+  public void validateAndUpdateBuilder(BlazeNewProjectBuilder builder)
+      throws ConfigurationException {
     if (getProjectViewPath().isEmpty()) {
-      return BlazeValidationResult.failure("Workspace path to project view file cannot be empty.");
+      throw new ConfigurationException("Workspace path to project view file cannot be empty.");
     }
     String error = WorkspacePath.validate(getProjectViewPath());
     if (error != null) {
-      return BlazeValidationResult.failure(error);
+      throw new ConfigurationException(error);
     }
     WorkspacePathResolver workspacePathResolver =
-        builder.getWorkspaceOption().getWorkspacePathResolver();
+        builder.getWorkspaceData().workspacePathResolver();
     File file = workspacePathResolver.resolveToFile(getSharedProjectView());
     if (!file.exists()) {
-      return BlazeValidationResult.failure("Project view file does not exist.");
+      throw new ConfigurationException("Project view file does not exist.");
     }
     if (file.isDirectory()) {
-      return BlazeValidationResult.failure("Specified path is a directory, not a file");
+      throw new ConfigurationException("Specified path is a directory, not a file");
     }
-
-    return BlazeValidationResult.success();
   }
 
   @Nullable
@@ -144,8 +143,8 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
         FileChooserFactory.getInstance().createFileChooser(descriptor, null, null);
 
     WorkspacePathResolver workspacePathResolver =
-        builder.getWorkspaceOption().getWorkspacePathResolver();
-    File fileBrowserRoot = builder.getWorkspaceOption().getFileBrowserRoot();
+        builder.getWorkspaceData().workspacePathResolver();
+    File fileBrowserRoot = builder.getWorkspaceData().fileBrowserRoot();
     File startingLocation = fileBrowserRoot;
     String projectViewPath = getProjectViewPath();
     if (!projectViewPath.isEmpty()) {

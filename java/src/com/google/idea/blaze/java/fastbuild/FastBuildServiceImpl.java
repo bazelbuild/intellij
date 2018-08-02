@@ -171,7 +171,7 @@ final class FastBuildServiceImpl implements FastBuildService {
             projectViewSet,
             BlazeCommandName.BUILD,
             BlazeInvocationContext.runConfigContext(
-                ExecutorType.FAST_BUILD_RUN, BlazeCommandRunConfigurationType.getInstance()));
+                ExecutorType.FAST_BUILD_RUN, BlazeCommandRunConfigurationType.getInstance(), true));
     return FastBuildParameters.builder()
         .setBlazeBinary(blazeBinaryPath)
         .addBlazeFlags(projectBlazeFlags)

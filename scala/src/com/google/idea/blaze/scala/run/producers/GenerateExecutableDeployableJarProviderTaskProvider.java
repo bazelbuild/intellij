@@ -127,7 +127,7 @@ class GenerateExecutableDeployableJarProviderTaskProvider
     return executeBuild(
         target,
         BlazeInvocationContext.runConfigContext(
-            ExecutorType.fromExecutor(env.getExecutor()), configuration.getType()));
+            ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true));
   }
 
   private boolean executeBuild(Label target, BlazeInvocationContext invocationContext) {

@@ -33,4 +33,13 @@ public interface PySdkSuggester {
    * @return an SDK appropriate for the project, or null
    */
   Sdk suggestSdk(Project project);
+
+  /**
+   * This is a mechanism allowing the plugin to migrate the suggested SDK. If a project/facet's
+   * PythonSDK is considered deprecated, the sync process will treat it as unset.
+   *
+   * @param sdk an SDK to check for deprecatedness
+   * @return a boolean indicated whether sdk is considered deprecated
+   */
+  boolean isDeprecatedSdk(Sdk sdk);
 }

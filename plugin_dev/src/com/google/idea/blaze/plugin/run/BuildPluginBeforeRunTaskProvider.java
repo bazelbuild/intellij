@@ -231,7 +231,8 @@ public final class BuildPluginBeforeRunTaskProvider
                                     BlazeCommandName.BUILD,
                                     BlazeInvocationContext.runConfigContext(
                                         ExecutorType.fromExecutor(env.getExecutor()),
-                                        config.getType())))
+                                        config.getType(),
+                                        true)))
                             .addBlazeFlags(config.getBlazeFlagsState().getExpandedFlags())
                             .addExeFlags(config.getExeFlagsState().getExpandedFlags())
                             .addBlazeFlags(buildResultHelper.getBuildFlags())

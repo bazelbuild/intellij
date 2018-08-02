@@ -15,28 +15,31 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
-import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.ui.UiUtil;
+import com.intellij.openapi.options.ConfigurationException;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
 
-/** Base class for the workspace and project view options. */
+/** Base class for options in the project import wizard. */
 public interface BlazeWizardOption {
   int VERTICAL_LAYOUT_GAP = 10;
   int HORIZONTAL_LAYOUT_GAP = 10;
   int PREFERRED_COMPONENT_WIDTH = 700;
 
-  /** @return A stable option name, used to remember which option was selected. */
+  /** Used during serialization to remember which option was selected. */
   String getOptionName();
 
-  /** @return the option text, eg "Create workspace from scratch" */
-  String getOptionText();
+  /** A brief description of this option. */
+  String getDescription();
 
-  /** @return a ui component to be added below the corresponding radio button */
+  void validateAndUpdateBuilder(BlazeNewProjectBuilder builder) throws ConfigurationException;
+
+  /** Serializes any relevant user-facing options. */
+  void commit() throws BlazeProjectCommitException;
+
+  /** @return a ui component for this option. */
   @Nullable
   JComponent getUiComponent();
-
-  BlazeValidationResult validate();
 
   default void optionSelected() {
     UiUtil.setEnabledRecursive(getUiComponent(), true);

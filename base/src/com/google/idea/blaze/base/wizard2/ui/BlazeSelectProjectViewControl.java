@@ -16,10 +16,10 @@
 package com.google.idea.blaze.base.wizard2.ui;
 
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
-import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.wizard2.BlazeNewProjectBuilder;
 import com.google.idea.blaze.base.wizard2.BlazeSelectProjectViewOption;
 import com.google.idea.blaze.base.wizard2.BlazeWizardOptionProvider;
+import com.intellij.openapi.options.ConfigurationException;
 import java.util.Collection;
 import javax.swing.JComponent;
 
@@ -35,12 +35,12 @@ public class BlazeSelectProjectViewControl {
     this.selectOptionControl =
         new BlazeSelectOptionControl<BlazeSelectProjectViewOption>(builder, options) {
           @Override
-          String getTitle() {
+          protected String getTitle() {
             return BlazeSelectProjectViewControl.getTitle(builder);
           }
 
           @Override
-          String getOptionKey() {
+          protected String getOptionKey() {
             return "select-project-view.selected-option";
           }
         };
@@ -50,16 +50,13 @@ public class BlazeSelectProjectViewControl {
     return selectOptionControl.getUiComponent();
   }
 
-  public BlazeValidationResult validate() {
-    return selectOptionControl.validate();
+  public void validateAndUpdateModel(BlazeNewProjectBuilder builder) throws ConfigurationException {
+    selectOptionControl.validateAndUpdateModel(builder);
+    builder.setProjectViewOption(selectOptionControl.getSelectedOption());
   }
 
   public void update(BlazeNewProjectBuilder builder) {
     selectOptionControl.setTitle(getTitle(builder));
-  }
-
-  public void updateBuilder(BlazeNewProjectBuilder builder) {
-    builder.setProjectViewOption(selectOptionControl.getSelectedOption());
   }
 
   public void commit() {

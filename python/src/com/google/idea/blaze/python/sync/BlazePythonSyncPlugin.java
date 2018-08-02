@@ -62,6 +62,8 @@ import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.sdk.PythonSdkType;
+import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -202,7 +204,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
   private static LibraryContributingFacet<?> getOrCreatePythonFacet(
       Project project, BlazeContext context, Module module) {
     LibraryContributingFacet<?> facet = findPythonFacet(module);
-    if (facet != null && facetHasSdk(facet)) {
+    if (facet != null && isValidPythonSdk(PythonFacetUtil.getSdk(facet))) {
       return facet;
     }
     FacetManager manager = FacetManager.getInstance(module);
@@ -233,11 +235,32 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
     return facet;
   }
 
-  private static boolean facetHasSdk(LibraryContributingFacet<?> facet) {
+  private static boolean isValidPythonSdk(@Nullable Sdk sdk) {
+    if (sdk == null) {
+      return false;
+    }
+
+    if (!(sdk.getSdkType() instanceof PythonSdkType)) {
+      return false;
+    }
     // facets aren't properly updated when SDKs change (e.g. when they're deleted), so we need to
     // manually check against the full list.
-    Sdk sdk = PythonFacetUtil.getSdk(facet);
-    return sdk != null && PythonSdkType.getAllSdks().contains(sdk);
+    if (!PythonSdkType.getAllSdks().contains(sdk)) {
+      return false;
+    }
+
+    // If an SDK exists with a home path that doesn't exist anymore, it's not valid
+    String sdkHome = sdk.getHomePath();
+    if (sdkHome == null) {
+      return false;
+    }
+    File sdkHomeFile = new File(sdkHome);
+    if (!sdkHomeFile.exists()) {
+      return false;
+    }
+
+    // Allow PySdkSuggester extensions the ability to veto an SDK as deprecated
+    return !isDeprecatedPythonSdk(sdk);
   }
 
   @Nullable
@@ -274,13 +297,19 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
       return;
     }
     Sdk currentSdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    if (currentSdk != null && currentSdk.getSdkType() instanceof PythonSdkType) {
+
+    if (isValidPythonSdk(currentSdk)) {
       return;
     }
     Sdk sdk = getOrCreatePythonSdk(project);
     if (sdk != null) {
       setProjectSdk(project, sdk);
     }
+  }
+
+  private static boolean isDeprecatedPythonSdk(Sdk sdk) {
+    return Arrays.stream(PySdkSuggester.EP_NAME.getExtensions())
+        .anyMatch(s -> s.isDeprecatedSdk(sdk));
   }
 
   @Nullable

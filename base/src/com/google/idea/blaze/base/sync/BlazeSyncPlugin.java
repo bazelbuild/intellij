@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -128,7 +129,8 @@ public interface BlazeSyncPlugin {
       ArtifactLocationDecoder artifactLocationDecoder,
       TargetMap targetMap,
       SyncState.Builder syncStateBuilder,
-      @Nullable SyncState previousSyncState) {}
+      @Nullable SyncState previousSyncState,
+      SyncMode syncMode) {}
 
   /**
    * Refresh any VFS files which may have changed during sync, and aren't covered by file watchers.
@@ -173,7 +175,8 @@ public interface BlazeSyncPlugin {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
-      Module workspaceModule) {}
+      Module workspaceModule,
+      SyncMode syncMode) {}
 
   /** Validates the project. */
   default boolean validate(

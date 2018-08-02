@@ -15,52 +15,33 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.settings.BuildSystem;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.common.experiments.BoolExperiment;
-import java.io.File;
-import javax.annotation.Nullable;
+import com.intellij.openapi.options.ConfigurationException;
 
-/** Provides an option on the "Select workspace" screen */
+/**
+ * The type of client to be imported. This covers both the build system type and details of the
+ * workspace (and optionally, the VCS).
+ */
 public interface BlazeSelectWorkspaceOption extends BlazeWizardOption {
-  BoolExperiment canonicalProjectDataLocationExperiment =
-      new BoolExperiment("canonical.project.data.location", false);
-
-  /** @return The workspace root that will be created after commit. */
-  WorkspaceRoot getWorkspaceRoot();
 
   /**
-   * @return The vcs root containing the workspace.
-   * @deprecated to be replaced by {@link #getCanonicalProjectDataLocation()}
+   * Used to migrate from a previous serialization format (also happens to be the current option
+   * key, but that doesn't effect migration).
+   *
+   * <p>TODO(brendandouglas): remove along with {@link #migratePreviousOptions} in v2018.10+
    */
-  @Nullable
-  @Deprecated
-  File getVcsRoot();
-
-  boolean allowProjectDataInVcs();
+  String OLD_OPTION_KEY = "select-workspace.selected-option";
 
   /**
-   * @return The project data directory if the workspace type supports a standard location relative
-   *     to the project, otherwise null.
+   * Apply options serialized in a previous plugin version. Returns true if this workspace type
+   * should be initially selected.
    */
-  @Nullable
-  File getCanonicalProjectDataLocation();
+  boolean migratePreviousOptions(BlazeWizardUserSettings userSettings);
 
-  /** @return A workspace path resolver to use during wizard validation. */
-  WorkspacePathResolver getWorkspacePathResolver();
+  @Override
+  default void validateAndUpdateBuilder(BlazeNewProjectBuilder builder)
+      throws ConfigurationException {
+    builder.setWorkspaceData(getWorkspaceData());
+  }
 
-  /** @return A root directory to use for browsing workspace paths. */
-  File getFileBrowserRoot();
-
-  /** @return the name of the workspace. Used to generate default project names. */
-  String getWorkspaceName();
-
-  /** @return the name of the 'branch', if applicable */
-  @Nullable
-  String getBranchName();
-
-  BuildSystem getBuildSystemForWorkspace();
-
-  void commit() throws BlazeProjectCommitException;
+  WorkspaceTypeData getWorkspaceData() throws ConfigurationException;
 }
