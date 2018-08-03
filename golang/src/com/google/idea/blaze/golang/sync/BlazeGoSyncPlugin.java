@@ -141,7 +141,7 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
     if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.GO)) {
       return null;
     }
-    return BlazeGoLibrarySource.INSTANCE;
+    return new BlazeGoLibrarySource(blazeProjectData);
   }
 
   @Override

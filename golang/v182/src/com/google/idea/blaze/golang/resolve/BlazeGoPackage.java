@@ -21,17 +21,16 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.io.VfsUtils;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
-import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
+import com.google.idea.blaze.golang.sync.BlazeGoLibrary;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,9 +42,9 @@ import com.intellij.psi.PsiManager;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -70,14 +69,12 @@ class BlazeGoPackage extends GoPackage {
   @Nullable private transient PsiElement cachedNavigable;
   @Nullable private transient PsiElement[] cachedImportReferences;
 
-  BlazeGoPackage(
-      Project project, BlazeProjectData projectData, String importPath, TargetIdeInfo target) {
-    this(
-        project,
-        importPath,
-        target.kind.ruleType == RuleType.TEST,
-        target.key.label,
-        getSourceFiles(target, projectData));
+  public static BlazeGoPackage create(Project project, String importPath, TargetIdeInfo target) {
+    // Symlinks already created by BlazeGoLibrary during sync.
+    // Grab the symlinkMap so we know which source files were replaced by symlinks.
+    Collection<File> files = BlazeGoLibrary.getSymlinkMap(project, target).values();
+    return new BlazeGoPackage(
+        project, importPath, target.kind.ruleType == RuleType.TEST, target.key.label, files);
   }
 
   BlazeGoPackage(
@@ -93,6 +90,31 @@ class BlazeGoPackage extends GoPackage {
     return importPath.substring(slash + 1);
   }
 
+  /**
+   * {@link BlazeGoPackage}s with newly created/symlinked {@link #files} might not have them
+   * resolved in time for {@link #getDirectories(Collection)}. This will attempt to recreate the
+   * {@link BlazeGoPackage} after all source files have been refreshed, and update the entry in
+   * {@link BlazeGoImportResolver#getGoPackageMap(Project)}.
+   */
+  void refreshFiles() {
+    VirtualFileSystemProvider.getInstance()
+        .getSystem()
+        .refreshIoFiles(
+            files,
+            true, // async
+            false, // recursive
+            () -> {
+              ConcurrentMap<String, Optional<BlazeGoPackage>> goPackageMap =
+                  BlazeGoImportResolver.getGoPackageMap(getProject());
+              if (goPackageMap == null) {
+                return;
+              }
+              BlazeGoPackage goPackage =
+                  new BlazeGoPackage(getProject(), importPath, isTestPackage(), label, files);
+              goPackageMap.put(importPath, Optional.of(goPackage));
+            });
+  }
+
   private static VirtualFile[] getDirectories(Collection<File> files) {
     return files
         .stream()
@@ -102,28 +124,6 @@ class BlazeGoPackage extends GoPackage {
         .map(VfsUtils::resolveVirtualFile)
         .filter(Objects::nonNull)
         .toArray(VirtualFile[]::new);
-  }
-
-  private static Collection<File> getSourceFiles(
-      TargetIdeInfo target, BlazeProjectData projectData) {
-    if (target.kind == Kind.GO_WRAP_CC) {
-      return ImmutableList.of(getWrapCcGoFile(target, projectData.blazeInfo));
-    } else {
-      return target
-          .sources
-          .stream()
-          .map(projectData.artifactLocationDecoder::decode)
-          .collect(Collectors.toList());
-    }
-  }
-
-  private static File getWrapCcGoFile(TargetIdeInfo target, BlazeInfo blazeInfo) {
-    String blazePackage = target.key.label.blazePackage().relativePath();
-    File directory = new File(blazeInfo.getGenfilesDirectory(), blazePackage);
-    String filename = blazePackage + '/' + target.key.label.targetName() + ".go";
-    filename = filename.replace("_", "__");
-    filename = filename.replace('/', '_');
-    return new File(directory, filename);
   }
 
   @Override
@@ -139,11 +139,6 @@ class BlazeGoPackage extends GoPackage {
               .filter(GoFile.class::isInstance)
               .map(GoFile.class::cast)
               .collect(Collectors.toList());
-      Map<GoFile, GoPackage> fileToPackageMap =
-          BlazeGoPackageFactory.getFileToPackageMap(getProject());
-      if (fileToPackageMap != null && cachedGoFiles != null) {
-        cachedGoFiles.forEach(f -> fileToPackageMap.put(f, this));
-      }
     }
     return cachedGoFiles;
   }
