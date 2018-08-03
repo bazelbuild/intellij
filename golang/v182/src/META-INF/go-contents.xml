@@ -24,5 +24,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <documentationProvider
         implementation="com.google.idea.blaze.golang.resolve.BlazeGoImportResolver$GoPackageDocumentationProvider"/>
+    <gotoDeclarationHandler
+        implementation="com.google.idea.blaze.golang.resolve.BlazeGoLibrarySymlinkGotoDeclarationHandler"
+        id="Blaze.GoLibrarySymlink"/>
   </extensions>
 </idea-plugin>

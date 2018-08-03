@@ -181,6 +181,21 @@ public class BlazeIssueParserTest extends BlazeTestCase {
   }
 
   @Test
+  public void testParseCompileErrorWithHyphenAndErrorCode() {
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    IssueOutput issue =
+        blazeIssueParser.parseIssue(
+            "java/com/google/foo/bar/baz.ts:123:45 - error TS2304: Cannot find name 'asdf'.");
+    assertThat(issue).isNotNull();
+    assertThat(issue.getLine()).isEqualTo(123);
+    assertThat(issue.getColumn()).isEqualTo(45);
+    assertThat(issue.getMessage()).isEqualTo("Cannot find name 'asdf'.");
+    assertThat(issue.getCategory()).isEqualTo(Category.ERROR);
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(TextRange.create(0, "java/com/google/foo/bar/baz.ts:123:45".length()));
+  }
+
+  @Test
   public void testParseBuildError() {
     BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     IssueOutput issue =

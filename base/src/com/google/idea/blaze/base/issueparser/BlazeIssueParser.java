@@ -179,7 +179,14 @@ public class BlazeIssueParser {
     private final WorkspaceRoot workspaceRoot;
 
     CompileParser(WorkspaceRoot workspaceRoot) {
-      super("^([^/].*?):([0-9]+):(?:([0-9]+):)? (fatal error|error|warning|note): (.*)$");
+      super(
+          "^([^/][^:]*)" // file path
+              + ":([0-9]+)" // line number
+              + "(?::([0-9]+))?" // optional column number
+              + "(?::| -)? " // colon or hyphen separator
+              + "(fatal error|error|warning|note)" // message type
+              + "(?: [^:]+)?: " // optional error code
+              + "(.*)$"); // message
       this.workspaceRoot = workspaceRoot;
     }
 

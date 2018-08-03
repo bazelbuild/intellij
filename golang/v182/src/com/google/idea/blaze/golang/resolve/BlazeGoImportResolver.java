@@ -40,10 +40,11 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.SyntheticFileSystemItem;
 import com.intellij.psi.search.PsiElementProcessor;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -68,25 +69,30 @@ class BlazeGoImportResolver implements GoImportResolver {
     if (projectData == null) {
       return null;
     }
-    Map<String, BlazeGoPackage> goPackageMap = Preconditions.checkNotNull(getGoPackageMap(project));
+    ConcurrentMap<String, Optional<BlazeGoPackage>> goPackageMap =
+        Preconditions.checkNotNull(getGoPackageMap(project));
+    // already resolved
     if (goPackageMap.containsKey(importPath)) {
-      return goPackageMap.get(importPath);
+      return goPackageMap.get(importPath).orElse(null);
     }
+
+    // not yet resolved
     Map<String, TargetKey> goTargetMap = Preconditions.checkNotNull(getGoTargetMap(project));
     TargetKey key = goTargetMap.get(importPath);
     if (key == null) {
-      goPackageMap.put(importPath, null);
+      goPackageMap.put(importPath, Optional.empty());
       return null;
     }
     TargetIdeInfo target = Preconditions.checkNotNull(projectData.targetMap.get(key));
-    BlazeGoPackage goPackage = new BlazeGoPackage(project, projectData, importPath, target);
-    goPackageMap.put(importPath, goPackage);
+    BlazeGoPackage goPackage = BlazeGoPackage.create(project, importPath, target);
+    goPackageMap.put(importPath, Optional.of(goPackage));
     return goPackage;
   }
 
   @Nullable
-  static Map<String, BlazeGoPackage> getGoPackageMap(Project project) {
-    return SyncCache.getInstance(project).get(GO_PACKAGE_MAP_KEY, (p, pd) -> new HashMap<>());
+  static ConcurrentMap<String, Optional<BlazeGoPackage>> getGoPackageMap(Project project) {
+    return SyncCache.getInstance(project)
+        .get(GO_PACKAGE_MAP_KEY, (p, pd) -> new ConcurrentHashMap<>());
   }
 
   @Nullable
