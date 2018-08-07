@@ -96,6 +96,20 @@ new_http_archive(
     url = "https://plugins.jetbrains.com/files/7322/44945/python-ce-2018.1.181.4445.78.zip",
 )
 
+# Python plugin for IntelliJ CE 2018.2. Required at compile-time for python-specific features.
+new_http_archive(
+    name = "python_2018_2",
+    build_file_content = "\n".join([
+        "java_import(",
+        "    name = 'python',",
+        "    jars = ['python-ce/lib/python-ce.jar'],",
+        "    visibility = ['//visibility:public'],",
+        ")",
+    ]),
+    sha256 = "5a54c3823fc591ae65ea4fdf1e6e6a1c2704025b3c052e9d2a1695f5cf6f0e0b",
+    url = "https://plugins.jetbrains.com/files/7322/48089/python-ce-2018.2.182.3684.101.zip",
+)
+
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
 new_http_archive(
     name = "go_2018_1",
@@ -108,6 +122,20 @@ new_http_archive(
     ]),
     sha256 = "de69ac9f8b81119c4a136860b66730d1e0dd89f713ac182bd8d5fdce801a60e5",
     url = "https://plugins.jetbrains.com/files/9568/44888/intellij-go-181.4445.53.182.zip",
+)
+
+# Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
+new_http_archive(
+    name = "go_2018_2",
+    build_file_content = "\n".join([
+        "java_import(",
+        "    name = 'go',",
+        "    jars = glob(['intellij-go/lib/*.jar']),",
+        "    visibility = ['//visibility:public'],",
+        ")",
+    ]),
+    sha256 = "7e974ae50372dd81e3fae3f5cb5256fedee158502ab785dd77882807b56d2bda",
+    url = "https://plugins.jetbrains.com/files/9568/48153/intellij-go-182.3684.111.849.zip",
 )
 
 # Scala plugin for IntelliJ CE 2018.1. Required at compile-time for scala-specific features.

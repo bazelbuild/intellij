@@ -29,17 +29,16 @@ import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import java.io.File;
@@ -210,13 +209,8 @@ public class BlazeClassJarProvider extends ClassJarProvider {
     // We need to do our own asynchronous refresh, and guard it with a flag to prevent the event
     // queue from overflowing.
     if (!missingJars.isEmpty() && !pendingRefresh.getAndSet(true)) {
-      ApplicationManager.getApplication()
-          .invokeLater(
-              () -> {
-                LocalFileSystem.getInstance().refreshIoFiles(missingJars);
-                pendingRefresh.set(false);
-              },
-              ModalityState.NON_MODAL);
+      VfsUtils.asyncRefreshIoFiles(
+          missingJars, /* recursive */ false, () -> pendingRefresh.set(false));
     }
   }
 

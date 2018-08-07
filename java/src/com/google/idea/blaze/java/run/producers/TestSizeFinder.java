@@ -21,16 +21,27 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /** Maps method and class annotations to our test size enumeration. */
-public class TestSizeAnnotationMap {
+public class TestSizeFinder {
   private static final ImmutableMap<String, TestSize> ANNOTATION_TO_TEST_SIZE =
       ImmutableMap.<String, TestSize>builder()
           .put("com.google.testing.testsize.SmallTest", TestSize.SMALL)
           .put("com.google.testing.testsize.MediumTest", TestSize.MEDIUM)
           .put("com.google.testing.testsize.LargeTest", TestSize.LARGE)
           .put("com.google.testing.testsize.EnormousTest", TestSize.ENORMOUS)
+          .build();
+
+  // parsing annotation parameter attributes is awkward and error-prone enough that we may as well
+  // just use a rough heuristic / hack instead
+  private static final ImmutableMap<String, TestSize> CATEGORY_ANNOTATION_HEURISTIC =
+      ImmutableMap.<String, TestSize>builder()
+          .put("@Category(SmallTest.class)", TestSize.SMALL)
+          .put("@Category(MediumTest.class)", TestSize.MEDIUM)
+          .put("@Category(LargeTest.class)", TestSize.LARGE)
+          .put("@Category(EnormousTest.class)", TestSize.ENORMOUS)
           .build();
 
   @Nullable
@@ -51,10 +62,17 @@ public class TestSizeAnnotationMap {
     }
     PsiAnnotation[] annotations = psiModifierList.getAnnotations();
     TestSize testSize = getTestSize(annotations);
-    if (testSize == null) {
-      return null;
+    if (testSize != null) {
+      return testSize;
     }
-    return testSize;
+    String fullText = psiModifierList.getText();
+    return CATEGORY_ANNOTATION_HEURISTIC
+        .entrySet()
+        .stream()
+        .filter(e -> fullText.contains(e.getKey()))
+        .map(Map.Entry::getValue)
+        .findFirst()
+        .orElse(null);
   }
 
   @Nullable

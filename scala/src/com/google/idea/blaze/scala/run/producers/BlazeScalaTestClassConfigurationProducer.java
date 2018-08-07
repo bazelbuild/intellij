@@ -25,7 +25,7 @@ import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.java.run.RunUtil;
-import com.google.idea.blaze.java.run.producers.TestSizeAnnotationMap;
+import com.google.idea.blaze.java.run.producers.TestSizeFinder;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
@@ -67,7 +67,7 @@ public class BlazeScalaTestClassConfigurationProducer
     }
     sourceElement.set(testClass);
     TargetInfo target =
-        RunUtil.targetForTestClass(testClass, TestSizeAnnotationMap.getTestSize(testClass));
+        RunUtil.targetForTestClass(testClass, TestSizeFinder.getTestSize(testClass));
     if (target == null) {
       return false;
     }
@@ -106,7 +106,7 @@ public class BlazeScalaTestClassConfigurationProducer
       return false;
     }
     TargetInfo target =
-        RunUtil.targetForTestClass(testClass, TestSizeAnnotationMap.getTestSize(testClass));
+        RunUtil.targetForTestClass(testClass, TestSizeFinder.getTestSize(testClass));
     return target != null && Objects.equals(configuration.getTarget(), target.label);
   }
 

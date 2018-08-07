@@ -151,7 +151,7 @@ public class BlazeJavaTestMethodConfigurationProducer
       }
     }
 
-    TestSize testSize = TestSizeAnnotationMap.getTestSize(firstMethod);
+    TestSize testSize = TestSizeFinder.getTestSize(firstMethod);
     TargetInfo target = RunUtil.targetForTestClass(containingClass, testSize);
     if (target == null) {
       return null;
