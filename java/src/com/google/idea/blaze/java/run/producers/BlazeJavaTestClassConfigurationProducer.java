@@ -95,7 +95,7 @@ public class BlazeJavaTestClassConfigurationProducer
       return null;
     }
 
-    TestSize testSize = TestSizeAnnotationMap.getTestSize(testClass);
+    TestSize testSize = TestSizeFinder.getTestSize(testClass);
     TargetInfo target = RunUtil.targetForTestClass(testClass, testSize);
     return target != null ? new TestLocation(testClass, target) : null;
   }

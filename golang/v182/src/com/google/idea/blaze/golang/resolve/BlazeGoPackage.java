@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.io.VfsUtils;
-import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
@@ -97,22 +96,19 @@ class BlazeGoPackage extends GoPackage {
    * {@link BlazeGoImportResolver#getGoPackageMap(Project)}.
    */
   void refreshFiles() {
-    VirtualFileSystemProvider.getInstance()
-        .getSystem()
-        .refreshIoFiles(
-            files,
-            true, // async
-            false, // recursive
-            () -> {
-              ConcurrentMap<String, Optional<BlazeGoPackage>> goPackageMap =
-                  BlazeGoImportResolver.getGoPackageMap(getProject());
-              if (goPackageMap == null) {
-                return;
-              }
-              BlazeGoPackage goPackage =
-                  new BlazeGoPackage(getProject(), importPath, isTestPackage(), label, files);
-              goPackageMap.put(importPath, Optional.of(goPackage));
-            });
+    VfsUtils.asyncRefreshIoFiles(
+        files,
+        /* recursive*/ false,
+        () -> {
+          ConcurrentMap<String, Optional<BlazeGoPackage>> goPackageMap =
+              BlazeGoImportResolver.getGoPackageMap(getProject());
+          if (goPackageMap == null) {
+            return;
+          }
+          BlazeGoPackage goPackage =
+              new BlazeGoPackage(getProject(), importPath, isTestPackage(), label, files);
+          goPackageMap.put(importPath, Optional.of(goPackage));
+        });
   }
 
   private static VirtualFile[] getDirectories(Collection<File> files) {

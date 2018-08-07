@@ -182,9 +182,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
   private static void setupContext(
       BlazeCommandRunConfiguration configuration, PsiClass subClass, @Nullable PsiMethod method) {
     TestSize testSize =
-        method != null
-            ? TestSizeAnnotationMap.getTestSize(method)
-            : TestSizeAnnotationMap.getTestSize(subClass);
+        method != null ? TestSizeFinder.getTestSize(method) : TestSizeFinder.getTestSize(subClass);
     TargetInfo target = RunUtil.targetForTestClass(subClass, testSize);
     if (target == null) {
       return;

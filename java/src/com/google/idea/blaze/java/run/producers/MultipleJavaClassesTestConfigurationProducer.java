@@ -212,7 +212,7 @@ public class MultipleJavaClassesTestConfigurationProducer
     if (testClass == null || testClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return null;
     }
-    TestSize testSize = TestSizeAnnotationMap.getTestSize(psiClass);
+    TestSize testSize = TestSizeFinder.getTestSize(psiClass);
     return RunUtil.targetForTestClass(psiClass, testSize);
   }
 

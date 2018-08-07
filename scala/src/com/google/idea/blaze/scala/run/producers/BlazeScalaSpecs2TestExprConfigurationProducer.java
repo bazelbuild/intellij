@@ -27,7 +27,7 @@ import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.java.run.RunUtil;
 import com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer;
-import com.google.idea.blaze.java.run.producers.TestSizeAnnotationMap;
+import com.google.idea.blaze.java.run.producers.TestSizeFinder;
 import com.google.idea.blaze.scala.run.Specs2Utils;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.util.Ref;
@@ -141,7 +141,7 @@ public class BlazeScalaSpecs2TestExprConfigurationProducer
     if (testClass == null) {
       return null;
     }
-    TestSize testSize = TestSizeAnnotationMap.getTestSize(testClass);
+    TestSize testSize = TestSizeFinder.getTestSize(testClass);
     TargetInfo target = RunUtil.targetForTestClass(testClass, testSize);
     if (target == null) {
       return null;
