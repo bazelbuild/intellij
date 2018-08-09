@@ -74,6 +74,9 @@ final class BlazeCSyncPlugin implements BlazeSyncPlugin {
 
   @Override
   public void refreshVirtualFileSystem(BlazeProjectData blazeProjectData) {
+    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C)) {
+      return;
+    }
     if (!refreshExecRoot.getValue()) {
       return;
     }

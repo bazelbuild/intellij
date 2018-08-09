@@ -19,8 +19,8 @@ new_http_archive(
 new_http_archive(
     name = "intellij_ce_2018_2",
     build_file = "@//intellij_platform_sdk:BUILD.idea",
-    sha256 = "6f703ad9204fe5ba6a6be9616e22e20d9006252482de4062ceb8003c8d74182c",
-    url = "https://download.jetbrains.com/idea/ideaIC-182.3684.2.tar.gz",
+    sha256 = "5dc3659adc2dca85d24decb2242021ad8421f6392d2b95836f6cf33ce7f7b811",
+    url = "https://download.jetbrains.com/idea/ideaIC-2018.2.1.tar.gz",
 )
 
 # The plugin api for IntelliJ UE 2018.1. This is required to run UE-specific
@@ -37,8 +37,8 @@ new_http_archive(
 new_http_archive(
     name = "intellij_ue_2018_2",
     build_file = "@//intellij_platform_sdk:BUILD.ue",
-    sha256 = "186cfc35afb25c73cfa2daf3a2d8b0521a112fc25b18f1b0af436f2d081b0ec5",
-    url = "https://download.jetbrains.com/idea/ideaIU-182.3684.2.tar.gz",
+    sha256 = "429456277220bea34aa2216155472b859ba8956b831a3054ca3ddcc588960d20",
+    url = "https://download.jetbrains.com/idea/ideaIU-2018.2.1.tar.gz",
 )
 
 # The plugin api for CLion 2018.1. This is required to build CLwB,
@@ -106,8 +106,8 @@ new_http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "5a54c3823fc591ae65ea4fdf1e6e6a1c2704025b3c052e9d2a1695f5cf6f0e0b",
-    url = "https://plugins.jetbrains.com/files/7322/48089/python-ce-2018.2.182.3684.101.zip",
+    sha256 = "863d8da8a6e1d2589178ed2ff657d935ed2536d26bde5ebd7785ca16ce0b3093",
+    url = "https://plugins.jetbrains.com/files/7322/48707/python-ce-2018.2.182.3911.36.zip",
 )
 
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
@@ -162,8 +162,8 @@ new_http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "2306be7c8f1e408ab8e671d8c5f4f85626dd774014b782950c8d3ea47607fbcd",
-    url = "https://plugins.jetbrains.com/files/1347/47293/scala-intellij-bin-2018.2.4.zip",
+    sha256 = "93aded50ca407f3bf7948cfcdbb603ab9669906a8b071ee13e0d025d5650efa7",
+    url = "https://plugins.jetbrains.com/files/1347/48309/scala-intellij-bin-2018.2.9.zip",
 )
 
 new_http_archive(
