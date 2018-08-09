@@ -268,7 +268,7 @@ public class JarCache {
     @Override
     public Collection<File> enumerateCacheFiles() {
       File[] cacheFiles =
-          cacheDir.listFiles((file, name) -> file.isFile() && name.endsWith(".jar"));
+          cacheDir.listFiles((dir, name) -> new File(dir, name).isFile() && name.endsWith(".jar"));
       Preconditions.checkNotNull(cacheFiles);
       return ImmutableList.copyOf(cacheFiles);
     }

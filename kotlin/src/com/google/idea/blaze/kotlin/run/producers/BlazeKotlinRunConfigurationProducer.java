@@ -152,6 +152,7 @@ public class BlazeKotlinRunConfigurationProducer
         project,
         projectData.artifactLocationDecoder,
         projectData.targetMap,
-        (target) -> target.kind == Kind.KT_JVM_BINARY && target.isPlainTarget());
+        (target) ->
+            target.kindIsOneOf(Kind.KT_JVM_BINARY, Kind.JAVA_BINARY) && target.isPlainTarget());
   }
 }
