@@ -18,23 +18,15 @@ package com.google.idea.blaze.golang.resolve;
 import com.goide.project.GoPackageFactory;
 import com.goide.psi.GoFile;
 import com.goide.psi.impl.GoPackage;
-import com.google.common.base.Preconditions;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.run.SourceToTargetFinder;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.sync.SyncCache;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.golang.sync.BlazeGoLibrary;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nullable;
 
 class BlazeGoPackageFactory implements GoPackageFactory {
@@ -46,52 +38,31 @@ class BlazeGoPackageFactory implements GoPackageFactory {
       return null;
     }
     Project project = goFile.getProject();
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (projectData == null) {
+    ConcurrentMap<File, String> fileToImportPathMap = getFileToImportPathMap(project);
+    if (fileToImportPathMap == null) {
       return null;
     }
-    Map<File, String> fileToImportPathMap =
-        Preconditions.checkNotNull(getFileToImportPathMap(project));
-    File file = VfsUtil.virtualToIoFile(virtualFile);
-    if (fileToImportPathMap.containsKey(file)) {
-      String importPath = fileToImportPathMap.get(file);
-      return importPath != null ? BlazeGoImportResolver.doResolve(importPath, project) : null;
-    }
-    GoPackage goPackage = doCreatePackage(project, projectData, file);
-    fileToImportPathMap.put(file, goPackage != null ? goPackage.getImportPath(false) : null);
-    return goPackage;
+    String importPath = fileToImportPathMap.get(VfsUtil.virtualToIoFile(virtualFile));
+    return importPath != null ? BlazeGoImportResolver.doResolve(importPath, project) : null;
   }
 
   @Nullable
-  private static GoPackage doCreatePackage(
-      Project project, BlazeProjectData projectData, File file) {
-    // Check if file is under blaze_go_library.
-    // We can easily find the import path in this case.
-    File goLibrary = BlazeGoLibrary.getLibraryRoot(project);
-    if (goLibrary != null && FileUtil.isAncestor(goLibrary, file, true)) {
-      String importPath = file.getParentFile().getName().replace('-', '/');
-      return BlazeGoImportResolver.doResolve(importPath, project);
-    }
-    // Otherwise, check targets.
-    return SourceToTargetFinder.findTargetsForSourceFile(project, file, Optional.empty())
-        .stream()
-        .map(t -> t.label)
-        .map(TargetKey::forPlainTarget)
-        .map(projectData.targetMap::get)
-        .filter(Objects::nonNull)
-        .filter(t -> t.goIdeInfo != null)
-        .map(t -> t.goIdeInfo.importPath)
-        .map(importPath -> BlazeGoImportResolver.doResolve(importPath, project))
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
-  }
-
-  @Nullable
-  private static Map<File, String> getFileToImportPathMap(Project project) {
+  static ConcurrentMap<File, String> getFileToImportPathMap(Project project) {
     return SyncCache.getInstance(project)
-        .get(BlazeGoPackageFactory.class, (p, pd) -> new HashMap<>());
+        .get(
+            BlazeGoPackageFactory.class,
+            (p, pd) -> {
+              ConcurrentMap<File, String> map = new ConcurrentHashMap<>();
+              for (TargetIdeInfo target : pd.targetMap.targets()) {
+                if (target.goIdeInfo == null) {
+                  continue;
+                }
+                for (File file : BlazeGoPackage.getSourceFiles(target, pd)) {
+                  map.putIfAbsent(file, target.goIdeInfo.importPath);
+                }
+              }
+              return map;
+            });
   }
 
   @Nullable
