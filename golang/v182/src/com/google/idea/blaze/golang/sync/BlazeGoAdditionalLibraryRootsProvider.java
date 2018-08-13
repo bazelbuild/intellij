@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import icons.BlazeIcons;
 import java.io.File;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
@@ -80,6 +81,7 @@ class BlazeGoAdditionalLibraryRootsProvider extends AdditionalLibraryRootsProvid
               .flatMap(t -> BlazeGoPackage.getSourceFiles(t, projectData).stream())
               .filter(isExternal)
               .map(VfsUtils::resolveVirtualFile)
+              .filter(Objects::nonNull)
               .collect(ImmutableList.toImmutableList());
     }
 
