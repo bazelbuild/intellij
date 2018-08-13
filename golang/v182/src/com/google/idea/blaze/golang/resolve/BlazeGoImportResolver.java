@@ -71,22 +71,21 @@ class BlazeGoImportResolver implements GoImportResolver {
     }
     ConcurrentMap<String, Optional<BlazeGoPackage>> goPackageMap =
         Preconditions.checkNotNull(getGoPackageMap(project));
-    // already resolved
-    if (goPackageMap.containsKey(importPath)) {
-      return goPackageMap.get(importPath).orElse(null);
-    }
-
-    // not yet resolved
     Map<String, TargetKey> goTargetMap = Preconditions.checkNotNull(getGoTargetMap(project));
-    TargetKey key = goTargetMap.get(importPath);
-    if (key == null) {
-      goPackageMap.put(importPath, Optional.empty());
+    TargetKey targetKey = goTargetMap.get(importPath);
+    if (!goPackageMap.containsKey(importPath) && targetKey == null) {
       return null;
     }
-    TargetIdeInfo target = Preconditions.checkNotNull(projectData.targetMap.get(key));
-    BlazeGoPackage goPackage = BlazeGoPackage.create(project, importPath, target);
-    goPackageMap.put(importPath, Optional.of(goPackage));
-    return goPackage;
+    return goPackageMap
+        .computeIfAbsent(
+            importPath,
+            (path) -> {
+              TargetIdeInfo target =
+                  Preconditions.checkNotNull(projectData.targetMap.get(targetKey));
+              BlazeGoPackage goPackage = BlazeGoPackage.create(project, projectData, path, target);
+              return Optional.of(goPackage);
+            })
+        .orElse(null);
   }
 
   @Nullable

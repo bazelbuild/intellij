@@ -18,18 +18,21 @@ package com.google.idea.blaze.golang.resolve;
 import com.goide.psi.GoFile;
 import com.goide.psi.impl.GoPackage;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
-import com.google.idea.blaze.golang.sync.BlazeGoLibrary;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,7 +46,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -60,7 +62,7 @@ import javax.annotation.Nullable;
  *
  * Exactly one {@link BlazeGoPackage} per go rule.
  */
-class BlazeGoPackage extends GoPackage {
+public class BlazeGoPackage extends GoPackage {
   private final String importPath;
   private final Label label;
   private final Collection<File> files;
@@ -68,12 +70,35 @@ class BlazeGoPackage extends GoPackage {
   @Nullable private transient PsiElement cachedNavigable;
   @Nullable private transient PsiElement[] cachedImportReferences;
 
-  public static BlazeGoPackage create(Project project, String importPath, TargetIdeInfo target) {
-    // Symlinks already created by BlazeGoLibrary during sync.
-    // Grab the symlinkMap so we know which source files were replaced by symlinks.
-    Collection<File> files = BlazeGoLibrary.getSymlinkMap(project, target).values();
+  public static BlazeGoPackage create(
+      Project project, BlazeProjectData projectData, String importPath, TargetIdeInfo target) {
     return new BlazeGoPackage(
-        project, importPath, target.kind.ruleType == RuleType.TEST, target.key.label, files);
+        project,
+        importPath,
+        target.kind.ruleType == RuleType.TEST,
+        target.key.label,
+        getSourceFiles(target, projectData));
+  }
+
+  public static Collection<File> getSourceFiles(
+      TargetIdeInfo target, BlazeProjectData projectData) {
+    if (target.kind == Kind.GO_WRAP_CC) {
+      return ImmutableList.of(getWrapCcGoFile(target, projectData.blazeInfo));
+    }
+    return Preconditions.checkNotNull(target.goIdeInfo)
+        .sources
+        .stream()
+        .map(projectData.artifactLocationDecoder::decode)
+        .collect(Collectors.toList());
+  }
+
+  private static File getWrapCcGoFile(TargetIdeInfo target, BlazeInfo blazeInfo) {
+    String blazePackage = target.key.label.blazePackage().relativePath();
+    File directory = new File(blazeInfo.getGenfilesDirectory(), blazePackage);
+    String filename = blazePackage + '/' + target.key.label.targetName() + ".go";
+    filename = filename.replace("_", "__");
+    filename = filename.replace('/', '_');
+    return new File(directory, filename);
   }
 
   BlazeGoPackage(
@@ -87,28 +112,6 @@ class BlazeGoPackage extends GoPackage {
   private static String getPackageName(String importPath) {
     int slash = importPath.lastIndexOf('/');
     return importPath.substring(slash + 1);
-  }
-
-  /**
-   * {@link BlazeGoPackage}s with newly created/symlinked {@link #files} might not have them
-   * resolved in time for {@link #getDirectories(Collection)}. This will attempt to recreate the
-   * {@link BlazeGoPackage} after all source files have been refreshed, and update the entry in
-   * {@link BlazeGoImportResolver#getGoPackageMap(Project)}.
-   */
-  void refreshFiles() {
-    VfsUtils.asyncRefreshIoFiles(
-        files,
-        /* recursive*/ false,
-        () -> {
-          ConcurrentMap<String, Optional<BlazeGoPackage>> goPackageMap =
-              BlazeGoImportResolver.getGoPackageMap(getProject());
-          if (goPackageMap == null) {
-            return;
-          }
-          BlazeGoPackage goPackage =
-              new BlazeGoPackage(getProject(), importPath, isTestPackage(), label, files);
-          goPackageMap.put(importPath, Optional.of(goPackage));
-        });
   }
 
   private static VirtualFile[] getDirectories(Collection<File> files) {
