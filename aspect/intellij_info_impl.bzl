@@ -10,6 +10,17 @@ load(
     "to_artifact_location",
 )
 
+# Defensive list of features that can appear in the C++ toolchain, but which we
+# definitely don't want to enable (when enabled, they'd contribute command line
+# flags that don't make sense in the context of intellij info).
+UNSUPPORTED_FEATURES = [
+    "thin_lto",
+    "module_maps",
+    "use_header_modules",
+    "fdo_instrument",
+    "fdo_optimize",
+]
+
 # Compile-time dependency attributes, grouped by type.
 DEPS = [
     "_cc_toolchain",  # From cc rules
@@ -318,21 +329,64 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
     if ctx.rule.kind != "cc_toolchain" or cc_common.CcToolchainInfo not in target:
         return False
 
-    # TODO(brendandouglas): remove cc_fragment dependency once we no longer have to support bazel
-    # versions prior to 0.13
-    # This should exist because we requested it in our aspect definition.
-    cc_fragment = ctx.fragments.cpp
-    cpp_options = cc_fragment.cxx_options(ctx.features)
-    c_options = cc_fragment.c_options
-    compiler_options = cc_fragment.compiler_options(ctx.features)
-    unfiltered_compiler_options = cc_fragment.unfiltered_compiler_options(ctx.features)
-
+    # cc toolchain to access compiler flags
     cpp_toolchain = target[cc_common.CcToolchainInfo]
 
-    #  cpp_options = cpp_toolchain.cxx_options()
-    #  compiler_options = cpp_toolchain.compiler_options()
-    #  c_options = cpp_toolchain.c_options()
-    #  unfiltered_compiler_options = cpp_toolchain.unfiltered_compiler_options([])
+    # cpp fragment to access bazel options
+    cpp_fragment = ctx.fragments.cpp
+
+    # Enabled in Bazel 0.16
+    if hasattr(cc_common, "get_memory_inefficient_command_line"):
+        # Enabled in Bazel 0.17
+        if hasattr(cpp_fragment, "copts"):
+            copts = cpp_fragment.copts
+            cxxopts = cpp_fragment.cxxopts
+            conlyopts = cpp_fragment.conlyopts
+        else:
+            copts = []
+            cxxopts = []
+            conlyopts = []
+        feature_configuration = cc_common.configure_features(
+            cc_toolchain = cpp_toolchain,
+            requested_features = ctx.features,
+            unsupported_features = ctx.disabled_features + UNSUPPORTED_FEATURES,
+        )
+        c_variables = cc_common.create_compile_variables(
+            feature_configuration = feature_configuration,
+            cc_toolchain = cpp_toolchain,
+            user_compile_flags = depset(copts + conlyopts),
+        )
+        cpp_variables = cc_common.create_compile_variables(
+            feature_configuration = feature_configuration,
+            cc_toolchain = cpp_toolchain,
+            add_legacy_cxx_options = True,
+            user_compile_flags = depset(copts + cxxopts),
+        )
+        c_options = cc_common.get_memory_inefficient_command_line(
+            feature_configuration = feature_configuration,
+            # TODO(#391): Use constants from action_names.bzl
+            action_name = "c-compile",
+            variables = c_variables,
+        )
+        cpp_options = cc_common.get_memory_inefficient_command_line(
+            feature_configuration = feature_configuration,
+            # TODO(#391): Use constants from action_names.bzl
+            action_name = "c++-compile",
+            variables = cpp_variables,
+        )
+        compiler_options = []
+        unfiltered_compiler_options = []
+    elif hasattr(cpp_toolchain, "unfiltered_compiler_options"):
+        cpp_options = cpp_toolchain.cxx_options()
+        compiler_options = cpp_toolchain.compiler_options()
+        c_options = cpp_toolchain.c_options()
+        unfiltered_compiler_options = cpp_toolchain.unfiltered_compiler_options([])
+    else:
+        cpp_options = cpp_fragment.cxx_options(ctx.features)
+        c_options = cpp_fragment.c_options
+        compiler_options = cpp_fragment.compiler_options(ctx.features)
+        unfiltered_compiler_options = cpp_fragment.unfiltered_compiler_options(ctx.features)
+
     if hasattr(semantics, "cc"):
         cpp_options = semantics.cc.augment_toolchain_cxx_options(cpp_options)
 

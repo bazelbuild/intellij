@@ -38,11 +38,10 @@ public class CcToolchainTest extends BazelIntellijAspectTest {
 
     assertThat(toolchains).hasSize(1);
     CToolchainIdeInfo toolchainInfo = toolchains.get(0).getCToolchainIdeInfo();
-    assertThat(toolchainInfo.getUnfilteredCompilerOptionList()).isNotEmpty();
     assertThat(toolchainInfo.getBuiltInIncludeDirectoryList()).isNotEmpty();
     assertThat(toolchainInfo.getCppExecutable()).isNotEmpty();
     assertThat(toolchainInfo.getTargetName()).isNotEmpty();
-    assertThat(toolchainInfo.getBaseCompilerOptionList()).isNotEmpty();
+    assertThat(toolchainInfo.getCOptionList()).isNotEmpty();
     assertThat(toolchainInfo.getCppOptionList()).isNotEmpty();
 
     // Should at least know the -std level (from some list of flags) to avoid b/70223102, unless the
