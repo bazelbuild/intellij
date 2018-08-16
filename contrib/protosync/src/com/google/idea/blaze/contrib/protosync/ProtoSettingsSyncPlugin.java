@@ -17,6 +17,7 @@ package com.google.idea.blaze.contrib.protosync;
 
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.plugin.PluginUtils;
@@ -24,6 +25,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -48,7 +50,7 @@ public class ProtoSettingsSyncPlugin implements BlazeSyncPlugin {
       IssueOutput.issue(
               IssueOutput.Category.INFORMATION,
               ProtoSettingsSyncSections.PROTO_IMPORT_ROOTS.getSectionKey().getName()
-                  + " found in project view set. Install the required proto plugin ?")
+                  + " found in project view set. Click here to install/enable the plugin")
           .navigatable(PluginUtils.installOrEnablePluginNavigable(PLUGIN_ID))
           .submit(context);
     }
@@ -63,12 +65,14 @@ public class ProtoSettingsSyncPlugin implements BlazeSyncPlugin {
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       BlazeInfo blazeInfo,
+      BlazeVersionData blazeVersionData,
       @Nullable WorkingSet workingSet,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
       TargetMap targetMap,
       SyncState.Builder syncStateBuilder,
-      @Nullable SyncState previousSyncState) {
+      @Nullable SyncState previousSyncState,
+      BlazeSyncParams.SyncMode syncMode) {
     if (PluginUtils.isPluginInstalled(PLUGIN_ID)) {
       ProtoSettingsSyncUpdater.syncSettings(project, projectViewSet, context);
     }

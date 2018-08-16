@@ -9,7 +9,7 @@ java_library(
 
 java_library(
   name = "protosync",
-  srcs = glob(["src/*.java"]),
+  srcs = glob(["src/**/*.java"]),
   deps = [
       "//base",
       "//intellij_platform_sdk:plugin_api",

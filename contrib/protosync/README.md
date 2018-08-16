@@ -2,11 +2,11 @@ Plugin to sync settings for the [protostuff intellij proto plugin](https://githu
 
 ## Behavior
 
-if any `proto_import_roots` sections are found and the plugin is missing
-add an information issue to install the plugin.
-
-Add workspace directories to the protobuf plugin so that it may resolve
-types correctly.
+1. If any `proto_import_roots` sections are found and the plugin is missing add an information issue to install the plugin.
+2. Convert any entries found in `proto_import_roots` to filesystem locations.
+3. For declared root that is verified to exist add it to the Protobuf plugin configuration. If the directory was not 
+    yet fetched by bazel raise a note and ignore. Eventually once the user has primed their workspace the directories 
+    should be added.  
 
 valid `proto_import_roots`:
 ```

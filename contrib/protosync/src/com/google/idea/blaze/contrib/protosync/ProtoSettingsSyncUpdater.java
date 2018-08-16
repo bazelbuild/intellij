@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.contrib.protosync;
 
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
@@ -26,25 +25,29 @@ import io.protostuff.jetbrains.plugin.settings.ProtobufSettings;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public final class ProtoSettingsSyncUpdater {
+final class ProtoSettingsSyncUpdater {
   static void syncSettings(Project project, ProjectViewSet projectViewSet, BlazeContext context) {
-    ApplicationManager.getApplication()
-        .invokeLater(
-            () -> {
-              ProtobufSettings protobufSettings = ProtobufSettings.getInstance(project);
-              List<String> toInclude =
-                  ProtoSettingsSyncSections.getProtoImportRoots(project, projectViewSet)
-                      .distinct()
-                      .collect(Collectors.toList());
+    List<String> toInclude =
+        ProtoSettingsSyncSections.getProtoImportRoots(context, project, projectViewSet)
+            .distinct()
+            .collect(Collectors.toList());
 
-              context.output(
-                  new StatusOutput(
-                      toInclude
-                          .stream()
-                          .collect(
-                              Collectors.joining(
-                                  "\n\t", "configuring proto import root directories: \n\t", ""))));
-              protobufSettings.setIncludePaths(Lists.newArrayList(toInclude));
-            });
+    if (!toInclude.isEmpty()) {
+      ApplicationManager.getApplication()
+          .invokeLater(
+              () -> {
+                ProtobufSettings protobufSettings = ProtobufSettings.getInstance(project);
+                if (!protobufSettings.getIncludePaths().containsAll(toInclude)) {
+                  protobufSettings.setIncludePaths(toInclude);
+                  context.output(
+                      new StatusOutput(
+                          toInclude
+                              .stream()
+                              .collect(
+                                  Collectors.joining(
+                                      "\n\t", "configured proto import roots:\n\t", ""))));
+                }
+              });
+    }
   }
 }
