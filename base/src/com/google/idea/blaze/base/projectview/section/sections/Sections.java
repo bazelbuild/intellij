@@ -34,6 +34,7 @@ public class Sections {
           TestSourceSection.PARSER,
           BuildFlagsSection.PARSER,
           SyncFlagsSection.PARSER,
+          TestFlagsSection.PARSER,
           ImportTargetOutputSection.PARSER,
           ExcludeTargetSection.PARSER,
           ExcludedSourceSection.PARSER,

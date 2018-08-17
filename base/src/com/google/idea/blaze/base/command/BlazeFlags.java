@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
+import com.google.idea.blaze.base.projectview.section.sections.TestFlagsSection;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.project.Project;
@@ -70,6 +71,9 @@ public final class BlazeFlags {
     flags.addAll(expandBuildFlags(projectViewSet.listItems(BuildFlagsSection.KEY)));
     if (context.type() == ContextType.Sync) {
       flags.addAll(expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY)));
+    }
+    if (BlazeCommandName.TEST.equals(command)) {
+      flags.addAll(expandBuildFlags(projectViewSet.listItems(TestFlagsSection.KEY)));
     }
     return flags;
   }

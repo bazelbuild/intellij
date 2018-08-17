@@ -117,6 +117,7 @@
     <executor implementation="com.google.idea.blaze.java.run.fastbuild.FastBuildDebugExecutor"/>
     <programRunner implementation="com.google.idea.blaze.java.run.fastbuild.FastBuildProgramRunner"/>
     <programRunner implementation="com.google.idea.blaze.java.run.fastbuild.FastBuildDebuggerRunner"/>
+    <applicationService serviceImplementation="com.google.idea.blaze.java.run.fastbuild.FastBuildSuggestion"/>
   </extensions>
 
   <application-components>

@@ -96,7 +96,7 @@ public class BlazeGoRootsProvider implements GoRootsProvider {
   }
 
   @Nullable
-  private static File getGoRoot(Project project) {
+  static File getGoRoot(Project project) {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     return importSettings != null

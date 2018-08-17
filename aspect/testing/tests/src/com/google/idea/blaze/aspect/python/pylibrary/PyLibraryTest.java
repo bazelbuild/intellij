@@ -41,7 +41,7 @@ public class PyLibraryTest extends BazelIntellijAspectTest {
         .containsExactly(testRelative("simple.py"));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-py"))
-        .containsExactly(testRelative("simple.intellij-info.txt"));
+        .containsExactly(testRelative(intellijInfoFileName("simple")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
   }
 }

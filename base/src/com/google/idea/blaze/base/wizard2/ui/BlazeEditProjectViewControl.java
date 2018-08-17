@@ -379,20 +379,22 @@ public final class BlazeEditProjectViewControl {
   }
 
   private String getDefaultProjectDataDirectory(String projectName) {
-    if (workspaceData.canonicalProjectDataLocation() != null) {
-      return newUniquePath(workspaceData.canonicalProjectDataLocation());
+    File canonicalProjectDataLocation = workspaceData.canonicalProjectDataLocation();
+    if (canonicalProjectDataLocation != null) {
+      return canonicalProjectDataLocation.getPath();
     }
-    String lastProjectPath = RecentProjectsManager.getInstance().getLastProjectPath();
-    if (lastProjectPath == null) {
+    String lastProjectLocation =
+        RecentProjectsManager.getInstance().getLastProjectCreationLocation();
+    if (lastProjectLocation == null) {
       return newUniquePath(new File(getDefaultProjectsDirectory(), projectName));
     }
     // Because RecentProjectsManager uses PathUtil.toSystemIndependentName.
-    lastProjectPath = lastProjectPath.replace('/', File.separatorChar);
-    File lastProject = new File(lastProjectPath);
-    if (lastProject.getName().equals(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY)) {
-      lastProject = lastProject.getParentFile();
+    lastProjectLocation = lastProjectLocation.replace('/', File.separatorChar);
+    File lastProjectParent = new File(lastProjectLocation);
+    if (lastProjectParent.getName().equals(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY)) {
+      lastProjectParent = lastProjectParent.getParentFile();
     }
-    return newUniquePath(new File(lastProject.getParentFile(), projectName));
+    return newUniquePath(new File(lastProjectParent, projectName));
   }
 
   private static File getDefaultProjectsDirectory() {
@@ -420,6 +422,18 @@ public final class BlazeEditProjectViewControl {
     }
   }
 
+  @Nullable
+  private File getProjectDataDir() {
+    String projectDataDir = projectDataDirField.getText().trim();
+    if (StringUtil.isEmpty(projectDataDir)) {
+      return null;
+    }
+    if (workspaceData.canonicalProjectDataLocation() == null) {
+      return new File(projectDataDir);
+    }
+    return new File(projectDataDir, BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY);
+  }
+
   public BlazeValidationResult validate() {
     // Validate project settings fields
     String projectName = projectNameField.getText().trim();
@@ -427,15 +441,14 @@ public final class BlazeEditProjectViewControl {
       return BlazeValidationResult.failure(
           new BlazeValidationError("Project name is not specified"));
     }
-    String projectDataDirPath = projectDataDirField.getText().trim();
-    if (StringUtil.isEmpty(projectDataDirPath)) {
-      return BlazeValidationResult.failure(
-          new BlazeValidationError("Project data directory is not specified"));
-    }
-    File projectDataDir = new File(projectDataDirPath);
-    if (!projectDataDir.isAbsolute()) {
+    File projectDataDir = getProjectDataDir();
+    if (projectDataDir == null || !projectDataDir.isAbsolute()) {
       return BlazeValidationResult.failure(
           new BlazeValidationError("Project data directory is not valid"));
+    }
+    if (projectDataDir.exists()) {
+      return BlazeValidationResult.failure(
+          new BlazeValidationError(projectDataDir + " already exists"));
     }
     for (ProjectDataDirectoryValidator validator :
         ProjectDataDirectoryValidator.EP_NAME.getExtensions()) {
@@ -539,12 +552,8 @@ public final class BlazeEditProjectViewControl {
 
   public void updateBuilder(BlazeNewProjectBuilder builder) {
     String projectName = projectNameField.getText().trim();
-    File projectDataDirectoryFile = new File(projectDataDirField.getText().trim());
-    if (workspaceData.canonicalProjectDataLocation() != null) {
-      projectDataDirectoryFile =
-          new File(projectDataDirectoryFile, BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY);
-    }
-    String projectDataDirectory = projectDataDirectoryFile.getPath();
+    File projectDataDir = getProjectDataDir();
+    String projectDataDirectory = projectDataDir.getPath();
     File localProjectViewFile =
         ProjectViewStorageManager.getLocalProjectViewFileName(
             builder.getBuildSystem(), new File(projectDataDirectory));

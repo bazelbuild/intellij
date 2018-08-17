@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.python.run.producers;
 
+import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -32,9 +33,18 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyDictLiteralExpression;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -57,14 +67,104 @@ public class BlazePyTestConfigurationProducer
       this.testFunction = testFunction;
     }
 
+    private String getTestFilterForParameters(String testBase, PyDecorator decorator) {
+      PyArgumentList parameterizedArgumentList = decorator.getArgumentList();
+      if (parameterizedArgumentList == null) {
+        return testBase;
+      }
+      PyExpression[] arguments = parameterizedArgumentList.getArguments();
+      if (arguments.length == 0) {
+        return testBase;
+      }
+
+      ArrayList<String> parameterizedFilters = new ArrayList<>();
+      for (int i = 0; i < arguments.length; ++i) {
+
+        parameterizedFilters.add(testBase + i);
+      }
+
+      if (parameterizedFilters.isEmpty()) {
+        return testBase;
+      }
+
+      return Joiner.on(" ").join(parameterizedFilters);
+    }
+
+    private String getTestFilterForNamedParameters(String testBase, PyDecorator decorator) {
+      PyArgumentList parameterizedArgumentList = decorator.getArgumentList();
+      if (parameterizedArgumentList == null) {
+        return testBase;
+      }
+      PyExpression[] arguments = parameterizedArgumentList.getArguments();
+      if (arguments.length == 0) {
+        return testBase;
+      }
+
+      ArrayList<String> parameterizedFilters = new ArrayList<>();
+      for (PyExpression argument : arguments) {
+        if (argument instanceof PyDictLiteralExpression) {
+          // can be defined as a dict, use the name from element 'testcase_name'
+          PyDictLiteralExpression dictArgument = (PyDictLiteralExpression) argument;
+          for (PyKeyValueExpression keyValueExpression : dictArgument.getElements()) {
+            PyExpression key = keyValueExpression.getKey();
+            PyExpression value = keyValueExpression.getValue();
+            if (key instanceof PyStringLiteralExpression
+                && value instanceof PyStringLiteralExpression) {
+              PyStringLiteralExpression keyString = (PyStringLiteralExpression) key;
+              PyStringLiteralExpression valueString = (PyStringLiteralExpression) value;
+              if (keyString.getStringValue().equals("testcase_name")) {
+                parameterizedFilters.add(testBase + valueString.getStringValue());
+              }
+            }
+          }
+        } else if (argument instanceof PyParenthesizedExpression) {
+          // can be defined as a tuple, use the name from the 0th element
+          PyExpression contained = ((PyParenthesizedExpression) argument).getContainedExpression();
+          if (contained instanceof PyTupleExpression) {
+            PyTupleExpression tupleArgument = (PyTupleExpression) contained;
+            PyExpression[] tupleElements = tupleArgument.getElements();
+            if (tupleElements.length > 0 && tupleElements[0] instanceof PyStringLiteralExpression) {
+              PyStringLiteralExpression testcaseName = (PyStringLiteralExpression) tupleElements[0];
+              parameterizedFilters.add(testBase + testcaseName.getStringValue());
+            }
+          }
+        }
+      }
+      if (parameterizedFilters.isEmpty()) {
+        return testBase;
+      }
+      return Joiner.on(" ").join(parameterizedFilters);
+    }
+
     @Nullable
     private String testFilter() {
       if (testClass == null) {
         return null;
       }
-      return testFunction == null
-          ? testClass.getName()
-          : testClass.getName() + "." + testFunction.getName();
+
+      if (testFunction == null) {
+        return testClass.getName();
+      }
+
+      String nonParameterizedTest = testClass.getName() + "." + testFunction.getName();
+
+      PyDecoratorList decoratorList = testFunction.getDecoratorList();
+      if (decoratorList == null) {
+        return nonParameterizedTest;
+      }
+
+      PyDecorator parameterizedDecorator = decoratorList.findDecorator("parameterized.parameters");
+      if (parameterizedDecorator != null) {
+        return getTestFilterForParameters(nonParameterizedTest, parameterizedDecorator);
+      }
+
+      PyDecorator namedParameterizedDecorator =
+          decoratorList.findDecorator("parameterized.named_parameters");
+      if (namedParameterizedDecorator != null) {
+        return getTestFilterForNamedParameters(nonParameterizedTest, namedParameterizedDecorator);
+      }
+
+      return nonParameterizedTest;
     }
 
     @Nullable

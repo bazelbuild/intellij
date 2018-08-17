@@ -52,7 +52,8 @@ public class ScalaBinaryTest extends BazelIntellijAspectTest {
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
         .containsAllOf(
-            testRelative("foolib.intellij-info.txt"), testRelative("foo.intellij-info.txt"));
+            testRelative(intellijInfoFileName("foolib")),
+            testRelative(intellijInfoFileName("foo")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
         .containsAllOf(testRelative("foolib.jar"), testRelative("foo.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))

@@ -47,7 +47,7 @@ public class CcBinaryTest extends BazelIntellijAspectTest {
     // the output group
     // assertThat(testFixture.getIntellijResolveFilesList()).isEmpty();
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-cpp"))
-        .contains(testRelative("simple.intellij-info.txt"));
+        .contains(testRelative(intellijInfoFileName("simple")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
   }
 }

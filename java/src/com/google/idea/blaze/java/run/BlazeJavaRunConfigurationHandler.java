@@ -25,12 +25,15 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.java.run.fastbuild.FastBuildConfigurationRunner;
+import com.google.idea.blaze.java.run.fastbuild.FastBuildSuggestion;
 import com.google.idea.blaze.java.run.hotswap.ClassFileManifestBuilder;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -102,6 +105,7 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
 
     @Override
     public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment env) {
+      FastBuildSuggestion.getInstance().displayNotification(getConfiguration(env));
       if (!BlazeCommandRunConfigurationRunner.isDebugging(env)
           || BlazeCommandRunConfigurationRunner.getBlazeCommand(env) == BlazeCommandName.BUILD) {
         return new BlazeCommandRunProfileState(env);
@@ -121,6 +125,14 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
         logger.info(e);
       }
       return false;
+    }
+
+    private static BlazeCommandRunConfiguration getConfiguration(ExecutionEnvironment environment) {
+      RunProfile runProfile = environment.getRunProfile();
+      if (runProfile instanceof WrappingRunConfiguration) {
+        runProfile = ((WrappingRunConfiguration) runProfile).getPeer();
+      }
+      return (BlazeCommandRunConfiguration) runProfile;
     }
   }
 }

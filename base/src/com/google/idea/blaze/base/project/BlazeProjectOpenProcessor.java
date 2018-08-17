@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2018 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,11 +39,16 @@ public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
     return null;
   }
 
+  private static final String DEPRECATED_PROJECT_DATA_SUBDIRECTORY = ".project";
+
   @Nullable
   private static VirtualFile getIdeaSubdirectory(VirtualFile file) {
     VirtualFile projectSubdirectory = file.findChild(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY);
     if (projectSubdirectory == null || !projectSubdirectory.isDirectory()) {
-      return null;
+      projectSubdirectory = file.findChild(DEPRECATED_PROJECT_DATA_SUBDIRECTORY);
+      if (projectSubdirectory == null || !projectSubdirectory.isDirectory()) {
+        return null;
+      }
     }
     VirtualFile ideaSubdirectory = projectSubdirectory.findChild(Project.DIRECTORY_STORE_FOLDER);
     VirtualFile blazeSubdirectory =

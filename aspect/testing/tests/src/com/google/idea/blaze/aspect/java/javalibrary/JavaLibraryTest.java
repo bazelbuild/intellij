@@ -58,7 +58,7 @@ public class JavaLibraryTest extends BazelIntellijAspectTest {
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
         .containsAllOf(
-            testRelative("simple.java-manifest"), testRelative("simple.intellij-info.txt"));
+            testRelative("simple.java-manifest"), testRelative(intellijInfoFileName("simple")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
         .containsExactly(
             testRelative("libsimple.jar"),

@@ -68,6 +68,30 @@ public class BlazeBuildFileRunConfigurationProducerTest
   }
 
   @Test
+  public void testTestSuiteMacroNameRecognized() {
+    PsiFile buildFile =
+        workspace.createPsiFile(
+            new WorkspacePath("java/com/google/test/BUILD"),
+            "random_junit4_test_suites(name='gen_tests'");
+
+    FuncallExpression target =
+        PsiUtils.findFirstChildOfClassRecursive(buildFile, FuncallExpression.class);
+    ConfigurationContext context = createContextFromPsi(target);
+    List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
+    assertThat(configurations).hasSize(1);
+
+    ConfigurationFromContext fromContext = configurations.get(0);
+    assertThat(fromContext.isProducedBy(BlazeBuildFileRunConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
+
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) fromContext.getConfiguration();
+    assertThat(config.getTarget())
+        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:gen_tests"));
+    assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
+  }
+
+  @Test
   public void testProducedWhenInsideFuncallExpression() {
     PsiFile buildFile =
         workspace.createPsiFile(

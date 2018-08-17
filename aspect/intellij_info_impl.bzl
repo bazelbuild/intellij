@@ -736,6 +736,10 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     # Initialize the ide info dict, and corresponding output file
     # This will be passed to each language-specific handler to fill in as required
     file_name = target.label.name
+
+    # bazel allows target names differing only by case, so append a hash to support
+    # case-insensitive file systems
+    file_name = file_name + "-" + str(hash(file_name))
     aspect_ids = get_aspect_ids(ctx, target)
     if aspect_ids:
         aspect_hash = hash(".".join(aspect_ids))

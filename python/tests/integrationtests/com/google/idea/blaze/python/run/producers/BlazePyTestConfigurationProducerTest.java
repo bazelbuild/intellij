@@ -170,4 +170,139 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
     assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=UnitTest.testSomething");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
+
+  @Test
+  public void testProducedFromTestCaseWithParameters() {
+    PsiFile pyFile =
+        createAndIndexFile(
+            new WorkspacePath("py/test/unittest.py"),
+            "class UnitTest(parameterized.TestCase):",
+            "  @parameterized.parameters(1,100)",
+            "  def testSomething(self, value):",
+            "    return");
+
+    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
+    builder.setTargetMap(
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setKind("py_test")
+                    .setLabel("//py/test:unittests")
+                    .addSource(sourceRoot("py/test/unittest.py"))
+                    .build())
+            .build());
+    registerProjectService(
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+
+    PyFunction function = PsiUtils.findFirstChildOfClassRecursive(pyFile, PyFunction.class);
+    assertThat(function).isNotNull();
+
+    ConfigurationContext context = createContextFromPsi(function);
+    List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
+    assertThat(configurations).hasSize(1);
+
+    ConfigurationFromContext fromContext = configurations.get(0);
+    assertThat(fromContext.isProducedBy(BlazePyTestConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
+
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) fromContext.getConfiguration();
+    assertThat(config.getTarget())
+        .isEqualTo(TargetExpression.fromStringSafe("//py/test:unittests"));
+    assertThat(getTestFilterContents(config))
+        .isEqualTo("--test_filter=UnitTest.testSomething0 UnitTest.testSomething1");
+    assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
+  }
+
+  @Test
+  public void testProducedFromTestCaseWithNamedParametersDict() {
+    PsiFile pyFile =
+        createAndIndexFile(
+            new WorkspacePath("py/test/unittest.py"),
+            "class UnitTest(parameterized.TestCase):",
+            "  @parameterized.named_parameters(",
+            "    {'testcase_name': '_First', value: 1},",
+            "    {'testcase_name': '_Second', value: 100},",
+            "  )",
+            "  def testSomething(self, value):",
+            "    return");
+
+    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
+    builder.setTargetMap(
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setKind("py_test")
+                    .setLabel("//py/test:unittests")
+                    .addSource(sourceRoot("py/test/unittest.py"))
+                    .build())
+            .build());
+    registerProjectService(
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+
+    PyFunction function = PsiUtils.findFirstChildOfClassRecursive(pyFile, PyFunction.class);
+    assertThat(function).isNotNull();
+
+    ConfigurationContext context = createContextFromPsi(function);
+    List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
+    assertThat(configurations).hasSize(1);
+
+    ConfigurationFromContext fromContext = configurations.get(0);
+    assertThat(fromContext.isProducedBy(BlazePyTestConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
+
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) fromContext.getConfiguration();
+    assertThat(config.getTarget())
+        .isEqualTo(TargetExpression.fromStringSafe("//py/test:unittests"));
+    assertThat(getTestFilterContents(config))
+        .isEqualTo("--test_filter=UnitTest.testSomething_First UnitTest.testSomething_Second");
+    assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
+  }
+
+  @Test
+  public void testProducedFromTestCaseWithNamedParametersTuple() {
+    PsiFile pyFile =
+        createAndIndexFile(
+            new WorkspacePath("py/test/unittest.py"),
+            "class UnitTest(parameterized.TestCase):",
+            "  @parameterized.named_parameters(",
+            "    ('_First', 1),",
+            "    ('_Second', 100),",
+            "  )",
+            "  def testSomething(self, value):",
+            "    return");
+
+    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
+    builder.setTargetMap(
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setKind("py_test")
+                    .setLabel("//py/test:unittests")
+                    .addSource(sourceRoot("py/test/unittest.py"))
+                    .build())
+            .build());
+    registerProjectService(
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+
+    PyFunction function = PsiUtils.findFirstChildOfClassRecursive(pyFile, PyFunction.class);
+    assertThat(function).isNotNull();
+
+    ConfigurationContext context = createContextFromPsi(function);
+    List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
+    assertThat(configurations).hasSize(1);
+
+    ConfigurationFromContext fromContext = configurations.get(0);
+    assertThat(fromContext.isProducedBy(BlazePyTestConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
+
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) fromContext.getConfiguration();
+    assertThat(config.getTarget())
+        .isEqualTo(TargetExpression.fromStringSafe("//py/test:unittests"));
+    assertThat(getTestFilterContents(config))
+        .isEqualTo("--test_filter=UnitTest.testSomething_First UnitTest.testSomething_Second");
+    assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
+  }
 }
