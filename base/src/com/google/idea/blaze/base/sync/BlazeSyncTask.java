@@ -260,8 +260,10 @@ final class BlazeSyncTask implements Progressive {
       logSyncError(context, e);
     } finally {
       try {
-        syncStats.setTotalExecTimeMs(System.currentTimeMillis() - syncStartTime);
-        syncStats.setSyncResult(syncResult);
+        syncStats
+            .setSyncTitle(syncParams.title)
+            .setTotalExecTimeMs(System.currentTimeMillis() - syncStartTime)
+            .setSyncResult(syncResult);
         EventLoggingService.getInstance().ifPresent(s -> s.log(buildStats(syncStats)));
       } catch (Exception e) {
         logSyncError(context, e);

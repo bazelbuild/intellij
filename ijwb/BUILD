@@ -54,6 +54,12 @@ optional_plugin_xml(
 )
 
 optional_plugin_xml(
+    name = "optional_javascript",
+    module = "JavaScript",
+    plugin_xml = "src/META-INF/javascript-contents.xml",
+)
+
+optional_plugin_xml(
     name = "optional_typescript",
     module = "JavaScript",
     plugin_xml = "src/META-INF/typescript-contents.xml",
@@ -98,6 +104,7 @@ java_library(
 
 OPTIONAL_PLUGIN_XMLS = [
     ":optional_java",
+    ":optional_javascript",
     ":optional_typescript",
     "//golang:optional_xml",
     "//java:optional_java",

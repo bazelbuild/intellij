@@ -47,6 +47,8 @@ public abstract class SyncStats {
 
   public abstract SyncMode syncMode();
 
+  public abstract String syncTitle();
+
   public abstract SyncResult syncResult();
 
   public abstract boolean syncSharded();
@@ -88,6 +90,8 @@ public abstract class SyncStats {
     public abstract Builder setTimedEvents(List<TimedEvent> timingStats);
 
     public abstract Builder setSyncMode(SyncMode syncMode);
+
+    public abstract Builder setSyncTitle(String syncTitle);
 
     public abstract Builder setSyncResult(SyncResult syncResult);
 

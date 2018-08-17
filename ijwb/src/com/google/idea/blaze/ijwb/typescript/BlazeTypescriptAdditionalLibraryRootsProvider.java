@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.golang.sync;
+package com.google.idea.blaze.ijwb.typescript;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Files;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
-import com.google.idea.blaze.golang.resolve.BlazeGoPackage;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
@@ -31,20 +31,24 @@ import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.vfs.VirtualFile;
 import icons.BlazeIcons;
-import java.io.File;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
-class BlazeGoAdditionalLibraryRootsProvider extends AdditionalLibraryRootsProvider {
-  private static final BoolExperiment useGoAdditionalLibraryRootsProvider =
-      new BoolExperiment("use.go.additional.library.roots.provider", true);
+/**
+ * The tsconfig library only contains .d.ts files under tsconfig.runfiles. We need this to provide
+ * the source .ts files so we can resolve to them.
+ */
+class BlazeTypescriptAdditionalLibraryRootsProvider extends AdditionalLibraryRootsProvider {
+  private static final BoolExperiment useTypescriptAdditionalLibraryRootsProvider =
+      new BoolExperiment("use.typescript.additional.library.roots.provider", true);
 
   @Override
   public Collection<SyntheticLibrary> getAdditionalProjectLibraries(Project project) {
-    if (!useGoAdditionalLibraryRootsProvider.getValue()) {
+    if (!useTypescriptAdditionalLibraryRootsProvider.getValue()) {
       return ImmutableList.of();
     }
     Library library = SyncCache.getInstance(project).get(getClass(), Library::new);
@@ -57,30 +61,40 @@ class BlazeGoAdditionalLibraryRootsProvider extends AdditionalLibraryRootsProvid
     private final ImmutableList<VirtualFile> files;
 
     Library(Project project, BlazeProjectData projectData) {
-      if (!projectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.GO)) {
+      if (!projectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)) {
         this.files = ImmutableList.of();
         return;
       }
-      WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProjectSafe(project);
       ImportRoots importRoots = ImportRoots.forProjectSafe(project);
-      if (workspaceRoot == null || importRoots == null) {
+      if (importRoots == null) {
         this.files = ImmutableList.of();
         return;
       }
-      Predicate<File> isExternal =
-          f -> {
-            WorkspacePath path = workspaceRoot.workspacePathForSafe(f);
-            return path == null || !importRoots.containsWorkspacePath(path);
+      Set<String> tsExtensions = TypescriptPrefetchFileSource.getTypescriptExtensions();
+      Predicate<ArtifactLocation> isTs =
+          (location) -> {
+            String extension = Files.getFileExtension(location.getRelativePath());
+            return tsExtensions.contains(extension);
+          };
+      Predicate<ArtifactLocation> isExternal =
+          (location) -> {
+            if (!location.isSource) {
+              return true;
+            }
+            WorkspacePath workspacePath = WorkspacePath.createIfValid(location.getRelativePath());
+            return workspacePath == null || !importRoots.containsWorkspacePath(workspacePath);
           };
       this.files =
           projectData
               .targetMap
               .targets()
               .stream()
-              .filter(t -> t.goIdeInfo != null)
-              .flatMap(t -> BlazeGoPackage.getSourceFiles(t, projectData).stream())
+              .filter(t -> t.tsIdeInfo != null)
+              .flatMap(t -> t.tsIdeInfo.sources.stream())
+              .filter(isTs)
               .filter(isExternal)
               .distinct()
+              .map(projectData.artifactLocationDecoder::decode)
               .map(VfsUtils::resolveVirtualFile)
               .filter(Objects::nonNull)
               .collect(ImmutableList.toImmutableList());
@@ -103,7 +117,7 @@ class BlazeGoAdditionalLibraryRootsProvider extends AdditionalLibraryRootsProvid
 
     @Override
     public String getPresentableText() {
-      return "Go Libraries";
+      return "TypeScript Libraries";
     }
 
     @Nullable

@@ -56,7 +56,8 @@ public class GenJarsTest extends BazelIntellijAspectTest {
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
         .containsAllOf(
-            testRelative("has_plugin.java-manifest"), testRelative("has_plugin.intellij-info.txt"));
+            testRelative("has_plugin.java-manifest"),
+            testRelative(intellijInfoFileName("has_plugin")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
         .containsAllOf(
             testRelative("libhas_plugin-gen.jar"), testRelative("libhas_plugin-gensrc.jar"));

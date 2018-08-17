@@ -221,6 +221,10 @@ public abstract class IntellijAspectTest {
     return sourcesList.stream().map(ArtifactLocation::getRelativePath).collect(toList());
   }
 
+  protected static String intellijInfoFileName(String targetName) {
+    return String.format("%s-%s.intellij-info.txt", targetName, targetName.hashCode());
+  }
+
   /** Returns the runtime location of a data dependency. */
   private static Path runfilesPath(String relativePath) {
     return Paths.get(getUserValue("TEST_SRCDIR"), getUserValue("TEST_WORKSPACE"), relativePath);

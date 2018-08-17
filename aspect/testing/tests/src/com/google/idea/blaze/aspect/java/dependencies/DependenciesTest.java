@@ -47,11 +47,11 @@ public class DependenciesTest extends BazelIntellijAspectTest {
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
         .containsAllOf(
             testRelative("foo.java-manifest"),
-            testRelative("foo.intellij-info.txt"),
+            testRelative(intellijInfoFileName("foo")),
             testRelative("single_dep.java-manifest"),
-            testRelative("single_dep.intellij-info.txt"),
+            testRelative(intellijInfoFileName("single_dep")),
             testRelative("transitive_dep.java-manifest"),
-            testRelative("transitive_dep.intellij-info.txt"));
+            testRelative(intellijInfoFileName("transitive_dep")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
         .containsAllOf(
             testRelative("libfoo.jar"),
@@ -96,11 +96,11 @@ public class DependenciesTest extends BazelIntellijAspectTest {
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
         .containsAllOf(
             testRelative("foo.java-manifest"),
-            testRelative("foo.intellij-info.txt"),
+            testRelative(intellijInfoFileName("foo")),
             testRelative("foo_exporter.java-manifest"),
-            testRelative("foo_exporter.intellij-info.txt"),
+            testRelative(intellijInfoFileName("foo_exporter")),
             testRelative("export_consumer.java-manifest"),
-            testRelative("export_consumer.intellij-info.txt"));
+            testRelative(intellijInfoFileName("export_consumer")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
         .containsAllOf(
             testRelative("libfoo.jar"),

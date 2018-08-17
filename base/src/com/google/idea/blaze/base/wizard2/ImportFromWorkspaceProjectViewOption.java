@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import java.awt.Dimension;
 import java.io.File;
-import java.io.IOException;
 import javax.annotation.Nullable;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -153,9 +152,7 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
       projectViewPath = StringUtil.trimEnd(projectViewPath, '/');
       if (WorkspacePath.isValid(projectViewPath)) {
         File fileLocation = workspacePathResolver.resolveToFile(new WorkspacePath(projectViewPath));
-        if (fileLocation.exists()
-            && FileUtil.isAncestor(
-                getCanonicalPathSafe(fileBrowserRoot), getCanonicalPathSafe(fileLocation), true)) {
+        if (fileLocation.exists() && FileUtil.isAncestor(fileBrowserRoot, fileLocation, true)) {
           startingLocation = fileLocation;
         }
       }
@@ -168,8 +165,7 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
     }
     VirtualFile file = files[0];
 
-    if (!FileUtil.isAncestor(
-        getCanonicalPathSafe(fileBrowserRoot), getCanonicalPathSafe(file), true)) {
+    if (!FileUtil.startsWith(file.getPath(), fileBrowserRoot.getPath())) {
       Messages.showErrorDialog(
           String.format(
               "You must choose a project view file under %s. "
@@ -179,32 +175,7 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
       return;
     }
 
-    String newWorkspacePath =
-        FileUtil.getRelativePath(
-            getCanonicalPathSafe(fileBrowserRoot),
-            getCanonicalPathSafe(new File(file.getPath())),
-            File.separatorChar);
+    String newWorkspacePath = FileUtil.getRelativePath(fileBrowserRoot, new File(file.getPath()));
     projectViewPathField.setText(newWorkspacePath);
-  }
-
-  /**
-   * Tries to resolve the canonical path of the file. If unsuccessful, falls back to returning the
-   * raw path.
-   */
-  private static String getCanonicalPathSafe(File file) {
-    try {
-      return file.getCanonicalPath();
-    } catch (IOException e) {
-      return file.getPath();
-    }
-  }
-
-  /**
-   * Tries to resolve the canonical path of the file. If unsuccessful, falls back to returning the
-   * raw path.
-   */
-  private static String getCanonicalPathSafe(VirtualFile file) {
-    String canonicalPath = file.getCanonicalPath();
-    return canonicalPath != null ? canonicalPath : file.getPath();
   }
 }

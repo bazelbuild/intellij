@@ -187,7 +187,8 @@ public enum Kind {
     return RuleType.UNKNOWN;
   }
 
-  private static boolean isTestSuite(String ruleType) {
-    return "test_suite".equals(ruleType);
+  private static boolean isTestSuite(String ruleName) {
+    // handle plain test_suite targets and macros producing a test/test_suite
+    return "test_suite".equals(ruleName) || ruleName.endsWith("test_suites");
   }
 }

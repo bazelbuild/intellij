@@ -181,13 +181,13 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
   }
 
   public void setTargetInfo(TargetInfo target) {
-    targetPattern = target.label.toString();
+    targetPattern = target.label.toString().trim();
     updateTargetKind(target);
   }
 
   /** Sets the target expression and asynchronously kicks off a target kind update. */
   public void setTarget(@Nullable TargetExpression target) {
-    targetPattern = target != null ? target.toString() : null;
+    targetPattern = target != null ? target.toString().trim() : null;
     updateTargetKindAsync(null);
   }
 
@@ -546,7 +546,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
       }
 
       // finally, update the handler
-      config.targetPattern = Strings.emptyToNull(targetField.getText());
+      config.targetPattern = Strings.emptyToNull(targetField.getText().trim());
       config.updateTargetKindAsync(() -> UIUtil.invokeLaterIfNeeded(this::fireEditorStateChanged));
       updateEditor(config);
       if (config.handlerProvider != handlerProvider) {

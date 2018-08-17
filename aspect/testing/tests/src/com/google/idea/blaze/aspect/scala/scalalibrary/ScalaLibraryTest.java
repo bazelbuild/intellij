@@ -55,7 +55,7 @@ public class ScalaLibraryTest extends BazelIntellijAspectTest {
         .contains(testRelative("simple.jar"));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
-        .contains(testRelative("simple.intellij-info.txt"));
+        .contains(testRelative(intellijInfoFileName("simple")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
         .contains(testRelative("simple.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();

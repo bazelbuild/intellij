@@ -44,6 +44,7 @@ import com.google.idea.blaze.base.projectview.section.sections.ShardBlazeBuildsS
 import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetShardSizeSection;
+import com.google.idea.blaze.base.projectview.section.sections.TestFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
@@ -51,7 +52,6 @@ import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSect
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -61,15 +61,14 @@ import org.junit.runners.JUnit4;
 public class ProjectViewSetTest extends BlazeTestCase {
 
   @Override
-  protected void initTest(
-      @NotNull Container applicationServices, @NotNull Container projectServices) {
+  protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(ExperimentService.class, new MockExperimentService());
     registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
   }
 
   @Test
-  public void testProjectViewSetSerializable() throws Exception {
+  public void testProjectViewSetSerializable() {
     ProjectViewSet projectViewSet =
         ProjectViewSet.builder()
             .add(
@@ -85,6 +84,7 @@ public class ProjectViewSetTest extends BlazeTestCase {
                     .add(ListSection.builder(ExcludedSourceSection.KEY).add(new Glob("*.java")))
                     .add(ListSection.builder(BuildFlagsSection.KEY).add("--android_sdk=abcd"))
                     .add(ListSection.builder(SyncFlagsSection.KEY).add("--config=arm"))
+                    .add(ListSection.builder(TestFlagsSection.KEY).add("--cache_test_results=no"))
                     .add(
                         ListSection.builder(ImportTargetOutputSection.KEY)
                             .add(Label.create("//test:test")))
@@ -104,7 +104,7 @@ public class ProjectViewSetTest extends BlazeTestCase {
             .build();
 
     // Assert we have all sections
-    assert projectViewSet.getTopLevelProjectViewFile() != null;
+    assertThat(projectViewSet.getTopLevelProjectViewFile()).isNotNull();
     ProjectView projectView = projectViewSet.getTopLevelProjectViewFile().projectView;
     for (SectionParser parser : Sections.getParsers()) {
       ImmutableList<Section<?>> sections = projectView.getSections();

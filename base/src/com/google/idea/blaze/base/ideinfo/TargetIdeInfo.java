@@ -18,15 +18,17 @@ package com.google.idea.blaze.base.ideinfo;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.Dependency.DependencyType;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Simple implementation of TargetIdeInfo. */
@@ -38,7 +40,7 @@ public final class TargetIdeInfo implements Serializable {
   @Nullable public final ArtifactLocation buildFile;
   public final Collection<Dependency> dependencies;
   public final Collection<String> tags;
-  public final Collection<ArtifactLocation> sources;
+  public final List<ArtifactLocation> sources;
   @Nullable public final CIdeInfo cIdeInfo;
   @Nullable public final CToolchainIdeInfo cToolchainIdeInfo;
   @Nullable public final JavaIdeInfo javaIdeInfo;
@@ -60,7 +62,7 @@ public final class TargetIdeInfo implements Serializable {
       @Nullable ArtifactLocation buildFile,
       Collection<Dependency> dependencies,
       Collection<String> tags,
-      Collection<ArtifactLocation> sources,
+      Set<ArtifactLocation> sources,
       @Nullable CIdeInfo cIdeInfo,
       @Nullable CToolchainIdeInfo cToolchainIdeInfo,
       @Nullable JavaIdeInfo javaIdeInfo,
@@ -80,7 +82,8 @@ public final class TargetIdeInfo implements Serializable {
     this.buildFile = buildFile;
     this.dependencies = dependencies;
     this.tags = tags;
-    this.sources = sources;
+    // can't convert to a set without bumping the serialization version
+    this.sources = new ArrayList<>(sources);
     this.cIdeInfo = cIdeInfo;
     this.cToolchainIdeInfo = cToolchainIdeInfo;
     this.javaIdeInfo = javaIdeInfo;
@@ -135,9 +138,9 @@ public final class TargetIdeInfo implements Serializable {
     private TargetKey key;
     private Kind kind;
     private ArtifactLocation buildFile;
-    private final List<Dependency> dependencies = Lists.newArrayList();
-    private final List<String> tags = Lists.newArrayList();
-    private final List<ArtifactLocation> sources = Lists.newArrayList();
+    private final List<Dependency> dependencies = new ArrayList<>();
+    private final List<String> tags = new ArrayList<>();
+    private final Set<ArtifactLocation> sources = new HashSet<>();
     private CIdeInfo cIdeInfo;
     private CToolchainIdeInfo cToolchainIdeInfo;
     private JavaIdeInfo javaIdeInfo;

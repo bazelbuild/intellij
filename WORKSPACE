@@ -46,8 +46,8 @@ new_http_archive(
 new_http_archive(
     name = "clion_2018_1",
     build_file = "@//intellij_platform_sdk:BUILD.clion",
-    sha256 = "85df4a1c2ed095cbf706fa73d30a87cad400a4ff5ef40acc7a7da676140c5235",
-    url = "https://download.jetbrains.com/cpp/CLion-2018.1.3.tar.gz",
+    sha256 = "f861409f421728e06280808208a06f79bdda8a437c91e576db0d7ed1e83ac7f5",
+    url = "https://download.jetbrains.com/cpp/CLion-2018.1.6.tar.gz",
 )
 
 # The plugin api for CLion 2018.2. This is required to build CLwB,

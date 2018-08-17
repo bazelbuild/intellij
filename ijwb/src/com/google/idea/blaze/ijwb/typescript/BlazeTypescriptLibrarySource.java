@@ -28,7 +28,7 @@ class BlazeTypescriptLibrarySource extends LibrarySource.Adapter {
     return library -> {
       String libraryName = library.getName();
       return libraryName != null
-          && libraryName.equals(BlazeTypescriptSyncPlugin.TSCONFIG_LIBRARY_NAME);
+          && libraryName.equals(BlazeTypescriptSyncPlugin.DEPRECATED_TSCONFIG_LIBRARY);
     };
   }
 }

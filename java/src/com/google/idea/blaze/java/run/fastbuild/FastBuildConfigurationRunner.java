@@ -79,6 +79,7 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
     if (!canRun(env.getRunProfile())) {
       return new BlazeCommandRunProfileState(env);
     }
+    FastBuildSuggestion.getInstance().triedFastBuild();
     env.putCopyableUserData(BUILD_INFO_KEY, new AtomicReference<>());
     env.putCopyableUserData(LOGGING_DATA_KEY, new AtomicReference<>());
     return new FastBuildRunProfileState(env);

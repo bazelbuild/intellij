@@ -50,7 +50,9 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.guava.GuavaHelper;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -74,7 +76,7 @@ public class IdeInfoFromProtobuf {
 
     Collection<String> tags = ImmutableList.copyOf(message.getTagsList());
 
-    Collection<ArtifactLocation> sources = Lists.newArrayList();
+    Set<ArtifactLocation> sources = new HashSet<>();
     CIdeInfo cIdeInfo = null;
     if (message.hasCIdeInfo()) {
       cIdeInfo = makeCIdeInfo(message.getCIdeInfo());

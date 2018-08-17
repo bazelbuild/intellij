@@ -354,6 +354,9 @@
     <component>
       <implementation-class>com.google.idea.blaze.base.run.DefaultRunConfigurationRemover</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.google.idea.blaze.base.sync.autosync.AutoSyncHandler</implementation-class>
+    </component>
   </project-components>
 
   <extensionPoints>
@@ -391,6 +394,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.TargetFinder" interface="com.google.idea.blaze.base.run.targetfinder.TargetFinder"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SourceToTargetFinder" interface="com.google.idea.blaze.base.run.SourceToTargetFinder"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.TestComparisonFailureParser" interface="com.google.idea.blaze.base.run.smrunner.TestComparisonFailureParser"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.AutoSyncProvider" interface="com.google.idea.blaze.base.sync.autosync.AutoSyncProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -422,6 +426,8 @@
     <BlazeConsoleLineProcessorProvider implementation="com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider$GeneralProvider"/>
     <TargetFinder implementation="com.google.idea.blaze.base.run.targetfinder.ProjectTargetFinder"/>
     <SourceToTargetFinder implementation="com.google.idea.blaze.base.run.testmap.ProjectSourceToTargetFinder"/>
+    <AutoSyncProvider implementation="com.google.idea.blaze.base.sync.autosync.ProjectViewAutoSyncProvider"/>
+    <AutoSyncProvider implementation="com.google.idea.blaze.base.sync.autosync.BuildFileAutoSyncProvider"/>
   </extensions>
 
 </idea-plugin>

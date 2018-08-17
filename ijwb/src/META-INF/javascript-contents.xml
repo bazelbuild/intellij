@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2017 The Bazel Authors. All rights reserved.
+  ~ Copyright 2018 The Bazel Authors. All rights reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -14,18 +14,7 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-  <extensions defaultExtensionNs="com.goide">
-    <rootsProvider implementation="com.google.idea.blaze.golang.resolve.BlazeGoRootsProvider"/>
+  <extensions defaultExtensionNs="JavaScript">
+    <elementScopeProvider implementation="com.google.idea.blaze.ijwb.javascript.BlazeJavascriptResolveScopeProvider" order="first"/>
   </extensions>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <gotoDeclarationHandler
-        implementation="com.google.idea.blaze.golang.resolve.BlazeGoGotoDeclarationHandler"/>
-  </extensions>
-
-  <application-components>
-    <component>
-      <implementation-class>com.google.idea.blaze.golang.resolve.BlazeGoSymlinkPreresolver</implementation-class>
-    </component>
-  </application-components>
 </idea-plugin>
