@@ -56,10 +56,10 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
-class GenerateExecutableDeployableJarProviderTaskProvider
-    extends BeforeRunTaskProvider<GenerateExecutableDeployableJarProviderTaskProvider.Task> {
-  private static final Key<GenerateExecutableDeployableJarProviderTaskProvider.Task> ID =
-      Key.create("CreateTempScalaBinaryTarget");
+class GenerateDeployableJarTaskProvider
+    extends BeforeRunTaskProvider<GenerateDeployableJarTaskProvider.Task> {
+  private static final Key<GenerateDeployableJarTaskProvider.Task> ID =
+      Key.create("GenerateDeployableJarTarget");
 
   static class Task extends BeforeRunTask<Task> {
     Task() {
@@ -70,7 +70,7 @@ class GenerateExecutableDeployableJarProviderTaskProvider
 
   private final Project project;
 
-  GenerateExecutableDeployableJarProviderTaskProvider(Project project) {
+  GenerateDeployableJarTaskProvider(Project project) {
     this.project = project;
   }
 
@@ -85,7 +85,7 @@ class GenerateExecutableDeployableJarProviderTaskProvider
   }
 
   @Override
-  public Icon getTaskIcon(GenerateExecutableDeployableJarProviderTaskProvider.Task task) {
+  public Icon getTaskIcon(GenerateDeployableJarTaskProvider.Task task) {
     return BlazeIcons.Blaze;
   }
 
@@ -97,7 +97,7 @@ class GenerateExecutableDeployableJarProviderTaskProvider
   @Override
   public final boolean canExecuteTask(
       RunConfiguration configuration,
-      GenerateExecutableDeployableJarProviderTaskProvider.Task task) {
+      GenerateDeployableJarTaskProvider.Task task) {
     return isValidConfiguration(configuration);
   }
 

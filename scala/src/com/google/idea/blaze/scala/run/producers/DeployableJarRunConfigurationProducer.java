@@ -18,7 +18,6 @@ package com.google.idea.blaze.scala.run.producers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.SourceToTargetFinder;
@@ -119,6 +118,6 @@ class DeployableJarRunConfigurationProducer
     Project project = config.getProject();
     RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
     runManager.setBeforeRunTasks(
-        config, ImmutableList.of(new GenerateExecutableDeployableJarProviderTaskProvider.Task()));
+        config, ImmutableList.of(new GenerateDeployableJarTaskProvider.Task()));
   }
 }
