@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.scala.run.producers;
 
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
@@ -36,6 +37,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
@@ -46,10 +48,13 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import icons.BlazeIcons;
+
+import javax.annotation.Nullable;
+import javax.swing.*;
+import java.io.File;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
-import javax.swing.Icon;
+import java.util.function.Consumer;
 
 class GenerateExecutableDeployableJarProviderTaskProvider
     extends BeforeRunTaskProvider<GenerateExecutableDeployableJarProviderTaskProvider.Task> {
@@ -127,10 +132,17 @@ class GenerateExecutableDeployableJarProviderTaskProvider
     return executeBuild(
         target,
         BlazeInvocationContext.runConfigContext(
-            ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true));
+            ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
+            buildResultHelper -> {
+              File artifact = Iterables.getFirst(buildResultHelper.getBuildArtifacts(), null);
+              if (artifact != null) {
+                ((ApplicationConfiguration)configuration).setVMParameters("-cp " + artifact.getPath());
+              }
+            });
   }
 
-  private boolean executeBuild(Label target, BlazeInvocationContext invocationContext) {
+  private boolean executeBuild(Label target, BlazeInvocationContext invocationContext,
+                               Consumer<BuildResultHelper> onSuccessfulBuild) {
     return Scope.root(
         context -> {
           String binaryPath = Blaze.getBuildSystemProvider(project).getBinaryPath();
@@ -172,6 +184,11 @@ class GenerateExecutableDeployableJarProviderTaskProvider
                     if (retVal != 0) {
                       context.setHasError();
                     }
+                    BuildResult result = BuildResult.fromExitCode(retVal);
+                    if (result.status == BuildResult.Status.SUCCESS) {
+                      onSuccessfulBuild.accept(buildResultHelper);
+                    }
+
                     FileCaches.refresh(project);
                     return null;
                   }
