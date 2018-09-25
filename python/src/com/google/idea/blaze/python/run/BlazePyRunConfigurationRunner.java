@@ -267,6 +267,11 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     if (FileOperationProvider.getInstance().exists(expectedPath)) {
       return expectedPath.getPath();
     }
+    // Default workspace name used when none specified in WORKSPACE file.
+    File fallbackPath = new File(executable.getPath() + ".runfiles/__main__");
+    if (FileOperationProvider.getInstance().exists(fallbackPath)) {
+      return fallbackPath.getPath();
+    }
     return null;
   }
 
