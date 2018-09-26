@@ -80,6 +80,16 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
       PsiFile file = psi.getContainingFile();
       if (file != null) {
         quickFix.addImport(psi, file, candidate.removeLastComponent());
+        continue;
+      }
+      // If import string is a package then find "__init__.py".
+      PsiElement child = psi.getFirstChild();
+      if (child == null) {
+        continue;
+      }
+      PsiFile pkgFile = child.getContainingFile();
+      if (pkgFile != null) {
+        quickFix.addImport(psi, pkgFile, candidate.removeLastComponent());
       }
     }
   }
