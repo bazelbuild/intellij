@@ -21,6 +21,7 @@ import com.google.idea.blaze.python.resolve.BlazePyResolverUtils;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
+
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -48,7 +49,6 @@ public class BazelPyImportResolverStrategy extends AbstractPyImportResolverStrat
   @Nullable
   @Override
   protected QualifiedName toImportString(ArtifactLocation source) {
-    // TODO(brendandouglas): handle references to external workspaces
     if (source.isExternal() || source.isGenerated() || !source.getRelativePath().endsWith(".py")) {
       return null;
     }
