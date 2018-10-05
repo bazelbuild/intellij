@@ -33,7 +33,7 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 /** Run prefetching on project open, prior to initial indexing step. */
-public class PrefetchProjectInitializer extends ApplicationComponent.Adapter {
+public class PrefetchProjectInitializer implements ApplicationComponent {
 
   private static final Logger logger = Logger.getInstance(PrefetchProjectInitializer.class);
 

@@ -25,8 +25,6 @@ public class BlazeIcons {
 
   public static final Icon Blaze = load("base/resources/icons/blaze.png"); // 16x16
   public static final Icon BlazeSlow = load("base/resources/icons/blaze_slow.png"); // 16x16
-  public static final Icon BlazeDirty = load("base/resources/icons/blaze_dirty.png"); // 16x16
-  public static final Icon BlazeClean = load("base/resources/icons/blaze_clean.png"); // 16x16
   public static final Icon BlazeFailed = load("base/resources/icons/blaze_failed.png"); // 16x16
 
   public static final Icon BlazeRerun = load("base/resources/icons/blazeRerun.png"); // 16x16

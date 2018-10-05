@@ -64,6 +64,8 @@ message CIdeInfo {
 }
 
 message AndroidIdeInfo {
+  // resources contains the unique res folders. This field is deprecated in
+  // favor of res_folders which includes more information.
   repeated ArtifactLocation resources = 1;
   ArtifactLocation apk = 2;
   repeated ArtifactLocation dependency_apk = 3;
@@ -75,6 +77,17 @@ message AndroidIdeInfo {
   string legacy_resources = 9;
   LibraryArtifact resource_jar = 10;
   string idl_import_root = 11;
+  map<string, string> manifest_values = 12;
+  repeated ResFolderLocation res_folders = 13;
+}
+
+// Details about an Android res folder
+message ResFolderLocation {
+  // The res folder itself
+  ArtifactLocation root = 1;
+  // Relative paths to the specific res files underneath the root. If empty, all
+  // res files
+  repeated string resources = 2;
 }
 
 message AndroidSdkIdeInfo {
@@ -92,6 +105,8 @@ message PyIdeInfo {
 message GoIdeInfo {
   repeated ArtifactLocation sources = 1;
   string import_path = 2;
+  string library_label = 3;
+  string library_kind = 4;
 }
 
 message JsIdeInfo {

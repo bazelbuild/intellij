@@ -36,8 +36,8 @@ public class LibraryGlobFilter implements Predicate<BlazeLibrary> {
       return true;
     }
     BlazeJarLibrary jarLibrary = (BlazeJarLibrary) blazeLibrary;
-    ArtifactLocation interfaceJar = jarLibrary.libraryArtifact.interfaceJar;
-    ArtifactLocation classJar = jarLibrary.libraryArtifact.classJar;
+    ArtifactLocation interfaceJar = jarLibrary.libraryArtifact.getInterfaceJar();
+    ArtifactLocation classJar = jarLibrary.libraryArtifact.getClassJar();
     boolean matches =
         (interfaceJar != null && excludedLibraries.matches(interfaceJar.getRelativePath()))
             || (classJar != null && excludedLibraries.matches(classJar.getRelativePath()));

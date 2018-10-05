@@ -29,7 +29,7 @@ public final class FilePathJavaPackageReader extends JavaPackageReader {
       BlazeContext context,
       ArtifactLocationDecoder artifactLocationDecoder,
       SourceArtifact sourceArtifact) {
-    String parentPath = new File(sourceArtifact.artifactLocation.relativePath).getParent();
+    String parentPath = new File(sourceArtifact.artifactLocation.getRelativePath()).getParent();
     return PackagePrefixCalculator.packagePrefixOf(
         new WorkspacePath(Strings.nullToEmpty(parentPath)));
   }

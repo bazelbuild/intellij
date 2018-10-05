@@ -16,6 +16,9 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <!-- Need to come before com.intellij.lang.javascript.navigation.JSGotoDeclarationHandler -->
-    <gotoDeclarationHandler implementation="com.google.idea.blaze.ijwb.typescript.BlazeTypescriptGotoDeclarationHandler" order="first"/>
+    <gotoDeclarationHandler
+        implementation="com.google.idea.blaze.ijwb.typescript.BlazeTypescriptGotoDeclarationHandler"
+        id="Blaze.Typescript"
+        order="first"/>
   </extensions>
 </idea-plugin>

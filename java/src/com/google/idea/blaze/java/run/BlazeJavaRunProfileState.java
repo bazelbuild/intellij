@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
+import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
 import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
@@ -159,6 +160,9 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
   @Override
   public ExecutionResult execute(Executor executor, ProgramRunner runner)
       throws ExecutionException {
+    if (BlazeCommandRunConfigurationRunner.isDebugging(getEnvironment())) {
+      new MultiRunDebuggerSessionListener(getEnvironment()).startListening();
+    }
     DefaultExecutionResult result = (DefaultExecutionResult) super.execute(executor, runner);
     return SmRunnerUtils.attachRerunFailedTestsAction(result);
   }

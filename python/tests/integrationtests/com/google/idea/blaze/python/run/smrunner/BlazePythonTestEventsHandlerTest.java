@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.execution.Location;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -119,5 +120,30 @@ public class BlazePythonTestEventsHandlerTest extends BlazeIntegrationTestCase {
             .getTestLocator()
             .getLocation(protocol, path, getProject(), GlobalSearchScope.allScope(getProject())),
         null);
+  }
+
+  @Test
+  public void testDisplayNameClassTest() {
+    String testName =
+        handler.testDisplayName(Kind.PY_TEST, "__main__.PythonModule.testDisplayName");
+    assertThat(testName).isEqualTo("testDisplayName");
+  }
+
+  @Test
+  public void testDisplayNameParameterizedTest() {
+    String testName = handler.testDisplayName(Kind.PY_TEST, "testParameterized(1, 2, 3)");
+    assertThat(testName).isEqualTo("testParameterized(1, 2, 3)");
+  }
+
+  @Test
+  public void testDisplayNameParameterizedTestWithDot() {
+    String testName = handler.testDisplayName(Kind.PY_TEST, "testParameterized('file.txt')");
+    assertThat(testName).isEqualTo("testParameterized('file.txt')");
+  }
+
+  @Test
+  public void testDisplayNameFallback() {
+    String testName = handler.testDisplayName(Kind.PY_TEST, "testWithNoDotOrBracket");
+    assertThat(testName).isEqualTo("testWithNoDotOrBracket");
   }
 }

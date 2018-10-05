@@ -22,10 +22,14 @@ import java.io.Serializable;
 public class TsIdeInfo implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  public final ImmutableList<ArtifactLocation> sources;
+  private final ImmutableList<ArtifactLocation> sources;
 
   public TsIdeInfo(ImmutableList<ArtifactLocation> sources) {
     this.sources = sources;
+  }
+
+  public ImmutableList<ArtifactLocation> getSources() {
+    return sources;
   }
 
   public static Builder builder() {
@@ -48,6 +52,6 @@ public class TsIdeInfo implements Serializable {
 
   @Override
   public String toString() {
-    return "TsIdeInfo{" + "\n" + "  sources=" + sources + "\n" + '}';
+    return "TsIdeInfo{" + "\n" + "  sources=" + getSources() + "\n" + '}';
   }
 }

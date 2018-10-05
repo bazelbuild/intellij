@@ -101,7 +101,7 @@ public class BlazeJavascriptSyncPlugin implements BlazeSyncPlugin {
   @Nullable
   @Override
   public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
-    if (!projectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.JAVASCRIPT)) {
+    if (!projectData.getWorkspaceLanguageSettings().isWorkspaceType(WorkspaceType.JAVASCRIPT)) {
       return null;
     }
     return GenericSourceFolderProvider.INSTANCE;
@@ -118,7 +118,7 @@ public class BlazeJavascriptSyncPlugin implements BlazeSyncPlugin {
       ModuleEditor moduleEditor,
       Module workspaceModule,
       ModifiableRootModel workspaceModifiableModel) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVASCRIPT)
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.JAVASCRIPT)
         || BlazeJavascriptLibrarySource.JS_LIBRARY_KIND == null) {
       return;
     }
@@ -149,7 +149,9 @@ public class BlazeJavascriptSyncPlugin implements BlazeSyncPlugin {
   @Override
   public LibrarySource getLibrarySource(
       ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVASCRIPT)) {
+    if (!blazeProjectData
+        .getWorkspaceLanguageSettings()
+        .isLanguageActive(LanguageClass.JAVASCRIPT)) {
       return null;
     }
     return BlazeJavascriptLibrarySource.INSTANCE;
@@ -158,7 +160,9 @@ public class BlazeJavascriptSyncPlugin implements BlazeSyncPlugin {
   @Override
   public boolean validate(
       Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVASCRIPT)) {
+    if (!blazeProjectData
+        .getWorkspaceLanguageSettings()
+        .isLanguageActive(LanguageClass.JAVASCRIPT)) {
       return true;
     }
     if (!ApplicationManager.getApplication().isUnitTestMode()

@@ -138,6 +138,8 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
             .withFileFilter(
                 virtualFile ->
                     ProjectViewStorageManager.isProjectViewFile(new File(virtualFile.getPath())));
+    // File filters are broken for the native Mac file chooser.
+    descriptor.setForcedToUseIdeaFileChooser(true);
     FileChooserDialog chooser =
         FileChooserFactory.getInstance().createFileChooser(descriptor, null, null);
 

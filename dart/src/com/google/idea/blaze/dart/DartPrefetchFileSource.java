@@ -49,7 +49,7 @@ public class DartPrefetchFileSource implements PrefetchFileSource {
       ImportRoots importRoots,
       BlazeProjectData blazeProjectData,
       Set<File> files) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.DART)
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.DART)
         || !prefetchAllDartSources.getValue()) {
       return;
     }
@@ -59,18 +59,15 @@ public class DartPrefetchFileSource implements PrefetchFileSource {
           if (location.isGenerated()) {
             return true;
           }
-          WorkspacePath path = WorkspacePath.createIfValid(location.relativePath);
+          WorkspacePath path = WorkspacePath.createIfValid(location.getRelativePath());
           return path != null && !importRoots.containsWorkspacePath(path);
         };
     List<File> sourceFiles =
-        blazeProjectData
-            .targetMap
-            .targets()
-            .stream()
+        blazeProjectData.getTargetMap().targets().stream()
             .map(DartPrefetchFileSource::getDartSources)
             .flatMap(Collection::stream)
             .filter(outsideProject)
-            .map(blazeProjectData.artifactLocationDecoder::decode)
+            .map(blazeProjectData.getArtifactLocationDecoder()::decode)
             .collect(Collectors.toList());
     files.addAll(sourceFiles);
   }
@@ -81,6 +78,8 @@ public class DartPrefetchFileSource implements PrefetchFileSource {
   }
 
   private static Collection<ArtifactLocation> getDartSources(TargetIdeInfo target) {
-    return target.dartIdeInfo != null ? target.dartIdeInfo.sources : ImmutableList.of();
+    return target.getDartIdeInfo() != null
+        ? target.getDartIdeInfo().getSources()
+        : ImmutableList.of();
   }
 }

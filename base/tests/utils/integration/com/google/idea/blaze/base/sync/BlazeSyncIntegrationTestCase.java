@@ -234,6 +234,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
         ProjectViewSet projectViewSet,
+        BlazeInfo blazeInfo,
         BlazeVersionData blazeVersionData,
         BlazeConfigurationHandler configHandler,
         ShardedTargetList shardedTargets,
@@ -251,6 +252,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
         ProjectViewSet projectViewSet,
+        BlazeInfo blazeInfo,
         BlazeVersionData blazeVersionData,
         WorkspaceLanguageSettings workspaceLanguageSettings,
         ShardedTargetList shardedTargets) {

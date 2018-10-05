@@ -15,10 +15,11 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.language.semantics;
 
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build;
-import com.google.idea.common.guava.GuavaHelper;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,24 +46,22 @@ public class RuleDefinition implements Serializable {
       hasNameAttr |= "name".equals(attr.getName());
     }
     if (!hasNameAttr) {
-      map.put(NAME_ATTRIBUTE.name, NAME_ATTRIBUTE);
+      map.put(NAME_ATTRIBUTE.getName(), NAME_ATTRIBUTE);
     }
     ImmutableMap<String, AttributeDefinition> sortedMap =
-        map.entrySet()
-            .stream()
+        map.entrySet().stream()
             .sorted(Map.Entry.comparingByValue())
-            .collect(GuavaHelper.toImmutableMap(Entry::getKey, Entry::getValue));
+            .collect(toImmutableMap(Entry::getKey, Entry::getValue));
     return new RuleDefinition(
         rule.getName(), sortedMap, rule.hasDocumentation() ? rule.getDocumentation() : null);
   }
 
-  public final String name;
-  /** This map is not exhaustive; it only contains documented attributes. */
-  public final ImmutableMap<String, AttributeDefinition> attributes;
+  private final String name;
+  private final ImmutableMap<String, AttributeDefinition> attributes;
 
-  public final ImmutableMap<String, AttributeDefinition> mandatoryAttributes;
+  private final ImmutableMap<String, AttributeDefinition> mandatoryAttributes;
 
-  @Nullable public final String documentation;
+  @Nullable private final String documentation;
 
   public RuleDefinition(
       String name,
@@ -74,19 +73,37 @@ public class RuleDefinition implements Serializable {
 
     ImmutableMap.Builder<String, AttributeDefinition> builder = ImmutableMap.builder();
     for (AttributeDefinition attr : attributes.values()) {
-      if (attr.mandatory) {
-        builder.put(attr.name, attr);
+      if (attr.isMandatory()) {
+        builder.put(attr.getName(), attr);
       }
     }
     mandatoryAttributes = builder.build();
   }
 
+  public String getName() {
+    return name;
+  }
+
+  /** This map is not exhaustive; it only contains documented attributes. */
+  public ImmutableMap<String, AttributeDefinition> getAttributes() {
+    return attributes;
+  }
+
+  public ImmutableMap<String, AttributeDefinition> getMandatoryAttributes() {
+    return mandatoryAttributes;
+  }
+
+  @Nullable
+  public String getDocumentation() {
+    return documentation;
+  }
+
   public ImmutableSet<String> getKnownAttributeNames() {
-    return attributes.keySet();
+    return getAttributes().keySet();
   }
 
   @Nullable
   public AttributeDefinition getAttribute(@Nullable String attributeName) {
-    return attributeName != null ? attributes.get(attributeName) : null;
+    return attributeName != null ? getAttributes().get(attributeName) : null;
   }
 }

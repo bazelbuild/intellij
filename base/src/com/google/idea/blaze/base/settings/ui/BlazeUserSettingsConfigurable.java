@@ -67,7 +67,8 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
       new ComboBox<>(FocusBehavior.values());
   private final ComboBox<FocusBehavior> showProblemsViewOnRun =
       new ComboBox<>(FocusBehavior.values());
-  private JCheckBox resyncAutomatically;
+  private JCheckBox resyncOnBuildFileChanges;
+  private JCheckBox resyncOnProtoChanges;
   private JCheckBox collapseProjectView;
   private JCheckBox formatBuildFilesOnSave;
   private JCheckBox showAddFileToProjectNotification;
@@ -104,7 +105,8 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     settings.setShowProblemsViewOnSync((FocusBehavior) showProblemsViewOnSync.getSelectedItem());
     settings.setShowBlazeConsoleOnRun((FocusBehavior) showBlazeConsoleOnRun.getSelectedItem());
     settings.setShowProblemsViewOnRun((FocusBehavior) showProblemsViewOnRun.getSelectedItem());
-    settings.setResyncAutomatically(resyncAutomatically.isSelected());
+    settings.setResyncAutomatically(resyncOnBuildFileChanges.isSelected());
+    settings.setResyncOnProtoChanges(resyncOnProtoChanges.isSelected());
     settings.setCollapseProjectView(collapseProjectView.isSelected());
     settings.setFormatBuildFilesOnSave(formatBuildFilesOnSave.isSelected());
     settings.setShowAddFileToProjectNotification(showAddFileToProjectNotification.isSelected());
@@ -123,7 +125,8 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     showProblemsViewOnSync.setSelectedItem(settings.getShowProblemsViewOnSync());
     showBlazeConsoleOnRun.setSelectedItem(settings.getShowBlazeConsoleOnRun());
     showProblemsViewOnRun.setSelectedItem(settings.getShowProblemsViewOnRun());
-    resyncAutomatically.setSelected(settings.getResyncAutomatically());
+    resyncOnBuildFileChanges.setSelected(settings.getResyncAutomatically());
+    resyncOnProtoChanges.setSelected(settings.getResyncOnProtoChanges());
     collapseProjectView.setSelected(settings.getCollapseProjectView());
     formatBuildFilesOnSave.setSelected(settings.getFormatBuildFilesOnSave());
     showAddFileToProjectNotification.setSelected(settings.getShowAddFileToProjectNotification());
@@ -149,7 +152,8 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             || showProblemsViewOnSync.getSelectedItem() != settings.getShowProblemsViewOnSync()
             || showBlazeConsoleOnRun.getSelectedItem() != settings.getShowBlazeConsoleOnRun()
             || showProblemsViewOnRun.getSelectedItem() != settings.getShowProblemsViewOnRun()
-            || resyncAutomatically.isSelected() != settings.getResyncAutomatically()
+            || resyncOnBuildFileChanges.isSelected() != settings.getResyncAutomatically()
+            || resyncOnProtoChanges.isSelected() != settings.getResyncOnProtoChanges()
             || collapseProjectView.isSelected() != settings.getCollapseProjectView()
             || formatBuildFilesOnSave.isSelected() != settings.getFormatBuildFilesOnSave()
             || showAddFileToProjectNotification.isSelected()
@@ -188,7 +192,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
       contributorRowCount += contributor.getRowCount();
     }
 
-    final int totalRowSize = 9 + contributorRowCount;
+    final int totalRowSize = 10 + contributorRowCount;
     int rowi = 0;
 
     SearchableOptionsHelper helper = new SearchableOptionsHelper(this);
@@ -215,12 +219,28 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
         new JSeparator(SwingConstants.HORIZONTAL), defaultNoGrowConstraints(rowi++, 0, 1, 2));
 
     String text = "Automatically re-sync project when BUILD files change";
-    helper.registerLabelText(text, true);
-    resyncAutomatically = new JCheckBox();
-    resyncAutomatically.setSelected(false);
-    resyncAutomatically.setText(text);
+    resyncOnBuildFileChanges = helper.createSearchableCheckBox(text, true);
+    resyncOnBuildFileChanges.setSelected(false);
     mainPanel.add(
-        resyncAutomatically,
+        resyncOnBuildFileChanges,
+        new GridConstraints(
+            rowi++,
+            0,
+            1,
+            2,
+            GridConstraints.ANCHOR_NORTHWEST,
+            GridConstraints.FILL_NONE,
+            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+            GridConstraints.SIZEPOLICY_FIXED,
+            null,
+            null,
+            null,
+            0,
+            false));
+    text = "Automatically re-sync project when proto files change";
+    resyncOnProtoChanges = helper.createSearchableCheckBox(text, true);
+    mainPanel.add(
+        resyncOnProtoChanges,
         new GridConstraints(
             rowi++,
             0,
@@ -236,10 +256,8 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             0,
             false));
     text = "Collapse project view directory roots";
-    helper.registerLabelText(text, true);
-    collapseProjectView = new JCheckBox();
+    collapseProjectView = helper.createSearchableCheckBox(text, true);
     collapseProjectView.setSelected(false);
-    collapseProjectView.setText(text);
     mainPanel.add(
         collapseProjectView,
         new GridConstraints(
@@ -257,10 +275,8 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             0,
             false));
     text = "Automatically format BUILD/Skylark files on file save";
-    helper.registerLabelText(text, true);
-    formatBuildFilesOnSave = new JCheckBox();
+    formatBuildFilesOnSave = helper.createSearchableCheckBox(text, true);
     formatBuildFilesOnSave.setSelected(false);
-    formatBuildFilesOnSave.setText(text);
     mainPanel.add(
         formatBuildFilesOnSave,
         new GridConstraints(
@@ -277,10 +293,9 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
             null,
             0,
             false));
-    helper.registerLabelText(SHOW_ADD_FILE_TO_PROJECT_LABEL_TEXT, true);
-    showAddFileToProjectNotification = new JCheckBox();
+    showAddFileToProjectNotification =
+        helper.createSearchableCheckBox(SHOW_ADD_FILE_TO_PROJECT_LABEL_TEXT, true);
     showAddFileToProjectNotification.setSelected(false);
-    showAddFileToProjectNotification.setText(SHOW_ADD_FILE_TO_PROJECT_LABEL_TEXT);
     mainPanel.add(
         showAddFileToProjectNotification,
         new GridConstraints(

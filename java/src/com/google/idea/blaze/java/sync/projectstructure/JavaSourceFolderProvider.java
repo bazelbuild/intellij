@@ -51,7 +51,7 @@ public class JavaSourceFolderProvider implements SourceFolderProvider {
       return ImmutableMap.of();
     }
     ImmutableMap.Builder<File, BlazeContentEntry> builder = ImmutableMap.builder();
-    for (BlazeContentEntry blazeContentEntry : syncData.importResult.contentEntries) {
+    for (BlazeContentEntry blazeContentEntry : syncData.getImportResult().contentEntries) {
       builder.put(blazeContentEntry.contentRoot, blazeContentEntry);
     }
     return builder.build();

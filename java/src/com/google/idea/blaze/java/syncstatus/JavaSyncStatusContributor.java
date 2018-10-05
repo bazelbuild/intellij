@@ -43,7 +43,7 @@ class JavaSyncStatusContributor implements SyncStatusContributor {
 
   @Override
   public boolean handlesFile(BlazeProjectData projectData, VirtualFile file) {
-    return projectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVA)
+    return projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.JAVA)
         && file.getName().endsWith(".java");
   }
 }

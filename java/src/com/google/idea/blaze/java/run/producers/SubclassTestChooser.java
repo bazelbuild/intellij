@@ -50,8 +50,7 @@ public class SubclassTestChooser {
     }
     PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
     classes.sort(renderer.getComparator());
-    // #api171 add generics to JBList.
-    JBList list = new JBList(classes);
+    JBList<PsiClass> list = new JBList<>(classes);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
     JBPopupFactory.getInstance()

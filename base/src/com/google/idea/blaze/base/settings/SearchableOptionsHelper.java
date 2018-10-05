@@ -17,8 +17,10 @@ package com.google.idea.blaze.base.settings;
 
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import java.util.Set;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
 /** A helper class to make settings text searchable. */
@@ -48,5 +50,11 @@ public final class SearchableOptionsHelper {
   public JLabel createSearchableLabel(String text, boolean applyStemming) {
     registerLabelText(text, applyStemming);
     return new JBLabel(text);
+  }
+
+  /** Create a {@link JCheckBox} from the given text, making that text searchable. */
+  public JCheckBox createSearchableCheckBox(String text, boolean applyStemming) {
+    registerLabelText(text, applyStemming);
+    return new JBCheckBox(text);
   }
 }

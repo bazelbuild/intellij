@@ -29,27 +29,27 @@ public class BazelVersionTest {
   public void testParseOldVersionFormat() {
     BazelVersion version = BazelVersion.parseVersion("release 0.4.1");
     assertThat(version).isNotNull();
-    assertThat(version.major).isEqualTo(0);
-    assertThat(version.minor).isEqualTo(4);
-    assertThat(version.bugfix).isEqualTo(1);
+    assertThat(version.getMajor()).isEqualTo(0);
+    assertThat(version.getMinor()).isEqualTo(4);
+    assertThat(version.getBugfix()).isEqualTo(1);
   }
 
   @Test
   public void testParseVersionFormatDistributionPackage() {
     BazelVersion version = BazelVersion.parseVersion("release 0.4.3- (@non-git)");
     assertThat(version).isNotNull();
-    assertThat(version.major).isEqualTo(0);
-    assertThat(version.minor).isEqualTo(4);
-    assertThat(version.bugfix).isEqualTo(3);
+    assertThat(version.getMajor()).isEqualTo(0);
+    assertThat(version.getMinor()).isEqualTo(4);
+    assertThat(version.getBugfix()).isEqualTo(3);
   }
 
   @Test
   public void testParseVersionFormatManualBuild() {
     BazelVersion version = BazelVersion.parseVersion("release 0.4.3- (@c9139896");
     assertThat(version).isNotNull();
-    assertThat(version.major).isEqualTo(0);
-    assertThat(version.minor).isEqualTo(4);
-    assertThat(version.bugfix).isEqualTo(3);
+    assertThat(version.getMajor()).isEqualTo(0);
+    assertThat(version.getMinor()).isEqualTo(4);
+    assertThat(version.getBugfix()).isEqualTo(3);
   }
 
   @Test

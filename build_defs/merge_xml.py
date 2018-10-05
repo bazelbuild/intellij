@@ -53,6 +53,6 @@ if __name__ == "__main__":
 
   if args.output:
     with file(args.output, "w") as f:
-      f.write(dom.toxml())
+      f.write(dom.toxml(encoding="utf-8"))
   else:
     print dom.toxml()

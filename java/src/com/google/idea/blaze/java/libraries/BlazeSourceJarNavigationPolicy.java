@@ -103,8 +103,9 @@ final class BlazeSourceJarNavigationPolicy extends ClsCustomNavigationPolicyEx {
     }
 
     // TODO: If there are multiple source jars, search for one containing this PsiJavaFile.
-    for (ArtifactLocation jar : blazeLibrary.libraryArtifact.sourceJars) {
-      VirtualFile root = getSourceJarRoot(project, blazeProjectData.artifactLocationDecoder, jar);
+    for (ArtifactLocation jar : blazeLibrary.libraryArtifact.getSourceJarsOrClassJar()) {
+      VirtualFile root =
+          getSourceJarRoot(project, blazeProjectData.getArtifactLocationDecoder(), jar);
       if (root != null) {
         return root;
       }

@@ -30,15 +30,15 @@ import javax.annotation.concurrent.Immutable;
 public class BlazeProjectData implements Serializable {
   private static final long serialVersionUID = 28L;
 
-  public final long syncTime;
-  public final TargetMap targetMap;
-  public final BlazeInfo blazeInfo;
-  public final BlazeVersionData blazeVersionData;
-  public final WorkspacePathResolver workspacePathResolver;
-  public final ArtifactLocationDecoder artifactLocationDecoder;
-  public final WorkspaceLanguageSettings workspaceLanguageSettings;
-  public final SyncState syncState;
-  public final ImmutableMultimap<TargetKey, TargetKey> reverseDependencies;
+  private final long syncTime;
+  private final TargetMap targetMap;
+  private final BlazeInfo blazeInfo;
+  private final BlazeVersionData blazeVersionData;
+  private final WorkspacePathResolver workspacePathResolver;
+  private final ArtifactLocationDecoder artifactLocationDecoder;
+  private final WorkspaceLanguageSettings workspaceLanguageSettings;
+  private final SyncState syncState;
+  private final ImmutableMultimap<TargetKey, TargetKey> reverseDependencies;
 
   public BlazeProjectData(
       long syncTime,
@@ -59,5 +59,41 @@ public class BlazeProjectData implements Serializable {
     this.workspaceLanguageSettings = workspaceLanguageSettings;
     this.syncState = syncState;
     this.reverseDependencies = reverseDependencies;
+  }
+
+  public long getSyncTime() {
+    return syncTime;
+  }
+
+  public TargetMap getTargetMap() {
+    return targetMap;
+  }
+
+  public BlazeInfo getBlazeInfo() {
+    return blazeInfo;
+  }
+
+  public BlazeVersionData getBlazeVersionData() {
+    return blazeVersionData;
+  }
+
+  public WorkspacePathResolver getWorkspacePathResolver() {
+    return workspacePathResolver;
+  }
+
+  public ArtifactLocationDecoder getArtifactLocationDecoder() {
+    return artifactLocationDecoder;
+  }
+
+  public WorkspaceLanguageSettings getWorkspaceLanguageSettings() {
+    return workspaceLanguageSettings;
+  }
+
+  public SyncState getSyncState() {
+    return syncState;
+  }
+
+  public ImmutableMultimap<TargetKey, TargetKey> getReverseDependencies() {
+    return reverseDependencies;
   }
 }

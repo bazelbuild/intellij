@@ -91,19 +91,19 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
     if (originatingTarget == null) {
       return null;
     }
-    TargetIdeInfo target = blazeProjectData.targetMap.get(originatingTarget);
+    TargetIdeInfo target = blazeProjectData.getTargetMap().get(originatingTarget);
     if (target == null) {
       return null;
     }
     // To start with, we whitelist only library rules
     // It makes no sense to add directories for java_imports and the like
-    if (!target.kind.isOneOf(Kind.JAVA_LIBRARY, Kind.ANDROID_LIBRARY, Kind.PROTO_LIBRARY)) {
+    if (!target.getKind().isOneOf(Kind.JAVA_LIBRARY, Kind.ANDROID_LIBRARY, Kind.PROTO_LIBRARY)) {
       return null;
     }
-    if (target.buildFile == null) {
+    if (target.getBuildFile() == null) {
       return null;
     }
-    File buildFile = new File(target.buildFile.getRelativePath());
+    File buildFile = new File(target.getBuildFile().getRelativePath());
     WorkspacePath workspacePath = new WorkspacePath(Strings.nullToEmpty(buildFile.getParent()));
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
     if (projectViewSet == null) {
@@ -127,13 +127,13 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
   @Nullable
   private static TargetKey findOriginatingTargetForLibrary(
       BlazeProjectData blazeProjectData, BlazeJarLibrary library) {
-    for (TargetIdeInfo target : blazeProjectData.targetMap.targets()) {
-      JavaIdeInfo javaIdeInfo = target.javaIdeInfo;
+    for (TargetIdeInfo target : blazeProjectData.getTargetMap().targets()) {
+      JavaIdeInfo javaIdeInfo = target.getJavaIdeInfo();
       if (javaIdeInfo == null) {
         continue;
       }
-      if (javaIdeInfo.jars.contains(library.libraryArtifact)) {
-        return target.key;
+      if (javaIdeInfo.getJars().contains(library.libraryArtifact)) {
+        return target.getKey();
       }
     }
     return null;

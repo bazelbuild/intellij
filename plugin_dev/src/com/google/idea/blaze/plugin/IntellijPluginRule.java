@@ -24,7 +24,7 @@ import javax.annotation.Nullable;
 public class IntellijPluginRule {
 
   public static boolean isPluginTarget(TargetIdeInfo target) {
-    return isPluginTargetKind(target.kind);
+    return isPluginTargetKind(target.getKind());
   }
 
   public static boolean isPluginTarget(TargetInfo target) {

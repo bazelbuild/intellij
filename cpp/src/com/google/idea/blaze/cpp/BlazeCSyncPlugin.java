@@ -57,7 +57,7 @@ final class BlazeCSyncPlugin implements BlazeSyncPlugin {
       BlazeProjectData blazeProjectData,
       Module workspaceModule,
       SyncMode syncMode) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C)) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C)) {
       return;
     }
 
@@ -74,7 +74,7 @@ final class BlazeCSyncPlugin implements BlazeSyncPlugin {
 
   @Override
   public void refreshVirtualFileSystem(BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C)) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C)) {
       return;
     }
     if (!refreshExecRoot.getValue()) {
@@ -89,7 +89,7 @@ final class BlazeCSyncPlugin implements BlazeSyncPlugin {
     // <li>Cidr caches the directory contents as part of symbol building, so we need to do this work
     // up front.
     VirtualFile execRoot =
-        VfsUtils.resolveVirtualFile(blazeProjectData.blazeInfo.getExecutionRoot());
+        VfsUtils.resolveVirtualFile(blazeProjectData.getBlazeInfo().getExecutionRoot());
     if (execRoot != null) {
       VfsUtil.markDirtyAndRefresh(false, true, true, execRoot);
     }

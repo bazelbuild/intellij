@@ -124,8 +124,7 @@ public class BlazeBuildService {
     FocusBehavior problemsViewFocus = BlazeUserSettings.getInstance().getShowProblemsViewOnRun();
     @SuppressWarnings("unused") // go/futurereturn-lsc
     Future<?> possiblyIgnoredError =
-        ProgressiveTaskWithProgressIndicator.builder(project)
-            .setTitle("Building targets")
+        ProgressiveTaskWithProgressIndicator.builder(project, "Building targets")
             .submitTaskWithResult(
                 new ScopedTask<Void>() {
                   @Override
@@ -155,7 +154,7 @@ public class BlazeBuildService {
                             context,
                             workspaceRoot,
                             projectViewSet,
-                            blazeProjectData.workspacePathResolver,
+                            blazeProjectData.getWorkspacePathResolver(),
                             targets);
                     if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
                       return null;
@@ -167,8 +166,8 @@ public class BlazeBuildService {
                                 context,
                                 workspaceRoot,
                                 projectViewSet,
-                                blazeProjectData.blazeVersionData,
-                                blazeProjectData.workspaceLanguageSettings,
+                                blazeProjectData.getBlazeVersionData(),
+                                blazeProjectData.getWorkspaceLanguageSettings(),
                                 shardedTargets.shardedTargets);
                     FileCaches.refresh(project);
 

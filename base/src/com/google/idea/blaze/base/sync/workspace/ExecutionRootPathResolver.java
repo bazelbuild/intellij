@@ -61,8 +61,8 @@ public class ExecutionRootPathResolver {
     return new ExecutionRootPathResolver(
         Blaze.getBuildSystem(project),
         WorkspaceRoot.fromProject(project),
-        projectData.blazeInfo.getExecutionRoot(),
-        projectData.workspacePathResolver);
+        projectData.getBlazeInfo().getExecutionRoot(),
+        projectData.getWorkspacePathResolver());
   }
 
   private static ImmutableList<String> buildArtifactDirectories(

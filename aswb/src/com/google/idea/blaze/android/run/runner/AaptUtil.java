@@ -34,32 +34,20 @@ import org.jetbrains.android.sdk.AndroidPlatform;
 
 /** A collection of utilities for extracting information from APKs using aapt. */
 public final class AaptUtil {
-
-  private static final Pattern DEBUGGABLE_PATTERN = Pattern.compile("^application-debuggable$");
-  private static final Pattern PACKAGE_PATTERN = Pattern.compile("^package: .*name='([\\w\\.]+)'");
-  private static final Pattern LAUNCHABLE_PATTERN =
-      Pattern.compile("^launchable-activity: .*name='([\\w\\.]+)'");
+  static final Pattern PACKAGE_PATTERN = Pattern.compile("^package:\\s+name='([\\w.]+)'");
 
   /** exception thrown by this class */
   public static class AaptUtilException extends Exception {
-    public AaptUtilException(String message) {
+    AaptUtilException(String message) {
       super(message);
     }
 
-    public AaptUtilException(String message, Throwable cause) {
+    AaptUtilException(String message, Throwable cause) {
       super(message, cause);
     }
   }
 
   private AaptUtil() {}
-
-  /**
-   * Determines whether the given APK is debuggable. Trying to debug a non-debuggable APK on a
-   * release-keys device will fail.
-   */
-  public static boolean isApkDebuggable(Project project, File apk) throws AaptUtilException {
-    return getAaptBadging(project, apk, DEBUGGABLE_PATTERN) != null;
-  }
 
   /** Determines the manifest package name for the given APK. */
   public static String getApkManifestPackage(Project project, File apk) throws AaptUtilException {
@@ -69,16 +57,6 @@ public final class AaptUtil {
           "No match found in `aapt dump badging` for package manifest pattern.");
     }
     return packageResult.group(1);
-  }
-
-  /** Determines the default launchable activity for the given apk. */
-  public static String getLaunchableActivity(Project project, File apk) throws AaptUtilException {
-    MatchResult activityResult = getAaptBadging(project, apk, LAUNCHABLE_PATTERN);
-    if (activityResult == null) {
-      throw new AaptUtilException(
-          "No match found in `aapt dump badging` for launchable activity pattern.");
-    }
-    return activityResult.group(1);
   }
 
   /**
@@ -115,15 +93,20 @@ public final class AaptUtil {
     BufferedReader reader =
         new BufferedReader(new InputStreamReader(handler.getProcess().getInputStream()));
     try {
-      String line;
-      while ((line = reader.readLine()) != null) {
-        Matcher matcher = pattern.matcher(line);
-        if (matcher.find()) {
-          return matcher.toMatchResult();
-        }
-      }
+      return matchPattern(reader, pattern);
     } catch (IOException e) {
       throw new AaptUtilException("Could not read aapt output.", e);
+    }
+  }
+
+  @Nullable
+  static MatchResult matchPattern(BufferedReader reader, Pattern pattern) throws IOException {
+    String line;
+    while ((line = reader.readLine()) != null) {
+      Matcher matcher = pattern.matcher(line);
+      if (matcher.find()) {
+        return matcher.toMatchResult();
+      }
     }
     return null;
   }

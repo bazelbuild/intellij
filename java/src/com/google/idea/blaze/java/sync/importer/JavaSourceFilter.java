@@ -25,9 +25,9 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
-import com.intellij.openapi.project.Project;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -47,12 +47,12 @@ public class JavaSourceFilter {
   final Set<String> jdepsPathsForExcludedJars = new HashSet<>();
 
   public JavaSourceFilter(
-      Project project,
+      BuildSystem buildSystem,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       TargetMap targetMap) {
     ProjectViewTargetImportFilter importFilter =
-        new ProjectViewTargetImportFilter(project, workspaceRoot, projectViewSet);
+        new ProjectViewTargetImportFilter(buildSystem, workspaceRoot, projectViewSet);
 
     List<TargetIdeInfo> excludedTargets =
         targetMap
@@ -66,23 +66,22 @@ public class JavaSourceFilter {
     includedTargets.removeAll(excludedTargets);
 
     List<TargetIdeInfo> javaTargets =
-        includedTargets
-            .stream()
-            .filter(target -> target.javaIdeInfo != null)
+        includedTargets.stream()
+            .filter(target -> target.getJavaIdeInfo() != null)
             .collect(Collectors.toList());
 
     targetToJavaSources = Maps.newHashMap();
     Predicate<ArtifactLocation> isSourceFile = JavaLikeLanguage.getSourceFileMatcher();
     for (TargetIdeInfo target : javaTargets) {
       List<ArtifactLocation> javaLikeSources =
-          target.sources.stream().filter(isSourceFile).collect(Collectors.toList());
-      targetToJavaSources.put(target.key, javaLikeSources);
+          target.getSources().stream().filter(isSourceFile).collect(Collectors.toList());
+      targetToJavaSources.put(target.getKey(), javaLikeSources);
     }
 
     sourceTargets = Lists.newArrayList();
     libraryTargets = Lists.newArrayList();
     for (TargetIdeInfo target : javaTargets) {
-      if (importAsSource(importFilter, target, targetToJavaSources.get(target.key))) {
+      if (importAsSource(importFilter, target, targetToJavaSources.get(target.getKey()))) {
         sourceTargets.add(target);
         jdepsPathsForExcludedJars.addAll(relativeArtifactPaths(target));
       } else {
@@ -103,9 +102,7 @@ public class JavaSourceFilter {
   public static boolean importAsSource(
       ProjectViewTargetImportFilter importFilter, TargetIdeInfo target) {
     Collection<ArtifactLocation> javaSources =
-        target
-            .sources
-            .stream()
+        target.getSources().stream()
             .filter(JavaLikeLanguage.getSourceFileMatcher())
             .collect(Collectors.toList());
     return importAsSource(importFilter, target, javaSources);
@@ -125,22 +122,19 @@ public class JavaSourceFilter {
   }
 
   private List<String> relativeArtifactPaths(TargetIdeInfo target) {
-    if (target.javaIdeInfo == null) {
+    if (target.getJavaIdeInfo() == null) {
       return ImmutableList.of();
     }
-    return target
-        .javaIdeInfo
-        .jars
-        .stream()
+    return target.getJavaIdeInfo().getJars().stream()
         .flatMap(j -> relativeArtifactPaths(j).stream())
         .collect(Collectors.toList());
   }
 
   private List<String> relativeArtifactPaths(LibraryArtifact jar) {
     List<String> list = new ArrayList<>();
-    addRelativePath(list, jar.classJar);
-    addRelativePath(list, jar.interfaceJar);
-    jar.sourceJars.forEach(a -> addRelativePath(list, a));
+    addRelativePath(list, jar.getClassJar());
+    addRelativePath(list, jar.getInterfaceJar());
+    jar.getSourceJars().forEach(a -> addRelativePath(list, a));
     return list;
   }
 

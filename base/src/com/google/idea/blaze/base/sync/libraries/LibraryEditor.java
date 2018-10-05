@@ -64,7 +64,7 @@ public class LibraryEditor {
       for (BlazeLibrary library : libraries) {
         updateLibrary(
             project,
-            blazeProjectData.artifactLocationDecoder,
+            blazeProjectData.getArtifactLocationDecoder(),
             libraryTable,
             libraryTableModel,
             library);

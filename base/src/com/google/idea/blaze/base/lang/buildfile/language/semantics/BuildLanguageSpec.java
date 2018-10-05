@@ -42,15 +42,19 @@ public class BuildLanguageSpec implements Serializable {
     return new BuildLanguageSpec(builder.build());
   }
 
-  public final ImmutableMap<String, RuleDefinition> rules;
+  private final ImmutableMap<String, RuleDefinition> rules;
 
   @VisibleForTesting
   public BuildLanguageSpec(ImmutableMap<String, RuleDefinition> rules) {
     this.rules = rules;
   }
 
+  public ImmutableMap<String, RuleDefinition> getRules() {
+    return rules;
+  }
+
   public ImmutableSet<String> getKnownRuleNames() {
-    return rules.keySet();
+    return getRules().keySet();
   }
 
   public boolean hasRule(@Nullable String ruleName) {
@@ -59,6 +63,6 @@ public class BuildLanguageSpec implements Serializable {
 
   @Nullable
   public RuleDefinition getRule(@Nullable String ruleName) {
-    return ruleName != null ? rules.get(ruleName) : null;
+    return ruleName != null ? getRules().get(ruleName) : null;
   }
 }

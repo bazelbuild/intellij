@@ -44,9 +44,9 @@ public class BazelPyGenfilesImportResolverStrategy extends AbstractPyImportResol
   @Override
   protected QualifiedName toImportString(ArtifactLocation source) {
     // TODO(brendandouglas): handle references to external workspaces
-    if (source.isExternal || source.isSource || !source.relativePath.endsWith(".py")) {
+    if (source.isExternal() || source.isSource() || !source.getRelativePath().endsWith(".py")) {
       return null;
     }
-    return fromRelativePath(source.relativePath);
+    return fromRelativePath(source.getRelativePath());
   }
 }

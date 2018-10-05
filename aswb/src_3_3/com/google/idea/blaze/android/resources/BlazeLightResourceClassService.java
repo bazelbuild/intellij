@@ -15,8 +15,9 @@
  */
 package com.google.idea.blaze.android.resources;
 
+import com.android.builder.model.AaptOptions;
+import com.android.tools.idea.projectsystem.LightResourceClassService;
 import com.android.tools.idea.res.AndroidLightPackage;
-import com.android.tools.idea.res.LightResourceClassService;
 import com.android.tools.idea.res.ModulePackageRClass;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -28,6 +29,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +64,8 @@ public class BlazeLightResourceClassService implements LightResourceClassService
     }
 
     public void addRClass(String resourceJavaPackage, Module module) {
-      ModulePackageRClass rClass = new ModulePackageRClass(psiManager, resourceJavaPackage, module);
+      ModulePackageRClass rClass =
+          new ModulePackageRClass(psiManager, module, AaptOptions.Namespacing.DISABLED);
       rClassMap.put(getQualifiedRClassName(resourceJavaPackage), rClass);
       if (CREATE_STUB_RESOURCE_PACKAGES.getValue()) {
         addStubPackages(resourceJavaPackage);
@@ -109,9 +112,29 @@ public class BlazeLightResourceClassService implements LightResourceClassService
     return ImmutableList.of();
   }
 
+  @NotNull
+  @Override
+  public Collection<? extends PsiClass> getLightRClassesAccessibleFromModule(
+      @NotNull Module module) {
+    return rClasses.values();
+  }
+
+  @NotNull
+  @Override
+  public Collection<? extends PsiClass> getLightRClassesContainingModuleResources(
+      @NotNull Module module) {
+    return rClasses.values();
+  }
+
   @Override
   @Nullable
   public PsiPackage findRClassPackage(@NotNull String qualifiedName) {
     return rClassPackages.get(qualifiedName);
+  }
+
+  @Override
+  @NotNull
+  public Collection<? extends PsiClass> getAllLightRClasses() {
+    return rClasses.values();
   }
 }

@@ -28,7 +28,7 @@ public class BlazeHotSwapAction extends AnAction {
 
   private static final String ACTION_ID = "Hotswap";
 
-  static class Initializer extends ApplicationComponent.Adapter {
+  static class Initializer implements ApplicationComponent {
     @Override
     public void initComponent() {
       AnAction delegate = ActionManager.getInstance().getAction(ACTION_ID);

@@ -80,8 +80,9 @@ public class BlazeModuleSystem implements AndroidModuleSystem {
       return;
     }
     AndroidResourceModuleRegistry registry = AndroidResourceModuleRegistry.getInstance(project);
-    TargetIdeInfo targetIdeInfo = blazeProjectData.targetMap.get(registry.getTargetKey(module));
-    if (targetIdeInfo == null || targetIdeInfo.buildFile == null) {
+    TargetIdeInfo targetIdeInfo =
+        blazeProjectData.getTargetMap().get(registry.getTargetKey(module));
+    if (targetIdeInfo == null || targetIdeInfo.getBuildFile() == null) {
       return;
     }
 
@@ -90,7 +91,7 @@ public class BlazeModuleSystem implements AndroidModuleSystem {
     // Will probably need to hardcode for each dependency.
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
     PsiElement buildTargetPsi =
-        BuildReferenceManager.getInstance(project).resolveLabel(targetIdeInfo.key.label);
+        BuildReferenceManager.getInstance(project).resolveLabel(targetIdeInfo.getKey().getLabel());
     if (buildTargetPsi != null) {
       // If we can find a PSI for the target,
       // then we can jump straight to the target in the build file.
@@ -102,7 +103,8 @@ public class BlazeModuleSystem implements AndroidModuleSystem {
           true);
     } else {
       // If not, just the build file is good enough.
-      File buildIoFile = blazeProjectData.artifactLocationDecoder.decode(targetIdeInfo.buildFile);
+      File buildIoFile =
+          blazeProjectData.getArtifactLocationDecoder().decode(targetIdeInfo.getBuildFile());
       VirtualFile buildVirtualFile = VfsUtils.resolveVirtualFile(buildIoFile);
       if (buildVirtualFile != null) {
         fileEditorManager.openFile(buildVirtualFile, true);
@@ -135,11 +137,11 @@ public class BlazeModuleSystem implements AndroidModuleSystem {
     }
 
     boolean projectHasDependency =
-        MavenArtifactLocator.forBuildSystem(Blaze.getBuildSystem(module.getProject()))
-            .stream()
+        MavenArtifactLocator.forBuildSystem(Blaze.getBuildSystem(module.getProject())).stream()
             .map(locator -> locator.labelFor(coordinate))
             .filter(Objects::nonNull)
-            .anyMatch(label -> projectData.targetMap.contains(TargetKey.forPlainTarget(label)));
+            .anyMatch(
+                label -> projectData.getTargetMap().contains(TargetKey.forPlainTarget(label)));
 
     return projectHasDependency ? coordinate : null;
   }

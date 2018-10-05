@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.lang;
 
-import static com.google.idea.common.guava.GuavaHelper.toImmutableSet;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -104,7 +104,7 @@ public class AdditionalLanguagesHelper
     if (projectData == null) {
       return null;
     }
-    WorkspaceLanguageSettings settings = projectData.workspaceLanguageSettings;
+    WorkspaceLanguageSettings settings = projectData.getWorkspaceLanguageSettings();
     if (settings.isLanguageActive(language)) {
       return null;
     }

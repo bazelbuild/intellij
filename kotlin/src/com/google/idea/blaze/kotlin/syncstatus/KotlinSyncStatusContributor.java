@@ -31,7 +31,7 @@ class KotlinSyncStatusContributor implements SyncStatusContributor {
   @Nullable
   @Override
   public PsiFileAndName toPsiFileAndName(BlazeProjectData projectData, ProjectViewNode<?> node) {
-    if (!projectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
+    if (!projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.KOTLIN)) {
       return null;
     }
     if (node instanceof KtFileTreeNode) {
@@ -47,7 +47,7 @@ class KotlinSyncStatusContributor implements SyncStatusContributor {
 
   @Override
   public boolean handlesFile(BlazeProjectData projectData, VirtualFile file) {
-    return projectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)
+    return projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.KOTLIN)
         && file.getName().endsWith(".kt");
   }
 }

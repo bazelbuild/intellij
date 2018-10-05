@@ -23,19 +23,23 @@ import javax.annotation.Nullable;
 public class TestIdeInfo implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  public final TestSize testSize;
+  private final TestSize testSize;
 
   public TestIdeInfo(TestSize testSize) {
     this.testSize = testSize;
   }
 
+  public TestSize getTestSize() {
+    return testSize;
+  }
+
   @Nullable
   public static TestSize getTestSize(TargetIdeInfo target) {
-    TestIdeInfo testIdeInfo = target.testIdeInfo;
+    TestIdeInfo testIdeInfo = target.getTestIdeInfo();
     if (testIdeInfo == null) {
       return null;
     }
-    return testIdeInfo.testSize;
+    return testIdeInfo.getTestSize();
   }
 
   public static Builder builder() {

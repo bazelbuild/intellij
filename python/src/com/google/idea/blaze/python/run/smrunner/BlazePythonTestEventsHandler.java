@@ -45,6 +45,11 @@ public class BlazePythonTestEventsHandler implements BlazeTestEventsHandler {
 
   @Override
   public String testDisplayName(@Nullable Kind kind, String rawName) {
+    // Parameterized tests contain parentheses
+    if (rawName.contains("(")) {
+      return rawName;
+    }
+    // For non-parameterized, name will be fully-qualified classname. We only need last component.
     int lastDotIndex = rawName.lastIndexOf('.');
     return lastDotIndex != -1 ? rawName.substring(lastDotIndex + 1) : rawName;
   }

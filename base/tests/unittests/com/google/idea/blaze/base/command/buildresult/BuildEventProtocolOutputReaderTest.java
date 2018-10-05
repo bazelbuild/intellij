@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.idea.common.guava.GuavaHelper.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -171,6 +171,38 @@ public class BuildEventProtocolOutputReaderTest {
             .addAll(fileSet2)
             .build()
             .stream()
+            .map(File::new)
+            .collect(toImmutableList());
+
+    ImmutableList<File> parsedFilenames =
+        BuildEventProtocolOutputReader.parseAllOutputFilenames(asInputStream(events), path -> true);
+
+    assertThat(parsedFilenames).containsExactlyElementsIn(allFiles).inOrder();
+  }
+
+  @Test
+  public void parseAllOutputFilenames_streamWithDuplicateFiles_returnsUniqueFilenames()
+      throws IOException {
+    ImmutableList<String> fileSet1 = ImmutableList.of("/usr/out/genfiles/foo.pb.h");
+
+    ImmutableList<String> fileSet2 =
+        ImmutableList.of("/usr/out/genfiles/foo.pb.h", "/usr/out/genfiles/foo.proto.h");
+
+    List<BuildEvent.Builder> events =
+        ImmutableList.of(
+            BuildEvent.newBuilder()
+                .setStarted(BuildEventStreamProtos.BuildStarted.getDefaultInstance()),
+            BuildEvent.newBuilder()
+                .setProgress(BuildEventStreamProtos.Progress.getDefaultInstance()),
+            BuildEvent.newBuilder().setNamedSetOfFiles(setOfFiles(fileSet1)),
+            BuildEvent.newBuilder()
+                .setProgress(BuildEventStreamProtos.Progress.getDefaultInstance()),
+            BuildEvent.newBuilder().setNamedSetOfFiles(setOfFiles(fileSet2)),
+            BuildEvent.newBuilder()
+                .setCompleted(BuildEventStreamProtos.TargetComplete.getDefaultInstance()));
+
+    ImmutableList<File> allFiles =
+        ImmutableSet.of("/usr/out/genfiles/foo.pb.h", "/usr/out/genfiles/foo.proto.h").stream()
             .map(File::new)
             .collect(toImmutableList());
 

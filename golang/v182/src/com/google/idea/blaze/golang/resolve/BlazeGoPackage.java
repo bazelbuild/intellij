@@ -32,7 +32,9 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
+import com.google.idea.blaze.base.ui.problems.BlazeProblemsView;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,31 +73,56 @@ public class BlazeGoPackage extends GoPackage {
   @Nullable private transient PsiElement[] cachedImportReferences;
 
   public static BlazeGoPackage create(
-      Project project, BlazeProjectData projectData, String importPath, TargetIdeInfo target) {
+      Project project,
+      BlazeProjectData projectData,
+      String importPath,
+      Collection<TargetIdeInfo> targets) {
     return new BlazeGoPackage(
         project,
         importPath,
-        target.kind.ruleType == RuleType.TEST,
-        target.key.label,
-        getSourceFiles(target, projectData));
+        isTestsOnly(targets),
+        getRepresentativeLabel(targets),
+        getSourceFiles(targets, projectData));
+  }
+
+  private static boolean isTestsOnly(Collection<TargetIdeInfo> targets) {
+    return targets.stream()
+        .map(TargetIdeInfo::getKind)
+        .map(kind -> kind.ruleType)
+        .allMatch(ruleType -> ruleType == RuleType.TEST);
+  }
+
+  private static Label getRepresentativeLabel(Collection<TargetIdeInfo> targets) {
+    for (TargetIdeInfo target : targets) {
+      if (target.getKind().ruleType != RuleType.TEST) {
+        return target.getKey().getLabel();
+      }
+    }
+    return targets.iterator().next().getKey().getLabel();
+  }
+
+  private static Collection<File> getSourceFiles(
+      Collection<TargetIdeInfo> targets, BlazeProjectData projectData) {
+    return targets.stream()
+        .map(target -> getSourceFiles(target, projectData))
+        .flatMap(Collection::stream)
+        .collect(Collectors.toSet());
   }
 
   public static Collection<File> getSourceFiles(
       TargetIdeInfo target, BlazeProjectData projectData) {
-    if (target.kind == Kind.GO_WRAP_CC) {
-      return ImmutableList.of(getWrapCcGoFile(target, projectData.blazeInfo));
+    if (target.getKind() == Kind.GO_WRAP_CC) {
+      return ImmutableList.of(getWrapCcGoFile(target, projectData.getBlazeInfo()));
     }
-    return Preconditions.checkNotNull(target.goIdeInfo)
-        .sources
-        .stream()
-        .map(projectData.artifactLocationDecoder::decode)
+    return Preconditions.checkNotNull(target.getGoIdeInfo()).getSources().stream()
+        .map(projectData.getArtifactLocationDecoder()::decode)
         .collect(Collectors.toList());
   }
 
   private static File getWrapCcGoFile(TargetIdeInfo target, BlazeInfo blazeInfo) {
-    String blazePackage = target.key.label.blazePackage().relativePath();
+    String blazePackage = target.getKey().getLabel().blazePackage().relativePath();
     File directory = new File(blazeInfo.getGenfilesDirectory(), blazePackage);
-    String filename = blazePackage + '/' + target.key.label.targetName() + ".go";
+    String filename = blazePackage + '/' + target.getKey().getLabel().targetName() + ".go";
     filename = filename.replace("_", "__");
     filename = filename.replace('/', '_');
     return new File(directory, filename);
@@ -115,8 +142,7 @@ public class BlazeGoPackage extends GoPackage {
   }
 
   private static VirtualFile[] getDirectories(Collection<File> files) {
-    return files
-        .stream()
+    return files.stream()
         .map(File::getParentFile)
         .filter(Objects::nonNull)
         .distinct()
@@ -130,14 +156,29 @@ public class BlazeGoPackage extends GoPackage {
     if (cachedGoFiles == null) {
       PsiManager psiManager = PsiManager.getInstance(getProject());
       cachedGoFiles =
-          files
-              .stream()
+          files.stream()
               .map(VfsUtils::resolveVirtualFile)
               .filter(Objects::nonNull)
               .map(psiManager::findFile)
               .filter(GoFile.class::isInstance)
               .map(GoFile.class::cast)
               .collect(Collectors.toList());
+      for (GoFile file : cachedGoFiles) {
+        String filePackageName = file.getPackageName();
+        if (!Objects.equals(filePackageName, getName())) {
+          BlazeProblemsView.getInstance(getProject())
+              .addMessage(
+                  IssueOutput.warn(
+                          "Invalid package name \""
+                              + filePackageName
+                              + "\" in file "
+                              + file.getName()
+                              + " belonging to target "
+                              + label)
+                      .build(),
+                  (Navigatable) file.getPackage());
+        }
+      }
     }
     return cachedGoFiles;
   }

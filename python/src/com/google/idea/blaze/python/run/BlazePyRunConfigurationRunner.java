@@ -24,6 +24,8 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -290,7 +292,8 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       throw new WithBrowserHyperlinkExecutionException(validationError);
     }
 
-    try (BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true)) {
+    try (BuildResultHelper buildResultHelper =
+        BuildResultHelperProvider.forFiles(project, file -> true)) {
 
       ListenableFuture<BuildResult> buildOperation =
           BlazeBeforeRunCommandHelper.runBlazeBuild(
@@ -315,12 +318,18 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       } catch (java.util.concurrent.ExecutionException e) {
         throw new ExecutionException(e);
       }
-      List<File> candidateFiles =
-          buildResultHelper
-              .getBuildArtifactsForTarget((Label) configuration.getTarget())
-              .stream()
-              .filter(File::canExecute)
-              .collect(Collectors.toList());
+      List<File> candidateFiles;
+      try {
+        candidateFiles =
+            buildResultHelper.getBuildArtifactsForTarget((Label) configuration.getTarget()).stream()
+                .filter(File::canExecute)
+                .collect(Collectors.toList());
+      } catch (GetArtifactsException e) {
+        throw new ExecutionException(
+            String.format(
+                "Failed to get output artifacts when building %s: %s",
+                configuration.getTarget(), e.getMessage()));
+      }
       if (candidateFiles.isEmpty()) {
         throw new ExecutionException(
             String.format("No output artifacts found when building %s", configuration.getTarget()));

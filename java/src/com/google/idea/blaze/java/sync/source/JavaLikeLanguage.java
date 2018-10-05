@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.java.sync.source;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -23,7 +25,6 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.java.run.BlazeJavaDebuggerRunner;
 import com.google.idea.blaze.java.run.BlazeJavaTestEventsHandler;
 import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
-import com.google.idea.common.guava.GuavaHelper;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,7 +43,7 @@ public interface JavaLikeLanguage {
   static ImmutableSet<LanguageClass> getAllJavaLikeLanguages() {
     return Arrays.stream(EP_NAME.getExtensions())
         .map(JavaLikeLanguage::getLanguageClass)
-        .collect(GuavaHelper.toImmutableSet());
+        .collect(toImmutableSet());
   }
 
   static Predicate<ArtifactLocation> getSourceFileMatcher() {
@@ -61,14 +62,14 @@ public interface JavaLikeLanguage {
     return Arrays.stream(EP_NAME.getExtensions())
         .map(JavaLikeLanguage::getDebuggableKinds)
         .flatMap(Collection::stream)
-        .collect(GuavaHelper.toImmutableSet());
+        .collect(toImmutableSet());
   }
 
   static ImmutableSet<Kind> getAllHandledTestKinds() {
     return Arrays.stream(EP_NAME.getExtensions())
         .map(JavaLikeLanguage::getHandledTestKinds)
         .flatMap(Collection::stream)
-        .collect(GuavaHelper.toImmutableSet());
+        .collect(toImmutableSet());
   }
 
   static boolean canImportAsSource(TargetIdeInfo target) {

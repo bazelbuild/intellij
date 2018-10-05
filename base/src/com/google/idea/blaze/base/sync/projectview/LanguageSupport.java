@@ -86,7 +86,7 @@ public class LanguageSupport {
       availableLanguages.addAll(supportedLanguagesForWorkspaceType(type));
     }
 
-    for (LanguageClass languageClass : languageSettings.activeLanguages) {
+    for (LanguageClass languageClass : languageSettings.getActiveLanguages()) {
       if (!availableLanguages.contains(languageClass)) {
         IssueOutput.error(
                 String.format(

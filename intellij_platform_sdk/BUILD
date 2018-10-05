@@ -38,6 +38,20 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-2018.3",
+    values = {
+        "define": "ij_product=intellij-2018.3",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2018.3",
+    values = {
+        "define": "ij_product=intellij-ue-2018.3",
+    },
+)
+
+config_setting(
     name = "intellij-2018.2",
     values = {
         "define": "ij_product=intellij-2018.2",
@@ -97,13 +111,6 @@ config_setting(
     name = "android-studio-3.2",
     values = {
         "define": "ij_product=android-studio-3.2",
-    },
-)
-
-config_setting(
-    name = "android-studio-3.0",
-    values = {
-        "define": "ij_product=android-studio-3.0",
     },
 )
 

@@ -79,7 +79,7 @@ class DetachAllSourceJarsAction extends BlazeProjectAction {
             }
             LibraryEditor.updateLibrary(
                 project,
-                blazeProjectData.artifactLocationDecoder,
+                blazeProjectData.getArtifactLocationDecoder(),
                 libraryTable,
                 libraryTableModel,
                 blazeLibrary);

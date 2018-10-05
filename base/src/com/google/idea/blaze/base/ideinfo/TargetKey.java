@@ -28,12 +28,20 @@ import java.util.List;
 public class TargetKey implements Serializable, Comparable<TargetKey> {
   private static final long serialVersionUID = 3L;
 
-  public final Label label;
+  private final Label label;
   private final ImmutableList<String> aspectIds;
 
   private TargetKey(Label label, ImmutableList<String> aspectIds) {
     this.label = label;
     this.aspectIds = aspectIds;
+  }
+
+  public Label getLabel() {
+    return label;
+  }
+
+  private ImmutableList<String> getAspectIds() {
+    return aspectIds;
   }
 
   /** Returns a key identifying a plain target */
@@ -50,7 +58,7 @@ public class TargetKey implements Serializable, Comparable<TargetKey> {
   }
 
   public boolean isPlainTarget() {
-    return aspectIds.isEmpty();
+    return getAspectIds().isEmpty();
   }
 
   @Override
@@ -62,27 +70,28 @@ public class TargetKey implements Serializable, Comparable<TargetKey> {
       return false;
     }
     TargetKey key = (TargetKey) o;
-    return Objects.equal(label, key.label) && Objects.equal(aspectIds, key.aspectIds);
+    return Objects.equal(getLabel(), key.getLabel())
+        && Objects.equal(getAspectIds(), key.getAspectIds());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(label, aspectIds);
+    return Objects.hashCode(getLabel(), getAspectIds());
   }
 
   @Override
   public String toString() {
-    if (aspectIds.isEmpty()) {
-      return label.toString();
+    if (getAspectIds().isEmpty()) {
+      return getLabel().toString();
     }
-    return label.toString() + "#" + Joiner.on('#').join(aspectIds);
+    return getLabel().toString() + "#" + Joiner.on('#').join(getAspectIds());
   }
 
   @Override
   public int compareTo(TargetKey o) {
     return ComparisonChain.start()
-        .compare(label, o.label)
-        .compare(aspectIds, o.aspectIds, Ordering.natural().lexicographical())
+        .compare(getLabel(), o.getLabel())
+        .compare(getAspectIds(), o.getAspectIds(), Ordering.natural().lexicographical())
         .result();
   }
 }

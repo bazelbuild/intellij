@@ -59,7 +59,8 @@ class BlazeCreateResourceUtils {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData != null) {
-      BlazeAndroidSyncData syncData = blazeProjectData.syncState.get(BlazeAndroidSyncData.class);
+      BlazeAndroidSyncData syncData =
+          blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
       if (syncData != null) {
         ImmutableCollection<TargetKey> rulesRelatedToContext = null;
         File fileFromContext = null;
@@ -72,7 +73,8 @@ class BlazeCreateResourceUtils {
           }
         }
 
-        ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.artifactLocationDecoder;
+        ArtifactLocationDecoder artifactLocationDecoder =
+            blazeProjectData.getArtifactLocationDecoder();
 
         // Sort:
         // - contextFile/res if contextFile is a directory,

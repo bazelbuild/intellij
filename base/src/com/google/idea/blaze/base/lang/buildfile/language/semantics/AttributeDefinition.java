@@ -41,10 +41,10 @@ public class AttributeDefinition implements Comparable<AttributeDefinition>, Ser
     return ImmutableList.copyOf(attr.getAllowedRuleClasses().getAllowedRuleClassList());
   }
 
-  public final String name;
-  public final Build.Attribute.Discriminator type;
-  public final boolean mandatory;
-  public final String documentation;
+  private final String name;
+  private final Build.Attribute.Discriminator type;
+  private final boolean mandatory;
+  private final String documentation;
 
   // the names of rules allowed in this attribute, or null if any rules are allowed.
   @Nullable private final ImmutableList<String> allowedRuleClasses;
@@ -64,19 +64,35 @@ public class AttributeDefinition implements Comparable<AttributeDefinition>, Ser
     this.allowedRuleClasses = allowedRuleClasses;
   }
 
+  public String getName() {
+    return name;
+  }
+
+  public Build.Attribute.Discriminator getType() {
+    return type;
+  }
+
+  public boolean isMandatory() {
+    return mandatory;
+  }
+
+  public String getDocumentation() {
+    return documentation;
+  }
+
   /**
    * Only relevant for attributes of type LABEL and LABEL_LIST. Some such attributes can only
    * contain certain rule types.
    */
   public boolean isRuleTypeAllowed(RuleDefinition rule) {
-    return allowedRuleClasses == null || allowedRuleClasses.contains(rule.name);
+    return allowedRuleClasses == null || allowedRuleClasses.contains(rule.getName());
   }
 
   @Override
   public int compareTo(AttributeDefinition other) {
-    if (mandatory != other.mandatory) {
-      return mandatory ? -1 : 1;
+    if (isMandatory() != other.isMandatory()) {
+      return isMandatory() ? -1 : 1;
     }
-    return name.compareTo(other.name);
+    return getName().compareTo(other.getName());
   }
 }

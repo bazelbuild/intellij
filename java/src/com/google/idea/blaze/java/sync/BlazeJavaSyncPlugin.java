@@ -125,9 +125,9 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
           new JavaWorkingSet(
               workspaceRoot, workingSet, Blaze.getBuildSystemProvider(project)::isBuildFile);
     }
-
     JavaSourceFilter sourceFilter =
-        new JavaSourceFilter(project, workspaceRoot, projectViewSet, targetMap);
+        new JavaSourceFilter(
+            Blaze.getBuildSystem(project), workspaceRoot, projectViewSet, targetMap);
 
     JdepsMap jdepsMap =
         jdepsFileReader.loadJdepsFiles(
@@ -175,7 +175,7 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
       BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.JAVA)) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isWorkspaceType(WorkspaceType.JAVA)) {
       return;
     }
     updateJdk(project, context, projectViewSet, blazeProjectData);
@@ -184,10 +184,10 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
   @Nullable
   @Override
   public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
-    if (!projectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.JAVA)) {
+    if (!projectData.getWorkspaceLanguageSettings().isWorkspaceType(WorkspaceType.JAVA)) {
       return null;
     }
-    return new JavaSourceFolderProvider(projectData.syncState.get(BlazeJavaSyncData.class));
+    return new JavaSourceFolderProvider(projectData.getSyncState().get(BlazeJavaSyncData.class));
   }
 
   private static void updateJdk(
@@ -228,7 +228,7 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
   @Override
   public boolean validate(
       Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
-    BlazeJavaSyncData syncData = blazeProjectData.syncState.get(BlazeJavaSyncData.class);
+    BlazeJavaSyncData syncData = blazeProjectData.getSyncState().get(BlazeJavaSyncData.class);
     if (syncData == null) {
       return true;
     }
@@ -248,7 +248,7 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
   @Override
   public LibrarySource getLibrarySource(
       ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVA)) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.JAVA)) {
       return null;
     }
     return new BlazeJavaLibrarySource(blazeProjectData);
@@ -260,14 +260,14 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
    * project.
    */
   private static void warnAboutDeployJars(BlazeContext context, BlazeJavaSyncData syncData) {
-    for (BlazeLibrary library : syncData.importResult.libraries.values()) {
+    for (BlazeLibrary library : syncData.getImportResult().libraries.values()) {
       if (!(library instanceof BlazeJarLibrary)) {
         continue;
       }
       BlazeJarLibrary jarLibrary = (BlazeJarLibrary) library;
       LibraryArtifact libraryArtifact = jarLibrary.libraryArtifact;
       ArtifactLocation artifactLocation = libraryArtifact.jarForIntellijLibrary();
-      if (artifactLocation.isExternal) {
+      if (artifactLocation.isExternal()) {
         return;
       }
       if (artifactLocation.getRelativePath().endsWith("deploy.jar")

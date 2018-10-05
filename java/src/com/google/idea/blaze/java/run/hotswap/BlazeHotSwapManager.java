@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.java.run.hotswap;
 
-import static com.google.idea.common.guava.GuavaHelper.toImmutableMap;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;

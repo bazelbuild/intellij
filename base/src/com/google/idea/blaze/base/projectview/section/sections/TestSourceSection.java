@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.projectview.section.GlobSectionParser;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 
 /** Section for configuring test sources. */
 public class TestSourceSection {
@@ -28,8 +29,10 @@ public class TestSourceSection {
       new GlobSectionParser(KEY) {
         @Override
         public String quickDocs() {
-          return "A list of workspace-relative glob patterns. Determines which sources IntelliJ "
-              + "treats as test sources.";
+          return String.format(
+              "A list of workspace-relative glob patterns. "
+                  + "Determines which sources %s treats as test sources.",
+              ApplicationNamesInfo.getInstance().getFullProductName());
         }
       };
 }

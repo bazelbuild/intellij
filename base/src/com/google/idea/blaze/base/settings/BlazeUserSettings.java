@@ -68,6 +68,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   @Deprecated private boolean suppressConsoleForRunAction = false;
   @Deprecated private boolean showProblemsViewForRunAction = false;
   private boolean resyncAutomatically = false;
+  private boolean resyncOnProtoChanges = false;
   private boolean syncStatusPopupShown = false;
   private boolean expandSyncToWorkingSet = true;
   private boolean showPerformanceWarnings = false;
@@ -105,8 +106,21 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
     this.resyncAutomatically = resyncAutomatically;
   }
 
+  /**
+   * Whether we should re-sync on changes to BUILD and project view files.
+   *
+   * <p>TODO(brendandouglas): change name and migrate settings.
+   */
   public boolean getResyncAutomatically() {
     return resyncAutomatically;
+  }
+
+  public void setResyncOnProtoChanges(boolean resyncOnProtoChanges) {
+    this.resyncOnProtoChanges = resyncOnProtoChanges;
+  }
+
+  public boolean getResyncOnProtoChanges() {
+    return resyncOnProtoChanges;
   }
 
   public FocusBehavior getShowBlazeConsoleOnSync() {
@@ -207,6 +221,10 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
 
   public void setBlazeBinaryPath(String blazeBinaryPath) {
     this.blazeBinaryPath = StringUtil.defaultIfEmpty(blazeBinaryPath, DEFAULT_BLAZE_PATH).trim();
+  }
+
+  public boolean isDefaultBlazePath() {
+    return DEFAULT_BLAZE_PATH.equals(getBlazeBinaryPath());
   }
 
   public String getBazelBinaryPath() {

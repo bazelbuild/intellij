@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -44,8 +45,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.ui.UiUtil;
-import com.google.idea.sdkcompat.run.RunManagerCompatUtils;
-import com.intellij.execution.BeforeRunTask;
+import com.google.idea.sdkcompat.run.RunConfigurationBaseCompat;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerIconProvider;
@@ -89,8 +89,8 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
    * Attributes or tags which are common to all run configuration types. We don't want to interfere
    * with the (de)serialization of these.
    *
-   * <p>TODO(brendandouglas): remove once we are fully migrated to serializing blaze-specific
-   * settings under a common parent.
+   * <p>This is here for backwards compatibility deserializing older-style run configurations
+   * without the top-level BLAZE_SETTINGS_TAG element.
    */
   private static final ImmutableSet<String> COMMON_SETTINGS =
       ImmutableSet.of(
@@ -306,14 +306,17 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     if (error != null) {
       throw new RuntimeConfigurationError(error);
     }
-    for (BeforeRunTask task : RunManagerCompatUtils.getBeforeRunTasks(this)) {
-      if (task.getProviderId().equals(BlazeBeforeRunTaskProvider.ID) && !task.isEnabled()) {
-        throw new RuntimeConfigurationError(
-            String.format(
-                "Invalid run configuration: the %s before run task is missing. Please re-run sync "
-                    + "to add it back",
-                Blaze.buildSystemName(getProject())));
-      }
+    boolean hasBlazeBeforeRunTask =
+        RunConfigurationBaseCompat.getAllBeforeRunTasks(this).stream()
+            .anyMatch(
+                task ->
+                    task.getProviderId().equals(BlazeBeforeRunTaskProvider.ID) && task.isEnabled());
+    if (!hasBlazeBeforeRunTask) {
+      throw new RuntimeConfigurationError(
+          String.format(
+              "Invalid run configuration: the %s before run task is missing. Please re-run sync "
+                  + "to add it back",
+              Blaze.buildSystemName(getProject())));
     }
     handler.checkConfiguration();
   }
@@ -577,13 +580,12 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
                   WorkspaceRoot.fromImportSettings(importSettings), importSettings.getBuildSystem())
               .add(projectViewSet)
               .build();
-      return projectData
-          .targetMap
-          .targets()
-          .stream()
+      return projectData.getTargetMap().targets().stream()
           .filter(TargetIdeInfo::isPlainTarget)
-          .filter(target -> importRoots.importAsSource(target.key.label))
-          .map(target -> target.key.label.toString())
+          .map(TargetIdeInfo::getKey)
+          .map(TargetKey::getLabel)
+          .filter(importRoots::importAsSource)
+          .map(TargetExpression::toString)
           .collect(toList());
     }
   }

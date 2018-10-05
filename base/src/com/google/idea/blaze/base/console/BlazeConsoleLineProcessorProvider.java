@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.console;
 
-import static com.google.idea.common.guava.GuavaHelper.toImmutableList;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream.LineProcessor;

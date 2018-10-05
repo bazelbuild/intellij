@@ -61,7 +61,7 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
     BlazeProjectData projectData = projectDataManager.getBlazeProjectData();
     checkState(projectData != null, "not a blaze project");
     return createCompiler(
-        projectData.artifactLocationDecoder.decode(javaToolchain.javacJar()),
+        projectData.getArtifactLocationDecoder().decode(javaToolchain.javacJar()),
         javaToolchain.sourceVersion(),
         javaToolchain.targetVersion());
   }

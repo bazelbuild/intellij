@@ -26,9 +26,9 @@ public class ReverseDependencyMap {
   public static ImmutableMultimap<TargetKey, TargetKey> createRdepsMap(TargetMap targetMap) {
     ImmutableMultimap.Builder<TargetKey, TargetKey> builder = ImmutableMultimap.builder();
     for (TargetIdeInfo target : targetMap.targets()) {
-      TargetKey key = target.key;
-      for (Dependency dep : target.dependencies) {
-        TargetKey depKey = dep.targetKey;
+      TargetKey key = target.getKey();
+      for (Dependency dep : target.getDependencies()) {
+        TargetKey depKey = dep.getTargetKey();
         if (targetMap.contains(depKey)) {
           builder.put(depKey, key);
         }

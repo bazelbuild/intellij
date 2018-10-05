@@ -21,14 +21,18 @@ import java.io.Serializable;
 public class AndroidAarIdeInfo implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  public final ArtifactLocation aar;
+  private final ArtifactLocation aar;
 
   public AndroidAarIdeInfo(ArtifactLocation aar) {
     this.aar = aar;
   }
 
+  public ArtifactLocation getAar() {
+    return aar;
+  }
+
   @Override
   public String toString() {
-    return "AndroidAarIdeInfo{" + "\n" + "  aar=" + aar + "\n" + '}';
+    return "AndroidAarIdeInfo{" + "\n" + "  aar=" + getAar() + "\n" + '}';
   }
 }

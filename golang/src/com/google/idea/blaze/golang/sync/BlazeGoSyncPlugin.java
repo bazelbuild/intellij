@@ -80,7 +80,7 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
   @Nullable
   @Override
   public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
-    if (!projectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.GO)) {
+    if (!projectData.getWorkspaceLanguageSettings().isWorkspaceType(WorkspaceType.GO)) {
       return null;
     }
     return GenericSourceFolderProvider.INSTANCE;
@@ -105,7 +105,7 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
       ModuleEditor moduleEditor,
       Module workspaceModule,
       ModifiableRootModel workspaceModifiableModel) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.GO)) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.GO)) {
       return;
     }
     for (Library lib : getGoLibraries(project)) {
@@ -138,7 +138,7 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
   @Override
   public LibrarySource getLibrarySource(
       ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.GO)) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.GO)) {
       return null;
     }
     return BlazeGoLibrarySource.INSTANCE;
@@ -146,7 +146,7 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
 
   @Override
   public void refreshVirtualFileSystem(BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.GO)) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.GO)) {
       return;
     }
     if (!refreshExecRoot.getValue()) {
@@ -162,7 +162,7 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
     // recursive refresh of the blaze execution root. This is required because our blaze aspect
     // can't yet tell us exactly which genfiles are required to resolve the project.
     VirtualFile execRoot =
-        VfsUtils.resolveVirtualFile(blazeProjectData.blazeInfo.getExecutionRoot());
+        VfsUtils.resolveVirtualFile(blazeProjectData.getBlazeInfo().getExecutionRoot());
     if (execRoot != null) {
       VfsUtil.markDirtyAndRefresh(false, true, true, execRoot);
     }

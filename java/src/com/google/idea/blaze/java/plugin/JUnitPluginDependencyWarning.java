@@ -48,7 +48,7 @@ import javax.swing.event.HyperlinkEvent;
  * Runs on startup, displaying an error if the JUnit plugin (required for the blaze plugin to
  * properly function) is not enabled.
  */
-public class JUnitPluginDependencyWarning extends ApplicationComponent.Adapter {
+public class JUnitPluginDependencyWarning implements ApplicationComponent {
 
   private static final String JUNIT_PLUGIN_ID = "JUnit";
 

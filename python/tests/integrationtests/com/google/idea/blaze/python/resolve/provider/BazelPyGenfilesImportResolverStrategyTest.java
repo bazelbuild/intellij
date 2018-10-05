@@ -42,7 +42,7 @@ public class BazelPyGenfilesImportResolverStrategyTest extends PyImportResolverS
   @Test
   public void testResolveGenfiles() {
     BlazeInfo roots =
-        BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData().blazeInfo;
+        BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData().getBlazeInfo();
     PsiFile genfile =
         fileSystem.createPsiFile(new File(roots.getGenfilesDirectory(), "foo/bar.py").getPath());
     PsiFile source =

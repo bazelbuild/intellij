@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.sync.importer.aggregators;
 
 import static java.util.stream.Collectors.toList;
 
+import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.Dependency.DependencyType;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -30,11 +31,9 @@ public abstract class TargetIdeInfoTransitiveAggregator<T> extends TransitiveAgg
 
   @Override
   protected Iterable<TargetKey> getDependencies(TargetIdeInfo target) {
-    return target
-        .dependencies
-        .stream()
-        .filter(dep -> dep.dependencyType == DependencyType.COMPILE_TIME)
-        .map(dep -> dep.targetKey)
+    return target.getDependencies().stream()
+        .filter(dep -> dep.getDependencyType() == DependencyType.COMPILE_TIME)
+        .map(Dependency::getTargetKey)
         .collect(toList());
   }
 }

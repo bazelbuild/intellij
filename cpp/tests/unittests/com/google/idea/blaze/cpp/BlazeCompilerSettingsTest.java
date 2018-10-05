@@ -19,13 +19,17 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.sdkcompat.cidr.CPPEnvironmentAdapter;
-import com.google.idea.sdkcompat.cidr.CidrCompilerSwitchesAdapter;
-import com.google.idea.sdkcompat.cidr.CompilerInfoCacheAdapter;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.jetbrains.cidr.lang.OCLanguageKind;
-import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
 import java.io.File;
-import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -36,26 +40,69 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
-    CPPEnvironmentAdapter.registerForTest(applicationServices.getPicoContainer());
+    ExtensionPointImpl<BlazeCompilerFlagsProcessor.Provider> ep =
+        registerExtensionPoint(
+            BlazeCompilerFlagsProcessor.EP_NAME, BlazeCompilerFlagsProcessor.Provider.class);
+    ep.registerExtension(new SysrootFlagsProcessor.Provider());
+
+    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager();
+    BlazeImportSettings importSettings =
+        new BlazeImportSettings("/root", "", "", "", BuildSystem.Bazel);
+    importSettingsManager.setImportSettings(importSettings);
+    projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
+
+    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
+    BlazeProjectData blazeProjectData = MockBlazeProjectDataBuilder.builder(workspaceRoot).build();
+    projectServices.register(
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(blazeProjectData));
   }
 
   @Test
   public void testCompilerSwitchesSimple() {
-    File cppExe = new File("bin/cpp");
     ImmutableList<String> cFlags = ImmutableList.of("-fast", "-slow");
-    CompilerInfoCacheAdapter compilerInfoCache = new CompilerInfoCacheAdapter();
     BlazeCompilerSettings settings =
         new BlazeCompilerSettings(
             getProject(),
-            cppExe,
-            cppExe,
+            new File("bin/c"),
+            new File("bin/c++"),
             cFlags,
             cFlags,
-            "cc version (trunk r123456)",
-            compilerInfoCache);
+            "cc version (trunk r123456)");
 
-    CidrCompilerSwitches compilerSwitches = settings.getCompilerSwitches(OCLanguageKind.C, null);
-    List<String> commandLineArgs = CidrCompilerSwitchesAdapter.getFileArgs(compilerSwitches);
-    assertThat(commandLineArgs).containsExactly("-fast", "-slow");
+    assertThat(settings.getCompilerSwitches(OCLanguageKind.C, null))
+        .containsExactly("-fast", "-slow")
+        .inOrder();
+  }
+
+  @Test
+  public void relativeSysroot_makesAbsolutePathInWorkspace() {
+    ImmutableList<String> cFlags = ImmutableList.of("--sysroot=third_party/toolchain/");
+    BlazeCompilerSettings settings =
+        new BlazeCompilerSettings(
+            getProject(),
+            new File("bin/c"),
+            new File("bin/c++"),
+            cFlags,
+            cFlags,
+            "cc version (trunk r123456)");
+
+    assertThat(settings.getCompilerSwitches(OCLanguageKind.C, null))
+        .containsExactly("--sysroot=/root/third_party/toolchain");
+  }
+
+  @Test
+  public void absoluteSysroot_doesNotChange() {
+    ImmutableList<String> cFlags = ImmutableList.of("--sysroot=/usr");
+    BlazeCompilerSettings settings =
+        new BlazeCompilerSettings(
+            getProject(),
+            new File("bin/c"),
+            new File("bin/c++"),
+            cFlags,
+            cFlags,
+            "cc version (trunk r123456)");
+
+    assertThat(settings.getCompilerSwitches(OCLanguageKind.C, null))
+        .containsExactly("--sysroot=/usr");
   }
 }

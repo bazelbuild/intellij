@@ -22,10 +22,14 @@ import java.io.Serializable;
 public class JsIdeInfo implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  public final ImmutableList<ArtifactLocation> sources;
+  private final ImmutableList<ArtifactLocation> sources;
 
   public JsIdeInfo(ImmutableList<ArtifactLocation> sources) {
     this.sources = sources;
+  }
+
+  public ImmutableList<ArtifactLocation> getSources() {
+    return sources;
   }
 
   public static Builder builder() {
@@ -48,6 +52,6 @@ public class JsIdeInfo implements Serializable {
 
   @Override
   public String toString() {
-    return "JsIdeInfo{" + "\n" + "  sources=" + sources + "\n" + '}';
+    return "JsIdeInfo{" + "\n" + "  sources=" + getSources() + "\n" + '}';
   }
 }

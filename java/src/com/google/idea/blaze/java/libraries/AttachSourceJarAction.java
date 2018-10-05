@@ -39,7 +39,7 @@ class AttachSourceJarAction extends BlazeProjectAction {
       return;
     }
     BlazeJarLibrary library = LibraryActionHelper.findBlazeLibraryForAction(project, e);
-    if (library == null || library.libraryArtifact.sourceJars.isEmpty()) {
+    if (library == null || library.libraryArtifact.getSourceJarsOrClassJar().isEmpty()) {
       hideAction(presentation);
       return;
     }
@@ -61,7 +61,7 @@ class AttachSourceJarAction extends BlazeProjectAction {
       return;
     }
     BlazeJarLibrary library = LibraryActionHelper.findBlazeLibraryForAction(project, e);
-    if (library == null || library.libraryArtifact.sourceJars.isEmpty()) {
+    if (library == null || library.libraryArtifact.getSourceJarsOrClassJar().isEmpty()) {
       return;
     }
     AttachedSourceJarManager sourceJarManager = AttachedSourceJarManager.getInstance(project);
@@ -75,7 +75,7 @@ class AttachSourceJarAction extends BlazeProjectAction {
               LibraryTable.ModifiableModel libraryTableModel = libraryTable.getModifiableModel();
               LibraryEditor.updateLibrary(
                   project,
-                  projectData.artifactLocationDecoder,
+                  projectData.getArtifactLocationDecoder(),
                   libraryTable,
                   libraryTableModel,
                   library);

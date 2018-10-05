@@ -70,7 +70,7 @@ public class BuildDocumentationProvider extends AbstractDocumentationProvider {
       return null;
     }
     return String.format(
-        "External documentation for %s:<br><a href=\"%s\">%s</a>", rule.name, link, link);
+        "External documentation for %s:<br><a href=\"%s\">%s</a>", rule.getName(), link, link);
   }
 
   private static void describeFile(PsiFile file, StringBuilder builder, boolean linkToFile) {

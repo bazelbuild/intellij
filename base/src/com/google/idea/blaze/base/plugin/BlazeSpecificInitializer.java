@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.components.ApplicationComponent;
 
 /** Runs on startup. */
-public class BlazeSpecificInitializer extends ApplicationComponent.Adapter {
+public class BlazeSpecificInitializer implements ApplicationComponent {
 
   @Override
   public void initComponent() {

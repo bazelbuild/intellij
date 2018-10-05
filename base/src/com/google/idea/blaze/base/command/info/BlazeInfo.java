@@ -32,7 +32,6 @@ public class BlazeInfo implements Serializable {
   public static final String OUTPUT_BASE_KEY = "output_base";
   public static final String OUTPUT_PATH_KEY = "output_path";
   public static final String MASTER_LOG = "master-log";
-  public static final String COMMAND_LOG = "command_log";
   public static final String RELEASE = "release";
 
   private static final Logger logger = Logger.getInstance(BlazeInfo.class);
@@ -54,17 +53,6 @@ public class BlazeInfo implements Serializable {
         return "blaze-genfiles";
       case Bazel:
         return "bazel-genfiles";
-      default:
-        throw new IllegalArgumentException("Unrecognized build system: " + buildSystem);
-    }
-  }
-
-  public static String blazeTestlogsKey(BuildSystem buildSystem) {
-    switch (buildSystem) {
-      case Blaze:
-        return "blaze-testlogs";
-      case Bazel:
-        return "bazel-testlogs";
       default:
         throw new IllegalArgumentException("Unrecognized build system: " + buildSystem);
     }

@@ -34,6 +34,8 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -107,43 +109,52 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
             WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
             BlazeApkDeployInfoProtoHelper deployInfoHelper =
-                new BlazeApkDeployInfoProtoHelper(project, blazeFlags, "_mi.deployinfo.pb");
-            BuildResultHelper buildResultHelper = deployInfoHelper.getBuildResultHelper();
+                new BlazeApkDeployInfoProtoHelper(project, blazeFlags);
+            try (BuildResultHelper buildResultHelper =
+                BuildResultHelperProvider.forFiles(
+                    project, fileName -> fileName.endsWith("_mi.deployinfo.pb"))) {
 
-            command
-                .addTargets(label)
-                .addBlazeFlags(blazeFlags)
-                .addBlazeFlags(buildResultHelper.getBuildFlags())
-                .addExeFlags(exeFlags);
+              command
+                  .addTargets(label)
+                  .addBlazeFlags(blazeFlags)
+                  .addBlazeFlags(buildResultHelper.getBuildFlags())
+                  .addExeFlags(exeFlags);
 
-            SaveUtil.saveAllFiles();
-            int retVal =
-                ExternalTask.builder(workspaceRoot)
-                    .addBlazeCommand(command.build())
-                    .context(context)
-                    .stderr(
-                        LineProcessingOutputStream.of(
-                            BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
-                    .build()
-                    .run();
-            FileCaches.refresh(project);
+              SaveUtil.saveAllFiles();
+              int retVal =
+                  ExternalTask.builder(workspaceRoot)
+                      .addBlazeCommand(command.build())
+                      .context(context)
+                      .stderr(
+                          LineProcessingOutputStream.of(
+                              BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
+                                  context)))
+                      .build()
+                      .run();
+              FileCaches.refresh(project);
 
-            if (retVal != 0) {
-              context.setHasError();
+              if (retVal != 0) {
+                context.setHasError();
+                return null;
+              }
+              try {
+                deployInfo = deployInfoHelper.readDeployInfo(context, buildResultHelper);
+              } catch (GetArtifactsException e) {
+                IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
+                    .submit(context);
+                return null;
+              }
+              if (deployInfo == null) {
+                IssueOutput.error("Could not read apk deploy info from build").submit(context);
+              }
               return null;
             }
-
-            deployInfo = deployInfoHelper.readDeployInfo(context);
-            if (deployInfo == null) {
-              IssueOutput.error("Could not read apk deploy info from build").submit(context);
-            }
-            return null;
           }
         };
 
     ListenableFuture<Void> buildFuture =
-        ProgressiveTaskWithProgressIndicator.builder(project)
-            .setTitle(String.format("Executing %s apk build", Blaze.buildSystemName(project)))
+        ProgressiveTaskWithProgressIndicator.builder(
+                project, String.format("Executing %s apk build", Blaze.buildSystemName(project)))
             .submitTaskWithResult(buildTask);
 
     try {

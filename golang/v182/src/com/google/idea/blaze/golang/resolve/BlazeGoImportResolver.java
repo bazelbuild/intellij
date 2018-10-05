@@ -19,7 +19,9 @@ import com.goide.psi.impl.GoPackage;
 import com.goide.psi.impl.imports.GoImportReference;
 import com.goide.psi.impl.imports.GoImportResolver;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Multimap;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -40,7 +42,6 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.SyntheticFileSystemItem;
 import com.intellij.psi.search.PsiElementProcessor;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -71,18 +72,22 @@ class BlazeGoImportResolver implements GoImportResolver {
     }
     ConcurrentMap<String, Optional<BlazeGoPackage>> goPackageMap =
         Preconditions.checkNotNull(getGoPackageMap(project));
-    Map<String, TargetKey> goTargetMap = Preconditions.checkNotNull(getGoTargetMap(project));
-    TargetKey targetKey = goTargetMap.get(importPath);
-    if (!goPackageMap.containsKey(importPath) && targetKey == null) {
+    Multimap<String, TargetKey> goTargetMap = Preconditions.checkNotNull(getGoTargetMap(project));
+    Collection<TargetKey> targetKeys = goTargetMap.get(importPath);
+    if (!goPackageMap.containsKey(importPath) && targetKeys.isEmpty()) {
       return null;
     }
     return goPackageMap
         .computeIfAbsent(
             importPath,
             (path) -> {
-              TargetIdeInfo target =
-                  Preconditions.checkNotNull(projectData.targetMap.get(targetKey));
-              BlazeGoPackage goPackage = BlazeGoPackage.create(project, projectData, path, target);
+              TargetMap targetMap = projectData.getTargetMap();
+              Collection<TargetIdeInfo> targets =
+                  targetKeys.stream()
+                      .map(targetMap::get)
+                      .filter(Objects::nonNull)
+                      .collect(Collectors.toList());
+              BlazeGoPackage goPackage = BlazeGoPackage.create(project, projectData, path, targets);
               return Optional.of(goPackage);
             })
         .orElse(null);
@@ -95,21 +100,17 @@ class BlazeGoImportResolver implements GoImportResolver {
   }
 
   @Nullable
-  private static Map<String, TargetKey> getGoTargetMap(Project project) {
+  private static Multimap<String, TargetKey> getGoTargetMap(Project project) {
     return SyncCache.getInstance(project)
         .get(
             GO_TARGET_MAP_KEY,
-            (p, projectData) ->
-                projectData
-                    .targetMap
-                    .targets()
-                    .stream()
-                    .filter(t -> t.goIdeInfo != null)
-                    .collect(
-                        // guaranteed unique per importpath in blaze
-                        // warning in bazel if not unique
-                        // we'll just ignore duplicates
-                        Collectors.toMap(t -> t.goIdeInfo.importPath, t -> t.key, (k1, k2) -> k1)));
+            (p, projectData) -> {
+              Multimap<String, TargetKey> map = HashMultimap.create();
+              projectData.getTargetMap().targets().stream()
+                  .filter(t -> t.getGoIdeInfo() != null)
+                  .forEach(t -> map.put(t.getGoIdeInfo().getImportPath(), t.getKey()));
+              return map;
+            });
   }
 
   @Nullable

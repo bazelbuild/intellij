@@ -45,29 +45,29 @@ public class CPrefetchFileSource implements PrefetchFileSource {
       ImportRoots importRoots,
       BlazeProjectData blazeProjectData,
       Set<File> files) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C)
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C)
         || !prefetchAllCppSources.getValue()) {
       return;
     }
     // Prefetch all non-project CPP header files encountered during sync
     Predicate<ArtifactLocation> shouldPrefetch =
         location -> {
-          if (!location.isSource || location.isExternal) {
+          if (!location.isSource() || location.isExternal()) {
             return false;
           }
-          WorkspacePath path = WorkspacePath.createIfValid(location.relativePath);
+          WorkspacePath path = WorkspacePath.createIfValid(location.getRelativePath());
           if (path == null || importRoots.containsWorkspacePath(path)) {
             return false;
           }
           String extension = FileUtil.getExtension(path.relativePath());
           return CFileExtensions.HEADER_EXTENSIONS.contains(extension);
         };
-    ArtifactLocationDecoder decoder = blazeProjectData.artifactLocationDecoder;
-    for (TargetIdeInfo target : blazeProjectData.targetMap.targets()) {
-      if (target.cIdeInfo == null) {
+    ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
+    for (TargetIdeInfo target : blazeProjectData.getTargetMap().targets()) {
+      if (target.getcIdeInfo() == null) {
         continue;
       }
-      target.sources.stream().filter(shouldPrefetch).map(decoder::decode).forEach(files::add);
+      target.getSources().stream().filter(shouldPrefetch).map(decoder::decode).forEach(files::add);
     }
   }
 

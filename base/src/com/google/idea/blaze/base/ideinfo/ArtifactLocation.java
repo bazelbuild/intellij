@@ -25,9 +25,9 @@ public final class ArtifactLocation implements Serializable, Comparable<Artifact
   private static final long serialVersionUID = 5L;
 
   private final String rootExecutionPathFragment;
-  public final String relativePath;
-  public final boolean isSource;
-  public final boolean isExternal;
+  private final String relativePath;
+  private final boolean isSource;
+  private final boolean isExternal;
 
   private ArtifactLocation(
       String rootExecutionPathFragment, String relativePath, boolean isSource, boolean isExternal) {
@@ -35,6 +35,10 @@ public final class ArtifactLocation implements Serializable, Comparable<Artifact
     this.relativePath = relativePath;
     this.isSource = isSource;
     this.isExternal = isExternal;
+  }
+
+  private String getRootExecutionPathFragment() {
+    return rootExecutionPathFragment;
   }
 
   /**
@@ -49,18 +53,22 @@ public final class ArtifactLocation implements Serializable, Comparable<Artifact
     return isSource;
   }
 
+  public boolean isExternal() {
+    return isExternal;
+  }
+
   public boolean isGenerated() {
-    return !isSource;
+    return !isSource();
   }
 
   /** Returns false for generated or external artifacts */
   public boolean isMainWorkspaceSourceArtifact() {
-    return isSource && !isExternal;
+    return isSource() && !isExternal();
   }
 
   /** For main-workspace source artifacts, this is simply the workspace-relative path. */
   public String getExecutionRootRelativePath() {
-    return Paths.get(rootExecutionPathFragment, relativePath).toString();
+    return Paths.get(getRootExecutionPathFragment(), getRelativePath()).toString();
   }
 
   public static Builder builder() {
@@ -96,10 +104,10 @@ public final class ArtifactLocation implements Serializable, Comparable<Artifact
 
     public static Builder copy(ArtifactLocation artifact) {
       return new Builder()
-          .setRelativePath(artifact.relativePath)
-          .setRootExecutionPathFragment(artifact.rootExecutionPathFragment)
-          .setIsSource(artifact.isSource)
-          .setIsExternal(artifact.isExternal);
+          .setRelativePath(artifact.getRelativePath())
+          .setRootExecutionPathFragment(artifact.getRootExecutionPathFragment())
+          .setIsSource(artifact.isSource())
+          .setIsExternal(artifact.isExternal());
     }
 
     public ArtifactLocation build() {
@@ -116,15 +124,16 @@ public final class ArtifactLocation implements Serializable, Comparable<Artifact
       return false;
     }
     ArtifactLocation that = (ArtifactLocation) o;
-    return Objects.equal(rootExecutionPathFragment, that.rootExecutionPathFragment)
-        && Objects.equal(relativePath, that.relativePath)
-        && Objects.equal(isSource, that.isSource)
-        && Objects.equal(isExternal, that.isExternal);
+    return Objects.equal(getRootExecutionPathFragment(), that.getRootExecutionPathFragment())
+        && Objects.equal(getRelativePath(), that.getRelativePath())
+        && Objects.equal(isSource(), that.isSource())
+        && Objects.equal(isExternal(), that.isExternal());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(rootExecutionPathFragment, relativePath, isSource, isExternal);
+    return Objects.hashCode(
+        getRootExecutionPathFragment(), getRelativePath(), isSource(), isExternal());
   }
 
   @Override
@@ -135,10 +144,10 @@ public final class ArtifactLocation implements Serializable, Comparable<Artifact
   @Override
   public int compareTo(ArtifactLocation o) {
     return ComparisonChain.start()
-        .compare(rootExecutionPathFragment, o.rootExecutionPathFragment)
-        .compare(relativePath, o.relativePath)
-        .compareFalseFirst(isSource, o.isSource)
-        .compareFalseFirst(isExternal, o.isExternal)
+        .compare(getRootExecutionPathFragment(), o.getRootExecutionPathFragment())
+        .compare(getRelativePath(), o.getRelativePath())
+        .compareFalseFirst(isSource(), o.isSource())
+        .compareFalseFirst(isExternal(), o.isExternal())
         .result();
   }
 }

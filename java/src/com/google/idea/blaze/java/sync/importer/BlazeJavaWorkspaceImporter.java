@@ -103,7 +103,8 @@ public final class BlazeJavaWorkspaceImporter {
   public BlazeJavaImportResult importWorkspace(BlazeContext context) {
     WorkspaceBuilder workspaceBuilder = new WorkspaceBuilder();
     for (TargetIdeInfo target : sourceFilter.sourceTargets) {
-      addTargetAsSource(workspaceBuilder, target, sourceFilter.targetToJavaSources.get(target.key));
+      addTargetAsSource(
+          workspaceBuilder, target, sourceFilter.targetToJavaSources.get(target.getKey()));
     }
 
     SourceDirectoryCalculator sourceDirectoryCalculator = new SourceDirectoryCalculator();
@@ -155,16 +156,16 @@ public final class BlazeJavaWorkspaceImporter {
     }
 
     for (TargetIdeInfo target : libraryTargets) {
-      JavaIdeInfo javaIdeInfo = target.javaIdeInfo;
+      JavaIdeInfo javaIdeInfo = target.getJavaIdeInfo();
       if (javaIdeInfo == null) {
         continue;
       }
       List<LibraryArtifact> allJars = Lists.newArrayList();
-      allJars.addAll(javaIdeInfo.jars);
+      allJars.addAll(javaIdeInfo.getJars());
       Collection<BlazeJarLibrary> libraries =
           allJars.stream().map(BlazeJarLibrary::new).collect(Collectors.toList());
 
-      targetKeyToLibrary.putAll(target.key, libraries);
+      targetKeyToLibrary.putAll(target.getKey(), libraries);
       for (BlazeJarLibrary library : libraries) {
         addLibraryToJdeps(jdepsPathToLibrary, library);
       }
@@ -175,10 +176,10 @@ public final class BlazeJavaWorkspaceImporter {
     // Collect jars from jdep references
     for (String jdepsPath : workspaceBuilder.jdeps) {
       ArtifactLocation artifact = ExecutionPathHelper.parse(workspaceRoot, buildSystem, jdepsPath);
-      if (sourceFilter.jdepsPathsForExcludedJars.contains(artifact.relativePath)) {
+      if (sourceFilter.jdepsPathsForExcludedJars.contains(artifact.getRelativePath())) {
         continue;
       }
-      BlazeJarLibrary library = jdepsPathToLibrary.get(artifact.relativePath);
+      BlazeJarLibrary library = jdepsPathToLibrary.get(artifact.getRelativePath());
       if (library == null) {
         // It's in the target's jdeps, but our aspect never attached to the target building it.
         // Perhaps it's an implicit dependency, or not referenced in an attribute we propagate
@@ -209,11 +210,11 @@ public final class BlazeJavaWorkspaceImporter {
   private void addLibraryToJdeps(
       Map<String, BlazeJarLibrary> jdepsPathToLibrary, BlazeJarLibrary library) {
     LibraryArtifact libraryArtifact = library.libraryArtifact;
-    ArtifactLocation interfaceJar = libraryArtifact.interfaceJar;
+    ArtifactLocation interfaceJar = libraryArtifact.getInterfaceJar();
     if (interfaceJar != null) {
       jdepsPathToLibrary.put(interfaceJar.getRelativePath(), library);
     }
-    ArtifactLocation classJar = libraryArtifact.classJar;
+    ArtifactLocation classJar = libraryArtifact.getClassJar();
     if (classJar != null) {
       jdepsPathToLibrary.put(classJar.getRelativePath(), library);
     }
@@ -223,12 +224,12 @@ public final class BlazeJavaWorkspaceImporter {
       WorkspaceBuilder workspaceBuilder,
       TargetIdeInfo target,
       Collection<ArtifactLocation> javaSources) {
-    JavaIdeInfo javaIdeInfo = target.javaIdeInfo;
+    JavaIdeInfo javaIdeInfo = target.getJavaIdeInfo();
     if (javaIdeInfo == null) {
       return;
     }
 
-    TargetKey targetKey = target.key;
+    TargetKey targetKey = target.getKey();
     Collection<String> jars = jdepsMap.getDependenciesForTarget(targetKey);
     if (jars != null) {
       workspaceBuilder.jdeps.addAll(jars);
@@ -238,17 +239,19 @@ public final class BlazeJavaWorkspaceImporter {
     if (workingSet == null || workingSet.isTargetInWorkingSet(target)) {
       // Add self, so we pick up our own gen jars if in working set
       workspaceBuilder.directDeps.add(targetKey);
-      for (Dependency dep : target.dependencies) {
-        if (dep.dependencyType != DependencyType.COMPILE_TIME) {
+      for (Dependency dep : target.getDependencies()) {
+        if (dep.getDependencyType() != DependencyType.COMPILE_TIME) {
           continue;
         }
         // forward deps from java proto_library aspect targets
-        TargetIdeInfo depTarget = targetMap.get(dep.targetKey);
-        if (depTarget != null && Kind.JAVA_PROTO_LIBRARY_KINDS.contains(depTarget.kind)) {
+        TargetIdeInfo depTarget = targetMap.get(dep.getTargetKey());
+        if (depTarget != null && Kind.JAVA_PROTO_LIBRARY_KINDS.contains(depTarget.getKind())) {
           workspaceBuilder.directDeps.addAll(
-              depTarget.dependencies.stream().map(d -> d.targetKey).collect(Collectors.toList()));
+              depTarget.getDependencies().stream()
+                  .map(Dependency::getTargetKey)
+                  .collect(Collectors.toList()));
         } else {
-          workspaceBuilder.directDeps.add(dep.targetKey);
+          workspaceBuilder.directDeps.add(dep.getTargetKey());
         }
       }
     }
@@ -261,21 +264,23 @@ public final class BlazeJavaWorkspaceImporter {
       }
     }
 
-    ArtifactLocation manifest = javaIdeInfo.packageManifest;
+    ArtifactLocation manifest = javaIdeInfo.getPackageManifest();
     if (manifest != null) {
       workspaceBuilder.javaPackageManifests.put(targetKey, manifest);
     }
-    for (LibraryArtifact libraryArtifact : javaIdeInfo.jars) {
-      ArtifactLocation classJar = libraryArtifact.classJar;
+    for (LibraryArtifact libraryArtifact : javaIdeInfo.getJars()) {
+      ArtifactLocation classJar = libraryArtifact.getClassJar();
       if (classJar != null) {
         workspaceBuilder.buildOutputJars.add(classJar);
       }
     }
     workspaceBuilder.generatedJarsFromSourceTargets.addAll(
-        javaIdeInfo.generatedJars.stream().map(BlazeJarLibrary::new).collect(Collectors.toList()));
-    if (javaIdeInfo.filteredGenJar != null) {
+        javaIdeInfo.getGeneratedJars().stream()
+            .map(BlazeJarLibrary::new)
+            .collect(Collectors.toList()));
+    if (javaIdeInfo.getFilteredGenJar() != null) {
       workspaceBuilder.generatedJarsFromSourceTargets.add(
-          new BlazeJarLibrary(javaIdeInfo.filteredGenJar));
+          new BlazeJarLibrary(javaIdeInfo.getFilteredGenJar()));
     }
 
     for (BlazeJavaSyncAugmenter augmenter : augmenters) {
@@ -291,8 +296,8 @@ public final class BlazeJavaWorkspaceImporter {
   @Nullable
   private String findSourceVersion(TargetMap targetMap) {
     for (TargetIdeInfo target : targetMap.targets()) {
-      if (target.javaToolchainIdeInfo != null) {
-        return target.javaToolchainIdeInfo.sourceVersion;
+      if (target.getJavaToolchainIdeInfo() != null) {
+        return target.getJavaToolchainIdeInfo().getSourceVersion();
       }
     }
     return null;
@@ -315,7 +320,7 @@ public final class BlazeJavaWorkspaceImporter {
    */
   @Nullable
   private static ArtifactLocation guessSrcJarLocation(ArtifactLocation outputJar) {
-    String srcJarRelPath = guessSrcJarRelativePath(outputJar.relativePath);
+    String srcJarRelPath = guessSrcJarRelativePath(outputJar.getRelativePath());
     if (srcJarRelPath == null) {
       return null;
     }

@@ -24,6 +24,7 @@ import com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter;
+import com.google.idea.blaze.android.sync.importer.BlazeImportInput;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
@@ -54,7 +55,6 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
-import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -152,18 +152,12 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
     AndroidSdkPlatform androidSdkPlatform =
         AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
 
-    JavaSourceFilter sourceFilter =
-        new JavaSourceFilter(project, workspaceRoot, projectViewSet, targetMap);
+    BlazeImportInput inputs =
+        BlazeImportInput.forProject(
+            project, workspaceRoot, projectViewSet, targetMap, artifactLocationDecoder);
 
     BlazeAndroidWorkspaceImporter workspaceImporter =
-        new BlazeAndroidWorkspaceImporter(
-            project,
-            context,
-            workspaceRoot,
-            projectViewSet,
-            targetMap,
-            sourceFilter,
-            artifactLocationDecoder);
+        new BlazeAndroidWorkspaceImporter(project, context, inputs);
     BlazeAndroidImportResult importResult =
         Scope.push(
             context,
@@ -182,10 +176,10 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
       BlazeProjectData blazeProjectData) {
-    if (!isAndroidWorkspace(blazeProjectData.workspaceLanguageSettings)) {
+    if (!isAndroidWorkspace(blazeProjectData.getWorkspaceLanguageSettings())) {
       return;
     }
-    BlazeAndroidSyncData syncData = blazeProjectData.syncState.get(BlazeAndroidSyncData.class);
+    BlazeAndroidSyncData syncData = blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
     if (syncData == null) {
       return;
     }
@@ -226,7 +220,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
         moduleEditor,
         workspaceModule,
         workspaceModifiableModel,
-        isAndroidWorkspace(blazeProjectData.workspaceLanguageSettings));
+        isAndroidWorkspace(blazeProjectData.getWorkspaceLanguageSettings()));
   }
 
   @Override
@@ -244,22 +238,22 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
         projectViewSet,
         blazeProjectData,
         workspaceModule,
-        isAndroidWorkspace(blazeProjectData.workspaceLanguageSettings));
+        isAndroidWorkspace(blazeProjectData.getWorkspaceLanguageSettings()));
   }
 
   @Nullable
   @Override
   public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
-    if (!projectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.ANDROID)) {
+    if (!projectData.getWorkspaceLanguageSettings().isWorkspaceType(WorkspaceType.ANDROID)) {
       return null;
     }
-    return new JavaSourceFolderProvider(projectData.syncState.get(BlazeJavaSyncData.class));
+    return new JavaSourceFolderProvider(projectData.getSyncState().get(BlazeJavaSyncData.class));
   }
 
   @Override
   public boolean validate(
       Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
-    if (!isAndroidWorkspace(blazeProjectData.workspaceLanguageSettings)) {
+    if (!isAndroidWorkspace(blazeProjectData.getWorkspaceLanguageSettings())) {
       return true;
     }
 
@@ -327,7 +321,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
   @Override
   public LibrarySource getLibrarySource(
       ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
-    if (!isAndroidWorkspace(blazeProjectData.workspaceLanguageSettings)) {
+    if (!isAndroidWorkspace(blazeProjectData.getWorkspaceLanguageSettings())) {
       return null;
     }
     return new BlazeAndroidLibrarySource(blazeProjectData);

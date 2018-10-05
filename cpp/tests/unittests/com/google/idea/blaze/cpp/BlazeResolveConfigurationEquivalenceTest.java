@@ -55,7 +55,6 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
-import com.google.idea.sdkcompat.cidr.CPPEnvironmentAdapter;
 import com.intellij.mock.MockPsiManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
@@ -91,7 +90,6 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(BlazeExecutor.class, new MockBlazeExecutor());
-    CPPEnvironmentAdapter.registerForTest(applicationServices.getPicoContainer());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
     applicationServices.register(
         CompilerVersionChecker.class, new MockCompilerVersionChecker("1234"));
@@ -113,10 +111,13 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         .setImportSettings(
             new BlazeImportSettings("", "", "", "", buildSystemProvider.buildSystem()));
 
+    registerExtensionPoint(
+        BlazeCompilerFlagsProcessor.EP_NAME, BlazeCompilerFlagsProcessor.Provider.class);
+
     context.addOutputSink(IssueOutput.class, errorCollector);
 
     resolver = new BlazeConfigurationResolver(project);
-    resolverResult = BlazeConfigurationResolverResult.empty(project);
+    resolverResult = BlazeConfigurationResolverResult.empty();
   }
 
   @Test
@@ -155,7 +156,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     for (BlazeResolveConfiguration configuration : configurations) {
       assertThat(configuration.getProjectHeadersRootsInternal()).isEmpty();
       assertThat(getHeaders(configuration, OCLanguageKind.CPP)).isEmpty();
-      assertThat(configuration.getCompilerMacros()).isEqualTo(macros());
+      assertThat(configuration.getDefinesInternal()).isEmpty();
     }
   }
 
@@ -191,10 +192,10 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
             .build();
     List<BlazeResolveConfiguration> configurations = resolve(projectView, targetMap);
     assertThat(configurations).hasSize(2);
-    assertThat(get(configurations, "//foo/bar:one and 1 other target(s)").getCompilerMacros())
-        .isEqualTo(macros("SAME=1"));
-    assertThat(get(configurations, "//foo/bar:three").getCompilerMacros())
-        .isEqualTo(macros("DIFFERENT=1"));
+    assertThat(get(configurations, "//foo/bar:one and 1 other target(s)").getDefinesInternal())
+        .isEqualTo(ImmutableList.of("SAME=1"));
+    assertThat(get(configurations, "//foo/bar:three").getDefinesInternal())
+        .isEqualTo(ImmutableList.of("DIFFERENT=1"));
     for (BlazeResolveConfiguration configuration : configurations) {
       assertThat(configuration.getProjectHeadersRootsInternal()).isEmpty();
       assertThat(getHeaders(configuration, OCLanguageKind.CPP)).isEmpty();
@@ -243,7 +244,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         .containsExactly(header(includeDifferent));
     for (BlazeResolveConfiguration configuration : configurations) {
       assertThat(configuration.getProjectHeadersRootsInternal()).isEmpty();
-      assertThat(configuration.getCompilerMacros()).isEqualTo(macros());
+      assertThat(configuration.getDefinesInternal()).isEmpty();
     }
   }
 
@@ -614,11 +615,6 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         .that(filteredConfigurations)
         .hasSize(1);
     return filteredConfigurations.get(0);
-  }
-
-  private BlazeCompilerMacros macros(String... defines) {
-    return new BlazeCompilerMacros(
-        project, null, null, ImmutableList.copyOf(defines), ImmutableMap.of());
   }
 
   private HeadersSearchRoot header(VirtualFile include) {

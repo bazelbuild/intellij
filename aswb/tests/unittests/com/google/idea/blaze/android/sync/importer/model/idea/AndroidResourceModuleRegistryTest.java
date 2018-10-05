@@ -69,9 +69,9 @@ public class AndroidResourceModuleRegistryTest extends BlazeTestCase {
     assertThat(registry.getTargetKey(moduleOne)).isEqualTo(resourceModuleOne.targetKey);
     assertThat(registry.getTargetKey(moduleTwo)).isEqualTo(resourceModuleTwo.targetKey);
     assertThat(registry.getTargetKey(moduleThree)).isEqualTo(resourceModuleThree.targetKey);
-    assertThat(registry.getLabel(moduleOne)).isEqualTo(resourceModuleOne.targetKey.label);
-    assertThat(registry.getLabel(moduleTwo)).isEqualTo(resourceModuleTwo.targetKey.label);
-    assertThat(registry.getLabel(moduleThree)).isEqualTo(resourceModuleThree.targetKey.label);
+    assertThat(registry.getLabel(moduleOne)).isEqualTo(resourceModuleOne.targetKey.getLabel());
+    assertThat(registry.getLabel(moduleTwo)).isEqualTo(resourceModuleTwo.targetKey.getLabel());
+    assertThat(registry.getLabel(moduleThree)).isEqualTo(resourceModuleThree.targetKey.getLabel());
   }
 
   @Test

@@ -288,7 +288,7 @@ public final class FastBuildCompilerFactoryImplTest {
             null,
             null,
             null,
-            artifact -> new File(artifact.relativePath),
+            artifact -> new File(artifact.getRelativePath()),
             null,
             null,
             null);

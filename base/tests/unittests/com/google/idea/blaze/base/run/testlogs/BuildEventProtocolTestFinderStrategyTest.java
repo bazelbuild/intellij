@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.base.run.testlogs;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.idea.common.guava.GuavaHelper.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;

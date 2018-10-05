@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run.state;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -94,7 +95,8 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
     return new RunConfigurationFlagsStateEditor(fieldLabel);
   }
 
-  private static class RunConfigurationFlagsStateEditor implements RunConfigurationStateEditor {
+  /** Editor component for flags list */
+  protected static class RunConfigurationFlagsStateEditor implements RunConfigurationStateEditor {
 
     private final JTextArea flagsField;
     private final String fieldLabel;
@@ -162,7 +164,8 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
     @Override
     public void applyEditorTo(RunConfigurationState genericState) {
       RunConfigurationFlagsState state = (RunConfigurationFlagsState) genericState;
-      state.setRawFlags(ParametersListUtil.parse(Strings.nullToEmpty(flagsField.getText())));
+      state.setRawFlags(
+          ParametersListUtil.parse(Strings.nullToEmpty(flagsField.getText()), false, true));
     }
 
     private JBScrollPane createScrollPane(JTextArea field) {
@@ -192,6 +195,11 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
     @Override
     public JComponent createComponent() {
       return UiUtil.createBox(new JLabel(fieldLabel), createScrollPane(flagsField));
+    }
+
+    @VisibleForTesting
+    public JComponent getInternalComponent() {
+      return flagsField;
     }
   }
 }

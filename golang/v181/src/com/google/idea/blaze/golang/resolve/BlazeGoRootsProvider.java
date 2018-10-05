@@ -68,7 +68,7 @@ public class BlazeGoRootsProvider implements GoRootsProvider {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null
-        || !projectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.GO)
+        || !projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.GO)
         || !BlazeGoSupport.blazeGoSupportEnabled.getValue()) {
       return ImmutableList.of();
     }
@@ -136,13 +136,13 @@ public class BlazeGoRootsProvider implements GoRootsProvider {
       logger.error("Failed to create " + goRoot);
       return;
     }
-    ArtifactLocationDecoder decoder = projectData.artifactLocationDecoder;
-    for (TargetIdeInfo target : projectData.targetMap.targets()) {
-      if (target.goIdeInfo == null || target.goIdeInfo.importPath == null) {
+    ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
+    for (TargetIdeInfo target : projectData.getTargetMap().targets()) {
+      if (target.getGoIdeInfo() == null || target.getGoIdeInfo().getImportPath() == null) {
         continue;
       }
-      String importPath = target.goIdeInfo.importPath;
-      createSymLinks(goRoot, importPath, getGoSources(target, decoder, projectData.blazeInfo));
+      String importPath = target.getGoIdeInfo().getImportPath();
+      createSymLinks(goRoot, importPath, getGoSources(target, decoder, projectData.getBlazeInfo()));
     }
   }
 
@@ -202,16 +202,16 @@ public class BlazeGoRootsProvider implements GoRootsProvider {
 
   private static ImmutableList<File> getGoSources(
       TargetIdeInfo target, ArtifactLocationDecoder decoder, BlazeInfo blazeInfo) {
-    if (target.kind.equals(Kind.GO_WRAP_CC)) {
+    if (target.getKind().equals(Kind.GO_WRAP_CC)) {
       return ImmutableList.of(getWrapCcGoFile(target, blazeInfo));
     }
-    return ImmutableList.copyOf(decoder.decodeAll(target.goIdeInfo.sources));
+    return ImmutableList.copyOf(decoder.decodeAll(target.getGoIdeInfo().getSources()));
   }
 
   private static File getWrapCcGoFile(TargetIdeInfo target, BlazeInfo blazeInfo) {
-    String blazePackage = target.key.label.blazePackage().relativePath();
+    String blazePackage = target.getKey().getLabel().blazePackage().relativePath();
     File directory = new File(blazeInfo.getGenfilesDirectory(), blazePackage);
-    String filename = blazePackage + '/' + target.key.label.targetName() + ".go";
+    String filename = blazePackage + '/' + target.getKey().getLabel().targetName() + ".go";
     filename = filename.replace("_", "__");
     filename = filename.replace('/', '_');
     return new File(directory, filename);
@@ -223,12 +223,10 @@ public class BlazeGoRootsProvider implements GoRootsProvider {
             PACKAGE_TO_TARGET_KEY,
             (p, pd) -> {
               Map<String, TargetKey> map = Maps.newHashMap();
-              pd.targetMap
-                  .targets()
-                  .stream()
-                  .filter(t -> t.goIdeInfo != null)
-                  .filter(t -> t.goIdeInfo.importPath != null)
-                  .forEach(t -> map.putIfAbsent(t.goIdeInfo.importPath, t.key));
+              pd.getTargetMap().targets().stream()
+                  .filter(t -> t.getGoIdeInfo() != null)
+                  .filter(t -> t.getGoIdeInfo().getImportPath() != null)
+                  .forEach(t -> map.putIfAbsent(t.getGoIdeInfo().getImportPath(), t.getKey()));
               return map;
             });
   }

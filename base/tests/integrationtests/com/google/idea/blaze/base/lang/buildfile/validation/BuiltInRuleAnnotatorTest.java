@@ -91,7 +91,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testNoErrorsForValidStandardRule() {
-    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.getName(), JAVA_TEST));
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -105,7 +105,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testNoErrorsForValidStringDict() {
-    specProvider.setRules(ImmutableMap.of(CONFIG_SETTING.name, CONFIG_SETTING));
+    specProvider.setRules(ImmutableMap.of(CONFIG_SETTING.getName(), CONFIG_SETTING));
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -118,7 +118,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testErrorForInvalidDict() {
-    specProvider.setRules(ImmutableMap.of(CONFIG_SETTING.name, CONFIG_SETTING));
+    specProvider.setRules(ImmutableMap.of(CONFIG_SETTING.getName(), CONFIG_SETTING));
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -132,7 +132,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testGlobTreatedAsList() {
-    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.getName(), JAVA_TEST));
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -146,7 +146,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testMissingMandatoryAttributeError() {
-    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.getName(), JAVA_TEST));
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -159,7 +159,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testInvalidAttributeTypeError() {
-    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.getName(), JAVA_TEST));
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -177,7 +177,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testInvalidAttributeTypeError2() {
-    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.getName(), JAVA_TEST));
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -195,7 +195,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testNoErrorForIfStatement() {
-    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.getName(), JAVA_TEST));
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -210,7 +210,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testUnknownReferenceIgnored() {
-    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.getName(), JAVA_TEST));
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -224,7 +224,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testKnownIncorrectReference() {
-    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.getName(), JAVA_TEST));
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -243,7 +243,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testValidValueInsideParenthesizedExpression() {
-    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.getName(), JAVA_TEST));
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -255,7 +255,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testInvalidValueInsideParenthesizedExpression() {
-    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.getName(), JAVA_TEST));
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"), "java_test(", "    name = (1),", ")");
@@ -268,7 +268,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testUnresolvedValueInsideParenthesizedExpression() {
-    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.getName(), JAVA_TEST));
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"), "java_test(", "    name = (ref),", ")");
@@ -277,7 +277,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testNoMissingMandatoryArgErrorIfKwargsPresent() {
-    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.getName(), JAVA_TEST));
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -288,7 +288,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testNoMissingAttributeErrorsForOverriddenBuiltIns() {
-    specProvider.setRules(ImmutableMap.of(JAVA_TEST.name, JAVA_TEST));
+    specProvider.setRules(ImmutableMap.of(JAVA_TEST.getName(), JAVA_TEST));
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/foo/BUILD"),

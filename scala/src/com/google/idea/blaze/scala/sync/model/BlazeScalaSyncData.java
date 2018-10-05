@@ -21,9 +21,13 @@ import java.io.Serializable;
 public class BlazeScalaSyncData implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  public final BlazeScalaImportResult importResult;
+  private final BlazeScalaImportResult importResult;
 
   public BlazeScalaSyncData(BlazeScalaImportResult importResult) {
     this.importResult = importResult;
+  }
+
+  public BlazeScalaImportResult getImportResult() {
+    return importResult;
   }
 }

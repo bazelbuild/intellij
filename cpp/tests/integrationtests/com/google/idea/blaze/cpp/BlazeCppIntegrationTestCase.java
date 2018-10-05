@@ -22,10 +22,12 @@ import com.android.tools.ndk.NdkHelper;
 import com.google.common.base.Splitter;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.sdkcompat.cidr.FileSymbolTablesCacheAdapter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.cidr.lang.psi.OCFile;
 import java.util.List;
+import org.junit.After;
 import org.junit.Before;
 
 /** Base C++ test class for integration tests. */
@@ -34,6 +36,14 @@ public class BlazeCppIntegrationTestCase extends BlazeIntegrationTestCase {
   @Before
   public void enableCppLanguageSupport() {
     NdkHelper.disableCppLanguageSupport(getProject(), false);
+
+    FileSymbolTablesCacheAdapter.enableSymbolTableBuildingInTests(getProject(), true, true);
+  }
+
+  @After
+  public void disableCppLanguageSupport() {
+    FileSymbolTablesCacheAdapter.disableSymbolTableBuildingInTests();
+    NdkHelper.disableCppLanguageSupport(getProject(), true);
   }
 
   protected OCFile createFile(String relativePath, String... contentLines) {

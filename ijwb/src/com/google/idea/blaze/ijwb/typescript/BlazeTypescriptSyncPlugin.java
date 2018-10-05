@@ -208,7 +208,9 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
       ModuleEditor moduleEditor,
       Module workspaceModule,
       ModifiableRootModel workspaceModifiableModel) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)) {
+    if (!blazeProjectData
+        .getWorkspaceLanguageSettings()
+        .isLanguageActive(LanguageClass.TYPESCRIPT)) {
       return;
     }
     Library tsConfigLibrary =
@@ -223,7 +225,9 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
   @Override
   public boolean validate(
       Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)) {
+    if (!blazeProjectData
+        .getWorkspaceLanguageSettings()
+        .isLanguageActive(LanguageClass.TYPESCRIPT)) {
       return true;
     }
     if (!PluginUtils.isPluginEnabled(TYPESCRIPT_PLUGIN_ID)) {
@@ -296,7 +300,9 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
   @Override
   public LibrarySource getLibrarySource(
       ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)) {
+    if (!blazeProjectData
+        .getWorkspaceLanguageSettings()
+        .isLanguageActive(LanguageClass.TYPESCRIPT)) {
       return null;
     }
     return new BlazeTypescriptLibrarySource();

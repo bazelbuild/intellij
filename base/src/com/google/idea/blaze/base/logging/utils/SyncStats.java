@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
+import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener.SyncResult;
 import java.util.ArrayList;
@@ -34,6 +35,8 @@ public abstract class SyncStats {
   public abstract List<LanguageClass> languagesActive();
 
   public abstract List<TargetExpression> blazeProjectTargets();
+
+  public abstract BuildBinaryType syncBinaryType();
 
   public abstract List<String> syncFlags();
 
@@ -62,13 +65,13 @@ public abstract class SyncStats {
         .setStartTimeInEpochTime(System.currentTimeMillis())
         .setWorkspaceType(WorkspaceType.JAVA)
         .setSyncMode(SyncMode.STARTUP)
+        .setSyncBinaryType(BuildBinaryType.BLAZE_CUSTOM)
         .setTimedEvents(new ArrayList<>())
         .setSyncSharded(false)
         .setSyncFlags(new ArrayList<>())
         .setLanguagesActive(new ArrayList<>())
         .setBlazeProjectTargets(new ArrayList<>())
-        .setWorkingSetTargets(new ArrayList<>())
-        .setSyncFlags(new ArrayList<>());
+        .setWorkingSetTargets(new ArrayList<>());
   }
   /** Auto value builder for SyncStats. */
   @AutoValue.Builder
@@ -78,6 +81,8 @@ public abstract class SyncStats {
     public abstract Builder setLanguagesActive(List<LanguageClass> languagesActive);
 
     public abstract Builder setBlazeProjectTargets(List<TargetExpression> blazeProjectTargets);
+
+    public abstract Builder setSyncBinaryType(BuildBinaryType binaryType);
 
     public abstract Builder setSyncFlags(List<String> syncFlags);
 

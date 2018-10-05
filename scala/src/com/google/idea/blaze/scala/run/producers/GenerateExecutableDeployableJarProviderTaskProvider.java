@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -143,7 +144,7 @@ class GenerateExecutableDeployableJarProviderTaskProvider
                 @Override
                 protected Void execute(BlazeContext context) {
                   try (BuildResultHelper buildResultHelper =
-                      BuildResultHelper.forFiles(f -> true)) {
+                      BuildResultHelperProvider.forFiles(project, f -> true)) {
                     BlazeCommand command =
                         BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
                             .addTargets(target.withTargetName(target.targetName() + "_deploy.jar"))
@@ -179,8 +180,8 @@ class GenerateExecutableDeployableJarProviderTaskProvider
               };
 
           ListenableFuture<Void> buildFuture =
-              ProgressiveTaskWithProgressIndicator.builder(project)
-                  .setTitle("Building deployable jar for " + target)
+              ProgressiveTaskWithProgressIndicator.builder(
+                      project, "Building deployable jar for " + target)
                   .submitTaskWithResult(buildTask);
 
           try {

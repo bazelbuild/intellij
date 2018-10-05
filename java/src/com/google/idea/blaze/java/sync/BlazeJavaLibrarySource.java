@@ -34,20 +34,20 @@ class BlazeJavaLibrarySource extends LibrarySource.Adapter {
 
   @Override
   public List<? extends BlazeLibrary> getLibraries() {
-    BlazeJavaSyncData syncData = blazeProjectData.syncState.get(BlazeJavaSyncData.class);
+    BlazeJavaSyncData syncData = blazeProjectData.getSyncState().get(BlazeJavaSyncData.class);
     if (syncData == null) {
       return ImmutableList.of();
     }
-    return syncData.importResult.libraries.values().asList();
+    return syncData.getImportResult().libraries.values().asList();
   }
 
   @Nullable
   @Override
   public Predicate<BlazeLibrary> getLibraryFilter() {
-    BlazeJavaSyncData syncData = blazeProjectData.syncState.get(BlazeJavaSyncData.class);
+    BlazeJavaSyncData syncData = blazeProjectData.getSyncState().get(BlazeJavaSyncData.class);
     if (syncData == null) {
       return o -> true;
     }
-    return new LibraryGlobFilter(syncData.excludedLibraries);
+    return new LibraryGlobFilter(syncData.getExcludedLibraries());
   }
 }

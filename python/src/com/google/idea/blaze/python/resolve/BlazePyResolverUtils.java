@@ -42,7 +42,7 @@ public class BlazePyResolverUtils {
     if (projectData == null) {
       return null;
     }
-    File genfiles = projectData.blazeInfo.getGenfilesDirectory();
+    File genfiles = projectData.getBlazeInfo().getGenfilesDirectory();
     return resolveFile(context.getPsiManager(), new File(genfiles, relativePath));
   }
 
@@ -58,7 +58,7 @@ public class BlazePyResolverUtils {
       return null;
     }
 
-    WorkspacePathResolver pathResolver = projectData.workspacePathResolver;
+    WorkspacePathResolver pathResolver = projectData.getWorkspacePathResolver();
     File file = pathResolver.resolveToFile(relativePath);
     return resolveFile(context.getPsiManager(), file);
   }

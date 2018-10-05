@@ -100,13 +100,13 @@ public class BlazeAndroidTestRunConfigurationHandler
     if (projectData == null) {
       return null;
     }
-    TargetMap targetMap = projectData.targetMap;
+    TargetMap targetMap = projectData.getTargetMap();
     TargetIdeInfo instrumentationTest = targetMap.get(TargetKey.forPlainTarget(label));
-    for (Dependency dependency : instrumentationTest.dependencies) {
-      TargetIdeInfo dependencyInfo = targetMap.get(dependency.targetKey);
+    for (Dependency dependency : instrumentationTest.getDependencies()) {
+      TargetIdeInfo dependencyInfo = targetMap.get(dependency.getTargetKey());
       // Should exist via test_app attribute, and be unique.
-      if (dependencyInfo != null && dependencyInfo.kind == Kind.ANDROID_BINARY) {
-        return dependency.targetKey.label;
+      if (dependencyInfo != null && dependencyInfo.getKind() == Kind.ANDROID_BINARY) {
+        return dependency.getTargetKey().getLabel();
       }
     }
     return null;

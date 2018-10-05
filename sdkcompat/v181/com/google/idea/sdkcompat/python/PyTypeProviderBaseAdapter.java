@@ -25,9 +25,11 @@ import javax.annotation.Nullable;
 /** Compat for {@link PyTypeProviderBase} #api181 */
 public abstract class PyTypeProviderBaseAdapter extends PyTypeProviderBase {
   @Override
+  @Nullable
   public final PyType getReferenceType(
       PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
-    return getReferenceTypeImpl(referenceTarget, context, anchor).get();
+    Ref<PyType> ref = getReferenceTypeImpl(referenceTarget, context, anchor);
+    return ref != null ? ref.get() : null;
   }
 
   @Nullable

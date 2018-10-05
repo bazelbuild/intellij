@@ -89,8 +89,7 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
 
     // Can only run one save operation per project at a time
     synchronized (saveLock) {
-      ProgressiveTaskWithProgressIndicator.builder(project)
-          .setTitle("Saving sync data...")
+      ProgressiveTaskWithProgressIndicator.builder(project, "Saving sync data...")
           .submitTask(
               (ProgressIndicator indicator) -> {
                 try {

@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.java.run.hotswap;
 
-import static com.google.idea.common.guava.GuavaHelper.toImmutableList;
-import static com.google.idea.common.guava.GuavaHelper.toImmutableMap;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -101,7 +101,7 @@ public class ClassFileManifest {
     ImmutableMap.Builder<File, JarManifest> jarManifests = ImmutableMap.builder();
     jars.forEach(
         f -> {
-          if (!updatedFiles.contains(f)) {
+          if (!updatedFiles.contains(f) && previousManifest != null) {
             jarManifests.put(f, previousManifest.jarManifests.get(f));
           }
         });

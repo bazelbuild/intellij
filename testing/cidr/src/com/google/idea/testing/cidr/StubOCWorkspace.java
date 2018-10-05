@@ -19,13 +19,11 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.OCFileType;
-import com.jetbrains.cidr.lang.symbols.OCSymbol;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** A stub {@link OCWorkspace} to use for testing. */
@@ -45,22 +43,6 @@ public class StubOCWorkspace implements OCWorkspace {
   @Override
   public Collection<VirtualFile> getLibraryFilesToBuildSymbols() {
     return ImmutableList.of();
-  }
-
-  public boolean areFromSameProject(@Nullable VirtualFile a, @Nullable VirtualFile b) {
-    return Objects.equals(a, b);
-  }
-
-  public boolean areFromSamePackage(@Nullable VirtualFile a, @Nullable VirtualFile b) {
-    return Objects.equals(a, b);
-  }
-
-  public boolean isInSDK(@Nullable VirtualFile file) {
-    return false;
-  }
-
-  public boolean isFromWrongSDK(OCSymbol symbol, @Nullable VirtualFile contextFile) {
-    return false;
   }
 
   @Override

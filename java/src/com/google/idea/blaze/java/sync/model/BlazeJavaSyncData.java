@@ -22,11 +22,19 @@ import java.io.Serializable;
 public class BlazeJavaSyncData implements Serializable {
   private static final long serialVersionUID = 3L;
 
-  public final BlazeJavaImportResult importResult;
-  public final Glob.GlobSet excludedLibraries;
+  private final BlazeJavaImportResult importResult;
+  private final Glob.GlobSet excludedLibraries;
 
   public BlazeJavaSyncData(BlazeJavaImportResult importResult, Glob.GlobSet excludedLibraries) {
     this.importResult = importResult;
     this.excludedLibraries = excludedLibraries;
+  }
+
+  public BlazeJavaImportResult getImportResult() {
+    return importResult;
+  }
+
+  public Glob.GlobSet getExcludedLibraries() {
+    return excludedLibraries;
   }
 }

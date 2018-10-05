@@ -25,14 +25,14 @@ import javax.annotation.Nullable;
 public final class AndroidIdeInfo implements Serializable {
   private static final long serialVersionUID = 5L;
 
-  public final Collection<ArtifactLocation> resources;
-  @Nullable public final ArtifactLocation manifest;
-  @Nullable public final LibraryArtifact idlJar;
-  @Nullable public final LibraryArtifact resourceJar;
-  public final boolean hasIdlSources;
-  @Nullable public final String resourceJavaPackage;
-  public boolean generateResourceClass;
-  @Nullable public Label legacyResources;
+  private final Collection<ArtifactLocation> resources;
+  @Nullable private final ArtifactLocation manifest;
+  @Nullable private final LibraryArtifact idlJar;
+  @Nullable private final LibraryArtifact resourceJar;
+  private final boolean hasIdlSources;
+  @Nullable private final String resourceJavaPackage;
+  private final boolean generateResourceClass;
+  @Nullable private final Label legacyResources;
 
   public AndroidIdeInfo(
       Collection<ArtifactLocation> resources,
@@ -51,6 +51,43 @@ public final class AndroidIdeInfo implements Serializable {
     this.resourceJar = resourceJar;
     this.hasIdlSources = hasIdlSources;
     this.legacyResources = legacyResources;
+  }
+
+  public Collection<ArtifactLocation> getResources() {
+    return resources;
+  }
+
+  @Nullable
+  public ArtifactLocation getManifest() {
+    return manifest;
+  }
+
+  @Nullable
+  public LibraryArtifact getIdlJar() {
+    return idlJar;
+  }
+
+  @Nullable
+  public LibraryArtifact getResourceJar() {
+    return resourceJar;
+  }
+
+  public boolean hasIdlSources() {
+    return hasIdlSources;
+  }
+
+  @Nullable
+  public String getResourceJavaPackage() {
+    return resourceJavaPackage;
+  }
+
+  public boolean generateResourceClass() {
+    return generateResourceClass;
+  }
+
+  @Nullable
+  public Label getLegacyResources() {
+    return legacyResources;
   }
 
   public static Builder builder() {

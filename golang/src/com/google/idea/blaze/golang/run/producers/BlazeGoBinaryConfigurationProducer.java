@@ -114,13 +114,11 @@ public class BlazeGoBinaryConfigurationProducer
       return null;
     }
     File file = new File(vf.getPath());
-    return SourceToTargetMap.getInstance(psiFile.getProject())
-        .getRulesForSourceFile(file)
-        .stream()
-        .map(projectData.targetMap::get)
+    return SourceToTargetMap.getInstance(psiFile.getProject()).getRulesForSourceFile(file).stream()
+        .map(projectData.getTargetMap()::get)
         .filter(Objects::nonNull)
-        .filter(t -> t.kind.languageClass.equals(LanguageClass.GO))
-        .filter(t -> t.kind.ruleType.equals(RuleType.BINARY))
+        .filter(t -> t.getKind().languageClass.equals(LanguageClass.GO))
+        .filter(t -> t.getKind().ruleType.equals(RuleType.BINARY))
         .map(TargetIdeInfo::toTargetInfo)
         .findFirst()
         .orElse(null);

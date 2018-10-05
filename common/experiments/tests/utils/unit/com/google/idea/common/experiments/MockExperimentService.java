@@ -42,6 +42,10 @@ public class MockExperimentService implements ExperimentService {
     return defaultValue;
   }
 
+  public void setExperimentString(StringExperiment experiment, String value) {
+    experiments.put(experiment.getKey(), value);
+  }
+
   @Override
   @Nullable
   public String getExperimentString(String key, @Nullable String defaultValue) {

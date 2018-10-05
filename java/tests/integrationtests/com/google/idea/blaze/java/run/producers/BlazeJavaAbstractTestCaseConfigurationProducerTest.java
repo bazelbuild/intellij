@@ -47,13 +47,37 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     extends BlazeRunConfigurationProducerTestCase {
 
   @Test
-  public void testIgnoreTestClassWitNoTestSubclasses() {
+  public void testIgnoreTestClassWithNoTestSubclasses() {
     PsiFile javaFile =
         createAndIndexFile(
             new WorkspacePath("java/com/google/test/TestClass.java"),
             "package com.google.test;",
             "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
             "public class TestClass {",
+            "  @org.junit.Test",
+            "  public void testMethod1() {}",
+            "  @org.junit.Test",
+            "  public void testMethod2() {}",
+            "}");
+
+    PsiClass javaClass = ((PsiClassOwner) javaFile).getClasses()[0];
+    assertThat(javaClass).isNotNull();
+
+    ConfigurationContext context = createContextFromPsi(javaClass);
+    ConfigurationFromContext fromContext =
+        new BlazeJavaAbstractTestCaseConfigurationProducer()
+            .createConfigurationFromContext(context);
+    assertThat(fromContext).isNull();
+  }
+
+  @Test
+  public void testIgnoreAbstractTestClassWithNoTestSubclasses() {
+    PsiFile javaFile =
+        createAndIndexFile(
+            new WorkspacePath("java/com/google/test/TestClass.java"),
+            "package com.google.test;",
+            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
+            "public abstract class TestClass {",
             "  @org.junit.Test",
             "  public void testMethod1() {}",
             "  @org.junit.Test",

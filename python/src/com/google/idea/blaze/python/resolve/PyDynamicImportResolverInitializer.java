@@ -29,7 +29,7 @@ import com.jetbrains.python.psi.impl.PyImportResolver;
  * We dynamically register the extension points to avoid adding several additional classes for each
  * provider.
  */
-public class PyDynamicImportResolverInitializer extends ApplicationComponent.Adapter {
+public class PyDynamicImportResolverInitializer implements ApplicationComponent {
 
   @Override
   public void initComponent() {

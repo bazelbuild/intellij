@@ -32,7 +32,12 @@ interface AutoSyncProvider {
 
   String AUTO_SYNC_TITLE = "Automatic Sync";
 
-  /** Returns true if changes to this file impact the results of an incremental sync. */
+  /**
+   * Returns true if changes to this file are expected to impact the results of a project sync.
+   *
+   * <p>This is run on the event thread in response to every file write, so should be very quick
+   * (approximate results are fine).
+   */
   boolean isSyncSensitiveFile(Project project, VirtualFile file);
 
   /**

@@ -33,7 +33,7 @@ class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     return blazeProjectData != null
-        && blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C);
+        && blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C);
   }
 
   @Override

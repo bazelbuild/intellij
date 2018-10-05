@@ -39,18 +39,18 @@ public class BlazeAndroidLiteJavaSyncAugmenter implements BlazeJavaSyncAugmenter
       return;
     }
 
-    AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
+    AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
     if (androidIdeInfo == null) {
       return;
     }
 
     // Add R.java jars
-    LibraryArtifact resourceJar = androidIdeInfo.resourceJar;
+    LibraryArtifact resourceJar = androidIdeInfo.getResourceJar();
     if (resourceJar != null) {
       jars.add(new BlazeJarLibrary(resourceJar));
     }
 
-    LibraryArtifact idlJar = androidIdeInfo.idlJar;
+    LibraryArtifact idlJar = androidIdeInfo.getIdlJar();
     if (idlJar != null) {
       genJars.add(new BlazeJarLibrary(idlJar));
     }

@@ -143,8 +143,7 @@ public final class SourceDirectoryCalculator {
 
   private Collection<SourceArtifact> filterGeneratedArtifacts(
       Collection<SourceArtifact> artifactLocations) {
-    return artifactLocations
-        .stream()
+    return artifactLocations.stream()
         .filter(sourceArtifact -> sourceArtifact.artifactLocation.isSource())
         .collect(Collectors.toList());
   }
@@ -156,16 +155,12 @@ public final class SourceDirectoryCalculator {
 
     for (SourceArtifact sourceArtifact : sources) {
       String sourcePath = sourceArtifact.artifactLocation.getRelativePath();
-      if (importRoots
-          .excludeDirectories()
-          .stream()
+      if (importRoots.excludeDirectories().stream()
           .anyMatch(excluded -> isUnderRootDirectory(excluded, sourcePath))) {
         continue;
       }
       WorkspacePath foundWorkspacePath =
-          importRoots
-              .rootDirectories()
-              .stream()
+          importRoots.rootDirectories().stream()
               .filter(rootDirectory -> isUnderRootDirectory(rootDirectory, sourcePath))
               .findFirst()
               .orElse(null);
@@ -474,7 +469,7 @@ public final class SourceDirectoryCalculator {
           .submit(context);
       return null;
     }
-    String parentPath = new File(sourceArtifact.artifactLocation.relativePath).getParent();
+    String parentPath = new File(sourceArtifact.artifactLocation.getRelativePath()).getParent();
     return new SourceRoot(new WorkspacePath(Strings.nullToEmpty(parentPath)), declaredPackage);
   }
 

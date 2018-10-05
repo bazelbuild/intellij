@@ -78,6 +78,9 @@ public class SkylarkDebugProcess extends XDebugProcess {
   private final ExecutionResult executionResult;
   private final DebugClientTransport transport;
 
+  // TODO(brendandouglas): Here for backwards-compatibility, remove in v2018.10+
+  private volatile boolean debuggingStarted = false;
+
   // state shared with debug server
   private final ConcurrentMap<Location, XLineBreakpoint<XBreakpointProperties>> lineBreakpoints =
       new ConcurrentHashMap<>();
@@ -136,6 +139,13 @@ public class SkylarkDebugProcess extends XDebugProcess {
         });
   }
 
+  /** Returns false if the blaze process is terminating or already terminated. */
+  boolean isProcessAlive() {
+    ProcessHandler handler = getProcessHandler();
+    return !handler.isProcessTerminated() && !handler.isProcessTerminating();
+  }
+
+  /** Returns true if the transport socket still appears to be connected. */
   private boolean isConnected() {
     return transport.isConnected();
   }
@@ -154,7 +164,7 @@ public class SkylarkDebugProcess extends XDebugProcess {
                 indicator.setText("Waiting for connection...");
                 boolean success = transport.waitForConnection();
                 if (!success) {
-                  getSession().reportError("Failed to connect to the debugger");
+                  reportError("Failed to connect to the debugger");
                   transport.close();
                   getSession().stop();
                   return;
@@ -167,11 +177,19 @@ public class SkylarkDebugProcess extends XDebugProcess {
   private void init() {
     getSession().rebuildViews();
     registerBreakpoints();
-    assertResponseType(
-        transport.sendRequest(
-            DebugRequest.newBuilder()
-                .setStartDebugging(StartDebuggingRequest.newBuilder().build())),
-        PayloadCase.START_DEBUGGING);
+    boolean started =
+        assertResponseType(
+            transport.sendRequest(
+                DebugRequest.newBuilder()
+                    .setStartDebugging(StartDebuggingRequest.newBuilder().build())),
+            PayloadCase.START_DEBUGGING);
+    if (started) {
+      debuggingStarted = true;
+    } else {
+      // abort the debugging session entirely if we couldn't successfully initialize
+      transport.close();
+      getSession().stop();
+    }
   }
 
   private void registerBreakpoints() {
@@ -205,28 +223,38 @@ public class SkylarkDebugProcess extends XDebugProcess {
         : breakpoint.getConditionExpression().getExpression();
   }
 
-  /** If the response doesn't match the expected type, or is an error event, log an error. */
-  private void assertResponseType(@Nullable DebugEvent response, PayloadCase expectedType) {
-    if (response == null) {
-      getSession()
-          .reportError(String.format("No '%s' response received from the debugger", expectedType));
-      return;
-    }
-    if (expectedType.equals(response.getPayloadCase())) {
-      return;
-    }
-    if (response.hasError()) {
-      handleError(response.getError());
-    } else {
-      String message =
-          String.format(
-              "Expected response type '%s', but got '%s'", expectedType, response.getPayloadCase());
+  private void reportError(SkylarkDebuggingProtos.Error error) {
+    reportError(error.getMessage());
+  }
+
+  private void reportError(String message) {
+    if (isConnected() && isProcessAlive()) {
       getSession().reportError(message);
     }
   }
 
-  private void handleError(SkylarkDebuggingProtos.Error error) {
-    getSession().reportError(error.getMessage());
+  /**
+   * If the response doesn't match the expected type, or is an error event, log an error.
+   *
+   * @return false if no response was received, or the response type doesn't match that expected.
+   */
+  private boolean assertResponseType(@Nullable DebugEvent response, PayloadCase expectedType) {
+    if (response == null) {
+      reportError(String.format("No '%s' response received from the debugger", expectedType));
+      return false;
+    }
+    if (expectedType.equals(response.getPayloadCase())) {
+      return true;
+    }
+    if (response.hasError()) {
+      reportError(response.getError());
+    } else {
+      String message =
+          String.format(
+              "Expected response type '%s', but got '%s'", expectedType, response.getPayloadCase());
+      reportError(message);
+    }
+    return false;
   }
 
   private Location convertLocation(XLineBreakpoint<XBreakpointProperties> breakpoint) {
@@ -414,7 +442,7 @@ public class SkylarkDebugProcess extends XDebugProcess {
   void handleEvent(SkylarkDebuggingProtos.DebugEvent event) {
     switch (event.getPayloadCase()) {
       case ERROR:
-        handleError(event.getError());
+        reportError(event.getError());
         return;
       case THREAD_PAUSED:
         handleThreadPausedEvent(event.getThreadPaused().getThread());
@@ -434,10 +462,9 @@ public class SkylarkDebugProcess extends XDebugProcess {
       case PAYLOAD_NOT_SET:
         break; // intentional fall through to error reporting
     }
-    getSession()
-        .reportError(
-            "Unrecognized or unset skylark debugger response type. Try upgrading to a newer "
-                + "version of the plugin.");
+    reportError(
+        "Unrecognized or unset skylark debugger response type. Try upgrading to a newer "
+            + "version of the plugin.");
   }
 
   /**
@@ -459,6 +486,15 @@ public class SkylarkDebugProcess extends XDebugProcess {
   }
 
   private void handleThreadPausedEvent(PausedThread thread) {
+    // ignore threads paused during initialization
+    if (!debuggingStarted && thread.getPauseReason() == PauseReason.ALL_THREADS_PAUSED) {
+      // Temporary backwards-compatibility code. TODO(brendandouglas): remove in v2018.10+
+      return;
+    }
+    if (thread.getPauseReason() == PauseReason.INITIALIZING) {
+      return;
+    }
+
     if (thread.getPauseReason() != PauseReason.CONDITIONAL_BREAKPOINT_ERROR) {
       notifyThreadPaused(thread);
       return;
@@ -507,13 +543,13 @@ public class SkylarkDebugProcess extends XDebugProcess {
       case HIT_BREAKPOINT:
       case CONDITIONAL_BREAKPOINT_ERROR:
         return true;
+      case INITIALIZING:
       case ALL_THREADS_PAUSED:
       case UNSET:
         return false;
       case UNRECOGNIZED:
     }
-    getSession()
-        .reportError("Unrecognized pause reason. Try upgrading to a newer version of the plugin.");
+    reportError("Unrecognized pause reason. Try upgrading to a newer version of the plugin.");
     // default to returning true, so we don't leave the debugger in an unusable state
     return true;
   }

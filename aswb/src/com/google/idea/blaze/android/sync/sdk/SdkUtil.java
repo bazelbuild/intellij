@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 public class SdkUtil {
   @Nullable
   public static AndroidSdkPlatform getAndroidSdkPlatform(BlazeProjectData blazeProjectData) {
-    BlazeAndroidSyncData syncData = blazeProjectData.syncState.get(BlazeAndroidSyncData.class);
+    BlazeAndroidSyncData syncData = blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
     return syncData != null ? syncData.androidSdkPlatform : null;
   }
 

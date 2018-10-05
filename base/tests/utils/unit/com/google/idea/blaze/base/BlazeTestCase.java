@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base;
 
-import com.google.idea.sdkcompat.plugin.ExtensionsAreaCompatUtils;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -82,11 +81,6 @@ public class BlazeTestCase {
       this.container.registerComponentInstance(klass.getName(), instance);
       return this;
     }
-
-    // Used by CPPEnvironmentAdapter. Can be removed after #api172
-    public MutablePicoContainer getPicoContainer() {
-      return container;
-    }
   }
 
   @Before
@@ -118,6 +112,7 @@ public class BlazeTestCase {
 
   protected <T> ExtensionPointImpl<T> registerExtensionPoint(
       ExtensionPointName<T> name, Class<T> type) {
-    return ExtensionsAreaCompatUtils.registerExtensionPoint(extensionsArea, name, type);
+    extensionsArea.registerExtensionPoint(name.getName(), type.getName());
+    return extensionsArea.getExtensionPoint(name.getName());
   }
 }

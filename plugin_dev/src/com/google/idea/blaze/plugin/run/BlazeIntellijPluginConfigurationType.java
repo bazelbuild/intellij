@@ -51,11 +51,12 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
   static class BlazeIntellijPluginRunConfigurationFactory extends BlazeRunConfigurationFactory {
     @Override
     public boolean handlesTarget(Project project, BlazeProjectData blazeProjectData, Label label) {
-      if (!blazeProjectData.workspaceLanguageSettings.isWorkspaceType(
-          WorkspaceType.INTELLIJ_PLUGIN)) {
+      if (!blazeProjectData
+          .getWorkspaceLanguageSettings()
+          .isWorkspaceType(WorkspaceType.INTELLIJ_PLUGIN)) {
         return false;
       }
-      TargetIdeInfo target = blazeProjectData.targetMap.get(TargetKey.forPlainTarget(label));
+      TargetIdeInfo target = blazeProjectData.getTargetMap().get(TargetKey.forPlainTarget(label));
       return target != null && IntellijPluginRule.isPluginTarget(target);
     }
 
@@ -108,12 +109,10 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
       if (projectData == null) {
         return null;
       }
-      return projectData
-          .targetMap
-          .targets()
-          .stream()
+      return projectData.getTargetMap().targets().stream()
           .filter(IntellijPluginRule::isPluginTarget)
-          .map(t -> t.key.label)
+          .map(TargetIdeInfo::getKey)
+          .map(TargetKey::getLabel)
           .findFirst()
           .orElse(null);
     }

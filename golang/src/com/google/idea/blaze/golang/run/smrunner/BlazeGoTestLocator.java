@@ -81,7 +81,7 @@ public final class BlazeGoTestLocator implements SMTestLocator {
       return ImmutableList.of();
     }
     // Exactly one source file, we'll go to the file.
-    if (target.sources.size() == 1) {
+    if (target.getSources().size() == 1) {
       List<VirtualFile> goFiles = getGoFiles(project, target);
       if (!goFiles.isEmpty()) {
         PsiFile psiFile = PsiManager.getInstance(project).findFile(goFiles.get(0));
@@ -91,7 +91,8 @@ public final class BlazeGoTestLocator implements SMTestLocator {
       }
     }
     // More than one source file or we failed to get one source file, we'll point to the rule.
-    PsiElement rule = BuildReferenceManager.getInstance(project).resolveLabel(target.key.label);
+    PsiElement rule =
+        BuildReferenceManager.getInstance(project).resolveLabel(target.getKey().getLabel());
     if (!(rule instanceof FuncallExpression)) {
       return ImmutableList.of();
     }
@@ -143,17 +144,17 @@ public final class BlazeGoTestLocator implements SMTestLocator {
     if (projectData == null) {
       return null;
     }
-    TargetIdeInfo target = projectData.targetMap.get(TargetKey.forPlainTarget(label));
+    TargetIdeInfo target = projectData.getTargetMap().get(TargetKey.forPlainTarget(label));
     if (target != null
-        && target.kind.languageClass.equals(LanguageClass.GO)
-        && target.kind.ruleType.equals(RuleType.TEST)) {
+        && target.getKind().languageClass.equals(LanguageClass.GO)
+        && target.getKind().ruleType.equals(RuleType.TEST)) {
       return target;
     }
     return null;
   }
 
   private static List<VirtualFile> getGoFiles(Project project, @Nullable TargetIdeInfo target) {
-    if (target == null || target.goIdeInfo == null) {
+    if (target == null || target.getGoIdeInfo() == null) {
       return ImmutableList.of();
     }
     BlazeProjectData projectData =
@@ -162,11 +163,8 @@ public final class BlazeGoTestLocator implements SMTestLocator {
     if (projectData == null) {
       return ImmutableList.of();
     }
-    return target
-        .goIdeInfo
-        .sources
-        .stream()
-        .map(projectData.artifactLocationDecoder::decode)
+    return target.getGoIdeInfo().getSources().stream()
+        .map(projectData.getArtifactLocationDecoder()::decode)
         .map(lfs::findFileByIoFile)
         .collect(Collectors.toList());
   }

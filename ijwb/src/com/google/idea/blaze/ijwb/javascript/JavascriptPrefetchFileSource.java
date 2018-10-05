@@ -48,8 +48,10 @@ public class JavascriptPrefetchFileSource implements PrefetchFileSource {
       ImportRoots importRoots,
       BlazeProjectData blazeProjectData,
       Set<File> files) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVASCRIPT)
-        || !blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.JAVASCRIPT)
+        || !blazeProjectData
+            .getWorkspaceLanguageSettings()
+            .isLanguageActive(LanguageClass.TYPESCRIPT)) {
       return;
     }
     if (!prefetchAllJsSources.getValue()) {
@@ -58,10 +60,10 @@ public class JavascriptPrefetchFileSource implements PrefetchFileSource {
     // Prefetch all non-project js source files found during sync
     Predicate<ArtifactLocation> shouldPrefetch =
         location -> {
-          if (!location.isSource) {
+          if (!location.isSource()) {
             return false;
           }
-          WorkspacePath path = WorkspacePath.createIfValid(location.relativePath);
+          WorkspacePath path = WorkspacePath.createIfValid(location.getRelativePath());
           if (path == null || importRoots.containsWorkspacePath(path)) {
             return false;
           }
@@ -69,14 +71,11 @@ public class JavascriptPrefetchFileSource implements PrefetchFileSource {
           return prefetchFileExtensions().contains(extension);
         };
     List<File> sourceFiles =
-        blazeProjectData
-            .targetMap
-            .targets()
-            .stream()
+        blazeProjectData.getTargetMap().targets().stream()
             .map(JavascriptPrefetchFileSource::getJsSources)
             .flatMap(Collection::stream)
             .filter(shouldPrefetch)
-            .map(blazeProjectData.artifactLocationDecoder::decode)
+            .map(blazeProjectData.getArtifactLocationDecoder()::decode)
             .collect(Collectors.toList());
     files.addAll(sourceFiles);
   }
@@ -91,11 +90,11 @@ public class JavascriptPrefetchFileSource implements PrefetchFileSource {
   }
 
   private static Collection<ArtifactLocation> getJsSources(TargetIdeInfo target) {
-    if (target.jsIdeInfo != null) {
-      return target.jsIdeInfo.sources;
+    if (target.getJsIdeInfo() != null) {
+      return target.getJsIdeInfo().getSources();
     }
-    if (target.kind.languageClass == LanguageClass.JAVASCRIPT) {
-      return target.sources;
+    if (target.getKind().languageClass == LanguageClass.JAVASCRIPT) {
+      return target.getSources();
     }
     return ImmutableList.of();
   }

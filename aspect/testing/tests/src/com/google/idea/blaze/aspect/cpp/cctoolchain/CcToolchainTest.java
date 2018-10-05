@@ -23,6 +23,7 @@ import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.CToolchainIdeInfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
 import com.google.idea.blaze.BazelIntellijAspectTest;
 import java.util.List;
+import java.util.regex.Pattern;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -44,13 +45,15 @@ public class CcToolchainTest extends BazelIntellijAspectTest {
     assertThat(toolchainInfo.getCOptionList()).isNotEmpty();
     assertThat(toolchainInfo.getCppOptionList()).isNotEmpty();
 
-    // Should at least know the -std level (from some list of flags) to avoid b/70223102, unless the
-    // default is sufficient.
+    // Should at least know the -std level (from some list of flags) to avoid b/70223102.
+    // This is *usually* deliberately chosen, though nowadays it may be fine to omit -std.
+    // Compilers like Clang now default to a modern language level:
+    // https://github.com/llvm-mirror/clang/commit/466d8da5f89b1a780f735c86f414fa69ce63221b
+    // The -std= flag could also be in the form -Xgcc-only=-std=<> or -Xclang-only=-std=<s>
+    Pattern stdRegex = Pattern.compile("^(-std=.*|-X[a-zA-Z]+-only=-std=.*)");
     assertThat(
-            toolchainInfo
-                .getCppOptionList()
-                .stream()
-                .anyMatch(option -> option.startsWith("-std=")))
+            toolchainInfo.getCppOptionList().stream()
+                .anyMatch(option -> stdRegex.matcher(option).matches()))
         .isTrue();
     // There should be several include directories, including:
     // - from compiler (for xmmintrin.h, etc.) (gcc/.../include, or clang/.../include)

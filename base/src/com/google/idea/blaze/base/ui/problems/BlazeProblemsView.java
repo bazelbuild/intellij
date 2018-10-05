@@ -63,7 +63,7 @@ public class BlazeProblemsView {
     return ServiceManager.getService(project, BlazeProblemsView.class);
   }
 
-  public static final String TOOL_WINDOW_ID = "Blaze Problems";
+  private static final String TOOL_WINDOW_ID = "Blaze Problems";
   private static final EnumSet<ErrorTreeElementKind> ALL_MESSAGE_KINDS =
       EnumSet.allOf(ErrorTreeElementKind.class);
   private static final int MAX_ISSUES = 2000;
@@ -76,7 +76,7 @@ public class BlazeProblemsView {
   private final Project project;
   private final BlazeProblemsViewPanel panel;
 
-  private final Set<String> problems = Collections.synchronizedSet(new HashSet<>());
+  private final Set<Integer> problemHashes = Collections.synchronizedSet(new HashSet<>());
   private final AtomicInteger problemCount = new AtomicInteger(0);
   private volatile boolean didFocusProblemsView = false;
   private volatile FocusBehavior focusBehavior;
@@ -112,14 +112,14 @@ public class BlazeProblemsView {
           problemCount.set(0);
           didFocusProblemsView = false;
           this.focusBehavior = focusBehavior;
-          problems.clear();
+          problemHashes.clear();
           updateIcon();
           panel.reload();
         });
   }
 
   public void addMessage(IssueOutput issue, @Nullable Navigatable openInConsole) {
-    if (!problems.add(issue.toString())) {
+    if (!problemHashes.add(issue.hashCode())) {
       return;
     }
     int count = problemCount.incrementAndGet();

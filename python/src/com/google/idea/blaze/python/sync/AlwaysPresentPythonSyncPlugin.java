@@ -64,11 +64,8 @@ public class AlwaysPresentPythonSyncPlugin implements BlazeSyncPlugin {
       return true;
     }
     boolean hasPythonTarget =
-        blazeProjectData
-            .targetMap
-            .targets()
-            .stream()
-            .filter(target -> importRoots.importAsSource(target.key.label))
+        blazeProjectData.getTargetMap().targets().stream()
+            .filter(target -> importRoots.importAsSource(target.getKey().getLabel()))
             .anyMatch(target -> target.kindIsOneOf(Kind.allKindsForLanguage(LanguageClass.PYTHON)));
     if (!hasPythonTarget) {
       return true;

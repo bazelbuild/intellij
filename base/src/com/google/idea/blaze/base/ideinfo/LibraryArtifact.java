@@ -23,12 +23,12 @@ import java.io.Serializable;
 import javax.annotation.Nullable;
 
 /** Represents a jar artifact. */
-public class LibraryArtifact implements Serializable {
+public final class LibraryArtifact implements Serializable {
   private static final long serialVersionUID = 3L;
 
-  @Nullable public final ArtifactLocation interfaceJar;
-  @Nullable public final ArtifactLocation classJar;
-  public final ImmutableList<ArtifactLocation> sourceJars;
+  @Nullable private final ArtifactLocation interfaceJar;
+  @Nullable private final ArtifactLocation classJar;
+  private final ImmutableList<ArtifactLocation> sourceJars;
 
   public LibraryArtifact(
       @Nullable ArtifactLocation interfaceJar,
@@ -43,21 +43,50 @@ public class LibraryArtifact implements Serializable {
     this.sourceJars = checkNotNull(sourceJars);
   }
 
+  @Nullable
+  public ArtifactLocation getInterfaceJar() {
+    return interfaceJar;
+  }
+
+  @Nullable
+  public ArtifactLocation getClassJar() {
+    return classJar;
+  }
+
+  public ImmutableList<ArtifactLocation> getSourceJars() {
+    return sourceJars;
+  }
+
+  /**
+   * Returns the source jars if available. Otherwise, if both interface and class jars are
+   * available, returns the class jar to provide some more information in the decompiled code.
+   */
+  public ImmutableList<ArtifactLocation> getSourceJarsOrClassJar() {
+    if (!sourceJars.isEmpty()) {
+      return sourceJars;
+    }
+    if (interfaceJar != null && classJar != null) {
+      return ImmutableList.of(classJar);
+    }
+    return ImmutableList.of();
+  }
+
   /**
    * Returns the best jar to add to IntelliJ.
    *
    * <p>We prefer the interface jar if one exists, otherwise the class jar.
    */
   public ArtifactLocation jarForIntellijLibrary() {
-    if (interfaceJar != null) {
-      return interfaceJar;
+    if (getInterfaceJar() != null) {
+      return getInterfaceJar();
     }
-    return classJar;
+    return getClassJar();
   }
 
   @Override
   public String toString() {
-    return String.format("jar=%s, ijar=%s, srcjars=%s", classJar, interfaceJar, sourceJars);
+    return String.format(
+        "jar=%s, ijar=%s, srcjars=%s", getClassJar(), getInterfaceJar(), getSourceJars());
   }
 
   @Override
@@ -69,14 +98,14 @@ public class LibraryArtifact implements Serializable {
       return false;
     }
     LibraryArtifact that = (LibraryArtifact) o;
-    return Objects.equal(interfaceJar, that.interfaceJar)
-        && Objects.equal(classJar, that.classJar)
-        && Objects.equal(sourceJars, that.sourceJars);
+    return Objects.equal(getInterfaceJar(), that.getInterfaceJar())
+        && Objects.equal(getClassJar(), that.getClassJar())
+        && Objects.equal(getSourceJars(), that.getSourceJars());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(interfaceJar, classJar, sourceJars);
+    return Objects.hashCode(getInterfaceJar(), getClassJar(), getSourceJars());
   }
 
   public static Builder builder() {

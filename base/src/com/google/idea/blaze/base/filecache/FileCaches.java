@@ -50,7 +50,7 @@ public class FileCaches {
 
   /** Call at the end of build when you want the IDE to pick up any changes. */
   public static void refresh(Project project) {
-    ProgressiveTaskWithProgressIndicator.builder(project)
+    ProgressiveTaskWithProgressIndicator.builder(project, "Updating file caches")
         .submitTask(
             indicator -> {
               indicator.setIndeterminate(true);

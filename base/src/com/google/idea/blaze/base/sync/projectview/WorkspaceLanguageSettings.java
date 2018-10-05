@@ -30,7 +30,7 @@ public class WorkspaceLanguageSettings implements Serializable {
   private static final long serialVersionUID = 1L;
 
   private final WorkspaceType workspaceType;
-  public final ImmutableSet<LanguageClass> activeLanguages;
+  private final ImmutableSet<LanguageClass> activeLanguages;
 
   public WorkspaceLanguageSettings(
       WorkspaceType workspaceType, ImmutableSet<LanguageClass> activeLanguages) {
@@ -40,6 +40,10 @@ public class WorkspaceLanguageSettings implements Serializable {
 
   public WorkspaceType getWorkspaceType() {
     return workspaceType;
+  }
+
+  public ImmutableSet<LanguageClass> getActiveLanguages() {
+    return activeLanguages;
   }
 
   public boolean isWorkspaceType(WorkspaceType workspaceType) {
@@ -56,12 +60,12 @@ public class WorkspaceLanguageSettings implements Serializable {
   }
 
   public boolean isLanguageActive(LanguageClass languageClass) {
-    return activeLanguages.contains(languageClass);
+    return getActiveLanguages().contains(languageClass);
   }
 
   public EnumSet<Kind> getAvailableTargetKinds() {
     EnumSet<Kind> kinds = EnumSet.allOf(Kind.class);
-    kinds.removeIf(kind -> !activeLanguages.contains(kind.languageClass));
+    kinds.removeIf(kind -> !getActiveLanguages().contains(kind.languageClass));
     return kinds;
   }
 
@@ -75,12 +79,12 @@ public class WorkspaceLanguageSettings implements Serializable {
     }
     WorkspaceLanguageSettings that = (WorkspaceLanguageSettings) o;
     return workspaceType == that.workspaceType
-        && Objects.equal(activeLanguages, that.activeLanguages);
+        && Objects.equal(getActiveLanguages(), that.getActiveLanguages());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(workspaceType, activeLanguages);
+    return Objects.hashCode(workspaceType, getActiveLanguages());
   }
 
   @Override
@@ -91,7 +95,7 @@ public class WorkspaceLanguageSettings implements Serializable {
         + workspaceType
         + "\n"
         + "  activeLanguages: "
-        + activeLanguages
+        + getActiveLanguages()
         + "\n"
         + '}';
   }

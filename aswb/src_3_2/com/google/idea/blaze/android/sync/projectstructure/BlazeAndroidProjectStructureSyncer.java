@@ -98,7 +98,7 @@ public class BlazeAndroidProjectStructureSyncer {
       return;
     }
 
-    BlazeAndroidSyncData syncData = blazeProjectData.syncState.get(BlazeAndroidSyncData.class);
+    BlazeAndroidSyncData syncData = blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
     if (syncData == null) {
       return;
     }
@@ -125,7 +125,7 @@ public class BlazeAndroidProjectStructureSyncer {
       targetToAndroidResourceModule.put(androidResourceModule.targetKey, androidResourceModule);
       String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
       Module module = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
-      TargetIdeInfo target = blazeProjectData.targetMap.get(androidResourceModule.targetKey);
+      TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
       AndroidFacetModuleCustomizer.createAndroidFacet(
           module, target != null && target.kindIsOneOf(Kind.ANDROID_BINARY, Kind.ANDROID_TEST));
     }
@@ -134,17 +134,17 @@ public class BlazeAndroidProjectStructureSyncer {
     int totalOrderEntries = 0;
     Set<File> existingRoots = Sets.newHashSet();
     for (AndroidResourceModule androidResourceModule : targetToAndroidResourceModule.values()) {
-      TargetIdeInfo target = blazeProjectData.targetMap.get(androidResourceModule.targetKey);
-      AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
+      TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
+      AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
       assert androidIdeInfo != null;
 
-      String moduleName = moduleNameForAndroidModule(target.key);
+      String moduleName = moduleNameForAndroidModule(target.getKey());
       Module module = moduleEditor.findModule(moduleName);
       assert module != null;
       ModifiableRootModel modifiableRootModel = moduleEditor.editModule(module);
 
       Collection<File> resources =
-          blazeProjectData.artifactLocationDecoder.decodeAll(androidResourceModule.resources);
+          blazeProjectData.getArtifactLocationDecoder().decodeAll(androidResourceModule.resources);
       if (useCyclicResourceDependency.getValue()) {
         // Remove existing resource roots to silence the duplicate content root error.
         // We can only do this if we have cyclic resource dependencies, since otherwise we risk
@@ -188,7 +188,7 @@ public class BlazeAndroidProjectStructureSyncer {
         getRunConfigurationTargets(
             project, projectViewSet, blazeProjectData, targetToAndroidResourceModule.keySet());
     for (TargetIdeInfo target : runConfigurationTargets) {
-      TargetKey targetKey = target.key;
+      TargetKey targetKey = target.getKey();
       String moduleName = moduleNameForAndroidModule(targetKey);
       Module module = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
       AndroidFacetModuleCustomizer.createAndroidFacet(module, true);
@@ -243,7 +243,7 @@ public class BlazeAndroidProjectStructureSyncer {
         continue;
       }
       // Ensure the label is a supported android rule that exists
-      TargetIdeInfo target = blazeProjectData.targetMap.get(targetKey);
+      TargetIdeInfo target = blazeProjectData.getTargetMap().get(targetKey);
       if (target == null) {
         continue;
       }
@@ -274,11 +274,11 @@ public class BlazeAndroidProjectStructureSyncer {
     if (androidSdkPlatform == null) {
       return null;
     }
-    TargetIdeInfo target = blazeProjectData.targetMap.get(targetKey);
+    TargetIdeInfo target = blazeProjectData.getTargetMap().get(targetKey);
     if (target == null) {
       return null;
     }
-    if (target.androidIdeInfo == null) {
+    if (target.getAndroidIdeInfo() == null) {
       return null;
     }
     // We can't run a write action outside the dispatch thread, and can't
@@ -306,8 +306,10 @@ public class BlazeAndroidProjectStructureSyncer {
         newModule,
         moduleDirectory,
         manifestFileForAndroidTarget(
-            blazeProjectData.artifactLocationDecoder, target.androidIdeInfo, moduleDirectory),
-        target.androidIdeInfo.resourceJavaPackage,
+            blazeProjectData.getArtifactLocationDecoder(),
+            target.getAndroidIdeInfo(),
+            moduleDirectory),
+        target.getAndroidIdeInfo().getResourceJavaPackage(),
         ImmutableList.of(),
         null);
     return newModule;
@@ -353,7 +355,7 @@ public class BlazeAndroidProjectStructureSyncer {
       Module workspaceModule,
       AndroidResourceModuleRegistry registry,
       BlazeLightResourceClassService.Builder rClassBuilder) {
-    BlazeAndroidSyncData syncData = blazeProjectData.syncState.get(BlazeAndroidSyncData.class);
+    BlazeAndroidSyncData syncData = blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
     if (syncData == null) {
       return;
     }
@@ -365,7 +367,7 @@ public class BlazeAndroidProjectStructureSyncer {
     updateWorkspaceModuleFacetInMemoryState(
         project, workspaceRoot, workspaceModule, androidSdkPlatform);
 
-    ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.artifactLocationDecoder;
+    ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
     ModuleFinder moduleFinder = ModuleFinder.getInstance(project);
     Executor resourceRepositoryExecutor = Executors.newSingleThreadExecutor();
 
@@ -386,16 +388,16 @@ public class BlazeAndroidProjectStructureSyncer {
 
     for (AndroidResourceModule androidResourceModule :
         syncData.importResult.androidResourceModules) {
-      TargetIdeInfo target = blazeProjectData.targetMap.get(androidResourceModule.targetKey);
-      String moduleName = moduleNameForAndroidModule(target.key);
+      TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
+      String moduleName = moduleNameForAndroidModule(target.getKey());
       Module module = moduleFinder.findModuleByName(moduleName);
       if (module == null) {
-        logger.warn("No module found for resource target: " + target.key);
+        logger.warn("No module found for resource target: " + target.getKey());
         continue;
       }
       registry.put(module, androidResourceModule);
 
-      AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
+      AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
       assert androidIdeInfo != null;
 
       List<File> resources =
@@ -412,30 +414,27 @@ public class BlazeAndroidProjectStructureSyncer {
               artifactLocationDecoder,
               androidIdeInfo,
               moduleDirectoryForAndroidTarget(workspaceRoot, target)),
-          androidIdeInfo.resourceJavaPackage,
+          androidIdeInfo.getResourceJavaPackage(),
           resources,
           resourceRepositoryExecutor);
-      rClassBuilder.addRClass(androidIdeInfo.resourceJavaPackage, module);
+      rClassBuilder.addRClass(androidIdeInfo.getResourceJavaPackage(), module);
     }
 
     Set<TargetKey> androidResourceModules =
-        syncData
-            .importResult
-            .androidResourceModules
-            .stream()
+        syncData.importResult.androidResourceModules.stream()
             .map(androidResourceModule -> androidResourceModule.targetKey)
             .collect(toSet());
     List<TargetIdeInfo> runConfigurationTargets =
         getRunConfigurationTargets(
             project, projectViewSet, blazeProjectData, androidResourceModules);
     for (TargetIdeInfo target : runConfigurationTargets) {
-      String moduleName = moduleNameForAndroidModule(target.key);
+      String moduleName = moduleNameForAndroidModule(target.getKey());
       Module module = moduleFinder.findModuleByName(moduleName);
       if (module == null) {
-        logger.warn("No module found for run configuration target: " + target.key);
+        logger.warn("No module found for run configuration target: " + target.getKey());
         continue;
       }
-      AndroidIdeInfo androidIdeInfo = target.androidIdeInfo;
+      AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
       assert androidIdeInfo != null;
       updateModuleFacetInMemoryState(
           project,
@@ -446,7 +445,7 @@ public class BlazeAndroidProjectStructureSyncer {
               artifactLocationDecoder,
               androidIdeInfo,
               moduleDirectoryForAndroidTarget(workspaceRoot, target)),
-          androidIdeInfo.resourceJavaPackage,
+          androidIdeInfo.getResourceJavaPackage(),
           ImmutableList.of(),
           null);
     }
@@ -454,14 +453,14 @@ public class BlazeAndroidProjectStructureSyncer {
 
   private static File moduleDirectoryForAndroidTarget(
       WorkspaceRoot workspaceRoot, TargetIdeInfo target) {
-    return workspaceRoot.fileForPath(target.key.label.blazePackage());
+    return workspaceRoot.fileForPath(target.getKey().getLabel().blazePackage());
   }
 
   private static File manifestFileForAndroidTarget(
       ArtifactLocationDecoder artifactLocationDecoder,
       AndroidIdeInfo androidIdeInfo,
       File moduleDirectory) {
-    ArtifactLocation manifestArtifactLocation = androidIdeInfo.manifest;
+    ArtifactLocation manifestArtifactLocation = androidIdeInfo.getManifest();
     return manifestArtifactLocation != null
         ? artifactLocationDecoder.decode(manifestArtifactLocation)
         : new File(moduleDirectory, "AndroidManifest.xml");

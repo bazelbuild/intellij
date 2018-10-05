@@ -16,9 +16,8 @@
 package com.google.idea.blaze.java.fastbuild;
 
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.idea.common.guava.GuavaHelper.toImmutableMap;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
-import com.google.common.base.Function;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -35,6 +34,8 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -77,7 +78,6 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -146,7 +146,7 @@ final class FastBuildServiceImpl implements FastBuildService {
           builds.compute(
               label,
               (unused, buildInfo) -> updateBuild(label, buildParameters, buildInfo, loggingData));
-      return transform(
+      return Futures.transform(
           buildState.newBuildOutput(),
           buildOutput ->
               FastBuildInfo.create(
@@ -257,9 +257,7 @@ final class FastBuildServiceImpl implements FastBuildService {
   }
 
   private void addAllModifiedPaths(Set<File> modifiedPaths) {
-    changeListManager
-        .getAllChanges()
-        .stream()
+    changeListManager.getAllChanges().stream()
         .flatMap(change -> Stream.of(change.getBeforeRevision(), change.getAfterRevision()))
         .filter(Objects::nonNull)
         .map(ContentRevision::getFile)
@@ -301,9 +299,11 @@ final class FastBuildServiceImpl implements FastBuildService {
 
     FastBuildAspectStrategy aspectStrategy =
         FastBuildAspectStrategyProvider.findAspectStrategy(
-            projectDataManager.getBlazeProjectData().blazeVersionData);
+            projectDataManager.getBlazeProjectData().getBlazeVersionData());
+    @SuppressWarnings("MustBeClosedChecker") // close buildResultHelper manually via a listener
     BuildResultHelper buildResultHelper =
-        BuildResultHelper.forFiles(
+        BuildResultHelperProvider.forFiles(
+            project,
             file ->
                 file.endsWith(deployJarLabel.targetName().toString())
                     || aspectStrategy.getAspectOutputFilePredicate().test(file));
@@ -311,7 +311,7 @@ final class FastBuildServiceImpl implements FastBuildService {
     Stopwatch timer = Stopwatch.createUnstarted();
 
     ListenableFuture<BuildResult> buildResultFuture =
-        ProgressiveTaskWithProgressIndicator.builder(project)
+        ProgressiveTaskWithProgressIndicator.builder(project, "Building deploy jar for fast builds")
             .submitTaskWithResult(
                 new ScopedTask<BuildResult>() {
                   @Override
@@ -359,7 +359,7 @@ final class FastBuildServiceImpl implements FastBuildService {
                   }
                 });
     ListenableFuture<BuildOutput> buildOutputFuture =
-        transform(
+        Futures.transform(
             buildResultFuture,
             result -> {
               loggingData.put("deploy_jar_build_result", result.status.toString());
@@ -368,21 +368,24 @@ final class FastBuildServiceImpl implements FastBuildService {
               if (result.status != Status.SUCCESS) {
                 throw new RuntimeException("Blaze failure building deploy jar");
               }
-              ImmutableList<File> deployJarArtifacts =
-                  buildResultHelper.getBuildArtifactsForTarget(deployJarLabel);
-              checkState(deployJarArtifacts.size() == 1);
-              File deployJar = deployJarArtifacts.get(0);
+              try {
+                ImmutableList<File> deployJarArtifacts =
+                    buildResultHelper.getBuildArtifactsForTarget(deployJarLabel);
+                checkState(deployJarArtifacts.size() == 1);
+                File deployJar = deployJarArtifacts.get(0);
 
-              ImmutableList<File> ideInfoFiles =
-                  buildResultHelper.getArtifactsForOutputGroups(
-                      ImmutableSet.of(aspectStrategy.getAspectOutputGroup()));
+                ImmutableList<File> ideInfoFiles =
+                    buildResultHelper.getArtifactsForOutputGroups(
+                        ImmutableSet.of(aspectStrategy.getAspectOutputGroup()));
 
-              ImmutableMap<Label, FastBuildBlazeData> blazeData =
-                  ideInfoFiles
-                      .stream()
-                      .map(aspectStrategy::readFastBuildBlazeData)
-                      .collect(toImmutableMap(FastBuildBlazeData::label, i -> i));
-              return BuildOutput.create(deployJar, blazeData);
+                ImmutableMap<Label, FastBuildBlazeData> blazeData =
+                    ideInfoFiles.stream()
+                        .map(aspectStrategy::readFastBuildBlazeData)
+                        .collect(toImmutableMap(FastBuildBlazeData::label, i -> i));
+                return BuildOutput.create(deployJar, blazeData);
+              } catch (GetArtifactsException e) {
+                throw new RuntimeException("Blaze failure building deploy jar: " + e.getMessage());
+              }
             },
             ConcurrencyUtil.getAppExecutorService());
     buildOutputFuture.addListener(
@@ -392,13 +395,6 @@ final class FastBuildServiceImpl implements FastBuildService {
 
   private Label createDeployJarLabel(Label label) {
     return Label.create(label + "_deploy.jar");
-  }
-
-  // #api171: this can go away. In Guava 19, there is a second overload of Futures.transform that
-  // prevents you from using a lambda for the function argument.
-  public static <I, O> ListenableFuture<O> transform(
-      ListenableFuture<I> input, Function<? super I, ? extends O> function, Executor executor) {
-    return Futures.transform(input, function, executor);
   }
 
   private static class FastBuildTunnelException extends RuntimeException {

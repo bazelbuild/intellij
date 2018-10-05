@@ -28,6 +28,8 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
 import com.intellij.lang.ecmascript6.psi.ES6ImportedBinding;
 import com.intellij.lang.javascript.JSTokenTypes;
 import com.intellij.lang.javascript.JavascriptLanguage;
+import com.intellij.lang.javascript.dialects.TypeScriptLanguageDialect;
+import com.intellij.lang.javascript.ecmascript6.TypeScriptUtil;
 import com.intellij.lang.javascript.psi.JSAssignmentExpression;
 import com.intellij.lang.javascript.psi.JSCallExpression;
 import com.intellij.lang.javascript.psi.JSDefinitionExpression;
@@ -80,7 +82,9 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
       @Nullable PsiElement sourceElement, int offset, Editor editor) {
     if (!typescriptGotoJavascript.getValue()
         || sourceElement == null
-        || !isJsIdentifier(sourceElement)) {
+        || !isJsIdentifier(sourceElement)
+        || !(sourceElement.getContainingFile().getLanguage()
+            instanceof TypeScriptLanguageDialect)) {
       return null;
     }
     Project project = sourceElement.getProject();
@@ -88,8 +92,8 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (!Blaze.isBlazeProject(project)
         || projectData == null
-        || !projectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVASCRIPT)
-        || !projectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)) {
+        || !projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.JAVASCRIPT)
+        || !projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.TYPESCRIPT)) {
       return null;
     }
     JSReferenceExpression referenceExpression =
@@ -156,7 +160,7 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
       return ImmutableList.of();
     }
     PsiFile dtsFile = dtsElement.getContainingFile();
-    if (!(dtsFile instanceof JSFile) || !dtsFile.getName().endsWith(".d.ts")) {
+    if (!TypeScriptUtil.isDefinitionFile(dtsFile)) {
       return ImmutableList.of();
     }
     String qualifiedName = getDtsQualifiedName((JSQualifiedNamedElement) dtsElement);
