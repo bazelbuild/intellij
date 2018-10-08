@@ -73,7 +73,7 @@ class BlazeGoSymlinkPreresolver implements ApplicationComponent {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null
-        || !projectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.GO)) {
+        || !projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.GO)) {
       return;
     }
     File goRoot = BlazeGoRootsProvider.getGoRoot(project);

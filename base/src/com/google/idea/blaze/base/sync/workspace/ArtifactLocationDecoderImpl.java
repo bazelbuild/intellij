@@ -36,7 +36,7 @@ public class ArtifactLocationDecoderImpl implements ArtifactLocationDecoder {
   @Override
   public File decode(ArtifactLocation artifactLocation) {
     if (artifactLocation.isMainWorkspaceSourceArtifact()) {
-      return pathResolver.resolveToFile(artifactLocation.relativePath);
+      return pathResolver.resolveToFile(artifactLocation.getRelativePath());
     }
     String path =
         Paths.get(

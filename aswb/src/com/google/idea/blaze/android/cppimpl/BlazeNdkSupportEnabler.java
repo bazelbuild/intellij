@@ -43,7 +43,8 @@ final class BlazeNdkSupportEnabler extends SyncListener.Adapter {
       BlazeProjectData blazeProjectData,
       SyncMode syncMode,
       SyncResult syncResult) {
-    boolean enabled = blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C);
+    boolean enabled =
+        blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C);
     enableCSupportInIde(project, enabled);
   }
 

@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.util;
 
-import static com.google.idea.common.guava.GuavaHelper.toImmutableSet;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

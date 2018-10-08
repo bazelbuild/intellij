@@ -32,10 +32,10 @@ public class BlazeScalaLibrarySource extends LibrarySource.Adapter {
 
   @Override
   public List<? extends BlazeLibrary> getLibraries() {
-    BlazeScalaSyncData syncData = blazeProjectData.syncState.get(BlazeScalaSyncData.class);
+    BlazeScalaSyncData syncData = blazeProjectData.getSyncState().get(BlazeScalaSyncData.class);
     if (syncData == null) {
       return ImmutableList.of();
     }
-    return syncData.importResult.libraries.values().asList();
+    return syncData.getImportResult().libraries.values().asList();
   }
 }

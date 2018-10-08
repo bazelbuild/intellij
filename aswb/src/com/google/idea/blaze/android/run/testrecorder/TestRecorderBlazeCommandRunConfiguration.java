@@ -36,5 +36,8 @@ public class TestRecorderBlazeCommandRunConfiguration extends BlazeCommandRunCon
     } catch (Exception e) {
       LOGGER.error(e);
     }
+
+    // Set before run tasks explicitly as they are not written out externally.
+    setBeforeRunTasks(baseConfiguration.getBeforeRunTasks());
   }
 }

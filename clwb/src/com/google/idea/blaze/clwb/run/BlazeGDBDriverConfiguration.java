@@ -19,16 +19,19 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.sdkcompat.clion.BlazeGDBDriverConfigurationBase;
+import com.google.idea.sdkcompat.clion.ToolchainUtils;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.jetbrains.cidr.cpp.execution.debugger.backend.GDBDriverConfiguration;
+import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
 import java.io.File;
 import java.io.IOException;
 import javax.annotation.Nullable;
 
-final class BlazeGDBDriverConfiguration extends BlazeGDBDriverConfigurationBase {
+final class BlazeGDBDriverConfiguration extends GDBDriverConfiguration {
   private static final Logger LOG = Logger.getInstance(BlazeGDBDriverConfiguration.class);
 
   private final ImmutableList<String> startupCommands;
@@ -37,14 +40,21 @@ final class BlazeGDBDriverConfiguration extends BlazeGDBDriverConfigurationBase 
 
   BlazeGDBDriverConfiguration(
       Project project, ImmutableList<String> startupCommands, WorkspaceRoot workspaceRoot) {
-    super(project);
+    super(project, ToolchainUtils.getToolchain());
     this.project = project;
     this.startupCommands = startupCommands;
     this.workspaceRoot = workspaceRoot;
   }
 
   @Override
-  public void modifyCommandLine(GeneralCommandLine commandLine) {
+  public GeneralCommandLine createDriverCommandLine(DebuggerDriver driver)
+      throws ExecutionException {
+    GeneralCommandLine commandLine = super.createDriverCommandLine(driver);
+    modifyCommandLine(commandLine);
+    return commandLine;
+  }
+
+  private void modifyCommandLine(GeneralCommandLine commandLine) {
     // Add our GDB commands to run after startup
     for (String command : startupCommands) {
       commandLine.addParameter("-ex");
@@ -52,7 +62,7 @@ final class BlazeGDBDriverConfiguration extends BlazeGDBDriverConfigurationBase 
     }
     commandLine.setWorkDirectory(workspaceRoot.directory());
   }
-
+  
   @Override
   public String convertToLocalPath(@Nullable String absolutePath) {
     if (absolutePath != null) {
@@ -63,7 +73,7 @@ final class BlazeGDBDriverConfiguration extends BlazeGDBDriverConfigurationBase 
       BlazeProjectData blazeProjectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
       if (blazeProjectData != null) {
-        git5SafeFile = blazeProjectData.workspacePathResolver.resolveToFile(relativePath);
+        git5SafeFile = blazeProjectData.getWorkspacePathResolver().resolveToFile(relativePath);
       }
       absolutePath = git5SafeFile == null ? null : git5SafeFile.getPath();
     }

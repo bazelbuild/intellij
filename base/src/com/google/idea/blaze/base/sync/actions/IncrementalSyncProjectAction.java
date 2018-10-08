@@ -27,6 +27,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import icons.BlazeIcons;
 import javax.swing.Icon;
@@ -64,10 +65,6 @@ public class IncrementalSyncProjectAction extends BlazeProjectAction {
     switch (status) {
       case FAILED:
         return BlazeIcons.BlazeFailed;
-      case DIRTY:
-        return BlazeIcons.BlazeDirty;
-      case CLEAN:
-        return BlazeIcons.BlazeClean;
       default:
         return BlazeIcons.Blaze;
     }
@@ -77,15 +74,17 @@ public class IncrementalSyncProjectAction extends BlazeProjectAction {
       new NotificationGroup("Changes since last blaze sync", NotificationDisplayType.BALLOON, true);
 
   private static void showPopupNotification(Project project) {
-    String msg =
-        "Some relevant files (e.g. BUILD files, .blazeproject file) have changed "
-            + "since the last sync. Please press the 'Sync' button in the toolbar to "
-            + "re-sync your IntelliJ project.";
+    String message =
+        String.format(
+            "Some relevant files (e.g. BUILD files, .blazeproject file) "
+                + "have changed since the last sync. "
+                + "Please press the 'Sync' button in the toolbar to re-sync your %s project.",
+            ApplicationNamesInfo.getInstance().getFullProductName());
     Notification notification =
         new Notification(
             NOTIFICATION_GROUP.getDisplayId(),
             String.format("Changes since last %s sync", Blaze.buildSystemName(project)),
-            msg,
+            message,
             NotificationType.INFORMATION);
     notification.setImportant(true);
     Notifications.Bus.notify(notification, project);

@@ -101,7 +101,7 @@ public class BlazeScalaMainClassRunConfigurationProducer
       return false;
     }
     TargetIdeInfo target = getTarget(context.getProject(), mainObject);
-    return target != null && Objects.equals(configuration.getTarget(), target.key.label);
+    return target != null && Objects.equals(configuration.getTarget(), target.getKey().getLabel());
   }
 
   @Nullable
@@ -179,12 +179,11 @@ public class BlazeScalaMainClassRunConfigurationProducer
 
     // first look for a matching main_class
     TargetIdeInfo match =
-        scalaBinaryTargets
-            .stream()
+        scalaBinaryTargets.stream()
             .filter(
                 target ->
-                    target.javaIdeInfo != null
-                        && qualifiedName.equals(target.javaIdeInfo.javaBinaryMainClass))
+                    target.getJavaIdeInfo() != null
+                        && qualifiedName.equals(target.getJavaIdeInfo().getJavaBinaryMainClass()))
             .findFirst()
             .orElse(null);
     if (match != null) {
@@ -192,9 +191,8 @@ public class BlazeScalaMainClassRunConfigurationProducer
     }
 
     match =
-        scalaBinaryTargets
-            .stream()
-            .filter(target -> className.equals(target.key.label.targetName().toString()))
+        scalaBinaryTargets.stream()
+            .filter(target -> className.equals(target.getKey().getLabel().targetName().toString()))
             .findFirst()
             .orElse(null);
     if (match != null) {
@@ -216,8 +214,8 @@ public class BlazeScalaMainClassRunConfigurationProducer
   private static FilteredTargetMap computeTargetMap(Project project, BlazeProjectData projectData) {
     return new FilteredTargetMap(
         project,
-        projectData.artifactLocationDecoder,
-        projectData.targetMap,
-        (target) -> target.kind == Kind.SCALA_BINARY && target.isPlainTarget());
+        projectData.getArtifactLocationDecoder(),
+        projectData.getTargetMap(),
+        (target) -> target.getKind() == Kind.SCALA_BINARY && target.isPlainTarget());
   }
 }

@@ -31,6 +31,7 @@ import com.android.tools.idea.run.editor.DeployTarget;
 import com.android.tools.idea.run.editor.DeployTargetState;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.LaunchUtils;
+import com.android.tools.idea.stats.RunStats;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -317,7 +318,8 @@ public final class BlazeAndroidRunConfigurationRunner
               launchInfo,
               processHandler,
               deviceSession.deviceFutures,
-              launchTasksProvider);
+              launchTasksProvider,
+              RunStats.from(env));
       ProgressManager.getInstance().run(task);
 
       return console == null ? null : new DefaultExecutionResult(console, processHandler);

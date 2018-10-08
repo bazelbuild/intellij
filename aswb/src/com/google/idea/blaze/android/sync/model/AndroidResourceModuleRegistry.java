@@ -33,7 +33,7 @@ public class AndroidResourceModuleRegistry {
 
   public Label getLabel(Module module) {
     TargetKey targetKey = getTargetKey(module);
-    return targetKey == null ? null : targetKey.label;
+    return targetKey == null ? null : targetKey.getLabel();
   }
 
   public TargetKey getTargetKey(Module module) {

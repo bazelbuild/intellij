@@ -24,33 +24,13 @@ import javax.annotation.Nullable;
 public final class JavaIdeInfo implements Serializable {
   private static final long serialVersionUID = 3L;
 
-  /**
-   * The main jar(s) produced by this java rule.
-   *
-   * <p>Usually this will be a single jar, but java_imports support importing multiple jars.
-   */
-  public final Collection<LibraryArtifact> jars;
-
-  /** A jar containing annotation processing. */
-  public final Collection<LibraryArtifact> generatedJars;
-
-  /**
-   * A jar containing code from *only* generated sources, iff the rule contains both generated and
-   * non-generated sources.
-   */
-  @Nullable public final LibraryArtifact filteredGenJar;
-
-  /** File containing a map from .java files to their corresponding package. */
-  @Nullable public final ArtifactLocation packageManifest;
-
-  /** File containing dependencies. */
-  @Nullable public final ArtifactLocation jdepsFile;
-
-  /** main_class attribute value for java_binary targets */
-  @Nullable public String javaBinaryMainClass;
-
-  /** test_class attribute value for java_test targets */
-  @Nullable public String testClass;
+  private final Collection<LibraryArtifact> jars;
+  private final Collection<LibraryArtifact> generatedJars;
+  @Nullable private final LibraryArtifact filteredGenJar;
+  @Nullable private final ArtifactLocation packageManifest;
+  @Nullable private final ArtifactLocation jdepsFile;
+  @Nullable private final String javaBinaryMainClass;
+  @Nullable private final String testClass;
 
   public JavaIdeInfo(
       Collection<LibraryArtifact> jars,
@@ -67,6 +47,53 @@ public final class JavaIdeInfo implements Serializable {
     this.filteredGenJar = filteredGenJar;
     this.javaBinaryMainClass = javaBinaryMainClass;
     this.testClass = testClass;
+  }
+
+  /**
+   * The main jar(s) produced by this java rule.
+   *
+   * <p>Usually this will be a single jar, but java_imports support importing multiple jars.
+   */
+  public Collection<LibraryArtifact> getJars() {
+    return jars;
+  }
+
+  /** A jar containing annotation processing. */
+  public Collection<LibraryArtifact> getGeneratedJars() {
+    return generatedJars;
+  }
+
+  /**
+   * A jar containing code from *only* generated sources, iff the rule contains both generated and
+   * non-generated sources.
+   */
+  @Nullable
+  public LibraryArtifact getFilteredGenJar() {
+    return filteredGenJar;
+  }
+
+  /** File containing a map from .java files to their corresponding package. */
+  @Nullable
+  public ArtifactLocation getPackageManifest() {
+    return packageManifest;
+  }
+
+  /** File containing dependencies. */
+  @Nullable
+  public ArtifactLocation getJdepsFile() {
+    return jdepsFile;
+  }
+
+  /** main_class attribute value for java_binary targets */
+  @Nullable
+  public String getJavaBinaryMainClass() {
+    return javaBinaryMainClass;
+  }
+
+  /** test_class attribute value for java_test targets */
+  @Nullable
+  public String getTestClass() {
+    return testClass;
   }
 
   public static Builder builder() {

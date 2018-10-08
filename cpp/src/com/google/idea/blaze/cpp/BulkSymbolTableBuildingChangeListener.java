@@ -104,7 +104,7 @@ public class BulkSymbolTableBuildingChangeListener implements BulkFileListener {
     enabled =
         workspaceRoot != null
             && importRoots != null
-            && blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C)
+            && blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C)
             && enableExperiment.getValue();
   }
 

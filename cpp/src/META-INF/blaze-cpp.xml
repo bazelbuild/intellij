@@ -20,11 +20,6 @@
   <application-components>
     <component>
       <implementation-class>
-        com.google.idea.blaze.cpp.CidrSymbolBuilderSuppressor
-      </implementation-class>
-    </component>
-    <component>
-      <implementation-class>
         com.google.idea.blaze.cpp.navigation.DelegatingSwitchToHeaderOrSourceProvider$ExtensionReplacer
       </implementation-class>
     </component>
@@ -35,11 +30,17 @@
     </component>
   </project-components>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.google.idea.blaze.cpp.BlazeCompilerFlagsProcessorProvider"
+                    interface="com.google.idea.blaze.cpp.BlazeCompilerFlagsProcessor$Provider"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.cpp.BlazeCSyncPlugin"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.cpp.CPrefetchFileSource"/>
     <SyncListener implementation="com.google.idea.blaze.cpp.BulkSymbolTableBuildingChangeListener$WorkspaceTypeSyncListener"/>
     <SyncStatusContributor implementation="com.google.idea.blaze.cpp.syncstatus.CppSyncStatusContributor"/>
+    <cpp.BlazeCompilerFlagsProcessorProvider implementation="com.google.idea.blaze.cpp.SysrootFlagsProcessor$Provider"/>
   </extensions>
 
   <extensions defaultExtensionNs="cidr.lang">

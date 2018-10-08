@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.scope.output;
 
+import com.google.common.base.Objects;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Output;
 import com.intellij.openapi.util.TextRange;
@@ -161,5 +162,23 @@ public class IssueOutput implements Output {
   @Override
   public String toString() {
     return message;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof IssueOutput)) {
+      return false;
+    }
+    IssueOutput other = (IssueOutput) o;
+    return Objects.equal(file, other.file)
+        && line == other.line
+        && column == other.column
+        && category == other.category
+        && message.equals(other.message);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(file, line, column, category, message);
   }
 }

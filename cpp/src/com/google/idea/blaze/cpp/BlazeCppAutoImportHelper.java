@@ -15,13 +15,14 @@
  */
 package com.google.idea.blaze.cpp;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.sdkcompat.cidr.OCDefaultAutoImportHelperAdapter;
-import com.google.idea.sdkcompat.cidr.OCResolveRootAndConfigurationAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import com.jetbrains.cidr.lang.autoImport.OCDefaultAutoImportHelper;
+import com.jetbrains.cidr.lang.preprocessor.OCResolveRootAndConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import com.jetbrains.cidr.lang.workspace.headerRoots.IncludedHeadersRoot;
@@ -34,11 +35,14 @@ import javax.annotation.Nullable;
  * blaze/bazel package path). Presumably this will be fixed in a future CLion release, but in the
  * meantime, fix it ourselves.
  */
-public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelperAdapter {
+public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelper {
 
   @Override
-  public boolean supports(Project project) {
-    return Blaze.isBlazeProject(project);
+  public boolean supports(OCResolveRootAndConfiguration rootAndConfiguration) {
+    if (rootAndConfiguration.getConfiguration() == null) {
+      return false;
+    }
+    return Blaze.isBlazeProject(rootAndConfiguration.getConfiguration().getProject());
   }
 
   /**
@@ -50,7 +54,7 @@ public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelperAdapter {
       Project project,
       @Nullable VirtualFile targetFile,
       VirtualFile fileToImport,
-      OCResolveRootAndConfigurationAdapter rootAndConfiguration,
+      OCResolveRootAndConfiguration rootAndConfiguration,
       Processor<ImportSpecification> processor) {
     // Check "system" roots first. "user" roots may include the workspace root, and the system
     // headers might be checked into source control, which would make it under the workspace root
@@ -62,13 +66,13 @@ public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelperAdapter {
     }
     ImportSpecification specification =
         findMatchingRoot(
-            fileToImport, getSystemHeaderRoots(rootAndConfiguration), /* asUserHeader= */ false);
+            fileToImport, getHeaderRoots(rootAndConfiguration), /* asUserHeader= */ false);
     if (specification != null && !processor.process(specification)) {
       return false;
     }
     specification =
         findMatchingRoot(
-            fileToImport, getUserHeaderRoots(rootAndConfiguration), /* asUserHeader= */ true);
+            fileToImport, getHeaderRoots(rootAndConfiguration), /* asUserHeader= */ true);
     return specification == null || processor.process(specification);
   }
 
@@ -95,5 +99,15 @@ public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelperAdapter {
               : ImportSpecification.Kind.SYSTEM_HEADER_SEARCH_PATH);
     }
     return null;
+  }
+
+  /** Return roots that could be used for angle-bracket or quote includes */
+  private List<HeadersSearchRoot> getHeaderRoots(OCResolveRootAndConfiguration rootAndConfig) {
+    if (rootAndConfig.getConfiguration() == null) {
+      return ImmutableList.of();
+    }
+    return rootAndConfig
+        .getConfiguration()
+        .getLibraryHeadersRoots(rootAndConfig.getKind(), rootAndConfig.getRootFile());
   }
 }

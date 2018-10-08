@@ -16,8 +16,8 @@
 package com.google.idea.blaze.python.run.producers;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.sdkcompat.python.PyConfigurationProducersList;
 import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.openapi.components.AbstractProjectComponent;
@@ -25,6 +25,17 @@ import com.intellij.openapi.project.Project;
 
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
 public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
+
+  private static final ImmutableList<Class<?>> PRODUCERS_TO_SUPPRESS =
+      ImmutableList.of(
+          com.jetbrains.python.run.PythonRunConfigurationProducer.class,
+          com.jetbrains.python.testing.PyTestsConfigurationProducer.class,
+          com.jetbrains.python.testing.PythonTestLegacyConfigurationProducer.class,
+          com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer.class,
+          com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestConfigurationProducer.class,
+          com.jetbrains.python.testing.pytestLegacy.PyTestConfigurationProducer.class,
+          com.jetbrains.python.testing.tox.PyToxConfigurationProducer.class,
+          com.jetbrains.python.testing.unittestLegacy.PythonUnitTestConfigurationProducer.class);
 
   public NonBlazeProducerSuppressor(Project project) {
     super(project);
@@ -42,7 +53,7 @@ public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
   static void suppressProducers(Project project) {
     RunConfigurationProducerService producerService =
         RunConfigurationProducerService.getInstance(project);
-    PyConfigurationProducersList.PRODUCERS_TO_SUPPRESS.forEach(
+    PRODUCERS_TO_SUPPRESS.forEach(
         (klass) -> {
           if (RunConfigurationProducer.class.isAssignableFrom(klass)) {
             producerService.addIgnoredProducer((Class<RunConfigurationProducer<?>>) klass);

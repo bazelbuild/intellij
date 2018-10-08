@@ -150,10 +150,5 @@ public class DelegatingSwitchToHeaderOrSourceProvider extends GotoRelatedProvide
 
     @Override
     public void disposeComponent() {}
-
-    @Override
-    public String getComponentName() {
-      return ExtensionReplacer.class.getName();
-    }
   }
 }

@@ -70,6 +70,10 @@ class DebugClientTransport implements Closeable {
     return clientSocket != null && !clientSocket.isClosed() && clientSocket.isConnected();
   }
 
+  private boolean ignoreErrors() {
+    return !isConnected() || !debugProcess.isProcessAlive();
+  }
+
   @Override
   public void close() {
     isStopCalled = true;
@@ -138,7 +142,7 @@ class DebugClientTransport implements Closeable {
       return waitForResponse(seq);
 
     } catch (IOException e) {
-      if (isConnected()) {
+      if (!ignoreErrors()) {
         logger.error("Error sending request to Skylark debugger", e);
       }
       return null;
@@ -153,7 +157,7 @@ class DebugClientTransport implements Closeable {
           try {
             listenForEvents(eventStream);
           } catch (IOException e) {
-            if (isConnected()) {
+            if (!ignoreErrors()) {
               logger.error("Malformed event proto", e);
             }
             close();

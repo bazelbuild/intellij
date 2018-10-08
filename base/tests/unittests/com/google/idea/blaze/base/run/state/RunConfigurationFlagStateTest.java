@@ -18,6 +18,9 @@ package com.google.idea.blaze.base.run.state;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState.RunConfigurationFlagsStateEditor;
+import javax.swing.JComponent;
+import javax.swing.JTextArea;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -52,6 +55,60 @@ public class RunConfigurationFlagStateTest {
     editor.applyEditorTo(state);
 
     assertThat(state.getRawFlags()).isEqualTo(flags);
+  }
+
+  @Test
+  public void testDoubleQuotesInEditor() {
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
+
+    RunConfigurationStateEditor editor = state.getEditor(null);
+    assertThat(editor).isInstanceOf(RunConfigurationFlagsStateEditor.class);
+    RunConfigurationFlagsStateEditor flagsEditor = (RunConfigurationFlagsStateEditor) editor;
+
+    JComponent internalField = flagsEditor.getInternalComponent();
+    assertThat(internalField).isInstanceOf(JTextArea.class);
+    JTextArea internalTextArea = (JTextArea) internalField;
+
+    internalTextArea.setText("\"--flags=a b\"\n\"--flags=\\\"a b\\\"\"");
+    ImmutableList<String> expectedRawFlags = ImmutableList.of("--flags=a b", "--flags=\"a b\"");
+    String expectedText = "\"--flags=a b\"\n\"--flags=\\\"a b\\\"\"";
+
+    editor.applyEditorTo(state);
+    assertThat(state.getRawFlags()).isEqualTo(expectedRawFlags);
+    editor.resetEditorFrom(state);
+    assertThat(internalTextArea.getText()).isEqualTo(expectedText);
+    // test round trip is stable
+    editor.applyEditorTo(state);
+    assertThat(state.getRawFlags()).isEqualTo(expectedRawFlags);
+    editor.resetEditorFrom(state);
+    assertThat(internalTextArea.getText()).isEqualTo(expectedText);
+  }
+
+  @Test
+  public void testSingleQuotesInEditor() {
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
+
+    RunConfigurationStateEditor editor = state.getEditor(null);
+    assertThat(editor).isInstanceOf(RunConfigurationFlagsStateEditor.class);
+    RunConfigurationFlagsStateEditor flagsEditor = (RunConfigurationFlagsStateEditor) editor;
+
+    JComponent internalField = flagsEditor.getInternalComponent();
+    assertThat(internalField).isInstanceOf(JTextArea.class);
+    JTextArea internalTextArea = (JTextArea) internalField;
+
+    internalTextArea.setText("'--flags=a b'\n'--flags=\"a b\"'");
+    ImmutableList<String> expectedRawFlags = ImmutableList.of("--flags=a b", "--flags=\"a b\"");
+    String expectedText = "\"--flags=a b\"\n\"--flags=\\\"a b\\\"\"";
+
+    editor.applyEditorTo(state);
+    assertThat(state.getRawFlags()).isEqualTo(expectedRawFlags);
+    editor.resetEditorFrom(state);
+    assertThat(internalTextArea.getText()).isEqualTo(expectedText);
+    // test round trip is stable
+    editor.applyEditorTo(state);
+    assertThat(state.getRawFlags()).isEqualTo(expectedRawFlags);
+    editor.resetEditorFrom(state);
+    assertThat(internalTextArea.getText()).isEqualTo(expectedText);
   }
 
   @Test

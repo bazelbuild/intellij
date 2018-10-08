@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
-import static com.google.idea.common.guava.GuavaHelper.toImmutableList;
-import static com.google.idea.common.guava.GuavaHelper.toImmutableSet;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -122,14 +122,14 @@ public final class BuildEventProtocolOutputReader {
    *
    * @throws IOException if the BEP output file is incorrectly formatted
    */
-  static ImmutableList<File> parseAllOutputFilenames(
+  public static ImmutableList<File> parseAllOutputFilenames(
       InputStream inputStream, Predicate<String> fileFilter) throws IOException {
-    ImmutableList.Builder<File> files = ImmutableList.builder();
+    ImmutableSet.Builder<File> files = ImmutableSet.builder();
     BuildEventStreamProtos.BuildEvent event;
     while ((event = BuildEventStreamProtos.BuildEvent.parseDelimitedFrom(inputStream)) != null) {
       files.addAll(parseFilenames(event, fileFilter));
     }
-    return files.build();
+    return files.build().asList();
   }
 
   /**
@@ -137,7 +137,7 @@ public final class BuildEventProtocolOutputReader {
    *
    * @throws IOException if the BEP output file is incorrectly formatted
    */
-  static ImmutableList<File> parseArtifactsForTarget(
+  public static ImmutableList<File> parseArtifactsForTarget(
       InputStream inputStream, Label label, Predicate<String> fileFilter) throws IOException {
     Map<String, List<BuildEventStreamProtos.File>> fileSets = new HashMap<>();
     List<String> fileSetsForLabel = new ArrayList<>();
@@ -150,12 +150,12 @@ public final class BuildEventProtocolOutputReader {
         fileSetsForLabel.addAll(getTargetFileSets(event));
       }
     }
-    return fileSetsForLabel
-        .stream()
+    return fileSetsForLabel.stream()
         .map(fileSets::get)
         .flatMap(List::stream)
         .map(file -> parseFile(file, fileFilter))
         .filter(Objects::nonNull)
+        .distinct()
         .collect(toImmutableList());
   }
 
@@ -164,18 +164,18 @@ public final class BuildEventProtocolOutputReader {
    *
    * @throws IOException if the BEP output file is incorrectly formatted
    */
-  static ImmutableList<File> parseAllOutputGroupFilenames(
+  public static ImmutableList<File> parseAllOutputGroupFilenames(
       InputStream inputStream, Collection<String> outputGroups, Predicate<String> fileFilter)
       throws IOException {
     Map<String, BuildEventStreamProtos.NamedSetOfFiles> fileSets = new HashMap<>();
     Set<String> fileSetsForOutputGroups = new HashSet<>();
     BuildEventStreamProtos.BuildEvent event;
+    // optimize for #contains()
+    ImmutableSet<String> outputGroupsSet = ImmutableSet.copyOf(outputGroups);
     while ((event = BuildEventStreamProtos.BuildEvent.parseDelimitedFrom(inputStream)) != null) {
       if (event.getId().hasNamedSet() && event.hasNamedSetOfFiles()) {
         fileSets.put(event.getId().getNamedSet().getId(), event.getNamedSetOfFiles());
       } else if (event.hasCompleted()) {
-        // optimize for #contains()
-        ImmutableSet<String> outputGroupsSet = ImmutableSet.copyOf(outputGroups);
         fileSetsForOutputGroups.addAll(
             event
                 .getCompleted()

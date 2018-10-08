@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.run.exporter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeRunConfiguration;
-import com.google.idea.sdkcompat.run.RunnerAndConfigurationSettingsCompatUtils;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -120,7 +119,7 @@ public class RunConfigurationSerializer {
       throws InvalidDataException {
     RunManagerImpl manager = RunManagerImpl.getInstanceImpl(project);
     RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(manager);
-    RunnerAndConfigurationSettingsCompatUtils.readConfiguration(settings, element);
+    settings.readExternal(element, /* isShared */ false);
     RunConfiguration config = settings.getConfiguration();
     if (config == null) {
       return null;

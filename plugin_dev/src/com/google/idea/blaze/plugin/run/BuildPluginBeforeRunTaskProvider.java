@@ -26,6 +26,8 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
@@ -220,7 +222,7 @@ public final class BuildPluginBeforeRunTaskProvider
                   }
 
                   try (BuildResultHelper buildResultHelper =
-                      BuildResultHelper.forFiles(f -> true)) {
+                      BuildResultHelperProvider.forFiles(project, f -> true)) {
                     BlazeCommand command =
                         BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
                             .addTargets(config.getTarget())
@@ -255,15 +257,21 @@ public final class BuildPluginBeforeRunTaskProvider
                       context.setHasError();
                     }
                     FileCaches.refresh(project);
-                    deployer.reportBuildComplete(new File(executionRoot), buildResultHelper);
+                    try {
+                      deployer.reportBuildComplete(new File(executionRoot), buildResultHelper);
+                    } catch (GetArtifactsException e) {
+                      IssueOutput.error("Failed to get build artifacts: " + e.getMessage())
+                          .submit(context);
+                      return null;
+                    }
                     return null;
                   }
                 }
               };
 
           ListenableFuture<Void> buildFuture =
-              ProgressiveTaskWithProgressIndicator.builder(project)
-                  .setTitle("Executing blaze build for IntelliJ plugin jar")
+              ProgressiveTaskWithProgressIndicator.builder(
+                      project, "Executing blaze build for IntelliJ plugin jar")
                   .submitTaskWithResult(buildTask);
 
           try {

@@ -81,7 +81,7 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
         continue;
       }
       LibraryArtifact libraryArtifact = blazeLibrary.libraryArtifact;
-      if (libraryArtifact.sourceJars.isEmpty()) {
+      if (libraryArtifact.getSourceJarsOrClassJar().isEmpty()) {
         continue;
       }
       librariesToAttachSourceTo.add(blazeLibrary);
@@ -169,7 +169,7 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
                     .setHasSourceJarAttached(blazeLibrary.key, true);
                 LibraryEditor.updateLibrary(
                     project,
-                    blazeProjectData.artifactLocationDecoder,
+                    blazeProjectData.getArtifactLocationDecoder(),
                     libraryTable,
                     libraryTableModel,
                     blazeLibrary);

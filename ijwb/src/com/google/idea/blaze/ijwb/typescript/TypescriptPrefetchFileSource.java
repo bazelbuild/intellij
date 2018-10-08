@@ -48,17 +48,17 @@ public class TypescriptPrefetchFileSource implements PrefetchFileSource {
       ImportRoots importRoots,
       BlazeProjectData blazeProjectData,
       Set<File> files) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.TYPESCRIPT)
         || !prefetchAllTsSources.getValue()) {
       return;
     }
     // Prefetch all non-project ts source files found during sync
     Predicate<ArtifactLocation> shouldPrefetch =
         location -> {
-          if (!location.isSource) {
+          if (!location.isSource()) {
             return false;
           }
-          WorkspacePath path = WorkspacePath.createIfValid(location.relativePath);
+          WorkspacePath path = WorkspacePath.createIfValid(location.getRelativePath());
           if (path == null || importRoots.containsWorkspacePath(path)) {
             return false;
           }
@@ -66,14 +66,11 @@ public class TypescriptPrefetchFileSource implements PrefetchFileSource {
           return prefetchFileExtensions().contains(extension);
         };
     List<File> sourceFiles =
-        blazeProjectData
-            .targetMap
-            .targets()
-            .stream()
+        blazeProjectData.getTargetMap().targets().stream()
             .map(TypescriptPrefetchFileSource::getJsSources)
             .flatMap(Collection::stream)
             .filter(shouldPrefetch)
-            .map(blazeProjectData.artifactLocationDecoder::decode)
+            .map(blazeProjectData.getArtifactLocationDecoder()::decode)
             .collect(Collectors.toList());
     files.addAll(sourceFiles);
   }
@@ -88,11 +85,11 @@ public class TypescriptPrefetchFileSource implements PrefetchFileSource {
   }
 
   private static Collection<ArtifactLocation> getJsSources(TargetIdeInfo target) {
-    if (target.tsIdeInfo != null) {
-      return target.tsIdeInfo.sources;
+    if (target.getTsIdeInfo() != null) {
+      return target.getTsIdeInfo().getSources();
     }
-    if (target.kind.languageClass == LanguageClass.TYPESCRIPT) {
-      return target.sources;
+    if (target.getKind().languageClass == LanguageClass.TYPESCRIPT) {
+      return target.getSources();
     }
     return ImmutableList.of();
   }

@@ -35,7 +35,7 @@ public final class SkylarkDebuggingUtils {
   public static boolean debuggingEnabled(Project project) {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    return projectData != null && debuggingEnabled(projectData.blazeVersionData);
+    return projectData != null && debuggingEnabled(projectData.getBlazeVersionData());
   }
 
   public static boolean debuggingEnabled(BlazeVersionData blazeVersion) {

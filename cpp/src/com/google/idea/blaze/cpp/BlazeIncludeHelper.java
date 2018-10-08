@@ -23,7 +23,6 @@ import com.jetbrains.cidr.lang.OCFileTypeHelpers;
 import com.jetbrains.cidr.lang.OCIncludeHelper;
 import com.jetbrains.cidr.lang.OCIncludeHelpers.ShowInCompletion;
 import com.jetbrains.cidr.lang.psi.OCFile;
-import javax.annotation.Nullable;
 
 /**
  * Suppress autocomplete of #include paths showing .cc files, if they don't have configurations:
@@ -47,11 +46,5 @@ public class BlazeIncludeHelper implements OCIncludeHelper {
   public boolean processContainingFramework(
       Project project, VirtualFile virtualFile, Processor<PsiFileSystemItem> processor) {
     return true;
-  }
-
-  @Nullable
-  @SuppressWarnings("MissingOverride") // #api173: removed in 2018.1
-  public VirtualFile findHeadersRoot(PsiFileSystemItem psiFileSystemItem) {
-    return null;
   }
 }

@@ -43,8 +43,7 @@ class AddSourceToProjectDialog extends DialogWrapper {
 
     mainPanel = new JPanel(new VerticalLayout(12));
 
-    @SuppressWarnings({"rawtypes", "unchecked"}) // #api171: generify JBList usage
-    JList<TargetInfo> targetsComponent = new JBList(targets);
+    JList<TargetInfo> targetsComponent = new JBList<>(targets);
     if (targets.size() == 1) {
       targetsComponent.setSelectedIndex(0);
     }

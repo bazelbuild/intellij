@@ -38,16 +38,18 @@ class KotlinSyncAugmenter implements BlazeJavaSyncAugmenter {
       Collection<BlazeJarLibrary> jars,
       Collection<BlazeJarLibrary> genJars) {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)
-        || target.kind.languageClass != LanguageClass.KOTLIN) {
+        || target.getKind().languageClass != LanguageClass.KOTLIN) {
       return;
     }
-    JavaIdeInfo javaInfo = target.javaIdeInfo;
-    if (javaInfo == null || javaInfo.filteredGenJar != null || !javaInfo.generatedJars.isEmpty()) {
+    JavaIdeInfo javaInfo = target.getJavaIdeInfo();
+    if (javaInfo == null
+        || javaInfo.getFilteredGenJar() != null
+        || !javaInfo.getGeneratedJars().isEmpty()) {
       return;
     }
     // this is a temporary hack to include annotation processing genjars, by including *all* jars
     // produced by source targets
     // TODO(brendandouglas): remove when kotlin rules expose JavaGenJarsProvider
-    javaInfo.jars.forEach(jar -> genJars.add(new BlazeJarLibrary(jar)));
+    javaInfo.getJars().forEach(jar -> genJars.add(new BlazeJarLibrary(jar)));
   }
 }

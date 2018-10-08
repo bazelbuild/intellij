@@ -35,7 +35,7 @@ class ProjectTargetFinder implements TargetFinder {
   public Future<TargetInfo> findTarget(Project project, Label label) {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    TargetInfo target = projectData != null ? findTarget(projectData.targetMap, label) : null;
+    TargetInfo target = projectData != null ? findTarget(projectData.getTargetMap(), label) : null;
     return Futures.immediateFuture(target);
   }
 
@@ -47,9 +47,8 @@ class ProjectTargetFinder implements TargetFinder {
       return target.toTargetInfo();
     }
     // otherwise just return any matching target
-    return map.targets()
-        .stream()
-        .filter(t -> Objects.equals(label, t.key.label))
+    return map.targets().stream()
+        .filter(t -> Objects.equals(label, t.getKey().getLabel()))
         .findFirst()
         .map(TargetIdeInfo::toTargetInfo)
         .orElse(null);

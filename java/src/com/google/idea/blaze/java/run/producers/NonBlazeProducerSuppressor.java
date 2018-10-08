@@ -17,7 +17,6 @@ package com.google.idea.blaze.java.run.producers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.sdkcompat.java.JavaConfigurationProducerList;
 import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -51,6 +50,16 @@ public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
           "com.android.tools.idea.testartifacts.junit.TestMethodAndroidConfigurationProducer",
           "com.android.tools.idea.testartifacts.junit.TestPackageAndroidConfigurationProducer",
           "com.android.tools.idea.testartifacts.junit.TestPatternConfigurationProducer");
+
+  private static final ImmutableList<Class<? extends RunConfigurationProducer<?>>> JAVA_PRODUCERS =
+      ImmutableList.of(
+          com.intellij.execution.junit.AllInDirectoryConfigurationProducer.class,
+          com.intellij.execution.junit.AllInPackageConfigurationProducer.class,
+          com.intellij.execution.junit.TestInClassConfigurationProducer.class,
+          com.intellij.execution.junit.TestClassConfigurationProducer.class,
+          com.intellij.execution.junit.TestMethodConfigurationProducer.class,
+          com.intellij.execution.junit.PatternConfigurationProducer.class,
+          com.intellij.execution.application.ApplicationConfigurationProducer.class);
 
   private static Collection<Class<? extends RunConfigurationProducer<?>>> getProducers(
       String pluginId, Collection<String> qualifiedClassNames) {
@@ -97,7 +106,7 @@ public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
     RunConfigurationProducerService producerService =
         RunConfigurationProducerService.getInstance(project);
     ImmutableList.<Class<? extends RunConfigurationProducer<?>>>builder()
-        .addAll(JavaConfigurationProducerList.PRODUCERS_TO_SUPPRESS)
+        .addAll(JAVA_PRODUCERS)
         .addAll(getProducers(KOTLIN_PLUGIN_ID, KOTLIN_PRODUCERS))
         .addAll(getProducers(ANDROID_PLUGIN_ID, ANDROID_PRODUCERS))
         .build()

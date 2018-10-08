@@ -120,7 +120,7 @@ public class UnpackedAars {
             .map(library -> (AarLibrary) library)
             .collect(Collectors.toList());
 
-    ArtifactLocationDecoder artifactLocationDecoder = projectData.artifactLocationDecoder;
+    ArtifactLocationDecoder artifactLocationDecoder = projectData.getArtifactLocationDecoder();
     BiMap<File, String> sourceAarFileToCacheKey = HashBiMap.create(aarLibraries.size());
     BiMap<File, String> sourceJarFileToCacheKey = HashBiMap.create(aarLibraries.size());
     for (AarLibrary library : aarLibraries) {

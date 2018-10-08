@@ -85,7 +85,7 @@ public class BlazeKotlinRunConfigurationProducer
         && handlerState != null
         && Objects.equals(handlerState.getCommandState().getCommand(), BlazeCommandName.RUN)
         && configuration.getTarget() != null
-        && Objects.equals(configuration.getTarget(), target.key.label);
+        && Objects.equals(configuration.getTarget(), target.getKey().getLabel());
   }
 
   @Nullable
@@ -113,12 +113,12 @@ public class BlazeKotlinRunConfigurationProducer
 
     // first look for a matching main_class
     TargetIdeInfo match =
-        kotlinBinaryTargets
-            .stream()
+        kotlinBinaryTargets.stream()
             .filter(
                 target ->
-                    target.javaIdeInfo != null
-                        && startClassFqName.equals(target.javaIdeInfo.javaBinaryMainClass))
+                    target.getJavaIdeInfo() != null
+                        && startClassFqName.equals(
+                            target.getJavaIdeInfo().getJavaBinaryMainClass()))
             .findFirst()
             .orElse(null);
     if (match != null) {
@@ -126,9 +126,10 @@ public class BlazeKotlinRunConfigurationProducer
     }
 
     match =
-        kotlinBinaryTargets
-            .stream()
-            .filter(target -> startClassFqName.equals(target.key.label.targetName().toString()))
+        kotlinBinaryTargets.stream()
+            .filter(
+                target ->
+                    startClassFqName.equals(target.getKey().getLabel().targetName().toString()))
             .findFirst()
             .orElse(null);
     if (match != null) {
@@ -150,8 +151,8 @@ public class BlazeKotlinRunConfigurationProducer
   private static FilteredTargetMap computeTargetMap(Project project, BlazeProjectData projectData) {
     return new FilteredTargetMap(
         project,
-        projectData.artifactLocationDecoder,
-        projectData.targetMap,
+        projectData.getArtifactLocationDecoder(),
+        projectData.getTargetMap(),
         (target) ->
             target.kindIsOneOf(Kind.KT_JVM_BINARY, Kind.JAVA_BINARY) && target.isPlainTarget());
   }

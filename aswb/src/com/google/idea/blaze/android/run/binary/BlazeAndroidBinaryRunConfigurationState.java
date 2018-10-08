@@ -51,6 +51,9 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
   private boolean useWorkProfileIfPresent = false;
   private Integer userId;
 
+  private static final String SHOW_LOGCAT_AUTOMATICALLY = "show-logcat-automatically";
+  private boolean showLogcatAutomatically = false;
+
   private static final String DEEP_LINK = "DEEP_LINK";
   private static final String ACTIVITY_CLASS = "ACTIVITY_CLASS";
   private static final String MODE = "MODE";
@@ -103,6 +106,14 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
 
   void setUserId(Integer userId) {
     this.userId = userId;
+  }
+
+  public boolean showLogcatAutomatically() {
+    return showLogcatAutomatically;
+  }
+
+  public void setShowLogcatAutomatically(boolean showLogcatAutomatically) {
+    this.showLogcatAutomatically = showLogcatAutomatically;
   }
 
   public String getDeepLink() {
@@ -160,6 +171,9 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
       setUserId(Integer.parseInt(userIdString));
     }
 
+    setShowLogcatAutomatically(
+        Boolean.parseBoolean(element.getAttributeValue(SHOW_LOGCAT_AUTOMATICALLY)));
+
     for (Map.Entry<String, String> entry : getLegacyValues(element).entrySet()) {
       String value = entry.getValue();
       switch (entry.getKey()) {
@@ -193,6 +207,7 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
     element.setAttribute(LAUNCH_METHOD_ATTR, launchMethod.name());
     element.setAttribute(USE_SPLIT_APKS_IF_POSSIBLE, Boolean.toString(useSplitApksIfPossible));
     element.setAttribute(WORK_PROFILE_ATTR, Boolean.toString(useWorkProfileIfPresent));
+    element.setAttribute(SHOW_LOGCAT_AUTOMATICALLY, Boolean.toString(showLogcatAutomatically));
 
     if (userId != null) {
       element.setAttribute(USER_ID_ATTR, Integer.toString(userId));

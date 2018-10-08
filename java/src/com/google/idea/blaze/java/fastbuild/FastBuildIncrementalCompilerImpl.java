@@ -116,7 +116,7 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
     ImmutableSet.Builder<File> annotationProcessorsClasspath = ImmutableSet.builder();
     Set<Label> seenTargets = new HashSet<>();
     recursivelyAddModifiedJavaSources(
-        projectData.artifactLocationDecoder,
+        projectData.getArtifactLocationDecoder(),
         blazeData,
         label,
         seenTargets,

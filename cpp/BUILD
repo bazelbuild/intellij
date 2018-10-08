@@ -11,17 +11,11 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 
 java_library(
     name = "cpp",
-    srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
-        "clion-2018.1": glob(["sdk_2018_1/src/**/*.java"]),
-        "clion-2018.2": glob(["sdk_2018_1/src/**/*.java"]),
-        "android-studio-3.0": glob(["sdk_2017_1/src/**/*.java"]),
-        "android-studio-3.2": glob(["sdk_2018_1/src/**/*.java"]),
-        "android-studio-3.3": glob(["sdk_2018_1/src/**/*.java"]),
-    }),
+    srcs = glob(["src/**/*.java"]),
     visibility = ["//visibility:public"],
     deps = [
         "//base",
@@ -39,12 +33,29 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+java_library(
+    name = "unit_test_utils",
+    testonly = 1,
+    srcs = glob(["tests/utils/**/*.java"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+        "@junit//jar",
+    ],
+)
+
 intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
+    class_rules = select_for_ide(
+        clion = ["com.google.idea.blaze.cpp.ClionUnitTestSystemPropertiesRule"],
+        default = [],
+    ),
     test_package_root = "com.google.idea.blaze.cpp",
     deps = [
         ":cpp",
+        ":unit_test_utils",
         "//base",
         "//base:unit_test_utils",
         "//common/experiments",

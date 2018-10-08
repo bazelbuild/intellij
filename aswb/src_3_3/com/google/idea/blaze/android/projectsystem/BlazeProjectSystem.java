@@ -15,17 +15,18 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
-import com.android.ide.common.repository.GradleCoordinate;
 import com.android.tools.apk.analyzer.AaptInvoker;
 import com.android.tools.idea.log.LogWrapper;
 import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.idea.projectsystem.AndroidProjectSystem;
+import com.android.tools.idea.projectsystem.LightResourceClassService;
 import com.android.tools.idea.projectsystem.ProjectSystemSyncManager;
+import com.android.tools.idea.res.AndroidInnerClassFinder;
 import com.android.tools.idea.res.AndroidResourceClassPsiElementFinder;
-import com.android.tools.idea.res.ResourceTypeClassFinder;
 import com.android.tools.idea.sdk.AndroidSdks;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.base.actions.BlazeBuildService;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,10 +37,17 @@ import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
-/** Blaze implementation of {@link AndroidProjectSystem} */
+/** Blaze Implementation of {@link AndroidProjectSystem}. */
 public class BlazeProjectSystem implements AndroidProjectSystem {
+  /**
+   * R classes are generated on the fly by {@link LightResourceClassService}. So there is no need to
+   * then augment those R classes. We keep this as an experiment in case something untoward happens,
+   * but it can be deleted (b/78110212)
+   */
+  private static final BoolExperiment ENABLE_PSI_AUGMENT =
+      new BoolExperiment("blaze.psi.augment", false);
+
   private final Project project;
   private final ProjectSystemSyncManager syncManager;
   private final List<PsiElementFinder> myFinders;
@@ -48,12 +56,10 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
     this.project = project;
     syncManager = new BlazeProjectSystemSyncManager(project);
 
-    BlazeLightResourceClassService resourceClassService =
-        BlazeLightResourceClassService.getInstance(project);
     myFinders =
         Arrays.asList(
-            ResourceTypeClassFinder.INSTANCE,
-            new AndroidResourceClassPsiElementFinder(resourceClassService));
+            AndroidInnerClassFinder.INSTANCE,
+            new AndroidResourceClassPsiElementFinder(getLightResourceClassService()));
   }
 
   @Override
@@ -101,13 +107,6 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
     return syncManager;
   }
 
-  @org.jetbrains.annotations.Nullable
-  @Override
-  public GradleCoordinate getAvailableDependency(
-      @NotNull GradleCoordinate coordinate, boolean includePreview) {
-    return null;
-  }
-
   @Nonnull
   @Override
   public Collection<PsiElementFinder> getPsiElementFinders() {
@@ -116,6 +115,12 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
 
   @Override
   public boolean getAugmentRClasses() {
-    return true;
+    return ENABLE_PSI_AUGMENT.getValue();
+  }
+
+  @Nonnull
+  @Override
+  public BlazeLightResourceClassService getLightResourceClassService() {
+    return BlazeLightResourceClassService.getInstance(project);
   }
 }

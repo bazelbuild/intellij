@@ -40,22 +40,19 @@ public class ProgressiveTaskWithProgressIndicator {
   }
 
   @Nullable private final Project project;
-  private String title = "";
+  private final String title;
   private boolean cancelable = true;
   private Modality modality = Modality.ALWAYS_BACKGROUND;
   private ListeningExecutorService executor = BlazeExecutor.getInstance().getExecutor();
 
-  private ProgressiveTaskWithProgressIndicator(@Nullable Project project) {
+  private ProgressiveTaskWithProgressIndicator(@Nullable Project project, String title) {
     this.project = project;
-  }
-
-  public static ProgressiveTaskWithProgressIndicator builder(@Nullable Project project) {
-    return new ProgressiveTaskWithProgressIndicator(project);
-  }
-
-  public ProgressiveTaskWithProgressIndicator setTitle(String title) {
     this.title = title;
-    return this;
+  }
+
+  public static ProgressiveTaskWithProgressIndicator builder(
+      @Nullable Project project, String title) {
+    return new ProgressiveTaskWithProgressIndicator(project, title);
   }
 
   public ProgressiveTaskWithProgressIndicator setCancelable(boolean cancelable) {

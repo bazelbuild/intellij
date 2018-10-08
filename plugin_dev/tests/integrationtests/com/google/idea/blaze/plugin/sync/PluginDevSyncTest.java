@@ -87,8 +87,8 @@ public class PluginDevSyncTest extends BlazeSyncIntegrationTestCase {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
     assertThat(blazeProjectData).isNotNull();
-    assertThat(blazeProjectData.targetMap).isEqualTo(targetMap);
-    assertThat(blazeProjectData.workspaceLanguageSettings.getWorkspaceType())
+    assertThat(blazeProjectData.getTargetMap()).isEqualTo(targetMap);
+    assertThat(blazeProjectData.getWorkspaceLanguageSettings().getWorkspaceType())
         .isEqualTo(WorkspaceType.INTELLIJ_PLUGIN);
 
     List<RunConfiguration> runConfigs =

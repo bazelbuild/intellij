@@ -20,19 +20,9 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Predicate;
 
 /** Assists in getting build artifacts from a build operation. */
 public interface BuildResultHelper extends AutoCloseable {
-
-  /**
-   * Constructs a new build result helper.
-   *
-   * @param files A filter for the output artifacts you are interested in.
-   */
-  static BuildResultHelper forFiles(Predicate<String> files) {
-    return new BuildResultHelperBep(files);
-  }
 
   /**
    * Returns the build flags necessary for the build result helper to work.
@@ -47,7 +37,7 @@ public interface BuildResultHelper extends AutoCloseable {
    *
    * @return The build artifacts from the build operation.
    */
-  ImmutableList<File> getBuildArtifacts();
+  ImmutableList<File> getBuildArtifacts() throws GetArtifactsException;
 
   /**
    * Returns the build artifacts, attempting to filter out all artifacts not directly produced by
@@ -55,11 +45,19 @@ public interface BuildResultHelper extends AutoCloseable {
    *
    * <p>May only be called once the build is complete, or no artifacts will be returned.
    */
-  ImmutableList<File> getBuildArtifactsForTarget(Label target);
+  ImmutableList<File> getBuildArtifactsForTarget(Label target) throws GetArtifactsException;
 
   /** Returns all build artifacts belonging to the given output groups. */
-  ImmutableList<File> getArtifactsForOutputGroups(Collection<String> outputGroups);
+  ImmutableList<File> getArtifactsForOutputGroups(Collection<String> outputGroups)
+      throws GetArtifactsException;
 
   @Override
   void close();
+
+  /** Indicates a failure to get artifact information */
+  class GetArtifactsException extends Exception {
+    public GetArtifactsException(String message) {
+      super(message);
+    }
+  }
 }

@@ -24,15 +24,15 @@ import java.io.Serializable;
 public class CToolchainIdeInfo implements Serializable {
   private static final long serialVersionUID = 4L;
 
-  public final ImmutableList<String> baseCompilerOptions;
-  public final ImmutableList<String> cCompilerOptions;
-  public final ImmutableList<String> cppCompilerOptions;
-  public final ImmutableList<ExecutionRootPath> builtInIncludeDirectories;
-  public final ExecutionRootPath cppExecutable;
-  public final String targetName;
+  private final ImmutableList<String> baseCompilerOptions;
+  private final ImmutableList<String> cCompilerOptions;
+  private final ImmutableList<String> cppCompilerOptions;
+  private final ImmutableList<ExecutionRootPath> builtInIncludeDirectories;
+  private final ExecutionRootPath cppExecutable;
+  private final String targetName;
 
-  public final ImmutableList<String> unfilteredCompilerOptions;
-  public final ImmutableList<ExecutionRootPath> unfilteredToolchainSystemIncludes;
+  private final ImmutableList<String> unfilteredCompilerOptions;
+  private final ImmutableList<ExecutionRootPath> unfilteredToolchainSystemIncludes;
 
   public CToolchainIdeInfo(
       ImmutableList<String> baseCompilerOptions,
@@ -51,6 +51,38 @@ public class CToolchainIdeInfo implements Serializable {
     this.targetName = targetName;
     this.unfilteredCompilerOptions = unfilteredCompilerOptions;
     this.unfilteredToolchainSystemIncludes = unfilteredToolchainSystemIncludes;
+  }
+
+  public ImmutableList<String> getBaseCompilerOptions() {
+    return baseCompilerOptions;
+  }
+
+  public ImmutableList<String> getcCompilerOptions() {
+    return cCompilerOptions;
+  }
+
+  public ImmutableList<String> getCppCompilerOptions() {
+    return cppCompilerOptions;
+  }
+
+  public ImmutableList<ExecutionRootPath> getBuiltInIncludeDirectories() {
+    return builtInIncludeDirectories;
+  }
+
+  public ExecutionRootPath getCppExecutable() {
+    return cppExecutable;
+  }
+
+  public String getTargetName() {
+    return targetName;
+  }
+
+  public ImmutableList<String> getUnfilteredCompilerOptions() {
+    return unfilteredCompilerOptions;
+  }
+
+  public ImmutableList<ExecutionRootPath> getUnfilteredToolchainSystemIncludes() {
+    return unfilteredToolchainSystemIncludes;
   }
 
   public static Builder builder() {
@@ -134,30 +166,30 @@ public class CToolchainIdeInfo implements Serializable {
     return "CToolchainIdeInfo{"
         + "\n"
         + "  baseCompilerOptions="
-        + baseCompilerOptions
+        + getBaseCompilerOptions()
         + "\n"
         + "  cCompilerOptions="
-        + cCompilerOptions
+        + getcCompilerOptions()
         + "\n"
         + "  cppCompilerOptions="
-        + cppCompilerOptions
+        + getCppCompilerOptions()
         + "\n"
         + "  builtInIncludeDirectories="
-        + builtInIncludeDirectories
+        + getBuiltInIncludeDirectories()
         + "\n"
         + "  cppExecutable='"
-        + cppExecutable
+        + getCppExecutable()
         + '\''
         + "\n"
         + "  targetName='"
-        + targetName
+        + getTargetName()
         + '\''
         + "\n"
         + "  unfilteredCompilerOptions="
-        + unfilteredCompilerOptions
+        + getUnfilteredCompilerOptions()
         + "\n"
         + "  unfilteredToolchainSystemIncludes="
-        + unfilteredToolchainSystemIncludes
+        + getUnfilteredToolchainSystemIncludes()
         + "\n"
         + '}';
   }
@@ -171,26 +203,27 @@ public class CToolchainIdeInfo implements Serializable {
       return false;
     }
     CToolchainIdeInfo that = (CToolchainIdeInfo) o;
-    return Objects.equal(baseCompilerOptions, that.baseCompilerOptions)
-        && Objects.equal(cCompilerOptions, that.cCompilerOptions)
-        && Objects.equal(cppCompilerOptions, that.cppCompilerOptions)
-        && Objects.equal(builtInIncludeDirectories, that.builtInIncludeDirectories)
-        && Objects.equal(cppExecutable, that.cppExecutable)
-        && Objects.equal(targetName, that.targetName)
-        && Objects.equal(unfilteredCompilerOptions, that.unfilteredCompilerOptions)
-        && Objects.equal(unfilteredToolchainSystemIncludes, that.unfilteredToolchainSystemIncludes);
+    return Objects.equal(getBaseCompilerOptions(), that.getBaseCompilerOptions())
+        && Objects.equal(getcCompilerOptions(), that.getcCompilerOptions())
+        && Objects.equal(getCppCompilerOptions(), that.getCppCompilerOptions())
+        && Objects.equal(getBuiltInIncludeDirectories(), that.getBuiltInIncludeDirectories())
+        && Objects.equal(getCppExecutable(), that.getCppExecutable())
+        && Objects.equal(getTargetName(), that.getTargetName())
+        && Objects.equal(getUnfilteredCompilerOptions(), that.getUnfilteredCompilerOptions())
+        && Objects.equal(
+            getUnfilteredToolchainSystemIncludes(), that.getUnfilteredToolchainSystemIncludes());
   }
 
   @Override
   public int hashCode() {
     return Objects.hashCode(
-        baseCompilerOptions,
-        cCompilerOptions,
-        cppCompilerOptions,
-        builtInIncludeDirectories,
-        cppExecutable,
-        targetName,
-        unfilteredCompilerOptions,
-        unfilteredToolchainSystemIncludes);
+        getBaseCompilerOptions(),
+        getcCompilerOptions(),
+        getCppCompilerOptions(),
+        getBuiltInIncludeDirectories(),
+        getCppExecutable(),
+        getTargetName(),
+        getUnfilteredCompilerOptions(),
+        getUnfilteredToolchainSystemIncludes());
   }
 }

@@ -21,9 +21,13 @@ import java.io.Serializable;
 public class AndroidSdkIdeInfo implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  public final ArtifactLocation androidJar;
+  private final ArtifactLocation androidJar;
 
   public AndroidSdkIdeInfo(ArtifactLocation androidJar) {
     this.androidJar = androidJar;
+  }
+
+  public ArtifactLocation getAndroidJar() {
+    return androidJar;
   }
 }

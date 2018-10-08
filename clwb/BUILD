@@ -30,6 +30,7 @@ merged_plugin_xml(
         "//cpp:plugin_xml",
         "//dart:plugin_xml",
         "//python:plugin_xml",
+        "//skylark:plugin_xml",
     ],
 )
 
@@ -58,6 +59,7 @@ java_library(
     runtime_deps = [
         "//dart",
         "//python",
+        "//skylark",
         "//terminal",
     ],
     deps = [

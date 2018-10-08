@@ -23,18 +23,18 @@ import java.io.Serializable;
 public class CIdeInfo implements Serializable {
   private static final long serialVersionUID = 8L;
 
-  public final ImmutableList<ArtifactLocation> sources;
-  public final ImmutableList<ArtifactLocation> headers;
-  public final ImmutableList<ArtifactLocation> textualHeaders;
+  private final ImmutableList<ArtifactLocation> sources;
+  private final ImmutableList<ArtifactLocation> headers;
+  private final ImmutableList<ArtifactLocation> textualHeaders;
 
-  public final ImmutableList<String> localDefines;
-  public final ImmutableList<ExecutionRootPath> localIncludeDirectories;
+  private final ImmutableList<String> localDefines;
+  private final ImmutableList<ExecutionRootPath> localIncludeDirectories;
   // From the cpp compilation context provider.
   // These should all be for the entire transitive closure.
-  public final ImmutableList<ExecutionRootPath> transitiveIncludeDirectories;
-  public final ImmutableList<ExecutionRootPath> transitiveQuoteIncludeDirectories;
-  public final ImmutableList<String> transitiveDefines;
-  public final ImmutableList<ExecutionRootPath> transitiveSystemIncludeDirectories;
+  private final ImmutableList<ExecutionRootPath> transitiveIncludeDirectories;
+  private final ImmutableList<ExecutionRootPath> transitiveQuoteIncludeDirectories;
+  private final ImmutableList<String> transitiveDefines;
+  private final ImmutableList<ExecutionRootPath> transitiveSystemIncludeDirectories;
 
   public CIdeInfo(
       ImmutableList<ArtifactLocation> sources,
@@ -55,6 +55,42 @@ public class CIdeInfo implements Serializable {
     this.transitiveQuoteIncludeDirectories = transitiveQuoteIncludeDirectories;
     this.transitiveDefines = transitiveDefines;
     this.transitiveSystemIncludeDirectories = transitiveSystemIncludeDirectories;
+  }
+
+  public ImmutableList<ArtifactLocation> getSources() {
+    return sources;
+  }
+
+  public ImmutableList<ArtifactLocation> getHeaders() {
+    return headers;
+  }
+
+  public ImmutableList<ArtifactLocation> getTextualHeaders() {
+    return textualHeaders;
+  }
+
+  public ImmutableList<String> getLocalDefines() {
+    return localDefines;
+  }
+
+  public ImmutableList<ExecutionRootPath> getLocalIncludeDirectories() {
+    return localIncludeDirectories;
+  }
+
+  public ImmutableList<ExecutionRootPath> getTransitiveIncludeDirectories() {
+    return transitiveIncludeDirectories;
+  }
+
+  public ImmutableList<ExecutionRootPath> getTransitiveQuoteIncludeDirectories() {
+    return transitiveQuoteIncludeDirectories;
+  }
+
+  public ImmutableList<String> getTransitiveDefines() {
+    return transitiveDefines;
+  }
+
+  public ImmutableList<ExecutionRootPath> getTransitiveSystemIncludeDirectories() {
+    return transitiveSystemIncludeDirectories;
   }
 
   public static Builder builder() {
@@ -160,31 +196,31 @@ public class CIdeInfo implements Serializable {
     return "CIdeInfo{"
         + "\n"
         + "  sources="
-        + sources
+        + getSources()
         + "\n"
         + "  headers="
-        + headers
+        + getHeaders()
         + "\n"
         + "  textualHeaders="
-        + textualHeaders
+        + getTextualHeaders()
         + "\n"
         + "  localDefines="
-        + localDefines
+        + getLocalDefines()
         + "\n"
         + "  localIncludeDirectories="
-        + localIncludeDirectories
+        + getLocalIncludeDirectories()
         + "\n"
         + "  transitiveIncludeDirectories="
-        + transitiveIncludeDirectories
+        + getTransitiveIncludeDirectories()
         + "\n"
         + "  transitiveQuoteIncludeDirectories="
-        + transitiveQuoteIncludeDirectories
+        + getTransitiveQuoteIncludeDirectories()
         + "\n"
         + "  transitiveDefines="
-        + transitiveDefines
+        + getTransitiveDefines()
         + "\n"
         + "  transitiveSystemIncludeDirectories="
-        + transitiveSystemIncludeDirectories
+        + getTransitiveSystemIncludeDirectories()
         + "\n"
         + '}';
   }

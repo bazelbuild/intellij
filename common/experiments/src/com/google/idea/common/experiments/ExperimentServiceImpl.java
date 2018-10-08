@@ -36,8 +36,7 @@ import javax.annotation.Nullable;
  * <p>It will check system properties first, then an experiment file in the user's home directory,
  * then finally all files specified by the system property blaze.experiments.file.
  */
-public class ExperimentServiceImpl extends ApplicationComponent.Adapter
-    implements ExperimentService {
+public class ExperimentServiceImpl implements ApplicationComponent, ExperimentService {
   private static final Logger logger = Logger.getInstance(ExperimentServiceImpl.class);
 
   private static final String USER_EXPERIMENT_OVERRIDES_FILE =

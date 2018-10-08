@@ -45,7 +45,7 @@ class CppSyncStatusContributor implements SyncStatusContributor {
 
   @Override
   public boolean handlesFile(BlazeProjectData projectData, VirtualFile virtualFile) {
-    if (!projectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C)) {
+    if (!projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C)) {
       return false;
     }
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(virtualFile.getName());

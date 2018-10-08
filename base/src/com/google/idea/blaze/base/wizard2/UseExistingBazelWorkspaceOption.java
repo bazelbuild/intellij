@@ -150,6 +150,8 @@ public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceO
             .withTitle("Select Workspace Root")
             .withDescription("Select the directory of the workspace you want to use.")
             .withFileFilter(UseExistingBazelWorkspaceOption::isWorkspaceRoot);
+    // File filters are broken for the native Mac file chooser.
+    descriptor.setForcedToUseIdeaFileChooser(true);
     FileChooserDialog chooser =
         FileChooserFactory.getInstance().createFileChooser(descriptor, null, null);
 

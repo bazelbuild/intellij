@@ -84,7 +84,7 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
     state.fileToTargetMapKey =
         ImmutableBiMap.of(
             new File("fileName"),
-            TargetIdeInfo.builder().setLabel(Label.create("//test:test")).build().key);
+            TargetIdeInfo.builder().setLabel(Label.create("//test:test")).build().getKey());
     state.fileState = ImmutableMap.of();
     state.targetMap =
         new TargetMap(ImmutableMap.of()); // Tested separately in testRuleIdeInfoIsSerializable

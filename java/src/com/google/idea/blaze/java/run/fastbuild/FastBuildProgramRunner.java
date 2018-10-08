@@ -29,6 +29,11 @@ import org.jetbrains.annotations.NotNull;
 final class FastBuildProgramRunner extends DefaultJavaProgramRunner {
 
   @Override
+  public String getRunnerId() {
+    return "FastBuildProgramRunner";
+  }
+
+  @Override
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
     ExecutorType executorType = ExecutorType.fromExecutorId(executorId);
     if (!executorType.equals(ExecutorType.FAST_BUILD_RUN)) {

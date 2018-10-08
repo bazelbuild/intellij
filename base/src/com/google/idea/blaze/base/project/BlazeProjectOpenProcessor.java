@@ -21,12 +21,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
+import icons.BlazeIcons;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 import org.jdom.JDOMException;
 
-/** Allows directly opening a project with project data directory embedded at .project */
+/** Allows directly opening a project with project data directory embedded within the project. */
 public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
   @Override
   public String getName() {
@@ -36,7 +37,7 @@ public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
   @Nullable
   @Override
   public Icon getIcon() {
-    return null;
+    return BlazeIcons.Blaze;
   }
 
   private static final String DEPRECATED_PROJECT_DATA_SUBDIRECTORY = ".project";

@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.targetmaps;
 
-import static com.google.idea.common.guava.GuavaHelper.toImmutableList;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -48,14 +48,14 @@ public class SourceToTargetMapImpl implements SourceToTargetMap {
     if (blazeProjectData == null) {
       return ImmutableList.of();
     }
-    return getRulesForSourceFile(sourceFile)
-        .stream()
-        .map(blazeProjectData.targetMap::get)
+    return getRulesForSourceFile(sourceFile).stream()
+        .map(blazeProjectData.getTargetMap()::get)
         .filter(Objects::nonNull)
         // TODO(tomlu): For non-plain targets we need to rdep our way back to a target to build
         // Without this, you won't be able to invoke "build" on (say) a proto_library
         .filter(TargetIdeInfo::isPlainTarget)
-        .map(rule -> rule.key.label)
+        .map(TargetIdeInfo::getKey)
+        .map(TargetKey::getLabel)
         .collect(toImmutableList());
   }
 
@@ -77,11 +77,11 @@ public class SourceToTargetMapImpl implements SourceToTargetMap {
   @SuppressWarnings("unused")
   private static ImmutableMultimap<File, TargetKey> computeSourceToTargetMap(
       Project project, BlazeProjectData blazeProjectData) {
-    ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.artifactLocationDecoder;
+    ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
     ImmutableMultimap.Builder<File, TargetKey> sourceToTargetMap = ImmutableMultimap.builder();
-    for (TargetIdeInfo target : blazeProjectData.targetMap.targets()) {
-      TargetKey key = target.key;
-      for (ArtifactLocation sourceArtifact : target.sources) {
+    for (TargetIdeInfo target : blazeProjectData.getTargetMap().targets()) {
+      TargetKey key = target.getKey();
+      for (ArtifactLocation sourceArtifact : target.getSources()) {
         sourceToTargetMap.put(artifactLocationDecoder.decode(sourceArtifact), key);
       }
     }

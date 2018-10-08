@@ -62,7 +62,7 @@ _generate_test_suite = rule(
     outputs = {"out": "%{name}.java"},
 )
 
-def intellij_unit_test_suite(name, srcs, test_package_root, **kwargs):
+def intellij_unit_test_suite(name, srcs, test_package_root, class_rules = [], **kwargs):
     """Creates a java_test rule comprising all valid test classes in the specified srcs.
 
     Only classes ending in "Test.java" will be recognized.
@@ -75,14 +75,31 @@ def intellij_unit_test_suite(name, srcs, test_package_root, **kwargs):
     """
     suite_class_name = name + "TestSuite"
     suite_class = test_package_root + "." + suite_class_name
+
+    api_version_txt_name = name + "_api_version"
+    api_version_txt(name = api_version_txt_name)
+    data = kwargs.pop("data", [])
+    data.append(api_version_txt_name)
+
+    jvm_flags = list(kwargs.pop("jvm_flags", []))
+    jvm_flags.extend([
+        "-Didea.classpath.index.enabled=false",
+        "-Djava.awt.headless=true",
+        #        "-Didea.platform.prefix=" + platform_prefix,
+        "-Dblaze.idea.api.version.file=$(location %s)" % api_version_txt_name,
+    ])
+
     _generate_test_suite(
         name = suite_class_name,
         srcs = srcs,
         test_package_root = test_package_root,
+        class_rules = class_rules,
     )
     native.java_test(
         name = name,
         srcs = srcs + [suite_class_name],
+        data = data,
+        jvm_flags = jvm_flags,
         test_class = suite_class,
         **kwargs
     )

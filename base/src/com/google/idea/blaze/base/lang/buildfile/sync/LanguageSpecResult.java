@@ -23,15 +23,23 @@ public class LanguageSpecResult implements Serializable {
 
   private static final long ONE_DAY_IN_MILLISECONDS = 1000 * 60 * 60 * 24;
 
-  public final BuildLanguageSpec spec;
-  public final long timestampMillis;
+  private final BuildLanguageSpec spec;
+  private final long timestampMillis;
 
   public LanguageSpecResult(BuildLanguageSpec spec, long timestampMillis) {
     this.spec = spec;
     this.timestampMillis = timestampMillis;
   }
 
+  public BuildLanguageSpec getSpec() {
+    return spec;
+  }
+
+  public long getTimestampMillis() {
+    return timestampMillis;
+  }
+
   public boolean shouldRecalculateSpec() {
-    return System.currentTimeMillis() - timestampMillis > ONE_DAY_IN_MILLISECONDS;
+    return System.currentTimeMillis() - getTimestampMillis() > ONE_DAY_IN_MILLISECONDS;
   }
 }

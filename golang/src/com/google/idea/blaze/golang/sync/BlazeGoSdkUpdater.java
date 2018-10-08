@@ -51,7 +51,7 @@ public class BlazeGoSdkUpdater extends SyncListener.Adapter {
       BlazeProjectData blazeProjectData,
       SyncMode syncMode,
       SyncResult syncResult) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.GO)) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.GO)) {
       return;
     }
     Module workspaceModule = getWorkspaceModule(project);

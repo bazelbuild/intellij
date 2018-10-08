@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
@@ -33,22 +32,12 @@ class BuildFileAutoSyncProvider implements AutoSyncProvider {
 
   @Override
   public boolean isSyncSensitiveFile(Project project, VirtualFile file) {
-    return isBuildFile(project, file) && isInProject(project, file);
+    // we'll just assume any BUILD file being modified is in the project
+    return isBuildFile(project, file);
   }
 
   private static boolean isBuildFile(Project project, VirtualFile file) {
     return Blaze.getBuildSystemProvider(project).isBuildFile(file.getName());
-  }
-
-  private static boolean isInProject(Project project, VirtualFile file) {
-    // for now, accept any file under the indexed project directories. Later, we may want to check
-    // whether there are actually target map targets in the corresponding package
-    WorkspacePath relativePath = getWorkspacePath(project, file);
-    if (relativePath == null) {
-      return false;
-    }
-    ImportRoots roots = ImportRoots.forProjectSafe(project);
-    return roots != null && roots.containsWorkspacePath(relativePath);
   }
 
   @Nullable
@@ -56,7 +45,7 @@ class BuildFileAutoSyncProvider implements AutoSyncProvider {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     return projectData != null
-        ? projectData.workspacePathResolver.getWorkspacePath(new File(file.getPath()))
+        ? projectData.getWorkspacePathResolver().getWorkspacePath(new File(file.getPath()))
         : null;
   }
 

@@ -71,7 +71,7 @@ public final class BlazeBeforeRunCommandHelper {
             ? handlerState.getBlazeBinaryState().getBlazeBinary()
             : Blaze.getBuildSystemProvider(project).getBinaryPath();
 
-    return ProgressiveTaskWithProgressIndicator.builder(project)
+    return ProgressiveTaskWithProgressIndicator.builder(project, "Blaze before run task")
         .submitTaskWithResult(
             new ScopedTask<BuildResult>() {
               @Override

@@ -39,7 +39,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import java.util.ArrayList;
 import java.util.List;
@@ -114,13 +113,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
   }
 
   private static boolean hasTestSubclasses(@Nullable PsiClass psiClass) {
-    if (psiClass == null) {
-      return false;
-    }
-    if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      return true;
-    }
-    return !SubclassTestChooser.findTestSubclasses(psiClass).isEmpty();
+    return psiClass != null && !SubclassTestChooser.findTestSubclasses(psiClass).isEmpty();
   }
 
   @Override

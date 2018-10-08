@@ -19,6 +19,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -89,63 +91,72 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
    * @throws ExecutionException if no unique output artifact was found.
    */
   private File getExecutableToDebug(ExecutionEnvironment env) throws ExecutionException {
-    BuildResultHelper buildResultHelper = BuildResultHelper.forFiles(file -> true);
+    try (BuildResultHelper buildResultHelper =
+        BuildResultHelperProvider.forFiles(env.getProject(), file -> true)) {
 
-    List<String> extraDebugFlags;
-    if (!BlazeCidrLauncher.useRemoteDebugging.getValue()) {
-      extraDebugFlags =
-          ImmutableList.of(
-              "--compilation_mode=dbg",
-              "--copt=-O0",
-              "--copt=-g",
-              "--strip=never",
-              "--dynamic_mode=off");
-    } else {
-      extraDebugFlags =
-          BlazeCidrLauncher.getExtraFlagsForDebugging(configuration.getHandler().getCommandName());
-    }
-
-    ListenableFuture<BuildResult> buildOperation =
-        BlazeBeforeRunCommandHelper.runBlazeBuild(
-            configuration,
-            buildResultHelper,
-            ImmutableList.of(),
-            extraDebugFlags,
-            BlazeInvocationContext.runConfigContext(
-                ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
-            "Building debug binary");
-
-    try {
-      SaveUtil.saveAllFiles();
-      BuildResult result = buildOperation.get();
-      if (result.status != BuildResult.Status.SUCCESS) {
-        throw new ExecutionException("Blaze failure building debug binary");
+      List<String> extraDebugFlags;
+      if (!BlazeCidrLauncher.useRemoteDebugging.getValue()) {
+        extraDebugFlags =
+            ImmutableList.of(
+                "--compilation_mode=dbg",
+                "--copt=-O0",
+                "--copt=-g",
+                "--strip=never",
+                "--dynamic_mode=off");
+      } else {
+        extraDebugFlags =
+            BlazeCidrLauncher.getExtraFlagsForDebugging(
+                configuration.getHandler().getCommandName());
       }
-    } catch (InterruptedException | CancellationException e) {
-      buildOperation.cancel(true);
-      throw new RunCanceledByUserException();
-    } catch (java.util.concurrent.ExecutionException e) {
-      throw new ExecutionException(e);
+
+      ListenableFuture<BuildResult> buildOperation =
+          BlazeBeforeRunCommandHelper.runBlazeBuild(
+              configuration,
+              buildResultHelper,
+              ImmutableList.of(),
+              extraDebugFlags,
+              BlazeInvocationContext.runConfigContext(
+                  ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
+              "Building debug binary");
+
+      try {
+        SaveUtil.saveAllFiles();
+        BuildResult result = buildOperation.get();
+        if (result.status != BuildResult.Status.SUCCESS) {
+          throw new ExecutionException("Blaze failure building debug binary");
+        }
+      } catch (InterruptedException | CancellationException e) {
+        buildOperation.cancel(true);
+        throw new RunCanceledByUserException();
+      } catch (java.util.concurrent.ExecutionException e) {
+        throw new ExecutionException(e);
+      }
+      List<File> candidateFiles;
+      try {
+        candidateFiles =
+            buildResultHelper.getBuildArtifactsForTarget((Label) configuration.getTarget()).stream()
+                .filter(File::canExecute)
+                .collect(Collectors.toList());
+      } catch (GetArtifactsException e) {
+        throw new ExecutionException(
+            String.format(
+                "Failed to get output artifacts when building %s: %s",
+                configuration.getTarget(), e.getMessage()));
+      }
+      if (candidateFiles.isEmpty()) {
+        throw new ExecutionException(
+            String.format("No output artifacts found when building %s", configuration.getTarget()));
+      }
+      File file = findExecutable((Label) configuration.getTarget(), candidateFiles);
+      if (file == null) {
+        throw new ExecutionException(
+            String.format(
+                "More than 1 executable was produced when building %s; don't know which to debug",
+                configuration.getTarget()));
+      }
+      LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
+      return file;
     }
-    List<File> candidateFiles =
-        buildResultHelper
-            .getBuildArtifactsForTarget((Label) configuration.getTarget())
-            .stream()
-            .filter(File::canExecute)
-            .collect(Collectors.toList());
-    if (candidateFiles.isEmpty()) {
-      throw new ExecutionException(
-          String.format("No output artifacts found when building %s", configuration.getTarget()));
-    }
-    File file = findExecutable((Label) configuration.getTarget(), candidateFiles);
-    if (file == null) {
-      throw new ExecutionException(
-          String.format(
-              "More than 1 executable was produced when building %s; don't know which one to debug",
-              configuration.getTarget()));
-    }
-    LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
-    return file;
   }
 
   /**

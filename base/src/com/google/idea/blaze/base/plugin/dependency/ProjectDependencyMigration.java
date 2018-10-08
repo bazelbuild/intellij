@@ -25,7 +25,7 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
  * Temporary migration code. Listens for blaze projects opening and closing, and adds required
  * plugin dependencies
  */
-public class ProjectDependencyMigration extends ApplicationComponent.Adapter {
+public class ProjectDependencyMigration implements ApplicationComponent {
 
   @Override
   public void initComponent() {

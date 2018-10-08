@@ -24,7 +24,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.xdebugger.XDebuggerUtil;
-import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -36,7 +35,7 @@ class SkylarkDebuggerEditorsProvider extends XDebuggerEditorsProvider {
   @Override
   public Document createDocument(
       Project project,
-      XExpression expression,
+      String expression,
       @Nullable XSourcePosition sourcePosition,
       EvaluationMode mode) {
     PsiElement context = null;
@@ -44,7 +43,7 @@ class SkylarkDebuggerEditorsProvider extends XDebuggerEditorsProvider {
       context = getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project);
     }
     PsiFile codeFragment =
-        createExpressionCodeFragment(project, expression.getExpression(), sourcePosition, context);
+        createExpressionCodeFragment(project, expression, sourcePosition, context);
     Document document = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
     assert document != null;
     return document;

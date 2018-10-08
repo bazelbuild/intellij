@@ -41,7 +41,7 @@ public class StandardFileResolver implements FileResolver {
     if (projectData == null) {
       return null;
     }
-    file = projectData.workspacePathResolver.resolveToFile(fileString);
+    file = projectData.getWorkspacePathResolver().resolveToFile(fileString);
     return VirtualFileSystemProvider.getInstance().getSystem().findFileByPath(file.getPath());
   }
 

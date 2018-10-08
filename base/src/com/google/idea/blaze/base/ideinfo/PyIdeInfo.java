@@ -22,10 +22,14 @@ import java.io.Serializable;
 public class PyIdeInfo implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  public final ImmutableList<ArtifactLocation> sources;
+  private final ImmutableList<ArtifactLocation> sources;
 
   public PyIdeInfo(ImmutableList<ArtifactLocation> sources) {
     this.sources = sources;
+  }
+
+  public ImmutableList<ArtifactLocation> getSources() {
+    return sources;
   }
 
   public static Builder builder() {
@@ -48,6 +52,6 @@ public class PyIdeInfo implements Serializable {
 
   @Override
   public String toString() {
-    return "PyIdeInfo{" + "\n" + "  sources=" + sources + "\n" + '}';
+    return "PyIdeInfo{" + "\n" + "  sources=" + getSources() + "\n" + '}';
   }
 }

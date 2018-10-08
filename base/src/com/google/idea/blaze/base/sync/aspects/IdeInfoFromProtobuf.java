@@ -16,6 +16,7 @@
 
 package com.google.idea.blaze.base.sync.aspects;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -48,7 +49,6 @@ import com.google.idea.blaze.base.ideinfo.TsIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.common.guava.GuavaHelper;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -80,9 +80,9 @@ public class IdeInfoFromProtobuf {
     CIdeInfo cIdeInfo = null;
     if (message.hasCIdeInfo()) {
       cIdeInfo = makeCIdeInfo(message.getCIdeInfo());
-      sources.addAll(cIdeInfo.sources);
-      sources.addAll(cIdeInfo.headers);
-      sources.addAll(cIdeInfo.textualHeaders);
+      sources.addAll(cIdeInfo.getSources());
+      sources.addAll(cIdeInfo.getHeaders());
+      sources.addAll(cIdeInfo.getTextualHeaders());
     }
     CToolchainIdeInfo cToolchainIdeInfo = null;
     if (message.hasCToolchainIdeInfo()) {
@@ -110,27 +110,27 @@ public class IdeInfoFromProtobuf {
     PyIdeInfo pyIdeInfo = null;
     if (message.hasPyIdeInfo()) {
       pyIdeInfo = makePyIdeInfo(message.getPyIdeInfo());
-      sources.addAll(pyIdeInfo.sources);
+      sources.addAll(pyIdeInfo.getSources());
     }
     GoIdeInfo goIdeInfo = null;
     if (message.hasGoIdeInfo()) {
-      goIdeInfo = makeGoIdeInfo(message.getGoIdeInfo());
-      sources.addAll(goIdeInfo.sources);
+      goIdeInfo = makeGoIdeInfo(message.getGoIdeInfo(), key.getLabel(), kind);
+      sources.addAll(goIdeInfo.getSources());
     }
     JsIdeInfo jsIdeInfo = null;
     if (message.hasJsIdeInfo()) {
       jsIdeInfo = makeJsIdeInfo(message.getJsIdeInfo());
-      sources.addAll(jsIdeInfo.sources);
+      sources.addAll(jsIdeInfo.getSources());
     }
     TsIdeInfo tsIdeInfo = null;
     if (message.hasTsIdeInfo()) {
       tsIdeInfo = makeTsIdeInfo(message.getTsIdeInfo());
-      sources.addAll(tsIdeInfo.sources);
+      sources.addAll(tsIdeInfo.getSources());
     }
     DartIdeInfo dartIdeInfo = null;
     if (message.hasDartIdeInfo()) {
       dartIdeInfo = makeDartIdeInfo(message.getDartIdeInfo());
-      sources.addAll(dartIdeInfo.sources);
+      sources.addAll(dartIdeInfo.getSources());
     }
     TestIdeInfo testIdeInfo = null;
     if (message.hasTestInfo()) {
@@ -318,8 +318,18 @@ public class IdeInfoFromProtobuf {
     return PyIdeInfo.builder().addSources(makeArtifactLocationList(info.getSourcesList())).build();
   }
 
-  private static GoIdeInfo makeGoIdeInfo(IntellijIdeInfo.GoIdeInfo info) {
+  private static GoIdeInfo makeGoIdeInfo(IntellijIdeInfo.GoIdeInfo info, Label label, Kind kind) {
+    String libraryLabel = info.getLibraryLabel();
+    if (!Strings.isNullOrEmpty(libraryLabel)) {
+      label = Label.create(libraryLabel);
+    }
+    String libraryKind = info.getLibraryKind();
+    if (!Strings.isNullOrEmpty(libraryKind)) {
+      kind = Kind.fromString(libraryKind);
+    }
     return GoIdeInfo.builder()
+        .setLabel(label)
+        .setKind(kind)
         .addSources(makeArtifactLocationList(info.getSourcesList()))
         .setImportPath(Strings.emptyToNull(info.getImportPath()))
         .build();
@@ -376,11 +386,9 @@ public class IdeInfoFromProtobuf {
   private static KotlinToolchainIdeInfo makeKotlinToolchainIdeInfo(
       IntellijIdeInfo.KotlinToolchainIdeInfo ktToolchainIdeInfo) {
     ImmutableList<Label> sdkTargets =
-        ktToolchainIdeInfo
-            .getSdkLibraryTargetsList()
-            .stream()
+        ktToolchainIdeInfo.getSdkLibraryTargetsList().stream()
             .map(Label::create)
-            .collect(GuavaHelper.toImmutableList());
+            .collect(toImmutableList());
     return new KotlinToolchainIdeInfo(ktToolchainIdeInfo.getLanguageVersion(), sdkTargets);
   }
 
@@ -408,9 +416,7 @@ public class IdeInfoFromProtobuf {
     ImmutableList.Builder<ArtifactLocation> sourceJars = ImmutableList.builder();
     if (!libraryArtifact.getSourceJarsList().isEmpty()) {
       sourceJars.addAll(
-          libraryArtifact
-              .getSourceJarsList()
-              .stream()
+          libraryArtifact.getSourceJarsList().stream()
               .map(IdeInfoFromProtobuf::makeArtifactLocation)
               .collect(Collectors.toList()));
     } else if (libraryArtifact.hasSourceJar()) {

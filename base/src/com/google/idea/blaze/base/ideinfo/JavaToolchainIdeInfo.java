@@ -22,9 +22,9 @@ import javax.annotation.Nullable;
 public class JavaToolchainIdeInfo implements Serializable {
   private static final long serialVersionUID = 2L;
 
-  public final String sourceVersion;
-  public final String targetVersion;
-  @Nullable public final ArtifactLocation javacJar;
+  private final String sourceVersion;
+  private final String targetVersion;
+  @Nullable private final ArtifactLocation javacJar;
 
   public JavaToolchainIdeInfo(
       String sourceVersion, String targetVersion, @Nullable ArtifactLocation javacJar) {
@@ -33,18 +33,31 @@ public class JavaToolchainIdeInfo implements Serializable {
     this.javacJar = javacJar;
   }
 
+  public String getSourceVersion() {
+    return sourceVersion;
+  }
+
+  public String getTargetVersion() {
+    return targetVersion;
+  }
+
+  @Nullable
+  public ArtifactLocation getJavacJar() {
+    return javacJar;
+  }
+
   @Override
   public String toString() {
     return "JavaToolchainIdeInfo{"
         + "\n"
         + "  sourceVersion="
-        + sourceVersion
+        + getSourceVersion()
         + "\n"
         + "  targetVersion="
-        + targetVersion
+        + getTargetVersion()
         + "\n"
         + "  javacJar="
-        + javacJar
+        + getJavacJar()
         + "\n"
         + '}';
   }

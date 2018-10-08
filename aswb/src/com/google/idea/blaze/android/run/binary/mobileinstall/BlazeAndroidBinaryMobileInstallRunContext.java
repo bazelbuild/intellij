@@ -91,7 +91,7 @@ public class BlazeAndroidBinaryMobileInstallRunContext implements BlazeAndroidRu
 
   @Override
   public void augmentLaunchOptions(LaunchOptions.Builder options) {
-    options.setDeploy(false).setOpenLogcatAutomatically(true);
+    options.setDeploy(false).setOpenLogcatAutomatically(configState.showLogcatAutomatically());
   }
 
   @Override

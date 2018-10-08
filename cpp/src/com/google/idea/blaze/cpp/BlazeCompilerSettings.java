@@ -16,27 +16,21 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.sdkcompat.cidr.CompilerInfoCacheAdapter;
-import com.google.idea.sdkcompat.cidr.OCCompilerSettingsAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.OCLanguageKind;
-import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
-import com.jetbrains.cidr.lang.toolchains.CidrSwitchBuilder;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import java.io.File;
 import java.util.List;
 import javax.annotation.Nullable;
 
-final class BlazeCompilerSettings extends OCCompilerSettingsAdapter {
-  private final Project project;
+final class BlazeCompilerSettings {
+
   @Nullable private final File cCompiler;
   @Nullable private final File cppCompiler;
-  private final CidrCompilerSwitches cCompilerSwitches;
-  private final CidrCompilerSwitches cppCompilerSwitches;
+  private final ImmutableList<String> cCompilerSwitches;
+  private final ImmutableList<String> cppCompilerSwitches;
   private final String compilerVersion;
-  private final CompilerInfoCacheAdapter compilerInfoCache;
 
   BlazeCompilerSettings(
       Project project,
@@ -44,27 +38,22 @@ final class BlazeCompilerSettings extends OCCompilerSettingsAdapter {
       @Nullable File cppCompiler,
       ImmutableList<String> cFlags,
       ImmutableList<String> cppFlags,
-      String compilerVersion,
-      CompilerInfoCacheAdapter compilerInfoCache) {
-    this.project = project;
+      String compilerVersion) {
     this.cCompiler = cCompiler;
     this.cppCompiler = cppCompiler;
-    this.cCompilerSwitches = getCompilerSwitches(cFlags);
-    this.cppCompilerSwitches = getCompilerSwitches(cppFlags);
+    this.cCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cFlags));
+    this.cppCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cppFlags));
     this.compilerVersion = compilerVersion;
-    this.compilerInfoCache = compilerInfoCache;
   }
 
-  @Override
-  public OCCompilerKind getCompiler(OCLanguageKind languageKind) {
+  OCCompilerKind getCompiler(OCLanguageKind languageKind) {
     if (languageKind == OCLanguageKind.C || languageKind == OCLanguageKind.CPP) {
       return OCCompilerKind.CLANG;
     }
     return OCCompilerKind.UNKNOWN;
   }
 
-  @Override
-  public File getCompilerExecutable(OCLanguageKind lang) {
+  File getCompilerExecutable(OCLanguageKind lang) {
     if (lang == OCLanguageKind.C) {
       return cCompiler;
     } else if (lang == OCLanguageKind.CPP) {
@@ -74,44 +63,21 @@ final class BlazeCompilerSettings extends OCCompilerSettingsAdapter {
     return null;
   }
 
-  @Override
-  public File getCompilerWorkingDir() {
-    return WorkspaceRoot.fromProject(project).directory();
-  }
-
-  @Override
-  public CidrCompilerSwitches getCompilerSwitches(
-      OCLanguageKind lang, @Nullable VirtualFile sourceFile) {
+  ImmutableList<String> getCompilerSwitches(OCLanguageKind lang, @Nullable VirtualFile sourceFile) {
     if (lang == OCLanguageKind.C) {
       return cCompilerSwitches;
     }
     if (lang == OCLanguageKind.CPP) {
       return cppCompilerSwitches;
     }
-    return new CidrSwitchBuilder().build();
+    return ImmutableList.of();
   }
 
-  private static CidrCompilerSwitches getCompilerSwitches(List<String> allCompilerFlags) {
-    return new CidrSwitchBuilder().addAllRaw(allCompilerFlags).build();
+  private static List<String> getCompilerSwitches(Project project, List<String> allCompilerFlags) {
+    return BlazeCompilerFlagsProcessor.process(project, allCompilerFlags);
   }
 
   String getCompilerVersion() {
     return compilerVersion;
-  }
-
-  @Override
-  public Project getProject() {
-    return project;
-  }
-
-  @Override
-  public CompilerInfoCacheAdapter getCompilerInfo() {
-    return compilerInfoCache;
-  }
-
-  @Override
-  public String getCompilerKeyString(
-      OCLanguageKind ocLanguageKind, @Nullable VirtualFile virtualFile) {
-    return getCompiler(ocLanguageKind) + "-" + ocLanguageKind;
   }
 }

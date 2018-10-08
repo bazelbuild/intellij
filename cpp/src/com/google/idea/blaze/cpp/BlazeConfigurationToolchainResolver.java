@@ -17,6 +17,7 @@ package com.google.idea.blaze.cpp;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -25,11 +26,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
+import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -38,7 +41,6 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException;
-import com.google.idea.sdkcompat.cidr.CompilerInfoCacheAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -48,6 +50,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,14 +63,15 @@ import javax.annotation.Nullable;
  * Converts {@link CToolchainIdeInfo} to interfaces used by {@link
  * com.jetbrains.cidr.lang.workspace.OCResolveConfiguration}
  */
-final class BlazeConfigurationToolchainResolver {
+public final class BlazeConfigurationToolchainResolver {
   private static final Logger logger =
       Logger.getInstance(BlazeConfigurationToolchainResolver.class);
 
   private BlazeConfigurationToolchainResolver() {}
 
-  /** Returns the toolchain used by each target */
-  static ImmutableMap<TargetKey, CToolchainIdeInfo> buildToolchainLookupMap(
+  /** Returns the C toolchain used by each C target */
+  @VisibleForTesting
+  public static ImmutableMap<TargetKey, CToolchainIdeInfo> buildToolchainLookupMap(
       BlazeContext context, TargetMap targetMap) {
     return Scope.push(
         context,
@@ -76,22 +80,21 @@ final class BlazeConfigurationToolchainResolver {
 
           Map<TargetKey, CToolchainIdeInfo> toolchains = Maps.newLinkedHashMap();
           for (TargetIdeInfo target : targetMap.targets()) {
-            CToolchainIdeInfo cToolchainIdeInfo = target.cToolchainIdeInfo;
+            CToolchainIdeInfo cToolchainIdeInfo = target.getcToolchainIdeInfo();
             if (cToolchainIdeInfo != null) {
-              toolchains.put(target.key, cToolchainIdeInfo);
+              toolchains.put(target.getKey(), cToolchainIdeInfo);
             }
           }
 
           ImmutableMap.Builder<TargetKey, CToolchainIdeInfo> lookupTable = ImmutableMap.builder();
           for (TargetIdeInfo target : targetMap.targets()) {
-            if (target.kind.languageClass != LanguageClass.C || target.kind == Kind.CC_TOOLCHAIN) {
+            if (target.getKind().languageClass != LanguageClass.C
+                || target.getKind() == Kind.CC_TOOLCHAIN) {
               continue;
             }
             List<TargetKey> toolchainDeps =
-                target
-                    .dependencies
-                    .stream()
-                    .map(dep -> dep.targetKey)
+                target.getDependencies().stream()
+                    .map(Dependency::getTargetKey)
                     .filter(toolchains::containsKey)
                     .collect(Collectors.toList());
             if (toolchainDeps.size() != 1) {
@@ -100,11 +103,11 @@ final class BlazeConfigurationToolchainResolver {
             if (!toolchainDeps.isEmpty()) {
               TargetKey toolchainKey = toolchainDeps.get(0);
               CToolchainIdeInfo toolchainInfo = toolchains.get(toolchainKey);
-              lookupTable.put(target.key, toolchainInfo);
+              lookupTable.put(target.getKey(), toolchainInfo);
             } else {
               CToolchainIdeInfo arbitraryToolchain = Iterables.getFirst(toolchains.values(), null);
               if (arbitraryToolchain != null) {
-                lookupTable.put(target.key, arbitraryToolchain);
+                lookupTable.put(target.getKey(), arbitraryToolchain);
               }
             }
           }
@@ -117,7 +120,7 @@ final class BlazeConfigurationToolchainResolver {
     String warningMessage =
         String.format(
             "cc target %s does not depend on exactly 1 cc toolchain. " + " Found %d toolchains.",
-            target.key, toolchainDeps.size());
+            target.getKey(), toolchainDeps.size());
     if (usesAppleCcToolchain(target)) {
       logger.warn(warningMessage + " (apple_cc_toolchain)");
     } else {
@@ -126,10 +129,11 @@ final class BlazeConfigurationToolchainResolver {
   }
 
   private static boolean usesAppleCcToolchain(TargetIdeInfo target) {
-    return target
-        .dependencies
-        .stream()
-        .anyMatch(dep -> dep.targetKey.label.toString().startsWith("//tools/osx/crosstool"));
+    return target.getDependencies().stream()
+        .map(Dependency::getTargetKey)
+        .map(TargetKey::getLabel)
+        .map(TargetExpression::toString)
+        .anyMatch(s -> s.startsWith("//tools/osx/crosstool"));
   }
 
   /** Returns the compiler settings for each toolchain. */
@@ -138,19 +142,13 @@ final class BlazeConfigurationToolchainResolver {
       Project project,
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
       ExecutionRootPathResolver executionRootPathResolver,
-      CompilerInfoCacheAdapter compilerInfoCache,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings) {
     return Scope.push(
         context,
         childContext -> {
           childContext.push(new TimingScope("Build compiler settings map", EventType.Other));
           return doBuildCompilerSettingsMap(
-              context,
-              project,
-              toolchainLookupMap,
-              executionRootPathResolver,
-              compilerInfoCache,
-              oldCompilerSettings);
+              context, project, toolchainLookupMap, executionRootPathResolver, oldCompilerSettings);
         });
   }
 
@@ -159,10 +157,8 @@ final class BlazeConfigurationToolchainResolver {
       Project project,
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
       ExecutionRootPathResolver executionRootPathResolver,
-      CompilerInfoCacheAdapter compilerInfoCache,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings) {
-    Set<CToolchainIdeInfo> toolchains =
-        toolchainLookupMap.values().stream().distinct().collect(Collectors.toSet());
+    Set<CToolchainIdeInfo> toolchains = new HashSet<>(toolchainLookupMap.values());
     List<ListenableFuture<Map.Entry<CToolchainIdeInfo, BlazeCompilerSettings>>>
         compilerSettingsFutures = new ArrayList<>();
     for (CToolchainIdeInfo toolchain : toolchains) {
@@ -170,10 +166,11 @@ final class BlazeConfigurationToolchainResolver {
           submit(
               () -> {
                 File cppExecutable =
-                    executionRootPathResolver.resolveExecutionRootPath(toolchain.cppExecutable);
+                    executionRootPathResolver.resolveExecutionRootPath(
+                        toolchain.getCppExecutable());
                 if (cppExecutable == null) {
                   IssueOutput.error(
-                          "Unable to find compiler executable: " + toolchain.cppExecutable)
+                          "Unable to find compiler executable: " + toolchain.getCppExecutable())
                       .submit(context);
                   return null;
                 }
@@ -193,8 +190,7 @@ final class BlazeConfigurationToolchainResolver {
                         toolchain,
                         executionRootPathResolver.getExecutionRoot(),
                         cppExecutable,
-                        compilerVersion,
-                        compilerInfoCache);
+                        compilerVersion);
                 if (settings == null) {
                   IssueOutput.error("Unable to create compiler wrapper for: " + cppExecutable)
                       .submit(context);
@@ -276,29 +272,27 @@ final class BlazeConfigurationToolchainResolver {
       CToolchainIdeInfo toolchainIdeInfo,
       File executionRoot,
       File cppExecutable,
-      String compilerVersion,
-      CompilerInfoCacheAdapter compilerInfoCache) {
+      String compilerVersion) {
     File compilerWrapper = createCompilerExecutableWrapper(executionRoot, cppExecutable);
     if (compilerWrapper == null) {
       return null;
     }
     ImmutableList.Builder<String> cFlagsBuilder = ImmutableList.builder();
-    cFlagsBuilder.addAll(toolchainIdeInfo.baseCompilerOptions);
-    cFlagsBuilder.addAll(toolchainIdeInfo.cCompilerOptions);
-    cFlagsBuilder.addAll(toolchainIdeInfo.unfilteredCompilerOptions);
+    cFlagsBuilder.addAll(toolchainIdeInfo.getBaseCompilerOptions());
+    cFlagsBuilder.addAll(toolchainIdeInfo.getCppCompilerOptions());
+    cFlagsBuilder.addAll(toolchainIdeInfo.getUnfilteredCompilerOptions());
 
     ImmutableList.Builder<String> cppFlagsBuilder = ImmutableList.builder();
-    cppFlagsBuilder.addAll(toolchainIdeInfo.baseCompilerOptions);
-    cppFlagsBuilder.addAll(toolchainIdeInfo.cppCompilerOptions);
-    cppFlagsBuilder.addAll(toolchainIdeInfo.unfilteredCompilerOptions);
+    cppFlagsBuilder.addAll(toolchainIdeInfo.getBaseCompilerOptions());
+    cppFlagsBuilder.addAll(toolchainIdeInfo.getCppCompilerOptions());
+    cppFlagsBuilder.addAll(toolchainIdeInfo.getUnfilteredCompilerOptions());
     return new BlazeCompilerSettings(
         project,
         compilerWrapper,
         compilerWrapper,
         cFlagsBuilder.build(),
         cppFlagsBuilder.build(),
-        compilerVersion,
-        compilerInfoCache);
+        compilerVersion);
   }
 
   /**

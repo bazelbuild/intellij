@@ -119,7 +119,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
   @Nullable
   @Override
   public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
-    if (!projectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.PYTHON)) {
+    if (!projectData.getWorkspaceLanguageSettings().isWorkspaceType(WorkspaceType.PYTHON)) {
       return null;
     }
     return GenericSourceFolderProvider.INSTANCE;
@@ -142,7 +142,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
 
   @Override
   public void refreshVirtualFileSystem(BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.PYTHON)) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.PYTHON)) {
       return;
     }
     if (!refreshExecRoot.getValue()) {
@@ -158,7 +158,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
     // recursive refresh of the blaze execution root. This is required because our blaze aspect
     // can't yet tell us exactly which genfiles are required to resolve the project.
     VirtualFile execRoot =
-        VfsUtils.resolveVirtualFile(blazeProjectData.blazeInfo.getExecutionRoot());
+        VfsUtils.resolveVirtualFile(blazeProjectData.getBlazeInfo().getExecutionRoot());
     if (execRoot != null) {
       VfsUtil.markDirtyAndRefresh(false, true, true, execRoot);
     }
@@ -171,8 +171,8 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
       Module workspaceModule,
       ModifiableRootModel workspaceModifiableModel) {
     if (!PythonFacetUtil.usePythonFacets()
-        || !blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.PYTHON)
-        || blazeProjectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.PYTHON)) {
+        || !blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.PYTHON)
+        || blazeProjectData.getWorkspaceLanguageSettings().isWorkspaceType(WorkspaceType.PYTHON)) {
       removeFacet(workspaceModule);
       return;
     }
@@ -293,7 +293,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
       BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.PYTHON)) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isWorkspaceType(WorkspaceType.PYTHON)) {
       return;
     }
     Sdk currentSdk = ProjectRootManager.getInstance(project).getProjectSdk();

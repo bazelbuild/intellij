@@ -87,8 +87,8 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
       return getIssues();
     }
 
-    TargetMap targetMap = blazeProjectData.targetMap;
-    ArtifactLocationDecoder decoder = blazeProjectData.artifactLocationDecoder;
+    TargetMap targetMap = blazeProjectData.getTargetMap();
+    ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
     AndroidResourceModule resourceModule =
         AndroidResourceModuleRegistry.getInstance(project).get(module);
     if (resourceModule == null) {
@@ -151,15 +151,12 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
 
   private static SortedMap<ArtifactLocation, TargetIdeInfo> getGeneratedResources(
       TargetIdeInfo target) {
-    if (target == null || target.androidIdeInfo == null) {
+    if (target == null || target.getAndroidIdeInfo() == null) {
       return Collections.emptySortedMap();
     }
     SortedMap<ArtifactLocation, TargetIdeInfo> generatedResources = Maps.newTreeMap();
     generatedResources.putAll(
-        target
-            .androidIdeInfo
-            .resources
-            .stream()
+        target.getAndroidIdeInfo().getResources().stream()
             .filter(ArtifactLocation::isGenerated)
             .collect(Collectors.toMap(Function.identity(), resource -> target)));
     return generatedResources;
@@ -171,7 +168,7 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
    */
   private void reportNonStandardAndroidManifestName(
       TargetIdeInfo target, ArtifactLocationDecoder decoder) {
-    if (target.androidIdeInfo == null || target.androidIdeInfo.manifest == null) {
+    if (target.getAndroidIdeInfo() == null || target.getAndroidIdeInfo().getManifest() == null) {
       return;
     }
 
@@ -180,7 +177,7 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
       return;
     }
 
-    File manifest = decoder.decode(target.androidIdeInfo.manifest);
+    File manifest = decoder.decode(target.getAndroidIdeInfo().getManifest());
     if (manifest.getName().equals(ANDROID_MANIFEST_XML)) {
       return;
     }
@@ -225,7 +222,7 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
 
     SourceToTargetMap sourceToTargetMap = SourceToTargetMap.getInstance(project);
     ImmutableCollection transitiveDependencies =
-        TransitiveDependencyMap.getInstance(project).getTransitiveDependencies(target.key);
+        TransitiveDependencyMap.getInstance(project).getTransitiveDependencies(target.getKey());
 
     for (String missingClass : missingClasses) {
       File sourceFile = getSourceFileForClass(missingClass);
@@ -234,11 +231,10 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
       }
       ImmutableCollection<TargetKey> sourceTargets =
           sourceToTargetMap.getRulesForSourceFile(sourceFile);
-      if (sourceTargets
-          .stream()
+      if (sourceTargets.stream()
           .noneMatch(
               sourceTarget ->
-                  sourceTarget.equals(target.key)
+                  sourceTarget.equals(target.getKey())
                       || transitiveDependencies.contains(sourceTarget))) {
         missingClassToTargetMap.putAll(missingClass, sourceTargets);
       }
@@ -303,14 +299,15 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
 
   private HtmlBuilder addTargetLink(
       HtmlBuilder builder, TargetIdeInfo target, ArtifactLocationDecoder decoder) {
-    File buildFile = decoder.decode(target.buildFile);
+    File buildFile = decoder.decode(target.getBuildFile());
     int line =
         ApplicationManager.getApplication()
             .runReadAction(
                 (Computable<Integer>)
                     () -> {
                       PsiElement buildTargetPsi =
-                          BuildReferenceManager.getInstance(project).resolveLabel(target.key.label);
+                          BuildReferenceManager.getInstance(project)
+                              .resolveLabel(target.getKey().getLabel());
                       if (buildTargetPsi == null) {
                         return -1;
                       }

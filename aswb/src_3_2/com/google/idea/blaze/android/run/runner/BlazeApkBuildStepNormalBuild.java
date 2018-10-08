@@ -27,6 +27,8 @@ import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.ideinfo.Dependency;
@@ -71,16 +73,16 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
     if (projectData == null) {
       return label;
     }
-    TargetMap targetMap = projectData.targetMap;
+    TargetMap targetMap = projectData.getTargetMap();
     TargetIdeInfo target = targetMap.get(TargetKey.forPlainTarget(label));
-    if (target == null || target.kind != Kind.ANDROID_INSTRUMENTATION_TEST) {
+    if (target == null || target.getKind() != Kind.ANDROID_INSTRUMENTATION_TEST) {
       return label;
     }
-    for (Dependency dependency : target.dependencies) {
-      TargetIdeInfo dependencyInfo = targetMap.get(dependency.targetKey);
+    for (Dependency dependency : target.getDependencies()) {
+      TargetIdeInfo dependencyInfo = targetMap.get(dependency.getTargetKey());
       // Should exist via test_app attribute, and be unique.
-      if (dependencyInfo != null && dependencyInfo.kind == Kind.ANDROID_BINARY) {
-        return dependency.targetKey.label;
+      if (dependencyInfo != null && dependencyInfo.getKind() == Kind.ANDROID_BINARY) {
+        return dependency.getTargetKey().getLabel();
       }
     }
     return label;
@@ -99,42 +101,52 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
             WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
             BlazeApkDeployInfoProtoHelper deployInfoHelper =
-                new BlazeApkDeployInfoProtoHelper(project, buildFlags, ".deployinfo.pb");
-            BuildResultHelper buildResultHelper = deployInfoHelper.getBuildResultHelper();
+                new BlazeApkDeployInfoProtoHelper(project, buildFlags);
+            try (BuildResultHelper buildResultHelper =
+                BuildResultHelperProvider.forFiles(
+                    project, fileName -> fileName.endsWith(".deployinfo.pb"))) {
 
-            command
-                .addTargets(getTargetToBuild())
-                .addBlazeFlags("--output_groups=+android_deploy_info")
-                .addBlazeFlags(buildFlags)
-                .addBlazeFlags(buildResultHelper.getBuildFlags());
+              command
+                  .addTargets(getTargetToBuild())
+                  .addBlazeFlags("--output_groups=+android_deploy_info")
+                  .addBlazeFlags(buildFlags)
+                  .addBlazeFlags(buildResultHelper.getBuildFlags());
 
-            SaveUtil.saveAllFiles();
-            int retVal =
-                ExternalTask.builder(workspaceRoot)
-                    .addBlazeCommand(command.build())
-                    .context(context)
-                    .stderr(
-                        LineProcessingOutputStream.of(
-                            BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
-                    .build()
-                    .run();
-            FileCaches.refresh(project);
+              SaveUtil.saveAllFiles();
+              int retVal =
+                  ExternalTask.builder(workspaceRoot)
+                      .addBlazeCommand(command.build())
+                      .context(context)
+                      .stderr(
+                          LineProcessingOutputStream.of(
+                              BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
+                                  context)))
+                      .build()
+                      .run();
+              FileCaches.refresh(project);
 
-            if (retVal != 0) {
-              context.setHasError();
+              if (retVal != 0) {
+                context.setHasError();
+                return null;
+              }
+              try {
+                deployInfo = deployInfoHelper.readDeployInfo(context, buildResultHelper);
+              } catch (GetArtifactsException e) {
+                IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
+                    .submit(context);
+                return null;
+              }
+              if (deployInfo == null) {
+                IssueOutput.error("Could not read apk deploy info from build").submit(context);
+              }
               return null;
             }
-            deployInfo = deployInfoHelper.readDeployInfo(context);
-            if (deployInfo == null) {
-              IssueOutput.error("Could not read apk deploy info from build").submit(context);
-            }
-            return null;
           }
         };
 
     ListenableFuture<Void> buildFuture =
-        ProgressiveTaskWithProgressIndicator.builder(project)
-            .setTitle(String.format("Executing %s apk build", Blaze.buildSystemName(project)))
+        ProgressiveTaskWithProgressIndicator.builder(
+                project, String.format("Executing %s apk build", Blaze.buildSystemName(project)))
             .submitTaskWithResult(buildTask);
 
     try {

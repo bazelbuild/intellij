@@ -34,7 +34,7 @@ public interface SourceFolderProvider {
     }
     throw new RuntimeException(
         "No SourceFolderProvider available for workspace type: "
-            + projectData.workspaceLanguageSettings.getWorkspaceType());
+            + projectData.getWorkspaceLanguageSettings().getWorkspaceType());
   }
 
   /**

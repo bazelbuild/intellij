@@ -178,6 +178,6 @@ public class WorkspaceHelper {
 
   @VisibleForTesting
   public static File getExternalSourceRoot(BlazeProjectData projectData) {
-    return new File(projectData.blazeInfo.getOutputBase(), "external");
+    return new File(projectData.getBlazeInfo().getOutputBase(), "external");
   }
 }

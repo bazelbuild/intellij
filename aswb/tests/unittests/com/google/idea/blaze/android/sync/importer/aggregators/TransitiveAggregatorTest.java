@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -141,13 +142,15 @@ public class TransitiveAggregatorTest extends BlazeTestCase {
 
     @Override
     protected Iterable<TargetKey> getDependencies(TargetIdeInfo target) {
-      return target.dependencies.stream().map(d -> d.targetKey).collect(Collectors.toList());
+      return target.getDependencies().stream()
+          .map(Dependency::getTargetKey)
+          .collect(Collectors.toList());
     }
 
     @Override
     protected Set<String> createForTarget(TargetIdeInfo target) {
       ++createCount;
-      return ImmutableSet.of(target.key.label.toString());
+      return ImmutableSet.of(target.getKey().getLabel().toString());
     }
 
     @Override

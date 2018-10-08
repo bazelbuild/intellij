@@ -72,7 +72,7 @@ public class DuplicateSourceDetector {
       context.output(new PerformanceWarning("  Source: " + artifactLocation.getRelativePath()));
       context.output(new PerformanceWarning("  Consumed by rules:"));
       for (TargetKey targetKey : duplicate.targets) {
-        context.output(new PerformanceWarning("    " + targetKey.label));
+        context.output(new PerformanceWarning("    " + targetKey.getLabel()));
       }
       context.output(new PerformanceWarning("")); // Newline
     }

@@ -32,14 +32,26 @@ public class BazelVersion implements Serializable {
   static final BazelVersion DEVELOPMENT = new BazelVersion(999, 999, 999);
   private static final Pattern PATTERN = Pattern.compile("([[0-9]\\.]+)");
 
-  final int major;
-  final int minor;
-  final int bugfix;
+  private final int major;
+  private final int minor;
+  private final int bugfix;
 
   public BazelVersion(int major, int minor, int bugfix) {
     this.bugfix = bugfix;
     this.minor = minor;
     this.major = major;
+  }
+
+  int getMajor() {
+    return major;
+  }
+
+  int getMinor() {
+    return minor;
+  }
+
+  int getBugfix() {
+    return bugfix;
   }
 
   @VisibleForTesting

@@ -63,14 +63,14 @@ public class JavaWorkingSet {
   }
 
   public boolean isTargetInWorkingSet(TargetIdeInfo target) {
-    ArtifactLocation buildFile = target.buildFile;
+    ArtifactLocation buildFile = target.getBuildFile();
     if (buildFile != null) {
       if (modifiedBuildFileRelativePaths.contains(buildFile.getRelativePath())) {
         return true;
       }
     }
 
-    for (ArtifactLocation artifactLocation : target.sources) {
+    for (ArtifactLocation artifactLocation : target.getSources()) {
       if (isInWorkingSet(artifactLocation)) {
         return true;
       }

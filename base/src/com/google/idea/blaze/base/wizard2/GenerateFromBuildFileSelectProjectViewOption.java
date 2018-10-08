@@ -193,6 +193,8 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
             .withTitle("Select BUILD File")
             .withDescription("Select a BUILD file to synthesize a project view from.")
             .withFileFilter(virtualFile -> buildSystem.isBuildFile(virtualFile.getName()));
+    // File filters are broken for the native Mac file chooser.
+    descriptor.setForcedToUseIdeaFileChooser(true);
     FileChooserDialog chooser =
         FileChooserFactory.getInstance().createFileChooser(descriptor, null, null);
 

@@ -54,7 +54,7 @@ public class BuildFileGroupingRuleProvider implements FileStructureGroupRuleProv
       this.project = project;
     }
 
-    @SuppressWarnings("MissingOverride") // #api171: added in 2017.2
+    @Override
     @Nullable
     public UsageGroup getParentGroupFor(Usage usage, UsageTarget[] targets) {
       if (!(usage instanceof UsageInFile)) {
@@ -90,11 +90,6 @@ public class BuildFileGroupingRuleProvider implements FileStructureGroupRuleProv
           return null; // already shown by default usage group (which we can't remove...)
         }
       };
-    }
-
-    @Override
-    public UsageGroup groupUsage(Usage usage) {
-      return getParentGroupFor(usage, UsageTarget.EMPTY_ARRAY);
     }
   }
 }

@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.java.run.coverage.BlazeCoverageData.FileData;
-import com.google.idea.common.guava.GuavaHelper;
 import gnu.trove.TIntIntHashMap;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -85,7 +84,7 @@ public class BlazeCoverageDataTest {
   private static ImmutableMap<Integer, Integer> toMap(TIntIntHashMap troveMap) {
     return Arrays.stream(troveMap.keys())
         .boxed()
-        .collect(GuavaHelper.toImmutableMap(Function.identity(), troveMap::get));
+        .collect(ImmutableMap.toImmutableMap(Function.identity(), troveMap::get));
   }
 
   private static InputStream inputStream(String... lines) {

@@ -16,6 +16,9 @@
 package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Label;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import java.io.Serializable;
 import javax.annotation.Nullable;
 
@@ -23,12 +26,31 @@ import javax.annotation.Nullable;
 public class GoIdeInfo implements Serializable {
   private static final long serialVersionUID = 2L;
 
-  public final ImmutableList<ArtifactLocation> sources;
-  @Nullable public final String importPath;
+  private final ImmutableList<ArtifactLocation> sources;
+  private final String importPath;
 
-  public GoIdeInfo(ImmutableList<ArtifactLocation> sources, @Nullable String importPath) {
+  private GoIdeInfo(
+      Label label,
+      Kind kind,
+      ImmutableList<ArtifactLocation> sources,
+      @Nullable String importPath) {
+    for (ImportPathReplacer fixer : ImportPathReplacer.EP_NAME.getExtensions()) {
+      if (fixer.shouldReplace(importPath)) {
+        importPath = fixer.getReplacement(label, kind);
+        break;
+      }
+    }
     this.sources = sources;
     this.importPath = importPath;
+  }
+
+  public ImmutableList<ArtifactLocation> getSources() {
+    return sources;
+  }
+
+  @Nullable
+  public String getImportPath() {
+    return importPath;
   }
 
   public static Builder builder() {
@@ -37,8 +59,20 @@ public class GoIdeInfo implements Serializable {
 
   /** Builder for go rule info */
   public static class Builder {
+    private Label label = null;
+    private Kind kind = null;
     private final ImmutableList.Builder<ArtifactLocation> sources = ImmutableList.builder();
-    private String importPath = null;
+    @Nullable private String importPath = null;
+
+    public Builder setLabel(Label label) {
+      this.label = label;
+      return this;
+    }
+
+    public Builder setKind(Kind kind) {
+      this.kind = kind;
+      return this;
+    }
 
     public Builder addSources(Iterable<ArtifactLocation> sources) {
       this.sources.addAll(sources);
@@ -51,7 +85,7 @@ public class GoIdeInfo implements Serializable {
     }
 
     public GoIdeInfo build() {
-      return new GoIdeInfo(sources.build(), importPath);
+      return new GoIdeInfo(label, kind, sources.build(), importPath);
     }
   }
 
@@ -60,11 +94,21 @@ public class GoIdeInfo implements Serializable {
     return "GoIdeInfo{"
         + "\n"
         + "  sources="
-        + sources
+        + getSources()
         + "\n"
         + "  importPath="
-        + importPath
+        + getImportPath()
         + "\n"
         + '}';
+  }
+
+  /** Replaces import path from the aspect based on target label and kind. */
+  public interface ImportPathReplacer {
+    ExtensionPointName<ImportPathReplacer> EP_NAME =
+        ExtensionPointName.create("com.google.idea.blaze.GoImportPathReplacer");
+
+    boolean shouldReplace(@Nullable String existingImportPath);
+
+    String getReplacement(Label label, Kind kind);
   }
 }

@@ -61,12 +61,13 @@ public class JavaClassQualifiedNameCompletionTest extends BuildFileIntegrationTe
                   new WorkspacePath("java/com/google/BUILD"),
                   "java_binary(",
                   "    name = 'binary',",
-                  "    main_class = 'com.google.bin.M',",
+                  "    main_class = 'com.google.bin.',",
                   ")");
 
           Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-          editorTest.setCaretPosition(editor, 2, "    main_class = 'com.google.bin.M".length());
+          editorTest.setCaretPosition(editor, 2, "    main_class = 'com.google.bin.".length());
 
+          completionTester.typeWithPauses("M");
           testFixture.complete(CompletionType.CLASS_NAME);
           assertFileContents(
               file,
@@ -92,12 +93,13 @@ public class JavaClassQualifiedNameCompletionTest extends BuildFileIntegrationTe
                   new WorkspacePath("java/com/google/BUILD"),
                   "java_binary(",
                   "    name = 'binary',",
-                  "    main_clazz = 'com.google.bin.M',",
+                  "    main_clazz = 'com.google.bin.',",
                   ")");
 
           Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-          editorTest.setCaretPosition(editor, 2, "    main_clazz = 'com.google.bin.M".length());
+          editorTest.setCaretPosition(editor, 2, "    main_clazz = 'com.google.bin.".length());
 
+          completionTester.typeWithPauses("M");
           LookupElement[] completionItems = testFixture.complete(CompletionType.CLASS_NAME);
           assertThat(completionItems).isEmpty();
 

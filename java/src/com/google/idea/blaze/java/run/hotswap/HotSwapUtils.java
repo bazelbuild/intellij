@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.java.run.hotswap;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.BlazeCommandName;
@@ -24,7 +26,6 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.common.guava.GuavaHelper;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.WrappingRunConfiguration;
@@ -43,12 +44,11 @@ public final class HotSwapUtils {
   private static final ImmutableSet<Kind> SUPPORTED_BINARIES = getSupportedBinaries();
 
   private static ImmutableSet<Kind> getSupportedBinaries() {
-    return JavaLikeLanguage.getAllJavaLikeLanguages()
-        .stream()
+    return JavaLikeLanguage.getAllJavaLikeLanguages().stream()
         .map(Kind::allKindsForLanguage)
         .flatMap(Collection::stream)
         .filter(kind -> kind.ruleType == RuleType.BINARY)
-        .collect(GuavaHelper.toImmutableSet());
+        .collect(toImmutableSet());
   }
 
   public static boolean canHotSwap(ExecutionEnvironment env) {

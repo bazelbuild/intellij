@@ -72,6 +72,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     state.setUseSplitApksIfPossible(false);
     state.setUseWorkProfileIfPresent(true);
     state.setUserId(2);
+    state.setShowLogcatAutomatically(true);
     state.setDeepLink("http://deeplink");
 
     Element element = new Element("test");
@@ -93,6 +94,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     assertThat(readState.useSplitApksIfPossible()).isFalse();
     assertThat(readState.useWorkProfileIfPresent()).isTrue();
     assertThat(readState.getUserId()).isEqualTo(2);
+    assertThat(readState.showLogcatAutomatically()).isTrue();
     assertThat(readState.getDeepLink()).isEqualTo("http://deeplink");
   }
 
@@ -134,6 +136,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     state.setUseSplitApksIfPossible(false);
     state.setUseWorkProfileIfPresent(true);
     state.setUserId(2);
+    state.setShowLogcatAutomatically(true);
     state.setDeepLink("http://deeplink");
 
     Element firstWrite = new Element("test");
@@ -159,6 +162,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     state.setUseSplitApksIfPossible(false);
     state.setUseWorkProfileIfPresent(true);
     state.setUserId(2);
+    state.setShowLogcatAutomatically(true);
     // We don't test DeepLink because it is not exposed in the editor.
     // state.setDeepLink("http://deeplink");
 
@@ -179,6 +183,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     assertThat(readState.useSplitApksIfPossible()).isEqualTo(state.useSplitApksIfPossible());
     assertThat(readState.useWorkProfileIfPresent()).isEqualTo(state.useWorkProfileIfPresent());
     assertThat(readState.getUserId()).isEqualTo(state.getUserId());
+    assertThat(readState.showLogcatAutomatically()).isEqualTo(state.showLogcatAutomatically());
     // We don't test DeepLink because it is not exposed in the editor.
     // assertThat(readState.getDeepLink()).isEqualTo(state.getDeepLink());
   }

@@ -17,7 +17,6 @@ package com.google.idea.blaze.clwb.run.test;
 
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.syncstatus.SyncStatusContributor;
-import com.google.idea.sdkcompat.cidr.CidrGoogleTestUtilAdapter;
 import com.google.idea.sdkcompat.cidr.OCSymbolAdapter;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
@@ -85,8 +84,8 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
     OCStructSymbol parentSymbol;
     if (parent instanceof OCStruct
         && ((parentSymbol = ((OCStruct) parent).getSymbol()) != null)
-        && CidrGoogleTestUtilAdapter.isGoogleTestClass(parentSymbol, project)) {
-      Couple<String> name = CidrGoogleTestUtilAdapter.extractGoogleTestName(parentSymbol, project);
+        && CidrGoogleTestUtil.isGoogleTestClass(parentSymbol, project)) {
+      Couple<String> name = CidrGoogleTestUtil.extractGoogleTestName(parentSymbol, project);
       if (name != null) {
         return createFromClassAndMethod(parent, name.first, name.second);
       }
@@ -103,10 +102,10 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
           @SuppressWarnings("rawtypes")
           OCSymbol owner = OCSymbolAdapter.getDefinitionSymbol(resolvedOwner, project);
           if (owner instanceof OCStructSymbol
-              && CidrGoogleTestUtilAdapter.isGoogleTestClass((OCStructSymbol) owner, project)) {
+              && CidrGoogleTestUtil.isGoogleTestClass((OCStructSymbol) owner, project)) {
             OCStruct struct = (OCStruct) OCSymbolAdapter.locateDefinition(owner, project);
             Couple<String> name =
-                CidrGoogleTestUtilAdapter.extractGoogleTestName((OCStructSymbol) owner, project);
+                CidrGoogleTestUtil.extractGoogleTestName((OCStructSymbol) owner, project);
             if (name != null) {
               return createFromClassAndMethod(struct, name.first, name.second);
             }

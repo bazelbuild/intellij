@@ -60,7 +60,7 @@ public final class BlazeNdkDependencySyncPlugin implements BlazeSyncPlugin {
   @Override
   public boolean validate(
       Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.C)) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C)) {
       return true;
     }
     boolean missingPlugin = false;

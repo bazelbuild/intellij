@@ -83,7 +83,8 @@ public class AdditionalLanguagesCompletionContributor extends CompletionContribu
             .get(
                 AdditionalLanguagesCompletionContributor.class,
                 (proj, projectData) ->
-                    additionalLanguages(projectData.workspaceLanguageSettings.getWorkspaceType()));
+                    additionalLanguages(
+                        projectData.getWorkspaceLanguageSettings().getWorkspaceType()));
     return langs == null ? additionalLanguages(LanguageSupport.getDefaultWorkspaceType()) : langs;
   }
 

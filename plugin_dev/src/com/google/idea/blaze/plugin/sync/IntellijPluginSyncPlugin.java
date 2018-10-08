@@ -68,10 +68,12 @@ public class IntellijPluginSyncPlugin implements BlazeSyncPlugin {
   @Nullable
   @Override
   public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
-    if (!projectData.workspaceLanguageSettings.isWorkspaceType(WorkspaceType.INTELLIJ_PLUGIN)) {
+    if (!projectData
+        .getWorkspaceLanguageSettings()
+        .isWorkspaceType(WorkspaceType.INTELLIJ_PLUGIN)) {
       return null;
     }
-    return new JavaSourceFolderProvider(projectData.syncState.get(BlazeJavaSyncData.class));
+    return new JavaSourceFolderProvider(projectData.getSyncState().get(BlazeJavaSyncData.class));
   }
 
   @Override
@@ -81,8 +83,9 @@ public class IntellijPluginSyncPlugin implements BlazeSyncPlugin {
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
       BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isWorkspaceType(
-        WorkspaceType.INTELLIJ_PLUGIN)) {
+    if (!blazeProjectData
+        .getWorkspaceLanguageSettings()
+        .isWorkspaceType(WorkspaceType.INTELLIJ_PLUGIN)) {
       return;
     }
 

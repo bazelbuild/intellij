@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
@@ -82,6 +83,9 @@ public interface BuildSystemProvider {
   default String getSyncBinaryPath() {
     return getBinaryPath();
   }
+
+  /** @return The type of the blaze/bazel binary to use for syncing */
+  BuildBinaryType getSyncBinaryType();
 
   WorkspaceRootProvider getWorkspaceRootProvider();
 

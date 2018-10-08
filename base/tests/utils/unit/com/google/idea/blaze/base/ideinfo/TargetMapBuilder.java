@@ -39,7 +39,7 @@ public class TargetMapBuilder {
   public TargetMap build() {
     ImmutableMap.Builder<TargetKey, TargetIdeInfo> targetMap = ImmutableMap.builder();
     for (TargetIdeInfo target : targets) {
-      TargetKey key = target.key;
+      TargetKey key = target.getKey();
       targetMap.put(key, target);
     }
     return new TargetMap(targetMap.build());

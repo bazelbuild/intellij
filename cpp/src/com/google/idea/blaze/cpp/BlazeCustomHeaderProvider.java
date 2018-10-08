@@ -20,9 +20,10 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.sdkcompat.cidr.CustomHeaderProviderAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.cidr.lang.CustomHeaderProvider;
+import com.jetbrains.cidr.lang.preprocessor.OCResolveRootAndConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import java.io.File;
 import java.util.Optional;
@@ -43,7 +44,7 @@ import javax.annotation.Nullable;
  * <p>Ideally our aspect would record which generated files are used, and we could avoid FS
  * operations entirely.
  */
-public class BlazeCustomHeaderProvider extends CustomHeaderProviderAdapter {
+public class BlazeCustomHeaderProvider extends CustomHeaderProvider {
 
   // Cache the workspace root's VirtualFile so that we can start search from there instead of having
   // to start from the root of the file system.
@@ -51,10 +52,13 @@ public class BlazeCustomHeaderProvider extends CustomHeaderProviderAdapter {
       new ConcurrentHashMap<>();
 
   @Override
-  public boolean accepts(Project project) {
-    return Blaze.isBlazeProject(project);
+  public boolean accepts(@Nullable OCResolveRootAndConfiguration rootAndConfig) {
+    if (rootAndConfig == null || rootAndConfig.getConfiguration() == null) {
+      return false;
+    }
+    return Blaze.isBlazeProject(rootAndConfig.getConfiguration().getProject());
   }
-
+  
   @Nullable
   @Override
   public VirtualFile getCustomHeaderFile(
@@ -71,7 +75,7 @@ public class BlazeCustomHeaderProvider extends CustomHeaderProviderAdapter {
     if (data == null) {
       return null;
     }
-    WorkspacePathResolver workspacePathResolver = data.workspacePathResolver;
+    WorkspacePathResolver workspacePathResolver = data.getWorkspacePathResolver();
     Optional<VirtualFile> workspaceRoot = getWorkspaceRoot(includeString, workspacePathResolver);
     if (!workspaceRoot.isPresent()) {
       return null;

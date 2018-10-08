@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.sdkcompat.run.RunManagerCompat;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -79,8 +80,8 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
     runManager.clearAll();
     // We don't need to do this at setup, because it is handled by RunManagerImpl's constructor.
     // However, clearAll() clears the configuration types, so we need to reinitialize them.
-    runManager.initializeConfigurationTypes(
-        ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions());
+    RunManagerCompat.initializeConfigurationTypes(
+        runManager, ConfigurationType.CONFIGURATION_TYPE_EP);
   }
 
   @Test
@@ -131,10 +132,6 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
 
   @Test
   public void testConvertAbsolutePathToWorkspacePathVariableWhenSerializing() {
-    if (isAndroidStudio()) {
-      // #api171: disable for android studio -- path variable substitution isn't working in 2017.1
-      return;
-    }
     WorkspacePath binaryPath = WorkspacePath.createIfValid("path/to/binary/blaze");
     String absoluteBinaryPath = workspaceRoot.fileForPath(binaryPath).getPath();
     setBlazeBinaryPath(configuration, absoluteBinaryPath);
@@ -175,10 +172,5 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
     BlazeCommandRunConfigurationCommonState state =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     return state != null ? state.getBlazeBinaryState().getBlazeBinary() : null;
-  }
-
-  private static boolean isAndroidStudio() {
-    return PluginManager.isPluginInstalled(PluginId.getId("org.jetbrains.android"))
-        && PluginManager.isPluginInstalled(PluginId.getId("com.android.tools.ndk"));
   }
 }

@@ -93,8 +93,8 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
   private PySourcesIndex buildSourcesIndex(Project project, BlazeProjectData projectData) {
     ImmutableSetMultimap.Builder<String, QualifiedName> shortNames = ImmutableSetMultimap.builder();
     Map<QualifiedName, PsiElementProvider> map = new HashMap<>();
-    ArtifactLocationDecoder decoder = projectData.artifactLocationDecoder;
-    for (TargetIdeInfo target : projectData.targetMap.targets()) {
+    ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
+    for (TargetIdeInfo target : projectData.getTargetMap().targets()) {
       for (ArtifactLocation source : getPySources(target)) {
         QualifiedName name = toImportString(source);
         if (name == null || name.getLastComponent() == null) {
@@ -123,11 +123,11 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
   }
 
   private static Collection<ArtifactLocation> getPySources(TargetIdeInfo target) {
-    if (target.pyIdeInfo != null) {
-      return target.pyIdeInfo.sources;
+    if (target.getPyIdeInfo() != null) {
+      return target.getPyIdeInfo().getSources();
     }
-    if (target.kind.languageClass == LanguageClass.PYTHON) {
-      return target.sources;
+    if (target.getKind().languageClass == LanguageClass.PYTHON) {
+      return target.getSources();
     }
     return ImmutableList.of();
   }
@@ -137,7 +137,7 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
   abstract QualifiedName toImportString(ArtifactLocation source);
 
   private static boolean includeParentDirectory(ArtifactLocation source) {
-    return source.relativePath.endsWith(".py");
+    return source.getRelativePath().endsWith(".py");
   }
 
   static QualifiedName fromRelativePath(String relativePath) {

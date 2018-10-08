@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -43,23 +44,16 @@ public class BlazeApkDeployInfoProtoHelper {
   private final Project project;
   private final WorkspaceRoot workspaceRoot;
   private final ImmutableList<String> buildFlags;
-  private final BuildResultHelper buildResultHelper;
 
-  public BlazeApkDeployInfoProtoHelper(
-      Project project, ImmutableList<String> buildFlags, String fileNameSuffix) {
+  public BlazeApkDeployInfoProtoHelper(Project project, ImmutableList<String> buildFlags) {
     this.project = project;
     this.buildFlags = buildFlags;
     this.workspaceRoot = WorkspaceRoot.fromProject(project);
-    this.buildResultHelper =
-        BuildResultHelper.forFiles(fileName -> fileName.endsWith(fileNameSuffix));
-  }
-
-  public BuildResultHelper getBuildResultHelper() {
-    return buildResultHelper;
   }
 
   @Nullable
-  public BlazeAndroidDeployInfo readDeployInfo(BlazeContext context) {
+  public BlazeAndroidDeployInfo readDeployInfo(
+      BlazeContext context, BuildResultHelper buildResultHelper) throws GetArtifactsException {
     File deployInfoFile = Iterables.getOnlyElement(buildResultHelper.getBuildArtifacts(), null);
     if (deployInfoFile == null) {
       return null;

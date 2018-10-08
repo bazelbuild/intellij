@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
+import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
@@ -87,12 +88,12 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
     assertThat(blazeProjectData).isNotNull();
-    assertThat(blazeProjectData.targetMap).isEqualTo(targetMap);
-    assertThat(blazeProjectData.workspaceLanguageSettings.getWorkspaceType())
+    assertThat(blazeProjectData.getTargetMap()).isEqualTo(targetMap);
+    assertThat(blazeProjectData.getWorkspaceLanguageSettings().getWorkspaceType())
         .isEqualTo(WorkspaceType.JAVA);
 
-    BlazeJavaSyncData javaSyncData = blazeProjectData.syncState.get(BlazeJavaSyncData.class);
-    List<BlazeContentEntry> contentEntries = javaSyncData.importResult.contentEntries;
+    BlazeJavaSyncData javaSyncData = blazeProjectData.getSyncState().get(BlazeJavaSyncData.class);
+    List<BlazeContentEntry> contentEntries = javaSyncData.getImportResult().contentEntries;
     assertThat(contentEntries).hasSize(1);
 
     BlazeContentEntry contentEntry = contentEntries.get(0);
@@ -143,8 +144,8 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
     assertThat(blazeProjectData).isNotNull();
-    assertThat(blazeProjectData.targetMap).isEqualTo(targetMap);
-    assertThat(blazeProjectData.workspaceLanguageSettings.getWorkspaceType())
+    assertThat(blazeProjectData.getTargetMap()).isEqualTo(targetMap);
+    assertThat(blazeProjectData.getWorkspaceLanguageSettings().getWorkspaceType())
         .isEqualTo(WorkspaceType.JAVA);
   }
 
@@ -175,32 +176,35 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
 
     setTargetMap(targetMap);
 
+    // Run a full sync before an incremental one, otherwise incremental may be treated as full.
+    runBlazeSync(
+        new BlazeSyncParams.Builder("Sync", SyncMode.FULL).addProjectViewTargets(true).build());
+    errorCollector.assertNoIssues();
+    List<SyncStats> syncStatsList = getSyncStats();
+    assertThat(syncStatsList).hasSize(1);
+
     runBlazeSync(
         new BlazeSyncParams.Builder("Sync", SyncMode.INCREMENTAL)
             .addProjectViewTargets(true)
             .build());
 
     errorCollector.assertNoIssues();
-
-    BlazeProjectData blazeProjectData =
-        BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
-    assertThat(blazeProjectData).isNotNull();
-    assertThat(blazeProjectData.targetMap).isEqualTo(targetMap);
-    assertThat(blazeProjectData.workspaceLanguageSettings.getWorkspaceType())
-        .isEqualTo(WorkspaceType.JAVA);
-
-    List<SyncStats> syncStatsList = getSyncStats();
-    assertThat(syncStatsList).hasSize(1);
+    syncStatsList = getSyncStats();
+    assertThat(syncStatsList).hasSize(2);
 
     SyncStats syncStats = syncStatsList.get(0);
     assertThat(syncStats).isNotNull();
     assertThat(syncStats.workspaceType()).isEqualTo(WorkspaceType.JAVA);
     assertThat(syncStats.blazeProjectTargets())
         .containsExactly(TargetExpression.fromString("//java/com/google:lib"));
-    assertThat(syncStats.syncMode()).isEqualTo(SyncMode.INCREMENTAL);
+    assertThat(syncStats.syncMode()).isEqualTo(SyncMode.FULL);
     assertThat(syncStats.syncResult()).isEqualTo(SyncResult.SUCCESS);
+    assertThat(syncStats.syncBinaryType()).isSameAs(BuildBinaryType.BAZEL);
     assertThat(syncStats.startTimeInEpochTime()).isNotEqualTo(0);
     assertThat(syncStats.timedEvents()).isNotEmpty();
+
+    SyncStats secondSyncStats = syncStatsList.get(1);
+    assertThat(secondSyncStats.syncMode()).isEqualTo(SyncMode.INCREMENTAL);
   }
 
   @Test

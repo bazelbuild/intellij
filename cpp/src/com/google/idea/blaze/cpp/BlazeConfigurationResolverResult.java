@@ -15,18 +15,9 @@
  */
 package com.google.idea.blaze.cpp;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -35,49 +26,24 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 final class BlazeConfigurationResolverResult {
 
-  private final Project project;
-
-  // Multiple target keys may map to the same resolve configuration.
-  private final ImmutableMap<TargetKey, BlazeResolveConfiguration> configurationMap;
   final ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration>
       uniqueResolveConfigurations;
   final ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings;
 
-  BlazeConfigurationResolverResult(
-      Project project,
-      ImmutableMap<TargetKey, BlazeResolveConfiguration> configurationMap,
+  private BlazeConfigurationResolverResult(
       ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration>
           uniqueResolveConfigurations,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings) {
-    this.project = project;
-    this.configurationMap = configurationMap;
     this.uniqueResolveConfigurations = uniqueResolveConfigurations;
     this.compilerSettings = compilerSettings;
   }
 
-  static Builder builder(Project project) {
-    return new Builder(project);
+  static Builder builder() {
+    return new Builder();
   }
 
-  static BlazeConfigurationResolverResult empty(Project project) {
-    return builder(project).build();
-  }
-
-  @Nullable
-  OCResolveConfiguration getConfigurationForFile(VirtualFile sourceFile) {
-    SourceToTargetMap sourceToTargetMap = SourceToTargetMap.getInstance(project);
-    ImmutableCollection<TargetKey> targetsForSourceFile =
-        sourceToTargetMap.getRulesForSourceFile(VfsUtilCore.virtualToIoFile(sourceFile));
-    if (targetsForSourceFile.isEmpty()) {
-      return null;
-    }
-
-    // If a source file is in two different targets, we can't possibly show how it will be
-    // interpreted in both contexts at the same time in the IDE, so just pick the "first" target.
-    TargetKey targetKey = targetsForSourceFile.stream().min(TargetKey::compareTo).orElse(null);
-    Preconditions.checkNotNull(targetKey);
-
-    return configurationMap.get(targetKey);
+  static BlazeConfigurationResolverResult empty() {
+    return builder().build();
   }
 
   ImmutableList<BlazeResolveConfiguration> getAllConfigurations() {
@@ -85,23 +51,14 @@ final class BlazeConfigurationResolverResult {
   }
 
   static class Builder {
-    final Project project;
-    ImmutableMap<TargetKey, BlazeResolveConfiguration> configurationMap = ImmutableMap.of();
     ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration> uniqueConfigurations =
         ImmutableMap.of();
     ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings = ImmutableMap.of();
 
-    public Builder(Project project) {
-      this.project = project;
-    }
+    public Builder() {}
 
     BlazeConfigurationResolverResult build() {
-      return new BlazeConfigurationResolverResult(
-          project, configurationMap, uniqueConfigurations, compilerSettings);
-    }
-
-    void setConfigurationMap(ImmutableMap<TargetKey, BlazeResolveConfiguration> configurationMap) {
-      this.configurationMap = configurationMap;
+      return new BlazeConfigurationResolverResult(uniqueConfigurations, compilerSettings);
     }
 
     void setUniqueConfigurations(

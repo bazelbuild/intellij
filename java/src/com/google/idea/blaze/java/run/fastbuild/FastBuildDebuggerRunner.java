@@ -29,6 +29,11 @@ import org.jetbrains.annotations.NotNull;
 final class FastBuildDebuggerRunner extends BlazeJavaDebuggerRunner {
 
   @Override
+  public String getRunnerId() {
+    return "FastBuildDebuggerRunner";
+  }
+
+  @Override
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
     ExecutorType executorType = ExecutorType.fromExecutorId(executorId);
     if (!executorType.equals(ExecutorType.FAST_BUILD_DEBUG)) {

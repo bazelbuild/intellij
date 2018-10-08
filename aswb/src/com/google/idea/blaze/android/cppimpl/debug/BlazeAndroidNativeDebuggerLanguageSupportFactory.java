@@ -16,7 +16,6 @@
 package com.google.idea.blaze.android.cppimpl.debug;
 
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
-import com.google.idea.sdkcompat.cidr.OCDebuggerLanguageSupportFactoryAdapter;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -31,14 +30,14 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.jetbrains.cidr.execution.debugger.OCDebuggerLanguageSupport;
 import com.jetbrains.cidr.execution.debugger.OCDebuggerTypesHelper;
 import com.jetbrains.cidr.lang.OCFileType;
 import com.jetbrains.cidr.lang.OCLanguage;
 import com.jetbrains.cidr.lang.util.OCElementFactory;
 import javax.annotation.Nullable;
 
-class BlazeAndroidNativeDebuggerLanguageSupportFactory
-    extends OCDebuggerLanguageSupportFactoryAdapter {
+class BlazeAndroidNativeDebuggerLanguageSupportFactory extends OCDebuggerLanguageSupport {
   @Override
   public XDebuggerEditorsProvider createEditor(RunProfile profile) {
     if (profile == null) {

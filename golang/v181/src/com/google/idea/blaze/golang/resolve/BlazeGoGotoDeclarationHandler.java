@@ -158,11 +158,11 @@ public class BlazeGoGotoDeclarationHandler implements GotoDeclarationHandler {
       return null;
     }
     BuildReferenceManager buildReferenceManager = BuildReferenceManager.getInstance(project);
-    PsiElement resolvedLabel = buildReferenceManager.resolveLabel(targetKey.label);
+    PsiElement resolvedLabel = buildReferenceManager.resolveLabel(targetKey.getLabel());
     if (resolvedLabel != null) {
       return resolvedLabel;
     }
-    File blazePackage = WorkspaceHelper.resolveBlazePackage(project, targetKey.label);
+    File blazePackage = WorkspaceHelper.resolveBlazePackage(project, targetKey.getLabel());
     return buildReferenceManager.findBuildFile(blazePackage);
   }
 

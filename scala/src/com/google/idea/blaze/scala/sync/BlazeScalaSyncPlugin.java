@@ -70,7 +70,7 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
       ModuleEditor moduleEditor,
       Module workspaceModule,
       ModifiableRootModel workspaceModifiableModel) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.SCALA)) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.SCALA)) {
       return;
     }
     for (Library library : ProjectLibraryTable.getInstance(project).getLibraries()) {
@@ -122,7 +122,7 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
   @Override
   public LibrarySource getLibrarySource(
       ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.SCALA)) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.SCALA)) {
       return null;
     }
     return new BlazeScalaLibrarySource(blazeProjectData);

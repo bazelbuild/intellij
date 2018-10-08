@@ -29,8 +29,9 @@ import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.common.transactions.Transactions;
-import com.google.idea.sdkcompat.run.RunManagerCompatUtils;
+import com.google.idea.sdkcompat.run.RunConfigurationBaseCompat;
 import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -63,7 +64,7 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
     }
 
     Set<File> xmlFiles =
-        getImportedRunConfigurations(projectViewSet, blazeProjectData.workspacePathResolver);
+        getImportedRunConfigurations(projectViewSet, blazeProjectData.getWorkspacePathResolver());
     Transactions.submitTransactionAndWait(
         () -> {
           // First, import from specified XML files. Then auto-generate from targets.
@@ -97,7 +98,7 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
         manager.getConfigurationsList(BlazeCommandRunConfigurationType.getInstance())) {
       if (config instanceof BlazeCommandRunConfiguration) {
         ((BlazeCommandRunConfiguration) config).updateTargetKindAsync(null);
-        beforeRunTasksChanged |= enableBlazeBeforeRunTask(config);
+        beforeRunTasksChanged |= enableBlazeBeforeRunTask((BlazeCommandRunConfiguration) config);
       }
     }
     if (beforeRunTasksChanged) {
@@ -105,15 +106,34 @@ public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
     }
   }
 
-  private static boolean enableBlazeBeforeRunTask(RunConfiguration config) {
+  private static boolean enableBlazeBeforeRunTask(BlazeCommandRunConfiguration config) {
+    if (RunConfigurationBaseCompat.getAllBeforeRunTasks(config).stream()
+        .noneMatch(t -> t.getProviderId().equals(BlazeBeforeRunTaskProvider.ID))) {
+      return addBlazeBeforeRunTask(config);
+    }
     boolean changed = false;
-    for (BeforeRunTask task : RunManagerCompatUtils.getBeforeRunTasks(config)) {
+    for (BeforeRunTask<?> task : RunConfigurationBaseCompat.getAllBeforeRunTasks(config)) {
       if (task.getProviderId().equals(BlazeBeforeRunTaskProvider.ID) && !task.isEnabled()) {
         changed = true;
         task.setEnabled(true);
       }
     }
     return changed;
+  }
+
+  private static boolean addBlazeBeforeRunTask(BlazeCommandRunConfiguration config) {
+    BeforeRunTaskProvider<?> provider =
+        BlazeBeforeRunTaskProvider.getProvider(config.getProject(), BlazeBeforeRunTaskProvider.ID);
+    if (provider == null) {
+      return false;
+    }
+    BeforeRunTask<?> task = provider.createTask(config);
+    if (task == null) {
+      return false;
+    }
+    task.setEnabled(true);
+    RunConfigurationBaseCompat.addBeforeRunTask(config, task);
+    return true;
   }
 
   private static Set<File> getImportedRunConfigurations(

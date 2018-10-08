@@ -59,10 +59,13 @@ public class BlazePyTestConfigurationProducer
   }
 
   private static class TestLocation {
+    private final PyFile testFile;
     @Nullable private final PyClass testClass;
     @Nullable private final PyFunction testFunction;
 
-    private TestLocation(@Nullable PyClass testClass, @Nullable PyFunction testFunction) {
+    private TestLocation(
+        PyFile testFile, @Nullable PyClass testClass, @Nullable PyFunction testFunction) {
+      this.testFile = testFile;
       this.testClass = testClass;
       this.testFunction = testFunction;
     }
@@ -141,11 +144,9 @@ public class BlazePyTestConfigurationProducer
       if (testClass == null) {
         return null;
       }
-
       if (testFunction == null) {
         return testClass.getName();
       }
-
       String nonParameterizedTest = testClass.getName() + "." + testFunction.getName();
 
       PyDecoratorList decoratorList = testFunction.getDecoratorList();
@@ -163,16 +164,14 @@ public class BlazePyTestConfigurationProducer
       if (namedParameterizedDecorator != null) {
         return getTestFilterForNamedParameters(nonParameterizedTest, namedParameterizedDecorator);
       }
-
       return nonParameterizedTest;
     }
 
-    @Nullable
-    PsiElement sourceElement(PsiFile file) {
+    PsiElement sourceElement() {
       if (testFunction != null) {
         return testFunction;
       }
-      return testClass != null ? testClass : file;
+      return testClass != null ? testClass : testFile;
     }
   }
 
@@ -201,8 +200,8 @@ public class BlazePyTestConfigurationProducer
     if (element == null) {
       return false;
     }
-    PsiFile file = element.getContainingFile();
-    if (!(file instanceof PyFile) || !PyTestUtils.isTestFile((PyFile) file)) {
+    TestLocation testLocation = testLocation(element);
+    if (testLocation == null) {
       return false;
     }
     TargetInfo testTarget = TestTargetHeuristic.testTargetForPsiElement(element);
@@ -211,8 +210,7 @@ public class BlazePyTestConfigurationProducer
     }
     configuration.setTargetInfo(testTarget);
 
-    TestLocation testLocation = testLocation(element);
-    sourceElement.set(testLocation.sourceElement(file));
+    sourceElement.set(testLocation.sourceElement());
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState == null) {
@@ -255,29 +253,34 @@ public class BlazePyTestConfigurationProducer
     if (element == null) {
       return false;
     }
-    if (!(element.getContainingFile() instanceof PyFile)) {
+    TestLocation testLocation = testLocation(element);
+    if (testLocation == null) {
       return false;
     }
     TargetInfo testTarget = TestTargetHeuristic.testTargetForPsiElement(element);
     if (testTarget == null || !testTarget.label.equals(configuration.getTarget())) {
       return false;
     }
-    String filter = testLocation(element).testFilter();
-
+    String filter = testLocation.testFilter();
     String filterFlag = handlerState.getTestFilterFlag();
     return (filterFlag == null && filter == null)
         || Objects.equals(filterFlag, BlazeFlags.TEST_FILTER + "=" + filter);
   }
 
+  @Nullable
   private static TestLocation testLocation(PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    if (!(file instanceof PyFile) || !PyTestUtils.isTestFile((PyFile) file)) {
+      return null;
+    }
     PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
     if (pyClass == null || !PyTestUtils.isTestClass(pyClass)) {
-      return new TestLocation(null, null);
+      return new TestLocation((PyFile) file, null, null);
     }
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
     if (pyFunction != null && PyTestUtils.isTestFunction(pyFunction)) {
-      return new TestLocation(pyClass, pyFunction);
+      return new TestLocation((PyFile) file, pyClass, pyFunction);
     }
-    return new TestLocation(pyClass, null);
+    return new TestLocation((PyFile) file, pyClass, null);
   }
 }

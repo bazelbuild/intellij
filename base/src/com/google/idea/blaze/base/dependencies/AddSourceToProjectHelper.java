@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.dependencies;
 
-import static com.google.idea.common.guava.GuavaHelper.toImmutableList;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -276,7 +276,7 @@ class AddSourceToProjectHelper {
    */
   private static boolean sourceInProjectTargets(
       LocationContext context, Collection<TargetKey> targetsBuildingSource) {
-    if (targetsBuildingSource.stream().anyMatch(context.syncData.targetMap::contains)) {
+    if (targetsBuildingSource.stream().anyMatch(context.syncData.getTargetMap()::contains)) {
       return true;
     }
     List<TargetExpression> projectViewTargets = context.projectViewSet.listItems(TargetSection.KEY);
@@ -288,7 +288,7 @@ class AddSourceToProjectHelper {
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
     for (TargetKey target : targetsBuildingSource) {
-      Label label = target.label;
+      Label label = target.getLabel();
       if (projectViewTargets.contains(label)
           || packageCoveredByWildcardPattern(projectViewTargets, label.blazePackage())) {
         return true;

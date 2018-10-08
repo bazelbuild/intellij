@@ -35,7 +35,7 @@ public class BlazeCidrTestOutputFilter extends RegexpFilter {
   public BlazeCidrTestOutputFilter(Project project) {
     super(project, FAILURE_REGEX);
     BlazeProjectData data = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    workspacePathResolver = data != null ? data.workspacePathResolver : null;
+    workspacePathResolver = data != null ? data.getWorkspacePathResolver() : null;
   }
 
   @Nullable

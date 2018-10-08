@@ -14,7 +14,6 @@ java_library(
     visibility = ["//visibility:public"],
     deps = [
         "//base",
-        "//common/guava",
         "//common/transactions",
         "//intellij_platform_sdk:devkit",
         "//intellij_platform_sdk:jsr305",

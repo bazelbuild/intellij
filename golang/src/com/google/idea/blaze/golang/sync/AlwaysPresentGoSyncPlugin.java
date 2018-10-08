@@ -75,7 +75,7 @@ public class AlwaysPresentGoSyncPlugin implements BlazeSyncPlugin {
   @Override
   public boolean validate(
       Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.workspaceLanguageSettings.isLanguageActive(LanguageClass.GO)
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.GO)
         || PluginUtils.isPluginEnabled(GO_PLUGIN_ID)) {
       return true;
     }

@@ -36,9 +36,10 @@ public class JavaLanguageLevelHelper {
 
   private static LanguageLevel getLanguageLevelFromToolchain(
       BlazeProjectData blazeProjectData, LanguageLevel defaultLanguageLevel) {
-    BlazeJavaSyncData blazeJavaSyncData = blazeProjectData.syncState.get(BlazeJavaSyncData.class);
+    BlazeJavaSyncData blazeJavaSyncData =
+        blazeProjectData.getSyncState().get(BlazeJavaSyncData.class);
     if (blazeJavaSyncData != null) {
-      String sourceVersion = blazeJavaSyncData.importResult.sourceVersion;
+      String sourceVersion = blazeJavaSyncData.getImportResult().sourceVersion;
       if (!Strings.isNullOrEmpty(sourceVersion)) {
         switch (sourceVersion) {
           case "6":

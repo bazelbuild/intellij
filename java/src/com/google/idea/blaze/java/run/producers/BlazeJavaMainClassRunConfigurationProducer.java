@@ -105,7 +105,7 @@ public class BlazeJavaMainClassRunConfigurationProducer
     if (target == null) {
       return false;
     }
-    return Objects.equals(configuration.getTarget(), target.key.label);
+    return Objects.equals(configuration.getTarget(), target.getKey().getLabel());
   }
 
   @Nullable
@@ -142,12 +142,11 @@ public class BlazeJavaMainClassRunConfigurationProducer
 
     // first look for a matching main_class
     TargetIdeInfo match =
-        javaBinaryTargets
-            .stream()
+        javaBinaryTargets.stream()
             .filter(
                 target ->
-                    target.javaIdeInfo != null
-                        && qualifiedName.equals(target.javaIdeInfo.javaBinaryMainClass))
+                    target.getJavaIdeInfo() != null
+                        && qualifiedName.equals(target.getJavaIdeInfo().getJavaBinaryMainClass()))
             .findFirst()
             .orElse(null);
     if (match != null) {
@@ -155,9 +154,8 @@ public class BlazeJavaMainClassRunConfigurationProducer
     }
 
     match =
-        javaBinaryTargets
-            .stream()
-            .filter(target -> className.equals(target.key.label.targetName().toString()))
+        javaBinaryTargets.stream()
+            .filter(target -> className.equals(target.getKey().getLabel().targetName().toString()))
             .findFirst()
             .orElse(null);
     if (match != null) {
@@ -178,8 +176,9 @@ public class BlazeJavaMainClassRunConfigurationProducer
   private static FilteredTargetMap computeTargetMap(Project project, BlazeProjectData projectData) {
     return new FilteredTargetMap(
         project,
-        projectData.artifactLocationDecoder,
-        projectData.targetMap,
-        (targetIdeInfo) -> targetIdeInfo.kind == Kind.JAVA_BINARY && targetIdeInfo.isPlainTarget());
+        projectData.getArtifactLocationDecoder(),
+        projectData.getTargetMap(),
+        (targetIdeInfo) ->
+            targetIdeInfo.getKind() == Kind.JAVA_BINARY && targetIdeInfo.isPlainTarget());
   }
 }

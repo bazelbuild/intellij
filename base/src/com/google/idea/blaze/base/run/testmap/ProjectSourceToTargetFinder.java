@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.run.testmap;
 
-import static com.google.idea.common.guava.GuavaHelper.toImmutableSet;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
@@ -59,7 +59,8 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
   }
 
   private static FilteredTargetMap computeTargetMap(Project project, BlazeProjectData projectData) {
-    return computeTargetMap(project, projectData.artifactLocationDecoder, projectData.targetMap);
+    return computeTargetMap(
+        project, projectData.getArtifactLocationDecoder(), projectData.getTargetMap());
   }
 
   private static FilteredTargetMap computeTargetMap(

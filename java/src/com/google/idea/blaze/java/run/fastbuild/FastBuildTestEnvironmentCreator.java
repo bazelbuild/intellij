@@ -16,11 +16,11 @@
 package com.google.idea.blaze.java.run.fastbuild;
 
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.idea.common.guava.GuavaHelper.stream;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Streams;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -56,6 +56,7 @@ final class FastBuildTestEnvironmentCreator {
   private static final String OUTPUT_FILE_VARIABLE = "XML_OUTPUT_FILE";
   private static final String RUNFILES_DIR_VARIABLE = "TEST_SRCDIR";
   private static final String TARGET_VARIABLE = "TEST_TARGET";
+  private static final String TEMP_DIRECTORY_VARIABLE = "TEST_TMPDIR";
   private static final String TEST_FILTER_VARIABLE = "TESTBRIDGE_TEST_ONLY";
   private static final String WORKSPACE_VARIABLE = "TEST_WORKSPACE";
 
@@ -129,6 +130,11 @@ final class FastBuildTestEnvironmentCreator {
         .withEnvironment(TARGET_VARIABLE, fastBuildInfo.label().toString())
         .withEnvironment(WORKSPACE_VARIABLE, workspaceName);
 
+    String tmpdir = System.getProperty("java.io.tmpdir");
+    if (tmpdir != null) {
+      commandLine.withEnvironment(TEMP_DIRECTORY_VARIABLE, tmpdir);
+    }
+
     if (testFilter != null) {
       commandLine.withEnvironment(TEST_FILTER_VARIABLE, testFilter);
     }
@@ -173,7 +179,7 @@ final class FastBuildTestEnvironmentCreator {
     String targetName = label.targetName().toString();
     PsiManager psiManager = PsiManager.getInstance(project);
     for (File source :
-        blazeProjectData.artifactLocationDecoder.decodeAll(targetJavaInfo.sources())) {
+        blazeProjectData.getArtifactLocationDecoder().decodeAll(targetJavaInfo.sources())) {
       VirtualFile virtualFile = VfsUtils.resolveVirtualFile(source);
       if (virtualFile == null) {
         continue;
@@ -204,13 +210,11 @@ final class FastBuildTestEnvironmentCreator {
     // First, any libraries that are direct dependencies of the test target go into
     // --strict_libraries
     String strictLibraries =
-        testBlazeData
-            .dependencies()
-            .stream()
+        testBlazeData.dependencies().stream()
             .filter(blazeData::containsKey)
             .map(blazeData::get)
-            .flatMap(d -> stream(d.androidInfo()))
-            .flatMap(ai -> stream(getAndroidResource(ai, workingDir)))
+            .flatMap(d -> Streams.stream(d.androidInfo()))
+            .flatMap(ai -> Streams.stream(getAndroidResource(ai, workingDir)))
             .collect(joining(","));
     if (!strictLibraries.isEmpty()) {
       commandLine.withParameters("--strict_libraries", strictLibraries);
@@ -272,7 +276,10 @@ final class FastBuildTestEnvironmentCreator {
     // Very occasionally (<1% of the time in my tests) these files won't exist. I'm not really sure
     // why that is. There must be something telling Blaze that they aren't needed for the build even
     // though it's listed as a dependency.
-    if (!workingDir.resolve(androidInfo.mergedManifest().get().relativePath).toFile().exists()) {
+    if (!workingDir
+        .resolve(androidInfo.mergedManifest().get().getRelativePath())
+        .toFile()
+        .exists()) {
       return Optional.empty();
     }
     return Optional.of(

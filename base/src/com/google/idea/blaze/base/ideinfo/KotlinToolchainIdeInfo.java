@@ -23,12 +23,20 @@ import java.io.Serializable;
 public class KotlinToolchainIdeInfo implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  public final String languageVersion;
-  public final ImmutableList<Label> sdkTargets;
+  private final String languageVersion;
+  private final ImmutableList<Label> sdkTargets;
 
   public KotlinToolchainIdeInfo(String languageVersion, ImmutableList<Label> sdkTargets) {
     this.languageVersion = languageVersion;
     this.sdkTargets = sdkTargets;
+  }
+
+  public String getLanguageVersion() {
+    return languageVersion;
+  }
+
+  public ImmutableList<Label> getSdkTargets() {
+    return sdkTargets;
   }
 
   @Override
@@ -36,10 +44,10 @@ public class KotlinToolchainIdeInfo implements Serializable {
     return "KotlinToolchainIdeInfo{"
         + "\n"
         + "  languageVersion="
-        + languageVersion
+        + getLanguageVersion()
         + "\n"
         + "  sdkTargets="
-        + sdkTargets
+        + getSdkTargets()
         + "\n"
         + '}';
   }

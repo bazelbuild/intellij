@@ -47,7 +47,7 @@ public class BuiltInRuleAnnotator extends BuildAnnotator {
       // this has been locally overridden, so don't attempt validation
       return;
     }
-    Set<String> missingAttributes = new TreeSet<>(rule.mandatoryAttributes.keySet());
+    Set<String> missingAttributes = new TreeSet<>(rule.getMandatoryAttributes().keySet());
     for (Argument arg : node.getArguments()) {
       if (arg instanceof Argument.StarStar) {
         missingAttributes.clear();
@@ -69,12 +69,12 @@ public class BuiltInRuleAnnotator extends BuildAnnotator {
         continue;
       }
       PsiElement rootElement = PsiUtils.getReferencedTargetValue(argValue);
-      if (!BuildElementValidation.possiblyValidType(rootElement, attribute.type)) {
+      if (!BuildElementValidation.possiblyValidType(rootElement, attribute.getType())) {
         markError(
             arg,
             String.format(
                 "Invalid value for attribute '%s'. Expected a value of type '%s'",
-                name, attribute.type));
+                name, attribute.getType()));
       }
     }
     if (!missingAttributes.isEmpty()) {

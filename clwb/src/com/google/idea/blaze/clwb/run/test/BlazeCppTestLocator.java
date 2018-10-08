@@ -18,7 +18,6 @@ package com.google.idea.blaze.clwb.run.test;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
-import com.google.idea.sdkcompat.cidr.CidrGoogleTestUtilAdapter;
 import com.google.idea.sdkcompat.cidr.OCSymbolAdapter;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
@@ -124,7 +123,7 @@ public class BlazeCppTestLocator implements SMTestLocator {
           @Override
           protected boolean accept(OCSymbol symbol) {
             return symbol instanceof OCStructSymbol
-                && CidrGoogleTestUtilAdapter.isGoogleTestClass((OCStructSymbol) symbol, project);
+                && CidrGoogleTestUtil.isGoogleTestClass((OCStructSymbol) symbol, project);
           }
         };
     OCGlobalProjectSymbolsCache.processTopLevelAndMemberSymbols(project, processor, suite);

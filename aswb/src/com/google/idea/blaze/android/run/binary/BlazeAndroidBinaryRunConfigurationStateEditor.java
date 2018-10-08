@@ -79,6 +79,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
   private JRadioButton launchCustomButton;
   private JComboBox<AndroidBinaryLaunchMethodComboEntry> launchMethodComboBox;
   private JCheckBox useWorkProfileIfPresentCheckBox;
+  private JCheckBox showLogcatAutomaticallyCheckBox;
   private JLabel userIdLabel;
   private IntegerTextField userIdField;
 
@@ -138,7 +139,8 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     launchMethodComboBox.addActionListener(
         e -> PropertiesComponent.getInstance(project).setValue(MI_NEVER_ASK_AGAIN, true));
 
-    useWorkProfileIfPresentCheckBox.addActionListener(e -> updateEnabledState());
+    useWorkProfileIfPresentCheckBox.addActionListener(listener);
+    showLogcatAutomaticallyCheckBox.addActionListener(listener);
   }
 
   @Override
@@ -166,8 +168,9 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
       }
     }
     useWorkProfileIfPresentCheckBox.setSelected(state.useWorkProfileIfPresent());
-
     userIdField.setValue(state.getUserId());
+
+    showLogcatAutomaticallyCheckBox.setSelected(state.showLogcatAutomatically());
 
     updateEnabledState();
   }
@@ -191,6 +194,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
         ((AndroidBinaryLaunchMethodComboEntry) launchMethodComboBox.getSelectedItem())
             .launchMethod);
     state.setUseWorkProfileIfPresent(useWorkProfileIfPresentCheckBox.isSelected());
+    state.setShowLogcatAutomatically(showLogcatAutomaticallyCheckBox.isSelected());
   }
 
   @Override
@@ -209,6 +213,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     launchCustomButton.setEnabled(componentEnabled);
     launchMethodComboBox.setEnabled(componentEnabled);
     useWorkProfileIfPresentCheckBox.setEnabled(componentEnabled);
+    showLogcatAutomaticallyCheckBox.setEnabled(componentEnabled);
   }
 
   @Override
@@ -241,7 +246,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
   private void setupUI(Project project) {
     createUIComponents(project);
     panel = new JPanel();
-    panel.setLayout(new GridLayoutManager(5, 2, new Insets(0, 0, 0, 0), -1, -1));
+    panel.setLayout(new GridLayoutManager(6, 2, new Insets(0, 0, 0, 0), -1, -1));
     final JPanel activityPanel = new JPanel();
     activityPanel.setLayout(new GridLayoutManager(4, 2, new Insets(0, 0, 0, 0), -1, -1));
     panel.add(
@@ -300,6 +305,35 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
                 userPanel.getFont().getStyle(),
                 userPanel.getFont().getSize()),
             new Color(-16777216)));
+    final JPanel logcatPanel = new JPanel();
+    logcatPanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+    panel.add(
+        logcatPanel,
+        new GridConstraints(
+            5,
+            0,
+            1,
+            2,
+            GridConstraints.ANCHOR_CENTER,
+            GridConstraints.FILL_BOTH,
+            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+            null,
+            null,
+            null,
+            0,
+            false));
+    logcatPanel.setBorder(
+        BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(),
+            "Logcat",
+            TitledBorder.DEFAULT_JUSTIFICATION,
+            TitledBorder.DEFAULT_POSITION,
+            new Font(
+                logcatPanel.getFont().getName(),
+                logcatPanel.getFont().getStyle(),
+                logcatPanel.getFont().getSize()),
+            Color.BLACK));
     launchNothingButton = new JRadioButton();
     this.loadButtonText(
         launchNothingButton,
@@ -419,6 +453,23 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
         new GridConstraints(
             1,
             1,
+            1,
+            1,
+            GridConstraints.ANCHOR_WEST,
+            GridConstraints.FILL_HORIZONTAL,
+            GridConstraints.SIZEPOLICY_WANT_GROW,
+            GridConstraints.SIZEPOLICY_FIXED,
+            null,
+            null,
+            null,
+            0,
+            false));
+    showLogcatAutomaticallyCheckBox = new JCheckBox(" Show logcat automatically");
+    logcatPanel.add(
+        showLogcatAutomaticallyCheckBox,
+        new GridConstraints(
+            0,
+            0,
             1,
             1,
             GridConstraints.ANCHOR_WEST,

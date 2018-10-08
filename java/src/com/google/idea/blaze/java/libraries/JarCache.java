@@ -104,14 +104,14 @@ public class JarCache {
             .map(library -> (BlazeJarLibrary) library)
             .collect(Collectors.toList());
 
-    ArtifactLocationDecoder artifactLocationDecoder = projectData.artifactLocationDecoder;
+    ArtifactLocationDecoder artifactLocationDecoder = projectData.getArtifactLocationDecoder();
     BiMap<File, String> sourceFileToCacheKey = HashBiMap.create(jarLibraries.size());
     for (BlazeJarLibrary library : jarLibraries) {
       File jarFile =
           artifactLocationDecoder.decode(library.libraryArtifact.jarForIntellijLibrary());
       sourceFileToCacheKey.put(jarFile, cacheKeyForJar(jarFile));
 
-      for (ArtifactLocation sourceJar : library.libraryArtifact.sourceJars) {
+      for (ArtifactLocation sourceJar : library.libraryArtifact.getSourceJarsOrClassJar()) {
         File srcJarFile = artifactLocationDecoder.decode(sourceJar);
         sourceFileToCacheKey.put(srcJarFile, cacheKeyForSourceJar(srcJarFile));
       }

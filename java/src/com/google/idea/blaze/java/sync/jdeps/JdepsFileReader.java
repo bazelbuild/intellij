@@ -110,11 +110,11 @@ public class JdepsFileReader {
     Map<File, TargetKey> fileToTargetMap = Maps.newHashMap();
     for (TargetIdeInfo target : targetsToLoad) {
       assert target != null;
-      JavaIdeInfo javaIdeInfo = target.javaIdeInfo;
+      JavaIdeInfo javaIdeInfo = target.getJavaIdeInfo();
       if (javaIdeInfo != null) {
-        ArtifactLocation jdepsFile = javaIdeInfo.jdepsFile;
+        ArtifactLocation jdepsFile = javaIdeInfo.getJdepsFile();
         if (jdepsFile != null) {
-          fileToTargetMap.put(artifactLocationDecoder.decode(jdepsFile), target.key);
+          fileToTargetMap.put(artifactLocationDecoder.decode(jdepsFile), target.getKey());
         }
       }
     }

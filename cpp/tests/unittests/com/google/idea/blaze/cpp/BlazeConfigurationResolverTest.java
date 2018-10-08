@@ -52,14 +52,11 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
-import com.google.idea.sdkcompat.cidr.CPPEnvironmentAdapter;
-import com.google.idea.sdkcompat.cidr.OCResolveConfigurationAdapter;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.jetbrains.cidr.lang.OCLanguageKind;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
@@ -85,7 +82,6 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(BlazeExecutor.class, new MockBlazeExecutor());
-    CPPEnvironmentAdapter.registerForTest(applicationServices.getPicoContainer());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
     compilerVersionChecker = new MockCompilerVersionChecker("1234");
     applicationServices.register(CompilerVersionChecker.class, compilerVersionChecker);
@@ -104,10 +100,13 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
         .setImportSettings(
             new BlazeImportSettings("", "", "", "", buildSystemProvider.buildSystem()));
 
+    registerExtensionPoint(
+        BlazeCompilerFlagsProcessor.EP_NAME, BlazeCompilerFlagsProcessor.Provider.class);
+
     context.addOutputSink(IssueOutput.class, errorCollector);
 
     resolver = new BlazeConfigurationResolver(project);
-    resolverResult = BlazeConfigurationResolverResult.empty(project);
+    resolverResult = BlazeConfigurationResolverResult.empty();
   }
 
   @Test
@@ -363,39 +362,6 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
         .producesConfigurationsFor("//foo/bar:binary");
     Collection<BlazeResolveConfiguration> initialConfigurations =
         resolverResult.getAllConfigurations();
-
-    targetMapBuilder.addTarget(
-        createCcTarget(
-            "//foo/bar:library",
-            Kind.CC_LIBRARY,
-            ImmutableList.of(src("foo/bar/library.cc")),
-            ImmutableList.of("OTHER=1")));
-
-    assertThatResolving(projectView, targetMapBuilder.build())
-        .reusedConfigurations(initialConfigurations, "//foo/bar:library");
-  }
-
-  @Test
-  public void afterQueryingConfiguration_newTarget_testIncrementalUpdatePartlyReused() {
-    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:*"));
-    TargetMapBuilder targetMapBuilder =
-        TargetMapBuilder.builder()
-            .addTarget(createCcToolchain())
-            .addTarget(
-                createCcTarget(
-                    "//foo/bar:binary",
-                    Kind.CC_BINARY,
-                    ImmutableList.of(src("foo/bar/binary.cc"))));
-    assertThatResolving(projectView, targetMapBuilder.build())
-        .producesConfigurationsFor("//foo/bar:binary");
-    Collection<BlazeResolveConfiguration> initialConfigurations =
-        resolverResult.getAllConfigurations();
-
-    // Make sure that if we *query* the configuration in some way, it doesn't affect its
-    // compatibility / reusability. There may be caches attached to the configuration and those
-    // should not be compared when checking equivalence.
-    OCResolveConfigurationAdapter firstConfiguration = initialConfigurations.iterator().next();
-    firstConfiguration.getLibraryHeadersRoots(OCLanguageKind.CPP, null);
 
     targetMapBuilder.addTarget(
         createCcTarget(

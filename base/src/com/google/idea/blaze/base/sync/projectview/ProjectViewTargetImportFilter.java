@@ -23,8 +23,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.ExcludeTargetSection;
 import com.google.idea.blaze.base.projectview.section.sections.ImportTargetOutputSection;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.intellij.openapi.project.Project;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import java.util.Set;
 
 /** Filters rules into source/library depending on the project view. */
@@ -34,29 +33,26 @@ public class ProjectViewTargetImportFilter {
   private final Set<Label> excludedTargets;
 
   public ProjectViewTargetImportFilter(
-      Project project, WorkspaceRoot workspaceRoot, ProjectViewSet projectViewSet) {
-    this.importRoots =
-        ImportRoots.builder(workspaceRoot, Blaze.getBuildSystem(project))
-            .add(projectViewSet)
-            .build();
+      BuildSystem buildSystem, WorkspaceRoot workspaceRoot, ProjectViewSet projectViewSet) {
+    this.importRoots = ImportRoots.builder(workspaceRoot, buildSystem).add(projectViewSet).build();
     this.importTargetOutputs =
         Sets.newHashSet(projectViewSet.listItems(ImportTargetOutputSection.KEY));
     this.excludedTargets = Sets.newHashSet(projectViewSet.listItems(ExcludeTargetSection.KEY));
   }
 
   public boolean isSourceTarget(TargetIdeInfo target) {
-    return importRoots.importAsSource(target.key.label) && !importTargetOutput(target);
+    return importRoots.importAsSource(target.getKey().getLabel()) && !importTargetOutput(target);
   }
 
   private boolean importTargetOutput(TargetIdeInfo target) {
-    return target.tags.contains(Tags.TARGET_TAG_IMPORT_TARGET_OUTPUT)
-        || target.tags.contains(Tags.TARGET_TAG_IMPORT_AS_LIBRARY_LEGACY)
-        || importTargetOutputs.contains(target.key.label);
+    return target.getTags().contains(Tags.TARGET_TAG_IMPORT_TARGET_OUTPUT)
+        || target.getTags().contains(Tags.TARGET_TAG_IMPORT_AS_LIBRARY_LEGACY)
+        || importTargetOutputs.contains(target.getKey().getLabel());
   }
 
   public boolean excludeTarget(TargetIdeInfo target) {
-    return excludedTargets.contains(target.key.label)
-        || target.tags.contains(Tags.TARGET_TAG_PROVIDED_BY_SDK)
-        || target.tags.contains(Tags.TARGET_TAG_EXCLUDE_TARGET);
+    return excludedTargets.contains(target.getKey().getLabel())
+        || target.getTags().contains(Tags.TARGET_TAG_PROVIDED_BY_SDK)
+        || target.getTags().contains(Tags.TARGET_TAG_EXCLUDE_TARGET);
   }
 }

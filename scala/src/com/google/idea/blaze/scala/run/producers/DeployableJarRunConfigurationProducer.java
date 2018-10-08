@@ -62,7 +62,7 @@ class DeployableJarRunConfigurationProducer
       return false;
     }
 
-    Label label = target.key.label;
+    Label label = target.getKey().getLabel();
     File jarFile = getDeployJarFile(label, context.getProject());
     if (jarFile == null) {
       return false;
@@ -99,7 +99,7 @@ class DeployableJarRunConfigurationProducer
     if (target == null) {
       return false;
     }
-    Label label = target.key.label;
+    Label label = target.getKey().getLabel();
     File jarFile = getDeployJarFile(label, context.getProject());
     if (jarFile == null) {
       return false;
@@ -134,7 +134,7 @@ class DeployableJarRunConfigurationProducer
     if (projectData == null) {
       return null;
     }
-    File blazeBin = projectData.blazeInfo.getBlazeBinDirectory();
+    File blazeBin = projectData.getBlazeInfo().getBlazeBinDirectory();
     return new File(blazeBin, String.format("%s_deploy.jar", target.targetName()));
   }
 }

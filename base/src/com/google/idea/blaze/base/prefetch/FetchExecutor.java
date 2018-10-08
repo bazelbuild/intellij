@@ -26,9 +26,10 @@ public class FetchExecutor {
   private static final int THREAD_COUNT = 32;
   public static final ListeningExecutorService EXECUTOR =
       MoreExecutors.listeningDecorator(
+          // #api181: use AppExecutorUtil.createBoundedApplicationPoolExecutor instead
+          // AppExecutorUtil.createBoundedApplicationPoolExecutor(
+          //     FetchExecutor.class.getSimpleName(),
           new BoundedTaskExecutor(
-              // #api171 add this argument, the form without a name is deprecated
-              // FetchExecutor.class.getSimpleName(),
               Executors.newFixedThreadPool(
                   THREAD_COUNT, ConcurrencyUtil.namedDaemonThreadPoolFactory(FetchExecutor.class)),
               THREAD_COUNT));

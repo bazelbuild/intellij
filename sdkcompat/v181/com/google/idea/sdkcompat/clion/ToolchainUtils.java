@@ -67,22 +67,6 @@ public class ToolchainUtils {
     toolchain.setDebugger(defaultToolchain.getDebugger());
   }
 
-  /**
-   * Used to register an instance of this class for unit tests. This needs to be in sdkcompat
-   * because CPPToolchains changed packages between 2017.2 and 2017.3. #api173
-   */
-  public static Class<CPPToolchains> getCppToolchainsClass() {
-    return CPPToolchains.class;
-  }
-
-  /**
-   * Used to register an instance of this class for unit tests. This needs to be in sdkcompat
-   * because CPPToolchains changed packages between 2017.2 and 2017.3. #api173
-   */
-  public static CPPToolchains createCppToolchainsInstance() {
-    return new CPPToolchains();
-  }
-
   /** Used to abstract away different between CPPToolchains.Toolchain #api173 */
   public static class ToolchainCompat extends CPPToolchains.Toolchain {
     protected ToolchainCompat() {

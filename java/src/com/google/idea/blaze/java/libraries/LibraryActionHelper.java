@@ -43,12 +43,12 @@ class LibraryActionHelper {
       return null;
     }
     LibraryKey libraryKey = LibraryKey.fromIntelliJLibraryName(libName);
-    BlazeJavaSyncData syncData = blazeProjectData.syncState.get(BlazeJavaSyncData.class);
+    BlazeJavaSyncData syncData = blazeProjectData.getSyncState().get(BlazeJavaSyncData.class);
     if (syncData == null) {
       Messages.showErrorDialog(project, "Project isn't synced. Please resync project.", "Error");
       return null;
     }
-    return syncData.importResult.libraries.get(libraryKey);
+    return syncData.getImportResult().libraries.get(libraryKey);
   }
 
   @Nullable
