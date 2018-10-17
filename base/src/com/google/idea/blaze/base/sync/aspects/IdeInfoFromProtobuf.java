@@ -28,6 +28,7 @@ import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.ideinfo.AndroidAarIdeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
+import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
 import com.google.idea.blaze.base.ideinfo.AndroidSdkIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.CIdeInfo;
@@ -290,7 +291,7 @@ public class IdeInfoFromProtobuf {
 
   private static AndroidIdeInfo makeAndroidIdeInfo(IntellijIdeInfo.AndroidIdeInfo androidIdeInfo) {
     return new AndroidIdeInfo(
-        makeArtifactLocationList(androidIdeInfo.getResourcesList()),
+        makeAndroidResFolders(androidIdeInfo.getResFoldersList()),
         androidIdeInfo.getJavaPackage(),
         androidIdeInfo.getGenerateResourceClass(),
         androidIdeInfo.hasManifest() ? makeArtifactLocation(androidIdeInfo.getManifest()) : null,
@@ -436,6 +437,22 @@ public class IdeInfoFromProtobuf {
       ArtifactLocation loc = makeArtifactLocation(pbArtifactLocation);
       if (loc != null) {
         builder.add(loc);
+      }
+    }
+    return builder.build();
+  }
+
+  private static List<AndroidResFolder> makeAndroidResFolders(
+      List<IntellijIdeInfo.ResFolderLocation> sourcesList) {
+    ImmutableList.Builder<AndroidResFolder> builder = ImmutableList.builder();
+    for (IntellijIdeInfo.ResFolderLocation resource : sourcesList) {
+      ArtifactLocation loc = makeArtifactLocation(resource.getRoot());
+      if (loc != null) {
+        AndroidResFolder.Builder resourceBuilder = AndroidResFolder.builder().setRoot(loc);
+        if (resource.getResourcesList() != null) {
+          resourceBuilder.addResources(resource.getResourcesList());
+        }
+        builder.add(resourceBuilder.build());
       }
     }
     return builder.build();

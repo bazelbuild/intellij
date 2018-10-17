@@ -101,7 +101,7 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
     String binaryPath =
         handlerState.getBlazeBinaryState().getBlazeBinary() != null
             ? handlerState.getBlazeBinaryState().getBlazeBinary()
-            : Blaze.getBuildSystemProvider(project).getBinaryPath();
+            : Blaze.getBuildSystemProvider(project).getBinaryPath(project);
 
     SaveUtil.saveAllFiles();
     FastBuildService buildService = FastBuildService.getInstance(project);

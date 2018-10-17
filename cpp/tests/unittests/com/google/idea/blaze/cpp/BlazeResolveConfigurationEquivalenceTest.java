@@ -285,103 +285,89 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   }
 
   // TODO(jvoung): This could be a separate Parameterized test.
-  private static final Map<List<String>, ReusedConfigurationExpectations>
+  private static final Map<List<String>, ImmutableList<String>>
+      // Nothing can really be reused, since we're changing the sources in each
+      // configuration, and configurations are tied to the sources now.
       permutationsAndExpectations =
-          ImmutableMap.<List<String>, ReusedConfigurationExpectations>builder()
-              .put(
-                  ImmutableList.of("a"),
-                  // Since we already had a config at 1 and one at 0, flipping any 1 to 0 will
-                  // always
-                  // result in reuse. The old configurations will get renamed.
-                  new ReusedConfigurationExpectations(
-                      ImmutableList.of(
-                          "//foo/bar:a and 1 other target(s)", "//foo/bar:b and 1 other target(s)"),
-                      ImmutableList.of()))
-              .put(
-                  ImmutableList.of("b"),
-                  new ReusedConfigurationExpectations(
-                      ImmutableList.of(
-                          "//foo/bar:a and 1 other target(s)", "//foo/bar:b and 1 other target(s)"),
-                      ImmutableList.of()))
-              .put(
-                  ImmutableList.of("c"),
-                  new ReusedConfigurationExpectations(
-                      ImmutableList.of(
-                          "//foo/bar:a and 1 other target(s)", "//foo/bar:c and 1 other target(s)"),
-                      ImmutableList.of()))
-              .put(
-                  ImmutableList.of("a", "b"),
-                  new ReusedConfigurationExpectations(
-                      ImmutableList.of("//foo/bar:a and 2 other target(s)", "//foo/bar:c"),
-                      ImmutableList.of()))
-              .put(
-                  ImmutableList.of("b", "c"),
-                  new ReusedConfigurationExpectations(
-                      ImmutableList.of("//foo/bar:a", "//foo/bar:b and 2 other target(s)"),
-                      ImmutableList.of()))
-              .put(
-                  ImmutableList.of("a", "c"),
-                  new ReusedConfigurationExpectations(
-                      ImmutableList.of("//foo/bar:a and 2 other target(s)", "//foo/bar:b"),
-                      ImmutableList.of()))
-              .put(
-                  ImmutableList.of("a", "b", "c"),
-                  new ReusedConfigurationExpectations(
-                      ImmutableList.of("//foo/bar:a and 3 other target(s)"), ImmutableList.of()))
-              .build();
+      ImmutableMap.<List<String>, ImmutableList<String>>builder()
+          .put(
+              ImmutableList.of("a"),
+              ImmutableList.of(
+                  "//foo/bar:a and 1 other target(s)", "//foo/bar:b and 1 other target(s)"))
+          .put(
+              ImmutableList.of("b"),
+              ImmutableList.of(
+                  "//foo/bar:a and 1 other target(s)", "//foo/bar:b and 1 other target(s)"))
+          .put(
+              ImmutableList.of("c"),
+              ImmutableList.of(
+                  "//foo/bar:a and 1 other target(s)", "//foo/bar:c and 1 other target(s)"))
+          .put(
+              ImmutableList.of("a", "b"),
+              ImmutableList.of("//foo/bar:a and 2 other target(s)", "//foo/bar:c"))
+          .put(
+              ImmutableList.of("b", "c"),
+              ImmutableList.of("//foo/bar:a", "//foo/bar:b and 2 other target(s)"))
+          .put(
+              ImmutableList.of("a", "c"),
+              ImmutableList.of("//foo/bar:a and 2 other target(s)", "//foo/bar:b"))
+          .put(
+              ImmutableList.of("a", "b", "c"),
+              ImmutableList.of("//foo/bar:a and 3 other target(s)"))
+          .build();
 
   @Test
   public void changeDefines_testIncrementalUpdate_0() {
-    Map.Entry<List<String>, ReusedConfigurationExpectations> testCase =
+    Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 0);
     do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_1() {
-    Map.Entry<List<String>, ReusedConfigurationExpectations> testCase =
+    Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 1);
     do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_2() {
-    Map.Entry<List<String>, ReusedConfigurationExpectations> testCase =
+    Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 2);
     do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_3() {
-    Map.Entry<List<String>, ReusedConfigurationExpectations> testCase =
+    Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 3);
     do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_4() {
-    Map.Entry<List<String>, ReusedConfigurationExpectations> testCase =
+    Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 4);
     do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_5() {
-    Map.Entry<List<String>, ReusedConfigurationExpectations> testCase =
+    Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 5);
     do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_6() {
-    Map.Entry<List<String>, ReusedConfigurationExpectations> testCase =
+    Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 6);
     do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
     assertThat(permutationsAndExpectations.size()).isEqualTo(7);
   }
 
   private void do_changeDefines_testIncrementalUpdate(
-      List<String> labelsToFlip, ReusedConfigurationExpectations expectation) {
+      List<String> labelsToFlip, ImmutableList<String> newConfigurationLabels) {
     ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:...:all"));
     List<BlazeResolveConfiguration> configurations =
         resolve(projectView, incrementalUpdateTestCaseInitialTargetMap());
@@ -418,7 +404,10 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
             includes()));
     List<BlazeResolveConfiguration> newConfigurations =
         resolve(projectView, targetMapBuilder.build());
-    assertReusedConfigs(configurations, newConfigurations, expectation);
+    assertThat(newConfigurations.size()).isEqualTo(newConfigurationLabels.size());
+    for (String label : newConfigurationLabels) {
+      assertThat(get(newConfigurations, label)).isNotNull();
+    }
   }
 
   @Test
@@ -473,7 +462,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   }
 
   @Test
-  public void changeDefinesMakeAllSame_testIncrementalUpdate() {
+  public void changeDefinesMakeAllSame_notReused() {
     ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:...:all"));
     TargetMap targetMap = incrementalUpdateTestCaseInitialTargetMap();
     List<BlazeResolveConfiguration> configurations = resolve(projectView, targetMap);
@@ -515,13 +504,9 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
             .build();
     List<BlazeResolveConfiguration> newConfigurations = resolve(projectView, targetMap);
     assertThat(newConfigurations).hasSize(1);
-    // What used to be "//foo/bar:a and 2 other target(s)" will be renamed to
-    // "//foo/bar:a and 3 other target(s)" and reused.
-    assertReusedConfigs(
-        configurations,
-        newConfigurations,
-        new ReusedConfigurationExpectations(
-            ImmutableList.of("//foo/bar:a and 3 other target(s)"), ImmutableList.of()));
+    // We can't actually reuse the configurations, since they they have a different
+    // set of sources covered, and CLion ties the sources to the configuration.
+    assertThat(get(newConfigurations, "//foo/bar:a and 3 other target(s)")).isNotNull();
   }
 
   private static List<ArtifactLocation> sources(String... paths) {
@@ -644,13 +629,17 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
       ReusedConfigurationExpectations expected) {
     for (String label : expected.reusedLabels) {
       assertWithMessage(String.format("Checking that %s is reused", label))
-          .that(get(newConfigurations, label))
-          .isSameAs(get(oldConfigurations, label));
+          .that(
+              get(newConfigurations, label)
+                  .isEquivalentConfigurations(get(oldConfigurations, label)))
+          .isTrue();
     }
     for (String label : expected.notReusedLabels) {
       assertWithMessage(String.format("Checking that %s is NOT reused", label))
-          .that(get(newConfigurations, label))
-          .isNotSameAs(get(oldConfigurations, label));
+          .that(
+              get(newConfigurations, label)
+                  .isEquivalentConfigurations(get(oldConfigurations, label)))
+          .isFalse();
     }
   }
 

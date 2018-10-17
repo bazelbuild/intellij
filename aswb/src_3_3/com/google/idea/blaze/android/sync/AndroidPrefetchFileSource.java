@@ -47,7 +47,7 @@ public class AndroidPrefetchFileSource implements PrefetchFileSource {
     files.addAll(
         artifactLocationDecoder.decodeAll(
             syncData.importResult.resourceLibraries.values().stream()
-                .map(resourceLibrary -> resourceLibrary.resource)
+                .map(resourceLibrary -> resourceLibrary.root)
                 .collect(Collectors.toList())));
   }
 

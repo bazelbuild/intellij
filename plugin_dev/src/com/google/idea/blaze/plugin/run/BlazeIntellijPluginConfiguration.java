@@ -71,6 +71,7 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.execution.ParametersListUtil;
 import java.awt.BorderLayout;
 import java.io.File;
 import java.io.IOException;
@@ -238,16 +239,11 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     };
   }
 
-  private static void fillParameterList(ParametersList list, @Nullable String value) {
-    if (value == null) {
+  private static void fillParameterList(ParametersList list, @Nullable String parameters) {
+    if (parameters == null) {
       return;
     }
-
-    for (String parameter : value.split(" ")) {
-      if (parameter != null && parameter.length() > 0) {
-        list.add(parameter);
-      }
-    }
+    list.addAll(ParametersListUtil.parse(parameters, /* keepQuotes */ false));
   }
 
   @Override

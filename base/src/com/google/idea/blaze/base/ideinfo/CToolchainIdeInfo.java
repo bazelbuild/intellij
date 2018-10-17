@@ -20,8 +20,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import java.io.Serializable;
 
-/** Represents a cc_toolchain */
-public class CToolchainIdeInfo implements Serializable {
+/** Represents toolchain info from a cc_toolchain or cc_toolchain_suite */
+public final class CToolchainIdeInfo implements Serializable {
   private static final long serialVersionUID = 4L;
 
   private final ImmutableList<String> baseCompilerOptions;

@@ -109,22 +109,28 @@ public final class BlazeCWorkspace implements ProjectComponent {
             new Task.Backgroundable(project, "Configuration Sync", false) {
               @Override
               public void run(ProgressIndicator indicator) {
-                Stopwatch s = Stopwatch.createStarted();
-                indicator.setIndeterminate(false);
-                indicator.setText("Updating Configurations...");
-                indicator.setFraction(0.0);
-                CommitableConfiguration config =
-                    calculateConfigurations(blazeProjectData, workspaceRoot, newResult, indicator);
-                commitConfigurations(config);
-                logger.info(
-                    String.format(
-                        "Update configurations took %dms", s.elapsed(TimeUnit.MILLISECONDS)));
+                if (oldResult.isEquivalentConfigurations(newResult)) {
+                  logger.info("Skipping update configurations -- no changes");
+                } else {
+                  Stopwatch s = Stopwatch.createStarted();
+                  indicator.setIndeterminate(false);
+                  indicator.setText("Updating Configurations...");
+                  indicator.setFraction(0.0);
+                  OCWorkspaceImpl.ModifiableModel model =
+                      calculateConfigurations(
+                          blazeProjectData, workspaceRoot, newResult, indicator);
+                  OCWorkspaceModifiableModelAdapter.commit(model, SERIALIZATION_VERSION);
+                  logger.info(
+                      String.format(
+                          "Update configurations took %dms", s.elapsed(TimeUnit.MILLISECONDS)));
+                }
+                resolverResult = newResult;
                 incModificationTrackers();
               }
             });
   }
 
-  private CommitableConfiguration calculateConfigurations(
+  private OCWorkspaceImpl.ModifiableModel calculateConfigurations(
       BlazeProjectData blazeProjectData,
       WorkspaceRoot workspaceRoot,
       BlazeConfigurationResolverResult newResult,
@@ -207,7 +213,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 .map(file -> "-isystem" + file.getAbsolutePath())
                 .collect(Collectors.toList());
 
-        for (VirtualFile vf : resolveConfiguration.getSources(blazeProjectData, targetKey)) {
+        for (VirtualFile vf : resolveConfiguration.getSources(targetKey)) {
           OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(vf);
           if (kind == null) {
             kind = OCLanguageKind.CPP;
@@ -257,12 +263,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
       progress++;
     }
 
-    return new CommitableConfiguration(newResult, workspaceModifiable);
-  }
-
-  private void commitConfigurations(CommitableConfiguration config) {
-    resolverResult = config.result;
-    OCWorkspaceModifiableModelAdapter.commit(config.model, SERIALIZATION_VERSION);
+    return workspaceModifiable;
   }
 
   private void addConfigLanguageSwitches(
@@ -297,17 +298,5 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
   public OCWorkspace getWorkspace() {
     return OCWorkspace.getInstance(project);
-  }
-
-  /** Contains the configuration to be committed all-at-once */
-  private static class CommitableConfiguration {
-    private final BlazeConfigurationResolverResult result;
-    private final OCWorkspaceImpl.ModifiableModel model;
-
-    CommitableConfiguration(
-        BlazeConfigurationResolverResult result, OCWorkspaceImpl.ModifiableModel model) {
-      this.result = result;
-      this.model = model;
-    }
   }
 }

@@ -108,6 +108,7 @@ class BlazeGoImportResolver implements GoImportResolver {
               Multimap<String, TargetKey> map = HashMultimap.create();
               projectData.getTargetMap().targets().stream()
                   .filter(t -> t.getGoIdeInfo() != null)
+                  .filter(t -> t.getGoIdeInfo().getImportPath() != null)
                   .forEach(t -> map.put(t.getGoIdeInfo().getImportPath(), t.getKey()));
               return map;
             });

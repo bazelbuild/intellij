@@ -28,11 +28,9 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.SourceToTargetFinder;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -265,11 +263,7 @@ public class TestMapTest extends BlazeTestCase {
     @Nullable
     @Override
     public BlazeProjectData getBlazeProjectData() {
-      return MockBlazeProjectDataBuilder.builder(new WorkspaceRoot(new File("/")))
-          .setTargetMap(targetMap)
-          .setArtifactLocationDecoder(location -> new File("/", location.getRelativePath()))
-          .setReverseDependencies(ReverseDependencyMap.createRdepsMap(targetMap))
-          .build();
+      return MockBlazeProjectDataBuilder.builder().setTargetMap(targetMap).build();
     }
   }
 }

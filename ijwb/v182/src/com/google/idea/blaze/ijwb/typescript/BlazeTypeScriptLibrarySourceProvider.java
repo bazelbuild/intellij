@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.android.cppimpl;
+package com.google.idea.blaze.ijwb.typescript;
 
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.cpp.BlazeCWorkspace;
-import com.google.idea.sdkcompat.cidr.OCWorkspaceManagerAdapter;
+import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.cidr.lang.workspace.OCWorkspace;
+import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import javax.annotation.Nullable;
 
-class BlazeCWorkspaceManager extends OCWorkspaceManagerAdapter {
-  private final Project project;
-
-  public BlazeCWorkspaceManager(Project project) {
-    this.project = project;
+/**
+ * #api181 2018.2 and later uses tsconfig$paths via {@link AdditionalLibraryRootsProvider} instead
+ * of a tsconfig$roots library.
+ */
+class BlazeTypeScriptLibrarySourceProvider {
+  @Nullable
+  static LibrarySource getLibrarySource() {
+    return null;
   }
 
-  @Override
-  public OCWorkspace getWorkspace() {
-    if (Blaze.isBlazeProject(project)) {
-      return BlazeCWorkspace.getInstance(project).getWorkspace();
-    }
-    return getWorkspaceFallback(project);
-  }
+  static void addTsConfigLibrary(Project project, ModifiableRootModel workspaceModifiableModel) {}
 }

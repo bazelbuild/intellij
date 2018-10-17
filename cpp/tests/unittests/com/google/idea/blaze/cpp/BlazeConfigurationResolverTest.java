@@ -227,6 +227,19 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   }
 
   @Test
+  public void withCcToolchainSuite_testSingleSourceTarget() {
+    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(createCcToolchainSuite())
+            .addTarget(
+                createCcTarget(
+                    "//foo/bar:binary", Kind.CC_BINARY, ImmutableList.of(src("foo/bar/binary.cc"))))
+            .build();
+    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
+  }
+
+  @Test
   public void testComplexProject() {
     ProjectView projectView =
         projectView(
@@ -343,8 +356,42 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
     Collection<BlazeResolveConfiguration> initialConfigurations =
         resolverResult.getAllConfigurations();
+    BlazeConfigurationResolverResult oldResult = resolverResult;
 
     assertThatResolving(projectView, targetMap).reusedConfigurations(initialConfigurations);
+    assertThat(resolverResult.isEquivalentConfigurations(oldResult)).isTrue();
+  }
+
+  @Test
+  public void identicalTargets_addedSources_testNotIncremental() {
+    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:*"));
+    TargetMapBuilder targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(createCcToolchain())
+            .addTarget(
+                createCcTarget(
+                    "//foo/bar:binary",
+                    Kind.CC_BINARY,
+                    ImmutableList.of(src("foo/bar/binary.cc"))));
+    createVirtualFile("/root/foo/bar/binary.cc");
+    createVirtualFile("/root/foo/bar/binary_helper.cc");
+
+    assertThatResolving(projectView, targetMap.build())
+        .producesConfigurationsFor("//foo/bar:binary");
+    BlazeConfigurationResolverResult oldResult = resolverResult;
+
+    targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(createCcToolchain())
+            .addTarget(
+                createCcTarget(
+                    "//foo/bar:binary",
+                    Kind.CC_BINARY,
+                    ImmutableList.of(src("foo/bar/binary.cc"), src("foo/bar/binary_helper.cc"))));
+
+    assertThatResolving(projectView, targetMap.build())
+        .reusedConfigurations(ImmutableList.of(), "//foo/bar:binary");
+    assertThat(resolverResult.isEquivalentConfigurations(oldResult)).isFalse();
   }
 
   @Test
@@ -362,6 +409,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
         .producesConfigurationsFor("//foo/bar:binary");
     Collection<BlazeResolveConfiguration> initialConfigurations =
         resolverResult.getAllConfigurations();
+    BlazeConfigurationResolverResult oldResult = resolverResult;
 
     targetMapBuilder.addTarget(
         createCcTarget(
@@ -372,6 +420,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
 
     assertThatResolving(projectView, targetMapBuilder.build())
         .reusedConfigurations(initialConfigurations, "//foo/bar:library");
+    assertThat(resolverResult.isEquivalentConfigurations(oldResult)).isFalse();
   }
 
   @Test
@@ -387,6 +436,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     ImmutableList<BlazeResolveConfiguration> noReusedConfigurations = ImmutableList.of();
     assertThatResolving(projectView, targetMap)
         .reusedConfigurations(noReusedConfigurations, "//foo/bar:binary");
+    BlazeConfigurationResolverResult oldResult = resolverResult;
 
     TargetMap targetMap2 =
         TargetMapBuilder.builder()
@@ -400,6 +450,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .build();
     assertThatResolving(projectView, targetMap2)
         .reusedConfigurations(noReusedConfigurations, "//foo/bar:library");
+    assertThat(resolverResult.isEquivalentConfigurations(oldResult)).isFalse();
   }
 
   @Test
@@ -415,6 +466,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     ImmutableList<BlazeResolveConfiguration> noReusedConfigurations = ImmutableList.of();
     assertThatResolving(projectView, targetMap)
         .reusedConfigurations(noReusedConfigurations, "//foo/bar:binary");
+    BlazeConfigurationResolverResult oldResult = resolverResult;
 
     ProjectView projectView2 = projectView(directories("foo/zoo"), targets("//foo/zoo:library"));
     TargetMap targetMap2 =
@@ -429,6 +481,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .build();
     assertThatResolving(projectView2, targetMap2)
         .reusedConfigurations(noReusedConfigurations, "//foo/zoo:library");
+    assertThat(resolverResult.isEquivalentConfigurations(oldResult)).isFalse();
   }
 
   @Test
@@ -445,10 +498,12 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     ImmutableList<BlazeResolveConfiguration> noReusedConfigurations = ImmutableList.of();
     assertThatResolving(projectView, targetMap)
         .reusedConfigurations(noReusedConfigurations, "//foo/bar:binary");
+    BlazeConfigurationResolverResult oldResult = resolverResult;
 
     compilerVersionChecker.setCompilerVersion("cc modified version");
     assertThatResolving(projectView, targetMap)
         .reusedConfigurations(noReusedConfigurations, "//foo/bar:binary");
+    assertThat(resolverResult.isEquivalentConfigurations(oldResult)).isFalse();
   }
 
   @Test
@@ -504,6 +559,14 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             CToolchainIdeInfo.builder().setCppExecutable(new ExecutionRootPath("cc")));
   }
 
+  private static TargetIdeInfo.Builder createCcToolchainSuite() {
+    return TargetIdeInfo.builder()
+        .setLabel("//:toolchain")
+        .setKind(Kind.CC_TOOLCHAIN_SUITE)
+        .setCToolchainInfo(
+            CToolchainIdeInfo.builder().setCppExecutable(new ExecutionRootPath("cc")));
+  }
+
   private static ListSection<DirectoryEntry> directories(String... directories) {
     return ListSection.builder(DirectorySection.KEY)
         .addAll(
@@ -531,7 +594,9 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     VirtualFile mockFile = mock(VirtualFile.class);
     when(mockFile.getPath()).thenReturn(path);
     when(mockFile.isValid()).thenReturn(true);
-    when(mockFileSystem.findFileByIoFile(new File(path))).thenReturn(mockFile);
+    File f = new File(path);
+    when(mockFileSystem.findFileByIoFile(f)).thenReturn(mockFile);
+    when(mockFile.getName()).thenReturn(f.getName());
     return mockFile;
   }
 
@@ -554,9 +619,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
       @Override
       public void producesConfigurationsFor(String... expected) {
         List<String> targets =
-            resolverResult
-                .getAllConfigurations()
-                .stream()
+            resolverResult.getAllConfigurations().stream()
                 .map(configuration -> configuration.getDisplayName(false))
                 .collect(Collectors.toList());
         assertThat(targets).containsExactly((Object[]) expected);
@@ -572,27 +635,21 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
           Collection<BlazeResolveConfiguration> expectedReused, String... expectedNotReused) {
         Collection<BlazeResolveConfiguration> currentConfigurations =
             resolverResult.getAllConfigurations();
-        assertContainsAllInIdentity(expectedReused, currentConfigurations);
+        for (BlazeResolveConfiguration expectedItem : expectedReused) {
+          assertThat(
+                  currentConfigurations.stream()
+                      .anyMatch(actualItem -> actualItem.isEquivalentConfigurations(expectedItem)))
+              .isTrue();
+        }
         List<String> notReusedTargets =
-            currentConfigurations
-                .stream()
+            currentConfigurations.stream()
                 .filter(
                     configuration ->
-                        expectedReused
-                            .stream()
-                            .noneMatch(reusedConfig -> configuration == reusedConfig))
+                        expectedReused.stream()
+                            .noneMatch(configuration::isEquivalentConfigurations))
                 .map(configuration -> configuration.getDisplayName(false))
                 .collect(Collectors.toList());
         assertThat(notReusedTargets).containsExactly((Object[]) expectedNotReused);
-      }
-
-      // In newer truth libraries, we could use:
-      // assertThat(actual).comparingElementsUsing(IdentityCorrespondence).containsAllIn(expected)
-      // but that isn't available in truth 0.30 from older plugin APIs.
-      private <T> void assertContainsAllInIdentity(Collection<T> expected, Collection<T> actual) {
-        for (T expectedItem : expected) {
-          assertThat(actual.stream().anyMatch(actualItem -> actualItem == expectedItem)).isTrue();
-        }
       }
     };
   }

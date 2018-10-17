@@ -81,9 +81,9 @@ new_http_archive(
 # and run integration tests.
 new_http_archive(
     name = "android_studio_3_2",
-    build_file = "@//intellij_platform_sdk:BUILD.android_studio",
-    sha256 = "e671d48cad66589860c510871167309b88c3f1f5e22a691cba053764c11a2a6c",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/3.2.0.26/android-studio-ide-181.5014246-linux.zip",
+    build_file = "intellij_platform_sdk/BUILD.android_studio",
+    sha256 = "b9ec0d44f2feaafe1e3fbd1ed696bf325f9e05cfb6c1ace84dbf87ae249efa84",
+    url = "https://dl.google.com/android/studio/ide-zips/3.2.1.0/android-studio-ide-181.5056338-linux.zip",
 )
 
 # Python plugin for IntelliJ CE 2018.1. Required at compile-time for python-specific features.

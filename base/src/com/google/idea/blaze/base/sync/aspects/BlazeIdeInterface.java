@@ -67,7 +67,8 @@ public interface BlazeIdeInterface {
       ArtifactLocationDecoder artifactLocationDecoder,
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState,
-      boolean mergeWithOldState);
+      boolean mergeWithOldState,
+      @Nullable TargetMap oldTargetMap);
 
   /**
    * Attempts to resolve the requested ide artifacts.

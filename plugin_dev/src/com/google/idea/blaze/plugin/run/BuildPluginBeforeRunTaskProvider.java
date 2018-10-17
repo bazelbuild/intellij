@@ -185,7 +185,7 @@ public final class BuildPluginBeforeRunTaskProvider
               new ScopedTask<Void>(context) {
                 @Override
                 protected Void execute(BlazeContext context) {
-                  String binaryPath = Blaze.getBuildSystemProvider(project).getBinaryPath();
+                  String binaryPath = Blaze.getBuildSystemProvider(project).getBinaryPath(project);
                   BlazeIntellijPluginConfiguration config =
                       (BlazeIntellijPluginConfiguration) configuration;
 

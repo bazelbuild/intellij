@@ -50,6 +50,7 @@ public enum Kind {
   CC_TEST("cc_test", LanguageClass.C, RuleType.TEST),
   CC_INC_LIBRARY("cc_inc_library", LanguageClass.C, RuleType.LIBRARY),
   CC_TOOLCHAIN("cc_toolchain", LanguageClass.C, RuleType.UNKNOWN),
+  CC_TOOLCHAIN_SUITE("cc_toolchain_suite", LanguageClass.C, RuleType.UNKNOWN),
   JAVA_WRAP_CC("java_wrap_cc", LanguageClass.JAVA, RuleType.UNKNOWN),
   GWT_APPLICATION("gwt_application", LanguageClass.JAVA, RuleType.UNKNOWN),
   GWT_HOST("gwt_host", LanguageClass.JAVA, RuleType.UNKNOWN),

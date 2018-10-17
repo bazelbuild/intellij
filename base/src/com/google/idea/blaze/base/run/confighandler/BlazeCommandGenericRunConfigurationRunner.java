@@ -193,7 +193,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
       String binaryPath =
           handlerState.getBlazeBinaryState().getBlazeBinary() != null
               ? handlerState.getBlazeBinaryState().getBlazeBinary()
-              : Blaze.getBuildSystemProvider(project).getBinaryPath();
+              : Blaze.getBuildSystemProvider(project).getBinaryPath(project);
 
       return BlazeCommand.builder(binaryPath, command)
           .addTargets(configuration.getTarget())

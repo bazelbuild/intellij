@@ -19,13 +19,14 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Ide info specific to android rules. */
 public final class AndroidIdeInfo implements Serializable {
-  private static final long serialVersionUID = 5L;
+  private static final long serialVersionUID = 6L;
 
-  private final Collection<ArtifactLocation> resources;
+  private final Collection<AndroidResFolder> resources;
   @Nullable private final ArtifactLocation manifest;
   @Nullable private final LibraryArtifact idlJar;
   @Nullable private final LibraryArtifact resourceJar;
@@ -35,7 +36,7 @@ public final class AndroidIdeInfo implements Serializable {
   @Nullable private final Label legacyResources;
 
   public AndroidIdeInfo(
-      Collection<ArtifactLocation> resources,
+      Collection<AndroidResFolder> resources,
       @Nullable String resourceJavaPackage,
       boolean generateResourceClass,
       @Nullable ArtifactLocation manifest,
@@ -53,8 +54,13 @@ public final class AndroidIdeInfo implements Serializable {
     this.legacyResources = legacyResources;
   }
 
-  public Collection<ArtifactLocation> getResources() {
+  public Collection<AndroidResFolder> getResFolders() {
     return resources;
+  }
+
+  // #api181
+  public Collection<ArtifactLocation> getResources() {
+    return resources.stream().map(AndroidResFolder::getRoot).collect(Collectors.toList());
   }
 
   @Nullable
@@ -96,7 +102,7 @@ public final class AndroidIdeInfo implements Serializable {
 
   /** Builder for android rule */
   public static class Builder {
-    private Collection<ArtifactLocation> resources = Lists.newArrayList();
+    private Collection<AndroidResFolder> resources = Lists.newArrayList();
     private ArtifactLocation manifest;
     private LibraryArtifact idlJar;
     private LibraryArtifact resourceJar;
@@ -111,7 +117,11 @@ public final class AndroidIdeInfo implements Serializable {
     }
 
     public Builder addResource(ArtifactLocation artifactLocation) {
-      this.resources.add(artifactLocation);
+      return addResource(AndroidResFolder.builder().setRoot(artifactLocation).build());
+    }
+
+    public Builder addResource(AndroidResFolder androidResFolder) {
+      this.resources.add(androidResFolder);
       return this;
     }
 

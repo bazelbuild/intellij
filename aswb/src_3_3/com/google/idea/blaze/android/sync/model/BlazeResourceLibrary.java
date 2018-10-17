@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.sync.model;
 import static com.google.idea.blaze.android.sync.importer.BlazeImportInput.createLooksLikeAarLibrary;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.LibraryKey;
@@ -26,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
+import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -34,15 +36,53 @@ import javax.annotation.concurrent.Immutable;
  */
 @Immutable
 public final class BlazeResourceLibrary extends BlazeLibrary {
-  private static final long serialVersionUID = 4L;
+  private static final long serialVersionUID = 5L;
 
-  public final ArtifactLocation resource;
+  public final ArtifactLocation root;
   public final ArtifactLocation manifest;
+  public final ImmutableSet<String> resources;
 
-  public BlazeResourceLibrary(ArtifactLocation resource, ArtifactLocation manifest) {
-    super(new LibraryKey(libraryNameFromArtifactLocation(resource)));
-    this.resource = resource;
+  private BlazeResourceLibrary(
+      ArtifactLocation root, ImmutableSet<String> resources, ArtifactLocation manifest) {
+    super(new LibraryKey(libraryNameFromArtifactLocation(root)));
+    this.root = root;
     this.manifest = manifest;
+    this.resources = resources;
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /** Builder for an blaze resource library */
+  public static class Builder {
+    ArtifactLocation root;
+    ArtifactLocation manifest;
+    ImmutableSet.Builder<String> resources = ImmutableSet.builder();
+
+    public BlazeResourceLibrary.Builder setRoot(ArtifactLocation root) {
+      this.root = root;
+      return this;
+    }
+
+    public BlazeResourceLibrary.Builder setManifest(ArtifactLocation manifest) {
+      this.manifest = manifest;
+      return this;
+    }
+
+    public BlazeResourceLibrary.Builder addResource(String resource) {
+      resources.add(resource);
+      return this;
+    }
+
+    public BlazeResourceLibrary.Builder addResources(Set<String> resources) {
+      this.resources.addAll(resources);
+      return this;
+    }
+
+    public BlazeResourceLibrary build() {
+      return new BlazeResourceLibrary(root, resources.build(), manifest);
+    }
   }
 
   public static String libraryNameFromArtifactLocation(ArtifactLocation resource) {
@@ -61,7 +101,7 @@ public final class BlazeResourceLibrary extends BlazeLibrary {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), resource);
+    return Objects.hashCode(super.hashCode(), root, manifest, resources);
   }
 
   @Override
@@ -75,7 +115,10 @@ public final class BlazeResourceLibrary extends BlazeLibrary {
 
     BlazeResourceLibrary that = (BlazeResourceLibrary) other;
 
-    return super.equals(other) && Objects.equal(resource, that.resource);
+    return super.equals(other)
+        && Objects.equal(root, that.root)
+        && Objects.equal(manifest, that.manifest)
+        && Objects.equal(resources, that.resources);
   }
 
   @Override
@@ -83,10 +126,13 @@ public final class BlazeResourceLibrary extends BlazeLibrary {
       Project project,
       ArtifactLocationDecoder artifactLocationDecoder,
       Library.ModifiableModel libraryModel) {
+    // TODO: Check if we need update library entry after converting to use project model to store
+    // resource library information.
+
     // OrderRootType.SOURCES is used for source roots for libraries not resource
     // In an aar library, path to resource directory should be tag with OrderRootType.CLASSES
     libraryModel.addRoot(
-        pathToUrl(artifactLocationDecoder.decode(resource)),
+        pathToUrl(artifactLocationDecoder.decode(root)),
         createLooksLikeAarLibrary.getValue() ? OrderRootType.CLASSES : OrderRootType.SOURCES);
   }
 }

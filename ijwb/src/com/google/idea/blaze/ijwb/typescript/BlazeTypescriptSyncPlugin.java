@@ -54,12 +54,9 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.ide.browsers.BrowserLauncher;
-import com.intellij.lang.typescript.tsconfig.TypeScriptConfigLibraryUpdater;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -81,13 +78,6 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
 
   // TypeScript support provided by JavaScript plugin
   private static final String TYPESCRIPT_PLUGIN_ID = "JavaScript";
-
-  /**
-   * {@link TypeScriptConfigLibraryUpdater.DEPRECATED_TSCONFIG_LIBRARY}
-   *
-   * <p>#api181, remove once 181 is deprecated
-   */
-  static final String DEPRECATED_TSCONFIG_LIBRARY = "tsconfig$roots";
 
   private static boolean isLanguageSupportedInIde() {
     return PlatformUtils.isIdeaUltimate()
@@ -178,7 +168,8 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
       Label target) {
     BlazeCommand command =
         BlazeCommand.builder(
-                Blaze.getBuildSystemProvider(project).getSyncBinaryPath(), BlazeCommandName.RUN)
+                Blaze.getBuildSystemProvider(project).getSyncBinaryPath(project),
+                BlazeCommandName.RUN)
             .addTargets(target)
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(
@@ -213,13 +204,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
         .isLanguageActive(LanguageClass.TYPESCRIPT)) {
       return;
     }
-    Library tsConfigLibrary =
-        ProjectLibraryTable.getInstance(project).getLibraryByName(DEPRECATED_TSCONFIG_LIBRARY);
-    if (tsConfigLibrary != null) {
-      if (workspaceModifiableModel.findLibraryOrderEntry(tsConfigLibrary) == null) {
-        workspaceModifiableModel.addLibraryEntry(tsConfigLibrary);
-      }
-    }
+    BlazeTypeScriptLibrarySourceProvider.addTsConfigLibrary(project, workspaceModifiableModel);
   }
 
   @Override
@@ -305,6 +290,6 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
         .isLanguageActive(LanguageClass.TYPESCRIPT)) {
       return null;
     }
-    return new BlazeTypescriptLibrarySource();
+    return BlazeTypeScriptLibrarySourceProvider.getLibrarySource();
   }
 }

@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.Section;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguagesSection;
+import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection;
 import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
@@ -52,6 +53,7 @@ import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSect
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
+import java.io.File;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -100,6 +102,9 @@ public class ProjectViewSetTest extends BlazeTestCase {
                             .add(new WorkspacePath("test")))
                     .add(ScalarSection.builder(ShardBlazeBuildsSection.KEY).set(false))
                     .add(ScalarSection.builder(TargetShardSizeSection.KEY).set(500))
+                    .add(
+                        ScalarSection.builder(BazelBinarySection.KEY)
+                            .set(new File("/bazel/path/override")))
                     .build())
             .build();
 

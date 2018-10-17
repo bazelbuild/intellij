@@ -148,7 +148,7 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
       vmoptions = vmoptions.replaceAll("\\s+", " ").trim();
       String vmoptionsFile = System.getProperty("jb.vmOptionsFile");
       if (vmoptionsFile != null) {
-        vmoptions += " -Djb.vmOptionsFile=" + vmoptionsFile;
+        vmoptions += String.format(" -Djb.vmOptionsFile=\"%s\"", vmoptionsFile);
       }
       return vmoptions;
     }

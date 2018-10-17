@@ -40,7 +40,8 @@ public class Sections {
           ExcludedSourceSection.PARSER,
           RunConfigurationsSection.PARSER,
           ShardBlazeBuildsSection.PARSER,
-          TargetShardSizeSection.PARSER);
+          TargetShardSizeSection.PARSER,
+          BazelBinarySection.PARSER);
 
   public static List<SectionParser> getParsers() {
     List<SectionParser> parsers = Lists.newArrayList(PARSERS);

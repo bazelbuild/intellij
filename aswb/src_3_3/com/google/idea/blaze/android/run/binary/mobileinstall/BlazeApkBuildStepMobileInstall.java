@@ -90,7 +90,7 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
             }
             BlazeCommand.Builder command =
                 BlazeCommand.builder(
-                    Blaze.getBuildSystemProvider(project).getBinaryPath(),
+                    Blaze.getBuildSystemProvider(project).getBinaryPath(project),
                     BlazeCommandName.MOBILE_INSTALL);
 
             command.addBlazeFlags(BlazeFlags.DEVICE, device.getSerialNumber());

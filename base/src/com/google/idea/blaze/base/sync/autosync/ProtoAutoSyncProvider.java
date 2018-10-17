@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync.autosync;
 
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -27,6 +28,7 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,7 +73,7 @@ class ProtoAutoSyncProvider implements AutoSyncProvider {
     // this as part of sync / make it a SyncCache
     Set<TargetExpression> plainTargets = new HashSet<>();
     getTargetsForSourceFile(project, modifiedFile)
-        .forEach(t -> plainTargets.addAll(getPlainTargets(projectData, t)));
+        .forEach(t -> plainTargets.addAll(getPlainTargets(project, t)));
 
     return plainTargets.isEmpty()
         ? null
@@ -85,13 +87,15 @@ class ProtoAutoSyncProvider implements AutoSyncProvider {
    * Finds all 'plain' targets in a target+aspect's rdeps, stopping at the first plain target it
    * finds along each path.
    */
-  private static List<Label> getPlainTargets(BlazeProjectData projectData, TargetKey target) {
+  private static List<Label> getPlainTargets(Project project, TargetKey target) {
     if (target.isPlainTarget()) {
       return ImmutableList.of(target.getLabel());
     }
     List<Label> output = new ArrayList<>();
     Queue<TargetKey> todo = Queues.newArrayDeque();
-    todo.addAll(projectData.getReverseDependencies().get(target));
+    ImmutableMultimap<TargetKey, TargetKey> reverseDependencyMap =
+        ReverseDependencyMap.get(project);
+    todo.addAll(reverseDependencyMap.get(target));
     Set<TargetKey> seen = Sets.newHashSet();
     while (!todo.isEmpty()) {
       TargetKey targetKey = todo.remove();
@@ -101,7 +105,7 @@ class ProtoAutoSyncProvider implements AutoSyncProvider {
       if (targetKey.isPlainTarget()) {
         output.add(targetKey.getLabel());
       } else {
-        todo.addAll(projectData.getReverseDependencies().get(targetKey));
+        todo.addAll(reverseDependencyMap.get(targetKey));
       }
     }
     return output;

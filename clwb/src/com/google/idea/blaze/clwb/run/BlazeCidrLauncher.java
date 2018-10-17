@@ -103,6 +103,7 @@ public final class BlazeCidrLauncher extends CidrLauncherCompat {
           "--strip=never",
           "--copt=-g",
           "--dynamic_mode=off",
+          "--fission=yes",
           "--run_under=gdbserver localhost:5556");
 
   private static final ImmutableList<String> extraFlagsForDebugTest =
@@ -110,6 +111,7 @@ public final class BlazeCidrLauncher extends CidrLauncherCompat {
           "--strip=never",
           "--copt=-g",
           "--dynamic_mode=off",
+          "--fission=yes",
           "--run_under=gdbserver localhost:5556",
           "--test_timeout=3600",
           "--nocache_test_results",
@@ -171,7 +173,7 @@ public final class BlazeCidrLauncher extends CidrLauncherCompat {
 
     BlazeCommand.Builder commandBuilder =
         BlazeCommand.builder(
-                Blaze.getBuildSystemProvider(project).getBinaryPath(),
+                Blaze.getBuildSystemProvider(project).getBinaryPath(project),
                 handlerState.getCommandState().getCommand())
             .addTargets(configuration.getTarget())
             .addBlazeFlags(extraBlazeFlags)

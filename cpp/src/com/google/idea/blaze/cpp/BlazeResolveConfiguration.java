@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -36,7 +37,6 @@ import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -51,44 +51,48 @@ final class BlazeResolveConfiguration {
   private final Project project;
   private final BlazeResolveConfigurationData configurationData;
 
-  private String displayNameIdentifier;
-  private Collection<TargetKey> targets;
+  private final String displayNameIdentifier;
+  private final ImmutableList<TargetKey> targets;
+  private final ImmutableMap<TargetKey, ImmutableList<VirtualFile>> targetSources;
 
   private BlazeResolveConfiguration(
       Project project,
       BlazeResolveConfigurationData configurationData,
-      Collection<TargetKey> targets) {
+      String displayName,
+      ImmutableList<TargetKey> targets,
+      ImmutableMap<TargetKey, ImmutableList<VirtualFile>> targetSources) {
     this.project = project;
     this.configurationData = configurationData;
-    representMultipleTargets(targets);
+    this.displayNameIdentifier = displayName;
+    this.targets = ImmutableList.copyOf(targets);
+    this.targetSources = targetSources;
   }
 
   static BlazeResolveConfiguration createForTargets(
       Project project,
+      BlazeProjectData blazeProjectData,
       BlazeResolveConfigurationData configurationData,
       Collection<TargetKey> targets) {
-    return new BlazeResolveConfiguration(project, configurationData, targets);
+    return new BlazeResolveConfiguration(
+        project,
+        configurationData,
+        computeDisplayName(targets),
+        ImmutableList.copyOf(targets),
+        computeTargetToSources(blazeProjectData, targets));
   }
 
-  public Collection<TargetKey> getTargets() {
+  Collection<TargetKey> getTargets() {
     return targets;
   }
 
-  /**
-   * Indicate that this single configuration represents N other targets. NOTE: this changes the
-   * identifier used by {@link #compareTo}, so any data structures using compareTo must be
-   * invalidated when this changes.
-   */
-  void representMultipleTargets(Collection<TargetKey> targets) {
+  private static String computeDisplayName(Collection<TargetKey> targets) {
     TargetKey minTargetKey = targets.stream().min(TargetKey::compareTo).orElse(null);
     Preconditions.checkNotNull(minTargetKey);
-    this.targets = targets;
     String minTarget = minTargetKey.toString();
     if (targets.size() == 1) {
-      displayNameIdentifier = minTarget;
+      return minTarget;
     } else {
-      displayNameIdentifier =
-          String.format("%s and %d other target(s)", minTarget, targets.size() - 1);
+      return String.format("%s and %d other target(s)", minTarget, targets.size() - 1);
     }
   }
 
@@ -96,32 +100,11 @@ final class BlazeResolveConfiguration {
     return displayNameIdentifier;
   }
 
-  public int compareTo(BlazeResolveConfiguration other) {
-    // This is a bit of a weak comparison -- it just uses the display name (ignoring case)
-    // and doesn't compare the actual fields of the configuration.
-    // It should only be used for simple things like sorting for the UI.
-    return getDisplayName(false).compareToIgnoreCase(other.getDisplayName(false));
-  }
-
-  @Override
-  public int hashCode() {
-    // There should only be one configuration per target, and the display name is derived
-    // from a target
-    return Objects.hashCode(displayNameIdentifier);
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-
-    if (!(obj instanceof BlazeResolveConfiguration)) {
-      return false;
-    }
-
-    BlazeResolveConfiguration that = (BlazeResolveConfiguration) obj;
-    return compareTo(that) == 0;
+  boolean isEquivalentConfigurations(BlazeResolveConfiguration other) {
+    return configurationData.equals(other.configurationData)
+        && displayNameIdentifier.equals(other.displayNameIdentifier)
+        && targets.equals(other.targets)
+        && targetSources.equals(other.targetSources);
   }
 
   @Nullable
@@ -156,7 +139,7 @@ final class BlazeResolveConfiguration {
     return null;
   }
 
-  private OCLanguageKind getMaximumLanguageKind() {
+  private static OCLanguageKind getMaximumLanguageKind() {
     return OCLanguageKind.CPP;
   }
 
@@ -189,11 +172,31 @@ final class BlazeResolveConfiguration {
     return roots.build().asList();
   }
 
+  @VisibleForTesting
+  ImmutableCollection<String> getDefinesInternal() {
+    return configurationData.defines;
+  }
+
   BlazeCompilerSettings getCompilerSettings() {
     return configurationData.compilerSettings;
   }
 
-  Collection<VirtualFile> getSources(BlazeProjectData blazeProjectData, TargetKey targetKey) {
+  ImmutableList<VirtualFile> getSources(TargetKey targetKey) {
+    return targetSources.get(targetKey);
+  }
+
+  private static ImmutableMap<TargetKey, ImmutableList<VirtualFile>> computeTargetToSources(
+      BlazeProjectData blazeProjectData, Collection<TargetKey> targets) {
+    ImmutableMap.Builder<TargetKey, ImmutableList<VirtualFile>> targetSourcesBuilder =
+        ImmutableMap.builder();
+    for (TargetKey targetKey : targets) {
+      targetSourcesBuilder.put(targetKey, computeSources(blazeProjectData, targetKey));
+    }
+    return targetSourcesBuilder.build();
+  }
+
+  private static ImmutableList<VirtualFile> computeSources(
+      BlazeProjectData blazeProjectData, TargetKey targetKey) {
     ImmutableList.Builder<VirtualFile> builder = ImmutableList.builder();
 
     TargetIdeInfo targetIdeInfo = blazeProjectData.getTargetMap().get(targetKey);
@@ -213,10 +216,5 @@ final class BlazeResolveConfiguration {
       builder.add(vf);
     }
     return builder.build();
-  }
-
-  @VisibleForTesting
-  ImmutableCollection<String> getDefinesInternal() {
-    return configurationData.defines;
   }
 }
