@@ -97,7 +97,8 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
           protected Void execute(BlazeContext context) {
             BlazeCommand.Builder command =
                 BlazeCommand.builder(
-                    Blaze.getBuildSystemProvider(project).getBinaryPath(), BlazeCommandName.BUILD);
+                    Blaze.getBuildSystemProvider(project).getBinaryPath(project),
+                    BlazeCommandName.BUILD);
             WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
             BlazeApkDeployInfoProtoHelper deployInfoHelper =

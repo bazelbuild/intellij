@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.android.sync.importer.aggregators.TransitiveResourceMap.TransitiveResourceInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
+import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -32,7 +33,7 @@ public class TransitiveResourceMap
   /** The transitive info computed per-rule */
   public static class TransitiveResourceInfo {
     public static final TransitiveResourceInfo NO_RESOURCES = new TransitiveResourceInfo();
-    public final Set<ArtifactLocation> transitiveResources = Sets.newHashSet();
+    public final Set<AndroidResFolder> transitiveResources = Sets.newHashSet();
     public final Set<TargetKey> transitiveResourceTargets = Sets.newHashSet();
   }
 
@@ -68,7 +69,7 @@ public class TransitiveResourceMap
       result.transitiveResourceTargets.add(target.getKey());
     }
     if (androidIdeInfo != null && androidIdeInfo.getLegacyResources() == null) {
-      for (ArtifactLocation resource : androidIdeInfo.getResources()) {
+      for (AndroidResFolder resource : androidIdeInfo.getResFolders()) {
         // For each target, it's hard to tell whether a manifest file is specific for a resource
         // since targets are allowed have same resource directory but different manifest files.
         // So for a target, we have the following assumption
@@ -81,12 +82,13 @@ public class TransitiveResourceMap
             continue;
           }
           String buildFileParent = buildFile.split("/BUILD")[0];
-          TargetIdeInfo targetIdeInfo = this.transitiveResourcesToTargetIdeInfo.get(resource);
-          if (resource.getRelativePath().startsWith(buildFileParent)
+          TargetIdeInfo targetIdeInfo =
+              this.transitiveResourcesToTargetIdeInfo.get(resource.getRoot());
+          if (resource.getRoot().getRelativePath().startsWith(buildFileParent)
               && (targetIdeInfo == null
                   || targetIdeInfo.getBuildFile().getRelativePath().length()
                       < buildFile.length())) {
-            this.transitiveResourcesToTargetIdeInfo.put(resource, target);
+            this.transitiveResourcesToTargetIdeInfo.put(resource.getRoot(), target);
           }
         }
         result.transitiveResources.add(resource);

@@ -33,13 +33,13 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.golang.BlazeGoSupport;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -102,16 +102,11 @@ public class BlazeGoGotoDeclarationHandlerTest extends BlazeIntegrationTestCase 
             .build();
 
     BlazeProjectData projectData =
-        new BlazeProjectData(
-            0L,
-            targetMap,
-            null,
-            null,
-            new WorkspacePathResolverImpl(workspaceRoot),
-            location -> workspaceRoot.fileForPath(new WorkspacePath(location.getRelativePath())),
-            new WorkspaceLanguageSettings(WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)),
-            null,
-            null);
+        MockBlazeProjectDataBuilder.builder(workspaceRoot)
+            .setTargetMap(targetMap)
+            .setWorkspaceLanguageSettings(
+                new WorkspaceLanguageSettings(WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)))
+            .build();
     registerProjectService(
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(projectData));
 

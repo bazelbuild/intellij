@@ -15,9 +15,7 @@
  */
 package com.google.idea.blaze.base.model;
 
-import com.google.common.collect.ImmutableMultimap;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -38,7 +36,6 @@ public class BlazeProjectData implements Serializable {
   private final ArtifactLocationDecoder artifactLocationDecoder;
   private final WorkspaceLanguageSettings workspaceLanguageSettings;
   private final SyncState syncState;
-  private final ImmutableMultimap<TargetKey, TargetKey> reverseDependencies;
 
   public BlazeProjectData(
       long syncTime,
@@ -48,8 +45,7 @@ public class BlazeProjectData implements Serializable {
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
       WorkspaceLanguageSettings workspaceLanguageSettings,
-      SyncState syncState,
-      ImmutableMultimap<TargetKey, TargetKey> reverseDependencies) {
+      SyncState syncState) {
     this.syncTime = syncTime;
     this.targetMap = targetMap;
     this.blazeInfo = blazeInfo;
@@ -58,7 +54,6 @@ public class BlazeProjectData implements Serializable {
     this.artifactLocationDecoder = artifactLocationDecoder;
     this.workspaceLanguageSettings = workspaceLanguageSettings;
     this.syncState = syncState;
-    this.reverseDependencies = reverseDependencies;
   }
 
   public long getSyncTime() {
@@ -91,9 +86,5 @@ public class BlazeProjectData implements Serializable {
 
   public SyncState getSyncState() {
     return syncState;
-  }
-
-  public ImmutableMultimap<TargetKey, TargetKey> getReverseDependencies() {
-    return reverseDependencies;
   }
 }

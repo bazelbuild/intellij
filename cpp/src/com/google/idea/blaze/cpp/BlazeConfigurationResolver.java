@@ -36,7 +36,6 @@ import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -58,7 +57,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -119,7 +117,6 @@ final class BlazeConfigurationResolver {
         headerRoots,
         compilerSettings,
         executionRootPathResolver,
-        oldResult,
         builder);
     builder.setCompilerSettings(compilerSettings);
     return builder.build();
@@ -270,7 +267,6 @@ final class BlazeConfigurationResolver {
       ImmutableMap<File, VirtualFile> headerRoots,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings,
       ExecutionRootPathResolver executionRootPathResolver,
-      BlazeConfigurationResolverResult oldConfigurationData,
       BlazeConfigurationResolverResult.Builder builder) {
     // Type specification needed to avoid incorrect type inference during command line build.
     Scope.push(
@@ -288,7 +284,7 @@ final class BlazeConfigurationResolver {
               List<ListenableFuture<?>> targetToDataFutures =
                   blazeProjectData.getTargetMap().targets().stream()
                       .filter(target -> target.getKind().languageClass == LanguageClass.C)
-                      .filter(target -> target.getKind() != Kind.CC_TOOLCHAIN)
+                      .filter(target -> target.getcToolchainIdeInfo() == null)
                       .filter(filter::isSourceTarget)
                       .filter(BlazeConfigurationResolver::containsCompiledSources)
                       .map(
@@ -319,50 +315,40 @@ final class BlazeConfigurationResolver {
                 logger.error("Could not build C resolve configurations", e);
                 return;
               }
-              findEquivalenceClasses(context, project, targetToData, oldConfigurationData, builder);
+              findEquivalenceClasses(context, project, blazeProjectData, targetToData, builder);
             });
   }
 
   private static void findEquivalenceClasses(
       BlazeContext context,
       Project project,
+      BlazeProjectData blazeProjectData,
       Map<TargetKey, BlazeResolveConfigurationData> targetToData,
-      BlazeConfigurationResolverResult oldConfigurationData,
       BlazeConfigurationResolverResult.Builder builder) {
-    Map<BlazeResolveConfigurationData, BlazeResolveConfiguration> dataToConfiguration =
-        new HashMap<>();
     Multimap<BlazeResolveConfigurationData, TargetKey> dataEquivalenceClasses =
         ArrayListMultimap.create();
-    int reused = 0;
     for (Map.Entry<TargetKey, BlazeResolveConfigurationData> entry : targetToData.entrySet()) {
       TargetKey target = entry.getKey();
       BlazeResolveConfigurationData data = entry.getValue();
-      if (!dataToConfiguration.containsKey(data)) {
-        BlazeResolveConfiguration configuration;
-        if (oldConfigurationData.uniqueResolveConfigurations.containsKey(data)) {
-          configuration = oldConfigurationData.uniqueResolveConfigurations.get(data);
-          reused++;
-        } else {
-          configuration =
-              BlazeResolveConfiguration.createForTargets(project, data, ImmutableList.of(target));
-        }
-        dataToConfiguration.put(data, configuration);
-      }
       dataEquivalenceClasses.put(data, target);
     }
+
+    ImmutableMap.Builder<BlazeResolveConfigurationData, BlazeResolveConfiguration>
+        dataToConfiguration = ImmutableMap.builder();
     for (Map.Entry<BlazeResolveConfigurationData, Collection<TargetKey>> entry :
         dataEquivalenceClasses.asMap().entrySet()) {
       BlazeResolveConfigurationData data = entry.getKey();
       Collection<TargetKey> targets = entry.getValue();
-      BlazeResolveConfiguration configuration = dataToConfiguration.get(data);
-      configuration.representMultipleTargets(targets);
+      dataToConfiguration.put(
+          data,
+          BlazeResolveConfiguration.createForTargets(project, blazeProjectData, data, targets));
     }
     context.output(
         PrintOutput.log(
             String.format(
-                "%s unique C configurations (%s reused), %s C targets",
-                dataEquivalenceClasses.keySet().size(), reused, dataEquivalenceClasses.size())));
-    builder.setUniqueConfigurations(ImmutableMap.copyOf(dataToConfiguration));
+                "%s unique C configurations, %s C targets",
+                dataEquivalenceClasses.keySet().size(), dataEquivalenceClasses.size())));
+    builder.setUniqueConfigurations(dataToConfiguration.build());
   }
 
   private static <T> ListenableFuture<T> submit(Callable<T> callable) {

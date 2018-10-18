@@ -102,7 +102,8 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
                 "--copt=-O0",
                 "--copt=-g",
                 "--strip=never",
-                "--dynamic_mode=off");
+                "--dynamic_mode=off",
+                "--fission=yes");
       } else {
         extraDebugFlags =
             BlazeCidrLauncher.getExtraFlagsForDebugging(

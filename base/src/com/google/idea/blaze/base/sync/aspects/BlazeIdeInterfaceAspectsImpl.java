@@ -79,6 +79,7 @@ import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.NavigatableAdapter;
 import java.io.File;
@@ -104,7 +105,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
   static class State implements Serializable {
     private static final long serialVersionUID = 15L;
-    TargetMap targetMap;
     ImmutableMap<File, Long> fileState = null;
     BiMap<File, TargetKey> fileToTargetMapKey = HashBiMap.create();
     WorkspaceLanguageSettings workspaceLanguageSettings;
@@ -125,13 +125,15 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       ArtifactLocationDecoder artifactLocationDecoder,
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState,
-      boolean mergeWithOldState) {
+      boolean mergeWithOldState,
+      @Nullable TargetMap oldTargetMap) {
     State prevState = previousSyncState != null ? previousSyncState.get(State.class) : null;
 
     // If the language filter has changed, redo everything from scratch
     if (prevState != null
         && !prevState.workspaceLanguageSettings.equals(workspaceLanguageSettings)) {
       prevState = null;
+      oldTargetMap = null;
     }
 
     // If the aspect strategy has changed, redo everything from scratch
@@ -140,6 +142,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     if (prevState != null
         && !Objects.equals(prevState.aspectStrategyName, aspectStrategy.getName())) {
       prevState = null;
+      oldTargetMap = null;
     }
 
     IdeInfoResult ideInfoResult =
@@ -154,8 +157,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             aspectStrategy);
     context.output(PrintOutput.log("ide-info result: " + ideInfoResult.buildResult.status));
     if (ideInfoResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
-      return new IdeResult(
-          prevState != null ? prevState.targetMap : null, ideInfoResult.buildResult);
+      return new IdeResult(oldTargetMap, ideInfoResult.buildResult);
     }
     // If there was a partial error, make a best-effort attempt to sync. Retain
     // any old state that we have in an attempt not to lose too much code.
@@ -170,7 +172,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         FileDiffer.updateFiles(
             prevState != null ? prevState.fileState : null, fileList, updatedFiles, removedFiles);
     if (fileState == null) {
-      return new IdeResult(prevState != null ? prevState.targetMap : null, BuildResult.FATAL_ERROR);
+      return new IdeResult(oldTargetMap, BuildResult.FATAL_ERROR);
     }
 
     // if we're merging with the old state, no files are removed
@@ -190,7 +192,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         .withProgressMessage("Reading IDE info result...")
         .run()
         .success()) {
-      return new IdeResult(prevState != null ? prevState.targetMap : null, BuildResult.FATAL_ERROR);
+      return new IdeResult(oldTargetMap, BuildResult.FATAL_ERROR);
     }
 
     ImportRoots importRoots =
@@ -198,6 +200,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .add(projectViewSet)
             .build();
 
+    Ref<TargetMap> targetMapReference = Ref.create(oldTargetMap);
     State state =
         updateState(
             project,
@@ -210,12 +213,13 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             aspectStrategy,
             updatedFiles,
             removedFiles,
-            mergeWithOldState);
+            mergeWithOldState,
+            targetMapReference);
     if (state == null) {
-      return new IdeResult(prevState != null ? prevState.targetMap : null, BuildResult.FATAL_ERROR);
+      return new IdeResult(oldTargetMap, BuildResult.FATAL_ERROR);
     }
     syncStateBuilder.put(State.class, state);
-    return new IdeResult(state.targetMap, ideInfoResult.buildResult);
+    return new IdeResult(targetMapReference.get(), ideInfoResult.buildResult);
   }
 
   private static class IdeInfoResult {
@@ -342,7 +346,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       AspectStrategy aspectStrategy,
       List<File> newFiles,
       List<File> removedFiles,
-      boolean mergeWithOldState) {
+      boolean mergeWithOldState,
+      Ref<TargetMap> targetMapReference) {
     Result<State> result =
         Scope.push(
             parentContext,
@@ -370,8 +375,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   state.aspectStrategyName = aspectStrategy.getName();
 
                   Map<TargetKey, TargetIdeInfo> targetMap = Maps.newHashMap();
-                  if (prevState != null) {
-                    targetMap.putAll(prevState.targetMap.map());
+                  if (prevState != null && !targetMapReference.isNull()) {
+                    targetMap.putAll(targetMapReference.get().map());
                     state.fileToTargetMapKey.putAll(prevState.fileToTargetMapKey);
                   }
 
@@ -465,7 +470,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                           workspaceLanguageSettings.getWorkspaceType()));
                   warnIgnoredLanguages(project, context, ignoredLanguages);
 
-                  state.targetMap = new TargetMap(ImmutableMap.copyOf(targetMap));
+                  targetMapReference.set(new TargetMap(ImmutableMap.copyOf(targetMap)));
                   return Result.of(state);
                 });
 
@@ -699,6 +704,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
   private static String getBinaryPath(Project project) {
     BuildSystemProvider buildSystemProvider = Blaze.getBuildSystemProvider(project);
-    return buildSystemProvider.getSyncBinaryPath();
+    return buildSystemProvider.getSyncBinaryPath(project);
   }
 }

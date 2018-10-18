@@ -23,6 +23,7 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 
 merged_plugin_xml(
     name = "merged_plugin_xml_common",
@@ -78,7 +79,12 @@ stamped_plugin_xml(
 
 java_library(
     name = "ijwb_lib",
-    srcs = glob(["src/**/*.java"]),
+    srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
+        "intellij-2018.1": glob(["v181/src/**/*.java"]),
+        "intellij-ue-2018.1": glob(["v181/src/**/*.java"]),
+        "intellij-2018.2": glob(["v182/src/**/*.java"]),
+        "intellij-ue-2018.2": glob(["v182/src/**/*.java"]),
+    }),
     exports = [
         "//plugin_dev",
     ],

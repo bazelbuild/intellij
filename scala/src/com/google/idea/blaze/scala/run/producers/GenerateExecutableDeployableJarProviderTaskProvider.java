@@ -134,7 +134,7 @@ class GenerateExecutableDeployableJarProviderTaskProvider
   private boolean executeBuild(Label target, BlazeInvocationContext invocationContext) {
     return Scope.root(
         context -> {
-          String binaryPath = Blaze.getBuildSystemProvider(project).getBinaryPath();
+          String binaryPath = Blaze.getBuildSystemProvider(project).getBinaryPath(project);
           ProjectViewSet projectViewSet =
               ProjectViewManager.getInstance(project).getProjectViewSet();
           WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);

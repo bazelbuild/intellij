@@ -193,7 +193,7 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
     String binaryPath =
         handlerState.getBlazeBinaryState().getBlazeBinary() != null
             ? handlerState.getBlazeBinaryState().getBlazeBinary()
-            : Blaze.getBuildSystemProvider(project).getBinaryPath();
+            : Blaze.getBuildSystemProvider(project).getBinaryPath(project);
 
     BlazeCommandName blazeCommand =
         Preconditions.checkNotNull(handlerState.getCommandState().getCommand());

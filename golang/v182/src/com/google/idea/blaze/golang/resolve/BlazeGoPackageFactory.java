@@ -54,7 +54,8 @@ class BlazeGoPackageFactory implements GoPackageFactory {
             (p, pd) -> {
               ConcurrentMap<File, String> map = new ConcurrentHashMap<>();
               for (TargetIdeInfo target : pd.getTargetMap().targets()) {
-                if (target.getGoIdeInfo() == null) {
+                if (target.getGoIdeInfo() == null
+                    || target.getGoIdeInfo().getImportPath() == null) {
                   continue;
                 }
                 for (File file : BlazeGoPackage.getSourceFiles(target, pd)) {

@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -34,7 +33,6 @@ import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
@@ -101,7 +99,6 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
-import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
 import com.google.idea.common.transactions.Transactions;
@@ -328,7 +325,7 @@ final class BlazeSyncTask implements Progressive {
             .runBlazeInfo(
                 context,
                 importSettings.getBuildSystem(),
-                Blaze.getBuildSystemProvider(project).getSyncBinaryPath(),
+                Blaze.getBuildSystemProvider(project).getSyncBinaryPath(project),
                 workspaceRoot,
                 syncFlags);
 
@@ -445,7 +442,8 @@ final class BlazeSyncTask implements Progressive {
             artifactLocationDecoder,
             syncStateBuilder,
             previousSyncState,
-            mergeWithOldState);
+            mergeWithOldState,
+            oldBlazeProjectData != null ? oldBlazeProjectData.getTargetMap() : null);
     if (context.isCancelled()) {
       return SyncResult.CANCELLED;
     }
@@ -463,9 +461,6 @@ final class BlazeSyncTask implements Progressive {
     context.output(
         PrintOutput.log("Target map size: " + ideQueryResult.targetMap.targets().size()));
     BuildResult ideInfoResult = ideQueryResult.buildResult;
-
-    ListenableFuture<ImmutableMultimap<TargetKey, TargetKey>> reverseDependenciesFuture =
-        BlazeExecutor.getInstance().submit(() -> ReverseDependencyMap.createRdepsMap(targetMap));
 
     BuildResult ideResolveResult =
         resolveIdeArtifacts(
@@ -511,16 +506,6 @@ final class BlazeSyncTask implements Progressive {
           }
         });
 
-    ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
-        FutureUtil.waitForFuture(context, reverseDependenciesFuture)
-            .timed("ReverseDependencies", EventType.Other)
-            .onError("Failed to compute reverse dependency map")
-            .run()
-            .result();
-    if (reverseDependencies == null) {
-      return SyncResult.FAILURE;
-    }
-
     newBlazeProjectData =
         new BlazeProjectData(
             syncStartTime,
@@ -530,8 +515,7 @@ final class BlazeSyncTask implements Progressive {
             workspacePathResolver,
             artifactLocationDecoder,
             workspaceLanguageSettings,
-            syncStateBuilder.build(),
-            reverseDependencies);
+            syncStateBuilder.build());
 
     FileCaches.onSync(project, context, projectViewSet, newBlazeProjectData, syncParams.syncMode);
     ListenableFuture<?> prefetch =
@@ -745,7 +729,8 @@ final class BlazeSyncTask implements Progressive {
       ArtifactLocationDecoder artifactLocationDecoder,
       Builder syncStateBuilder,
       @Nullable SyncState previousSyncState,
-      boolean mergeWithOldState) {
+      boolean mergeWithOldState,
+      @Nullable TargetMap oldTargetMap) {
 
     return Scope.push(
         parentContext,
@@ -768,7 +753,8 @@ final class BlazeSyncTask implements Progressive {
               artifactLocationDecoder,
               syncStateBuilder,
               previousSyncState,
-              mergeWithOldState);
+              mergeWithOldState,
+              oldTargetMap);
         });
   }
 

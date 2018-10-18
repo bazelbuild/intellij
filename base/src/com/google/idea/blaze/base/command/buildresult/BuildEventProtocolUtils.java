@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.util.UUID;
@@ -27,6 +28,8 @@ public final class BuildEventProtocolUtils {
 
   // Instructs BEP to use local file paths (file://...) rather than objfs blobids.
   private static final String LOCAL_FILE_PATHS = "--nobuild_event_binary_file_path_conversion";
+  // An environment variable overriding the directory used for the BEP output file.
+  private static final String BEP_OUTPUT_FILE_OVERRIDE = "IDEA_BAZEL_BEP_PATH";
 
   private BuildEventProtocolUtils() {}
 
@@ -35,7 +38,7 @@ public final class BuildEventProtocolUtils {
    * this file after use.
    */
   public static File createTempOutputFile() {
-    File tempDir = new File(System.getProperty("java.io.tmpdir"));
+    File tempDir = getOutputDir();
     String suffix = UUID.randomUUID().toString();
     String fileName = "intellij-bep-" + suffix;
     File tempFile = new File(tempDir, fileName);
@@ -48,5 +51,13 @@ public final class BuildEventProtocolUtils {
   /** Returns a build flag instructing blaze to write build events to the given output file. */
   public static ImmutableList<String> getBuildFlags(File outputFile) {
     return ImmutableList.of("--build_event_binary_file=" + outputFile.getPath(), LOCAL_FILE_PATHS);
+  }
+
+  private static File getOutputDir() {
+    String dirPath = System.getenv(BEP_OUTPUT_FILE_OVERRIDE);
+    if (Strings.isNullOrEmpty(dirPath)) {
+      dirPath = System.getProperty("java.io.tmpdir");
+    }
+    return new File(dirPath);
   }
 }

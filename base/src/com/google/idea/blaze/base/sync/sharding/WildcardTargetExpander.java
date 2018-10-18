@@ -255,6 +255,6 @@ public class WildcardTargetExpander {
 
   private static String getBinaryPath(Project project) {
     BuildSystemProvider buildSystemProvider = Blaze.getBuildSystemProvider(project);
-    return buildSystemProvider.getSyncBinaryPath();
+    return buildSystemProvider.getSyncBinaryPath(project);
   }
 }

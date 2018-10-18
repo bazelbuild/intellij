@@ -242,7 +242,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         ArtifactLocationDecoder artifactLocationDecoder,
         SyncState.Builder syncStateBuilder,
         @Nullable SyncState previousSyncState,
-        boolean mergeWithOldState) {
+        boolean mergeWithOldState,
+        @Nullable TargetMap oldTargetMap) {
       return new IdeResult(targetMap, BuildResult.SUCCESS);
     }
 

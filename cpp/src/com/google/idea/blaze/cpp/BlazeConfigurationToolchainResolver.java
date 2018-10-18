@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -89,7 +88,7 @@ public final class BlazeConfigurationToolchainResolver {
           ImmutableMap.Builder<TargetKey, CToolchainIdeInfo> lookupTable = ImmutableMap.builder();
           for (TargetIdeInfo target : targetMap.targets()) {
             if (target.getKind().languageClass != LanguageClass.C
-                || target.getKind() == Kind.CC_TOOLCHAIN) {
+                || target.getcToolchainIdeInfo() != null) {
               continue;
             }
             List<TargetKey> toolchainDeps =
@@ -114,7 +113,7 @@ public final class BlazeConfigurationToolchainResolver {
           return lookupTable.build();
         });
   }
-
+  
   private static void issueToolchainWarning(
       BlazeContext context, TargetIdeInfo target, List<TargetKey> toolchainDeps) {
     String warningMessage =

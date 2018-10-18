@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.Label;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -58,7 +59,8 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
             .build();
 
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(targetMap);
+        ReverseDependencyMap.createRdepsMap(
+            getProject(), MockBlazeProjectDataBuilder.builder().setTargetMap(targetMap).build());
     assertThat(reverseDependencies)
         .containsEntry(
             TargetKey.forPlainTarget(Label.create("//l:l2")),
@@ -90,7 +92,8 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
             .build();
 
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(targetMap);
+        ReverseDependencyMap.createRdepsMap(
+            getProject(), MockBlazeProjectDataBuilder.builder().setTargetMap(targetMap).build());
     assertThat(reverseDependencies)
         .containsEntry(
             TargetKey.forPlainTarget(Label.create("//l:l2")),
@@ -126,7 +129,8 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
             .build();
 
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(targetMap);
+        ReverseDependencyMap.createRdepsMap(
+            getProject(), MockBlazeProjectDataBuilder.builder().setTargetMap(targetMap).build());
     assertThat(reverseDependencies)
         .containsEntry(
             TargetKey.forPlainTarget(Label.create("//l:l3")),
@@ -174,7 +178,8 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
             .build();
 
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
-        ReverseDependencyMap.createRdepsMap(targetMap);
+        ReverseDependencyMap.createRdepsMap(
+            getProject(), MockBlazeProjectDataBuilder.builder().setTargetMap(targetMap).build());
     assertThat(reverseDependencies)
         .containsEntry(
             TargetKey.forPlainTarget(Label.create("//l:l3")),
@@ -194,9 +199,6 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
   }
 
   private static ArtifactLocation sourceRoot(String relativePath) {
-    return ArtifactLocation.builder()
-        .setRelativePath(relativePath)
-        .setIsSource(true)
-        .build();
+    return ArtifactLocation.builder().setRelativePath(relativePath).setIsSource(true).build();
   }
 }

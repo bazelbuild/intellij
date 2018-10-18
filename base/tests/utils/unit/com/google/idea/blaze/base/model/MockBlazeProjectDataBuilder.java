@@ -16,10 +16,8 @@
 package com.google.idea.blaze.base.model;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -28,6 +26,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import java.io.File;
 
 /**
  * Use to build mock project data for tests.
@@ -47,10 +46,13 @@ public class MockBlazeProjectDataBuilder {
   private ArtifactLocationDecoder artifactLocationDecoder;
   private WorkspaceLanguageSettings workspaceLanguageSettings;
   private SyncState syncState;
-  private ImmutableMultimap<TargetKey, TargetKey> reverseDependencies;
 
   private MockBlazeProjectDataBuilder(WorkspaceRoot workspaceRoot) {
     this.workspaceRoot = workspaceRoot;
+  }
+
+  public static MockBlazeProjectDataBuilder builder() {
+    return builder(new WorkspaceRoot(new File("/")));
   }
 
   public static MockBlazeProjectDataBuilder builder(WorkspaceRoot workspaceRoot) {
@@ -105,12 +107,6 @@ public class MockBlazeProjectDataBuilder {
     return this;
   }
 
-  public MockBlazeProjectDataBuilder setReverseDependencies(
-      ImmutableMultimap<TargetKey, TargetKey> reverseDependencies) {
-    this.reverseDependencies = reverseDependencies;
-    return this;
-  }
-
   public BlazeProjectData build() {
     TargetMap targetMap =
         this.targetMap != null ? this.targetMap : new TargetMap(ImmutableMap.of());
@@ -140,8 +136,6 @@ public class MockBlazeProjectDataBuilder {
             : new WorkspaceLanguageSettings(WorkspaceType.JAVA, ImmutableSet.of());
     SyncState syncState =
         this.syncState != null ? this.syncState : new SyncState(ImmutableMap.of());
-    ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
-        this.reverseDependencies != null ? this.reverseDependencies : ImmutableMultimap.of();
 
     return new BlazeProjectData(
         syncTime,
@@ -151,7 +145,6 @@ public class MockBlazeProjectDataBuilder {
         workspacePathResolver,
         artifactLocationDecoder,
         workspaceLanguageSettings,
-        syncState,
-        reverseDependencies);
+        syncState);
   }
 }

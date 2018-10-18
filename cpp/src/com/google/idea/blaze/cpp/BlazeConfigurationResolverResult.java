@@ -18,6 +18,7 @@ package com.google.idea.blaze.cpp;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
+import java.util.Map;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -26,7 +27,7 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 final class BlazeConfigurationResolverResult {
 
-  final ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration>
+  private final ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration>
       uniqueResolveConfigurations;
   final ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings;
 
@@ -48,6 +49,22 @@ final class BlazeConfigurationResolverResult {
 
   ImmutableList<BlazeResolveConfiguration> getAllConfigurations() {
     return uniqueResolveConfigurations.values().asList();
+  }
+
+  boolean isEquivalentConfigurations(BlazeConfigurationResolverResult other) {
+    if (!uniqueResolveConfigurations.keySet().equals(other.uniqueResolveConfigurations.keySet())) {
+      return false;
+    }
+    for (Map.Entry<BlazeResolveConfigurationData, BlazeResolveConfiguration> mapEntry :
+        uniqueResolveConfigurations.entrySet()) {
+      BlazeResolveConfiguration config = mapEntry.getValue();
+      BlazeResolveConfiguration otherConfig =
+          other.uniqueResolveConfigurations.get(mapEntry.getKey());
+      if (otherConfig == null || !config.isEquivalentConfigurations(otherConfig)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   static class Builder {

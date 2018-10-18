@@ -132,7 +132,7 @@ class BlazeAndroidTestLaunchTask implements LaunchTask {
 
                         BlazeCommand.Builder commandBuilder =
                             BlazeCommand.builder(
-                                    Blaze.getBuildSystemProvider(project).getBinaryPath(),
+                                    Blaze.getBuildSystemProvider(project).getBinaryPath(project),
                                     BlazeCommandName.TEST)
                                 .addTargets(target);
                         // Build flags must match BlazeBeforeRunTask.

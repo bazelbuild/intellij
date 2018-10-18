@@ -30,7 +30,7 @@ import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
-import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -39,7 +39,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.execution.Location;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -78,17 +77,12 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
     registerProjectService(
         BlazeProjectDataManager.class,
         new MockBlazeProjectDataManager(
-            new BlazeProjectData(
-                0L,
-                targetMap,
-                null,
-                null,
-                new WorkspacePathResolverImpl(workspaceRoot),
-                location ->
-                    workspaceRoot.fileForPath(new WorkspacePath(location.getRelativePath())),
-                new WorkspaceLanguageSettings(WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)),
-                null,
-                null)));
+            MockBlazeProjectDataBuilder.builder(workspaceRoot)
+                .setTargetMap(targetMap)
+                .setWorkspaceLanguageSettings(
+                    new WorkspaceLanguageSettings(
+                        WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)))
+                .build()));
 
     workspace.createFile(
         new WorkspacePath("foo/bar/foo_test.go"),
@@ -145,17 +139,12 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
     registerProjectService(
         BlazeProjectDataManager.class,
         new MockBlazeProjectDataManager(
-            new BlazeProjectData(
-                0L,
-                targetMap,
-                null,
-                null,
-                new WorkspacePathResolverImpl(workspaceRoot),
-                location ->
-                    workspaceRoot.fileForPath(new WorkspacePath(location.getRelativePath())),
-                new WorkspaceLanguageSettings(WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)),
-                null,
-                null)));
+            MockBlazeProjectDataBuilder.builder(workspaceRoot)
+                .setTargetMap(targetMap)
+                .setWorkspaceLanguageSettings(
+                    new WorkspaceLanguageSettings(
+                        WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)))
+                .build()));
 
     GoFile goFile =
         (GoFile)
@@ -199,17 +188,12 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
     registerProjectService(
         BlazeProjectDataManager.class,
         new MockBlazeProjectDataManager(
-            new BlazeProjectData(
-                0L,
-                targetMap,
-                null,
-                null,
-                new WorkspacePathResolverImpl(workspaceRoot),
-                location ->
-                    workspaceRoot.fileForPath(new WorkspacePath(location.getRelativePath())),
-                new WorkspaceLanguageSettings(WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)),
-                null,
-                null)));
+            MockBlazeProjectDataBuilder.builder(workspaceRoot)
+                .setTargetMap(targetMap)
+                .setWorkspaceLanguageSettings(
+                    new WorkspaceLanguageSettings(
+                        WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)))
+                .build()));
 
     GoFile goFile =
         (GoFile)
@@ -253,18 +237,12 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
     registerProjectService(
         BlazeProjectDataManager.class,
         new MockBlazeProjectDataManager(
-            new BlazeProjectData(
-                0L,
-                targetMap,
-                null,
-                null,
-                new WorkspacePathResolverImpl(workspaceRoot),
-                location ->
-                    workspaceRoot.fileForPath(new WorkspacePath(location.getRelativePath())),
-                new WorkspaceLanguageSettings(WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)),
-                null,
-                null)));
-
+            MockBlazeProjectDataBuilder.builder(workspaceRoot)
+                .setTargetMap(targetMap)
+                .setWorkspaceLanguageSettings(
+                    new WorkspaceLanguageSettings(
+                        WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)))
+                .build()));
     GoFile goFile =
         (GoFile)
             workspace.createPsiFile(

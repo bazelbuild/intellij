@@ -327,7 +327,16 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
 
 def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates cc_toolchain-relevant output groups, returns false if not a cc_toolchain target."""
-    if ctx.rule.kind != "cc_toolchain" or cc_common.CcToolchainInfo not in target:
+
+    # The other toolchains like the JDK might also have ToolchainInfo but it's not a C++ toolchain,
+    # so check kind as well.
+    # TODO(jvoung): We are temporarily getting info from cc_toolchain_suite
+    # https://github.com/bazelbuild/bazel/commit/3aedb2f6de80630f88ffb6b60795c44e351a5810
+    # but will switch back to cc_toolchain providing CcToolchainProvider once we migrate C++ rules
+    # to generic platforms and toolchains.
+    if ctx.rule.kind != "cc_toolchain" and ctx.rule.kind != "cc_toolchain_suite":
+        return False
+    if cc_common.CcToolchainInfo not in target:
         return False
 
     # cc toolchain to access compiler flags
@@ -412,9 +421,9 @@ def get_java_provider(target):
     if hasattr(target, "kt") and hasattr(target.kt, "outputs"):
         return target.kt
 
-    # TODO(brendandouglas): use java_common.provider preferentially
-    if java_common.provider in target:
-        return target[java_common.provider]
+    # TODO(brendandouglas): use JavaInfo preferentially
+    if JavaInfo in target:
+        return target[JavaInfo]
     return None
 
 def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
@@ -712,14 +721,17 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
     # Propagate my own exports
     export_deps = []
-    if hasattr(target, "java"):
-        transitive_exports = target.java.transitive_exports
+    if JavaInfo in target:
+        transitive_exports = target[JavaInfo].transitive_exports
         export_deps = [make_dep_from_label(label, COMPILE_TIME) for label in transitive_exports]
 
         # Empty android libraries export all their dependencies.
         if ctx.rule.kind == "android_library":
             if not hasattr(rule_attrs, "srcs") or not ctx.rule.attr.srcs:
                 export_deps = export_deps + compiletime_deps
+        elif ctx.rule.kind == "aar_import":
+            direct_exports = collect_targets_from_attrs(rule_attrs, ["exports"])
+            export_deps = export_deps + make_deps(direct_exports, COMPILE_TIME)
     export_deps = list(depset(export_deps))
 
     # runtime_deps

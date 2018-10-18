@@ -17,6 +17,7 @@ package com.google.idea.blaze.aspect.cpp.cctoolchain;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.IntellijAspectTestFixture;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.CToolchainIdeInfo;
@@ -28,17 +29,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Tests cc_toolchain */
+/** Tests cc_toolchain and cc_toolchain_suite */
 @RunWith(JUnit4.class)
 public class CcToolchainTest extends BazelIntellijAspectTest {
 
   @Test
   public void testCcToolchain() throws Exception {
     IntellijAspectTestFixture testFixture = loadTestFixture(":fixture");
-    List<TargetIdeInfo> toolchains = findCcToolchainTarget(testFixture);
+    List<TargetIdeInfo> toolchains = findToolchainTarget(testFixture);
 
-    assertThat(toolchains).hasSize(1);
-    CToolchainIdeInfo toolchainInfo = toolchains.get(0).getCToolchainIdeInfo();
+    CToolchainIdeInfo toolchainInfo = Iterables.getOnlyElement(toolchains).getCToolchainIdeInfo();
     assertThat(toolchainInfo.getBuiltInIncludeDirectoryList()).isNotEmpty();
     assertThat(toolchainInfo.getCppExecutable()).isNotEmpty();
     assertThat(toolchainInfo.getTargetName()).isNotEmpty();
@@ -90,10 +90,10 @@ public class CcToolchainTest extends BazelIntellijAspectTest {
         .isTrue();
   }
 
-  private static List<TargetIdeInfo> findCcToolchainTarget(IntellijAspectTestFixture testFixture) {
+  private static List<TargetIdeInfo> findToolchainTarget(IntellijAspectTestFixture testFixture) {
     List<TargetIdeInfo> result = Lists.newArrayList();
     for (TargetIdeInfo target : testFixture.getTargetsList()) {
-      if (target.getKindString().equals("cc_toolchain")) {
+      if (target.hasCToolchainIdeInfo()) {
         result.add(target);
       }
     }

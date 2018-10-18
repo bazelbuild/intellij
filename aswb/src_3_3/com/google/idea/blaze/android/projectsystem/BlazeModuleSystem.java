@@ -249,7 +249,7 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
     return new ExternalLibrary(library.key.toString())
         .withManifestFile(
             library.manifest == null ? null : new PathString(decoder.decode(library.manifest)))
-        .withResFolder(new PathString(decoder.decode(library.resource)));
+        .withResFolder(new PathString(decoder.decode(library.root)));
   }
 
   private ExternalLibrary toExternalLibrary(

@@ -37,6 +37,7 @@ import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.ideinfo.AndroidAarIdeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
+import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
@@ -365,8 +366,10 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     assertThat(result.resourceLibraries.values())
         .containsExactly(
-            new BlazeResourceLibrary(
-                source("aarLibrary/res"), source("aarLibrary/AndroidManifest.xml")));
+            new BlazeResourceLibrary.Builder()
+                .setRoot(source("aarLibrary/res"))
+                .setManifest(source("aarLibrary/AndroidManifest.xml"))
+                .build());
     assertThat(result.androidResourceModules)
         .containsExactly(expectedAndroidResourceModule1, expectedAndroidResourceModule2);
   }
@@ -702,6 +705,76 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                 .build());
   }
 
+  @Test
+  public void testAndroidResourceImport_containsMultipleExternalResources() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/com/google/android/assets/quantum:values")
+                    .setBuildFile(source("java/com/google/android/assets/quantum/BUILD"))
+                    .setKind("android_library")
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setGenerateResourceClass(true)
+                            .setManifestFile(
+                                source(
+                                    "java/com/google/android/assets/quantum/AndroidManifest.xml"))
+                            .addResource(
+                                AndroidResFolder.builder()
+                                    .setRoot(source("java/com/google/android/assets/quantum/res"))
+                                    .addResources(
+                                        ImmutableSet.of(
+                                            "values/colors.xml",
+                                            "values/styles.xml",
+                                            "values-v16/styles.xml"))
+                                    .build()))
+                    .build())
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example:resources")
+                    .setBuildFile(source("java/example/BUILD"))
+                    .setKind("android_library")
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/example/AndroidManifest.xml"))
+                            .addResource(source("java/example/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("com.google.android.example"))
+                    .addDependency("//java/com/google/android/assets/quantum:values")
+                    .build());
+
+    BlazeAndroidImportResult result =
+        importWorkspace(workspaceRoot, targetMapBuilder, projectView, true);
+    errorCollector.assertNoIssues();
+    assertThat(result.androidResourceModules)
+        .containsExactly(
+            AndroidResourceModule.builder(
+                    TargetKey.forPlainTarget(Label.create("//java/example:resources")))
+                .addResourceAndTransitiveResource(source("java/example/res"))
+                .addTransitiveResourceDependency("//java/com/google/android/assets/quantum:values")
+                .addResourceLibraryKey(
+                    BlazeResourceLibrary.libraryNameFromArtifactLocation(
+                        source("java/com/google/android/assets/quantum/res")))
+                .build());
+    assertThat(result.resourceLibraries.values())
+        .containsExactly(
+            new BlazeResourceLibrary.Builder()
+                .setRoot(source("java/com/google/android/assets/quantum/res"))
+                .setManifest(source("java/com/google/android/assets/quantum/AndroidManifest.xml"))
+                .addResources(
+                    ImmutableSet.of(
+                        "values/colors.xml", "values/styles.xml", "values-v16/styles.xml"))
+                .build());
+  }
+
   private BlazeAndroidImportResult
       getBlazeAndroidImportResult_testResourceImportOutsideSourceFilterIsAddedToResourceLibrary(
           boolean createAarLibrary) {
@@ -752,8 +825,10 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     ImmutableCollection<BlazeResourceLibrary> library = result.resourceLibraries.values();
     assertSameElements(
         library,
-        new BlazeResourceLibrary(
-            source("java/example2/res"), source("java/example2/AndroidManifest.xml")));
+        new BlazeResourceLibrary.Builder()
+            .setRoot(source("java/example2/res"))
+            .setManifest(source("java/example2/AndroidManifest.xml"))
+            .build());
   }
 
   @Test
@@ -764,16 +839,12 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
             true);
     errorCollector.assertNoIssues();
     ImmutableCollection<BlazeResourceLibrary> library = result.resourceLibraries.values();
-    assertThat(library).isNotNull();
-    assertThat(library).hasSize(1);
     assertThat(library)
         .containsExactly(
-            new BlazeResourceLibrary(
-                ArtifactLocation.builder()
-                    .setRelativePath("java/example2/res")
-                    .setIsSource(true)
-                    .build(),
-                null));
+            new BlazeResourceLibrary.Builder()
+                .setRoot(source("java/example2/res"))
+                .setManifest(source("java/example2/AndroidManifest.xml"))
+                .build());
   }
 
   @Test

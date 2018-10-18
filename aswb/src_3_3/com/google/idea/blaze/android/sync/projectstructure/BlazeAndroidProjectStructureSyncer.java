@@ -388,7 +388,7 @@ public class BlazeAndroidProjectStructureSyncer {
                 ? ImmutableList.of()
                 : ImmutableList.copyOf(
                     syncData.importResult.resourceLibraries.values().stream()
-                        .map(library -> artifactLocationDecoder.decode(library.resource))
+                        .map(library -> artifactLocationDecoder.decode(library.root))
                         .collect(Collectors.toList())));
       } else if (useLibraryResourcesModule.getValue()) {
         logger.warn("Library resources module missing.");

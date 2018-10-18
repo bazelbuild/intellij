@@ -97,7 +97,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     ExtensionPointImpl<BuildSystemProvider> buildSystemProviderExtensionPoint =
         registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
     BuildSystemProvider buildSystemProvider = mock(BuildSystemProvider.class);
-    when(buildSystemProvider.getBinaryPath()).thenReturn("/usr/bin/blaze");
+    when(buildSystemProvider.getBinaryPath(project)).thenReturn("/usr/bin/blaze");
     buildSystemProviderExtensionPoint.registerExtension(buildSystemProvider);
 
     configuration =
