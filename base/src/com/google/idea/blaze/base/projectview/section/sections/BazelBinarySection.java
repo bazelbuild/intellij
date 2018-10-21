@@ -38,7 +38,7 @@ public class BazelBinarySection {
     @Override
     @Nullable
     protected File parseItem(ProjectViewParser parser, ParseContext parseContext, String text) {
-      if (text.isEmpty() || text.indexOf(0) != File.pathSeparatorChar) {
+      if (text.isEmpty() || text.charAt(0) != File.separatorChar) {
         parseContext.addError(errorMessage(text, "Specify an absolute file path"));
         return null;
       }
