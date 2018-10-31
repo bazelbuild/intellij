@@ -15,21 +15,20 @@
  */
 package com.google.idea.blaze.base.model;
 
+import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BuildSystem;
-import java.io.Serializable;
 import javax.annotation.Nullable;
 
 /**
  * Version data about the user's blaze/bazel and other info needed for switching behaviour
  * dynamically.
  */
-public class BlazeVersionData implements Serializable {
-  private static final long serialVersionUID = 2L;
-
+public class BlazeVersionData implements ProtoWrapper<ProjectData.BlazeVersionData> {
   @Nullable private final Long blazeCl;
   @Nullable private final Long clientCl;
   @Nullable private final BazelVersion bazelVersion;
@@ -39,6 +38,22 @@ public class BlazeVersionData implements Serializable {
     this.blazeCl = blazeCl;
     this.clientCl = clientCl;
     this.bazelVersion = bazelVersion;
+  }
+
+  static BlazeVersionData fromProto(ProjectData.BlazeVersionData proto) {
+    return new BlazeVersionData(
+        proto.getBlazeCl() != 0 ? proto.getBlazeCl() : null,
+        proto.getClientCl() != 0 ? proto.getClientCl() : null,
+        proto.hasBazelVersion() ? BazelVersion.fromProto(proto.getBazelVersion()) : null);
+  }
+
+  @Override
+  public ProjectData.BlazeVersionData toProto() {
+    ProjectData.BlazeVersionData.Builder builder = ProjectData.BlazeVersionData.newBuilder();
+    ProtoWrapper.setIfNotNull(builder::setBlazeCl, blazeCl);
+    ProtoWrapper.setIfNotNull(builder::setClientCl, clientCl);
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setBazelVersion, bazelVersion);
+    return builder.build();
   }
 
   public boolean blazeVersionIsKnown() {

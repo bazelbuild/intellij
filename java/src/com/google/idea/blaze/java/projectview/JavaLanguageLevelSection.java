@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.projectview;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
@@ -40,30 +41,14 @@ public class JavaLanguageLevelSection {
   }
 
   @Nullable
-  private static LanguageLevel getLanguageLevel(
-      Integer level, @Nullable LanguageLevel defaultValue) {
-    switch (level) {
-      case 3:
-        return LanguageLevel.JDK_1_3;
-      case 4:
-        return LanguageLevel.JDK_1_4;
-      case 5:
-        return LanguageLevel.JDK_1_5;
-      case 6:
-        return LanguageLevel.JDK_1_6;
-      case 7:
-        return LanguageLevel.JDK_1_7;
-      case 8:
-        return LanguageLevel.JDK_1_8;
-      case 9:
-        return LanguageLevel.JDK_1_9;
-      default:
-        return defaultValue;
-    }
+  @VisibleForTesting
+  static LanguageLevel getLanguageLevel(Integer level, @Nullable LanguageLevel defaultValue) {
+    LanguageLevel parsed = LanguageLevel.parse(level.toString());
+    return parsed != null ? parsed : defaultValue;
   }
 
   private static class JavaLanguageLevelParser extends ScalarSectionParser<Integer> {
-    public JavaLanguageLevelParser() {
+    JavaLanguageLevelParser() {
       super(KEY, ':');
     }
 

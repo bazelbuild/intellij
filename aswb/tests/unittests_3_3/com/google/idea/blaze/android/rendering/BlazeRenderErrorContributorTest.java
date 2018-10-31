@@ -40,6 +40,7 @@ import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -429,7 +430,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     TargetMap targetMap =
         TargetMapBuilder.builder()
             .addTarget(
-                TargetIdeInfo.builder()
+                mockTargetIdeInfoBuilder()
                     .setLabel(mainResourcesTarget)
                     .setBuildFile(mainBuildFile)
                     .setAndroidInfo(
@@ -440,7 +441,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
                     .addDependency(dependencyGeneratedResourceTarget)
                     .addDependency(dependencySourceResourceTarget))
             .addTarget(
-                TargetIdeInfo.builder()
+                mockTargetIdeInfoBuilder()
                     .setLabel(dependencyGeneratedResourceTarget)
                     .setBuildFile(dependencyBuildFile)
                     .setAndroidInfo(
@@ -449,7 +450,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
                             .addResource(dependencyGeneratedResource))
                     .addDependency(transitiveSourceResourceTarget))
             .addTarget(
-                TargetIdeInfo.builder()
+                mockTargetIdeInfoBuilder()
                     .setLabel(dependencySourceResourceTarget)
                     .setBuildFile(dependencyBuildFile)
                     .setAndroidInfo(
@@ -458,7 +459,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
                             .addResource(dependencySourceResource))
                     .addDependency(transitiveGeneratedResourcesTarget))
             .addTarget(
-                TargetIdeInfo.builder()
+                mockTargetIdeInfoBuilder()
                     .setLabel(transitiveGeneratedResourcesTarget)
                     .setBuildFile(transitiveBuildFile)
                     .setAndroidInfo(
@@ -467,7 +468,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
                             .addResource(transitiveGeneratedResourceOne)
                             .addResource(transitiveGeneratedResourceTwo)))
             .addTarget(
-                TargetIdeInfo.builder()
+                mockTargetIdeInfoBuilder()
                     .setLabel(transitiveSourceResourceTarget)
                     .setBuildFile(transitiveBuildFile)
                     .setAndroidInfo(
@@ -475,7 +476,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
                             .setGenerateResourceClass(true)
                             .addResource(transitiveSourceResource)))
             .addTarget(
-                TargetIdeInfo.builder()
+                mockTargetIdeInfoBuilder()
                     .setLabel(unrelatedGeneratedResourceTarget)
                     .setBuildFile(unrelatedBuildFile)
                     .setAndroidInfo(
@@ -483,7 +484,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
                             .setGenerateResourceClass(true)
                             .addResource(unrelatedGeneratedResource)))
             .addTarget(
-                TargetIdeInfo.builder()
+                mockTargetIdeInfoBuilder()
                     .setLabel(unrelatedSourceResourceTarget)
                     .setBuildFile(unrelatedBuildFile)
                     .setAndroidInfo(
@@ -512,7 +513,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     TargetMap targetMap =
         TargetMapBuilder.builder()
             .addTarget(
-                TargetIdeInfo.builder()
+                mockTargetIdeInfoBuilder()
                     .setLabel(mainResourceTarget)
                     .setBuildFile(mainBuildFile)
                     .setAndroidInfo(
@@ -555,7 +556,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     TargetMap targetMap =
         TargetMapBuilder.builder()
             .addTarget(
-                TargetIdeInfo.builder()
+                mockTargetIdeInfoBuilder()
                     .setLabel(mainResourceTarget)
                     .setBuildFile(mainBuildFile)
                     .setAndroidInfo(
@@ -564,7 +565,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
                             .setManifestFile(mainManifest)
                             .addResource(mainResource)))
             .addTarget(
-                TargetIdeInfo.builder()
+                mockTargetIdeInfoBuilder()
                     .setLabel(dependencyResourceTarget)
                     .setBuildFile(dependencyBuildFile)
                     .setAndroidInfo(
@@ -598,24 +599,24 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     TargetMap targetMap =
         TargetMapBuilder.builder()
             .addTarget(
-                TargetIdeInfo.builder()
+                mockTargetIdeInfoBuilder()
                     .setLabel(parentTarget)
                     .setBuildFile(buildFile)
                     .addDependency(independentLibraryTarget)
                     .addDependency(resourcesTarget))
             .addTarget(
-                TargetIdeInfo.builder()
+                mockTargetIdeInfoBuilder()
                     .setLabel(independentLibraryTarget)
                     .setBuildFile(buildFile)
                     .setJavaInfo(JavaIdeInfo.builder())
                     .addDependency(independentLibrary2Target))
             .addTarget(
-                TargetIdeInfo.builder()
+                mockTargetIdeInfoBuilder()
                     .setLabel(independentLibrary2Target)
                     .setBuildFile(buildFile)
                     .setJavaInfo(JavaIdeInfo.builder()))
             .addTarget(
-                TargetIdeInfo.builder()
+                mockTargetIdeInfoBuilder()
                     .setLabel(resourcesTarget)
                     .setBuildFile(buildFile)
                     .setAndroidInfo(
@@ -625,7 +626,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
                             .addResource(resources))
                     .addDependency(dependentLibraryTarget))
             .addTarget(
-                TargetIdeInfo.builder()
+                mockTargetIdeInfoBuilder()
                     .setLabel(dependentLibraryTarget)
                     .setBuildFile(buildFile)
                     .setJavaInfo(JavaIdeInfo.builder()))
@@ -676,6 +677,10 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     projectServices.register(
         JavaPsiFacade.class, new MockJavaPsiFacade(project, psiManager, classes));
     projectServices.register(SourceToTargetMap.class, new MockSourceToTargetMap(sourceToTarget));
+  }
+
+  private static TargetIdeInfo.Builder mockTargetIdeInfoBuilder() {
+    return TargetIdeInfo.builder().setKind(Kind.ANDROID_LIBRARY);
   }
 
   private static PsiClass mockPsiClass(VirtualFile virtualFile) {

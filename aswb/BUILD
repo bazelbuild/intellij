@@ -38,6 +38,7 @@ merged_plugin_xml(
     ] + select_for_plugin_api({
         "android-studio-3.2": ["src/META-INF/aswb_3_2.xml"],
         "android-studio-3.3": ["src/META-INF/aswb_3_3.xml"],
+        "android-studio-3.4": ["src/META-INF/aswb_3_3.xml"],
     }),
 )
 
@@ -86,6 +87,7 @@ java_library(
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
         "android-studio-3.2": glob(["src_3_2/**/*.java"]),
         "android-studio-3.3": glob(["src_3_3/**/*.java"]),
+        "android-studio-3.4": glob(["src_3_4/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     runtime_deps = [
@@ -112,6 +114,7 @@ intellij_unit_test_suite(
     srcs = glob(["tests/unittests/**/*.java"]) + select_for_plugin_api({
         "android-studio-3.2": glob(["tests/unittests_3_2/**/*.java"]),
         "android-studio-3.3": glob(["tests/unittests_3_3/**/*.java"]),
+        "android-studio-3.4": glob(["tests/unittests_3_3/**/*.java"]),
     }),
     test_package_root = "com.google.idea.blaze.android",
     deps = [
@@ -144,6 +147,7 @@ intellij_integration_test_suite(
     ) + select_for_plugin_api({
         "android-studio-3.2": glob(["tests/integrationtests_3_2/**/*.java"]),
         "android-studio-3.3": glob(["tests/integrationtests_3_3/**/*.java"]),
+        "android-studio-3.4": glob(["tests/integrationtests_3_4/**/*.java"]),
     }),
     platform_prefix = "AndroidStudio",
     required_plugins = "com.google.idea.bazel.aswb",

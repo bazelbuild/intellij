@@ -251,7 +251,8 @@ public final class BlazeCWorkspace implements ProjectComponent {
       String id = resolveConfiguration.getDisplayName(false);
       String shortDisplayName = resolveConfiguration.getDisplayName(true);
 
-      workspaceModifiable.addConfiguration(
+      OCWorkspaceModifiableModelAdapter.addConfiguration(
+          workspaceModifiable,
           id,
           id,
           shortDisplayName,

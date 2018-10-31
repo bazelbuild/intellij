@@ -15,17 +15,33 @@
  */
 package com.google.idea.blaze.base.ui;
 
+import static com.google.common.base.Preconditions.checkState;
+
+import com.intellij.openapi.options.CancelledConfigurationException;
+import com.intellij.openapi.options.ConfigurationException;
 import javax.annotation.Nullable;
 
-/** Pair of (success, validation error) */
+/** Pair of (status, validation error) */
 public class BlazeValidationResult {
-  public final boolean success;
-  @Nullable public final BlazeValidationError error;
 
-  private static final BlazeValidationResult SUCCESS = new BlazeValidationResult(true, null);
+  /** The status of the validation. */
+  public enum Status {
+    SUCCESS,
+    FAILURE,
+    CANCELLED
+  }
 
-  private BlazeValidationResult(boolean success, @Nullable BlazeValidationError error) {
-    this.success = success;
+  private final Status status;
+  @Nullable private final String error;
+
+  private static final BlazeValidationResult SUCCESS =
+      new BlazeValidationResult(Status.SUCCESS, null);
+  private static final BlazeValidationResult CANCELLED =
+      new BlazeValidationResult(Status.CANCELLED, null);
+
+  private BlazeValidationResult(Status status, @Nullable String error) {
+    checkState(status.equals(Status.FAILURE) == (error != null));
+    this.status = status;
     this.error = error;
   }
 
@@ -34,10 +50,33 @@ public class BlazeValidationResult {
   }
 
   public static BlazeValidationResult failure(BlazeValidationError error) {
-    return new BlazeValidationResult(false, error);
+    return failure(error.getError());
   }
 
   public static BlazeValidationResult failure(String error) {
-    return failure(new BlazeValidationError(error));
+    return new BlazeValidationResult(Status.FAILURE, error);
+  }
+
+  /**
+   * Represents a state where the validation code presented the user with an error dialog and the
+   * user chose 'cancel', to return to the wizard.
+   */
+  public static BlazeValidationResult cancelled() {
+    return CANCELLED;
+  }
+
+  public boolean isSuccess() {
+    return status.equals(Status.SUCCESS);
+  }
+
+  public void throwConfigurationExceptionIfNotSuccess() throws ConfigurationException {
+    switch (status) {
+      case SUCCESS:
+        break;
+      case FAILURE:
+        throw new ConfigurationException(error);
+      case CANCELLED:
+        throw new CancelledConfigurationException();
+    }
   }
 }

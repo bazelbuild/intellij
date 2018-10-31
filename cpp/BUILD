@@ -53,6 +53,7 @@ intellij_unit_test_suite(
         default = [],
     ),
     test_package_root = "com.google.idea.blaze.cpp",
+    runtime_deps = ["//intellij_platform_sdk:plugin_api_for_tests"],
     deps = [
         ":cpp",
         ":unit_test_utils",

@@ -16,18 +16,16 @@
 package com.google.idea.blaze.base.model.primitives;
 
 import com.google.common.base.Objects;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
-import java.io.Serializable;
 import javax.annotation.Nullable;
 
 /**
  * An absolute or relative path returned from Blaze. If it is a relative path, it is relative to the
  * execution root.
  */
-public final class ExecutionRootPath implements Serializable {
-  public static final long serialVersionUID = 3L;
-
+public final class ExecutionRootPath implements ProtoWrapper<String> {
   private final File path;
 
   public ExecutionRootPath(String path) {
@@ -146,5 +144,14 @@ public final class ExecutionRootPath implements Serializable {
   public static boolean isAncestor(
       String possibleParentPath, String possibleChildPath, boolean strict) {
     return FileUtil.isAncestor(possibleParentPath, possibleChildPath, strict);
+  }
+
+  public static ExecutionRootPath fromProto(String proto) {
+    return new ExecutionRootPath(proto);
+  }
+
+  @Override
+  public String toProto() {
+    return path.getPath();
   }
 }

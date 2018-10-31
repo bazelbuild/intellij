@@ -16,16 +16,15 @@
 package com.google.idea.blaze.android.sync.model;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
+import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.Label;
-import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.concurrent.Immutable;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,23 +33,41 @@ import org.jetbrains.annotations.NotNull;
  * module/facet.
  */
 @Immutable
-public final class AndroidResourceModule implements Serializable {
-  private static final long serialVersionUID = 8L;
-
+public final class AndroidResourceModule
+    implements ProtoWrapper<ProjectData.AndroidResourceModule> {
   public final TargetKey targetKey;
-  public final ImmutableCollection<ArtifactLocation> resources;
-  public final ImmutableCollection<ArtifactLocation> transitiveResources;
-  public final ImmutableCollection<TargetKey> transitiveResourceDependencies;
+  public final ImmutableList<ArtifactLocation> resources;
+  public final ImmutableList<ArtifactLocation> transitiveResources;
+  public final ImmutableList<TargetKey> transitiveResourceDependencies;
 
   public AndroidResourceModule(
       TargetKey targetKey,
-      ImmutableCollection<ArtifactLocation> resources,
-      ImmutableCollection<ArtifactLocation> transitiveResources,
-      ImmutableCollection<TargetKey> transitiveResourceDependencies) {
+      ImmutableList<ArtifactLocation> resources,
+      ImmutableList<ArtifactLocation> transitiveResources,
+      ImmutableList<TargetKey> transitiveResourceDependencies) {
     this.targetKey = targetKey;
     this.resources = resources;
     this.transitiveResources = transitiveResources;
     this.transitiveResourceDependencies = transitiveResourceDependencies;
+  }
+
+  static AndroidResourceModule fromProto(ProjectData.AndroidResourceModule proto) {
+    return new AndroidResourceModule(
+        TargetKey.fromProto(proto.getTargetKey()),
+        ProtoWrapper.map(proto.getResourcesList(), ArtifactLocation::fromProto),
+        ProtoWrapper.map(proto.getTransitiveResourcesList(), ArtifactLocation::fromProto),
+        ProtoWrapper.map(proto.getTransitiveResourceDependenciesList(), TargetKey::fromProto));
+  }
+
+  @Override
+  public ProjectData.AndroidResourceModule toProto() {
+    return ProjectData.AndroidResourceModule.newBuilder()
+        .setTargetKey(targetKey.toProto())
+        .addAllResources(ProtoWrapper.mapToProtos(resources))
+        .addAllTransitiveResources(ProtoWrapper.mapToProtos(transitiveResources))
+        .addAllTransitiveResourceDependencies(
+            ProtoWrapper.mapToProtos(transitiveResourceDependencies))
+        .build();
   }
 
   @Override
@@ -152,10 +169,9 @@ public final class AndroidResourceModule implements Serializable {
     public AndroidResourceModule build() {
       return new AndroidResourceModule(
           targetKey,
-          ImmutableList.copyOf(resources.stream().sorted().collect(Collectors.toList())),
-          ImmutableList.copyOf(transitiveResources.stream().sorted().collect(Collectors.toList())),
-          ImmutableList.copyOf(
-              transitiveResourceDependencies.stream().sorted().collect(Collectors.toList())));
+          ImmutableList.sortedCopyOf(resources),
+          ImmutableList.sortedCopyOf(transitiveResources),
+          ImmutableList.sortedCopyOf(transitiveResourceDependencies));
     }
   }
 }

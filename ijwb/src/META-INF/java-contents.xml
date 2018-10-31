@@ -17,5 +17,7 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.ijwb.android.BlazeAndroidLiteSyncPlugin"/>
     <JavaSyncAugmenter implementation="com.google.idea.blaze.ijwb.android.BlazeAndroidLiteJavaSyncAugmenter"/>
+    <SyncDataDeserializer implementation="com.google.idea.blaze.java.sync.model.BlazeJavaSyncData$Deserializer"/>
+    <SyncDataDeserializer implementation="com.google.idea.blaze.java.sync.jdeps.JdepsState$Deserializer"/>
   </extensions>
 </idea-plugin>

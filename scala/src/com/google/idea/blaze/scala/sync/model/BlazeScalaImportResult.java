@@ -16,19 +16,36 @@
 package com.google.idea.blaze.scala.sync.model;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.devtools.intellij.model.ProjectData;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
-import java.io.Serializable;
+import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
 import javax.annotation.concurrent.Immutable;
 
 /** The result of a blaze import operation. */
 @Immutable
-public class BlazeScalaImportResult implements Serializable {
-  private static final long serialVersionUID = 1L;
-
+public class BlazeScalaImportResult implements ProtoWrapper<ProjectData.BlazeJavaImportResult> {
   public final ImmutableMap<LibraryKey, BlazeJarLibrary> libraries;
 
   public BlazeScalaImportResult(ImmutableMap<LibraryKey, BlazeJarLibrary> libraries) {
     this.libraries = libraries;
+  }
+
+  static BlazeScalaImportResult fromProto(ProjectData.BlazeJavaImportResult proto) {
+    return new BlazeScalaImportResult(
+        ProtoWrapper.map(
+            proto.getLibrariesMap(), LibraryKey::fromProto, BlazeJarLibrary::fromProto));
+  }
+
+  /**
+   * Reusing {@link ProjectData.BlazeJavaImportResult} since {@link BlazeScalaImportResult} is a
+   * subset of {@link BlazeJavaImportResult}.
+   */
+  @Override
+  public ProjectData.BlazeJavaImportResult toProto() {
+    return ProjectData.BlazeJavaImportResult.newBuilder()
+        .putAllLibraries(ProtoWrapper.mapToProtos(libraries))
+        .build();
   }
 }

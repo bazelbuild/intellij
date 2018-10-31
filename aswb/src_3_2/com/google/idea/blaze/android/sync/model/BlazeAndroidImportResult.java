@@ -15,30 +15,51 @@
  */
 package com.google.idea.blaze.android.sync.model;
 
-import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
+import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import java.io.Serializable;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /** The result of a blaze import operation. */
 @Immutable
-public class BlazeAndroidImportResult implements Serializable {
-  private static final long serialVersionUID = 5L;
-
-  public final ImmutableCollection<AndroidResourceModule> androidResourceModules;
+public class BlazeAndroidImportResult
+    implements ProtoWrapper<ProjectData.BlazeAndroidImportResult> {
+  public final ImmutableList<AndroidResourceModule> androidResourceModules;
   @Nullable public final BlazeResourceLibrary resourceLibrary;
   @Nullable public final ArtifactLocation javacJar;
-  public final ImmutableCollection<AarLibrary> aarLibraries;
+  public final ImmutableList<AarLibrary> aarLibraries;
 
   public BlazeAndroidImportResult(
-      ImmutableCollection<AndroidResourceModule> androidResourceModules,
+      ImmutableList<AndroidResourceModule> androidResourceModules,
       @Nullable BlazeResourceLibrary resourceLibrary,
-      ImmutableCollection<AarLibrary> aarLibraries,
+      ImmutableList<AarLibrary> aarLibraries,
       @Nullable ArtifactLocation javacJar) {
     this.androidResourceModules = androidResourceModules;
     this.resourceLibrary = resourceLibrary;
     this.aarLibraries = aarLibraries;
     this.javacJar = javacJar;
+  }
+
+  static BlazeAndroidImportResult fromProto(ProjectData.BlazeAndroidImportResult proto) {
+    return new BlazeAndroidImportResult(
+        ProtoWrapper.map(proto.getAndroidResourceModulesList(), AndroidResourceModule::fromProto),
+        !proto.getResourceLibrariesList().isEmpty()
+            ? BlazeResourceLibrary.fromProto(proto.getResourceLibraries(0))
+            : null,
+        ProtoWrapper.map(proto.getAarLibrariesList(), AarLibrary::fromProto),
+        proto.hasJavacJar() ? ArtifactLocation.fromProto(proto.getJavacJar()) : null);
+  }
+
+  @Override
+  public ProjectData.BlazeAndroidImportResult toProto() {
+    ProjectData.BlazeAndroidImportResult.Builder builder =
+        ProjectData.BlazeAndroidImportResult.newBuilder()
+            .addAllAndroidResourceModules(ProtoWrapper.mapToProtos(androidResourceModules))
+            .addAllAarLibraries(ProtoWrapper.mapToProtos(aarLibraries));
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::addResourceLibraries, resourceLibrary);
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setJavacJar, javacJar);
+    return builder.build();
   }
 }

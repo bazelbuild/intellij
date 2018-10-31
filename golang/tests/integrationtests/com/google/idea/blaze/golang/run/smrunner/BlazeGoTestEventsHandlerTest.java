@@ -32,8 +32,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
-import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -67,8 +65,6 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
                     .addSource(src("foo/bar/bar_test.go"))
                     .setGoInfo(
                         GoIdeInfo.builder()
-                            .setLabel(Label.create("//foo/bar:foo_test"))
-                            .setKind(Kind.GO_TEST)
                             .addSources(ImmutableList.of(src("foo/bar/foo_test.go")))
                             .addSources(ImmutableList.of(src("foo/bar/bar_test.go")))
                             .setImportPath("google3/foo/bar/foo")))
@@ -130,8 +126,6 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
                     .addSource(src("foo/bar/foo_test.go"))
                     .setGoInfo(
                         GoIdeInfo.builder()
-                            .setLabel(Label.create("//foo/bar:foo_test"))
-                            .setKind(Kind.GO_TEST)
                             .addSources(ImmutableList.of(src("foo/bar/foo_test.go")))
                             .setImportPath("google3/foo/bar/foo")))
             .build();
@@ -179,8 +173,6 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
                     .addSource(src("foo_test.go"))
                     .setGoInfo(
                         GoIdeInfo.builder()
-                            .setLabel(Label.create("//:foo_test"))
-                            .setKind(Kind.GO_TEST)
                             .addSources(ImmutableList.of(src("foo_test.go")))
                             .setImportPath("foo")))
             .build();
@@ -228,8 +220,6 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
                     .addSource(src("foo/bar/foo_test.go"))
                     .setGoInfo(
                         GoIdeInfo.builder()
-                            .setLabel(Label.create("//foo/bar:foo_test"))
-                            .setKind(Kind.GO_TEST)
                             .addSources(ImmutableList.of(src("foo/bar/foo_test.go")))
                             .setImportPath("google3/foo/bar/foo")))
             .build();

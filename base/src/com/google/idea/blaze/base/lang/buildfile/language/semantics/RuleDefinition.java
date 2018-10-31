@@ -15,22 +15,19 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.language.semantics;
 
-import static com.google.common.collect.ImmutableMap.toImmutableMap;
-
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build;
-import java.io.Serializable;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.annotation.Nullable;
 
 /** Simple implementation of RuleDefinition, from build.proto */
-public class RuleDefinition implements Serializable {
-
-  private static final long serialVersionUID = 2L;
-
+public class RuleDefinition implements ProtoWrapper<Build.RuleDefinition> {
   /**
    * In previous versions of blaze/bazel, this wasn't included in the proto. All other documented
    * attributes seem to be.
@@ -38,46 +35,49 @@ public class RuleDefinition implements Serializable {
   private static final AttributeDefinition NAME_ATTRIBUTE =
       new AttributeDefinition("name", Build.Attribute.Discriminator.STRING, true, null, null);
 
-  public static RuleDefinition fromProto(Build.RuleDefinition rule) {
-    boolean hasNameAttr = false;
-    Map<String, AttributeDefinition> map = new HashMap<>();
-    for (Build.AttributeDefinition attr : rule.getAttributeList()) {
-      map.put(attr.getName(), AttributeDefinition.fromProto(attr));
-      hasNameAttr |= "name".equals(attr.getName());
-    }
-    if (!hasNameAttr) {
-      map.put(NAME_ATTRIBUTE.getName(), NAME_ATTRIBUTE);
-    }
-    ImmutableMap<String, AttributeDefinition> sortedMap =
-        map.entrySet().stream()
-            .sorted(Map.Entry.comparingByValue())
-            .collect(toImmutableMap(Entry::getKey, Entry::getValue));
-    return new RuleDefinition(
-        rule.getName(), sortedMap, rule.hasDocumentation() ? rule.getDocumentation() : null);
-  }
-
   private final String name;
   private final ImmutableMap<String, AttributeDefinition> attributes;
-
   private final ImmutableMap<String, AttributeDefinition> mandatoryAttributes;
-
   @Nullable private final String documentation;
 
+  @VisibleForTesting
   public RuleDefinition(
       String name,
       ImmutableMap<String, AttributeDefinition> attributes,
       @Nullable String documentation) {
     this.name = name;
     this.attributes = attributes;
+    this.mandatoryAttributes =
+        ImmutableMap.copyOf(Maps.filterValues(this.attributes, AttributeDefinition::isMandatory));
     this.documentation = documentation;
+  }
 
-    ImmutableMap.Builder<String, AttributeDefinition> builder = ImmutableMap.builder();
-    for (AttributeDefinition attr : attributes.values()) {
-      if (attr.isMandatory()) {
-        builder.put(attr.getName(), attr);
-      }
+  public static RuleDefinition fromProto(Build.RuleDefinition proto) {
+    Map<String, AttributeDefinition> attributes = new HashMap<>();
+    for (Build.AttributeDefinition attr : proto.getAttributeList()) {
+      attributes.put(attr.getName(), AttributeDefinition.fromProto(attr));
     }
-    mandatoryAttributes = builder.build();
+    if (!attributes.containsKey("name")) {
+      attributes.put(NAME_ATTRIBUTE.getName(), NAME_ATTRIBUTE);
+    }
+    attributes =
+        attributes.entrySet().stream()
+            .sorted(Entry.comparingByValue())
+            .collect(ImmutableMap.toImmutableMap(Entry::getKey, Entry::getValue));
+    return new RuleDefinition(
+        proto.getName(),
+        ImmutableMap.copyOf(attributes),
+        proto.hasDocumentation() ? proto.getDocumentation() : null);
+  }
+
+  @Override
+  public Build.RuleDefinition toProto() {
+    Build.RuleDefinition.Builder builder =
+        Build.RuleDefinition.newBuilder()
+            .setName(name)
+            .addAllAttribute(ProtoWrapper.mapToProtos(attributes.values()));
+    ProtoWrapper.setIfNotNull(builder::setDocumentation, documentation);
+    return builder.build();
   }
 
   public String getName() {

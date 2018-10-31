@@ -22,6 +22,18 @@ java_library(
     ],
 )
 
+java_library(
+    name = "proto_wrapper",
+    srcs = ["src/com/google/idea/blaze/base/ideinfo/ProtoWrapper.java"],
+    neverlink = 1,
+    visibility = ["//visibility:private"],
+    deps = [
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+        "//proto:proto_deps",
+    ],
+)
+
 # self-contained label parsing API, exposed so other plugins can optionally depend on it
 java_library(
     name = "label_api",
@@ -40,8 +52,10 @@ java_library(
     ],
     neverlink = 1,
     deps = [
+        ":proto_wrapper",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//proto:proto_deps",
     ],
 )
 
@@ -59,8 +73,10 @@ java_library(
     ],
     neverlink = 1,
     deps = [
+        ":proto_wrapper",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//proto:proto_deps",
     ],
 )
 
@@ -102,6 +118,7 @@ java_library(
     neverlink = 1,
     deps = [
         ":label_api",
+        ":proto_wrapper",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
     ],

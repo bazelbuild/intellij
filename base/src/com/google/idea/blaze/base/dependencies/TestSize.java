@@ -16,10 +16,11 @@
 package com.google.idea.blaze.base.dependencies;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import javax.annotation.Nullable;
 
 /** The "size" attribute from test rules */
-public enum TestSize {
+public enum TestSize implements ProtoWrapper<String> {
   SMALL("small"),
   MEDIUM("medium"),
   LARGE("large"),
@@ -49,5 +50,10 @@ public enum TestSize {
       result.put(size.name, size);
     }
     return result.build();
+  }
+
+  @Override
+  public String toProto() {
+    return name;
   }
 }

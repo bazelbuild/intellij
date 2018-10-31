@@ -15,20 +15,34 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.sync;
 
+import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
-import java.io.Serializable;
+import com.google.idea.blaze.base.model.SyncData;
+import javax.annotation.Nullable;
 
 /** The BUILD language specifications, serialized along with the sync data. */
-public class LanguageSpecResult implements Serializable {
-
+public class LanguageSpecResult implements SyncData<ProjectData.LanguageSpecResult> {
   private static final long ONE_DAY_IN_MILLISECONDS = 1000 * 60 * 60 * 24;
 
   private final BuildLanguageSpec spec;
   private final long timestampMillis;
 
-  public LanguageSpecResult(BuildLanguageSpec spec, long timestampMillis) {
+  LanguageSpecResult(BuildLanguageSpec spec, long timestampMillis) {
     this.spec = spec;
     this.timestampMillis = timestampMillis;
+  }
+
+  private static LanguageSpecResult fromProto(ProjectData.LanguageSpecResult proto) {
+    return new LanguageSpecResult(
+        BuildLanguageSpec.fromProto(proto.getSpec()), proto.getTimestampMillis());
+  }
+
+  @Override
+  public ProjectData.LanguageSpecResult toProto() {
+    return ProjectData.LanguageSpecResult.newBuilder()
+        .setSpec(spec.toProto())
+        .setTimestampMillis(timestampMillis)
+        .build();
   }
 
   public BuildLanguageSpec getSpec() {
@@ -41,5 +55,20 @@ public class LanguageSpecResult implements Serializable {
 
   public boolean shouldRecalculateSpec() {
     return System.currentTimeMillis() - getTimestampMillis() > ONE_DAY_IN_MILLISECONDS;
+  }
+
+  @Override
+  public void insert(ProjectData.SyncState.Builder builder) {
+    builder.setLanguageSpecResult(toProto());
+  }
+
+  static class Extractor implements SyncData.Extractor<LanguageSpecResult> {
+    @Nullable
+    @Override
+    public LanguageSpecResult extract(ProjectData.SyncState syncState) {
+      return syncState.hasLanguageSpecResult()
+          ? LanguageSpecResult.fromProto(syncState.getLanguageSpecResult())
+          : null;
+    }
   }
 }

@@ -15,26 +15,25 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import java.io.Serializable;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import java.util.Collection;
 import javax.annotation.Nullable;
 
 /** Ide info specific to java rules. */
-public final class JavaIdeInfo implements Serializable {
-  private static final long serialVersionUID = 3L;
-
-  private final Collection<LibraryArtifact> jars;
-  private final Collection<LibraryArtifact> generatedJars;
+public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeInfo> {
+  private final ImmutableList<LibraryArtifact> jars;
+  private final ImmutableList<LibraryArtifact> generatedJars;
   @Nullable private final LibraryArtifact filteredGenJar;
   @Nullable private final ArtifactLocation packageManifest;
   @Nullable private final ArtifactLocation jdepsFile;
   @Nullable private final String javaBinaryMainClass;
   @Nullable private final String testClass;
 
-  public JavaIdeInfo(
-      Collection<LibraryArtifact> jars,
-      Collection<LibraryArtifact> generatedJars,
+  private JavaIdeInfo(
+      ImmutableList<LibraryArtifact> jars,
+      ImmutableList<LibraryArtifact> generatedJars,
       @Nullable LibraryArtifact filteredGenJar,
       @Nullable ArtifactLocation packageManifest,
       @Nullable ArtifactLocation jdepsFile,
@@ -47,6 +46,31 @@ public final class JavaIdeInfo implements Serializable {
     this.filteredGenJar = filteredGenJar;
     this.javaBinaryMainClass = javaBinaryMainClass;
     this.testClass = testClass;
+  }
+
+  static JavaIdeInfo fromProto(IntellijIdeInfo.JavaIdeInfo proto) {
+    return new JavaIdeInfo(
+        ProtoWrapper.map(proto.getJarsList(), LibraryArtifact::fromProto),
+        ProtoWrapper.map(proto.getGeneratedJarsList(), LibraryArtifact::fromProto),
+        proto.hasFilteredGenJar() ? LibraryArtifact.fromProto(proto.getFilteredGenJar()) : null,
+        proto.hasPackageManifest() ? ArtifactLocation.fromProto(proto.getPackageManifest()) : null,
+        proto.hasJdeps() ? ArtifactLocation.fromProto(proto.getJdeps()) : null,
+        Strings.emptyToNull(proto.getMainClass()),
+        Strings.emptyToNull(proto.getTestClass()));
+  }
+
+  @Override
+  public IntellijIdeInfo.JavaIdeInfo toProto() {
+    IntellijIdeInfo.JavaIdeInfo.Builder builder =
+        IntellijIdeInfo.JavaIdeInfo.newBuilder()
+            .addAllJars(ProtoWrapper.mapToProtos(jars))
+            .addAllGeneratedJars(ProtoWrapper.mapToProtos(generatedJars));
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setFilteredGenJar, filteredGenJar);
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setPackageManifest, packageManifest);
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setJdeps, jdepsFile);
+    ProtoWrapper.setIfNotNull(builder::setMainClass, javaBinaryMainClass);
+    ProtoWrapper.setIfNotNull(builder::setTestClass, testClass);
+    return builder.build();
   }
 
   /**

@@ -18,23 +18,36 @@ package com.google.idea.blaze.java.sync.model;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.devtools.intellij.model.ProjectData;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import java.io.File;
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.concurrent.Immutable;
 
 /** Corresponds to an IntelliJ content entry. */
 @Immutable
-public class BlazeContentEntry implements Serializable {
-  private static final long serialVersionUID = 1L;
-
+public class BlazeContentEntry implements ProtoWrapper<ProjectData.BlazeContentEntry> {
   public final File contentRoot;
   public final ImmutableList<BlazeSourceDirectory> sources;
 
   public BlazeContentEntry(File contentRoot, ImmutableList<BlazeSourceDirectory> sources) {
     this.contentRoot = contentRoot;
     this.sources = sources;
+  }
+
+  public static BlazeContentEntry fromProto(ProjectData.BlazeContentEntry proto) {
+    return new BlazeContentEntry(
+        new File(proto.getContentRoot()),
+        ProtoWrapper.map(proto.getSourcesList(), BlazeSourceDirectory::fromProto));
+  }
+
+  @Override
+  public ProjectData.BlazeContentEntry toProto() {
+    return ProjectData.BlazeContentEntry.newBuilder()
+        .setContentRoot(contentRoot.getPath())
+        .addAllSources(ProtoWrapper.mapToProtos(sources))
+        .build();
   }
 
   @Override

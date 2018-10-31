@@ -48,6 +48,23 @@ java_proto_library(
 )
 
 proto_library(
+    name = "project_data_proto",
+    srcs = ["project_data.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":common_proto",
+        ":intellij_ide_info_proto",
+        "//third_party/bazel/src/main/protobuf:build_proto",
+    ],
+)
+
+java_proto_library(
+    name = "project_data_java_proto",
+    visibility = ["//visibility:public"],
+    deps = [":project_data_proto"],
+)
+
+proto_library(
     name = "intellij_plugin_target_deploy_info_proto",
     srcs = ["intellij_plugin_target_deploy_info.proto"],
 )

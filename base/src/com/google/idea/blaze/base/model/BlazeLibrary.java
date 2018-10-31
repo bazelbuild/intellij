@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.model;
 
 import com.google.common.base.Objects;
+import com.google.devtools.intellij.model.ProjectData;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
@@ -26,18 +28,20 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.URLUtil;
 import java.io.File;
-import java.io.Serializable;
 import javax.annotation.concurrent.Immutable;
 
 /** A model object for something that will map to an IntelliJ library. */
 @Immutable
-public abstract class BlazeLibrary implements Serializable {
-  private static final long serialVersionUID = 8L;
-
+public abstract class BlazeLibrary implements ProtoWrapper<ProjectData.BlazeLibrary> {
   public final LibraryKey key;
 
   protected BlazeLibrary(LibraryKey key) {
     this.key = key;
+  }
+
+  @Override
+  public ProjectData.BlazeLibrary toProto() {
+    return ProjectData.BlazeLibrary.newBuilder().setLibraryKey(key.toProto()).build();
   }
 
   @Override

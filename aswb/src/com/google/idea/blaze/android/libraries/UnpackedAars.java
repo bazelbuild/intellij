@@ -15,11 +15,14 @@
  */
 package com.google.idea.blaze.android.libraries;
 
+import static com.google.common.io.Files.asByteSource;
+
 import com.android.SdkConstants;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
@@ -114,8 +117,7 @@ public class UnpackedAars {
     }
 
     List<AarLibrary> aarLibraries =
-        libraries
-            .stream()
+        libraries.stream()
             .filter(library -> library instanceof AarLibrary)
             .map(library -> (AarLibrary) library)
             .collect(Collectors.toList());
@@ -217,8 +219,13 @@ public class UnpackedAars {
   }
 
   private static String cacheKeyInternal(File aar) {
-    int parentHash = aar.getParent().hashCode();
-    return FileUtil.getNameWithoutExtension(aar) + "_" + Integer.toHexString(parentHash);
+    long hash = aar.getParent().hashCode();
+    try {
+      hash = asByteSource(aar).hash(Hashing.farmHashFingerprint64()).asLong();
+    } catch (IOException e) {
+      logger.warn("Fail to calculate checksum of file " + aar, e);
+    }
+    return FileUtil.getNameWithoutExtension(aar) + "_" + Long.toHexString(hash);
   }
 
   private static File getCacheDir(BlazeImportSettings importSettings) {

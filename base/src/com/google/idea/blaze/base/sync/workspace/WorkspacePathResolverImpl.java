@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.common.collect.ImmutableList;
+import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import java.io.File;
@@ -23,12 +24,17 @@ import javax.annotation.Nullable;
 
 /** Uses the package path locations to resolve a workspace path. */
 public class WorkspacePathResolverImpl implements WorkspacePathResolver {
-  private static final long serialVersionUID = 3L;
-
   private final WorkspaceRoot workspaceRoot;
 
   public WorkspacePathResolverImpl(WorkspaceRoot workspaceRoot) {
     this.workspaceRoot = workspaceRoot;
+  }
+
+  @Override
+  public ProjectData.WorkspacePathResolver toProto() {
+    return ProjectData.WorkspacePathResolver.newBuilder()
+        .setWorkspaceRoot(workspaceRoot.toProto())
+        .build();
   }
 
   @Override
@@ -51,5 +57,12 @@ public class WorkspacePathResolverImpl implements WorkspacePathResolver {
   @Override
   public WorkspaceRoot findWorkspaceRoot(File absoluteFile) {
     return workspaceRoot.isInWorkspace(absoluteFile) ? workspaceRoot : null;
+  }
+
+  static class Extractor implements WorkspacePathResolver.Extractor {
+    @Override
+    public WorkspacePathResolverImpl extract(ProjectData.WorkspacePathResolver proto) {
+      return new WorkspacePathResolverImpl(WorkspaceRoot.fromProto(proto.getWorkspaceRoot()));
+    }
   }
 }

@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.android.sync.model;
 
+import com.android.SdkConstants;
+import com.android.ide.common.util.PathString;
+import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
@@ -24,9 +27,13 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.Library.ModifiableModel;
+import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import javax.annotation.concurrent.Immutable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A library corresponding to an AAR file. Has jars and resource directories.
@@ -37,7 +44,6 @@ import javax.annotation.concurrent.Immutable;
  */
 @Immutable
 public final class AarLibrary extends BlazeLibrary {
-  private static final long serialVersionUID = 1L;
   private static final Logger logger = Logger.getInstance(AarLibrary.class);
 
   public final LibraryArtifact libraryArtifact;
@@ -49,6 +55,24 @@ public final class AarLibrary extends BlazeLibrary {
     super(LibraryKey.fromArtifactLocation(aarArtifact));
     this.libraryArtifact = libraryArtifact;
     this.aarArtifact = aarArtifact;
+  }
+
+  static AarLibrary fromProto(ProjectData.BlazeLibrary proto) {
+    return new AarLibrary(
+        LibraryArtifact.fromProto(proto.getAarLibrary().getLibraryArtifact()),
+        ArtifactLocation.fromProto(proto.getAarLibrary().getAarArtifact()));
+  }
+
+  @Override
+  public ProjectData.BlazeLibrary toProto() {
+    return super.toProto()
+        .toBuilder()
+        .setAarLibrary(
+            ProjectData.AarLibrary.newBuilder()
+                .setLibraryArtifact(libraryArtifact.toProto())
+                .setAarArtifact(aarArtifact.toProto())
+                .build())
+        .build();
   }
 
   /**
@@ -69,5 +93,22 @@ public final class AarLibrary extends BlazeLibrary {
     }
     libraryModel.addRoot(pathToUrl(jar), OrderRootType.CLASSES);
     libraryModel.addRoot(pathToUrl(resourceDirectory), OrderRootType.CLASSES);
+  }
+
+  /** Get path to res folder according to CLASSES root of modifiable model */
+  @Nullable
+  public PathString getResFolder(Project project) {
+    Library aarLibrary =
+        ProjectLibraryTable.getInstance(project)
+            .getLibraryByName(this.key.getIntelliJLibraryName());
+    if (aarLibrary != null) {
+      VirtualFile[] files = aarLibrary.getModifiableModel().getFiles(OrderRootType.CLASSES);
+      for (VirtualFile file : files) {
+        if (file.isDirectory() && SdkConstants.FD_RES.equals(file.getName())) {
+          return new PathString(file.getPath());
+        }
+      }
+    }
+    return null;
   }
 }

@@ -20,20 +20,32 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
-import java.io.Serializable;
 import java.util.List;
 
 /** A key that uniquely identifies a target in the target map */
-public class TargetKey implements Serializable, Comparable<TargetKey> {
-  private static final long serialVersionUID = 3L;
-
+public final class TargetKey
+    implements ProtoWrapper<IntellijIdeInfo.TargetKey>, Comparable<TargetKey> {
   private final Label label;
   private final ImmutableList<String> aspectIds;
 
   private TargetKey(Label label, ImmutableList<String> aspectIds) {
     this.label = label;
     this.aspectIds = aspectIds;
+  }
+
+  public static TargetKey fromProto(IntellijIdeInfo.TargetKey proto) {
+    return new TargetKey(
+        Label.fromProto(proto.getLabel()), ImmutableList.copyOf(proto.getAspectIdsList()));
+  }
+
+  @Override
+  public IntellijIdeInfo.TargetKey toProto() {
+    return IntellijIdeInfo.TargetKey.newBuilder()
+        .setLabel(label.toProto())
+        .addAllAspectIds(aspectIds)
+        .build();
   }
 
   public Label getLabel() {

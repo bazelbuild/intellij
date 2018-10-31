@@ -164,8 +164,7 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
                 .addAll(projectViewSet.listItems(ExcludeLibrarySection.KEY))
                 .addAll(projectViewSet.listItems(ExcludedLibrarySection.KEY))
                 .build());
-    BlazeJavaSyncData syncData = new BlazeJavaSyncData(importResult, excludedLibraries);
-    syncStateBuilder.put(BlazeJavaSyncData.class, syncData);
+    syncStateBuilder.put(new BlazeJavaSyncData(importResult, excludedLibraries));
   }
 
   @Override

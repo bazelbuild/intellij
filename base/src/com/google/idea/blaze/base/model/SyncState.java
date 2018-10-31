@@ -16,27 +16,27 @@
 package com.google.idea.blaze.base.model;
 
 import com.google.common.collect.ImmutableMap;
-import java.io.Serializable;
-import java.util.Map;
+import com.google.devtools.intellij.model.ProjectData;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import javax.annotation.Nullable;
 
 /** Used to save arbitrary state with the sync task. */
-public class SyncState implements Serializable {
-  private static final long serialVersionUID = 1L;
-  private final ImmutableMap<String, Serializable> syncStateMap;
+public class SyncState implements ProtoWrapper<ProjectData.SyncState> {
+  private final ImmutableMap<Class<? extends SyncData>, SyncData<?>> syncStateMap;
 
   @SuppressWarnings("unchecked")
   @Nullable
-  public <T extends Serializable> T get(Class<T> klass) {
-    return (T) syncStateMap.get(klass.getName());
+  public <T extends SyncData<?>> T get(Class<T> klass) {
+    return (T) syncStateMap.get(klass);
   }
 
   /** Builder for a sync state */
   public static class Builder {
-    ImmutableMap.Builder<Class, Serializable> syncStateMap = ImmutableMap.builder();
+    ImmutableMap.Builder<Class<? extends SyncData>, SyncData<?>> syncStateMap =
+        ImmutableMap.builder();
 
-    public <K extends Serializable, V extends K> Builder put(Class<K> klass, V instance) {
-      syncStateMap.put(klass, instance);
+    public Builder put(SyncData<?> instance) {
+      syncStateMap.put(instance.getClass(), instance);
       return this;
     }
 
@@ -45,11 +45,18 @@ public class SyncState implements Serializable {
     }
   }
 
-  SyncState(ImmutableMap<Class, Serializable> syncStateMap) {
-    ImmutableMap.Builder<String, Serializable> extraProjectSyncStateMap = ImmutableMap.builder();
-    for (Map.Entry<Class, Serializable> entry : syncStateMap.entrySet()) {
-      extraProjectSyncStateMap.put(entry.getKey().getName(), entry.getValue());
-    }
-    this.syncStateMap = extraProjectSyncStateMap.build();
+  SyncState(ImmutableMap<Class<? extends SyncData>, SyncData<?>> syncStateMap) {
+    this.syncStateMap = syncStateMap;
+  }
+
+  static SyncState fromProto(ProjectData.SyncState proto) {
+    return new SyncState(SyncData.extract(proto));
+  }
+
+  @Override
+  public ProjectData.SyncState toProto() {
+    ProjectData.SyncState.Builder builder = ProjectData.SyncState.newBuilder();
+    syncStateMap.values().forEach(syncData -> syncData.insert(builder));
+    return builder.build();
   }
 }

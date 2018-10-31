@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.sync.model;
 
 import com.google.common.base.Objects;
+import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeLibrary;
@@ -32,13 +33,27 @@ import javax.annotation.concurrent.Immutable;
 /** An immutable reference to a .jar required by a rule. */
 @Immutable
 public final class BlazeJarLibrary extends BlazeLibrary {
-  private static final long serialVersionUID = 3L;
-
   public final LibraryArtifact libraryArtifact;
 
   public BlazeJarLibrary(LibraryArtifact libraryArtifact) {
     super(LibraryKey.fromArtifactLocation(libraryArtifact.jarForIntellijLibrary()));
     this.libraryArtifact = libraryArtifact;
+  }
+
+  public static BlazeJarLibrary fromProto(ProjectData.BlazeLibrary proto) {
+    return new BlazeJarLibrary(
+        LibraryArtifact.fromProto(proto.getBlazeJarLibrary().getLibraryArtifact()));
+  }
+
+  @Override
+  public ProjectData.BlazeLibrary toProto() {
+    return super.toProto()
+        .toBuilder()
+        .setBlazeJarLibrary(
+            ProjectData.BlazeJarLibrary.newBuilder()
+                .setLibraryArtifact(libraryArtifact.toProto())
+                .build())
+        .build();
   }
 
   @Override

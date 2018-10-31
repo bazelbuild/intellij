@@ -114,8 +114,7 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
               childContext.push(new TimingScope("ScalaWorkspaceImporter", EventType.Other));
               return blazeScalaWorkspaceImporter.importWorkspace();
             });
-    BlazeScalaSyncData syncData = new BlazeScalaSyncData(importResult);
-    syncStateBuilder.put(BlazeScalaSyncData.class, syncData);
+    syncStateBuilder.put(new BlazeScalaSyncData(importResult));
   }
 
   @Nullable

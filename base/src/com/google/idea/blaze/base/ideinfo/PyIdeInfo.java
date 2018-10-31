@@ -15,21 +15,49 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import java.io.Serializable;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.idea.blaze.base.model.primitives.Label;
+import javax.annotation.Nullable;
 
 /** Ide info specific to python rules. */
-public class PyIdeInfo implements Serializable {
-  private static final long serialVersionUID = 1L;
-
+public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> {
   private final ImmutableList<ArtifactLocation> sources;
+  @Nullable private final Label launcher;
 
-  public PyIdeInfo(ImmutableList<ArtifactLocation> sources) {
+  private PyIdeInfo(ImmutableList<ArtifactLocation> sources, @Nullable Label launcher) {
     this.sources = sources;
+    this.launcher = launcher;
+  }
+
+  static PyIdeInfo fromProto(IntellijIdeInfo.PyIdeInfo proto) {
+    String launcherString = Strings.emptyToNull(proto.getLauncher());
+    Label launcher = null;
+    if (launcherString != null) {
+      launcher = Label.createIfValid(launcherString);
+    }
+    return new PyIdeInfo(
+        ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto), launcher);
+  }
+
+  @Override
+  public IntellijIdeInfo.PyIdeInfo toProto() {
+    IntellijIdeInfo.PyIdeInfo.Builder builder =
+        IntellijIdeInfo.PyIdeInfo.newBuilder().addAllSources(ProtoWrapper.mapToProtos(sources));
+    if (launcher != null) {
+      builder.setLauncher(launcher.toString());
+    }
+    return builder.build();
   }
 
   public ImmutableList<ArtifactLocation> getSources() {
     return sources;
+  }
+
+  @Nullable
+  public Label getLauncher() {
+    return launcher;
   }
 
   public static Builder builder() {
@@ -39,19 +67,33 @@ public class PyIdeInfo implements Serializable {
   /** Builder for python rule info */
   public static class Builder {
     private final ImmutableList.Builder<ArtifactLocation> sources = ImmutableList.builder();
+    @Nullable Label launcher;
 
     public Builder addSources(Iterable<ArtifactLocation> sources) {
       this.sources.addAll(sources);
       return this;
     }
 
+    public Builder setLauncher(@Nullable String launcher) {
+      this.launcher = (launcher == null) ? null : Label.createIfValid(launcher);
+      return this;
+    }
+
     public PyIdeInfo build() {
-      return new PyIdeInfo(sources.build());
+      return new PyIdeInfo(sources.build(), launcher);
     }
   }
 
   @Override
   public String toString() {
-    return "PyIdeInfo{" + "\n" + "  sources=" + getSources() + "\n" + '}';
+    StringBuilder s = new StringBuilder();
+    s.append("PyIdeInfo{\n");
+    s.append("  sources=").append(getSources()).append("\n");
+    Label l = getLauncher();
+    if (l != null) {
+      s.append("  launcher=").append(l).append("\n");
+    }
+    s.append("}");
+    return s.toString();
   }
 }

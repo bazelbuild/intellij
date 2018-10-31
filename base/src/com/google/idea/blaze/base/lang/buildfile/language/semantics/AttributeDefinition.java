@@ -18,35 +18,19 @@ package com.google.idea.blaze.base.lang.buildfile.language.semantics;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build;
-import java.io.Serializable;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import javax.annotation.Nullable;
 
 /** Simple implementation of AttributeDefinition, from build.proto */
-public class AttributeDefinition implements Comparable<AttributeDefinition>, Serializable {
-
-  public static AttributeDefinition fromProto(Build.AttributeDefinition attr) {
-    return new AttributeDefinition(
-        attr.getName(),
-        attr.getType(),
-        attr.getMandatory(),
-        attr.hasDocumentation() ? attr.getDocumentation() : null,
-        getAllowedRuleClasses(attr));
-  }
-
-  @Nullable
-  private static ImmutableList<String> getAllowedRuleClasses(Build.AttributeDefinition attr) {
-    if (!attr.hasAllowedRuleClasses()) {
-      return null;
-    }
-    return ImmutableList.copyOf(attr.getAllowedRuleClasses().getAllowedRuleClassList());
-  }
+public class AttributeDefinition
+    implements ProtoWrapper<Build.AttributeDefinition>, Comparable<AttributeDefinition> {
 
   private final String name;
   private final Build.Attribute.Discriminator type;
   private final boolean mandatory;
-  private final String documentation;
+  @Nullable private final String documentation;
 
-  // the names of rules allowed in this attribute, or null if any rules are allowed.
+  // the names of rules allowed in this attribute, or null if all rules are allowed.
   @Nullable private final ImmutableList<String> allowedRuleClasses;
 
   @VisibleForTesting
@@ -54,14 +38,39 @@ public class AttributeDefinition implements Comparable<AttributeDefinition>, Ser
       String name,
       Build.Attribute.Discriminator type,
       boolean mandatory,
-      String documentation,
+      @Nullable String documentation,
       @Nullable ImmutableList<String> allowedRuleClasses) {
-
     this.name = name;
     this.type = type;
     this.mandatory = mandatory;
     this.documentation = documentation;
     this.allowedRuleClasses = allowedRuleClasses;
+  }
+
+  static AttributeDefinition fromProto(Build.AttributeDefinition proto) {
+    return new AttributeDefinition(
+        proto.getName(),
+        proto.getType(),
+        proto.getMandatory(),
+        proto.hasDocumentation() ? proto.getDocumentation() : null,
+        proto.hasAllowedRuleClasses()
+            ? ImmutableList.copyOf(proto.getAllowedRuleClasses().getAllowedRuleClassList())
+            : null);
+  }
+
+  @Override
+  public Build.AttributeDefinition toProto() {
+    Build.AttributeDefinition.Builder builder =
+        Build.AttributeDefinition.newBuilder().setName(name).setType(type).setMandatory(mandatory);
+    ProtoWrapper.setIfNotNull(builder::setDocumentation, documentation);
+    if (allowedRuleClasses != null) {
+      builder.setAllowedRuleClasses(
+          Build.AllowedRuleClassInfo.newBuilder()
+              .addAllAllowedRuleClass(allowedRuleClasses)
+              .setPolicy(
+                  Build.AllowedRuleClassInfo.AllowedRuleClasses.ANY)); // unnecessary, but mandatory
+    }
+    return builder.build();
   }
 
   public String getName() {
@@ -76,6 +85,7 @@ public class AttributeDefinition implements Comparable<AttributeDefinition>, Ser
     return mandatory;
   }
 
+  @Nullable
   public String getDocumentation() {
     return documentation;
   }

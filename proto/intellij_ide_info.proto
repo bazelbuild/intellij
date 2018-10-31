@@ -100,6 +100,7 @@ message AndroidAarIdeInfo {
 
 message PyIdeInfo {
   repeated ArtifactLocation sources = 1;
+  string launcher = 2;
 }
 
 message GoIdeInfo {

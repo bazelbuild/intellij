@@ -15,15 +15,15 @@
  */
 package com.google.idea.blaze.android.sync.model;
 
-import java.io.Serializable;
+import com.google.devtools.intellij.model.ProjectData;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
+import com.google.idea.blaze.base.model.SyncData;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /** Sync data for the Android plugin. */
 @Immutable
-public class BlazeAndroidSyncData implements Serializable {
-  private static final long serialVersionUID = 1L;
-
+public class BlazeAndroidSyncData implements SyncData<ProjectData.BlazeAndroidSyncData> {
   public final BlazeAndroidImportResult importResult;
   @Nullable public final AndroidSdkPlatform androidSdkPlatform;
 
@@ -31,5 +31,36 @@ public class BlazeAndroidSyncData implements Serializable {
       BlazeAndroidImportResult importResult, @Nullable AndroidSdkPlatform androidSdkPlatform) {
     this.importResult = importResult;
     this.androidSdkPlatform = androidSdkPlatform;
+  }
+
+  private static BlazeAndroidSyncData fromProto(ProjectData.BlazeAndroidSyncData proto) {
+    return new BlazeAndroidSyncData(
+        BlazeAndroidImportResult.fromProto(proto.getImportResult()),
+        proto.hasAndroidSdkPlatform()
+            ? AndroidSdkPlatform.fromProto(proto.getAndroidSdkPlatform())
+            : null);
+  }
+
+  @Override
+  public ProjectData.BlazeAndroidSyncData toProto() {
+    ProjectData.BlazeAndroidSyncData.Builder builder =
+        ProjectData.BlazeAndroidSyncData.newBuilder().setImportResult(importResult.toProto());
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setAndroidSdkPlatform, androidSdkPlatform);
+    return builder.build();
+  }
+
+  @Override
+  public void insert(ProjectData.SyncState.Builder builder) {
+    builder.setBlazeAndroidSyncData(toProto());
+  }
+
+  static class Extractor implements SyncData.Extractor<BlazeAndroidSyncData> {
+    @Nullable
+    @Override
+    public BlazeAndroidSyncData extract(ProjectData.SyncState syncState) {
+      return syncState.hasBlazeAndroidSyncData()
+          ? BlazeAndroidSyncData.fromProto(syncState.getBlazeAndroidSyncData())
+          : null;
+    }
   }
 }

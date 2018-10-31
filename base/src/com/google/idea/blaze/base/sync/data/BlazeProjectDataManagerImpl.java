@@ -15,18 +15,14 @@
  */
 package com.google.idea.blaze.base.sync.data;
 
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
-import com.google.idea.blaze.base.util.SerializationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /** Stores a cache of blaze project data and issues any side effects when that data is updated. */
@@ -71,15 +67,7 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
   private synchronized BlazeProjectData loadProject(BlazeImportSettings importSettings)
       throws IOException {
     File file = getCacheFile(project, importSettings);
-
-    List<ClassLoader> classLoaders = Lists.newArrayList();
-    for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-      classLoaders.add(syncPlugin.getClass().getClassLoader());
-    }
-    classLoaders.add(getClass().getClassLoader());
-    classLoaders.add(Thread.currentThread().getContextClassLoader());
-
-    blazeProjectData = (BlazeProjectData) SerializationUtil.loadFromDisk(file, classLoaders);
+    blazeProjectData = BlazeProjectData.loadFromDisk(file);
     return blazeProjectData;
   }
 
@@ -94,7 +82,7 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
               (ProgressIndicator indicator) -> {
                 try {
                   File file = getCacheFile(project, importSettings);
-                  SerializationUtil.saveToDisk(file, blazeProjectData);
+                  blazeProjectData.saveToDisk(file);
                 } catch (IOException e) {
                   logger.error(
                       "Could not save cache data file to disk. Please resync project. Error: "
@@ -105,6 +93,6 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
   }
 
   private static File getCacheFile(Project project, BlazeImportSettings importSettings) {
-    return new File(BlazeDataStorage.getProjectCacheDir(project, importSettings), "cache.dat");
+    return new File(BlazeDataStorage.getProjectCacheDir(project, importSettings), "cache.dat.gz");
   }
 }

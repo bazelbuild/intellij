@@ -1,3 +1,7 @@
+v2018.10.22
+===========
+* Bug fixes and internal cleanup.
+
 v2018.10.08
 ===========
 * Support auto-syncing on proto file changes (Bazel Settings > Automatically re-sync when proto files change)

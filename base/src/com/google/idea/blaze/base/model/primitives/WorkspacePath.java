@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.model.primitives;
 
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import java.io.Serializable;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
@@ -27,7 +28,8 @@ import javax.annotation.concurrent.Immutable;
  * names.
  */
 @Immutable
-public class WorkspacePath implements Serializable {
+public class WorkspacePath implements ProtoWrapper<String>, Serializable {
+  // still Serializable as part of ProjectViewSet
   public static final long serialVersionUID = 1L;
 
   /** Silently returns null if this is not a valid workspace path. */
@@ -127,5 +129,14 @@ public class WorkspacePath implements Serializable {
   @Override
   public int hashCode() {
     return relativePath.hashCode();
+  }
+
+  public static WorkspacePath fromProto(String proto) {
+    return new WorkspacePath(proto);
+  }
+
+  @Override
+  public String toProto() {
+    return relativePath;
   }
 }

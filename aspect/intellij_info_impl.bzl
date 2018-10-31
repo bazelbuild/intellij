@@ -192,13 +192,20 @@ def update_set_in_dict(input_dict, key, other_set):
 
 ##### Builders for individual parts of the aspect output
 
-def collect_py_info(target, ctx, ide_info, ide_info_file, output_groups):
+def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates Python-specific output groups, returns false if not a Python target."""
     if not hasattr(target, "py"):
         return False
 
+    py_semantics = getattr(semantics, "py", None)
+    if py_semantics:
+        py_launcher = py_semantics.get_launcher(ctx)
+    else:
+        py_launcher = None
+
     ide_info["py_ide_info"] = struct_omit_none(
         sources = sources_from_target(ctx),
+        launcher = py_launcher,
     )
     transitive_sources = target.py.transitive_sources
 
@@ -783,7 +790,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     ide_info["test_info"] = build_test_info(ctx)
 
     handled = False
-    handled = collect_py_info(target, ctx, ide_info, ide_info_file, output_groups) or handled
+    handled = collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled

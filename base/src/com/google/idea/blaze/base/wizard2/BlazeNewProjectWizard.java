@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
+import com.intellij.openapi.options.CancelledConfigurationException;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
@@ -144,7 +145,9 @@ abstract class BlazeNewProjectWizard extends AbstractWizard<ProjectImportWizardS
       step.validateAndUpdateModel();
       return true;
     } catch (ConfigurationException e) {
-      Messages.showErrorDialog(myContentPanel, e.getMessage(), e.getTitle());
+      if (!(e instanceof CancelledConfigurationException)) {
+        Messages.showErrorDialog(myContentPanel, e.getMessage(), e.getTitle());
+      }
       return false;
     }
   }

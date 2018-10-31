@@ -64,6 +64,8 @@
     <FastBuildAspectStrategyProvider implementation="com.google.idea.blaze.java.fastbuild.BazelFastBuildAspectStrategyProvider"/>
     <FastBuildTestEnvironmentCreatorFactory implementation="com.google.idea.blaze.java.run.fastbuild.BazelFastBuildTestEnvironmentCreatorFactory"/>
     <SyncStatusContributor implementation="com.google.idea.blaze.java.syncstatus.JavaSyncStatusContributor"/>
+    <SyncDataExtractor implementation="com.google.idea.blaze.java.sync.model.BlazeJavaSyncData$Extractor"/>
+    <SyncDataExtractor implementation="com.google.idea.blaze.java.sync.jdeps.JdepsState$Extractor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

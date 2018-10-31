@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.model.primitives;
 
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import java.io.Serializable;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -26,7 +27,9 @@ import javax.annotation.Nullable;
  * <p>TargetExpression is a generalization of {@link Label} to include wildcards for finding all
  * packages beneath some root, and/or all targets within a package.
  */
-public class TargetExpression implements Serializable, Comparable<TargetExpression> {
+public class TargetExpression
+    implements ProtoWrapper<String>, Comparable<TargetExpression>, Serializable {
+  // still Serializable as part of ProjectViewSet
   public static final long serialVersionUID = 1L;
 
   protected static final Pattern VALID_REPO_NAME = Pattern.compile("@[\\w\\-.]*");
@@ -150,5 +153,10 @@ public class TargetExpression implements Serializable, Comparable<TargetExpressi
     return colonIndex >= 0
         ? targetPattern.substring(prefixLength, colonIndex)
         : targetPattern.substring(prefixLength);
+  }
+
+  @Override
+  public String toProto() {
+    return expression;
   }
 }

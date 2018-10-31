@@ -23,7 +23,7 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public final class Label extends TargetExpression {
   private static final Logger logger = Logger.getInstance(Label.class);
-
+  // still Serializable as part of ProjectViewSet
   public static final long serialVersionUID = 2L;
 
   /** Silently returns null if this is not a valid Label */
@@ -143,5 +143,9 @@ public final class Label extends TargetExpression {
   @Nullable
   public static String validatePackagePath(String path) {
     return PackagePathValidator.validatePackageName(path);
+  }
+
+  public static Label fromProto(String proto) {
+    return new Label(proto);
   }
 }

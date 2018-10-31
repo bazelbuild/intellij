@@ -26,7 +26,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.aspect.FastBuildInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.sync.aspects.ArtifactLocationFromProtobuf;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
@@ -76,10 +75,10 @@ public abstract class FastBuildBlazeData {
     checkState(!Strings.isNullOrEmpty(proto.getWorkspaceName()), MISSING_WORKSPACE_NAME_ERROR);
     FastBuildBlazeData.Builder builder =
         FastBuildBlazeData.builder()
-            .setLabel(Label.create(proto.getLabel()))
+            .setLabel(Label.fromProto(proto.getLabel()))
             .setWorkspaceName(proto.getWorkspaceName())
             .setDependencies(
-                proto.getDependenciesList().stream().map(Label::create).collect(toSet()));
+                proto.getDependenciesList().stream().map(Label::fromProto).collect(toSet()));
     if (proto.hasAndroidInfo()) {
       builder.setAndroidInfo(AndroidInfo.fromProto(proto.getAndroidInfo()));
     }
@@ -106,12 +105,9 @@ public abstract class FastBuildBlazeData {
     }
 
     static AndroidInfo fromProto(FastBuildInfo.AndroidInfo proto) {
-      ArtifactLocation aar =
-          proto.hasAar() ? ArtifactLocationFromProtobuf.makeArtifactLocation(proto.getAar()) : null;
+      ArtifactLocation aar = proto.hasAar() ? ArtifactLocation.fromProto(proto.getAar()) : null;
       ArtifactLocation manifest =
-          proto.hasMergedManifest()
-              ? ArtifactLocationFromProtobuf.makeArtifactLocation(proto.getMergedManifest())
-              : null;
+          proto.hasMergedManifest() ? ArtifactLocation.fromProto(proto.getMergedManifest()) : null;
       return create(aar, manifest);
     }
   }
@@ -145,16 +141,10 @@ public abstract class FastBuildBlazeData {
 
     static JavaInfo fromProto(FastBuildInfo.JavaInfo proto) {
       Set<ArtifactLocation> sources =
-          proto
-              .getSourcesList()
-              .stream()
-              .map(ArtifactLocationFromProtobuf::makeArtifactLocation)
-              .collect(toSet());
+          proto.getSourcesList().stream().map(ArtifactLocation::fromProto).collect(toSet());
       Set<ArtifactLocation> annotationProcessorClasspath =
-          proto
-              .getAnnotationProcessorClasspathList()
-              .stream()
-              .map(ArtifactLocationFromProtobuf::makeArtifactLocation)
+          proto.getAnnotationProcessorClasspathList().stream()
+              .map(ArtifactLocation::fromProto)
               .collect(toSet());
       return create(
           sources,
@@ -182,7 +172,7 @@ public abstract class FastBuildBlazeData {
 
     static JavaToolchainInfo fromProto(FastBuildInfo.JavaToolchainInfo javaToolchainInfo) {
       return create(
-          ArtifactLocationFromProtobuf.makeArtifactLocation(javaToolchainInfo.getJavacJar()),
+          ArtifactLocation.fromProto(javaToolchainInfo.getJavacJar()),
           javaToolchainInfo.getSourceVersion(),
           javaToolchainInfo.getTargetVersion());
     }

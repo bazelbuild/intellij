@@ -16,14 +16,18 @@
 package com.google.idea.blaze.base.projectview.section;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 /** Glob matcher. */
-public class Glob implements Serializable {
+public class Glob implements ProtoWrapper<String>, Serializable {
+  // still Serializable as part of ProjectViewSet
   private static final long serialVersionUID = 1L;
 
   private String pattern;
@@ -34,8 +38,7 @@ public class Glob implements Serializable {
   }
 
   /** A set of globs */
-  public static class GlobSet implements Serializable {
-    private static final long serialVersionUID = 1L;
+  public static class GlobSet {
 
     private final Collection<Glob> globs = Lists.newArrayList();
 
@@ -58,6 +61,14 @@ public class Glob implements Serializable {
         }
       }
       return false;
+    }
+
+    public static GlobSet fromProto(List<String> proto) {
+      return new Glob.GlobSet(ProtoWrapper.map(proto, Glob::fromProto));
+    }
+
+    public ImmutableList<String> toProto() {
+      return ProtoWrapper.mapToProtos(globs);
     }
   }
 
@@ -88,5 +99,14 @@ public class Glob implements Serializable {
   @Override
   public int hashCode() {
     return Objects.hashCode(pattern);
+  }
+
+  public static Glob fromProto(String proto) {
+    return new Glob(proto);
+  }
+
+  @Override
+  public String toProto() {
+    return pattern;
   }
 }

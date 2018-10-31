@@ -45,14 +45,18 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.util.List;
@@ -80,7 +84,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   private MockBlazeInfoRunner blazeInfoData;
   private MockBlazeIdeInterface blazeIdeInterface;
   private MockEventLoggingService eventLogger;
-  private ProjectModuleMocker moduleMocker;
+  @Nullable private ProjectModuleMocker moduleMocker; // this will be null for heavy test cases
 
   protected ErrorCollector errorCollector;
 
@@ -92,7 +96,9 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     blazeInfoData = new MockBlazeInfoRunner();
     blazeIdeInterface = new MockBlazeIdeInterface();
     eventLogger = new MockEventLoggingService(thisClassDisposable);
-    moduleMocker = new ProjectModuleMocker(getProject(), thisClassDisposable);
+    if (isLightTestCase()) {
+      moduleMocker = new ProjectModuleMocker(getProject(), thisClassDisposable);
+    }
     registerApplicationService(BlazeInfoRunner.class, blazeInfoData);
     registerApplicationService(BlazeIdeInterface.class, blazeIdeInterface);
 
@@ -118,13 +124,22 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
 
   /** The workspace content entries created during sync */
   protected ImmutableList<ContentEntry> getWorkspaceContentEntries() {
-    return moduleMocker.getWorkspaceContentEntries();
+    if (moduleMocker != null) {
+      return moduleMocker.getWorkspaceContentEntries();
+    }
+
+    ModuleManager moduleManager = ModuleManager.getInstance(getProject());
+    Module workspaceModule = moduleManager.findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
+    assertThat(workspaceModule).isNotNull();
+
+    ContentEntry[] entries = ModuleRootManager.getInstance(workspaceModule).getContentEntries();
+    return ImmutableList.copyOf(entries);
   }
 
   /** Search the workspace module's {@link ContentEntry}s for one with the given file. */
   @Nullable
   protected ContentEntry findContentEntry(VirtualFile root) {
-    for (ContentEntry entry : moduleMocker.getWorkspaceContentEntries()) {
+    for (ContentEntry entry : getWorkspaceContentEntries()) {
       if (root.equals(entry.getFile())) {
         return entry;
       }
