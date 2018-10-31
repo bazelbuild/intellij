@@ -22,6 +22,7 @@
         implementation="com.google.idea.blaze.scala.run.smrunner.BlazeScalaTestEventsHandler"/>
     <JavaTestCaseIdentifier
         implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaSpecs2TestExprConfigurationProducer$Identifier"/>
+    <SyncDataExtractor implementation="com.google.idea.blaze.scala.sync.model.BlazeScalaSyncData$Extractor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

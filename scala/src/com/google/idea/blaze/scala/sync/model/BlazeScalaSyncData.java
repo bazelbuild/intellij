@@ -15,19 +15,50 @@
  */
 package com.google.idea.blaze.scala.sync.model;
 
-import java.io.Serializable;
+import com.google.devtools.intellij.model.ProjectData;
+import com.google.idea.blaze.base.model.SyncData;
+import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
+import javax.annotation.Nullable;
 
 /** Sync data for the scala plugin. */
-public class BlazeScalaSyncData implements Serializable {
-  private static final long serialVersionUID = 1L;
-
+public class BlazeScalaSyncData implements SyncData<ProjectData.BlazeJavaSyncData> {
   private final BlazeScalaImportResult importResult;
 
   public BlazeScalaSyncData(BlazeScalaImportResult importResult) {
     this.importResult = importResult;
   }
 
+  /**
+   * Reusing {@link ProjectData.BlazeJavaSyncData} since {@link BlazeScalaImportResult} is a subset
+   * of {@link BlazeJavaImportResult}.
+   */
+  private static BlazeScalaSyncData fromProto(ProjectData.BlazeJavaSyncData proto) {
+    return new BlazeScalaSyncData(BlazeScalaImportResult.fromProto(proto.getImportResult()));
+  }
+
+  @Override
+  public ProjectData.BlazeJavaSyncData toProto() {
+    return ProjectData.BlazeJavaSyncData.newBuilder()
+        .setImportResult(importResult.toProto())
+        .build();
+  }
+
   public BlazeScalaImportResult getImportResult() {
     return importResult;
+  }
+
+  @Override
+  public void insert(ProjectData.SyncState.Builder builder) {
+    builder.setBlazeScalaSyncData(toProto());
+  }
+
+  static class Extractor implements SyncData.Extractor<BlazeScalaSyncData> {
+    @Nullable
+    @Override
+    public BlazeScalaSyncData extract(ProjectData.SyncState syncState) {
+      return syncState.hasBlazeScalaSyncData()
+          ? BlazeScalaSyncData.fromProto(syncState.getBlazeScalaSyncData())
+          : null;
+    }
   }
 }

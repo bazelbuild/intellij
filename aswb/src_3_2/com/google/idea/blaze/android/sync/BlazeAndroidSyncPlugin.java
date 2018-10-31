@@ -173,8 +173,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
               childContext.push(new TimingScope("AndroidWorkspaceImporter", EventType.Other));
               return workspaceImporter.importWorkspace();
             });
-    BlazeAndroidSyncData syncData = new BlazeAndroidSyncData(importResult, androidSdkPlatform);
-    syncStateBuilder.put(BlazeAndroidSyncData.class, syncData);
+    syncStateBuilder.put(new BlazeAndroidSyncData(importResult, androidSdkPlatform));
   }
 
   @Override

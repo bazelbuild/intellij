@@ -16,8 +16,6 @@
 package com.google.idea.blaze.base.sync.aspects;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -83,7 +81,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.NavigatableAdapter;
 import java.io.File;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -103,14 +100,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
   private static final Logger logger = Logger.getInstance(BlazeIdeInterfaceAspectsImpl.class);
 
-  static class State implements Serializable {
-    private static final long serialVersionUID = 15L;
-    ImmutableMap<File, Long> fileState = null;
-    BiMap<File, TargetKey> fileToTargetMapKey = HashBiMap.create();
-    WorkspaceLanguageSettings workspaceLanguageSettings;
-    String aspectStrategyName;
-  }
-
   @Override
   public IdeResult updateTargetMap(
       Project project,
@@ -127,7 +116,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       @Nullable SyncState previousSyncState,
       boolean mergeWithOldState,
       @Nullable TargetMap oldTargetMap) {
-    State prevState = previousSyncState != null ? previousSyncState.get(State.class) : null;
+    BlazeIdeInterfaceState prevState =
+        previousSyncState != null ? previousSyncState.get(BlazeIdeInterfaceState.class) : null;
 
     // If the language filter has changed, redo everything from scratch
     if (prevState != null
@@ -201,7 +191,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .build();
 
     Ref<TargetMap> targetMapReference = Ref.create(oldTargetMap);
-    State state =
+    BlazeIdeInterfaceState state =
         updateState(
             project,
             context,
@@ -218,7 +208,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     if (state == null) {
       return new IdeResult(oldTargetMap, BuildResult.FATAL_ERROR);
     }
-    syncStateBuilder.put(State.class, state);
+    syncStateBuilder.put(state);
     return new IdeResult(targetMapReference.get(), ideInfoResult.buildResult);
   }
 
@@ -335,10 +325,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   }
 
   @Nullable
-  static State updateState(
+  static BlazeIdeInterfaceState updateState(
       Project project,
       BlazeContext parentContext,
-      @Nullable State prevState,
+      @Nullable BlazeIdeInterfaceState prevState,
       ImmutableMap<File, Long> fileState,
       BlazeConfigurationHandler configHandler,
       WorkspaceLanguageSettings workspaceLanguageSettings,
@@ -348,10 +338,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       List<File> removedFiles,
       boolean mergeWithOldState,
       Ref<TargetMap> targetMapReference) {
-    Result<State> result =
+    Result<BlazeIdeInterfaceState> result =
         Scope.push(
             parentContext,
-            (ScopedFunction<Result<State>>)
+            (ScopedFunction<Result<BlazeIdeInterfaceState>>)
                 context -> {
                   context.push(new TimingScope("UpdateTargetMap", EventType.Other));
 
@@ -369,7 +359,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                     nextFileState = fileStateBuilder.build();
                   }
 
-                  State state = new State();
+                  BlazeIdeInterfaceState.Builder state = BlazeIdeInterfaceState.builder();
                   state.fileState = nextFileState;
                   state.workspaceLanguageSettings = workspaceLanguageSettings;
                   state.aspectStrategyName = aspectStrategy.getName();
@@ -471,7 +461,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   warnIgnoredLanguages(project, context, ignoredLanguages);
 
                   targetMapReference.set(new TargetMap(ImmutableMap.copyOf(targetMap)));
-                  return Result.of(state);
+                  return Result.of(state.build());
                 });
 
     if (result.error != null) {
@@ -487,14 +477,15 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       ImportRoots importRoots,
       IntellijIdeInfo.TargetIdeInfo message,
       Set<LanguageClass> ignoredLanguages) {
-    Kind kind = IdeInfoFromProtobuf.getKind(message);
+    Kind kind = Kind.fromProto(message);
     if (kind == null) {
       return null;
     }
     if (languageSettings.isLanguageActive(kind.languageClass)) {
-      return IdeInfoFromProtobuf.makeTargetIdeInfo(message);
+      TargetIdeInfo targetIdeInfo = TargetIdeInfo.fromProto(message);
+      return targetIdeInfo.getKey() != null ? targetIdeInfo : null;
     }
-    TargetKey key = IdeInfoFromProtobuf.getKey(message);
+    TargetKey key = message.hasKey() ? TargetKey.fromProto(message.getKey()) : null;
     if (key != null && importRoots.importAsSource(key.getLabel())) {
       ignoredLanguages.add(kind.languageClass);
     }

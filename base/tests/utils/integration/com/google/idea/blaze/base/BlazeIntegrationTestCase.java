@@ -88,13 +88,10 @@ public abstract class BlazeIntegrationTestCase {
 
   @Before
   public final void setUp() throws Exception {
-    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
-        factory.createLightFixtureBuilder(LightCodeInsightFixtureTestCase.JAVA_8);
-    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    testFixture = factory.createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
+    testFixture = createTestFixture();
     testFixture.setUp();
-    fileSystem = new TestFileSystem(getProject(), testFixture.getTempDirFixture());
+    fileSystem =
+        new TestFileSystem(getProject(), testFixture.getTempDirFixture(), isLightTestCase());
 
     runWriteAction(
         () -> {
@@ -115,8 +112,6 @@ public abstract class BlazeIntegrationTestCase {
                 buildSystem()));
 
     registerApplicationService(
-        FileOperationProvider.class, new TestFileSystem.MockFileOperationProvider());
-    registerApplicationService(
         InputStreamProvider.class,
         file -> {
           VirtualFile vf = fileSystem.findFile(file.getPath());
@@ -125,8 +120,13 @@ public abstract class BlazeIntegrationTestCase {
           }
           return vf.getInputStream();
         });
-    registerApplicationService(
-        VirtualFileSystemProvider.class, new TestFileSystem.TempVirtualFileSystemProvider());
+
+    if (isLightTestCase()) {
+      registerApplicationService(
+          FileOperationProvider.class, new TestFileSystem.MockFileOperationProvider());
+      registerApplicationService(
+          VirtualFileSystemProvider.class, new TestFileSystem.TempVirtualFileSystemProvider());
+    }
 
     String requiredPlugins = System.getProperty("idea.required.plugins.id");
     if (requiredPlugins != null) {
@@ -151,6 +151,30 @@ public abstract class BlazeIntegrationTestCase {
   private static void runWriteAction(Runnable writeAction) {
     EdtTestUtil.runInEdtAndWait(
         () -> ApplicationManager.getApplication().runWriteAction(writeAction));
+  }
+
+  private CodeInsightTestFixture createTestFixture() {
+    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+
+    if (isLightTestCase()) {
+      TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
+          factory.createLightFixtureBuilder(LightCodeInsightFixtureTestCase.JAVA_8);
+      IdeaProjectTestFixture lightFixture = fixtureBuilder.getFixture();
+      return factory.createCodeInsightFixture(lightFixture, new LightTempDirTestFixtureImpl(true));
+    }
+
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
+        factory.createFixtureBuilder("test-project");
+    return factory.createCodeInsightFixture(fixtureBuilder.getFixture());
+  }
+
+  /**
+   * Override to back this test with a heavy test fixture, which will actually modify files on disk
+   * instead of keeping everything in memory like a light test fixture does. This can hurt test
+   * performance, though we aren't sure to what extent (b/117435202).
+   */
+  protected boolean isLightTestCase() {
+    return true;
   }
 
   /** Override to run tests with bazel specified as the project's build system. */

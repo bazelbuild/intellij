@@ -21,6 +21,7 @@ import com.intellij.dvcs.branch.DvcsMultiRootBranchConfig;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.Condition;
 import java.util.function.Function;
@@ -49,5 +50,32 @@ public abstract class DvcsBranchPopupAdapter<RepoT extends Repository>
   protected String getCommonName(Function<RepoT, String> nameSupplier) {
     return MultiRootBranches.getCommonName(
         myRepositoryManager.getRepositories(), nameSupplier::apply);
+  }
+
+  @Override
+  protected final void fillPopupWithCurrentRepositoryActions(
+      LightActionGroup popupGroup, @Nullable LightActionGroup actions) {
+    fillPopupWithCurrentRepositoryActions(
+        new DvcsPopupActionGroup(popupGroup), new DvcsPopupActionGroup(actions));
+  }
+
+  protected abstract void fillPopupWithCurrentRepositoryActions(
+      DvcsPopupActionGroup popupGroup, @Nullable DvcsPopupActionGroup actions);
+
+  // #api182: method changed to use LightActionGroup in 2018.3
+  @Override
+  protected void fillWithCommonRepositoryActions(
+      LightActionGroup popupGroup, AbstractRepositoryManager<RepoT> repositoryManager) {
+    fillWithCommonRepositoryActions(new DvcsPopupActionGroup(popupGroup), repositoryManager);
+  }
+
+  protected abstract void fillWithCommonRepositoryActions(
+      DvcsPopupActionGroup popupGroup, AbstractRepositoryManager<RepoT> repositoryManager);
+
+  // #api182: method changed to return LightActionGroup in 2018.3
+  @Override
+  protected final LightActionGroup createRepositoriesActions() {
+    // only supporting a single repository
+    return new LightActionGroup(false);
   }
 }

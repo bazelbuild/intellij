@@ -15,25 +15,36 @@
  */
 package com.google.idea.common.experiments;
 
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+
+import com.google.common.collect.ImmutableMap;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Properties;
 
 final class SystemPropertyExperimentLoader extends HashingExperimentLoader {
   private static final String BLAZE_EXPERIMENT_OVERRIDE = "blaze.experiment.";
 
+  // Cache the properties at startup to avoid some synchronization inside the Properties object, in
+  // case we do experiment checking on a hot code path. There's no reason to think people will be
+  // changing these at runtime anyway.
+  private static final ImmutableMap<String, String> properties = cacheSystemProperties();
+
   @Override
   public Map<String, String> getUnhashedExperiments() {
-    return System.getProperties()
-        .stringPropertyNames()
-        .stream()
-        .filter(name -> name.startsWith(BLAZE_EXPERIMENT_OVERRIDE))
-        .collect(
-            Collectors.toMap(
-                name -> name.substring(BLAZE_EXPERIMENT_OVERRIDE.length()), System::getProperty));
+    return properties;
   }
 
   @Override
   public void initialize() {
     // Nothing to do.
+  }
+
+  private static ImmutableMap<String, String> cacheSystemProperties() {
+    Properties properties = System.getProperties();
+    return properties.stringPropertyNames().stream()
+        .filter(name -> name.startsWith(BLAZE_EXPERIMENT_OVERRIDE))
+        .collect(
+            toImmutableMap(
+                name -> name.substring(BLAZE_EXPERIMENT_OVERRIDE.length()), System::getProperty));
   }
 }

@@ -41,15 +41,19 @@ import javax.annotation.Nullable;
 public class TestFileSystem {
   private final Project project;
   private final TempDirTestFixture tempDirTestFixture;
+  private final boolean isLight;
 
-  public TestFileSystem(Project project, TempDirTestFixture tempDirTestFixture) {
+  public TestFileSystem(Project project, TempDirTestFixture tempDirTestFixture, boolean isLight) {
     this.project = project;
     this.tempDirTestFixture = tempDirTestFixture;
+    this.isLight = isLight;
   }
 
   /** Returns the root directory of the file system */
   public String getRootDir() {
-    return LightPlatformTestCase.getSourceRoot().getPath();
+    return isLight
+        ? LightPlatformTestCase.getSourceRoot().getPath()
+        : tempDirTestFixture.getTempDirPath();
   }
 
   /** Creates an empty file in the temp file system */

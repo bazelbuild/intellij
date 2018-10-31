@@ -15,19 +15,17 @@
  */
 package com.google.idea.blaze.base.model.primitives;
 
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
-import java.io.Serializable;
 import javax.annotation.Nullable;
 
 /** Represents a workspace root */
-public class WorkspaceRoot implements Serializable {
-  public static final long serialVersionUID = 1L;
-
+public class WorkspaceRoot implements ProtoWrapper<String> {
   private final File directory;
 
   public WorkspaceRoot(File directory) {
@@ -144,5 +142,14 @@ public class WorkspaceRoot implements Serializable {
   @Override
   public int hashCode() {
     return directory.hashCode();
+  }
+
+  public static WorkspaceRoot fromProto(String proto) {
+    return new WorkspaceRoot(new File(proto));
+  }
+
+  @Override
+  public String toProto() {
+    return directory.getPath();
   }
 }

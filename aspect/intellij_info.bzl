@@ -27,10 +27,20 @@ def get_go_import_path(ctx):
         import_path += "/" + ctx.label.name
     return import_path
 
+def get_py_launcher(ctx):
+    """Returns the python launcher for a given rule."""
+    attr = ctx.rule.attr
+    if hasattr(attr, "_launcher") and attr._launcher != None:
+        return str(attr._launcher.label)
+    return None
+
 semantics = struct(
     tool_label = tool_label,
     go = struct(
         get_import_path = get_go_import_path,
+    ),
+    py = struct(
+        get_launcher = get_py_launcher,
     ),
 )
 

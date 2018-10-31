@@ -15,22 +15,38 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
-import java.io.Serializable;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import javax.annotation.Nullable;
 
 /** Represents the java_toolchain class */
-public class JavaToolchainIdeInfo implements Serializable {
-  private static final long serialVersionUID = 2L;
-
+public final class JavaToolchainIdeInfo
+    implements ProtoWrapper<IntellijIdeInfo.JavaToolchainIdeInfo> {
   private final String sourceVersion;
   private final String targetVersion;
   @Nullable private final ArtifactLocation javacJar;
 
-  public JavaToolchainIdeInfo(
+  private JavaToolchainIdeInfo(
       String sourceVersion, String targetVersion, @Nullable ArtifactLocation javacJar) {
     this.sourceVersion = sourceVersion;
     this.targetVersion = targetVersion;
     this.javacJar = javacJar;
+  }
+
+  static JavaToolchainIdeInfo fromProto(IntellijIdeInfo.JavaToolchainIdeInfo proto) {
+    return new JavaToolchainIdeInfo(
+        proto.getSourceVersion(),
+        proto.getTargetVersion(),
+        proto.hasJavacJar() ? ArtifactLocation.fromProto(proto.getJavacJar()) : null);
+  }
+
+  @Override
+  public IntellijIdeInfo.JavaToolchainIdeInfo toProto() {
+    IntellijIdeInfo.JavaToolchainIdeInfo.Builder builder =
+        IntellijIdeInfo.JavaToolchainIdeInfo.newBuilder()
+            .setSourceVersion(sourceVersion)
+            .setTargetVersion(targetVersion);
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setJavacJar, javacJar);
+    return builder.build();
   }
 
   public String getSourceVersion() {

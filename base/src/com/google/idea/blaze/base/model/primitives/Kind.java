@@ -19,12 +19,14 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import java.util.Arrays;
 import java.util.Collection;
 import javax.annotation.Nullable;
 
 /** Wrapper around a string for a blaze kind (android_library, android_test...) */
-public enum Kind {
+public enum Kind implements ProtoWrapper<String> {
   ANDROID_BINARY("android_binary", LanguageClass.ANDROID, RuleType.BINARY),
   ANDROID_LIBRARY("android_library", LanguageClass.ANDROID, RuleType.LIBRARY),
   ANDROID_TEST("android_test", LanguageClass.ANDROID, RuleType.TEST),
@@ -191,5 +193,19 @@ public enum Kind {
   private static boolean isTestSuite(String ruleName) {
     // handle plain test_suite targets and macros producing a test/test_suite
     return "test_suite".equals(ruleName) || ruleName.endsWith("test_suites");
+  }
+
+  @Nullable
+  public static Kind fromProto(IntellijIdeInfo.TargetIdeInfo proto) {
+    Kind kind = Kind.fromString(proto.getKindString());
+    if (kind == null && proto.hasJavaIdeInfo()) {
+      kind = Kind.GENERIC_JAVA_PROVIDER;
+    }
+    return kind;
+  }
+
+  @Override
+  public String toProto() {
+    return kind;
   }
 }

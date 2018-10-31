@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -62,7 +63,7 @@ public class ManifestParser {
     Manifest manifest = manifestFileMap.get(file);
     // Note: The manifest may be invalid if the underlying VirtualFile is invalidated.
     // Once invalid, it cannot become valid again, and must be reloaded.
-    if (manifest != null && manifest.isValid()) {
+    if (manifest != null && isValid(manifest)) {
       return manifest;
     }
     final VirtualFile virtualFile;
@@ -80,10 +81,13 @@ public class ManifestParser {
     return manifest;
   }
 
+  private static boolean isValid(Manifest manifest) {
+    return ReadAction.compute(() -> manifest.isValid());
+  }
+
   public void refreshManifests(Collection<File> manifestFiles) {
     List<VirtualFile> manifestVirtualFiles =
-        manifestFiles
-            .stream()
+        manifestFiles.stream()
             .map(file -> VfsUtil.findFileByIoFile(file, false))
             .filter(Objects::nonNull)
             .collect(Collectors.toList());

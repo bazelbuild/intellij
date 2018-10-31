@@ -65,7 +65,7 @@ public abstract class BlazeSelectOptionControl<T extends BlazeWizardOption> {
     canvas.add(new JSeparator());
 
     JPanel content = new JPanel(new VerticalLayout(12));
-    content.setBorder(Borders.empty(20, 100, 0, 0));
+    content.setBorder(Borders.empty(20, 20, 0, 0));
     JScrollPane scrollPane = new JBScrollPane(content);
     scrollPane.setBorder(BorderFactory.createEmptyBorder());
     canvas.add(scrollPane);

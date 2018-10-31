@@ -33,6 +33,7 @@ import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.android.sync.model.BlazeResourceLibrary;
+import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.VfsUtils;
@@ -45,6 +46,7 @@ import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -57,6 +59,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
@@ -160,18 +165,37 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
   @Override
   public GradleCoordinate getRegisteredDependency(GradleCoordinate coordinate)
       throws DependencyManagementException {
-    return null;
+
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(module.getProject()).getBlazeProjectData();
+    if (projectData == null) {
+      return null;
+    }
+
+    TargetKey resourceModuleKey =
+        AndroidResourceModuleRegistry.getInstance(module.getProject()).getTargetKey(module);
+    if (resourceModuleKey == null) {
+      // TODO: decide what constitutes a registered dependency for the .workspace module
+      return null;
+    }
+
+    TargetIdeInfo resourceModuleTarget = projectData.getTargetMap().get(resourceModuleKey);
+    if (resourceModuleTarget == null) {
+      return null;
+    }
+
+    Set<TargetKey> firstLevelDeps =
+        resourceModuleTarget.getDependencies().stream()
+            .map(Dependency::getTargetKey)
+            .collect(Collectors.toSet());
+
+    return locateArtifactsFor(coordinate).anyMatch(firstLevelDeps::contains) ? coordinate : null;
   }
 
   @Nullable
   @Override
   public GradleCoordinate getResolvedDependency(GradleCoordinate coordinate)
       throws DependencyManagementException {
-    // External dependencies can be imported into the project via many routes (e.g. maven_jar,
-    // local_repository,
-    // custom repo paths, etc). Within the project these dependencies are all referenced by their
-    // TargetKey.
-    // Here we use a locator to convert coordinates to TargetKey labels in order to find them.
 
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(module.getProject()).getBlazeProjectData();
@@ -180,14 +204,38 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
       return null;
     }
 
-    boolean projectHasDependency =
-        MavenArtifactLocator.forBuildSystem(Blaze.getBuildSystem(module.getProject())).stream()
-            .map(locator -> locator.labelFor(coordinate))
-            .filter(Objects::nonNull)
-            .anyMatch(
-                label -> projectData.getTargetMap().contains(TargetKey.forPlainTarget(label)));
+    TargetKey resourceModuleKey =
+        AndroidResourceModuleRegistry.getInstance(module.getProject()).getTargetKey(module);
+    TransitiveDependencyMap transitiveDependencyMap =
+        TransitiveDependencyMap.getInstance(module.getProject());
 
-    return projectHasDependency ? coordinate : null;
+    boolean moduleHasDependency =
+        locateArtifactsFor(coordinate)
+            .anyMatch(
+                artifactKey ->
+                    resourceModuleKey == null
+                        // If this isn't a resource module, then it must be the .workspace module,
+                        // which transitively depends on everything in the project. So we can just
+                        // check to see if the artifact is included in the project by checking the
+                        // keys of the target map.
+                        ? projectData.getTargetMap().contains(artifactKey)
+                        // Otherwise, we actually need to search the transitive dependencies of the
+                        // resource module.
+                        : transitiveDependencyMap.hasTransitiveDependency(
+                            resourceModuleKey, artifactKey));
+
+    return moduleHasDependency ? coordinate : null;
+  }
+
+  private Stream<TargetKey> locateArtifactsFor(GradleCoordinate coordinate) {
+    // External dependencies can be imported into the project via many routes (e.g. maven_jar,
+    // local_repository, custom repo paths, etc). Within the project these dependencies are all
+    // referenced by their TargetKey. Here we use a locator to convert coordinates to TargetKey
+    // labels in order to find them.
+    return MavenArtifactLocator.forBuildSystem(Blaze.getBuildSystem(module.getProject())).stream()
+        .map(locator -> locator.labelFor(coordinate))
+        .filter(Objects::nonNull)
+        .map(TargetKey::forPlainTarget);
   }
 
   @Override

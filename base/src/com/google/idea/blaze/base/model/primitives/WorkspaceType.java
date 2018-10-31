@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.model.primitives;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 
 /**
  * Workspace types.
@@ -23,7 +24,7 @@ import com.google.common.collect.ImmutableSet;
  * <p>If the user doesn't specify a workspace, she gets the supported workspace type with lowest
  * enum ordinal.
  */
-public enum WorkspaceType {
+public enum WorkspaceType implements ProtoWrapper<String> {
   ANDROID("android", LanguageClass.ANDROID, LanguageClass.JAVA),
   C("c", LanguageClass.C),
   JAVA("java", LanguageClass.JAVA),
@@ -60,6 +61,11 @@ public enum WorkspaceType {
 
   @Override
   public String toString() {
+    return name;
+  }
+
+  @Override
+  public String toProto() {
     return name;
   }
 }

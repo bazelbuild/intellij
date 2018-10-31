@@ -18,7 +18,7 @@ package com.google.idea.sdkcompat.vcs;
 import com.intellij.icons.AllIcons.Nodes;
 import javax.swing.Icon;
 
-/** #api181: icons moved in 2018.3. */
+/** #api182: icons moved in 2018.3. */
 public class DvcsIcons {
   public static final Icon FavoriteOnHover = Nodes.Favorite;
   public static final Icon NotFavoriteOnHover = Nodes.NotFavoriteOnHover;

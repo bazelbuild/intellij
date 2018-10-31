@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.ideinfo;
 
 /** Tag constants used by our rules. */
-public class Tags {
+public final class Tags {
   /** Forces import of the target output. */
   public static final String TARGET_TAG_IMPORT_TARGET_OUTPUT = "intellij-import-target-output";
 

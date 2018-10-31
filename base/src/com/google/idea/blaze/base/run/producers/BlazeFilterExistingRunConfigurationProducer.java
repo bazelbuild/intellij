@@ -104,7 +104,7 @@ public class BlazeFilterExistingRunConfigurationProducer
     }
     List<Location<?>> selectedElements = SmRunnerUtils.getSelectedSmRunnerTreeElements(context);
     if (selectedElements.isEmpty()) {
-      return null;
+      return Optional.empty();
     }
     Optional<BlazeTestEventsHandler> testEventsHandler =
         BlazeTestEventsHandler.getHandlerForTarget(context.getProject(), target);

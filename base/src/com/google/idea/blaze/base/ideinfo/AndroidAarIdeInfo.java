@@ -15,16 +15,23 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
-import java.io.Serializable;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 
 /** aar_import ide info */
-public class AndroidAarIdeInfo implements Serializable {
-  private static final long serialVersionUID = 1L;
-
+public final class AndroidAarIdeInfo implements ProtoWrapper<IntellijIdeInfo.AndroidAarIdeInfo> {
   private final ArtifactLocation aar;
 
   public AndroidAarIdeInfo(ArtifactLocation aar) {
     this.aar = aar;
+  }
+
+  static AndroidAarIdeInfo fromProto(IntellijIdeInfo.AndroidAarIdeInfo proto) {
+    return new AndroidAarIdeInfo(ArtifactLocation.fromProto(proto.getAar()));
+  }
+
+  @Override
+  public IntellijIdeInfo.AndroidAarIdeInfo toProto() {
+    return IntellijIdeInfo.AndroidAarIdeInfo.newBuilder().setAar(aar.toProto()).build();
   }
 
   public ArtifactLocation getAar() {

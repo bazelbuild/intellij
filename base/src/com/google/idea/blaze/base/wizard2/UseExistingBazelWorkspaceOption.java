@@ -64,7 +64,7 @@ public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceO
     canvas.add(new JSeparator());
 
     JPanel content = new JPanel(new VerticalLayout(12));
-    content.setBorder(Borders.empty(20, 100, 0, 0));
+    content.setBorder(Borders.empty(20, 20, 0, 0));
 
     JComponent box =
         UiUtil.createHorizontalBox(

@@ -15,16 +15,25 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
-import java.io.Serializable;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 
 /** android_sdk ide info */
-public class AndroidSdkIdeInfo implements Serializable {
-  private static final long serialVersionUID = 1L;
-
+public final class AndroidSdkIdeInfo implements ProtoWrapper<IntellijIdeInfo.AndroidSdkIdeInfo> {
   private final ArtifactLocation androidJar;
 
-  public AndroidSdkIdeInfo(ArtifactLocation androidJar) {
+  private AndroidSdkIdeInfo(ArtifactLocation androidJar) {
     this.androidJar = androidJar;
+  }
+
+  static AndroidSdkIdeInfo fromProto(IntellijIdeInfo.AndroidSdkIdeInfo proto) {
+    return new AndroidSdkIdeInfo(ArtifactLocation.fromProto(proto.getAndroidJar()));
+  }
+
+  @Override
+  public IntellijIdeInfo.AndroidSdkIdeInfo toProto() {
+    return IntellijIdeInfo.AndroidSdkIdeInfo.newBuilder()
+        .setAndroidJar(androidJar.toProto())
+        .build();
   }
 
   public ArtifactLocation getAndroidJar() {

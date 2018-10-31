@@ -15,31 +15,28 @@
  */
 package com.google.idea.blaze.java.sync.model;
 
-import com.google.common.collect.ImmutableCollection;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.LibraryKey;
-import java.io.Serializable;
 import javax.annotation.Nullable;
-import javax.annotation.concurrent.Immutable;
 
 /** The result of a blaze import operation. */
-@Immutable
-public class BlazeJavaImportResult implements Serializable {
-  private static final long serialVersionUID = 4L;
-
+public class BlazeJavaImportResult implements ProtoWrapper<ProjectData.BlazeJavaImportResult> {
   public final ImmutableList<BlazeContentEntry> contentEntries;
   public final ImmutableMap<LibraryKey, BlazeJarLibrary> libraries;
-  public final ImmutableCollection<ArtifactLocation> buildOutputJars;
+  public final ImmutableList<ArtifactLocation> buildOutputJars;
   public final ImmutableSet<ArtifactLocation> javaSourceFiles;
   @Nullable public final String sourceVersion;
 
   public BlazeJavaImportResult(
       ImmutableList<BlazeContentEntry> contentEntries,
       ImmutableMap<LibraryKey, BlazeJarLibrary> libraries,
-      ImmutableCollection<ArtifactLocation> buildOutputJars,
+      ImmutableList<ArtifactLocation> buildOutputJars,
       ImmutableSet<ArtifactLocation> javaSourceFiles,
       @Nullable String sourceVersion) {
     this.contentEntries = contentEntries;
@@ -47,5 +44,30 @@ public class BlazeJavaImportResult implements Serializable {
     this.buildOutputJars = buildOutputJars;
     this.javaSourceFiles = javaSourceFiles;
     this.sourceVersion = sourceVersion;
+  }
+
+  public static BlazeJavaImportResult fromProto(ProjectData.BlazeJavaImportResult proto) {
+    return new BlazeJavaImportResult(
+        ProtoWrapper.map(proto.getContentEntriesList(), BlazeContentEntry::fromProto),
+        ProtoWrapper.map(
+            proto.getLibrariesMap(), LibraryKey::fromProto, BlazeJarLibrary::fromProto),
+        ProtoWrapper.map(proto.getBuildOutputJarsList(), ArtifactLocation::fromProto),
+        ProtoWrapper.map(
+            proto.getJavaSourceFilesList(),
+            ArtifactLocation::fromProto,
+            ImmutableSet.toImmutableSet()),
+        Strings.emptyToNull(proto.getSourceVersion()));
+  }
+
+  @Override
+  public ProjectData.BlazeJavaImportResult toProto() {
+    ProjectData.BlazeJavaImportResult.Builder builder =
+        ProjectData.BlazeJavaImportResult.newBuilder()
+            .addAllContentEntries(ProtoWrapper.mapToProtos(contentEntries))
+            .putAllLibraries(ProtoWrapper.mapToProtos(libraries))
+            .addAllBuildOutputJars(ProtoWrapper.mapToProtos(buildOutputJars))
+            .addAllJavaSourceFiles(ProtoWrapper.mapToProtos(javaSourceFiles));
+    ProtoWrapper.setIfNotNull(builder::setSourceVersion, sourceVersion);
+    return builder.build();
   }
 }

@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -161,34 +162,38 @@ public class TransitiveDependencyMapTest extends BlazeTestCase {
     Label diamondCC = Label.create("//com/google/example/diamond:cc");
     Label diamondCCC = Label.create("//com/google/example/diamond:ccc");
     return TargetMapBuilder.builder()
-        .addTarget(TargetIdeInfo.builder().setLabel(simpleA).addDependency(simpleB))
-        .addTarget(TargetIdeInfo.builder().setLabel(simpleB))
-        .addTarget(TargetIdeInfo.builder().setLabel(chainA).addDependency(chainB))
-        .addTarget(TargetIdeInfo.builder().setLabel(chainB).addDependency(chainC))
-        .addTarget(TargetIdeInfo.builder().setLabel(chainC).addDependency(chainD))
-        .addTarget(TargetIdeInfo.builder().setLabel(chainD))
+        .addTarget(mockTargetIdeInfoBuilder().setLabel(simpleA).addDependency(simpleB))
+        .addTarget(mockTargetIdeInfoBuilder().setLabel(simpleB))
+        .addTarget(mockTargetIdeInfoBuilder().setLabel(chainA).addDependency(chainB))
+        .addTarget(mockTargetIdeInfoBuilder().setLabel(chainB).addDependency(chainC))
+        .addTarget(mockTargetIdeInfoBuilder().setLabel(chainC).addDependency(chainD))
+        .addTarget(mockTargetIdeInfoBuilder().setLabel(chainD))
         .addTarget(
-            TargetIdeInfo.builder()
+            mockTargetIdeInfoBuilder()
                 .setLabel(diamondA)
                 .addDependency(diamondB)
                 .addDependency(diamondBB)
                 .addDependency(diamondBBB))
-        .addTarget(TargetIdeInfo.builder().setLabel(diamondB).addDependency(diamondC))
+        .addTarget(mockTargetIdeInfoBuilder().setLabel(diamondB).addDependency(diamondC))
         .addTarget(
-            TargetIdeInfo.builder()
+            mockTargetIdeInfoBuilder()
                 .setLabel(diamondBB)
                 .addDependency(diamondB)
                 .addDependency(diamondC)
                 .addDependency(diamondCC))
         .addTarget(
-            TargetIdeInfo.builder()
+            mockTargetIdeInfoBuilder()
                 .setLabel(diamondBBB)
                 .addDependency(diamondC)
                 .addDependency(diamondCC)
                 .addDependency(diamondCCC))
-        .addTarget(TargetIdeInfo.builder().setLabel(diamondC))
-        .addTarget(TargetIdeInfo.builder().setLabel(diamondCC))
-        .addTarget(TargetIdeInfo.builder().setLabel(diamondCCC))
+        .addTarget(mockTargetIdeInfoBuilder().setLabel(diamondC))
+        .addTarget(mockTargetIdeInfoBuilder().setLabel(diamondCC))
+        .addTarget(mockTargetIdeInfoBuilder().setLabel(diamondCCC))
         .build();
+  }
+
+  private static TargetIdeInfo.Builder mockTargetIdeInfoBuilder() {
+    return TargetIdeInfo.builder().setKind(Kind.JAVA_LIBRARY);
   }
 }

@@ -19,13 +19,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
-import java.io.Serializable;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import javax.annotation.Nullable;
 
 /** Represents a jar artifact. */
-public final class LibraryArtifact implements Serializable {
-  private static final long serialVersionUID = 3L;
-
+public final class LibraryArtifact implements ProtoWrapper<IntellijIdeInfo.LibraryArtifact> {
   @Nullable private final ArtifactLocation interfaceJar;
   @Nullable private final ArtifactLocation classJar;
   private final ImmutableList<ArtifactLocation> sourceJars;
@@ -37,10 +35,30 @@ public final class LibraryArtifact implements Serializable {
     if (interfaceJar == null && classJar == null) {
       throw new IllegalArgumentException("Interface and class jars cannot both be null.");
     }
-
     this.interfaceJar = interfaceJar;
     this.classJar = classJar;
     this.sourceJars = checkNotNull(sourceJars);
+  }
+
+  public static LibraryArtifact fromProto(IntellijIdeInfo.LibraryArtifact proto) {
+    return new LibraryArtifact(
+        proto.hasInterfaceJar() ? ArtifactLocation.fromProto(proto.getInterfaceJar()) : null,
+        proto.hasJar() ? ArtifactLocation.fromProto(proto.getJar()) : null,
+        !proto.getSourceJarsList().isEmpty()
+            ? ProtoWrapper.map(proto.getSourceJarsList(), ArtifactLocation::fromProto)
+            : proto.hasSourceJar()
+                ? ImmutableList.of(ArtifactLocation.fromProto(proto.getSourceJar()))
+                : ImmutableList.of());
+  }
+
+  @Override
+  public IntellijIdeInfo.LibraryArtifact toProto() {
+    IntellijIdeInfo.LibraryArtifact.Builder builder =
+        IntellijIdeInfo.LibraryArtifact.newBuilder()
+            .addAllSourceJars(ProtoWrapper.mapToProtos(sourceJars));
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setInterfaceJar, interfaceJar);
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setJar, classJar);
+    return builder.build();
   }
 
   @Nullable

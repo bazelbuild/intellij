@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.java.sync.jdeps;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
@@ -41,7 +40,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -52,13 +50,6 @@ import javax.annotation.Nullable;
 /** Reads jdeps from the ide info result. */
 public class JdepsFileReader {
   private static final Logger logger = Logger.getInstance(JdepsFileReader.class);
-
-  static class JdepsState implements Serializable {
-    private static final long serialVersionUID = 4L;
-    private ImmutableMap<File, Long> fileState = null;
-    private Map<File, TargetKey> fileToTargetMap = Maps.newHashMap();
-    private Map<TargetKey, List<String>> targetToJdeps = Maps.newHashMap();
-  }
 
   private static class Result {
     File file;
@@ -92,8 +83,8 @@ public class JdepsFileReader {
     if (jdepsState == null) {
       return null;
     }
-    syncStateBuilder.put(JdepsState.class, jdepsState);
-    return targetKey -> jdepsState.targetToJdeps.get(targetKey);
+    syncStateBuilder.put(jdepsState);
+    return jdepsState.targetToJdeps::get;
   }
 
   private JdepsState doLoadJdepsFiles(
@@ -101,7 +92,7 @@ public class JdepsFileReader {
       ArtifactLocationDecoder artifactLocationDecoder,
       @Nullable JdepsState oldState,
       Iterable<TargetIdeInfo> targetsToLoad) {
-    JdepsState state = new JdepsState();
+    JdepsState.Builder state = JdepsState.builder();
     if (oldState != null) {
       state.targetToJdeps = Maps.newHashMap(oldState.targetToJdeps);
       state.fileToTargetMap = Maps.newHashMap(oldState.fileToTargetMap);
@@ -191,7 +182,7 @@ public class JdepsFileReader {
       logger.error(e);
       return null;
     }
-    return state;
+    return state.build();
   }
 
   private static <T> ListenableFuture<T> submit(Callable<T> callable) {

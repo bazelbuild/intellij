@@ -15,18 +15,19 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
-import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Ide info specific to android rules. */
-public final class AndroidIdeInfo implements Serializable {
-  private static final long serialVersionUID = 6L;
-
-  private final Collection<AndroidResFolder> resources;
+public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.AndroidIdeInfo> {
+  private final ImmutableList<AndroidResFolder> resources;
   @Nullable private final ArtifactLocation manifest;
   @Nullable private final LibraryArtifact idlJar;
   @Nullable private final LibraryArtifact resourceJar;
@@ -35,8 +36,8 @@ public final class AndroidIdeInfo implements Serializable {
   private final boolean generateResourceClass;
   @Nullable private final Label legacyResources;
 
-  public AndroidIdeInfo(
-      Collection<AndroidResFolder> resources,
+  private AndroidIdeInfo(
+      List<AndroidResFolder> resources,
       @Nullable String resourceJavaPackage,
       boolean generateResourceClass,
       @Nullable ArtifactLocation manifest,
@@ -44,7 +45,7 @@ public final class AndroidIdeInfo implements Serializable {
       @Nullable LibraryArtifact resourceJar,
       boolean hasIdlSources,
       @Nullable Label legacyResources) {
-    this.resources = resources;
+    this.resources = ImmutableList.copyOf(resources);
     this.resourceJavaPackage = resourceJavaPackage;
     this.generateResourceClass = generateResourceClass;
     this.manifest = manifest;
@@ -54,7 +55,38 @@ public final class AndroidIdeInfo implements Serializable {
     this.legacyResources = legacyResources;
   }
 
-  public Collection<AndroidResFolder> getResFolders() {
+  static AndroidIdeInfo fromProto(IntellijIdeInfo.AndroidIdeInfo proto) {
+    return new AndroidIdeInfo(
+        !proto.getResFoldersList().isEmpty()
+            ? ProtoWrapper.map(proto.getResFoldersList(), AndroidResFolder::fromProto)
+            : ProtoWrapper.map(proto.getResourcesList(), AndroidResFolder::fromProto),
+        Strings.emptyToNull(proto.getJavaPackage()),
+        proto.getGenerateResourceClass(),
+        proto.hasManifest() ? ArtifactLocation.fromProto(proto.getManifest()) : null,
+        proto.hasIdlJar() ? LibraryArtifact.fromProto(proto.getIdlJar()) : null,
+        proto.hasResourceJar() ? LibraryArtifact.fromProto(proto.getResourceJar()) : null,
+        proto.getHasIdlSources(),
+        !Strings.isNullOrEmpty(proto.getLegacyResources())
+            ? Label.create(proto.getLegacyResources())
+            : null);
+  }
+
+  @Override
+  public IntellijIdeInfo.AndroidIdeInfo toProto() {
+    IntellijIdeInfo.AndroidIdeInfo.Builder builder =
+        IntellijIdeInfo.AndroidIdeInfo.newBuilder()
+            .addAllResFolders(ProtoWrapper.mapToProtos(resources))
+            .setGenerateResourceClass(generateResourceClass)
+            .setHasIdlSources(hasIdlSources);
+    ProtoWrapper.setIfNotNull(builder::setJavaPackage, resourceJavaPackage);
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setManifest, manifest);
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setIdlJar, idlJar);
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setResourceJar, resourceJar);
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setLegacyResources, legacyResources);
+    return builder.build();
+  }
+
+  public List<AndroidResFolder> getResFolders() {
     return resources;
   }
 
@@ -102,7 +134,7 @@ public final class AndroidIdeInfo implements Serializable {
 
   /** Builder for android rule */
   public static class Builder {
-    private Collection<AndroidResFolder> resources = Lists.newArrayList();
+    private List<AndroidResFolder> resources = Lists.newArrayList();
     private ArtifactLocation manifest;
     private LibraryArtifact idlJar;
     private LibraryArtifact resourceJar;

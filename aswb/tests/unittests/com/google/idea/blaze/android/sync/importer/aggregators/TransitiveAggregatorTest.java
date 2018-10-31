@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -47,19 +48,19 @@ public class TransitiveAggregatorTest extends BlazeTestCase {
         new TargetKeyAggregator(
             TargetMapBuilder.builder()
                 .addTarget(
-                    TargetIdeInfo.builder()
+                    mockTargetIdeInfoBuilder()
                         .setLabel("//:foo")
                         .addDependency("//:bar")
                         .addDependency("//:baz")
                         .addDependency("//:qux")
                         .build())
                 .addTarget(
-                    TargetIdeInfo.builder().setLabel("//:bar").addDependency("//:baz").build())
+                    mockTargetIdeInfoBuilder().setLabel("//:bar").addDependency("//:baz").build())
                 .addTarget(
-                    TargetIdeInfo.builder().setLabel("//:baz").addDependency("//:qux").build())
-                .addTarget(TargetIdeInfo.builder().setLabel("//:qux").build())
+                    mockTargetIdeInfoBuilder().setLabel("//:baz").addDependency("//:qux").build())
+                .addTarget(mockTargetIdeInfoBuilder().setLabel("//:qux").build())
                 .addTarget(
-                    TargetIdeInfo.builder()
+                    mockTargetIdeInfoBuilder()
                         .setLabel("//:unrelated")
                         .addDependency("//:qux")
                         .build())
@@ -80,7 +81,7 @@ public class TransitiveAggregatorTest extends BlazeTestCase {
     TargetMapBuilder targetMapBuilder = TargetMapBuilder.builder();
     // Put the targets with more dependencies first so we don't cheat with a partially filled map.
     for (int i = 99; i >= 0; --i) {
-      TargetIdeInfo.Builder targetIdeInfoBuilder = TargetIdeInfo.builder().setLabel("//:t" + i);
+      TargetIdeInfo.Builder targetIdeInfoBuilder = mockTargetIdeInfoBuilder().setLabel("//:t" + i);
       for (int j = i - 1; j >= 0; --j) {
         targetIdeInfoBuilder.addDependency("//:t" + j);
       }
@@ -108,8 +109,10 @@ public class TransitiveAggregatorTest extends BlazeTestCase {
   public void testAggregateCyclicDependencyTerminates() {
     new TargetKeyAggregator(
         TargetMapBuilder.builder()
-            .addTarget(TargetIdeInfo.builder().setLabel("//:foo").addDependency("//:bar").build())
-            .addTarget(TargetIdeInfo.builder().setLabel("//:bar").addDependency("//:foo").build())
+            .addTarget(
+                mockTargetIdeInfoBuilder().setLabel("//:foo").addDependency("//:bar").build())
+            .addTarget(
+                mockTargetIdeInfoBuilder().setLabel("//:bar").addDependency("//:foo").build())
             .build());
   }
 
@@ -121,7 +124,7 @@ public class TransitiveAggregatorTest extends BlazeTestCase {
         new TargetKeyAggregator(
             TargetMapBuilder.builder()
                 .addTarget(
-                    TargetIdeInfo.builder().setLabel("//:foo").addDependency("//:bar").build())
+                    mockTargetIdeInfoBuilder().setLabel("//:foo").addDependency("//:bar").build())
                 .build());
     assertThat(aggregator.get("//:foo")).containsExactly("//:foo");
     assertThat(aggregator.get("//:bar")).isNull();
@@ -158,5 +161,9 @@ public class TransitiveAggregatorTest extends BlazeTestCase {
       ++reduceCount;
       return ImmutableSet.copyOf(Iterables.concat(value, dependencyValue));
     }
+  }
+
+  private static TargetIdeInfo.Builder mockTargetIdeInfoBuilder() {
+    return TargetIdeInfo.builder().setKind(Kind.JAVA_LIBRARY);
   }
 }

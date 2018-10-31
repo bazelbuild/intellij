@@ -68,9 +68,7 @@ class BlazeSelectBuildSystemBinaryStep extends ProjectImportWizardStep {
   @Override
   public void validateAndUpdateModel() throws ConfigurationException {
     BlazeValidationResult result = control.validate();
-    if (!result.success) {
-      throw new ConfigurationException(result.error.getError());
-    }
+    result.throwConfigurationExceptionIfNotSuccess();
   }
 
   @Override

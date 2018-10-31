@@ -15,18 +15,31 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TestInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
-import java.io.Serializable;
 import javax.annotation.Nullable;
 
 /** Test info. */
-public class TestIdeInfo implements Serializable {
-  private static final long serialVersionUID = 1L;
-
+public final class TestIdeInfo implements ProtoWrapper<TestInfo> {
   private final TestSize testSize;
 
-  public TestIdeInfo(TestSize testSize) {
+  private TestIdeInfo(TestSize testSize) {
     this.testSize = testSize;
+  }
+
+  static TestIdeInfo fromProto(TestInfo proto) {
+
+    TestSize testSize = TestSize.fromString(proto.getSize());
+    if (testSize == null) {
+      testSize = TestSize.DEFAULT_RULE_TEST_SIZE;
+    }
+    return new TestIdeInfo(testSize);
+  }
+
+  @Override
+  public TestInfo toProto() {
+    return IntellijIdeInfo.TestInfo.newBuilder().setSize(testSize.toProto()).build();
   }
 
   public TestSize getTestSize() {

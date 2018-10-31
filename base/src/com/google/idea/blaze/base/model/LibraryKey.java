@@ -16,16 +16,14 @@
 package com.google.idea.blaze.base.model;
 
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
-import java.io.Serializable;
 import javax.annotation.concurrent.Immutable;
 
 /** Uniquely identifies a library as imported into IntellJ. */
 @Immutable
-public final class LibraryKey implements Serializable {
-  public static final long serialVersionUID = 1L;
-
+public final class LibraryKey implements ProtoWrapper<String> {
   private final String name;
 
   public static LibraryKey fromArtifactLocation(ArtifactLocation artifactLocation) {
@@ -76,5 +74,14 @@ public final class LibraryKey implements Serializable {
   @Override
   public int hashCode() {
     return name.hashCode();
+  }
+
+  public static LibraryKey fromProto(String proto) {
+    return new LibraryKey(proto);
+  }
+
+  @Override
+  public String toProto() {
+    return name;
   }
 }

@@ -15,19 +15,27 @@
  */
 package com.google.idea.blaze.base.model;
 
+import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import java.io.Serializable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import javax.annotation.concurrent.Immutable;
 
 /** The top-level object serialized to cache. */
 @Immutable
-public class BlazeProjectData implements Serializable {
-  private static final long serialVersionUID = 28L;
-
+public class BlazeProjectData implements ProtoWrapper<ProjectData.BlazeProjectData> {
   private final long syncTime;
   private final TargetMap targetMap;
   private final BlazeInfo blazeInfo;
@@ -54,6 +62,34 @@ public class BlazeProjectData implements Serializable {
     this.artifactLocationDecoder = artifactLocationDecoder;
     this.workspaceLanguageSettings = workspaceLanguageSettings;
     this.syncState = syncState;
+  }
+
+  private static BlazeProjectData fromProto(ProjectData.BlazeProjectData proto) {
+    BlazeInfo blazeInfo = BlazeInfo.fromProto(proto.getBlazeInfo());
+    WorkspacePathResolver workspacePathResolver =
+        WorkspacePathResolver.fromProto(proto.getWorkspacePathResolver());
+    return new BlazeProjectData(
+        proto.getSyncTime(),
+        TargetMap.fromProto(proto.getTargetMap()),
+        blazeInfo,
+        BlazeVersionData.fromProto(proto.getBlazeVersionData()),
+        workspacePathResolver,
+        new ArtifactLocationDecoderImpl(blazeInfo, workspacePathResolver),
+        WorkspaceLanguageSettings.fromProto(proto.getWorkspaceLanguageSettings()),
+        SyncState.fromProto(proto.getSyncState()));
+  }
+
+  @Override
+  public ProjectData.BlazeProjectData toProto() {
+    return ProjectData.BlazeProjectData.newBuilder()
+        .setSyncTime(syncTime)
+        .setTargetMap(targetMap.toProto())
+        .setBlazeInfo(blazeInfo.toProto())
+        .setBlazeVersionData(blazeVersionData.toProto())
+        .setWorkspacePathResolver(workspacePathResolver.toProto())
+        .setWorkspaceLanguageSettings(workspaceLanguageSettings.toProto())
+        .setSyncState(syncState.toProto())
+        .build();
   }
 
   public long getSyncTime() {
@@ -86,5 +122,17 @@ public class BlazeProjectData implements Serializable {
 
   public SyncState getSyncState() {
     return syncState;
+  }
+
+  public static BlazeProjectData loadFromDisk(File file) throws IOException {
+    try (InputStream stream = new GZIPInputStream(new FileInputStream(file))) {
+      return fromProto(ProjectData.BlazeProjectData.parseFrom(stream));
+    }
+  }
+
+  public void saveToDisk(File file) throws IOException {
+    try (OutputStream stream = new GZIPOutputStream(new FileOutputStream(file))) {
+      toProto().writeTo(stream);
+    }
   }
 }

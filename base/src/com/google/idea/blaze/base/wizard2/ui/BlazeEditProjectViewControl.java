@@ -58,6 +58,7 @@ import com.google.idea.blaze.base.wizard2.BlazeSelectProjectViewOption;
 import com.google.idea.blaze.base.wizard2.ProjectDataDirectoryValidator;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.icons.AllIcons.General;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -65,6 +66,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
@@ -97,6 +99,9 @@ public final class BlazeEditProjectViewControl {
       new BoolExperiment("allow.add.project.view.default.values", true);
   private static final String LAST_WORKSPACE_MODE_PROPERTY =
       "blaze.edit.project.view.control.last.workspace.mode";
+
+  private static final String EMPTY_DIRECTORIES_QUESTION =
+      "Are you sure you want to create a project with no source directories?";
 
   private final JPanel component;
   private final String buildSystemName;
@@ -453,7 +458,7 @@ public final class BlazeEditProjectViewControl {
     for (ProjectDataDirectoryValidator validator :
         ProjectDataDirectoryValidator.EP_NAME.getExtensions()) {
       BlazeValidationResult result = validator.validateDataDirectory(projectDataDir);
-      if (!result.success) {
+      if (!result.isSuccess()) {
         return result;
       }
     }
@@ -483,11 +488,23 @@ public final class BlazeEditProjectViewControl {
 
     List<DirectoryEntry> directories = projectViewSet.listItems(DirectorySection.KEY);
     if (directories.isEmpty()) {
-      String msg = "Add some directories to index in the 'directories' section.";
-      if (projectViewSet.listItems(TargetSection.KEY).isEmpty()) {
-        msg += "\nTargets are also generally required to resolve sources.";
+      if (workspaceData.buildSystem().equals(BuildSystem.Blaze)) {
+        int result =
+            Messages.showOkCancelDialog(
+                getUiComponent(),
+                EMPTY_DIRECTORIES_QUESTION,
+                "Use Empty Project?",
+                General.QuestionDialog);
+        if (result == Messages.CANCEL) {
+          return BlazeValidationResult.cancelled();
+        }
+      } else {
+        String msg = "Add some directories to index in the 'directories' section.";
+        if (projectViewSet.listItems(TargetSection.KEY).isEmpty()) {
+          msg += "\nTargets are also generally required to resolve sources.";
+        }
+        return BlazeValidationResult.failure(msg);
       }
-      return BlazeValidationResult.failure(msg);
     }
 
     return BlazeValidationResult.success();
@@ -533,8 +550,7 @@ public final class BlazeEditProjectViewControl {
   @Nullable
   private static BlazeValidationError validationErrorFromIssueList(List<IssueOutput> issues) {
     List<IssueOutput> errors =
-        issues
-            .stream()
+        issues.stream()
             .filter(issue -> issue.getCategory() == IssueOutput.Category.ERROR)
             .collect(toList());
 

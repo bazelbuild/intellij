@@ -17,21 +17,39 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
-import java.io.Serializable;
+import com.google.devtools.intellij.aspect.Common;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.ResFolderLocation;
 import java.util.Collection;
 
 /**
  * Information about Android res folders. Contains the root res folder and optionally the specific
  * resources within that folder.
  */
-public final class AndroidResFolder implements Serializable {
-  private static final long serialVersionUID = 1L;
+public final class AndroidResFolder implements ProtoWrapper<IntellijIdeInfo.ResFolderLocation> {
   private final ArtifactLocation root;
   private final ImmutableSet<String> resources;
 
   private AndroidResFolder(ArtifactLocation root, ImmutableSet<String> resources) {
     this.root = root;
     this.resources = resources;
+  }
+
+  static AndroidResFolder fromProto(IntellijIdeInfo.ResFolderLocation proto) {
+    return new AndroidResFolder(
+        ArtifactLocation.fromProto(proto.getRoot()), ImmutableSet.copyOf(proto.getResourcesList()));
+  }
+
+  static AndroidResFolder fromProto(Common.ArtifactLocation root) {
+    return new AndroidResFolder(ArtifactLocation.fromProto(root), ImmutableSet.of());
+  }
+
+  @Override
+  public ResFolderLocation toProto() {
+    return IntellijIdeInfo.ResFolderLocation.newBuilder()
+        .setRoot(root.toProto())
+        .addAllResources(resources)
+        .build();
   }
 
   public ArtifactLocation getRoot() {

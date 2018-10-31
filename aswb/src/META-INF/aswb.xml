@@ -67,6 +67,7 @@
     <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection$AndroidSdkPlatformProjectViewDefaultValueProvider"/>
     <AndroidBinaryLaunchMethodsProvider implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProviderImpl"/>
     <AndroidTestLaunchMethodsProvider implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProviderImpl"/>
+    <SyncDataExtractor implementation="com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData$Extractor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">

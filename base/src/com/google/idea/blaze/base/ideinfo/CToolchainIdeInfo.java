@@ -17,13 +17,11 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import java.io.Serializable;
 
 /** Represents toolchain info from a cc_toolchain or cc_toolchain_suite */
-public final class CToolchainIdeInfo implements Serializable {
-  private static final long serialVersionUID = 4L;
-
+public final class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.CToolchainIdeInfo> {
   private final ImmutableList<String> baseCompilerOptions;
   private final ImmutableList<String> cCompilerOptions;
   private final ImmutableList<String> cppCompilerOptions;
@@ -31,10 +29,10 @@ public final class CToolchainIdeInfo implements Serializable {
   private final ExecutionRootPath cppExecutable;
   private final String targetName;
 
-  private final ImmutableList<String> unfilteredCompilerOptions;
-  private final ImmutableList<ExecutionRootPath> unfilteredToolchainSystemIncludes;
+  @Deprecated private final ImmutableList<String> unfilteredCompilerOptions;
+  @Deprecated private final ImmutableList<ExecutionRootPath> unfilteredToolchainSystemIncludes;
 
-  public CToolchainIdeInfo(
+  private CToolchainIdeInfo(
       ImmutableList<String> baseCompilerOptions,
       ImmutableList<String> cCompilerOptions,
       ImmutableList<String> cppCompilerOptions,
@@ -51,6 +49,31 @@ public final class CToolchainIdeInfo implements Serializable {
     this.targetName = targetName;
     this.unfilteredCompilerOptions = unfilteredCompilerOptions;
     this.unfilteredToolchainSystemIncludes = unfilteredToolchainSystemIncludes;
+  }
+
+  static CToolchainIdeInfo fromProto(IntellijIdeInfo.CToolchainIdeInfo proto) {
+    return new CToolchainIdeInfo(
+        ImmutableList.copyOf(proto.getBaseCompilerOptionList()),
+        ImmutableList.copyOf(proto.getCOptionList()),
+        ImmutableList.copyOf(proto.getCppOptionList()),
+        ProtoWrapper.map(proto.getBuiltInIncludeDirectoryList(), ExecutionRootPath::fromProto),
+        ExecutionRootPath.fromProto(proto.getCppExecutable()),
+        proto.getTargetName(),
+        ImmutableList.copyOf(proto.getUnfilteredCompilerOptionList()),
+        ImmutableList.of());
+  }
+
+  @Override
+  public IntellijIdeInfo.CToolchainIdeInfo toProto() {
+    return IntellijIdeInfo.CToolchainIdeInfo.newBuilder()
+        .addAllBaseCompilerOption(baseCompilerOptions)
+        .addAllCOption(cCompilerOptions)
+        .addAllCppOption(cppCompilerOptions)
+        .addAllBuiltInIncludeDirectory(ProtoWrapper.mapToProtos(builtInIncludeDirectories))
+        .setCppExecutable(cppExecutable.toProto())
+        .setTargetName(targetName)
+        .addAllUnfilteredCompilerOption(unfilteredCompilerOptions)
+        .build();
   }
 
   public ImmutableList<String> getBaseCompilerOptions() {

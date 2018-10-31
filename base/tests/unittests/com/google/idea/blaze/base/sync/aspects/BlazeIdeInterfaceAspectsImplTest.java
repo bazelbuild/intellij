@@ -17,8 +17,6 @@ package com.google.idea.blaze.base.sync.aspects;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
@@ -28,15 +26,12 @@ import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.JavaIdeInfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.LibraryArtifact;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetKey;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.TestUtils;
 import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
-import java.io.File;
 import java.util.Collection;
 import java.util.Set;
 import org.junit.Test;
@@ -52,36 +47,6 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(ExperimentService.class, new MockExperimentService());
     applicationServices.register(FileOperationProvider.class, new FileOperationProvider());
-  }
-
-  @Test
-  public void testTargetIdeInfoIsSerializable() {
-    IntellijIdeInfo.TargetIdeInfo ideProto =
-        IntellijIdeInfo.TargetIdeInfo.newBuilder()
-            .setKey(TargetKey.newBuilder().setLabel("//test:test").build())
-            .setKindString("android_binary")
-            .addDeps(
-                Dependency.newBuilder()
-                    .setTarget(TargetKey.newBuilder().setLabel("//test:dep"))
-                    .build())
-            .addTags("tag")
-            .setJavaIdeInfo(
-                JavaIdeInfo.newBuilder()
-                    .addJars(
-                        LibraryArtifact.newBuilder().setJar(artifactLocation("jar.jar")).build())
-                    .addGeneratedJars(
-                        LibraryArtifact.newBuilder().setJar(artifactLocation("jar.jar")).build())
-                    .addSources(artifactLocation("source.java")))
-            .setAndroidIdeInfo(
-                AndroidIdeInfo.newBuilder()
-                    .addResources(artifactLocation("res"))
-                    .setApk(artifactLocation("apk"))
-                    .addDependencyApk(artifactLocation("apk"))
-                    .setJavaPackage("package"))
-            .build();
-
-    TargetIdeInfo target = IdeInfoFromProtobuf.makeTargetIdeInfo(ideProto);
-    TestUtils.assertIsSerializable(target);
   }
 
   @Test
@@ -115,24 +80,12 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
                     .addDependencyApk(artifactLocation("apk"))
                     .setJavaPackage("package"))
             .build();
-    TargetIdeInfo target = IdeInfoFromProtobuf.makeTargetIdeInfo(ideProto);
+    TargetIdeInfo target = TargetIdeInfo.fromProto(ideProto);
     Collection<AndroidResFolder> resources = target.getAndroidIdeInfo().getResFolders();
     assertThat(resources)
         .containsExactly(
             resFolderLocation(artifactLocation(localResFolder), localResourceRelativePath),
             resFolderLocation(artifactLocation(quantumResFolder), quantumResRelativePath));
-  }
-
-  @Test
-  public void testBlazeStateIsSerializable() {
-    BlazeIdeInterfaceAspectsImpl.State state = new BlazeIdeInterfaceAspectsImpl.State();
-    state.fileToTargetMapKey =
-        ImmutableBiMap.of(
-            new File("fileName"),
-            TargetIdeInfo.builder().setLabel(Label.create("//test:test")).build().getKey());
-    state.fileState = ImmutableMap.of();
-
-    TestUtils.assertIsSerializable(state);
   }
 
   static ArtifactLocation artifactLocation(Common.ArtifactLocation artifactLocation) {

@@ -16,13 +16,11 @@
 package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.collect.ImmutableList;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import java.io.Serializable;
 
 /** Sister class to {@link JavaIdeInfo} */
-public class CIdeInfo implements Serializable {
-  private static final long serialVersionUID = 8L;
-
+public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
   private final ImmutableList<ArtifactLocation> sources;
   private final ImmutableList<ArtifactLocation> headers;
   private final ImmutableList<ArtifactLocation> textualHeaders;
@@ -36,7 +34,7 @@ public class CIdeInfo implements Serializable {
   private final ImmutableList<String> transitiveDefines;
   private final ImmutableList<ExecutionRootPath> transitiveSystemIncludeDirectories;
 
-  public CIdeInfo(
+  private CIdeInfo(
       ImmutableList<ArtifactLocation> sources,
       ImmutableList<ArtifactLocation> headers,
       ImmutableList<ArtifactLocation> textualHeaders,
@@ -55,6 +53,56 @@ public class CIdeInfo implements Serializable {
     this.transitiveQuoteIncludeDirectories = transitiveQuoteIncludeDirectories;
     this.transitiveDefines = transitiveDefines;
     this.transitiveSystemIncludeDirectories = transitiveSystemIncludeDirectories;
+  }
+
+  static CIdeInfo fromProto(IntellijIdeInfo.CIdeInfo proto) {
+    proto = fixProto(proto);
+    return new CIdeInfo(
+        ProtoWrapper.map(proto.getSourceList(), ArtifactLocation::fromProto),
+        ProtoWrapper.map(proto.getHeaderList(), ArtifactLocation::fromProto),
+        ProtoWrapper.map(proto.getTextualHeaderList(), ArtifactLocation::fromProto),
+        ImmutableList.copyOf(proto.getTargetDefineList()),
+        ProtoWrapper.map(proto.getTargetIncludeList(), ExecutionRootPath::fromProto),
+        ProtoWrapper.map(proto.getTransitiveIncludeDirectoryList(), ExecutionRootPath::fromProto),
+        ProtoWrapper.map(
+            proto.getTransitiveQuoteIncludeDirectoryList(), ExecutionRootPath::fromProto),
+        ImmutableList.copyOf(proto.getTransitiveDefineList()),
+        ProtoWrapper.map(
+            proto.getTransitiveSystemIncludeDirectoryList(), ExecutionRootPath::fromProto));
+  }
+
+  @Override
+  public IntellijIdeInfo.CIdeInfo toProto() {
+    return IntellijIdeInfo.CIdeInfo.newBuilder()
+        .addAllSource(ProtoWrapper.mapToProtos(sources))
+        .addAllHeader(ProtoWrapper.mapToProtos(headers))
+        .addAllTextualHeader(ProtoWrapper.mapToProtos(textualHeaders))
+        .addAllTargetDefine(localDefines)
+        .addAllTargetInclude(ProtoWrapper.mapToProtos(localIncludeDirectories))
+        .addAllTransitiveIncludeDirectory(ProtoWrapper.mapToProtos(transitiveIncludeDirectories))
+        .addAllTransitiveQuoteIncludeDirectory(
+            ProtoWrapper.mapToProtos(transitiveQuoteIncludeDirectories))
+        .addAllTransitiveDefine(transitiveDefines)
+        .addAllTransitiveSystemIncludeDirectory(
+            ProtoWrapper.mapToProtos(transitiveSystemIncludeDirectories))
+        .build();
+  }
+
+  private static IntellijIdeInfo.CIdeInfo fixProto(IntellijIdeInfo.CIdeInfo proto) {
+    if (!proto.getTargetCoptList().isEmpty()) {
+      UnfilteredCompilerOptions compilerOptions =
+          UnfilteredCompilerOptions.builder()
+              .registerSingleOrSplitOption("-D")
+              .registerSingleOrSplitOption("-I")
+              .build(proto.getTargetCoptList());
+      return proto
+          .toBuilder()
+          .addAllTargetDefine(compilerOptions.getExtractedOptionValues("-D"))
+          .addAllTargetInclude(compilerOptions.getExtractedOptionValues("-I"))
+          .clearTargetCopt()
+          .build();
+    }
+    return proto;
   }
 
   public ImmutableList<ArtifactLocation> getSources() {

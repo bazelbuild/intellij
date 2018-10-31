@@ -395,6 +395,8 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.TestComparisonFailureParser" interface="com.google.idea.blaze.base.run.smrunner.TestComparisonFailureParser"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AutoSyncProvider" interface="com.google.idea.blaze.base.sync.autosync.AutoSyncProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.GoImportPathReplacer" interface="com.google.idea.blaze.base.ideinfo.GoIdeInfo$ImportPathReplacer"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.WorkspacePathResolverExtractor" interface="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver$Extractor"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.SyncDataExtractor" interface="com.google.idea.blaze.base.model.SyncData$Extractor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -431,6 +433,9 @@
     <AutoSyncProvider implementation="com.google.idea.blaze.base.sync.autosync.ProjectViewAutoSyncProvider"/>
     <AutoSyncProvider implementation="com.google.idea.blaze.base.sync.autosync.BuildFileAutoSyncProvider"/>
     <AutoSyncProvider implementation="com.google.idea.blaze.base.sync.autosync.ProtoAutoSyncProvider"/>
+    <WorkspacePathResolverExtractor implementation="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl$Extractor"/>
+    <SyncDataExtractor implementation="com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceState$Extractor"/>
+    <SyncDataExtractor implementation="com.google.idea.blaze.base.lang.buildfile.sync.LanguageSpecResult$Extractor"/>
   </extensions>
 
 </idea-plugin>

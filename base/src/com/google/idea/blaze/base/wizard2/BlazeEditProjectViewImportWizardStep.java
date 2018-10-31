@@ -59,9 +59,7 @@ class BlazeEditProjectViewImportWizardStep extends ProjectImportWizardStep {
   @Override
   public void validateAndUpdateModel() throws ConfigurationException {
     BlazeValidationResult validationResult = control.validate();
-    if (validationResult.error != null) {
-      throw new ConfigurationException(validationResult.error.getError());
-    }
+    validationResult.throwConfigurationExceptionIfNotSuccess();
 
     BlazeNewProjectBuilder builder = getProjectBuilder();
     control.updateBuilder(builder);

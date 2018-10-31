@@ -16,18 +16,11 @@
 package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.base.Objects;
-import java.io.Serializable;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.Dependency.DependencyType;
 
 /** Represents a dependency between two targets. */
-public class Dependency implements Serializable {
-  private static final long serialVersionUID = 1L;
-
-  /** Type of dependency */
-  public enum DependencyType {
-    COMPILE_TIME,
-    RUNTIME
-  }
-
+public final class Dependency implements ProtoWrapper<IntellijIdeInfo.Dependency> {
   private final TargetKey targetKey;
   private final DependencyType dependencyType;
 
@@ -36,11 +29,23 @@ public class Dependency implements Serializable {
     this.dependencyType = dependencyType;
   }
 
+  static Dependency fromProto(IntellijIdeInfo.Dependency proto) {
+    return new Dependency(TargetKey.fromProto(proto.getTarget()), proto.getDependencyType());
+  }
+
+  @Override
+  public IntellijIdeInfo.Dependency toProto() {
+    return IntellijIdeInfo.Dependency.newBuilder()
+        .setTarget(targetKey.toProto())
+        .setDependencyType(dependencyType)
+        .build();
+  }
+
   public TargetKey getTargetKey() {
     return targetKey;
   }
 
-  public DependencyType getDependencyType() {
+  public IntellijIdeInfo.Dependency.DependencyType getDependencyType() {
     return dependencyType;
   }
 

@@ -17,7 +17,9 @@ package com.google.idea.blaze.android.sync.model;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -29,13 +31,28 @@ import javax.annotation.concurrent.Immutable;
 /** A library that contains sources. */
 @Immutable
 public final class BlazeResourceLibrary extends BlazeLibrary {
-  private static final long serialVersionUID = 2L;
-
   public final ImmutableList<ArtifactLocation> sources;
 
   public BlazeResourceLibrary(ImmutableList<ArtifactLocation> sources) {
     super(LibraryKey.forResourceLibrary());
     this.sources = sources;
+  }
+
+  static BlazeResourceLibrary fromProto(ProjectData.BlazeLibrary proto) {
+    return new BlazeResourceLibrary(
+        ProtoWrapper.map(
+            proto.getBlazeResourceLibrary().getSourcesList(), ArtifactLocation::fromProto));
+  }
+
+  @Override
+  public ProjectData.BlazeLibrary toProto() {
+    return super.toProto()
+        .toBuilder()
+        .setBlazeResourceLibrary(
+            ProjectData.BlazeResourceLibrary.newBuilder()
+                .addAllSources(ProtoWrapper.mapToProtos(sources))
+                .build())
+        .build();
   }
 
   @Override

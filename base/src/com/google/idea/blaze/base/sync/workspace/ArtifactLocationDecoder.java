@@ -17,13 +17,12 @@ package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import java.io.File;
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /** Decodes intellij_ide_info.proto ArtifactLocation file paths */
-public interface ArtifactLocationDecoder extends Serializable {
+public interface ArtifactLocationDecoder {
 
   File decode(ArtifactLocation artifactLocation);
 

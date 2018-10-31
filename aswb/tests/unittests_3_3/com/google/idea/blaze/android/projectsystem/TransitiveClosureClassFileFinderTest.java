@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +41,8 @@ public class TransitiveClosureClassFileFinderTest {
 
     TargetIdeInfo info =
         TargetIdeInfo.builder()
+            .setLabel("//foo:bar")
+            .setKind(Kind.ANDROID_LIBRARY)
             .setJavaInfo(JavaIdeInfo.builder().addJar(normalJar).addJar(resourceJar))
             .setAndroidInfo(AndroidIdeInfo.builder().setResourceJar(resourceJar))
             .build();

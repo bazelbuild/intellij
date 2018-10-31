@@ -17,6 +17,7 @@ package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.cidr.OCResolveConfigurationCompat;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -106,8 +107,7 @@ public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelper {
     if (rootAndConfig.getConfiguration() == null) {
       return ImmutableList.of();
     }
-    return rootAndConfig
-        .getConfiguration()
-        .getLibraryHeadersRoots(rootAndConfig.getKind(), rootAndConfig.getRootFile());
+    return OCResolveConfigurationCompat.getAllHeaderRoots(
+        rootAndConfig.getConfiguration(), rootAndConfig.getKind(), rootAndConfig.getRootFile());
   }
 }

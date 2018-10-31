@@ -16,17 +16,19 @@
 package com.google.idea.common.experiments;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 
 /** Reads experiments from a property file. */
@@ -34,40 +36,40 @@ final class FileExperimentLoader extends HashingExperimentLoader {
 
   private static final Logger logger = Logger.getInstance(FileExperimentLoader.class);
 
-  private final String filename;
+  private final File file;
+
+  private volatile boolean refresh = true;
+
   private Map<String, String> experiments = ImmutableMap.of();
-  private FileTime lastModified = FileTime.fromMillis(0);
 
   FileExperimentLoader(String filename) {
-    this.filename = filename;
+    this.file = new File(filename);
   }
 
   @SuppressWarnings("unchecked") // Properties is Map<Object, Object>, we cast to strings
   @Override
   Map<String, String> getUnhashedExperiments() {
-    Properties properties = new Properties();
 
-    File file = new File(filename);
+    if (!refresh) {
+      return experiments;
+    }
+
+    logger.info("loading experiments file " + file);
+
+    refresh = false;
+
     if (!file.exists()) {
       experiments = ImmutableMap.of();
       return experiments;
     }
 
-    try {
-      FileTime lastModified =
-          Files.readAttributes(file.toPath(), BasicFileAttributes.class).lastModifiedTime();
-      if (Objects.equals(lastModified, this.lastModified)) {
-        return experiments;
-      }
-
-      try (InputStream fis = new FileInputStream(filename);
-          BufferedInputStream bis = new BufferedInputStream(fis)) {
-        properties.load(bis);
-        experiments = ImmutableMap.copyOf((Map) properties);
-        this.lastModified = lastModified;
-      }
+    try (InputStream fis = new FileInputStream(file);
+        BufferedInputStream bis = new BufferedInputStream(fis)) {
+      Properties properties = new Properties();
+      properties.load(bis);
+      experiments = ImmutableMap.copyOf((Map) properties);
     } catch (IOException e) {
-      logger.warn("Could not load experiments from file: " + filename, e);
+      logger.warn("Could not load experiments from file: " + file, e);
     }
 
     return experiments;
@@ -75,7 +77,29 @@ final class FileExperimentLoader extends HashingExperimentLoader {
 
   @Override
   public void initialize() {
-    // Reads the file into memory.
-    getUnhashedExperiments();
+    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    fileSystem.addRootToWatch(file.getPath(), /* watchRecursively */ false);
+    // We need to look up the file in the VFS or else we don't receive events about it. This works
+    // even if the returned VirtualFile is null (because the experiments file doesn't exist yet).
+    fileSystem.findFileByIoFile(file);
+    ApplicationManager.getApplication()
+        .getMessageBus()
+        .connect()
+        .subscribe(VirtualFileManager.VFS_CHANGES, new RefreshExperimentsListener());
+  }
+
+  private class RefreshExperimentsListener implements BulkFileListener {
+
+    @Override
+    public void after(List<? extends VFileEvent> events) {
+      if (events.stream().anyMatch(this::isExperimentsFile)) {
+        logger.info("Scheduling experiments file refresh on " + file);
+        refresh = true;
+      }
+    }
+
+    private boolean isExperimentsFile(VFileEvent event) {
+      return event.getFile() != null && event.getFile().getPath().equals(file.getPath());
+    }
   }
 }

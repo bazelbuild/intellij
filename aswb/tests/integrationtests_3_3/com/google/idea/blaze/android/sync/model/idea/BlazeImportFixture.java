@@ -126,10 +126,8 @@ public final class BlazeImportFixture {
     BlazeAndroidImportResult importAndroidResult = importAndroidWorkspace();
     BlazeJavaImportResult importJavaResult = importJavaWorkspace();
     syncStateBuilder.put(
-        BlazeAndroidSyncData.class,
         new BlazeAndroidSyncData(importAndroidResult, new AndroidSdkPlatform("stable", 15)));
     syncStateBuilder.put(
-        BlazeJavaSyncData.class,
         new BlazeJavaSyncData(importJavaResult, new Glob.GlobSet(ImmutableList.of())));
     return syncStateBuilder.build();
   }

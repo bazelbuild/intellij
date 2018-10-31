@@ -21,8 +21,20 @@ java_library(
                clion = glob(["cidr/src/**/*.java"]),
                default = [],
            ) + select_for_plugin_api({
-        "android-studio-3.2": glob(["studio/integration_3_2/**/*.java"]),
-        "android-studio-3.3": glob(["studio/integration_3_3/**/*.java"]),
+        "android-studio-3.2": glob([
+            "studio/integration_3_2/**/*.java",
+            "cidr/v181/**/*.java",
+        ]),
+        "android-studio-3.3": glob([
+            "studio/integration_3_3/**/*.java",
+            "cidr/v181/**/*.java",
+        ]),
+        "android-studio-3.4": glob([
+            "studio/integration_3_3/**/*.java",
+            "cidr/v183/**/*.java",
+        ]),
+        "clion-2018.1": glob(["cidr/v181/**/*.java"]),
+        "clion-2018.2": glob(["cidr/v181/**/*.java"]),
         "default": [],
     }),
     deps = [

@@ -16,13 +16,20 @@
 package com.google.idea.sdkcompat.vcs;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 
-/** Compat for {@link ChangesListView} #api181 */
+/** Compat for {@link ChangesListView} #api182 */
 public final class ChangesListViewCompat {
   private ChangesListViewCompat() {}
 
+  // #api181
   public static void installPopupHandler(ChangesListView view, ActionGroup group) {
     view.setMenuActions(group);
+  }
+
+  // #api182
+  public static ChangesListView create(Project project) {
+    return new ChangesListView(project);
   }
 }

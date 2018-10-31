@@ -16,16 +16,15 @@
 package com.google.idea.blaze.java.sync.model;
 
 import com.google.common.base.Objects;
+import com.google.devtools.intellij.model.ProjectData;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import java.io.File;
-import java.io.Serializable;
 import java.util.Comparator;
 import javax.annotation.concurrent.Immutable;
 
 /** A source directory. */
 @Immutable
-public final class BlazeSourceDirectory implements Serializable {
-  private static final long serialVersionUID = 3L;
-
+public final class BlazeSourceDirectory implements ProtoWrapper<ProjectData.BlazeSourceDirectory> {
   public static final Comparator<BlazeSourceDirectory> COMPARATOR =
       (o1, o2) ->
           String.CASE_INSENSITIVE_ORDER.compare(
@@ -83,18 +82,36 @@ public final class BlazeSourceDirectory implements Serializable {
     this.packagePrefix = packagePrefix;
   }
 
+  static BlazeSourceDirectory fromProto(ProjectData.BlazeSourceDirectory proto) {
+    return new BlazeSourceDirectory(
+        new File(proto.getDirectory()),
+        proto.getIsResource(),
+        proto.getIsGenerated(),
+        proto.getPackagePrefix());
+  }
+
+  @Override
+  public ProjectData.BlazeSourceDirectory toProto() {
+    return ProjectData.BlazeSourceDirectory.newBuilder()
+        .setDirectory(directory.getPath())
+        .setIsResource(isResource)
+        .setIsGenerated(isGenerated)
+        .setPackagePrefix(packagePrefix)
+        .build();
+  }
+
   /** Returns the full path name of the root of a source directory. */
   public File getDirectory() {
     return directory;
   }
 
   /** Returns {@code true} if the directory contains resources. */
-  public boolean getIsResource() {
+  public boolean isResource() {
     return isResource;
   }
 
   /** Returns {@code true} if the directory contains generated files. */
-  public boolean getIsGenerated() {
+  public boolean isGenerated() {
     return isGenerated;
   }
 

@@ -55,8 +55,10 @@ abstract class ProjectImportWizardStep extends StepAdapter {
 
   /**
    * Validates the current selection. If there are no problems, commits data from UI into
-   * BlazeNewProjectBuilder and WizardContext, else throws {@ConfigurationException} with an error
-   * message for the user.
+   * BlazeNewProjectBuilder and WizardContext, else throws {@link ConfigurationException} with an
+   * error message for the user or {@link
+   * com.intellij.openapi.options.CancelledConfigurationException} to return to the wizard without
+   * an error.
    */
   public abstract void validateAndUpdateModel() throws ConfigurationException;
 
