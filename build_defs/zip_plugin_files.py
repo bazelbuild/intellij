@@ -1,7 +1,11 @@
 """Packages plugin files into a zip archive."""
 
 import argparse
-from itertools import izip
+try:
+  from itertools import izip as zip
+except ImportError:
+  # Python 3.x already has a built-in `zip` that takes `izip`'s place.
+  pass
 import time
 import zipfile
 
@@ -14,7 +18,7 @@ parser.add_argument(
 
 def pairwise(t):
   it = iter(t)
-  return izip(it, it)
+  return zip(it, it)
 
 
 def main():

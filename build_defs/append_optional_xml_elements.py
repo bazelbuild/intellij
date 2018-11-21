@@ -2,7 +2,11 @@
 """
 
 import argparse
-from itertools import izip
+try:
+  from itertools import izip as zip
+except ImportError:
+  # Python 3.x already has a built-in `zip` that takes `izip`'s place.
+  pass
 from xml.dom.minidom import parse
 
 parser = argparse.ArgumentParser()
@@ -18,7 +22,7 @@ parser.add_argument(
 
 def pairwise(t):
   it = iter(t)
-  return izip(it, it)
+  return zip(it, it)
 
 
 def main():
@@ -36,10 +40,10 @@ def main():
     plugin_xml.appendChild(depends_element)
 
   if args.output:
-    with file(args.output, "w") as f:
+    with open(args.output, "wb") as f:
       f.write(dom.toxml(encoding="utf-8"))
   else:
-    print dom.toxml(encoding="utf-8")
+    print(dom.toxml(encoding="utf-8"))
 
 
 if __name__ == "__main__":

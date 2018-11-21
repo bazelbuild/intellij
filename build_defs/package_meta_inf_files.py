@@ -2,7 +2,11 @@
 """
 
 import argparse
-from itertools import izip
+try:
+  from itertools import izip as zip
+except ImportError:
+  # Python 3.x already has a built-in `zip` that takes `izip`'s place.
+  pass
 import shutil
 import zipfile
 
@@ -27,7 +31,7 @@ parser.add_argument(
 
 def pairwise(t):
   it = iter(t)
-  return izip(it, it)
+  return zip(it, it)
 
 
 def main():
@@ -36,7 +40,7 @@ def main():
   shutil.copyfile(args.deploy_jar, args.output)
   output_jar = zipfile.ZipFile(args.output, "a")
   for meta_inf_file, name in pairwise(args.meta_inf_files):
-    with file(meta_inf_file) as f:
+    with open(meta_inf_file, "r") as f:
       zip_info = zipfile.ZipInfo("META-INF/" + name, ZIP_DATE)
       output_jar.writestr(zip_info, f.read())
 

@@ -58,7 +58,7 @@ def main():
     build_element = build_elements[0]
 
     attrs = build_element.attributes
-    if attrs.has_key("apiVersion"):
+    if "apiVersion" in attrs:
       api_version_attr = attrs.get("apiVersion")
     else:
       api_version_attr = attrs.get("number")
@@ -67,7 +67,7 @@ def main():
     raise ValueError("Could not find api version in application info")
 
   api_version = _parse_build_number(api_version_attr.value)
-  print api_version
+  print(api_version)
 
 
 if __name__ == "__main__":

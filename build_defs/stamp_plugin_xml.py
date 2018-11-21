@@ -203,7 +203,7 @@ def main():
   for new_element in new_elements:
     idea_plugin.appendChild(new_element)
 
-  print dom.toxml(encoding="utf-8")
+  print(dom.toxml())
 
 
 if __name__ == "__main__":
