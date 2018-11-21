@@ -18,10 +18,11 @@ package com.google.idea.blaze.base.model;
 import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Used to save arbitrary state with the sync task. */
-public class SyncState implements ProtoWrapper<ProjectData.SyncState> {
+public final class SyncState implements ProtoWrapper<ProjectData.SyncState> {
   private final ImmutableMap<Class<? extends SyncData>, SyncData<?>> syncStateMap;
 
   @SuppressWarnings("unchecked")
@@ -58,5 +59,22 @@ public class SyncState implements ProtoWrapper<ProjectData.SyncState> {
     ProjectData.SyncState.Builder builder = ProjectData.SyncState.newBuilder();
     syncStateMap.values().forEach(syncData -> syncData.insert(builder));
     return builder.build();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    SyncState syncState = (SyncState) o;
+    return Objects.equals(syncStateMap, syncState.syncStateMap);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(syncStateMap);
   }
 }

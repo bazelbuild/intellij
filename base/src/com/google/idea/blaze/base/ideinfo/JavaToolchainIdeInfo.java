@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.ideinfo;
 
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Represents the java_toolchain class */
@@ -76,6 +77,25 @@ public final class JavaToolchainIdeInfo
         + getJavacJar()
         + "\n"
         + '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    JavaToolchainIdeInfo that = (JavaToolchainIdeInfo) o;
+    return Objects.equals(sourceVersion, that.sourceVersion)
+        && Objects.equals(targetVersion, that.targetVersion)
+        && Objects.equals(javacJar, that.javacJar);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(sourceVersion, targetVersion, javacJar);
   }
 
   public static Builder builder() {

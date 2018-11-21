@@ -28,7 +28,7 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import javax.annotation.Nullable;
 
-class WorkspaceFileFinderImpl extends SyncListener.Adapter implements WorkspaceFileFinder {
+class WorkspaceFileFinderImpl implements SyncListener, WorkspaceFileFinder {
 
   private final WorkspaceRoot root;
   private volatile ImportRoots importRoots;

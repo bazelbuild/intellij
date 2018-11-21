@@ -138,7 +138,15 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
       } else {
         argsBuilder
             .add("-processor")
-            .add(instructions.annotationProcessorClassNames().stream().collect(joining(",")));
+            .add(String.join(",", instructions.annotationProcessorClassNames()));
+        if (!instructions.annotationProcessorClasspath().isEmpty()) {
+          argsBuilder
+              .add("-processorpath")
+              .add(
+                  instructions.annotationProcessorClasspath().stream()
+                      .map(File::getPath)
+                      .collect(joining(":")));
+        }
       }
       List<String> args =
           argsBuilder.addAll(transform(instructions.filesToCompile(), File::getPath)).build();
@@ -201,8 +209,7 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
   }
 
   private static List<String> getProcessorNames(Collection<String> classNames) {
-    return classNames
-        .stream()
+    return classNames.stream()
         .map(
             className -> {
               int lastDot = className.lastIndexOf('.');

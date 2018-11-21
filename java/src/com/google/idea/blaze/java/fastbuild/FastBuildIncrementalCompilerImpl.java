@@ -81,14 +81,12 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
                     .compile(
                         CompileInstructions.builder()
                             .outputDirectory(buildState.compilerOutputDirectory())
-                            .classpath(
-                                ImmutableList.<File>builder()
-                                    .add(buildOutput.deployJar())
-                                    .addAll(changedSourceInfo.annotationProcessorClasspath)
-                                    .build())
+                            .classpath(ImmutableList.of(buildOutput.deployJar()))
                             .filesToCompile(changedSourceInfo.pathsToCompile)
                             .annotationProcessorClassNames(
                                 changedSourceInfo.annotationProcessorClassNames)
+                            .annotationProcessorClasspath(
+                                changedSourceInfo.annotationProcessorClasspath)
                             .outputWriter(writer)
                             .build(),
                         loggingData);

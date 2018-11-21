@@ -53,7 +53,10 @@ public class ClassFileManifestBuilder {
 
   /** Called when initializing our run profile state, to support hotswapping. */
   public static void initState(ExecutionEnvironment env) {
-    if (HotSwapUtils.canHotSwap(env)) {
+    if (!HotSwapUtils.canHotSwap(env)) {
+      return;
+    }
+    if (env.getCopyableUserData(MANIFEST_KEY) == null) {
       env.putCopyableUserData(MANIFEST_KEY, new AtomicReference<>());
     }
   }

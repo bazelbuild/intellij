@@ -16,12 +16,23 @@
 package com.google.idea.blaze.base.util;
 
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import org.jetbrains.annotations.NotNull;
 
 /** Calculates package prefix from workspace paths. */
 public final class PackagePrefixCalculator {
 
-  public static String packagePrefixOf(@NotNull WorkspacePath workspacePath) {
+  public static String packagePrefixOf(WorkspacePath workspacePath) {
+    return workspacePath.relativePath().substring(getSkipIndex(workspacePath)).replace('/', '.');
+  }
+
+  /**
+   * Returns true if the given workspace path looks likely to be a source root (e.g. it starts with
+   * a common set of directories, such as "src/main/java").
+   */
+  public static boolean looksLikeSourceRoot(WorkspacePath workspacePath) {
+    return getSkipIndex(workspacePath) != 0;
+  }
+
+  private static int getSkipIndex(WorkspacePath workspacePath) {
     int skipIndex = 0;
 
     // For Bazel-style projects.
@@ -36,10 +47,10 @@ public final class PackagePrefixCalculator {
     skipIndex = skipIndex == 0 ? skip(workspacePath, "src/main/kotlin/") : skipIndex;
     skipIndex = skipIndex == 0 ? skip(workspacePath, "src/test/kotlin/") : skipIndex;
 
-    return workspacePath.relativePath().substring(skipIndex).replace('/', '.');
+    return skipIndex;
   }
 
-  private static int skip(@NotNull WorkspacePath workspacePath, @NotNull String skipString) {
+  private static int skip(WorkspacePath workspacePath, String skipString) {
     if (workspacePath.relativePath().startsWith(skipString)) {
       return skipString.length();
     }

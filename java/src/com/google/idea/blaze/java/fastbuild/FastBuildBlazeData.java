@@ -17,16 +17,22 @@ package com.google.idea.blaze.java.fastbuild;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Strings.emptyToNull;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.util.stream.Collectors.toSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.aspect.FastBuildInfo;
+import com.google.devtools.intellij.aspect.FastBuildInfo.Data;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -44,31 +50,38 @@ public abstract class FastBuildBlazeData {
 
   public abstract ImmutableSet<Label> dependencies();
 
+  public abstract ImmutableMap<Label, ImmutableSet<ArtifactLocation>> data();
+
   public abstract Optional<AndroidInfo> androidInfo();
 
   public abstract Optional<JavaInfo> javaInfo();
 
   public abstract Optional<JavaToolchainInfo> javaToolchainInfo();
 
-  static Builder builder() {
-    return new AutoValue_FastBuildBlazeData.Builder().setDependencies(ImmutableList.of());
+  public static Builder builder() {
+    return new AutoValue_FastBuildBlazeData.Builder()
+        .setDependencies(ImmutableList.of())
+        .setData(ImmutableMap.of());
   }
 
+  /** A builder for {@link FastBuildBlazeData} objects. */
   @AutoValue.Builder
-  abstract static class Builder {
-    abstract Builder setLabel(Label label);
+  public abstract static class Builder {
+    public abstract Builder setLabel(Label label);
 
-    abstract Builder setWorkspaceName(String workspaceName);
+    public abstract Builder setWorkspaceName(String workspaceName);
 
-    abstract Builder setDependencies(Collection<Label> dependencies);
+    public abstract Builder setDependencies(Collection<Label> dependencies);
 
-    abstract Builder setAndroidInfo(AndroidInfo androidInfo);
+    public abstract Builder setData(Map<Label, ImmutableSet<ArtifactLocation>> data);
 
-    abstract Builder setJavaInfo(JavaInfo javaInfo);
+    public abstract Builder setAndroidInfo(AndroidInfo androidInfo);
 
-    abstract Builder setJavaToolchainInfo(JavaToolchainInfo javaToolchainInfo);
+    public abstract Builder setJavaInfo(JavaInfo javaInfo);
 
-    abstract FastBuildBlazeData build();
+    public abstract Builder setJavaToolchainInfo(JavaToolchainInfo javaToolchainInfo);
+
+    public abstract FastBuildBlazeData build();
   }
 
   static FastBuildBlazeData fromProto(FastBuildInfo.FastBuildBlazeData proto) {
@@ -78,7 +91,8 @@ public abstract class FastBuildBlazeData {
             .setLabel(Label.fromProto(proto.getLabel()))
             .setWorkspaceName(proto.getWorkspaceName())
             .setDependencies(
-                proto.getDependenciesList().stream().map(Label::fromProto).collect(toSet()));
+                proto.getDependenciesList().stream().map(Label::fromProto).collect(toSet()))
+            .setData(convertDataToMap(proto.getDataList()));
     if (proto.hasAndroidInfo()) {
       builder.setAndroidInfo(AndroidInfo.fromProto(proto.getAndroidInfo()));
     }
@@ -91,6 +105,18 @@ public abstract class FastBuildBlazeData {
     return builder.build();
   }
 
+  private static ImmutableMap<Label, ImmutableSet<ArtifactLocation>> convertDataToMap(
+      List<Data> dataList) {
+    return dataList.stream()
+        .collect(
+            toImmutableMap(
+                data -> Label.fromProto(data.getLabel()),
+                data ->
+                    data.getArtifactsList().stream()
+                        .map(ArtifactLocation::fromProto)
+                        .collect(toImmutableSet())));
+  }
+
   /** Data about an Android rule (android_library, android_roboelectric_test, etc.) */
   @AutoValue
   public abstract static class AndroidInfo {
@@ -98,7 +124,7 @@ public abstract class FastBuildBlazeData {
 
     public abstract Optional<ArtifactLocation> mergedManifest();
 
-    static AndroidInfo create(
+    public static AndroidInfo create(
         @Nullable ArtifactLocation aar, @Nullable ArtifactLocation mergedManifest) {
       return new AutoValue_FastBuildBlazeData_AndroidInfo(
           Optional.ofNullable(aar), Optional.ofNullable(mergedManifest));
@@ -119,6 +145,8 @@ public abstract class FastBuildBlazeData {
 
     public abstract Optional<String> testClass();
 
+    public abstract Optional<String> testSize();
+
     public abstract ImmutableList<String> annotationProcessorClassNames();
 
     public abstract ImmutableList<ArtifactLocation> annotationProcessorClasspath();
@@ -128,18 +156,20 @@ public abstract class FastBuildBlazeData {
     static JavaInfo create(
         Collection<ArtifactLocation> sources,
         @Nullable String testClass,
+        @Nullable String testSize,
         Collection<String> annotationProcessorClassNames,
         Collection<ArtifactLocation> annotationProcessorClassPath,
         Collection<String> jvmFlags) {
       return new AutoValue_FastBuildBlazeData_JavaInfo(
           ImmutableSet.copyOf(sources),
           Optional.ofNullable(testClass),
+          Optional.ofNullable(testSize),
           ImmutableList.copyOf(annotationProcessorClassNames),
           ImmutableList.copyOf(annotationProcessorClassPath),
           ImmutableList.copyOf(jvmFlags));
     }
 
-    static JavaInfo fromProto(FastBuildInfo.JavaInfo proto) {
+    public static JavaInfo fromProto(FastBuildInfo.JavaInfo proto) {
       Set<ArtifactLocation> sources =
           proto.getSourcesList().stream().map(ArtifactLocation::fromProto).collect(toSet());
       Set<ArtifactLocation> annotationProcessorClasspath =
@@ -149,6 +179,7 @@ public abstract class FastBuildBlazeData {
       return create(
           sources,
           emptyToNull(proto.getTestClass()),
+          emptyToNull(proto.getTestSize()),
           proto.getAnnotationProcessorClassNamesList(),
           annotationProcessorClasspath,
           proto.getJvmFlagsList());

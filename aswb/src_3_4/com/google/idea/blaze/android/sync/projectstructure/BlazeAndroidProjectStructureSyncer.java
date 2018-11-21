@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.sync.projectstructure;
 import static com.google.idea.blaze.android.sync.importer.BlazeImportInput.createLooksLikeAarLibrary;
 import static java.util.stream.Collectors.toSet;
 
+import com.android.annotations.VisibleForTesting;
 import com.android.builder.model.SourceProvider;
 import com.android.ide.common.gradle.model.SourceProviderUtil;
 import com.android.ide.common.util.PathStringUtil;
@@ -47,6 +48,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
@@ -314,7 +316,8 @@ public class BlazeAndroidProjectStructureSyncer {
             target.getAndroidIdeInfo(),
             moduleDirectory),
         target.getAndroidIdeInfo().getResourceJavaPackage(),
-        ImmutableList.of());
+        ImmutableList.of(),
+        false);
     return newModule;
   }
 
@@ -367,8 +370,10 @@ public class BlazeAndroidProjectStructureSyncer {
       return;
     }
 
+    boolean configAndroidJava8Libs = hasConfigAndroidJava8Libs(projectViewSet);
+
     updateWorkspaceModuleFacetInMemoryState(
-        project, workspaceRoot, workspaceModule, androidSdkPlatform);
+        project, workspaceRoot, workspaceModule, androidSdkPlatform, configAndroidJava8Libs);
 
     ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
     ModuleFinder moduleFinder = ModuleFinder.getInstance(project);
@@ -386,7 +391,8 @@ public class BlazeAndroidProjectStructureSyncer {
                 : ImmutableList.copyOf(
                     syncData.importResult.resourceLibraries.values().stream()
                         .map(library -> artifactLocationDecoder.decode(library.root))
-                        .collect(Collectors.toList())));
+                        .collect(Collectors.toList())),
+            configAndroidJava8Libs);
       } else if (useLibraryResourcesModule.getValue()) {
         logger.warn("Library resources module missing.");
       }
@@ -421,7 +427,8 @@ public class BlazeAndroidProjectStructureSyncer {
               androidIdeInfo,
               moduleDirectoryForAndroidTarget(workspaceRoot, target)),
           androidIdeInfo.getResourceJavaPackage(),
-          resources);
+          resources,
+          configAndroidJava8Libs);
       rClassBuilder.addRClass(androidIdeInfo.getResourceJavaPackage(), module);
     }
 
@@ -451,8 +458,15 @@ public class BlazeAndroidProjectStructureSyncer {
               androidIdeInfo,
               moduleDirectoryForAndroidTarget(workspaceRoot, target)),
           androidIdeInfo.getResourceJavaPackage(),
-          ImmutableList.of());
+          ImmutableList.of(),
+          configAndroidJava8Libs);
     }
+  }
+
+  @VisibleForTesting
+  static boolean hasConfigAndroidJava8Libs(ProjectViewSet projectViewSet) {
+    return projectViewSet.listItems(BuildFlagsSection.KEY).stream()
+        .anyMatch(f -> "--config=android_java8_libs".equals(f));
   }
 
   private static File moduleDirectoryForAndroidTarget(
@@ -475,7 +489,8 @@ public class BlazeAndroidProjectStructureSyncer {
       Project project,
       WorkspaceRoot workspaceRoot,
       Module workspaceModule,
-      AndroidSdkPlatform androidSdkPlatform) {
+      AndroidSdkPlatform androidSdkPlatform,
+      boolean configAndroidJava8Libs) {
     File moduleDirectory = workspaceRoot.directory();
     File manifest = new File(workspaceRoot.directory(), "AndroidManifest.xml");
     String resourceJavaPackage = ":workspace";
@@ -486,7 +501,8 @@ public class BlazeAndroidProjectStructureSyncer {
         moduleDirectory,
         manifest,
         resourceJavaPackage,
-        ImmutableList.of());
+        ImmutableList.of(),
+        configAndroidJava8Libs);
   }
 
   /**
@@ -498,7 +514,8 @@ public class BlazeAndroidProjectStructureSyncer {
       WorkspaceRoot workspaceRoot,
       Module workspaceModule,
       AndroidSdkPlatform androidSdkPlatform,
-      Collection<File> resources) {
+      Collection<File> resources,
+      boolean configAndroidJava8Libs) {
     File moduleDirectory = workspaceRoot.directory();
     File manifest = new File(workspaceRoot.directory(), "AndroidManifest.xml");
     String resourceJavaPackage = ":android-resources";
@@ -509,7 +526,8 @@ public class BlazeAndroidProjectStructureSyncer {
         moduleDirectory,
         manifest,
         resourceJavaPackage,
-        resources);
+        resources,
+        configAndroidJava8Libs);
   }
 
   private static void updateModuleFacetInMemoryState(
@@ -519,7 +537,8 @@ public class BlazeAndroidProjectStructureSyncer {
       File moduleDirectory,
       File manifest,
       String resourceJavaPackage,
-      Collection<File> resources) {
+      Collection<File> resources,
+      boolean configAndroidJava8Libs) {
     SourceSet sourceSet =
         new SourceSet(
             ImmutableMap.of(
@@ -533,12 +552,12 @@ public class BlazeAndroidProjectStructureSyncer {
     BlazeAndroidModel androidModel =
         new BlazeAndroidModel(
             project,
-            module,
             moduleDirectory,
             sourceProvider,
             manifest,
             resourceJavaPackage,
-            androidSdkPlatform.androidMinSdkLevel);
+            androidSdkPlatform.androidMinSdkLevel,
+            configAndroidJava8Libs);
     AndroidFacet facet = AndroidFacet.getInstance(module);
     if (facet != null) {
       facet.getConfiguration().setModel(androidModel);

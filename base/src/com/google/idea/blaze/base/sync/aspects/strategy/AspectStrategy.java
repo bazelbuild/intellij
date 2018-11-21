@@ -22,7 +22,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
 import com.google.protobuf.repackaged.TextFormat;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,7 +40,10 @@ import java.util.function.Predicate;
 import java.util.zip.GZIPInputStream;
 
 /** Aspect strategy for Skylark. */
-public abstract class AspectStrategy {
+public abstract class AspectStrategy implements BuildSystemExtensionPoint {
+
+  private static final ExtensionPointName<AspectStrategy> EP_NAME =
+      ExtensionPointName.create("com.google.idea.blaze.AspectStrategy");
 
   private static final Predicate<String> ASPECT_OUTPUT_FILE_PREDICATE =
       str -> str.endsWith(".intellij-info.txt") || str.endsWith(".intellij-info.txt.gz");
@@ -53,6 +59,10 @@ public abstract class AspectStrategy {
     OutputGroup(String prefix) {
       this.prefix = prefix;
     }
+  }
+
+  public static AspectStrategy getInstance(BuildSystem buildSystem) {
+    return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystem);
   }
 
   public abstract String getName();

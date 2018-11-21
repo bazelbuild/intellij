@@ -22,62 +22,44 @@ import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 
 /** Represents toolchain info from a cc_toolchain or cc_toolchain_suite */
 public final class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.CToolchainIdeInfo> {
-  private final ImmutableList<String> baseCompilerOptions;
+
   private final ImmutableList<String> cCompilerOptions;
   private final ImmutableList<String> cppCompilerOptions;
   private final ImmutableList<ExecutionRootPath> builtInIncludeDirectories;
   private final ExecutionRootPath cppExecutable;
   private final String targetName;
 
-  @Deprecated private final ImmutableList<String> unfilteredCompilerOptions;
-  @Deprecated private final ImmutableList<ExecutionRootPath> unfilteredToolchainSystemIncludes;
-
   private CToolchainIdeInfo(
-      ImmutableList<String> baseCompilerOptions,
       ImmutableList<String> cCompilerOptions,
       ImmutableList<String> cppCompilerOptions,
       ImmutableList<ExecutionRootPath> builtInIncludeDirectories,
       ExecutionRootPath cppExecutable,
-      String targetName,
-      ImmutableList<String> unfilteredCompilerOptions,
-      ImmutableList<ExecutionRootPath> unfilteredToolchainSystemIncludes) {
-    this.baseCompilerOptions = baseCompilerOptions;
+      String targetName) {
     this.cCompilerOptions = cCompilerOptions;
     this.cppCompilerOptions = cppCompilerOptions;
     this.builtInIncludeDirectories = builtInIncludeDirectories;
     this.cppExecutable = cppExecutable;
     this.targetName = targetName;
-    this.unfilteredCompilerOptions = unfilteredCompilerOptions;
-    this.unfilteredToolchainSystemIncludes = unfilteredToolchainSystemIncludes;
   }
 
   static CToolchainIdeInfo fromProto(IntellijIdeInfo.CToolchainIdeInfo proto) {
     return new CToolchainIdeInfo(
-        ImmutableList.copyOf(proto.getBaseCompilerOptionList()),
         ImmutableList.copyOf(proto.getCOptionList()),
         ImmutableList.copyOf(proto.getCppOptionList()),
         ProtoWrapper.map(proto.getBuiltInIncludeDirectoryList(), ExecutionRootPath::fromProto),
         ExecutionRootPath.fromProto(proto.getCppExecutable()),
-        proto.getTargetName(),
-        ImmutableList.copyOf(proto.getUnfilteredCompilerOptionList()),
-        ImmutableList.of());
+        proto.getTargetName());
   }
 
   @Override
   public IntellijIdeInfo.CToolchainIdeInfo toProto() {
     return IntellijIdeInfo.CToolchainIdeInfo.newBuilder()
-        .addAllBaseCompilerOption(baseCompilerOptions)
         .addAllCOption(cCompilerOptions)
         .addAllCppOption(cppCompilerOptions)
         .addAllBuiltInIncludeDirectory(ProtoWrapper.mapToProtos(builtInIncludeDirectories))
         .setCppExecutable(cppExecutable.toProto())
         .setTargetName(targetName)
-        .addAllUnfilteredCompilerOption(unfilteredCompilerOptions)
         .build();
-  }
-
-  public ImmutableList<String> getBaseCompilerOptions() {
-    return baseCompilerOptions;
   }
 
   public ImmutableList<String> getcCompilerOptions() {
@@ -100,21 +82,12 @@ public final class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.CTo
     return targetName;
   }
 
-  public ImmutableList<String> getUnfilteredCompilerOptions() {
-    return unfilteredCompilerOptions;
-  }
-
-  public ImmutableList<ExecutionRootPath> getUnfilteredToolchainSystemIncludes() {
-    return unfilteredToolchainSystemIncludes;
-  }
-
   public static Builder builder() {
     return new Builder();
   }
 
   /** Builder for c toolchain */
   public static class Builder {
-    private final ImmutableList.Builder<String> baseCompilerOptions = ImmutableList.builder();
     private final ImmutableList.Builder<String> cCompilerOptions = ImmutableList.builder();
     private final ImmutableList.Builder<String> cppCompilerOptions = ImmutableList.builder();
 
@@ -124,15 +97,6 @@ public final class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.CTo
     ExecutionRootPath cppExecutable;
 
     String targetName = "";
-
-    private final ImmutableList.Builder<String> unfilteredCompilerOptions = ImmutableList.builder();
-    private final ImmutableList.Builder<ExecutionRootPath> unfilteredToolchainSystemIncludes =
-        ImmutableList.builder();
-
-    public Builder addBaseCompilerOptions(Iterable<String> baseCompilerOptions) {
-      this.baseCompilerOptions.addAll(baseCompilerOptions);
-      return this;
-    }
 
     public Builder addCCompilerOptions(Iterable<String> cCompilerOptions) {
       this.cCompilerOptions.addAll(cCompilerOptions);
@@ -160,36 +124,19 @@ public final class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.CTo
       return this;
     }
 
-    public Builder addUnfilteredCompilerOptions(Iterable<String> unfilteredCompilerOptions) {
-      this.unfilteredCompilerOptions.addAll(unfilteredCompilerOptions);
-      return this;
-    }
-
-    public Builder addUnfilteredToolchainSystemIncludes(
-        Iterable<ExecutionRootPath> unfilteredToolchainSystemIncludes) {
-      this.unfilteredToolchainSystemIncludes.addAll(unfilteredToolchainSystemIncludes);
-      return this;
-    }
-
     public CToolchainIdeInfo build() {
       return new CToolchainIdeInfo(
-          baseCompilerOptions.build(),
           cCompilerOptions.build(),
           cppCompilerOptions.build(),
           builtInIncludeDirectories.build(),
           cppExecutable,
-          targetName,
-          unfilteredCompilerOptions.build(),
-          unfilteredToolchainSystemIncludes.build());
+          targetName);
     }
   }
 
   @Override
   public String toString() {
     return "CToolchainIdeInfo{"
-        + "\n"
-        + "  baseCompilerOptions="
-        + getBaseCompilerOptions()
         + "\n"
         + "  cCompilerOptions="
         + getcCompilerOptions()
@@ -208,12 +155,6 @@ public final class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.CTo
         + getTargetName()
         + '\''
         + "\n"
-        + "  unfilteredCompilerOptions="
-        + getUnfilteredCompilerOptions()
-        + "\n"
-        + "  unfilteredToolchainSystemIncludes="
-        + getUnfilteredToolchainSystemIncludes()
-        + "\n"
         + '}';
   }
 
@@ -226,27 +167,20 @@ public final class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.CTo
       return false;
     }
     CToolchainIdeInfo that = (CToolchainIdeInfo) o;
-    return Objects.equal(getBaseCompilerOptions(), that.getBaseCompilerOptions())
-        && Objects.equal(getcCompilerOptions(), that.getcCompilerOptions())
+    return Objects.equal(getcCompilerOptions(), that.getcCompilerOptions())
         && Objects.equal(getCppCompilerOptions(), that.getCppCompilerOptions())
         && Objects.equal(getBuiltInIncludeDirectories(), that.getBuiltInIncludeDirectories())
         && Objects.equal(getCppExecutable(), that.getCppExecutable())
-        && Objects.equal(getTargetName(), that.getTargetName())
-        && Objects.equal(getUnfilteredCompilerOptions(), that.getUnfilteredCompilerOptions())
-        && Objects.equal(
-            getUnfilteredToolchainSystemIncludes(), that.getUnfilteredToolchainSystemIncludes());
+        && Objects.equal(getTargetName(), that.getTargetName());
   }
 
   @Override
   public int hashCode() {
     return Objects.hashCode(
-        getBaseCompilerOptions(),
         getcCompilerOptions(),
         getCppCompilerOptions(),
         getBuiltInIncludeDirectories(),
         getCppExecutable(),
-        getTargetName(),
-        getUnfilteredCompilerOptions(),
-        getUnfilteredToolchainSystemIncludes());
+        getTargetName());
   }
 }

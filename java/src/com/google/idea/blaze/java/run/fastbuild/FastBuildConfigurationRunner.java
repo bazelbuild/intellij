@@ -131,22 +131,41 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
     } catch (java.util.concurrent.ExecutionException e) {
       logger.warn(e);
       if (e.getCause() instanceof FastBuildIncrementalCompileException) {
-        loggingData.data.putAll(
-            ((FastBuildIncrementalCompileException) e.getCause()).getLoggingData());
-        BlazeConsoleService console = BlazeConsoleService.getInstance(project);
-        console.print(
-            "Error performing incremental compilation: " + e.getCause().getMessage() + '\n',
-            ConsoleViewContentType.ERROR_OUTPUT);
-        console.printHyperlink(
-            "Click here to run the tests again with a fresh "
-                + Blaze.getBuildSystem(project)
-                + " build.\n",
-            new RerunTestsWithBlazeHyperlink(buildService, label, env));
+        handleJavacError(
+            env,
+            project,
+            label,
+            buildService,
+            loggingData,
+            (FastBuildIncrementalCompileException) e.getCause());
+      } else {
+        ExecutionUtil.handleExecutionError(env, new ExecutionException(e.getCause()));
       }
-      ExecutionUtil.handleExecutionError(env, new ExecutionException(e.getCause()));
     }
     loggingData.writeLog();
     return false;
+  }
+
+  private static void handleJavacError(
+      ExecutionEnvironment env,
+      Project project,
+      Label label,
+      FastBuildService buildService,
+      FastBuildLoggingData loggingData,
+      FastBuildIncrementalCompileException e) {
+
+    loggingData.data.putAll(e.getLoggingData());
+    BlazeConsoleService console = BlazeConsoleService.getInstance(project);
+    console.print(
+        "Error performing incremental compilation: " + e.getCause().getMessage() + '\n',
+        ConsoleViewContentType.ERROR_OUTPUT);
+    console.printHyperlink(
+        "Click here to run the tests again with a fresh "
+            + Blaze.getBuildSystem(project)
+            + " build.\n",
+        new RerunTestsWithBlazeHyperlink(buildService, label, env));
+    ExecutionUtil.handleExecutionError(
+        env, new ExecutionException("See the Blaze Console for javac output", e.getCause()));
   }
 
   static class FastBuildLoggingData {

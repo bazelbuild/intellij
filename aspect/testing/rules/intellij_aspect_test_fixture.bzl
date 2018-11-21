@@ -23,7 +23,7 @@ def _impl(ctx):
     output = ctx.new_file(output_name)
 
     args = [output.path]
-    args += [":".join([f.path for f in inputs])]
+    args += [":".join([f.path for f in inputs.to_list()])]
     for k, v in output_groups.items():
         args.append(k)
         args.append(":".join([f.short_path for f in v]))

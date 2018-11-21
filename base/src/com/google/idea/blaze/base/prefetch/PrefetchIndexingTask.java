@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.prefetch;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -23,24 +22,24 @@ import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.TimeoutUtil;
+import java.util.concurrent.Future;
 
 /** Kicks off an indexing task associated with a running prefetch task, with progress dialog. */
 public final class PrefetchIndexingTask extends DumbModeTask {
 
   private static final Logger logger = Logger.getInstance(PrefetchIndexingTask.class);
 
-  public static void submitPrefetchingTask(
-      Project project, ListenableFuture<?> task, String taskName) {
+  public static void submitPrefetchingTask(Project project, Future<?> task, String taskName) {
     TransactionGuard.submitTransaction(
         project,
         () -> DumbService.getInstance(project).queueTask(new PrefetchIndexingTask(task, taskName)));
   }
 
-  private final ListenableFuture<?> future;
+  private final Future<?> future;
   private final String taskName;
   private final long startTimeMillis;
 
-  private PrefetchIndexingTask(ListenableFuture<?> future, String taskName) {
+  private PrefetchIndexingTask(Future<?> future, String taskName) {
     this.future = future;
     this.taskName = taskName;
     this.startTimeMillis = System.currentTimeMillis();

@@ -49,14 +49,13 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
         .containsExactly(testRelative("simple/simple_textual.h"));
 
     CIdeInfo cTargetIdeInfo = target.getCIdeInfo();
-    assertThat(cTargetIdeInfo.getTargetIncludeList()).containsExactly("foo/bar");
     assertThat(cTargetIdeInfo.getTargetCoptList())
         .containsExactly("-DGOPT", "-Ifoo/baz/", "-I", "other/headers");
-    assertThat(cTargetIdeInfo.getTargetDefineList()).containsExactly("VERSION2");
 
     // Make sure our understanding of where this attributes show up in other providers is correct.
-    List<String> transDefineList = cTargetIdeInfo.getTransitiveDefineList();
-    assertThat(transDefineList).contains("VERSION2");
+    assertThat(cTargetIdeInfo.getTransitiveSystemIncludeDirectoryList())
+        .contains(testRelative("foo/bar"));
+    assertThat(cTargetIdeInfo.getTransitiveDefineList()).contains("VERSION2");
 
     List<String> transQuoteIncludeDirList = cTargetIdeInfo.getTransitiveQuoteIncludeDirectoryList();
     assertThat(transQuoteIncludeDirList).contains(".");
@@ -91,10 +90,13 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
     assertThat(lib2.hasCIdeInfo()).isTrue();
     CIdeInfo cIdeInfo1 = lib1.getCIdeInfo();
 
-    assertThat(cIdeInfo1.getTargetIncludeList()).containsExactly("foo/bar");
+    assertThat(cIdeInfo1.getTransitiveSystemIncludeDirectoryList())
+        .contains(testRelative("foo/bar"));
+    assertThat(cIdeInfo1.getTransitiveSystemIncludeDirectoryList())
+        .contains(testRelative("baz/lib"));
+
     assertThat(cIdeInfo1.getTargetCoptList()).containsExactly("-DGOPT", "-Ifoo/baz/");
 
-    assertThat(cIdeInfo1.getTargetDefineList()).containsExactly("VERSION2");
     assertThat(cIdeInfo1.getTransitiveDefineList()).contains("VERSION2");
     assertThat(cIdeInfo1.getTransitiveDefineList()).contains("COMPLEX_IMPL");
   }

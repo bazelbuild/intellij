@@ -20,11 +20,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.execution.actions.RunConfigurationProducer;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
-public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
+public class NonBlazeProducerSuppressor implements ProjectComponent {
 
   private static final ImmutableList<Class<?>> PRODUCERS_TO_SUPPRESS =
       ImmutableList.of(
@@ -37,14 +37,16 @@ public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
           com.jetbrains.python.testing.tox.PyToxConfigurationProducer.class,
           com.jetbrains.python.testing.unittestLegacy.PythonUnitTestConfigurationProducer.class);
 
+  private final Project project;
+
   public NonBlazeProducerSuppressor(Project project) {
-    super(project);
+    this.project = project;
   }
 
   @Override
   public void projectOpened() {
-    if (Blaze.isBlazeProject(myProject)) {
-      suppressProducers(myProject);
+    if (Blaze.isBlazeProject(project)) {
+      suppressProducers(project);
     }
   }
 

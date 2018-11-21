@@ -17,6 +17,7 @@ package com.google.idea.blaze.scala.run.smrunner;
 
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.scala.run.Specs2Utils;
@@ -46,8 +47,7 @@ public class BlazeScalaTestEventsHandler implements BlazeTestEventsHandler {
   @Override
   public String getTestFilter(Project project, List<Location<?>> testLocations) {
     String filter =
-        testLocations
-            .stream()
+        testLocations.stream()
             .map(Location::getPsiElement)
             .map(BlazeScalaTestEventsHandler::getTestFilter)
             .filter(Objects::nonNull)
@@ -63,7 +63,7 @@ public class BlazeScalaTestEventsHandler implements BlazeTestEventsHandler {
   }
 
   @Override
-  public String testDisplayName(@Nullable Kind kind, String rawName) {
+  public String testDisplayName(Label label, @Nullable Kind kind, String rawName) {
     return rawName.replace(SmRunnerUtils.TEST_NAME_PARTS_SPLITTER, " ");
   }
 }

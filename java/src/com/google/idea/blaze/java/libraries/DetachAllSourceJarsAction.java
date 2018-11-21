@@ -88,7 +88,7 @@ class DetachAllSourceJarsAction extends BlazeProjectAction {
         });
   }
 
-  static class DetachAllOnSync extends SyncListener.Adapter {
+  static class DetachAllOnSync implements SyncListener {
 
     @Override
     public void onSyncComplete(

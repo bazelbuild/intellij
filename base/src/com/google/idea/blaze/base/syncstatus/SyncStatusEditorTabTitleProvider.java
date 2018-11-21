@@ -16,12 +16,13 @@
 package com.google.idea.blaze.base.syncstatus;
 
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import javax.annotation.Nullable;
 
 /** Changes the tab title for unsynced files. */
-public class SyncStatusEditorTabTitleProvider implements EditorTabTitleProvider {
+public class SyncStatusEditorTabTitleProvider implements EditorTabTitleProvider, DumbAware {
   @Nullable
   @Override
   public String getEditorTabTitle(Project project, VirtualFile file) {

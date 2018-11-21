@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.dependencies;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.dependencies.AddSourceToProjectHelper.LocationContext;
@@ -29,7 +30,6 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
-import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -119,18 +119,19 @@ public class ExternalFileProjectManagementHelper
     if (context == null) {
       return null;
     }
-    if (!SourceToTargetMap.getInstance(context.project).getRulesForSourceFile(file).isEmpty()) {
-      // don't show notification for sources covered by project targets + libraries:
-      // early-out if source covered by previously built targets
-      return null;
-    }
-    ListenableFuture<List<TargetInfo>> targetsFuture =
-        AddSourceToProjectHelper.getTargetsBuildingSource(context);
-    if (targetsFuture == null) {
+    boolean alreadyBuilt = AddSourceToProjectHelper.sourceCoveredByProjectViewTargets(context);
+    boolean inProjectDirectories = AddSourceToProjectHelper.sourceInProjectDirectories(context);
+    if (alreadyBuilt && inProjectDirectories) {
       return null;
     }
 
-    boolean inProjectDirectories = AddSourceToProjectHelper.sourceInProjectDirectories(context);
+    ListenableFuture<List<TargetInfo>> targetsFuture =
+        alreadyBuilt
+            ? Futures.immediateFuture(ImmutableList.of())
+            : AddSourceToProjectHelper.getTargetsBuildingSource(context);
+    if (targetsFuture == null) {
+      return null;
+    }
 
     EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setVisible(false); // starts off not visible until we get the query results
@@ -177,7 +178,7 @@ public class ExternalFileProjectManagementHelper
     return panel;
   }
 
-  static class UpdateNotificationsAfterSync extends SyncListener.Adapter {
+  static class UpdateNotificationsAfterSync implements SyncListener {
 
     @Override
     public void onSyncComplete(

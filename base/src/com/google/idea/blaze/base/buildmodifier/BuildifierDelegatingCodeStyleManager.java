@@ -45,10 +45,14 @@ final class BuildifierDelegatingCodeStyleManager extends ExternalFormatterCodeSt
     if (!(file instanceof BuildFile)) {
       return;
     }
+    FileContentsProvider contentsProvider = FileContentsProvider.fromPsiFile(file);
+    if (contentsProvider == null) {
+      return;
+    }
     BlazeFileType type = ((BuildFile) file).getBlazeFileType();
-    String inputText = document.getText();
     ListenableFuture<Replacements> formattedFileFuture =
-        BuildFileFormatter.formatTextWithProgressDialog(getProject(), type, inputText, ranges);
-    performReplacementsAsync(file, inputText, formattedFileFuture);
+        BuildFileFormatter.formatTextWithProgressDialog(
+            getProject(), type, contentsProvider, ranges);
+    performReplacementsAsync(contentsProvider, formattedFileFuture);
   }
 }

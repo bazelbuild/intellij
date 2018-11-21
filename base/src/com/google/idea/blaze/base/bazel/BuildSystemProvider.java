@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
@@ -110,8 +109,11 @@ public interface BuildSystemProvider {
   @Nullable
   String getLanguageSupportDocumentationUrl(String relativeDocName);
 
-  /** The BUILD filenames supported by this build system. */
-  ImmutableSet<String> possibleBuildFileNames();
+  /**
+   * The BUILD filenames supported by this build system, in decreasing order of preference (e.g. if
+   * both BUILD and BUILD.bazel exist in a directory, bazel ignores the former).
+   */
+  ImmutableList<String> possibleBuildFileNames();
 
   /** Check if the given filename is a valid BUILD file name. */
   default boolean isBuildFile(String fileName) {

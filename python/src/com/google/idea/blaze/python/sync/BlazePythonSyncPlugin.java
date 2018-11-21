@@ -170,8 +170,10 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
       BlazeProjectData blazeProjectData,
       Module workspaceModule,
       ModifiableRootModel workspaceModifiableModel) {
-    if (!PythonFacetUtil.usePythonFacets()
-        || !blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.PYTHON)
+    if (!PythonFacetUtil.usePythonFacets()) {
+      return;
+    }
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.PYTHON)
         || blazeProjectData.getWorkspaceLanguageSettings().isWorkspaceType(WorkspaceType.PYTHON)) {
       removeFacet(workspaceModule);
       return;

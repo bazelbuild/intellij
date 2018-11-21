@@ -113,7 +113,7 @@ public final class BlazeConfigurationToolchainResolver {
           return lookupTable.build();
         });
   }
-  
+
   private static void issueToolchainWarning(
       BlazeContext context, TargetIdeInfo target, List<TargetKey> toolchainDeps) {
     String warningMessage =
@@ -277,14 +277,10 @@ public final class BlazeConfigurationToolchainResolver {
       return null;
     }
     ImmutableList.Builder<String> cFlagsBuilder = ImmutableList.builder();
-    cFlagsBuilder.addAll(toolchainIdeInfo.getBaseCompilerOptions());
-    cFlagsBuilder.addAll(toolchainIdeInfo.getCppCompilerOptions());
-    cFlagsBuilder.addAll(toolchainIdeInfo.getUnfilteredCompilerOptions());
+    cFlagsBuilder.addAll(toolchainIdeInfo.getcCompilerOptions());
 
     ImmutableList.Builder<String> cppFlagsBuilder = ImmutableList.builder();
-    cppFlagsBuilder.addAll(toolchainIdeInfo.getBaseCompilerOptions());
     cppFlagsBuilder.addAll(toolchainIdeInfo.getCppCompilerOptions());
-    cppFlagsBuilder.addAll(toolchainIdeInfo.getUnfilteredCompilerOptions());
     return new BlazeCompilerSettings(
         project,
         compilerWrapper,

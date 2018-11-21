@@ -31,8 +31,6 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
-import com.google.idea.blaze.base.model.primitives.TargetName;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.Location;
@@ -47,7 +45,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope.FilesScope;
 import com.intellij.psi.stubs.StubIndex;
-import com.intellij.util.PathUtil;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -73,10 +70,9 @@ public final class BlazeGoTestLocator implements SMTestLocator {
     }
   }
 
-  /** @param path for "//foo/bar:baz" would be "foo/bar/baz". */
   @SuppressWarnings("rawtypes")
-  private static List<Location> findTestPackage(Project project, String path) {
-    TargetIdeInfo target = getGoTestTarget(project, path);
+  private static List<Location> findTestPackage(Project project, String labelString) {
+    TargetIdeInfo target = getGoTestTarget(project, labelString);
     if (target == null) {
       return ImmutableList.of();
     }
@@ -106,7 +102,7 @@ public final class BlazeGoTestLocator implements SMTestLocator {
   }
 
   /**
-   * @param path for function "TestFoo" in target "//foo/bar:baz" would be "foo/bar/baz::TestFoo".
+   * @param path for function "TestFoo" in target "//foo/bar:baz" would be "//foo/bar:baz::TestFoo".
    *     See {@link BlazeGoTestEventsHandler#testLocationUrl}.
    */
   @SuppressWarnings("rawtypes")
@@ -115,8 +111,12 @@ public final class BlazeGoTestLocator implements SMTestLocator {
     if (parts.length != 2) {
       return ImmutableList.of();
     }
+    String labelString = parts[0];
     String functionName = parts[1];
-    TargetIdeInfo target = getGoTestTarget(project, parts[0]);
+    TargetIdeInfo target = getGoTestTarget(project, labelString);
+    if (target == null) {
+      return ImmutableList.of();
+    }
     List<VirtualFile> goFiles = getGoFiles(project, target);
     if (goFiles.isEmpty()) {
       return ImmutableList.of();
@@ -129,16 +129,11 @@ public final class BlazeGoTestLocator implements SMTestLocator {
   }
 
   @Nullable
-  private static TargetIdeInfo getGoTestTarget(Project project, String path) {
-    WorkspacePath targetPackage = WorkspacePath.createIfValid(PathUtil.getParentPath(path));
-    if (targetPackage == null) {
+  private static TargetIdeInfo getGoTestTarget(Project project, String labelString) {
+    Label label = Label.createIfValid(labelString);
+    if (label == null) {
       return null;
     }
-    TargetName targetName = TargetName.createIfValid(PathUtil.getFileName(path));
-    if (targetName == null) {
-      return null;
-    }
-    Label label = Label.create(targetPackage, targetName);
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null) {

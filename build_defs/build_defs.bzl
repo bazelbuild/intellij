@@ -289,7 +289,7 @@ def _plugin_deploy_zip_impl(ctx):
     ctx.action(
         executable = ctx.executable._zip_plugin_files,
         arguments = args,
-        inputs = list(input_files),
+        inputs = input_files.to_list(),
         outputs = [zip_file],
         mnemonic = "ZipPluginFiles",
         progress_message = "Creating final plugin zip archive",

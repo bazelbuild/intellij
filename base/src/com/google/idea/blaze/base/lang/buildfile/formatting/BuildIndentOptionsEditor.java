@@ -24,9 +24,6 @@ import javax.swing.JLabel;
 /**
  * A custom {@link SmartIndentOptionsEditor} which allows for a separate continuation indent for
  * function declaration parameters.
- *
- * <p>#api173: remove this class, and use the upstream API to implement this (added in
- * https://github.com/JetBrains/intellij-community/commit/4c80d98c861cd6478870d0930105765f2973f019).
  */
 class BuildIndentOptionsEditor extends SmartIndentOptionsEditor {
 

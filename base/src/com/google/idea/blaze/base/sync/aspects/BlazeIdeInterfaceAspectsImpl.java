@@ -69,7 +69,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProvider;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -127,8 +126,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     }
 
     // If the aspect strategy has changed, redo everything from scratch
-    final AspectStrategy aspectStrategy =
-        AspectStrategyProvider.findAspectStrategy(blazeVersionData);
+    AspectStrategy aspectStrategy = AspectStrategy.getInstance(blazeVersionData.buildSystem());
     if (prevState != null
         && !Objects.equals(prevState.aspectStrategyName, aspectStrategy.getName())) {
       prevState = null;
@@ -601,7 +599,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                       BlazeInvocationContext.SYNC_CONTEXT));
 
       // Request the 'intellij-resolve' aspect output group.
-      AspectStrategyProvider.findAspectStrategy(blazeVersionData)
+      AspectStrategy.getInstance(blazeVersionData.buildSystem())
           .addAspectAndOutputGroups(
               blazeCommandBuilder,
               OutputGroup.RESOLVE,
@@ -657,7 +655,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                     BlazeCommandName.BUILD,
                     BlazeInvocationContext.SYNC_CONTEXT));
 
-    AspectStrategyProvider.findAspectStrategy(blazeVersionData)
+    AspectStrategy.getInstance(blazeVersionData.buildSystem())
         .addAspectAndOutputGroups(
             blazeCommandBuilder,
             OutputGroup.COMPILE,

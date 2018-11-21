@@ -60,6 +60,7 @@ public final class FastBuildCompilerFactoryImplTest {
       JavaInfo.create(
           /*sources*/ ImmutableSet.of(),
           /*testClass*/ null,
+          /*testSize*/ null,
           /* annotationProcessorClassNames */ ImmutableList.of(),
           /* annotationProcessorClassPath */ ImmutableList.of(),
           /* jvmFlags */ ImmutableList.of());

@@ -23,10 +23,12 @@ import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.LibraryKey;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** The result of a blaze import operation. */
-public class BlazeJavaImportResult implements ProtoWrapper<ProjectData.BlazeJavaImportResult> {
+public final class BlazeJavaImportResult
+    implements ProtoWrapper<ProjectData.BlazeJavaImportResult> {
   public final ImmutableList<BlazeContentEntry> contentEntries;
   public final ImmutableMap<LibraryKey, BlazeJarLibrary> libraries;
   public final ImmutableList<ArtifactLocation> buildOutputJars;
@@ -69,5 +71,26 @@ public class BlazeJavaImportResult implements ProtoWrapper<ProjectData.BlazeJava
             .addAllJavaSourceFiles(ProtoWrapper.mapToProtos(javaSourceFiles));
     ProtoWrapper.setIfNotNull(builder::setSourceVersion, sourceVersion);
     return builder.build();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    BlazeJavaImportResult that = (BlazeJavaImportResult) o;
+    return Objects.equals(contentEntries, that.contentEntries)
+        && Objects.equals(libraries, that.libraries)
+        && Objects.equals(buildOutputJars, that.buildOutputJars)
+        && Objects.equals(javaSourceFiles, that.javaSourceFiles)
+        && Objects.equals(sourceVersion, that.sourceVersion);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(contentEntries, libraries, buildOutputJars, javaSourceFiles, sourceVersion);
   }
 }

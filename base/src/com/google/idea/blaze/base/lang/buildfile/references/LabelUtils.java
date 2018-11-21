@@ -82,10 +82,17 @@ public class LabelUtils {
     }
     int colonIndex = labelString.indexOf(':');
     if (isAbsolute(labelString)) {
-      if (colonIndex == -1) {
-        // add the implicit rule name
-        labelString += ":" + PathUtil.getFileName(labelString);
+      if (colonIndex != -1) {
+        return Label.createIfValid(labelString);
       }
+      if (isExternal(labelString) && !labelString.contains("//")) {
+        // external workspace labels are either canonical, or of the form '@workspace', which is
+        // interpreted as '@workspace//:workspace'
+        String externalWorkspace = labelString.substring(1);
+        return Label.createIfValid(labelString + "//:" + externalWorkspace);
+      }
+      // add the implicit rule name
+      labelString += ":" + PathUtil.getFileName(labelString);
       return Label.createIfValid(labelString);
     }
     // package-relative label of the form '[:]relativePath'
@@ -137,11 +144,16 @@ public class LabelUtils {
 
   @Nullable
   public static String getExternalWorkspaceComponent(String labelString) {
-    if (!labelString.startsWith("@")) {
+    if (!isExternal(labelString)) {
       return null;
     }
     int slashesIndex = labelString.indexOf("//");
-    return slashesIndex == -1 ? null : labelString.substring(1, slashesIndex);
+    // '@workspace' is interpreted as '@workspace//:workspace'
+    return slashesIndex == -1 ? labelString.substring(1) : labelString.substring(1, slashesIndex);
+  }
+
+  private static boolean isExternal(String labelString) {
+    return !labelString.isEmpty() && labelString.charAt(0) == '@';
   }
 
   /** Returns false for package-relative labels */
@@ -177,6 +189,9 @@ public class LabelUtils {
     strings.add(label.toString());
     String packagePath = label.blazePackage().relativePath();
     if (packagePath.isEmpty()) {
+      if (label.isExternal()) {
+        strings.add("@" + label.externalWorkspaceName());
+      }
       return strings;
     }
     String ruleName = label.targetName().toString();

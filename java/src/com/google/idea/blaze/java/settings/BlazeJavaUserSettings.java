@@ -15,7 +15,9 @@
  */
 package com.google.idea.blaze.java.settings;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.logging.LoggedSettingsProvider;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -52,5 +54,21 @@ public class BlazeJavaUserSettings implements PersistentStateComponent<BlazeJava
 
   public void setUseJarCache(boolean useJarCache) {
     this.useJarCache = useJarCache;
+  }
+
+  static class SettingsLogger implements LoggedSettingsProvider {
+    @Override
+    public String getNamespace() {
+      return "BlazeJavaUserSettings";
+    }
+
+    @Override
+    public ImmutableMap<String, String> getApplicationSettings() {
+      BlazeJavaUserSettings settings = BlazeJavaUserSettings.getInstance();
+
+      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+      builder.put("useJarCache", Boolean.toString(settings.useJarCache));
+      return builder.build();
+    }
   }
 }

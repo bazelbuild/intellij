@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import java.util.Objects;
 
 /** Ide info specific to dart rules. */
 public final class DartIdeInfo implements ProtoWrapper<IntellijIdeInfo.DartIdeInfo> {
@@ -62,5 +63,22 @@ public final class DartIdeInfo implements ProtoWrapper<IntellijIdeInfo.DartIdeIn
   @Override
   public String toString() {
     return "DartIdeInfo{" + "\n" + "  sources=" + getSources() + "\n" + '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    DartIdeInfo that = (DartIdeInfo) o;
+    return Objects.equals(sources, that.sources);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(sources);
   }
 }

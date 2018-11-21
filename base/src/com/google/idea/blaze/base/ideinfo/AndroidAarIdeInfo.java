@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.ideinfo;
 
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import java.util.Objects;
 
 /** aar_import ide info */
 public final class AndroidAarIdeInfo implements ProtoWrapper<IntellijIdeInfo.AndroidAarIdeInfo> {
@@ -41,5 +42,22 @@ public final class AndroidAarIdeInfo implements ProtoWrapper<IntellijIdeInfo.And
   @Override
   public String toString() {
     return "AndroidAarIdeInfo{" + "\n" + "  aar=" + getAar() + "\n" + '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AndroidAarIdeInfo that = (AndroidAarIdeInfo) o;
+    return Objects.equals(aar, that.aar);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(aar);
   }
 }

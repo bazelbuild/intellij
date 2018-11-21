@@ -28,7 +28,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="cidr.debugger">
-    <languageSupport language="" implementationClass="com.google.idea.blaze.android.cppimpl.debug.BlazeAndroidNativeDebuggerLanguageSupportFactory"/>
+    <languageSupport language="" implementationClass="com.google.idea.blaze.android.cppimpl.debug.BlazeAndroidNativeDebuggerLanguageSupport"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.run">

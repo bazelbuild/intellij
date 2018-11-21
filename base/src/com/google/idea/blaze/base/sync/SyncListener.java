@@ -51,39 +51,19 @@ public interface SyncListener {
   }
 
   /** Called after open documents have been saved, prior to starting the blaze sync. */
-  void onSyncStart(Project project, BlazeContext context, SyncMode syncMode);
+  default void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {}
 
   /** Called on successful (or partially successful) completion of a sync */
-  void onSyncComplete(
+  default void onSyncComplete(
       Project project,
       BlazeContext context,
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
       SyncMode syncMode,
-      SyncResult syncResult);
+      SyncResult syncResult) {}
 
   /** Guaranteed to be called once per sync, regardless of whether it successfully completed */
-  void afterSync(Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult);
-
-  /** Convenience adapter class. */
-  abstract class Adapter implements SyncListener {
-
-    @Override
-    public void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {}
-
-    @Override
-    public void onSyncComplete(
-        Project project,
-        BlazeContext context,
-        BlazeImportSettings importSettings,
-        ProjectViewSet projectViewSet,
-        BlazeProjectData blazeProjectData,
-        SyncMode syncMode,
-        SyncResult syncResult) {}
-
-    @Override
-    public void afterSync(
-        Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {}
-  }
+  default void afterSync(
+      Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {}
 }

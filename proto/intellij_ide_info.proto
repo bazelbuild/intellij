@@ -57,10 +57,8 @@ message CIdeInfo {
   repeated string transitive_system_include_directory = 6;
 
   repeated string target_copt = 7;
-  repeated string target_define = 8;
-  repeated string target_include = 9;
-  repeated ArtifactLocation header = 10;
-  repeated ArtifactLocation textual_header = 11;
+  repeated ArtifactLocation header = 8;
+  repeated ArtifactLocation textual_header = 9;
 }
 
 message AndroidIdeInfo {
@@ -106,8 +104,8 @@ message PyIdeInfo {
 message GoIdeInfo {
   repeated ArtifactLocation sources = 1;
   string import_path = 2;
-  string library_label = 3;
-  string library_kind = 4;
+  string library_label = 3; // only for go_test / go_appengine_test
+  string library_kind = 4 [deprecated = true];
 }
 
 message JsIdeInfo {
@@ -124,12 +122,10 @@ message DartIdeInfo {
 
 message CToolchainIdeInfo {
   string target_name = 1;
-  repeated string base_compiler_option = 2;
-  repeated string cpp_option = 3;
-  repeated string c_option = 4;
-  string cpp_executable = 5;
-  repeated string built_in_include_directory = 6;
-  repeated string unfiltered_compiler_option = 7;
+  repeated string cpp_option = 2;
+  repeated string c_option = 3;
+  string cpp_executable = 4;
+  repeated string built_in_include_directory = 5;
 }
 
 message TestInfo {

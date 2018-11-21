@@ -73,7 +73,7 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
                       .toString()
                       .trim();
               ImmutableMap<String, String> blazeInfoMap = parseBlazeInfoResult(blazeInfoString);
-              return new BlazeInfo(buildSystem, blazeInfoMap);
+              return BlazeInfo.create(buildSystem, blazeInfoMap);
             });
   }
 

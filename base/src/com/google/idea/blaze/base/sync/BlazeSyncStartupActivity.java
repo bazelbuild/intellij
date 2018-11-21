@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import java.io.IOException;
 import org.jetbrains.annotations.NotNull;
 
 /** Syncs the project upon startup. */
@@ -47,11 +46,7 @@ public class BlazeSyncStartupActivity implements StartupActivity {
   }
 
   private static boolean hasProjectData(Project project, BlazeImportSettings importSettings) {
-    try {
-      return BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings) != null;
-    } catch (IOException e) {
-      return false;
-    }
+    return BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings) != null;
   }
 
   private static BlazeSyncParams startupSyncParams() {

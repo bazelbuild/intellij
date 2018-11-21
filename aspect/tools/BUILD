@@ -33,6 +33,13 @@ java_binary(
 
 java_binary(
     name = "PackageParser",
+    jvm_flags = [
+        # quiet warnings from com.google.protobuf.UnsafeUtil,
+        # see: https://github.com/google/protobuf/issues/3781
+        "-XX:+IgnoreUnrecognizedVMOptions",
+        "--add-opens=java.base/java.nio=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+    ],
     main_class = "com.google.idea.blaze.aspect.PackageParser",
     visibility = ["//visibility:public"],
     runtime_deps = [":lib"],

@@ -15,30 +15,19 @@
  */
 package com.google.idea.blaze.java.run.fastbuild;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import java.util.Arrays;
-import java.util.Optional;
 
-interface FastBuildTestEnvironmentCreatorFactory {
+interface FastBuildTestEnvironmentCreatorFactory extends BuildSystemExtensionPoint {
 
   ExtensionPointName<FastBuildTestEnvironmentCreatorFactory> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.FastBuildTestEnvironmentCreatorFactory");
 
   static FastBuildTestEnvironmentCreatorFactory getInstance(BuildSystem buildSystem) {
-    Optional<FastBuildTestEnvironmentCreatorFactory> factory =
-        Arrays.stream(EP_NAME.getExtensions()).filter(f -> f.appliesTo(buildSystem)).findAny();
-    checkState(
-        factory.isPresent(),
-        "No FastBuildTestEnvironmentCreatorFactory for build system %s",
-        buildSystem);
-    return factory.get();
+    return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystem);
   }
-
-  boolean appliesTo(BuildSystem buildSystem);
 
   FastBuildTestEnvironmentCreator getTestEnvironmentCreator(Project project);
 }

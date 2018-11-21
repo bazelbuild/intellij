@@ -167,7 +167,7 @@ public class BlazeScalaMainClassRunConfigurationProducer
     // Scala objects are basically singletons with a '$' appended to the class name.
     // The trunced qualified name removes the '$',
     // so it matches the main class specified in the scala_binary rule.
-    String qualifiedName = mainObject.getTruncedQualifiedName();
+    String qualifiedName = mainObject.qualifiedName();
 
     if (qualifiedName == null) {
       // out of date psi element; just take the first match

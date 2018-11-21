@@ -40,6 +40,7 @@ import com.google.idea.blaze.plugin.IntellijPluginRule;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaCommandLineState;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
@@ -221,6 +222,23 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
           }
         }
         return params;
+      }
+
+      /** https://youtrack.jetbrains.com/issue/IDEA-201733 */
+      @Override
+      protected GeneralCommandLine createCommandLine() throws ExecutionException {
+        GeneralCommandLine commandLine = super.createCommandLine();
+        for (String jreName : new String[] {"jre64", "jre"}) {
+          File bundledJre = new File(ideaJdk.getHomePath(), jreName);
+          if (bundledJre.isDirectory()) {
+            File bundledJava = new File(bundledJre, "bin/java");
+            if (bundledJava.canExecute()) {
+              commandLine.setExePath(bundledJava.getAbsolutePath());
+              break;
+            }
+          }
+        }
+        return commandLine;
       }
 
       @Override

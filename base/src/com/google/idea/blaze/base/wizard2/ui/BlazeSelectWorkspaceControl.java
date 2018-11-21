@@ -172,16 +172,9 @@ public class BlazeSelectWorkspaceControl {
 
   /** Migrate old settings, apply current settings. */
   private boolean initializeSettings() {
-    boolean selected = false;
-    for (BlazeSelectWorkspaceOption option : availableWorkspaceTypes) {
-      if (option.migratePreviousOptions(userSettings)) {
-        workspaceTypeList.setSelectedValue(option, false);
-        selected = true;
-      }
-    }
     String selectedOption = userSettings.get(OPTION_KEY, null);
     if (selectedOption == null) {
-      return selected;
+      return false;
     }
     for (BlazeSelectWorkspaceOption option : availableWorkspaceTypes) {
       if (option.getOptionName().equals(selectedOption)) {

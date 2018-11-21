@@ -170,7 +170,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
         parsedResults.targetSuites.size() == 1
             ? parsedResults.targetSuites.get(0)
             : BlazeXmlSchema.mergeSuites(parsedResults.targetSuites);
-    processTestSuite(getProcessor(), eventsHandler, kind, suite);
+    processTestSuite(getProcessor(), eventsHandler, parsedResults.label, kind, suite);
   }
 
   /** Return false if there's output XML which should be parsed. */
@@ -222,28 +222,29 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   private static void processTestSuite(
       GeneralTestEventsProcessor processor,
       BlazeTestEventsHandler eventsHandler,
+      Label label,
       @Nullable Kind kind,
       TestSuite suite) {
     if (!hasRunChild(suite)) {
       return;
     }
     // only include the innermost 'testsuite' element
-    boolean logSuite = !eventsHandler.ignoreSuite(kind, suite);
+    boolean logSuite = !eventsHandler.ignoreSuite(label, kind, suite);
     if (suite.name != null && logSuite) {
       TestSuiteStarted suiteStarted =
-          new TestSuiteStarted(eventsHandler.suiteDisplayName(kind, suite.name));
-      String locationUrl = eventsHandler.suiteLocationUrl(kind, suite.name);
+          new TestSuiteStarted(eventsHandler.suiteDisplayName(label, kind, suite.name));
+      String locationUrl = eventsHandler.suiteLocationUrl(label, kind, suite.name);
       processor.onSuiteStarted(new TestSuiteStartedEvent(suiteStarted, locationUrl));
     }
 
     for (TestSuite child : suite.testSuites) {
-      processTestSuite(processor, eventsHandler, kind, child);
+      processTestSuite(processor, eventsHandler, label, kind, child);
     }
     for (TestSuite decorator : suite.testDecorators) {
-      processTestSuite(processor, eventsHandler, kind, decorator);
+      processTestSuite(processor, eventsHandler, label, kind, decorator);
     }
     for (TestCase test : suite.testCases) {
-      processTestCase(processor, eventsHandler, kind, suite, test);
+      processTestCase(processor, eventsHandler, label, kind, suite, test);
     }
 
     if (suite.sysOut != null) {
@@ -255,7 +256,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
 
     if (suite.name != null && logSuite) {
       processor.onSuiteFinished(
-          new TestSuiteFinishedEvent(eventsHandler.suiteDisplayName(kind, suite.name)));
+          new TestSuiteFinishedEvent(eventsHandler.suiteDisplayName(label, kind, suite.name)));
     }
   }
 
@@ -316,15 +317,16 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   private static void processTestCase(
       GeneralTestEventsProcessor processor,
       BlazeTestEventsHandler eventsHandler,
+      Label label,
       @Nullable Kind kind,
       TestSuite parent,
       TestCase test) {
     if (test.name == null || !wasRun(test) || isCancelled(test)) {
       return;
     }
-    String displayName = eventsHandler.testDisplayName(kind, test.name);
+    String displayName = eventsHandler.testDisplayName(label, kind, test.name);
     String locationUrl =
-        eventsHandler.testLocationUrl(kind, parent.name, test.name, test.classname);
+        eventsHandler.testLocationUrl(label, kind, parent.name, test.name, test.classname);
     processor.onTestStarted(new TestStartedEvent(displayName, locationUrl));
 
     if (test.sysOut != null) {

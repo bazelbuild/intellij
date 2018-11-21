@@ -23,7 +23,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 
 /** Android-specific hooks to run after a blaze sync. */
-public class BlazeAndroidSyncListener extends SyncListener.Adapter {
+public class BlazeAndroidSyncListener implements SyncListener {
   @Override
   public void afterSync(
       Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {

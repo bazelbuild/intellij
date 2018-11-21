@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.TestFileSystem;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidAarIdeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
+import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
@@ -167,7 +168,8 @@ public final class BlazeImportFixture {
         outputBase,
         outputBase + "/execroot",
         outputBase + "/execroot/bin",
-        outputBase + "/execroot/gen");
+        outputBase + "/execroot/gen",
+        outputBase + "/execroot/testlogs");
   }
 
   public ArtifactLocationDecoder getDecoder() {
@@ -249,6 +251,7 @@ public final class BlazeImportFixture {
             TargetIdeInfo.builder()
                 .setLabel(individualLibrary)
                 .setKind(Kind.ANDROID_LIBRARY)
+                .setBuildFile(source("third_party/individualLibrary/BUILD"))
                 .setAndroidInfo(
                     AndroidIdeInfo.builder()
                         .setManifestFile(
@@ -260,10 +263,19 @@ public final class BlazeImportFixture {
             TargetIdeInfo.builder()
                 .setLabel(quantum)
                 .setKind(Kind.ANDROID_LIBRARY)
+                .setBuildFile(source("third_party/quantum/BUILD"))
                 .setAndroidInfo(
                     AndroidIdeInfo.builder()
                         .setManifestFile(source("third_party/quantum/AndroidManifest.xml"))
-                        .addResource(source("third_party/quantum/res"))
+                        .addResource(
+                            AndroidResFolder.builder()
+                                .setRoot(source("third_party/quantum/res"))
+                                .addResources(
+                                    ImmutableList.of(
+                                        "values/strings.xml",
+                                        "values/attrs.xml",
+                                        "layout/menu.xml"))
+                                .build())
                         .setGenerateResourceClass(true)
                         .setResourceJavaPackage("third_party.quantum")))
         .addTarget(
@@ -284,6 +296,7 @@ public final class BlazeImportFixture {
             TargetIdeInfo.builder()
                 .setLabel(recyclerView)
                 .setKind(Kind.ANDROID_LIBRARY)
+                .setBuildFile(source("third_party/recyclerview/BUILD"))
                 .setAndroidInfo(
                     AndroidIdeInfo.builder()
                         .setManifestFile(source("third_party/recyclerview/AndroidManifest.xml"))
@@ -294,6 +307,7 @@ public final class BlazeImportFixture {
             TargetIdeInfo.builder()
                 .setLabel(intermediateDependency)
                 .setKind(Kind.ANDROID_LIBRARY)
+                .setBuildFile(source("java/com/google/intermediate/BUILD"))
                 .setAndroidInfo(
                     AndroidIdeInfo.builder()
                         .setManifestFile(source("java/com/google/intermediate/AndroidManifest.xml"))
@@ -305,6 +319,7 @@ public final class BlazeImportFixture {
             TargetIdeInfo.builder()
                 .setLabel(constraintLayout)
                 .setKind(Kind.ANDROID_LIBRARY)
+                .setBuildFile(source("third_party/constraint_layout/BUILD"))
                 .setAndroidInfo(
                     AndroidIdeInfo.builder()
                         .setManifestFile(

@@ -32,7 +32,7 @@ final class BlazeSyncModificationTracker {
         .modificationTracker;
   }
 
-  static class SyncTrackerUpdater extends SyncListener.Adapter {
+  static class SyncTrackerUpdater implements SyncListener {
 
     @Override
     public void afterSync(

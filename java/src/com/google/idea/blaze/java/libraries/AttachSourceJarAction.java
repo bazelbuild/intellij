@@ -39,7 +39,7 @@ class AttachSourceJarAction extends BlazeProjectAction {
       return;
     }
     BlazeJarLibrary library = LibraryActionHelper.findBlazeLibraryForAction(project, e);
-    if (library == null || library.libraryArtifact.getSourceJarsOrClassJar().isEmpty()) {
+    if (library == null || library.libraryArtifact.getSourceJars().isEmpty()) {
       hideAction(presentation);
       return;
     }
@@ -61,7 +61,7 @@ class AttachSourceJarAction extends BlazeProjectAction {
       return;
     }
     BlazeJarLibrary library = LibraryActionHelper.findBlazeLibraryForAction(project, e);
-    if (library == null || library.libraryArtifact.getSourceJarsOrClassJar().isEmpty()) {
+    if (library == null || library.libraryArtifact.getSourceJars().isEmpty()) {
       return;
     }
     AttachedSourceJarManager sourceJarManager = AttachedSourceJarManager.getInstance(project);

@@ -89,11 +89,6 @@ public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceO
   }
 
   @Override
-  public boolean migratePreviousOptions(BlazeWizardUserSettings userSettings) {
-    return false;
-  }
-
-  @Override
   public String getTitle() {
     return "Bazel";
   }

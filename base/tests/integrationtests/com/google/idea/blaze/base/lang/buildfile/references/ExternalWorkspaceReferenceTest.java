@@ -71,6 +71,33 @@ public class ExternalWorkspaceReferenceTest extends BuildFileIntegrationTestCase
   }
 
   @Test
+  public void testExternalWorkspaceTargetReferenceShortForm() {
+    BuildFile workspaceBuildFile =
+        createBuildFile(
+            new WorkspacePath("BUILD"),
+            "java_library(",
+            "    name = 'lib',",
+            "    exports = ['@junit'],",
+            ")");
+    BuildFile externalBuildFile =
+        (BuildFile)
+            createFileInExternalWorkspace(
+                "junit",
+                new WorkspacePath("BUILD"),
+                "java_import(",
+                "    name = 'junit',",
+                "    jars = ['junit-4.11.jar'],",
+                ")");
+
+    FuncallExpression target = externalBuildFile.findRule("junit");
+    assertThat(target).isNotNull();
+
+    Argument.Keyword arg = workspaceBuildFile.findRule("lib").getKeywordArgument("exports");
+    StringLiteral label = PsiUtils.findFirstChildOfClassRecursive(arg, StringLiteral.class);
+    assertThat(label.getReferencedElement()).isEqualTo(target);
+  }
+
+  @Test
   public void testLocalTargetReferenceWithinExternalWorkspaceResolves() {
     BuildFile externalFile =
         (BuildFile)

@@ -33,7 +33,6 @@ java_library(
             "studio/integration_3_3/**/*.java",
             "cidr/v183/**/*.java",
         ]),
-        "clion-2018.1": glob(["cidr/v181/**/*.java"]),
         "clion-2018.2": glob(["cidr/v181/**/*.java"]),
         "default": [],
     }),

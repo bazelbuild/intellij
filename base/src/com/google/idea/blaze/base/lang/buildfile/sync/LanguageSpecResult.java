@@ -18,10 +18,11 @@ package com.google.idea.blaze.base.lang.buildfile.sync;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
 import com.google.idea.blaze.base.model.SyncData;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** The BUILD language specifications, serialized along with the sync data. */
-public class LanguageSpecResult implements SyncData<ProjectData.LanguageSpecResult> {
+public final class LanguageSpecResult implements SyncData<ProjectData.LanguageSpecResult> {
   private static final long ONE_DAY_IN_MILLISECONDS = 1000 * 60 * 60 * 24;
 
   private final BuildLanguageSpec spec;
@@ -60,6 +61,23 @@ public class LanguageSpecResult implements SyncData<ProjectData.LanguageSpecResu
   @Override
   public void insert(ProjectData.SyncState.Builder builder) {
     builder.setLanguageSpecResult(toProto());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    LanguageSpecResult that = (LanguageSpecResult) o;
+    return timestampMillis == that.timestampMillis && Objects.equals(spec, that.spec);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(spec, timestampMillis);
   }
 
   static class Extractor implements SyncData.Extractor<LanguageSpecResult> {

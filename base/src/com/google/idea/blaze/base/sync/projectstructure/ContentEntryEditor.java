@@ -34,6 +34,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import java.io.File;
 import java.util.Collection;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /** Modifies content entries based on project data. */
 public class ContentEntryEditor {
@@ -90,7 +91,7 @@ public class ContentEntryEditor {
       ContentEntry contentEntry,
       SourceFolderProvider provider,
       ImmutableMap<File, SourceFolder> sourceFolders,
-      SourceFolder parent,
+      @Nullable SourceFolder parent,
       WorkspacePath workspacePath,
       DirectoryStructure directoryStructure) {
     if (excludedDirectories.contains(workspacePath)) {
@@ -100,7 +101,7 @@ public class ContentEntryEditor {
     boolean isTest = testConfig.isTestSource(workspacePath.relativePath());
     SourceFolder current = sourceFolders.get(new File(file.getPath()));
     SourceFolder currentOrParent = current != null ? current : parent;
-    if (isTest != currentOrParent.isTestSource()) {
+    if (currentOrParent != null && isTest != currentOrParent.isTestSource()) {
       currentOrParent =
           provider.setSourceFolderForLocation(contentEntry, currentOrParent, file, isTest);
       if (current != null) {
@@ -127,15 +128,10 @@ public class ContentEntryEditor {
 
     Multimap<WorkspacePath, WorkspacePath> result = ArrayListMultimap.create();
     for (WorkspacePath exclude : excludedDirectories) {
-      WorkspacePath foundWorkspacePath =
-          rootDirectories
-              .stream()
-              .filter(rootDirectory -> isUnderRootDirectory(rootDirectory, exclude.relativePath()))
-              .findFirst()
-              .orElse(null);
-      if (foundWorkspacePath != null) {
-        result.put(foundWorkspacePath, exclude);
-      }
+      rootDirectories.stream()
+          .filter(rootDirectory -> isUnderRootDirectory(rootDirectory, exclude.relativePath()))
+          .findFirst()
+          .ifPresent(foundWorkspacePath -> result.put(foundWorkspacePath, exclude));
     }
     return result;
   }

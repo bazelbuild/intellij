@@ -133,21 +133,21 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
                     "//foo/bar:one",
                     Kind.CC_BINARY,
                     sources("foo/bar/one.cc"),
-                    defines(),
+                    copts(),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:two",
                     Kind.CC_BINARY,
                     sources("foo/bar/two.cc"),
-                    defines(),
+                    copts(),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:three",
                     Kind.CC_BINARY,
                     sources("foo/bar/three.cc"),
-                    defines(),
+                    copts(),
                     includes()))
             .build();
     List<BlazeResolveConfiguration> configurations = resolve(projectView, targetMap);
@@ -156,7 +156,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     for (BlazeResolveConfiguration configuration : configurations) {
       assertThat(configuration.getProjectHeadersRootsInternal()).isEmpty();
       assertThat(getHeaders(configuration, OCLanguageKind.CPP)).isEmpty();
-      assertThat(configuration.getDefinesInternal()).isEmpty();
+      assertThat(configuration.getTargetCopts()).isEmpty();
     }
   }
 
@@ -173,29 +173,29 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
                     "//foo/bar:one",
                     Kind.CC_BINARY,
                     sources("foo/bar/one.cc"),
-                    defines("SAME=1"),
+                    copts("-DSAME=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:two",
                     Kind.CC_BINARY,
                     sources("foo/bar/two.cc"),
-                    defines("SAME=1"),
+                    copts("-DSAME=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:three",
                     Kind.CC_BINARY,
                     sources("foo/bar/three.cc"),
-                    defines("DIFFERENT=1"),
+                    copts("-DDIFFERENT=1"),
                     includes()))
             .build();
     List<BlazeResolveConfiguration> configurations = resolve(projectView, targetMap);
     assertThat(configurations).hasSize(2);
-    assertThat(get(configurations, "//foo/bar:one and 1 other target(s)").getDefinesInternal())
-        .isEqualTo(ImmutableList.of("SAME=1"));
-    assertThat(get(configurations, "//foo/bar:three").getDefinesInternal())
-        .isEqualTo(ImmutableList.of("DIFFERENT=1"));
+    assertThat(get(configurations, "//foo/bar:one and 1 other target(s)").getTargetCopts())
+        .isEqualTo(ImmutableList.of("-DSAME=1"));
+    assertThat(get(configurations, "//foo/bar:three").getTargetCopts())
+        .isEqualTo(ImmutableList.of("-DDIFFERENT=1"));
     for (BlazeResolveConfiguration configuration : configurations) {
       assertThat(configuration.getProjectHeadersRootsInternal()).isEmpty();
       assertThat(getHeaders(configuration, OCLanguageKind.CPP)).isEmpty();
@@ -215,21 +215,21 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
                     "//foo/bar:one",
                     Kind.CC_BINARY,
                     sources("foo/bar/one.cc"),
-                    defines(),
+                    copts(),
                     includes("foo/same")))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:two",
                     Kind.CC_BINARY,
                     sources("foo/bar/two.cc"),
-                    defines(),
+                    copts(),
                     includes("foo/same")))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:three",
                     Kind.CC_BINARY,
                     sources("foo/bar/three.cc"),
-                    defines(),
+                    copts(),
                     includes("foo/different")))
             .build();
     VirtualFile includeSame = createVirtualFile("/root/foo/same");
@@ -244,7 +244,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         .containsExactly(header(includeDifferent));
     for (BlazeResolveConfiguration configuration : configurations) {
       assertThat(configuration.getProjectHeadersRootsInternal()).isEmpty();
-      assertThat(configuration.getDefinesInternal()).isEmpty();
+      assertThat(configuration.getTargetCopts()).isEmpty();
     }
   }
 
@@ -258,28 +258,28 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
                 "//foo/bar:a",
                 Kind.CC_BINARY,
                 sources("foo/bar/a.cc"),
-                defines("SAME=1"),
+                copts("-DSAME=1"),
                 includes()))
         .addTarget(
             createCcTarget(
                 "//foo/bar:b",
                 Kind.CC_BINARY,
                 sources("foo/bar/b.cc"),
-                defines("SAME=1"),
+                copts("-DSAME=1"),
                 includes()))
         .addTarget(
             createCcTarget(
                 "//foo/bar:c",
                 Kind.CC_BINARY,
                 sources("foo/bar/c.cc"),
-                defines("SAME=1"),
+                copts("-DSAME=1"),
                 includes()))
         .addTarget(
             createCcTarget(
                 "//foo/bar:d",
                 Kind.CC_BINARY,
                 sources("foo/bar/d.cc"),
-                defines("DIFFERENT=1"),
+                copts("-DDIFFERENT=1"),
                 includes()))
         .build();
   }
@@ -383,7 +383,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
                 String.format("//foo/bar:%s", target),
                 Kind.CC_BINARY,
                 sources(String.format("foo/bar/%s.cc", target)),
-                defines("DIFFERENT=1"),
+                copts("-DDIFFERENT=1"),
                 includes()));
       } else {
         targetMapBuilder.addTarget(
@@ -391,7 +391,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
                 String.format("//foo/bar:%s", target),
                 Kind.CC_BINARY,
                 sources(String.format("foo/bar/%s.cc", target)),
-                defines("SAME=1"),
+                copts("-DSAME=1"),
                 includes()));
       }
     }
@@ -400,7 +400,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
             "//foo/bar:d",
             Kind.CC_BINARY,
             sources("foo/bar/d.cc"),
-            defines("DIFFERENT=1"),
+            copts("-DDIFFERENT=1"),
             includes()));
     List<BlazeResolveConfiguration> newConfigurations =
         resolve(projectView, targetMapBuilder.build());
@@ -427,28 +427,28 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
                     "//foo/bar:a",
                     Kind.CC_BINARY,
                     sources("foo/bar/a.cc"),
-                    defines("CHANGED=1"),
+                    copts("-DCHANGED=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:b",
                     Kind.CC_BINARY,
                     sources("foo/bar/b.cc"),
-                    defines("CHANGED=1"),
+                    copts("-DCHANGED=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:c",
                     Kind.CC_BINARY,
                     sources("foo/bar/c.cc"),
-                    defines("CHANGED=1"),
+                    copts("-DCHANGED=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:d",
                     Kind.CC_BINARY,
                     sources("foo/bar/d.cc"),
-                    defines("DIFFERENT=1"),
+                    copts("-DDIFFERENT=1"),
                     includes()))
             .build();
     List<BlazeResolveConfiguration> newConfigurations = resolve(projectView, targetMap);
@@ -478,28 +478,28 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
                     "//foo/bar:a",
                     Kind.CC_BINARY,
                     sources("foo/bar/a.cc"),
-                    defines("SAME=1"),
+                    copts("-DSAME=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:b",
                     Kind.CC_BINARY,
                     sources("foo/bar/b.cc"),
-                    defines("SAME=1"),
+                    copts("-DSAME=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:c",
                     Kind.CC_BINARY,
                     sources("foo/bar/c.cc"),
-                    defines("SAME=1"),
+                    copts("-DSAME=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:d",
                     Kind.CC_BINARY,
                     sources("foo/bar/d.cc"),
-                    defines("SAME=1"),
+                    copts("-DSAME=1"),
                     includes()))
             .build();
     List<BlazeResolveConfiguration> newConfigurations = resolve(projectView, targetMap);
@@ -515,8 +515,8 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         .collect(Collectors.toList());
   }
 
-  private static List<String> defines(String... defines) {
-    return Arrays.asList(defines);
+  private static List<String> copts(String... copts) {
+    return Arrays.asList(copts);
   }
 
   private static List<ExecutionRootPath> includes(String... paths) {
@@ -527,7 +527,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
       String label,
       Kind kind,
       List<ArtifactLocation> sources,
-      List<String> defines,
+      List<String> copts,
       List<ExecutionRootPath> includes) {
     TargetIdeInfo.Builder targetInfo =
         TargetIdeInfo.builder().setLabel(label).setKind(kind).addDependency("//:toolchain");
@@ -535,8 +535,8 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     return targetInfo.setCInfo(
         CIdeInfo.builder()
             .addSources(sources)
-            .addLocalDefines(defines)
-            .addLocalIncludeDirectories(includes));
+            .addLocalCopts(copts)
+            .addTransitiveIncludeDirectories(includes));
   }
 
   private static TargetIdeInfo.Builder createCcToolchain() {
@@ -585,15 +585,13 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   private static BlazeResolveConfiguration get(
       List<BlazeResolveConfiguration> configurations, String name) {
     List<BlazeResolveConfiguration> filteredConfigurations =
-        configurations
-            .stream()
+        configurations.stream()
             .filter(c -> c.getDisplayName(false).equals(name))
             .collect(Collectors.toList());
     assertWithMessage(
             String.format(
                 "%s contains %s",
-                configurations
-                    .stream()
+                configurations.stream()
                     .map(c -> c.getDisplayName(false))
                     .collect(Collectors.toList()),
                 name))

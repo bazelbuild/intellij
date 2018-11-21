@@ -70,7 +70,7 @@ public final class FastBuildRunExecutor extends DefaultRunExecutor {
     return new LayeredIcon(AllIcons.Process.DisabledRun, BlazeIcons.LightningOverlay);
   }
 
-  @SuppressWarnings("MissingOverride") // #api173 added in 2018.1
+  @Override
   public boolean isApplicable(Project project) {
     return Blaze.isBlazeProject(project);
   }

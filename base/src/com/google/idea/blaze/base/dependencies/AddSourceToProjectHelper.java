@@ -42,7 +42,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.ui.OpenLocalProjectViewAction;
+import com.google.idea.blaze.base.settings.ui.OpenProjectViewAction;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
@@ -208,7 +208,7 @@ class AddSourceToProjectHelper {
               @Override
               protected void hyperlinkActivated(Notification notification, HyperlinkEvent e) {
                 notification.expire();
-                OpenLocalProjectViewAction.openLocalProjectViewFile(project);
+                OpenProjectViewAction.openLocalProjectViewFile(project);
               }
             });
     notification.notify(project);

@@ -96,7 +96,7 @@ public class ManifestParser {
         false, false, false, ArrayUtil.toObjectArray(manifestVirtualFiles, VirtualFile.class));
   }
 
-  static class ClearManifestParser extends SyncListener.Adapter {
+  static class ClearManifestParser implements SyncListener {
     @Override
     public void onSyncComplete(
         Project project,

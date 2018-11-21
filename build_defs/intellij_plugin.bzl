@@ -94,14 +94,14 @@ def _merge_plugin_xmls(ctx):
             dep_plugin_xmls.append(dep[_PluginXmlInfo].plugin_xmls)
     plugin_xmls = depset([ctx.file.plugin_xml], transitive = dep_plugin_xmls)
 
-    if len(plugin_xmls) == 1:
+    if len(plugin_xmls.to_list()) == 1:
         return plugin_xmls.to_list()[0]
 
     merged_name = "merged_plugin_xml_for_" + ctx.label.name + ".xml"
     merged_file = ctx.actions.declare_file(merged_name)
     ctx.actions.run(
         executable = ctx.executable._merge_xml_binary,
-        arguments = ["--output", merged_file.path] + [xml.path for xml in plugin_xmls],
+        arguments = ["--output", merged_file.path] + [xml.path for xml in plugin_xmls.to_list()],
         inputs = plugin_xmls,
         outputs = [merged_file],
         progress_message = "Merging plugin xmls",

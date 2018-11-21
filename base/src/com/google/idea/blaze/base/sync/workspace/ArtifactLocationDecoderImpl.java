@@ -20,9 +20,10 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 /** Decodes intellij_ide_info.proto ArtifactLocation file paths */
-public class ArtifactLocationDecoderImpl implements ArtifactLocationDecoder {
+public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecoder {
   private static final long serialVersionUID = 1L;
 
   private final BlazeInfo blazeInfo;
@@ -45,5 +46,23 @@ public class ArtifactLocationDecoderImpl implements ArtifactLocationDecoder {
             .toString();
     // doesn't require file-system operations -- no attempt to resolve symlinks.
     return new File(FileUtil.toCanonicalPath(path));
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ArtifactLocationDecoderImpl that = (ArtifactLocationDecoderImpl) o;
+    return Objects.equals(blazeInfo, that.blazeInfo)
+        && Objects.equals(pathResolver, that.pathResolver);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(blazeInfo, pathResolver);
   }
 }

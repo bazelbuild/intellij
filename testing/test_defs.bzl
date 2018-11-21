@@ -109,6 +109,7 @@ def intellij_integration_test_suite(
         srcs,
         test_package_root,
         deps,
+        additional_class_rules = [],
         size = "medium",
         jvm_flags = [],
         runtime_deps = [],
@@ -126,6 +127,7 @@ def intellij_integration_test_suite(
       srcs: the test classes.
       test_package_root: only tests under this package root will be run.
       deps: the required deps.
+      additional_class_rules: extra JUnit class rules to apply to these tests.
       size: the test size.
       jvm_flags: extra flags to be passed to the test vm.
       runtime_deps: the required runtime_deps.
@@ -142,7 +144,7 @@ def intellij_integration_test_suite(
         name = suite_class_name,
         srcs = srcs,
         test_package_root = test_package_root,
-        class_rules = ["com.google.idea.testing.BlazeTestSystemPropertiesRule"],
+        class_rules = ["com.google.idea.testing.BlazeTestSystemPropertiesRule"] + additional_class_rules,
     )
 
     api_version_txt_name = name + "_api_version"
@@ -199,4 +201,4 @@ def _get_test_srcs(targets):
     files = depset()
     for target in targets:
         files += target.files
-    return [f for f in files if f.basename.endswith("Test.java")]
+    return [f for f in files.to_list() if f.basename.endswith("Test.java")]

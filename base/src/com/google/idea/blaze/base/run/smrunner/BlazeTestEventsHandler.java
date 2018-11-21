@@ -114,23 +114,27 @@ public interface BlazeTestEventsHandler {
   }
 
   /** Converts the testsuite name in the blaze test XML to a user-friendly format. */
-  default String suiteDisplayName(@Nullable Kind kind, String rawName) {
+  default String suiteDisplayName(Label label, @Nullable Kind kind, String rawName) {
     return rawName;
   }
 
   /** Converts the testcase name in the blaze test XML to a user-friendly format. */
-  default String testDisplayName(@Nullable Kind kind, String rawName) {
+  default String testDisplayName(Label label, @Nullable Kind kind, String rawName) {
     return rawName;
   }
 
   /** Converts the suite name to a parsable location URL. */
-  default String suiteLocationUrl(@Nullable Kind kind, String name) {
+  default String suiteLocationUrl(Label label, @Nullable Kind kind, String name) {
     return SmRunnerUtils.GENERIC_SUITE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + name;
   }
 
   /** Converts the test case and suite names to a parsable location URL. */
   default String testLocationUrl(
-      @Nullable Kind kind, String parentSuite, String name, @Nullable String className) {
+      Label label,
+      @Nullable Kind kind,
+      String parentSuite,
+      String name,
+      @Nullable String className) {
     String base = SmRunnerUtils.GENERIC_TEST_PROTOCOL + URLUtil.SCHEME_SEPARATOR;
     if (Strings.isNullOrEmpty(className)) {
       return base + name;
@@ -139,7 +143,7 @@ public interface BlazeTestEventsHandler {
   }
 
   /** Whether to skip logging a {@link TestSuite}. */
-  default boolean ignoreSuite(@Nullable Kind kind, TestSuite suite) {
+  default boolean ignoreSuite(Label label, @Nullable Kind kind, TestSuite suite) {
     // by default only include innermost 'testsuite' elements
     return !suite.testSuites.isEmpty();
   }

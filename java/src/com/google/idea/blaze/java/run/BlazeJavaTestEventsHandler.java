@@ -18,6 +18,7 @@ package com.google.idea.blaze.java.run;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
 import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags;
@@ -50,7 +51,7 @@ public class BlazeJavaTestEventsHandler implements BlazeTestEventsHandler {
 
   /** Overridden to support parameterized tests, which use nested test_suite XML elements. */
   @Override
-  public boolean ignoreSuite(@Nullable Kind kind, TestSuite suite) {
+  public boolean ignoreSuite(Label label, @Nullable Kind kind, TestSuite suite) {
     if (suite.testSuites.isEmpty()) {
       return false;
     }
@@ -69,13 +70,17 @@ public class BlazeJavaTestEventsHandler implements BlazeTestEventsHandler {
   }
 
   @Override
-  public String suiteLocationUrl(@Nullable Kind kind, String name) {
+  public String suiteLocationUrl(Label label, @Nullable Kind kind, String name) {
     return JavaTestLocator.SUITE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + name;
   }
 
   @Override
   public String testLocationUrl(
-      @Nullable Kind kind, String parentSuite, String name, @Nullable String classname) {
+      Label label,
+      @Nullable Kind kind,
+      String parentSuite,
+      String name,
+      @Nullable String classname) {
     if (classname == null) {
       return null;
     }
@@ -96,7 +101,7 @@ public class BlazeJavaTestEventsHandler implements BlazeTestEventsHandler {
   }
 
   @Override
-  public String suiteDisplayName(@Nullable Kind kind, String rawName) {
+  public String suiteDisplayName(Label label, @Nullable Kind kind, String rawName) {
     String name = StringUtil.trimEnd(rawName, '.');
     int lastPointIx = name.lastIndexOf('.');
     return lastPointIx != -1 ? name.substring(lastPointIx + 1, name.length()) : name;

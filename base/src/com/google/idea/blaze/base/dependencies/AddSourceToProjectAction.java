@@ -89,8 +89,9 @@ class AddSourceToProjectAction extends BlazeProjectAction {
           ImmutableList.of(TargetExpression.allFromPackageNonRecursive(context.blazePackage)));
       return;
     }
-    if (AddSourceToProjectHelper.sourceCoveredByProjectViewTargets(context)
-        || (inProjectDirectories && SyncStatusContributor.isUnsynced(project, context.file))) {
+    if (inProjectDirectories
+        && (AddSourceToProjectHelper.sourceCoveredByProjectViewTargets(context)
+            || !SyncStatusContributor.isUnsynced(project, context.file))) {
       return;
     }
     // otherwise find the targets building this source file, then add them to the project
@@ -143,8 +144,10 @@ class AddSourceToProjectAction extends BlazeProjectAction {
     if (!SourceToTargetProvider.hasProvider()) {
       return null;
     }
-    if (AddSourceToProjectHelper.sourceCoveredByProjectViewTargets(context)
-        || (inProjectDirectories && !SyncStatusContributor.isUnsynced(project, context.file))) {
+
+    if (inProjectDirectories
+        && (AddSourceToProjectHelper.sourceCoveredByProjectViewTargets(context)
+            || !SyncStatusContributor.isUnsynced(project, context.file))) {
       return null;
     }
     return "Add source file to project";

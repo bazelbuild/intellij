@@ -23,8 +23,6 @@ import com.intellij.coverage.SimpleCoverageAnnotator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -88,15 +86,6 @@ public class BlazeCoverageAnnotator extends SimpleCoverageAnnotator {
       }
     }
     return false;
-  }
-
-  // #api173: superclass method visible as of 181. Remove this override when we no longer support
-  // 173 and earlier.
-  protected static String normalizeFilePath(String filePath) {
-    if (SystemInfo.isWindows) {
-      filePath = filePath.toLowerCase();
-    }
-    return FileUtil.toSystemIndependentName(filePath);
   }
 
   /**

@@ -33,10 +33,6 @@ message TargetMap {
 
 message BlazeInfo {
   map<string, string> blaze_info = 1;
-  string execution_root = 2;
-  string blaze_bin_execution_root_path = 3;
-  string blaze_genfiles_execution_root_path = 4;
-  string output_base = 5;
 }
 
 message BazelVersion {

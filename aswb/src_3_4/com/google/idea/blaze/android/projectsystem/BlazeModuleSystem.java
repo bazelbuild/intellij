@@ -27,6 +27,7 @@ import com.android.tools.idea.projectsystem.DependencyManagementException;
 import com.android.tools.idea.projectsystem.NamedModuleTemplate;
 import com.android.tools.idea.projectsystem.SampleDataDirectoryProvider;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.npw.project.BlazeAndroidModuleTemplate;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
@@ -56,11 +57,13 @@ import com.intellij.psi.PsiElement;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import kotlin.Triple;
 import org.jetbrains.annotations.Nullable;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
@@ -114,8 +117,7 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
   }
 
   @Override
-  public List<NamedModuleTemplate> getModuleTemplates(
-      @javax.annotation.Nullable VirtualFile targetDirectory) {
+  public List<NamedModuleTemplate> getModuleTemplates(@Nullable VirtualFile targetDirectory) {
     return BlazeAndroidModuleTemplate.getTemplates(module, targetDirectory);
   }
 
@@ -278,36 +280,40 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
 
     BlazeAndroidSyncData androidSyncData =
         blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
+    if (androidSyncData == null) {
+      return ImmutableList.of();
+    }
+
     for (String libraryKey : registry.get(module).resourceLibraryKeys) {
-      if (androidSyncData.importResult.resourceLibraries.containsKey(libraryKey)) {
-        libraries.add(
-            toExternalLibrary(
-                androidSyncData.importResult.resourceLibraries.get(libraryKey), decoder));
+      ImmutableMap<String, BlazeResourceLibrary> resourceLibraries =
+          androidSyncData.importResult.resourceLibraries;
+      if (resourceLibraries != null && resourceLibraries.containsKey(libraryKey)) {
+        libraries.add(toExternalLibrary(resourceLibraries.get(libraryKey), decoder));
       }
-      if (androidSyncData.importResult.aarLibraries.containsKey(libraryKey)) {
-        libraries.add(
-            toExternalLibrary(
-                androidSyncData.importResult.aarLibraries.get(libraryKey), decoder, project));
+      ImmutableMap<String, AarLibrary> aarLibraries = androidSyncData.importResult.aarLibraries;
+      if (aarLibraries != null && aarLibraries.containsKey(libraryKey)) {
+        libraries.add(toExternalLibrary(aarLibraries.get(libraryKey), decoder, project));
       }
     }
     return libraries.build();
   }
 
-  private ExternalLibrary toExternalLibrary(
+  private static ExternalLibrary toExternalLibrary(
       BlazeResourceLibrary library, ArtifactLocationDecoder decoder) {
     PathString resFolder = new PathString(decoder.decode(library.root));
+    List<PathString> resources =
+        library.resources.isEmpty()
+            ? null
+            : library.resources.stream()
+                .map(relativePath -> resFolder.resolve(relativePath))
+                .collect(Collectors.toList());
     return new ExternalLibrary(library.key.toString())
         .withManifestFile(
             library.manifest == null ? null : new PathString(decoder.decode(library.manifest)))
-        .withResFolder(
-            new SelectiveResourceFolder(
-                resFolder,
-                library.resources.stream()
-                    .map(relativePath -> resFolder.resolve(relativePath))
-                    .collect(Collectors.toList())));
+        .withResFolder(new SelectiveResourceFolder(resFolder, resources));
   }
 
-  private ExternalLibrary toExternalLibrary(
+  private static ExternalLibrary toExternalLibrary(
       AarLibrary library, ArtifactLocationDecoder decoder, Project project) {
     PathString aarFile = new PathString(decoder.decode(library.aarArtifact));
     PathString resFolder = library.getResFolder(project);
@@ -319,7 +325,7 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
         .withSymbolFile(resFolder == null ? null : resFolder.getParentOrRoot().resolve("R.txt"));
   }
 
-  private ExternalLibrary toExternalLibrary(
+  private static ExternalLibrary toExternalLibrary(
       BlazeJarLibrary library, ArtifactLocationDecoder decoder) {
     return new ExternalLibrary(library.key.toString())
         .withClassJars(
@@ -327,10 +333,9 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
                 new PathString(decoder.decode(library.libraryArtifact.jarForIntellijLibrary()))));
   }
 
-  @Nullable
   @Override
-  public GradleCoordinate getLatestCompatibleDependency(
-      String mavenGroupId, String mavenArtifactId) {
-    return null;
+  public Triple<List<GradleCoordinate>, List<GradleCoordinate>, String>
+      analyzeDependencyCompatibility(List<GradleCoordinate> dependenciesToAdd) {
+    return new Triple<>(Collections.emptyList(), dependenciesToAdd, "");
   }
 }

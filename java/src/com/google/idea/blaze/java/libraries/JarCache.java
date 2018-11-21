@@ -111,7 +111,7 @@ public class JarCache {
           artifactLocationDecoder.decode(library.libraryArtifact.jarForIntellijLibrary());
       sourceFileToCacheKey.put(jarFile, cacheKeyForJar(jarFile));
 
-      for (ArtifactLocation sourceJar : library.libraryArtifact.getSourceJarsOrClassJar()) {
+      for (ArtifactLocation sourceJar : library.libraryArtifact.getSourceJars()) {
         File srcJarFile = artifactLocationDecoder.decode(sourceJar);
         sourceFileToCacheKey.put(srcJarFile, cacheKeyForSourceJar(srcJarFile));
       }

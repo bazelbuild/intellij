@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Simple implementation of TargetIdeInfo. */
@@ -143,7 +144,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
             ? ArtifactLocation.fromProto(proto.getBuildFileArtifactLocation())
             : null,
         ProtoWrapper.map(proto.getDepsList(), Dependency::fromProto),
-        ImmutableList.copyOf(proto.getTagsList()),
+        ProtoWrapper.internStrings(proto.getTagsList()),
         sourcesBuilder.build(),
         cIdeInfo,
         proto.hasCToolchainIdeInfo()
@@ -496,5 +497,61 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
           javaToolchainIdeInfo,
           kotlinToolchainIdeInfo);
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    TargetIdeInfo that = (TargetIdeInfo) o;
+    return Objects.equals(key, that.key)
+        && kind == that.kind
+        && Objects.equals(buildFile, that.buildFile)
+        && Objects.equals(dependencies, that.dependencies)
+        && Objects.equals(tags, that.tags)
+        && Objects.equals(sources, that.sources)
+        && Objects.equals(cIdeInfo, that.cIdeInfo)
+        && Objects.equals(cToolchainIdeInfo, that.cToolchainIdeInfo)
+        && Objects.equals(javaIdeInfo, that.javaIdeInfo)
+        && Objects.equals(androidIdeInfo, that.androidIdeInfo)
+        && Objects.equals(androidSdkIdeInfo, that.androidSdkIdeInfo)
+        && Objects.equals(androidAarIdeInfo, that.androidAarIdeInfo)
+        && Objects.equals(pyIdeInfo, that.pyIdeInfo)
+        && Objects.equals(goIdeInfo, that.goIdeInfo)
+        && Objects.equals(jsIdeInfo, that.jsIdeInfo)
+        && Objects.equals(tsIdeInfo, that.tsIdeInfo)
+        && Objects.equals(dartIdeInfo, that.dartIdeInfo)
+        && Objects.equals(testIdeInfo, that.testIdeInfo)
+        && Objects.equals(javaToolchainIdeInfo, that.javaToolchainIdeInfo)
+        && Objects.equals(kotlinToolchainIdeInfo, that.kotlinToolchainIdeInfo);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        key,
+        kind,
+        buildFile,
+        dependencies,
+        tags,
+        sources,
+        cIdeInfo,
+        cToolchainIdeInfo,
+        javaIdeInfo,
+        androidIdeInfo,
+        androidSdkIdeInfo,
+        androidAarIdeInfo,
+        pyIdeInfo,
+        goIdeInfo,
+        jsIdeInfo,
+        tsIdeInfo,
+        dartIdeInfo,
+        testIdeInfo,
+        javaToolchainIdeInfo,
+        kotlinToolchainIdeInfo);
   }
 }

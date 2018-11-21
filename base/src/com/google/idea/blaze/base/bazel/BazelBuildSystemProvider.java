@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -36,8 +35,8 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
 
   private static final String BAZEL_DOC_SITE = "https://ij.bazel.build/docs";
 
-  private static final ImmutableSet<String> BUILD_FILE_NAMES =
-      ImmutableSet.of("BUILD", "BUILD.bazel");
+  private static final ImmutableList<String> BUILD_FILE_NAMES =
+      ImmutableList.of("BUILD.bazel", "BUILD");
 
   @Override
   public BuildSystem buildSystem() {
@@ -97,7 +96,7 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   }
 
   @Override
-  public ImmutableSet<String> possibleBuildFileNames() {
+  public ImmutableList<String> possibleBuildFileNames() {
     return BUILD_FILE_NAMES;
   }
 

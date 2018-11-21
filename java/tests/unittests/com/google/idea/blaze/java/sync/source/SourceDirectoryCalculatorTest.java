@@ -73,8 +73,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
 
   private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
   private final ArtifactLocationDecoder decoder =
-      (ArtifactLocationDecoder)
-          artifactLocation -> new File("/root", artifactLocation.getRelativePath());
+      artifactLocation -> new File("/root", artifactLocation.getRelativePath());
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -102,7 +101,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testWorkspacePathIsAddedWithoutSources() throws Exception {
+  public void testGuessPackagePathForCommonRootDirectory() {
     List<SourceArtifact> sourceArtifacts = ImmutableList.of();
     ImmutableList<BlazeContentEntry> result =
         sourceDirectoryCalculator.calculateContentEntries(
@@ -126,7 +125,25 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testCalculatesPackageForSimpleCase() throws Exception {
+  public void testRootDirectoryWithoutSourcesIsNotMarkedAsSourceRoot() {
+    List<SourceArtifact> sourceArtifacts = ImmutableList.of();
+    ImmutableList<BlazeContentEntry> result =
+        sourceDirectoryCalculator.calculateContentEntries(
+            project,
+            context,
+            workspaceRoot,
+            decoder,
+            buildImportRoots(
+                ImmutableList.of(new WorkspacePath("some/innocuous/path")), ImmutableList.of()),
+            sourceArtifacts,
+            NO_MANIFESTS);
+    issues.assertNoIssues();
+    assertThat(result)
+        .containsExactly(BlazeContentEntry.builder("/root/some/innocuous/path").build());
+  }
+
+  @Test
+  public void testCalculatesPackageForSimpleCase() {
     mockInputStreamProvider.addFile(
         "/root/java/com/google/Bla.java", "package com.google;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
@@ -159,7 +176,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSourceRootUnderExcludedDirectoryIsIgnored() throws Exception {
+  public void testSourceRootUnderExcludedDirectoryIsIgnored() {
     mockInputStreamProvider.addFile(
         "/root/included/src/com/google/Bla.java", "package com.google;\n public class Bla {}");
     mockInputStreamProvider.addFile(
@@ -192,14 +209,13 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     assertThat(result)
         .containsExactly(
             BlazeContentEntry.builder("/root")
-                .addSource(BlazeSourceDirectory.builder("/root").build())
                 .addSource(BlazeSourceDirectory.builder("/root/included/src").build())
                 .build());
     issues.assertNoIssues();
   }
 
   @Test
-  public void testHandlesSourceAtProjectRoot() throws Exception {
+  public void testHandlesSourceAtProjectRoot() {
     mockInputStreamProvider.addFile("/root/Bla.java", "package com.google;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
@@ -226,7 +242,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSourcesToSourceDirectories_testReturnsTest() throws Exception {
+  public void testSourcesToSourceDirectories_testReturnsTest() {
     mockInputStreamProvider.addFile(
         "/root/java/com/google/Bla.java", "package com.google;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
@@ -259,7 +275,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSourcesToSourceDirectories_multipleMatchingPackagesAreMerged() throws Exception {
+  public void testSourcesToSourceDirectories_multipleMatchingPackagesAreMerged() {
     mockInputStreamProvider
         .addFile("/root/java/com/google/Bla.java", "package com.google;\n public class Bla {}")
         .addFile(
@@ -301,7 +317,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testMultipleDirectoriesAreMergedWithDirectoryRootAsWorkspaceRoot() throws Exception {
+  public void testMultipleDirectoriesAreMergedWithDirectoryRootAsWorkspaceRoot() {
     mockInputStreamProvider
         .addFile(
             "/root/java/com/google/idea/blaze/plugin/run/Run.java",
@@ -345,13 +361,12 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     assertThat(result)
         .containsExactly(
             BlazeContentEntry.builder("/root")
-                .addSource(BlazeSourceDirectory.builder("/root").setPackagePrefix("").build())
                 .addSource(BlazeSourceDirectory.builder("/root/java").setPackagePrefix("").build())
                 .build());
   }
 
   @Test
-  public void testIncorrectPackageInMiddleOfTreeCausesMergePointHigherUp() throws Exception {
+  public void testIncorrectPackageInMiddleOfTreeCausesMergePointHigherUp() {
     mockInputStreamProvider
         .addFile(
             "/root/java/com/google/idea/blaze/plugin/run/Run.java",
@@ -395,7 +410,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     assertThat(result)
         .containsExactly(
             BlazeContentEntry.builder("/root")
-                .addSource(BlazeSourceDirectory.builder("/root").setPackagePrefix("").build())
                 .addSource(BlazeSourceDirectory.builder("/root/java").setPackagePrefix("").build())
                 .addSource(
                     BlazeSourceDirectory.builder("/root/java/com/google/idea/blaze")
@@ -409,8 +423,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSourcesToSourceDirectories_multipleNonMatchingPackagesAreNotMerged()
-      throws Exception {
+  public void testSourcesToSourceDirectories_multipleNonMatchingPackagesAreNotMerged() {
     mockInputStreamProvider
         .addFile("/root/java/com/google/Bla.java", "package com.google;\n public class Bla {}")
         .addFile(
@@ -456,7 +469,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSourcesToSourceDirectories_childMatchesPathButParentDoesnt() throws Exception {
+  public void testSourcesToSourceDirectories_childMatchesPathButParentDoesnt() {
     mockInputStreamProvider
         .addFile("/root/java/com/google/Bla.java", "package com.facebook;\n public class Bla {}")
         .addFile(
@@ -502,7 +515,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSourcesToSourceDirectories_orderIsIrrelevant() throws Exception {
+  public void testSourcesToSourceDirectories_orderIsIrrelevant() {
     mockInputStreamProvider
         .addFile("/root/java/com/google/Bla.java", "package com.google;\n public class Bla {}")
         .addFile(
@@ -548,7 +561,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSourcesToSourceDirectories_packagesMatchPath() throws Exception {
+  public void testSourcesToSourceDirectories_packagesMatchPath() {
     mockInputStreamProvider.addFile(
         "/root/java/com/google/Bla.java", "package com.google;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
@@ -581,7 +594,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSourcesToSourceDirectories_packagesDoNotMatchPath() throws Exception {
+  public void testSourcesToSourceDirectories_packagesDoNotMatchPath() {
     mockInputStreamProvider.addFile(
         "/root/java/com/google/Bla.java", "package com.facebook;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
@@ -614,7 +627,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSourcesToSourceDirectories_completePackagePathMismatch() throws Exception {
+  public void testSourcesToSourceDirectories_completePackagePathMismatch() {
     mockInputStreamProvider.addFile(
         "/root/java/com/org/foo/Bla.java", "package com.facebook;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
@@ -639,10 +652,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         .containsExactly(
             BlazeContentEntry.builder("/root/java/com/org")
                 .addSource(
-                    BlazeSourceDirectory.builder("/root/java/com/org")
-                        .setPackagePrefix("com.org")
-                        .build())
-                .addSource(
                     BlazeSourceDirectory.builder("/root/java/com/org/foo")
                         .setPackagePrefix("com.facebook")
                         .build())
@@ -650,8 +659,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSourcesToSourceDirectories_sourcesOutsideOfModuleGeneratesIssue()
-      throws Exception {
+  public void testSourcesToSourceDirectories_sourcesOutsideOfModuleGeneratesIssue() {
     mockInputStreamProvider.addFile(
         "/root/java/com/facebook/Bla.java", "package com.facebook;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
@@ -676,8 +684,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSourcesToSourceDirectories_generatedSourcesOutsideOfModuleGeneratesNoIssue()
-      throws Exception {
+  public void testSourcesToSourceDirectories_generatedSourcesOutsideOfModuleGeneratesNoIssue() {
     mockInputStreamProvider.addFile(
         "/root/java/com/facebook/Bla.java", "package com.facebook;\n public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
@@ -701,7 +708,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSourcesToSourceDirectories_missingPackageDeclaration() throws Exception {
+  public void testSourcesToSourceDirectories_missingPackageDeclaration() {
     mockInputStreamProvider.addFile("/root/java/com/google/Bla.java", "public class Bla {}");
     List<SourceArtifact> sourceArtifacts =
         ImmutableList.of(
@@ -725,7 +732,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testCompetingPackageDeclarationPicksMajority() throws Exception {
+  public void testCompetingPackageDeclarationPicksMajority() {
     mockInputStreamProvider
         .addFile("/root/java/com/google/Foo.java", "package com.google;\n public class Foo {}")
         .addFile(
@@ -784,7 +791,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testCompetingPackageDeclarationWithEqualCountsPicksDefault() throws Exception {
+  public void testCompetingPackageDeclarationWithEqualCountsPicksDefault() {
     mockInputStreamProvider
         .addFile(
             "/root/java/com/google/Bla.java", "package com.google.different;\n public class Bla {}")
@@ -825,7 +832,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSourcesToSourceDirectories_packagesMatchPathButNotAtRoot() throws Exception {
+  public void testSourcesToSourceDirectories_packagesMatchPathButNotAtRoot() {
     mockInputStreamProvider
         .addFile(
             "/root/java/com/google/Bla.java", "package com.google.different;\n public class Bla {}")
@@ -881,7 +888,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSourcesToSourceDirectories_multipleSubdirectoriesAreNotMerged() throws Exception {
+  public void testSourcesToSourceDirectories_multipleSubdirectoriesAreNotMerged() {
     mockInputStreamProvider
         .addFile(
             "/root/java/com/google/package0/Bla.java",
@@ -918,10 +925,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
         .containsExactly(
             BlazeContentEntry.builder("/root/java/com/google")
                 .addSource(
-                    BlazeSourceDirectory.builder("/root/java/com/google")
-                        .setPackagePrefix("com.google")
-                        .build())
-                .addSource(
                     BlazeSourceDirectory.builder("/root/java/com/google/package0")
                         .setPackagePrefix("com.google.packagewrong0")
                         .build())
@@ -933,7 +936,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testLowestDirectoryIsPrioritised() throws Exception {
+  public void testLowestDirectoryIsPrioritised() {
     mockInputStreamProvider
         .addFile(
             "/root/java/com/google/android/chimera/internal/Preconditions.java",
@@ -984,7 +987,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testNewFormatManifest() throws Exception {
+  public void testNewFormatManifest() {
     setNewFormatPackageManifest(
         "/root/java/com/test.manifest",
         ImmutableList.of(
@@ -1013,7 +1016,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testManifestSingleFile() throws Exception {
+  public void testManifestSingleFile() {
     setPackageManifest(
         "/root/java/com/test.manifest",
         ImmutableList.of("java/com/google/Bla.java"),
@@ -1038,7 +1041,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testManifestRepeatedSources() throws Exception {
+  public void testManifestRepeatedSources() {
     setPackageManifest(
         "/root/java/com/test.manifest",
         ImmutableList.of("java/com/google/Bla.java", "java/com/google/Foo.java"),
@@ -1091,7 +1094,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testManifestMissingSourcesFallback() throws Exception {
+  public void testManifestMissingSourcesFallback() {
     setPackageManifest(
         "/root/java/com/test.manifest",
         ImmutableList.of("java/com/google/Bla.java", "java/com/google/Foo.java"),
@@ -1199,7 +1202,11 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     WorkspaceRoot workspaceRoot = new WorkspaceRoot(root);
     BlazeInfo roots =
         BlazeInfo.createMockBlazeInfo(
-            "/", "/root", "/root/out/crosstool/bin", "/root/out/crosstool/gen");
+            "/",
+            "/root",
+            "/root/out/crosstool/bin",
+            "/root/out/crosstool/gen",
+            "/root/out/crosstool/testlogs");
     return new ArtifactLocationDecoderImpl(roots, new WorkspacePathResolverImpl(workspaceRoot));
   }
 

@@ -21,8 +21,8 @@ import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
+import com.google.idea.common.formatter.ExternalFormatterCodeStyleManager.FileContentsProvider;
 import com.google.idea.common.formatter.ExternalFormatterCodeStyleManager.Replacements;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
@@ -62,10 +62,13 @@ public class BuildFileFormatter {
    * indication that their IDE hasn't died.
    */
   static ListenableFuture<Replacements> formatTextWithProgressDialog(
-      Project project, BlazeFileType fileType, String text, Collection<TextRange> ranges) {
+      Project project,
+      BlazeFileType fileType,
+      FileContentsProvider fileContents,
+      Collection<TextRange> ranges) {
     ListenableFuture<Replacements> future =
         MoreExecutors.listeningDecorator(PooledThreadExecutor.INSTANCE)
-            .submit(() -> getReplacements(fileType, text, ranges));
+            .submit(() -> getReplacements(fileType, fileContents, ranges));
     ProgressWindow progressWindow =
         new BackgroundableProcessIndicator(
             project,
@@ -85,15 +88,12 @@ public class BuildFileFormatter {
           }
         });
     future.addListener(
-        () ->
-            ApplicationManager.getApplication()
-                .invokeLater(
-                    () -> {
-                      if (progressWindow.isRunning()) {
-                        progressWindow.stop();
-                        progressWindow.processFinish();
-                      }
-                    }),
+        () -> {
+          if (progressWindow.isRunning()) {
+            progressWindow.stop();
+            progressWindow.processFinish();
+          }
+        },
         MoreExecutors.directExecutor());
     return future;
   }
@@ -104,9 +104,13 @@ public class BuildFileFormatter {
    */
   @Nullable
   private static Replacements getReplacements(
-      BlazeFileType fileType, String text, Collection<TextRange> ranges) {
+      BlazeFileType fileType, FileContentsProvider fileContents, Collection<TextRange> ranges) {
     File buildifierBinary = getBuildifierBinary();
     if (buildifierBinary == null) {
+      return null;
+    }
+    String text = fileContents.getFileContentsIfUnchanged();
+    if (text == null) {
       return null;
     }
     Replacements output = new Replacements();
