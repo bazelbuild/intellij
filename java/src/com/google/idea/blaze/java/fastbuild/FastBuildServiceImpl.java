@@ -59,9 +59,8 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
 import com.google.idea.common.concurrency.ConcurrencyUtil;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -83,7 +82,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
-final class FastBuildServiceImpl implements FastBuildService {
+final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
 
   private static final ImmutableSetMultimap<BuildSystem, Kind> SUPPORTED_KINDS =
       ImmutableSetMultimap.<BuildSystem, Kind>builder()
@@ -99,7 +98,6 @@ final class FastBuildServiceImpl implements FastBuildService {
   private final ProjectViewManager projectViewManager;
   private final BlazeProjectDataManager projectDataManager;
   private final ChangeListManager changeListManager;
-  private final ProjectManager projectManager;
   private final FastBuildIncrementalCompiler incrementalCompiler;
 
   private final ConcurrentHashMap<Label, FastBuildState> builds;
@@ -109,13 +107,11 @@ final class FastBuildServiceImpl implements FastBuildService {
       ProjectViewManager projectViewManager,
       BlazeProjectDataManager projectDataManager,
       ChangeListManager changeListManager,
-      ProjectManager projectManager,
       FastBuildIncrementalCompiler incrementalCompiler) {
     this.project = project;
     this.projectViewManager = projectViewManager;
     this.projectDataManager = projectDataManager;
     this.changeListManager = changeListManager;
-    this.projectManager = projectManager;
     this.incrementalCompiler = incrementalCompiler;
     this.builds = new ConcurrentHashMap<>();
   }
@@ -174,6 +170,11 @@ final class FastBuildServiceImpl implements FastBuildService {
                 ExecutorType.FAST_BUILD_RUN, BlazeCommandRunConfigurationType.getInstance(), true));
     return FastBuildParameters.builder()
         .setBlazeBinary(blazeBinaryPath)
+        // TODO(b/64714884): reenable this once one version enforcement is turned on for java_tests
+        // Right now there's a discrepancy because enforcement is disabled for java_test rules, but
+        // turns back on if you build a java_test_deploy.jar (as we do). So force it off for the
+        // deploy jar too.
+        .addBlazeFlags(ImmutableList.of("--experimental_one_version_enforcement=off"))
         .addBlazeFlags(projectBlazeFlags)
         .addBlazeFlags(userBlazeFlags)
         .build();
@@ -193,13 +194,6 @@ final class FastBuildServiceImpl implements FastBuildService {
       return existingBuildState;
     }
 
-    // We're adding a new entry to the map, so make sure to also mark it for cleanup.
-    if (existingBuildState == null) {
-      CleanupFastBuildData cleanup = new CleanupFastBuildData(label);
-      projectManager.addProjectManagerListener(project, cleanup);
-      Runtime.getRuntime().addShutdownHook(new Thread(() -> resetBuild(label)));
-    }
-
     BuildOutput completedBuildOutput = getCompletedBuild(existingBuildState);
 
     Stopwatch timer = Stopwatch.createStarted();
@@ -208,7 +202,7 @@ final class FastBuildServiceImpl implements FastBuildService {
         "retrieve_modified_files_time_ms", Long.toString(timer.elapsed(TimeUnit.MILLISECONDS)));
 
     if (completedBuildOutput == null) {
-      File compileDirectory = createCompilerOutputDirectory();
+      File compileDirectory = getCompilerOutputDirectory(existingBuildState);
       return FastBuildState.create(
           buildDeployJar(label, buildParameters, loggingData),
           compileDirectory,
@@ -224,25 +218,18 @@ final class FastBuildServiceImpl implements FastBuildService {
     }
   }
 
-  private File createCompilerOutputDirectory() {
+  private static File getCompilerOutputDirectory(@Nullable FastBuildState buildState) {
+    if (buildState == null || !buildState.compilerOutputDirectory().exists()) {
+      return createCompilerOutputDirectory();
+    }
+    return buildState.compilerOutputDirectory();
+  }
+
+  private static File createCompilerOutputDirectory() {
     try {
       return Files.createTempDirectory("ide-fastbuild-").toFile();
     } catch (IOException e) {
       throw new FastBuildTunnelException(e);
-    }
-  }
-
-  private class CleanupFastBuildData implements ProjectManagerListener {
-
-    private final Label label;
-
-    private CleanupFastBuildData(Label label) {
-      this.label = label;
-    }
-
-    @Override
-    public void projectClosed(Project project) {
-      resetBuild(label);
     }
   }
 
@@ -298,8 +285,8 @@ final class FastBuildServiceImpl implements FastBuildService {
     FocusBehavior problemsViewFocus = BlazeUserSettings.getInstance().getShowProblemsViewOnRun();
 
     FastBuildAspectStrategy aspectStrategy =
-        FastBuildAspectStrategyProvider.findAspectStrategy(
-            projectDataManager.getBlazeProjectData().getBlazeVersionData());
+        FastBuildAspectStrategy.getInstance(
+            projectDataManager.getBlazeProjectData().getBlazeVersionData().buildSystem());
     @SuppressWarnings("MustBeClosedChecker") // close buildResultHelper manually via a listener
     BuildResultHelper buildResultHelper =
         BuildResultHelperProvider.forFiles(
@@ -409,5 +396,15 @@ final class FastBuildServiceImpl implements FastBuildService {
           ? (FastBuildException) cause
           : new FastBuildException(cause);
     }
+  }
+
+  @Override
+  public void projectOpened() {
+    Runtime.getRuntime().addShutdownHook(new Thread(this::projectClosed));
+  }
+
+  @Override
+  public void projectClosed() {
+    builds.keySet().forEach(this::resetBuild);
   }
 }

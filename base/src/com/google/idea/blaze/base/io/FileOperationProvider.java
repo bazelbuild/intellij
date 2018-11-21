@@ -15,14 +15,11 @@
  */
 package com.google.idea.blaze.base.io;
 
+import com.google.common.io.MoreFiles;
 import com.intellij.openapi.components.ServiceManager;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 import javax.annotation.Nullable;
 
 /** File system operations. Mocked out in tests involving file manipulations. */
@@ -78,33 +75,6 @@ public class FileOperationProvider {
   }
 
   public void deleteRecursively(File file) throws IOException {
-    // Guava 21
-    // MoreFiles.deleteRecursively(goRoot.toPath());
-    Files.walkFileTree(file.toPath(), new FileDeleter());
-  }
-
-  private static class FileDeleter implements FileVisitor<Path> {
-    @Override
-    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
-        throws IOException {
-      return FileVisitResult.CONTINUE;
-    }
-
-    @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-      Files.delete(file);
-      return FileVisitResult.CONTINUE;
-    }
-
-    @Override
-    public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-      return FileVisitResult.CONTINUE;
-    }
-
-    @Override
-    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-      Files.delete(dir);
-      return FileVisitResult.CONTINUE;
-    }
+    MoreFiles.deleteRecursively(file.toPath());
   }
 }

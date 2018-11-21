@@ -19,30 +19,34 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.execution.actions.RunConfigurationProducer;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.plugins.scala.runner.ScalaApplicationConfigurationProducer;
 import org.jetbrains.plugins.scala.testingSupport.test.scalatest.ScalaTestConfigurationProducer;
 import org.jetbrains.plugins.scala.testingSupport.test.specs2.Specs2ConfigurationProducer;
 
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
-public class NonBlazeProducerSuppressor extends AbstractProjectComponent {
+public class NonBlazeProducerSuppressor implements ProjectComponent {
 
   private static final ImmutableList<Class<? extends RunConfigurationProducer<?>>>
+      // ImmutableList.of(...) is broken: https://youtrack.jetbrains.com/issue/SCL-14531
       PRODUCERS_TO_SUPPRESS =
-          ImmutableList.of(
-              ScalaApplicationConfigurationProducer.class,
-              Specs2ConfigurationProducer.class,
-              ScalaTestConfigurationProducer.class);
+      ImmutableList.<Class<? extends RunConfigurationProducer<?>>>builder()
+          .add(ScalaApplicationConfigurationProducer.class)
+          .add(Specs2ConfigurationProducer.class)
+          .add(ScalaTestConfigurationProducer.class)
+          .build();
+
+  private final Project project;
 
   public NonBlazeProducerSuppressor(Project project) {
-    super(project);
+    this.project = project;
   }
 
   @Override
   public void projectOpened() {
-    if (Blaze.isBlazeProject(myProject)) {
-      suppressProducers(myProject);
+    if (Blaze.isBlazeProject(project)) {
+      suppressProducers(project);
     }
   }
 

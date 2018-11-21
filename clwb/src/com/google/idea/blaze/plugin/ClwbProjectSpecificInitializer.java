@@ -15,18 +15,20 @@
  */
 package com.google.idea.blaze.plugin;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 
 /** Runs on project startup, and customizes CLion UI. */
-public class ClwbProjectSpecificInitializer extends AbstractProjectComponent {
+public class ClwbProjectSpecificInitializer implements ProjectComponent {
+
+  private final Project project;
 
   public ClwbProjectSpecificInitializer(Project project) {
-    super(project);
+    this.project = project;
   }
 
   @Override
   public void projectOpened() {
-    CMakeNotificationFilter.overrideProjectExtension(myProject);
+    CMakeNotificationFilter.overrideProjectExtension(project);
   }
 }

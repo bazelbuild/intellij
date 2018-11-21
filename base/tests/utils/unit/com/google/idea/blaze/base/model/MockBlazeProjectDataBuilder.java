@@ -118,7 +118,8 @@ public class MockBlazeProjectDataBuilder {
               outputBase,
               outputBase + "/execroot",
               outputBase + "/execroot/bin",
-              outputBase + "/execroot/gen");
+              outputBase + "/execroot/gen",
+              outputBase + "/execroot/testlogs");
     }
     BlazeVersionData blazeVersionData =
         this.blazeVersionData != null ? this.blazeVersionData : BlazeVersionData.builder().build();

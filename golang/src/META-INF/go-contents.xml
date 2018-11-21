@@ -14,6 +14,14 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
+  <extensions defaultExtensionNs="com.goide">
+    <importResolver
+        implementation="com.google.idea.blaze.golang.resolve.BlazeGoImportResolver"
+        id="Blaze.GoImportResolver"
+        order="before default"/>
+    <packageFactory implementation="com.google.idea.blaze.golang.resolve.BlazeGoPackageFactory"/>
+  </extensions>
+
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.golang.sync.BlazeGoSyncPlugin"/>
     <SyncListener implementation="com.google.idea.blaze.golang.sync.BlazeGoSdkUpdater"/>
@@ -23,10 +31,10 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.golang.run.producers.BlazeGoBinaryConfigurationProducer"/>
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.golang.run.producers.BlazeGoTestConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.google.idea.blaze.golang.run.producers.BlazeGoBinaryConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.google.idea.blaze.golang.run.producers.BlazeGoTestConfigurationProducer"/>
+    <documentationProvider implementation="com.google.idea.blaze.golang.resolve.BlazeGoImportResolver$GoPackageDocumentationProvider"/>
+    <additionalLibraryRootsProvider implementation="com.google.idea.blaze.golang.sync.BlazeGoAdditionalLibraryRootsProvider"/>
   </extensions>
 
   <project-components>

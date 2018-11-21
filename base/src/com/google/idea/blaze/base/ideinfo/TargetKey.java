@@ -36,8 +36,10 @@ public final class TargetKey
   }
 
   public static TargetKey fromProto(IntellijIdeInfo.TargetKey proto) {
-    return new TargetKey(
-        Label.fromProto(proto.getLabel()), ImmutableList.copyOf(proto.getAspectIdsList()));
+    return ProjectDataInterner.intern(
+        new TargetKey(
+            Label.fromProto(proto.getLabel()),
+            ProtoWrapper.internStrings(proto.getAspectIdsList())));
   }
 
   @Override
@@ -58,15 +60,12 @@ public final class TargetKey
 
   /** Returns a key identifying a plain target */
   public static TargetKey forPlainTarget(Label label) {
-    return new TargetKey(label, ImmutableList.of());
+    return forGeneralTarget(label, ImmutableList.of());
   }
 
   /** Returns a key identifying a general target */
   public static TargetKey forGeneralTarget(Label label, List<String> aspectIds) {
-    if (aspectIds.isEmpty()) {
-      return forPlainTarget(label);
-    }
-    return new TargetKey(label, ImmutableList.copyOf(aspectIds));
+    return ProjectDataInterner.intern(new TargetKey(label, ProtoWrapper.internStrings(aspectIds)));
   }
 
   public boolean isPlainTarget() {

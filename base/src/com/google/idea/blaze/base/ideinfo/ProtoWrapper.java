@@ -59,6 +59,10 @@ public interface ProtoWrapper<P> {
     return map(wrappers, ProtoWrapper::toProto, ProtoWrapper::toProto);
   }
 
+  static ImmutableList<String> internStrings(Iterable<String> iterable) {
+    return map(iterable, ProjectDataInterner::intern);
+  }
+
   static <P> void unwrapAndSetIfNotNull(Consumer<P> setter, @Nullable ProtoWrapper<P> wrapper) {
     if (wrapper != null) {
       setter.accept(wrapper.toProto());

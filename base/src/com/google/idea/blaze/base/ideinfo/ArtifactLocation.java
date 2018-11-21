@@ -41,11 +41,12 @@ public final class ArtifactLocation
 
   public static ArtifactLocation fromProto(Common.ArtifactLocation proto) {
     proto = fixProto(proto);
-    return new ArtifactLocation(
-        proto.getRootExecutionPathFragment(),
-        proto.getRelativePath(),
-        proto.getIsSource(),
-        proto.getIsExternal());
+    return ProjectDataInterner.intern(
+        new ArtifactLocation(
+            proto.getRootExecutionPathFragment().intern(),
+            proto.getRelativePath(),
+            proto.getIsSource(),
+            proto.getIsExternal()));
   }
 
   private static Common.ArtifactLocation fixProto(Common.ArtifactLocation proto) {

@@ -40,7 +40,7 @@ import javax.annotation.Nullable;
  * Runs after sync. Sets up a Go SDK library if Go-lang is active, and there's no existing library
  * set up.
  */
-public class BlazeGoSdkUpdater extends SyncListener.Adapter {
+public class BlazeGoSdkUpdater implements SyncListener {
 
   @Override
   public void onSyncComplete(

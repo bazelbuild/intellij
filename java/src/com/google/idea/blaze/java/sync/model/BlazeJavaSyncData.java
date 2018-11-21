@@ -18,10 +18,11 @@ package com.google.idea.blaze.java.sync.model;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.model.SyncData;
 import com.google.idea.blaze.base.projectview.section.Glob;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Sync data for the java plugin. */
-public class BlazeJavaSyncData implements SyncData<ProjectData.BlazeJavaSyncData> {
+public final class BlazeJavaSyncData implements SyncData<ProjectData.BlazeJavaSyncData> {
   private final BlazeJavaImportResult importResult;
   private final Glob.GlobSet excludedLibraries;
 
@@ -55,6 +56,24 @@ public class BlazeJavaSyncData implements SyncData<ProjectData.BlazeJavaSyncData
   @Override
   public void insert(ProjectData.SyncState.Builder builder) {
     builder.setBlazeJavaSyncData(toProto());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    BlazeJavaSyncData that = (BlazeJavaSyncData) o;
+    return Objects.equals(importResult, that.importResult)
+        && Objects.equals(excludedLibraries, that.excludedLibraries);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(importResult, excludedLibraries);
   }
 
   static class Extractor implements SyncData.Extractor<BlazeJavaSyncData> {

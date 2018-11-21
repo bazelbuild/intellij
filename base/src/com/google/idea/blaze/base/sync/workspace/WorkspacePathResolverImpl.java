@@ -20,10 +20,11 @@ import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import java.io.File;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Uses the package path locations to resolve a workspace path. */
-public class WorkspacePathResolverImpl implements WorkspacePathResolver {
+public final class WorkspacePathResolverImpl implements WorkspacePathResolver {
   private final WorkspaceRoot workspaceRoot;
 
   public WorkspacePathResolverImpl(WorkspaceRoot workspaceRoot) {
@@ -57,6 +58,23 @@ public class WorkspacePathResolverImpl implements WorkspacePathResolver {
   @Override
   public WorkspaceRoot findWorkspaceRoot(File absoluteFile) {
     return workspaceRoot.isInWorkspace(absoluteFile) ? workspaceRoot : null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    WorkspacePathResolverImpl that = (WorkspacePathResolverImpl) o;
+    return Objects.equals(workspaceRoot, that.workspaceRoot);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(workspaceRoot);
   }
 
   static class Extractor implements WorkspacePathResolver.Extractor {

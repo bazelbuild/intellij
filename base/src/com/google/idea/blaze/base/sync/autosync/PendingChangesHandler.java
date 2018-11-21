@@ -66,6 +66,11 @@ abstract class PendingChangesHandler<V> {
     }
   }
 
+  /** Clears the list of pending changes. Any task */
+  void clearQueue() {
+    pendingItems.clear();
+  }
+
   private void queueTask(long delayMillis) {
     timer.schedule(newTask(), delayMillis);
   }
@@ -91,6 +96,9 @@ abstract class PendingChangesHandler<V> {
       return;
     }
     ImmutableSet<V> items = retrieveAndClearPendingItems();
+    if (items.isEmpty()) {
+      return;
+    }
     if (runTask(items)) {
       isTaskPending.set(false);
     } else {

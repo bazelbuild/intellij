@@ -25,9 +25,15 @@ message FastBuildBlazeData {
   repeated string dependencies = 2;
   string workspace_name = 3;
 
-  AndroidInfo android_info = 8;
-  JavaInfo java_info = 9;
-  JavaToolchainInfo java_toolchain_info = 10;
+  repeated Data data = 4;
+  AndroidInfo android_info = 5;
+  JavaInfo java_info = 6;
+  JavaToolchainInfo java_toolchain_info = 7;
+}
+
+message Data {
+  string label = 1;
+  repeated ArtifactLocation artifacts = 2;
 }
 
 message AndroidInfo {
@@ -38,9 +44,10 @@ message AndroidInfo {
 message JavaInfo {
   repeated ArtifactLocation sources = 1;
   string test_class = 2;
-  repeated string annotation_processor_class_names = 3;
-  repeated ArtifactLocation annotation_processor_classpath = 4;
-  repeated string jvm_flags = 5;
+  string test_size = 3;
+  repeated string annotation_processor_class_names = 4;
+  repeated ArtifactLocation annotation_processor_classpath = 5;
+  repeated string jvm_flags = 6;
 }
 
 message JavaToolchainInfo {

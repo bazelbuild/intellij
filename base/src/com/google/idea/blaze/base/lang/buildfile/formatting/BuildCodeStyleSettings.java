@@ -21,7 +21,7 @@ import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 /**
  * BUILD/Skylark-specific code style settings.
  *
- * <p>#api173: use IndentOptions#DECLARATION_PARAMETER_INDENT directly.
+ * <p>#api183: use IndentOptions#DECLARATION_PARAMETER_INDENT directly (if it's ever actually used)
  */
 public class BuildCodeStyleSettings extends CustomCodeStyleSettings {
 

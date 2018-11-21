@@ -69,7 +69,7 @@ class DeployableJarRunConfigurationProducer
     }
 
     configuration.setVMParameters("-cp " + jarFile.getPath());
-    configuration.setMainClassName(mainObject.getTruncedQualifiedName());
+    configuration.setMainClassName(mainObject.qualifiedName());
     configuration.setModule(context.getModule());
 
     configuration.putUserData(TARGET_LABEL, label);
@@ -104,7 +104,7 @@ class DeployableJarRunConfigurationProducer
     if (jarFile == null) {
       return false;
     }
-    return mainClass.getQualifiedName().equals(mainObject.getTruncedQualifiedName())
+    return mainClass.getQualifiedName().equals(mainObject.qualifiedName())
         && configuration.getVMParameters().contains("-cp " + jarFile.getPath());
   }
 

@@ -215,7 +215,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//foo/bar:library",
                     Kind.CC_LIBRARY,
                     ImmutableList.of(src("foo/bar/library.cc")),
-                    ImmutableList.of("SOME_DEFINE=1")))
+                    ImmutableList.of("-DSOME_DEFINE=1")))
             .addTarget(
                 createCcTarget(
                     "//third_party:library",
@@ -261,7 +261,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                         "//foo/bar:binary",
                         Kind.CC_BINARY,
                         ImmutableList.of(src("foo/bar/binary.cc")),
-                        ImmutableList.of("SOME_DEFINE=1"))
+                        ImmutableList.of("-DSOME_DEFINE=1"))
                     .addDependency("//foo/bar:library")
                     .addDependency("//foo/bar:empty")
                     .addDependency("//foo/bar:generated")
@@ -272,7 +272,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//foo/bar:library",
                     Kind.CC_LIBRARY,
                     ImmutableList.of(src("foo/bar/library.cc")),
-                    ImmutableList.of("SOME_DEFINE=2")))
+                    ImmutableList.of("-DSOME_DEFINE=2")))
             .addTarget(createCcTarget("//foo/bar:empty", Kind.CC_LIBRARY, ImmutableList.of()))
             .addTarget(
                 createCcTarget(
@@ -284,13 +284,13 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//foo/bar:mixed",
                     Kind.CC_LIBRARY,
                     ImmutableList.of(src("foo/bar/mixed_src.cc"), gen("foo/bar/mixed_gen.cc")),
-                    ImmutableList.of("SOME_DEFINE=3")))
+                    ImmutableList.of("-DSOME_DEFINE=3")))
             .addTarget(
                 createCcTarget(
                         "//foo/baz:test",
                         Kind.CC_TEST,
                         ImmutableList.of(src("foo/baz/test.cc")),
-                        ImmutableList.of("SOME_DEFINE=4"))
+                        ImmutableList.of("-DSOME_DEFINE=4"))
                     .addDependency("//foo/baz:binary")
                     .addDependency("//foo/baz:library")
                     .addDependency("//foo/qux:library"))
@@ -299,13 +299,13 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//foo/baz:binary",
                     Kind.CC_BINARY,
                     ImmutableList.of(src("foo/baz/binary.cc")),
-                    ImmutableList.of("SOME_DEFINE=5")))
+                    ImmutableList.of("-DSOME_DEFINE=5")))
             .addTarget(
                 createCcTarget(
                     "//foo/baz:library",
                     Kind.CC_LIBRARY,
                     ImmutableList.of(src("foo/baz/library.cc")),
-                    ImmutableList.of("SOME_DEFINE=6")))
+                    ImmutableList.of("-DSOME_DEFINE=6")))
             .addTarget(
                 createCcTarget(
                     "//foo/qux:library",
@@ -416,7 +416,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             "//foo/bar:library",
             Kind.CC_LIBRARY,
             ImmutableList.of(src("foo/bar/library.cc")),
-            ImmutableList.of("OTHER=1")));
+            ImmutableList.of("-DOTHER=1")));
 
     assertThatResolving(projectView, targetMapBuilder.build())
         .reusedConfigurations(initialConfigurations, "//foo/bar:library");
@@ -446,7 +446,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//foo/bar:library",
                     Kind.CC_LIBRARY,
                     ImmutableList.of(src("foo/bar/library.cc")),
-                    ImmutableList.of("OTHER=1")))
+                    ImmutableList.of("-DOTHER=1")))
             .build();
     assertThatResolving(projectView, targetMap2)
         .reusedConfigurations(noReusedConfigurations, "//foo/bar:library");
@@ -477,7 +477,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//foo/zoo:library",
                     Kind.CC_LIBRARY,
                     ImmutableList.of(src("foo/zoo/library.cc")),
-                    ImmutableList.of("OTHER=1")))
+                    ImmutableList.of("-DOTHER=1")))
             .build();
     assertThatResolving(projectView2, targetMap2)
         .reusedConfigurations(noReusedConfigurations, "//foo/zoo:library");
@@ -544,11 +544,11 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
       String label,
       Kind kind,
       ImmutableList<ArtifactLocation> sources,
-      ImmutableList<String> defines) {
+      ImmutableList<String> copts) {
     TargetIdeInfo.Builder targetInfo =
         TargetIdeInfo.builder().setLabel(label).setKind(kind).addDependency("//:toolchain");
     sources.forEach(targetInfo::addSource);
-    return targetInfo.setCInfo(CIdeInfo.builder().addSources(sources).addLocalDefines(defines));
+    return targetInfo.setCInfo(CIdeInfo.builder().addSources(sources).addLocalCopts(copts));
   }
 
   private static TargetIdeInfo.Builder createCcToolchain() {

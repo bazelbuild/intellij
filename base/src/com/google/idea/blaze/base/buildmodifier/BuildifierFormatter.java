@@ -16,18 +16,19 @@
 package com.google.idea.blaze.base.buildmodifier;
 
 import com.google.idea.common.formatter.FormatterInstaller;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 
 /** Integrates buildifier with IntelliJ's formatter. */
-public class BuildifierFormatter extends AbstractProjectComponent {
+public class BuildifierFormatter implements ProjectComponent {
+  private final Project project;
 
   protected BuildifierFormatter(Project project) {
-    super(project);
+    this.project = project;
   }
 
   @Override
   public void projectOpened() {
-    FormatterInstaller.replaceFormatter(myProject, BuildifierDelegatingCodeStyleManager::new);
+    FormatterInstaller.replaceFormatter(project, BuildifierDelegatingCodeStyleManager::new);
   }
 }

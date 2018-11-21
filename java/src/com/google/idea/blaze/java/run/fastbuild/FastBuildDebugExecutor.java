@@ -72,7 +72,7 @@ final class FastBuildDebugExecutor extends DefaultDebugExecutor {
     return new LayeredIcon(AllIcons.Process.DisabledDebug, BlazeIcons.LightningOverlay);
   }
 
-  @SuppressWarnings("MissingOverride") // #api173 added in 2018.1
+  @Override
   public boolean isApplicable(Project project) {
     return Blaze.isBlazeProject(project);
   }

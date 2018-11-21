@@ -69,7 +69,7 @@ public final class BlazeJarLibrary extends BlazeLibrary {
     if (!sourceJarManager.hasSourceJarAttached(key)) {
       return;
     }
-    for (ArtifactLocation srcJar : libraryArtifact.getSourceJarsOrClassJar()) {
+    for (ArtifactLocation srcJar : libraryArtifact.getSourceJars()) {
       File sourceJar = jarCache.getCachedSourceJar(artifactLocationDecoder, srcJar);
       if (sourceJar != null) {
         libraryModel.addRoot(pathToUrl(sourceJar), OrderRootType.SOURCES);

@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.run.fastbuild;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.project.Project;
@@ -23,8 +24,8 @@ final class BazelFastBuildTestEnvironmentCreatorFactory
     implements FastBuildTestEnvironmentCreatorFactory {
 
   @Override
-  public boolean appliesTo(BuildSystem buildSystem) {
-    return buildSystem.equals(BuildSystem.Bazel);
+  public ImmutableSet<BuildSystem> getSupportedBuildSystems() {
+    return ImmutableSet.of(BuildSystem.Bazel);
   }
 
   @Override

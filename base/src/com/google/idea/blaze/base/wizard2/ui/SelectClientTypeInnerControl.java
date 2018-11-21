@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.wizard2.ui;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.wizard2.BlazeNewProjectBuilder;
 import com.google.idea.blaze.base.wizard2.BlazeSelectWorkspaceOption;
-import com.google.idea.blaze.base.wizard2.BlazeWizardUserSettings;
 
 /**
  * There are now generally two layers of workspace types (e.g. [client type], then new/existing
@@ -27,34 +26,10 @@ import com.google.idea.blaze.base.wizard2.BlazeWizardUserSettings;
 public abstract class SelectClientTypeInnerControl
     extends BlazeSelectOptionControl<BlazeSelectWorkspaceOption> {
 
-  private final ImmutableList<BlazeSelectWorkspaceOption> options;
-
   /** @param options a list of mutually exclusive options associated with the parent option. */
   protected SelectClientTypeInnerControl(
       BlazeNewProjectBuilder builder, ImmutableList<BlazeSelectWorkspaceOption> options) {
     super(builder, options);
-    this.options = options;
-  }
-
-  public boolean migratePreviousOptions(BlazeWizardUserSettings userSettings) {
-    boolean select = false;
-    for (BlazeSelectWorkspaceOption option : options) {
-      boolean selected = option.migratePreviousOptions(userSettings);
-      if (selected) {
-        setSelectedOption(option);
-      }
-      select |= selected;
-    }
-    return select;
-  }
-
-  private void setSelectedOption(BlazeSelectWorkspaceOption option) {
-    for (OptionUiEntry<BlazeSelectWorkspaceOption> entry : optionUiEntryList) {
-      if (entry.option.equals(option)) {
-        entry.radioButton.setSelected(true);
-        return;
-      }
-    }
   }
 
   public void optionSelected() {

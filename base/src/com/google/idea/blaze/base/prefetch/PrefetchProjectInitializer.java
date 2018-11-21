@@ -15,21 +15,23 @@
  */
 package com.google.idea.blaze.base.prefetch;
 
+import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
-import java.io.IOException;
+import com.intellij.openapi.project.ProjectManagerListener;
 import javax.annotation.Nullable;
 
 /** Run prefetching on project open, prior to initial indexing step. */
@@ -42,30 +44,40 @@ public class PrefetchProjectInitializer implements ApplicationComponent {
 
   @Override
   public void initComponent() {
-    ProjectManager projectManager = ProjectManager.getInstance();
-    projectManager.addProjectManagerListener(
-        new ProjectManagerAdapter() {
-          @Override
-          public void projectOpened(Project project) {
-            if (prefetchOnProjectOpen.getValue()) {
-              prefetchProjectFiles(project);
-            }
-          }
-        });
+    ApplicationManager.getApplication()
+        .getMessageBus()
+        .connect()
+        .subscribe(
+            ProjectManager.TOPIC,
+            new ProjectManagerListener() {
+              @Override
+              public void projectOpened(Project project) {
+                if (prefetchOnProjectOpen.getValue()) {
+                  prefetchProjectFiles(project);
+                }
+              }
+            });
   }
 
   private static void prefetchProjectFiles(Project project) {
     if (!Blaze.isBlazeProject(project)) {
       return;
     }
-    BlazeProjectData projectData = getBlazeProjectData(project);
-    ProjectViewSet projectViewSet = getProjectViewSet(project);
-    if (projectViewSet == null) {
-      return;
-    }
     PrefetchIndexingTask.submitPrefetchingTask(
         project,
-        PrefetchService.getInstance().prefetchProjectFiles(project, projectViewSet, projectData),
+        ApplicationManager.getApplication()
+            .executeOnPooledThread(
+                () -> {
+                  BlazeProjectData projectData = getBlazeProjectData(project);
+                  ProjectViewSet projectViewSet = getProjectViewSet(project);
+                  if (projectViewSet == null) {
+                    return;
+                  }
+                  FutureUtil.waitForFuture(
+                      new BlazeContext(),
+                      PrefetchService.getInstance()
+                          .prefetchProjectFiles(project, projectViewSet, projectData));
+                }),
         "Initial Prefetching");
   }
 
@@ -76,13 +88,12 @@ public class PrefetchProjectInitializer implements ApplicationComponent {
     if (importSettings == null) {
       return null;
     }
-    try {
-      return BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings);
-    } catch (IOException e) {
-      // ignore: if we can't load the previous project data, we can't fetch dependencies
-      logger.info("Couldn't load project data for prefetcher", e);
-      return null;
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings);
+    if (blazeProjectData == null) {
+      logger.info("Couldn't load project data for prefetcher");
     }
+    return blazeProjectData;
   }
 
   /** Get the cached {@link ProjectViewSet}, or reload it from source. */

@@ -21,47 +21,51 @@ import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import java.util.Optional;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Ide info specific to go rules. */
 public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> {
   private final ImmutableList<ArtifactLocation> sources;
   @Nullable private final String importPath;
-  @Nullable private final Label libraryLabel;
-  @Nullable private final Kind libraryKind;
+  @Nullable private final Label libraryLabel; // only valid for tests
 
   private GoIdeInfo(
       ImmutableList<ArtifactLocation> sources,
       @Nullable String importPath,
-      @Nullable Label libraryLabel,
-      @Nullable Kind libraryKind) {
+      @Nullable Label libraryLabel) {
     this.sources = sources;
     this.importPath = importPath;
     this.libraryLabel = libraryLabel;
-    this.libraryKind = libraryKind;
   }
 
   public static GoIdeInfo fromProto(
       IntellijIdeInfo.GoIdeInfo proto, Label targetLabel, Kind targetKind) {
-    Label libraryLabel = null;
-    Kind libraryKind = null;
-    String importPath = Strings.emptyToNull(proto.getImportPath());
-    for (ImportPathReplacer fixer : ImportPathReplacer.EP_NAME.getExtensions()) {
-      if (fixer.shouldReplace(importPath)) {
-        libraryLabel =
-            Optional.ofNullable(Label.createIfValid(proto.getLibraryLabel())).orElse(targetLabel);
-        libraryKind =
-            Optional.ofNullable(Kind.fromString(proto.getLibraryKind())).orElse(targetKind);
-        importPath = fixer.getReplacement(libraryLabel, libraryKind);
-        break;
-      }
-    }
     return new GoIdeInfo(
         ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto),
-        importPath,
-        libraryLabel,
-        libraryKind);
+        fixImportPath(Strings.emptyToNull(proto.getImportPath()), targetLabel, targetKind),
+        extractLibraryLabel(Strings.emptyToNull(proto.getLibraryLabel()), targetLabel, targetKind));
+  }
+
+  @Nullable
+  private static String fixImportPath(
+      @Nullable String oldImportPath, Label targetLabel, Kind targetKind) {
+    for (ImportPathReplacer fixer : ImportPathReplacer.EP_NAME.getExtensions()) {
+      if (fixer.shouldReplace(oldImportPath)) {
+        return fixer.getReplacement(targetLabel, targetKind);
+      }
+    }
+    return oldImportPath;
+  }
+
+  @Nullable
+  private static Label extractLibraryLabel(
+      @Nullable String libraryLabelString, Label targetLabel, Kind targetKind) {
+    if (libraryLabelString == null || !targetKind.isOneOf(Kind.GO_TEST, Kind.GO_APPENGINE_TEST)) {
+      return null;
+    }
+    Label libraryLabel = Label.create(libraryLabelString);
+    return !libraryLabel.equals(targetLabel) ? libraryLabel : null;
   }
 
   @Override
@@ -71,7 +75,6 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
             .addAllSources(ProtoWrapper.mapToProtos(sources))
             .setImportPath(importPath);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setLibraryLabel, libraryLabel);
-    ProtoWrapper.unwrapAndSetIfNotNull(builder::setLibraryKind, libraryKind);
     return builder.build();
   }
 
@@ -82,6 +85,11 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
   @Nullable
   public String getImportPath() {
     return importPath;
+  }
+
+  @Nullable
+  public Label getLibraryLabel() {
+    return libraryLabel;
   }
 
   public static Builder builder() {
@@ -104,7 +112,7 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
     }
 
     public GoIdeInfo build() {
-      return new GoIdeInfo(sources.build(), importPath, null, null);
+      return new GoIdeInfo(sources.build(), importPath, null);
     }
   }
 
@@ -119,6 +127,25 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
         + getImportPath()
         + "\n"
         + '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    GoIdeInfo goIdeInfo = (GoIdeInfo) o;
+    return Objects.equals(sources, goIdeInfo.sources)
+        && Objects.equals(importPath, goIdeInfo.importPath)
+        && Objects.equals(libraryLabel, goIdeInfo.libraryLabel);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(sources, importPath, libraryLabel);
   }
 
   /** Replaces import path from the aspect based on target label and kind. */

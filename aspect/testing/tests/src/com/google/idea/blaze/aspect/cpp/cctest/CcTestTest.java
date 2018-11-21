@@ -40,8 +40,6 @@ public class CcTestTest extends BazelIntellijAspectTest {
     CIdeInfo cTargetIdeInfo = target.getCIdeInfo();
 
     assertThat(cTargetIdeInfo.getTargetCoptList()).isEmpty();
-    assertThat(cTargetIdeInfo.getTargetDefineList()).isEmpty();
-    assertThat(cTargetIdeInfo.getTargetIncludeList()).isEmpty();
 
     // Can't test for this because the cc code stuffs source
     // artifacts into the output group

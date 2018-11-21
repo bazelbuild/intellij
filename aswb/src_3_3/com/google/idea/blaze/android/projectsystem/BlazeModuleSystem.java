@@ -29,6 +29,7 @@ import com.android.tools.idea.projectsystem.SampleDataDirectoryProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.npw.project.BlazeAndroidModuleTemplate;
+import com.google.idea.blaze.android.sync.importer.BlazeImportInput;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
@@ -259,7 +260,8 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
               ProjectViewManager.getInstance(project).getProjectViewSet(), blazeProjectData)) {
         if (library instanceof AarLibrary) {
           libraries.add(toExternalLibrary((AarLibrary) library, decoder, project));
-        } else if (library instanceof BlazeResourceLibrary) {
+        } else if (BlazeImportInput.createLooksLikeAarLibrary.getValue()
+            && library instanceof BlazeResourceLibrary) {
           libraries.add(toExternalLibrary((BlazeResourceLibrary) library, decoder));
         } else if (library instanceof BlazeJarLibrary) {
           libraries.add(toExternalLibrary((BlazeJarLibrary) library, decoder));
@@ -278,7 +280,8 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
     BlazeAndroidSyncData androidSyncData =
         blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
     for (String libraryKey : registry.get(module).resourceLibraryKeys) {
-      if (androidSyncData.importResult.resourceLibraries.containsKey(libraryKey)) {
+      if (BlazeImportInput.createLooksLikeAarLibrary.getValue()
+          && androidSyncData.importResult.resourceLibraries.containsKey(libraryKey)) {
         libraries.add(
             toExternalLibrary(
                 androidSyncData.importResult.resourceLibraries.get(libraryKey), decoder));

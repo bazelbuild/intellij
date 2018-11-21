@@ -19,6 +19,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Ide info specific to python rules. */
@@ -95,5 +96,23 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
     }
     s.append("}");
     return s.toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    PyIdeInfo pyIdeInfo = (PyIdeInfo) o;
+    return Objects.equals(sources, pyIdeInfo.sources)
+        && Objects.equals(launcher, pyIdeInfo.launcher);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(sources, launcher);
   }
 }

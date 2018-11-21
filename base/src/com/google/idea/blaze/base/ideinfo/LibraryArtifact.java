@@ -20,10 +20,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.idea.common.experiments.BoolExperiment;
 import javax.annotation.Nullable;
 
 /** Represents a jar artifact. */
 public final class LibraryArtifact implements ProtoWrapper<IntellijIdeInfo.LibraryArtifact> {
+
+  private static final BoolExperiment indexClassJarIfNoSrcJars =
+      new BoolExperiment("blaze.use.class.jar", true);
+
   @Nullable private final ArtifactLocation interfaceJar;
   @Nullable private final ArtifactLocation classJar;
   private final ImmutableList<ArtifactLocation> sourceJars;
@@ -76,29 +81,15 @@ public final class LibraryArtifact implements ProtoWrapper<IntellijIdeInfo.Libra
   }
 
   /**
-   * Returns the source jars if available. Otherwise, if both interface and class jars are
-   * available, returns the class jar to provide some more information in the decompiled code.
-   */
-  public ImmutableList<ArtifactLocation> getSourceJarsOrClassJar() {
-    if (!sourceJars.isEmpty()) {
-      return sourceJars;
-    }
-    if (interfaceJar != null && classJar != null) {
-      return ImmutableList.of(classJar);
-    }
-    return ImmutableList.of();
-  }
-
-  /**
    * Returns the best jar to add to IntelliJ.
    *
-   * <p>We prefer the interface jar if one exists, otherwise the class jar.
+   * <p>We use the class jar if there are no source jars, otherwise the interface jar.
    */
   public ArtifactLocation jarForIntellijLibrary() {
-    if (getInterfaceJar() != null) {
-      return getInterfaceJar();
+    if (sourceJars.isEmpty() && indexClassJarIfNoSrcJars.getValue()) {
+      return classJar != null ? classJar : interfaceJar;
     }
-    return getClassJar();
+    return interfaceJar != null ? interfaceJar : classJar;
   }
 
   @Override

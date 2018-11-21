@@ -67,7 +67,7 @@ public class SyncCache {
     cache.clear();
   }
 
-  static class ClearSyncCache extends SyncListener.Adapter {
+  static class ClearSyncCache implements SyncListener {
     @Override
     public void onSyncComplete(
         Project project,

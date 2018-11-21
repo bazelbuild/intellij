@@ -57,8 +57,7 @@ public class JavaPrefetchFileSource implements PrefetchFileSource {
       }
       BlazeJarLibrary jarLibrary = (BlazeJarLibrary) library;
       files.add(artifactLocationDecoder.decode(jarLibrary.libraryArtifact.jarForIntellijLibrary()));
-      files.addAll(
-          artifactLocationDecoder.decodeAll(jarLibrary.libraryArtifact.getSourceJarsOrClassJar()));
+      files.addAll(artifactLocationDecoder.decodeAll(jarLibrary.libraryArtifact.getSourceJars()));
     }
   }
 

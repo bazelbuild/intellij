@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.run.test.smrunner;
 
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags;
@@ -50,13 +51,17 @@ public class BlazeAndroidTestEventsHandler implements BlazeTestEventsHandler {
   }
 
   @Override
-  public String suiteLocationUrl(@Nullable Kind kind, String name) {
+  public String suiteLocationUrl(Label label, @Nullable Kind kind, String name) {
     return SmRunnerUtils.GENERIC_SUITE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + name;
   }
 
   @Override
   public String testLocationUrl(
-      @Nullable Kind kind, String parentSuite, String name, @Nullable String className) {
+      Label label,
+      @Nullable Kind kind,
+      String parentSuite,
+      String name,
+      @Nullable String className) {
     // ignore initial value of className -- it's the test runner class.
     name = StringUtil.trimTrailing(name, '-');
     if (!name.contains("-")) {
@@ -73,7 +78,7 @@ public class BlazeAndroidTestEventsHandler implements BlazeTestEventsHandler {
   }
 
   @Override
-  public String testDisplayName(@Nullable Kind kind, String rawName) {
+  public String testDisplayName(Label label, @Nullable Kind kind, String rawName) {
     String name = StringUtil.trimTrailing(rawName, '-');
     if (name.contains("-")) {
       int ix = name.lastIndexOf('-');

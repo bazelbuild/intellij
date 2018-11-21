@@ -174,7 +174,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
         .orElse(null);
   }
 
-  static class Listener extends SyncListener.Adapter {
+  static class Listener implements SyncListener {
     @Override
     public void afterSync(
         Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {

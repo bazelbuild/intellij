@@ -22,6 +22,17 @@ def _fast_build_info_impl(target, ctx):
     }
 
     write_output = False
+    if hasattr(ctx.rule.attr, "data") and ctx.rule.attr.data:
+        # The data attribute can reference artifacts directly (like deploy jars) that the aspect
+        # will skip. So we need to gather them up here, in the referencing target.
+        write_output = True
+        info["data"] = [
+            struct(
+                label = str(datadep.label),
+                artifacts = [artifact_location(file) for file in datadep.files],
+            )
+            for datadep in ctx.rule.attr.data
+        ]
     if hasattr(target, "java_toolchain"):
         write_output = True
         toolchain = target.java_toolchain
@@ -34,9 +45,10 @@ def _fast_build_info_impl(target, ctx):
         write_output = True
         jvm_flags = getattr(ctx.rule.attr, "jvm_flags", [])
         java_info = {
+            "jvm_flags": jvm_flags,
+            "test_size": getattr(ctx.rule.attr, "size", None),
             "sources": sources_from_target(ctx),
             "test_class": getattr(ctx.rule.attr, "test_class", None),
-            "jvm_flags": jvm_flags,
         }
         annotation_processing = target[JavaInfo].annotation_processing
         if annotation_processing:

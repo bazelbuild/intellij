@@ -173,8 +173,8 @@ final class BlazeResolveConfiguration {
   }
 
   @VisibleForTesting
-  ImmutableCollection<String> getDefinesInternal() {
-    return configurationData.defines;
+  ImmutableCollection<String> getTargetCopts() {
+    return configurationData.targetCopts;
   }
 
   BlazeCompilerSettings getCompilerSettings() {

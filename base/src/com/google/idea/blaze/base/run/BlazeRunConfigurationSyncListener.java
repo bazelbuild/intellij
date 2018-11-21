@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
  * Imports run configurations specified in the project view, and creates run configurations for
  * project view targets, where appropriate.
  */
-public class BlazeRunConfigurationSyncListener extends SyncListener.Adapter {
+public class BlazeRunConfigurationSyncListener implements SyncListener {
 
   @Override
   public void onSyncComplete(

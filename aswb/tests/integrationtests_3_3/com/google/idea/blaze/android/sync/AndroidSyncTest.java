@@ -205,7 +205,6 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
         CToolchainIdeInfo.builder()
             .setTargetName("arm-linux-androideabi")
             .setCppExecutable(new ExecutionRootPath("bin/arm-linux-androideabi-gcc"))
-            .addBaseCompilerOptions(ImmutableList.of("-DOS_ANDROID", "-march=armv7-a"))
             .addBuiltInIncludeDirectories(
                 ImmutableList.of(
                     new ExecutionRootPath("lib/gcc/arm-linux-androideabi/4.8/include")));
@@ -213,7 +212,6 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
         CToolchainIdeInfo.builder()
             .setTargetName("aarch64-linux-android")
             .setCppExecutable(new ExecutionRootPath("bin/aarch64-linux-android-gcc"))
-            .addBaseCompilerOptions(ImmutableList.of("-DOS_ANDROID"))
             .addBuiltInIncludeDirectories(
                 ImmutableList.of(
                     new ExecutionRootPath("lib/gcc/aarch64-linux-android/4.9/include")));

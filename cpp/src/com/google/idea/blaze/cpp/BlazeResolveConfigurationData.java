@@ -39,6 +39,7 @@ final class BlazeResolveConfigurationData {
   final ImmutableList<HeadersSearchRoot> cppLibraryIncludeRoots;
   final ImmutableList<HeadersSearchRoot> projectIncludeRoots;
   final ImmutableCollection<String> defines;
+  final ImmutableList<String> targetCopts;
   private final CToolchainIdeInfo toolchainIdeInfo;
 
   static BlazeResolveConfigurationData create(
@@ -51,18 +52,15 @@ final class BlazeResolveConfigurationData {
     ImmutableSet.Builder<ExecutionRootPath> systemIncludesBuilder = ImmutableSet.builder();
     systemIncludesBuilder.addAll(cIdeInfo.getTransitiveSystemIncludeDirectories());
     systemIncludesBuilder.addAll(toolchainIdeInfo.getBuiltInIncludeDirectories());
-    systemIncludesBuilder.addAll(toolchainIdeInfo.getUnfilteredToolchainSystemIncludes());
 
     ImmutableSet.Builder<ExecutionRootPath> userIncludesBuilder = ImmutableSet.builder();
     userIncludesBuilder.addAll(cIdeInfo.getTransitiveIncludeDirectories());
-    userIncludesBuilder.addAll(cIdeInfo.getLocalIncludeDirectories());
 
     ImmutableSet.Builder<ExecutionRootPath> userQuoteIncludesBuilder = ImmutableSet.builder();
     userQuoteIncludesBuilder.addAll(cIdeInfo.getTransitiveQuoteIncludeDirectories());
 
     ImmutableList.Builder<String> defines = ImmutableList.builder();
     defines.addAll(cIdeInfo.getTransitiveDefines());
-    defines.addAll(cIdeInfo.getLocalDefines());
 
     return new BlazeResolveConfigurationData(
         project,
@@ -75,6 +73,7 @@ final class BlazeResolveConfigurationData {
         userIncludesBuilder.build(),
         defines.build(),
         compilerSettings,
+        cIdeInfo.getLocalCopts(),
         toolchainIdeInfo);
   }
 
@@ -89,6 +88,7 @@ final class BlazeResolveConfigurationData {
       ImmutableCollection<ExecutionRootPath> cppIncludeDirs,
       ImmutableCollection<String> defines,
       BlazeCompilerSettings compilerSettings,
+      ImmutableList<String> targetCopts,
       CToolchainIdeInfo toolchainIdeInfo) {
     this.toolchainIdeInfo = toolchainIdeInfo;
 
@@ -115,6 +115,7 @@ final class BlazeResolveConfigurationData {
 
     this.compilerSettings = compilerSettings;
     this.defines = defines;
+    this.targetCopts = targetCopts;
   }
 
   @Override
@@ -129,6 +130,7 @@ final class BlazeResolveConfigurationData {
     return this.cLibraryIncludeRoots.equals(otherData.cLibraryIncludeRoots)
         && this.cppLibraryIncludeRoots.equals(otherData.cppLibraryIncludeRoots)
         && this.projectIncludeRoots.equals(otherData.projectIncludeRoots)
+        && this.targetCopts.equals(otherData.targetCopts)
         && this.defines.equals(otherData.defines)
         && this.toolchainIdeInfo.equals(otherData.toolchainIdeInfo)
         && this.compilerSettings
@@ -142,6 +144,7 @@ final class BlazeResolveConfigurationData {
         cLibraryIncludeRoots,
         cppLibraryIncludeRoots,
         projectIncludeRoots,
+        targetCopts,
         defines,
         toolchainIdeInfo,
         compilerSettings.getCompilerVersion());

@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 /** Inputs used for importing an Android project. */
 public final class BlazeImportInput {
   public static final BoolExperiment createLooksLikeAarLibrary =
-      new BoolExperiment("create.resource.lookslikeaarlibrary", true);
+      new BoolExperiment("create.resource.lookslikeaarlibrary", false);
 
   public final @NonNull WorkspaceRoot workspaceRoot;
   public final @NonNull ProjectViewSet projectViewSet;

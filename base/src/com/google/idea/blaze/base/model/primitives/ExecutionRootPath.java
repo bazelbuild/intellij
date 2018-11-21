@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.model.primitives;
 
 import com.google.common.base.Objects;
+import com.google.idea.blaze.base.ideinfo.ProjectDataInterner;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
@@ -94,7 +95,7 @@ public final class ExecutionRootPath implements ProtoWrapper<String> {
     if (relativePath == null) {
       return null;
     }
-    return new ExecutionRootPath(new File(relativePath));
+    return ProjectDataInterner.intern(new ExecutionRootPath(new File(relativePath)));
   }
 
   /**
@@ -147,7 +148,7 @@ public final class ExecutionRootPath implements ProtoWrapper<String> {
   }
 
   public static ExecutionRootPath fromProto(String proto) {
-    return new ExecutionRootPath(proto);
+    return ProjectDataInterner.intern(new ExecutionRootPath(proto));
   }
 
   @Override

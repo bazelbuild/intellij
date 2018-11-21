@@ -20,7 +20,7 @@ import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.and
 import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.android_library;
 import static com.google.idea.blaze.android.targetmapbuilder.NbCcTarget.cc_library;
 import static com.google.idea.blaze.android.targetmapbuilder.NbCcToolchain.cc_toolchain;
-import static com.google.idea.blaze.android.targetmapbuilder.TargetIdeInfoBuilderWrapper.targetMap;
+import static com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder.targetMap;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -195,12 +195,10 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
             cc_toolchain("//android_ndk_linux/toolchains:armv7a")
                 .cc_target_name("arm-linux-androideabi")
                 .cpp_executable("bin/arm-linux-androideabi-gcc")
-                .base_compiler_options("-DOS_ANDROID", "-march=armv7-a")
                 .built_in_include_dirs("lib/gcc/arm-linux-androideabi/4.8/include"),
             cc_toolchain("//android_ndk_linux/toolchains:aarch64")
                 .cc_target_name("aarch64-linux-android")
                 .cpp_executable("bin/aarch64-linux-android-gcc")
-                .base_compiler_options("-DOS_ANDROID")
                 .built_in_include_dirs("lib/gcc/aarch64-linux-android/4.9/include"),
 
             // Technically, blaze returns multiple instances of native libs (one for each CPU from

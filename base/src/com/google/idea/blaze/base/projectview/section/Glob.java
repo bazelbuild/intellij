@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.projectview.section;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import java.io.Serializable;
@@ -26,7 +25,7 @@ import java.util.List;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 /** Glob matcher. */
-public class Glob implements ProtoWrapper<String>, Serializable {
+public final class Glob implements ProtoWrapper<String>, Serializable {
   // still Serializable as part of ProjectViewSet
   private static final long serialVersionUID = 1L;
 
@@ -38,20 +37,16 @@ public class Glob implements ProtoWrapper<String>, Serializable {
   }
 
   /** A set of globs */
-  public static class GlobSet {
+  public static final class GlobSet {
 
-    private final Collection<Glob> globs = Lists.newArrayList();
+    private final ImmutableList<Glob> globs;
 
     public GlobSet(Collection<Glob> globs) {
-      this.globs.addAll(globs);
+      this.globs = ImmutableList.copyOf(globs);
     }
 
     public boolean isEmpty() {
       return globs.isEmpty();
-    }
-
-    public void add(Glob glob) {
-      globs.add(glob);
     }
 
     public boolean matches(String string) {
@@ -69,6 +64,23 @@ public class Glob implements ProtoWrapper<String>, Serializable {
 
     public ImmutableList<String> toProto() {
       return ProtoWrapper.mapToProtos(globs);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      GlobSet globSet = (GlobSet) o;
+      return java.util.Objects.equals(globs, globSet.globs);
+    }
+
+    @Override
+    public int hashCode() {
+      return java.util.Objects.hash(globs);
     }
   }
 

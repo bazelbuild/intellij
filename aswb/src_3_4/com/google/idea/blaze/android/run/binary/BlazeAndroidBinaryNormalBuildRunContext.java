@@ -15,11 +15,9 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
-import static com.android.tools.idea.run.ui.ApplyChangesAction.APPLY_CHANGES;
-import static com.android.tools.idea.run.ui.CodeSwapAction.CODE_SWAP;
-
 import com.android.ddmlib.IDevice;
 import com.android.tools.idea.flags.StudioFlags;
+import com.android.tools.idea.gradle.util.DynamicAppUtils;
 import com.android.tools.idea.run.ApkInfo;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
@@ -30,11 +28,15 @@ import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
 import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
+import com.android.tools.idea.run.tasks.ApplyCodeChangesAction;
 import com.android.tools.idea.run.tasks.DebugConnectorTask;
 import com.android.tools.idea.run.tasks.DeployApkTask;
+import com.android.tools.idea.run.tasks.InstallAction;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.tasks.UnifiedDeployTask;
+import com.android.tools.idea.run.ui.ApplyChangesAction;
+import com.android.tools.idea.run.ui.CodeSwapAction;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
@@ -46,17 +48,24 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStepNormalBuild;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
+import java.io.File;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.annotations.NotNull;
 
 /** Run context for android_binary. */
 class BlazeAndroidBinaryNormalBuildRunContext implements BlazeAndroidRunContext {
+  private static final BoolExperiment updateCodeViaJvmti =
+      new BoolExperiment("android.apply.changes", false);
 
   private final Project project;
   private final AndroidFacet facet;
@@ -136,14 +145,25 @@ class BlazeAndroidBinaryNormalBuildRunContext implements BlazeAndroidRunContext 
       throw new ExecutionException(e);
     }
 
-    if (StudioFlags.JVMTI_REFRESH.get()) {
-      UnifiedDeployTask.DeployType type = UnifiedDeployTask.DeployType.INSTALL;
-      if (Boolean.TRUE.equals(env.getCopyableUserData(APPLY_CHANGES))) {
-        type = UnifiedDeployTask.DeployType.FULL_SWAP;
-      } else if (Boolean.TRUE.equals(env.getCopyableUserData(CODE_SWAP))) {
-        type = UnifiedDeployTask.DeployType.CODE_SWAP;
+    if (updateCodeViaJvmti.getValue() && StudioFlags.JVMTI_REFRESH.get()) {
+      UnifiedDeployTask.Builder builder = UnifiedDeployTask.builder().setProject(project);
+
+      // Add packages to the deployment, filtering out any dynamic features that are disabled.
+      for (ApkInfo apkInfo : apks) {
+        builder.addPackage(
+            apkInfo.getApplicationId(),
+            getFilteredFeatures(apkInfo, launchOptions.getDisabledDynamicFeatures()));
       }
-      return ImmutableList.of(new UnifiedDeployTask(project, apks, type));
+
+      // Set the appropriate action based on which deployment we're doing.
+      if (Boolean.TRUE.equals(env.getCopyableUserData(ApplyChangesAction.KEY))) {
+        builder.setAction(new com.android.tools.idea.run.tasks.ApplyChangesAction());
+      } else if (Boolean.TRUE.equals(env.getCopyableUserData(CodeSwapAction.KEY))) {
+        builder.setAction(new ApplyCodeChangesAction());
+      } else {
+        builder.setAction(new InstallAction(launchOptions.getPmInstallOptions()));
+      }
+      return ImmutableList.of(builder.build());
     } else {
       return ImmutableList.of(new DeployApkTask(project, launchOptions, apks));
     }
@@ -205,5 +225,17 @@ class BlazeAndroidBinaryNormalBuildRunContext implements BlazeAndroidRunContext 
   public Integer getUserId(IDevice device, ConsolePrinter consolePrinter)
       throws ExecutionException {
     return UserIdHelper.getUserIdFromConfigurationState(device, consolePrinter, configState);
+  }
+
+  @NotNull
+  private static List<File> getFilteredFeatures(ApkInfo apkInfo, List<String> disabledFeatures) {
+    if (apkInfo.getFiles().size() > 1) {
+      return apkInfo.getFiles().stream()
+          .filter(feature -> DynamicAppUtils.isFeatureEnabled(disabledFeatures, feature))
+          .map(file -> file.getApkFile())
+          .collect(Collectors.toList());
+    } else {
+      return ImmutableList.of(apkInfo.getFile());
+    }
   }
 }

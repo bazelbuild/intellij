@@ -18,6 +18,7 @@ package com.google.idea.blaze.golang.run.smrunner;
 import com.goide.psi.GoFunctionOrMethodDeclaration;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
@@ -48,8 +49,7 @@ public class BlazeGoTestEventsHandler implements BlazeTestEventsHandler {
   @Override
   public String getTestFilter(Project project, List<Location<?>> testLocations) {
     String filter =
-        testLocations
-            .stream()
+        testLocations.stream()
             .map(Location::getPsiElement)
             .filter(psi -> psi instanceof GoFunctionOrMethodDeclaration)
             .map(psi -> ((GoFunctionOrMethodDeclaration) psi).getName())
@@ -60,11 +60,25 @@ public class BlazeGoTestEventsHandler implements BlazeTestEventsHandler {
   }
 
   @Override
+  public String suiteDisplayName(Label label, @Nullable Kind kind, String rawName) {
+    return label.toString(); // rawName is just the target name, which can be too short
+  }
+
+  @Override
+  public String suiteLocationUrl(Label label, @Nullable Kind kind, String name) {
+    return SmRunnerUtils.GENERIC_SUITE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + label.toString();
+  }
+
+  @Override
   public String testLocationUrl(
-      @Nullable Kind kind, String parentSuite, String name, @Nullable String className) {
+      Label label,
+      @Nullable Kind kind,
+      String parentSuite,
+      String name,
+      @Nullable String className) {
     return SmRunnerUtils.GENERIC_TEST_PROTOCOL
         + URLUtil.SCHEME_SEPARATOR
-        + parentSuite
+        + label.toString()
         + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER
         + name;
   }

@@ -187,6 +187,7 @@ public interface BlazeSyncPlugin {
   /**
    * Validates the project view.
    *
+   * @param project null when called from the project import wizard
    * @return True for success, false for fatal error.
    */
   default boolean validateProjectView(

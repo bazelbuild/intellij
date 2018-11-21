@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -145,6 +146,11 @@ public class AspectStrategyTest extends BlazeTestCase {
     @Override
     protected List<String> getAspectFlags() {
       return ImmutableList.of();
+    }
+
+    @Override
+    public ImmutableSet<BuildSystem> getSupportedBuildSystems() {
+      return ImmutableSet.copyOf(BuildSystem.values());
     }
   }
 }

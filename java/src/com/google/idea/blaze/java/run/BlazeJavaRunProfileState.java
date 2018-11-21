@@ -161,7 +161,7 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
   public ExecutionResult execute(Executor executor, ProgramRunner runner)
       throws ExecutionException {
     if (BlazeCommandRunConfigurationRunner.isDebugging(getEnvironment())) {
-      new MultiRunDebuggerSessionListener(getEnvironment()).startListening();
+      new MultiRunDebuggerSessionListener(getEnvironment(), this).startListening();
     }
     DefaultExecutionResult result = (DefaultExecutionResult) super.execute(executor, runner);
     return SmRunnerUtils.attachRerunFailedTestsAction(result);

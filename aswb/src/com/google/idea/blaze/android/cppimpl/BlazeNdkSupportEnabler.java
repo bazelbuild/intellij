@@ -32,7 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackers;
 
-final class BlazeNdkSupportEnabler extends SyncListener.Adapter {
+final class BlazeNdkSupportEnabler implements SyncListener {
 
   @Override
   public void onSyncComplete(

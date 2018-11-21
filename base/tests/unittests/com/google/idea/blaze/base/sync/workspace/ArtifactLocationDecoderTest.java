@@ -47,7 +47,8 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
                 OUTPUT_BASE,
                 EXECUTION_ROOT,
                 EXECUTION_ROOT + "/blaze-out/crosstool/bin",
-                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles"),
+                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles",
+                EXECUTION_ROOT + "/blaze-out/crosstool/testlogs"),
             null);
 
     assertThat(decoder.decode(artifactLocation).getPath())
@@ -74,7 +75,8 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
                 OUTPUT_BASE,
                 EXECUTION_ROOT,
                 EXECUTION_ROOT + "/blaze-out/crosstool/bin",
-                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles"),
+                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles",
+                EXECUTION_ROOT + "/blaze-out/crosstool/testlogs"),
             null);
 
     assertThat(decoder.decode(artifactLocation).getPath())
@@ -102,7 +104,8 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
                 OUTPUT_BASE,
                 EXECUTION_ROOT,
                 EXECUTION_ROOT + "/blaze-out/crosstool/bin",
-                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles"),
+                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles",
+                EXECUTION_ROOT + "/blaze-out/crosstool/testlogs"),
             null);
 
     assertThat(decoder.decode(artifactLocation).getPath())
@@ -132,7 +135,8 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
                 OUTPUT_BASE,
                 EXECUTION_ROOT,
                 EXECUTION_ROOT + "/blaze-out/crosstool/bin",
-                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles"),
+                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles",
+                EXECUTION_ROOT + "/blaze-out/crosstool/testlogs"),
             null);
 
     assertThat(decoder.decode(artifactLocation).getPath())
@@ -160,7 +164,8 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
                 OUTPUT_BASE,
                 EXECUTION_ROOT,
                 EXECUTION_ROOT + "/blaze-out/crosstool/bin",
-                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles"),
+                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles",
+                EXECUTION_ROOT + "/blaze-out/crosstool/testlogs"),
             null);
 
     assertThat(decoder.decode(artifactLocation).getPath())

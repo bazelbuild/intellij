@@ -110,6 +110,37 @@ public class ExternalWorkspaceFindUsagesTest extends BuildFileIntegrationTestCas
     assertThat(references[0].getElement()).isEqualTo(label);
   }
 
+  @Test
+  public void testFindUsagesFromExternalWorkspaceFileShortFormLabel() {
+    BuildFile workspaceBuildFile =
+        createBuildFile(
+            new WorkspacePath("BUILD"),
+            "java_library(",
+            "    name = 'lib',",
+            "    exports = ['@junit'],",
+            ")");
+    BuildFile externalFile =
+        (BuildFile)
+            createFileInExternalWorkspace(
+                "junit",
+                new WorkspacePath("BUILD"),
+                "java_import(",
+                "    name = 'junit',",
+                "    jars = ['junit-4.11.jar'],",
+                ")");
+
+    FuncallExpression target = externalFile.findRule("junit");
+    assertThat(target).isNotNull();
+
+    Argument.Keyword arg = workspaceBuildFile.findRule("lib").getKeywordArgument("exports");
+    StringLiteral label = PsiUtils.findFirstChildOfClassRecursive(arg, StringLiteral.class);
+    assertThat(label).isNotNull();
+
+    PsiReference[] references = FindUsages.findAllReferences(target);
+    assertThat(references).hasLength(1);
+    assertThat(references[0].getElement()).isEqualTo(label);
+  }
+
   private PsiFile createFileInExternalWorkspace(
       String workspaceName, WorkspacePath path, String... contents) {
     String filePath =

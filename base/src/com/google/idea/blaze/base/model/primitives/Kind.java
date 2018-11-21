@@ -98,9 +98,9 @@ public enum Kind implements ProtoWrapper<String> {
   DART_PROTO_LIBRARY("dart_proto_library", LanguageClass.DART, RuleType.LIBRARY),
   DART_LIBRARY("_dart_library", LanguageClass.DART, RuleType.LIBRARY),
   DART_VM_TEST("dart_vm_test", LanguageClass.DART, RuleType.TEST),
-  KT_JVM_LIBRARY("kt_jvm_library", LanguageClass.KOTLIN, RuleType.LIBRARY),
   KT_JVM_TOOLCHAIN("kt_jvm_toolchain", LanguageClass.KOTLIN, RuleType.UNKNOWN),
-  // TODO(brendandouglas): remove this once kotlin rules expose jdeps and genjars
+  // TODO(brendandouglas): remove these once kotlin rules expose genjars
+  KT_JVM_LIBRARY_HELPER("kt_jvm_library_helper", LanguageClass.KOTLIN, RuleType.LIBRARY),
   KT_ANDROID_LIBRARY_HELPER("kt_android_library_helper", LanguageClass.KOTLIN, RuleType.LIBRARY),
   // bazel only kotlin rules:
   KT_JVM_BINARY("kt_jvm_binary", LanguageClass.KOTLIN, RuleType.BINARY),

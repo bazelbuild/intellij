@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.intellij.pom.java.LanguageLevel;
+import javax.annotation.Nullable;
 
 /** Called by sync plugins to determine the appropriate java language level. */
 public class JavaLanguageLevelHelper {
@@ -29,30 +30,18 @@ public class JavaLanguageLevelHelper {
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
       LanguageLevel defaultLanguageLevel) {
-
-    defaultLanguageLevel = getLanguageLevelFromToolchain(blazeProjectData, defaultLanguageLevel);
-    return JavaLanguageLevelSection.getLanguageLevel(projectViewSet, defaultLanguageLevel);
+    LanguageLevel fromToolchain = getLanguageLevelFromToolchain(blazeProjectData);
+    return JavaLanguageLevelSection.getLanguageLevel(
+        projectViewSet, fromToolchain != null ? fromToolchain : defaultLanguageLevel);
   }
 
-  private static LanguageLevel getLanguageLevelFromToolchain(
-      BlazeProjectData blazeProjectData, LanguageLevel defaultLanguageLevel) {
-    BlazeJavaSyncData blazeJavaSyncData =
-        blazeProjectData.getSyncState().get(BlazeJavaSyncData.class);
-    if (blazeJavaSyncData != null) {
-      String sourceVersion = blazeJavaSyncData.getImportResult().sourceVersion;
-      if (!Strings.isNullOrEmpty(sourceVersion)) {
-        switch (sourceVersion) {
-          case "6":
-            return LanguageLevel.JDK_1_6;
-          case "7":
-            return LanguageLevel.JDK_1_7;
-          case "8":
-            return LanguageLevel.JDK_1_8;
-          case "9":
-            return LanguageLevel.JDK_1_9;
-        }
-      }
+  @Nullable
+  private static LanguageLevel getLanguageLevelFromToolchain(BlazeProjectData projectData) {
+    BlazeJavaSyncData javaSyncData = projectData.getSyncState().get(BlazeJavaSyncData.class);
+    if (javaSyncData == null) {
+      return null;
     }
-    return defaultLanguageLevel;
+    String sourceVersion = javaSyncData.getImportResult().sourceVersion;
+    return Strings.isNullOrEmpty(sourceVersion) ? null : LanguageLevel.parse(sourceVersion);
   }
 }

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.ideinfo;
 
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import java.util.Objects;
 
 /** android_sdk ide info */
 public final class AndroidSdkIdeInfo implements ProtoWrapper<IntellijIdeInfo.AndroidSdkIdeInfo> {
@@ -38,5 +39,22 @@ public final class AndroidSdkIdeInfo implements ProtoWrapper<IntellijIdeInfo.And
 
   public ArtifactLocation getAndroidJar() {
     return androidJar;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AndroidSdkIdeInfo that = (AndroidSdkIdeInfo) o;
+    return Objects.equals(androidJar, that.androidJar);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(androidJar);
   }
 }

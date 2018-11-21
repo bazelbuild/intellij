@@ -94,7 +94,7 @@ def _intellij_plugin_debug_target_impl(ctx):
 
     # We've already consumed any dependent intellij_plugin_debug_targets into our own,
     # do not build or report these
-    files = depset([f for f in files if not f.path.endswith(SUFFIX)])
+    files = depset([f for f in files.to_list() if not f.path.endswith(SUFFIX)])
     files = files | depset([output])
 
     return struct(

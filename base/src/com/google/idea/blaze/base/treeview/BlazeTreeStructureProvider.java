@@ -25,6 +25,7 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
+import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -63,11 +64,20 @@ public class BlazeTreeStructureProvider implements TreeStructureProvider, DumbAw
     Collection<AbstractTreeNode> result = Lists.newArrayList();
     result.add(rootNode);
     for (AbstractTreeNode treeNode : children) {
-      if (treeNode instanceof ExternalLibrariesNode) {
+      if (keepOriginalNode(treeNode)) {
         result.add(treeNode);
       }
     }
     return result;
+  }
+
+  /**
+   * We replace the project tree with our own list of nodes, but keep some of the originals
+   * (external libraries, scratches).
+   */
+  private static boolean keepOriginalNode(AbstractTreeNode node) {
+    return node instanceof ExternalLibrariesNode
+        || ScratchesNamedScope.NAME.equals(node.getValue());
   }
 
   @Nullable

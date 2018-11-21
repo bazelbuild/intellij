@@ -15,17 +15,18 @@
  */
 package com.google.idea.blaze.base.command.info;
 
+import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.settings.BuildSystem;
-import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
 
 /** The data output by blaze info. */
-public class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
+@AutoValue
+public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
   public static final String EXECUTION_ROOT_KEY = "execution_root";
   public static final String PACKAGE_PATH_KEY = "package_path";
   public static final String BUILD_LANGUAGE = "build-language";
@@ -34,17 +35,14 @@ public class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
   public static final String MASTER_LOG = "master-log";
   public static final String RELEASE = "release";
 
-  private static final Logger logger = Logger.getInstance(BlazeInfo.class);
-
   public static String blazeBinKey(BuildSystem buildSystem) {
     switch (buildSystem) {
       case Blaze:
         return "blaze-bin";
       case Bazel:
         return "bazel-bin";
-      default:
-        throw new IllegalArgumentException("Unrecognized build system: " + buildSystem);
     }
+    throw new IllegalArgumentException("Unrecognized build system: " + buildSystem);
   }
 
   public static String blazeGenfilesKey(BuildSystem buildSystem) {
@@ -53,74 +51,45 @@ public class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
         return "blaze-genfiles";
       case Bazel:
         return "bazel-genfiles";
-      default:
-        throw new IllegalArgumentException("Unrecognized build system: " + buildSystem);
     }
+    throw new IllegalArgumentException("Unrecognized build system: " + buildSystem);
   }
 
-  private final ImmutableMap<String, String> blazeInfoMap;
-
-  private final File executionRoot;
-  private final ExecutionRootPath blazeBinExecutionRootPath;
-  private final ExecutionRootPath blazeGenfilesExecutionRootPath;
-  private final File outputBase;
-
-  private BlazeInfo(
-      ImmutableMap<String, String> blazeInfoMap,
-      File executionRoot,
-      ExecutionRootPath blazeBinExecutionRootPath,
-      ExecutionRootPath blazeGenfilesExecutionRootPath,
-      File outputBase) {
-    logger.assertTrue(blazeBinExecutionRootPath != null);
-    logger.assertTrue(blazeGenfilesExecutionRootPath != null);
-    this.blazeInfoMap = blazeInfoMap;
-    this.executionRoot = executionRoot;
-    this.blazeBinExecutionRootPath = blazeBinExecutionRootPath;
-    this.blazeGenfilesExecutionRootPath = blazeGenfilesExecutionRootPath;
-    this.outputBase = outputBase;
+  public static String blazeTestlogsKey(BuildSystem buildSystem) {
+    switch (buildSystem) {
+      case Blaze:
+        return "blaze-testlogs";
+      case Bazel:
+        return "bazel-testlogs";
+    }
+    throw new IllegalArgumentException("Unrecognized build system: " + buildSystem);
   }
 
-  private BlazeInfo(
-      ImmutableMap<String, String> blazeInfoMap,
-      File executionRoot,
-      File blazeBinRelativePath,
-      File blazeGenfilesRelativePath,
-      File outputBase) {
-    this(
-        blazeInfoMap,
-        executionRoot,
-        ExecutionRootPath.createAncestorRelativePath(executionRoot, blazeBinRelativePath),
-        ExecutionRootPath.createAncestorRelativePath(executionRoot, blazeGenfilesRelativePath),
-        outputBase);
+  public static BlazeInfo create(
+      BuildSystem buildSystem, ImmutableMap<String, String> blazeInfoMap) {
+
+    File executionRoot = new File(getOrThrow(blazeInfoMap, EXECUTION_ROOT_KEY).trim());
+    ExecutionRootPath blazeBin =
+        ExecutionRootPath.createAncestorRelativePath(
+            executionRoot, new File(getOrThrow(blazeInfoMap, blazeBinKey(buildSystem))));
+    ExecutionRootPath blazeGenfiles =
+        ExecutionRootPath.createAncestorRelativePath(
+            executionRoot, new File(getOrThrow(blazeInfoMap, blazeGenfilesKey(buildSystem))));
+    ExecutionRootPath blazeTestlogs =
+        ExecutionRootPath.createAncestorRelativePath(
+            executionRoot, new File(getOrThrow(blazeInfoMap, blazeTestlogsKey(buildSystem))));
+    File outputBase = new File(getOrThrow(blazeInfoMap, OUTPUT_BASE_KEY).trim());
+    return new AutoValue_BlazeInfo(
+        blazeInfoMap, executionRoot, blazeBin, blazeGenfiles, blazeTestlogs, outputBase);
   }
 
-  public BlazeInfo(BuildSystem buildSystem, ImmutableMap<String, String> blazeInfoMap) {
-    this(
-        blazeInfoMap,
-        new File(getOrThrow(blazeInfoMap, EXECUTION_ROOT_KEY).trim()),
-        new File(getOrThrow(blazeInfoMap, blazeBinKey(buildSystem))),
-        new File(getOrThrow(blazeInfoMap, blazeGenfilesKey(buildSystem))),
-        new File(getOrThrow(blazeInfoMap, OUTPUT_BASE_KEY).trim()));
-  }
-
-  public static BlazeInfo fromProto(ProjectData.BlazeInfo proto) {
-    return new BlazeInfo(
-        ImmutableMap.copyOf(proto.getBlazeInfoMap()),
-        new File(proto.getExecutionRoot()),
-        ExecutionRootPath.fromProto(proto.getBlazeBinExecutionRootPath()),
-        ExecutionRootPath.fromProto(proto.getBlazeGenfilesExecutionRootPath()),
-        new File(proto.getOutputBase()));
+  public static BlazeInfo fromProto(BuildSystem buildSystem, ProjectData.BlazeInfo proto) {
+    return create(buildSystem, ImmutableMap.copyOf(proto.getBlazeInfoMap()));
   }
 
   @Override
   public ProjectData.BlazeInfo toProto() {
-    return ProjectData.BlazeInfo.newBuilder()
-        .putAllBlazeInfo(blazeInfoMap)
-        .setExecutionRoot(executionRoot.getPath())
-        .setBlazeBinExecutionRootPath(blazeBinExecutionRootPath.toProto())
-        .setBlazeGenfilesExecutionRootPath(blazeGenfilesExecutionRootPath.toProto())
-        .setOutputBase(outputBase.getPath())
-        .build();
+    return ProjectData.BlazeInfo.newBuilder().putAllBlazeInfo(getBlazeInfoMap()).build();
   }
 
   private static String getOrThrow(ImmutableMap<String, String> map, String key) {
@@ -131,45 +100,50 @@ public class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
     return value;
   }
 
+  abstract ImmutableMap<String, String> getBlazeInfoMap();
+
   public String get(String key) {
-    return blazeInfoMap.get(key);
+    return getBlazeInfoMap().get(key);
   }
 
-  public File getExecutionRoot() {
-    return executionRoot;
-  }
+  public abstract File getExecutionRoot();
 
-  public ExecutionRootPath getBlazeBinExecutionRootPath() {
-    return blazeBinExecutionRootPath;
-  }
-
-  public ExecutionRootPath getBlazeGenfilesExecutionRootPath() {
-    return blazeGenfilesExecutionRootPath;
-  }
-
-  public File getGenfilesDirectory() {
-    return blazeGenfilesExecutionRootPath.getFileRootedAt(getExecutionRoot());
-  }
+  public abstract ExecutionRootPath getBlazeBin();
 
   public File getBlazeBinDirectory() {
-    return blazeBinExecutionRootPath.getFileRootedAt(getExecutionRoot());
+    return getBlazeBin().getFileRootedAt(getExecutionRoot());
   }
 
-  public File getOutputBase() {
-    return outputBase;
+  public abstract ExecutionRootPath getBlazeGenfiles();
+
+  public File getGenfilesDirectory() {
+    return getBlazeGenfiles().getFileRootedAt(getExecutionRoot());
   }
+
+  public abstract ExecutionRootPath getBlazeTestlogs();
+
+  public File getBlazeTestlogsDirectory() {
+    return getBlazeTestlogs().getFileRootedAt(getExecutionRoot());
+  }
+
+  public abstract File getOutputBase();
 
   /** Creates a mock blaze info with the minimum information required for syncing. */
   @VisibleForTesting
   public static BlazeInfo createMockBlazeInfo(
-      String outputBase, String executionRoot, String blazeBin, String blazeGenFiles) {
+      String outputBase,
+      String executionRoot,
+      String blazeBin,
+      String blazeGenFiles,
+      String blazeTestlogs) {
     BuildSystem buildSystem = BuildSystem.Bazel;
     ImmutableMap.Builder<String, String> blazeInfoMap =
         ImmutableMap.<String, String>builder()
             .put(OUTPUT_BASE_KEY, outputBase)
             .put(EXECUTION_ROOT_KEY, executionRoot)
             .put(blazeBinKey(buildSystem), blazeBin)
-            .put(blazeGenfilesKey(buildSystem), blazeGenFiles);
-    return new BlazeInfo(buildSystem, blazeInfoMap.build());
+            .put(blazeGenfilesKey(buildSystem), blazeGenFiles)
+            .put(blazeTestlogsKey(buildSystem), blazeTestlogs);
+    return BlazeInfo.create(buildSystem, blazeInfoMap.build());
   }
 }

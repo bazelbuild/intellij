@@ -26,7 +26,6 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RemoteState;
-import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 
@@ -51,17 +50,11 @@ public class MultiRunDebuggerSessionListener implements DebuggerManagerListener 
   private final DebugEnvironment debugEnvironment;
   private final DebuggerManagerEx debuggerManager;
 
-  public MultiRunDebuggerSessionListener(ExecutionEnvironment executionEnvironment)
-      throws ExecutionException {
+  public MultiRunDebuggerSessionListener(
+      ExecutionEnvironment executionEnvironment, RemoteState state) {
     this.executionEnvironment = executionEnvironment;
     this.debuggerManager = DebuggerManagerEx.getInstanceEx(executionEnvironment.getProject());
-
-    RunProfileState state = executionEnvironment.getState();
-    if (!(state instanceof RemoteState)) {
-      throw new IllegalArgumentException(
-          "RunProfileState of execution environment must be an instance of RemoteState");
-    }
-    RemoteConnection remoteConnection = ((RemoteState) state).getRemoteConnection();
+    RemoteConnection remoteConnection = state.getRemoteConnection();
     debugEnvironment =
         new DefaultDebugEnvironment(executionEnvironment, state, remoteConnection, true);
   }

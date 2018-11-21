@@ -16,18 +16,14 @@
 package com.google.idea.blaze.java.run.fastbuild;
 
 import static com.google.common.base.Preconditions.checkState;
-import static java.util.stream.Collectors.joining;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Streams;
-import com.google.idea.blaze.base.io.VfsUtils;
-import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData;
-import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.AndroidInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
 import com.intellij.execution.ExecutionException;
@@ -36,25 +32,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.util.SystemProperties;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 final class FastBuildTestEnvironmentCreator {
 
   private static final String OUTPUT_FILE_VARIABLE = "XML_OUTPUT_FILE";
   private static final String RUNFILES_DIR_VARIABLE = "TEST_SRCDIR";
+  private static final String TEST_BINARY_VARIABLE = "TEST_BINARY";
   private static final String TARGET_VARIABLE = "TEST_TARGET";
   private static final String TEMP_DIRECTORY_VARIABLE = "TEST_TMPDIR";
   private static final String TEST_FILTER_VARIABLE = "TESTBRIDGE_TEST_ONLY";
@@ -99,47 +88,58 @@ final class FastBuildTestEnvironmentCreator {
             fastBuildInfo.label().targetName() + ".runfiles");
     Path workingDir = runfilesDir.resolve(workspaceName);
 
-    GeneralCommandLine commandLine =
-        new GeneralCommandLine(getJavaBinPath()).withWorkDirectory(workingDir.toString());
+    JavaCommandBuilder commandBuilder = new JavaCommandBuilder();
+    commandBuilder.setJavaBinary(getJavaBinPath()).setWorkingDirectory(workingDir.toFile());
 
     if (debugPort > 0) {
-      commandLine.withParameters(
+      commandBuilder.addJvmArgument(
           "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
     }
 
-    targetJavaInfo.jvmFlags().forEach(commandLine::addParameter);
+    for (String flag : targetJavaInfo.jvmFlags()) {
+      commandBuilder.addJvmArgument(
+          LocationSubstitution.replaceLocations(flag, fastBuildInfo.label(), targetData.data()));
+    }
 
-    commandLine.withParameters(
-        "-cp",
-        createClasspath(fastBuildInfo),
-        getTestSuiteParameter(fastBuildInfo.label(), targetJavaInfo));
+    fastBuildInfo.classpath().forEach(commandBuilder::addClasspathElement);
+
+    commandBuilder.addSystemProperty(
+        testClassProperty,
+        FastBuildTestClassFinder.getInstance(project)
+            .getTestClass(fastBuildInfo.label(), targetJavaInfo));
 
     if (kind.equals(Kind.ANDROID_LOCAL_TEST)) {
-      addAndroidLocalTestParameters(commandLine, fastBuildInfo);
+      addAndroidLocalTestParameters(commandBuilder, fastBuildInfo);
     }
 
-    commandLine.withParameters(testRunner);
+    commandBuilder.setMainClass(testRunner);
 
-    if (kind.equals(Kind.ANDROID_ROBOLECTRIC_TEST)) {
-      addAndroidRobolectricTestParameters(commandLine, fastBuildInfo, workingDir);
-    }
-
-    commandLine
-        .withEnvironment(OUTPUT_FILE_VARIABLE, outputFile.getAbsolutePath())
-        .withEnvironment(RUNFILES_DIR_VARIABLE, runfilesDir.toString())
-        .withEnvironment(TARGET_VARIABLE, fastBuildInfo.label().toString())
-        .withEnvironment(WORKSPACE_VARIABLE, workspaceName);
+    commandBuilder
+        .addEnvironmentVariable(TEST_BINARY_VARIABLE, getOutputPath(fastBuildInfo.label()))
+        .addEnvironmentVariable(OUTPUT_FILE_VARIABLE, outputFile.getAbsolutePath())
+        .addEnvironmentVariable("GUNIT_OUTPUT", "xml:" + outputFile.getAbsolutePath())
+        .addEnvironmentVariable(RUNFILES_DIR_VARIABLE, runfilesDir.toString())
+        .addEnvironmentVariable(TARGET_VARIABLE, fastBuildInfo.label().toString())
+        .addEnvironmentVariable("USER", SystemProperties.getUserName())
+        .addEnvironmentVariable(WORKSPACE_VARIABLE, workspaceName);
+    addTestSizeVariables(commandBuilder, targetJavaInfo);
+    configureTestOutputs(commandBuilder, fastBuildInfo.label());
 
     String tmpdir = System.getProperty("java.io.tmpdir");
-    if (tmpdir != null) {
-      commandLine.withEnvironment(TEMP_DIRECTORY_VARIABLE, tmpdir);
-    }
+    commandBuilder
+        .addEnvironmentVariable(TEMP_DIRECTORY_VARIABLE, tmpdir)
+        .addEnvironmentVariable("HOME", tmpdir);
 
     if (testFilter != null) {
-      commandLine.withEnvironment(TEST_FILTER_VARIABLE, testFilter);
+      commandBuilder.addEnvironmentVariable(TEST_FILTER_VARIABLE, testFilter);
     }
 
-    return commandLine;
+    for (FastBuildTestEnvironmentModifier modifier :
+        FastBuildTestEnvironmentModifier.getModifiers(Blaze.getBuildSystem(project))) {
+      modifier.modify(commandBuilder, kind, fastBuildInfo);
+    }
+
+    return commandBuilder.build();
   }
 
   private String getJavaBinPath() throws ExecutionException {
@@ -153,138 +153,112 @@ final class FastBuildTestEnvironmentCreator {
     return ((JavaSdkType) projectSdk.getSdkType()).getVMExecutablePath(projectSdk);
   }
 
-  private String createClasspath(FastBuildInfo fastBuildInfo) {
-    return Joiner.on(':').join(fastBuildInfo.classpath());
+  // Bazel uses '/' for separators on Windows too (I haven't tested that, but see
+  // WindowsOsPathPolicy#getSeparator and the comment above PathFragment)
+  private String getOutputPath(Label label) {
+    StringBuilder sb = new StringBuilder();
+    if (label.isExternal()) {
+      sb.append("/external/").append(label.externalWorkspaceName()).append('/');
+    }
+    sb.append(label.blazePackage()).append('/').append(label.targetName());
+    return sb.toString();
   }
 
-  private String getTestSuiteParameter(Label label, JavaInfo targetJavaInfo)
+  private static void addTestSizeVariables(
+      JavaCommandBuilder commandBuilder, JavaInfo targetJavaInfo) throws ExecutionException {
+    String testSize = targetJavaInfo.testSize().orElse("medium");
+    int testTimeout;
+    switch (testSize) {
+      case "small":
+        testTimeout = 60;
+        break;
+      case "medium":
+        testTimeout = 300;
+        break;
+      case "large":
+        testTimeout = 900;
+        break;
+      case "enormous":
+        testTimeout = 3600;
+        break;
+      default:
+        throw new IllegalStateException("Unknown test size '" + testSize + "'");
+    }
+
+    commandBuilder
+        .addEnvironmentVariable("TEST_SIZE", testSize)
+        .addEnvironmentVariable("TEST_TIMEOUT", Integer.toString(testTimeout));
+  }
+
+  /**
+   * Adds environment variables and performs other setup (creating/removing directories) related to
+   * the Google test runner output.
+   */
+  private void configureTestOutputs(JavaCommandBuilder commandBuilder, Label target)
       throws ExecutionException {
-    return "-D" + testClassProperty + "=" + getTestClass(label, targetJavaInfo);
-  }
 
-  private String getTestClass(Label label, JavaInfo targetJavaInfo) throws ExecutionException {
-    if (targetJavaInfo.testClass().isPresent()) {
-      return targetJavaInfo.testClass().get();
-    } else {
-      return determineTestClassFromSources(label, targetJavaInfo);
-    }
-  }
+    FileOperationProvider files = FileOperationProvider.getInstance();
 
-  private String determineTestClassFromSources(Label label, JavaInfo targetJavaInfo)
-      throws ExecutionException {
+    File blazeTestlogs =
+        BlazeProjectDataManager.getInstance(project)
+            .getBlazeProjectData()
+            .getBlazeInfo()
+            .getBlazeTestlogsDirectory();
+    File testOutputDir = new File(blazeTestlogs, getOutputPath(target));
 
-    BlazeProjectData blazeProjectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    File undeclaredOutputsAnnotationsDir = new File(testOutputDir, "test.outputs_manifest");
+    File undeclaredOutputsDir = new File(testOutputDir, "test.outputs");
 
-    String targetName = label.targetName().toString();
-    PsiManager psiManager = PsiManager.getInstance(project);
-    for (File source :
-        blazeProjectData.getArtifactLocationDecoder().decodeAll(targetJavaInfo.sources())) {
-      VirtualFile virtualFile = VfsUtils.resolveVirtualFile(source);
-      if (virtualFile == null) {
-        continue;
-      }
-      PsiFile psiFile = psiManager.findFile(virtualFile);
-      if (!(psiFile instanceof PsiJavaFile)) {
-        continue;
-      }
-      for (PsiElement psiElement : psiFile.getChildren()) {
-        if (!(psiElement instanceof PsiClass)) {
-          continue;
+    files.mkdirs(undeclaredOutputsAnnotationsDir);
+    files.mkdirs(undeclaredOutputsDir);
+
+    commandBuilder
+        .addEnvironmentVariable(
+            "TEST_INFRASTRUCTURE_FAILURE_FILE",
+            getTestOutputFile(testOutputDir, "test.infrastructure_failure"))
+        .addEnvironmentVariable(
+            "TEST_LOGSPLITTER_OUTPUT_FILE",
+            getTestOutputFile(testOutputDir, "test.raw_splitlogs/test.splitlogs"))
+        .addEnvironmentVariable(
+            "TEST_PREMATURE_EXIT_FILE", getTestOutputFile(testOutputDir, "test.exited_prematurely"))
+        .addEnvironmentVariable(
+            "TEST_UNDECLARED_OUTPUTS_ANNOTATIONS_DIR", undeclaredOutputsAnnotationsDir.toString())
+        .addEnvironmentVariable("TEST_UNDECLARED_OUTPUTS_DIR", undeclaredOutputsDir.toString())
+        .addEnvironmentVariable(
+            "TEST_UNUSED_RUNFILES_LOG_FILE",
+            getTestOutputFile(testOutputDir, "test.unused_runfiles_log"))
+        .addEnvironmentVariable(
+            "TEST_WARNINGS_OUTPUT_FILE", getTestOutputFile(testOutputDir, "test.warnings"));
+
+    if (Blaze.getBuildSystem(project).equals(BuildSystem.Blaze)) {
+      File testDiagnosticsDir = new File(testOutputDir, "test.test_diagnostics");
+
+      try {
+        if (testDiagnosticsDir.exists()) {
+          files.deleteRecursively(testDiagnosticsDir);
         }
-        PsiClass psiClass = (PsiClass) psiElement;
-        if (targetName.equals(psiClass.getName()) && psiClass.getQualifiedName() != null) {
-          return ((PsiClass) psiElement).getQualifiedName();
-        }
+      } catch (IOException e) {
+        throw new ExecutionException(e);
       }
+
+      commandBuilder.addEnvironmentVariable(
+          "TEST_DIAGNOSTICS_OUTPUT_DIR", testDiagnosticsDir.toString());
     }
-    throw new ExecutionException("Couldn't determine test class");
   }
 
-  private void addAndroidRobolectricTestParameters(
-      GeneralCommandLine commandLine, FastBuildInfo fastBuildInfo, Path workingDir) {
-
-    ImmutableMap<Label, FastBuildBlazeData> blazeData = fastBuildInfo.blazeData();
-    FastBuildBlazeData testBlazeData = blazeData.get(fastBuildInfo.label());
-
-    // First, any libraries that are direct dependencies of the test target go into
-    // --strict_libraries
-    String strictLibraries =
-        testBlazeData.dependencies().stream()
-            .filter(blazeData::containsKey)
-            .map(blazeData::get)
-            .flatMap(d -> Streams.stream(d.androidInfo()))
-            .flatMap(ai -> Streams.stream(getAndroidResource(ai, workingDir)))
-            .collect(joining(","));
-    if (!strictLibraries.isEmpty()) {
-      commandLine.withParameters("--strict_libraries", strictLibraries);
-    }
-
-    // Now, add the entire list of libraries to --android_libraries. (Those in --strict_libraries
-    // will be duplicated here, but that's okay; Blaze does the same thing.)
-    Set<String> libraries = new HashSet<>();
-    Set<Label> processedLabels = new HashSet<>();
-    recursivelyAddAndroidLibraries(
-        fastBuildInfo.label(), blazeData, libraries, processedLabels, workingDir);
-    if (!libraries.isEmpty()) {
-      commandLine.withParameters("--android_libraries", libraries.stream().collect(joining(",")));
-    }
+  private static String getTestOutputFile(File testOutputDir, String filename) {
+    return new File(testOutputDir, filename).toString();
   }
 
   private void addAndroidLocalTestParameters(
-      GeneralCommandLine commandLine, FastBuildInfo fastBuildInfo) throws ExecutionException {
-    commandLine
-        .withParameters("-Drobolectric.offline=true")
-        .withParameters(
-            "-Drobolectric-deps.properties="
-                + robolectricDepsPropertiesFinder.getPropertiesLocation(fastBuildInfo))
-        .withParameters("-Duse_framework_manifest_parser=true")
-        .withParameters(
-            "-Dorg.robolectric.packagesToNotAcquire=com.google.testing.junit.runner.util");
-  }
-
-  private void recursivelyAddAndroidLibraries(
-      Label label,
-      Map<Label, FastBuildBlazeData> blazeData,
-      Set<String> libraries,
-      Set<Label> processedLabels,
-      Path workingDir) {
-    processedLabels.add(label);
-    if (!blazeData.containsKey(label)) {
-      return;
-    }
-    FastBuildBlazeData currentData = blazeData.get(label);
-    if (currentData.androidInfo().isPresent()) {
-      getAndroidResource(currentData.androidInfo().get(), workingDir).ifPresent(libraries::add);
-    }
-    currentData
-        .dependencies()
-        .stream()
-        .filter(d -> !processedLabels.contains(d))
-        .forEach(
-            d ->
-                recursivelyAddAndroidLibraries(
-                    d, blazeData, libraries, processedLabels, workingDir));
-  }
-
-  // Returns a string like
-  //   java/com/google/android/lib/AndroidManifest.xml:java/com/google/android/lib/lib.aar
-  private Optional<String> getAndroidResource(AndroidInfo androidInfo, Path workingDir) {
-    if (!androidInfo.mergedManifest().isPresent() || !androidInfo.aar().isPresent()) {
-      return Optional.empty();
-    }
-    // Very occasionally (<1% of the time in my tests) these files won't exist. I'm not really sure
-    // why that is. There must be something telling Blaze that they aren't needed for the build even
-    // though it's listed as a dependency.
-    if (!workingDir
-        .resolve(androidInfo.mergedManifest().get().getRelativePath())
-        .toFile()
-        .exists()) {
-      return Optional.empty();
-    }
-    return Optional.of(
-        androidInfo.mergedManifest().get().getRelativePath()
-            + ":"
-            + androidInfo.aar().get().getRelativePath());
+      JavaCommandBuilder commandBuilder, FastBuildInfo fastBuildInfo) throws ExecutionException {
+    commandBuilder
+        .addSystemProperty("robolectric.offline", "true")
+        .addSystemProperty(
+            "robolectric-deps.properties",
+            robolectricDepsPropertiesFinder.getPropertiesLocation(fastBuildInfo))
+        .addSystemProperty("use_framework_manifest_parser", "true")
+        .addSystemProperty(
+            "org.robolectric.packagesToNotAcquire", "com.google.testing.junit.runner.util");
   }
 }

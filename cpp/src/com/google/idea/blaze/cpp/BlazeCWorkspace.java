@@ -16,11 +16,14 @@
 
 package com.google.idea.blaze.cpp;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -64,11 +67,11 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
   private final BlazeConfigurationResolver configurationResolver;
   private BlazeConfigurationResolverResult resolverResult;
-  private ImmutableList<OCLanguageKind> supportedLanguages =
+  private final ImmutableList<OCLanguageKind> supportedLanguages =
       ImmutableList.of(OCLanguageKind.C, OCLanguageKind.CPP);
 
   private final Project project;
-  private CidrToolEnvironment toolEnvironment = new CidrToolEnvironment();
+  private final CidrToolEnvironment toolEnvironment = new CidrToolEnvironment();
 
   private BlazeCWorkspace(Project project) {
     this.configurationResolver = new BlazeConfigurationResolver(project);
@@ -109,7 +112,8 @@ public final class BlazeCWorkspace implements ProjectComponent {
             new Task.Backgroundable(project, "Configuration Sync", false) {
               @Override
               public void run(ProgressIndicator indicator) {
-                if (oldResult.isEquivalentConfigurations(newResult)) {
+                if (!syncMode.equals(SyncMode.FULL)
+                    && oldResult.isEquivalentConfigurations(newResult)) {
                   logger.info("Skipping update configurations -- no changes");
                 } else {
                   Stopwatch s = Stopwatch.createStarted();
@@ -165,23 +169,29 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // defines and include directories are the same for all sources in a given target, so lets
         // collect them once and reuse for each source file's options
 
-        // localDefines are sourced from -D options in a target's "copts" attribute
-        List<String> localDefineOptions =
-            targetIdeInfo.getcIdeInfo().getLocalDefines().stream()
-                .map(s -> "-D" + s)
-                .collect(Collectors.toList());
+        UnfilteredCompilerOptions coptsExtractor =
+            UnfilteredCompilerOptions.builder()
+                .registerSingleOrSplitOption("-I")
+                .build(targetIdeInfo.getcIdeInfo().getLocalCopts());
+        ImmutableList<String> plainLocalCopts =
+            filterIncompatibleFlags(coptsExtractor.getUninterpretedOptions());
+        ImmutableList<ExecutionRootPath> localIncludes =
+            coptsExtractor.getExtractedOptionValues("-I").stream()
+                .map(ExecutionRootPath::new)
+                .collect(toImmutableList());
+
         // transitiveDefines are sourced from a target's (and transitive deps) "defines" attribute
         List<String> transitiveDefineOptions =
             targetIdeInfo.getcIdeInfo().getTransitiveDefines().stream()
                 .map(s -> "-D" + s)
                 .collect(Collectors.toList());
 
-        // localIncludeDirectories are sourced from -I options in a target's "copts" attribute
+        // localIncludes are sourced from -I options in a target's "copts" attribute
         // transitiveIncludeDirectories are sourced from CcSkylarkApiProvider.include_directories
         // [see CcCompilationContextInfo::getIncludeDirs]
         List<String> iOptionIncludeDirectories =
             Stream.concat(
-                    targetIdeInfo.getcIdeInfo().getLocalIncludeDirectories().stream(),
+                    localIncludes.stream(),
                     targetIdeInfo.getcIdeInfo().getTransitiveIncludeDirectories().stream())
                 .flatMap(
                     executionRootPath ->
@@ -226,7 +236,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
           fileSpecificSwitchBuilder.addAllRaw(iOptionIncludeDirectories);
           fileSpecificSwitchBuilder.addAllRaw(iquoteOptionIncludeDirectories);
           fileSpecificSwitchBuilder.addAllRaw(isystemOptionIncludeDirectories);
-          fileSpecificSwitchBuilder.addAllRaw(localDefineOptions);
+          fileSpecificSwitchBuilder.addAllRaw(plainLocalCopts);
           fileSpecificSwitchBuilder.addAllRaw(transitiveDefineOptions);
           configSourceFiles.put(vf, Pair.create(kind, fileSpecificSwitchBuilder.build()));
           if (!configLanguages.containsKey(kind)) {
@@ -299,5 +309,14 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
   public OCWorkspace getWorkspace() {
     return OCWorkspace.getInstance(project);
+  }
+
+  // Filter out any raw copts that aren't compatible with feature detection.
+  private static ImmutableList<String> filterIncompatibleFlags(List<String> copts) {
+    return copts.stream()
+        // "-include somefile.h" doesn't seem to work for some reason. E.g.,
+        // "-include cstddef" results in "clang: error: no such file or directory: 'cstddef'"
+        .filter(opt -> !opt.startsWith("-include "))
+        .collect(toImmutableList());
   }
 }

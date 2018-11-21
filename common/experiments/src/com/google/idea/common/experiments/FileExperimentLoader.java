@@ -77,6 +77,12 @@ final class FileExperimentLoader extends HashingExperimentLoader {
 
   @Override
   public void initialize() {
+    // set up VFS listener asynchronously, to prevent cyclic dependencies if initialization involves
+    // experiment checks (b/118813939)
+    ApplicationManager.getApplication().executeOnPooledThread(this::doInitialize);
+  }
+
+  private void doInitialize() {
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     fileSystem.addRootToWatch(file.getPath(), /* watchRecursively */ false);
     // We need to look up the file in the VFS or else we don't receive events about it. This works

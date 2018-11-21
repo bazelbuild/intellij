@@ -26,9 +26,10 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.SyncData;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import java.io.File;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
-class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInterfaceState> {
+final class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInterfaceState> {
   final ImmutableMap<File, Long> fileState;
   final ImmutableBiMap<File, TargetKey> fileToTargetMapKey;
   final WorkspaceLanguageSettings workspaceLanguageSettings;
@@ -60,7 +61,29 @@ class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInterfaceSt
         .putAllFileState(ProtoWrapper.map(fileState, File::getPath, Functions.identity()))
         .putAllFileToTarget(ProtoWrapper.map(fileToTargetMapKey, File::getPath, TargetKey::toProto))
         .setWorkspaceLanguageSettings(workspaceLanguageSettings.toProto())
+        .setAspectStrategyName(aspectStrategyName)
         .build();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    BlazeIdeInterfaceState that = (BlazeIdeInterfaceState) o;
+    return Objects.equals(fileState, that.fileState)
+        && Objects.equals(fileToTargetMapKey, that.fileToTargetMapKey)
+        && Objects.equals(workspaceLanguageSettings, that.workspaceLanguageSettings)
+        && Objects.equals(aspectStrategyName, that.aspectStrategyName);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        fileState, fileToTargetMapKey, workspaceLanguageSettings, aspectStrategyName);
   }
 
   static Builder builder() {

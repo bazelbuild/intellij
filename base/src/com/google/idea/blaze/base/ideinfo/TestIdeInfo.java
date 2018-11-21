@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.ideinfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TestInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Test info. */
@@ -71,5 +72,22 @@ public final class TestIdeInfo implements ProtoWrapper<TestInfo> {
     public TestIdeInfo build() {
       return new TestIdeInfo(testSize);
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    TestIdeInfo that = (TestIdeInfo) o;
+    return testSize == that.testSize;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(testSize);
   }
 }

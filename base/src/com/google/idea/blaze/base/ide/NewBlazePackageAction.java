@@ -16,9 +16,12 @@
 
 package com.google.idea.blaze.base.ide;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.buildmodifier.BuildFileModifier;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -61,8 +64,6 @@ import org.jetbrains.annotations.NotNull;
 
 class NewBlazePackageAction extends BlazeProjectAction implements DumbAware {
   private static final Logger logger = Logger.getInstance(NewBlazePackageAction.class);
-
-  private static final String BUILD_FILE_NAME = "BUILD";
 
   public NewBlazePackageAction() {
     super();
@@ -111,6 +112,9 @@ class NewBlazePackageAction extends BlazeProjectAction implements DumbAware {
 
   private Optional<VirtualFile> createPackageOnDisk(
       Project project, BlazeContext context, Label newRule, Kind ruleKind) {
+    BuildSystemProvider provider =
+        checkNotNull(BuildSystemProvider.getBuildSystemProvider(Blaze.getBuildSystem(project)));
+    String buildFileName = provider.possibleBuildFileNames().get(0);
 
     String commandName =
         String.format(
@@ -128,7 +132,7 @@ class NewBlazePackageAction extends BlazeProjectAction implements DumbAware {
           File dir = workspaceRoot.fileForPath(newRule.blazePackage());
           try {
             VirtualFile newDirectory = VfsUtil.createDirectories(dir.getPath());
-            VirtualFile newFile = newDirectory.createChildData(this, BUILD_FILE_NAME);
+            VirtualFile newFile = newDirectory.createChildData(this, buildFileName);
             BuildFileModifier buildFileModifier = BuildFileModifier.getInstance();
             buildFileModifier.addRule(project, newRule, ruleKind);
             result.setResult(Optional.of(newFile));

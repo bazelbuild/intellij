@@ -1,3 +1,8 @@
+v2018.11.12
+===========
+* Resolve short-form references to external workspace targets
+* Changed serialization scheme for faster read/write and reduced disk usage.
+
 v2018.10.22
 ===========
 * Bug fixes and internal cleanup.

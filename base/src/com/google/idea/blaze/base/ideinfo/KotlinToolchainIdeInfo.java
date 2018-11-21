@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.ideinfo;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
+import java.util.Objects;
 
 /** Kotlin toolchain information. */
 public final class KotlinToolchainIdeInfo
@@ -63,6 +64,24 @@ public final class KotlinToolchainIdeInfo
         + getSdkTargets()
         + "\n"
         + '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    KotlinToolchainIdeInfo that = (KotlinToolchainIdeInfo) o;
+    return Objects.equals(languageVersion, that.languageVersion)
+        && Objects.equals(sdkTargets, that.sdkTargets);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(languageVersion, sdkTargets);
   }
 
   public static KotlinToolchainIdeInfo.Builder builder() {

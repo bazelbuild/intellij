@@ -36,12 +36,15 @@ public final class AndroidResFolder implements ProtoWrapper<IntellijIdeInfo.ResF
   }
 
   static AndroidResFolder fromProto(IntellijIdeInfo.ResFolderLocation proto) {
-    return new AndroidResFolder(
-        ArtifactLocation.fromProto(proto.getRoot()), ImmutableSet.copyOf(proto.getResourcesList()));
+    return ProjectDataInterner.intern(
+        new AndroidResFolder(
+            ArtifactLocation.fromProto(proto.getRoot()),
+            ImmutableSet.copyOf(proto.getResourcesList())));
   }
 
   static AndroidResFolder fromProto(Common.ArtifactLocation root) {
-    return new AndroidResFolder(ArtifactLocation.fromProto(root), ImmutableSet.of());
+    return ProjectDataInterner.intern(
+        new AndroidResFolder(ArtifactLocation.fromProto(root), ImmutableSet.of()));
   }
 
   @Override

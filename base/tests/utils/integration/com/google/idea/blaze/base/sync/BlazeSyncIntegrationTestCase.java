@@ -78,6 +78,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
       OUTPUT_PATH + "/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
   private static final String BLAZE_GENFILES =
       OUTPUT_PATH + "/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/genfiles";
+  private static final String BLAZE_TESTLOGS =
+      OUTPUT_PATH + "/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/testlogs";
 
   private Disposable thisClassDisposable; // disposed prior to calling parent class's @After methods
   private MockProjectViewManager projectViewManager;
@@ -110,6 +112,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         ImmutableMap.<String, String>builder()
             .put(BlazeInfo.blazeBinKey(Blaze.getBuildSystem(getProject())), BLAZE_BIN)
             .put(BlazeInfo.blazeGenfilesKey(Blaze.getBuildSystem(getProject())), BLAZE_GENFILES)
+            .put(BlazeInfo.blazeTestlogsKey(Blaze.getBuildSystem(getProject())), BLAZE_TESTLOGS)
             .put(BlazeInfo.EXECUTION_ROOT_KEY, EXECUTION_ROOT)
             .put(BlazeInfo.OUTPUT_BASE_KEY, OUTPUT_BASE)
             .put(BlazeInfo.OUTPUT_PATH_KEY, OUTPUT_PATH)
@@ -231,7 +234,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         String binaryPath,
         WorkspaceRoot workspaceRoot,
         List<String> blazeFlags) {
-      return Futures.immediateFuture(new BlazeInfo(buildSystem, ImmutableMap.copyOf(results)));
+      return Futures.immediateFuture(BlazeInfo.create(buildSystem, ImmutableMap.copyOf(results)));
     }
 
     public void setResults(Map<String, String> results) {

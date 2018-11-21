@@ -116,7 +116,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -205,17 +204,14 @@ final class BlazeSyncTask implements Progressive {
 
   @Nullable
   private BlazeProjectData getOldProjectData(BlazeContext context) {
-    try {
-      return BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings);
-    } catch (IOException e) {
-      logger.info(e);
-      if (syncParams.syncMode != SyncMode.NO_BUILD) {
-        context.output(
-            new StatusOutput(
-                "Couldn't load previously cached project data; full sync will be needed"));
-      }
-      return null;
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings);
+    if (blazeProjectData == null && syncParams.syncMode != SyncMode.NO_BUILD) {
+      context.output(
+          new StatusOutput(
+              "Couldn't load previously cached project data; full sync will be needed"));
     }
+    return blazeProjectData;
   }
 
   /** Returns true if sync successfully completed */

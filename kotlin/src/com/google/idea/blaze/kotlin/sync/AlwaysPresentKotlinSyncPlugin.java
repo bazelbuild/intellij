@@ -61,14 +61,18 @@ public class AlwaysPresentKotlinSyncPlugin implements BlazeSyncPlugin {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)) {
       return true;
     }
-    if (!PluginUtils.isPluginEnabled(KOTLIN_PLUGIN_ID)) {
-      IssueOutput.error(
-              "Kotlin support requires the Kotlin plugin. Click here to install/enable the Kotlin "
-                  + "plugin, then restart the IDE")
-          .navigatable(PluginUtils.installOrEnablePluginNavigable(KOTLIN_PLUGIN_ID))
-          .submit(context);
-      return false;
+    if (PluginUtils.isPluginEnabled(KOTLIN_PLUGIN_ID)) {
+      return true;
     }
-    return true;
+    boolean fixable = project != null;
+    String message =
+        String.format(
+            "Kotlin support requires the Kotlin plugin. %s install/enable the Kotlin "
+                + "plugin, then restart the IDE",
+            fixable ? "Click here to" : "Please");
+    IssueOutput.error(message)
+        .navigatable(PluginUtils.installOrEnablePluginNavigable(KOTLIN_PLUGIN_ID))
+        .submit(context);
+    return false;
   }
 }

@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -108,7 +109,7 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
         PsiUtils.findFirstChildOfClassRecursive(buildFile, FuncallExpression.class);
     assertThat(buildRule).isNotNull();
 
-    String url = handler.suiteLocationUrl(null, "foo/bar/foo_test");
+    String url = handler.suiteLocationUrl(Label.create("//foo/bar:foo_test"), null, "foo_test");
     Location<?> location = getLocation(url);
     assertThat(location).isNotNull();
     assertThat(location.getPsiElement()).isEqualTo(buildRule);
@@ -155,7 +156,7 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
         "    srcs = ['foo_test.go'],",
         ")");
 
-    String url = handler.suiteLocationUrl(null, "foo/bar/foo_test");
+    String url = handler.suiteLocationUrl(Label.create("//foo/bar:foo_test"), null, "foo_test");
     Location<?> location = getLocation(url);
     assertThat(location).isNotNull();
     assertThat(location.getPsiElement()).isEqualTo(goFile);
@@ -202,7 +203,7 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
         "    srcs = ['foo_test.go'],",
         ")");
 
-    String url = handler.suiteLocationUrl(null, "foo_test");
+    String url = handler.suiteLocationUrl(Label.create("//:foo_test"), null, "foo_test");
     Location<?> location = getLocation(url);
     assertThat(location).isNotNull();
     assertThat(location.getPsiElement()).isEqualTo(goFile);
@@ -252,7 +253,9 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
         PsiUtils.findFirstChildOfClassRecursive(goFile, GoFunctionDeclaration.class);
     assertThat(function).isNotNull();
 
-    String url = handler.testLocationUrl(null, "foo/bar/foo_test", "TestFoo", null);
+    String url =
+        handler.testLocationUrl(
+            Label.create("//foo/bar:foo_test"), null, "foo_test", "TestFoo", null);
     Location<?> location = getLocation(url);
     assertThat(location).isNotNull();
     assertThat(location.getPsiElement()).isEqualTo(function);

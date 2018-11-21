@@ -223,8 +223,8 @@ final class BlazeConfigurationResolver {
   }
 
   private static boolean isOutputArtifact(BlazeInfo blazeInfo, ExecutionRootPath path) {
-    return ExecutionRootPath.isAncestor(blazeInfo.getBlazeGenfilesExecutionRootPath(), path, false)
-        || ExecutionRootPath.isAncestor(blazeInfo.getBlazeBinExecutionRootPath(), path, false);
+    return ExecutionRootPath.isAncestor(blazeInfo.getBlazeGenfiles(), path, false)
+        || ExecutionRootPath.isAncestor(blazeInfo.getBlazeBin(), path, false);
   }
 
   private static Set<ExecutionRootPath> collectExecutionRootPaths(
@@ -232,7 +232,6 @@ final class BlazeConfigurationResolver {
     Set<ExecutionRootPath> paths = Sets.newHashSet();
     for (TargetIdeInfo target : targetMap.targets()) {
       if (target.getcIdeInfo() != null) {
-        paths.addAll(target.getcIdeInfo().getLocalIncludeDirectories());
         paths.addAll(target.getcIdeInfo().getTransitiveSystemIncludeDirectories());
         paths.addAll(target.getcIdeInfo().getTransitiveIncludeDirectories());
         paths.addAll(target.getcIdeInfo().getTransitiveQuoteIncludeDirectories());
@@ -241,7 +240,6 @@ final class BlazeConfigurationResolver {
     Set<CToolchainIdeInfo> toolchains = new LinkedHashSet<>(toolchainLookupMap.values());
     for (CToolchainIdeInfo toolchain : toolchains) {
       paths.addAll(toolchain.getBuiltInIncludeDirectories());
-      paths.addAll(toolchain.getUnfilteredToolchainSystemIncludes());
     }
     return paths;
   }

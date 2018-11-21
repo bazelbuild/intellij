@@ -19,6 +19,7 @@ import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.model.ProjectData;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Map of configured targets (and soon aspects). */
@@ -58,5 +59,22 @@ public final class TargetMap implements ProtoWrapper<ProjectData.TargetMap> {
 
   public ImmutableMap<TargetKey, TargetIdeInfo> map() {
     return targetMap;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof TargetMap)) {
+      return false;
+    }
+    TargetMap other = (TargetMap) o;
+    return Objects.equals(targetMap, other.targetMap);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(targetMap);
   }
 }

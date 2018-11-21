@@ -22,6 +22,7 @@ import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -205,5 +206,37 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
           hasIdlSources,
           legacyResources);
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AndroidIdeInfo that = (AndroidIdeInfo) o;
+    return hasIdlSources == that.hasIdlSources
+        && generateResourceClass == that.generateResourceClass
+        && Objects.equals(resources, that.resources)
+        && Objects.equals(manifest, that.manifest)
+        && Objects.equals(idlJar, that.idlJar)
+        && Objects.equals(resourceJar, that.resourceJar)
+        && Objects.equals(resourceJavaPackage, that.resourceJavaPackage)
+        && Objects.equals(legacyResources, that.legacyResources);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        resources,
+        manifest,
+        idlJar,
+        resourceJar,
+        hasIdlSources,
+        resourceJavaPackage,
+        generateResourceClass,
+        legacyResources);
   }
 }

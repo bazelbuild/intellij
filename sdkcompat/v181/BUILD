@@ -7,6 +7,7 @@ load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 java_library(
     name = "v181",
     srcs = glob([
+        "com/google/idea/sdkcompat/openapi/**",
         "com/google/idea/sdkcompat/python/**",
         "com/google/idea/sdkcompat/query/**",
         "com/google/idea/sdkcompat/run/**",

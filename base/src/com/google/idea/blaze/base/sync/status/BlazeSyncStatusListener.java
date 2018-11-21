@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project;
  * Application-wide listener for blaze syncs. Notifies per-project status listener when they start
  * and finish.
  */
-public class BlazeSyncStatusListener extends SyncListener.Adapter {
+public class BlazeSyncStatusListener implements SyncListener {
 
   @Override
   public void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {

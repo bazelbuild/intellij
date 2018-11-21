@@ -15,10 +15,12 @@
  */
 package com.google.idea.blaze.base.model;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
@@ -29,13 +31,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Objects;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.annotation.concurrent.Immutable;
 
 /** The top-level object serialized to cache. */
 @Immutable
-public class BlazeProjectData implements ProtoWrapper<ProjectData.BlazeProjectData> {
+public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazeProjectData> {
   private final long syncTime;
   private final TargetMap targetMap;
   private final BlazeInfo blazeInfo;
@@ -64,8 +67,10 @@ public class BlazeProjectData implements ProtoWrapper<ProjectData.BlazeProjectDa
     this.syncState = syncState;
   }
 
-  private static BlazeProjectData fromProto(ProjectData.BlazeProjectData proto) {
-    BlazeInfo blazeInfo = BlazeInfo.fromProto(proto.getBlazeInfo());
+  @VisibleForTesting
+  public static BlazeProjectData fromProto(
+      BuildSystem buildSystem, ProjectData.BlazeProjectData proto) {
+    BlazeInfo blazeInfo = BlazeInfo.fromProto(buildSystem, proto.getBlazeInfo());
     WorkspacePathResolver workspacePathResolver =
         WorkspacePathResolver.fromProto(proto.getWorkspacePathResolver());
     return new BlazeProjectData(
@@ -124,15 +129,49 @@ public class BlazeProjectData implements ProtoWrapper<ProjectData.BlazeProjectDa
     return syncState;
   }
 
-  public static BlazeProjectData loadFromDisk(File file) throws IOException {
+  public static BlazeProjectData loadFromDisk(BuildSystem buildSystem, File file)
+      throws IOException {
     try (InputStream stream = new GZIPInputStream(new FileInputStream(file))) {
-      return fromProto(ProjectData.BlazeProjectData.parseFrom(stream));
+      return fromProto(buildSystem, ProjectData.BlazeProjectData.parseFrom(stream));
     }
   }
 
   public void saveToDisk(File file) throws IOException {
+    ProjectData.BlazeProjectData proto = toProto();
     try (OutputStream stream = new GZIPOutputStream(new FileOutputStream(file))) {
-      toProto().writeTo(stream);
+      proto.writeTo(stream);
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof BlazeProjectData)) {
+      return false;
+    }
+    BlazeProjectData other = (BlazeProjectData) o;
+    return syncTime == other.syncTime
+        && Objects.equals(targetMap, other.targetMap)
+        && Objects.equals(blazeInfo, other.blazeInfo)
+        && Objects.equals(blazeVersionData, other.blazeVersionData)
+        && Objects.equals(workspacePathResolver, other.workspacePathResolver)
+        && Objects.equals(artifactLocationDecoder, other.artifactLocationDecoder)
+        && Objects.equals(workspaceLanguageSettings, other.workspaceLanguageSettings)
+        && Objects.equals(syncState, other.syncState);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        syncTime,
+        targetMap,
+        blazeInfo,
+        blazeVersionData,
+        workspaceLanguageSettings,
+        artifactLocationDecoder,
+        workspaceLanguageSettings,
+        syncState);
   }
 }

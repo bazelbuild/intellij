@@ -121,7 +121,7 @@ public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
    * synced.
    */
   @VisibleForTesting
-  static class SyncStatusPublisher extends SyncListener.Adapter {
+  static class SyncStatusPublisher implements SyncListener {
     @Override
     public void afterSync(
         Project project,

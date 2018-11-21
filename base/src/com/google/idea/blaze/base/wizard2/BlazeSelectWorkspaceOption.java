@@ -23,20 +23,6 @@ import com.intellij.openapi.options.ConfigurationException;
  */
 public interface BlazeSelectWorkspaceOption extends BlazeWizardOption {
 
-  /**
-   * Used to migrate from a previous serialization format (also happens to be the current option
-   * key, but that doesn't effect migration).
-   *
-   * <p>TODO(brendandouglas): remove along with {@link #migratePreviousOptions} in v2018.10+
-   */
-  String OLD_OPTION_KEY = "select-workspace.selected-option";
-
-  /**
-   * Apply options serialized in a previous plugin version. Returns true if this workspace type
-   * should be initially selected.
-   */
-  boolean migratePreviousOptions(BlazeWizardUserSettings userSettings);
-
   @Override
   default void validateAndUpdateBuilder(BlazeNewProjectBuilder builder)
       throws ConfigurationException {

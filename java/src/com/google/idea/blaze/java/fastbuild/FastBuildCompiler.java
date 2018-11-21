@@ -42,9 +42,12 @@ interface FastBuildCompiler {
 
     abstract ImmutableList<String> annotationProcessorClassNames();
 
+    abstract ImmutableList<File> annotationProcessorClasspath();
+
     static Builder builder() {
       return new AutoValue_FastBuildCompiler_CompileInstructions.Builder()
-          .annotationProcessorClassNames(ImmutableList.of());
+          .annotationProcessorClassNames(ImmutableList.of())
+          .annotationProcessorClasspath(ImmutableList.of());
     }
 
     @AutoValue.Builder
@@ -63,6 +66,8 @@ interface FastBuildCompiler {
 
       abstract Builder annotationProcessorClassNames(
           Collection<String> annotationProcessorClassNames);
+
+      abstract Builder annotationProcessorClasspath(Collection<File> annotationProcessorClasspath);
 
       abstract CompileInstructions build();
     }

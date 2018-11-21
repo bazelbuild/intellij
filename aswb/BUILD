@@ -83,6 +83,22 @@ stamped_plugin_xml(
 )
 
 java_library(
+    name = "integration_test_utils",
+    testonly = 1,
+    srcs = glob(["tests/utils/integration/**/*.java"]),
+    deps = [
+        ":aswb_lib",
+        "//base",
+        "//base:integration_test_utils",
+        "//base:unit_test_utils",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//testing:lib",
+        "@junit//jar",
+    ],
+)
+
+java_library(
     name = "aswb_lib",
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
         "android-studio-3.2": glob(["src_3_2/**/*.java"]),
@@ -114,7 +130,7 @@ intellij_unit_test_suite(
     srcs = glob(["tests/unittests/**/*.java"]) + select_for_plugin_api({
         "android-studio-3.2": glob(["tests/unittests_3_2/**/*.java"]),
         "android-studio-3.3": glob(["tests/unittests_3_3/**/*.java"]),
-        "android-studio-3.4": glob(["tests/unittests_3_3/**/*.java"]),
+        "android-studio-3.4": glob(["tests/unittests_3_4/**/*.java"]),
     }),
     test_package_root = "com.google.idea.blaze.android",
     deps = [
@@ -154,9 +170,11 @@ intellij_integration_test_suite(
     test_package_root = "com.google.idea.blaze.android",
     runtime_deps = [
         ":aswb_bazel",
+        "//intellij_platform_sdk:plugin_api_for_tests",
     ],
     deps = [
         ":aswb_lib",
+        ":integration_test_utils",
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",

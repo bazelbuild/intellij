@@ -48,15 +48,12 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
-import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.ide.browsers.BrowserLauncher;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -189,25 +186,6 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
   }
 
   @Override
-  public void updateProjectStructure(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData,
-      @Nullable BlazeProjectData oldBlazeProjectData,
-      ModuleEditor moduleEditor,
-      Module workspaceModule,
-      ModifiableRootModel workspaceModifiableModel) {
-    if (!blazeProjectData
-        .getWorkspaceLanguageSettings()
-        .isLanguageActive(LanguageClass.TYPESCRIPT)) {
-      return;
-    }
-    BlazeTypeScriptLibrarySourceProvider.addTsConfigLibrary(project, workspaceModifiableModel);
-  }
-
-  @Override
   public boolean validate(
       Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
     if (!blazeProjectData
@@ -279,17 +257,5 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
   @Override
   public Collection<SectionParser> getSections() {
     return ImmutableList.of(TsConfigRuleSection.PARSER, TsConfigRulesSection.PARSER);
-  }
-
-  @Nullable
-  @Override
-  public LibrarySource getLibrarySource(
-      ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData
-        .getWorkspaceLanguageSettings()
-        .isLanguageActive(LanguageClass.TYPESCRIPT)) {
-      return null;
-    }
-    return BlazeTypeScriptLibrarySourceProvider.getLibrarySource();
   }
 }

@@ -66,20 +66,6 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-2018.1",
-    values = {
-        "define": "ij_product=intellij-2018.1",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2018.1",
-    values = {
-        "define": "ij_product=intellij-ue-2018.1",
-    },
-)
-
-config_setting(
     name = "android-studio-latest",
     values = {
         "define": "ij_product=android-studio-latest",
@@ -136,22 +122,23 @@ config_setting(
 )
 
 config_setting(
-    name = "clion-2018.1",
-    values = {
-        "define": "ij_product=clion-2018.1",
-    },
-)
-
-config_setting(
     name = "clion-2018.2",
     values = {
         "define": "ij_product=clion-2018.2",
     },
 )
 
+config_setting(
+    name = "clion-2018.3",
+    values = {
+        "define": "ij_product=clion-2018.3",
+    },
+)
+
 load(
     ":build_defs.bzl",
     "select_for_ide",
+    "select_for_plugin_api",
     "select_from_plugin_api_directory",
 )
 
@@ -206,10 +193,12 @@ java_library(
 # aswb.jar, but they will be in clwb.jar.
 java_library(
     name = "jsr305",
-    exports = select_for_ide(
-        clion = ["@jsr305_annotations//jar"],
-        default = [":plugin_api"],
-    ),
+    exports = select_for_plugin_api({
+        "clion-2018.2": ["@jsr305_annotations//jar"],
+        "clion-2018.3": ["@jsr305_annotations//jar"],
+        "intellij-ue-2018.3": ["@jsr305_annotations//jar"],
+        "default": [":plugin_api"],
+    }),
 )
 
 # The version of truth bundled with the IntelliJ plugin API.

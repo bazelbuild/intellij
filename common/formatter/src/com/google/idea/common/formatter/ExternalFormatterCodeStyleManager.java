@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.CheckUtil;
@@ -52,7 +51,7 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
    * A set of replacements to apply. Enforces dropping replacements that don't actually change
    * anything, avoiding unnecessary write actions and documents committals.
    */
-  public static class Replacements {
+  public static final class Replacements {
     public static final Replacements EMPTY = new Replacements();
     private final Map<TextRange, String> replacements = new HashMap<>();
 
@@ -60,6 +59,36 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
       if (!before.equals(after)) {
         replacements.put(range, after);
       }
+    }
+  }
+
+  /**
+   * Provides file contents asynchronously, providing information about whether there have been any
+   * changes.
+   */
+  public static final class FileContentsProvider {
+    @Nullable
+    public static FileContentsProvider fromPsiFile(PsiFile file) {
+      String text = getCurrentText(file);
+      return text == null ? null : new FileContentsProvider(file, text);
+    }
+
+    private final String initialFileContents;
+    private final PsiFile file;
+
+    private FileContentsProvider(PsiFile file, String initialFileContents) {
+      this.initialFileContents = initialFileContents;
+      this.file = file;
+    }
+
+    @Nullable
+    public String getFileContentsIfUnchanged() {
+      String text = getCurrentText(file);
+      return initialFileContents.equals(text) ? text : null;
+    }
+
+    public String getInitialFileContents() {
+      return initialFileContents;
     }
   }
 
@@ -107,21 +136,6 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
     }
   }
 
-  @Override
-  public PsiElement reformatRange(
-      PsiElement element, int startOffset, int endOffset, boolean canChangeWhiteSpacesOnly) {
-    // Only handle elements that are PsiFile for now -- otherwise we need to search for some
-    // element within the file at new locations given the original startOffset and endOffsets
-    // to serve as the return value.
-    PsiFile file = element instanceof PsiFile ? (PsiFile) element : null;
-    if (file != null && canChangeWhiteSpacesOnly && overrideFormatterForFile(file)) {
-      formatInternal(file, ImmutableList.of(new TextRange(startOffset, endOffset)));
-      return file;
-    } else {
-      return super.reformatRange(element, startOffset, endOffset, canChangeWhiteSpacesOnly);
-    }
-  }
-
   private void formatInternal(PsiFile file, Collection<TextRange> ranges) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
@@ -166,35 +180,43 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
   }
 
   protected void performReplacementsAsync(
-      PsiFile file, String originalText, ListenableFuture<Replacements> future) {
+      FileContentsProvider fileContents, ListenableFuture<Replacements> future) {
     future.addListener(
         () -> {
-          Document document = getDocument(file);
-          if (document == null || !canApplyChanges(document, originalText)) {
+          String text = fileContents.getFileContentsIfUnchanged();
+          if (text == null) {
+            return;
+          }
+          Document document = getDocument(fileContents.file);
+          if (!canApplyChanges(document)) {
             return;
           }
           Replacements replacements = getFormattingFuture(future);
           if (replacements != null) {
-            performReplacements(originalText, document, replacements);
+            performReplacements(text, document, replacements);
           }
         },
         MoreExecutors.directExecutor());
   }
 
-  protected void formatAsync(PsiFile file, String originalText, ListenableFuture<String> future) {
+  protected void formatAsync(FileContentsProvider fileContents, ListenableFuture<String> future) {
     future.addListener(
         () -> {
-          Document document = getDocument(file);
-          if (document == null || !canApplyChanges(document, originalText)) {
+          String text = fileContents.getFileContentsIfUnchanged();
+          if (text == null) {
+            return;
+          }
+          Document document = getDocument(fileContents.file);
+          if (!canApplyChanges(document)) {
             return;
           }
           String formattedFile = getFormattingFuture(future);
-          if (formattedFile == null || formattedFile.equals(getCurrentText(file))) {
+          if (formattedFile == null || formattedFile.equals(text)) {
             return;
           }
           runWriteActionIfUnchanged(
               document,
-              originalText,
+              text,
               () -> {
                 document.setText(formattedFile);
                 PsiDocumentManager.getInstance(getProject()).commitDocument(document);
@@ -214,16 +236,10 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
         });
   }
 
-  /**
-   * Checks whether the {@link Document} is still writable, and hasn't changed since {@code
-   * originalText} was calculated.
-   */
-  private boolean canApplyChanges(Document document, String originalText) {
-    if (PsiDocumentManager.getInstance(getProject()).isDocumentBlockedByPsi(document)) {
-      return false;
-    }
-    String currentText = document.getText();
-    return originalText.equals(currentText);
+  /** Checks whether the {@link Document} is still writable. */
+  private boolean canApplyChanges(@Nullable Document document) {
+    return document != null
+        && !PsiDocumentManager.getInstance(getProject()).isDocumentBlockedByPsi(document);
   }
 
   @Nullable

@@ -18,12 +18,13 @@ package com.google.idea.blaze.android.sync.model;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.SyncData;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /** Sync data for the Android plugin. */
 @Immutable
-public class BlazeAndroidSyncData implements SyncData<ProjectData.BlazeAndroidSyncData> {
+public final class BlazeAndroidSyncData implements SyncData<ProjectData.BlazeAndroidSyncData> {
   public final BlazeAndroidImportResult importResult;
   @Nullable public final AndroidSdkPlatform androidSdkPlatform;
 
@@ -52,6 +53,24 @@ public class BlazeAndroidSyncData implements SyncData<ProjectData.BlazeAndroidSy
   @Override
   public void insert(ProjectData.SyncState.Builder builder) {
     builder.setBlazeAndroidSyncData(toProto());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    BlazeAndroidSyncData that = (BlazeAndroidSyncData) o;
+    return Objects.equals(importResult, that.importResult)
+        && Objects.equals(androidSdkPlatform, that.androidSdkPlatform);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(importResult, androidSdkPlatform);
   }
 
   static class Extractor implements SyncData.Extractor<BlazeAndroidSyncData> {

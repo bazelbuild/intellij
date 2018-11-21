@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import java.util.Objects;
 
 /** Ide info specific to typescript rules. */
 public final class TsIdeInfo implements ProtoWrapper<IntellijIdeInfo.TsIdeInfo> {
@@ -62,5 +63,22 @@ public final class TsIdeInfo implements ProtoWrapper<IntellijIdeInfo.TsIdeInfo> 
   @Override
   public String toString() {
     return "TsIdeInfo{" + "\n" + "  sources=" + getSources() + "\n" + '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    TsIdeInfo tsIdeInfo = (TsIdeInfo) o;
+    return Objects.equals(sources, tsIdeInfo.sources);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(sources);
   }
 }
