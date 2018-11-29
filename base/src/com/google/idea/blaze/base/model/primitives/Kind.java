@@ -93,6 +93,11 @@ public enum Kind implements ProtoWrapper<String> {
   PINTO_LIBRARY_MOD("pinto_library_mod", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
   PINTO_MODULE("pinto_module", LanguageClass.JAVASCRIPT, RuleType.UNKNOWN),
   NG_MODULE("ng_module", LanguageClass.TYPESCRIPT, RuleType.LIBRARY),
+  NODEJS_BINARY("_nodejs_binary", LanguageClass.JAVASCRIPT, RuleType.BINARY),
+  NODEJS_MODULE("_nodejs_module", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
+  NODEJS_TEST("_nodejs_test", LanguageClass.JAVASCRIPT, RuleType.TEST),
+  // not executable, despite the name
+  CHECKABLE_JS_LIB_BINARY("checkable_js_lib_binary", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
   TS_LIBRARY("ts_library", LanguageClass.TYPESCRIPT, RuleType.LIBRARY),
   TS_CONFIG("ts_config", LanguageClass.TYPESCRIPT, RuleType.BINARY),
   DART_PROTO_LIBRARY("dart_proto_library", LanguageClass.DART, RuleType.LIBRARY),

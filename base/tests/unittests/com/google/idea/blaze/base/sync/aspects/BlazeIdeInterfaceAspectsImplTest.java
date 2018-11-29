@@ -81,6 +81,7 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
                     .setJavaPackage("package"))
             .build();
     TargetIdeInfo target = TargetIdeInfo.fromProto(ideProto);
+    assertThat(target).isNotNull();
     Collection<AndroidResFolder> resources = target.getAndroidIdeInfo().getResFolders();
     assertThat(resources)
         .containsExactly(

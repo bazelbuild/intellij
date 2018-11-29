@@ -29,7 +29,10 @@ public final class BuildEventProtocolUtils {
   // Instructs BEP to use local file paths (file://...) rather than objfs blobids.
   private static final String LOCAL_FILE_PATHS = "--nobuild_event_binary_file_path_conversion";
   // An environment variable overriding the directory used for the BEP output file.
-  private static final String BEP_OUTPUT_FILE_OVERRIDE = "IDEA_BAZEL_BEP_PATH";
+  private static final String BEP_OUTPUT_FILE_ENV_OVERRIDE = "IDEA_BAZEL_BEP_PATH";
+  // A vm option overriding the directory used for the BEP output file.
+  // This takes precedence over the environment variable if both are provided.
+  private static final String BEP_OUTPUT_FILE_VM_OVERRIDE = "bazel.bep.path";
 
   private BuildEventProtocolUtils() {}
 
@@ -54,7 +57,10 @@ public final class BuildEventProtocolUtils {
   }
 
   private static File getOutputDir() {
-    String dirPath = System.getenv(BEP_OUTPUT_FILE_OVERRIDE);
+    String dirPath = System.getProperty(BEP_OUTPUT_FILE_VM_OVERRIDE);
+    if (Strings.isNullOrEmpty(dirPath)) {
+      dirPath = System.getenv(BEP_OUTPUT_FILE_ENV_OVERRIDE);
+    }
     if (Strings.isNullOrEmpty(dirPath)) {
       dirPath = System.getProperty("java.io.tmpdir");
     }

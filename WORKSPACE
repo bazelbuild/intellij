@@ -46,8 +46,8 @@ http_archive(
 http_archive(
     name = "clion_2018_2",
     build_file = "@//intellij_platform_sdk:BUILD.clion",
-    sha256 = "d284345ae11224c4c29ab8dfcb516cf6e43958a5cf9c902dea110d28fde32b2f",
-    url = "https://download.jetbrains.com/cpp/CLion-2018.2.5.tar.gz",
+    sha256 = "2e1742c6769cceb806acedaffeaf764cdf5990d7dbd0165741400e788d1af5d5",
+    url = "https://download.jetbrains.com/cpp/CLion-2018.2.6.tar.gz",
 )
 
 # The plugin api for CLion 2018.3. This is required to build CLwB,
@@ -169,8 +169,8 @@ http_archive(
 http_archive(
     name = "android_studio_3_3",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio",
-    sha256 = "02369c3ae059091d7593546d072a70307be13b7f6db276b9a78507b6a9e5ff89",
-    url = "https://dl.google.com/android/studio/ide-zips/3.3.0.16/android-studio-ide-182.5114240-linux.zip",
+    sha256 = "670936864a2a3337879c287bda7a36823f513b260d14f9dce6933f428d29ec2a",
+    url = "https://dl.google.com/android/studio/ide-zips/3.3.0.17/android-studio-ide-182.5138683-linux.zip",
 )
 
 # LICENSE: Common Public License 1.0

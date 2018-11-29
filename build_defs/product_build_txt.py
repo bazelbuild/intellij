@@ -2,7 +2,7 @@
 
 import argparse
 import re
-from xml.dom.minidom import parseString
+from xml.dom.minidom import parseString  # pylint: disable=g-importing-member
 import zipfile
 
 parser = argparse.ArgumentParser()
@@ -65,7 +65,7 @@ def main():
 
   build_number, _ = _parse_build_number(build_number_attr.value)
 
-  print build_number
+  print(build_number)  # pylint: disable=superfluous-parens
 
 
 if __name__ == "__main__":

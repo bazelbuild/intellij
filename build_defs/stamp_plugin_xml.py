@@ -3,7 +3,8 @@
 import argparse
 import io
 import re
-from xml.dom.minidom import parse
+import sys
+from xml.dom.minidom import parse  # pylint: disable=g-importing-member
 
 parser = argparse.ArgumentParser()
 
@@ -203,7 +204,12 @@ def main():
   for new_element in new_elements:
     idea_plugin.appendChild(new_element)
 
-  print dom.toxml(encoding="utf-8")
+  if hasattr(sys.stdout, "buffer"):
+    sys.stdout.buffer.write(dom.toxml(encoding="utf-8"))
+  else:
+    # Python 2.x has no sys.stdout.buffer, but `print` still accepts byte
+    # strings.
+    print(dom.toxml(encoding="utf-8"))  # pylint: disable=superfluous-parens
 
 
 if __name__ == "__main__":

@@ -32,17 +32,10 @@ def artifact_location(f):
 def to_artifact_location(exec_path, root_exec_path_fragment, is_source, is_external):
     """Derives workspace path from other path fragments, and creates an ArtifactLocation proto."""
 
-    # Bazel 0.4.4 has directory structure:
-    # exec_path = (root_fragment)? + (external/repo_name)? + relative_path
-    # Bazel 0.4.5 has planned directory structure:
+    # directory structure:
     # exec_path = (../repo_name)? + (root_fragment)? + relative_path
-    # Handle both cases by trying to strip the external workspace prefix before and after removing
-    # root_exec_path_fragment.
     relative_path = _strip_external_workspace_prefix(exec_path)
     relative_path = _strip_root_exec_path_fragment(relative_path, root_exec_path_fragment)
-
-    # Remove this line when Bazel 0.4.4 and earlier no longer need to be supported.
-    relative_path = _strip_external_workspace_prefix(relative_path)
 
     root_exec_path_fragment = exec_path[:-(len("/" + relative_path))]
 
