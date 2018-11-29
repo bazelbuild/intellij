@@ -91,10 +91,6 @@
     <action id="Blaze.NewPackageAction"
       class="com.google.idea.blaze.base.ide.NewBlazePackageAction"
       text="New Package"/>
-    <action id="Blaze.NewRuleAction"
-      class="com.google.idea.blaze.base.ide.NewBlazeRuleAction"
-      text="New Rule"
-      popup="true"/>
     <action id="Blaze.OpenWorkspaceFile"
       class="com.google.idea.blaze.base.ide.OpenBlazeWorkspaceFileAction"
       text="Open Workspace File..."
@@ -139,7 +135,6 @@
     <group id="Blaze.NewActions" text="Edit Blaze structure" description="Create new Blaze packages, rules, etc.">
       <add-to-group group-id="NewGroup" anchor="first"/>
       <reference id="Blaze.NewPackageAction"/>
-      <reference id="Blaze.NewRuleAction"/>
       <separator/>
     </group>
 

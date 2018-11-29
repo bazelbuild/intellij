@@ -95,9 +95,13 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     this.kotlinToolchainIdeInfo = kotlinToolchainIdeInfo;
   }
 
+  @Nullable
   public static TargetIdeInfo fromProto(IntellijIdeInfo.TargetIdeInfo proto) {
     TargetKey key = proto.hasKey() ? TargetKey.fromProto(proto.getKey()) : null;
     Kind kind = Kind.fromProto(proto);
+    if (key == null || kind == null) {
+      return null;
+    }
     ImmutableSet.Builder<ArtifactLocation> sourcesBuilder = ImmutableSet.builder();
     CIdeInfo cIdeInfo = null;
     if (proto.hasCIdeInfo()) {

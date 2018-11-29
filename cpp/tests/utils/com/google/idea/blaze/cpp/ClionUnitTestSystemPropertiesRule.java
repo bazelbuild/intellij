@@ -106,7 +106,7 @@ public class ClionUnitTestSystemPropertiesRule extends ExternalResource {
       return null;
     }
     try {
-      return Files.readFirstLine(apiVersionFile, StandardCharsets.UTF_8);
+      return Files.asCharSource(apiVersionFile, StandardCharsets.UTF_8).readFirstLine();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

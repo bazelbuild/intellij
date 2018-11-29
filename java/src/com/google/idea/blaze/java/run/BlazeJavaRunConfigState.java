@@ -16,12 +16,10 @@
 package com.google.idea.blaze.java.run;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.run.state.DebugPortState;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.settings.BuildSystem;
-import com.intellij.openapi.project.Project;
 
 /** A java-specific version of the common state, allowing the debug port to be customized. */
 public class BlazeJavaRunConfigState extends BlazeCommandRunConfigurationCommonState {
@@ -30,7 +28,7 @@ public class BlazeJavaRunConfigState extends BlazeCommandRunConfigurationCommonS
 
   private final DebugPortState debugPortState;
 
-  BlazeJavaRunConfigState(BuildSystem buildSystem, Project project, Kind kind) {
+  BlazeJavaRunConfigState(BuildSystem buildSystem) {
     super(buildSystem);
     debugPortState = new DebugPortState(DEFAULT_DEBUG_PORT);
   }

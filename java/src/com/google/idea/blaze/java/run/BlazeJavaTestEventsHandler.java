@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
 import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags;
 import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
+import com.google.idea.sdkcompat.run.JavaTestCaseProtocolCompat;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
@@ -87,9 +88,12 @@ public class BlazeJavaTestEventsHandler implements BlazeTestEventsHandler {
     String classComponent = JavaTestLocator.TEST_PROTOCOL + URLUtil.SCHEME_SEPARATOR + classname;
     String parameterComponent = extractParameterComponent(name);
     if (parameterComponent != null) {
-      return classComponent + "." + parentSuite + parameterComponent;
+      return classComponent
+          + JavaTestCaseProtocolCompat.TEST_CASE_SEPARATOR
+          + parentSuite
+          + parameterComponent;
     }
-    return classComponent + "." + name;
+    return classComponent + JavaTestCaseProtocolCompat.TEST_CASE_SEPARATOR + name;
   }
 
   @Nullable
@@ -104,7 +108,7 @@ public class BlazeJavaTestEventsHandler implements BlazeTestEventsHandler {
   public String suiteDisplayName(Label label, @Nullable Kind kind, String rawName) {
     String name = StringUtil.trimEnd(rawName, '.');
     int lastPointIx = name.lastIndexOf('.');
-    return lastPointIx != -1 ? name.substring(lastPointIx + 1, name.length()) : name;
+    return lastPointIx != -1 ? name.substring(lastPointIx + 1) : name;
   }
 
   @Nullable

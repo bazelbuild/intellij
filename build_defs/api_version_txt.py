@@ -3,7 +3,7 @@
 
 import argparse
 import re
-from xml.dom.minidom import parseString
+from xml.dom.minidom import parseString  # pylint: disable=g-importing-member
 import zipfile
 
 parser = argparse.ArgumentParser()
@@ -58,16 +58,16 @@ def main():
     build_element = build_elements[0]
 
     attrs = build_element.attributes
-    if attrs.has_key("apiVersion"):
-      api_version_attr = attrs.get("apiVersion")
-    else:
-      api_version_attr = attrs.get("number")
+    try:
+      api_version_attr = attrs["apiVersion"]
+    except KeyError:
+      api_version_attr = attrs["number"]
 
   if not api_version_attr:
     raise ValueError("Could not find api version in application info")
 
   api_version = _parse_build_number(api_version_attr.value)
-  print api_version
+  print(api_version)  # pylint: disable=superfluous-parens
 
 
 if __name__ == "__main__":

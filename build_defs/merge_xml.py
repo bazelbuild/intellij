@@ -3,7 +3,7 @@
 
 import argparse
 import sys
-from xml.dom.minidom import parse
+from xml.dom.minidom import parse  # pylint: disable=g-importing-member
 
 parser = argparse.ArgumentParser()
 
@@ -52,7 +52,12 @@ if __name__ == "__main__":
     AppendFileToTree(filename, dom)
 
   if args.output:
-    with file(args.output, "w") as f:
+    with open(args.output, "wb") as f:
       f.write(dom.toxml(encoding="utf-8"))
   else:
-    print dom.toxml()
+    if hasattr(sys.stdout, "buffer"):
+      sys.stdout.buffer.write(dom.toxml(encoding="utf-8"))
+    else:
+      # Python 2.x has no sys.stdout.buffer, but `print` still accepts byte
+      # strings.
+      print(dom.toxml(encoding="utf-8"))  # pylint: disable=superfluous-parens

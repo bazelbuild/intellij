@@ -1,9 +1,14 @@
 """Packages plugin files into a zip archive."""
 
 import argparse
-from itertools import izip
 import time
 import zipfile
+
+try:
+  from itertools import izip  # pylint: disable=g-importing-member,g-import-not-at-top
+except ImportError:
+  # Python 3.x already has a built-in `zip` that takes `izip`'s place.
+  izip = zip
 
 parser = argparse.ArgumentParser()
 

@@ -71,9 +71,8 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
   @Override
   public IntellijIdeInfo.GoIdeInfo toProto() {
     IntellijIdeInfo.GoIdeInfo.Builder builder =
-        IntellijIdeInfo.GoIdeInfo.newBuilder()
-            .addAllSources(ProtoWrapper.mapToProtos(sources))
-            .setImportPath(importPath);
+        IntellijIdeInfo.GoIdeInfo.newBuilder().addAllSources(ProtoWrapper.mapToProtos(sources));
+    ProtoWrapper.setIfNotNull(builder::setImportPath, importPath);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setLibraryLabel, libraryLabel);
     return builder.build();
   }

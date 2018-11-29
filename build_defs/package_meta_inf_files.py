@@ -2,9 +2,14 @@
 """
 
 import argparse
-from itertools import izip
 import shutil
 import zipfile
+
+try:
+  from itertools import izip  # pylint: disable=g-importing-member,g-import-not-at-top
+except ImportError:
+  # Python 3.x already has a built-in `zip` that takes `izip`'s place.
+  izip = zip
 
 # Set to Jan 1 1980, the earliest date supported by zipfile
 ZIP_DATE = (1980, 1, 1, 0, 0, 0)
@@ -36,7 +41,7 @@ def main():
   shutil.copyfile(args.deploy_jar, args.output)
   output_jar = zipfile.ZipFile(args.output, "a")
   for meta_inf_file, name in pairwise(args.meta_inf_files):
-    with file(meta_inf_file) as f:
+    with open(meta_inf_file, "rb") as f:
       zip_info = zipfile.ZipInfo("META-INF/" + name, ZIP_DATE)
       output_jar.writestr(zip_info, f.read())
 

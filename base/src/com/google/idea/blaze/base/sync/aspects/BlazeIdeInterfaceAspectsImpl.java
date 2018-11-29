@@ -480,8 +480,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       return null;
     }
     if (languageSettings.isLanguageActive(kind.languageClass)) {
-      TargetIdeInfo targetIdeInfo = TargetIdeInfo.fromProto(message);
-      return targetIdeInfo.getKey() != null ? targetIdeInfo : null;
+      return TargetIdeInfo.fromProto(message);
     }
     TargetKey key = message.hasKey() ? TargetKey.fromProto(message.getKey()) : null;
     if (key != null && importRoots.importAsSource(key.getLabel())) {

@@ -34,6 +34,7 @@ public final class TargetMap implements ProtoWrapper<ProjectData.TargetMap> {
     return new TargetMap(
         proto.getTargetsList().stream()
             .map(TargetIdeInfo::fromProto)
+            .filter(Objects::nonNull)
             .collect(ImmutableMap.toImmutableMap(TargetIdeInfo::getKey, Functions.identity())));
   }
 
