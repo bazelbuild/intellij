@@ -271,6 +271,8 @@ scala_repositories()
 load("@io_bazel_rules_scala//scala:toolchains.bzl", "scala_register_toolchains")
 
 scala_register_toolchains()
+load("@io_bazel_rules_scala//twitter_scrooge:twitter_scrooge.bzl", "twitter_scrooge")
+twitter_scrooge()
 # END-EXTERNAL-SCALA
 
 # BEGIN-EXTERNAL-KOTLIN
