@@ -84,13 +84,16 @@
         order="first"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer"
-        order="first"/>
+        order="first" id="blazeJavaTestClass"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestMethodConfigurationProducer"
-        order="first"/>
+        order="first" id="blazeJavaTestMethod"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.java.run.producers.MultipleJavaClassesTestConfigurationProducer"
         order="first"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.java.run.producers.BlazeJavaWebTestConfigurationProducer"
+        order="first, before blazeJavaTestClass, before blazeJavaTestMethod"/>
     <applicationService serviceInterface="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"
                         serviceImplementation="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"/>
     <applicationService serviceInterface="com.google.idea.blaze.java.sync.source.PackageManifestReader"

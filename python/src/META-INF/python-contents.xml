@@ -31,7 +31,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <useScopeEnlarger implementation="com.google.idea.blaze.python.search.BlazePyUseScopeEnlarger"/>
     <runConfigurationProducer implementation="com.google.idea.blaze.python.run.producers.BlazePyBinaryConfigurationProducer" order="first"/>
-    <runConfigurationProducer implementation="com.google.idea.blaze.python.run.producers.BlazePyTestConfigurationProducer" order="first"/>
+    <runConfigurationProducer implementation="com.google.idea.blaze.python.run.producers.BlazePyTestConfigurationProducer" order="first" id="blazePyTest"/>
+    <runConfigurationProducer implementation="com.google.idea.blaze.python.run.producers.BlazePyWebTestConfigurationProducer" order="first, before blazePyTest"/>
     <programRunner implementation="com.google.idea.blaze.python.run.BlazePyDebugRunner"/>
     <consoleFilterProvider implementation="com.google.idea.blaze.python.run.filter.BlazePyTracebackFilter$BlazePyTracebackFilterProvider"/>
   </extensions>

@@ -98,6 +98,7 @@ public enum Kind implements ProtoWrapper<String> {
   NODEJS_TEST("_nodejs_test", LanguageClass.JAVASCRIPT, RuleType.TEST),
   // not executable, despite the name
   CHECKABLE_JS_LIB_BINARY("checkable_js_lib_binary", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
+  WEB_TEST("web_test", LanguageClass.GENERIC, RuleType.TEST),
   TS_LIBRARY("ts_library", LanguageClass.TYPESCRIPT, RuleType.LIBRARY),
   TS_CONFIG("ts_config", LanguageClass.TYPESCRIPT, RuleType.BINARY),
   DART_PROTO_LIBRARY("dart_proto_library", LanguageClass.DART, RuleType.LIBRARY),
