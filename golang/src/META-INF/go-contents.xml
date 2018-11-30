@@ -32,7 +32,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationProducer implementation="com.google.idea.blaze.golang.run.producers.BlazeGoBinaryConfigurationProducer"/>
-    <runConfigurationProducer implementation="com.google.idea.blaze.golang.run.producers.BlazeGoTestConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.google.idea.blaze.golang.run.producers.BlazeGoTestConfigurationProducer" id="blazeGoTest"/>
+    <runConfigurationProducer implementation="com.google.idea.blaze.golang.run.producers.BlazeGoWebTestConfigurationProducer" order="before blazeGoTest"/>
     <documentationProvider implementation="com.google.idea.blaze.golang.resolve.BlazeGoImportResolver$GoPackageDocumentationProvider"/>
     <additionalLibraryRootsProvider implementation="com.google.idea.blaze.golang.sync.BlazeGoAdditionalLibraryRootsProvider"/>
   </extensions>
