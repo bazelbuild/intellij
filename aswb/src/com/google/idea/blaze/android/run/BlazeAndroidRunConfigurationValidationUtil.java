@@ -105,7 +105,7 @@ public final class BlazeAndroidRunConfigurationValidationUtil {
       errors.add(
           ValidationError.fatal(
               String.format("No existing %s rule selected.", Blaze.buildSystemName(project))));
-    } else if (target.getKind() == null || !target.getKind().isOneOf(kinds)) {
+    } else if (target.getKind() == null || !kinds.contains(target.getKind())) {
       errors.add(
           ValidationError.fatal(
               String.format(

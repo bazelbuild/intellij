@@ -184,6 +184,7 @@
                         serviceImplementation="com.google.idea.blaze.base.lang.buildfile.actions.BuildFileModifierImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.command.info.BlazeInfoRunner"
                         serviceImplementation="com.google.idea.blaze.base.command.info.BlazeInfoRunnerImpl"/>
+    <applicationService serviceImplementation="com.google.idea.blaze.base.model.primitives.Kind$ApplicationState"/>
 
     <treeStructureProvider implementation="com.google.idea.blaze.base.treeview.BlazeTreeStructureProvider" id="blaze" order="last"/>
 
@@ -351,6 +352,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.google.idea.blaze.SyncListener" interface="com.google.idea.blaze.base.sync.SyncListener"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.SimpleSyncListener" interface="com.google.idea.blaze.base.sync.SimpleSyncListener"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SyncPlugin" interface="com.google.idea.blaze.base.sync.BlazeSyncPlugin"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.RunConfigurationFactory" interface="com.google.idea.blaze.base.run.BlazeRunConfigurationFactory"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.Prefetcher"
@@ -389,6 +391,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.GoImportPathReplacer" interface="com.google.idea.blaze.base.ideinfo.GoIdeInfo$ImportPathReplacer"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.WorkspacePathResolverExtractor" interface="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver$Extractor"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SyncDataExtractor" interface="com.google.idea.blaze.base.model.SyncData$Extractor"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.TargetKindProvider" interface="com.google.idea.blaze.base.model.primitives.Kind$Provider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -398,6 +401,7 @@
     <SyncListener implementation="com.google.idea.blaze.base.dependencies.ExternalFileProjectManagementHelper$UpdateNotificationsAfterSync"/>
     <SyncListener implementation="com.google.idea.blaze.base.sync.autosync.AutoSyncHandler$Listener"/>
     <SyncListener implementation="com.google.idea.blaze.base.ideinfo.ProjectDataInterner$Updater"/>
+    <SyncListener implementation="com.google.idea.blaze.base.sync.SimpleSyncListenerService"/>
     <SyncPlugin implementation="com.google.idea.blaze.base.lang.buildfile.sync.BuildLangSyncPlugin"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.command.BuildFlagsProviderImpl"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.run.coverage.CoverageBuildFlagsProvider"/>
@@ -431,6 +435,7 @@
     <SyncDataExtractor implementation="com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceState$Extractor"/>
     <SyncDataExtractor implementation="com.google.idea.blaze.base.lang.buildfile.sync.LanguageSpecResult$Extractor"/>
     <LoggedSettingsProvider implementation="com.google.idea.blaze.base.settings.BlazeUserSettings$SettingsLogger"/>
+    <TargetKindProvider implementation="com.google.idea.blaze.base.model.primitives.GenericBlazeRules"/>
   </extensions>
 
 </idea-plugin>

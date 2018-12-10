@@ -17,7 +17,7 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.scala.sync.BlazeScalaSyncPlugin"/>
     <JavaLikeLanguage
-        implementation="com.google.idea.blaze.scala.sync.source.ScalaJavaLikeLanguage"/>
+        implementation="com.google.idea.blaze.scala.ScalaJavaLikeLanguage"/>
     <BlazeTestEventsHandler
         implementation="com.google.idea.blaze.scala.run.smrunner.BlazeScalaTestEventsHandler"/>
     <JavaTestCaseIdentifier

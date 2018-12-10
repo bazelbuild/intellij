@@ -62,7 +62,6 @@ import jetbrains.buildServer.messages.serviceMessages.TestSuiteStarted;
 
 /** Converts blaze test runner xml logs to smRunner events. */
 public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConverter {
-
   private static final ErrorOrFailureOrSkipped NO_ERROR = new ErrorOrFailureOrSkipped();
   private static final BoolExperiment removeZeroRunTimeCheck =
       new BoolExperiment("remove.zero.run.time.check", true);
@@ -84,17 +83,24 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   @Override
   public void flushBufferOnProcessTermination(int exitCode) {
     super.flushBufferOnProcessTermination(exitCode);
-    processAllTestResults();
+    BlazeTestResults testResults = testResultFinderStrategy.findTestResults();
+    if (testResults == null || testResults == BlazeTestResults.NO_RESULTS) {
+      BlazeTestExitStatus exitStatus = BlazeTestExitStatus.forExitCode(exitCode);
+      if (exitStatus == null) {
+        reportTestRuntimeError(
+            "Unknown Error",
+            "Test runtime terminated unexpectedly with exit code " + exitCode + ".");
+      } else {
+        reportTestRuntimeError(exitStatus.title, exitStatus.message);
+      }
+    } else {
+      processAllTestResults(testResults);
+    }
   }
 
-  private void processAllTestResults() {
+  private void processAllTestResults(BlazeTestResults testResults) {
     onStartTesting();
     getProcessor().onTestsReporterAttached();
-
-    BlazeTestResults testResults = testResultFinderStrategy.findTestResults();
-    if (testResults == null) {
-      return;
-    }
     try {
       List<ListenableFuture<ParsedTargetResults>> futures = new ArrayList<>();
       for (Label label : testResults.perTargetResults.keySet()) {
@@ -105,7 +111,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
       List<ParsedTargetResults> parsedResults =
           FuturesUtil.getIgnoringErrors(Futures.allAsList(futures));
       if (parsedResults != null) {
-        parsedResults.forEach(this::processAllTestResults);
+        parsedResults.forEach(this::processParsedTestResults);
       }
     } finally {
       testResultFinderStrategy.deleteTemporaryOutputXmlFiles();
@@ -148,8 +154,8 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
     return new ParsedTargetResults(label, results, outputFiles, targetSuites);
   }
 
-  /** Process all test XML files from a single test target. */
-  private void processAllTestResults(ParsedTargetResults parsedResults) {
+  /** Process all parsed test XML files from a single test target. */
+  private void processParsedTestResults(ParsedTargetResults parsedResults) {
     if (noUsefulOutput(parsedResults.results, parsedResults.outputFiles)) {
       Optional<TestStatus> status =
           parsedResults.results.stream().map(BlazeTestResult::getTestStatus).findFirst();
@@ -171,6 +177,15 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
             ? parsedResults.targetSuites.get(0)
             : BlazeXmlSchema.mergeSuites(parsedResults.targetSuites);
     processTestSuite(getProcessor(), eventsHandler, parsedResults.label, kind, suite);
+  }
+
+  /**
+   * If an error occurred when running the test the user should be informed with sensible error
+   * messages to help them decide what to do next. (e.g. re-run the test?)
+   */
+  private void reportTestRuntimeError(String errorName, String errorMessage) {
+    GeneralTestEventsProcessor processor = getProcessor();
+    processor.onTestFailure(getTestFailedEvent(errorName, errorMessage, null, 0));
   }
 
   /** Return false if there's output XML which should be parsed. */

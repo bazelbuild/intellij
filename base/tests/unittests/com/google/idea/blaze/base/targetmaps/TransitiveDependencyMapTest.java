@@ -25,10 +25,12 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
@@ -48,6 +50,11 @@ public class TransitiveDependencyMapTest extends BlazeTestCase {
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
+    ExtensionPointImpl<Kind.Provider> ep =
+        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    ep.registerExtension(new GenericBlazeRules());
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+
     targetMap = buildTargetMap();
     projectServices.register(
         BlazeProjectDataManager.class,
@@ -194,6 +201,6 @@ public class TransitiveDependencyMapTest extends BlazeTestCase {
   }
 
   private static TargetIdeInfo.Builder mockTargetIdeInfoBuilder() {
-    return TargetIdeInfo.builder().setKind(Kind.JAVA_LIBRARY);
+    return TargetIdeInfo.builder().setKind("proto_library");
   }
 }

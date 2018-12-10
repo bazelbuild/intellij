@@ -38,9 +38,9 @@ public class BlazePackageHeuristicTest extends BlazeIntegrationTestCase {
   @Test
   public void testPredicateMatchesSamePackage() {
     workspace.createFile(new WorkspacePath("foo/BUILD"));
-    VirtualFile testSource = workspace.createFile(new WorkspacePath("foo/com/foo/FooTest.java"));
+    VirtualFile testSource = workspace.createFile(new WorkspacePath("foo/com/foo/test.sh"));
     TargetInfo target =
-        TargetIdeInfo.builder().setLabel("//foo:test").setKind("java_test").build().toTargetInfo();
+        TargetIdeInfo.builder().setLabel("//foo:test").setKind("sh_test").build().toTargetInfo();
 
     assertThat(
             new BlazePackageHeuristic()
@@ -51,9 +51,9 @@ public class BlazePackageHeuristicTest extends BlazeIntegrationTestCase {
   @Test
   public void testPredicateDoesNotMatchDifferentPackage() {
     workspace.createFile(new WorkspacePath("foo/BUILD"));
-    VirtualFile testSource = workspace.createFile(new WorkspacePath("foo/com/foo/FooTest.java"));
+    VirtualFile testSource = workspace.createFile(new WorkspacePath("foo/com/foo/test.sh"));
     TargetInfo target =
-        TargetIdeInfo.builder().setLabel("//bar:test").setKind("java_test").build().toTargetInfo();
+        TargetIdeInfo.builder().setLabel("//bar:test").setKind("sh_test").build().toTargetInfo();
 
     assertThat(
             new BlazePackageHeuristic()
@@ -64,17 +64,17 @@ public class BlazePackageHeuristicTest extends BlazeIntegrationTestCase {
   @Test
   public void testChooseSourceFileFromMatchingPackage() {
     workspace.createFile(new WorkspacePath("foo/BUILD"));
-    VirtualFile testSource = workspace.createFile(new WorkspacePath("foo/com/foo/FooTest.java"));
+    VirtualFile testSource = workspace.createFile(new WorkspacePath("foo/com/foo/test.sh"));
     Collection<TargetInfo> targets =
         ImmutableList.of(
             TargetIdeInfo.builder()
                 .setLabel("//bar:test")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:test")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .build()
                 .toTargetInfo());
 

@@ -35,8 +35,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.sync.BlazeSyncParams;
-import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
+import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -83,7 +82,7 @@ public class JarCache {
       BlazeContext context,
       ProjectViewSet projectViewSet,
       BlazeProjectData projectData,
-      BlazeSyncParams.SyncMode syncMode) {
+      SyncMode syncMode) {
     Collection<BlazeLibrary> libraries =
         BlazeLibraryCollector.getLibraries(projectViewSet, projectData);
     boolean fullRefresh = syncMode == SyncMode.FULL;
@@ -235,7 +234,7 @@ public class JarCache {
         BlazeContext context,
         ProjectViewSet projectViewSet,
         BlazeProjectData projectData,
-        BlazeSyncParams.SyncMode syncMode) {
+        SyncMode syncMode) {
       getInstance(project).onSync(context, projectViewSet, projectData, syncMode);
     }
 

@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.base.sync.status;
 
-import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
-import com.google.idea.blaze.base.sync.SyncListener.SyncResult;
+import com.google.idea.blaze.base.sync.SyncMode;
+import com.google.idea.blaze.base.sync.SyncResult;
 import com.intellij.openapi.project.Project;
 import java.util.concurrent.atomic.AtomicBoolean;
 

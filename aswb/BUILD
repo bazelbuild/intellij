@@ -91,8 +91,10 @@ java_library(
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
+        "//cpp",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "//java",
         "//testing:lib",
         "@junit//jar",
     ],
@@ -234,10 +236,17 @@ repackaged_files(
     strip_prefix = "/aspect",
 )
 
+repackaged_files(
+    name = "fast_build_javac",
+    srcs = ["//java:fast_build_javac"],
+    prefix = "aswb/lib",
+)
+
 intellij_plugin_debug_target(
     name = "aswb_bazel_dev",
     deps = [
         ":aspect_directory",
+        ":fast_build_javac",
         ":plugin_jar",
     ],
 )
@@ -246,6 +255,7 @@ plugin_deploy_zip(
     name = "aswb_bazel_zip",
     srcs = [
         ":aspect_directory",
+        ":fast_build_javac",
         ":plugin_jar",
     ],
     zip_filename = "aswb_bazel.zip",

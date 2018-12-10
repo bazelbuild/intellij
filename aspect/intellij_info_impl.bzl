@@ -161,6 +161,10 @@ def get_aspect_ids(ctx, target):
         return None
     return [aspect_id for aspect_id in aspect_ids if "intellij_info_aspect" not in aspect_id]
 
+def _is_language_specific_proto_library(target):
+    """Returns True if the proto library is specific to a single language."""
+    return hasattr(target, "proto_java") or hasattr(target, "aspect_proto_go_api_info")
+
 def make_target_key(label, aspect_ids):
     """Returns a TargetKey proto struct from a target."""
     return struct_omit_none(
@@ -194,7 +198,7 @@ def update_set_in_dict(input_dict, key, other_set):
 
 def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates Python-specific output groups, returns false if not a Python target."""
-    if not hasattr(target, "py"):
+    if not hasattr(target, "py") or _is_language_specific_proto_library(target):
         return False
 
     py_semantics = getattr(semantics, "py", None)
@@ -291,7 +295,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
 
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates C++-specific output groups, returns false if not a C++ target."""
-    if not hasattr(target, "cc"):
+    if not hasattr(target, "cc") or _is_language_specific_proto_library(target):
         return False
 
     sources = artifacts_from_target_list_attr(ctx, "srcs")

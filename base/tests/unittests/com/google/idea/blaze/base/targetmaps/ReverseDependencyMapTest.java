@@ -25,7 +25,11 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
+import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Kind.Provider;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +42,10 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
   protected void initTest(
       @NotNull Container applicationServices, @NotNull Container projectServices) {
     super.initTest(applicationServices, projectServices);
+    ExtensionPointImpl<Provider> kindProvider =
+        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    kindProvider.registerExtension(new GenericBlazeRules());
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
   }
 
   @Test
@@ -49,13 +57,13 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//l:l1")
-                    .setKind("java_library")
+                    .setKind("proto_library")
                     .addDependency("//l:l2"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//l:l2")
-                    .setKind("java_library"))
+                    .setKind("proto_library"))
             .build();
 
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
@@ -76,19 +84,19 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//l:l1")
-                    .setKind("java_library")
+                    .setKind("proto_library")
                     .addDependency("//l:l2")
                     .addDependency("//l:l3"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//l:l2")
-                    .setKind("java_library"))
+                    .setKind("proto_library"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//l:l3")
-                    .setKind("java_library"))
+                    .setKind("proto_library"))
             .build();
 
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
@@ -113,19 +121,19 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//l:l1")
-                    .setKind("java_library")
+                    .setKind("proto_library")
                     .addDependency("//l:l3"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//l:l2")
                     .addDependency("//l:l3")
-                    .setKind("java_library"))
+                    .setKind("proto_library"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//l:l3")
-                    .setKind("java_library"))
+                    .setKind("proto_library"))
             .build();
 
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =
@@ -150,31 +158,31 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//l:l1")
-                    .setKind("java_library")
+                    .setKind("proto_library")
                     .addDependency("//l:l3"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//l:l2")
                     .addDependency("//l:l3")
-                    .setKind("java_library"))
+                    .setKind("proto_library"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//l:l3")
-                    .setKind("java_library"))
+                    .setKind("proto_library"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//l:l4")
                     .addDependency("//l:l3")
-                    .setKind("java_library"))
+                    .setKind("proto_library"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//l:l5")
                     .addDependency("//l:l4")
-                    .setKind("java_library"))
+                    .setKind("proto_library"))
             .build();
 
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencies =

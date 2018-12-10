@@ -15,174 +15,160 @@
  */
 package com.google.idea.blaze.base.model.primitives;
 
-import com.google.common.collect.ImmutableCollection;
-import com.google.common.collect.ImmutableMap;
+import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
-import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
-/** Wrapper around a string for a blaze kind (android_library, android_test...) */
-public enum Kind implements ProtoWrapper<String> {
-  ANDROID_BINARY("android_binary", LanguageClass.ANDROID, RuleType.BINARY),
-  ANDROID_LIBRARY("android_library", LanguageClass.ANDROID, RuleType.LIBRARY),
-  ANDROID_TEST("android_test", LanguageClass.ANDROID, RuleType.TEST),
-  ANDROID_ROBOLECTRIC_TEST("android_robolectric_test", LanguageClass.ANDROID, RuleType.TEST),
-  ANDROID_LOCAL_TEST("android_local_test", LanguageClass.ANDROID, RuleType.TEST),
-  ANDROID_INSTRUMENTATION_TEST(
-      "android_instrumentation_test", LanguageClass.ANDROID, RuleType.TEST),
-  ANDROID_SDK("android_sdk", LanguageClass.ANDROID, RuleType.UNKNOWN),
-  AAR_IMPORT("aar_import", LanguageClass.ANDROID, RuleType.UNKNOWN),
-  JAVA_LIBRARY("java_library", LanguageClass.JAVA, RuleType.LIBRARY),
-  JAVA_TEST("java_test", LanguageClass.JAVA, RuleType.TEST),
-  JAVA_BINARY("java_binary", LanguageClass.JAVA, RuleType.BINARY),
-  JAVA_IMPORT("java_import", LanguageClass.JAVA, RuleType.UNKNOWN),
-  JAVA_TOOLCHAIN("java_toolchain", LanguageClass.JAVA, RuleType.UNKNOWN),
-  JAVA_PROTO_LIBRARY("java_proto_library", LanguageClass.JAVA, RuleType.LIBRARY),
-  JAVA_LITE_PROTO_LIBRARY("java_lite_proto_library", LanguageClass.JAVA, RuleType.LIBRARY),
-  JAVA_MUTABLE_PROTO_LIBRARY("java_mutable_proto_library", LanguageClass.JAVA, RuleType.LIBRARY),
-  JAVA_PLUGIN("java_plugin", LanguageClass.JAVA, RuleType.UNKNOWN),
-  PROTO_LIBRARY("proto_library", LanguageClass.GENERIC, RuleType.LIBRARY),
-  ANDROID_RESOURCES("android_resources", LanguageClass.ANDROID, RuleType.UNKNOWN),
-  CC_LIBRARY("cc_library", LanguageClass.C, RuleType.LIBRARY),
-  CC_BINARY("cc_binary", LanguageClass.C, RuleType.BINARY),
-  CC_TEST("cc_test", LanguageClass.C, RuleType.TEST),
-  CC_INC_LIBRARY("cc_inc_library", LanguageClass.C, RuleType.LIBRARY),
-  CC_TOOLCHAIN("cc_toolchain", LanguageClass.C, RuleType.UNKNOWN),
-  CC_TOOLCHAIN_SUITE("cc_toolchain_suite", LanguageClass.C, RuleType.UNKNOWN),
-  JAVA_WRAP_CC("java_wrap_cc", LanguageClass.JAVA, RuleType.UNKNOWN),
-  GWT_APPLICATION("gwt_application", LanguageClass.JAVA, RuleType.UNKNOWN),
-  GWT_HOST("gwt_host", LanguageClass.JAVA, RuleType.UNKNOWN),
-  GWT_MODULE("gwt_module", LanguageClass.JAVA, RuleType.UNKNOWN),
-  GWT_TEST("gwt_test", LanguageClass.JAVA, RuleType.TEST),
-  TEST_SUITE("test_suite", LanguageClass.GENERIC, RuleType.TEST),
-  PY_LIBRARY("py_library", LanguageClass.PYTHON, RuleType.LIBRARY),
-  PY_BINARY("py_binary", LanguageClass.PYTHON, RuleType.BINARY),
-  PY_TEST("py_test", LanguageClass.PYTHON, RuleType.TEST),
-  PY_APPENGINE_BINARY("py_appengine_binary", LanguageClass.PYTHON, RuleType.BINARY),
-  PY_WRAP_CC("py_wrap_cc", LanguageClass.PYTHON, RuleType.UNKNOWN),
-  GO_TEST("go_test", LanguageClass.GO, RuleType.TEST),
-  GO_APPENGINE_TEST("go_appengine_test", LanguageClass.GO, RuleType.TEST),
-  GO_BINARY("go_binary", LanguageClass.GO, RuleType.BINARY),
-  GO_APPENGINE_BINARY("go_appengine_binary", LanguageClass.GO, RuleType.BINARY),
-  GO_LIBRARY("go_library", LanguageClass.GO, RuleType.LIBRARY),
-  GO_APPENGINE_LIBRARY("go_appengine_library", LanguageClass.GO, RuleType.LIBRARY),
-  GO_PROTO_LIBRARY("go_proto_library", LanguageClass.GO, RuleType.LIBRARY),
-  GO_WRAP_CC("go_wrap_cc", LanguageClass.GO, RuleType.UNKNOWN),
-  INTELLIJ_PLUGIN_DEBUG_TARGET(
-      "intellij_plugin_debug_target", LanguageClass.JAVA, RuleType.UNKNOWN),
-  SCALA_BINARY("scala_binary", LanguageClass.SCALA, RuleType.BINARY),
-  SCALA_IMPORT("scala_import", LanguageClass.SCALA, RuleType.UNKNOWN),
-  SCALA_LIBRARY("scala_library", LanguageClass.SCALA, RuleType.LIBRARY),
-  SCALA_MACRO_LIBRARY("scala_macro_library", LanguageClass.SCALA, RuleType.LIBRARY),
-  SCALA_TEST("scala_test", LanguageClass.SCALA, RuleType.TEST),
-  SCALA_JUNIT_TEST("scala_junit_test", LanguageClass.SCALA, RuleType.TEST),
-  SH_TEST("sh_test", LanguageClass.GENERIC, RuleType.TEST),
-  SH_LIBRARY("sh_library", LanguageClass.GENERIC, RuleType.LIBRARY),
-  SH_BINARY("sh_binary", LanguageClass.GENERIC, RuleType.BINARY),
-  JS_BINARY("js_binary", LanguageClass.JAVASCRIPT, RuleType.BINARY),
-  JS_MODULE_BINARY("js_module_binary", LanguageClass.JAVASCRIPT, RuleType.BINARY),
-  JS_LIBRARY("js_library", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
-  JS_UNIT_TEST("jsunit_test", LanguageClass.JAVASCRIPT, RuleType.TEST),
-  JS_PUPPET_TEST("js_puppet_test", LanguageClass.JAVASCRIPT, RuleType.TEST),
-  JSPB_PROTO_LIBRARY("jspb_proto_library", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
-  PINTO_LIBRARY("pinto_library", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
-  PINTO_LIBRARY_MOD("pinto_library_mod", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
-  PINTO_MODULE("pinto_module", LanguageClass.JAVASCRIPT, RuleType.UNKNOWN),
-  NG_MODULE("ng_module", LanguageClass.TYPESCRIPT, RuleType.LIBRARY),
-  NODEJS_BINARY("_nodejs_binary", LanguageClass.JAVASCRIPT, RuleType.BINARY),
-  NODEJS_MODULE("_nodejs_module", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
-  NODEJS_TEST("_nodejs_test", LanguageClass.JAVASCRIPT, RuleType.TEST),
-  // not executable, despite the name
-  CHECKABLE_JS_LIB_BINARY("checkable_js_lib_binary", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
-  WEB_TEST("web_test", LanguageClass.GENERIC, RuleType.TEST),
-  TS_LIBRARY("ts_library", LanguageClass.TYPESCRIPT, RuleType.LIBRARY),
-  TS_CONFIG("ts_config", LanguageClass.TYPESCRIPT, RuleType.BINARY),
-  DART_PROTO_LIBRARY("dart_proto_library", LanguageClass.DART, RuleType.LIBRARY),
-  DART_LIBRARY("_dart_library", LanguageClass.DART, RuleType.LIBRARY),
-  DART_VM_TEST("dart_vm_test", LanguageClass.DART, RuleType.TEST),
-  KT_JVM_TOOLCHAIN("kt_jvm_toolchain", LanguageClass.KOTLIN, RuleType.UNKNOWN),
-  // TODO(brendandouglas): remove these once kotlin rules expose genjars
-  KT_JVM_LIBRARY_HELPER("kt_jvm_library_helper", LanguageClass.KOTLIN, RuleType.LIBRARY),
-  KT_ANDROID_LIBRARY_HELPER("kt_android_library_helper", LanguageClass.KOTLIN, RuleType.LIBRARY),
-  // bazel only kotlin rules:
-  KT_JVM_BINARY("kt_jvm_binary", LanguageClass.KOTLIN, RuleType.BINARY),
-  KT_JVM_TEST("kt_jvm_test", LanguageClass.KOTLIN, RuleType.TEST),
-  KT_JVM_IMPORT("kt_jvm_import", LanguageClass.KOTLIN, RuleType.UNKNOWN),
-  KOTLIN_STDLIB("kotlin_stdlib", LanguageClass.KOTLIN, RuleType.UNKNOWN),
+/**
+ * A set of recognized blaze rule names, together with {@link LanguageClass} and {@link RuleType}.
+ * Language-specific extensions can provide their own set of rule names, as well as heuristics to
+ * recognize rule names at runtime.
+ *
+ * <p>Each rule name maps to at most one Kind.
+ */
+@AutoValue
+public abstract class Kind {
 
-  // any rule exposing java_common.provider which isn't specifically recognized
-  GENERIC_JAVA_PROVIDER("generic_java", LanguageClass.JAVA, RuleType.UNKNOWN),
-  ;
+  /**
+   * Provides a set of recognized blaze rule names. Individual language-specific sub-plugins can use
+   * this EP to register rule types relevant to that language.
+   *
+   * <p>Each rule name must map to at most one Kind, across all such providers.
+   */
+  public interface Provider {
+    ExtensionPointName<Provider> EP_NAME =
+        ExtensionPointName.create("com.google.idea.blaze.TargetKindProvider");
 
-  static final ImmutableMap<String, Kind> STRING_TO_KIND = makeStringToKindMap();
+    /** A set of rule names known at compile time. */
+    ImmutableSet<Kind> getTargetKinds();
 
-  static final ImmutableMultimap<LanguageClass, Kind> PER_LANGUAGES_KINDS = makePerLanguageMap();
-
-  public static final ImmutableSet<Kind> JAVA_PROTO_LIBRARY_KINDS =
-      ImmutableSet.of(JAVA_PROTO_LIBRARY, JAVA_LITE_PROTO_LIBRARY, JAVA_MUTABLE_PROTO_LIBRARY);
-
-  private static ImmutableMap<String, Kind> makeStringToKindMap() {
-    ImmutableMap.Builder<String, Kind> result = ImmutableMap.builder();
-    for (Kind kind : Kind.values()) {
-      result.put(kind.toString(), kind);
+    /**
+     * A heuristic to identify additional target kinds at runtime which aren't known up-front. For
+     * example, any rule name starting with 'kt_jvm_' might be parsed as a kotlin rule of unknown
+     * {@link RuleType}.
+     */
+    default Function<IntellijIdeInfo.TargetIdeInfo, Kind> getTargetKindHeuristics() {
+      return t -> null;
     }
-    return result.build();
+
+    static Kind create(String ruleName, LanguageClass languageClass, RuleType ruleType) {
+      return new AutoValue_Kind(ruleName, languageClass, ruleType);
+    }
   }
 
-  private static ImmutableMultimap<LanguageClass, Kind> makePerLanguageMap() {
-    ImmutableMultimap.Builder<LanguageClass, Kind> result = ImmutableMultimap.builder();
-    for (Kind kind : Kind.values()) {
-      result.put(kind.languageClass, kind);
+  /**
+   * We cache target kinds provided by the extension points above. This state is associated with an
+   * application, so for example needs to be reset between unit test runs with manual extension
+   * point setup.
+   */
+  @VisibleForTesting
+  public static final class ApplicationState {
+    private static ApplicationState getService() {
+      return ServiceManager.getService(ApplicationState.class);
     }
-    return result.build();
+
+    /** An internal map of all known rule types. */
+    private final Map<String, Kind> stringToKind = Collections.synchronizedMap(new HashMap<>());
+
+    /** An internal map of all known rule types. */
+    private final Multimap<LanguageClass, Kind> perLanguageKinds =
+        Multimaps.synchronizedSetMultimap(HashMultimap.create());
+
+    public ApplicationState() {
+      // initialize the global state
+      Arrays.stream(Provider.EP_NAME.getExtensions())
+          .map(Provider::getTargetKinds)
+          .flatMap(Collection::stream)
+          .forEach(this::cacheIfNecessary);
+    }
+
+    /** Add the Kind instance to the global map, or returns an existing kind with this rule name. */
+    private Kind cacheIfNecessary(Kind kind) {
+      Kind existing = stringToKind.putIfAbsent(kind.getKindString(), kind);
+      if (existing != null) {
+        return existing;
+      }
+      perLanguageKinds.put(kind.getLanguageClass(), kind);
+      return kind;
+    }
   }
 
   @Nullable
-  public static Kind fromString(@Nullable String kindString) {
-    return STRING_TO_KIND.get(kindString);
+  public static Kind fromProto(IntellijIdeInfo.TargetIdeInfo proto) {
+    Kind existing = fromRuleName(proto.getKindString());
+    if (existing != null) {
+      return existing;
+    }
+    // check provided heuristics
+    Kind derived =
+        Arrays.stream(Provider.EP_NAME.getExtensions())
+            .map(p -> p.getTargetKindHeuristics().apply(proto))
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse(null);
+    if (derived != null) {
+      derived = ApplicationState.getService().cacheIfNecessary(derived);
+    }
+    return derived;
   }
 
-  public static ImmutableCollection<Kind> allKindsForLanguage(LanguageClass language) {
-    return PER_LANGUAGES_KINDS.get(language);
+  @Nullable
+  public static Kind fromRuleName(String ruleName) {
+    return ApplicationState.getService().stringToKind.get(ruleName);
   }
 
-  private final String kind;
-  public final LanguageClass languageClass;
-  public final RuleType ruleType;
+  /**
+   * Returns a per-language map of rule kinds handled by an available {@link Provider}.
+   *
+   * <p>Don't rely on this map being complete -- some rule names are recognized at runtime using
+   * heuristics.
+   */
+  public static ImmutableMultimap<LanguageClass, Kind> getPerLanguageKinds() {
+    ApplicationState state = ApplicationState.getService();
+    synchronized (state.perLanguageKinds) {
+      return ImmutableMultimap.copyOf(state.perLanguageKinds);
+    }
+  }
 
-  Kind(String kind, LanguageClass languageClass, RuleType ruleType) {
-    this.kind = kind;
-    this.languageClass = languageClass;
-    this.ruleType = ruleType;
+  public static ImmutableSet<Kind> getKindsForLanguage(LanguageClass language) {
+    return ImmutableSet.copyOf(getPerLanguageKinds().get(language));
+  }
+
+  public abstract String getKindString();
+
+  public abstract LanguageClass getLanguageClass();
+
+  public abstract RuleType getRuleType();
+
+  public boolean isOneOf(Kind... kinds) {
+    return Arrays.asList(kinds).contains(this);
   }
 
   @Override
-  public String toString() {
-    return kind;
-  }
-
-  public boolean isOneOf(Kind... kinds) {
-    return isOneOf(Arrays.asList(kinds));
-  }
-
-  public boolean isOneOf(Collection<Kind> kinds) {
-    for (Kind kind : kinds) {
-      if (this.equals(kind)) {
-        return true;
-      }
-    }
-    return false;
+  public final String toString() {
+    return getKindString();
   }
 
   /** If rule type isn't recognized, uses a heuristic to guess the rule type. */
   public static RuleType guessRuleType(String ruleName) {
-    Kind kind = fromString(ruleName);
+    Kind kind = fromRuleName(ruleName);
     if (kind != null) {
-      return kind.ruleType;
+      return kind.getRuleType();
     }
     if (isTestSuite(ruleName) || ruleName.endsWith("_test")) {
       return RuleType.TEST;
@@ -199,19 +185,5 @@ public enum Kind implements ProtoWrapper<String> {
   private static boolean isTestSuite(String ruleName) {
     // handle plain test_suite targets and macros producing a test/test_suite
     return "test_suite".equals(ruleName) || ruleName.endsWith("test_suites");
-  }
-
-  @Nullable
-  public static Kind fromProto(IntellijIdeInfo.TargetIdeInfo proto) {
-    Kind kind = Kind.fromString(proto.getKindString());
-    if (kind == null && proto.hasJavaIdeInfo()) {
-      kind = Kind.GENERIC_JAVA_PROVIDER;
-    }
-    return kind;
-  }
-
-  @Override
-  public String toProto() {
-    return kind;
   }
 }

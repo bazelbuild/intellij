@@ -39,6 +39,7 @@ import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Kind.Provider;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -56,6 +57,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.mock.MockPsiManager;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -101,6 +103,11 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         VirtualFileSystemProvider.class, mock(VirtualFileSystemProvider.class));
     when(VirtualFileSystemProvider.getInstance().getSystem()).thenReturn(mockFileSystem);
 
+    ExtensionPointImpl<Provider> ep =
+        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    ep.registerExtension(new CppBlazeRules());
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+
     projectServices.register(PsiManager.class, new MockPsiManager(project));
     projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
 
@@ -131,21 +138,21 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
             .addTarget(
                 createCcTarget(
                     "//foo/bar:one",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/one.cc"),
                     copts(),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:two",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/two.cc"),
                     copts(),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:three",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/three.cc"),
                     copts(),
                     includes()))
@@ -171,21 +178,21 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
             .addTarget(
                 createCcTarget(
                     "//foo/bar:one",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/one.cc"),
                     copts("-DSAME=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:two",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/two.cc"),
                     copts("-DSAME=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:three",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/three.cc"),
                     copts("-DDIFFERENT=1"),
                     includes()))
@@ -213,21 +220,21 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
             .addTarget(
                 createCcTarget(
                     "//foo/bar:one",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/one.cc"),
                     copts(),
                     includes("foo/same")))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:two",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/two.cc"),
                     copts(),
                     includes("foo/same")))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:three",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/three.cc"),
                     copts(),
                     includes("foo/different")))
@@ -256,28 +263,28 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         .addTarget(
             createCcTarget(
                 "//foo/bar:a",
-                Kind.CC_BINARY,
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                 sources("foo/bar/a.cc"),
                 copts("-DSAME=1"),
                 includes()))
         .addTarget(
             createCcTarget(
                 "//foo/bar:b",
-                Kind.CC_BINARY,
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                 sources("foo/bar/b.cc"),
                 copts("-DSAME=1"),
                 includes()))
         .addTarget(
             createCcTarget(
                 "//foo/bar:c",
-                Kind.CC_BINARY,
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                 sources("foo/bar/c.cc"),
                 copts("-DSAME=1"),
                 includes()))
         .addTarget(
             createCcTarget(
                 "//foo/bar:d",
-                Kind.CC_BINARY,
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                 sources("foo/bar/d.cc"),
                 copts("-DDIFFERENT=1"),
                 includes()))
@@ -381,7 +388,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         targetMapBuilder.addTarget(
             createCcTarget(
                 String.format("//foo/bar:%s", target),
-                Kind.CC_BINARY,
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                 sources(String.format("foo/bar/%s.cc", target)),
                 copts("-DDIFFERENT=1"),
                 includes()));
@@ -389,7 +396,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         targetMapBuilder.addTarget(
             createCcTarget(
                 String.format("//foo/bar:%s", target),
-                Kind.CC_BINARY,
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                 sources(String.format("foo/bar/%s.cc", target)),
                 copts("-DSAME=1"),
                 includes()));
@@ -398,7 +405,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     targetMapBuilder.addTarget(
         createCcTarget(
             "//foo/bar:d",
-            Kind.CC_BINARY,
+            CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
             sources("foo/bar/d.cc"),
             copts("-DDIFFERENT=1"),
             includes()));
@@ -425,28 +432,28 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
             .addTarget(
                 createCcTarget(
                     "//foo/bar:a",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/a.cc"),
                     copts("-DCHANGED=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:b",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/b.cc"),
                     copts("-DCHANGED=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:c",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/c.cc"),
                     copts("-DCHANGED=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:d",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/d.cc"),
                     copts("-DDIFFERENT=1"),
                     includes()))
@@ -476,28 +483,28 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
             .addTarget(
                 createCcTarget(
                     "//foo/bar:a",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/a.cc"),
                     copts("-DSAME=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:b",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/b.cc"),
                     copts("-DSAME=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:c",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/c.cc"),
                     copts("-DSAME=1"),
                     includes()))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:d",
-                    Kind.CC_BINARY,
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     sources("foo/bar/d.cc"),
                     copts("-DSAME=1"),
                     includes()))
@@ -542,7 +549,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   private static TargetIdeInfo.Builder createCcToolchain() {
     return TargetIdeInfo.builder()
         .setLabel("//:toolchain")
-        .setKind(Kind.CC_TOOLCHAIN)
+        .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
         .setCToolchainInfo(
             CToolchainIdeInfo.builder().setCppExecutable(new ExecutionRootPath("cc")));
   }

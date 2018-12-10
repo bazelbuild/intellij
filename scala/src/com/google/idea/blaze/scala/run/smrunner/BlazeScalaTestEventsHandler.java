@@ -18,6 +18,8 @@ package com.google.idea.blaze.scala.run.smrunner;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.scala.run.Specs2Utils;
@@ -35,7 +37,9 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinitio
 public class BlazeScalaTestEventsHandler implements BlazeTestEventsHandler {
   @Override
   public boolean handlesKind(@Nullable Kind kind) {
-    return kind == Kind.SCALA_JUNIT_TEST;
+    return kind != null
+        && kind.getLanguageClass().equals(LanguageClass.KOTLIN)
+        && kind.getRuleType().equals(RuleType.TEST);
   }
 
   @Override

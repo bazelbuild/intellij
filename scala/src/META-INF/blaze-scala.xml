@@ -16,5 +16,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.scala.sync.AlwaysPresentScalaSyncPlugin"/>
+    <TargetKindProvider implementation="com.google.idea.blaze.scala.ScalaBlazeRules"/>
   </extensions>
 </idea-plugin>

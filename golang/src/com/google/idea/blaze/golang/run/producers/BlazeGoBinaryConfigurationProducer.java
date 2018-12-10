@@ -117,8 +117,8 @@ public class BlazeGoBinaryConfigurationProducer
     return SourceToTargetMap.getInstance(psiFile.getProject()).getRulesForSourceFile(file).stream()
         .map(projectData.getTargetMap()::get)
         .filter(Objects::nonNull)
-        .filter(t -> t.getKind().languageClass.equals(LanguageClass.GO))
-        .filter(t -> t.getKind().ruleType.equals(RuleType.BINARY))
+        .filter(t -> t.getKind().getLanguageClass().equals(LanguageClass.GO))
+        .filter(t -> t.getKind().getRuleType().equals(RuleType.BINARY))
         .map(TargetIdeInfo::toTargetInfo)
         .findFirst()
         .orElse(null);

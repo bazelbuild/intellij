@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
+import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags;
 import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags.JUnitVersion;
 import com.intellij.execution.Location;
@@ -42,7 +43,10 @@ public class BlazeAndroidTestEventsHandler implements BlazeTestEventsHandler {
 
   @Override
   public boolean handlesKind(@Nullable Kind kind) {
-    return kind != null && kind.isOneOf(Kind.ANDROID_TEST, Kind.ANDROID_INSTRUMENTATION_TEST);
+    return kind != null
+        && kind.isOneOf(
+            AndroidBlazeRules.RuleTypes.ANDROID_TEST.getKind(),
+            AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind());
   }
 
   @Override

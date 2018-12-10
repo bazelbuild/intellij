@@ -15,8 +15,11 @@
  */
 package com.google.idea.blaze.base.ide;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Kind.Provider;
 import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.ide.IdeBundle;
@@ -26,6 +29,9 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Set;
 import javax.annotation.Nullable;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
@@ -33,26 +39,26 @@ import javax.swing.event.DocumentEvent;
 final class NewRuleUI {
 
   private static final ImmutableSet<Kind> HANDLED_RULES =
-      ImmutableSet.of(
-          Kind.ANDROID_LIBRARY,
-          Kind.JAVA_LIBRARY,
-          Kind.CC_LIBRARY,
-          Kind.CC_BINARY,
-          Kind.PROTO_LIBRARY);
+      Arrays.stream(Provider.EP_NAME.getExtensions())
+          .map(Provider::getTargetKinds)
+          .flatMap(Set::stream)
+          .sorted(Comparator.comparing(Kind::getKindString))
+          .collect(toImmutableSet());
 
   private static final String LAST_SELECTED_KIND = "Blaze.Rule.Kind";
 
-  private final ComboBox ruleComboBox = new ComboBox(HANDLED_RULES.toArray(new Kind[0]));
+  private final ComboBox<Kind> ruleComboBox;
   private final JBLabel ruleNameLabel = new JBLabel("Rule name:");
   private final JBTextField ruleNameField;
 
   private boolean ruleNameEditedByUser = false;
 
   public NewRuleUI(int textFieldLength) {
+    this.ruleComboBox = new ComboBox<>(HANDLED_RULES.toArray(new Kind[0]));
     this.ruleNameField = new JBTextField(textFieldLength);
     Kind lastValue =
-        Kind.fromString(PropertiesComponent.getInstance().getValue(LAST_SELECTED_KIND));
-    if (HANDLED_RULES.contains(lastValue)) {
+        Kind.fromRuleName(PropertiesComponent.getInstance().getValue(LAST_SELECTED_KIND));
+    if (lastValue != null && HANDLED_RULES.contains(lastValue)) {
       ruleComboBox.setSelectedItem(lastValue);
     }
   }

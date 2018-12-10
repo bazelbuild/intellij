@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.aspect;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ImmutableList;
@@ -53,6 +54,18 @@ public abstract class IntellijAspectTest {
     try (InputStream inputStream = new FileInputStream(runfilesPath)) {
       return IntellijAspectTestFixture.parseFrom(inputStream);
     }
+  }
+
+  /** Finds all instances of the given target, regardless of which aspects are attached. */
+  protected ImmutableList<TargetIdeInfo> findAllTargetsWithLabel(
+      IntellijAspectTestFixture testFixture, String maybeRelativeLabel) {
+    String label =
+        isAbsoluteTarget(maybeRelativeLabel)
+            ? maybeRelativeLabel
+            : testRelative(maybeRelativeLabel);
+    return testFixture.getTargetsList().stream()
+        .filter(t -> t.hasKey() && t.getKey().getLabel().equals(label))
+        .collect(toImmutableList());
   }
 
   protected TargetIdeInfo findTarget(
@@ -124,10 +137,17 @@ public abstract class IntellijAspectTest {
     if (!targetKey.getLabel().equals(label)) {
       return false;
     }
+    return targetHasMatchingAspects(target, fractionalAspectIds);
+  }
+
+  protected static boolean targetHasMatchingAspects(
+      TargetIdeInfo target, String... fractionalAspectIds) {
+    if (!target.hasKey()) {
+      return false;
+    }
+    TargetKey targetKey = target.getKey();
     for (String fractionalAspectId : fractionalAspectIds) {
-      if (targetKey
-          .getAspectIdsList()
-          .stream()
+      if (targetKey.getAspectIdsList().stream()
           .noneMatch(aspectId -> aspectId.contains(fractionalAspectId))) {
         return false;
       }

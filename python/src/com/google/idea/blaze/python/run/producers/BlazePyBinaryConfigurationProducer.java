@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
@@ -128,7 +129,9 @@ public class BlazePyBinaryConfigurationProducer
 
   private static boolean acceptTarget(String fileName, TargetInfo target) {
     Kind kind = target.getKind();
-    if (kind == null || !(kind.isOneOf(Kind.PY_BINARY, Kind.PY_APPENGINE_BINARY))) {
+    if (kind == null
+        || !kind.getLanguageClass().equals(LanguageClass.PYTHON)
+        || !kind.getRuleType().equals(RuleType.BINARY)) {
       return false;
     }
     // The 'main' attribute isn't exposed, so only suggest a binary if the name matches

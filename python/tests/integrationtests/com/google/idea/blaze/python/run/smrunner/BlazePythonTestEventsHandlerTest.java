@@ -136,7 +136,7 @@ public class BlazePythonTestEventsHandlerTest extends BlazeIntegrationTestCase {
     String testName =
         handler.testDisplayName(
             Label.create("//lib:app_unittest"),
-            Kind.PY_TEST,
+            Kind.fromRuleName("py_test"),
             "__main__.PythonModule.testDisplayName");
     assertThat(testName).isEqualTo("testDisplayName");
   }
@@ -145,7 +145,9 @@ public class BlazePythonTestEventsHandlerTest extends BlazeIntegrationTestCase {
   public void testDisplayNameParameterizedTest() {
     String testName =
         handler.testDisplayName(
-            Label.create("//lib:app_unittest"), Kind.PY_TEST, "testParameterized(1, 2, 3)");
+            Label.create("//lib:app_unittest"),
+            Kind.fromRuleName("py_test"),
+            "testParameterized(1, 2, 3)");
     assertThat(testName).isEqualTo("testParameterized(1, 2, 3)");
   }
 
@@ -153,7 +155,9 @@ public class BlazePythonTestEventsHandlerTest extends BlazeIntegrationTestCase {
   public void testDisplayNameParameterizedTestWithDot() {
     String testName =
         handler.testDisplayName(
-            Label.create("//lib:app_unittest"), Kind.PY_TEST, "testParameterized('file.txt')");
+            Label.create("//lib:app_unittest"),
+            Kind.fromRuleName("py_test"),
+            "testParameterized('file.txt')");
     assertThat(testName).isEqualTo("testParameterized('file.txt')");
   }
 
@@ -161,7 +165,9 @@ public class BlazePythonTestEventsHandlerTest extends BlazeIntegrationTestCase {
   public void testDisplayNameFallback() {
     String testName =
         handler.testDisplayName(
-            Label.create("//lib:app_unittest"), Kind.PY_TEST, "testWithNoDotOrBracket");
+            Label.create("//lib:app_unittest"),
+            Kind.fromRuleName("py_test"),
+            "testWithNoDotOrBracket");
     assertThat(testName).isEqualTo("testWithNoDotOrBracket");
   }
 }

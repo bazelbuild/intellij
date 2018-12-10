@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncListener;
+import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -69,7 +70,7 @@ public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
                   + " Use ProjectSystemSyncManager.isSyncInProgress to detect this scenario."));
     } else {
       BlazeSyncParams syncParams =
-          new BlazeSyncParams.Builder("Sync", BlazeSyncParams.SyncMode.INCREMENTAL)
+          new BlazeSyncParams.Builder("Sync", SyncMode.INCREMENTAL)
               .addProjectViewTargets(true)
               .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
               .setBackgroundSync(true)
@@ -101,7 +102,8 @@ public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
   }
 
   @Contract(pure = true)
-  private static SyncResult convertToProjectSystemSyncResult(SyncListener.SyncResult syncResult) {
+  private static SyncResult convertToProjectSystemSyncResult(
+      com.google.idea.blaze.base.sync.SyncResult syncResult) {
     switch (syncResult) {
       case SUCCESS:
         return SyncResult.SUCCESS;
@@ -126,13 +128,14 @@ public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
     public void afterSync(
         Project project,
         BlazeContext context,
-        BlazeSyncParams.SyncMode syncMode,
-        SyncResult syncResult) {
+        SyncMode syncMode,
+        com.google.idea.blaze.base.sync.SyncResult syncResult) {
 
       LastSyncResultCache lastSyncResultCache = LastSyncResultCache.getInstance(project);
 
       lastSyncResultCache.lastSyncResult =
-          (syncMode == BlazeSyncParams.SyncMode.STARTUP && syncResult == SyncResult.SUCCESS)
+          (syncMode == SyncMode.STARTUP
+                  && syncResult == com.google.idea.blaze.base.sync.SyncResult.SUCCESS)
               ? ProjectSystemSyncManager.SyncResult.SKIPPED_OUT_OF_DATE
               : convertToProjectSystemSyncResult(syncResult);
 

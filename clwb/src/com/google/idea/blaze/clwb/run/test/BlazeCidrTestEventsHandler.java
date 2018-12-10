@@ -18,6 +18,8 @@ package com.google.idea.blaze.clwb.run.test;
 import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
@@ -31,7 +33,9 @@ public class BlazeCidrTestEventsHandler implements BlazeTestEventsHandler {
 
   @Override
   public boolean handlesKind(@Nullable Kind kind) {
-    return kind == Kind.CC_TEST;
+    return kind != null
+        && kind.getLanguageClass().equals(LanguageClass.C)
+        && kind.getRuleType().equals(RuleType.TEST);
   }
 
   @Override

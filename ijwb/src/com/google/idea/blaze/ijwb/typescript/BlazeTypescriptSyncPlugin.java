@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -46,8 +47,8 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
@@ -133,10 +134,12 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
           List<File> tsconfigs = new ArrayList<>();
           List<File> runfiles = new ArrayList<>();
           for (Label target : tsConfigTargets) {
-            if (runTsConfigTarget(project, childContext, workspaceRoot, projectViewSet, target)
+            File tsconfig =
+                new File(workspaceRoot.fileForPath(target.blazePackage()), "tsconfig.json");
+            if (syncTsConfigTarget(
+                    project, childContext, workspaceRoot, projectViewSet, target, tsconfig)
                 == 0) {
-              tsconfigs.add(
-                  new File(workspaceRoot.fileForPath(target.blazePackage()), "tsconfig.json"));
+              tsconfigs.add(tsconfig);
               File blazeBin =
                   new File(blazeInfo.getBlazeBinDirectory(), target.blazePackage().relativePath());
               runfiles.add(new File(blazeBin, target.targetName() + ".runfiles"));
@@ -157,23 +160,36 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
         });
   }
 
-  private static int runTsConfigTarget(
+  private static int syncTsConfigTarget(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
-      Label target) {
+      Label target,
+      File tsconfig) {
+    String binaryPath;
+    BlazeCommandName commandName;
+    // One could "run" or "build" a tsconfig target.
+    // * "run" is considered first time setup (creates a "tsconfig.json" in source tree,
+    //   which refers to a separate "tsconfig_editor.json" in blaze-bin).
+    // * "build" is sufficient when the "tsconfig.json" in source tree already exists. It builds
+    //   any dependencies like generated .ts files, and updates the "tsconfig_editor.json"
+    //   in blaze-bin to refer to those dependencies. "tsconfig.json" will be untouched, but
+    //   continues to refer to the"tsconfig_editor.json" in blaze-bin that was already set up.
+    if (FileOperationProvider.getInstance().exists(tsconfig)) {
+      binaryPath = Blaze.getBuildSystemProvider(project).getSyncBinaryPath(project);
+      commandName = BlazeCommandName.BUILD;
+    } else {
+      // Sync binary is not be compatible with "run" if sync'ing with BuildRabbit.
+      binaryPath = Blaze.getBuildSystemProvider(project).getBinaryPath(project);
+      commandName = BlazeCommandName.RUN;
+    }
     BlazeCommand command =
-        BlazeCommand.builder(
-                Blaze.getBuildSystemProvider(project).getSyncBinaryPath(project),
-                BlazeCommandName.RUN)
+        BlazeCommand.builder(binaryPath, commandName)
             .addTargets(target)
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(
-                    project,
-                    projectViewSet,
-                    BlazeCommandName.RUN,
-                    BlazeInvocationContext.SYNC_CONTEXT))
+                    project, projectViewSet, commandName, BlazeInvocationContext.SYNC_CONTEXT))
             .build();
     return ExternalTask.builder(workspaceRoot)
         .addBlazeCommand(command)

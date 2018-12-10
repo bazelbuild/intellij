@@ -19,4 +19,9 @@
       <implementation-class>com.google.idea.blaze.java.plugin.JUnitPluginDependencyWarning</implementation-class>
     </component>
   </application-components>
+
+  <extensions defaultExtensionNs="com.google.idea.blaze">
+    <TargetKindProvider implementation="com.google.idea.blaze.java.JavaBlazeRules"/>
+    <TargetKindProvider implementation="com.google.idea.blaze.java.AndroidBlazeRules"/>
+  </extensions>
 </idea-plugin>

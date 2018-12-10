@@ -92,7 +92,7 @@ public final class BuildEventProtocolOutputReader {
   @Nullable
   private static Kind parseTargetKind(String kind) {
     return kind.endsWith(" rule")
-        ? Kind.fromString(kind.substring(0, kind.length() - " rule".length()))
+        ? Kind.fromRuleName(kind.substring(0, kind.length() - " rule".length()))
         : null;
   }
 

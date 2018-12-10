@@ -19,12 +19,14 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.blaze.cpp.CppBlazeRules;
 
 /** Utility methods for CLion run configurations */
 public class RunConfigurationUtils {
 
   static boolean canUseClionHandler(Kind kind) {
-    return kind == Kind.CC_TEST || kind == Kind.CC_BINARY;
+    return kind == CppBlazeRules.RuleTypes.CC_TEST.getKind()
+        || kind == CppBlazeRules.RuleTypes.CC_BINARY.getKind();
   }
 
   static boolean canUseClionRunner(BlazeCommandRunConfiguration config) {
@@ -37,7 +39,9 @@ public class RunConfigurationUtils {
     BlazeCommandName command = handlerState.getCommandState().getCommand();
     return kind != null
         && command != null
-        && ((kind == Kind.CC_TEST && command.equals(BlazeCommandName.TEST))
-            || (kind == Kind.CC_BINARY && command.equals(BlazeCommandName.RUN)));
+        && ((kind == CppBlazeRules.RuleTypes.CC_TEST.getKind()
+                && command.equals(BlazeCommandName.TEST))
+            || (kind == CppBlazeRules.RuleTypes.CC_BINARY.getKind()
+                && command.equals(BlazeCommandName.RUN)));
   }
 }

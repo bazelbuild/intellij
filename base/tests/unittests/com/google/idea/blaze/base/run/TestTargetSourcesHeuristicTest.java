@@ -25,6 +25,8 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -52,13 +54,18 @@ public class TestTargetSourcesHeuristicTest extends BlazeTestCase {
     ExtensionPointImpl<TestTargetHeuristic> ep =
         registerExtensionPoint(TestTargetHeuristic.EP_NAME, TestTargetHeuristic.class);
     ep.registerExtension(new TestTargetSourcesHeuristic());
+
+    ExtensionPointImpl<Kind.Provider> kindProvider =
+        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    kindProvider.registerExtension(new GenericBlazeRules());
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
   }
 
   @Test
   public void testPredicateNoSources() {
     File source = workspaceRoot.fileForPath(new WorkspacePath("java/com/foo/FooTest.java"));
     TargetInfo target =
-        TargetIdeInfo.builder().setLabel("//foo:test").setKind("java_test").build().toTargetInfo();
+        TargetIdeInfo.builder().setLabel("//foo:test").setKind("sh_test").build().toTargetInfo();
     assertThat(new TestTargetSourcesHeuristic().matchesSource(project, target, null, source, null))
         .isFalse();
   }
@@ -69,7 +76,7 @@ public class TestTargetSourcesHeuristicTest extends BlazeTestCase {
     TargetInfo target =
         TargetIdeInfo.builder()
             .setLabel("//foo:test")
-            .setKind("java_test")
+            .setKind("sh_test")
             .addSource(sourceRoot("java/com/bar/OtherTest.java"))
             .build()
             .toTargetInfo();
@@ -83,7 +90,7 @@ public class TestTargetSourcesHeuristicTest extends BlazeTestCase {
     TargetInfo target =
         TargetIdeInfo.builder()
             .setLabel("//foo:test")
-            .setKind("java_test")
+            .setKind("sh_test")
             .addSource(sourceRoot("java/com/bar/OtherTest.java"))
             .addSource(sourceRoot("java/com/foo/FooTest.java"))
             .build()
@@ -99,13 +106,13 @@ public class TestTargetSourcesHeuristicTest extends BlazeTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder()
                 .setLabel("//foo:test1")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .addSource(sourceRoot("java/com/bar/OtherTest.java"))
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:test2")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .build()
                 .toTargetInfo());
     TargetInfo match =
@@ -120,13 +127,13 @@ public class TestTargetSourcesHeuristicTest extends BlazeTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder()
                 .setLabel("//foo:test1")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .addSource(sourceRoot("java/com/bar/OtherTest.java"))
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:test2")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .addSource(sourceRoot("java/com/foo/FooTest.java"))
                 .build()
                 .toTargetInfo());

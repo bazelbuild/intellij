@@ -25,7 +25,7 @@ import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.ProjectViewEdit;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
+import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.WorkspacePathUtil;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
@@ -97,7 +98,7 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
     }
     // To start with, we whitelist only library rules
     // It makes no sense to add directories for java_imports and the like
-    if (!target.getKind().isOneOf(Kind.JAVA_LIBRARY, Kind.ANDROID_LIBRARY, Kind.PROTO_LIBRARY)) {
+    if (!target.getKind().getRuleType().equals(RuleType.LIBRARY)) {
       return null;
     }
     if (target.getBuildFile() == null) {
@@ -169,7 +170,7 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
     edit.apply();
     BlazeSyncManager.getInstance(project)
         .requestProjectSync(
-            new BlazeSyncParams.Builder("Adding Library", BlazeSyncParams.SyncMode.INCREMENTAL)
+            new BlazeSyncParams.Builder("Adding Library", SyncMode.INCREMENTAL)
                 .addProjectViewTargets(true)
                 .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
                 .build());

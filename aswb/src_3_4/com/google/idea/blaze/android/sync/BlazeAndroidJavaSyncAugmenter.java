@@ -21,8 +21,8 @@ import com.google.idea.blaze.android.sync.importer.WhitelistFilter;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
@@ -56,7 +56,9 @@ public class BlazeAndroidJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
       // Add blaze's output unless it's a top level rule.
       // In these cases the resource jar contains the entire
       // transitive closure of R classes. It's unlikely this is wanted to resolve in the IDE.
-      boolean discardResourceJar = target.kindIsOneOf(Kind.ANDROID_BINARY, Kind.ANDROID_TEST);
+      boolean discardResourceJar =
+          target.getKind().getRuleType() == RuleType.TEST
+              || target.getKind().getRuleType() == RuleType.BINARY;
       if (!discardResourceJar) {
         LibraryArtifact resourceJar = androidIdeInfo.getResourceJar();
         if (resourceJar != null) {

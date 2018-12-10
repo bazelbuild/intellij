@@ -97,6 +97,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//java",
+        "//proto:proto_deps",
         "//sdkcompat",
         "//third_party/javascript",
     ],
@@ -138,10 +139,17 @@ repackaged_files(
     strip_prefix = "/aspect",
 )
 
+repackaged_files(
+    name = "fast_build_javac",
+    srcs = ["//java:fast_build_javac"],
+    prefix = "ijwb/lib",
+)
+
 intellij_plugin_debug_target(
     name = "ijwb_bazel_dev",
     deps = [
         ":aspect_directory",
+        ":fast_build_javac",
         ":plugin_jar",
     ],
 )
@@ -150,6 +158,7 @@ plugin_deploy_zip(
     name = "ijwb_bazel_zip",
     srcs = [
         ":aspect_directory",
+        ":fast_build_javac",
         ":plugin_jar",
     ],
     zip_filename = "ijwb_bazel.zip",

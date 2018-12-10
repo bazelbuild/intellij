@@ -18,7 +18,6 @@ package com.google.idea.blaze.python.sync;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.plugin.PluginUtils;
@@ -66,7 +65,7 @@ public class AlwaysPresentPythonSyncPlugin implements BlazeSyncPlugin {
     boolean hasPythonTarget =
         blazeProjectData.getTargetMap().targets().stream()
             .filter(target -> importRoots.importAsSource(target.getKey().getLabel()))
-            .anyMatch(target -> target.kindIsOneOf(Kind.allKindsForLanguage(LanguageClass.PYTHON)));
+            .anyMatch(target -> target.getKind().getLanguageClass() == LanguageClass.PYTHON);
     if (!hasPythonTarget) {
       return true;
     }

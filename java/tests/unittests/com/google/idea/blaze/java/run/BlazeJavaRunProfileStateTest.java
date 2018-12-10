@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BuildFlagsProvider;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -45,6 +46,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildService;
 import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
@@ -76,6 +78,13 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     ExperimentService experimentService = new MockExperimentService();
     applicationServices.register(ExperimentService.class, experimentService);
     applicationServices.register(BlazeUserSettings.class, new BlazeUserSettings());
+
+    ExtensionPointImpl<Kind.Provider> ep =
+        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    ep.registerExtension(new GenericBlazeRules());
+    ep.registerExtension(new JavaBlazeRules());
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+
     projectServices.register(FastBuildService.class, new DisabledFastBuildService());
     projectServices.register(ProjectViewManager.class, new MockProjectViewManager());
 
@@ -178,9 +187,9 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     public Future<TargetInfo> findTarget(Project project, Label label) {
       TargetIdeInfo.Builder builder = TargetIdeInfo.builder().setLabel(label);
       if (label.targetName().toString().equals("java_binary_rule")) {
-        builder.setKind(Kind.JAVA_BINARY);
+        builder.setKind("java_binary");
       } else {
-        builder.setKind(Kind.JAVA_TEST);
+        builder.setKind("java_test");
       }
       return Futures.immediateFuture(builder.build().toTargetInfo());
     }
@@ -215,7 +224,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
     @Override
     public Future<FastBuildInfo> createBuild(
-        Label label, String blazeBinaryPath, List<String> blazeFlags) {
+        BlazeContext context, Label label, String blazeBinaryPath, List<String> blazeFlags) {
       throw new UnsupportedOperationException();
     }
 

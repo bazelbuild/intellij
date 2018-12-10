@@ -479,12 +479,12 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     if (kind == null) {
       return null;
     }
-    if (languageSettings.isLanguageActive(kind.languageClass)) {
+    if (languageSettings.isLanguageActive(kind.getLanguageClass())) {
       return TargetIdeInfo.fromProto(message);
     }
     TargetKey key = message.hasKey() ? TargetKey.fromProto(message.getKey()) : null;
     if (key != null && importRoots.importAsSource(key.getLabel())) {
-      ignoredLanguages.add(kind.languageClass);
+      ignoredLanguages.add(kind.getLanguageClass());
     }
     return null;
   }

@@ -181,7 +181,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     IntellijIdeInfo.TargetIdeInfo.Builder builder =
         IntellijIdeInfo.TargetIdeInfo.newBuilder()
             .setKey(key.toProto())
-            .setKindString(kind.toProto())
+            .setKindString(kind.getKindString())
             .addAllDeps(ProtoWrapper.mapToProtos(dependencies))
             .addAllTags(tags);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setBuildFileArtifactLocation, buildFile);
@@ -298,7 +298,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   }
 
   public TargetInfo toTargetInfo() {
-    return TargetInfo.builder(getKey().getLabel(), getKind().toString())
+    return TargetInfo.builder(getKey().getLabel(), getKind().getKindString())
         .setTestSize(getTestIdeInfo() != null ? getTestIdeInfo().getTestSize() : null)
         .setSources(ImmutableList.copyOf(getSources()))
         .build();
@@ -316,10 +316,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
 
   /** Returns whether this rule is one of the kinds. */
   public boolean kindIsOneOf(Collection<Kind> kinds) {
-    if (getKind() != null) {
-      return getKind().isOneOf(kinds);
-    }
-    return false;
+    return kinds.contains(getKind());
   }
 
   public boolean isPlainTarget() {
@@ -367,7 +364,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
 
     @VisibleForTesting
     public Builder setKind(String kindString) {
-      Kind kind = Preconditions.checkNotNull(Kind.fromString(kindString));
+      Kind kind = Preconditions.checkNotNull(Kind.fromRuleName(kindString));
       return setKind(kind);
     }
 

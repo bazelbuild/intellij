@@ -39,7 +39,6 @@ import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.SyncState;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -57,6 +56,8 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.java.AndroidBlazeRules;
+import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.sync.importer.BlazeJavaWorkspaceImporter;
 import com.google.idea.blaze.java.sync.jdeps.MockJdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
@@ -232,7 +233,7 @@ public final class BlazeImportFixture {
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(main)
-                .setKind(Kind.ANDROID_BINARY)
+                .setKind(AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind())
                 .setBuildFile(source("java/com/google/BUILD"))
                 .setJavaInfo(javaInfoWithJars("app.jar"))
                 .setAndroidInfo(
@@ -250,7 +251,7 @@ public final class BlazeImportFixture {
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(individualLibrary)
-                .setKind(Kind.ANDROID_LIBRARY)
+                .setKind(AndroidBlazeRules.RuleTypes.ANDROID_LIBRARY.getKind())
                 .setBuildFile(source("third_party/individualLibrary/BUILD"))
                 .setAndroidInfo(
                     AndroidIdeInfo.builder()
@@ -262,7 +263,7 @@ public final class BlazeImportFixture {
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(quantum)
-                .setKind(Kind.ANDROID_LIBRARY)
+                .setKind(AndroidBlazeRules.RuleTypes.ANDROID_LIBRARY.getKind())
                 .setBuildFile(source("third_party/quantum/BUILD"))
                 .setAndroidInfo(
                     AndroidIdeInfo.builder()
@@ -281,13 +282,13 @@ public final class BlazeImportFixture {
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(guava)
-                .setKind(Kind.JAVA_LIBRARY)
+                .setKind(JavaBlazeRules.RuleTypes.JAVA_LIBRARY.getKind())
                 .setJavaInfo(javaInfoWithJars("third_party/guava-21.jar")))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(aarFile)
                 .setBuildFile(source("third_party/aar/BUILD"))
-                .setKind(Kind.AAR_IMPORT)
+                .setKind(AndroidBlazeRules.RuleTypes.AAR_IMPORT.getKind())
                 .setAndroidAarInfo(new AndroidAarIdeInfo(source("third_party/aar/lib_aar.aar")))
                 .setJavaInfo(
                     javaInfoWithJars("third_party/aar/_aar/an_aar/classes_and_libs_merged.jar"))
@@ -295,7 +296,7 @@ public final class BlazeImportFixture {
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(recyclerView)
-                .setKind(Kind.ANDROID_LIBRARY)
+                .setKind(AndroidBlazeRules.RuleTypes.ANDROID_LIBRARY.getKind())
                 .setBuildFile(source("third_party/recyclerview/BUILD"))
                 .setAndroidInfo(
                     AndroidIdeInfo.builder()
@@ -306,7 +307,7 @@ public final class BlazeImportFixture {
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(intermediateDependency)
-                .setKind(Kind.ANDROID_LIBRARY)
+                .setKind(AndroidBlazeRules.RuleTypes.ANDROID_LIBRARY.getKind())
                 .setBuildFile(source("java/com/google/intermediate/BUILD"))
                 .setAndroidInfo(
                     AndroidIdeInfo.builder()
@@ -318,7 +319,7 @@ public final class BlazeImportFixture {
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(constraintLayout)
-                .setKind(Kind.ANDROID_LIBRARY)
+                .setKind(AndroidBlazeRules.RuleTypes.ANDROID_LIBRARY.getKind())
                 .setBuildFile(source("third_party/constraint_layout/BUILD"))
                 .setAndroidInfo(
                     AndroidIdeInfo.builder()

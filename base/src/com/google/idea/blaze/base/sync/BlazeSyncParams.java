@@ -24,33 +24,6 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public final class BlazeSyncParams {
 
-  /** The kind of sync. */
-  public enum SyncMode {
-    /** Happens on startup, restores in-memory state */
-    STARTUP,
-    /** Partial / working set sync */
-    PARTIAL,
-    /** This is the standard incremental sync */
-    INCREMENTAL,
-    /** Full sync, can invalidate/redo work that an incremental sync does not */
-    FULL,
-    /** A partial sync, without any blaze build (i.e. updates directories / in-memory state only) */
-    NO_BUILD;
-
-    public static boolean involvesBlazeBuild(SyncMode mode) {
-      switch (mode) {
-        case STARTUP:
-        case NO_BUILD:
-          return false;
-        case PARTIAL:
-        case INCREMENTAL:
-        case FULL:
-          return true;
-      }
-      throw new AssertionError("SyncMode not handled: " + mode);
-    }
-  }
-
   /** Builder for sync params */
   public static final class Builder {
     private String title;

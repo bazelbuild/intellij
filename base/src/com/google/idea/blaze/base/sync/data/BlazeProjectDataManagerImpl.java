@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndi
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.common.concurrency.ConcurrencyUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -91,7 +92,9 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
   public void saveProject(
       final BlazeImportSettings importSettings, final BlazeProjectData blazeProjectData) {
     this.blazeProjectData = blazeProjectData;
-
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     ProgressiveTaskWithProgressIndicator.builder(project, "Saving sync data...")
         .setExecutor(writeDataExecutor)
         .submitTask(

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.sync.aspects;
+package com.google.idea.blaze.android.sync;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -30,8 +30,12 @@ import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
+import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceAspectsImpl;
+import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.util.Collection;
 import java.util.Set;
 import org.junit.Test;
@@ -47,6 +51,10 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(ExperimentService.class, new MockExperimentService());
     applicationServices.register(FileOperationProvider.class, new FileOperationProvider());
+    ExtensionPointImpl<Kind.Provider> ep =
+        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    ep.registerExtension(new AndroidBlazeRules());
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
   }
 
   @Test
@@ -89,19 +97,19 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
             resFolderLocation(artifactLocation(quantumResFolder), quantumResRelativePath));
   }
 
-  static ArtifactLocation artifactLocation(Common.ArtifactLocation artifactLocation) {
+  private static ArtifactLocation artifactLocation(Common.ArtifactLocation artifactLocation) {
     return ArtifactLocation.builder().setRelativePath(artifactLocation.getRelativePath()).build();
   }
 
-  static Common.ArtifactLocation artifactLocation(String relativePath) {
+  private static Common.ArtifactLocation artifactLocation(String relativePath) {
     return Common.ArtifactLocation.newBuilder().setRelativePath(relativePath).build();
   }
 
-  static AndroidResFolder resFolderLocation(ArtifactLocation root, Set<String> resources) {
+  private static AndroidResFolder resFolderLocation(ArtifactLocation root, Set<String> resources) {
     return AndroidResFolder.builder().setRoot(root).addResources(resources).build();
   }
 
-  static IntellijIdeInfo.ResFolderLocation resFolderLocation(
+  private static IntellijIdeInfo.ResFolderLocation resFolderLocation(
       Common.ArtifactLocation root, Set<String> resources) {
     return IntellijIdeInfo.ResFolderLocation.newBuilder()
         .setRoot(root)

@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.sync.sharding;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.process.ExternalTask;
@@ -26,7 +25,6 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -153,7 +151,7 @@ public class WildcardTargetExpander {
     ShardedTargetList shards =
         BlazeBuildTargetSharder.shardTargets(
             allTargets, BlazeBuildTargetSharder.PACKAGE_SHARD_SIZE);
-    ImmutableSet<String> handledRuleTypes = handledRuleTypes(projectViewSet);
+    Predicate<String> handledRulesPredicate = handledRuleTypes(projectViewSet);
     ExpandedTargetsResult output = null;
     for (int i = 0; i < shards.shardedTargets.size(); i++) {
       List<TargetExpression> shard = shards.shardedTargets.get(i);
@@ -163,7 +161,7 @@ public class WildcardTargetExpander {
                   "Expanding wildcard target patterns, shard %s of %s",
                   i + 1, shards.shardedTargets.size())));
       ExpandedTargetsResult result =
-          queryIndividualTargets(project, context, workspaceRoot, handledRuleTypes, shard);
+          queryIndividualTargets(project, context, workspaceRoot, handledRulesPredicate, shard);
       output = output == null ? result : ExpandedTargetsResult.merge(output, result);
       if (output.buildResult.status == Status.FATAL_ERROR) {
         return output;
@@ -177,7 +175,7 @@ public class WildcardTargetExpander {
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
-      ImmutableSet<String> handledRuleTypes,
+      Predicate<String> handledRulesPredicate,
       List<TargetExpression> targetPatterns) {
     String query = queryString(targetPatterns);
     if (query.isEmpty()) {
@@ -198,7 +196,7 @@ public class WildcardTargetExpander {
     Predicate<RuleTypeAndLabel> filter =
         !filterByRuleType.getValue()
             ? t -> true
-            : t -> handledRuleTypes.contains(t.ruleType) || explicitTargets.contains(t.label);
+            : t -> handledRulesPredicate.test(t.ruleType) || explicitTargets.contains(t.label);
 
     int retVal =
         ExternalTask.builder(workspaceRoot)
@@ -215,13 +213,9 @@ public class WildcardTargetExpander {
     return new ExpandedTargetsResult(output.build(), buildResult);
   }
 
-  private static ImmutableSet<String> handledRuleTypes(ProjectViewSet projectViewSet) {
-    return ImmutableSet.copyOf(
-        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet)
-            .getAvailableTargetKinds()
-            .stream()
-            .map(Kind::toString)
-            .collect(Collectors.toList()));
+  private static Predicate<String> handledRuleTypes(ProjectViewSet projectViewSet) {
+    return LanguageSupport.createWorkspaceLanguageSettings(projectViewSet)
+        .getAvailableTargetKinds();
   }
 
   private static String queryString(List<TargetExpression> targets) {

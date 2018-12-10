@@ -34,8 +34,10 @@ import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManage
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
+import com.google.idea.blaze.golang.GoBlazeRules.RuleTypes;
 import com.google.idea.sdkcompat.golang.GoPackageCompatAdapter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -81,7 +83,7 @@ public class BlazeGoPackage extends GoPackageCompatAdapter {
     return create(
         project,
         importPath,
-        target.kindIsOneOf(Kind.GO_TEST, Kind.GO_APPENGINE_TEST),
+        target.getKind().getRuleType().equals(RuleType.TEST),
         replaceProtoLibrary(project, projectData, target.getKey()).getLabel(),
         getSourceFiles(target, projectData));
   }
@@ -100,13 +102,16 @@ public class BlazeGoPackage extends GoPackageCompatAdapter {
       Project project, BlazeProjectData projectData, TargetKey targetKey) {
     TargetMap targetMap = projectData.getTargetMap();
     TargetIdeInfo target = targetMap.get(targetKey);
-    if (target == null || target.getKind() != Kind.PROTO_LIBRARY) {
+    if (target == null
+        || target.getKind()
+            != com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes.PROTO_LIBRARY
+                .getKind()) {
       return targetKey;
     }
     return ReverseDependencyMap.get(project).get(targetKey).stream()
         .map(targetMap::get)
         .filter(Objects::nonNull)
-        .filter(t -> t.getKind() == Kind.GO_PROTO_LIBRARY)
+        .filter(t -> t.getKind() == RuleTypes.GO_PROTO_LIBRARY.getKind())
         .map(TargetIdeInfo::getKey)
         .findFirst()
         .orElse(targetKey);
@@ -116,31 +121,29 @@ public class BlazeGoPackage extends GoPackageCompatAdapter {
     if (target.getGoIdeInfo() == null) {
       return ImmutableSet.of();
     }
-    switch (target.getKind()) {
-      case GO_WRAP_CC:
-        return ImmutableSet.of(getWrapCcGoFile(target, projectData.getBlazeInfo()));
-      case GO_TEST:
-      case GO_APPENGINE_TEST:
-        // The go_test package also contains all the sources of the associated library.
-        // Even though it has a different (unusable) import path from the library package.
-        Label libraryLabel = target.getGoIdeInfo().getLibraryLabel();
-        TargetIdeInfo library =
-            projectData.getTargetMap().get(TargetKey.forPlainTarget(libraryLabel));
-        if (library != null
-            && !Objects.equals(library.getKey(), target.getKey())
-            && library.getGoIdeInfo() != null) {
-          return Stream.concat(
-                  target.getGoIdeInfo().getSources().stream(),
-                  library.getGoIdeInfo().getSources().stream())
-              .map(projectData.getArtifactLocationDecoder()::decode)
-              .collect(Collectors.toSet());
-        }
-        // fall through
-      default:
-        return target.getGoIdeInfo().getSources().stream()
+    Kind kind = target.getKind();
+    if (kind == RuleTypes.GO_WRAP_CC.getKind()) {
+      return ImmutableSet.of(getWrapCcGoFile(target, projectData.getBlazeInfo()));
+    }
+    if (kind.getRuleType() == RuleType.TEST) {
+      // The go_test package also contains all the sources of the associated library.
+      // Even though it has a different (unusable) import path from the library package.
+      Label libraryLabel = target.getGoIdeInfo().getLibraryLabel();
+      TargetIdeInfo library =
+          projectData.getTargetMap().get(TargetKey.forPlainTarget(libraryLabel));
+      if (library != null
+          && !Objects.equals(library.getKey(), target.getKey())
+          && library.getGoIdeInfo() != null) {
+        return Stream.concat(
+                target.getGoIdeInfo().getSources().stream(),
+                library.getGoIdeInfo().getSources().stream())
             .map(projectData.getArtifactLocationDecoder()::decode)
             .collect(Collectors.toSet());
+      }
     }
+    return target.getGoIdeInfo().getSources().stream()
+        .map(projectData.getArtifactLocationDecoder()::decode)
+        .collect(Collectors.toSet());
   }
 
   private static File getWrapCcGoFile(TargetIdeInfo target, BlazeInfo blazeInfo) {
@@ -169,13 +172,13 @@ public class BlazeGoPackage extends GoPackageCompatAdapter {
    * Package name is determined by package declaration in the source files (must all be the same).
    *
    * <ul>
-   *   <li>for {@link Kind#GO_BINARY}, it will always be {@code main}.
-   *   <li>for {@link Kind#GO_LIBRARY}, it is usually the last component of the import path (though
-   *       not at all enforced).
-   *   <li>for {@link Kind#GO_TEST} it will be the same as the {@link Kind#GO_BINARY}/{@link
-   *       Kind#GO_LIBRARY} under test, otherwise similar to a {@link Kind#GO_LIBRARY} if no test
-   *       subject is specified.
-   *   <li>for {@link Kind#GO_PROTO_LIBRARY}, it's either declared via the {@code go_package}
+   *   <li>for {@link RuleTypes#GO_BINARY}, it will always be {@code main}.
+   *   <li>for {@link RuleTypes#GO_LIBRARY}, it is usually the last component of the import path
+   *       (though not at all enforced).
+   *   <li>for {@link RuleTypes#GO_TEST} it will be the same as the {@link
+   *       RuleTypes#GO_BINARY}/{@link RuleTypes#GO_LIBRARY} under test, otherwise similar to a
+   *       {@link RuleTypes#GO_LIBRARY} if no test subject is specified.
+   *   <li>for {@link RuleTypes#GO_PROTO_LIBRARY}, it's either declared via the {@code go_package}
    *       option, or automatically generated from the target name.
    * </ul>
    */

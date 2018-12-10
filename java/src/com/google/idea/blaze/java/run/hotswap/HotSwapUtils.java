@@ -31,7 +31,6 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import java.util.Collection;
 
 /** Helper methods for HotSwapping */
 public final class HotSwapUtils {
@@ -44,10 +43,8 @@ public final class HotSwapUtils {
   private static final ImmutableSet<Kind> SUPPORTED_BINARIES = getSupportedBinaries();
 
   private static ImmutableSet<Kind> getSupportedBinaries() {
-    return JavaLikeLanguage.getAllJavaLikeLanguages().stream()
-        .map(Kind::allKindsForLanguage)
-        .flatMap(Collection::stream)
-        .filter(kind -> kind.ruleType == RuleType.BINARY)
+    return JavaLikeLanguage.getAllDebuggableKinds().stream()
+        .filter(kind -> kind.getRuleType().equals(RuleType.BINARY))
         .collect(toImmutableSet());
   }
 
@@ -62,7 +59,7 @@ public final class HotSwapUtils {
     return BlazeCommandName.RUN.equals(
             Preconditions.checkNotNull(handlerState).getCommandState().getCommand())
         && kind != null
-        && kind.isOneOf(SUPPORTED_BINARIES);
+        && SUPPORTED_BINARIES.contains(kind);
   }
 
   private static boolean isDebugging(ExecutionEnvironment environment) {

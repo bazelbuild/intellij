@@ -44,8 +44,6 @@
   </extensions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.google.idea.blaze.BlazePyFilterProvider"
-      interface="com.google.idea.blaze.python.run.filter.BlazePyFilterProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazePyDebugFlagsProvider"
       interface="com.google.idea.blaze.python.run.BlazePyDebugHelper"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.PyParameterizedNameConverter"

@@ -16,12 +16,17 @@
 package com.google.idea.blaze.python.run;
 
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.RuleType;
 import javax.annotation.Nullable;
 
 /** Utilities class for debuggable python run configurations. */
 public class PyDebugUtils {
 
   static boolean canUsePyDebugger(@Nullable Kind kind) {
-    return kind != null && kind.isOneOf(Kind.PY_BINARY, Kind.PY_APPENGINE_BINARY, Kind.PY_TEST);
+    return kind != null
+        && kind.getLanguageClass() == LanguageClass.PYTHON
+        && kind.getRuleType() == RuleType.BINARY
+        && kind.getRuleType() == RuleType.TEST;
   }
 }

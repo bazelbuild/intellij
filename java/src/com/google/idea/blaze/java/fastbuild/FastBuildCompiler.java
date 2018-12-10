@@ -18,17 +18,16 @@ package com.google.idea.blaze.java.fastbuild;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 interface FastBuildCompiler {
 
-  void compile(CompileInstructions instructions, Map<String, String> loggingData)
-      throws FastBuildException;
+  void compile(BlazeContext context, CompileInstructions instructions) throws FastBuildException;
 
   @AutoValue
   abstract class CompileInstructions {
@@ -38,6 +37,7 @@ interface FastBuildCompiler {
 
     abstract File outputDirectory();
 
+    @Deprecated
     abstract PrintWriter outputWriter();
 
     abstract ImmutableList<String> annotationProcessorClassNames();
@@ -58,8 +58,10 @@ interface FastBuildCompiler {
 
       abstract Builder outputDirectory(File outputDirectory);
 
+      @Deprecated
       abstract Builder outputWriter(PrintWriter outputWriter);
 
+      @Deprecated
       Builder outputWriter(Writer writer) {
         return this.outputWriter(new PrintWriter(writer));
       }

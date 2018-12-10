@@ -281,7 +281,7 @@ final class BlazeConfigurationResolver {
                   Maps.newConcurrentMap();
               List<ListenableFuture<?>> targetToDataFutures =
                   blazeProjectData.getTargetMap().targets().stream()
-                      .filter(target -> target.getKind().languageClass == LanguageClass.C)
+                      .filter(target -> target.getKind().getLanguageClass() == LanguageClass.C)
                       .filter(target -> target.getcToolchainIdeInfo() == null)
                       .filter(filter::isSourceTarget)
                       .filter(BlazeConfigurationResolver::containsCompiledSources)

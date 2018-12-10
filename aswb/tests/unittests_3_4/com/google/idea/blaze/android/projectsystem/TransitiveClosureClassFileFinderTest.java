@@ -16,12 +16,16 @@
 package com.google.idea.blaze.android.projectsystem;
 
 import com.google.common.truth.Truth;
+import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Kind.Provider;
+import com.google.idea.blaze.java.AndroidBlazeRules;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,7 +33,16 @@ import org.junit.runners.JUnit4;
 
 /** Tests for {@link TransitiveClosureClassFileFinder}. */
 @RunWith(JUnit4.class)
-public class TransitiveClosureClassFileFinderTest {
+public class TransitiveClosureClassFileFinderTest extends BlazeTestCase {
+
+  @Override
+  protected void initTest(Container applicationServices, Container projectServices) {
+    ExtensionPointImpl<Provider> ep =
+        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    ep.registerExtension(new AndroidBlazeRules());
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+  }
+
   @Test
   public void testGetNonResourceJars() throws Exception {
     LibraryArtifact.Builder normalJar =
@@ -42,7 +55,7 @@ public class TransitiveClosureClassFileFinderTest {
     TargetIdeInfo info =
         TargetIdeInfo.builder()
             .setLabel("//foo:bar")
-            .setKind(Kind.ANDROID_LIBRARY)
+            .setKind(AndroidBlazeRules.RuleTypes.ANDROID_LIBRARY.getKind())
             .setJavaInfo(JavaIdeInfo.builder().addJar(normalJar).addJar(resourceJar))
             .setAndroidInfo(AndroidIdeInfo.builder().setResourceJar(resourceJar))
             .build();

@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -165,7 +166,7 @@ public class AdditionalLanguagesHelper
 
     BlazeSyncManager.getInstance(project)
         .requestProjectSync(
-            new BlazeSyncParams.Builder("Sync", BlazeSyncParams.SyncMode.INCREMENTAL)
+            new BlazeSyncParams.Builder("Sync", SyncMode.INCREMENTAL)
                 .addProjectViewTargets(true)
                 .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
                 .build());

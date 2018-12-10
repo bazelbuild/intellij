@@ -27,6 +27,8 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.LibraryKey;
+import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Kind.Provider;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -47,6 +49,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.blaze.java.sync.importer.BlazeJavaWorkspaceImporter;
 import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
@@ -59,11 +62,13 @@ import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
 import com.google.idea.blaze.java.sync.source.JavaSourcePackageReader;
 import com.google.idea.blaze.java.sync.source.PackageManifestReader;
 import com.google.idea.blaze.java.sync.source.SourceArtifact;
+import com.google.idea.blaze.scala.ScalaBlazeRules;
+import com.google.idea.blaze.scala.ScalaJavaLikeLanguage;
 import com.google.idea.blaze.scala.sync.model.BlazeScalaImportResult;
-import com.google.idea.blaze.scala.sync.source.ScalaJavaLikeLanguage;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.io.File;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -86,6 +91,12 @@ public class BlazeScalaWorkspaceImporterTest extends BlazeTestCase {
     super.initTest(applicationServices, projectServices);
     context = new BlazeContext();
     context.addOutputSink(IssueOutput.class, errorCollector);
+
+    ExtensionPointImpl<Provider> ep =
+        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    ep.registerExtension(new JavaBlazeRules());
+    ep.registerExtension(new ScalaBlazeRules());
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
 
     registerExtensionPoint(BlazeJavaSyncAugmenter.EP_NAME, BlazeJavaSyncAugmenter.class);
 

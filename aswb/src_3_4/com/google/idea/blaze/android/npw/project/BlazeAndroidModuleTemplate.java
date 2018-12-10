@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.npw.project;
 
-import com.android.SdkConstants;
 import com.android.builder.model.SourceProvider;
 import com.android.tools.idea.projectsystem.AndroidModuleTemplate;
 import com.android.tools.idea.projectsystem.NamedModuleTemplate;
@@ -167,9 +166,6 @@ public class BlazeAndroidModuleTemplate implements AndroidModuleTemplate {
     }
     // We have a res dir if this happens to be a resource module.
     paths.resDirectories = ImmutableList.copyOf(sourceProvider.getResDirectories());
-    if (paths.resDirectories.isEmpty()) {
-      paths.resDirectories = ImmutableList.of(new File(paths.srcDirectory, SdkConstants.FD_RES));
-    }
     return Collections.singletonList(new NamedModuleTemplate(name, paths));
   }
 }

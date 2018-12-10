@@ -17,8 +17,9 @@ package com.google.idea.blaze.android.sync;
 
 import com.android.tools.idea.res.ResourceFolderRegistry;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.SyncListener;
+import com.google.idea.blaze.base.sync.SyncMode;
+import com.google.idea.blaze.base.sync.SyncResult;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 

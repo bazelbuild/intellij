@@ -20,6 +20,8 @@ import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.Loc
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -60,7 +62,15 @@ class SkylarkStackFrame extends XStackFrame {
   @Override
   public XSourcePosition getSourcePosition() {
     XSourcePosition base = fromLocationProto(frame.getLocation());
-    return new SkylarkSourcePosition(base, this);
+    return base == null ? null : new SkylarkSourcePosition(base, this);
+  }
+
+  @Override
+  public void customizePresentation(ColoredTextContainer component) {
+    if (frame.hasLocation()) {
+      component.append(frame.getFunctionName() + " at ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
+    super.customizePresentation(component);
   }
 
   /** Converts between source location formats used by the IDE and the Skylark debug server. */

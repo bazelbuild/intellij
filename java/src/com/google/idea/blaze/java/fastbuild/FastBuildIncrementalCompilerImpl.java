@@ -25,20 +25,24 @@ import com.google.idea.blaze.base.console.BlazeConsoleService;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildCompiler.CompileInstructions;
+import com.google.idea.blaze.java.fastbuild.FastBuildLogDataScope.FastBuildLogOutput;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
 import com.google.idea.common.concurrency.ConcurrencyUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import java.io.File;
-import java.io.IOException;
 import java.io.Writer;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
 
 final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalCompiler {
 
@@ -57,7 +61,10 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
 
   @Override
   public ListenableFuture<BuildOutput> compile(
-      Label label, FastBuildState buildState, Map<String, String> loggingData) {
+      BlazeContext context,
+      Label label,
+      FastBuildState buildState,
+      @Nullable Set<File> vfsModifiedFiles) {
     checkState(buildState.completedBuildOutput().isPresent());
     BuildOutput buildOutput = buildState.completedBuildOutput().get();
     checkState(buildOutput.blazeData().containsKey(label));
@@ -67,18 +74,16 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
             () -> {
               BlazeConsoleWriter writer = new BlazeConsoleWriter(blazeConsoleService);
 
+              Set<File> modifiedFiles =
+                  vfsModifiedFiles != null ? vfsModifiedFiles : buildState.modifiedFiles();
               ChangedSourceInfo changedSourceInfo =
-                  getPathsToCompile(
-                      label,
-                      buildOutput.blazeData(),
-                      buildState.modifiedFiles(),
-                      writer,
-                      loggingData);
+                  getPathsToCompile(context, label, buildOutput.blazeData(), modifiedFiles);
 
               if (!changedSourceInfo.pathsToCompile.isEmpty()) {
                 compilerFactory
                     .getCompilerFor(label, buildOutput.blazeData())
                     .compile(
+                        context,
                         CompileInstructions.builder()
                             .outputDirectory(buildState.compilerOutputDirectory())
                             .classpath(ImmutableList.of(buildOutput.deployJar()))
@@ -88,22 +93,19 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
                             .annotationProcessorClasspath(
                                 changedSourceInfo.annotationProcessorClasspath)
                             .outputWriter(writer)
-                            .build(),
-                        loggingData);
+                            .build());
               } else {
-                writer.write("No modified files to compile.\n");
+                context.output(new PrintOutput("No modified files to compile."));
               }
               return buildOutput;
             });
   }
 
   private ChangedSourceInfo getPathsToCompile(
+      BlazeContext context,
       Label label,
       Map<Label, FastBuildBlazeData> blazeData,
-      Set<File> modifiedSinceBuild,
-      Writer writer,
-      Map<String, String> loggingData)
-      throws IOException {
+      Set<File> modifiedSinceBuild) {
 
     Stopwatch timer = Stopwatch.createStarted();
 
@@ -113,6 +115,7 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
     // Use ImmutableSet.Builder because it will preserve the classpath order.
     ImmutableSet.Builder<File> annotationProcessorsClasspath = ImmutableSet.builder();
     Set<Label> seenTargets = new HashSet<>();
+    AtomicInteger affectedTargets = new AtomicInteger(0);
     recursivelyAddModifiedJavaSources(
         projectData.getArtifactLocationDecoder(),
         blazeData,
@@ -121,11 +124,12 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
         sourceFiles,
         annotationProcessorClassNames,
         annotationProcessorsClasspath,
-        modifiedSinceBuild);
+        modifiedSinceBuild,
+        affectedTargets);
 
-    writer.write("Calculated compilation paths in " + timer + "\n");
-    loggingData.put(
-        "calculate_changed_sources_time_ms", Long.toString(timer.elapsed(TimeUnit.MILLISECONDS)));
+    context.output(new StatusOutput("Calculated compilation paths in " + timer));
+    context.output(FastBuildLogOutput.milliseconds("calculate_changed_sources_time_ms", timer));
+    context.output(FastBuildLogOutput.keyValue("affected_targets", affectedTargets.toString()));
 
     return new ChangedSourceInfo(
         sourceFiles, annotationProcessorClassNames, annotationProcessorsClasspath.build());
@@ -139,7 +143,8 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
       Set<File> sourceFiles,
       Set<String> annotationProcessorClassNames,
       ImmutableSet.Builder<File> annotationProcessorsClasspath,
-      Set<File> modifiedSinceBuild) {
+      Set<File> modifiedSinceBuild,
+      AtomicInteger affectedTargets) {
     if (seenTargets.contains(label)) {
       return;
     }
@@ -165,6 +170,7 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
     }
 
     if (addedSources) {
+      affectedTargets.incrementAndGet();
       annotationProcessorClassNames.addAll(javaInfo.annotationProcessorClassNames());
       for (ArtifactLocation artifactLocation : javaInfo.annotationProcessorClasspath()) {
         annotationProcessorsClasspath.add(artifactLocationDecoder.decode(artifactLocation));
@@ -183,7 +189,8 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
                     sourceFiles,
                     annotationProcessorClassNames,
                     annotationProcessorsClasspath,
-                    modifiedSinceBuild));
+                    modifiedSinceBuild,
+                    affectedTargets));
   }
 
   private static class BlazeConsoleWriter extends Writer {

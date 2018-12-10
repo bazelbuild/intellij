@@ -28,7 +28,7 @@ import com.intellij.psi.PsiFile;
 import java.io.File;
 import javax.annotation.Nullable;
 
-/** Looks for a test rule with in the same blaze package as the source file. */
+/** Looks for a test rule in the same blaze package as the source file. */
 class BlazePackageHeuristic implements TestTargetHeuristic {
 
   @Override

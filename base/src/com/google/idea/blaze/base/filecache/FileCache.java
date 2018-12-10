@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.filecache;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.sync.BlazeSyncParams;
+import com.google.idea.blaze.base.sync.SyncMode;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 
@@ -36,7 +36,7 @@ public interface FileCache {
       BlazeContext context,
       ProjectViewSet projectViewSet,
       BlazeProjectData projectData,
-      BlazeSyncParams.SyncMode syncMode);
+      SyncMode syncMode);
 
   /** Called after a build operation to refresh any updated files. */
   void refreshFiles(Project project);

@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.java.AndroidBlazeRules;
 
 /**
  * Builder for a blaze android target's IDE info. Defines common attributes across all android
@@ -41,7 +42,8 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
   }
 
   public static NbAndroidTarget android_library(String label, BlazeInfoData environment) {
-    return new NbAndroidTarget(environment, label, Kind.ANDROID_LIBRARY);
+    return new NbAndroidTarget(
+        environment, label, AndroidBlazeRules.RuleTypes.ANDROID_LIBRARY.getKind());
   }
 
   public static NbAndroidTarget android_binary(String label) {
@@ -49,7 +51,8 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
   }
 
   public static NbAndroidTarget android_binary(String label, BlazeInfoData environment) {
-    return new NbAndroidTarget(environment, label, Kind.ANDROID_BINARY);
+    return new NbAndroidTarget(
+        environment, label, AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind());
   }
 
   NbAndroidTarget(BlazeInfoData blazeInfoData, String label, Kind kind) {

@@ -19,11 +19,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
 import com.google.idea.blaze.java.run.BlazeJavaDebuggableRunProfileState;
 import com.google.idea.blaze.java.run.BlazeJavaRunConfigState;
-import com.google.idea.blaze.java.run.fastbuild.FastBuildConfigurationRunner.FastBuildLoggingData;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -54,7 +54,7 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
         BlazeTestUiSession.create(
             /* blazeFlags */ ImmutableList.of(),
             new FastBuildTestResultFinderStrategy(
-                label, getConfiguration().getTargetKind(), outputFile, getLoggingData()));
+                label, getConfiguration().getTargetKind(), outputFile, getBlazeContext()));
     setConsoleBuilder(
         new TextConsoleBuilderImpl(project) {
           @Override
@@ -123,9 +123,9 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
     return userData.get();
   }
 
-  private FastBuildLoggingData getLoggingData() throws ExecutionException {
-    AtomicReference<FastBuildLoggingData> userData =
-        getEnvironment().getCopyableUserData(FastBuildConfigurationRunner.LOGGING_DATA_KEY);
+  private BlazeContext getBlazeContext() throws ExecutionException {
+    AtomicReference<BlazeContext> userData =
+        getEnvironment().getCopyableUserData(FastBuildConfigurationRunner.BLAZE_CONTEXT);
     if (userData == null || userData.get() == null) {
       throw new ExecutionException(
           "No logging data stored in environment; before-run tasks weren't executed?");

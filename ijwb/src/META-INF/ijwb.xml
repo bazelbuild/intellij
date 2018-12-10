@@ -30,6 +30,8 @@
     <SyncPlugin implementation="com.google.idea.blaze.ijwb.typescript.BlazeTypescriptSyncPlugin"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.ijwb.javascript.JavascriptPrefetchFileSource"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.ijwb.typescript.TypescriptPrefetchFileSource"/>
+    <TargetKindProvider implementation="com.google.idea.blaze.ijwb.javascript.JavascriptBlazeRules"/>
+    <TargetKindProvider implementation="com.google.idea.blaze.ijwb.typescript.TypeScriptBlazeRules"/>
   </extensions>
 
 </idea-plugin>

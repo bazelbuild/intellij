@@ -60,7 +60,6 @@ class NewBlazePackageDialog extends DialogWrapper {
     super(project);
     this.project = project;
     this.parentDirectory = currentDirectory;
-
     initializeUI();
   }
 

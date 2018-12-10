@@ -23,8 +23,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.testFramework.fixtures.CompletionAutoPopupTester;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -33,82 +31,57 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class JavaClassQualifiedNameCompletionTest extends BuildFileIntegrationTestCase {
 
-  private CompletionAutoPopupTester completionTester;
-
-  @Before
-  public final void before() {
-    completionTester = new CompletionAutoPopupTester(testFixture);
-  }
-
-  /** Completion UI testing can't be run on the EDT. */
-  @Override
-  protected boolean runTestsOnEdt() {
-    return false;
-  }
-
   @Test
   public void testCompleteClassName() {
-    completionTester.runWithAutoPopupEnabled(
-        () -> {
-          workspace.createPsiFile(
-              new WorkspacePath("java/com/google/bin/Main.java"),
-              "package com.google.bin;",
-              "public class Main {",
-              "  public void main() {}",
-              "}");
-          BuildFile file =
-              createBuildFile(
-                  new WorkspacePath("java/com/google/BUILD"),
-                  "java_binary(",
-                  "    name = 'binary',",
-                  "    main_class = 'com.google.bin.',",
-                  ")");
+    workspace.createPsiFile(
+        new WorkspacePath("java/com/google/bin/Main.java"),
+        "package com.google.bin;",
+        "public class Main {",
+        "  public void main() {}",
+        "}");
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "java_binary(",
+            "    name = 'binary',",
+            "    main_class = 'com.google.bin.M',",
+            ")");
 
-          Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-          editorTest.setCaretPosition(editor, 2, "    main_class = 'com.google.bin.".length());
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 2, "    main_class = 'com.google.bin.M".length());
 
-          completionTester.typeWithPauses("M");
-          testFixture.complete(CompletionType.CLASS_NAME);
-          assertFileContents(
-              file,
-              "java_binary(",
-              "    name = 'binary',",
-              "    main_class = 'com.google.bin.Main',",
-              ")");
-        });
+    LookupElement[] completionItems = testFixture.complete(CompletionType.CLASS_NAME);
+    assertThat(completionItems).isNull();
+    assertFileContents(
+        file,
+        "java_binary(",
+        "    name = 'binary',",
+        "    main_class = 'com.google.bin.Main',",
+        ")");
   }
 
   @Test
   public void testNoCompletionForOtherAttributes() {
-    completionTester.runWithAutoPopupEnabled(
-        () -> {
-          workspace.createPsiFile(
-              new WorkspacePath("java/com/google/bin/Main.java"),
-              "package com.google.bin;",
-              "public class Main {",
-              "  public void main() {}",
-              "}");
-          BuildFile file =
-              createBuildFile(
-                  new WorkspacePath("java/com/google/BUILD"),
-                  "java_binary(",
-                  "    name = 'binary',",
-                  "    main_clazz = 'com.google.bin.',",
-                  ")");
+    workspace.createPsiFile(
+        new WorkspacePath("java/com/google/bin/Main.java"),
+        "package com.google.bin;",
+        "public class Main {",
+        "  public void main() {}",
+        "}");
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "java_binary(",
+            "    name = 'binary',",
+            "    main_clazz = 'com.google.bin.M',",
+            ")");
 
-          Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-          editorTest.setCaretPosition(editor, 2, "    main_clazz = 'com.google.bin.".length());
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+    editorTest.setCaretPosition(editor, 2, "    main_clazz = 'com.google.bin.M".length());
 
-          completionTester.typeWithPauses("M");
-          LookupElement[] completionItems = testFixture.complete(CompletionType.CLASS_NAME);
-          assertThat(completionItems).isEmpty();
-
-          assertFileContents(
-              file,
-              "java_binary(",
-              "    name = 'binary',",
-              "    main_clazz = 'com.google.bin.M',",
-              ")");
-        });
+    LookupElement[] completionItems = testFixture.complete(CompletionType.CLASS_NAME);
+    assertThat(completionItems).isEmpty();
+    assertFileContents(
+        file, "java_binary(", "    name = 'binary',", "    main_clazz = 'com.google.bin.M',", ")");
   }
 }

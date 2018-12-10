@@ -15,6 +15,7 @@ java_plugin(
 java_plugin(
     name = "auto_value_plugin",
     processor_class = "com.google.auto.value.processor.AutoValueProcessor",
+    visibility = ["//visibility:public"],  # FastBuildCompilerFactoryImplTest uses this
     deps = ["@auto_value//jar"],
 )
 

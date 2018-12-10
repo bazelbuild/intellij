@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Bazel Authors. All rights reserved.
+ * Copyright 2018 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.kotlin.sync.source;
+package com.google.idea.blaze.kotlin;
+
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
+import com.google.idea.blaze.kotlin.KotlinBlazeRules.RuleTypes;
 
-/** Provides Java-like parts of Kotlin to the Java plugin. */
-public class BlazeKotlinJavaLikeLanguage implements JavaLikeLanguage {
-  @Override
-  public LanguageClass getLanguageClass() {
-    return LanguageClass.KOTLIN;
-  }
-
+/** Kotlin-specific implementation of {@link JavaLikeLanguage}. */
+class KotlinJavaLikeLanguage implements JavaLikeLanguage {
   @Override
   public ImmutableSet<String> getFileExtensions() {
     return ImmutableSet.of(".kt");
@@ -34,16 +33,21 @@ public class BlazeKotlinJavaLikeLanguage implements JavaLikeLanguage {
 
   @Override
   public ImmutableSet<Kind> getDebuggableKinds() {
-    return ImmutableSet.of(Kind.KT_JVM_BINARY, Kind.KT_JVM_TEST);
+    return Kind.getKindsForLanguage(LanguageClass.KOTLIN).stream()
+        .filter(
+            k -> k.getRuleType().equals(RuleType.TEST) || k.getRuleType().equals(RuleType.BINARY))
+        .collect(toImmutableSet());
   }
 
   @Override
   public ImmutableSet<Kind> getHandledTestKinds() {
-    return ImmutableSet.of(Kind.KT_JVM_TEST);
+    return Kind.getKindsForLanguage(LanguageClass.KOTLIN).stream()
+        .filter(k -> k.getRuleType().equals(RuleType.TEST))
+        .collect(toImmutableSet());
   }
 
   @Override
   public ImmutableSet<Kind> getNonSourceKinds() {
-    return ImmutableSet.of(Kind.KT_JVM_IMPORT, Kind.KOTLIN_STDLIB);
+    return ImmutableSet.of(RuleTypes.KT_JVM_IMPORT.getKind(), RuleTypes.KOTLIN_STDLIB.getKind());
   }
 }

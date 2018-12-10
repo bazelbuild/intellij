@@ -59,7 +59,7 @@ public class FuncallExpression extends BuildElementImpl
   @Nullable
   public Kind getRuleKind() {
     String functionName = getFunctionName();
-    return functionName != null ? Kind.fromString(functionName) : null;
+    return functionName != null ? Kind.fromRuleName(functionName) : null;
   }
 
   @Override
