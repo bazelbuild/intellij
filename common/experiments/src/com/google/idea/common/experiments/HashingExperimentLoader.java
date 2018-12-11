@@ -17,6 +17,7 @@ package com.google.idea.common.experiments;
 
 import static com.google.idea.common.experiments.ExperimentsUtil.hashExperimentName;
 
+import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -26,13 +27,27 @@ import java.util.stream.Collectors;
  */
 abstract class HashingExperimentLoader implements ExperimentLoader {
 
+  private volatile ImmutableMap<String, String> previousUnhashedExperiments = null;
+  private volatile Map<String, String> hashedExperiments = null;
+
   @Override
   public Map<String, String> getExperiments() {
-    return getUnhashedExperiments()
-        .entrySet()
-        .stream()
+    ImmutableMap<String, String> unhashedExperiments = getUnhashedExperiments();
+    // use object equality and avoid all locking beyond that associated with 'volatile' -- we don't
+    // care if multiple threads run this calculation initially, as long as all subsequent calls
+    // don't have to
+    if (previousUnhashedExperiments == unhashedExperiments) {
+      return hashedExperiments;
+    }
+    previousUnhashedExperiments = unhashedExperiments;
+    hashedExperiments = hashExperiments(unhashedExperiments);
+    return hashedExperiments;
+  }
+
+  private static Map<String, String> hashExperiments(Map<String, String> unhashed) {
+    return unhashed.entrySet().stream()
         .collect(Collectors.toMap(e -> hashExperimentName(e.getKey()), Map.Entry::getValue));
   }
 
-  abstract Map<String, String> getUnhashedExperiments();
+  abstract ImmutableMap<String, String> getUnhashedExperiments();
 }

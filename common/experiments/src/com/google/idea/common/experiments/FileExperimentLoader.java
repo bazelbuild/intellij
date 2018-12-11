@@ -40,7 +40,7 @@ final class FileExperimentLoader extends HashingExperimentLoader {
 
   private volatile boolean refresh = true;
 
-  private Map<String, String> experiments = ImmutableMap.of();
+  private ImmutableMap<String, String> experiments = ImmutableMap.of();
 
   FileExperimentLoader(String filename) {
     this.file = new File(filename);
@@ -48,7 +48,7 @@ final class FileExperimentLoader extends HashingExperimentLoader {
 
   @SuppressWarnings("unchecked") // Properties is Map<Object, Object>, we cast to strings
   @Override
-  Map<String, String> getUnhashedExperiments() {
+  ImmutableMap<String, String> getUnhashedExperiments() {
 
     if (!refresh) {
       return experiments;

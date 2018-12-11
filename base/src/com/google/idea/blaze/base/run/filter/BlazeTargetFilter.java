@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.execution.filters.Filter;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.UIUtil;
@@ -45,16 +44,14 @@ public class BlazeTargetFilter implements Filter {
   // format: ([@external_workspace]//package:rule)
   private static final String TARGET_REGEX =
       String.format(
-          "(^|[ '\"=])(@[%s]*)?//[%s]*(:[%s]+)?",
+          "(^|[ '\"=])(@[%s]*)?//[%s]+(:[%s]+)?",
           PACKAGE_NAME_CHARS, PACKAGE_NAME_CHARS, TARGET_CHARS);
 
   @VisibleForTesting static final Pattern TARGET_PATTERN = Pattern.compile(TARGET_REGEX);
 
-  private final Project project;
   private final boolean highlightMatches;
 
-  public BlazeTargetFilter(Project project, boolean highlightMatches) {
-    this.project = project;
+  public BlazeTargetFilter(boolean highlightMatches) {
     this.highlightMatches = highlightMatches;
   }
 
@@ -73,11 +70,14 @@ public class BlazeTargetFilter implements Filter {
       if (label == null) {
         continue;
       }
-      PsiElement psi = BuildReferenceManager.getInstance(project).resolveLabel(label);
-      if (!(psi instanceof NavigatablePsiElement)) {
-        continue;
-      }
-      NonProblemHyperlinkInfo link = project -> ((NavigatablePsiElement) psi).navigate(true);
+      // for performance reasons, don't resolve until the user clicks the link
+      NonProblemHyperlinkInfo link =
+          project -> {
+            PsiElement psi = BuildReferenceManager.getInstance(project).resolveLabel(label);
+            if (psi instanceof NavigatablePsiElement) {
+              ((NavigatablePsiElement) psi).navigate(true);
+            }
+          };
       int offset = entireLength - line.length();
       results.add(
           new ResultItem(

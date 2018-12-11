@@ -40,7 +40,7 @@ interface FastBuildCompiler {
     @Deprecated
     abstract PrintWriter outputWriter();
 
-    abstract ImmutableList<String> annotationProcessorClassNames();
+    abstract ImmutableSet<String> annotationProcessorClassNames();
 
     abstract ImmutableList<File> annotationProcessorClasspath();
 
@@ -49,6 +49,8 @@ interface FastBuildCompiler {
           .annotationProcessorClassNames(ImmutableList.of())
           .annotationProcessorClasspath(ImmutableList.of());
     }
+
+    abstract Builder toBuilder();
 
     @AutoValue.Builder
     abstract static class Builder {

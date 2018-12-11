@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
@@ -53,17 +52,11 @@ final class FastBuildTestEnvironmentCreator {
   private final Project project;
   private final String testClassProperty;
   private final String testRunner;
-  private final RobolectricDepsPropertiesFinder robolectricDepsPropertiesFinder;
 
-  FastBuildTestEnvironmentCreator(
-      Project project,
-      String testClassProperty,
-      String testRunner,
-      RobolectricDepsPropertiesFinder robolectricDepsPropertiesFinder) {
+  FastBuildTestEnvironmentCreator(Project project, String testClassProperty, String testRunner) {
     this.project = project;
     this.testClassProperty = testClassProperty;
     this.testRunner = testRunner;
-    this.robolectricDepsPropertiesFinder = robolectricDepsPropertiesFinder;
   }
 
   GeneralCommandLine createCommandLine(
@@ -108,10 +101,6 @@ final class FastBuildTestEnvironmentCreator {
         testClassProperty,
         FastBuildTestClassFinder.getInstance(project)
             .getTestClass(fastBuildInfo.label(), targetJavaInfo));
-
-    if (kind.equals(AndroidBlazeRules.RuleTypes.ANDROID_LOCAL_TEST.getKind())) {
-      addAndroidLocalTestParameters(commandBuilder, fastBuildInfo);
-    }
 
     commandBuilder.setMainClass(testRunner);
 
@@ -166,7 +155,7 @@ final class FastBuildTestEnvironmentCreator {
   }
 
   private static void addTestSizeVariables(
-      JavaCommandBuilder commandBuilder, JavaInfo targetJavaInfo) throws ExecutionException {
+      JavaCommandBuilder commandBuilder, JavaInfo targetJavaInfo) {
     String testSize = targetJavaInfo.testSize().orElse("medium");
     int testTimeout;
     switch (testSize) {
@@ -249,17 +238,5 @@ final class FastBuildTestEnvironmentCreator {
 
   private static String getTestOutputFile(File testOutputDir, String filename) {
     return new File(testOutputDir, filename).toString();
-  }
-
-  private void addAndroidLocalTestParameters(
-      JavaCommandBuilder commandBuilder, FastBuildInfo fastBuildInfo) throws ExecutionException {
-    commandBuilder
-        .addSystemProperty("robolectric.offline", "true")
-        .addSystemProperty(
-            "robolectric-deps.properties",
-            robolectricDepsPropertiesFinder.getPropertiesLocation(fastBuildInfo))
-        .addSystemProperty("use_framework_manifest_parser", "true")
-        .addSystemProperty(
-            "org.robolectric.packagesToNotAcquire", "com.google.testing.junit.runner.util");
   }
 }

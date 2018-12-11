@@ -26,6 +26,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 /** Stores blaze view settings. */
@@ -69,7 +70,9 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   @Deprecated private boolean suppressConsoleForRunAction = false;
   @Deprecated private boolean showProblemsViewForRunAction = false;
   private boolean resyncAutomatically = false;
-  private boolean resyncOnProtoChanges = false;
+  // TODO(brendandouglas): enable for other IDEs once C++ updates on sync are less expensive for
+  // no-op syncs
+  private boolean resyncOnProtoChanges = PlatformUtils.isIntelliJ();
   private boolean syncStatusPopupShown = false;
   private boolean expandSyncToWorkingSet = true;
   private boolean showPerformanceWarnings = false;

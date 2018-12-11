@@ -80,20 +80,26 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
                   getPathsToCompile(context, label, buildOutput.blazeData(), modifiedFiles);
 
               if (!changedSourceInfo.pathsToCompile.isEmpty()) {
+                CompileInstructions instructions =
+                    CompileInstructions.builder()
+                        .outputDirectory(buildState.compilerOutputDirectory())
+                        .classpath(ImmutableList.of(buildOutput.deployJar()))
+                        .filesToCompile(changedSourceInfo.pathsToCompile)
+                        .annotationProcessorClassNames(
+                            changedSourceInfo.annotationProcessorClassNames)
+                        .annotationProcessorClasspath(
+                            changedSourceInfo.annotationProcessorClasspath)
+                        .outputWriter(writer)
+                        .build();
+
+                for (FastBuildCompilationModification modification :
+                    FastBuildCompilationModification.EP_NAME.getExtensions()) {
+                  instructions = modification.modifyInstructions(instructions);
+                }
+
                 compilerFactory
                     .getCompilerFor(label, buildOutput.blazeData())
-                    .compile(
-                        context,
-                        CompileInstructions.builder()
-                            .outputDirectory(buildState.compilerOutputDirectory())
-                            .classpath(ImmutableList.of(buildOutput.deployJar()))
-                            .filesToCompile(changedSourceInfo.pathsToCompile)
-                            .annotationProcessorClassNames(
-                                changedSourceInfo.annotationProcessorClassNames)
-                            .annotationProcessorClasspath(
-                                changedSourceInfo.annotationProcessorClasspath)
-                            .outputWriter(writer)
-                            .build());
+                    .compile(context, instructions);
               } else {
                 context.output(new PrintOutput("No modified files to compile."));
               }
