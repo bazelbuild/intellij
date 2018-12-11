@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
+import com.google.idea.blaze.java.AndroidBlazeRules;
 
 /** Handler provider for android_binary targets. */
 public class BlazeAndroidBinaryRunConfigurationHandlerProvider
@@ -31,7 +32,7 @@ public class BlazeAndroidBinaryRunConfigurationHandlerProvider
 
   @Override
   public boolean canHandleKind(Kind kind) {
-    return kind == Kind.ANDROID_BINARY;
+    return kind == AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind();
   }
 
   @Override

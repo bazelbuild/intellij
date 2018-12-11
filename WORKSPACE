@@ -19,8 +19,8 @@ http_archive(
 http_archive(
     name = "intellij_ce_2018_3",
     build_file = "@//intellij_platform_sdk:BUILD.idea",
-    sha256 = "d7c8e0c9cd858cc9a09e7046e2c6283f01955d4d8f46a9edfa0c495059888e4f",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2018.3/ideaIC-2018.3.zip",
+    sha256 = "25eaa9641fa674d9fc10c2865e454187b16fac0f682ac50aef97a6ca1c75e53f",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2018.3.1/ideaIC-2018.3.1.zip",
 )
 
 # The plugin api for IntelliJ UE 2018.2. This is required to run UE-specific
@@ -37,8 +37,8 @@ http_archive(
 http_archive(
     name = "intellij_ue_2018_3",
     build_file = "@//intellij_platform_sdk:BUILD.ue",
-    sha256 = "219159cf37a5f9d7b808007c92c55fd8383fa76bea1a83d8c0c6b63d03d6b93d",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2018.3/ideaIU-2018.3.zip",
+    sha256 = "d1cbac631b738f86773cb6b7f272f04e5252e7c2ec7af9a9af84bff0317e3874",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2018.3.1/ideaIU-2018.3.1.zip",
 )
 
 # The plugin api for CLion 2018.2. This is required to build CLwB,
@@ -55,8 +55,8 @@ http_archive(
 http_archive(
     name = "clion_2018_3",
     build_file = "@//intellij_platform_sdk:BUILD.clion",
-    sha256 = "111fa549c11468c663d123761c7e44f7726b2d5fe16619f6c6ab5e9578add966",
-    url = "https://download.jetbrains.com/cpp/CLion-183.3975.20.tar.gz",
+    sha256 = "51a6659bd14b0ab22cf9e20892984649ddcb8db5c8517d097549b17060856473",
+    url = "https://download.jetbrains.com/cpp/CLion-2018.3.1.tar.gz",
 )
 
 # The plugin api for Android Studio 3.2. This is required to build ASwB,
@@ -106,8 +106,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "346898238e3cab9d062407d4837a84315ddeb8a6ee981af7678571e77118cf37",
-    url = "https://plugins.jetbrains.com/files/7322/50178/python-ce-2018.3.183.2635.13.zip",
+    sha256 = "15969495651d8fcb6e3ae7ea33ef1b15ed62a7a929b016f6ec389a217fdad1d6",
+    url = "https://plugins.jetbrains.com/files/7322/52274/python-ce-2018.3.183.4284.148.zip",
 )
 
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
@@ -134,8 +134,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "1dc6b34e20ca8bc18107162564d72347b4fb57e20f82eda45a9deefa98b9b533",
-    url = "https://plugins.jetbrains.com/files/9568/51834/intellij-go-183.4284.36.1532.zip",
+    sha256 = "3bcab5174d20363cd3f91302b32d0e9d3114533397d70ed03084e5ac8dbe5d66",
+    url = "https://plugins.jetbrains.com/files/9568/52280/intellij-go-183.4284.148.1556.zip",
 )
 
 # Scala plugin for IntelliJ CE 2018.2. Required at compile-time for scala-specific features.
@@ -169,8 +169,8 @@ http_archive(
 http_archive(
     name = "android_studio_3_3",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio",
-    sha256 = "670936864a2a3337879c287bda7a36823f513b260d14f9dce6933f428d29ec2a",
-    url = "https://dl.google.com/android/studio/ide-zips/3.3.0.17/android-studio-ide-182.5138683-linux.zip",
+    sha256 = "257a69d69843232643c970afed4b1c137a4b9335bf4405c1059d0378d9e63217",
+    url = "https://dl.google.com/android/studio/ide-zips/3.3.0.18/android-studio-ide-182.5160847-linux.zip",
 )
 
 # LICENSE: Common Public License 1.0

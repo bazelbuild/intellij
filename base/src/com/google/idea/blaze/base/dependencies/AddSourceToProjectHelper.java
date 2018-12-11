@@ -363,7 +363,7 @@ class AddSourceToProjectHelper {
 
   private static boolean supportedTargetKind(TargetInfo target) {
     Kind kind = target.getKind();
-    return kind != null && supportedLanguage(kind.languageClass);
+    return kind != null && supportedLanguage(kind.getLanguageClass());
   }
 
   static boolean supportedLanguage(LanguageClass language) {

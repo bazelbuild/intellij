@@ -19,6 +19,7 @@ import com.android.ide.common.repository.GradleCoordinate;
 import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.idea.projectsystem.CapabilityNotSupported;
 import com.android.tools.idea.projectsystem.CapabilityStatus;
+import com.android.tools.idea.projectsystem.CapabilitySupported;
 import com.android.tools.idea.projectsystem.DependencyManagementException;
 import com.android.tools.idea.projectsystem.NamedModuleTemplate;
 import com.google.idea.blaze.android.npw.project.BlazeAndroidModuleTemplate;
@@ -52,12 +53,7 @@ public class BlazeModuleSystem implements AndroidModuleSystem {
 
   @Override
   public CapabilityStatus canGeneratePngFromVectorGraphics() {
-    // We're currently unsure of the state of the Blaze support, so we report that it's unsupported.
-    // TODO: Change this to "supported" when and if we can confirm that Blaze supports it
-    return new CapabilityNotSupported(
-        "<html><p>Blaze does not support generation of PNG images from vector assets. "
-            + "Vector asset support requires a SDK version of at least 21.</p></html>",
-        "Vector Assets Not Supported");
+    return new CapabilitySupported();
   }
 
   @Override

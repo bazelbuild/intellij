@@ -35,19 +35,9 @@ public abstract class FastBuildInfo {
 
   public abstract ImmutableMap<Label, FastBuildBlazeData> blazeData();
 
-  public abstract ImmutableMap<String, String> loggingData();
-
   public static FastBuildInfo create(
-      Label label,
-      File deployJar,
-      List<File> classpath,
-      Map<Label, FastBuildBlazeData> blazeData,
-      Map<String, String> loggingData) {
+      Label label, File deployJar, List<File> classpath, Map<Label, FastBuildBlazeData> blazeData) {
     return new AutoValue_FastBuildInfo(
-        label,
-        deployJar,
-        ImmutableList.copyOf(classpath),
-        ImmutableMap.copyOf(blazeData),
-        ImmutableMap.copyOf(loggingData));
+        label, deployJar, ImmutableList.copyOf(classpath), ImmutableMap.copyOf(blazeData));
   }
 }

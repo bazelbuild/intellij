@@ -35,7 +35,7 @@ public class BlazeGenericTestEventsHandler implements BlazeTestEventsHandler {
   public boolean handlesKind(@Nullable Kind kind) {
     // Generic handler specifically exists to handle test-suites and multi-target blaze
     // invocations, so must handle any targets without a (known) kind.
-    return kind == null || kind == Kind.TEST_SUITE;
+    return kind == null || kind.getKindString().equals("test_suite");
   }
 
   @Override

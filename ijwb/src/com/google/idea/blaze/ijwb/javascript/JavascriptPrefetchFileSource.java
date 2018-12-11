@@ -93,7 +93,7 @@ public class JavascriptPrefetchFileSource implements PrefetchFileSource {
     if (target.getJsIdeInfo() != null) {
       return target.getJsIdeInfo().getSources();
     }
-    if (target.getKind().languageClass == LanguageClass.JAVASCRIPT) {
+    if (target.getKind().getLanguageClass() == LanguageClass.JAVASCRIPT) {
       return target.getSources();
     }
     return ImmutableList.of();

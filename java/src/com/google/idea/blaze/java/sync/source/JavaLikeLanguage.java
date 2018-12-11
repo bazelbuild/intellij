@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.run.BlazeJavaDebuggerRunner;
 import com.google.idea.blaze.java.run.BlazeJavaTestEventsHandler;
 import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
@@ -39,12 +39,6 @@ import java.util.stream.Collectors;
 public interface JavaLikeLanguage {
   ExtensionPointName<JavaLikeLanguage> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.JavaLikeLanguage");
-
-  static ImmutableSet<LanguageClass> getAllJavaLikeLanguages() {
-    return Arrays.stream(EP_NAME.getExtensions())
-        .map(JavaLikeLanguage::getLanguageClass)
-        .collect(toImmutableSet());
-  }
 
   static Predicate<ArtifactLocation> getSourceFileMatcher() {
     final Set<String> fileExtensions =
@@ -78,9 +72,6 @@ public interface JavaLikeLanguage {
         .noneMatch(target::kindIsOneOf);
   }
 
-  /** @return the {@link LanguageClass} represented by this {@link JavaLikeLanguage}. */
-  LanguageClass getLanguageClass();
-
   /** @return file extensions associated with this particular java-like language. */
   ImmutableSet<String> getFileExtensions();
 
@@ -96,11 +87,6 @@ public interface JavaLikeLanguage {
   /** Java is itself a Java-like language. */
   class Java implements JavaLikeLanguage {
     @Override
-    public LanguageClass getLanguageClass() {
-      return LanguageClass.JAVA;
-    }
-
-    @Override
     public ImmutableSet<String> getFileExtensions() {
       return ImmutableSet.of(".java");
     }
@@ -108,18 +94,22 @@ public interface JavaLikeLanguage {
     @Override
     public ImmutableSet<Kind> getDebuggableKinds() {
       return ImmutableSet.of(
-          Kind.ANDROID_ROBOLECTRIC_TEST, Kind.ANDROID_LOCAL_TEST, Kind.JAVA_BINARY, Kind.JAVA_TEST);
+          JavaBlazeRules.RuleTypes.JAVA_BINARY.getKind(),
+          JavaBlazeRules.RuleTypes.JAVA_TEST.getKind());
     }
 
     @Override
     public ImmutableSet<Kind> getHandledTestKinds() {
       return ImmutableSet.of(
-          Kind.JAVA_TEST, Kind.ANDROID_ROBOLECTRIC_TEST, Kind.ANDROID_LOCAL_TEST, Kind.GWT_TEST);
+          JavaBlazeRules.RuleTypes.JAVA_TEST.getKind(),
+          JavaBlazeRules.RuleTypes.GWT_TEST.getKind());
     }
 
     @Override
     public ImmutableSet<Kind> getNonSourceKinds() {
-      return ImmutableSet.of(Kind.JAVA_WRAP_CC, Kind.JAVA_IMPORT, Kind.AAR_IMPORT);
+      return ImmutableSet.of(
+          JavaBlazeRules.RuleTypes.JAVA_WRAP_CC.getKind(),
+          JavaBlazeRules.RuleTypes.JAVA_IMPORT.getKind());
     }
   }
 }

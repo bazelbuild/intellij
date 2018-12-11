@@ -19,7 +19,6 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 
@@ -27,28 +26,6 @@ import com.intellij.openapi.project.Project;
 public interface SyncListener {
   ExtensionPointName<SyncListener> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.SyncListener");
-
-  /** Result of the sync operation */
-  enum SyncResult {
-    /** Full success */
-    SUCCESS(true),
-    /** The user has errors in their BUILD files or compilation errors */
-    PARTIAL_SUCCESS(true),
-    /** The user cancelled */
-    CANCELLED(false),
-    /** Failure -- sync could not complete */
-    FAILURE(false);
-
-    private final boolean success;
-
-    SyncResult(boolean success) {
-      this.success = success;
-    }
-
-    public boolean successful() {
-      return success;
-    }
-  }
 
   /** Called after open documents have been saved, prior to starting the blaze sync. */
   default void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {}

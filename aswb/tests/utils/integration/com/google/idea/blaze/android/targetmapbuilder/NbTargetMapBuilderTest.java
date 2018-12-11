@@ -34,7 +34,9 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.cpp.CppBlazeRules;
+import com.google.idea.blaze.java.AndroidBlazeRules;
+import com.google.idea.blaze.java.JavaBlazeRules;
 import java.io.IOException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,7 +56,7 @@ public class NbTargetMapBuilderTest {
                 TargetIdeInfo.builder()
                     .setBuildFile(source("android_ndk_linux/toolchains/BUILD"))
                     .setLabel("//android_ndk_linux/toolchains:armv7a")
-                    .setKind(Kind.CC_TOOLCHAIN)
+                    .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
                     .setCToolchainInfo(
                         CToolchainIdeInfo.builder()
                             .setTargetName("arm-linux-androideabi")
@@ -68,7 +70,7 @@ public class NbTargetMapBuilderTest {
                 TargetIdeInfo.builder()
                     .setBuildFile(source("android_ndk_linux/toolchains/BUILD"))
                     .setLabel("//android_ndk_linux/toolchains:aarch64")
-                    .setKind(Kind.CC_TOOLCHAIN)
+                    .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
                     .setCToolchainInfo(
                         CToolchainIdeInfo.builder()
                             .setTargetName("aarch64-linux-android")
@@ -82,7 +84,7 @@ public class NbTargetMapBuilderTest {
                 TargetIdeInfo.builder()
                     .setBuildFile(source("java/com/google/BUILD"))
                     .setLabel("//java/com/google:native_lib2")
-                    .setKind(Kind.CC_LIBRARY)
+                    .setKind(CppBlazeRules.RuleTypes.CC_LIBRARY.getKind())
                     .setCInfo(
                         CIdeInfo.builder()
                             .addTransitiveQuoteIncludeDirectories(
@@ -99,7 +101,7 @@ public class NbTargetMapBuilderTest {
                 TargetIdeInfo.builder()
                     .setBuildFile(source("java/com/google/BUILD"))
                     .setLabel("//java/com/google:native_lib")
-                    .setKind(Kind.CC_LIBRARY)
+                    .setKind(CppBlazeRules.RuleTypes.CC_LIBRARY.getKind())
                     .setCInfo(
                         CIdeInfo.builder()
                             .addTransitiveQuoteIncludeDirectories(
@@ -148,7 +150,7 @@ public class NbTargetMapBuilderTest {
                 TargetIdeInfo.builder()
                     .setBuildFile(source("java/com/google/BUILD"))
                     .setLabel("//java/com/google:lib")
-                    .setKind(Kind.JAVA_LIBRARY)
+                    .setKind(JavaBlazeRules.RuleTypes.JAVA_LIBRARY.getKind())
                     .addSource(source("java/com/google/ClassWithUniqueName1.java"))
                     .addSource(source("java/com/google/ClassWithUniqueName2.java"))
                     .addDependency("//java/com/google:dep")
@@ -181,7 +183,7 @@ public class NbTargetMapBuilderTest {
                 TargetIdeInfo.builder()
                     .setLabel("//import:liba")
                     .setBuildFile(source("import/BUILD"))
-                    .setKind(Kind.ANDROID_LIBRARY)
+                    .setKind(AndroidBlazeRules.RuleTypes.ANDROID_LIBRARY.getKind())
                     .addSource(source("import/Lib.java"))
                     .setJavaInfo(JavaIdeInfo.builder())
                     .setAndroidInfo(AndroidIdeInfo.builder())
@@ -191,7 +193,7 @@ public class NbTargetMapBuilderTest {
                 TargetIdeInfo.builder()
                     .setLabel("//import:lib")
                     .setBuildFile(source("import/BUILD"))
-                    .setKind(Kind.ANDROID_LIBRARY)
+                    .setKind(AndroidBlazeRules.RuleTypes.ANDROID_LIBRARY.getKind())
                     .addSource(source("import/Lib.java"))
                     .setJavaInfo(JavaIdeInfo.builder())
                     .setAndroidInfo(AndroidIdeInfo.builder())
@@ -201,7 +203,7 @@ public class NbTargetMapBuilderTest {
                 TargetIdeInfo.builder()
                     .setLabel("//import:import")
                     .setBuildFile(source("import/BUILD"))
-                    .setKind(Kind.JAVA_LIBRARY)
+                    .setKind(JavaBlazeRules.RuleTypes.JAVA_LIBRARY.getKind())
                     .setJavaInfo(
                         JavaIdeInfo.builder()
                             .addJar(

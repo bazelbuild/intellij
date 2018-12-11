@@ -290,7 +290,7 @@ public final class BlazeAndroidRunConfigurationRunner
         }
 
         processHandler =
-            new AndroidProcessHandler.Builder()
+            new AndroidProcessHandler.Builder(env.getProject())
                 .setApplicationId(applicationId)
                 .monitorRemoteProcesses(launchTasksProvider.monitorRemoteProcess())
                 .build();

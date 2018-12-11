@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.lang.buildfile.actions;
 import com.google.idea.blaze.base.buildmodifier.BuildFileModifier;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
-import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -43,11 +43,11 @@ public class BuildFileModifierTest extends BuildFileIntegrationTestCase {
                     .addRule(
                         getProject(),
                         Label.create("//:new_target"),
-                        Kind.JAVA_TEST));
+                        RuleTypes.PROTO_LIBRARY.getKind()));
     assertFileContents(
         buildFile,
         "java_library(name = 'existing')",
-        "java_test(",
+        "proto_library(",
         "    name = \"new_target\"",
         ")");
   }

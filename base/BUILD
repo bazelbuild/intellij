@@ -61,6 +61,22 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//third_party/auto_value",
+    ],
+)
+
+# self-contained sync listener API, exposed so other plugins can optionally depend on it
+java_library(
+    name = "sync_listener_api",
+    srcs = [
+        "src/com/google/idea/blaze/base/sync/SimpleSyncListener.java",
+        "src/com/google/idea/blaze/base/sync/SyncMode.java",
+        "src/com/google/idea/blaze/base/sync/SyncResult.java",
+    ],
+    neverlink = 1,
+    visibility = ["//visibility:public"],
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
     ],
 )
 

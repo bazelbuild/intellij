@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
@@ -108,7 +109,7 @@ final class FastBuildTestEnvironmentCreator {
         FastBuildTestClassFinder.getInstance(project)
             .getTestClass(fastBuildInfo.label(), targetJavaInfo));
 
-    if (kind.equals(Kind.ANDROID_LOCAL_TEST)) {
+    if (kind.equals(AndroidBlazeRules.RuleTypes.ANDROID_LOCAL_TEST.getKind())) {
       addAndroidLocalTestParameters(commandBuilder, fastBuildInfo);
     }
 

@@ -88,7 +88,7 @@ public class TypescriptPrefetchFileSource implements PrefetchFileSource {
     if (target.getTsIdeInfo() != null) {
       return target.getTsIdeInfo().getSources();
     }
-    if (target.getKind().languageClass == LanguageClass.TYPESCRIPT) {
+    if (target.getKind().getLanguageClass() == LanguageClass.TYPESCRIPT) {
       return target.getSources();
     }
     return ImmutableList.of();

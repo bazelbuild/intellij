@@ -36,7 +36,6 @@ import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -46,6 +45,7 @@ import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
@@ -96,7 +96,7 @@ public final class BlazeAndroidWorkspaceImporter {
   public BlazeAndroidImportResult importWorkspace() {
     List<TargetIdeInfo> sourceTargets =
         targetMap.targets().stream()
-            .filter(target -> target.getKind().languageClass == LanguageClass.ANDROID)
+            .filter(target -> target.getKind().getLanguageClass().equals(LanguageClass.ANDROID))
             .filter(target -> target.getAndroidIdeInfo() != null)
             .filter(importFilter::isSourceTarget)
             .filter(target -> !importFilter.excludeTarget(target))
@@ -129,7 +129,7 @@ public final class BlazeAndroidWorkspaceImporter {
 
   private static ArtifactLocation getJavacJar(Collection<TargetIdeInfo> targets) {
     return targets.stream()
-        .filter(target -> target.getKind() == Kind.JAVA_TOOLCHAIN)
+        .filter(target -> target.getKind() == JavaBlazeRules.RuleTypes.JAVA_TOOLCHAIN.getKind())
         .map(TargetIdeInfo::getJavaToolchainIdeInfo)
         .filter(Objects::nonNull)
         .map(JavaToolchainIdeInfo::getJavacJar)

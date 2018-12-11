@@ -21,6 +21,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.io.File;
@@ -40,17 +42,18 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
     ExtensionPointImpl<TestTargetHeuristic> ep =
         registerExtensionPoint(TestTargetHeuristic.EP_NAME, TestTargetHeuristic.class);
     ep.registerExtension(new TargetNameHeuristic());
+
+    ExtensionPointImpl<Kind.Provider> kindProvider =
+        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    kindProvider.registerExtension(new GenericBlazeRules());
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
   }
 
   @Test
   public void testPredicateMatchingName() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
     TargetInfo target =
-        TargetIdeInfo.builder()
-            .setLabel("//foo:FooTest")
-            .setKind("java_test")
-            .build()
-            .toTargetInfo();
+        TargetIdeInfo.builder().setLabel("//foo:FooTest").setKind("sh_test").build().toTargetInfo();
     assertThat(new TargetNameHeuristic().matchesSource(project, target, null, source, null))
         .isTrue();
   }
@@ -61,7 +64,7 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
     TargetInfo target =
         TargetIdeInfo.builder()
             .setLabel("//foo:foo/FooTest")
-            .setKind("java_test")
+            .setKind("sh_test")
             .build()
             .toTargetInfo();
     assertThat(new TargetNameHeuristic().matchesSource(project, target, null, source, null))
@@ -72,11 +75,7 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
   public void testPredicateNotMatchingForPartialOverlap() throws Exception {
     File source = new File("java/com/foo/BarFooTest.java");
     TargetInfo target =
-        TargetIdeInfo.builder()
-            .setLabel("//foo:FooTest")
-            .setKind("java_test")
-            .build()
-            .toTargetInfo();
+        TargetIdeInfo.builder().setLabel("//foo:FooTest").setKind("sh_test").build().toTargetInfo();
     assertThat(new TargetNameHeuristic().matchesSource(project, target, null, source, null))
         .isFalse();
   }
@@ -87,7 +86,7 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
     TargetInfo target =
         TargetIdeInfo.builder()
             .setLabel("//foo:bar/FooTest")
-            .setKind("java_test")
+            .setKind("sh_test")
             .build()
             .toTargetInfo();
     assertThat(new TargetNameHeuristic().matchesSource(project, target, null, source, null))
@@ -98,11 +97,7 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
   public void testPredicateDifferentName() throws Exception {
     File source = new File("java/com/foo/FooTest.java");
     TargetInfo target =
-        TargetIdeInfo.builder()
-            .setLabel("//foo:ForTest")
-            .setKind("java_test")
-            .build()
-            .toTargetInfo();
+        TargetIdeInfo.builder().setLabel("//foo:ForTest").setKind("sh_test").build().toTargetInfo();
     assertThat(new TargetNameHeuristic().matchesSource(project, target, null, source, null))
         .isFalse();
   }
@@ -114,12 +109,12 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder()
                 .setLabel("//foo:FirstTest")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//bar:OtherTest")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .build()
                 .toTargetInfo());
     TargetInfo match =
@@ -134,12 +129,12 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder()
                 .setLabel("//bar:FirstTest")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:FooTest")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .build()
                 .toTargetInfo());
     TargetInfo match =
@@ -154,17 +149,17 @@ public class RuleNameHeuristicTest extends BlazeTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder()
                 .setLabel("//bar:OtherTest")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:FooTest")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//bar/foo:FooTest")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .build()
                 .toTargetInfo());
     TargetInfo match =

@@ -41,6 +41,7 @@
     <SyncListener implementation="com.google.idea.blaze.cpp.BulkSymbolTableBuildingChangeListener$WorkspaceTypeSyncListener"/>
     <SyncStatusContributor implementation="com.google.idea.blaze.cpp.syncstatus.CppSyncStatusContributor"/>
     <cpp.BlazeCompilerFlagsProcessorProvider implementation="com.google.idea.blaze.cpp.SysrootFlagsProcessor$Provider"/>
+    <TargetKindProvider implementation="com.google.idea.blaze.cpp.CppBlazeRules"/>
   </extensions>
 
   <extensions defaultExtensionNs="cidr.lang">

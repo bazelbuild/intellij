@@ -26,7 +26,10 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Kind.Provider;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.java.JavaBlazeRules;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -39,6 +42,14 @@ import org.junit.runners.JUnit4;
 public class TransitiveAggregatorTest extends BlazeTestCase {
   private static int createCount;
   private static int reduceCount;
+
+  @Override
+  protected void initTest(Container applicationServices, Container projectServices) {
+    ExtensionPointImpl<Provider> kindProvider =
+        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    kindProvider.registerExtension(new JavaBlazeRules());
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+  }
 
   @Test
   public void testAggregate() {
@@ -164,6 +175,6 @@ public class TransitiveAggregatorTest extends BlazeTestCase {
   }
 
   private static TargetIdeInfo.Builder mockTargetIdeInfoBuilder() {
-    return TargetIdeInfo.builder().setKind(Kind.JAVA_LIBRARY);
+    return TargetIdeInfo.builder().setKind(JavaBlazeRules.RuleTypes.JAVA_LIBRARY.getKind());
   }
 }

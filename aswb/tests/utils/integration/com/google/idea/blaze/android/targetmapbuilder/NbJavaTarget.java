@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.java.JavaBlazeRules;
 
 /**
  * Builder for a blaze java target's IDE info. Defines common attributes across all java targets.
@@ -40,7 +41,7 @@ public class NbJavaTarget extends NbBaseTargetBuilder {
   }
 
   public static NbJavaTarget java_library(String label, BlazeInfoData environment) {
-    return new NbJavaTarget(environment, label, Kind.JAVA_LIBRARY);
+    return new NbJavaTarget(environment, label, JavaBlazeRules.RuleTypes.JAVA_LIBRARY.getKind());
   }
 
   NbJavaTarget(BlazeInfoData blazeInfoData, String label, Kind kind) {

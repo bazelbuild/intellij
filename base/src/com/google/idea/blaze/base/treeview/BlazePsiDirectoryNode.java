@@ -32,6 +32,11 @@ public class BlazePsiDirectoryNode extends PsiDirectoryNode {
   }
 
   @Override
+  public String getQualifiedNameSortKey() {
+    return toString();
+  }
+
+  @Override
   protected boolean shouldShowModuleName() {
     return false;
   }

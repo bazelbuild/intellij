@@ -41,6 +41,7 @@ import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManage
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Kind.Provider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -50,12 +51,14 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
+import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.intellij.mock.MockModule;
 import com.intellij.mock.MockPsiFile;
 import com.intellij.mock.MockPsiManager;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.MockFileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -106,6 +109,11 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     projectServices.register(ProjectScopeBuilder.class, new ProjectScopeBuilderImpl(project));
     projectServices.register(
         AndroidResourceModuleRegistry.class, new AndroidResourceModuleRegistry());
+
+    ExtensionPointImpl<Provider> kindProvider =
+        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    kindProvider.registerExtension(new AndroidBlazeRules());
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
 
     BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager();
     BlazeImportSettings settings = new BlazeImportSettings("", "", "", "", BuildSystem.Blaze);
@@ -680,7 +688,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
   }
 
   private static TargetIdeInfo.Builder mockTargetIdeInfoBuilder() {
-    return TargetIdeInfo.builder().setKind(Kind.ANDROID_LIBRARY);
+    return TargetIdeInfo.builder().setKind(AndroidBlazeRules.RuleTypes.ANDROID_LIBRARY.getKind());
   }
 
   private static PsiClass mockPsiClass(VirtualFile virtualFile) {

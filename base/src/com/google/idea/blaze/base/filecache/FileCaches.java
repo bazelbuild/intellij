@@ -23,7 +23,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
-import com.google.idea.blaze.base.sync.BlazeSyncParams;
+import com.google.idea.blaze.base.sync.SyncMode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 
@@ -35,7 +35,7 @@ public class FileCaches {
       BlazeContext context,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
-      BlazeSyncParams.SyncMode syncMode) {
+      SyncMode syncMode) {
     for (FileCache fileCache : FileCache.EP_NAME.getExtensions()) {
       Scope.push(
           context,

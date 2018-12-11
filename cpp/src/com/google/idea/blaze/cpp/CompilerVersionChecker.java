@@ -26,17 +26,18 @@ public interface CompilerVersionChecker {
   }
 
   /** Indicates failure to check compiler version */
-  class VersionCheckException extends Exception {
+  public static class VersionCheckException extends Exception {
 
     final IssueKind kind;
 
-    enum IssueKind {
+    /** Describes the failure mode of the version check. */
+    public enum IssueKind {
       MISSING_EXEC_ROOT,
       MISSING_COMPILER,
       GENERIC_FAILURE
     }
 
-    VersionCheckException(IssueKind kind, String message) {
+    public VersionCheckException(IssueKind kind, String message) {
       super(message);
       this.kind = kind;
     }

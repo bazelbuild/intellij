@@ -22,6 +22,7 @@ java_library(
         "//common/experiments",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//proto:proto_deps",
         "//sdkcompat",
         "//third_party/auto_value",
     ],
@@ -43,6 +44,15 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "@junit//jar",
     ],
+)
+
+# exposed so plugins can optionally depend on it
+java_library(
+    name = "compiler_version_checker",
+    srcs = ["src/com/google/idea/blaze/cpp/CompilerVersionChecker.java"],
+    neverlink = 1,
+    visibility = ["//visibility:public"],
+    deps = ["//intellij_platform_sdk:plugin_api"],
 )
 
 intellij_unit_test_suite(

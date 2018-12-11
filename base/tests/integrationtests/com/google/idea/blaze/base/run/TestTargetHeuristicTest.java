@@ -55,13 +55,13 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder()
                 .setLabel("//foo:test1")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:test2")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .build()
                 .toTargetInfo());
@@ -78,13 +78,13 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder()
                 .setLabel("//foo:test1")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .addSource(sourceRoot("java/com/bar/OtherTest.java"))
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:test2")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .addSource(sourceRoot("java/com/foo/FooTest.java"))
                 .build()
                 .toTargetInfo());
@@ -101,12 +101,12 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder()
                 .setLabel("//foo:FirstTest")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:FooTest")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .build()
                 .toTargetInfo());
     TargetInfo match =
@@ -122,13 +122,13 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder()
                 .setLabel("//bar:BarTest")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:OtherTest")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .build()
                 .toTargetInfo());
@@ -145,13 +145,13 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder()
                 .setLabel("//bar:BarTest")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:FooTest")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
                 .build()
                 .toTargetInfo());
@@ -168,14 +168,14 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder()
                 .setLabel("//foo:test1")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .addSource(sourceRoot("java/com/bar/OtherTest.java"))
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:test2")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
                 .addSource(sourceRoot("java/com/foo/FooTest.java"))
                 .build()

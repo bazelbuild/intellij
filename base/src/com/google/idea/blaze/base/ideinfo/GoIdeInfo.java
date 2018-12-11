@@ -20,6 +20,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -61,7 +63,9 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
   @Nullable
   private static Label extractLibraryLabel(
       @Nullable String libraryLabelString, Label targetLabel, Kind targetKind) {
-    if (libraryLabelString == null || !targetKind.isOneOf(Kind.GO_TEST, Kind.GO_APPENGINE_TEST)) {
+    if (libraryLabelString == null
+        || !targetKind.getLanguageClass().equals(LanguageClass.GO)
+        || !targetKind.getRuleType().equals(RuleType.TEST)) {
       return null;
     }
     Label libraryLabel = Label.create(libraryLabelString);

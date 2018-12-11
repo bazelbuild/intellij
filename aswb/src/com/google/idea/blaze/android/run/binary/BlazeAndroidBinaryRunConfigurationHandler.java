@@ -31,7 +31,6 @@ import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectSt
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.logging.EventLoggingService;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -43,6 +42,7 @@ import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
@@ -188,7 +188,9 @@ public class BlazeAndroidBinaryRunConfigurationHandler
     errors.addAll(configState.validate(facet));
     errors.addAll(
         BlazeAndroidRunConfigurationValidationUtil.validateLabel(
-            getLabel(), configuration.getProject(), ImmutableList.of(Kind.ANDROID_BINARY)));
+            getLabel(),
+            configuration.getProject(),
+            ImmutableList.of(AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind())));
     return errors;
   }
 

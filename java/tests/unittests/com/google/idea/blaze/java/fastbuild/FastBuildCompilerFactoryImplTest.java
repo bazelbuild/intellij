@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.fastbuild;
 
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
@@ -25,6 +26,9 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.OutputSink;
+import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaToolchainInfo;
@@ -38,22 +42,32 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 /** Unit tests for {@link FastBuildCompilerFactoryImpl}. */
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public final class FastBuildCompilerFactoryImplTest {
 
-  private static final File JAVAC_JAR = new File(System.getProperty("javac.jar"));
+  private static final String AUTO_VALUE_PROCESSOR =
+      "com.google.auto.value.processor.AutoValueProcessor";
+  private static final File AUTO_VALUE_JAR = new File(System.getProperty("auto_value.jar"));
+  private static final File AUTO_VALUE_PLUGIN_JAR =
+      new File(System.getProperty("auto_value_plugin.jar"));
+  private static final File FAST_BUILD_JAVAC_JAR =
+      new File(System.getProperty("fast_build_javac.jar"));
   private static final File GUAVA_JAR = new File(System.getProperty("guava.jar"));
+  private static final File JDK_TOOLS_JAR = new File(System.getProperty("jdk_tools.jar"));
   private static final File TRUTH_JAR = new File(System.getProperty("truth.jar"));
   private static final String WORKSPACE_NAME = "io_bazel";
 
   private static final JavaToolchainInfo JAVA_TOOLCHAIN =
       JavaToolchainInfo.create(
-          ArtifactLocation.builder().setRelativePath(JAVAC_JAR.getPath()).build(),
+          ArtifactLocation.builder().setRelativePath(JDK_TOOLS_JAR.getPath()).build(),
           /* sourceVersion */ "8",
           /* targetVersion */ "8");
   private static final JavaInfo JAVA_LIBRARY_WITHOUT_SOURCES =
@@ -64,6 +78,40 @@ public final class FastBuildCompilerFactoryImplTest {
           /* annotationProcessorClassNames */ ImmutableList.of(),
           /* annotationProcessorClassPath */ ImmutableList.of(),
           /* jvmFlags */ ImmutableList.of());
+
+  private FastBuildCompilerFactory compilerFactory;
+  private final boolean useNewCompiler;
+
+  public FastBuildCompilerFactoryImplTest(boolean useNewCompiler) {
+    this.useNewCompiler = useNewCompiler;
+  }
+
+  @Parameters(name = "useNewCompiler: {0}")
+  public static Iterable<Boolean[]> data() {
+    return ImmutableSet.of(new Boolean[] {true}, new Boolean[] {false});
+  }
+
+  @BeforeClass
+  public static void verifyJars() {
+    checkState(AUTO_VALUE_JAR.exists());
+    checkState(AUTO_VALUE_PLUGIN_JAR.exists());
+    checkState(GUAVA_JAR.exists());
+    checkState(FAST_BUILD_JAVAC_JAR.exists());
+    checkState(JDK_TOOLS_JAR.exists());
+    checkState(TRUTH_JAR.exists());
+  }
+
+  @Before
+  public void setUp() {
+    BlazeProjectData projectData =
+        MockBlazeProjectDataBuilder.builder()
+            .setArtifactLocationDecoder(artifact -> new File(artifact.getRelativePath()))
+            .build();
+    BlazeProjectDataManager projectDataManager = new MockBlazeProjectDataManager(projectData);
+    compilerFactory =
+        FastBuildCompilerFactoryImpl.createForTest(
+            projectDataManager, useNewCompiler, FAST_BUILD_JAVAC_JAR);
+  }
 
   @Test
   public void testNoJavaToolchain() {
@@ -87,7 +135,7 @@ public final class FastBuildCompilerFactoryImplTest {
     blazeData.put(dependencyLabel, dependencyData);
 
     try {
-      createCompilerFactory().getCompilerFor(targetLabel, blazeData);
+      compilerFactory.getCompilerFor(targetLabel, blazeData);
       fail("Should have thrown FastBuildException");
     } catch (FastBuildException e) {
       assertThat(e.getMessage()).contains("Java toolchain");
@@ -124,7 +172,7 @@ public final class FastBuildCompilerFactoryImplTest {
     blazeData.put(jdkTwoLabel, jdkTwoData);
 
     try {
-      createCompilerFactory().getCompilerFor(targetLabel, blazeData);
+      compilerFactory.getCompilerFor(targetLabel, blazeData);
       fail("Should have thrown FastBuildException");
     } catch (FastBuildException e) {
       assertThat(e.getMessage()).contains("Java toolchain");
@@ -213,10 +261,12 @@ public final class FastBuildCompilerFactoryImplTest {
     try {
       getCompiler(
               JavaToolchainInfo.create(
-                  ArtifactLocation.builder().setRelativePath(JAVAC_JAR.getPath()).build(),
+                  ArtifactLocation.builder().setRelativePath(JDK_TOOLS_JAR.getPath()).build(),
                   /* sourceVersion */ "7",
                   /* targetVersion */ "8"))
-          .compile(createCompileInstructions(java, javacOutput).build(), new HashMap<>());
+          .compile(
+              createBlazeContext(javacOutput),
+              createCompileInstructions(java, javacOutput).build());
       fail("Should have thrown FastBuildIncrementalCompileException");
     } catch (FastBuildIncrementalCompileException e) {
       assertThat(javacOutput.toString()).contains("lambda");
@@ -224,11 +274,41 @@ public final class FastBuildCompilerFactoryImplTest {
     }
   }
 
+  @Test
+  public void runsAnnotationProcessors() throws IOException, FastBuildException {
+    String java =
+        ""
+            + "package com.google.idea.blaze.java.fastbuild;\n"
+            + "\n"
+            + "import com.google.auto.value.AutoValue;\n"
+            + "\n"
+            + "@AutoValue\n"
+            + "abstract class TestClass {\n"
+            + "  abstract String someString();\n"
+            + "  TestClass create(String someString) {\n"
+            + "    return new AutoValue_TestClass(someString);\n"
+            + "  }\n"
+            + "}\n";
+    StringWriter javacOutput = new StringWriter();
+    FastBuildCompiler compiler = getCompiler();
+    try {
+      compiler.compile(
+          createBlazeContext(javacOutput),
+          createCompileInstructions(java, javacOutput, AUTO_VALUE_JAR)
+              .annotationProcessorClasspath(ImmutableSet.of(AUTO_VALUE_PLUGIN_JAR))
+              .annotationProcessorClassNames(ImmutableSet.of(AUTO_VALUE_PROCESSOR))
+              .build());
+    } catch (FastBuildIncrementalCompileException e) {
+      throw new AssertionError("Compilation failed:\n" + javacOutput, e);
+    }
+  }
+
   private void compile(String source, Writer javacOutput, File... classpath)
       throws IOException, FastBuildException {
     getCompiler()
         .compile(
-            createCompileInstructions(source, javacOutput, classpath).build(), new HashMap<>());
+            createBlazeContext(javacOutput),
+            createCompileInstructions(source, javacOutput, classpath).build());
   }
 
   private CompileInstructions.Builder createCompileInstructions(
@@ -279,15 +359,29 @@ public final class FastBuildCompilerFactoryImplTest {
     blazeData.put(targetLabel, targetData);
     blazeData.put(jdkLabel, jdkData);
 
-    return createCompilerFactory().getCompilerFor(targetLabel, blazeData);
+    return compilerFactory.getCompilerFor(targetLabel, blazeData);
   }
 
-  private static FastBuildCompilerFactoryImpl createCompilerFactory() {
-    BlazeProjectData projectData =
-        MockBlazeProjectDataBuilder.builder()
-            .setArtifactLocationDecoder(artifact -> new File(artifact.getRelativePath()))
-            .build();
-    BlazeProjectDataManager projectDataManager = new MockBlazeProjectDataManager(projectData);
-    return new FastBuildCompilerFactoryImpl(projectDataManager);
+  private static BlazeContext createBlazeContext(Writer javacOutput) {
+    return new BlazeContext().addOutputSink(PrintOutput.class, new WritingOutputSink(javacOutput));
+  }
+
+  private static class WritingOutputSink implements OutputSink<PrintOutput> {
+
+    private final Writer writer;
+
+    private WritingOutputSink(Writer writer) {
+      this.writer = writer;
+    }
+
+    @Override
+    public Propagation onOutput(PrintOutput output) {
+      try {
+        writer.write(output.getText());
+        return Propagation.Continue;
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 }

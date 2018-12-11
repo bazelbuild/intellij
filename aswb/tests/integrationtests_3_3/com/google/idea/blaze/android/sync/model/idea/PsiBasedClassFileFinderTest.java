@@ -28,11 +28,11 @@ import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.java.JavaBlazeRules;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import org.junit.Before;
@@ -104,7 +104,7 @@ public class PsiBasedClassFileFinderTest extends BlazeIntegrationTestCase {
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel(Label.create("//p1/p2:main"))
-                    .setKind(Kind.JAVA_BINARY)
+                    .setKind(JavaBlazeRules.RuleTypes.JAVA_BINARY.getKind())
                     .setJavaInfo(JavaIdeInfo.builder().addJar(classJar))
                     .addSource(mainSource))
             .build());
@@ -131,7 +131,7 @@ public class PsiBasedClassFileFinderTest extends BlazeIntegrationTestCase {
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel(Label.create("//nested:nested"))
-                    .setKind(Kind.JAVA_BINARY)
+                    .setKind(JavaBlazeRules.RuleTypes.JAVA_BINARY.getKind())
                     .setJavaInfo(JavaIdeInfo.builder().addJar(classJar))
                     .addSource(nestedSource))
             .build());
@@ -166,7 +166,7 @@ public class PsiBasedClassFileFinderTest extends BlazeIntegrationTestCase {
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel(Label.create("//versioned:versioned"))
-                    .setKind(Kind.JAVA_BINARY)
+                    .setKind(JavaBlazeRules.RuleTypes.JAVA_BINARY.getKind())
                     .setJavaInfo(JavaIdeInfo.builder().addJar(classJar))
                     .addSource(selectedSource))
             .build());

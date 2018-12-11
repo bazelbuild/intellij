@@ -31,7 +31,6 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -42,6 +41,7 @@ import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaExecutionUtil;
@@ -105,7 +105,8 @@ public class BlazeAndroidTestRunConfigurationHandler
     for (Dependency dependency : instrumentationTest.getDependencies()) {
       TargetIdeInfo dependencyInfo = targetMap.get(dependency.getTargetKey());
       // Should exist via test_app attribute, and be unique.
-      if (dependencyInfo != null && dependencyInfo.getKind() == Kind.ANDROID_BINARY) {
+      if (dependencyInfo != null
+          && dependencyInfo.getKind() == AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind()) {
         return dependency.getTargetKey().getLabel();
       }
     }
@@ -115,7 +116,9 @@ public class BlazeAndroidTestRunConfigurationHandler
   @Nullable
   private Module getModule() {
     Label target = getLabel();
-    if (Objects.equals(configuration.getTargetKind(), Kind.ANDROID_INSTRUMENTATION_TEST)) {
+    if (Objects.equals(
+        configuration.getTargetKind(),
+        AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind())) {
       target = getInstrumentationBinary(target);
     }
     return target != null
@@ -189,7 +192,9 @@ public class BlazeAndroidTestRunConfigurationHandler
         BlazeAndroidRunConfigurationValidationUtil.validateLabel(
             getLabel(),
             configuration.getProject(),
-            ImmutableList.of(Kind.ANDROID_TEST, Kind.ANDROID_INSTRUMENTATION_TEST)));
+            ImmutableList.of(
+                AndroidBlazeRules.RuleTypes.ANDROID_TEST.getKind(),
+                AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind())));
     return errors;
   }
 

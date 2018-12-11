@@ -16,18 +16,22 @@
 package com.google.idea.blaze.base.sync.projectview;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
-import java.util.EnumSet;
+import java.util.Collection;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.annotation.concurrent.Immutable;
 
 /** Contains the user's language preferences from the project view. */
 @Immutable
-public class WorkspaceLanguageSettings
+public final class WorkspaceLanguageSettings
     implements ProtoWrapper<ProjectData.WorkspaceLanguageSettings> {
   private final WorkspaceType workspaceType;
   private final ImmutableSet<LanguageClass> activeLanguages;
@@ -80,10 +84,22 @@ public class WorkspaceLanguageSettings
     return getActiveLanguages().contains(languageClass);
   }
 
-  public EnumSet<Kind> getAvailableTargetKinds() {
-    EnumSet<Kind> kinds = EnumSet.allOf(Kind.class);
-    kinds.removeIf(kind -> !getActiveLanguages().contains(kind.languageClass));
-    return kinds;
+  /**
+   * Returns the set of known rule names corresponding to the currently active languages in this
+   * project.
+   *
+   * <p>Don't rely on this list being complete -- some rule names are recognized at runtime using
+   * heuristics.
+   */
+  public Predicate<String> getAvailableTargetKinds() {
+    ImmutableMultimap<LanguageClass, Kind> kinds = Kind.getPerLanguageKinds();
+    Set<String> ruleNames =
+        activeLanguages.stream()
+            .map(kinds::get)
+            .flatMap(Collection::stream)
+            .map(Kind::getKindString)
+            .collect(Collectors.toSet());
+    return ruleNames::contains;
   }
 
   @Override

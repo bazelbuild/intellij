@@ -27,8 +27,8 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -65,7 +65,7 @@ public class BlazeSampleDataDirectoryProviderTest extends BlazeAndroidIntegratio
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel("//com/google/example:main")
-                    .setKind(Kind.ANDROID_BINARY)
+                    .setKind(AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind())
                     .setJavaInfo(JavaIdeInfo.builder())
                     .setAndroidInfo(
                         AndroidIdeInfo.builder()

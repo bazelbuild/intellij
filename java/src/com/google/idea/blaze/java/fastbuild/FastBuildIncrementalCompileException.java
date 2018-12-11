@@ -15,8 +15,6 @@
  */
 package com.google.idea.blaze.java.fastbuild;
 
-import com.google.common.collect.ImmutableMap;
-import java.util.Map;
 
 /**
  * An exception compiling code using the {@link FastBuildService}.
@@ -25,14 +23,7 @@ import java.util.Map;
  */
 public class FastBuildIncrementalCompileException extends FastBuildException {
 
-  private final ImmutableMap<String, String> loggingData;
-
-  FastBuildIncrementalCompileException(String message, Map<String, String> loggingData) {
-    super(message);
-    this.loggingData = ImmutableMap.copyOf(loggingData);
-  }
-
-  public ImmutableMap<String, String> getLoggingData() {
-    return loggingData;
+  FastBuildIncrementalCompileException() {
+    super("incremental compilation failed");
   }
 }

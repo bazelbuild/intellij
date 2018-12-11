@@ -349,7 +349,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     Element targetElement = element.getChild(TARGET_TAG);
     if (targetElement != null && !Strings.isNullOrEmpty(targetElement.getTextTrim())) {
       targetPattern = targetElement.getTextTrim();
-      targetKind = Kind.fromString(targetElement.getAttributeValue(KIND_ATTR));
+      targetKind = Kind.fromRuleName(targetElement.getAttributeValue(KIND_ATTR));
     }
     // Because BlazeProjectData is not available when configurations are loading,
     // we can't call setTarget and have it find the appropriate handler provider.

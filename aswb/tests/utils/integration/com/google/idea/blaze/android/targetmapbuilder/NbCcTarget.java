@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.cpp.CppBlazeRules;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -43,7 +44,7 @@ public class NbCcTarget extends NbBaseTargetBuilder {
   }
 
   public static NbCcTarget cc_library(String label, BlazeInfoData blazeInfoData) {
-    return new NbCcTarget(blazeInfoData, label, Kind.CC_LIBRARY);
+    return new NbCcTarget(blazeInfoData, label, CppBlazeRules.RuleTypes.CC_LIBRARY.getKind());
   }
 
   NbCcTarget(BlazeInfoData blazeInfoData, String label, Kind kind) {

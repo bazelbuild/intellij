@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
@@ -55,6 +56,8 @@ public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
     applicationServices.register(ExperimentService.class, new MockExperimentService());
+    registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
 
     ExtensionPointImpl<TargetFinder> targetFinderEp =
         registerExtensionPoint(TargetFinder.EP_NAME, TargetFinder.class);

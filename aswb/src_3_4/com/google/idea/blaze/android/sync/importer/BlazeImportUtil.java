@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -34,6 +33,7 @@ import com.google.idea.blaze.base.scope.Output;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
+import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import java.util.Collection;
 import java.util.Collections;
@@ -87,7 +87,7 @@ public class BlazeImportUtil {
   static Stream<TargetIdeInfo> getSourceTargetsStream(
       TargetMap targetMap, ProjectViewTargetImportFilter importFilter) {
     return targetMap.targets().stream()
-        .filter(target -> target.getKind().languageClass == LanguageClass.ANDROID)
+        .filter(target -> target.getKind().getLanguageClass() == LanguageClass.ANDROID)
         .filter(target -> target.getAndroidIdeInfo() != null)
         .filter(importFilter::isSourceTarget)
         .filter(target -> !importFilter.excludeTarget(target));
@@ -109,7 +109,8 @@ public class BlazeImportUtil {
   /** Returns the javac jar if it can be found in the given list of targets, otherwise null. */
   static ArtifactLocation getJavacJar(Collection<TargetIdeInfo> targets) {
     return targets.stream()
-        .filter(target -> target.getKind() == Kind.JAVA_TOOLCHAIN)
+        .filter(
+            target -> target.getKind().equals(JavaBlazeRules.RuleTypes.JAVA_TOOLCHAIN.getKind()))
         .map(TargetIdeInfo::getJavaToolchainIdeInfo)
         .filter(Objects::nonNull)
         .map(JavaToolchainIdeInfo::getJavacJar)

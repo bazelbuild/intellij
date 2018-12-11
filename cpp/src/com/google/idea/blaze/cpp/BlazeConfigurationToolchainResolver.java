@@ -87,7 +87,7 @@ public final class BlazeConfigurationToolchainResolver {
 
           ImmutableMap.Builder<TargetKey, CToolchainIdeInfo> lookupTable = ImmutableMap.builder();
           for (TargetIdeInfo target : targetMap.targets()) {
-            if (target.getKind().languageClass != LanguageClass.C
+            if (target.getKind().getLanguageClass() != LanguageClass.C
                 || target.getcToolchainIdeInfo() != null) {
               continue;
             }

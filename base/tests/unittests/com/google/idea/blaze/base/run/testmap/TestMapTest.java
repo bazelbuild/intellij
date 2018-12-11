@@ -26,6 +26,8 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.SourceToTargetFinder;
@@ -62,6 +64,11 @@ public class TestMapTest extends BlazeTestCase {
     ExtensionPointImpl<SourceToTargetFinder> ep =
         registerExtensionPoint(SourceToTargetFinder.EP_NAME, SourceToTargetFinder.class);
     ep.registerExtension(new ProjectSourceToTargetFinder());
+
+    ExtensionPointImpl<Kind.Provider> kindProvider =
+        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    kindProvider.registerExtension(new GenericBlazeRules());
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
   }
 
   @Test
@@ -72,7 +79,7 @@ public class TestMapTest extends BlazeTestCase {
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test")
-                    .setKind("java_test")
+                    .setKind("sh_test")
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
@@ -92,13 +99,13 @@ public class TestMapTest extends BlazeTestCase {
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test")
-                    .setKind("java_test")
+                    .setKind("sh_test")
                     .addDependency("//test:lib"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib")
-                    .setKind("java_library")
+                    .setKind("sh_library")
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
@@ -118,19 +125,19 @@ public class TestMapTest extends BlazeTestCase {
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test")
-                    .setKind("java_test")
+                    .setKind("sh_test")
                     .addDependency("//test:lib"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test2")
-                    .setKind("java_test")
+                    .setKind("sh_test")
                     .addDependency("//test:lib"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib")
-                    .setKind("java_library")
+                    .setKind("sh_library")
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
@@ -150,25 +157,25 @@ public class TestMapTest extends BlazeTestCase {
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib")
-                    .setKind("java_library")
+                    .setKind("sh_library")
                     .addSource(sourceRoot("test/Test.java")))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib2")
-                    .setKind("java_library")
+                    .setKind("sh_library")
                     .addDependency("//test:lib"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test2")
-                    .setKind("java_test")
+                    .setKind("sh_test")
                     .addDependency("//test:lib2"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test")
-                    .setKind("java_test")
+                    .setKind("sh_test")
                     .addDependency("//test:lib"))
             .build();
 
@@ -189,25 +196,25 @@ public class TestMapTest extends BlazeTestCase {
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test")
-                    .setKind("java_test")
+                    .setKind("sh_test")
                     .addDependency("//test:lib"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test2")
-                    .setKind("java_test")
+                    .setKind("sh_test")
                     .addDependency("//test:lib2"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib")
-                    .setKind("java_library")
+                    .setKind("sh_library")
                     .addSource(sourceRoot("test/Test.java")))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib2")
-                    .setKind("java_library")
+                    .setKind("sh_library")
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 
@@ -227,20 +234,20 @@ public class TestMapTest extends BlazeTestCase {
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:test")
-                    .setKind("java_test")
+                    .setKind("sh_test")
                     .addDependency("//test:lib")
                     .addDependency("//test:lib2"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib")
-                    .setKind("java_library")
+                    .setKind("sh_library")
                     .addSource(sourceRoot("test/Test.java")))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("test/BUILD"))
                     .setLabel("//test:lib2")
-                    .setKind("java_library")
+                    .setKind("sh_library")
                     .addSource(sourceRoot("test/Test.java")))
             .build();
 

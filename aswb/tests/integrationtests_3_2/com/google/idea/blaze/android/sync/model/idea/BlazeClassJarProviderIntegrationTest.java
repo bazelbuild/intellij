@@ -148,78 +148,6 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
         .isNull();
   }
 
-  private void createClassesInJars() {
-    fileSystem.createFile(
-        BLAZE_BIN
-            + "/com/google/example/libmain.jar!"
-            + "/com/google/example/main/MainActivity.class");
-    fileSystem.createFile(
-        BLAZE_BIN + "/com/google/example/main_resources.jar!" + "/com/google/example/main/R.class");
-    fileSystem.createFile(
-        BLAZE_BIN
-            + "/com/google/example/main_resources.jar!"
-            + "/com/google/example/main/R$string.class");
-    fileSystem.createFile(
-        BLAZE_BIN
-            + "/com/google/example/libandroid.jar!"
-            + "/com/google/example/android/Android.class");
-    fileSystem.createFile(
-        BLAZE_BIN
-            + "/com/google/example/resource_resources.jar!"
-            + "/com/google/example/resource/R.class");
-    fileSystem.createFile(
-        BLAZE_BIN
-            + "/com/google/example/resource_resources.jar!"
-            + "/com/google/example/resource/R$style.class");
-    fileSystem.createFile(
-        BLAZE_BIN
-            + "/com/google/unrelated/resource_resources.jar!"
-            + "/com/google/unrelated/resource/R$layout.class");
-    fileSystem.createFile(
-        BLAZE_BIN
-            + "/com/google/example/resource2_resources.jar!"
-            + "/com/google/example/resource2/R.class");
-    fileSystem.createFile(
-        BLAZE_BIN
-            + "/com/google/example/transitive/resource_resources.jar!"
-            + "/com/google/example/transitive/R.class");
-    fileSystem.createFile(
-        BLAZE_BIN + "/com/google/example/libjava.jar!" + "/com/google/example/java/Java.class");
-    fileSystem.createFile(
-        BLAZE_BIN
-            + "/com/google/example/libtransitive.jar!"
-            + "/com/google/example/transitive/Transitive.class");
-    fileSystem.createFile(
-        BLAZE_BIN
-            + "/com/google/example/libshared.jar!"
-            + "/com/google/example/shared/Shared.class");
-    fileSystem.createFile(
-        BLAZE_BIN
-            + "/com/google/example/libshared2.jar!"
-            + "/com/google/example/shared2/Shared2.class");
-    fileSystem.createFile(
-        "com/google/example/libimport.jar!" + "/com/google/example/import/Import.class");
-    fileSystem.createFile(
-        "com/google/example/transitive/libimport.jar!"
-            + "/com/google/example/transitive/import/TransitiveImport.class");
-    fileSystem.createFile(
-        BLAZE_BIN
-            + "/com/google/example/unrelated/libjava.jar!"
-            + "/com/google/example/unrelated/Java.class");
-    fileSystem.createFile(
-        BLAZE_BIN
-            + "/com/google/example/unrelated/libandroid.jar!"
-            + "/com/google/example/unrelated/Android.class");
-    fileSystem.createFile(
-        BLAZE_BIN
-            + "/com/google/example/unrelated/libresource.jar!"
-            + "/com/google/example/unrelated/Resource.class");
-    fileSystem.createFile(
-        BLAZE_BIN
-            + "/com/google/example/unrelated/resource_resources.jar!"
-            + "/com/google/example/unrelated/R.class");
-  }
-
   private TargetMap buildTargetMap() {
     Label mainResourceLibrary = Label.create("//com/google/example:main");
     Label androidDependency = Label.create("//com/google/example:android");
@@ -260,7 +188,7 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(mainResourceLibrary)
-                .setKind(Kind.ANDROID_LIBRARY)
+                .setKind(Kind.fromRuleName("android_library"))
                 .setJavaInfo(
                     javaInfoWithJars(
                         "com/google/example/libmain.jar", "com/google/example/main_resources.jar"))
@@ -277,13 +205,13 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(androidDependency)
-                .setKind(Kind.ANDROID_LIBRARY)
+                .setKind(Kind.fromRuleName("android_library"))
                 .setJavaInfo(javaInfoWithJars("com/google/example/libandroid.jar"))
                 .addDependency(transitiveResourceDependency))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(resourceDependency)
-                .setKind(Kind.ANDROID_LIBRARY)
+                .setKind(Kind.fromRuleName("android_library"))
                 .setJavaInfo(
                     javaInfoWithJars(
                         "com/google/example/resource.jar",
@@ -296,7 +224,7 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(resourceDependency2)
-                .setKind(Kind.ANDROID_LIBRARY)
+                .setKind(Kind.fromRuleName("android_library"))
                 .setJavaInfo(
                     javaInfoWithJars(
                         "com/google/example/resource2.jar",
@@ -309,7 +237,7 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(transitiveResourceDependency)
-                .setKind(Kind.ANDROID_LIBRARY)
+                .setKind(Kind.fromRuleName("android_library"))
                 .setJavaInfo(
                     javaInfoWithJars(
                         "com/google/example/transitive/resource.jar",
@@ -322,7 +250,7 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(javaDependency)
-                .setKind(Kind.JAVA_LIBRARY)
+                .setKind(Kind.fromRuleName("java_library"))
                 .setJavaInfo(javaInfoWithJars("com/google/example/libjava.jar"))
                 .addDependency(transitiveJavaDependency)
                 .addDependency(sharedJavaDependency)
@@ -331,30 +259,30 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(transitiveJavaDependency)
-                .setKind(Kind.JAVA_LIBRARY)
+                .setKind(Kind.fromRuleName("java_library"))
                 .setJavaInfo(javaInfoWithJars("com/google/example/libtransitive.jar"))
                 .addDependency(sharedJavaDependency)
                 .addDependency(sharedJavaDependency2))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(sharedJavaDependency)
-                .setKind(Kind.JAVA_LIBRARY)
+                .setKind(Kind.fromRuleName("java_library"))
                 .setJavaInfo(javaInfoWithJars("com/google/example/libshared.jar"))
                 .addDependency(sharedJavaDependency2))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(sharedJavaDependency2)
-                .setKind(Kind.JAVA_LIBRARY)
+                .setKind(Kind.fromRuleName("java_library"))
                 .setJavaInfo(javaInfoWithJars("com/google/example/libshared2.jar")))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(importDependency)
-                .setKind(Kind.JAVA_IMPORT)
+                .setKind(Kind.fromRuleName("java_import"))
                 .setJavaInfo(javaInfoWithCheckedInJars("com/google/example/libimport.jar")))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(transitiveImportDependency)
-                .setKind(Kind.JAVA_IMPORT)
+                .setKind(Kind.fromRuleName("java_import"))
                 .setJavaInfo(
                     javaInfoWithCheckedInJars(
                         "com/google/example/transitive/libimport.jar",
@@ -362,17 +290,17 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(unrelatedJava)
-                .setKind(Kind.JAVA_LIBRARY)
+                .setKind(Kind.fromRuleName("java_library"))
                 .setJavaInfo(javaInfoWithJars("com/google/unrelated/libjava.jar")))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(unrelatedAndroid)
-                .setKind(Kind.ANDROID_LIBRARY)
+                .setKind(Kind.fromRuleName("android_library"))
                 .setJavaInfo(javaInfoWithJars("com/google/unrelated/libandroid.jar")))
         .addTarget(
             TargetIdeInfo.builder()
                 .setLabel(unrelatedResource)
-                .setKind(Kind.ANDROID_LIBRARY)
+                .setKind(Kind.fromRuleName("android_library"))
                 .setJavaInfo(
                     javaInfoWithJars(
                         "com/google/unrelated/libresource.jar",

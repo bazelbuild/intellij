@@ -23,6 +23,8 @@ import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.io.File;
@@ -41,6 +43,11 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
     ExtensionPointImpl<TestTargetHeuristic> ep =
         registerExtensionPoint(TestTargetHeuristic.EP_NAME, TestTargetHeuristic.class);
     ep.registerExtension(new TestSizeHeuristic());
+
+    ExtensionPointImpl<Kind.Provider> kindProvider =
+        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    kindProvider.registerExtension(new GenericBlazeRules());
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
   }
 
   @Test
@@ -49,7 +56,7 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
     TargetInfo target =
         TargetIdeInfo.builder()
             .setLabel("//foo:test")
-            .setKind("java_test")
+            .setKind("sh_test")
             .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
             .build()
             .toTargetInfo();
@@ -64,7 +71,7 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
     TargetInfo target =
         TargetIdeInfo.builder()
             .setLabel("//foo:test")
-            .setKind("java_test")
+            .setKind("sh_test")
             .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
             .build()
             .toTargetInfo();
@@ -78,7 +85,7 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
     TargetInfo target =
         TargetIdeInfo.builder()
             .setLabel("//foo:test")
-            .setKind("java_test")
+            .setKind("sh_test")
             .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
             .build()
             .toTargetInfo();
@@ -87,7 +94,7 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
     target =
         TargetIdeInfo.builder()
             .setLabel("//foo:test")
-            .setKind("java_test")
+            .setKind("sh_test")
             .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
             .build()
             .toTargetInfo();
@@ -102,19 +109,19 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder()
                 .setLabel("//foo:test1")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:test2")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.LARGE))
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:test3")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.ENORMOUS))
                 .build()
                 .toTargetInfo());
@@ -131,13 +138,13 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder()
                 .setLabel("//foo:test1")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:test2")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .build()
                 .toTargetInfo());
@@ -154,19 +161,19 @@ public class TestSizeHeuristicTest extends BlazeTestCase {
         ImmutableList.of(
             TargetIdeInfo.builder()
                 .setLabel("//foo:test1")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:test2")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .build()
                 .toTargetInfo(),
             TargetIdeInfo.builder()
                 .setLabel("//foo:test3")
-                .setKind("java_test")
+                .setKind("sh_test")
                 .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
                 .build()
                 .toTargetInfo());

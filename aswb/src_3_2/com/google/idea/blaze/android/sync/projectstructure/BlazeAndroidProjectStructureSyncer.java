@@ -40,7 +40,6 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -54,6 +53,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -127,7 +127,11 @@ public class BlazeAndroidProjectStructureSyncer {
       Module module = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
       TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
       AndroidFacetModuleCustomizer.createAndroidFacet(
-          module, target != null && target.kindIsOneOf(Kind.ANDROID_BINARY, Kind.ANDROID_TEST));
+          module,
+          target != null
+              && target.kindIsOneOf(
+                  AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind(),
+                  AndroidBlazeRules.RuleTypes.ANDROID_TEST.getKind()));
     }
 
     // Configure android resource modules
@@ -247,7 +251,9 @@ public class BlazeAndroidProjectStructureSyncer {
       if (target == null) {
         continue;
       }
-      if (!target.kindIsOneOf(Kind.ANDROID_BINARY, Kind.ANDROID_TEST)) {
+      if (!target.kindIsOneOf(
+          AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind(),
+          AndroidBlazeRules.RuleTypes.ANDROID_TEST.getKind())) {
         continue;
       }
       result.add(target);

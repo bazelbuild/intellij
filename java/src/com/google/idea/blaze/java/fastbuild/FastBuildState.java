@@ -56,6 +56,7 @@ abstract class FastBuildState {
 
   abstract FastBuildParameters buildParameters();
 
+  @Deprecated
   abstract ImmutableSet<File> modifiedFiles();
 
   static FastBuildState create(
@@ -71,6 +72,7 @@ abstract class FastBuildState {
         ImmutableSet.copyOf(modifiedFiles));
   }
 
+  @Deprecated
   @CheckReturnValue
   FastBuildState withAdditionalModifiedFiles(Collection<File> additionalModifiedFiles) {
     return new AutoValue_FastBuildState(

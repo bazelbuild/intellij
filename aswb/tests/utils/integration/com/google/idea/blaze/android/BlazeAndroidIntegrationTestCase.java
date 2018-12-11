@@ -24,6 +24,7 @@ import com.google.idea.blaze.android.sdk.MockBlazeSdkProvider;
 import com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
+import com.google.idea.blaze.base.sync.SyncMode;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import org.junit.Rule;
@@ -55,7 +56,7 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
 
   protected void runFullBlazeSync() {
     runBlazeSync(
-        new BlazeSyncParams.Builder("full sync", BlazeSyncParams.SyncMode.FULL)
+        new BlazeSyncParams.Builder("full sync", SyncMode.FULL)
             .addProjectViewTargets(true)
             .build());
     errorCollector.assertNoIssues();

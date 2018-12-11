@@ -17,6 +17,7 @@ package com.google.idea.blaze.plugin;
 
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import javax.annotation.Nullable;
 
@@ -32,6 +33,6 @@ public class IntellijPluginRule {
   }
 
   private static boolean isPluginTargetKind(@Nullable Kind kind) {
-    return Kind.INTELLIJ_PLUGIN_DEBUG_TARGET.equals(kind);
+    return RuleTypes.INTELLIJ_PLUGIN_DEBUG_TARGET.getKind().equals(kind);
   }
 }

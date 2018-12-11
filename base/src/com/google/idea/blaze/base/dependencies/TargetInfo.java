@@ -47,7 +47,7 @@ public class TargetInfo {
 
   @Nullable
   public Kind getKind() {
-    return Kind.fromString(kindString);
+    return Kind.fromRuleName(kindString);
   }
 
   /** Returns this targets sources, or Optional#empty if they're not known. */
@@ -57,8 +57,8 @@ public class TargetInfo {
 
   public RuleType getRuleType() {
     Kind kind = getKind();
-    if (kind != null && kind.ruleType != RuleType.UNKNOWN) {
-      return kind.ruleType;
+    if (kind != null && kind.getRuleType() != RuleType.UNKNOWN) {
+      return kind.getRuleType();
     }
     return guessRuleTypeFromKindString(kindString);
   }

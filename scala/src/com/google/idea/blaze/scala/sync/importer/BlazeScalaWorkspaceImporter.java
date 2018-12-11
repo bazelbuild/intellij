@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.LibraryKey;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -32,7 +31,6 @@ import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.scala.sync.model.BlazeScalaImportResult;
 import com.intellij.openapi.project.Project;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -60,11 +58,10 @@ public final class BlazeScalaWorkspaceImporter {
         new ProjectViewTargetImportFilter(
             Blaze.getBuildSystem(project), workspaceRoot, projectViewSet);
 
-    Collection<Kind> scalaKinds = Kind.allKindsForLanguage(LanguageClass.SCALA);
     List<TargetKey> scalaSourceTargets =
         targetMap.targets().stream()
             .filter(target -> target.getJavaIdeInfo() != null)
-            .filter(target -> target.kindIsOneOf(scalaKinds))
+            .filter(target -> target.getKind().getLanguageClass() == LanguageClass.SCALA)
             .filter(importFilter::isSourceTarget)
             .map(TargetIdeInfo::getKey)
             .collect(Collectors.toList());

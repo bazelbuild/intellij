@@ -34,20 +34,20 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
-import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
+import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.cpp.BlazeCWorkspace;
 import com.google.idea.blaze.cpp.BlazeConfigurationToolchainResolver;
 import com.google.idea.blaze.cpp.CompilerVersionChecker;
+import com.google.idea.blaze.cpp.CppBlazeRules;
 import com.google.idea.blaze.cpp.MockCompilerVersionChecker;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceManagerAdapter;
@@ -274,13 +274,13 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("android_ndk_linux/toolchains/BUILD"))
                     .setLabel("//android_ndk_linux/toolchains:armv7a")
-                    .setKind(Kind.CC_TOOLCHAIN)
+                    .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
                     .setCToolchainInfo(aarch32Toolchain))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(sourceRoot("android_ndk_linux/toolchains/BUILD"))
                     .setLabel("//android_ndk_linux/toolchains:aarch64")
-                    .setKind(Kind.CC_TOOLCHAIN)
+                    .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
                     .setCToolchainInfo(aarch64Toolchain))
             .addTarget(targetWith64Dep)
             .addTarget(targetWith32Dep)

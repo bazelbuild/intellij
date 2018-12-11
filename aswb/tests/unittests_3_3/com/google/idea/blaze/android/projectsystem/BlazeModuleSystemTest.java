@@ -50,12 +50,14 @@ import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.mock.MockModule;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.editor.LazyRangeMarkerFactory;
 import com.intellij.openapi.editor.impl.LazyRangeMarkerFactoryImpl;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
@@ -81,6 +83,11 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
+    ExtensionPointImpl<Kind.Provider> kindProvider =
+        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    kindProvider.registerExtension(new AndroidBlazeRules());
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+
     module = new MockModule(project, () -> {});
 
     // For the 'blaze.class.file.finder.name' experiment.
@@ -184,7 +191,7 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel(Label.create("//foo:bar"))
-                    .setKind(Kind.ANDROID_LIBRARY)
+                    .setKind(AndroidBlazeRules.RuleTypes.ANDROID_LIBRARY.getKind())
                     .setBuildFile(ArtifactLocation.builder().setRelativePath("foo/BUILD").build())
                     .build())
             .build();

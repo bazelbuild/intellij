@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.TestUtils;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
+import com.google.idea.blaze.base.sync.SyncMode;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,9 +55,7 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
         workspace.createFile(new WorkspacePath("common/jslayout/tests/date_formatter_test.js"));
 
     BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Full Sync", BlazeSyncParams.SyncMode.FULL)
-            .addProjectViewTargets(true)
-            .build();
+        new BlazeSyncParams.Builder("Full Sync", SyncMode.FULL).addProjectViewTargets(true).build();
     runBlazeSync(syncParams);
 
     errorCollector.assertNoIssues();
@@ -91,9 +90,7 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
     VirtualFile testDir = workspace.createDirectory(new WorkspacePath("common/jslayout/tests"));
 
     BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Full Sync", BlazeSyncParams.SyncMode.FULL)
-            .addProjectViewTargets(true)
-            .build();
+        new BlazeSyncParams.Builder("Full Sync", SyncMode.FULL).addProjectViewTargets(true).build();
     runBlazeSync(syncParams);
 
     errorCollector.assertNoIssues();
@@ -128,9 +125,7 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
         workspace.createDirectory(new WorkspacePath("common/jslayout/tests/foo"));
 
     BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Full Sync", BlazeSyncParams.SyncMode.FULL)
-            .addProjectViewTargets(true)
-            .build();
+        new BlazeSyncParams.Builder("Full Sync", SyncMode.FULL).addProjectViewTargets(true).build();
     runBlazeSync(syncParams);
 
     errorCollector.assertNoIssues();
@@ -162,9 +157,7 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
     workspace.createDirectory(new WorkspacePath("common/jslayout"));
 
     BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Full Sync", BlazeSyncParams.SyncMode.FULL)
-            .addProjectViewTargets(true)
-            .build();
+        new BlazeSyncParams.Builder("Full Sync", SyncMode.FULL).addProjectViewTargets(true).build();
     runBlazeSync(syncParams);
     errorCollector.assertIssues("IntelliJ Ultimate needed for Javascript support.");
   }

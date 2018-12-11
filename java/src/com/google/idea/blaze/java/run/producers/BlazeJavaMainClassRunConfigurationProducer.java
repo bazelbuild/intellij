@@ -20,7 +20,8 @@ import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
@@ -178,7 +179,9 @@ public class BlazeJavaMainClassRunConfigurationProducer
         project,
         projectData.getArtifactLocationDecoder(),
         projectData.getTargetMap(),
-        (targetIdeInfo) ->
-            targetIdeInfo.getKind() == Kind.JAVA_BINARY && targetIdeInfo.isPlainTarget());
+        target ->
+            target.isPlainTarget()
+                && target.getKind().getLanguageClass().equals(LanguageClass.JAVA)
+                && target.getKind().getRuleType().equals(RuleType.BINARY));
   }
 }

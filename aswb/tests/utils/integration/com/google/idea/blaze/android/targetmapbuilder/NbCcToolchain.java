@@ -18,7 +18,7 @@ package com.google.idea.blaze.android.targetmapbuilder;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.cpp.CppBlazeRules;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -45,7 +45,7 @@ public class NbCcToolchain extends NbBaseTargetBuilder {
 
   NbCcToolchain(BlazeInfoData blazeInfoData, String label) {
     super(blazeInfoData);
-    target = new NbTarget(blazeInfoData, label, Kind.CC_TOOLCHAIN);
+    target = new NbTarget(blazeInfoData, label, CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind());
     cToolchainIdeInfoBuilder = new CToolchainIdeInfo.Builder();
   }
 

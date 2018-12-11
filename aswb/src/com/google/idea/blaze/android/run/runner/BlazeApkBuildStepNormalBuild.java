@@ -36,7 +36,6 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -45,6 +44,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.project.Project;
 import java.util.concurrent.CancellationException;
@@ -64,8 +64,8 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
   }
 
   /**
-   * In case we're dealing with an {@link Kind#ANDROID_INSTRUMENTATION_TEST}, build the underlying
-   * {@link Kind#ANDROID_BINARY} instead.
+   * In case we're dealing with an {@link AndroidBlazeRules.RuleTypes#ANDROID_INSTRUMENTATION_TEST},
+   * build the underlying {@link AndroidBlazeRules.RuleTypes#ANDROID_BINARY} instead.
    */
   private Label getTargetToBuild() {
     BlazeProjectData projectData =
@@ -75,13 +75,15 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
     }
     TargetMap targetMap = projectData.getTargetMap();
     TargetIdeInfo target = targetMap.get(TargetKey.forPlainTarget(label));
-    if (target == null || target.getKind() != Kind.ANDROID_INSTRUMENTATION_TEST) {
+    if (target == null
+        || target.getKind() != AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind()) {
       return label;
     }
     for (Dependency dependency : target.getDependencies()) {
       TargetIdeInfo dependencyInfo = targetMap.get(dependency.getTargetKey());
       // Should exist via test_app attribute, and be unique.
-      if (dependencyInfo != null && dependencyInfo.getKind() == Kind.ANDROID_BINARY) {
+      if (dependencyInfo != null
+          && dependencyInfo.getKind() == AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind()) {
         return dependency.getTargetKey().getLabel();
       }
     }

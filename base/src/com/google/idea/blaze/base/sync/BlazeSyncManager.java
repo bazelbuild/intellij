@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.sync.BlazeSyncParams.SyncMode;
 import com.google.idea.blaze.base.sync.projectview.SyncDirectoriesWarning;
 import com.google.idea.common.concurrency.ConcurrencyUtil;
 import com.intellij.openapi.components.ServiceManager;
@@ -71,8 +70,7 @@ public class BlazeSyncManager {
               }
               if (runInitialDirectoryOnlySync(syncParams)) {
                 BlazeSyncParams params =
-                    new BlazeSyncParams.Builder(
-                            "Initial directory update", BlazeSyncParams.SyncMode.NO_BUILD)
+                    new BlazeSyncParams.Builder("Initial directory update", SyncMode.NO_BUILD)
                         .setBackgroundSync(true)
                         .build();
                 submitTask(new BlazeSyncTask(project, importSettings, params));
@@ -105,7 +103,7 @@ public class BlazeSyncManager {
 
   public void fullProjectSync() {
     BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Full Sync", BlazeSyncParams.SyncMode.FULL)
+        new BlazeSyncParams.Builder("Full Sync", SyncMode.FULL)
             .addProjectViewTargets(true)
             .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
             .build();
@@ -114,7 +112,7 @@ public class BlazeSyncManager {
 
   public void incrementalProjectSync() {
     BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Sync", BlazeSyncParams.SyncMode.INCREMENTAL)
+        new BlazeSyncParams.Builder("Sync", SyncMode.INCREMENTAL)
             .addProjectViewTargets(true)
             .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
             .build();
@@ -123,7 +121,7 @@ public class BlazeSyncManager {
 
   public void partialSync(Collection<? extends TargetExpression> targetExpressions) {
     BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Partial Sync", BlazeSyncParams.SyncMode.PARTIAL)
+        new BlazeSyncParams.Builder("Partial Sync", SyncMode.PARTIAL)
             .addTargetExpressions(targetExpressions)
             .build();
     requestProjectSync(syncParams);
@@ -137,7 +135,7 @@ public class BlazeSyncManager {
    */
   public void directoryUpdate(boolean inBackground) {
     BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Update Directories", BlazeSyncParams.SyncMode.NO_BUILD)
+        new BlazeSyncParams.Builder("Update Directories", SyncMode.NO_BUILD)
             .setBackgroundSync(inBackground)
             .build();
     requestProjectSync(syncParams);
@@ -145,7 +143,7 @@ public class BlazeSyncManager {
 
   public void workingSetSync() {
     BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Sync Working Set", BlazeSyncParams.SyncMode.PARTIAL)
+        new BlazeSyncParams.Builder("Sync Working Set", SyncMode.PARTIAL)
             .addWorkingSet(true)
             .build();
     requestProjectSync(syncParams);

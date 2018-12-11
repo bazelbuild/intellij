@@ -38,7 +38,7 @@ class KotlinSyncAugmenter implements BlazeJavaSyncAugmenter {
       Collection<BlazeJarLibrary> jars,
       Collection<BlazeJarLibrary> genJars) {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN)
-        || target.getKind().languageClass != LanguageClass.KOTLIN) {
+        || target.getKind().getLanguageClass() != LanguageClass.KOTLIN) {
       return;
     }
     JavaIdeInfo javaInfo = target.getJavaIdeInfo();

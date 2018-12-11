@@ -30,11 +30,15 @@ import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.Nam
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.TargetComplete;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.TargetConfigured;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.TestResult;
+import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -48,6 +52,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -58,7 +63,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 /** Unit tests for {@link BuildEventProtocolOutputReader}. */
 @RunWith(Parameterized.class)
-public class BuildEventProtocolOutputReaderTest {
+public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
 
   @Parameters
   public static Collection<Object[]> data() {
@@ -69,6 +74,16 @@ public class BuildEventProtocolOutputReaderTest {
   @Parameter public boolean useOldFormatFileUri = false;
 
   @Rule public TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  @Override
+  protected void initTest(
+      @NotNull Container applicationServices, @NotNull Container projectServices) {
+    super.initTest(applicationServices, projectServices);
+    ExtensionPointImpl<Kind.Provider> ep =
+        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    ep.registerExtension(new GenericBlazeRules());
+    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+  }
 
   @Test
   public void parseAllOutputFilenames_singleFileEvent_returnsAllFilenames() throws IOException {
@@ -252,7 +267,7 @@ public class BuildEventProtocolOutputReaderTest {
     ImmutableList<String> filePaths = ImmutableList.of("/usr/local/tmp/_cache/test_result.xml");
     InputStream events =
         asInputStream(
-            targetConfiguredEvent(label.toString(), "java_test rule"),
+            targetConfiguredEvent(label.toString(), "sh_test rule"),
             testResultEvent(label.toString(), status, filePaths));
 
     BlazeTestResults results = BuildEventProtocolOutputReader.parseTestResults(events);
@@ -260,7 +275,7 @@ public class BuildEventProtocolOutputReaderTest {
     assertThat(results.perTargetResults.keySet()).containsExactly(label);
     assertThat(results.perTargetResults.get(label)).hasSize(1);
     BlazeTestResult result = results.perTargetResults.get(label).iterator().next();
-    assertThat(result.getTargetKind()).isEqualTo(Kind.JAVA_TEST);
+    assertThat(result.getTargetKind()).isEqualTo(RuleTypes.SH_TEST.getKind());
     assertThat(result.getTestStatus()).isEqualTo(TestStatus.FAILED);
     assertThat(result.getOutputXmlFiles())
         .containsExactly(new File("/usr/local/tmp/_cache/test_result.xml"));
@@ -274,7 +289,7 @@ public class BuildEventProtocolOutputReaderTest {
     ImmutableList<String> filePaths = ImmutableList.of("/usr/local/tmp/_cache/test_result.xml");
     InputStream events =
         asInputStream(
-            targetCompletedEvent(label.toString(), "java_test rule"),
+            targetCompletedEvent(label.toString(), "sh_test rule"),
             testResultEvent(label.toString(), status, filePaths));
 
     BlazeTestResults results = BuildEventProtocolOutputReader.parseTestResults(events);
@@ -282,7 +297,7 @@ public class BuildEventProtocolOutputReaderTest {
     assertThat(results.perTargetResults.keySet()).containsExactly(label);
     assertThat(results.perTargetResults.get(label)).hasSize(1);
     BlazeTestResult result = results.perTargetResults.get(label).iterator().next();
-    assertThat(result.getTargetKind()).isEqualTo(Kind.JAVA_TEST);
+    assertThat(result.getTargetKind()).isEqualTo(RuleTypes.SH_TEST.getKind());
     assertThat(result.getTestStatus()).isEqualTo(TestStatus.FAILED);
     assertThat(result.getOutputXmlFiles())
         .containsExactly(new File("/usr/local/tmp/_cache/test_result.xml"));
@@ -296,8 +311,8 @@ public class BuildEventProtocolOutputReaderTest {
     ImmutableList<String> filePaths = ImmutableList.of("/usr/local/tmp/_cache/test_result.xml");
     InputStream events =
         asInputStream(
-            targetConfiguredEvent(label.toString(), "java_test rule"),
-            targetCompletedEvent(label.toString(), "java_test rule"),
+            targetConfiguredEvent(label.toString(), "sh_test rule"),
+            targetCompletedEvent(label.toString(), "sh_test rule"),
             testResultEvent(label.toString(), status, filePaths));
 
     BlazeTestResults results = BuildEventProtocolOutputReader.parseTestResults(events);
@@ -305,7 +320,7 @@ public class BuildEventProtocolOutputReaderTest {
     assertThat(results.perTargetResults.keySet()).containsExactly(label);
     assertThat(results.perTargetResults.get(label)).hasSize(1);
     BlazeTestResult result = results.perTargetResults.get(label).iterator().next();
-    assertThat(result.getTargetKind()).isEqualTo(Kind.JAVA_TEST);
+    assertThat(result.getTargetKind()).isEqualTo(RuleTypes.SH_TEST.getKind());
     assertThat(result.getTestStatus()).isEqualTo(TestStatus.FAILED);
     assertThat(result.getOutputXmlFiles())
         .containsExactly(new File("/usr/local/tmp/_cache/test_result.xml"));

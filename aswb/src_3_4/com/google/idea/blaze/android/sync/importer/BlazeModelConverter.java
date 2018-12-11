@@ -137,7 +137,7 @@ public final class BlazeModelConverter {
    */
   @Nullable
   public static ProjectType ruleKindToProjectType(Kind kind) {
-    return ruleTypeToProjectType(kind.ruleType);
+    return ruleTypeToProjectType(kind.getRuleType());
   }
 
   /** Converts a {@link AndroidSdkPlatform} to an {@link AndroidVersion} */
