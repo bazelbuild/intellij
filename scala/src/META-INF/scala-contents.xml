@@ -44,7 +44,7 @@
         language="Scala"
         order="first"/>
     <stepsBeforeRunProvider
-        implementation="com.google.idea.blaze.scala.run.producers.GenerateExecutableDeployableJarProviderTaskProvider"/>
+        implementation="com.google.idea.blaze.scala.run.producers.GenerateDeployableJarTaskProvider"/>
   </extensions>
 
   <project-components>

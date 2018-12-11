@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.targetmaps;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -33,7 +34,8 @@ public class ReverseDependencyMap {
     return map != null ? map : ImmutableMultimap.of();
   }
 
-  public static ImmutableMultimap<TargetKey, TargetKey> createRdepsMap(
+  @VisibleForTesting
+  static ImmutableMultimap<TargetKey, TargetKey> createRdepsMap(
       Project project, BlazeProjectData projectData) {
     TargetMap targetMap = projectData.getTargetMap();
     ImmutableMultimap.Builder<TargetKey, TargetKey> builder = ImmutableMultimap.builder();

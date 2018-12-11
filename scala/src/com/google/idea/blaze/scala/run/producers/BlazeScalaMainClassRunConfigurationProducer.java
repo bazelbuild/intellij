@@ -203,7 +203,8 @@ public class BlazeScalaMainClassRunConfigurationProducer
   }
 
   /** Returns all scala_binary targets reachable from the given source file. */
-  static Collection<TargetIdeInfo> findScalaBinaryTargets(Project project, File mainClassFile) {
+  private static Collection<TargetIdeInfo> findScalaBinaryTargets(
+      Project project, File mainClassFile) {
     FilteredTargetMap map =
         SyncCache.getInstance(project)
             .get(

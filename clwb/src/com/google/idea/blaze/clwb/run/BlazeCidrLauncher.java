@@ -413,7 +413,7 @@ public final class BlazeCidrLauncher extends CidrLauncherCompat {
 
   private ImmutableList<Filter> getConsoleFilters() {
     return ImmutableList.of(
-        new BlazeTargetFilter(project, true),
+        new BlazeTargetFilter(true),
         new UrlFilter(),
         new IssueOutputFilter(
             project,

@@ -167,5 +167,7 @@
                     interface="com.google.idea.blaze.java.fastbuild.FastBuildAspectStrategy"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildTestEnvironmentModifier"
                     interface="com.google.idea.blaze.java.run.fastbuild.FastBuildTestEnvironmentModifier"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildCompilationModification"
+                    interface="com.google.idea.blaze.java.fastbuild.FastBuildCompilationModification"/>
   </extensionPoints>
 </idea-plugin>

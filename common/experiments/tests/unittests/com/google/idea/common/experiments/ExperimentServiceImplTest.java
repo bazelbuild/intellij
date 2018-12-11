@@ -18,6 +18,7 @@ package com.google.idea.common.experiments;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
@@ -189,8 +190,8 @@ public class ExperimentServiceImplTest {
     }
 
     @Override
-    public Map<String, String> getUnhashedExperiments() {
-      return map;
+    public ImmutableMap<String, String> getUnhashedExperiments() {
+      return ImmutableMap.copyOf(map);
     }
 
     @Override

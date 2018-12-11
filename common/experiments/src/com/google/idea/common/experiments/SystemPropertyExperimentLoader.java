@@ -18,7 +18,6 @@ package com.google.idea.common.experiments;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.collect.ImmutableMap;
-import java.util.Map;
 import java.util.Properties;
 
 final class SystemPropertyExperimentLoader extends HashingExperimentLoader {
@@ -30,7 +29,7 @@ final class SystemPropertyExperimentLoader extends HashingExperimentLoader {
   private static final ImmutableMap<String, String> properties = cacheSystemProperties();
 
   @Override
-  public Map<String, String> getUnhashedExperiments() {
+  public ImmutableMap<String, String> getUnhashedExperiments() {
     return properties;
   }
 

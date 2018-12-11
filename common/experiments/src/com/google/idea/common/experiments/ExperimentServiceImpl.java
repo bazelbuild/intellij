@@ -43,7 +43,7 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
       SystemProperties.getUserHome() + File.separator + ".intellij-experiments";
 
   private final List<ExperimentLoader> services;
-  private Map<String, String> experiments;
+  private volatile Map<String, String> experiments;
   private int experimentScopeCounter = 0;
 
   public ExperimentServiceImpl(String pluginName) {

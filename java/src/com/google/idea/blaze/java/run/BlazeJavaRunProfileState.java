@@ -102,7 +102,7 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
               project, getConfiguration(), ImmutableList.of(), getExecutorType());
     }
     addConsoleFilters(
-        new BlazeTargetFilter(project, true),
+        new BlazeTargetFilter(true),
         new IssueOutputFilter(
             project,
             WorkspaceRoot.fromProject(project),
