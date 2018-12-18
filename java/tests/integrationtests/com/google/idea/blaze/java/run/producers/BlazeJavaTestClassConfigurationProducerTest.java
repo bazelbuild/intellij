@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.run.producers;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.base.command.BlazeFlags.TEST_OUTPUT_STREAMED;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -301,5 +302,41 @@ public class BlazeJavaTestClassConfigurationProducerTest
 
     assertThat(new TestContextRunConfigurationProducer().doIsConfigFromContext(config, context))
         .isFalse();
+  }
+
+  @Test
+  public void testRunConfigurationFlagsFromConfig() {
+    PsiFile javaFile =
+      createAndIndexFile(
+        new WorkspacePath("java/com/google/test/TestClass.java"),
+        "package com.google.test;",
+        "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
+        "public class TestClass {",
+        "  @org.junit.Test",
+        "  public void testMethod1() {}",
+        "  @org.junit.Test",
+        "  public void testMethod2() {}",
+        "}");
+
+    setProjectView("single_test_flags:", "  --test_output=streamed");
+    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
+    builder.setTargetMap(
+      TargetMapBuilder.builder()
+        .addTarget(
+          TargetIdeInfo.builder()
+            .setKind("java_test")
+            .setLabel("//java/com/google/test:TestClass")
+            .addSource(sourceRoot("java/com/google/test/TestClass.java"))
+            .build())
+        .build());
+    registerProjectService(
+      BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+
+    PsiClass javaClass = ((PsiClassOwner) javaFile).getClasses()[0];
+    ConfigurationContext context = createContextFromPsi(javaClass);
+    List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
+    ConfigurationFromContext fromContext = configurations.get(0);
+    BlazeCommandRunConfiguration config = (BlazeCommandRunConfiguration) fromContext.getConfiguration();
+    assertThat(getRunConfigurationFlags(config)).contains(TEST_OUTPUT_STREAMED);
   }
 }

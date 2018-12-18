@@ -42,6 +42,7 @@ import com.google.idea.blaze.base.projectview.section.sections.ImportTargetOutpu
 import com.google.idea.blaze.base.projectview.section.sections.RunConfigurationsSection;
 import com.google.idea.blaze.base.projectview.section.sections.Sections;
 import com.google.idea.blaze.base.projectview.section.sections.ShardBlazeBuildsSection;
+import com.google.idea.blaze.base.projectview.section.sections.SingleTestFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetShardSizeSection;
@@ -105,6 +106,9 @@ public class ProjectViewSetTest extends BlazeTestCase {
                     .add(
                         ScalarSection.builder(BazelBinarySection.KEY)
                             .set(new File("/bazel/path/override")))
+                    .add(
+                      ListSection.builder(SingleTestFlagsSection.KEY)
+                        .add("someFlag"))
                     .build())
             .build();
 

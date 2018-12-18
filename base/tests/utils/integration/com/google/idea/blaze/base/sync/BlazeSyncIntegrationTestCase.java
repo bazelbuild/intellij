@@ -82,13 +82,10 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
       OUTPUT_PATH + "/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/testlogs";
 
   private Disposable thisClassDisposable; // disposed prior to calling parent class's @After methods
-  private MockProjectViewManager projectViewManager;
   private MockBlazeInfoRunner blazeInfoData;
   private MockBlazeIdeInterface blazeIdeInterface;
   private MockEventLoggingService eventLogger;
   @Nullable private ProjectModuleMocker moduleMocker; // this will be null for heavy test cases
-
-  protected ErrorCollector errorCollector;
 
   @Before
   public void doSetup() throws Exception {
@@ -152,23 +149,6 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
 
   protected static ArtifactLocation sourceRoot(String relativePath) {
     return ArtifactLocation.builder().setRelativePath(relativePath).setIsSource(true).build();
-  }
-
-  protected void setProjectView(String... contents) {
-    BlazeContext context = new BlazeContext();
-    context.addOutputSink(IssueOutput.class, errorCollector);
-    ProjectViewParser projectViewParser =
-        new ProjectViewParser(context, new WorkspacePathResolverImpl(workspaceRoot));
-    projectViewParser.parseProjectView(Joiner.on("\n").join(contents));
-
-    ProjectViewSet result = projectViewParser.getResult();
-    assertThat(result.getProjectViewFiles()).isNotEmpty();
-    errorCollector.assertNoIssues();
-    setProjectViewSet(result);
-  }
-
-  protected void setProjectViewSet(ProjectViewSet projectViewSet) {
-    projectViewManager.setProjectView(projectViewSet);
   }
 
   protected void setTargetMap(TargetMap targetMap) {

@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.run.producers.TestContextProvider;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -86,6 +87,7 @@ class JavaTestContextProvider implements TestContextProvider {
         .setTarget(target)
         .setSourceElement(testClass)
         .setTestFilter(testFilter)
+        .setSingleTestFlags(testClass.getProject())
         .setDescription(testClass.getName())
         .build();
   }

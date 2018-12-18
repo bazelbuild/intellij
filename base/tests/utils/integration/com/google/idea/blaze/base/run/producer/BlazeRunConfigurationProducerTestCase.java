@@ -42,9 +42,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.MapDataContext;
 import java.util.Arrays;
 import javax.annotation.Nullable;
+
 import org.junit.Before;
 
-/** Run configuration producer integration test base */
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * Run configuration producer integration test base
+ */
 public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestCase {
 
   protected EditorTestHelper editorTest;
@@ -89,6 +95,12 @@ public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestC
     BlazeCommandRunConfigurationCommonState handlerState =
         config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     return handlerState != null ? handlerState.getTestFilterFlag() : null;
+  }
+
+  protected static List<String> getRunConfigurationFlags(BlazeCommandRunConfiguration config) {
+    BlazeCommandRunConfigurationCommonState handlerState =
+            config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    return handlerState == null ? Collections.emptyList() : handlerState.getBlazeFlagsState().getRawFlags();
   }
 
   @Nullable

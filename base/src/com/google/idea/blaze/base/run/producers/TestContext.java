@@ -23,6 +23,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.section.sections.SingleTestFlagsSection;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.PendingRunConfigurationContext;
@@ -30,11 +33,13 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState;
 import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /** A context related to a blaze test target, used to configure a run configuration. */
 public abstract class TestContext implements RunConfigurationContext {
@@ -199,6 +204,28 @@ public abstract class TestContext implements RunConfigurationContext {
    * filter.
    */
   public interface BlazeFlagsModification {
+    static BlazeFlagsModification singleTestFlags(Project project) {
+      return new BlazeFlagsModification() {
+        @Override
+        public void modifyFlags(List<String> flags) {
+
+          ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+          if (projectViewSet != null) {
+            flags.addAll(projectViewSet.listItems(SingleTestFlagsSection.KEY));
+          }
+        }
+
+        @Override
+        public boolean matchesConfigState(RunConfigurationFlagsState state) {
+          ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+          if (projectViewSet != null) {
+            return state.getRawFlags().containsAll(projectViewSet.listItems(SingleTestFlagsSection.KEY));
+          }
+          return false;
+        }
+      };
+    }
+
     void modifyFlags(List<String> flags);
 
     boolean matchesConfigState(RunConfigurationFlagsState state);
@@ -285,6 +312,11 @@ public abstract class TestContext implements RunConfigurationContext {
       if (filter != null) {
         blazeFlags.add(BlazeFlagsModification.testFilter(filter));
       }
+      return this;
+    }
+
+    public Builder setSingleTestFlags(Project project) {
+      blazeFlags.add(BlazeFlagsModification.singleTestFlags(project));
       return this;
     }
 

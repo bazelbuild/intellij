@@ -15,15 +15,22 @@
  */
 package com.google.idea.blaze.base;
 
+import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.ErrorCollector;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.SyncCache;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.testing.EdtRule;
 import com.google.idea.testing.IntellijTestSetupRule;
 import com.google.idea.testing.ServiceHelper;
@@ -53,6 +60,8 @@ import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+
+import static com.google.common.truth.Truth.assertThat;
 
 /** Base test class for blaze integration tests. {@link UsefulTestCase} */
 public abstract class BlazeIntegrationTestCase {
@@ -85,6 +94,8 @@ public abstract class BlazeIntegrationTestCase {
   protected VirtualFile projectDataDirectory;
   protected TestFileSystem fileSystem;
   protected WorkspaceFileSystem workspace;
+  protected MockProjectViewManager projectViewManager;
+  protected ErrorCollector errorCollector;
 
   @Before
   public final void setUp() throws Exception {
@@ -97,6 +108,8 @@ public abstract class BlazeIntegrationTestCase {
         () -> {
           ProjectJdkTable.getInstance().addJdk(IdeaTestUtil.getMockJdk18());
           VirtualFile workspaceRootVirtualFile = fileSystem.createDirectory("workspace");
+          projectViewManager = new MockProjectViewManager(testFixture.getProject(), getTestRootDisposable());
+          errorCollector = new ErrorCollector();
           workspaceRoot = new WorkspaceRoot(new File(workspaceRootVirtualFile.getPath()));
           projectDataDirectory = fileSystem.createDirectory("project-data-dir");
           workspace = new WorkspaceFileSystem(workspaceRoot, fileSystem);
@@ -132,6 +145,23 @@ public abstract class BlazeIntegrationTestCase {
     if (requiredPlugins != null) {
       VerifyRequiredPluginsEnabled.runCheck(requiredPlugins.split(","));
     }
+  }
+
+  protected void setProjectView(String... contents) {
+    BlazeContext context = new BlazeContext();
+    context.addOutputSink(IssueOutput.class, errorCollector);
+    ProjectViewParser projectViewParser =
+            new ProjectViewParser(context, new WorkspacePathResolverImpl(workspaceRoot));
+    projectViewParser.parseProjectView(Joiner.on("\n").join(contents));
+
+    ProjectViewSet result = projectViewParser.getResult();
+    assertThat(result.getProjectViewFiles()).isNotEmpty();
+    errorCollector.assertNoIssues();
+    projectViewManager.setProjectView(result);
+  }
+
+  protected void setProjectViewSet(ProjectViewSet projectViewSet) {
+    projectViewManager.setProjectView(projectViewSet);
   }
 
   @After
