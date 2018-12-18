@@ -38,6 +38,8 @@ import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.ui.problems.ImportProblemContainerService;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.util.List;
 
@@ -65,7 +67,7 @@ public final class BlazeBeforeRunCommandHelper {
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-
+      ServiceManager.getService(ImportProblemContainerService.class).resetIssues();
     String binaryPath =
         handlerState.getBlazeBinaryState().getBlazeBinary() != null
             ? handlerState.getBlazeBinaryState().getBlazeBinary()
