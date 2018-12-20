@@ -82,6 +82,12 @@ public class BuildElementGenerator {
     return (Argument.Keyword) funcall.getArguments()[0];
   }
 
+  public Argument.Keyword createKeywordArgumentWithListValue(String keyword) {
+    String dummyText = String.format("foo(%s = [])", keyword);
+    FuncallExpression funcall = (FuncallExpression) createExpressionFromText(dummyText);
+    return (Argument.Keyword) funcall.getArguments()[0];
+  }
+
   public Expression createExpressionFromText(String text) {
     PsiFile dummyFile = createDummyFile(text);
     PsiElement element = dummyFile.getFirstChild();

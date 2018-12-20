@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /** Abstraction to modify build files, eg. using buildifier */
 public interface BuildFileModifier {
@@ -38,4 +39,14 @@ public interface BuildFileModifier {
    * @return true if rule is added to file, false otherwise
    */
   boolean addRule(Project project, Label newRule, Kind ruleKind);
+
+
+  /**
+   * Adds dependency in other target to existing target. if deps doesnt exist adds it to the rule.
+   * @param project
+   * @param targetToBeAdded target that will be added
+   * @param virtualFileToBeEdited virtual file that belong to the target to be edited
+   * @return true if rule is added to file, false otherwise
+   */
+  boolean addDepToRule(Project project, Label targetToBeAdded, VirtualFile virtualFileToBeEdited);
 }

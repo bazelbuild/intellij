@@ -21,7 +21,7 @@ public class ImportIssueAnnotator implements Annotator {
         if (element instanceof PsiImportStatement) {
             Optional<ImportIssue> issue = importProblemContainerService.findIssue(element);
             if(issue.isPresent()){
-                importProblemContainerService.createImportErrorAnnotation(element, holder, issue);
+                importProblemContainerService.createImportErrorAnnotation(element, holder, issue.get());
             }
         }
     }
