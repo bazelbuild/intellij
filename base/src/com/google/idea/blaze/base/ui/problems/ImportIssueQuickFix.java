@@ -3,6 +3,7 @@ package com.google.idea.blaze.base.ui.problems;
 import com.google.idea.blaze.base.buildmodifier.BuildFileModifier;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -54,7 +55,8 @@ public class ImportIssueQuickFix implements IntentionAction {
     public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         BuildFileModifier buildFileModifier = BuildFileModifier.getInstance();
         VirtualFile containingVirtualFile = importIssue.getFile().getVirtualFile();
-        buildFileModifier.addDepToRule(project, importClassTarget, containingVirtualFile);
+        Runnable runnable = () -> buildFileModifier.addDepToRule(project, importClassTarget, containingVirtualFile);
+        WriteCommandAction.runWriteCommandAction(project, runnable);
         importProblemContainerService.removeIssue(importIssue);
     }
 
