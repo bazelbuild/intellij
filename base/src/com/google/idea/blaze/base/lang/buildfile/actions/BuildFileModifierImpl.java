@@ -128,7 +128,7 @@ public class BuildFileModifierImpl implements BuildFileModifier {
 
     private void addCommaToTargetAttributesIfNeeded(Project project, PsiElement attributes) {
       if(attributes.getChildren().length > 0){
-          PsiElement commaLiteral = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(",");
+          PsiElement commaLiteral = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(",\n\t");
           attributes.addBefore(commaLiteral, attributes.getLastChild());
       }
     }
