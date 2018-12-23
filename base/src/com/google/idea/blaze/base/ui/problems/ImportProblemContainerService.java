@@ -74,10 +74,10 @@ public class ImportProblemContainerService {
 
     private Optional<Label> findClassTarget(String importLine, Project project) {
         String lineWithoutImportKeyword = getImportIssueKey(importLine);
-        int indexOfClassNameSeperator = lineWithoutImportKeyword.lastIndexOf(".");
-        String packageOnly = lineWithoutImportKeyword.substring(0, indexOfClassNameSeperator);
+        int indexOfClassNameSeparator = lineWithoutImportKeyword.lastIndexOf(".");
+        String packageOnly = lineWithoutImportKeyword.substring(0, indexOfClassNameSeparator);
         PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageOnly);
-        String simpleClassName = lineWithoutImportKeyword.substring(indexOfClassNameSeperator + 1);
+        String simpleClassName = lineWithoutImportKeyword.substring(indexOfClassNameSeparator + 1);
 
         return findImportClassTargetLabel(project, aPackage, simpleClassName);
     }

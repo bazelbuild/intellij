@@ -80,7 +80,7 @@ public class BuildFileModifierImpl implements BuildFileModifier {
             java.util.Optional<Argument.Keyword> maybeDepsKeyword = findTargetDepsAttribute(targetToBeEdited.get());
             if(!maybeDepsKeyword.isPresent()){
                 ArgumentList targetAttributes = PsiUtils.findFirstChildOfClassRecursive(targetToBeEdited.get(), ArgumentList.class);
-                addCommaToTargetAttributesIfNeeded(project, targetAttributes);
+                addCommaToTargetAttributesIfNeeded(project, targetAttributes, ",\n\t");
                 addDepsAttributeToTargetAttributes(targetAttributes, project);
                 maybeDepsKeyword = findTargetDepsAttribute(targetToBeEdited.get());
             }
@@ -108,7 +108,7 @@ public class BuildFileModifierImpl implements BuildFileModifier {
 
     private void addTargetToDeps(Label targetToBeAdded, Project project, PsiElement values) {
         PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-        addCommaToTargetAttributesIfNeeded(project, values);
+        addCommaToTargetAttributesIfNeeded(project, values, ", ");
         addTargetToDeps(targetToBeAdded, values, factory);
     }
 
@@ -126,9 +126,9 @@ public class BuildFileModifierImpl implements BuildFileModifier {
         values.addBefore(stringLiteral, values.getLastChild());
     }
 
-    private void addCommaToTargetAttributesIfNeeded(Project project, PsiElement attributes) {
+    private void addCommaToTargetAttributesIfNeeded(Project project, PsiElement attributes, String whiteSpaceValue) {
       if(attributes.getChildren().length > 0){
-          PsiElement commaLiteral = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(",\n\t");
+          PsiElement commaLiteral = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(whiteSpaceValue);
           attributes.addBefore(commaLiteral, attributes.getLastChild());
       }
     }
