@@ -5,5 +5,6 @@ public class ImportIssueConstants {
     public static final String JAVA_WILDCARD_KEYWORD = ".*";
     public static final String SCALA_WILDCARD_KEYWORD = "._";
     public static final String IMPORT_KEYWORD = "import";
+    public static final String STATIC_KEYWORD = "static";
 
 }

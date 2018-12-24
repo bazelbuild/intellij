@@ -8,8 +8,6 @@ import com.intellij.psi.PsiManager;
 
 import java.util.regex.Pattern;
 
-import static com.google.idea.blaze.base.ui.problems.ImportIssueConstants.*;
-
 public class ImportIssueResolver {
 
     private static final String NEW_LINE = "\n";
@@ -43,14 +41,10 @@ public class ImportIssueResolver {
 
     private static boolean missingWildCardImport(String originalLine,
                                           boolean missingImportDependencyWildcardOrStaticJava) {
-        return missingImportDependencyWildcardOrStaticJava && isWildCardImportLine(originalLine);
+        return missingImportDependencyWildcardOrStaticJava && ImportLineUtils.isWildCardImportLine(originalLine);
     }
 
-    public static boolean isWildCardImportLine(String originalLine) {
-        String lineWithoutDotComma = originalLine.replace(JAVA_EOFL_IDENTIFIER, "");
-        return lineWithoutDotComma.endsWith(JAVA_WILDCARD_KEYWORD) ||
-                lineWithoutDotComma.endsWith(SCALA_WILDCARD_KEYWORD);
-    }
+
 
     public static String getOriginalLineByIssue(IssueOutput issue, PsiFile psiFile) {
         return psiFile.getText().split(NEW_LINE)[issue.getLine() - 1];
