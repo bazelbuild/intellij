@@ -13,19 +13,20 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 
 public class ImportIssueQuickFix implements IntentionAction {
     private final String key;
     private final ImportIssue importIssue;
-    private Label importClassTarget;
+    private List<Label> importClassTargets;
     private Label currentClassTarget;
     ImportProblemContainerService importProblemContainerService =
             ServiceManager.getService(ImportProblemContainerService.class);
 
-    public ImportIssueQuickFix(String key, ImportIssue importIssue, Label importClassTarget, Label currentClassTarget) {
+    public ImportIssueQuickFix(String key, ImportIssue importIssue, List<Label> importClassTargets, Label currentClassTarget) {
         this.key = key;
         this.importIssue = importIssue;
-        this.importClassTarget = importClassTarget;
+        this.importClassTargets = importClassTargets;
         this.currentClassTarget = currentClassTarget;
     }
 
@@ -55,8 +56,11 @@ public class ImportIssueQuickFix implements IntentionAction {
     public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         BuildFileModifier buildFileModifier = BuildFileModifier.getInstance();
         VirtualFile containingVirtualFile = importIssue.getFile().getVirtualFile();
-        Runnable runnable = () -> buildFileModifier.addDepToRule(project, importClassTarget, containingVirtualFile);
-        WriteCommandAction.runWriteCommandAction(project, runnable);
+        importClassTargets.forEach( importClassTarget -> {
+            Runnable runnable = () -> buildFileModifier.addDepToRule(project, importClassTarget, containingVirtualFile);
+            WriteCommandAction.runWriteCommandAction(project, runnable);
+        });
+
         importProblemContainerService.removeIssue(importIssue);
     }
 
@@ -70,7 +74,7 @@ public class ImportIssueQuickFix implements IntentionAction {
         return "ImportIssueQuickFix{" +
                 "key='" + key + '\'' +
                 ", importIssue=" + importIssue +
-                ", importClassTarget=" + importClassTarget +
+                ", importClassTargets=" + importClassTargets +
                 ", currentClassTarget=" + currentClassTarget +
                 '}';
     }

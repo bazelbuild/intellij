@@ -58,6 +58,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
+import static com.google.idea.blaze.base.ui.problems.ImportIssueResolver.isImportIssue;
 import static com.google.idea.blaze.base.ui.problems.ImportIssueType.DEPENDENCY_MISSING_IN_BUILD_FILE;
 
 /** A custom error tree view for Blaze invocation errors. */
@@ -174,10 +175,7 @@ public class BlazeProblemsView {
   }
 
     private void addImportIssueIfNeeded(IssueOutput issue, VirtualFile file) {
-        boolean missingImportDependencyInBuildFile =
-                Pattern.compile("object .* is not a member of package .*").matcher(issue.getMessage()).find();
-
-        if (missingImportDependencyInBuildFile) {
+        if (isImportIssue(issue, file, project)) {
             PsiManager psiManager = PsiManager.getInstance(project);
             PsiFile psiFile =  psiManager.findFile(file);
 
