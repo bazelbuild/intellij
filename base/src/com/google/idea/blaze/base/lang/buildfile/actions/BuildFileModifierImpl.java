@@ -110,6 +110,7 @@ public class BuildFileModifierImpl implements BuildFileModifier {
         PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
         addCommaToTargetAttributesIfNeeded(project, values, ", ");
         addTargetToDeps(targetToBeAdded, values, factory);
+        addCommaToTargetAttributesIfNeeded(project, values, ",\n\t");
     }
 
     private boolean doesDepsContainTarget(Label targetToBeAdded, PsiElement values) {

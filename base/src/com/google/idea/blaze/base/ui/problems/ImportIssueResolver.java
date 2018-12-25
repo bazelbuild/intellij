@@ -29,14 +29,14 @@ public class ImportIssueResolver {
 
             importIssue =  missingImportDependencyInBuildFile ||
                     missingWildCardImport(originalLine, missingImportDependencyWildOrStaticJava) ||
-                    (missingImportDependencyWildOrStaticJava && isStaticImport(originalLine));
+                    isStaticImport(originalLine, missingImportDependencyWildOrStaticJava);
         }
 
         return importIssue;
     }
 
-    private static boolean isStaticImport(String originalLine) {
-        return originalLine.contains(IMPORT_STATIC_IDENTIFIER);
+    private static boolean isStaticImport(String originalLine, boolean missingImportDependencyWildOrStaticJava) {
+        return missingImportDependencyWildOrStaticJava && originalLine.contains(IMPORT_STATIC_IDENTIFIER);
     }
 
     private static boolean missingWildCardImport(String originalLine,
