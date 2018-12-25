@@ -80,7 +80,7 @@ public class BuildFileModifierImpl implements BuildFileModifier {
             java.util.Optional<Argument.Keyword> maybeDepsKeyword = findTargetDepsAttribute(targetToBeEdited.get());
             if(!maybeDepsKeyword.isPresent()){
                 ArgumentList targetAttributes = PsiUtils.findFirstChildOfClassRecursive(targetToBeEdited.get(), ArgumentList.class);
-                addCommaToTargetAttributesIfNeeded(project, targetAttributes, ",\n\t");
+                addCommaToTargetAttributesIfNeeded(project, targetAttributes, ",\n\t\t");
                 addDepsAttributeToTargetAttributes(targetAttributes, project);
                 maybeDepsKeyword = findTargetDepsAttribute(targetToBeEdited.get());
             }
@@ -110,7 +110,7 @@ public class BuildFileModifierImpl implements BuildFileModifier {
         PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
         addCommaToTargetAttributesIfNeeded(project, values, ", ");
         addTargetToDeps(targetToBeAdded, values, factory);
-        addCommaToTargetAttributesIfNeeded(project, values, ",\n\t");
+        addCommaToTargetAttributesIfNeeded(project, values, ",\n\t\t");
     }
 
     private boolean doesDepsContainTarget(Label targetToBeAdded, PsiElement values) {
