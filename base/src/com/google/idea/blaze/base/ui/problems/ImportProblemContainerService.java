@@ -42,9 +42,14 @@ public class ImportProblemContainerService {
     @NotNull
     private Optional<String> getImportIssueKey(String originalLine, PsiFile file) {
         return Optional.ofNullable(file).flatMap(psiFile -> {
-            String directoryName = file.getParent().getName();
-            Optional<String> maybePackageName = getPackageName(originalLine);
-            return maybePackageName.map(packageName ->  directoryName+"\\/"+packageName);
+            PsiDirectory parent = file.getParent();
+            if(parent != null){
+                String directoryName = parent.getName();
+                Optional<String> maybePackageName = getPackageName(originalLine);
+                return maybePackageName.map(packageName ->  directoryName+"\\/"+packageName);
+            }else {
+                return Optional.empty();
+            }
         });
     }
 
