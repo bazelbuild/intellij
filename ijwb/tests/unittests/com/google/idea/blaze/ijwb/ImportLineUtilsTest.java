@@ -4,6 +4,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.Optional;
+
 import static com.google.idea.blaze.base.ui.problems.ImportLineUtils.getPackageName;
 import static org.junit.Assert.assertEquals;
 
@@ -14,27 +16,27 @@ public class ImportLineUtilsTest {
     public void getPackageName_regularImportLine() {
         String importLine = "import org.junit.Test;";
 
-        String packageName = getPackageName(importLine);
+        Optional<String> packageName = getPackageName(importLine);
 
-        assertEquals("org.junit", packageName);
+        assertEquals("org.junit", packageName.get());
     }
 
     @Test
     public void getPackageName_javaWildCardImportLine() {
         String importLine = "import org.junit.*;";
 
-        String packageName = getPackageName(importLine);
+        Optional<String> packageName = getPackageName(importLine);
 
-        assertEquals("org.junit", packageName);
+        assertEquals("org.junit", packageName.get());
     }
 
     @Test
     public void getPackageName_scalaWildCardImportLine() {
         String importLine = "import org.junit._";
 
-        String packageName = getPackageName(importLine);
+        Optional<String> packageName = getPackageName(importLine);
 
-        assertEquals("org.junit", packageName);
+        assertEquals("org.junit", packageName.get());
     }
 
 
@@ -42,9 +44,18 @@ public class ImportLineUtilsTest {
     public void getPackageName_scalaMultipleClassesImportLine() {
         String importLine = "import java.util.concurrent.{CountDownLatch, Executors}";
 
-        String packageName = getPackageName(importLine);
+        Optional<String> packageName = getPackageName(importLine);
 
-        assertEquals("java.util.concurrent", packageName);
+        assertEquals("java.util.concurrent", packageName.get());
+    }
+
+    @Test
+    public void getPackageName_StaticImport() {
+        String importLine = "import com.wixpress.dispatch.domain.Dispatch.www\n";
+
+        Optional<String> packageName = getPackageName(importLine);
+
+        assertEquals(Optional.empty(), packageName);
     }
 
 }

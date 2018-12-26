@@ -41,10 +41,10 @@ public class ImportProblemContainerService {
 
     @NotNull
     private Optional<String> getImportIssueKey(String originalLine, PsiFile file) {
-        return Optional.ofNullable(file).map(psiFile -> {
+        return Optional.ofNullable(file).flatMap(psiFile -> {
             String directoryName = file.getParent().getName();
-            String packageName = getPackageName(originalLine);
-            return directoryName+"\\/"+packageName;
+            Optional<String> maybePackageName = getPackageName(originalLine);
+            return maybePackageName.map(packageName ->  directoryName+"\\/"+packageName);
         });
     }
 
@@ -95,19 +95,24 @@ public class ImportProblemContainerService {
                 break;
             case SCALA_WILDCARD:
             case JAVA_WILDCARD:
-                String importedPackageName = getPackageName(originalLine);
-                addWildCardTargets(element, project, importClassTargets, importedPackageName);
+                Optional<String> importedPackageName = getPackageName(originalLine);
+                if(importedPackageName.isPresent()) {
+                    addWildCardTargets(element, project, importClassTargets, importedPackageName.get());
+                }
                 break;
             case MULTIPLE_SCALA:
                 List<String> classNames = getClassNames(originalLine, importType);
-                String packageName = getPackageName(originalLine);
-                classNames.stream().forEach(className ->
-                        addSingleClassImportTargetIssue(
-                                packageName + ImportIssueConstants.PACKAGE_SEPARATOR + className,
-                                project,
-                                importClassTargets
-                        )
-                );
+                Optional<String> packageName = getPackageName(originalLine);
+                if(packageName.isPresent()){
+                    classNames.stream().forEach(className ->
+                            addSingleClassImportTargetIssue(
+                                    packageName.get() + ImportIssueConstants.PACKAGE_SEPARATOR + className,
+                                    project,
+                                    importClassTargets
+                            )
+                    );
+                }
+
                 break;
             default:
                 break;
@@ -136,12 +141,18 @@ public class ImportProblemContainerService {
 
 
     private Optional<Label> findClassTarget(String importLine, Project project) {
-        String packageName = getPackageName(importLine);
-        PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
-        int indexOfClassNameSeparator = importLine.lastIndexOf(".");
-        String simpleClassName = importLine.substring(indexOfClassNameSeparator + 1);
+        Optional<Label> importClassTargetLabel = Optional.empty();
+        Optional<String> packageName = getPackageName(importLine);
 
-        return findImportClassTargetLabel(project, aPackage, simpleClassName);
+        if(packageName.isPresent()){
+            PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName.get());
+            int indexOfClassNameSeparator = importLine.lastIndexOf(".");
+            String simpleClassName = importLine.substring(indexOfClassNameSeparator + 1);
+
+            importClassTargetLabel = findImportClassTargetLabel(project, aPackage, simpleClassName);
+        }
+
+        return importClassTargetLabel;
     }
 
     private Optional<Label> findImportClassTargetLabel(Project project, PsiPackage psiPackage, String simpleClassName) {

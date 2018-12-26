@@ -4,6 +4,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -13,12 +16,23 @@ import static com.google.idea.blaze.base.ui.problems.ImportLineUtils.ImportType.
 import static com.google.idea.blaze.base.ui.problems.ImportProblemContainerService.EMPTY_STRING;
 
 public class ImportLineUtils {
-
+    private static final Logger logger = Logger.getLogger(ImportLineUtils.class.getName());
 
     @NotNull
-    public static String getPackageName(String originalLine) {
-        String packageName = resolvePackageName(originalLine);
-        return packageName;
+    public static Optional<String> getPackageName(String originalLine) {
+        ImportType importType = getImportType(originalLine);
+        switch (importType) {
+            case REGULAR:
+            case JAVA_WILDCARD:
+            case SCALA_WILDCARD:
+            case MULTIPLE_SCALA:
+                String importWithoutKeywords = getImportLineWithoutKeywords(originalLine);
+                String packageName = importWithoutKeywords.substring(0, importWithoutKeywords.lastIndexOf(PACKAGE_SEPARATOR));
+                return Optional.of(packageName);
+            default:
+                logger.log(Level.SEVERE, "Unsupported import type for line ["+originalLine+"]");
+                return Optional.empty();
+        }
     }
 
     @NotNull
@@ -28,21 +42,6 @@ public class ImportLineUtils {
                 replace(STATIC_KEYWORD, EMPTY_STRING).
                 replace(JAVA_EOFL_IDENTIFIER, EMPTY_STRING).
                 trim();
-    }
-
-
-    private static String resolvePackageName(String originalLine) {
-        ImportType importType = getImportType(originalLine);
-        switch (importType) {
-            case REGULAR:
-            case JAVA_WILDCARD:
-            case SCALA_WILDCARD:
-            case MULTIPLE_SCALA:
-                String importWithoutKeywords = getImportLineWithoutKeywords(originalLine);
-                return importWithoutKeywords.substring(0, importWithoutKeywords.lastIndexOf(PACKAGE_SEPARATOR));
-            default:
-                throw new RuntimeException("Issue resolving package " + originalLine);
-        }
     }
 
     private static boolean isMultipleClassesImport(String importWithoutKeywords) {
@@ -97,8 +96,9 @@ public class ImportLineUtils {
             return MULTIPLE_SCALA;
         } else if (isRegularImport(numberOfPartsThatStartWithUpperCase, isClassNameLast(importLinePartsArray))) {
             return REGULAR;
+        } else {
+            return UNSUPPORTED;
         }
-        return null;
     }
 
     public static List<String> getClassNames(String originalLine, ImportType importType) {
@@ -120,7 +120,7 @@ public class ImportLineUtils {
     }
 
     public enum ImportType {
-        REGULAR, JAVA_WILDCARD, SCALA_WILDCARD, STATIC, ALIAS, MULTIPLE_SCALA, SCALA_OBJECTS
+        REGULAR, JAVA_WILDCARD, SCALA_WILDCARD, STATIC, ALIAS, MULTIPLE_SCALA, SCALA_OBJECTS, UNSUPPORTED
     }
 }
 
