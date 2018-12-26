@@ -102,7 +102,7 @@ public class BuildFileModifierImpl implements BuildFileModifier {
         ArgumentList targetAttributes = PsiUtils.findFirstChildOfClassRecursive(targetToBeEdited, ArgumentList.class);
         addDepsAttributeToTargetAttributes(targetAttributes, project);
         maybeDepsKeyword = findTargetDepsAttribute(targetToBeEdited);
-        PsiElement whiteSpaceLiteral = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n\t");
+        PsiElement whiteSpaceLiteral = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n    ");
         targetAttributes.addBefore(whiteSpaceLiteral, maybeDepsKeyword.get());
         PsiElement commaLiteral = createCommaElement(project);
         targetAttributes.addAfter(commaLiteral, maybeDepsKeyword.get());
@@ -120,7 +120,7 @@ public class BuildFileModifierImpl implements BuildFileModifier {
     private void addTargetToDepsIfNeeded(Argument.Keyword depsKeyword, Label targetToBeAdded, Project project) {
         PsiElement depsElement = depsKeyword.getPsiChild(BuildElementTypes.LIST_LITERAL, null);
         if(depsDoesntHaveWhiteSpace(depsElement)){
-            addWhiteSpaceElement(project, depsElement, "\n\t");
+            addWhiteSpaceElement(project, depsElement, "\n    ");
         }
         if(!doesDepsContainTarget(targetToBeAdded, depsElement)){
             addTargetToDeps(targetToBeAdded, project, depsElement);
@@ -143,7 +143,7 @@ public class BuildFileModifierImpl implements BuildFileModifier {
         depsElement.addBefore(commaLiteral,lastWhiteSpace);
 
         PsiLiteralExpression addedTarget = PsiUtils.findLastChildOfClassRecursive(depsElement, PsiLiteralExpression.class);
-        PsiElement whiteSpaceLiteral = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n\t\t");
+        PsiElement whiteSpaceLiteral = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n        ");
         depsElement.addBefore(whiteSpaceLiteral, addedTarget);
     }
 

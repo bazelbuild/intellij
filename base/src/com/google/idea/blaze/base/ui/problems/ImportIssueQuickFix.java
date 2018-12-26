@@ -5,9 +5,12 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
@@ -57,7 +60,12 @@ public class ImportIssueQuickFix implements IntentionAction {
         BuildFileModifier buildFileModifier = BuildFileModifier.getInstance();
         VirtualFile containingVirtualFile = importIssue.getFile().getVirtualFile();
         importClassTargets.forEach( importClassTarget -> {
-            Runnable runnable = () -> buildFileModifier.addDepToRule(project, importClassTarget, containingVirtualFile);
+            Runnable runnable = () -> {
+                Document document = FileDocumentManager.getInstance().getDocument(psiFile.getVirtualFile());
+                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+                buildFileModifier.addDepToRule(project, importClassTarget, containingVirtualFile);
+                PsiDocumentManager.getInstance(project).commitAllDocuments();
+            };
             WriteCommandAction.runWriteCommandAction(project, runnable);
         });
 
