@@ -45,12 +45,12 @@ public class ImportLineUtils {
                 trim();
     }
 
-    private static boolean isMultipleClassesImport(String importWithoutKeywords) {
+    private static boolean isScalaAlias(String importWithoutKeywords) {
         return Pattern.compile(".*\\{.*^((?!=>).)*$\\}.*").matcher(importWithoutKeywords).find();
     }
 
-    private static boolean isScalaAlias(String importWithoutKeywords) {
-        return Pattern.compile(".*\\{.*=>.*\\}.*").matcher(importWithoutKeywords).find();
+    private static boolean isMultipleClassesImport(String importWithoutKeywords) {
+        return Pattern.compile(".*\\{.*\\}.*").matcher(importWithoutKeywords).find();
     }
 
     public static boolean isWildCardImportLineJava(String importLine) {
