@@ -166,7 +166,7 @@ public class ImportProblemContainerService {
                             psiClass.getOriginalElement(),
                             psiClass.getContainingFile().getVirtualFile()
                     );
-                    target = Optional.of(targetLabel);
+                    target = Optional.ofNullable(targetLabel);
                 }
             }
         }
