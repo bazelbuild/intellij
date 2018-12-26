@@ -33,7 +33,7 @@ public class ImportLineUtils {
 
     private static String resolvePackageName(String originalLine) {
         ImportType importType = getImportType(originalLine);
-            switch (importType) {
+        switch (importType) {
             case REGULAR:
             case JAVA_WILDCARD:
             case SCALA_WILDCARD:
