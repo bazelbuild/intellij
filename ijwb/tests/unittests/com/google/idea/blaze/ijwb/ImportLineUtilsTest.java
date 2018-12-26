@@ -50,6 +50,15 @@ public class ImportLineUtilsTest {
     }
 
     @Test
+    public void getPackageName_mixedScalaMultipleClassesWithAliasImportLine() {
+        String importLine = "import java.util.concurrent.{CountDownLatch, Executors, A=> B}";
+
+        Optional<String> packageName = getPackageName(importLine);
+
+        assertEquals("java.util.concurrent", packageName.get());
+    }
+
+    @Test
     public void getPackageName_scalaAliasImport() {
         String importLine = "import java.lang.{Boolean => JBool, Integer => JInt}";
 
@@ -65,5 +74,7 @@ public class ImportLineUtilsTest {
 
         assertEquals(Optional.empty(), packageName);
     }
+
+
 
 }

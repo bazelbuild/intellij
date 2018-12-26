@@ -45,12 +45,24 @@ public class ImportLineUtils {
                 trim();
     }
 
-    private static boolean isScalaAlias(String importWithoutKeywords) {
-        return Pattern.compile(".*\\{.*^((?!=>).)*$\\}.*").matcher(importWithoutKeywords).find();
+    private static boolean isMultipleClassesImport(String importWithoutKeywords) {
+        return containsCurlyBraces(importWithoutKeywords) && doesNotContainArrow(importWithoutKeywords);
     }
 
-    private static boolean isMultipleClassesImport(String importWithoutKeywords) {
+    private static boolean containsCurlyBraces(String importWithoutKeywords) {
         return Pattern.compile(".*\\{.*\\}.*").matcher(importWithoutKeywords).find();
+    }
+
+    private static boolean doesNotContainArrow(String importWithoutKeywords) {
+        return Pattern.compile("^((?!=>).)*$").matcher(importWithoutKeywords).find();
+    }
+
+    private static boolean isScalaAlias(String importWithoutKeywords) {
+        return containsCurlyBracesAndArrowInside(importWithoutKeywords);
+    }
+
+    private static boolean containsCurlyBracesAndArrowInside(String importWithoutKeywords) {
+        return Pattern.compile(".*\\{.*=>.*\\}.*").matcher(importWithoutKeywords).find();
     }
 
     public static boolean isWildCardImportLineJava(String importLine) {
@@ -97,10 +109,10 @@ public class ImportLineUtils {
             return JAVA_WILDCARD;
         } else if (isWildCardImportLineScala(importWithoutKeywords)) {
             return SCALA_WILDCARD;
-        } else if (isMultipleClassesImport(importWithoutKeywords)) {
-            return MULTIPLE_SCALA;
         } else if (isScalaAlias(importWithoutKeywords)) {
             return SCALA_ALIAS;
+        } else if (isMultipleClassesImport(importWithoutKeywords)) {
+            return MULTIPLE_SCALA;
         } else if (isRegularImport(numberOfPartsThatStartWithUpperCase, isClassNameLast(importLinePartsArray))) {
             return REGULAR;
         } else {
