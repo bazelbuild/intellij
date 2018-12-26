@@ -46,7 +46,7 @@ public class ScalaBinaryTest extends BazelIntellijAspectTest {
                 .stream()
                 .map(IntellijAspectTest::libraryArtifactToString)
                 .collect(Collectors.toList()))
-        .containsExactly(jarString(testRelative("foo.jar"), null, null));
+        .containsExactly(jarString(testRelative("foo.jar"), null, testRelative("foo-src.jar")));
 
     assertThat(binaryInfo.getJavaIdeInfo().getMainClass()).isEqualTo("com.google.MyMainClass");
 

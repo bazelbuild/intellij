@@ -48,7 +48,7 @@ public class ScalaLibraryTest extends BazelIntellijAspectTest {
                 .stream()
                 .map(IntellijAspectTest::libraryArtifactToString)
                 .collect(Collectors.toList()))
-        .containsExactly(jarString(testRelative("simple.jar"), null, null));
+        .containsExactly(jarString(testRelative("simple.jar"), null, testRelative("simple-src.jar")));
     // Also contains ijars for scala-library.
     // Also contains jars + srcjars for liblibrary.
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))

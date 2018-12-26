@@ -44,7 +44,7 @@ public class ScalaTestTest extends BazelIntellijAspectTest {
                 .stream()
                 .map(IntellijAspectTest::libraryArtifactToString)
                 .collect(Collectors.toList()))
-        .containsExactly(jarString(testRelative("FooTest.jar"), null, null));
+        .containsExactly(jarString(testRelative("FooTest.jar"), null, testRelative("FooTest-src.jar")));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
         .contains(testRelative(intellijInfoFileName("FooTest")));
