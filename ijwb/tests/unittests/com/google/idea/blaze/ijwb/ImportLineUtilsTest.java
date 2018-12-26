@@ -50,6 +50,14 @@ public class ImportLineUtilsTest {
     }
 
     @Test
+    public void getPackageName_scalaAliasImport() {
+        String importLine = "import java.lang.{Boolean => JBool, Integer => JInt}";
+
+        Optional<String> packageName = getPackageName(importLine);
+
+        assertEquals("java.lang", packageName.get());
+    }
+    @Test
     public void getPackageName_StaticImport() {
         String importLine = "import com.wixpress.dispatch.domain.Dispatch.www\n";
 

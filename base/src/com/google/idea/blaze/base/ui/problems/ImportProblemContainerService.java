@@ -31,10 +31,10 @@ public class ImportProblemContainerService {
     public void setIssue(IssueOutput issue, PsiFile file, ImportIssueType importIssueType) {
         String originalLine = getOriginalLineByIssue(issue, file);
         ImportIssue importIssue = new ImportIssue(issue, file, originalLine, importIssueType);
-        Optional<String> importClassKey = getImportIssueKey(originalLine, file);
+        Optional<String> importIssueKey = getImportIssueKey(originalLine, file);
 
-        if(importClassKey.isPresent()) {
-            issues.put(importClassKey.get(), importIssue);
+        if(importIssueKey.isPresent()) {
+            issues.put(importIssueKey.get(), importIssue);
         }
 
     }
@@ -51,10 +51,10 @@ public class ImportProblemContainerService {
 
     public Optional<ImportIssue> findIssue(PsiElement psiElement) {
         PsiFile file = psiElement.getContainingFile();
-        Optional<String> importClass = getImportIssueKey(psiElement.getText(), file);
+        Optional<String> importIssueKey = getImportIssueKey(psiElement.getText(), file);
 
-        if(doesIssueExist(importClass)){
-            ImportIssue importIssue = issues.get(importClass.get());
+        if(doesIssueExist(importIssueKey)){
+            ImportIssue importIssue = issues.get(importIssueKey.get());
             return Optional.of(importIssue);
         } else {
             return Optional.empty();
@@ -101,6 +101,7 @@ public class ImportProblemContainerService {
                 }
                 break;
             case MULTIPLE_SCALA:
+            case SCALA_ALIAS:
                 List<String> classNames = getClassNames(originalLine, importType);
                 Optional<String> packageName = getPackageName(originalLine);
                 if(packageName.isPresent()){
@@ -112,7 +113,6 @@ public class ImportProblemContainerService {
                             )
                     );
                 }
-
                 break;
             default:
                 break;

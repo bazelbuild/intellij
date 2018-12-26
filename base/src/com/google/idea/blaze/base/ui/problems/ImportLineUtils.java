@@ -26,6 +26,7 @@ public class ImportLineUtils {
             case JAVA_WILDCARD:
             case SCALA_WILDCARD:
             case MULTIPLE_SCALA:
+            case SCALA_ALIAS:
                 String importWithoutKeywords = getImportLineWithoutKeywords(originalLine);
                 String packageName = importWithoutKeywords.substring(0, importWithoutKeywords.lastIndexOf(PACKAGE_SEPARATOR));
                 return Optional.of(packageName);
@@ -45,7 +46,11 @@ public class ImportLineUtils {
     }
 
     private static boolean isMultipleClassesImport(String importWithoutKeywords) {
-        return Pattern.compile(".*\\{.*\\}.*").matcher(importWithoutKeywords).find();
+        return Pattern.compile(".*\\{.*^((?!=>).)*$\\}.*").matcher(importWithoutKeywords).find();
+    }
+
+    private static boolean isScalaAlias(String importWithoutKeywords) {
+        return Pattern.compile(".*\\{.*=>.*\\}.*").matcher(importWithoutKeywords).find();
     }
 
     public static boolean isWildCardImportLineJava(String importLine) {
@@ -94,6 +99,8 @@ public class ImportLineUtils {
             return SCALA_WILDCARD;
         } else if (isMultipleClassesImport(importWithoutKeywords)) {
             return MULTIPLE_SCALA;
+        } else if (isScalaAlias(importWithoutKeywords)) {
+            return SCALA_ALIAS;
         } else if (isRegularImport(numberOfPartsThatStartWithUpperCase, isClassNameLast(importLinePartsArray))) {
             return REGULAR;
         } else {
@@ -102,25 +109,49 @@ public class ImportLineUtils {
     }
 
     public static List<String> getClassNames(String originalLine, ImportType importType) {
-        if (importType != MULTIPLE_SCALA) {
-            throw new RuntimeException(
-                    "Trying to parse multiple scala classes when import type is [" + importType.name() + "], and import line [" + originalLine + "]"
-            );
+
+        switch (importType){
+            case MULTIPLE_SCALA:
+                return getClassNamesForMultipleScala(originalLine);
+            case SCALA_ALIAS:
+                return getClassNamesForScalaAlias(originalLine);
+            default:
+                throw new RuntimeException(
+                        "Trying to parse multiple scala classes when import type is [" + importType.name() + "], and import line [" + originalLine + "]"
+                );
         }
+    }
+
+    private static List<String> getClassNamesForScalaAlias(String originalLine) {
         String importWithoutKeywords = getImportLineWithoutKeywords(originalLine);
 
-        String[] classNames = importWithoutKeywords.substring(importWithoutKeywords.lastIndexOf(PACKAGE_SEPARATOR ) + 1).
-                replace(SCALA_MULTIPLE_START_IDENTIFIER, EMPTY_STRING).
-                replace(SCALA_MULTIPLE_END_IDENTIFIER, EMPTY_STRING).
+        List<String> classNamesListTrimmed = getMultipleClassNamesFromImportLine(importWithoutKeywords);
+        List<String> originalClassNamesOnly =
+                classNamesListTrimmed.stream().map(className -> className.split("=>")[0].trim()).collect(Collectors.toList());
+        return originalClassNamesOnly;
+    }
+
+    @NotNull
+    private static List<String> getMultipleClassNamesFromImportLine(String importWithoutKeywords) {
+        String[] classNames = importWithoutKeywords.substring(importWithoutKeywords.lastIndexOf(PACKAGE_SEPARATOR) + 1).
+                replace(SCALA_IMPORT_CURLY_BRACE_START_IDENTIFIER, EMPTY_STRING).
+                replace(SCALA_IMPORT_CURLY__END_IDENTIFIER, EMPTY_STRING).
                 split(SCALA_MULTIPLE_CLASS_SEPARATOR);
 
         List<String> classNamesList = Arrays.asList(classNames);
-        List<String> classNamesListTrimmed = classNamesList.stream().map(String::trim).collect(Collectors.toList());
+        return classNamesList.stream().map(String::trim).collect(Collectors.toList());
+    }
+
+    @NotNull
+    private static List<String> getClassNamesForMultipleScala(String originalLine) {
+        String importWithoutKeywords = getImportLineWithoutKeywords(originalLine);
+
+        List<String> classNamesListTrimmed = getMultipleClassNamesFromImportLine(importWithoutKeywords);
         return classNamesListTrimmed;
     }
 
     public enum ImportType {
-        REGULAR, JAVA_WILDCARD, SCALA_WILDCARD, STATIC, ALIAS, MULTIPLE_SCALA, SCALA_OBJECTS, UNSUPPORTED
+        REGULAR, JAVA_WILDCARD, SCALA_WILDCARD, STATIC, SCALA_ALIAS, MULTIPLE_SCALA, SCALA_OBJECTS, UNSUPPORTED
     }
 }
 

@@ -8,8 +8,8 @@ public class ImportIssueConstants {
     public static final String STATIC_KEYWORD = "static";
 
 
-    public static final String SCALA_MULTIPLE_START_IDENTIFIER = "{";
-    public static final String SCALA_MULTIPLE_END_IDENTIFIER = "}";
+    public static final String SCALA_IMPORT_CURLY_BRACE_START_IDENTIFIER = "{";
+    public static final String SCALA_IMPORT_CURLY__END_IDENTIFIER = "}";
     public static final String SCALA_MULTIPLE_CLASS_SEPARATOR = ",";
     public static final String PACKAGE_SEPARATOR = ".";
 }
