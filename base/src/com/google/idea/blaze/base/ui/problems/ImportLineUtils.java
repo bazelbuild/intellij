@@ -135,7 +135,7 @@ public class ImportLineUtils {
     private static List<String> getMultipleClassNamesFromImportLine(String importWithoutKeywords) {
         String[] classNames = importWithoutKeywords.substring(importWithoutKeywords.lastIndexOf(PACKAGE_SEPARATOR) + 1).
                 replace(SCALA_IMPORT_CURLY_BRACE_START_IDENTIFIER, EMPTY_STRING).
-                replace(SCALA_IMPORT_CURLY__END_IDENTIFIER, EMPTY_STRING).
+                replace(SCALA_IMPORT_CURLY_END_IDENTIFIER, EMPTY_STRING).
                 split(SCALA_MULTIPLE_CLASS_SEPARATOR);
 
         List<String> classNamesList = Arrays.asList(classNames);
