@@ -13,21 +13,26 @@ public class ImportIssueResolver {
     private static final String NEW_LINE = "\n";
     private static String missingImportRegEx = "object .* is not a member of package .*";
     private static String wildCardOrStaticRegEx = "package .* does not exist";
+    private static String javaStaticImport = "static import only from classes and interfaces";
+
     private static final String IMPORT_STATIC_IDENTIFIER = "import static";
 
-    public static boolean isImportIssue(IssueOutput issue, VirtualFile file, Project project){
+    public static boolean isImportIssue(IssueOutput issue, VirtualFile file, Project project) {
         boolean importIssue = false;
-        if(file != null){
+        if (file != null) {
             boolean missingImportDependencyInBuildFile =
                     Pattern.compile(missingImportRegEx).matcher(issue.getMessage()).find();
             boolean missingImportDependencyWildOrStaticJava =
                     Pattern.compile(wildCardOrStaticRegEx).matcher(issue.getMessage()).find();
+            boolean missingImportDependencyJavaStaticImport =
+                    Pattern.compile(javaStaticImport).matcher(issue.getMessage()).find();
 
             PsiManager psiManager = PsiManager.getInstance(project);
-            PsiFile psiFile =  psiManager.findFile(file);
+            PsiFile psiFile = psiManager.findFile(file);
             String originalLine = getOriginalLineByIssue(issue, psiFile);
 
-            importIssue =  missingImportDependencyInBuildFile ||
+            importIssue = missingImportDependencyJavaStaticImport ||
+                    missingImportDependencyInBuildFile ||
                     missingWildCardImport(originalLine, missingImportDependencyWildOrStaticJava) ||
                     isStaticImport(originalLine, missingImportDependencyWildOrStaticJava);
         }
@@ -40,10 +45,9 @@ public class ImportIssueResolver {
     }
 
     private static boolean missingWildCardImport(String originalLine,
-                                          boolean missingImportDependencyWildcardOrStaticJava) {
+                                                 boolean missingImportDependencyWildcardOrStaticJava) {
         return missingImportDependencyWildcardOrStaticJava && ImportLineUtils.isWildCardImportLine(originalLine);
     }
-
 
 
     public static String getOriginalLineByIssue(IssueOutput issue, PsiFile psiFile) {

@@ -1,7 +1,10 @@
 package com.google.idea.blaze.base.ui.problems;
 
+import org.apache.commons.compress.utils.Lists;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -9,6 +12,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.google.idea.blaze.base.ui.problems.ImportIssueConstants.*;
@@ -21,19 +25,41 @@ public class ImportLineUtils {
     @NotNull
     public static Optional<String> getPackageName(String originalLine) {
         ImportType importType = getImportType(originalLine);
+        String importWithoutKeywords = getImportLineWithoutKeywords(originalLine);
+
         switch (importType) {
             case REGULAR:
             case JAVA_WILDCARD:
             case SCALA_WILDCARD:
             case MULTIPLE_SCALA:
             case SCALA_ALIAS:
-                String importWithoutKeywords = getImportLineWithoutKeywords(originalLine);
                 String packageName = importWithoutKeywords.substring(0, importWithoutKeywords.lastIndexOf(PACKAGE_SEPARATOR));
                 return Optional.of(packageName);
+            case JAVA_STATIC:
+                List<String> packageNameParts = Arrays.asList(importWithoutKeywords.split("\\"+PACKAGE_SEPARATOR));
+                int indexOfFirstClassName = IntStream.range(0, packageNameParts.size())
+                        .filter(index -> {
+                            String packagePart = packageNameParts.get(index);
+                            char firstLetter = packagePart.charAt(0);
+                            return Character.isUpperCase(firstLetter);
+                        })
+                        .findFirst()
+                        .orElse(-1);
+                Optional<String> maybePackageName =
+                        indexOfFirstClassName == -1 ?
+                                Optional.empty() : concatListUntilIndex(packageNameParts, indexOfFirstClassName);
+                return maybePackageName;
             default:
                 logger.log(Level.SEVERE, "Unsupported import type for line ["+originalLine+"]");
                 return Optional.empty();
         }
+    }
+
+    @NotNull
+    private static Optional<String> concatListUntilIndex(List<String> list, int indexUntil) {
+        List<String> packagePartsSublist = list.subList(0, indexUntil);
+        String packageName = StringUtils.join(packagePartsSublist, PACKAGE_SEPARATOR);
+        return Optional.of(packageName);
     }
 
     @NotNull
@@ -67,7 +93,7 @@ public class ImportLineUtils {
 
     public static boolean isWildCardImportLineJava(String importLine) {
         String lineWithoutDotComma = importLine.replace(JAVA_EOFL_IDENTIFIER, "");
-        return lineWithoutDotComma.endsWith(JAVA_WILDCARD_KEYWORD);
+        return lineWithoutDotComma.endsWith(JAVA_WILDCARD_KEYWORD) && !isJavaStaticImport(importLine);
     }
 
     public static boolean isWildCardImportLineScala(String importLine) {
@@ -105,7 +131,9 @@ public class ImportLineUtils {
         Stream<String> partsThatStartWithCapital = importLineParts.stream().filter(part -> startsWithUpperCase(part));
         long numberOfPartsThatStartWithUpperCase = partsThatStartWithCapital.count();
 
-        if (isWildCardImportLineJava(importWithoutKeywords)) {
+        if(isJavaStaticImport(originalLine)){
+            return JAVA_STATIC;
+        }else if (isWildCardImportLineJava(importWithoutKeywords)) {
             return JAVA_WILDCARD;
         } else if (isWildCardImportLineScala(importWithoutKeywords)) {
             return SCALA_WILDCARD;
@@ -120,6 +148,10 @@ public class ImportLineUtils {
         }
     }
 
+    private static boolean isJavaStaticImport(String originalLine) {
+        return originalLine.startsWith("import static");
+    }
+
     public static List<String> getClassNames(String originalLine, ImportType importType) {
 
         switch (importType){
@@ -127,11 +159,35 @@ public class ImportLineUtils {
                 return getClassNamesForMultipleScala(originalLine);
             case SCALA_ALIAS:
                 return getClassNamesForScalaAlias(originalLine);
+            case JAVA_STATIC:
+                ArrayList<String> classNames = Lists.newArrayList();
+                getClassNameWithPackageForJavaStatic(originalLine).ifPresent(classNameWithPackage -> {
+                    String className = classNameWithPackage.substring(classNameWithPackage.lastIndexOf(PACKAGE_SEPARATOR) + 1);
+                    classNames.add(className);
+                });
+                return classNames;
             default:
                 throw new RuntimeException(
                         "Trying to parse multiple scala classes when import type is [" + importType.name() + "], and import line [" + originalLine + "]"
                 );
         }
+    }
+
+    private static Optional<String> getClassNameWithPackageForJavaStatic(String originalLine) {
+        String importWithoutKeywords = getImportLineWithoutKeywords(originalLine);
+        List<String> packageNameParts = Arrays.asList(importWithoutKeywords.split("\\"+PACKAGE_SEPARATOR));
+        int indexOfFirstClassName = IntStream.range(0, packageNameParts.size())
+                .filter(index -> {
+                    String packagePart = packageNameParts.get(index);
+                    char firstLetter = packagePart.charAt(0);
+                    return Character.isUpperCase(firstLetter);
+                })
+                .findFirst()
+                .orElse(-1);
+        Optional<String> maybeClassName =
+                indexOfFirstClassName == -1 ?
+                        Optional.empty() : concatListUntilIndex(packageNameParts, indexOfFirstClassName+1);
+        return maybeClassName;
     }
 
     private static List<String> getClassNamesForScalaAlias(String originalLine) {
@@ -163,7 +219,7 @@ public class ImportLineUtils {
     }
 
     public enum ImportType {
-        REGULAR, JAVA_WILDCARD, SCALA_WILDCARD, STATIC, SCALA_ALIAS, MULTIPLE_SCALA, SCALA_OBJECTS, UNSUPPORTED
+        REGULAR, JAVA_WILDCARD, SCALA_WILDCARD, JAVA_STATIC, SCALA_ALIAS, MULTIPLE_SCALA, SCALA_OBJECTS, UNSUPPORTED
     }
 }
 

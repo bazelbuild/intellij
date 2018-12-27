@@ -36,17 +36,15 @@ public class ImportProblemContainerService {
         if(importIssueKey.isPresent()) {
             issues.put(importIssueKey.get(), importIssue);
         }
-
     }
 
     @NotNull
-    private Optional<String> getImportIssueKey(String originalLine, PsiFile file) {
+    private Optional<String> getImportIssueKey(String importLine, PsiFile file) {
         return Optional.ofNullable(file).flatMap(psiFile -> {
             PsiDirectory parent = file.getParent();
             if(parent != null){
-                String directoryName = parent.getName();
-                Optional<String> maybePackageName = getPackageName(originalLine);
-                return maybePackageName.map(packageName ->  directoryName+"\\/"+packageName);
+                String directoryName = parent.toString();
+                return Optional.of(directoryName+"\\/"+importLine);
             }else {
                 return Optional.empty();
             }
@@ -55,6 +53,15 @@ public class ImportProblemContainerService {
 
 
     public Optional<ImportIssue> findIssue(PsiElement psiElement) {
+        if(!issues.isEmpty()){
+            return handleWhenIssuesExist(psiElement);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @NotNull
+    private Optional<ImportIssue> handleWhenIssuesExist(PsiElement psiElement) {
         PsiFile file = psiElement.getContainingFile();
         Optional<String> importIssueKey = getImportIssueKey(psiElement.getText(), file);
 
@@ -107,6 +114,7 @@ public class ImportProblemContainerService {
                 break;
             case MULTIPLE_SCALA:
             case SCALA_ALIAS:
+            case JAVA_STATIC:
                 List<String> classNames = getClassNames(originalLine, importType);
                 Optional<String> packageName = getPackageName(originalLine);
                 if(packageName.isPresent()){
