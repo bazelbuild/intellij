@@ -16,13 +16,16 @@
 package com.google.idea.blaze.base.actions;
 
 import com.google.idea.blaze.base.logging.EventLoggingService;
+import com.google.idea.blaze.base.ui.problems.ImportProblemContainerService;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
 class BlazeMakeProjectAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
+    ServiceManager.getService(ImportProblemContainerService.class).resetIssues();
     EventLoggingService.getInstance().ifPresent(s -> s.logEvent(getClass(), "make"));
     BlazeBuildService.getInstance().buildProject(project);
   }
