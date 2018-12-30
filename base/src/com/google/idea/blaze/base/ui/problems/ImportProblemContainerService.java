@@ -81,7 +81,7 @@ public class ImportProblemContainerService {
         Project project = element.getProject();
 
         List<Label> importClassTargets = getImportClassTargets(element, originalLine, project).stream().distinct().collect(Collectors.toList());
-        Optional<Label> currentClassTarget = Optional.of(
+        Optional<Label> currentClassTarget = Optional.ofNullable(
                 findTarget(project, element, element.getContainingFile().getVirtualFile())
         );
 

@@ -64,7 +64,7 @@ public class ImportIssueQuickFix implements IntentionAction {
                 Document document = FileDocumentManager.getInstance().getDocument(psiFile.getVirtualFile());
                 PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
                 buildFileModifier.addDepToRule(project, importClassTarget, containingVirtualFile);
-                PsiDocumentManager.getInstance(project).commitAllDocuments();
+                PsiDocumentManager.getInstance(project).commitDocument(document);
             };
             WriteCommandAction.runWriteCommandAction(project, runnable);
         });
