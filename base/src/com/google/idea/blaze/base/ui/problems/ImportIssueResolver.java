@@ -23,7 +23,7 @@ public class ImportIssueResolver {
 
     public static boolean isImportIssue(IssueOutput issue, VirtualFile file, Project project) {
         boolean importIssue = false;
-        if (file != null) {
+        if (file != null && issue != null && issue.getLine() > 0) {
             boolean missingImportDependencyInBuildFile =
                     Pattern.compile(missingImportRegEx).matcher(issue.getMessage()).find();
             boolean missingImportDependencyWildOrStaticJava =
@@ -33,16 +33,16 @@ public class ImportIssueResolver {
 
             PsiManager psiManager = PsiManager.getInstance(project);
 
-            PsiFile psiFile = ApplicationManager.getApplication()
+            String originalLine = ApplicationManager.getApplication()
                     .runReadAction(
-                            new Computable<PsiFile>() {
+                            new Computable<String>() {
                                 @Override
-                                public PsiFile compute() {
-                                    return psiManager.findFile(file);
+                                public String compute() {
+                                    PsiFile psiFile = psiManager.findFile(file);
+                                    return getOriginalLineByIssue(issue, psiFile);
                                 }
                             });
 
-            String originalLine = getOriginalLineByIssue(issue, psiFile);
 
             importIssue = missingImportDependencyJavaStaticImport ||
                     missingImportDependencyInBuildFile ||
