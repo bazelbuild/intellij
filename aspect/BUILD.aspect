@@ -22,6 +22,13 @@ java_binary(
     main_class = "com.google.idea.blaze.aspect.PackageParser",
     runtime_deps = [":package_parser_lib"],
     visibility = ["//visibility:public"],
+    jvm_flags = [
+             # quiet warnings from com.google.protobuf.UnsafeUtil,
+             # see: https://github.com/google/protobuf/issues/3781
+             "-XX:+IgnoreUnrecognizedVMOptions",
+             "--add-opens=java.base/java.nio=ALL-UNNAMED",
+             "--add-opens=java.base/java.lang=ALL-UNNAMED",
+         ],
 )
 
 java_import(
