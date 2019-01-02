@@ -127,7 +127,7 @@ public interface BuildSystemProvider {
     FileOperationProvider provider = FileOperationProvider.getInstance();
     for (String filename : possibleBuildFileNames()) {
       File child = new File(directory, filename);
-      if (provider.exists(child)) {
+      if (provider.exists(child) && provider.isFile(child)) {
         return child;
       }
     }
