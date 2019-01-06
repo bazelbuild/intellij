@@ -45,6 +45,7 @@
         order="first"/>
     <stepsBeforeRunProvider
         implementation="com.google.idea.blaze.scala.run.producers.GenerateDeployableJarTaskProvider"/>
+    <attachSourcesProvider implementation="com.google.idea.blaze.scala.libraries.BlazeScalaAttachSourceProvider"/>
   </extensions>
 
   <project-components>

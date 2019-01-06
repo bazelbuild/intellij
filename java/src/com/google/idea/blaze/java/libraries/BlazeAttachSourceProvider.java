@@ -51,6 +51,19 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
   private static final BoolExperiment attachAutomatically =
       new BoolExperiment("blaze.attach.source.jars.automatically.2", true);
 
+  private final BlazeJarLibraryLocator blazeJarLibraryLocator;
+
+  /**
+   * Used by the intellij platform to construct an BlazeAttachSourceProvider for Java
+   */
+  public BlazeAttachSourceProvider() {
+    this.blazeJarLibraryLocator = new BlazeJavaJarLibraryLocator();
+  }
+
+  public BlazeAttachSourceProvider(BlazeJarLibraryLocator blazeJarLibraryLocator) {
+    this.blazeJarLibraryLocator = blazeJarLibraryLocator;
+  }
+
   @Override
   public Collection<AttachSourcesAction> getActions(
       List<LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
@@ -76,7 +89,7 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
         continue;
       }
       BlazeJarLibrary blazeLibrary =
-          LibraryActionHelper.findLibraryFromIntellijLibrary(project, blazeProjectData, library);
+              blazeJarLibraryLocator.findLibraryFromIntellijLibrary(project, blazeProjectData, library);
       if (blazeLibrary == null) {
         continue;
       }
