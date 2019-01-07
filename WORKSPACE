@@ -260,7 +260,7 @@ http_archive(
 # LICENSE: The Apache Software License, Version 2.0
 git_repository(
     name = "io_bazel_rules_scala",
-    commit = "8359fc6781cf3102e918c84cb1638a1b1e050ce0",
+    commit = "326b4ce252c36aeff2232e241ff4bfd8d6f6e071",
     remote = "https://github.com/bazelbuild/rules_scala.git",
 )
 
@@ -277,7 +277,7 @@ scala_register_toolchains()
 # LICENSE: The Apache Software License, Version 2.0
 git_repository(
     name = "io_bazel_rules_kotlin",
-    commit = "6d8dcd4d6000d0cf3321eb8580d8fc67f8731f8e",
+    commit = "cab5eaffc2012dfe46260c03d6419c0d2fa10be0",
     remote = "https://github.com/bazelbuild/rules_kotlin.git",
 )
 
