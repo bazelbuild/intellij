@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.run.smrunner;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import javax.annotation.Nullable;
 
-/** Parses test XML output to give actual/expected text comparisons. */
+/** Parses test case failure messages to give actual/expected text comparisons. */
 public interface TestComparisonFailureParser {
   ExtensionPointName<TestComparisonFailureParser> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.TestComparisonFailureParser");
@@ -30,7 +30,7 @@ public interface TestComparisonFailureParser {
         return data;
       }
     }
-    return new BlazeComparisonFailureData(null, null);
+    return BlazeComparisonFailureData.NONE;
   }
 
   @Nullable
@@ -38,10 +38,11 @@ public interface TestComparisonFailureParser {
 
   /** Data class for actual/expected text. */
   class BlazeComparisonFailureData {
-    public final String actual;
-    public final String expected;
+    static final BlazeComparisonFailureData NONE = new BlazeComparisonFailureData(null, null);
+    @Nullable public final String actual;
+    @Nullable public final String expected;
 
-    public BlazeComparisonFailureData(String actual, String expected) {
+    public BlazeComparisonFailureData(@Nullable String actual, @Nullable String expected) {
       this.actual = actual;
       this.expected = expected;
     }

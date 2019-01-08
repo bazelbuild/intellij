@@ -38,7 +38,7 @@ test_suite(
     name = "ijwb_ue_tests",
     tests = [
         "//golang:integration_tests",
-        "//ijwb:typescript_integration_tests",
+        "//javascript:integration_tests",
     ],
 )
 

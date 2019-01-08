@@ -20,8 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.IntellijAspectTestFixture;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
 import com.google.idea.blaze.BazelIntellijAspectTest;
-import com.google.idea.blaze.aspect.IntellijAspectTest;
-import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -37,14 +35,9 @@ public class ScalaTestTest extends BazelIntellijAspectTest {
     assertThat(testInfo.getKindString()).isEqualTo("scala_test");
     assertThat(relativePathsForArtifacts(testInfo.getJavaIdeInfo().getSourcesList()))
         .containsExactly(testRelative("FooTest.scala"));
-    assertThat(
-            testInfo
-                .getJavaIdeInfo()
-                .getJarsList()
-                .stream()
-                .map(IntellijAspectTest::libraryArtifactToString)
-                .collect(Collectors.toList()))
-        .containsExactly(jarString(testRelative("FooTest.jar"), null, null));
+    assertThat(testInfo.getJavaIdeInfo().getJarsList()).hasSize(1);
+    assertThat(testInfo.getJavaIdeInfo().getJarsList().get(0).getJar().getRelativePath())
+        .isEqualTo(testRelative("FooTest.jar"));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
         .contains(testRelative(intellijInfoFileName("FooTest")));

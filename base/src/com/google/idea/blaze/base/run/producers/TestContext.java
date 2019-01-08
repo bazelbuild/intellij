@@ -129,32 +129,23 @@ public abstract class TestContext implements RunConfigurationContext {
   }
 
   /**
-   * For situations where we appear to be in a recognized test context, but can't efficiently find a
-   * relevant blaze target.
+   * For situations where we appear to be in a recognized test context, but can't efficiently
+   * resolve the psi elements and/or relevant blaze target.
    *
    * <p>A {@link BlazeCommandRunConfiguration} will be produced synchronously, then filled in later
-   * when the target is known.
-   *
-   * <p>Run configurations need to be provided synchronously (on the EDT!) by
-   * RunConfigurationProducer's, however it can be expensive to determine the blaze target relevant
-   * to a given context.
+   * when the full context is known.
    */
-  private static class PendingTargetTestContext extends TestContext {
-    private final ListenableFuture<TargetInfo> target;
+  private static class PendingContextTestContext extends TestContext
+      implements PendingRunConfigurationContext {
 
-    private PendingTargetTestContext(
+    private static PendingContextTestContext fromTargetFuture(
         ListenableFuture<TargetInfo> target,
         PsiElement sourceElement,
         ImmutableList<BlazeFlagsModification> blazeFlags,
         @Nullable String description) {
-      super(sourceElement, blazeFlags, description);
-      this.target = target;
-    }
-
-    private PendingRunConfigurationContext getPendingContext() {
       String buildSystem = Blaze.buildSystemName(sourceElement.getProject());
       String progressMessage = String.format("Searching for %s target", buildSystem);
-      ListenableFuture<RunConfigurationContext> contextFuture =
+      ListenableFuture<RunConfigurationContext> future =
           Futures.transform(
               target,
               t -> {
@@ -164,13 +155,37 @@ public abstract class TestContext implements RunConfigurationContext {
                 return new KnownTargetTestContext(t, sourceElement, blazeFlags, description);
               },
               MoreExecutors.directExecutor());
-      return new PendingRunConfigurationContext(
-          contextFuture, progressMessage, sourceElement.toString(), sourceElement);
+      return new PendingContextTestContext(
+          future, progressMessage, sourceElement, blazeFlags, description);
+    }
+
+    private final ListenableFuture<RunConfigurationContext> future;
+    private final String progressMessage;
+
+    private PendingContextTestContext(
+        ListenableFuture<RunConfigurationContext> future,
+        String progressMessage,
+        PsiElement sourceElement,
+        ImmutableList<BlazeFlagsModification> blazeFlags,
+        @Nullable String description) {
+      super(sourceElement, blazeFlags, description);
+      this.future = PendingRunConfigurationContext.recursivelyResolveContext(future);
+      this.progressMessage = progressMessage;
+    }
+
+    @Override
+    public ListenableFuture<RunConfigurationContext> getFuture() {
+      return future;
+    }
+
+    @Override
+    public String getProgressMessage() {
+      return progressMessage;
     }
 
     @Override
     void setupTarget(BlazeCommandRunConfiguration config) {
-      config.setPendingContext(getPendingContext());
+      config.setPendingContext(this);
     }
 
     @Override
@@ -229,12 +244,18 @@ public abstract class TestContext implements RunConfigurationContext {
 
   /** Builder class for {@link TestContext}. */
   public static class Builder {
+    private ListenableFuture<RunConfigurationContext> contextFuture = null;
     private ListenableFuture<TargetInfo> targetFuture = null;
     private TargetInfo target = null;
     private PsiElement sourceElement = null;
     private final ImmutableList.Builder<BlazeFlagsModification> blazeFlags =
         ImmutableList.builder();
     private String description = null;
+
+    public Builder setContextFuture(ListenableFuture<RunConfigurationContext> contextFuture) {
+      this.contextFuture = contextFuture;
+      return this;
+    }
 
     public Builder setTarget(ListenableFuture<TargetInfo> future) {
       if (future.isDone()) {
@@ -278,12 +299,21 @@ public abstract class TestContext implements RunConfigurationContext {
     }
 
     public TestContext build() {
-      Preconditions.checkState(targetFuture == null ^ target == null);
       Preconditions.checkNotNull(sourceElement);
+      if (contextFuture != null) {
+        Preconditions.checkState(targetFuture == null && target == null);
+        return new PendingContextTestContext(
+            contextFuture,
+            "Resolving test context",
+            sourceElement,
+            blazeFlags.build(),
+            description);
+      }
+      Preconditions.checkState(targetFuture == null ^ target == null);
       if (target != null) {
         return new KnownTargetTestContext(target, sourceElement, blazeFlags.build(), description);
       }
-      return new PendingTargetTestContext(
+      return PendingContextTestContext.fromTargetFuture(
           targetFuture, sourceElement, blazeFlags.build(), description);
     }
   }

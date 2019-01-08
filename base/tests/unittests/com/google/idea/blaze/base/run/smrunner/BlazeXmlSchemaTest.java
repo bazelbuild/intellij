@@ -19,6 +19,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.ErrorOrFailureOrSkipped;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestCase;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
 import java.io.ByteArrayInputStream;
@@ -84,9 +86,34 @@ public class BlazeXmlSchemaTest {
     TestCase testCase = parsed.testSuites.get(0).testCases.get(0);
     assertThat(testCase.failures).hasSize(2);
     assertThat(testCase.failures.get(0).message).isEqualTo("failed");
-    assertThat(testCase.failures.get(0).content).isEqualTo("Error message");
+    assertThat(BlazeXmlSchema.getErrorContent(testCase.failures.get(0))).isEqualTo("Error message");
     assertThat(testCase.failures.get(1).message).isEqualTo("failed2");
-    assertThat(testCase.failures.get(1).content).isEqualTo("Another Error");
+    assertThat(BlazeXmlSchema.getErrorContent(testCase.failures.get(1))).isEqualTo("Another Error");
+  }
+
+  @Test
+  public void testTestCaseFailureWithExpectedActualData() {
+    TestSuite parsed =
+        parseXml(
+            "<?xml version='1.0' encoding='UTF-8'?>",
+            "<testsuites>",
+            "  <testsuite name='com.google.ConfigTest' time='10' tests='1' failures='1'>",
+            "    <testcase name='testCase1' time='7.9' status='run' result='completed'>",
+            "      <failure message='failed' type='AssertionError'>Error message",
+            "        <expected><value><![CDATA[abc]]></value></expected>",
+            "        <actual><value><![CDATA[xyz]]></value></actual>",
+            "      </failure>",
+            "    </testcase>",
+            "  </testsuite>",
+            "</testsuites>");
+
+    assertThat(parsed.testSuites.get(0).testCases).hasSize(1);
+    assertThat(parsed.testSuites.get(0).failures).isEqualTo(1);
+
+    ErrorOrFailureOrSkipped failure =
+        Iterables.getOnlyElement(parsed.testSuites.get(0).testCases.get(0).failures);
+    assertThat(failure.expected.values).containsExactly("abc");
+    assertThat(failure.actual.values).containsExactly("xyz");
   }
 
   @Test

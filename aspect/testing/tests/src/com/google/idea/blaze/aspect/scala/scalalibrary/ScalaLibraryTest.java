@@ -20,8 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.IntellijAspectTestFixture;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
 import com.google.idea.blaze.BazelIntellijAspectTest;
-import com.google.idea.blaze.aspect.IntellijAspectTest;
-import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -41,14 +39,9 @@ public class ScalaLibraryTest extends BazelIntellijAspectTest {
 
     assertThat(relativePathsForArtifacts(target.getJavaIdeInfo().getSourcesList()))
         .containsExactly(testRelative("Foo.scala"));
-    assertThat(
-            target
-                .getJavaIdeInfo()
-                .getJarsList()
-                .stream()
-                .map(IntellijAspectTest::libraryArtifactToString)
-                .collect(Collectors.toList()))
-        .containsExactly(jarString(testRelative("simple.jar"), null, null));
+    assertThat(target.getJavaIdeInfo().getJarsList()).hasSize(1);
+    assertThat(target.getJavaIdeInfo().getJarsList().get(0).getJar().getRelativePath())
+        .isEqualTo(testRelative("simple.jar"));
     // Also contains ijars for scala-library.
     // Also contains jars + srcjars for liblibrary.
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))

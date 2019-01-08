@@ -15,7 +15,9 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.run.producers.RunConfigurationContext;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
@@ -24,10 +26,7 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.UIUtil;
-import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
  * Used when we don't yet know all the configuration details, but want to provide a 'run/debug'
@@ -36,26 +35,26 @@ import javax.annotation.Nullable;
  * <p>This is necessary whenever details are expensive to calculate (e.g. involve searching for a
  * blaze target, or resolving PSI elements), because run configurations are set up on the EDT.
  */
-public class PendingRunConfigurationContext implements RunConfigurationContext {
-  public final ListenableFuture<RunConfigurationContext> future;
-  private final String progressMessage;
+public interface PendingRunConfigurationContext extends RunConfigurationContext {
+
+  ListenableFuture<RunConfigurationContext> getFuture();
+
+  String getProgressMessage();
+
   /**
-   * Used to recognize previously created configs with pending details, to avoid creating duplicate
-   * configs.
+   * Returns a future with all currently-unknown details of this configuration context resolved.
+   *
+   * <p>Handles the case where there are nested {@link PendingRunConfigurationContext}s.
    */
-  final String contextString;
-
-  @Nullable private final PsiElement sourceElement;
-
-  public PendingRunConfigurationContext(
-      ListenableFuture<RunConfigurationContext> future,
-      String progressMessage,
-      String contextString,
-      @Nullable PsiElement sourceElement) {
-    this.future = future;
-    this.progressMessage = progressMessage;
-    this.contextString = contextString;
-    this.sourceElement = sourceElement;
+  static ListenableFuture<RunConfigurationContext> recursivelyResolveContext(
+      ListenableFuture<RunConfigurationContext> future) {
+    return Futures.transformAsync(
+        future,
+        c ->
+            c instanceof PendingRunConfigurationContext
+                ? recursivelyResolveContext(((PendingRunConfigurationContext) c).getFuture())
+                : Futures.immediateFuture(c),
+        MoreExecutors.directExecutor());
   }
 
   /**
@@ -63,9 +62,10 @@ public class PendingRunConfigurationContext implements RunConfigurationContext {
    *
    * @throws ExecutionException if the run configuration is not successfully configured
    */
-  public void waitForFutureUnderProgressDialog(Project project) throws ExecutionException {
-    if (future.isDone()) {
-      getFutureHandlingErrors();
+  static void waitForFutureUnderProgressDialog(
+      Project project, PendingRunConfigurationContext pendingContext) throws ExecutionException {
+    if (pendingContext.getFuture().isDone()) {
+      getFutureHandlingErrors(pendingContext);
     }
     // The progress indicator must be created on the UI thread.
     ProgressWindow indicator =
@@ -73,7 +73,7 @@ public class PendingRunConfigurationContext implements RunConfigurationContext {
             () ->
                 new BackgroundableProcessIndicator(
                     project,
-                    progressMessage,
+                    pendingContext.getProgressMessage(),
                     PerformInBackgroundOption.ALWAYS_BACKGROUND,
                     "Cancel",
                     "Cancel",
@@ -86,11 +86,11 @@ public class PendingRunConfigurationContext implements RunConfigurationContext {
           @Override
           public void cancel() {
             super.cancel();
-            future.cancel(true);
+            pendingContext.getFuture().cancel(true);
           }
         });
     try {
-      getFutureHandlingErrors();
+      getFutureHandlingErrors(pendingContext);
     } finally {
       if (indicator.isRunning()) {
         indicator.stop();
@@ -99,9 +99,10 @@ public class PendingRunConfigurationContext implements RunConfigurationContext {
     }
   }
 
-  RunConfigurationContext getFutureHandlingErrors() throws ExecutionException {
+  static RunConfigurationContext getFutureHandlingErrors(
+      PendingRunConfigurationContext pendingContext) throws ExecutionException {
     try {
-      RunConfigurationContext result = future.get();
+      RunConfigurationContext result = pendingContext.getFuture().get();
       if (result == null) {
         throw new ExecutionException("Run configuration setup failed.");
       }
@@ -111,22 +112,5 @@ public class PendingRunConfigurationContext implements RunConfigurationContext {
     } catch (java.util.concurrent.ExecutionException e) {
       throw new ExecutionException(e);
     }
-  }
-
-  @Nullable
-  @Override
-  public PsiElement getSourceElement() {
-    return sourceElement;
-  }
-
-  @Override
-  public boolean setupRunConfiguration(BlazeCommandRunConfiguration config) {
-    config.setPendingContext(this);
-    return true;
-  }
-
-  @Override
-  public boolean matchesRunConfiguration(BlazeCommandRunConfiguration config) {
-    return Objects.equals(config.getContextElementString(), contextString);
   }
 }

@@ -405,6 +405,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.SyncDataExtractor" interface="com.google.idea.blaze.base.model.SyncData$Extractor"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.TargetKindProvider" interface="com.google.idea.blaze.base.model.primitives.Kind$Provider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.TestContextProvider" interface="com.google.idea.blaze.base.run.producers.TestContextProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.HeuristicTestIdentifier" interface="com.google.idea.blaze.base.run.producers.HeuristicTestIdentifier"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -450,6 +451,7 @@
     <SyncDataExtractor implementation="com.google.idea.blaze.base.lang.buildfile.sync.LanguageSpecResult$Extractor"/>
     <LoggedSettingsProvider implementation="com.google.idea.blaze.base.settings.BlazeUserSettings$SettingsLogger"/>
     <TargetKindProvider implementation="com.google.idea.blaze.base.model.primitives.GenericBlazeRules"/>
+    <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.OutsideProjectTestContextProvider"/>
   </extensions>
 
 </idea-plugin>
