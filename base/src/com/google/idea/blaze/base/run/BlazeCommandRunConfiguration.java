@@ -148,22 +148,25 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     this.pendingContext = pendingContext;
     this.targetPattern = null;
     this.targetKindString = null;
-    this.contextElementString = pendingContext.contextString;
+    this.contextElementString = pendingContext.getSourceElement().toString();
     updateHandler();
     EventLoggingService.getInstance().ifPresent(s -> s.logEvent(getClass(), "async-run-config"));
-    pendingContext.future.addListener(
-        () -> {
-          try {
-            RunConfigurationContext context = pendingContext.getFutureHandlingErrors();
-            boolean success = context.setupRunConfiguration(this);
-            if (success) {
-              this.pendingContext = null;
-            }
-          } catch (ExecutionException e) {
-            // ignore silently, will be presented to the user if they try to run this config
-          }
-        },
-        MoreExecutors.directExecutor());
+    pendingContext
+        .getFuture()
+        .addListener(
+            () -> {
+              try {
+                RunConfigurationContext context =
+                    PendingRunConfigurationContext.getFutureHandlingErrors(pendingContext);
+                boolean success = context.setupRunConfiguration(this);
+                if (success) {
+                  this.pendingContext = null;
+                }
+              } catch (ExecutionException e) {
+                // ignore silently, will be presented to the user if they try to run this config
+              }
+            },
+            MoreExecutors.directExecutor());
   }
 
   @Nullable
@@ -370,7 +373,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     }
     handler.checkConfiguration();
     PendingRunConfigurationContext pendingContext = this.pendingContext;
-    if (pendingContext != null && !pendingContext.future.isDone()) {
+    if (pendingContext != null && !pendingContext.getFuture().isDone()) {
       return;
     }
     if (Strings.isNullOrEmpty(targetPattern)) {
@@ -468,6 +471,8 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     configuration.blazeElementState = blazeElementState.clone();
     configuration.targetPattern = targetPattern;
     configuration.targetKindString = targetKindString;
+    configuration.contextElementString = contextElementString;
+    configuration.pendingContext = pendingContext;
     configuration.keepInSync = keepInSync;
     configuration.handlerProvider = handlerProvider;
     configuration.handler = handlerProvider.createHandler(this);

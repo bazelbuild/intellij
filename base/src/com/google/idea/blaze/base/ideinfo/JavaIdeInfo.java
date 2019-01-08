@@ -137,6 +137,7 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
     @Nullable LibraryArtifact filteredGenJar;
     @Nullable String mainClass;
     @Nullable String testClass;
+    @Nullable ArtifactLocation jdepsFile;
 
     public Builder addJar(LibraryArtifact.Builder jar) {
       jars.add(jar.build());
@@ -163,6 +164,11 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
       return this;
     }
 
+    public Builder setJdepsFile(@Nullable ArtifactLocation jdepsFile) {
+      this.jdepsFile = jdepsFile;
+      return this;
+    }
+
     public JavaIdeInfo build() {
       return new JavaIdeInfo(
           jars.build(),
@@ -170,7 +176,7 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
           filteredGenJar,
           ImmutableList.of(),
           null,
-          null,
+          jdepsFile,
           mainClass,
           testClass);
     }

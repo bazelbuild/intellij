@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2016 The Bazel Authors. All rights reserved.
+  ~ Copyright 2018 The Bazel Authors. All rights reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -14,9 +14,15 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-  <vendor>Google</vendor>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"
-                        serviceImplementation="com.google.idea.blaze.ijwb.plugin.IjwbPluginId"/>
+    <!-- Need to come before com.intellij.lang.javascript.navigation.JSGotoDeclarationHandler -->
+    <gotoDeclarationHandler
+        implementation="com.google.idea.blaze.typescript.BlazeTypescriptGotoDeclarationHandler"
+        id="Blaze.Typescript"
+        order="first"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="JavaScript">
+    <elementScopeProvider implementation="com.google.idea.blaze.javascript.BlazeJavascriptResolveScopeProvider" order="first"/>
   </extensions>
 </idea-plugin>

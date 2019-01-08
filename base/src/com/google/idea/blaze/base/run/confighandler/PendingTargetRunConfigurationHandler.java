@@ -85,7 +85,7 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
 
   private static boolean hasPendingTarget(BlazeCommandRunConfiguration config) {
     PendingRunConfigurationContext pendingContext = config.getPendingContext();
-    return pendingContext != null && !pendingContext.future.isDone();
+    return pendingContext != null && !pendingContext.getFuture().isDone();
   }
 
   static class PendingTargetProgramRunner extends BaseProgramRunner<RunnerSettings> {
@@ -109,8 +109,10 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
 
     @Override
     protected void execute(
-        ExecutionEnvironment env, @Nullable Callback callback, RunProfileState state) {
+        ExecutionEnvironment env, @Nullable Callback callback, RunProfileState state)
+        throws ExecutionException {
       if (!(state instanceof DummyRunProfileState)) {
+        reRunConfiguration(env);
         return;
       }
       ApplicationManager.getApplication()
@@ -182,6 +184,7 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
     if (pendingContext == null) {
       return;
     }
-    pendingContext.waitForFutureUnderProgressDialog(env.getProject());
+    PendingRunConfigurationContext.waitForFutureUnderProgressDialog(
+        env.getProject(), pendingContext);
   }
 }

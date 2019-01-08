@@ -21,17 +21,11 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.intellij.psi.PsiElement;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /** A context used to configure a blaze run configuration, possibly asynchronously. */
 public interface RunConfigurationContext {
 
-  /**
-   * A {@link PsiElement} relevant to this test context (e.g. a method, class, file, etc.).
-   *
-   * <p>Can be null in situations where resolving the {@link PsiElement} is expensive.
-   */
-  @Nullable
+  /** The {@link PsiElement} most relevant to this context (e.g. a method, class, file, etc.). */
   PsiElement getSourceElement();
 
   /** Returns true if the run configuration was successfully configured. */

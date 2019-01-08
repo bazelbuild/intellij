@@ -32,6 +32,7 @@ merged_plugin_xml(
         "//dart:plugin_xml",
         "//golang:plugin_xml",
         "//java:plugin_xml",
+        "//javascript:plugin_xml",
         "//kotlin:plugin_xml",
         "//python:plugin_xml",
         "//scala:plugin_xml",
@@ -51,18 +52,6 @@ optional_plugin_xml(
     name = "optional_java",
     module = "com.intellij.modules.java",
     plugin_xml = "src/META-INF/java-contents.xml",
-)
-
-optional_plugin_xml(
-    name = "optional_javascript",
-    module = "JavaScript",
-    plugin_xml = "src/META-INF/javascript-contents.xml",
-)
-
-optional_plugin_xml(
-    name = "optional_typescript",
-    module = "JavaScript",
-    plugin_xml = "src/META-INF/typescript-contents.xml",
 )
 
 stamped_plugin_xml(
@@ -85,6 +74,7 @@ java_library(
     runtime_deps = [
         "//dart",
         "//golang",
+        "//javascript",
         "//kotlin",
         "//python",
         "//scala",
@@ -93,20 +83,17 @@ java_library(
     ],
     deps = [
         "//base",
-        "//common/experiments",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
         "//sdkcompat",
-        "//third_party/javascript",
     ],
 )
 
 OPTIONAL_PLUGIN_XMLS = [
     ":optional_java",
-    ":optional_javascript",
-    ":optional_typescript",
+    "//javascript:optional_xml",
     "//golang:optional_xml",
     "//java:optional_java",
     "//java:optional_coverage",
@@ -195,25 +182,6 @@ intellij_integration_test_suite(
         "//base:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
-        "@junit//jar",
-    ],
-)
-
-intellij_integration_test_suite(
-    name = "typescript_integration_tests",
-    srcs = glob(["tests/typescript_integration_tests/**/*.java"]),
-    platform_prefix = "",
-    required_plugins = "com.google.idea.bazel.ijwb,JavaScript",
-    test_package_root = "com.google.idea.blaze.ijwb",
-    runtime_deps = [":ijwb_bazel"],
-    deps = [
-        ":ijwb_lib",
-        "//base",
-        "//base:integration_test_utils",
-        "//base:unit_test_utils",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",
-        "//third_party/javascript:javascript_for_tests",
         "@junit//jar",
     ],
 )

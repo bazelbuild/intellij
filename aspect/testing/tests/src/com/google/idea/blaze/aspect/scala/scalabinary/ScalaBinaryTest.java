@@ -20,8 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.IntellijAspectTestFixture;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
 import com.google.idea.blaze.BazelIntellijAspectTest;
-import com.google.idea.blaze.aspect.IntellijAspectTest;
-import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -39,14 +37,9 @@ public class ScalaBinaryTest extends BazelIntellijAspectTest {
         .containsExactly(testRelative("FooMain.scala"));
     assertThat(dependenciesForTarget(binaryInfo)).contains(dep(":foolib"));
 
-    assertThat(
-            binaryInfo
-                .getJavaIdeInfo()
-                .getJarsList()
-                .stream()
-                .map(IntellijAspectTest::libraryArtifactToString)
-                .collect(Collectors.toList()))
-        .containsExactly(jarString(testRelative("foo.jar"), null, null));
+    assertThat(binaryInfo.getJavaIdeInfo().getJarsList()).hasSize(1);
+    assertThat(binaryInfo.getJavaIdeInfo().getJarsList().get(0).getJar().getRelativePath())
+        .isEqualTo(testRelative("foo.jar"));
 
     assertThat(binaryInfo.getJavaIdeInfo().getMainClass()).isEqualTo("com.google.MyMainClass");
 
