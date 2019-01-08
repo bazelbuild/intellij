@@ -49,17 +49,14 @@ import javax.swing.ListSelectionModel;
  *
  * <p>Pops up a dialog to choose a specific browser/platform if multiple are declared.
  */
-public abstract class BlazeWebTestConfigurationProducer
+public class BlazeWebTestConfigurationProducer
     extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
-  private final ImmutableList<
-          Class<? extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration>>>
-      producers;
 
-  protected BlazeWebTestConfigurationProducer(
-      ImmutableList<Class<? extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration>>>
-          producers) {
+  private final TestContextRunConfigurationProducer delegate;
+
+  private BlazeWebTestConfigurationProducer() {
     super(BlazeCommandRunConfigurationType.getInstance());
-    this.producers = producers;
+    delegate = new TestContextRunConfigurationProducer(true);
   }
 
   @Override
@@ -67,10 +64,7 @@ public abstract class BlazeWebTestConfigurationProducer
       BlazeCommandRunConfiguration configuration,
       ConfigurationContext context,
       Ref<PsiElement> sourceElement) {
-    if (producers.stream()
-        .map(EP_NAME::findExtension)
-        .noneMatch(
-            producer -> producer.doSetupConfigFromContext(configuration, context, sourceElement))) {
+    if (!delegate.doSetupConfigFromContext(configuration, context, sourceElement)) {
       return false;
     }
 
@@ -102,9 +96,7 @@ public abstract class BlazeWebTestConfigurationProducer
   @Override
   protected boolean doIsConfigFromContext(
       BlazeCommandRunConfiguration configuration, ConfigurationContext context) {
-    return producers.stream()
-            .map(EP_NAME::findExtension)
-            .anyMatch(producer -> producer.doIsConfigFromContext(configuration, context))
+    return delegate.doIsConfigFromContext(configuration, context)
         && configuration.getTargetKind() == GenericBlazeRules.RuleTypes.WEB_TEST.getKind();
   }
 
@@ -204,6 +196,7 @@ public abstract class BlazeWebTestConfigurationProducer
 
   @Override
   public boolean shouldReplace(ConfigurationFromContext self, ConfigurationFromContext other) {
-    return producers.stream().anyMatch(other::isProducedBy);
+    return super.shouldReplace(self, other)
+        || other.isProducedBy(TestContextRunConfigurationProducer.class);
   }
 }

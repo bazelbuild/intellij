@@ -56,7 +56,7 @@ public final class VfsUtils {
         () ->
             VirtualFileSystemProvider.getInstance()
                 .getSystem()
-                .refreshIoFiles(files, /* async */ true, recursive, onFinish);
+                .refreshIoFiles(files, /* async= */ true, recursive, onFinish);
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     if (app.holdsReadLock()) {
       // THE async IS A LIE!

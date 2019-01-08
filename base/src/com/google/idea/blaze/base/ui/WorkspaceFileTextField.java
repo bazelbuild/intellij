@@ -52,7 +52,7 @@ public final class WorkspaceFileTextField extends FileTextFieldImpl {
       Disposable parent) {
     JTextField textField = new WorkspacePathTextField(pathResolver, columns);
     return new WorkspaceFileTextField(
-        pathResolver, textField, new FileChooserFilter(descriptor, /* showHidden */ true), parent);
+        pathResolver, textField, new FileChooserFilter(descriptor, /* showHidden= */ true), parent);
   }
 
   @Nullable

@@ -30,7 +30,7 @@ public class TestSourceSection {
         @Override
         public String quickDocs() {
           return String.format(
-              "A list of workspace-relative glob patterns. "
+              "A list of workspace-relative glob patterns, matching directories. "
                   + "Determines which sources %s treats as test sources.",
               ApplicationNamesInfo.getInstance().getFullProductName());
         }

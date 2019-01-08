@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run.confighandler;
 
+import com.google.common.base.Preconditions;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
@@ -56,10 +57,17 @@ public interface BlazeCommandRunConfigurationRunner {
 
   static BlazeCommandRunConfiguration getConfiguration(ExecutionEnvironment environment) {
     RunProfile runProfile = environment.getRunProfile();
+    return Preconditions.checkNotNull(getBlazeConfig(runProfile));
+  }
+
+  @Nullable
+  static BlazeCommandRunConfiguration getBlazeConfig(RunProfile runProfile) {
     if (runProfile instanceof WrappingRunConfiguration) {
       runProfile = ((WrappingRunConfiguration) runProfile).getPeer();
     }
-    return (BlazeCommandRunConfiguration) runProfile;
+    return runProfile instanceof BlazeCommandRunConfiguration
+        ? (BlazeCommandRunConfiguration) runProfile
+        : null;
   }
 
   @Nullable

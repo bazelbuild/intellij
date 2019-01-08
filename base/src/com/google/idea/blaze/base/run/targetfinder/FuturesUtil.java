@@ -53,12 +53,14 @@ public class FuturesUtil {
   /**
    * Iterates through the futures, returning the first future satisfying the predicate. Future
    * returns null if there are no results matching the predicate.
+   *
+   * <p>Prioritizes immediately available results.
    */
   public static <T> ListenableFuture<T> getFirstFutureSatisfyingPredicate(
       Iterable<Future<T>> iterable, Predicate<T> predicate) {
     List<ListenableFuture<T>> futures = new ArrayList<>();
     for (Future<T> future : iterable) {
-      if (future.isDone() && futures.isEmpty()) {
+      if (future.isDone()) {
         T result = getIgnoringErrors(future);
         if (predicate.test(result)) {
           return Futures.immediateFuture(result);

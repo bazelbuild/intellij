@@ -37,7 +37,7 @@ public interface SourceToTargetProvider {
 
   /**
    * Returns the blaze targets provided by the first available {@link SourceToTargetProvider} able
-   * to handle the given source file.
+   * to handle the given source file, prioritizing any which are immediately available.
    *
    * <p>Future returns null if no provider was able to handle the given source file.
    */

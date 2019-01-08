@@ -30,13 +30,20 @@ public interface BlazeCommandRunConfigurationHandlerProvider {
       ExtensionPointName.create(
           "com.google.idea.blaze.BlazeCommandRunConfigurationHandlerProvider");
 
+  /** The target state of a blaze run configuration. */
+  enum TargetState {
+    KNOWN,
+    PENDING;
+  }
+
   /**
    * Find a BlazeCommandRunConfigurationHandlerProvider applicable to the given kind. If no provider
    * is more relevant, {@link BlazeCommandGenericRunConfigurationHandlerProvider} is returned.
    */
-  static BlazeCommandRunConfigurationHandlerProvider findHandlerProvider(@Nullable Kind kind) {
+  static BlazeCommandRunConfigurationHandlerProvider findHandlerProvider(
+      TargetState state, @Nullable Kind kind) {
     for (BlazeCommandRunConfigurationHandlerProvider handlerProvider : EP_NAME.getExtensions()) {
-      if (handlerProvider.canHandleKind(kind)) {
+      if (handlerProvider.canHandleKind(state, kind)) {
         return handlerProvider;
       }
     }
@@ -56,7 +63,7 @@ public interface BlazeCommandRunConfigurationHandlerProvider {
   }
 
   /** Whether this extension is applicable to the kind. */
-  boolean canHandleKind(@Nullable Kind kind);
+  boolean canHandleKind(TargetState state, @Nullable Kind kind);
 
   /** Returns the corresponding {@link BlazeCommandRunConfigurationHandler}. */
   BlazeCommandRunConfigurationHandler createHandler(BlazeCommandRunConfiguration configuration);

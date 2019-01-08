@@ -22,11 +22,9 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import javax.annotation.Nullable;
-import javax.swing.Icon;
 
 /**
  * Generic handler for {@link BlazeCommandRunConfiguration}s, used as a fallback in the case where
@@ -77,11 +75,5 @@ public final class BlazeCommandGenericRunConfigurationHandler
   @Override
   public String getHandlerName() {
     return "Generic Handler";
-  }
-
-  @Override
-  @Nullable
-  public Icon getExecutorIcon(RunConfiguration configuration, Executor executor) {
-    return null;
   }
 }

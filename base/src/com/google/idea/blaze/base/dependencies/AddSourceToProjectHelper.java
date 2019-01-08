@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -74,7 +75,7 @@ class AddSourceToProjectHelper {
 
   private static final NotificationGroup NOTIFICATION_GROUP =
       new NotificationGroup(
-          "Add source to project", NotificationDisplayType.BALLOON, /* logByDefault */ true);
+          "Add source to project", NotificationDisplayType.BALLOON, /* logByDefault= */ true);
 
   /**
    * Given the workspace targets building a source file, updates the .blazeproject 'directories' and
@@ -85,6 +86,8 @@ class AddSourceToProjectHelper {
       WorkspacePath workspacePath,
       boolean inProjectDirectories,
       Future<List<TargetInfo>> targetsFuture) {
+    EventLoggingService.getInstance()
+        .ifPresent(s -> s.logEvent(AddSourceToProjectHelper.class, "AddSourceToProject"));
     List<TargetInfo> targets;
     try {
       targets = targetsFuture.get();
@@ -179,7 +182,7 @@ class AddSourceToProjectHelper {
             "Failed to add source file to project",
             message,
             NotificationType.WARNING,
-            /* listener */ null);
+            /* listener= */ null);
     notification.notify(project);
   }
 

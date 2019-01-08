@@ -45,7 +45,6 @@ import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
@@ -53,7 +52,6 @@ import com.intellij.openapi.project.Project;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
-import javax.swing.Icon;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /**
@@ -235,11 +233,5 @@ public class BlazeAndroidTestRunConfigurationHandler
   @Override
   public String getHandlerName() {
     return "Android Test Handler";
-  }
-
-  @Override
-  @Nullable
-  public Icon getExecutorIcon(RunConfiguration configuration, Executor executor) {
-    return null;
   }
 }

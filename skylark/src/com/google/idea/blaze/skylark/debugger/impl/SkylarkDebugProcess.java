@@ -158,7 +158,7 @@ public class SkylarkDebugProcess extends XDebugProcess {
   private void waitForConnection() {
     ProgressManager.getInstance()
         .run(
-            new Task.Backgroundable(project, "Connecting To Debugger", /* canBeCanceled */ false) {
+            new Task.Backgroundable(project, "Connecting To Debugger", /* canBeCanceled= */ false) {
               @Override
               public void run(ProgressIndicator indicator) {
                 indicator.setText("Waiting for connection...");
@@ -509,7 +509,7 @@ public class SkylarkDebugProcess extends XDebugProcess {
   }
 
   private void notifyThreadPaused(PausedThread thread) {
-    notifyThreadPaused(new PausedThreadState(thread), /* alwaysNotify */ false);
+    notifyThreadPaused(new PausedThreadState(thread), /* alwaysNotify= */ false);
   }
 
   private void notifyThreadPaused(PausedThreadState threadState, boolean alwaysNotify) {

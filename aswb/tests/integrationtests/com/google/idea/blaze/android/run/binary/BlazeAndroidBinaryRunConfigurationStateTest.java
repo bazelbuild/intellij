@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
 import com.google.idea.blaze.android.cppapi.NdkSupport;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
-import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProvider.AndroidBinaryLaunchMethod;
+import com.google.idea.blaze.android.run.binary.AndroidBinaryLaunchMethodsUtils.AndroidBinaryLaunchMethod;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.common.experiments.ExperimentService;

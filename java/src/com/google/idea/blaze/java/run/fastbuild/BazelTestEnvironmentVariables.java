@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.run.fastbuild;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
@@ -23,7 +24,11 @@ import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
 final class BazelTestEnvironmentVariables implements FastBuildTestEnvironmentModifier {
 
   @Override
-  public void modify(JavaCommandBuilder commandBuilder, Kind kind, FastBuildInfo fastBuildInfo) {
+  public void modify(
+      JavaCommandBuilder commandBuilder,
+      Kind kind,
+      FastBuildInfo fastBuildInfo,
+      BlazeInfo blazeInfo) {
 
     String runfilesDir = commandBuilder.getEnvironmentVariable("TEST_SRCDIR");
 

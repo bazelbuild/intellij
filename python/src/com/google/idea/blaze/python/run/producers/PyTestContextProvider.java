@@ -16,20 +16,16 @@
 package com.google.idea.blaze.python.run.producers;
 
 import com.google.common.base.Joiner;
-import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
-import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
-import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
-import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
+import com.google.idea.blaze.base.run.producers.RunConfigurationContext;
+import com.google.idea.blaze.base.run.producers.TestContext;
+import com.google.idea.blaze.base.run.producers.TestContextProvider;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
-import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.python.run.PyTestUtils;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -47,15 +43,43 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Producer for run configurations related to python test classes in Blaze. */
-public class BlazePyTestConfigurationProducer
-    extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
+class PyTestContextProvider implements TestContextProvider {
 
-  public BlazePyTestConfigurationProducer() {
-    super(BlazeCommandRunConfigurationType.getInstance());
+  @Override
+  public boolean webTestCompatible() {
+    return true;
+  }
+
+  @Nullable
+  @Override
+  public RunConfigurationContext getTestContext(ConfigurationContext context) {
+    PsiElement element = selectedPsiElement(context);
+    if (element == null) {
+      return null;
+    }
+    TestLocation testLocation = testLocation(element);
+    if (testLocation == null) {
+      return null;
+    }
+    ListenableFuture<TargetInfo> testTarget =
+        TestTargetHeuristic.targetFutureForPsiElement(element, /* testSize= */ null);
+    if (testTarget == null) {
+      return null;
+    }
+    String filter = testLocation.testFilter();
+    String description =
+        filter != null
+            ? String.format("%s (%s)", filter, testLocation.testFile.getName())
+            : testLocation.testFile.getName();
+    return TestContext.builder()
+        .setTarget(testTarget)
+        .setSourceElement(testLocation.sourceElement())
+        .setTestFilter(filter)
+        .setDescription(description)
+        .build();
   }
 
   private static class TestLocation {
@@ -188,83 +212,6 @@ public class BlazePyTestConfigurationProducer
     }
     Location<?> location = context.getLocation();
     return location != null ? location.getPsiElement() : null;
-  }
-
-  @Override
-  protected boolean doSetupConfigFromContext(
-      BlazeCommandRunConfiguration configuration,
-      ConfigurationContext context,
-      Ref<PsiElement> sourceElement) {
-
-    PsiElement element = selectedPsiElement(context);
-    if (element == null) {
-      return false;
-    }
-    TestLocation testLocation = testLocation(element);
-    if (testLocation == null) {
-      return false;
-    }
-    TargetInfo testTarget = TestTargetHeuristic.testTargetForPsiElement(element);
-    if (testTarget == null) {
-      return false;
-    }
-    configuration.setTargetInfo(testTarget);
-
-    sourceElement.set(testLocation.sourceElement());
-    BlazeCommandRunConfigurationCommonState handlerState =
-        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    if (handlerState == null) {
-      return false;
-    }
-    handlerState.getCommandState().setCommand(BlazeCommandName.TEST);
-
-    // remove conflicting flags from initial configuration
-    List<String> flags = new ArrayList<>(handlerState.getBlazeFlagsState().getRawFlags());
-    flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
-    String filter = testLocation.testFilter();
-    if (filter != null) {
-      flags.add(BlazeFlags.TEST_FILTER + "=" + filter);
-    }
-    handlerState.getBlazeFlagsState().setRawFlags(flags);
-
-    BlazeConfigurationNameBuilder nameBuilder = new BlazeConfigurationNameBuilder(configuration);
-    if (filter != null) {
-      nameBuilder.setTargetString(String.format("%s (%s)", filter, testTarget.label.toString()));
-    } else {
-      nameBuilder.setTargetString(testTarget.label);
-    }
-    configuration.setName(nameBuilder.build());
-    configuration.setNameChangedByUser(true); // don't revert to generated name
-    return true;
-  }
-
-  @Override
-  protected boolean doIsConfigFromContext(
-      BlazeCommandRunConfiguration configuration, ConfigurationContext context) {
-
-    BlazeCommandRunConfigurationCommonState handlerState =
-        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    if (handlerState == null
-        || !BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand())) {
-      return false;
-    }
-
-    PsiElement element = selectedPsiElement(context);
-    if (element == null) {
-      return false;
-    }
-    TestLocation testLocation = testLocation(element);
-    if (testLocation == null) {
-      return false;
-    }
-    TargetInfo testTarget = TestTargetHeuristic.testTargetForPsiElement(element);
-    if (testTarget == null || !testTarget.label.equals(configuration.getTarget())) {
-      return false;
-    }
-    String filter = testLocation.testFilter();
-    String filterFlag = handlerState.getTestFilterFlag();
-    return (filterFlag == null && filter == null)
-        || Objects.equals(filterFlag, BlazeFlags.TEST_FILTER + "=" + filter);
   }
 
   @Nullable

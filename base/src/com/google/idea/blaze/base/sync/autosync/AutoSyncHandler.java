@@ -53,7 +53,7 @@ class AutoSyncHandler implements ProjectComponent {
   private static Logger logger = Logger.getInstance(AutoSyncHandler.class);
 
   private final PendingChangesHandler<VirtualFile> pendingChangesHandler =
-      new PendingChangesHandler<VirtualFile>(/* delayMillis */ 2000) {
+      new PendingChangesHandler<VirtualFile>(/* delayMillis= */ 2000) {
         @Override
         boolean runTask(ImmutableSet<VirtualFile> changes) {
           if (BlazeSyncStatus.getInstance(project).syncInProgress()) {

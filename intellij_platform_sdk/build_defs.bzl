@@ -10,7 +10,7 @@ INDIRECT_IJ_PRODUCTS = {
     "android-studio-beta": "android-studio-3.3",
     "android-studio-canary": "android-studio-3.4",
     "clion-latest": "clion-2018.2",
-    "clion-beta": "clion-2018.2",
+    "clion-beta": "clion-2018.3",
 }
 
 DIRECT_IJ_PRODUCTS = {

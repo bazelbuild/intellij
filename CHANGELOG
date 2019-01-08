@@ -1,3 +1,10 @@
+v2019.01.02
+===========
+* Fast Run now supports TikTok tests.
+* Compilation errors during Fast Run show up in the Bazel Problems view and can be double-clicked to
+  navigate to the error in the source
+* Go: fix some spurious 'unused symbol' warnings
+
 v2018.12.03
 ===========
 * Fix failed test case gutter icons not displaying.

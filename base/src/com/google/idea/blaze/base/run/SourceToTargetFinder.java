@@ -44,7 +44,7 @@ public interface SourceToTargetFinder {
 
   /**
    * Iterates through the all {@link SourceToTargetFinder}'s, returning a {@link Future}
-   * representing the first non-empty result.
+   * representing the first non-empty result, prioritizing any which are immediately available.
    *
    * <p>Future returns null if there was no non-empty result found.
    */
@@ -63,12 +63,9 @@ public interface SourceToTargetFinder {
    */
   static Collection<TargetInfo> findTargetsForSourceFile(
       Project project, File sourceFile, Optional<RuleType> ruleType) {
-    for (SourceToTargetFinder finder : EP_NAME.getExtensions()) {
-      Future<? extends Collection<TargetInfo>> future =
-          finder.targetsForSourceFile(project, sourceFile, ruleType);
-      if (!future.isDone()) {
-        continue;
-      }
+    ListenableFuture<Collection<TargetInfo>> future =
+        findTargetInfoFuture(project, sourceFile, ruleType);
+    if (future.isDone()) {
       Collection<TargetInfo> targets = FuturesUtil.getIgnoringErrors(future);
       if (targets != null && !targets.isEmpty()) {
         return targets;

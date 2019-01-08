@@ -119,7 +119,7 @@ public class RunConfigurationSerializer {
       throws InvalidDataException {
     RunManagerImpl manager = RunManagerImpl.getInstanceImpl(project);
     RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(manager);
-    settings.readExternal(element, /* isShared */ false);
+    settings.readExternal(element, /* isShared= */ false);
     RunConfiguration config = settings.getConfiguration();
     if (config == null) {
       return null;

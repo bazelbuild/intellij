@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.intellij.history.core.Paths;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PackagePrefixFileSystemItem;
 import com.intellij.psi.PsiDirectory;
@@ -31,6 +30,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import java.util.Objects;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /**
@@ -162,7 +162,7 @@ public class BlazePackage {
     }
   }
 
-  private static boolean isBlazePackage(PsiDirectory dir) {
+  public static boolean isBlazePackage(PsiDirectory dir) {
     return Blaze.getBuildSystemProvider(dir.getProject())
             .findBuildFileInDirectory(dir.getVirtualFile())
         != null;
@@ -198,23 +198,24 @@ public class BlazePackage {
         Blaze.buildSystemName(buildFile.getProject()), buildFile.getPackageLabel());
   }
 
-  public static boolean hasBlazePackageChild(PsiDirectory directory) {
-    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(directory.getProject());
+  public static boolean hasBlazePackageChild(
+      PsiDirectory directory, Predicate<PsiDirectory> searchDirectory) {
     BuildSystemProvider buildSystemProvider = Blaze.getBuildSystemProvider(directory.getProject());
-    return hasBlazePackageChild(index, buildSystemProvider, directory);
+    return hasBlazePackageChild(searchDirectory, buildSystemProvider, directory);
   }
 
   private static boolean hasBlazePackageChild(
-      ProjectFileIndex index, BuildSystemProvider buildSystemProvider, PsiDirectory directory) {
-    if (!index.isInSourceContent(directory.getVirtualFile())) {
-      // only search project files
+      Predicate<PsiDirectory> searchDirectory,
+      BuildSystemProvider buildSystemProvider,
+      PsiDirectory directory) {
+    if (!searchDirectory.test(directory)) {
       return false;
     }
     if (buildSystemProvider.findBuildFileInDirectory(directory.getVirtualFile()) != null) {
       return true;
     }
     for (PsiDirectory child : directory.getSubdirectories()) {
-      if (hasBlazePackageChild(index, buildSystemProvider, child)) {
+      if (hasBlazePackageChild(searchDirectory, buildSystemProvider, child)) {
         return true;
       }
     }

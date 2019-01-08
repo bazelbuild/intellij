@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.run.fastbuild;
 
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
@@ -23,7 +24,11 @@ import com.intellij.execution.ExecutionException;
 abstract class AndroidLocalTestEnvironmentModifier implements FastBuildTestEnvironmentModifier {
 
   @Override
-  public void modify(JavaCommandBuilder commandBuilder, Kind kind, FastBuildInfo fastBuildInfo)
+  public void modify(
+      JavaCommandBuilder commandBuilder,
+      Kind kind,
+      FastBuildInfo fastBuildInfo,
+      BlazeInfo blazeInfo)
       throws ExecutionException {
     if (!kind.equals(RuleTypes.ANDROID_LOCAL_TEST.getKind())) {
       return;

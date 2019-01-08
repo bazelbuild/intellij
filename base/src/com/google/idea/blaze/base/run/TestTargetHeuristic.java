@@ -15,9 +15,14 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.model.primitives.RuleType;
+import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,8 +33,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 /** Heuristic to match test targets to source files. */
 public interface TestTargetHeuristic {
@@ -40,6 +47,21 @@ public interface TestTargetHeuristic {
   /** Finds a test rule associated with a given {@link PsiElement}. */
   @Nullable
   static TargetInfo testTargetForPsiElement(@Nullable PsiElement element) {
+    return testTargetForPsiElement(element, null);
+  }
+
+  /** Finds a test rule associated with a given {@link PsiElement}. */
+  @Nullable
+  static TargetInfo testTargetForPsiElement(
+      @Nullable PsiElement element, @Nullable TestSize testSize) {
+    ListenableFuture<TargetInfo> future = targetFutureForPsiElement(element, testSize);
+    return future != null && future.isDone() ? FuturesUtil.getIgnoringErrors(future) : null;
+  }
+
+  /** Finds a test rule associated with a given {@link PsiElement}. */
+  @Nullable
+  static ListenableFuture<TargetInfo> targetFutureForPsiElement(
+      @Nullable PsiElement element, @Nullable TestSize testSize) {
     if (element == null) {
       return null;
     }
@@ -53,9 +75,23 @@ public interface TestTargetHeuristic {
       return null;
     }
     Project project = element.getProject();
-    Collection<TargetInfo> rules =
-        SourceToTargetFinder.findTargetsForSourceFile(project, file, Optional.of(RuleType.TEST));
-    return chooseTestTargetForSourceFile(element.getProject(), psiFile, file, rules, null);
+    ListenableFuture<Collection<TargetInfo>> targets =
+        SourceToTargetFinder.findTargetInfoFuture(project, file, Optional.of(RuleType.TEST));
+    if (targets.isDone() && FuturesUtil.getIgnoringErrors(targets) == null) {
+      return null;
+    }
+    Executor executor =
+        ApplicationManager.getApplication().isUnitTestMode()
+            ? MoreExecutors.directExecutor()
+            : PooledThreadExecutor.INSTANCE;
+    return Futures.transform(
+        targets,
+        list ->
+            list == null
+                ? null
+                : TestTargetHeuristic.chooseTestTargetForSourceFile(
+                    project, psiFile, file, list, testSize),
+        executor);
   }
 
   /**

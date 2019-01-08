@@ -29,7 +29,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import javax.annotation.Nullable;
-import javax.swing.Icon;
 
 /** CLion-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public final class BlazeCidrRunConfigurationHandler implements BlazeCommandRunConfigurationHandler {
@@ -82,11 +81,5 @@ public final class BlazeCidrRunConfigurationHandler implements BlazeCommandRunCo
   @Override
   public String getHandlerName() {
     return "CLion Handler";
-  }
-
-  @Override
-  @Nullable
-  public Icon getExecutorIcon(RunConfiguration configuration, Executor executor) {
-    return null;
   }
 }

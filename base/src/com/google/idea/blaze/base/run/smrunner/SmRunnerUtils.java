@@ -69,21 +69,30 @@ public class SmRunnerUtils {
     return console;
   }
 
-  public static DefaultExecutionResult attachRerunFailedTestsAction(DefaultExecutionResult result) {
+  @Nullable
+  public static AbstractRerunFailedTestsAction createRerunFailedTestsAction(
+      DefaultExecutionResult result) {
     ExecutionConsole console = result.getExecutionConsole();
     if (!(console instanceof SMTRunnerConsoleView)) {
-      return result;
+      return null;
     }
     SMTRunnerConsoleView smConsole = (SMTRunnerConsoleView) console;
     TestConsoleProperties consoleProperties = smConsole.getProperties();
     if (!(consoleProperties instanceof BlazeTestConsoleProperties)) {
-      return result;
+      return null;
     }
     BlazeTestConsoleProperties properties = (BlazeTestConsoleProperties) consoleProperties;
     AbstractRerunFailedTestsAction action = properties.createRerunFailedTestsAction(smConsole);
     if (action != null) {
       action.init(properties);
       action.setModelProvider(smConsole::getResultsViewer);
+    }
+    return action;
+  }
+
+  public static DefaultExecutionResult attachRerunFailedTestsAction(DefaultExecutionResult result) {
+    AbstractRerunFailedTestsAction action = createRerunFailedTestsAction(result);
+    if (action != null) {
       result.setRestartActions(action);
     }
     return result;
@@ -92,8 +101,7 @@ public class SmRunnerUtils {
   public static List<Location<?>> getSelectedSmRunnerTreeElements(ConfigurationContext context) {
     Project project = context.getProject();
     List<SMTestProxy> tests = getSelectedTestProxies(context);
-    return tests
-        .stream()
+    return tests.stream()
         .map(test -> (Location<?>) test.getLocation(project, GlobalSearchScope.allScope(project)))
         .filter(Objects::nonNull)
         .collect(Collectors.toList());

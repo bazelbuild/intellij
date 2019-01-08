@@ -26,7 +26,7 @@ public abstract class ScopedTask<T> implements ProgressiveWithResult<T> {
   @Nullable final BlazeContext parentContext;
 
   public ScopedTask() {
-    this(/* parentContext */ null);
+    this(/* parentContext= */ null);
   }
 
   public ScopedTask(@Nullable BlazeContext parentContext) {

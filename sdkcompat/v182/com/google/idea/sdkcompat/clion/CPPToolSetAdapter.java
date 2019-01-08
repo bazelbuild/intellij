@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.python.run.producers;
+package com.google.idea.sdkcompat.clion;
 
-import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.run.producers.BlazeWebTestConfigurationProducer;
+import com.jetbrains.cidr.cpp.toolchains.CPPToolSet;
+import java.io.File;
 
-class BlazePyWebTestConfigurationProducer extends BlazeWebTestConfigurationProducer {
-  BlazePyWebTestConfigurationProducer() {
-    super(ImmutableList.of(BlazePyTestConfigurationProducer.class));
+/** Adapter to bridge different SDK versions. #api182 */
+public abstract class CPPToolSetAdapter extends CPPToolSet {
+
+  public CPPToolSetAdapter(File workingDirectory) {
+    super(Kind.MINGW, workingDirectory);
   }
 }

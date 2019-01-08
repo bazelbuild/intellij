@@ -176,7 +176,7 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
       if (configurationFactory.handlesTarget(project, blazeProjectData, label)) {
         final RunnerAndConfigurationSettings settings =
             configurationFactory.createForTarget(project, runManager, label);
-        runManager.addConfiguration(settings, /* isShared */ false);
+        runManager.addConfiguration(settings, /* isShared= */ false);
         if (runManager.getSelectedConfiguration() == null) {
           runManager.setSelectedConfiguration(settings);
         }

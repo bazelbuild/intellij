@@ -115,13 +115,14 @@ public class ProjectViewRearranger implements Rearranger<Entry>, ArrangementStan
     if (name == null) {
       return null;
     }
-    Entry parent = new Entry(null, name, listSection.getTextRange(), /* canBeMatched */ false);
+    Entry parent = new Entry(null, name, listSection.getTextRange(), /* canBeMatched= */ false);
     List<Entry> children =
         Arrays.stream(listSection.childrenOfClass(ProjectViewPsiListItem.class))
             .filter(item -> isWithinBounds(ranges, item.getTextRange()))
             .map(
                 item ->
-                    new Entry(parent, item.getText(), item.getTextRange(), /* canBeMatched */ true))
+                    new Entry(
+                        parent, item.getText(), item.getTextRange(), /* canBeMatched= */ true))
             .collect(toImmutableList());
     if (children.size() < 2) {
       return null;

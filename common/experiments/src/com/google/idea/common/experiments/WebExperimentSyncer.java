@@ -144,10 +144,10 @@ final class WebExperimentSyncer {
         setExperimentValues(mapBuilder);
 
         logger.debug("Successfully fetched experiments: " + getExperimentValues());
-        scheduleNextRefresh(/* refreshWasSuccessful */ true);
+        scheduleNextRefresh(/* refreshWasSuccessful= */ true);
       } catch (InterruptedException | ExecutionException | RuntimeException e) {
         logger.debug("Error fetching experiments", e);
-        scheduleNextRefresh(/* refreshWasSuccessful */ false);
+        scheduleNextRefresh(/* refreshWasSuccessful= */ false);
       }
     }
   }

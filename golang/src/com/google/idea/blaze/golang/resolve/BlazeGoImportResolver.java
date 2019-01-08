@@ -132,6 +132,7 @@ class BlazeGoImportResolver implements GoImportResolver {
   static ResolveResult[] doResolve(BlazeGoPackage goPackage, int index) {
     return Stream.of(goPackage)
         .map(BlazeGoPackage::getImportReferences)
+        .filter(Objects::nonNull)
         .filter(list -> index < list.length)
         .map(list -> list[index])
         .filter(Objects::nonNull)

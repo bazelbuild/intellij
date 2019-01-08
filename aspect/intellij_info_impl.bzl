@@ -161,9 +161,10 @@ def get_aspect_ids(ctx, target):
         return None
     return [aspect_id for aspect_id in aspect_ids if "intellij_info_aspect" not in aspect_id]
 
-def _is_language_specific_proto_library(target):
-    """Returns True if the proto library is specific to a single language."""
-    return hasattr(target, "proto_java") or hasattr(target, "aspect_proto_go_api_info")
+def _is_language_specific_proto_library(ctx, target):
+    """Returns True if the target is a proto library with attached language-specific aspect."""
+    return (ctx.rule.kind == "proto_library" and
+            (hasattr(target, "java") or hasattr(target, "aspect_proto_go_api_info")))
 
 def make_target_key(label, aspect_ids):
     """Returns a TargetKey proto struct from a target."""
@@ -198,7 +199,7 @@ def update_set_in_dict(input_dict, key, other_set):
 
 def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates Python-specific output groups, returns false if not a Python target."""
-    if not hasattr(target, "py") or _is_language_specific_proto_library(target):
+    if not hasattr(target, "py") or _is_language_specific_proto_library(ctx, target):
         return False
 
     py_semantics = getattr(semantics, "py", None)
@@ -295,7 +296,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
 
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates C++-specific output groups, returns false if not a C++ target."""
-    if not hasattr(target, "cc") or _is_language_specific_proto_library(target):
+    if not hasattr(target, "cc") or _is_language_specific_proto_library(ctx, target):
         return False
 
     sources = artifacts_from_target_list_attr(ctx, "srcs")
@@ -413,8 +414,6 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
 
 def get_java_provider(target):
     """Find a provider exposing java compilation/outputs data."""
-    if hasattr(target, "proto_java"):
-        return target.proto_java
     if hasattr(target, "java"):
         return target.java
     if hasattr(target, "scala"):
@@ -850,5 +849,5 @@ def make_intellij_info_aspect(aspect_impl, semantics):
         attr_aspects = attr_aspects,
         fragments = ["cpp"],
         implementation = aspect_impl,
-        required_aspect_providers = [["proto_java"], ["aspect_proto_go_api_info"], ["dart"]],
+        required_aspect_providers = [["java"], ["aspect_proto_go_api_info"], ["dart"]],
     )

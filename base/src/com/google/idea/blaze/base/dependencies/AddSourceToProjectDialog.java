@@ -38,7 +38,7 @@ class AddSourceToProjectDialog extends DialogWrapper {
   private final JList<TargetInfo> targetsComponent;
 
   AddSourceToProjectDialog(Project project, List<TargetInfo> targets) {
-    super(project, /* canBeParent */ true, IdeModalityType.MODELESS);
+    super(project, /* canBeParent= */ true, IdeModalityType.MODELESS);
     this.project = project;
 
     mainPanel = new JPanel(new VerticalLayout(12));

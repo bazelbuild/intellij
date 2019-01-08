@@ -69,7 +69,7 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
         .submit(
             () -> {
               String blazeInfoString =
-                  runBlazeInfo(binaryPath, workspaceRoot, /* key */ null, blazeFlags, context)
+                  runBlazeInfo(binaryPath, workspaceRoot, /* key= */ null, blazeFlags, context)
                       .toString()
                       .trim();
               ImmutableMap<String, String> blazeInfoMap = parseBlazeInfoResult(blazeInfoString);

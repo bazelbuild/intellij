@@ -35,7 +35,7 @@ public class BlazeJavaRunConfigurationHandlerProvider
   }
 
   @Override
-  public boolean canHandleKind(@Nullable Kind kind) {
+  public boolean canHandleKind(TargetState state, @Nullable Kind kind) {
     return supportsKind(kind);
   }
 

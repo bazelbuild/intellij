@@ -78,7 +78,7 @@ class BlazeGoAdditionalLibraryRootsProvider extends AdditionalLibraryRootsProvid
         };
     return projectData.getTargetMap().targets().stream()
         .filter(t -> t.getGoIdeInfo() != null)
-        .flatMap(t -> BlazeGoPackage.getSourceFiles(t, projectData).stream())
+        .flatMap(t -> BlazeGoPackage.getSourceFiles(t, project, projectData).stream())
         .filter(isExternal)
         .distinct()
         .map(VfsUtils::resolveVirtualFile)

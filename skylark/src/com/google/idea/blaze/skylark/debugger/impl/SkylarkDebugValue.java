@@ -100,7 +100,7 @@ class SkylarkDebugValue extends XNamedValue {
         type.icon,
         getTypeString(),
         truncateToMaxLength(value.getDescription()),
-        /* hasChildren */ value.getHasChildren());
+        /* hasChildren= */ value.getHasChildren());
     if (value.getDescription().length() > XValueNode.MAX_VALUE_LENGTH) {
       node.setFullValueEvaluator(
           new XFullValueEvaluator() {

@@ -20,9 +20,12 @@
         implementation="com.google.idea.blaze.scala.ScalaJavaLikeLanguage"/>
     <BlazeTestEventsHandler
         implementation="com.google.idea.blaze.scala.run.smrunner.BlazeScalaTestEventsHandler"/>
-    <JavaTestCaseIdentifier
-        implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaSpecs2TestExprConfigurationProducer$Identifier"/>
     <SyncDataExtractor implementation="com.google.idea.blaze.scala.sync.model.BlazeScalaSyncData$Extractor"/>
+    <TestContextProvider
+        implementation="com.google.idea.blaze.scala.run.producers.ScalaTestContextProvider"/>
+    <TestContextProvider
+        implementation="com.google.idea.blaze.scala.run.producers.ScalaSpecs2TestContextProvider"
+        order="before JavaTestContextProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -30,10 +33,6 @@
         implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaMainClassRunConfigurationProducer"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.scala.run.producers.DeployableJarRunConfigurationProducer"/>
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaTestClassConfigurationProducer"/>
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaSpecs2TestExprConfigurationProducer"/>
     <!-- Need to come before the one in the scala plugin to override the icon. -->
     <runLineMarkerContributor
         implementationClass="com.google.idea.blaze.scala.run.producers.BlazeScalaRunLineMarkerContributor"

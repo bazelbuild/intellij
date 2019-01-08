@@ -198,7 +198,7 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
     for (int i = 0; i < jars.length; ++i) {
       urls[i] = jars[i].toURI().toURL();
     }
-    URLClassLoader urlClassLoader = new URLClassLoader(urls, /* parent */ null);
+    URLClassLoader urlClassLoader = new URLClassLoader(urls, /* parent= */ null);
     return urlClassLoader.loadClass(javaCompilerClass);
   }
 

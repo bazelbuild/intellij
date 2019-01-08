@@ -79,7 +79,7 @@ public class BlazeConsoleServiceImpl implements BlazeConsoleService, ColoredText
     ToolWindow toolWindow =
         ToolWindowManager.getInstance(project).getToolWindow(BlazeConsoleToolWindowFactory.ID);
     if (toolWindow != null) {
-      toolWindow.activate(/* runnable */ null, /* autoFocusContents */ false);
+      toolWindow.activate(/* runnable= */ null, /* autoFocusContents= */ false);
     }
   }
 }

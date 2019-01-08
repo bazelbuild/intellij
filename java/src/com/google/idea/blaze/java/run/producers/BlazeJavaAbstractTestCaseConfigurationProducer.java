@@ -16,18 +16,11 @@
 package com.google.idea.blaze.java.run.producers;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.dependencies.TargetInfo;
-import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
-import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
+import com.google.idea.blaze.base.run.producers.TestContext;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
-import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
-import com.google.idea.blaze.java.run.RunUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
@@ -40,7 +33,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -174,37 +166,11 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
 
   private static void setupContext(
       BlazeCommandRunConfiguration configuration, PsiClass subClass, @Nullable PsiMethod method) {
-    TestSize testSize =
-        method != null ? TestSizeFinder.getTestSize(method) : TestSizeFinder.getTestSize(subClass);
-    TargetInfo target = RunUtil.targetForTestClass(subClass, testSize);
-    if (target == null) {
+    TestContext testContext = JavaTestContextProvider.fromClassAndMethod(subClass, method);
+    if (testContext == null) {
       return;
     }
-    configuration.setTargetInfo(target);
-    BlazeCommandRunConfigurationCommonState handlerState =
-        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    if (handlerState == null) {
-      return;
-    }
-    handlerState.getCommandState().setCommand(BlazeCommandName.TEST);
-
-    // remove old test filter flag if present
-    List<String> flags = new ArrayList<>(handlerState.getBlazeFlagsState().getRawFlags());
-    flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
-
-    String testFilter =
-        BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(
-            subClass, method == null ? ImmutableList.of() : ImmutableList.of(method));
-    if (testFilter == null) {
-      return;
-    }
-    flags.add(BlazeFlags.TEST_FILTER + "=" + testFilter);
-    handlerState.getBlazeFlagsState().setRawFlags(flags);
-
-    BlazeConfigurationNameBuilder nameBuilder = new BlazeConfigurationNameBuilder(configuration);
-    nameBuilder.setTargetString(configName(subClass, method));
-    configuration.setName(nameBuilder.build());
-    configuration.setNameChangedByUser(true); // don't revert to generated name
+    testContext.setupRunConfiguration(configuration);
   }
 
   private static String configName(PsiClass psiClass, @Nullable PsiMethod method) {

@@ -57,7 +57,7 @@ class SkylarkDebuggerEditorsProvider extends XDebuggerEditorsProvider {
     text = text.trim();
     SkylarkExpressionCodeFragment fragment =
         new SkylarkExpressionCodeFragment(
-            project, codeFragmentFileName(context), text, /* isPhysical */ true);
+            project, codeFragmentFileName(context), text, /* isPhysical= */ true);
     // inject the debug frame context into the file
     if (sourcePosition instanceof SkylarkSourcePosition) {
       fragment.setDebugEvaluationContext((SkylarkSourcePosition) sourcePosition);

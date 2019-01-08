@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationRunner.BlazeCommandRunProfileState;
+import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.skylark.debugger.SkylarkDebuggingUtils;
 import com.google.idea.blaze.skylark.debugger.impl.SkylarkDebugProcess;
@@ -26,7 +27,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.GenericProgramRunner;
@@ -56,7 +56,8 @@ class SkylarkDebugRunner extends GenericProgramRunner {
     if (!DefaultDebugExecutor.EXECUTOR_ID.equals(executorId)) {
       return false;
     }
-    BlazeCommandRunConfiguration config = getBlazeConfig(profile);
+    BlazeCommandRunConfiguration config =
+        BlazeCommandRunConfigurationRunner.getBlazeConfig(profile);
     if (config == null || !SkylarkDebuggingUtils.debuggingEnabled(config.getProject())) {
       return false;
     }
@@ -68,16 +69,6 @@ class SkylarkDebugRunner extends GenericProgramRunner {
   }
 
   @Nullable
-  private static BlazeCommandRunConfiguration getBlazeConfig(RunProfile runProfile) {
-    if (runProfile instanceof WrappingRunConfiguration) {
-      runProfile = ((WrappingRunConfiguration) runProfile).getPeer();
-    }
-    return runProfile instanceof BlazeCommandRunConfiguration
-        ? (BlazeCommandRunConfiguration) runProfile
-        : null;
-  }
-
-  @Nullable
   @Override
   protected RunContentDescriptor doExecute(RunProfileState state, ExecutionEnvironment env)
       throws ExecutionException {
@@ -85,7 +76,8 @@ class SkylarkDebugRunner extends GenericProgramRunner {
       logger.error("Unexpected executor id: " + env.getExecutor().getId());
       return null;
     }
-    BlazeCommandRunConfiguration config = getBlazeConfig(env.getRunProfile());
+    BlazeCommandRunConfiguration config =
+        BlazeCommandRunConfigurationRunner.getBlazeConfig(env.getRunProfile());
     if (config == null || !(state instanceof BlazeCommandRunProfileState)) {
       throw new ExecutionException("Debugging is not supported for this blaze run configuration");
     }

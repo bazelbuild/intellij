@@ -261,7 +261,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     if (parameters == null) {
       return;
     }
-    list.addAll(ParametersListUtil.parse(parameters, /* keepQuotes */ false));
+    list.addAll(ParametersListUtil.parse(parameters, /* keepQuotes= */ false));
   }
 
   @Override

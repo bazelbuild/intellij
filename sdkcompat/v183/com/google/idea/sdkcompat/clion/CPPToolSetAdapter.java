@@ -13,9 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.sdkcompat.cidr;
+package com.google.idea.sdkcompat.clion;
 
-import com.jetbrains.cidr.execution.testing.CidrLauncher;
+import com.jetbrains.cidr.cpp.toolchains.CPPToolSetWithHome;
+import java.io.File;
 
-/** Adapter to bridge different SDK versions. */
-public abstract class CidrLauncherCompat extends CidrLauncher {}
+/** Adapter to bridge different SDK versions. #api182 */
+public abstract class CPPToolSetAdapter extends CPPToolSetWithHome {
+
+  public CPPToolSetAdapter(File workingDirectory) {
+    super(Kind.MINGW, workingDirectory);
+  }
+}

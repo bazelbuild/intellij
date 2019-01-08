@@ -26,8 +26,8 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.producer.BlazeRunConfigurationProducerTestCase;
+import com.google.idea.blaze.base.run.producers.TestContextRunConfigurationProducer;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.psi.PsiClass;
@@ -38,10 +38,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/**
- * Integration tests for {@link BlazeScalaTestClassConfigurationProducer} and {@link
- * BlazeJavaTestClassConfigurationProducer}.
- */
+/** Integration tests for {@link ScalaTestContextProvider} and {@link JavaTestContextProvider}. */
 @RunWith(JUnit4.class)
 public class BlazeScalaTestClassConfigurationProducerTest
     extends BlazeRunConfigurationProducerTestCase {
@@ -82,7 +79,7 @@ public class BlazeScalaTestClassConfigurationProducerTest
     assertThat(configurations).isNotNull();
     assertThat(configurations).hasSize(1);
     ConfigurationFromContext fromContext = configurations.get(0);
-    assertThat(fromContext.isProducedBy(BlazeJavaTestClassConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.isProducedBy(TestContextRunConfigurationProducer.class)).isTrue();
     assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
 
     BlazeCommandRunConfiguration config =
@@ -132,7 +129,7 @@ public class BlazeScalaTestClassConfigurationProducerTest
     assertThat(configurations).isNotNull();
     assertThat(configurations).hasSize(1);
     ConfigurationFromContext fromContext = configurations.get(0);
-    assertThat(fromContext.isProducedBy(BlazeScalaTestClassConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.isProducedBy(TestContextRunConfigurationProducer.class)).isTrue();
     assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
 
     BlazeCommandRunConfiguration config =

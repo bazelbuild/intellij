@@ -20,11 +20,12 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.cpp.CppBlazeRules;
+import javax.annotation.Nullable;
 
 /** Utility methods for CLion run configurations */
 public class RunConfigurationUtils {
 
-  static boolean canUseClionHandler(Kind kind) {
+  static boolean canUseClionHandler(@Nullable Kind kind) {
     return kind == CppBlazeRules.RuleTypes.CC_TEST.getKind()
         || kind == CppBlazeRules.RuleTypes.CC_BINARY.getKind();
   }

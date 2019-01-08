@@ -19,11 +19,10 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
+import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RemoteState;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 
 /**
@@ -40,16 +39,8 @@ public abstract class BlazeJavaDebuggableRunProfileState extends CommandLineStat
 
   protected BlazeJavaDebuggableRunProfileState(ExecutionEnvironment environment) {
     super(environment);
-    this.cfg = getConfiguration(environment);
+    this.cfg = BlazeCommandRunConfigurationRunner.getConfiguration(environment);
     this.executorType = ExecutorType.fromExecutor(environment.getExecutor());
-  }
-
-  private static BlazeCommandRunConfiguration getConfiguration(ExecutionEnvironment environment) {
-    RunProfile runProfile = environment.getRunProfile();
-    if (runProfile instanceof WrappingRunConfiguration) {
-      runProfile = ((WrappingRunConfiguration) runProfile).getPeer();
-    }
-    return (BlazeCommandRunConfiguration) runProfile;
   }
 
   protected BlazeCommandRunConfiguration getConfiguration() {
@@ -68,9 +59,9 @@ public abstract class BlazeJavaDebuggableRunProfileState extends CommandLineStat
     BlazeJavaRunConfigState state = cfg.getHandlerStateIfType(BlazeJavaRunConfigState.class);
     checkState(state != null);
     return new RemoteConnection(
-        /* useSockets */ true,
+        /* useSockets= */ true,
         DEBUG_HOST_NAME,
         Integer.toString(state.getDebugPortState().port),
-        /* serverMode */ false);
+        /* serverMode= */ false);
   }
 }

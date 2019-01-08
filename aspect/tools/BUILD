@@ -11,7 +11,8 @@ licenses(["notice"])  # Apache 2.0
 # guava version bundled with the IntelliJ plugin API.
 java_library(
     name = "guava",
-    exports = ["//intellij_platform_sdk:guava"],
+    visibility = ["//visibility:private"],
+    exports = ["//intellij_platform_sdk:guava_for_external_binaries"],
 )
 
 java_library(

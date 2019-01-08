@@ -79,8 +79,8 @@ public class BlazeConsoleView implements Disposable {
         new ConsoleViewImpl(
             this.project,
             GlobalSearchScope.allScope(project),
-            /* viewer */ false,
-            /* usePredefinedFilters */ false);
+            /* viewer= */ false,
+            /* usePredefinedFilters= */ false);
 
     consoleView.addMessageFilter(customFilters);
     addWrappedPredefinedFilters();

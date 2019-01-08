@@ -22,16 +22,15 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
-import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import java.util.Objects;
+import java.io.File;
 import javax.annotation.Nullable;
 
-/** Runs tests in all packages below selected directory */
+/** Runs all tests in a single selected blaze package directory. */
 public class AllInPackageBlazeConfigurationProducer
     extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
 
@@ -40,80 +39,54 @@ public class AllInPackageBlazeConfigurationProducer
   }
 
   @Override
-  protected boolean restrictedToProjectFiles() {
-    return true;
-  }
-
-  @Override
   protected boolean doSetupConfigFromContext(
       BlazeCommandRunConfiguration configuration,
       ConfigurationContext context,
       Ref<PsiElement> sourceElement) {
-
-    PsiDirectory dir = getTestDirectory(context);
-    if (dir == null) {
+    RunConfigurationContext testContext = getTestContext(context);
+    if (testContext == null) {
       return false;
     }
-    WorkspaceRoot root = WorkspaceRoot.fromProject(context.getProject());
-    WorkspacePath packagePath = getWorkspaceRelativeDirectoryPath(root, dir);
-    if (packagePath == null) {
-      return false;
-    }
-    sourceElement.set(dir);
-
-    configuration.setTarget(TargetExpression.allFromPackageRecursive(packagePath));
-    BlazeCommandRunConfigurationCommonState handlerState =
-        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    if (handlerState == null) {
-      return false;
-    }
-    handlerState.getCommandState().setCommand(BlazeCommandName.TEST);
-    configuration.setGeneratedName();
-    return true;
+    sourceElement.set(testContext.getSourceElement());
+    return testContext.setupRunConfiguration(configuration);
   }
 
   @Override
   protected boolean doIsConfigFromContext(
       BlazeCommandRunConfiguration configuration, ConfigurationContext context) {
-
-    PsiDirectory dir = getTestDirectory(context);
-    if (dir == null) {
-      return false;
-    }
-    WorkspaceRoot root = WorkspaceRoot.fromProject(context.getProject());
-    WorkspacePath packagePath = getWorkspaceRelativeDirectoryPath(root, dir);
-    if (packagePath == null) {
-      return false;
-    }
-    BlazeCommandRunConfigurationCommonState handlerState =
-        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    if (handlerState == null) {
-      return false;
-    }
-    return Objects.equals(handlerState.getCommandState().getCommand(), BlazeCommandName.TEST)
-        && Objects.equals(
-            configuration.getTarget(), TargetExpression.allFromPackageRecursive(packagePath));
+    RunConfigurationContext testContext = getTestContext(context);
+    return testContext != null && testContext.matchesRunConfiguration(configuration);
   }
 
   @Nullable
-  private static PsiDirectory getTestDirectory(ConfigurationContext context) {
+  private static RunConfigurationContext getTestContext(ConfigurationContext context) {
     WorkspaceRoot root = WorkspaceRoot.fromProject(context.getProject());
     PsiElement location = context.getPsiLocation();
     if (!(location instanceof PsiDirectory)) {
       return null;
     }
     PsiDirectory dir = (PsiDirectory) location;
-    return isInWorkspace(root, dir) && BlazePackage.hasBlazePackageChild(dir) ? dir : null;
+    if (!isInWorkspace(root, dir)) {
+      return null;
+    }
+    // only check if the directory itself is a blaze package
+    // TODO(brendandouglas): otherwise check off the EDT, and return PendingRunConfigurationContext?
+    return BlazePackage.isBlazePackage(dir) ? fromDirectory(root, dir) : null;
   }
 
   @Nullable
-  private static WorkspacePath getWorkspaceRelativeDirectoryPath(
-      WorkspaceRoot root, PsiDirectory dir) {
-    VirtualFile file = dir.getVirtualFile();
-    if (isInWorkspace(root, dir)) {
-      return root.workspacePathFor(file);
+  private static RunConfigurationContext fromDirectory(WorkspaceRoot root, PsiDirectory dir) {
+    WorkspacePath packagePath = getWorkspaceRelativePath(root, dir.getVirtualFile());
+    if (packagePath == null) {
+      return null;
     }
-    return null;
+    return RunConfigurationContext.fromKnownTarget(
+        TargetExpression.allFromPackageRecursive(packagePath), BlazeCommandName.TEST, dir);
+  }
+
+  @Nullable
+  private static WorkspacePath getWorkspaceRelativePath(WorkspaceRoot root, VirtualFile vf) {
+    return root.workspacePathForSafe(new File(vf.getPath()));
   }
 
   private static boolean isInWorkspace(WorkspaceRoot root, PsiDirectory dir) {

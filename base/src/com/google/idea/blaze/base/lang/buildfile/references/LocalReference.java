@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
 public class LocalReference extends PsiReferenceBase<ReferenceExpression> {
 
   public LocalReference(ReferenceExpression element) {
-    super(element, new TextRange(0, element.getTextLength()), /* soft */ false);
+    super(element, new TextRange(0, element.getTextLength()), /* soft= */ false);
   }
 
   @Nullable

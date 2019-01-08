@@ -34,7 +34,7 @@ public interface TargetFinder {
 
   /**
    * Iterates through all {@link TargetFinder}s, returning a {@link Future} representing the first
-   * non-null result.
+   * non-null result, prioritizing any which are immediately available.
    *
    * <p>Future returns null if this no non-null result was found.
    */
@@ -51,17 +51,8 @@ public interface TargetFinder {
    */
   @Nullable
   static TargetInfo findTargetInfo(Project project, Label label) {
-    for (TargetFinder finder : EP_NAME.getExtensions()) {
-      Future<TargetInfo> future = finder.findTarget(project, label);
-      if (!future.isDone()) {
-        continue;
-      }
-      TargetInfo target = FuturesUtil.getIgnoringErrors(future);
-      if (target != null) {
-        return target;
-      }
-    }
-    return null;
+    ListenableFuture<TargetInfo> future = findTargetInfoFuture(project, label);
+    return future.isDone() ? FuturesUtil.getIgnoringErrors(future) : null;
   }
 
   /** Returns a future for a {@link TargetInfo} corresponding to the given blaze label. */

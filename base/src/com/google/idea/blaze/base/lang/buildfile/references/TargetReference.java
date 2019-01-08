@@ -34,7 +34,7 @@ import javax.annotation.Nullable;
 public class TargetReference extends PsiReferenceBase<TargetExpression> {
 
   public TargetReference(TargetExpression element) {
-    super(element, new TextRange(0, element.getTextLength()), /* soft */ true);
+    super(element, new TextRange(0, element.getTextLength()), /* soft= */ true);
   }
 
   @Nullable
