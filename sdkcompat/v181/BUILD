@@ -17,7 +17,6 @@ java_library(
             "com/google/idea/sdkcompat/cidr/**",
         ]),
         clion = glob([
-            "com/google/idea/sdkcompat/clion/**",
             "com/google/idea/sdkcompat/cidr/**",
         ]),
     ),

@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.producer.BlazeRunConfigurationProducerTestCase;
+import com.google.idea.blaze.base.run.producers.TestContextRunConfigurationProducer;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -38,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import java.util.List;
 import org.junit.After;
 import org.junit.Before;
@@ -45,7 +47,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Integration tests for {@link MultipleJavaClassesTestConfigurationProducer}. */
+/** Integration tests for {@link MultipleJavaClassesTestContextProvider}. */
 @RunWith(JUnit4.class)
 public class MultipleJavaClassesTestConfigurationProducerTest
     extends BlazeRunConfigurationProducerTestCase {
@@ -115,8 +117,7 @@ public class MultipleJavaClassesTestConfigurationProducerTest
     assertThat(configurations).hasSize(1);
 
     ConfigurationFromContext fromContext = configurations.get(0);
-    assertThat(fromContext.isProducedBy(MultipleJavaClassesTestConfigurationProducer.class))
-        .isTrue();
+    assertThat(fromContext.isProducedBy(TestContextRunConfigurationProducer.class)).isTrue();
     assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
 
     BlazeCommandRunConfiguration config =
@@ -158,8 +159,7 @@ public class MultipleJavaClassesTestConfigurationProducerTest
     assertThat(configurations).hasSize(1);
 
     ConfigurationFromContext fromContext = configurations.get(0);
-    assertThat(fromContext.isProducedBy(MultipleJavaClassesTestConfigurationProducer.class))
-        .isTrue();
+    assertThat(fromContext.isProducedBy(TestContextRunConfigurationProducer.class)).isTrue();
     assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
 
     BlazeCommandRunConfiguration config =
@@ -201,8 +201,7 @@ public class MultipleJavaClassesTestConfigurationProducerTest
     assertThat(configurations).hasSize(1);
 
     ConfigurationFromContext fromContext = configurations.get(0);
-    assertThat(fromContext.isProducedBy(MultipleJavaClassesTestConfigurationProducer.class))
-        .isTrue();
+    assertThat(fromContext.isProducedBy(TestContextRunConfigurationProducer.class)).isTrue();
     assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
 
     BlazeCommandRunConfiguration config =
@@ -231,42 +230,7 @@ public class MultipleJavaClassesTestConfigurationProducerTest
         workspace.createPsiDirectory(new WorkspacePath("java/com/google/test"));
 
     ConfigurationContext context = createContextFromPsi(directory);
-    assertThat(
-            new MultipleJavaClassesTestConfigurationProducer()
-                .createConfigurationFromContext(context))
-        .isNull();
-  }
-
-  @Test
-  public void testNotProducedFromSingleTestFile() {
-    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
-    builder.setTargetMap(
-        TargetMapBuilder.builder()
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setKind("java_test")
-                    .setLabel("//java/com/google/test:TestClass")
-                    .addSource(sourceRoot("java/com/google/test/TestClass.java"))
-                    .build())
-            .build());
-    registerProjectService(
-        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
-
-    workspace.createPsiDirectory(new WorkspacePath("java/com/google/test"));
-    PsiFile file =
-        createAndIndexFile(
-            new WorkspacePath("java/com/google/test/TestClass.java"),
-            "package com.google.test;",
-            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-            "public class TestClass {",
-            "  @org.junit.Test",
-            "  public void testMethod() {}",
-            "}");
-
-    ConfigurationContext context = createContextFromPsi(file);
-    assertThat(
-            new MultipleJavaClassesTestConfigurationProducer()
-                .createConfigurationFromContext(context))
+    assertThat(new TestContextRunConfigurationProducer().createConfigurationFromContext(context))
         .isNull();
   }
 
@@ -309,7 +273,7 @@ public class MultipleJavaClassesTestConfigurationProducerTest
     ConfigurationContext context =
         createContextFromMultipleElements(new PsiElement[] {testClass1, testClass2});
     ConfigurationFromContext fromContext =
-        new MultipleJavaClassesTestConfigurationProducer().createConfigurationFromContext(context);
+        new TestContextRunConfigurationProducer().createConfigurationFromContext(context);
     assertThat(fromContext).isNotNull();
     assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
 
@@ -345,30 +309,31 @@ public class MultipleJavaClassesTestConfigurationProducerTest
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
 
     workspace.createPsiDirectory(new WorkspacePath("java/com/google/test"));
-    PsiFile testClass1 =
-        createAndIndexFile(
-            new WorkspacePath("java/com/google/test/TestClass1.java"),
-            "package com.google.test;",
-            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-            "public class TestClass1 {",
-            "  @org.junit.Test",
-            "  public void testMethod() {}",
-            "}");
-    PsiFile testClass2 =
-        createAndIndexFile(
-            new WorkspacePath("java/com/google/test/TestClass2.java"),
-            "package com.google.test;",
-            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-            "public class TestClass2 {",
-            "  @org.junit.Test",
-            "  public void testMethod() {}",
-            "}");
+    PsiJavaFile testClass1 =
+        (PsiJavaFile)
+            createAndIndexFile(
+                new WorkspacePath("java/com/google/test/TestClass1.java"),
+                "package com.google.test;",
+                "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
+                "public class TestClass1 {",
+                "  @org.junit.Test",
+                "  public void testMethod() {}",
+                "}");
+    PsiJavaFile testClass2 =
+        (PsiJavaFile)
+            createAndIndexFile(
+                new WorkspacePath("java/com/google/test/TestClass2.java"),
+                "package com.google.test;",
+                "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
+                "public class TestClass2 {",
+                "  @org.junit.Test",
+                "  public void testMethod() {}",
+                "}");
 
     ConfigurationContext context =
-        createContextFromMultipleElements(new PsiElement[] {testClass1, testClass2});
-    assertThat(
-            new MultipleJavaClassesTestConfigurationProducer()
-                .createConfigurationFromContext(context))
+        createContextFromMultipleElements(
+            new PsiElement[] {testClass1.getClasses()[0], testClass2.getClasses()[0]});
+    assertThat(new TestContextRunConfigurationProducer().createConfigurationFromContext(context))
         .isNull();
   }
 
@@ -403,7 +368,7 @@ public class MultipleJavaClassesTestConfigurationProducerTest
     ConfigurationContext context =
         createContextFromMultipleElements(new PsiElement[] {testClass1, testClass2});
     ConfigurationFromContext fromContext =
-        new MultipleJavaClassesTestConfigurationProducer().createConfigurationFromContext(context);
+        new TestContextRunConfigurationProducer().createConfigurationFromContext(context);
     assertThat(fromContext).isNull();
   }
 }

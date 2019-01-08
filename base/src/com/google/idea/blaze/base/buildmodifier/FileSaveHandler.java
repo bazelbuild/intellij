@@ -15,15 +15,25 @@
  */
 package com.google.idea.blaze.base.buildmodifier;
 
+import static com.google.idea.blaze.base.buildmodifier.BuildFileFormatter.getReplacements;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.intellij.codeInsight.actions.ReformatCodeProcessor;
+import com.google.idea.common.formatter.FileBasedFormattingSynchronizer;
+import com.google.idea.common.formatter.FileBasedFormattingSynchronizer.Formatter;
+import com.google.idea.common.formatter.FormatUtils;
+import com.google.idea.common.formatter.FormatUtils.FileContentsProvider;
+import com.google.idea.common.formatter.FormatUtils.Replacements;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -49,9 +59,22 @@ public class FileSaveHandler extends FileDocumentManagerAdapter {
     if (!isBuildFile(psiFile) || !isProjectValid(project) || !canWriteToFile(project, psiFile)) {
       return;
     }
-    new ReformatCodeProcessor(
-            project, psiFile, /* range */ null, /* processChangedTextOnly */ false)
-        .run();
+    // DO not use formatter here, instead we format the entire file.
+    BlazeFileType type = ((BuildFile) psiFile).getBlazeFileType();
+    ListenableFuture<Void> future =
+        FileBasedFormattingSynchronizer.applyReplacements(
+            psiFile,
+            f -> {
+              FileContentsProvider fileContents = FileContentsProvider.fromPsiFile(f);
+              if (fileContents == null) {
+                return new Formatter.Result<>(null, new Replacements());
+              }
+              ImmutableList<TextRange> toFormat =
+                  ImmutableList.of(TextRange.allOf(fileContents.getInitialFileContents()));
+              Replacements replacements = getReplacements(type, fileContents, toFormat);
+              return new Formatter.Result<>(null, replacements);
+            });
+    FormatUtils.formatWithProgressDialog(project, "Running buildifier", future);
   }
 
   private static boolean canWriteToFile(Project project, PsiFile psiFile) {

@@ -17,11 +17,16 @@ package com.google.idea.blaze.java.run.producers;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiClassUtil;
@@ -81,6 +86,31 @@ public class ProducerUtils {
         .collect(Collectors.toSet());
   }
 
+  @Nullable
+  public static PsiClass getTestClass(final PsiElement element) {
+    return getTestClass(PsiLocation.fromPsiElement(element));
+  }
+
+  /** Same as {@link JUnitUtil#getTestClass}, but handles classes outside the project. */
+  @Nullable
+  public static PsiClass getTestClass(final Location<?> location) {
+    for (Iterator<Location<PsiClass>> iterator = location.getAncestors(PsiClass.class, false);
+        iterator.hasNext(); ) {
+      final Location<PsiClass> classLocation = iterator.next();
+      if (isTestClass(classLocation.getPsiElement())) {
+        return classLocation.getPsiElement();
+      }
+    }
+    PsiElement element = location.getPsiElement();
+    if (element instanceof PsiClassOwner) {
+      PsiClass[] classes = ((PsiClassOwner) element).getClasses();
+      if (classes.length == 1 && isTestClass(classes[0])) {
+        return classes[0];
+      }
+    }
+    return null;
+  }
+
   /**
    * Based on {@link JUnitUtil#isTestClass}. We don't use that directly because it returns true for
    * all inner classes of a test class, regardless of whether they're also test classes.
@@ -98,7 +128,7 @@ public class ProducerUtils {
     if (AnnotationUtil.isAnnotated(psiClass, JUnitUtil.RUN_WITH, true)) {
       return true;
     }
-    if (JUnitUtil.isTestCaseInheritor(psiClass)) {
+    if (isTestCaseInheritor(psiClass)) {
       return true;
     }
     return CachedValuesManager.getCachedValue(
@@ -107,6 +137,15 @@ public class ProducerUtils {
             CachedValueProvider.Result.create(
                 hasTestOrSuiteMethods(psiClass),
                 PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+  }
+
+  private static boolean isTestCaseInheritor(PsiClass psiClass) {
+    // unlike JUnitUtil#isTestCaseInheritor, works even if the class isn't in the project
+    PsiClass testCaseClass =
+        JavaPsiFacade.getInstance(psiClass.getProject())
+            .findClass(
+                JUnitUtil.TEST_CASE_CLASS, GlobalSearchScope.allScope(psiClass.getProject()));
+    return testCaseClass != null && psiClass.isInheritor(testCaseClass, true);
   }
 
   private static boolean hasTestOrSuiteMethods(PsiClass psiClass) {

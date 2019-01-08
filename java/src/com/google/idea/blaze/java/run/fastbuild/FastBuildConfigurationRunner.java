@@ -69,10 +69,11 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
 
   /** Returns false if this isn't a 'blaze test' invocation. */
   static boolean canRun(RunProfile runProfile) {
-    if (!(runProfile instanceof BlazeCommandRunConfiguration)) {
+    BlazeCommandRunConfiguration blazeCfg =
+        BlazeCommandRunConfigurationRunner.getBlazeConfig(runProfile);
+    if (blazeCfg == null) {
       return false;
     }
-    BlazeCommandRunConfiguration blazeCfg = (BlazeCommandRunConfiguration) runProfile;
     return Objects.equals(blazeCfg.getHandler().getCommandName(), BlazeCommandName.TEST)
         && FastBuildService.getInstance(blazeCfg.getProject())
             .supportsFastBuilds(
@@ -96,7 +97,8 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
       return true;
     }
     Project project = env.getProject();
-    BlazeCommandRunConfiguration configuration = (BlazeCommandRunConfiguration) env.getRunProfile();
+    BlazeCommandRunConfiguration configuration =
+        BlazeCommandRunConfigurationRunner.getBlazeConfig(env.getRunProfile());
     BlazeCommandRunConfigurationCommonState handlerState =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
 
@@ -125,7 +127,7 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
                             project,
                             WorkspaceRoot.fromProject(project),
                             ContextType.RunConfiguration,
-                            /* linkToBlazeConsole */ true))
+                            /* linkToBlazeConsole= */ true))
                     .build())
             .push(new FastBuildLogDataScope());
 
@@ -138,7 +140,7 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
       env.getCopyableUserData(BLAZE_CONTEXT).set(context);
       return true;
     } catch (InterruptedException e) {
-      buildFuture.cancel(/* mayInterruptIfRunning */ true);
+      buildFuture.cancel(/* mayInterruptIfRunning= */ true);
       Thread.currentThread().interrupt();
     } catch (CancellationException e) {
       ExecutionUtil.handleExecutionError(

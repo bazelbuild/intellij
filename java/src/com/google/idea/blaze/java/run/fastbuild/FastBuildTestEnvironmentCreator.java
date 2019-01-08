@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.run.fastbuild;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -73,6 +74,10 @@ final class FastBuildTestEnvironmentCreator {
         targetData.javaInfo().isPresent(), "Couldn't find Java info for %s", fastBuildInfo.label());
     JavaInfo targetJavaInfo = targetData.javaInfo().get();
 
+    BlazeInfo blazeInfo =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData().getBlazeInfo();
+    checkState(blazeInfo != null, "Couldn't find Blaze info.");
+
     // To emulate 'blaze test', the binary should be launched from something like
     // blaze-out/k8-opt/bin/path/to/package/MyLabel.runfiles/io_bazel
     String workspaceName = targetData.workspaceName();
@@ -113,7 +118,7 @@ final class FastBuildTestEnvironmentCreator {
         .addEnvironmentVariable("USER", SystemProperties.getUserName())
         .addEnvironmentVariable(WORKSPACE_VARIABLE, workspaceName);
     addTestSizeVariables(commandBuilder, targetJavaInfo);
-    configureTestOutputs(commandBuilder, fastBuildInfo.label());
+    configureTestOutputs(commandBuilder, fastBuildInfo.label(), blazeInfo);
 
     String tmpdir = System.getProperty("java.io.tmpdir");
     commandBuilder
@@ -126,7 +131,7 @@ final class FastBuildTestEnvironmentCreator {
 
     for (FastBuildTestEnvironmentModifier modifier :
         FastBuildTestEnvironmentModifier.getModifiers(Blaze.getBuildSystem(project))) {
-      modifier.modify(commandBuilder, kind, fastBuildInfo);
+      modifier.modify(commandBuilder, kind, fastBuildInfo, blazeInfo);
     }
 
     return commandBuilder.build();
@@ -184,16 +189,13 @@ final class FastBuildTestEnvironmentCreator {
    * Adds environment variables and performs other setup (creating/removing directories) related to
    * the Google test runner output.
    */
-  private void configureTestOutputs(JavaCommandBuilder commandBuilder, Label target)
+  private void configureTestOutputs(
+      JavaCommandBuilder commandBuilder, Label target, BlazeInfo blazeInfo)
       throws ExecutionException {
 
     FileOperationProvider files = FileOperationProvider.getInstance();
 
-    File blazeTestlogs =
-        BlazeProjectDataManager.getInstance(project)
-            .getBlazeProjectData()
-            .getBlazeInfo()
-            .getBlazeTestlogsDirectory();
+    File blazeTestlogs = blazeInfo.getBlazeTestlogsDirectory();
     File testOutputDir = new File(blazeTestlogs, getOutputPath(target));
 
     File undeclaredOutputsAnnotationsDir = new File(testOutputDir, "test.outputs_manifest");

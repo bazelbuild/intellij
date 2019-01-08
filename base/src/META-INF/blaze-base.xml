@@ -219,18 +219,26 @@
                     serviceImplementation="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProviderImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.sync.projectview.WorkspaceFileFinder$Provider"
                     serviceImplementation="com.google.idea.blaze.base.sync.projectview.WorkspaceFileFinderImpl$Provider"/>
+    <projectService serviceInterface="com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageChecker"
+        serviceImplementation="com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageCheckerImpl"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.sync.SyncCache"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.BlazeProblemsView"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.ProblemsViewConfiguration"/>
     <configurationType implementation="com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType"/>
     <runConfigurationProducer
-        implementation="com.google.idea.blaze.base.run.producers.AllInPackageBlazeConfigurationProducer"
-        order="first"/>
-    <runConfigurationProducer
         implementation="com.google.idea.blaze.base.run.producers.BlazeBuildFileRunConfigurationProducer"
         order="first"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.base.run.producers.BlazeFilterExistingRunConfigurationProducer"
+        order="first"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.base.run.producers.TestContextRunConfigurationProducer"
+        order="first" id="testContextProducer"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.base.run.producers.BlazeWebTestConfigurationProducer"
+        order="first, before testContextProducer"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.base.run.producers.AllInPackageBlazeConfigurationProducer"
         order="first"/>
     <projectService serviceInterface="com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider"
                     serviceImplementation="com.google.idea.blaze.base.run.smrunner.TestUiSessionProviderImpl"/>
@@ -248,6 +256,10 @@
     <editorTabColorProvider implementation="com.google.idea.blaze.base.syncstatus.SyncStatusEditorTabColorProvider"/>
     <editorTabTitleProvider implementation="com.google.idea.blaze.base.syncstatus.SyncStatusEditorTabTitleProvider"/>
     <macro implementation="com.google.idea.blaze.base.actions.WorkspaceRootMacro"/>
+    <!--needs to run before DefaultJavaProgramRunner at the very least, since that accepts *all* configs -->
+    <programRunner
+        implementation="com.google.idea.blaze.base.run.confighandler.PendingTargetRunConfigurationHandler$PendingTargetProgramRunner"
+        order="first"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -392,6 +404,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.WorkspacePathResolverExtractor" interface="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver$Extractor"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SyncDataExtractor" interface="com.google.idea.blaze.base.model.SyncData$Extractor"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.TargetKindProvider" interface="com.google.idea.blaze.base.model.primitives.Kind$Provider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.TestContextProvider" interface="com.google.idea.blaze.base.run.producers.TestContextProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -410,6 +423,7 @@
     <BuildSystemProvider implementation="com.google.idea.blaze.base.bazel.BazelBuildSystemProvider" order="last"/>
     <BuildifierBinaryProvider implementation="com.google.idea.blaze.base.buildmodifier.BazelBuildifierBinaryProvider"/>
     <BuildResultHelperProvider order="last" implementation="com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep$Provider"/>
+    <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.PendingTargetRunConfigurationHandlerProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandlerProvider" order="last"/>
     <TestTargetHeuristic implementation="com.google.idea.blaze.base.run.TargetNameHeuristic" id="TargetNameHeuristic"/>
     <TestTargetHeuristic implementation="com.google.idea.blaze.base.run.TestTargetSourcesHeuristic" order="after TargetNameHeuristic"/>

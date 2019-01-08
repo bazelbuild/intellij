@@ -18,7 +18,7 @@ package com.google.idea.blaze.android.run.binary;
 import com.android.tools.idea.fd.InstantRunUtils;
 import com.android.tools.idea.run.AndroidSessionInfo;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
-import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProvider.AndroidBinaryLaunchMethod;
+import com.google.idea.blaze.android.run.binary.AndroidBinaryLaunchMethodsUtils.AndroidBinaryLaunchMethod;
 import com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallDebugExecutor;
 import com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallRunExecutor;
 import com.intellij.execution.ExecutionException;

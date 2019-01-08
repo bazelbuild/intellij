@@ -86,7 +86,7 @@ public final class ExecutionRootPath implements ProtoWrapper<String> {
     if (root.isAbsolute() != path.isAbsolute()) {
       return null;
     }
-    if (!isAncestor(root.getPath(), path.getPath(), /* strict */ false)) {
+    if (!isAncestor(root.getPath(), path.getPath(), /* strict= */ false)) {
       return null;
     }
     String relativePath =

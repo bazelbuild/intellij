@@ -19,13 +19,14 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
+import javax.annotation.Nullable;
 
 /** CLion-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public class BlazeCidrRunConfigurationHandlerProvider
     implements BlazeCommandRunConfigurationHandlerProvider {
 
   @Override
-  public boolean canHandleKind(Kind kind) {
+  public boolean canHandleKind(TargetState state, @Nullable Kind kind) {
     return RunConfigurationUtils.canUseClionHandler(kind);
   }
 

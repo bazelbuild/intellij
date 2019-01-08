@@ -172,6 +172,7 @@ java_binary(
 
 java_binary(
     name = "guava_lib",
+    testonly = True,
     main_class = "None",
     runtime_deps = ["//intellij_platform_sdk:guava"],
 )

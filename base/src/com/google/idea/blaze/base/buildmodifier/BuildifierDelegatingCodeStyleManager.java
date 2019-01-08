@@ -15,10 +15,17 @@
  */
 package com.google.idea.blaze.base.buildmodifier;
 
+import static com.google.idea.blaze.base.buildmodifier.BuildFileFormatter.getReplacements;
+
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.common.formatter.ExternalFormatterCodeStyleManager;
+import com.google.idea.common.formatter.FileBasedFormattingSynchronizer;
+import com.google.idea.common.formatter.FileBasedFormattingSynchronizer.Formatter;
+import com.google.idea.common.formatter.FormatUtils;
+import com.google.idea.common.formatter.FormatUtils.FileContentsProvider;
+import com.google.idea.common.formatter.FormatUtils.Replacements;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -45,14 +52,15 @@ final class BuildifierDelegatingCodeStyleManager extends ExternalFormatterCodeSt
     if (!(file instanceof BuildFile)) {
       return;
     }
-    FileContentsProvider contentsProvider = FileContentsProvider.fromPsiFile(file);
-    if (contentsProvider == null) {
-      return;
-    }
     BlazeFileType type = ((BuildFile) file).getBlazeFileType();
-    ListenableFuture<Replacements> formattedFileFuture =
-        BuildFileFormatter.formatTextWithProgressDialog(
-            getProject(), type, contentsProvider, ranges);
-    performReplacementsAsync(contentsProvider, formattedFileFuture);
+    ListenableFuture<Void> future =
+        FileBasedFormattingSynchronizer.applyReplacements(
+            file,
+            f -> {
+              FileContentsProvider fileContents = FileContentsProvider.fromPsiFile(f);
+              Replacements replacements = getReplacements(type, fileContents, ranges);
+              return new Formatter.Result<>(null, replacements);
+            });
+    FormatUtils.formatWithProgressDialog(file.getProject(), "Running buildifier", future);
   }
 }

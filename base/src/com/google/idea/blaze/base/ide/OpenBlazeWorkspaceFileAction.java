@@ -59,7 +59,7 @@ final class OpenBlazeWorkspaceFileAction extends BlazeProjectAction {
 
     OpenBlazeWorkspaceFileActionDialog(
         Project project, WorkspacePathResolver workspacePathResolver) {
-      super(project, /* canBeParent */ false, IdeModalityType.PROJECT);
+      super(project, /* canBeParent= */ false, IdeModalityType.PROJECT);
       this.project = project;
 
       component = new JPanel(new GridBagLayout());

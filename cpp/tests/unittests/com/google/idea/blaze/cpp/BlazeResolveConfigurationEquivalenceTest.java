@@ -97,6 +97,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         CompilerVersionChecker.class, new MockCompilerVersionChecker("1234"));
 
     applicationServices.register(ProgressManager.class, new ProgressManagerImpl());
+    applicationServices.register(CompilerWrapperProvider.class, new CompilerWrapperProviderImpl());
     applicationServices.register(VirtualFileManager.class, mock(VirtualFileManager.class));
     mockFileSystem = mock(LocalFileSystem.class);
     applicationServices.register(

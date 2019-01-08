@@ -26,7 +26,7 @@ public class BlazePyRunConfigurationHandlerProvider
     implements BlazeCommandRunConfigurationHandlerProvider {
 
   @Override
-  public boolean canHandleKind(@Nullable Kind kind) {
+  public boolean canHandleKind(TargetState state, @Nullable Kind kind) {
     return PyDebugUtils.canUsePyDebugger(kind);
   }
 

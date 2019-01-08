@@ -36,7 +36,7 @@ abstract class PendingChangesHandler<V> {
 
   private final Set<V> pendingItems = Collections.synchronizedSet(new HashSet<>());
 
-  private final Timer timer = new Timer("pendingChangesTimer", /* isDaemon */ true);
+  private final Timer timer = new Timer("pendingChangesTimer", /* isDaemon= */ true);
   private final int delayMillis;
   private final AtomicBoolean isTaskPending = new AtomicBoolean(false);
 

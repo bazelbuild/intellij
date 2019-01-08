@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.run.fastbuild;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
@@ -33,6 +34,10 @@ public interface FastBuildTestEnvironmentModifier extends BuildSystemExtensionPo
     return BuildSystemExtensionPoint.getInstances(EP_NAME, buildSystem);
   }
 
-  void modify(JavaCommandBuilder commandBuilder, Kind kind, FastBuildInfo fastBuildInfo)
+  void modify(
+      JavaCommandBuilder commandBuilder,
+      Kind kind,
+      FastBuildInfo fastBuildInfo,
+      BlazeInfo blazeInfo)
       throws ExecutionException;
 }

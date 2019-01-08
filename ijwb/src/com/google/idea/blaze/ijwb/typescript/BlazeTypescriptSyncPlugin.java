@@ -138,21 +138,22 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
                 new File(workspaceRoot.fileForPath(target.blazePackage()), "tsconfig.json");
             if (syncTsConfigTarget(
                     project, childContext, workspaceRoot, projectViewSet, target, tsconfig)
-                == 0) {
-              tsconfigs.add(tsconfig);
-              File blazeBin =
-                  new File(blazeInfo.getBlazeBinDirectory(), target.blazePackage().relativePath());
-              runfiles.add(new File(blazeBin, target.targetName() + ".runfiles"));
-            } else {
+                != 0) {
               childContext.setHasError();
               // continue running any remaining targets
             }
+            // tsconfig may have changed even if the build failed
+            tsconfigs.add(tsconfig);
+            File blazeBin =
+                new File(blazeInfo.getBlazeBinDirectory(), target.blazePackage().relativePath());
+            tsconfigs.add(new File(blazeBin, "tsconfig_editor.json"));
+            runfiles.add(new File(blazeBin, target.targetName() + ".runfiles"));
           }
           LocalFileSystem lfs = VirtualFileSystemProvider.getInstance().getSystem();
           VfsUtil.markDirtyAndRefresh(
-              /* async */ true,
-              /* recursive */ true,
-              /* reloadChildren */ false,
+              /* async= */ true,
+              /* recursive= */ true,
+              /* reloadChildren= */ false,
               Streams.concat(tsconfigs.stream(), runfiles.stream())
                   .map(lfs::findFileByIoFile)
                   .filter(Objects::nonNull)

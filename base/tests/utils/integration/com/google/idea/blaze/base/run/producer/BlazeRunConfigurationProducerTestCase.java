@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.MapDataContext;
+import java.util.Arrays;
 import javax.annotation.Nullable;
 import org.junit.Before;
 
@@ -110,6 +111,9 @@ public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestC
     dataContext.put(CommonDataKeys.PROJECT, getProject());
     dataContext.put(LangDataKeys.MODULE, ModuleUtil.findModuleForPsiElement(elements[0]));
     dataContext.put(Location.DATA_KEY, PsiLocation.fromPsiElement(elements[0]));
+    dataContext.put(
+        Location.DATA_KEYS,
+        Arrays.stream(elements).map(PsiLocation::fromPsiElement).toArray(Location[]::new));
     dataContext.put(LangDataKeys.PSI_ELEMENT_ARRAY, elements);
     return ConfigurationContext.getFromContext(dataContext);
   }

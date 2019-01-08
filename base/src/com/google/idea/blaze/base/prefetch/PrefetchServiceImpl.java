@@ -147,9 +147,9 @@ public class PrefetchServiceImpl implements PrefetchService {
         prefetchFiles(
             excludeDirectories,
             sourceDirectories,
-            /* refetchCachedFiles */ false,
+            /* refetchCachedFiles= */ false,
             // PushedFilePropertiesUpdaterImpl will eventually want the file types of module roots.
-            /* fetchFileTypes */ true);
+            /* fetchFileTypes= */ true);
     Set<File> externalFiles = new HashSet<>();
     if (blazeProjectData != null) {
       for (PrefetchFileSource fileSource : PrefetchFileSource.EP_NAME.getExtensions()) {

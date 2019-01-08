@@ -48,9 +48,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.UrlFilter;
@@ -195,7 +193,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
         protected ConsoleView createConsole() {
           PythonDebugLanguageConsoleView consoleView =
               new PythonDebugLanguageConsoleView(project, sdk);
-          for (Filter filter : getFilters(project)) {
+          for (Filter filter : getFilters()) {
             consoleView.addMessageFilter(filter);
           }
           return consoleView;
@@ -205,6 +203,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
 
     private static String getScriptParams(BlazeCommandRunConfigurationCommonState state) {
       List<String> params = Lists.newArrayList(state.getExeFlagsState().getExpandedFlags());
+      params.addAll(state.getTestArgs());
       String filterFlag = state.getTestFilterFlag();
       if (filterFlag != null) {
         params.add(filterFlag.substring((BlazeFlags.TEST_FILTER + "=").length()));
@@ -213,7 +212,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     }
   }
 
-  private static ImmutableList<Filter> getFilters(Project project) {
+  private static ImmutableList<Filter> getFilters() {
     return ImmutableList.<Filter>builder()
         .add(new BlazeTargetFilter(true))
         .add(new UrlFilter())
@@ -223,10 +222,11 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
   @Override
   public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment env) {
     if (!BlazeCommandRunConfigurationRunner.isDebugging(env)
-        || BlazeCommandRunConfigurationRunner.getBlazeCommand(env) == BlazeCommandName.BUILD) {
+        || BlazeCommandName.BUILD.equals(BlazeCommandRunConfigurationRunner.getBlazeCommand(env))) {
       return new BlazeCommandRunProfileState(env);
     }
-    BlazeCommandRunConfiguration configuration = getConfiguration(env);
+    BlazeCommandRunConfiguration configuration =
+        BlazeCommandRunConfigurationRunner.getConfiguration(env);
     env.putCopyableUserData(EXECUTABLE_KEY, new AtomicReference<>());
     return new BlazePyDummyRunProfileState(configuration);
   }
@@ -250,14 +250,6 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     return false;
   }
 
-  private static BlazeCommandRunConfiguration getConfiguration(ExecutionEnvironment environment) {
-    RunProfile runProfile = environment.getRunProfile();
-    if (runProfile instanceof WrappingRunConfiguration) {
-      runProfile = ((WrappingRunConfiguration) runProfile).getPeer();
-    }
-    return (BlazeCommandRunConfiguration) runProfile;
-  }
-
   /** Make a best-effort attempt to get the runfiles path. Returns null if it can't be found. */
   @Nullable
   private static String getRunfilesPath(File executable, @Nullable WorkspaceRoot root) {
@@ -278,7 +270,8 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
    * @throws ExecutionException if the target cannot be debugged.
    */
   private static File getExecutableToDebug(ExecutionEnvironment env) throws ExecutionException {
-    BlazeCommandRunConfiguration configuration = getConfiguration(env);
+    BlazeCommandRunConfiguration configuration =
+        BlazeCommandRunConfigurationRunner.getConfiguration(env);
     Project project = configuration.getProject();
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();

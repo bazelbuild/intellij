@@ -181,6 +181,7 @@ java_library(
 # The version of guava bundled with the IntelliJ plugin API.
 java_library(
     name = "guava",
+    testonly = True,
     exports = select_from_plugin_api_directory(
         android_studio = [":guava"],
         clion = [":guava"],
@@ -188,9 +189,18 @@ java_library(
     ),
 )
 
-# Android Studio and IntelliJ include jsr305.jar, but CLion doesn't. Since :plugin_api is marked
-# neverlink, this means that the JSR305 classes (@Nullable, etc.) will /not/ end up in ijwb.jar or
-# aswb.jar, but they will be in clwb.jar.
+java_library(
+    name = "guava_for_external_binaries",
+    visibility = ["//aspect/tools:__pkg__"],
+    exports = select_from_plugin_api_directory(
+        android_studio = [":guava"],
+        clion = [":guava"],
+        intellij = [":guava"],
+    ),
+)
+
+# Some versions of the IDE include jsr305.jar, but others don't. So we need to include the JSR 305
+# classes (@Nullable, etc.) in the plugin jars for IDEs that don't already have it on the classpath.
 java_library(
     name = "jsr305",
     exports = select_for_plugin_api({

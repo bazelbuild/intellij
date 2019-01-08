@@ -30,7 +30,7 @@ public class EnvironmentVariablesState implements RunConfigurationState {
   private static final String ELEMENT_TAG = "env_state";
 
   private EnvironmentVariablesData data =
-      EnvironmentVariablesData.create(ImmutableMap.of(), /* passParentEnvs */ true);
+      EnvironmentVariablesData.create(ImmutableMap.of(), /* passParentEnvs= */ true);
 
   public EnvironmentVariablesData getData() {
     return data;

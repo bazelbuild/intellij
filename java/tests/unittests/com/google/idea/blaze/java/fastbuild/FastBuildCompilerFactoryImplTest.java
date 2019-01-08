@@ -68,16 +68,9 @@ public final class FastBuildCompilerFactoryImplTest {
   private static final JavaToolchainInfo JAVA_TOOLCHAIN =
       JavaToolchainInfo.create(
           ArtifactLocation.builder().setRelativePath(JDK_TOOLS_JAR.getPath()).build(),
-          /* sourceVersion */ "8",
-          /* targetVersion */ "8");
-  private static final JavaInfo JAVA_LIBRARY_WITHOUT_SOURCES =
-      JavaInfo.create(
-          /*sources*/ ImmutableSet.of(),
-          /*testClass*/ null,
-          /*testSize*/ null,
-          /* annotationProcessorClassNames */ ImmutableList.of(),
-          /* annotationProcessorClassPath */ ImmutableList.of(),
-          /* jvmFlags */ ImmutableList.of());
+          /* sourceVersion= */ "8",
+          /* targetVersion= */ "8");
+  private static final JavaInfo JAVA_LIBRARY_WITHOUT_SOURCES = JavaInfo.builder().build();
 
   private FastBuildCompilerFactory compilerFactory;
   private final boolean useNewCompiler;
@@ -262,8 +255,8 @@ public final class FastBuildCompilerFactoryImplTest {
       getCompiler(
               JavaToolchainInfo.create(
                   ArtifactLocation.builder().setRelativePath(JDK_TOOLS_JAR.getPath()).build(),
-                  /* sourceVersion */ "7",
-                  /* targetVersion */ "8"))
+                  /* sourceVersion= */ "7",
+                  /* targetVersion= */ "8"))
           .compile(
               createBlazeContext(javacOutput),
               createCompileInstructions(java, javacOutput).build());

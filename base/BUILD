@@ -116,6 +116,21 @@ java_library(
 
 # neverlink library exposed so other plugins can optionally depend on it
 java_library(
+    name = "workspace_language_checker_api",
+    srcs = [
+        "src/com/google/idea/blaze/base/model/primitives/LanguageClass.java",
+        "src/com/google/idea/blaze/base/sync/projectview/WorkspaceLanguageChecker.java",
+    ],
+    neverlink = 1,
+    deps = [
+        ":proto_wrapper",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+# neverlink library exposed so other plugins can optionally depend on it
+java_library(
     name = "logging_api",
     srcs = [
         "src/com/google/idea/blaze/base/logging/EventLogger.java",
@@ -123,6 +138,20 @@ java_library(
     ],
     neverlink = 1,
     deps = [
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+# neverlink library exposed so other plugins can optionally depend on it
+java_library(
+    name = "blaze_user_settings_api",
+    srcs = [
+        "src/com/google/idea/blaze/base/settings/BlazeUserSettings.java",
+    ],
+    neverlink = 1,
+    deps = [
+        ":logging_api",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
     ],
@@ -143,6 +172,19 @@ java_library(
     deps = [
         ":label_api",
         ":proto_wrapper",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+# neverlink library exposed so other plugins can optionally depend on it
+java_library(
+    name = "buildifier_binary_provider_api",
+    srcs = [
+        "src/com/google/idea/blaze/base/buildmodifier/BuildifierBinaryProvider.java",
+    ],
+    neverlink = 1,
+    deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
     ],

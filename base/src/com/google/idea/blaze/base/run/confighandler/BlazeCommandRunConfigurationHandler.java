@@ -20,11 +20,9 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import javax.annotation.Nullable;
-import javax.swing.Icon;
 
 /**
  * Supports the run configuration flow for {@link BlazeCommandRunConfiguration}s.
@@ -33,8 +31,6 @@ import javax.swing.Icon;
  */
 public interface BlazeCommandRunConfigurationHandler {
   RunConfigurationState getState();
-
-
 
   /** @return A {@link BlazeCommandRunConfigurationRunner} for running the configuration. */
   @Nullable
@@ -64,12 +60,4 @@ public interface BlazeCommandRunConfigurationHandler {
 
   /** @return The name of this handler. Shown in the UI. */
   String getHandlerName();
-
-  /**
-   * Allows overriding the default behavior of {@link
-   * com.intellij.execution.RunnerIconProvider#getExecutorIcon(RunConfiguration, Executor)}. Return
-   * null to keep the default behavior.
-   */
-  @Nullable
-  Icon getExecutorIcon(RunConfiguration configuration, Executor executor);
 }

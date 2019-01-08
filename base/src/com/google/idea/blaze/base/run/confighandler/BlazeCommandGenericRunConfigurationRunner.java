@@ -48,9 +48,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.CommandLineState;
-import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilderImpl;
 import com.intellij.execution.filters.UrlFilter;
@@ -107,11 +105,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
     }
 
     private static BlazeCommandRunConfiguration getConfiguration(ExecutionEnvironment environment) {
-      RunProfile runProfile = environment.getRunProfile();
-      if (runProfile instanceof WrappingRunConfiguration) {
-        runProfile = ((WrappingRunConfiguration) runProfile).getPeer();
-      }
-      return (BlazeCommandRunConfiguration) runProfile;
+      return BlazeCommandRunConfigurationRunner.getConfiguration(environment);
     }
 
     @Override

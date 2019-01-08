@@ -179,7 +179,7 @@ public final class FastBuildSuggestion
   private static class OpenLinkAndLog implements NotificationListener {
 
     private final NotificationListener openLink =
-        new UrlOpeningListener(/* expireNotification */ true);
+        new UrlOpeningListener(/* expireNotification= */ true);
 
     @Override
     public void hyperlinkUpdate(Notification notification, HyperlinkEvent event) {

@@ -67,7 +67,7 @@ public final class FastBuildJavacImpl implements FastBuildJavac {
             fileManager,
             formattingListener,
             args,
-            /* classes */ null,
+            /* classes= */ null,
             filesToCompile,
             context);
     return task.call();

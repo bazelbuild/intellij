@@ -24,22 +24,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import icons.BlazeIcons;
 import javax.swing.Icon;
-import org.jetbrains.annotations.NotNull;
 
 /** A type for run configurations that execute Blaze commands. */
 public class BlazeCommandRunConfigurationType implements ConfigurationType {
-  @NotNull
+  
   private final BlazeCommandRunConfigurationFactory factory =
       new BlazeCommandRunConfigurationFactory(this);
 
   /** A run configuration factory */
   public static class BlazeCommandRunConfigurationFactory extends ConfigurationFactory {
-    protected BlazeCommandRunConfigurationFactory(@NotNull ConfigurationType type) {
+    private BlazeCommandRunConfigurationFactory(ConfigurationType type) {
       super(type);
     }
 
     @Override
-    public boolean isApplicable(@NotNull Project project) {
+    public boolean isApplicable(Project project) {
       return Blaze.isBlazeProject(project);
     }
 
@@ -53,50 +52,44 @@ public class BlazeCommandRunConfigurationType implements ConfigurationType {
         Key<? extends BeforeRunTask> providerID, BeforeRunTask task) {
       task.setEnabled(providerID.equals(BlazeBeforeRunTaskProvider.ID));
     }
-
-    @Override
-    public boolean isConfigurationSingletonByDefault() {
-      return true;
-    }
   }
 
-  @NotNull
+  
   public static BlazeCommandRunConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(BlazeCommandRunConfigurationType.class);
   }
 
-  @NotNull
+  
   @Override
   public String getDisplayName() {
     return Blaze.defaultBuildSystemName() + " Command";
   }
 
-  @NotNull
+  
   @Override
   public String getConfigurationTypeDescription() {
     return String.format(
         "Configuration for launching arbitrary %s commands.", Blaze.guessBuildSystemName());
   }
 
-  @NotNull
+  
   @Override
   public Icon getIcon() {
     return BlazeIcons.Blaze;
   }
 
-  @NotNull
+  
   @Override
   public String getId() {
     return "BlazeCommandRunConfigurationType";
   }
 
-  @NotNull
   @Override
   public BlazeCommandRunConfigurationFactory[] getConfigurationFactories() {
     return new BlazeCommandRunConfigurationFactory[] {factory};
   }
 
-  @NotNull
+  
   public BlazeCommandRunConfigurationFactory getFactory() {
     return factory;
   }

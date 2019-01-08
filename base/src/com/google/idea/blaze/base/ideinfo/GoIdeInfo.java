@@ -103,9 +103,10 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
   public static class Builder {
     private final ImmutableList.Builder<ArtifactLocation> sources = ImmutableList.builder();
     @Nullable private String importPath = null;
+    @Nullable private Label libraryLabel = null;
 
-    public Builder addSources(Iterable<ArtifactLocation> sources) {
-      this.sources.addAll(sources);
+    public Builder addSource(ArtifactLocation source) {
+      this.sources.add(source);
       return this;
     }
 
@@ -114,8 +115,13 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
       return this;
     }
 
+    public Builder setLibraryLabel(String libraryLabel) {
+      this.libraryLabel = Label.create(libraryLabel);
+      return this;
+    }
+
     public GoIdeInfo build() {
-      return new GoIdeInfo(sources.build(), importPath, null);
+      return new GoIdeInfo(sources.build(), importPath, libraryLabel);
     }
   }
 
@@ -128,6 +134,9 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
         + "\n"
         + "  importPath="
         + getImportPath()
+        + "\n"
+        + "  libraryLabel="
+        + getLibraryLabel()
         + "\n"
         + '}';
   }

@@ -84,7 +84,7 @@ final class FileExperimentLoader extends HashingExperimentLoader {
 
   private void doInitialize() {
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-    fileSystem.addRootToWatch(file.getPath(), /* watchRecursively */ false);
+    fileSystem.addRootToWatch(file.getPath(), /* watchRecursively= */ false);
     // We need to look up the file in the VFS or else we don't receive events about it. This works
     // even if the returned VirtualFile is null (because the experiments file doesn't exist yet).
     fileSystem.findFileByIoFile(file);

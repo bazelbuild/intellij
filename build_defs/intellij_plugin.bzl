@@ -57,7 +57,7 @@ optional_plugin_xml = rule(
     },
 )
 
-_PluginXmlInfo = provider(fields = ["plugin_xmls", "optional_plugin_xmls"])
+_IntellijPluginLibraryInfo = provider(fields = ["plugin_xmls", "optional_plugin_xmls", "java_info"])
 
 def _intellij_plugin_library_impl(ctx):
     java_info = java_common.merge([dep[JavaInfo] for dep in ctx.attr.deps])
@@ -68,14 +68,14 @@ def _intellij_plugin_library_impl(ctx):
             plugin_xmls.append(file)
 
     return [
-        _PluginXmlInfo(
+        _IntellijPluginLibraryInfo(
             plugin_xmls = depset(plugin_xmls),
             optional_plugin_xmls = [
                 dep[_OptionalPluginXmlInfo]
                 for dep in ctx.attr.optional_plugin_xmls
             ],
+            java_info = java_info,
         ),
-        java_info,
     ]
 
 intellij_plugin_library = rule(
@@ -90,8 +90,8 @@ intellij_plugin_library = rule(
 def _merge_plugin_xmls(ctx):
     dep_plugin_xmls = []
     for dep in ctx.attr.deps:
-        if _PluginXmlInfo in dep:
-            dep_plugin_xmls.append(dep[_PluginXmlInfo].plugin_xmls)
+        if _IntellijPluginLibraryInfo in dep:
+            dep_plugin_xmls.append(dep[_IntellijPluginLibraryInfo].plugin_xmls)
     plugin_xmls = depset([ctx.file.plugin_xml], transitive = dep_plugin_xmls)
 
     if len(plugin_xmls.to_list()) == 1:
@@ -114,9 +114,13 @@ def _merge_optional_plugin_xmls(ctx):
     module_to_xmls = {}
     optional_plugin_xml_providers = []
     for dep in ctx.attr.deps:
-        if _PluginXmlInfo in dep:
-            optional_plugin_xml_providers.extend(dep[_PluginXmlInfo].optional_plugin_xmls)
-    optional_plugin_xml_providers.extend([target[_OptionalPluginXmlInfo] for target in ctx.attr.optional_plugin_xmls])
+        if _IntellijPluginLibraryInfo in dep:
+            optional_plugin_xml_providers.extend(
+                dep[_IntellijPluginLibraryInfo].optional_plugin_xmls,
+            )
+    optional_plugin_xml_providers.extend(
+        [target[_OptionalPluginXmlInfo] for target in ctx.attr.optional_plugin_xmls],
+    )
     for provider in optional_plugin_xml_providers:
         for xml in provider.optional_plugin_xmls:
             module = xml.module
@@ -186,6 +190,26 @@ def _package_meta_inf_files(ctx, final_plugin_xml_file, module_to_merged_xmls):
     )
     return jar_file
 
+def _intellij_plugin_java_deps_impl(ctx):
+    java_infos = []
+    for dep in ctx.attr.deps:
+        if JavaInfo in dep:
+            java_infos.append(dep[JavaInfo])
+        elif _IntellijPluginLibraryInfo in dep:
+            java_infos.append(dep[_IntellijPluginLibraryInfo].java_info)
+    return [java_common.merge(java_infos)]
+
+_intellij_plugin_java_deps = rule(
+    implementation = _intellij_plugin_java_deps_impl,
+    attrs = {
+        # TODO(b/117574372): make this not accept JavaInfo (only intellij_plugin_libraries allowed)
+        "deps": attr.label_list(
+            mandatory = True,
+            providers = [[JavaInfo], [_IntellijPluginLibraryInfo]],
+        ),
+    },
+)
+
 def _intellij_plugin_jar_impl(ctx):
     augmented_xml = _merge_plugin_xmls(ctx)
     module_to_merged_xmls = _merge_optional_plugin_xmls(ctx)
@@ -203,7 +227,8 @@ _intellij_plugin_jar = rule(
         "plugin_xml": attr.label(mandatory = True, allow_single_file = [".xml"]),
         "optional_plugin_xmls": attr.label_list(providers = [_OptionalPluginXmlInfo]),
         "jar_name": attr.string(mandatory = True),
-        "deps": attr.label_list(providers = [JavaInfo]),
+        # TODO(b/117574372): make this not accept JavaInfo (only intellij_plugin_libraries allowed)
+        "deps": attr.label_list(providers = [[JavaInfo], [_IntellijPluginLibraryInfo]]),
         "_merge_xml_binary": attr.label(
             default = Label("//build_defs:merge_xml"),
             executable = True,
@@ -233,11 +258,16 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
       jar_name: The name of the final plugin jar, or <name>.jar if None
       **kwargs: Any further arguments to be passed to the final target
     """
+    java_deps_name = name + "_java_deps"
     binary_name = name + "_binary"
     deploy_jar = binary_name + "_deploy.jar"
+    _intellij_plugin_java_deps(
+        name = java_deps_name,
+        deps = deps,
+    )
     native.java_binary(
         name = binary_name,
-        runtime_deps = deps,
+        runtime_deps = [":" + java_deps_name],
         create_executable = 0,
     )
     jar_target_name = name + "_intellij_plugin_jar"

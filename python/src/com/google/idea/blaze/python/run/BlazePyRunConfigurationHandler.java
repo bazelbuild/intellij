@@ -23,11 +23,9 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import javax.annotation.Nullable;
-import javax.swing.Icon;
 
 /** Python-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public final class BlazePyRunConfigurationHandler implements BlazeCommandRunConfigurationHandler {
@@ -74,11 +72,5 @@ public final class BlazePyRunConfigurationHandler implements BlazeCommandRunConf
   @Override
   public String getHandlerName() {
     return "Python Handler";
-  }
-
-  @Override
-  @Nullable
-  public Icon getExecutorIcon(RunConfiguration configuration, Executor executor) {
-    return null;
   }
 }

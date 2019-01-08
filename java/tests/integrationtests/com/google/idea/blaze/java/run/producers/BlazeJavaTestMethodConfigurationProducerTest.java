@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.producer.BlazeRunConfigurationProducerTestCase;
+import com.google.idea.blaze.base.run.producers.TestContextRunConfigurationProducer;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -41,7 +42,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Integration tests for {@link BlazeJavaTestMethodConfigurationProducer}. */
+/** Integration tests for configuring run configurations from java test methods. */
 @RunWith(JUnit4.class)
 public class BlazeJavaTestMethodConfigurationProducerTest
     extends BlazeRunConfigurationProducerTestCase {
@@ -80,7 +81,7 @@ public class BlazeJavaTestMethodConfigurationProducerTest
 
     // Assert
     assertThat(configurations).hasSize(1);
-    assertThat(fromContext.isProducedBy(BlazeJavaTestMethodConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.isProducedBy(TestContextRunConfigurationProducer.class)).isTrue();
     assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
 
     BlazeCommandRunConfiguration config =
@@ -105,7 +106,7 @@ public class BlazeJavaTestMethodConfigurationProducerTest
         (BlazeCommandRunConfiguration) context.getConfiguration().getConfiguration();
 
     boolean isConfigFromContext =
-        new BlazeJavaTestMethodConfigurationProducer().doIsConfigFromContext(config, context);
+        new TestContextRunConfigurationProducer().doIsConfigFromContext(config, context);
 
     assertThat(isConfigFromContext).isTrue();
   }
@@ -122,7 +123,7 @@ public class BlazeJavaTestMethodConfigurationProducerTest
 
     // Act
     boolean isConfigFromContext =
-        new BlazeJavaTestMethodConfigurationProducer().doIsConfigFromContext(config, context);
+        new TestContextRunConfigurationProducer().doIsConfigFromContext(config, context);
 
     // Assert
     assertThat(isConfigFromContext).isFalse();
@@ -146,7 +147,7 @@ public class BlazeJavaTestMethodConfigurationProducerTest
 
     // Act
     boolean isConfigFromContext =
-        new BlazeJavaTestMethodConfigurationProducer().doIsConfigFromContext(config, context);
+        new TestContextRunConfigurationProducer().doIsConfigFromContext(config, context);
 
     // Assert
     assertThat(isConfigFromContext).isFalse();

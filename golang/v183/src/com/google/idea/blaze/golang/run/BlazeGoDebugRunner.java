@@ -78,11 +78,6 @@ public class BlazeGoDebugRunner extends GoBuildingRunner {
     }
     BlazeGoDummyDebugProfileState blazeState = (BlazeGoDummyDebugProfileState) state;
     GoApplicationRunningState goState = blazeState.toNativeState(environment);
-    goState.setOutputFilePath(blazeState.getExecutable(environment).getPath());
-    String arguments = blazeState.getExecutableArguments();
-    if (arguments != null) {
-      goState.getConfiguration().setParams(arguments);
-    }
     ExecutionResult executionResult = goState.execute(environment.getExecutor(), this);
     return XDebuggerManager.getInstance(environment.getProject())
         .startSession(

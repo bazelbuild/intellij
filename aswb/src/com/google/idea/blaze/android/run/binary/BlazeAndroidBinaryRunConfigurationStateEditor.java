@@ -18,7 +18,6 @@ package com.google.idea.blaze.android.run.binary;
 import static com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandler.MI_NEVER_ASK_AGAIN;
 
 import com.android.tools.idea.run.activity.ActivityLocatorUtils;
-import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProvider.AndroidBinaryLaunchMethodComboEntry;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.blaze.base.ui.IntegerTextField;
@@ -53,7 +52,6 @@ import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -77,7 +75,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
   private JRadioButton launchNothingButton;
   private JRadioButton launchDefaultButton;
   private JRadioButton launchCustomButton;
-  private JComboBox<AndroidBinaryLaunchMethodComboEntry> launchMethodComboBox;
+  private JCheckBox useMobileInstallCheckBox;
   private JCheckBox useWorkProfileIfPresentCheckBox;
   private JCheckBox showLogcatAutomaticallyCheckBox;
   private JLabel userIdLabel;
@@ -136,7 +134,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     launchDefaultButton.addActionListener(listener);
     launchNothingButton.addActionListener(listener);
 
-    launchMethodComboBox.addActionListener(
+    useMobileInstallCheckBox.addActionListener(
         e -> PropertiesComponent.getInstance(project).setValue(MI_NEVER_ASK_AGAIN, true));
 
     useWorkProfileIfPresentCheckBox.addActionListener(listener);
@@ -161,12 +159,9 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
       activityField.getChildComponent().setText(state.getActivityClass());
     }
 
-    for (int i = 0; i < launchMethodComboBox.getItemCount(); ++i) {
-      if (launchMethodComboBox.getItemAt(i).launchMethod.equals(state.getLaunchMethod())) {
-        launchMethodComboBox.setSelectedIndex(i);
-        break;
-      }
-    }
+    useMobileInstallCheckBox.setSelected(
+        AndroidBinaryLaunchMethodsUtils.useMobileInstall(
+            ((BlazeAndroidBinaryRunConfigurationState) genericState).getLaunchMethod()));
     useWorkProfileIfPresentCheckBox.setSelected(state.useWorkProfileIfPresent());
     userIdField.setValue(state.getUserId());
 
@@ -191,8 +186,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
       state.setMode(BlazeAndroidBinaryRunConfigurationState.DO_NOTHING);
     }
     state.setLaunchMethod(
-        ((AndroidBinaryLaunchMethodComboEntry) launchMethodComboBox.getSelectedItem())
-            .launchMethod);
+        AndroidBinaryLaunchMethodsUtils.getLaunchMethod(useMobileInstallCheckBox.isSelected()));
     state.setUseWorkProfileIfPresent(useWorkProfileIfPresentCheckBox.isSelected());
     state.setShowLogcatAutomatically(showLogcatAutomaticallyCheckBox.isSelected());
   }
@@ -211,7 +205,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     launchNothingButton.setEnabled(componentEnabled);
     launchDefaultButton.setEnabled(componentEnabled);
     launchCustomButton.setEnabled(componentEnabled);
-    launchMethodComboBox.setEnabled(componentEnabled);
+    useMobileInstallCheckBox.setEnabled(componentEnabled);
     useWorkProfileIfPresentCheckBox.setEnabled(componentEnabled);
     showLogcatAutomaticallyCheckBox.setEnabled(componentEnabled);
   }
@@ -481,10 +475,11 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
             null,
             0,
             false));
-    launchMethodComboBox =
-        new JComboBox<>(BlazeAndroidBinaryLaunchMethodsProvider.getAllLaunchMethods(project));
+    useMobileInstallCheckBox = new JCheckBox();
+    useMobileInstallCheckBox.setText("Use mobile-install");
+    useMobileInstallCheckBox.setSelected(true);
     panel.add(
-        launchMethodComboBox,
+        useMobileInstallCheckBox,
         new GridConstraints(
             0,
             0,

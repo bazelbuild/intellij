@@ -15,42 +15,16 @@
  */
 package com.google.idea.blaze.java.run;
 
-import com.google.idea.blaze.base.dependencies.TargetInfo;
-import com.google.idea.blaze.base.dependencies.TestSize;
-import com.google.idea.blaze.base.model.primitives.RuleType;
-import com.google.idea.blaze.base.run.SourceToTargetFinder;
-import com.google.idea.blaze.base.run.TestTargetHeuristic;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import java.io.File;
-import java.util.Collection;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Utility methods for finding rules and Android facets. */
 public final class RunUtil {
 
   private RunUtil() {}
-
-  /**
-   * @return The Blaze test rule containing the target test class. In the case of multiple
-   *     containing rules, the first rule sorted alphabetically by label.
-   */
-  @Nullable
-  public static TargetInfo targetForTestClass(PsiClass testClass, @Nullable TestSize testSize) {
-    File testFile = getFileForClass(testClass);
-    if (testFile == null) {
-      return null;
-    }
-    Project project = testClass.getProject();
-    Collection<TargetInfo> targets =
-        SourceToTargetFinder.findTargetsForSourceFile(
-            project, testFile, Optional.of(RuleType.TEST));
-    return TestTargetHeuristic.chooseTestTargetForSourceFile(
-        project, testClass.getContainingFile(), testFile, targets, testSize);
-  }
 
   /**
    * Returns an instance of {@link java.io.File} related to the containing file of the given class.

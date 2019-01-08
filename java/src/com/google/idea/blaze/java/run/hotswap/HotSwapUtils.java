@@ -23,12 +23,11 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 
@@ -52,7 +51,8 @@ public final class HotSwapUtils {
     if (!isDebugging(env) || !enableHotSwapping.getValue()) {
       return false;
     }
-    BlazeCommandRunConfiguration configuration = getConfiguration(env);
+    BlazeCommandRunConfiguration configuration =
+        BlazeCommandRunConfigurationRunner.getConfiguration(env);
     BlazeCommandRunConfigurationCommonState handlerState =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     Kind kind = configuration.getTargetKind();
@@ -65,13 +65,5 @@ public final class HotSwapUtils {
   private static boolean isDebugging(ExecutionEnvironment environment) {
     Executor executor = environment.getExecutor();
     return executor instanceof DefaultDebugExecutor;
-  }
-
-  private static BlazeCommandRunConfiguration getConfiguration(ExecutionEnvironment env) {
-    RunProfile runProfile = env.getRunProfile();
-    if (runProfile instanceof WrappingRunConfiguration) {
-      runProfile = ((WrappingRunConfiguration) runProfile).getPeer();
-    }
-    return (BlazeCommandRunConfiguration) runProfile;
   }
 }

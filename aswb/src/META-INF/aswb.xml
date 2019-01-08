@@ -50,7 +50,6 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.google.idea.blaze.MavenArtifactLocator" interface="com.google.idea.blaze.android.projectsystem.MavenArtifactLocator"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.AndroidBinaryLaunchMethodsProvider" interface="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AndroidTestLaunchMethodsProvider" interface="com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider"/>
   </extensionPoints>
 
@@ -65,7 +64,6 @@
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationHandlerProvider"/>
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.android.run.test.smrunner.BlazeAndroidTestEventsHandler"/>
     <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection$AndroidSdkPlatformProjectViewDefaultValueProvider"/>
-    <AndroidBinaryLaunchMethodsProvider implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryLaunchMethodsProviderImpl"/>
     <AndroidTestLaunchMethodsProvider implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProviderImpl"/>
     <SyncDataExtractor implementation="com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData$Extractor"/>
   </extensions>

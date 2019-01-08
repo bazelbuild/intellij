@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
 import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags.JUnitVersion;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
@@ -56,12 +57,17 @@ public class JUnitTestHeuristic implements TestTargetHeuristic {
     if (!(psiFile instanceof PsiClassOwner)) {
       return null;
     }
-    for (PsiClass psiClass : ((PsiClassOwner) psiFile).getClasses()) {
+    return ReadAction.compute(() -> junitVersion((PsiClassOwner) psiFile));
+  }
+
+  @Nullable
+  private JUnitVersion junitVersion(PsiClassOwner classOwner) {
+    for (PsiClass psiClass : classOwner.getClasses()) {
       if (JUnitUtil.isJUnit4TestClass(psiClass)) {
         return JUnitVersion.JUNIT_4;
       }
     }
-    for (PsiClass psiClass : ((PsiClassOwner) psiFile).getClasses()) {
+    for (PsiClass psiClass : classOwner.getClasses()) {
       if (JUnitUtil.isJUnit3TestClass(psiClass)) {
         return JUnitVersion.JUNIT_3;
       }

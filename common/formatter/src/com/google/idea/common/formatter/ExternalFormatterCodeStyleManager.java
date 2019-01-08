@@ -15,13 +15,13 @@
  */
 package com.google.idea.common.formatter;
 
-import static java.util.Comparator.comparing;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.idea.common.formatter.FormatUtils.FileContentsProvider;
+import com.google.idea.common.formatter.FormatUtils.Replacements;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
@@ -31,10 +31,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.util.IncorrectOperationException;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
@@ -46,51 +43,6 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
 
   private static final Logger logger =
       Logger.getInstance("com.google.idea.common.formatter.ExternalFormatterCodeStyleManager");
-
-  /**
-   * A set of replacements to apply. Enforces dropping replacements that don't actually change
-   * anything, avoiding unnecessary write actions and documents committals.
-   */
-  public static final class Replacements {
-    public static final Replacements EMPTY = new Replacements();
-    private final Map<TextRange, String> replacements = new HashMap<>();
-
-    public void addReplacement(TextRange range, String before, String after) {
-      if (!before.equals(after)) {
-        replacements.put(range, after);
-      }
-    }
-  }
-
-  /**
-   * Provides file contents asynchronously, providing information about whether there have been any
-   * changes.
-   */
-  public static final class FileContentsProvider {
-    @Nullable
-    public static FileContentsProvider fromPsiFile(PsiFile file) {
-      String text = getCurrentText(file);
-      return text == null ? null : new FileContentsProvider(file, text);
-    }
-
-    private final String initialFileContents;
-    private final PsiFile file;
-
-    private FileContentsProvider(PsiFile file, String initialFileContents) {
-      this.initialFileContents = initialFileContents;
-      this.file = file;
-    }
-
-    @Nullable
-    public String getFileContentsIfUnchanged() {
-      String text = getCurrentText(file);
-      return initialFileContents.equals(text) ? text : null;
-    }
-
-    public String getInitialFileContents() {
-      return initialFileContents;
-    }
-  }
 
   public ExternalFormatterCodeStyleManager(CodeStyleManager delegate) {
     super(delegate);
@@ -165,13 +117,13 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
     if (replacements.replacements.isEmpty()) {
       return;
     }
-    TreeMap<TextRange, String> sorted = new TreeMap<>(comparing(TextRange::getStartOffset));
-    sorted.putAll(replacements.replacements);
-    runWriteActionIfUnchanged(
+    FormatUtils.runWriteActionIfUnchanged(
+        getProject(),
         document,
         originalText,
         () -> {
-          for (Entry<TextRange, String> entry : sorted.descendingMap().entrySet()) {
+          for (Entry<TextRange, String> entry :
+              replacements.replacements.descendingMap().entrySet()) {
             document.replaceString(
                 entry.getKey().getStartOffset(), entry.getKey().getEndOffset(), entry.getValue());
           }
@@ -183,17 +135,9 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
       FileContentsProvider fileContents, ListenableFuture<Replacements> future) {
     future.addListener(
         () -> {
-          String text = fileContents.getFileContentsIfUnchanged();
-          if (text == null) {
-            return;
-          }
-          Document document = getDocument(fileContents.file);
-          if (!canApplyChanges(document)) {
-            return;
-          }
           Replacements replacements = getFormattingFuture(future);
           if (replacements != null) {
-            performReplacements(text, document, replacements);
+            FormatUtils.performReplacements(fileContents, replacements);
           }
         },
         MoreExecutors.directExecutor());
@@ -207,14 +151,15 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
             return;
           }
           Document document = getDocument(fileContents.file);
-          if (!canApplyChanges(document)) {
+          if (!FormatUtils.canApplyChanges(getProject(), document)) {
             return;
           }
           String formattedFile = getFormattingFuture(future);
           if (formattedFile == null || formattedFile.equals(text)) {
             return;
           }
-          runWriteActionIfUnchanged(
+          FormatUtils.runWriteActionIfUnchanged(
+              getProject(),
               document,
               text,
               () -> {
@@ -225,37 +170,13 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
         MoreExecutors.directExecutor());
   }
 
-  /** Calls the runnable inside a write action iff the document's text hasn't changed. */
-  private void runWriteActionIfUnchanged(Document document, String inputText, Runnable action) {
-    WriteCommandAction.runWriteCommandAction(
-        getProject(),
-        () -> {
-          if (inputText.equals(document.getText())) {
-            action.run();
-          }
-        });
-  }
-
-  /** Checks whether the {@link Document} is still writable. */
-  private boolean canApplyChanges(@Nullable Document document) {
-    return document != null
-        && !PsiDocumentManager.getInstance(getProject()).isDocumentBlockedByPsi(document);
-  }
-
   @Nullable
   private static Document getDocument(PsiFile file) {
     return PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
   }
 
   @Nullable
-  private static String getCurrentText(PsiFile file) {
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
-    Document document = documentManager.getDocument(file);
-    return document == null ? null : document.getText();
-  }
-
-  @Nullable
-  private static <V> V getFormattingFuture(ListenableFuture<V> future) {
+  protected static <V> V getFormattingFuture(ListenableFuture<V> future) {
     try {
       return future.get();
     } catch (InterruptedException e) {

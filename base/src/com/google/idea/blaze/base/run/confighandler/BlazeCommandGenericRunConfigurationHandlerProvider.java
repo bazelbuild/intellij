@@ -32,8 +32,8 @@ public class BlazeCommandGenericRunConfigurationHandlerProvider
   }
 
   @Override
-  public boolean canHandleKind(@Nullable Kind kind) {
-    return true;
+  public boolean canHandleKind(TargetState state, @Nullable Kind kind) {
+    return !state.equals(TargetState.PENDING);
   }
 
   @Override

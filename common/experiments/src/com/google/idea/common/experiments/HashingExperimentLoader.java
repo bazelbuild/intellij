@@ -15,11 +15,12 @@
  */
 package com.google.idea.common.experiments;
 
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.idea.common.experiments.ExperimentsUtil.hashExperimentName;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
-import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * An experiment loader that handles hashing the experiment names, for sources that store the data
@@ -27,26 +28,37 @@ import java.util.stream.Collectors;
  */
 abstract class HashingExperimentLoader implements ExperimentLoader {
 
-  private volatile ImmutableMap<String, String> previousUnhashedExperiments = null;
-  private volatile Map<String, String> hashedExperiments = null;
+  private static final class ExperimentCache {
+    private final ImmutableMap<String, String> previousUnhashedExperiments;
+    private final ImmutableMap<String, String> hashedExperiments;
+
+    private ExperimentCache(
+        ImmutableMap<String, String> previousUnhashedExperiments,
+        ImmutableMap<String, String> hashedExperiments) {
+      this.previousUnhashedExperiments = previousUnhashedExperiments;
+      this.hashedExperiments = hashedExperiments;
+    }
+  }
+
+  @Nullable private volatile ExperimentCache experimentCache;
 
   @Override
   public Map<String, String> getExperiments() {
     ImmutableMap<String, String> unhashedExperiments = getUnhashedExperiments();
-    // use object equality and avoid all locking beyond that associated with 'volatile' -- we don't
-    // care if multiple threads run this calculation initially, as long as all subsequent calls
-    // don't have to
-    if (previousUnhashedExperiments == unhashedExperiments) {
-      return hashedExperiments;
+    ExperimentCache cache = experimentCache;
+    if (cache != null && cache.previousUnhashedExperiments.equals(unhashedExperiments)) {
+      return cache.hashedExperiments;
     }
-    previousUnhashedExperiments = unhashedExperiments;
-    hashedExperiments = hashExperiments(unhashedExperiments);
+    // No synchronization besides 'volatile': we want callers to use the cache when experiments
+    // haven't changed, but don't care if multiple threads compute hashes when they do change.
+    ImmutableMap<String, String> hashedExperiments = hashExperiments(unhashedExperiments);
+    experimentCache = new ExperimentCache(unhashedExperiments, hashedExperiments);
     return hashedExperiments;
   }
 
-  private static Map<String, String> hashExperiments(Map<String, String> unhashed) {
+  private static ImmutableMap<String, String> hashExperiments(Map<String, String> unhashed) {
     return unhashed.entrySet().stream()
-        .collect(Collectors.toMap(e -> hashExperimentName(e.getKey()), Map.Entry::getValue));
+        .collect(toImmutableMap(e -> hashExperimentName(e.getKey()), Map.Entry::getValue));
   }
 
   abstract ImmutableMap<String, String> getUnhashedExperiments();

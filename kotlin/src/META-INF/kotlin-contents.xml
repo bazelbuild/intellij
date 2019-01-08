@@ -20,11 +20,10 @@
     <JavaLikeLanguage implementation="com.google.idea.blaze.kotlin.KotlinJavaLikeLanguage"/>
     <JavaSyncAugmenter implementation="com.google.idea.blaze.kotlin.sync.importer.KotlinSyncAugmenter"/>
     <SyncStatusContributor implementation="com.google.idea.blaze.kotlin.syncstatus.KotlinSyncStatusContributor"/>
+    <TestContextProvider implementation="com.google.idea.blaze.kotlin.run.producers.KotlinTestContextProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.kotlin.run.producers.BlazeKotlinTestClassConfigurationProducer"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.kotlin.run.producers.BlazeKotlinRunConfigurationProducer"/>
   </extensions>

@@ -20,11 +20,11 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
+import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import java.io.File;
 import javax.annotation.Nullable;
@@ -62,12 +62,7 @@ public class CoverageUtils {
 
   @Nullable
   private static BlazeCommandRunConfiguration toBlazeConfig(RunProfile profile) {
-    if (profile instanceof WrappingRunConfiguration) {
-      profile = ((WrappingRunConfiguration) profile).getPeer();
-    }
-    return profile instanceof BlazeCommandRunConfiguration
-        ? (BlazeCommandRunConfiguration) profile
-        : null;
+    return BlazeCommandRunConfigurationRunner.getBlazeConfig(profile);
   }
 
   private static final ImmutableList<String> BLAZE_FLAGS =

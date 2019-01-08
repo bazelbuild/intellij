@@ -16,14 +16,17 @@
 package com.google.idea.blaze.golang.resolve;
 
 import com.goide.psi.GoFile;
-import com.goide.psi.GoPackageClause;
 import com.goide.psi.impl.GoPackage;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Multimap;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.ideinfo.GoIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -34,7 +37,9 @@ import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManage
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
+import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.golang.GoBlazeRules.RuleTypes;
@@ -71,6 +76,8 @@ import javax.annotation.Nullable;
  * Exactly one {@link BlazeGoPackage} per go rule.
  */
 public class BlazeGoPackage extends GoPackageCompatAdapter {
+  private static final String GO_LIBRARY_TO_TEST_MAP_KEY = "BlazeGoLibraryToTestMap";
+
   private final String importPath;
   private final Label label;
   private final Collection<File> files;
@@ -85,7 +92,7 @@ public class BlazeGoPackage extends GoPackageCompatAdapter {
         importPath,
         target.getKind().getRuleType().equals(RuleType.TEST),
         replaceProtoLibrary(project, projectData, target.getKey()).getLabel(),
-        getSourceFiles(target, projectData));
+        getSourceFiles(target, project, projectData));
   }
 
   static BlazeGoPackage create(
@@ -117,7 +124,8 @@ public class BlazeGoPackage extends GoPackageCompatAdapter {
         .orElse(targetKey);
   }
 
-  public static Set<File> getSourceFiles(TargetIdeInfo target, BlazeProjectData projectData) {
+  public static Set<File> getSourceFiles(
+      TargetIdeInfo target, Project project, BlazeProjectData projectData) {
     if (target.getGoIdeInfo() == null) {
       return ImmutableSet.of();
     }
@@ -125,25 +133,33 @@ public class BlazeGoPackage extends GoPackageCompatAdapter {
     if (kind == RuleTypes.GO_WRAP_CC.getKind()) {
       return ImmutableSet.of(getWrapCcGoFile(target, projectData.getBlazeInfo()));
     }
-    if (kind.getRuleType() == RuleType.TEST) {
-      // The go_test package also contains all the sources of the associated library.
-      // Even though it has a different (unusable) import path from the library package.
-      Label libraryLabel = target.getGoIdeInfo().getLibraryLabel();
-      TargetIdeInfo library =
-          projectData.getTargetMap().get(TargetKey.forPlainTarget(libraryLabel));
-      if (library != null
-          && !Objects.equals(library.getKey(), target.getKey())
-          && library.getGoIdeInfo() != null) {
-        return Stream.concat(
-                target.getGoIdeInfo().getSources().stream(),
-                library.getGoIdeInfo().getSources().stream())
-            .map(projectData.getArtifactLocationDecoder()::decode)
-            .collect(Collectors.toSet());
-      }
-    }
-    return target.getGoIdeInfo().getSources().stream()
+    Multimap<Label, GoIdeInfo> libraryToTestMap =
+        Preconditions.checkNotNull(getLibraryToTestMap(project));
+    return Stream.concat(
+            Stream.of(target.getGoIdeInfo()),
+            libraryToTestMap.get(target.getKey().getLabel()).stream())
+        .map(GoIdeInfo::getSources)
+        .flatMap(Collection::stream)
         .map(projectData.getArtifactLocationDecoder()::decode)
         .collect(Collectors.toSet());
+  }
+
+  @Nullable
+  private static Multimap<Label, GoIdeInfo> getLibraryToTestMap(Project project) {
+    return SyncCache.getInstance(project)
+        .get(GO_LIBRARY_TO_TEST_MAP_KEY, (p, projectData) -> buildLibraryToTestMap(projectData));
+  }
+
+  private static Multimap<Label, GoIdeInfo> buildLibraryToTestMap(BlazeProjectData projectData) {
+    TargetMap targetMap = projectData.getTargetMap();
+    ImmutableMultimap.Builder<Label, GoIdeInfo> builder = ImmutableMultimap.builder();
+    targetMap.targets().stream()
+        .filter(t -> t.getKind().getLanguageClass() == LanguageClass.GO)
+        .filter(t -> t.getKind().getRuleType() == RuleType.TEST)
+        .filter(t -> t.getGoIdeInfo() != null)
+        .filter(t -> t.getGoIdeInfo().getLibraryLabel() != null)
+        .forEach(t -> builder.put(t.getGoIdeInfo().getLibraryLabel(), t.getGoIdeInfo()));
+    return builder.build();
   }
 
   private static File getWrapCcGoFile(TargetIdeInfo target, BlazeInfo blazeInfo) {
@@ -190,9 +206,8 @@ public class BlazeGoPackage extends GoPackageCompatAdapter {
         .map(psiManager::findFile)
         .filter(GoFile.class::isInstance)
         .map(GoFile.class::cast)
-        .map(GoFile::getPackage) // GoFile::getPackageName may be null if not indexed
+        .map(GoFile::getCanonicalPackageName) // strips _test suffix from test packages
         .filter(Objects::nonNull)
-        .map(GoPackageClause::getName)
         .findFirst() // short circuit
         .orElseGet(() -> importPath.substring(importPath.lastIndexOf('/') + 1));
   }
@@ -302,6 +317,7 @@ public class BlazeGoPackage extends GoPackageCompatAdapter {
    *   <li>two resolves to directory one/two/
    * </ol>
    */
+  @Nullable
   PsiElement[] getImportReferences() {
     if (cachedImportReferences == null) {
       PsiElement navigable = getNavigableElement();

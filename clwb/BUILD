@@ -2,8 +2,7 @@
 # Description: Builds clwb
 #
 
-licenses(["notice"])  # Apache 2.0
-
+load("//:version.bzl", "VERSION")
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
@@ -16,11 +15,12 @@ load(
     "//build_defs:intellij_plugin_debug_target.bzl",
     "intellij_plugin_debug_target",
 )
-load("//:version.bzl", "VERSION")
 load(
     "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
 )
+
+licenses(["notice"])  # Apache 2.0
 
 merged_plugin_xml(
     name = "merged_plugin_xml_common",
@@ -123,6 +123,7 @@ intellij_unit_test_suite(
     test_package_root = "com.google.idea.blaze.clwb",
     deps = [
         ":clwb_lib",
+        "//base",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "@junit//jar",

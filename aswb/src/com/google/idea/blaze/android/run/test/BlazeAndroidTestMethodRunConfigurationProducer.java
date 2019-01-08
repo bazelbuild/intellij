@@ -20,10 +20,10 @@ import com.google.common.base.Strings;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
+import com.google.idea.blaze.base.run.TestTargetHeuristic;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.java.AndroidBlazeRules;
-import com.google.idea.blaze.java.run.RunUtil;
 import com.google.idea.blaze.java.run.producers.JUnitConfigurationUtil;
 import com.google.idea.blaze.java.run.producers.ProducerUtils;
 import com.intellij.execution.Location;
@@ -74,7 +74,7 @@ public class BlazeAndroidTestMethodRunConfigurationProducer
       return false;
     }
 
-    TargetInfo target = RunUtil.targetForTestClass(containingClass, null);
+    TargetInfo target = TestTargetHeuristic.testTargetForPsiElement(containingClass, null);
     if (target == null) {
       return false;
     }

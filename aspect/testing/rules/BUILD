@@ -18,6 +18,7 @@ java_proto_library(
 
 java_binary(
     name = "IntellijAspectTestFixtureBuilder",
+    testonly = True,
     srcs = ["src/com/google/idea/blaze/aspect/IntellijAspectTestFixtureBuilder.java"],
     visibility = [
         "//aspect/testing/tests:__subpackages__",

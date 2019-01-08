@@ -55,6 +55,8 @@
 
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerVersionChecker"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>
+    <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerWrapperProvider"
+                        serviceImplementation="com.google.idea.blaze.cpp.CompilerWrapperProviderImpl"/>
     <projectService serviceImplementation="com.google.idea.blaze.cpp.BulkSymbolTableBuildingChangeListener"/>
   </extensions>
 </idea-plugin>

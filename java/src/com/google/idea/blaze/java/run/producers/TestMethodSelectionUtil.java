@@ -112,7 +112,8 @@ public class TestMethodSelectionUtil {
     for (PsiElement element : elements) {
       if (element instanceof PsiMethod) {
         PsiMethod method = (PsiMethod) element;
-        if (JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(method), /* checkAbstract */ false)) {
+        if (JUnitUtil.isTestMethod(
+            PsiLocation.fromPsiElement(method), /* checkAbstract= */ false)) {
           methods.add(method);
         } else if (allMustMatch) {
           return null;

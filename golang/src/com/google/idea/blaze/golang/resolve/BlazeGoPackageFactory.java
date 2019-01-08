@@ -19,6 +19,10 @@ import com.goide.project.GoPackageFactory;
 import com.goide.psi.GoFile;
 import com.goide.psi.impl.GoPackage;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -49,21 +53,33 @@ class BlazeGoPackageFactory implements GoPackageFactory {
   @Nullable
   static ConcurrentMap<File, String> getFileToImportPathMap(Project project) {
     return SyncCache.getInstance(project)
-        .get(
-            BlazeGoPackageFactory.class,
-            (p, pd) -> {
-              ConcurrentMap<File, String> map = new ConcurrentHashMap<>();
-              for (TargetIdeInfo target : pd.getTargetMap().targets()) {
-                if (target.getGoIdeInfo() == null
-                    || target.getGoIdeInfo().getImportPath() == null) {
-                  continue;
-                }
-                for (File file : BlazeGoPackage.getSourceFiles(target, pd)) {
-                  map.putIfAbsent(file, target.getGoIdeInfo().getImportPath());
-                }
-              }
-              return map;
-            });
+        .get(BlazeGoPackageFactory.class, BlazeGoPackageFactory::buildFileToImportPathMap);
+  }
+
+  private static ConcurrentMap<File, String> buildFileToImportPathMap(
+      Project project, BlazeProjectData projectData) {
+    TargetMap targetMap = projectData.getTargetMap();
+    ConcurrentMap<File, String> map = new ConcurrentHashMap<>();
+    for (TargetIdeInfo target : targetMap.targets()) {
+      if (target.getGoIdeInfo() == null) {
+        continue;
+      }
+      Label libraryLabel = target.getGoIdeInfo().getLibraryLabel();
+      if (libraryLabel != null) {
+        TargetIdeInfo libraryTarget = targetMap.get(TargetKey.forPlainTarget(libraryLabel));
+        if (libraryTarget != null && libraryTarget.getGoIdeInfo() != null) {
+          target = libraryTarget;
+        }
+      }
+      String importPath = target.getGoIdeInfo().getImportPath();
+      if (importPath == null) {
+        continue;
+      }
+      for (File file : BlazeGoPackage.getSourceFiles(target, project, projectData)) {
+        map.putIfAbsent(file, importPath);
+      }
+    }
+    return map;
   }
 
   @Nullable

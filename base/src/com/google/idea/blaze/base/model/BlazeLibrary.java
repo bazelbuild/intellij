@@ -75,7 +75,9 @@ public abstract class BlazeLibrary implements ProtoWrapper<ProjectData.BlazeLibr
   protected static String pathToUrl(File path) {
     String name = path.getName();
     boolean isJarFile =
-        FileUtilRt.extensionEquals(name, "jar") || FileUtilRt.extensionEquals(name, "zip");
+        FileUtilRt.extensionEquals(name, "jar")
+            || FileUtilRt.extensionEquals(name, "srcjar")
+            || FileUtilRt.extensionEquals(name, "zip");
     // .jar files require an URL with "jar" protocol.
     String protocol =
         isJarFile

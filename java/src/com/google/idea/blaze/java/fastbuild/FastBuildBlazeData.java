@@ -153,22 +153,6 @@ public abstract class FastBuildBlazeData {
 
     public abstract ImmutableList<String> jvmFlags();
 
-    static JavaInfo create(
-        Collection<ArtifactLocation> sources,
-        @Nullable String testClass,
-        @Nullable String testSize,
-        Collection<String> annotationProcessorClassNames,
-        Collection<ArtifactLocation> annotationProcessorClassPath,
-        Collection<String> jvmFlags) {
-      return new AutoValue_FastBuildBlazeData_JavaInfo(
-          ImmutableSet.copyOf(sources),
-          Optional.ofNullable(testClass),
-          Optional.ofNullable(testSize),
-          ImmutableList.copyOf(annotationProcessorClassNames),
-          ImmutableList.copyOf(annotationProcessorClassPath),
-          ImmutableList.copyOf(jvmFlags));
-    }
-
     public static JavaInfo fromProto(FastBuildInfo.JavaInfo proto) {
       Set<ArtifactLocation> sources =
           proto.getSourcesList().stream().map(ArtifactLocation::fromProto).collect(toSet());
@@ -176,13 +160,43 @@ public abstract class FastBuildBlazeData {
           proto.getAnnotationProcessorClasspathList().stream()
               .map(ArtifactLocation::fromProto)
               .collect(toSet());
-      return create(
-          sources,
-          emptyToNull(proto.getTestClass()),
-          emptyToNull(proto.getTestSize()),
-          proto.getAnnotationProcessorClassNamesList(),
-          annotationProcessorClasspath,
-          proto.getJvmFlagsList());
+      return builder()
+          .setSources(sources)
+          .setTestClass(emptyToNull(proto.getTestClass()))
+          .setTestSize(emptyToNull(proto.getTestSize()))
+          .setAnnotationProcessorClassNames(proto.getAnnotationProcessorClassNamesList())
+          .setAnnotationProcessorClasspath(annotationProcessorClasspath)
+          .setJvmFlags(proto.getJvmFlagsList())
+          .build();
+    }
+
+    public static Builder builder() {
+      return new AutoValue_FastBuildBlazeData_JavaInfo.Builder()
+          .setSources(ImmutableList.of())
+          .setAnnotationProcessorClassNames(ImmutableList.of())
+          .setAnnotationProcessorClasspath(ImmutableList.of())
+          .setJvmFlags(ImmutableList.of());
+    }
+
+    /** A builder for {@link JavaInfo} objects. */
+    @AutoValue.Builder
+    public abstract static class Builder {
+
+      public abstract Builder setSources(Collection<ArtifactLocation> sources);
+
+      public abstract Builder setTestClass(@Nullable String testClass);
+
+      public abstract Builder setTestSize(@Nullable String testSize);
+
+      public abstract Builder setAnnotationProcessorClassNames(
+          Collection<String> annotationProcessorClassNames);
+
+      public abstract Builder setAnnotationProcessorClasspath(
+          Collection<ArtifactLocation> annotationProcessorClasspath);
+
+      public abstract Builder setJvmFlags(Collection<String> jvmFlags);
+
+      public abstract JavaInfo build();
     }
   }
 

@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
+import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider.TargetState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.sdkcompat.run.RunManagerCompat;
@@ -166,7 +167,7 @@ public class TestRecorderBlazeCommandRunConfigurationTest extends BlazeIntegrati
   private class MockBlazeAndroidBinaryRunConfigurationHandlerProvider
       extends BlazeAndroidBinaryRunConfigurationHandlerProvider {
     @Override
-    public boolean canHandleKind(Kind kind) {
+    public boolean canHandleKind(TargetState state, @Nullable Kind kind) {
       return true;
     }
 

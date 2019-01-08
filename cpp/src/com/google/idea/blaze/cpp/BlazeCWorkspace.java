@@ -31,6 +31,8 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceModifiableModelAdapter;
+import com.google.idea.sdkcompat.cidr.OCWorkspaceModifiableModelAdapter.PerFileCompilerOpts;
+import com.google.idea.sdkcompat.cidr.OCWorkspaceModifiableModelAdapter.PerLanguageCompilerOpts;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,12 +40,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
 import com.jetbrains.cidr.lang.OCLanguageKind;
-import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
 import com.jetbrains.cidr.lang.toolchains.CidrSwitchBuilder;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
@@ -54,9 +54,10 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 /** Main entry point for C/CPP configuration data. */
 public final class BlazeCWorkspace implements ProjectComponent {
@@ -120,10 +121,12 @@ public final class BlazeCWorkspace implements ProjectComponent {
                   indicator.setIndeterminate(false);
                   indicator.setText("Updating Configurations...");
                   indicator.setFraction(0.0);
+                  NullableFunction<File, VirtualFile> fileMapper = new ConcurrentFileMapper();
                   OCWorkspaceImpl.ModifiableModel model =
                       calculateConfigurations(
-                          blazeProjectData, workspaceRoot, newResult, indicator);
-                  OCWorkspaceModifiableModelAdapter.commit(model, SERIALIZATION_VERSION);
+                          blazeProjectData, workspaceRoot, newResult, indicator, fileMapper);
+                  OCWorkspaceModifiableModelAdapter.commit(
+                      model, SERIALIZATION_VERSION, toolEnvironment, fileMapper);
                   logger.info(
                       String.format(
                           "Update configurations took %dms", s.elapsed(TimeUnit.MILLISECONDS)));
@@ -138,11 +141,11 @@ public final class BlazeCWorkspace implements ProjectComponent {
       BlazeProjectData blazeProjectData,
       WorkspaceRoot workspaceRoot,
       BlazeConfigurationResolverResult newResult,
-      ProgressIndicator indicator) {
-    NullableFunction<File, VirtualFile> fileMapper = OCWorkspaceImpl.createFileMapper();
+      ProgressIndicator indicator,
+      NullableFunction<File, VirtualFile> fileMapper) {
 
     OCWorkspaceImpl.ModifiableModel workspaceModifiable =
-        OCWorkspaceImpl.getInstanceImpl(project).getModifiableModel();
+        OCWorkspaceModifiableModelAdapter.getClearedModifiableModel(project);
     ImmutableList<BlazeResolveConfiguration> configurations = newResult.getAllConfigurations();
     ExecutionRootPathResolver executionRootPathResolver =
         new ExecutionRootPathResolver(
@@ -152,14 +155,13 @@ public final class BlazeCWorkspace implements ProjectComponent {
             blazeProjectData.getWorkspacePathResolver());
 
     int progress = 0;
+
     for (BlazeResolveConfiguration resolveConfiguration : configurations) {
       indicator.setText2(resolveConfiguration.getDisplayName(true));
       indicator.setFraction(((double) progress) / configurations.size());
       BlazeCompilerSettings compilerSettings = resolveConfiguration.getCompilerSettings();
-      Map<OCLanguageKind, Trinity<OCCompilerKind, File, CidrCompilerSwitches>> configLanguages =
-          new HashMap<>();
-      Map<VirtualFile, Pair<OCLanguageKind, CidrCompilerSwitches>> configSourceFiles =
-          new HashMap<>();
+      Map<OCLanguageKind, PerLanguageCompilerOpts> configLanguages = new HashMap<>();
+      Map<VirtualFile, PerFileCompilerOpts> configSourceFiles = new HashMap<>();
       for (TargetKey targetKey : resolveConfiguration.getTargets()) {
         TargetIdeInfo targetIdeInfo = blazeProjectData.getTargetMap().get(targetKey);
         if (targetIdeInfo == null || targetIdeInfo.getcIdeInfo() == null) {
@@ -181,15 +183,15 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 .collect(toImmutableList());
 
         // transitiveDefines are sourced from a target's (and transitive deps) "defines" attribute
-        List<String> transitiveDefineOptions =
+        ImmutableList<String> transitiveDefineOptions =
             targetIdeInfo.getcIdeInfo().getTransitiveDefines().stream()
                 .map(s -> "-D" + s)
-                .collect(Collectors.toList());
+                .collect(toImmutableList());
 
         // localIncludes are sourced from -I options in a target's "copts" attribute
         // transitiveIncludeDirectories are sourced from CcSkylarkApiProvider.include_directories
         // [see CcCompilationContextInfo::getIncludeDirs]
-        List<String> iOptionIncludeDirectories =
+        ImmutableList<String> iOptionIncludeDirectories =
             Stream.concat(
                     localIncludes.stream(),
                     targetIdeInfo.getcIdeInfo().getTransitiveIncludeDirectories().stream())
@@ -198,30 +200,30 @@ public final class BlazeCWorkspace implements ProjectComponent {
                         executionRootPathResolver.resolveToIncludeDirectories(executionRootPath)
                             .stream())
                 .map(file -> "-I" + file.getAbsolutePath())
-                .collect(Collectors.toList());
+                .collect(toImmutableList());
 
         // transitiveQuoteIncludeDirectories are sourced from
         // CcSkylarkApiProvider.quote_include_directories
         // [see CcCompilationContextInfo::getQuoteIncludeDirs]
-        List<String> iquoteOptionIncludeDirectories =
+        ImmutableList<String> iquoteOptionIncludeDirectories =
             targetIdeInfo.getcIdeInfo().getTransitiveQuoteIncludeDirectories().stream()
                 .flatMap(
                     executionRootPath ->
                         executionRootPathResolver.resolveToIncludeDirectories(executionRootPath)
                             .stream())
                 .map(file -> "-iquote" + file.getAbsolutePath())
-                .collect(Collectors.toList());
+                .collect(toImmutableList());
         // transitiveSystemIncludeDirectories are sourced from
         // CcSkylarkApiProvider.system_include_directories
         // [see CcCompilationContextInfo::getSystemIncludeDirs]
-        List<String> isystemOptionIncludeDirectories =
+        ImmutableList<String> isystemOptionIncludeDirectories =
             targetIdeInfo.getcIdeInfo().getTransitiveSystemIncludeDirectories().stream()
                 .flatMap(
                     executionRootPath ->
                         executionRootPathResolver.resolveToIncludeDirectories(executionRootPath)
                             .stream())
                 .map(file -> "-isystem" + file.getAbsolutePath())
-                .collect(Collectors.toList());
+                .collect(toImmutableList());
 
         for (VirtualFile vf : resolveConfiguration.getSources(targetKey)) {
           OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(vf);
@@ -238,7 +240,9 @@ public final class BlazeCWorkspace implements ProjectComponent {
           fileSpecificSwitchBuilder.addAllRaw(isystemOptionIncludeDirectories);
           fileSpecificSwitchBuilder.addAllRaw(plainLocalCopts);
           fileSpecificSwitchBuilder.addAllRaw(transitiveDefineOptions);
-          configSourceFiles.put(vf, Pair.create(kind, fileSpecificSwitchBuilder.build()));
+          PerFileCompilerOpts perFileCompilerOpts =
+              new PerFileCompilerOpts(kind, fileSpecificSwitchBuilder.build());
+          configSourceFiles.put(vf, perFileCompilerOpts);
           if (!configLanguages.containsKey(kind)) {
             addConfigLanguageSwitches(
                 configLanguages, compilerSettings,
@@ -273,12 +277,11 @@ public final class BlazeCWorkspace implements ProjectComponent {
           fileMapper);
       progress++;
     }
-
     return workspaceModifiable;
   }
 
   private void addConfigLanguageSwitches(
-      Map<OCLanguageKind, Trinity<OCCompilerKind, File, CidrCompilerSwitches>> configLanguages,
+      Map<OCLanguageKind, PerLanguageCompilerOpts> configLanguages,
       BlazeCompilerSettings compilerSettings,
       List<String> additionalSwitches,
       OCLanguageKind language) {
@@ -288,7 +291,9 @@ public final class BlazeCWorkspace implements ProjectComponent {
     ImmutableList<String> switches = compilerSettings.getCompilerSwitches(language, null);
     switchBuilder.addAllRaw(switches);
     switchBuilder.addAllRaw(additionalSwitches);
-    configLanguages.put(language, Trinity.create(compilerKind, executable, switchBuilder.build()));
+    PerLanguageCompilerOpts perLanguageCompilerOpts =
+        new PerLanguageCompilerOpts(compilerKind, executable, switchBuilder.build());
+    configLanguages.put(language, perLanguageCompilerOpts);
   }
 
   private void incModificationTrackers() {
@@ -318,5 +323,16 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // "-include cstddef" results in "clang: error: no such file or directory: 'cstddef'"
         .filter(opt -> !opt.startsWith("-include "))
         .collect(toImmutableList());
+  }
+
+  private static class ConcurrentFileMapper implements NullableFunction<File, VirtualFile> {
+    private static final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+    private static final ConcurrentHashMap<File, VirtualFile> cache = new ConcurrentHashMap<>();
+
+    @Nullable
+    @Override
+    public VirtualFile fun(File file) {
+      return cache.computeIfAbsent(file, localFileSystem::findFileByIoFile);
+    }
   }
 }

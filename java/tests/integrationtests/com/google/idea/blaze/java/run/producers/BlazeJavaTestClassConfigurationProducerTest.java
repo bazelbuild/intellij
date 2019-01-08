@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.producer.BlazeRunConfigurationProducerTestCase;
+import com.google.idea.blaze.base.run.producers.TestContextRunConfigurationProducer;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -41,7 +42,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Integration tests for {@link BlazeJavaTestClassConfigurationProducer}. */
+/** Integration tests for producing run configurations from java test classes. */
 @RunWith(JUnit4.class)
 public class BlazeJavaTestClassConfigurationProducerTest
     extends BlazeRunConfigurationProducerTestCase {
@@ -78,7 +79,7 @@ public class BlazeJavaTestClassConfigurationProducerTest
     assertThat(configurations).hasSize(1);
 
     ConfigurationFromContext fromContext = configurations.get(0);
-    assertThat(fromContext.isProducedBy(BlazeJavaTestClassConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.isProducedBy(TestContextRunConfigurationProducer.class)).isTrue();
     assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
 
     BlazeCommandRunConfiguration config =
@@ -125,7 +126,7 @@ public class BlazeJavaTestClassConfigurationProducerTest
     assertThat(configurations).hasSize(1);
 
     ConfigurationFromContext fromContext = configurations.get(0);
-    assertThat(fromContext.isProducedBy(BlazeJavaTestClassConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.isProducedBy(TestContextRunConfigurationProducer.class)).isTrue();
     assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
 
     BlazeCommandRunConfiguration config =
@@ -176,7 +177,7 @@ public class BlazeJavaTestClassConfigurationProducerTest
     assertThat(configurations).hasSize(1);
 
     ConfigurationFromContext fromContext = configurations.get(0);
-    assertThat(fromContext.isProducedBy(BlazeJavaTestClassConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.isProducedBy(TestContextRunConfigurationProducer.class)).isTrue();
     assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
 
     BlazeCommandRunConfiguration config =
@@ -220,7 +221,7 @@ public class BlazeJavaTestClassConfigurationProducerTest
         (BlazeCommandRunConfiguration) context.getConfiguration().getConfiguration();
     assertThat(config).isNotNull();
 
-    assertThat(new BlazeJavaTestClassConfigurationProducer().doIsConfigFromContext(config, context))
+    assertThat(new TestContextRunConfigurationProducer().doIsConfigFromContext(config, context))
         .isTrue();
   }
 
@@ -257,7 +258,7 @@ public class BlazeJavaTestClassConfigurationProducerTest
     // modify the label, and check that is enough for the producer to class it as different.
     config.setTarget(Label.create("//java/com/google/test:TestClass2"));
 
-    assertThat(new BlazeJavaTestClassConfigurationProducer().doIsConfigFromContext(config, context))
+    assertThat(new TestContextRunConfigurationProducer().doIsConfigFromContext(config, context))
         .isFalse();
   }
 
@@ -298,7 +299,7 @@ public class BlazeJavaTestClassConfigurationProducerTest
     flags.add(BlazeFlags.TEST_FILTER + "=com.google.test.OtherTestClass#");
     handlerState.getBlazeFlagsState().setRawFlags(flags);
 
-    assertThat(new BlazeJavaTestClassConfigurationProducer().doIsConfigFromContext(config, context))
+    assertThat(new TestContextRunConfigurationProducer().doIsConfigFromContext(config, context))
         .isFalse();
   }
 }

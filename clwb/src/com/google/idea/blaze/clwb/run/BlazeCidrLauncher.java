@@ -44,7 +44,8 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.cpp.CppBlazeRules;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.sdkcompat.cidr.CidrLauncherCompat;
+import com.google.idea.sdkcompat.clion.CPPToolSetAdapter;
+import com.google.idea.sdkcompat.clion.CidrGoogleTestUtilAdapter;
 import com.google.idea.sdkcompat.clion.ToolchainUtils;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
@@ -73,8 +74,8 @@ import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemoteDebugParameters;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemotePathMapping;
+import com.jetbrains.cidr.execution.testing.CidrLauncher;
 import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestConsoleProperties;
-import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestUtil;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment.PrepareFor;
 import java.io.File;
 import java.util.List;
@@ -85,7 +86,7 @@ import javax.annotation.Nullable;
  * Handles running/debugging cc_test and cc_binary targets in CLion. Sets up gdb when debugging, and
  * uses the Google Test infrastructure for presenting test results.
  */
-public final class BlazeCidrLauncher extends CidrLauncherCompat {
+public final class BlazeCidrLauncher extends CidrLauncher {
 
   private final Project project;
   private final BlazeCommandRunConfiguration configuration;
@@ -256,6 +257,7 @@ public final class BlazeCidrLauncher extends CidrLauncherCompat {
 
       commandLine.setWorkDirectory(workingDir);
       commandLine.addParameters(handlerState.getExeFlagsState().getExpandedFlags());
+      commandLine.addParameters(handlerState.getTestArgs());
 
       EnvironmentVariablesData envState = handlerState.getEnvVarsState().getData();
       commandLine.withParentEnvironmentType(
@@ -282,7 +284,7 @@ public final class BlazeCidrLauncher extends CidrLauncherCompat {
 
     ProcessHandler targetProcess = createProcess(state, extraDebugFlags, true);
 
-    configProcessHandler(state, targetProcess, false, true);
+    configProcessHandler(targetProcess, false, true, getProject());
 
     targetProcess.startNotify();
 
@@ -323,11 +325,11 @@ public final class BlazeCidrLauncher extends CidrLauncherCompat {
    * create it. By creating a CPPToolSet, we have an opportunity to alter the commandline before it
    * launches. See https://youtrack.jetbrains.com/issue/CPP-8362
    */
-  private static class BlazeToolSet extends CPPToolSet {
+  private static class BlazeToolSet extends CPPToolSetAdapter {
     private static final char[] separators = {'/'};
 
     private BlazeToolSet(File workingDirectory) {
-      super(Kind.MINGW, workingDirectory);
+      super(workingDirectory);
     }
 
     @Override
@@ -350,12 +352,6 @@ public final class BlazeCidrLauncher extends CidrLauncherCompat {
       return ToolchainUtils.getDebuggerFile(ToolchainUtils.getToolchain());
     }
 
-    // This was converted to 'supportsDebugger' in 2018.2 #api181
-    @SuppressWarnings("MissingOverride")
-    public boolean isBundledGdbCompatible() {
-      return false;
-    }
-
     @Override
     public void prepareEnvironment(
         GeneralCommandLine cl, PrepareFor prepareFor, List<CPPToolSet.Option> options)
@@ -366,7 +362,7 @@ public final class BlazeCidrLauncher extends CidrLauncherCompat {
       }
     }
 
-    @SuppressWarnings("MissingOverride")
+    @Override
     public boolean supportsDebugger(CPPDebugger.Kind kind) {
       return kind == CPPDebugger.Kind.CUSTOM_GDB;
     }
@@ -386,8 +382,7 @@ public final class BlazeCidrLauncher extends CidrLauncherCompat {
         && handlerState.getTestFilterFlag() != null
         && !PropertiesComponent.getInstance()
             .getBoolean(DISABLE_BAZEL_GOOGLETEST_FILTER_WARNING, false)
-        && !CidrGoogleTestUtil.findGoogleTestSymbolsForSuiteRandomly(getProject(), null, true)
-            .isEmpty();
+        && CidrGoogleTestUtilAdapter.findGoogleTestSymbol(getProject()) != null;
   }
 
   /**

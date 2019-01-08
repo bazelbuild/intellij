@@ -109,7 +109,7 @@ public class FastBuildChangedFilesServiceTest extends BlazeIntegrationTestCase {
     changedFilesService.newBuild(
         Label.create("//java:all_files"),
         Futures.immediateFuture(
-            BuildOutput.create(new File("deploy.jar"), /* blazeData */ ImmutableMap.of())));
+            BuildOutput.create(new File("deploy.jar"), /* blazeData= */ ImmutableMap.of())));
 
     ChangedSources changedSources =
         changedFilesService.getAndResetChangedSources(Label.create("//java:all_files"));

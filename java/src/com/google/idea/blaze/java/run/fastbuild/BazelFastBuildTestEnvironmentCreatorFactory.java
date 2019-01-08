@@ -31,7 +31,7 @@ final class BazelFastBuildTestEnvironmentCreatorFactory
   public FastBuildTestEnvironmentCreator getTestEnvironmentCreator(Project project) {
     return new FastBuildTestEnvironmentCreator(
         project,
-        /* testClassProperty */ "bazel.test_suite",
-        /* testRunner */ "com.google.testing.junit.runner.BazelTestRunner");
+        /* testClassProperty= */ "bazel.test_suite",
+        /* testRunner= */ "com.google.testing.junit.runner.BazelTestRunner");
   }
 }

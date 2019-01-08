@@ -33,6 +33,7 @@ import com.intellij.execution.filters.TextConsoleBuilderImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -52,7 +53,7 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
     Label label = getLabel();
     BlazeTestUiSession testUiSession =
         BlazeTestUiSession.create(
-            /* blazeFlags */ ImmutableList.of(),
+            /* blazeFlags= */ ImmutableList.of(),
             new FastBuildTestResultFinderStrategy(
                 label, getConfiguration().getTargetKind(), outputFile, getBlazeContext()));
     setConsoleBuilder(
@@ -107,7 +108,10 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
   public ExecutionResult execute(Executor executor, ProgramRunner runner)
       throws ExecutionException {
     DefaultExecutionResult result = (DefaultExecutionResult) super.execute(executor, runner);
-    result.setActions(
+    AbstractRerunFailedTestsAction rerunFailedAction =
+        SmRunnerUtils.createRerunFailedTestsAction(result);
+    result.setRestartActions(
+        rerunFailedAction,
         new RerunFastBuildConfigurationWithBlazeAction(
             getConfiguration().getProject(), getFastBuildInfo().label(), getEnvironment()));
     return result;

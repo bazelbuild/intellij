@@ -28,14 +28,13 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
+import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.debugger.impl.HotSwapProgress;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -80,7 +79,8 @@ public class ClassFileManifestBuilder {
     if (!HotSwapUtils.canHotSwap(env)) {
       return null;
     }
-    BlazeCommandRunConfiguration configuration = getConfiguration(env);
+    BlazeCommandRunConfiguration configuration =
+        BlazeCommandRunConfigurationRunner.getConfiguration(env);
     Project project = configuration.getProject();
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
@@ -140,13 +140,5 @@ public class ClassFileManifestBuilder {
           ? ClassFileManifest.modifiedClasses(oldManifest, newManifest)
           : null;
     }
-  }
-
-  private static BlazeCommandRunConfiguration getConfiguration(ExecutionEnvironment environment) {
-    RunProfile runProfile = environment.getRunProfile();
-    if (runProfile instanceof WrappingRunConfiguration) {
-      runProfile = ((WrappingRunConfiguration) runProfile).getPeer();
-    }
-    return (BlazeCommandRunConfiguration) runProfile;
   }
 }

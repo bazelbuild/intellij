@@ -63,7 +63,6 @@
     <SyncListener implementation="com.google.idea.blaze.java.libraries.BlazeSyncModificationTracker$SyncTrackerUpdater"/>
     <SyncListener implementation="com.google.idea.blaze.java.libraries.DetachAllSourceJarsAction$DetachAllOnSync"/>
     <JavaClasspathAspectStrategy implementation="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy$BazelStrategy"/>
-    <JavaTestCaseIdentifier implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestMethodConfigurationProducer$Identifier"/>
     <TestComparisonFailureParser implementation="com.google.idea.blaze.java.run.smrunner.JunitTestComparisonFailureParser"/>
     <FastBuildAspectStrategy implementation="com.google.idea.blaze.java.fastbuild.BazelFastBuildAspectStrategy"/>
     <FastBuildTestEnvironmentCreatorFactory implementation="com.google.idea.blaze.java.run.fastbuild.BazelFastBuildTestEnvironmentCreatorFactory"/>
@@ -74,27 +73,20 @@
     <LoggedSettingsProvider implementation="com.google.idea.blaze.java.settings.BlazeJavaUserSettings$SettingsLogger"/>
     <JavaLikeLanguage implementation="com.google.idea.blaze.java.sync.source.JavaLikeLanguage$Java"/>
     <JavaLikeLanguage implementation="com.google.idea.blaze.java.sync.source.AndroidJavaLikeLanguage"/>
+    <TestContextProvider
+        implementation="com.google.idea.blaze.java.run.producers.MultipleJavaClassesTestContextProvider"/>
+    <TestContextProvider
+        implementation="com.google.idea.blaze.java.run.producers.JavaTestContextProvider"
+        id="JavaTestContextProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationProducer
         implementation="com.google.idea.blaze.java.run.producers.BlazeJavaAbstractTestCaseConfigurationProducer"
-        order="first"/>
+        order="first, before testContextProducer"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.java.run.producers.BlazeJavaMainClassRunConfigurationProducer"
         order="first"/>
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer"
-        order="first" id="blazeJavaTestClass"/>
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.java.run.producers.BlazeJavaTestMethodConfigurationProducer"
-        order="first" id="blazeJavaTestMethod"/>
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.java.run.producers.MultipleJavaClassesTestConfigurationProducer"
-        order="first"/>
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.java.run.producers.BlazeJavaWebTestConfigurationProducer"
-        order="first, before blazeJavaTestClass, before blazeJavaTestMethod"/>
     <applicationService serviceInterface="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"
                         serviceImplementation="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"/>
     <applicationService serviceInterface="com.google.idea.blaze.java.sync.source.PackageManifestReader"
@@ -159,8 +151,6 @@
                     interface="com.google.idea.blaze.java.run.producers.JUnitParameterizedClassHeuristic"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.JavaClasspathAspectStrategy"
                     interface="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.JavaTestCaseIdentifier"
-                    interface="com.google.idea.blaze.java.run.producers.BlazeJavaTestClassConfigurationProducer$JavaTestCaseIdentifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildTestEnvironmentCreatorFactory"
                     interface="com.google.idea.blaze.java.run.fastbuild.FastBuildTestEnvironmentCreatorFactory"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildAspectStrategy"
