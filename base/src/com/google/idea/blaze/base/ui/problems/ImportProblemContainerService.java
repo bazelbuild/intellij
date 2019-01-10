@@ -1,5 +1,8 @@
 package com.google.idea.blaze.base.ui.problems;
 
+import com.google.idea.blaze.base.actions.BuildFileUtils;
+import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
+import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.intellij.lang.annotation.Annotation;
@@ -10,6 +13,8 @@ import com.intellij.psi.*;
 import org.apache.commons.compress.utils.Lists;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +27,9 @@ import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR;
 
 public class ImportProblemContainerService {
     public static final String EMPTY_STRING = "";
-    private HashMap<String, ImportIssue>  issues = new HashMap();
+    private HashMap<String, ImportIssue> issues = new HashMap();
+    private int MAX_RECURSIVE_DEPTH_SEARCH = 10;
+    private Label NO_TARGET_FOUND = null;
 
     public void resetIssues() {
         issues = new HashMap();
@@ -33,7 +40,7 @@ public class ImportProblemContainerService {
         ImportIssue importIssue = new ImportIssue(issue, file, originalLine, importIssueType);
         Optional<String> importIssueKey = getImportIssueKey(originalLine, file);
 
-        if(importIssueKey.isPresent()) {
+        if (importIssueKey.isPresent()) {
             issues.put(importIssueKey.get(), importIssue);
         }
     }
@@ -42,10 +49,10 @@ public class ImportProblemContainerService {
     private Optional<String> getImportIssueKey(String importLine, PsiFile file) {
         return Optional.ofNullable(file).flatMap(psiFile -> {
             PsiDirectory parent = file.getParent();
-            if(parent != null){
+            if (parent != null) {
                 String directoryName = parent.toString();
-                return Optional.of(directoryName+"\\/"+importLine);
-            }else {
+                return Optional.of(directoryName + "\\/" + importLine);
+            } else {
                 return Optional.empty();
             }
         });
@@ -53,7 +60,7 @@ public class ImportProblemContainerService {
 
 
     public Optional<ImportIssue> findIssue(PsiElement psiElement) {
-        if(!issues.isEmpty()){
+        if (!issues.isEmpty()) {
             return handleWhenIssuesExist(psiElement);
         } else {
             return Optional.empty();
@@ -65,7 +72,7 @@ public class ImportProblemContainerService {
         PsiFile file = psiElement.getContainingFile();
         Optional<String> importIssueKey = getImportIssueKey(psiElement.getText(), file);
 
-        if(doesIssueExist(importIssueKey)){
+        if (doesIssueExist(importIssueKey)) {
             ImportIssue importIssue = issues.get(importIssueKey.get());
             return Optional.of(importIssue);
         } else {
@@ -84,8 +91,7 @@ public class ImportProblemContainerService {
         Optional<Label> currentClassTarget = Optional.ofNullable(
                 findTarget(project, element, element.getContainingFile().getVirtualFile())
         );
-
-        if(!importClassTargets.isEmpty() && currentClassTarget.isPresent()){
+        if (!importClassTargets.isEmpty() && currentClassTarget.isPresent()) {
             errorAnnotation.registerFix(
                     new ImportIssueQuickFix(
                             tooltip.substring(7),
@@ -108,7 +114,7 @@ public class ImportProblemContainerService {
             case SCALA_WILDCARD:
             case JAVA_WILDCARD:
                 Optional<String> importedPackageName = getPackageName(originalLine);
-                if(importedPackageName.isPresent()) {
+                if (importedPackageName.isPresent()) {
                     addWildCardTargets(element, project, importClassTargets, importedPackageName.get());
                 }
                 break;
@@ -117,7 +123,7 @@ public class ImportProblemContainerService {
             case JAVA_STATIC:
                 List<String> classNames = getClassNames(originalLine, importType);
                 Optional<String> packageName = getPackageName(originalLine);
-                if(packageName.isPresent()){
+                if (packageName.isPresent()) {
                     classNames.stream().forEach(className ->
                             addSingleClassImportTargetIssue(
                                     packageName.get() + ImportIssueConstants.PACKAGE_SEPARATOR + className,
@@ -136,7 +142,7 @@ public class ImportProblemContainerService {
 
     private void addSingleClassImportTargetIssue(String originalLine, Project project, List<Label> importClassTargets) {
         Optional<Label> classTarget = findClassTarget(originalLine, project);
-        if(classTarget.isPresent()) {
+        if (classTarget.isPresent()) {
             importClassTargets.add(classTarget.get());
         }
     }
@@ -146,21 +152,21 @@ public class ImportProblemContainerService {
         for (PsiClass importFromWildCard : importsFromWildCard) {
             VirtualFile virtualFile = importFromWildCard.getContainingFile().getVirtualFile();
             Optional<Label> classTarget = Optional.of(findTarget(project, element, virtualFile));
-            if(classTarget.isPresent()) {
+            if (classTarget.isPresent()) {
                 importClassTargets.add(classTarget.get());
             }
         }
     }
 
-
     private Optional<Label> findClassTarget(String importLine, Project project) {
         Optional<Label> importClassTargetLabel = Optional.empty();
         Optional<String> packageName = getPackageName(importLine);
 
-        if(packageName.isPresent()){
+        if (packageName.isPresent()) {
+            String importLineWithoutKeywords = getImportLineWithoutKeywords(importLine);
             PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName.get());
-            int indexOfClassNameSeparator = importLine.lastIndexOf(".");
-            String simpleClassName = importLine.substring(indexOfClassNameSeparator + 1);
+            int indexOfClassNameSeparator = importLineWithoutKeywords.lastIndexOf(".");
+            String simpleClassName = importLineWithoutKeywords.substring(indexOfClassNameSeparator + 1);
 
             importClassTargetLabel = findImportClassTargetLabel(project, aPackage, simpleClassName);
         }
@@ -171,15 +177,24 @@ public class ImportProblemContainerService {
     private Optional<Label> findImportClassTargetLabel(Project project, PsiPackage psiPackage, String simpleClassName) {
         Optional<Label> target = Optional.empty();
 
-        if(psiPackage != null){
-            for (PsiClass psiClass : psiPackage.getClasses()) {
+        if (psiPackage != null) {
+            PsiClass[] classes = psiPackage.getClasses();
+            classes = Arrays.stream(classes).distinct().toArray(PsiClass[]::new);
+            for (PsiClass psiClass : classes) {
                 if (psiClass.getName().equals(simpleClassName)) {
+
+                    VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
+                    PsiElement originalElement = psiClass.getOriginalElement();
                     Label targetLabel = findTarget(
                             project,
-                            psiClass.getOriginalElement(),
-                            psiClass.getContainingFile().getVirtualFile()
+                            originalElement,
+                            virtualFile
                     );
                     target = Optional.ofNullable(targetLabel);
+
+                    if (!target.isPresent()) {
+                        target = Optional.ofNullable(getLabelFromParentRecursively(project, virtualFile.getParent(), virtualFile, MAX_RECURSIVE_DEPTH_SEARCH));
+                    }
                 }
             }
         }
@@ -187,10 +202,29 @@ public class ImportProblemContainerService {
         return target;
     }
 
+    private Label getLabelFromParentRecursively(Project project, VirtualFile folder, VirtualFile virtualFile, int depthSearch) {
+        BlazePackage aPackage = BuildFileUtils.getBuildFile(project, folder);
+        PsiElement buildTarget = null;
+        if(aPackage != null) {
+            buildTarget = BuildFileUtils.findBuildTarget(
+                    project,
+                    aPackage,
+                    new File(virtualFile.getPath()));
+        }
+        if (buildTarget != null) {
+            return ((FuncallExpression) buildTarget).resolveBuildLabel();
+        } else if (depthSearch > 0) {
+            return getLabelFromParentRecursively(project, folder.getParent(), virtualFile, --depthSearch);
+        } else {
+            return NO_TARGET_FOUND;
+        }
+    }
+
+
     public void removeIssue(ImportIssue issue) {
         PsiFile file = issue.getFile();
         Optional<String> importIssueKey = getImportIssueKey(issue.getOriginalLine(), file);
-        if(doesIssueExist(importIssueKey)){
+        if (doesIssueExist(importIssueKey)) {
             issues.remove(importIssueKey.get());
         }
     }

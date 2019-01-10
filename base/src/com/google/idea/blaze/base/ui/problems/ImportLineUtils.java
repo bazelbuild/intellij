@@ -63,7 +63,7 @@ public class ImportLineUtils {
     }
 
     @NotNull
-    private static String getImportLineWithoutKeywords(String originalLine) {
+    public static String getImportLineWithoutKeywords(String originalLine) {
         return originalLine.
                 replace(IMPORT_KEYWORD, EMPTY_STRING).
                 replace(STATIC_KEYWORD, EMPTY_STRING).
@@ -121,6 +121,10 @@ public class ImportLineUtils {
 
     public static boolean isWildCardImportLine(String importLine) {
         return isWildCardImportLineJava(importLine) || isWildCardImportLineScala(importLine);
+    }
+
+    public static boolean isRegularImportLine(String originalLine) {
+        return getImportType(originalLine) == REGULAR;
     }
 
     public static ImportType getImportType(String originalLine) {

@@ -2,8 +2,6 @@ package com.google.idea.blaze.base.ui.problems;
 
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,7 +14,7 @@ public class ImportIssueResolver {
 
     private static final String NEW_LINE = "\n";
     private static String missingImportRegEx = "object .* is not a member of package .*";
-    private static String wildCardOrStaticRegEx = "package .* does not exist";
+    private static String missingPackageRegEx = "package .* does not exist";
     private static String javaStaticImport = "static import only from classes and interfaces";
 
     private static final String IMPORT_STATIC_IDENTIFIER = "import static";
@@ -26,8 +24,8 @@ public class ImportIssueResolver {
         if (file != null && issue != null && issue.getLine() > 0) {
             boolean missingImportDependencyInBuildFile =
                     Pattern.compile(missingImportRegEx).matcher(issue.getMessage()).find();
-            boolean missingImportDependencyWildOrStaticJava =
-                    Pattern.compile(wildCardOrStaticRegEx).matcher(issue.getMessage()).find();
+            boolean missingPackage =
+                    Pattern.compile(missingPackageRegEx).matcher(issue.getMessage()).find();
             boolean missingImportDependencyJavaStaticImport =
                     Pattern.compile(javaStaticImport).matcher(issue.getMessage()).find();
 
@@ -46,11 +44,16 @@ public class ImportIssueResolver {
 
             importIssue = missingImportDependencyJavaStaticImport ||
                     missingImportDependencyInBuildFile ||
-                    missingWildCardImport(originalLine, missingImportDependencyWildOrStaticJava) ||
-                    isStaticImport(originalLine, missingImportDependencyWildOrStaticJava);
+                    missingWildCardImport(originalLine, missingPackage) ||
+                    isStaticImport(originalLine, missingPackage) ||
+                    isMissingPackage(originalLine, missingPackage);
         }
 
         return importIssue;
+    }
+
+    private static boolean isMissingPackage(String originalLine, boolean missingPackage) {
+        return ImportLineUtils.isRegularImportLine(originalLine) && missingPackage;
     }
 
     private static boolean isStaticImport(String originalLine, boolean missingImportDependencyWildOrStaticJava) {
