@@ -12,4 +12,7 @@ public class ImportIssueConstants {
     public static final String SCALA_IMPORT_CURLY_END_IDENTIFIER = "}";
     public static final String SCALA_MULTIPLE_CLASS_SEPARATOR = ",";
     public static final String PACKAGE_SEPARATOR = ".";
+
+    public static final String IMPORT_ISSUE_NOTIFIER_TOPIC_NAME = "ImportIssueNotification";
+    public static final String RESET_IMPORT_ISSUE_NOTIFIER_TOPIC_NAME = "ResetImportIssueNotification";
 }

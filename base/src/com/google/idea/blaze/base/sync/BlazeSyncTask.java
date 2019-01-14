@@ -97,12 +97,11 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
-import com.google.idea.blaze.base.ui.problems.ImportProblemContainerService;
+import com.google.idea.blaze.base.ui.problems.ResetImportIssueNotifier;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
 import com.google.idea.common.transactions.Transactions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -115,6 +114,9 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -124,6 +126,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
+
+import static com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive;
 
 /** Syncs the project with blaze. */
 final class BlazeSyncTask implements Progressive {
@@ -139,6 +143,7 @@ final class BlazeSyncTask implements Progressive {
 
   @GuardedBy("this")
   private final List<TimedEvent> timedEvents = new ArrayList<>();
+  private final MessageBus messageBus;
 
   private BlazeSyncParams syncParams;
 
@@ -162,7 +167,15 @@ final class BlazeSyncTask implements Progressive {
           }
         };
 
-    ServiceManager.getService(ImportProblemContainerService.class).resetIssues();
+    this.messageBus = project.getMessageBus();
+    syncPublisher(() ->
+            messageBus.syncPublisher(ResetImportIssueNotifier.RESET_IMPORT_ISSUE_NOTIFIER_TOPIC).
+                    resetIssues());
+
+  }
+
+  private void syncPublisher(@NotNull Runnable publishingTask) {
+    invokeLaterIfProjectAlive(project, publishingTask);
   }
 
   @Override

@@ -454,10 +454,4 @@
     <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.OutsideProjectTestContextProvider"/>
   </extensions>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <!-- Add your extensions here -->
-    <applicationService serviceInterface="com.google.idea.blaze.base.ui.problems.ImportProblemContainerService" serviceImplementation="com.google.idea.blaze.base.ui.problems.ImportProblemContainerService">
-    </applicationService>
-  </extensions>
-
 </idea-plugin>

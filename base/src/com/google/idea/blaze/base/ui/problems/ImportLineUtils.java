@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 import static com.google.idea.blaze.base.ui.problems.ImportIssueConstants.*;
 import static com.google.idea.blaze.base.ui.problems.ImportLineUtils.ImportType.*;
-import static com.google.idea.blaze.base.ui.problems.ImportProblemContainerService.EMPTY_STRING;
+import static com.google.idea.blaze.base.ui.problems.ImportProblemContainerServiceBase.EMPTY_STRING;
 
 public class ImportLineUtils {
     private static final Logger logger = Logger.getLogger(ImportLineUtils.class.getName());

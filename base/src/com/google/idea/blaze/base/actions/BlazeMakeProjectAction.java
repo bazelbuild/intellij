@@ -16,16 +16,21 @@
 package com.google.idea.blaze.base.actions;
 
 import com.google.idea.blaze.base.logging.EventLoggingService;
-import com.google.idea.blaze.base.ui.problems.ImportProblemContainerService;
+import com.google.idea.blaze.base.ui.problems.ResetImportIssueNotifier;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.messages.MessageBus;
+
+import static com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive;
 
 class BlazeMakeProjectAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    ServiceManager.getService(ImportProblemContainerService.class).resetIssues();
+    MessageBus messageBus = project.getMessageBus();
+    invokeLaterIfProjectAlive(project, () ->
+            messageBus.syncPublisher(ResetImportIssueNotifier.RESET_IMPORT_ISSUE_NOTIFIER_TOPIC).
+                    resetIssues());
     EventLoggingService.getInstance().ifPresent(s -> s.logEvent(getClass(), "make"));
     BlazeBuildService.getInstance().buildProject(project);
   }

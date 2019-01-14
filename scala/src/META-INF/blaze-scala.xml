@@ -18,4 +18,19 @@
     <SyncPlugin implementation="com.google.idea.blaze.scala.sync.AlwaysPresentScalaSyncPlugin"/>
     <TargetKindProvider implementation="com.google.idea.blaze.scala.ScalaBlazeRules"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+    <applicationService serviceInterface="com.google.idea.blaze.scala.sync.ScalaLikeImportProblemContainerService" serviceImplementation="com.google.idea.blaze.scala.sync.ScalaLikeImportProblemContainerService">
+    </applicationService>
+  </extensions>
+
+  <project-components>
+    <component>
+      <implementation-class>com.google.idea.blaze.scala.sync.ScalaImportIssueListener</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.google.idea.blaze.scala.sync.ScalaResetImportIssueListener</implementation-class>
+    </component>
+  </project-components>
 </idea-plugin>

@@ -18,15 +18,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ImportIssueQuickFix implements IntentionAction {
+public abstract  class ImportIssueQuickFixBase implements IntentionAction {
     private final String key;
     private final ImportIssue importIssue;
     private List<Label> importClassTargets;
     private Label currentClassTarget;
-    ImportProblemContainerService importProblemContainerService =
-            ServiceManager.getService(ImportProblemContainerService.class);
 
-    public ImportIssueQuickFix(String key, ImportIssue importIssue, List<Label> importClassTargets, Label currentClassTarget) {
+    public ImportIssueQuickFixBase(String key, ImportIssue importIssue, List<Label> importClassTargets, Label currentClassTarget) {
         this.key = key;
         this.importIssue = importIssue;
         this.importClassTargets = importClassTargets;
@@ -69,8 +67,10 @@ public class ImportIssueQuickFix implements IntentionAction {
             WriteCommandAction.runWriteCommandAction(project, runnable);
         });
 
-        importProblemContainerService.removeIssue(importIssue);
+        getImportIssueContainerService().removeIssue(importIssue);
     }
+
+    public abstract ImportProblemContainerServiceBase getImportIssueContainerService();
 
     @Override
     public boolean startInWriteAction() {
@@ -79,7 +79,7 @@ public class ImportIssueQuickFix implements IntentionAction {
 
     @Override
     public String toString() {
-        return "ImportIssueQuickFix{" +
+        return "ImportIssueQuickFixBase{" +
                 "key='" + key + '\'' +
                 ", importIssue=" + importIssue +
                 ", importClassTargets=" + importClassTargets +

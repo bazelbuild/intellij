@@ -1,7 +1,7 @@
 package com.google.idea.blaze.scala.sync;
 
 import com.google.idea.blaze.base.ui.problems.ImportIssue;
-import com.google.idea.blaze.base.ui.problems.ImportProblemContainerService;
+import com.google.idea.blaze.base.ui.problems.ImportProblemContainerServiceBase;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.components.ServiceManager;
@@ -14,8 +14,8 @@ import java.util.Optional;
 
 public class ImportIssueAnnotator implements Annotator {
 
-    ImportProblemContainerService importProblemContainerService =
-            ServiceManager.getService(ImportProblemContainerService.class);
+    ImportProblemContainerServiceBase importProblemContainerService =
+            ServiceManager.getService(ScalaLikeImportProblemContainerService.class);
 
     @Override
     public void annotate(@NotNull final PsiElement element, @NotNull AnnotationHolder holder) {

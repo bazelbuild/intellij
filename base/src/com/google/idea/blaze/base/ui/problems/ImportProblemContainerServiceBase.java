@@ -5,8 +5,10 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -25,7 +27,7 @@ import static com.google.idea.blaze.base.ui.problems.ImportIssueResolver.getOrig
 import static com.google.idea.blaze.base.ui.problems.ImportLineUtils.*;
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR;
 
-public class ImportProblemContainerService {
+public abstract class ImportProblemContainerServiceBase implements ProjectComponent {
     public static final String EMPTY_STRING = "";
     private HashMap<String, ImportIssue> issues = new HashMap();
     private int MAX_RECURSIVE_DEPTH_SEARCH = 10;
@@ -93,15 +95,15 @@ public class ImportProblemContainerService {
         );
         if (!importClassTargets.isEmpty() && currentClassTarget.isPresent()) {
             errorAnnotation.registerFix(
-                    new ImportIssueQuickFix(
-                            tooltip.substring(7),
-                            importIssue,
-                            importClassTargets,
-                            currentClassTarget.get()
-                    )
+                    createImportIssueFix(importIssue, tooltip, importClassTargets, currentClassTarget)
             );
         }
     }
+
+    protected abstract IntentionAction createImportIssueFix(ImportIssue importIssue,
+                                                            String tooltip, List<Label> importClassTargets,
+                                                            Optional<Label> currentClassTarget);
+
 
     @NotNull
     private List<Label> getImportClassTargets(@NotNull PsiElement element, String originalLine, Project project) {
@@ -148,7 +150,7 @@ public class ImportProblemContainerService {
     }
 
     private void addWildCardTargets(@NotNull PsiElement element, Project project, List<Label> importClassTargets, String importedPackageName) {
-        List<PsiClass> importsFromWildCard = WildCardImportExtractor.getImportsFromWildCard(element, importedPackageName);
+        List<PsiClass> importsFromWildCard = getImportsFromWildCard(element, importedPackageName);
         for (PsiClass importFromWildCard : importsFromWildCard) {
             VirtualFile virtualFile = importFromWildCard.getContainingFile().getVirtualFile();
             Optional<Label> classTarget = Optional.of(findTarget(project, element, virtualFile));
@@ -157,6 +159,8 @@ public class ImportProblemContainerService {
             }
         }
     }
+
+    public abstract List<PsiClass> getImportsFromWildCard(@NotNull PsiElement element, String importedPackageName);
 
     private Optional<Label> findClassTarget(String importLine, Project project) {
         Optional<Label> importClassTargetLabel = Optional.empty();

@@ -24,4 +24,19 @@
     <TargetKindProvider implementation="com.google.idea.blaze.java.JavaBlazeRules"/>
     <TargetKindProvider implementation="com.google.idea.blaze.java.AndroidBlazeRules"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+    <applicationService serviceInterface="com.google.idea.blaze.java.sync.JavaLikeImportProblemContainerService" serviceImplementation="com.google.idea.blaze.java.sync.JavaLikeImportProblemContainerService">
+    </applicationService>
+  </extensions>
+
+  <project-components>
+    <component>
+      <implementation-class>com.google.idea.blaze.java.sync.JavaImportIssueListener</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.google.idea.blaze.java.sync.JavaResetImportIssueListener</implementation-class>
+    </component>
+  </project-components>
 </idea-plugin>
