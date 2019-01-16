@@ -1,0 +1,201 @@
+Index: ../base/src/com/google/idea/blaze/base/ui/problems/ImportIssueResolver.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.google.idea.blaze.base.ui.problems;\n\nimport com.google.idea.blaze.base.scope.output.IssueOutput;\nimport com.intellij.openapi.application.ApplicationManager;\nimport com.intellij.openapi.editor.Document;\nimport com.intellij.openapi.fileEditor.FileDocumentManager;\nimport com.intellij.openapi.project.Project;\nimport com.intellij.openapi.util.Computable;\nimport com.intellij.openapi.vfs.VirtualFile;\nimport com.intellij.psi.PsiFile;\nimport com.intellij.psi.PsiManager;\n\nimport java.util.regex.Pattern;\n\npublic class ImportIssueResolver {\n\n    private static final String NEW_LINE = \"\\n\";\n    private static String missingImportRegEx = \"object .* is not a member of package .*\";\n    private static String wildCardOrStaticRegEx = \"package .* does not exist\";\n    private static String javaStaticImport = \"static import only from classes and interfaces\";\n\n    private static final String IMPORT_STATIC_IDENTIFIER = \"import static\";\n\n    public static boolean isImportIssue(IssueOutput issue, VirtualFile file, Project project) {\n        boolean importIssue = false;\n        if (file != null && issue != null && issue.getLine() > 0) {\n            boolean missingImportDependencyInBuildFile =\n                    Pattern.compile(missingImportRegEx).matcher(issue.getMessage()).find();\n            boolean missingImportDependencyWildOrStaticJava =\n                    Pattern.compile(wildCardOrStaticRegEx).matcher(issue.getMessage()).find();\n            boolean missingImportDependencyJavaStaticImport =\n                    Pattern.compile(javaStaticImport).matcher(issue.getMessage()).find();\n\n            PsiManager psiManager = PsiManager.getInstance(project);\n\n            String originalLine = ApplicationManager.getApplication()\n                    .runReadAction(\n                            new Computable<String>() {\n                                @Override\n                                public String compute() {\n                                    PsiFile psiFile = psiManager.findFile(file);\n                                    return getOriginalLineByIssue(issue, psiFile);\n                                }\n                            });\n\n\n            importIssue = missingImportDependencyJavaStaticImport ||\n                    missingImportDependencyInBuildFile ||\n                    missingWildCardImport(originalLine, missingImportDependencyWildOrStaticJava) ||\n                    isStaticImport(originalLine, missingImportDependencyWildOrStaticJava);\n        }\n\n        return importIssue;\n    }\n\n    private static boolean isStaticImport(String originalLine, boolean missingImportDependencyWildOrStaticJava) {\n        return missingImportDependencyWildOrStaticJava && originalLine.contains(IMPORT_STATIC_IDENTIFIER);\n    }\n\n    private static boolean missingWildCardImport(String originalLine,\n                                                 boolean missingImportDependencyWildcardOrStaticJava) {\n        return missingImportDependencyWildcardOrStaticJava && ImportLineUtils.isWildCardImportLine(originalLine);\n    }\n\n\n    public static String getOriginalLineByIssue(IssueOutput issue, PsiFile psiFile) {\n        return psiFile.getText().split(NEW_LINE)[issue.getLine() - 1];\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- ../base/src/com/google/idea/blaze/base/ui/problems/ImportIssueResolver.java	(revision 4d2229a59591e820da10dba176cdbf295a537ef9)
++++ ../base/src/com/google/idea/blaze/base/ui/problems/ImportIssueResolver.java	(date 1547043358000)
+@@ -2,8 +2,6 @@
+ 
+ import com.google.idea.blaze.base.scope.output.IssueOutput;
+ import com.intellij.openapi.application.ApplicationManager;
+-import com.intellij.openapi.editor.Document;
+-import com.intellij.openapi.fileEditor.FileDocumentManager;
+ import com.intellij.openapi.project.Project;
+ import com.intellij.openapi.util.Computable;
+ import com.intellij.openapi.vfs.VirtualFile;
+@@ -16,7 +14,7 @@
+ 
+     private static final String NEW_LINE = "\n";
+     private static String missingImportRegEx = "object .* is not a member of package .*";
+-    private static String wildCardOrStaticRegEx = "package .* does not exist";
++    private static String missingPackageRegEx = "package .* does not exist";
+     private static String javaStaticImport = "static import only from classes and interfaces";
+ 
+     private static final String IMPORT_STATIC_IDENTIFIER = "import static";
+@@ -26,8 +24,8 @@
+         if (file != null && issue != null && issue.getLine() > 0) {
+             boolean missingImportDependencyInBuildFile =
+                     Pattern.compile(missingImportRegEx).matcher(issue.getMessage()).find();
+-            boolean missingImportDependencyWildOrStaticJava =
+-                    Pattern.compile(wildCardOrStaticRegEx).matcher(issue.getMessage()).find();
++            boolean missingPackage =
++                    Pattern.compile(missingPackageRegEx).matcher(issue.getMessage()).find();
+             boolean missingImportDependencyJavaStaticImport =
+                     Pattern.compile(javaStaticImport).matcher(issue.getMessage()).find();
+ 
+@@ -46,13 +44,18 @@
+ 
+             importIssue = missingImportDependencyJavaStaticImport ||
+                     missingImportDependencyInBuildFile ||
+-                    missingWildCardImport(originalLine, missingImportDependencyWildOrStaticJava) ||
+-                    isStaticImport(originalLine, missingImportDependencyWildOrStaticJava);
++                    missingWildCardImport(originalLine, missingPackage) ||
++                    isStaticImport(originalLine, missingPackage) ||
++                    isMissingPackage(originalLine, missingPackage);
+         }
+ 
+         return importIssue;
+     }
+ 
++    private static boolean isMissingPackage(String originalLine, boolean missingPackage) {
++        return ImportLineUtils.isRegularImportLine(originalLine) && missingPackage;
++    }
++
+     private static boolean isStaticImport(String originalLine, boolean missingImportDependencyWildOrStaticJava) {
+         return missingImportDependencyWildOrStaticJava && originalLine.contains(IMPORT_STATIC_IDENTIFIER);
+     }
+Index: ../base/src/com/google/idea/blaze/base/ui/problems/ImportLineUtils.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.google.idea.blaze.base.ui.problems;\n\nimport org.apache.commons.compress.utils.Lists;\nimport org.apache.commons.lang3.StringUtils;\nimport org.jetbrains.annotations.NotNull;\n\nimport java.util.ArrayList;\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.Optional;\nimport java.util.logging.Level;\nimport java.util.logging.Logger;\nimport java.util.regex.Pattern;\nimport java.util.stream.Collectors;\nimport java.util.stream.IntStream;\nimport java.util.stream.Stream;\n\nimport static com.google.idea.blaze.base.ui.problems.ImportIssueConstants.*;\nimport static com.google.idea.blaze.base.ui.problems.ImportLineUtils.ImportType.*;\nimport static com.google.idea.blaze.base.ui.problems.ImportProblemContainerService.EMPTY_STRING;\n\npublic class ImportLineUtils {\n    private static final Logger logger = Logger.getLogger(ImportLineUtils.class.getName());\n\n    @NotNull\n    public static Optional<String> getPackageName(String originalLine) {\n        ImportType importType = getImportType(originalLine);\n        String importWithoutKeywords = getImportLineWithoutKeywords(originalLine);\n\n        switch (importType) {\n            case REGULAR:\n            case JAVA_WILDCARD:\n            case SCALA_WILDCARD:\n            case MULTIPLE_SCALA:\n            case SCALA_ALIAS:\n                String packageName = importWithoutKeywords.substring(0, importWithoutKeywords.lastIndexOf(PACKAGE_SEPARATOR));\n                return Optional.of(packageName);\n            case JAVA_STATIC:\n                List<String> packageNameParts = Arrays.asList(importWithoutKeywords.split(\"\\\\\"+PACKAGE_SEPARATOR));\n                int indexOfFirstClassName = IntStream.range(0, packageNameParts.size())\n                        .filter(index -> {\n                            String packagePart = packageNameParts.get(index);\n                            char firstLetter = packagePart.charAt(0);\n                            return Character.isUpperCase(firstLetter);\n                        })\n                        .findFirst()\n                        .orElse(-1);\n                Optional<String> maybePackageName =\n                        indexOfFirstClassName == -1 ?\n                                Optional.empty() : concatListUntilIndex(packageNameParts, indexOfFirstClassName);\n                return maybePackageName;\n            default:\n                logger.log(Level.SEVERE, \"Unsupported import type for line [\"+originalLine+\"]\");\n                return Optional.empty();\n        }\n    }\n\n    @NotNull\n    private static Optional<String> concatListUntilIndex(List<String> list, int indexUntil) {\n        List<String> packagePartsSublist = list.subList(0, indexUntil);\n        String packageName = StringUtils.join(packagePartsSublist, PACKAGE_SEPARATOR);\n        return Optional.of(packageName);\n    }\n\n    @NotNull\n    private static String getImportLineWithoutKeywords(String originalLine) {\n        return originalLine.\n                replace(IMPORT_KEYWORD, EMPTY_STRING).\n                replace(STATIC_KEYWORD, EMPTY_STRING).\n                replace(JAVA_EOFL_IDENTIFIER, EMPTY_STRING).\n                trim();\n    }\n\n    private static boolean isMultipleClassesImport(String importWithoutKeywords) {\n        return containsCurlyBraces(importWithoutKeywords) && doesNotContainArrow(importWithoutKeywords);\n    }\n\n    private static boolean containsCurlyBraces(String importWithoutKeywords) {\n        return Pattern.compile(\".*\\\\{.*\\\\}.*\").matcher(importWithoutKeywords).find();\n    }\n\n    private static boolean doesNotContainArrow(String importWithoutKeywords) {\n        return Pattern.compile(\"^((?!=>).)*$\").matcher(importWithoutKeywords).find();\n    }\n\n    private static boolean isScalaAlias(String importWithoutKeywords) {\n        return containsCurlyBracesAndArrowInside(importWithoutKeywords);\n    }\n\n    private static boolean containsCurlyBracesAndArrowInside(String importWithoutKeywords) {\n        return Pattern.compile(\".*\\\\{.*=>.*\\\\}.*\").matcher(importWithoutKeywords).find();\n    }\n\n    public static boolean isWildCardImportLineJava(String importLine) {\n        String lineWithoutDotComma = importLine.replace(JAVA_EOFL_IDENTIFIER, \"\");\n        return lineWithoutDotComma.endsWith(JAVA_WILDCARD_KEYWORD) && !isJavaStaticImport(importLine);\n    }\n\n    public static boolean isWildCardImportLineScala(String importLine) {\n        String lineWithoutDotComma = importLine.replace(JAVA_EOFL_IDENTIFIER, \"\");\n        return lineWithoutDotComma.endsWith(SCALA_WILDCARD_KEYWORD);\n    }\n\n\n    private static boolean isRegularImport(long numberOfPartsThatStartWithUpperCase, boolean classNameLast) {\n        return thereIsOneClassName(numberOfPartsThatStartWithUpperCase) && classNameLast;\n    }\n\n    private static boolean isClassNameLast(String[] parts) {\n        return startsWithUpperCase(parts[parts.length - 1]);\n    }\n\n    private static boolean thereIsOneClassName(long partsThatStartWithUpperCase) {\n        return partsThatStartWithUpperCase == 1;\n    }\n\n    private static boolean startsWithUpperCase(String part) {\n        return Character.isUpperCase(part.charAt(0));\n    }\n\n\n    public static boolean isWildCardImportLine(String importLine) {\n        return isWildCardImportLineJava(importLine) || isWildCardImportLineScala(importLine);\n    }\n\n    public static ImportType getImportType(String originalLine) {\n        String importWithoutKeywords = getImportLineWithoutKeywords(originalLine);\n\n        String[] importLinePartsArray = importWithoutKeywords.split(\"\\\\.\");\n        List<String> importLineParts = Arrays.asList(importLinePartsArray);\n        Stream<String> partsThatStartWithCapital = importLineParts.stream().filter(part -> startsWithUpperCase(part));\n        long numberOfPartsThatStartWithUpperCase = partsThatStartWithCapital.count();\n\n        if(isJavaStaticImport(originalLine)){\n            return JAVA_STATIC;\n        }else if (isWildCardImportLineJava(importWithoutKeywords)) {\n            return JAVA_WILDCARD;\n        } else if (isWildCardImportLineScala(importWithoutKeywords)) {\n            return SCALA_WILDCARD;\n        } else if (isScalaAlias(importWithoutKeywords)) {\n            return SCALA_ALIAS;\n        } else if (isMultipleClassesImport(importWithoutKeywords)) {\n            return MULTIPLE_SCALA;\n        } else if (isRegularImport(numberOfPartsThatStartWithUpperCase, isClassNameLast(importLinePartsArray))) {\n            return REGULAR;\n        } else {\n            return UNSUPPORTED;\n        }\n    }\n\n    private static boolean isJavaStaticImport(String originalLine) {\n        return originalLine.startsWith(\"import static\");\n    }\n\n    public static List<String> getClassNames(String originalLine, ImportType importType) {\n\n        switch (importType){\n            case MULTIPLE_SCALA:\n                return getClassNamesForMultipleScala(originalLine);\n            case SCALA_ALIAS:\n                return getClassNamesForScalaAlias(originalLine);\n            case JAVA_STATIC:\n                ArrayList<String> classNames = Lists.newArrayList();\n                getClassNameWithPackageForJavaStatic(originalLine).ifPresent(classNameWithPackage -> {\n                    String className = classNameWithPackage.substring(classNameWithPackage.lastIndexOf(PACKAGE_SEPARATOR) + 1);\n                    classNames.add(className);\n                });\n                return classNames;\n            default:\n                throw new RuntimeException(\n                        \"Trying to parse multiple scala classes when import type is [\" + importType.name() + \"], and import line [\" + originalLine + \"]\"\n                );\n        }\n    }\n\n    private static Optional<String> getClassNameWithPackageForJavaStatic(String originalLine) {\n        String importWithoutKeywords = getImportLineWithoutKeywords(originalLine);\n        List<String> packageNameParts = Arrays.asList(importWithoutKeywords.split(\"\\\\\"+PACKAGE_SEPARATOR));\n        int indexOfFirstClassName = IntStream.range(0, packageNameParts.size())\n                .filter(index -> {\n                    String packagePart = packageNameParts.get(index);\n                    char firstLetter = packagePart.charAt(0);\n                    return Character.isUpperCase(firstLetter);\n                })\n                .findFirst()\n                .orElse(-1);\n        Optional<String> maybeClassName =\n                indexOfFirstClassName == -1 ?\n                        Optional.empty() : concatListUntilIndex(packageNameParts, indexOfFirstClassName+1);\n        return maybeClassName;\n    }\n\n    private static List<String> getClassNamesForScalaAlias(String originalLine) {\n        String importWithoutKeywords = getImportLineWithoutKeywords(originalLine);\n\n        List<String> classNamesListTrimmed = getMultipleClassNamesFromImportLine(importWithoutKeywords);\n        List<String> originalClassNamesOnly =\n                classNamesListTrimmed.stream().map(className -> className.split(\"=>\")[0].trim()).collect(Collectors.toList());\n        return originalClassNamesOnly;\n    }\n\n    @NotNull\n    private static List<String> getMultipleClassNamesFromImportLine(String importWithoutKeywords) {\n        String[] classNames = importWithoutKeywords.substring(importWithoutKeywords.lastIndexOf(PACKAGE_SEPARATOR) + 1).\n                replace(SCALA_IMPORT_CURLY_BRACE_START_IDENTIFIER, EMPTY_STRING).\n                replace(SCALA_IMPORT_CURLY_END_IDENTIFIER, EMPTY_STRING).\n                split(SCALA_MULTIPLE_CLASS_SEPARATOR);\n\n        List<String> classNamesList = Arrays.asList(classNames);\n        return classNamesList.stream().map(String::trim).collect(Collectors.toList());\n    }\n\n    @NotNull\n    private static List<String> getClassNamesForMultipleScala(String originalLine) {\n        String importWithoutKeywords = getImportLineWithoutKeywords(originalLine);\n\n        List<String> classNamesListTrimmed = getMultipleClassNamesFromImportLine(importWithoutKeywords);\n        return classNamesListTrimmed;\n    }\n\n    public enum ImportType {\n        REGULAR, JAVA_WILDCARD, SCALA_WILDCARD, JAVA_STATIC, SCALA_ALIAS, MULTIPLE_SCALA, SCALA_OBJECTS, UNSUPPORTED\n    }\n}\n\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- ../base/src/com/google/idea/blaze/base/ui/problems/ImportLineUtils.java	(revision 4d2229a59591e820da10dba176cdbf295a537ef9)
++++ ../base/src/com/google/idea/blaze/base/ui/problems/ImportLineUtils.java	(date 1547051652000)
+@@ -63,7 +63,7 @@
+     }
+ 
+     @NotNull
+-    private static String getImportLineWithoutKeywords(String originalLine) {
++    public static String getImportLineWithoutKeywords(String originalLine) {
+         return originalLine.
+                 replace(IMPORT_KEYWORD, EMPTY_STRING).
+                 replace(STATIC_KEYWORD, EMPTY_STRING).
+@@ -123,6 +123,10 @@
+         return isWildCardImportLineJava(importLine) || isWildCardImportLineScala(importLine);
+     }
+ 
++    public static boolean isRegularImportLine(String originalLine) {
++        return getImportType(originalLine) == REGULAR;
++    }
++
+     public static ImportType getImportType(String originalLine) {
+         String importWithoutKeywords = getImportLineWithoutKeywords(originalLine);
+ 
+Index: ../base/src/com/google/idea/blaze/base/ui/problems/ImportProblemContainerService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.google.idea.blaze.base.ui.problems;\n\nimport com.google.idea.blaze.base.model.primitives.Label;\nimport com.google.idea.blaze.base.scope.output.IssueOutput;\nimport com.intellij.lang.annotation.Annotation;\nimport com.intellij.lang.annotation.AnnotationHolder;\nimport com.intellij.openapi.project.Project;\nimport com.intellij.openapi.vfs.VirtualFile;\nimport com.intellij.psi.*;\nimport org.apache.commons.compress.utils.Lists;\nimport org.jetbrains.annotations.NotNull;\n\nimport java.util.HashMap;\nimport java.util.List;\nimport java.util.Optional;\nimport java.util.stream.Collectors;\n\nimport static com.google.idea.blaze.base.actions.DependencyLabelFinder.findTarget;\nimport static com.google.idea.blaze.base.ui.problems.ImportIssueResolver.getOriginalLineByIssue;\nimport static com.google.idea.blaze.base.ui.problems.ImportLineUtils.*;\nimport static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR;\n\npublic class ImportProblemContainerService {\n    public static final String EMPTY_STRING = \"\";\n    private HashMap<String, ImportIssue>  issues = new HashMap();\n\n    public void resetIssues() {\n        issues = new HashMap();\n    }\n\n    public void setIssue(IssueOutput issue, PsiFile file, ImportIssueType importIssueType) {\n        String originalLine = getOriginalLineByIssue(issue, file);\n        ImportIssue importIssue = new ImportIssue(issue, file, originalLine, importIssueType);\n        Optional<String> importIssueKey = getImportIssueKey(originalLine, file);\n\n        if(importIssueKey.isPresent()) {\n            issues.put(importIssueKey.get(), importIssue);\n        }\n    }\n\n    @NotNull\n    private Optional<String> getImportIssueKey(String importLine, PsiFile file) {\n        return Optional.ofNullable(file).flatMap(psiFile -> {\n            PsiDirectory parent = file.getParent();\n            if(parent != null){\n                String directoryName = parent.toString();\n                return Optional.of(directoryName+\"\\\\/\"+importLine);\n            }else {\n                return Optional.empty();\n            }\n        });\n    }\n\n\n    public Optional<ImportIssue> findIssue(PsiElement psiElement) {\n        if(!issues.isEmpty()){\n            return handleWhenIssuesExist(psiElement);\n        } else {\n            return Optional.empty();\n        }\n    }\n\n    @NotNull\n    private Optional<ImportIssue> handleWhenIssuesExist(PsiElement psiElement) {\n        PsiFile file = psiElement.getContainingFile();\n        Optional<String> importIssueKey = getImportIssueKey(psiElement.getText(), file);\n\n        if(doesIssueExist(importIssueKey)){\n            ImportIssue importIssue = issues.get(importIssueKey.get());\n            return Optional.of(importIssue);\n        } else {\n            return Optional.empty();\n        }\n    }\n\n    public void createImportErrorAnnotation(@NotNull PsiElement element, @NotNull AnnotationHolder holder, ImportIssue importIssue) {\n        String tooltip = importIssue.getOriginalIssue().getMessage();\n        Annotation errorAnnotation = holder.createErrorAnnotation(element, tooltip);\n        errorAnnotation.setHighlightType(GENERIC_ERROR);\n        String originalLine = importIssue.getOriginalLine();\n        Project project = element.getProject();\n\n        List<Label> importClassTargets = getImportClassTargets(element, originalLine, project).stream().distinct().collect(Collectors.toList());\n        Optional<Label> currentClassTarget = Optional.ofNullable(\n                findTarget(project, element, element.getContainingFile().getVirtualFile())\n        );\n\n        if(!importClassTargets.isEmpty() && currentClassTarget.isPresent()){\n            errorAnnotation.registerFix(\n                    new ImportIssueQuickFix(\n                            tooltip.substring(7),\n                            importIssue,\n                            importClassTargets,\n                            currentClassTarget.get()\n                    )\n            );\n        }\n    }\n\n    @NotNull\n    private List<Label> getImportClassTargets(@NotNull PsiElement element, String originalLine, Project project) {\n        List<Label> importClassTargets = Lists.newArrayList();\n        ImportType importType = getImportType(originalLine);\n        switch (importType) {\n            case REGULAR:\n                addSingleClassImportTargetIssue(originalLine, project, importClassTargets);\n                break;\n            case SCALA_WILDCARD:\n            case JAVA_WILDCARD:\n                Optional<String> importedPackageName = getPackageName(originalLine);\n                if(importedPackageName.isPresent()) {\n                    addWildCardTargets(element, project, importClassTargets, importedPackageName.get());\n                }\n                break;\n            case MULTIPLE_SCALA:\n            case SCALA_ALIAS:\n            case JAVA_STATIC:\n                List<String> classNames = getClassNames(originalLine, importType);\n                Optional<String> packageName = getPackageName(originalLine);\n                if(packageName.isPresent()){\n                    classNames.stream().forEach(className ->\n                            addSingleClassImportTargetIssue(\n                                    packageName.get() + ImportIssueConstants.PACKAGE_SEPARATOR + className,\n                                    project,\n                                    importClassTargets\n                            )\n                    );\n                }\n                break;\n            default:\n                break;\n        }\n\n        return importClassTargets;\n    }\n\n    private void addSingleClassImportTargetIssue(String originalLine, Project project, List<Label> importClassTargets) {\n        Optional<Label> classTarget = findClassTarget(originalLine, project);\n        if(classTarget.isPresent()) {\n            importClassTargets.add(classTarget.get());\n        }\n    }\n\n    private void addWildCardTargets(@NotNull PsiElement element, Project project, List<Label> importClassTargets, String importedPackageName) {\n        List<PsiClass> importsFromWildCard = WildCardImportExtractor.getImportsFromWildCard(element, importedPackageName);\n        for (PsiClass importFromWildCard : importsFromWildCard) {\n            VirtualFile virtualFile = importFromWildCard.getContainingFile().getVirtualFile();\n            Optional<Label> classTarget = Optional.of(findTarget(project, element, virtualFile));\n            if(classTarget.isPresent()) {\n                importClassTargets.add(classTarget.get());\n            }\n        }\n    }\n\n\n    private Optional<Label> findClassTarget(String importLine, Project project) {\n        Optional<Label> importClassTargetLabel = Optional.empty();\n        Optional<String> packageName = getPackageName(importLine);\n\n        if(packageName.isPresent()){\n            PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName.get());\n            int indexOfClassNameSeparator = importLine.lastIndexOf(\".\");\n            String simpleClassName = importLine.substring(indexOfClassNameSeparator + 1);\n\n            importClassTargetLabel = findImportClassTargetLabel(project, aPackage, simpleClassName);\n        }\n\n        return importClassTargetLabel;\n    }\n\n    private Optional<Label> findImportClassTargetLabel(Project project, PsiPackage psiPackage, String simpleClassName) {\n        Optional<Label> target = Optional.empty();\n\n        if(psiPackage != null){\n            for (PsiClass psiClass : psiPackage.getClasses()) {\n                if (psiClass.getName().equals(simpleClassName)) {\n                    Label targetLabel = findTarget(\n                            project,\n                            psiClass.getOriginalElement(),\n                            psiClass.getContainingFile().getVirtualFile()\n                    );\n                    target = Optional.ofNullable(targetLabel);\n                }\n            }\n        }\n\n        return target;\n    }\n\n    public void removeIssue(ImportIssue issue) {\n        PsiFile file = issue.getFile();\n        Optional<String> importIssueKey = getImportIssueKey(issue.getOriginalLine(), file);\n        if(doesIssueExist(importIssueKey)){\n            issues.remove(importIssueKey.get());\n        }\n    }\n\n    private boolean doesIssueExist(Optional<String> importIssueKey) {\n        return importIssueKey.isPresent() && issues.containsKey(importIssueKey.get());\n    }\n}\n\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- ../base/src/com/google/idea/blaze/base/ui/problems/ImportProblemContainerService.java	(revision 4d2229a59591e820da10dba176cdbf295a537ef9)
++++ ../base/src/com/google/idea/blaze/base/ui/problems/ImportProblemContainerService.java	(date 1547112264000)
+@@ -1,5 +1,8 @@
+ package com.google.idea.blaze.base.ui.problems;
+ 
++import com.google.idea.blaze.base.actions.BuildFileUtils;
++import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
++import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
+ import com.google.idea.blaze.base.model.primitives.Label;
+ import com.google.idea.blaze.base.scope.output.IssueOutput;
+ import com.intellij.lang.annotation.Annotation;
+@@ -10,6 +13,8 @@
+ import org.apache.commons.compress.utils.Lists;
+ import org.jetbrains.annotations.NotNull;
+ 
++import java.io.File;
++import java.util.Arrays;
+ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Optional;
+@@ -23,6 +28,8 @@
+ public class ImportProblemContainerService {
+     public static final String EMPTY_STRING = "";
+     private HashMap<String, ImportIssue>  issues = new HashMap();
++    private int MAX_RECURSIVE_DEPTH_SEARCH = 10;
++    private Label NO_TARGET_FOUND = null;
+ 
+     public void resetIssues() {
+         issues = new HashMap();
+@@ -84,7 +91,6 @@
+         Optional<Label> currentClassTarget = Optional.ofNullable(
+                 findTarget(project, element, element.getContainingFile().getVirtualFile())
+         );
+-
+         if(!importClassTargets.isEmpty() && currentClassTarget.isPresent()){
+             errorAnnotation.registerFix(
+                     new ImportIssueQuickFix(
+@@ -152,15 +158,15 @@
+         }
+     }
+ 
+-
+     private Optional<Label> findClassTarget(String importLine, Project project) {
+         Optional<Label> importClassTargetLabel = Optional.empty();
+         Optional<String> packageName = getPackageName(importLine);
+ 
+         if(packageName.isPresent()){
++            String importLineWithoutKeywords = getImportLineWithoutKeywords(importLine);
+             PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName.get());
+-            int indexOfClassNameSeparator = importLine.lastIndexOf(".");
+-            String simpleClassName = importLine.substring(indexOfClassNameSeparator + 1);
++            int indexOfClassNameSeparator = importLineWithoutKeywords.lastIndexOf(".");
++            String simpleClassName = importLineWithoutKeywords.substring(indexOfClassNameSeparator + 1);
+ 
+             importClassTargetLabel = findImportClassTargetLabel(project, aPackage, simpleClassName);
+         }
+@@ -172,14 +178,23 @@
+         Optional<Label> target = Optional.empty();
+ 
+         if(psiPackage != null){
+-            for (PsiClass psiClass : psiPackage.getClasses()) {
++            PsiClass[] classes = psiPackage.getClasses();
++            classes = Arrays.stream(classes).distinct().toArray(PsiClass[]::new);
++            for (PsiClass psiClass : classes) {
+                 if (psiClass.getName().equals(simpleClassName)) {
++
++                    VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
++                    PsiElement originalElement = psiClass.getOriginalElement();
+                     Label targetLabel = findTarget(
+                             project,
+-                            psiClass.getOriginalElement(),
+-                            psiClass.getContainingFile().getVirtualFile()
++                            originalElement,
++                            virtualFile
+                     );
+                     target = Optional.ofNullable(targetLabel);
++
++                    if(!target.isPresent()){
++                        target = Optional.ofNullable(getLabelFromParentRecursively(project, virtualFile.getParent(),virtualFile, MAX_RECURSIVE_DEPTH_SEARCH));
++                    }
+                 }
+             }
+         }
+@@ -187,6 +202,22 @@
+         return target;
+     }
+ 
++    private Label getLabelFromParentRecursively(Project project, VirtualFile folder, VirtualFile virtualFile, int depthSearch) {
++        BlazePackage aPackage = BuildFileUtils.getBuildFile(project, folder);
++        PsiElement buildTarget = BuildFileUtils.findBuildTarget(
++                project,
++                aPackage,
++                new File(virtualFile.getPath()));
++        if(buildTarget != null){
++            return ((FuncallExpression) buildTarget).resolveBuildLabel();
++        } else if(depthSearch > 0){
++            return getLabelFromParentRecursively(project, folder.getParent(), virtualFile, --depthSearch);
++        } else {
++            return NO_TARGET_FOUND;
++        }
++    }
++
++
+     public void removeIssue(ImportIssue issue) {
+         PsiFile file = issue.getFile();
+         Optional<String> importIssueKey = getImportIssueKey(issue.getOriginalLine(), file);

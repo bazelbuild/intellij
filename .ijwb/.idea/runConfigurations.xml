@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RunConfigurationProducerService">
+    <option name="ignoredProducers">
+      <set>
+        <option value="com.android.tools.idea.run.AndroidConfigurationProducer" />
+        <option value="com.android.tools.idea.testartifacts.instrumented.AndroidTestConfigurationProducer" />
+        <option value="com.android.tools.idea.testartifacts.junit.TestClassAndroidConfigurationProducer" />
+        <option value="com.android.tools.idea.testartifacts.junit.TestDirectoryAndroidConfigurationProducer" />
+        <option value="com.android.tools.idea.testartifacts.junit.TestMethodAndroidConfigurationProducer" />
+        <option value="com.android.tools.idea.testartifacts.junit.TestPackageAndroidConfigurationProducer" />
+        <option value="com.android.tools.idea.testartifacts.junit.TestPatternConfigurationProducer" />
+        <option value="com.intellij.execution.application.ApplicationConfigurationProducer" />
+        <option value="com.intellij.execution.junit.AllInDirectoryConfigurationProducer" />
+        <option value="com.intellij.execution.junit.AllInPackageConfigurationProducer" />
+        <option value="com.intellij.execution.junit.PatternConfigurationProducer" />
+        <option value="com.intellij.execution.junit.TestClassConfigurationProducer" />
+        <option value="com.intellij.execution.junit.TestInClassConfigurationProducer" />
+        <option value="com.intellij.execution.junit.TestMethodConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.run.KotlinJUnitRunConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.run.KotlinPatternConfigurationProducer" />
+        <option value="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer" />
+        <option value="org.jetbrains.plugins.scala.runner.ScalaApplicationConfigurationProducer" />
+        <option value="org.jetbrains.plugins.scala.testingSupport.test.scalatest.ScalaTestConfigurationProducer" />
+        <option value="org.jetbrains.plugins.scala.testingSupport.test.specs2.Specs2ConfigurationProducer" />
+      </set>
+    </option>
+  </component>
+</project>

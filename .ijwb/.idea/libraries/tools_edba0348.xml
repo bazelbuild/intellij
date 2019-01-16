@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="tools_edba0348">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../third_party/jdk8/tools.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

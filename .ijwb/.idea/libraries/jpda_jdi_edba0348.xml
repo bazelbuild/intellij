@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="jpda-jdi_edba0348">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../third_party/jdk8/jpda-jdi.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

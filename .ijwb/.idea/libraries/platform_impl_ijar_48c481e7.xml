@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="platform-impl-ijar_48c481e7">
+    <CLASSES>
+      <root url="jar:///private/var/tmp/_bazel_idank/985baea44d32ce67b7c7ac10bdd22479/execroot/intellij_with_bazel/bazel-out/darwin-fastbuild/genfiles/external/intellij_ce_2018_3/_ijar/sdk/external/intellij_ce_2018_3/lib/platform-impl-ijar.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar:///private/var/tmp/_bazel_idank/985baea44d32ce67b7c7ac10bdd22479/execroot/intellij_with_bazel/bazel-out/darwin-fastbuild/genfiles/external/intellij_ce_2018_3/_ijar/sdk/external/intellij_ce_2018_3/lib/platform-impl-src.jar!/" />
+    </SOURCES>
+  </library>
+</component>

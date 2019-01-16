@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="jsr305-ijar_48c481e7">
+    <CLASSES>
+      <root url="jar:///private/var/tmp/_bazel_idank/985baea44d32ce67b7c7ac10bdd22479/execroot/intellij_with_bazel/bazel-out/darwin-fastbuild/genfiles/external/intellij_ce_2018_3/_ijar/sdk/external/intellij_ce_2018_3/lib/jsr305-ijar.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

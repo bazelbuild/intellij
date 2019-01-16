@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="proto_deps_65fc9e8">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../proto/proto_deps.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
