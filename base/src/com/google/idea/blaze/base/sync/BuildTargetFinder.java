@@ -50,6 +50,15 @@ public class BuildTargetFinder {
     }
 
     final File directory = file;
+    boolean excluded = importRoots
+            .excludeDirectories()
+            .stream()
+            .map(workspaceRoot::fileForPath)
+            .anyMatch(potentialExclude -> FileUtil.isAncestor(potentialExclude, directory, false));
+    if (excluded) {
+      return null;
+    }
+
     File root =
         importRoots
             .rootDirectories()
