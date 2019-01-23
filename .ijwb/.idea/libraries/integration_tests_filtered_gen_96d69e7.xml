@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="integration_tests-filtered-gen_96d69e7">
-    <CLASSES>
-      <root url="jar:///private/var/tmp/_bazel_idank/985baea44d32ce67b7c7ac10bdd22479/execroot/intellij_with_bazel/bazel-out/darwin-fastbuild/bin/scala/integration_tests-filtered-gen.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

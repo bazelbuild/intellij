@@ -1,4 +1,0 @@
-<changelist name="FIX_-_read_access_is_allowed_from_event_dispatch_thread_or_inside_read-action_only_+_no_li" date="1547112624823" recycled="false">
-  <option name="PATH" value="$PROJECT_DIR$/.idea/shelf/FIX_-_read_access_is_allowed_from_event_dispatch_thread_or_inside_read-action_only_+_no_li/shelved.patch" />
-  <option name="DESCRIPTION" value="FIX - read access is allowed from event dispatch thread or inside read-action only + no line fix" />
-</changelist>

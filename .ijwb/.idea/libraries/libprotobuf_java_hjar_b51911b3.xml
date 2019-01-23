@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="libprotobuf_java-hjar_b51911b3">
-    <CLASSES>
-      <root url="jar:///private/var/tmp/_bazel_idank/985baea44d32ce67b7c7ac10bdd22479/execroot/intellij_with_bazel/bazel-out/darwin-fastbuild/bin/external/com_google_protobuf_java/libprotobuf_java-hjar.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
