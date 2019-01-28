@@ -27,6 +27,9 @@ import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManage
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.intellij.execution.OutputListener;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,18 +42,26 @@ import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nullable;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
 /** Implementation of BuildFileModifier. Modifies the PSI tree directly. */
 public class BuildFileModifierImpl implements BuildFileModifier {
 
-  private static final Logger logger = Logger.getInstance(BuildFileModifierImpl.class);
+    private static final Logger logger = Logger.getInstance(BuildFileModifierImpl.class);
+    public static final String ATTRIBUTE_NAME = "name";
+    public static final String ATTRIBUTE_DEPS = "deps";
+    public static final String BUILDOZER_COMMAND = "buildozer";
+    public static final String ADD_DEPS_COMMAND = "add deps ";
 
-  @Override
+    @Override
   public boolean addRule(Project project, Label newRule, Kind ruleKind) {
     BuildReferenceManager manager = BuildReferenceManager.getInstance(project);
     File file = manager.resolvePackage(newRule.blazePackage());
@@ -84,11 +95,14 @@ public class BuildFileModifierImpl implements BuildFileModifier {
                       )
               );
         if(targetToBeEdited.isPresent()){
-            java.util.Optional<Argument.Keyword> maybeDepsKeyword = findTargetDepsAttribute(targetToBeEdited.get());
-            if(!maybeDepsKeyword.isPresent()){
-                maybeDepsKeyword = addDepsAttribute(project, targetToBeEdited.get());
+            VirtualFile workDirectory = findWorkspaceFile(project.getWorkspaceFile());
+
+            if(isBuildozerInstalled(workDirectory) && workDirectory != null){
+                addDependencyUsingBuildozer(workDirectory, targetToBeAdded, targetToBeEdited);
+            } else {
+                addUsingBuildFileUtils(project, targetToBeAdded, targetToBeEdited);
             }
-            addTargetToDepsIfNeeded(maybeDepsKeyword.get(), targetToBeAdded, project);
+
             wasDepsAddedToRule = true;
         }
     }
@@ -96,12 +110,98 @@ public class BuildFileModifierImpl implements BuildFileModifier {
     return wasDepsAddedToRule;
   }
 
+  private void addDependencyUsingBuildozer(VirtualFile workDirectory, Label targetToBeAdded, Optional<PsiElement> targetToBeEdited) {
+      try {
+          java.util.Optional<Argument.Keyword> targetNameAttribute = findTargetAttribute(targetToBeEdited.get(), ATTRIBUTE_NAME);
+          PsiElement targetToBeEditedPsiElement = targetNameAttribute.get().getPsiChild(BuildElementTypes.STRING_LITERAL, null);
+          String targetToBeEditedDirectory = getTargetDirectory(targetToBeEdited);
+          String targetToBeEditedName = targetToBeEditedPsiElement.getText().replaceAll("\"", "");
+          String targetToBeEditedFullPath = targetToBeEditedDirectory+":"+targetToBeEditedName;
+          List<String> commandList = new ArrayList<>();
+          commandList.add(BUILDOZER_COMMAND);
+          commandList.add(ADD_DEPS_COMMAND +targetToBeAdded.toString());
+          commandList.add(targetToBeEditedFullPath);
+
+          runCliCommand(
+                  commandList,
+                  workDirectory.getPath()
+          );
+      } catch (Exception e) {
+          logger.error("failed adding using buildozer ", e);
+
+      }
+  }
+
+    @NotNull
+    private String getTargetDirectory(Optional<PsiElement> targetToBeEdited) {
+        return targetToBeEdited.get()
+                .getContainingFile()
+                .toString()
+                .replace("/BUILD.bazel", "")
+                .replace("/BUILD", "");
+    }
+
+    private boolean isBuildozerInstalled(VirtualFile workDirectory) {
+        try {
+            List<String> command = Arrays.asList("which buildozer".split(" "));
+            String buildozerInstallationPath = runCliCommand(command, workDirectory.getPath());
+            return StringUtils.isNoneEmpty(buildozerInstallationPath);
+        } catch (Exception e) {
+            logger.error("failed checking for buildozer installation falling back to PSIElement manipulation ", e);
+            return false;
+        }
+    }
+
+    private String runCliCommand(List<String> command, String path) throws Exception {
+        GeneralCommandLine generalCommandLine = new GeneralCommandLine(command);
+
+        generalCommandLine.setWorkDirectory(path);
+        OSProcessHandler osProcessHandler = new OSProcessHandler(generalCommandLine.createProcess(), generalCommandLine.getCommandLineString());
+        OutputListener outputListener = new OutputListener();
+        osProcessHandler.addProcessListener(outputListener);
+        osProcessHandler.startNotify();
+        osProcessHandler.waitFor(1000);
+        if(outputListener.getOutput().getExitCode() != 0){
+            throw new Exception("Failed buildozer invocation: "+outputListener.getOutput().getStderr());
+        }
+
+        return outputListener.getOutput().getStdout();
+    }
+
+    @Nullable
+    private VirtualFile findWorkspaceFile(VirtualFile folder) {
+        while (folder != null) {
+            java.util.Optional<VirtualFile> workspaceFile = Arrays.asList(folder.getChildren())
+                    .stream()
+                    .filter(file -> isWorkspaceFile(file))
+                    .findFirst();
+            if (workspaceFile.isPresent()) {
+                return folder;
+            }
+
+            folder = folder.getParent();
+        }
+        return null;
+    }
+
+    private boolean isWorkspaceFile(VirtualFile file) {
+        return file.getName().equals("WORKSPACE");
+    }
+
+    private void addUsingBuildFileUtils(Project project, Label targetToBeAdded, Optional<PsiElement> targetToBeEdited) {
+        java.util.Optional<Argument.Keyword> maybeDepsKeyword = findTargetAttribute(targetToBeEdited.get(), "deps");
+        if(!maybeDepsKeyword.isPresent()){
+            maybeDepsKeyword = addDepsAttribute(project, targetToBeEdited.get());
+        }
+        addTargetToDepsIfNeeded(maybeDepsKeyword.get(), targetToBeAdded, project);
+    }
+
     @NotNull
     private java.util.Optional<Argument.Keyword> addDepsAttribute(Project project, PsiElement targetToBeEdited) {
         java.util.Optional<Argument.Keyword> maybeDepsKeyword;
         ArgumentList targetAttributes = PsiUtils.findFirstChildOfClassRecursive(targetToBeEdited, ArgumentList.class);
         addDepsAttributeToTargetAttributes(targetAttributes, project);
-        maybeDepsKeyword = findTargetDepsAttribute(targetToBeEdited);
+        maybeDepsKeyword = findTargetAttribute(targetToBeEdited, "deps");
         PsiElement whiteSpaceLiteral = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n    ");
         targetAttributes.addBefore(whiteSpaceLiteral, maybeDepsKeyword.get());
         PsiElement commaLiteral = createCommaElement(project);
@@ -111,9 +211,9 @@ public class BuildFileModifierImpl implements BuildFileModifier {
     }
 
     @NotNull
-    private java.util.Optional<Argument.Keyword> findTargetDepsAttribute(PsiElement psiElement) {
+    private java.util.Optional<Argument.Keyword> findTargetAttribute(PsiElement psiElement, String attributeName) {
         List<Argument.Keyword> allChildKeywords = PsiUtils.findAllChildrenOfClassRecursive(psiElement, Argument.Keyword.class);
-        Stream<Argument.Keyword> depsKeywords = allChildKeywords.stream().filter(keyword -> keyword.getName().equals("deps"));
+        Stream<Argument.Keyword> depsKeywords = allChildKeywords.stream().filter(keyword -> keyword.getName().equals(attributeName));
         return depsKeywords.findFirst();
     }
 
@@ -152,7 +252,7 @@ public class BuildFileModifierImpl implements BuildFileModifier {
     }
 
     private void addDepsAttributeToTargetAttributes(PsiElement depsElement, Project project) {
-        Argument.Keyword deps = BuildElementGenerator.getInstance(project).createKeywordArgumentWithListValue("deps");
+        Argument.Keyword deps = BuildElementGenerator.getInstance(project).createKeywordArgumentWithListValue(ATTRIBUTE_DEPS);
         depsElement.addBefore(deps, depsElement.getLastChild().getPrevSibling());
     }
 
