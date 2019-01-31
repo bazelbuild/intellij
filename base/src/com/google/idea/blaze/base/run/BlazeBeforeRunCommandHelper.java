@@ -38,8 +38,13 @@ import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.ui.problems.ResetImportIssueNotifier;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.messages.MessageBus;
+
 import java.util.List;
+
+import static com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive;
 
 /**
  * Runs a blaze build command associated with a {@link BlazeCommandRunConfiguration configuration},
@@ -65,8 +70,13 @@ public final class BlazeBeforeRunCommandHelper {
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+      MessageBus messageBus = project.getMessageBus();
 
-    String binaryPath =
+      invokeLaterIfProjectAlive(project, () ->
+              messageBus.syncPublisher(ResetImportIssueNotifier.RESET_IMPORT_ISSUE_NOTIFIER_TOPIC).
+                      resetIssues());
+
+      String binaryPath =
         handlerState.getBlazeBinaryState().getBlazeBinary() != null
             ? handlerState.getBlazeBinaryState().getBlazeBinary()
             : Blaze.getBuildSystemProvider(project).getBinaryPath(project);

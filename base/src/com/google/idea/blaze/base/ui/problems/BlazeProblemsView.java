@@ -34,12 +34,19 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.Nullable;
+import javax.swing.Icon;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,8 +58,11 @@ import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nullable;
-import javax.swing.Icon;
+
+import static com.google.idea.blaze.base.ui.problems.ImportIssueNotifier.IMPORT_ISSUE_NOTIFIER_TOPIC;
+import static com.google.idea.blaze.base.ui.problems.ImportIssueResolver.isImportIssue;
+import static com.google.idea.blaze.base.ui.problems.ImportIssueType.DEPENDENCY_MISSING_IN_BUILD_FILE;
+import static com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive;
 
 /** A custom error tree view for Blaze invocation errors. */
 public class BlazeProblemsView {
@@ -82,11 +92,16 @@ public class BlazeProblemsView {
   private volatile FocusBehavior focusBehavior;
   private volatile UUID currentSessionId = UUID.randomUUID();
 
+  @NotNull
+  private final MessageBus messageBus;
+
+
   public BlazeProblemsView(Project project, ToolWindowManager wm) {
     this.project = project;
     panel = new BlazeProblemsViewPanel(project);
     Disposer.register(project, () -> Disposer.dispose(panel));
     UIUtil.invokeLaterIfNeeded(() -> createToolWindow(project, wm));
+    this.messageBus = project.getMessageBus();
   }
 
   private void createToolWindow(Project project, ToolWindowManager wm) {
@@ -150,6 +165,8 @@ public class BlazeProblemsView {
         getExportTextPrefix(issue),
         getRenderTextPrefix(issue));
 
+        addImportIssueIfNeeded(issue, file);
+
     if (didFocusProblemsView) {
       return;
     }
@@ -161,6 +178,22 @@ public class BlazeProblemsView {
       focusProblemsView();
     }
   }
+
+    private void addImportIssueIfNeeded(IssueOutput issue, VirtualFile file) {
+        if (isImportIssue(issue, file, project)) {
+            PsiManager psiManager = PsiManager.getInstance(project);
+            PsiFile psiFile = psiManager.findFile(file);
+
+            syncPublisher(() ->
+                    messageBus.syncPublisher(IMPORT_ISSUE_NOTIFIER_TOPIC).
+                            notify(issue, psiFile, DEPENDENCY_MISSING_IN_BUILD_FILE));
+
+        }
+    }
+
+    private void syncPublisher(@NotNull Runnable publishingTask) {
+        invokeLaterIfProjectAlive(project, publishingTask);
+    }
 
   /**
    * Finds the virtual file associated with the given file path, resolving symlinks where relevant.

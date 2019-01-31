@@ -160,4 +160,8 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildCompilationModification"
                     interface="com.google.idea.blaze.java.fastbuild.FastBuildCompilationModification"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <annotator language="JAVA" implementationClass="com.google.idea.blaze.java.sync.ImportIssueAnnotator"/>
+  </extensions>
 </idea-plugin>
