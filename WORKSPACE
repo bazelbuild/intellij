@@ -173,6 +173,18 @@ http_archive(
     url = "https://dl.google.com/android/studio/ide-zips/3.3.0.19/android-studio-ide-182.5183351-linux.zip",
 )
 
+new_http_archive(
+    name = "protobuf_jetbrains_plugin",
+    url = "https://plugins.jetbrains.com/files/8277/37332/protobuf-jetbrains-plugin-0.10.2.zip",
+    build_file_content = "\n".join([
+    "java_import(",
+    "   name = 'protobuf_jetbrains_plugin',",
+    "   jars = ['protobuf-jetbrains-plugin/lib/protobuf-jetbrains-plugin-0.10.2.jar'],",
+    "   visibility = ['//visibility:public'],",
+    ")",
+    ])
+)
+
 # LICENSE: Common Public License 1.0
 maven_jar(
     name = "junit",
