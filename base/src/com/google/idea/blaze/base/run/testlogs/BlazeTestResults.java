@@ -35,4 +35,19 @@ public class BlazeTestResults {
   private BlazeTestResults(ImmutableMultimap<Label, BlazeTestResult> perTargetResults) {
     this.perTargetResults = perTargetResults;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    BlazeTestResults that = (BlazeTestResults) o;
+
+    return perTargetResults.equals(that.perTargetResults);
+  }
+
+  @Override
+  public int hashCode() {
+    return perTargetResults.hashCode();
+  }
 }
