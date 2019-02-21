@@ -62,6 +62,8 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private static final String DEFAULT_BLAZE_PATH =
       SystemInfo.isMac ? "/usr/local/bin/blaze" : "/usr/bin/blaze";
   private static final String DEFAULT_BAZEL_PATH = "bazel";
+  private static final String DEFAULT_BUILDIFIER_PATH = "buildifier";
+  private static final String DEFAULT_BUILDOZER_PATH = "buildozer";
 
   private FocusBehavior showBlazeConsoleOnSync = FocusBehavior.ALWAYS;
   private FocusBehavior showBlazeProblemsViewOnSync = FocusBehavior.ALWAYS;
@@ -81,6 +83,9 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private boolean showAddFileToProjectNotification = true;
   private String blazeBinaryPath = DEFAULT_BLAZE_PATH;
   private String bazelBinaryPath = DEFAULT_BAZEL_PATH;
+  private String buildifierBinaryPath = DEFAULT_BUILDIFIER_PATH;
+  private boolean useBuiltInBuildifier = true;
+  private String buildozerBinaryPath = DEFAULT_BUILDOZER_PATH;
 
   public static BlazeUserSettings getInstance() {
     return ServiceManager.getService(BlazeUserSettings.class);
@@ -239,6 +244,38 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
     this.bazelBinaryPath = StringUtil.defaultIfEmpty(bazelBinaryPath, DEFAULT_BAZEL_PATH).trim();
   }
 
+  public boolean getUseBuiltInBuildifier() {
+    return this.useBuiltInBuildifier;
+  }
+
+  public void setUseBuiltInBuildifier(boolean useBuiltInBuildifier) {
+    this.useBuiltInBuildifier = useBuiltInBuildifier;
+  }
+
+  public String getBuildifierBinaryPath() {
+    return StringUtil.defaultIfEmpty(buildifierBinaryPath, DEFAULT_BUILDIFIER_PATH).trim();
+  }
+
+  public void setBuildifierBinaryPath(String buildifierBinaryPath) {
+    this.buildifierBinaryPath = StringUtil.defaultIfEmpty(buildifierBinaryPath, DEFAULT_BUILDIFIER_PATH).trim();;
+  }
+
+  public String getBuildozerBinaryPath() {
+    return StringUtil.defaultIfEmpty(buildozerBinaryPath, DEFAULT_BUILDOZER_PATH).trim();
+  }
+
+  public void setBuildozerBinaryPath(String buildozerBinaryPath) {
+    this.buildozerBinaryPath = StringUtil.defaultIfEmpty(buildozerBinaryPath, DEFAULT_BUILDOZER_PATH).trim();;
+  }
+
+  public boolean isBuildozerDefault() {
+    return DEFAULT_BUILDOZER_PATH.equals(buildifierBinaryPath);
+  }
+
+  public String getDefaultBuildozerPath() {
+    return DEFAULT_BUILDOZER_PATH;
+  }
+
   public boolean getCollapseProjectView() {
     return collapseProjectView;
   }
@@ -294,6 +331,8 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
           Boolean.toString(settings.showAddFileToProjectNotification));
       builder.put("blazeBinaryPath", settings.blazeBinaryPath);
       builder.put("bazelBinaryPath", settings.bazelBinaryPath);
+      builder.put("buildifierBinaryPath", settings.buildifierBinaryPath);
+      builder.put("buildozerBinaryPath", settings.buildozerBinaryPath);
       return builder.build();
     }
   }

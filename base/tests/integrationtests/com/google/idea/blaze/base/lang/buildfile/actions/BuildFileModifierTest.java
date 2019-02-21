@@ -47,8 +47,6 @@ public class BuildFileModifierTest extends BuildFileIntegrationTestCase {
     assertFileContents(
         buildFile,
         "java_library(name = 'existing')",
-        "proto_library(",
-        "    name = \"new_target\"",
-        ")");
+        "proto_library(name = \"new_target\")");
   }
 }

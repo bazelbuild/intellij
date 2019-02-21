@@ -50,6 +50,8 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
 
   private static final String BLAZE_BINARY_PATH_KEY = "blaze.binary.path";
   public static final String BAZEL_BINARY_PATH_KEY = "bazel.binary.path";
+  public static final String BUILDIFIER_BINARY_PATH_KEY = "buildifier.binary.path";
+  public static final String BUILDOZER_BINARY_PATH_KEY = "buildozer.binary.path";
   public static final String ID = "blaze.view";
   public static final String SHOW_ADD_FILE_TO_PROJECT_LABEL_TEXT =
       "Show 'Add source to project' editor notifications";
@@ -74,6 +76,9 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
   private JCheckBox showAddFileToProjectNotification;
   private FileSelectorWithStoredHistory blazeBinaryPathField;
   private FileSelectorWithStoredHistory bazelBinaryPathField;
+  private JCheckBox useBuildInBuildifier;
+  private FileSelectorWithStoredHistory buildifierBinaryPathField;
+  private FileSelectorWithStoredHistory buildozerBinaryPathField;
 
   public BlazeUserSettingsConfigurable() {
     this.defaultBuildSystem = Blaze.defaultBuildSystem();
@@ -112,6 +117,9 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     settings.setShowAddFileToProjectNotification(showAddFileToProjectNotification.isSelected());
     settings.setBlazeBinaryPath(Strings.nullToEmpty(blazeBinaryPathField.getText()));
     settings.setBazelBinaryPath(Strings.nullToEmpty(bazelBinaryPathField.getText()));
+    settings.setBuildifierBinaryPath(Strings.nullToEmpty(buildifierBinaryPathField.getText()));
+    settings.setUseBuiltInBuildifier(useBuildInBuildifier.isSelected());
+    settings.setBuildozerBinaryPath(buildozerBinaryPathField.getText());
 
     for (BlazeUserSettingsContributor settingsContributor : settingsContributors) {
       settingsContributor.apply();
@@ -132,6 +140,9 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
     showAddFileToProjectNotification.setSelected(settings.getShowAddFileToProjectNotification());
     blazeBinaryPathField.setTextWithHistory(settings.getBlazeBinaryPath());
     bazelBinaryPathField.setTextWithHistory(settings.getBazelBinaryPath());
+    buildifierBinaryPathField.setTextWithHistory(settings.getBuildifierBinaryPath());
+    useBuildInBuildifier.setSelected(settings.getUseBuiltInBuildifier());
+    buildozerBinaryPathField.setTextWithHistory(settings.getBuildozerBinaryPath());
 
     for (BlazeUserSettingsContributor settingsContributor : settingsContributors) {
       settingsContributor.reset();
@@ -163,7 +174,14 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
                 Strings.nullToEmpty(settings.getBlazeBinaryPath()))
             || !Objects.equal(
                 Strings.nullToEmpty(bazelBinaryPathField.getText()).trim(),
-                Strings.nullToEmpty(settings.getBazelBinaryPath()));
+                Strings.nullToEmpty(settings.getBazelBinaryPath()))
+            || !Objects.equal(
+                Strings.nullToEmpty(buildifierBinaryPathField.getText()).trim(),
+                Strings.nullToEmpty(settings.getBuildifierBinaryPath()))
+            || useBuildInBuildifier.isSelected() != settings.getUseBuiltInBuildifier()
+            || !Objects.equal(
+                Strings.nullToEmpty(buildozerBinaryPathField.getText()).trim(),
+                Strings.nullToEmpty(settings.getBuildozerBinaryPath()));
 
     for (BlazeUserSettingsContributor settingsContributor : settingsContributors) {
       isModified |= settingsContributor.isModified();
@@ -192,7 +210,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
       contributorRowCount += contributor.getRowCount();
     }
 
-    final int totalRowSize = 10 + contributorRowCount;
+    final int totalRowSize = 12 + contributorRowCount;
     int rowi = 0;
 
     SearchableOptionsHelper helper = new SearchableOptionsHelper(this);
@@ -323,6 +341,18 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
         FileSelectorWithStoredHistory.create(
             BAZEL_BINARY_PATH_KEY, "Specify the bazel binary path");
 
+    useBuildInBuildifier = helper.createSearchableCheckBox("Use built-in buildifier binary", true);
+    useBuildInBuildifier.addActionListener(e -> buildifierBinaryPathField.setEnabled(!((JCheckBox)e.getSource()).isSelected()));
+
+    buildifierBinaryPathField =
+        FileSelectorWithStoredHistory.create(
+            BUILDIFIER_BINARY_PATH_KEY, "Specify the buildifier binary path");
+    buildifierBinaryPathField.setEnabled(!BlazeUserSettings.getInstance().getUseBuiltInBuildifier());
+
+    buildozerBinaryPathField =
+        FileSelectorWithStoredHistory.create(
+            BUILDOZER_BINARY_PATH_KEY, "Specify the buildozer binary path");
+
     if (BuildSystemProvider.isBuildSystemAvailable(BuildSystem.Blaze)) {
       addBinaryLocationSetting(
           helper.createSearchableLabel("Blaze binary location", true),
@@ -335,6 +365,36 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
           bazelBinaryPathField,
           rowi++);
     }
+    if (BuildSystemProvider.isBuildSystemAvailable(BuildSystem.Bazel) || BuildSystemProvider.isBuildSystemAvailable(BuildSystem.Blaze)) {
+      mainPanel.add(
+        useBuildInBuildifier,
+        new GridConstraints(
+              rowi++,
+              0,
+              1,
+              2,
+              GridConstraints.ANCHOR_NORTHWEST,
+              GridConstraints.FILL_NONE,
+              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+              GridConstraints.SIZEPOLICY_FIXED,
+              null,
+              null,
+              null,
+              0,
+              false));
+      addBinaryLocationSetting(
+          helper.createSearchableLabel("Buildifier binary location", true),
+          buildifierBinaryPathField,
+          rowi++);
+    }
+
+    if (BuildSystemProvider.isBuildSystemAvailable(BuildSystem.Bazel)) {
+      addBinaryLocationSetting(
+              helper.createSearchableLabel("Buildozer binary location", true),
+              buildozerBinaryPathField,
+              rowi++);
+    }
+
 
     mainPanel.add(
         new Spacer(),
