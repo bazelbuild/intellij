@@ -257,7 +257,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   }
 
   public void setBuildifierBinaryPath(String buildifierBinaryPath) {
-    this.buildifierBinaryPath = StringUtil.defaultIfEmpty(buildifierBinaryPath, DEFAULT_BUILDIFIER_PATH).trim();;
+    this.buildifierBinaryPath = StringUtil.defaultIfEmpty(buildifierBinaryPath, DEFAULT_BUILDIFIER_PATH).trim();
   }
 
   public String getBuildozerBinaryPath() {
@@ -265,7 +265,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   }
 
   public void setBuildozerBinaryPath(String buildozerBinaryPath) {
-    this.buildozerBinaryPath = StringUtil.defaultIfEmpty(buildozerBinaryPath, DEFAULT_BUILDOZER_PATH).trim();;
+    this.buildozerBinaryPath = StringUtil.defaultIfEmpty(buildozerBinaryPath, DEFAULT_BUILDOZER_PATH).trim();
   }
 
   public boolean isBuildozerDefault() {
