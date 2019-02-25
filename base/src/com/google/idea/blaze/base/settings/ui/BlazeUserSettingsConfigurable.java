@@ -210,7 +210,7 @@ public class BlazeUserSettingsConfigurable extends BaseConfigurable
       contributorRowCount += contributor.getRowCount();
     }
 
-    final int totalRowSize = 12 + contributorRowCount;
+    final int totalRowSize = 13 + contributorRowCount;
     int rowi = 0;
 
     SearchableOptionsHelper helper = new SearchableOptionsHelper(this);
