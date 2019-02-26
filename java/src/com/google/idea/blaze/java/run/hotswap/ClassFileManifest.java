@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.filecache.FileDiffer;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
 import java.io.IOException;
@@ -88,35 +89,34 @@ public class ClassFileManifest {
   public static ClassFileManifest build(
       Collection<File> jars, @Nullable ClassFileManifest previousManifest)
       throws ExecutionException {
-    Set<File> updatedFiles = new HashSet<>();
-    ImmutableMap<File, Long> newFileState =
-        FileDiffer.updateFiles(
-            previousManifest != null ? previousManifest.jarFileState : null,
-            jars,
-            updatedFiles,
-            new ArrayList<>());
-    if (newFileState == null) {
-      throw new ExecutionException("Couldn't read jar file state");
-    }
-    ImmutableMap.Builder<File, JarManifest> jarManifests = ImmutableMap.builder();
-    jars.forEach(
-        f -> {
-          if (!updatedFiles.contains(f) && previousManifest != null) {
-            jarManifests.put(f, previousManifest.jarManifests.get(f));
-          }
-        });
     try {
+      Set<File> updatedFiles = new HashSet<>();
+      ImmutableMap<File, Long> newFileState =
+          FileDiffer.updateFiles(
+              previousManifest != null ? previousManifest.jarFileState : null,
+              jars,
+              updatedFiles,
+              new ArrayList<>());
+      if (newFileState == null) {
+        throw new ExecutionException("Couldn't read jar file state");
+      }
+      ImmutableMap.Builder<File, JarManifest> jarManifests = ImmutableMap.builder();
+      jars.forEach(
+          f -> {
+            if (!updatedFiles.contains(f) && previousManifest != null) {
+              jarManifests.put(f, previousManifest.jarManifests.get(f));
+            }
+          });
       buildJarManifests(updatedFiles)
           .stream()
           .filter(Objects::nonNull)
           .forEach(m -> jarManifests.put(m.jar, m));
       return new ClassFileManifest(newFileState, jarManifests.build());
     } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
+      throw new RunCanceledByUserException();
     } catch (java.util.concurrent.ExecutionException e) {
       throw new ExecutionException("Error parsing runtime jars", e);
     }
-    return null;
   }
 
   private static List<JarManifest> buildJarManifests(Collection<File> jars)

@@ -114,7 +114,7 @@ public final class ScopedBlazeProcessHandler extends KillableColoredProcessHandl
 
     @Override
     public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-      FileCaches.refresh(project);
+      FileCaches.refresh(project, context);
       context.release();
     }
   }

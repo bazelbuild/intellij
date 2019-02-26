@@ -83,6 +83,7 @@ public class JdepsFileWriter {
     target.getDependencies().stream()
         .map(Dependency::getTargetKey)
         .map(targetMap::get)
+        .filter(Objects::nonNull)
         .flatMap(JdepsFileWriter::getJars)
         .map(ArtifactLocation::getRelativePath)
         .map(

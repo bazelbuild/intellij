@@ -199,8 +199,8 @@ public final class BlazeCommandGenericRunConfigurationRunner
                   BlazeInvocationContext.runConfigContext(
                       executorType, configuration.getType(), false)))
           .addBlazeFlags(extraBlazeFlags)
-          .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
-          .addExeFlags(handlerState.getExeFlagsState().getExpandedFlags())
+          .addBlazeFlags(handlerState.getBlazeFlagsState().getFlagsForExternalProcesses())
+          .addExeFlags(handlerState.getExeFlagsState().getFlagsForExternalProcesses())
           .build();
     }
 

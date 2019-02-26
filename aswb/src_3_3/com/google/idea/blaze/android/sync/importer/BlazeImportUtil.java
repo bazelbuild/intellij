@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.scope.Output;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
-import com.google.idea.blaze.java.JavaBlazeRules;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -83,7 +82,7 @@ public class BlazeImportUtil {
   /** Returns the javac jar if it can be found in the given list of targets, otherwise null. */
   static ArtifactLocation getJavacJar(Collection<TargetIdeInfo> targets) {
     return targets.stream()
-        .filter(target -> target.getKind() == JavaBlazeRules.RuleTypes.JAVA_TOOLCHAIN.getKind())
+        .filter(target -> target.getJavaToolchainIdeInfo() != null)
         .map(TargetIdeInfo::getJavaToolchainIdeInfo)
         .filter(Objects::nonNull)
         .map(JavaToolchainIdeInfo::getJavacJar)

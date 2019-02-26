@@ -14,6 +14,7 @@ java_library(
     visibility = ["//visibility:public"],
     deps = [
         "//base",
+        "//common/experiments",
         "//common/transactions",
         "//intellij_platform_sdk:devkit",
         "//intellij_platform_sdk:jsr305",
@@ -91,6 +92,7 @@ intellij_integration_test_suite(
         "//base:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "@junit//jar",
     ],
 )

@@ -40,6 +40,7 @@
     <PrefetchFileSource implementation="com.google.idea.blaze.cpp.CPrefetchFileSource"/>
     <SyncListener implementation="com.google.idea.blaze.cpp.BulkSymbolTableBuildingChangeListener$WorkspaceTypeSyncListener"/>
     <SyncStatusContributor implementation="com.google.idea.blaze.cpp.syncstatus.CppSyncStatusContributor"/>
+    <cpp.BlazeCompilerFlagsProcessorProvider implementation="com.google.idea.blaze.cpp.IncludeRootFlagsProcessor$Provider"/>
     <cpp.BlazeCompilerFlagsProcessorProvider implementation="com.google.idea.blaze.cpp.SysrootFlagsProcessor$Provider"/>
     <TargetKindProvider implementation="com.google.idea.blaze.cpp.CppBlazeRules"/>
   </extensions>

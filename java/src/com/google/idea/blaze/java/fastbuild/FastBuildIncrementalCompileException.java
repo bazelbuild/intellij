@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.java.fastbuild;
 
-
 /**
  * An exception compiling code using the {@link FastBuildService}.
  *
@@ -24,6 +23,10 @@ package com.google.idea.blaze.java.fastbuild;
 public class FastBuildIncrementalCompileException extends FastBuildException {
 
   FastBuildIncrementalCompileException() {
-    super("incremental compilation failed");
+    super("Error performing incremental compilation");
+  }
+
+  public FastBuildIncrementalCompileException(Throwable cause) {
+    super("Error performing incremental compilation: " + cause, cause);
   }
 }

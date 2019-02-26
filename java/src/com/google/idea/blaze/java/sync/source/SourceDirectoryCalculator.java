@@ -96,7 +96,6 @@ public final class SourceDirectoryCalculator {
               Map<TargetKey, Map<ArtifactLocation, String>> manifestMap =
                   PackageManifestReader.getInstance()
                       .readPackageManifestFiles(
-                          project,
                           childContext,
                           artifactLocationDecoder,
                           javaPackageManifests,
@@ -217,9 +216,8 @@ public final class SourceDirectoryCalculator {
         javaPackageReaders,
         result);
 
-    if (result.isEmpty() && PackagePrefixCalculator.looksLikeSourceRoot(directoryRoot)) {
-      // if this really looks like a source root, but we didn't find any sources
-      // then call it a root and guess the package path anyway
+    if (result.isEmpty()) {
+      // if there are no nested source directories, then mark the content root as a source directory
       return ImmutableList.of(
           BlazeSourceDirectory.builder(workspaceRoot.fileForPath(directoryRoot))
               .setPackagePrefix(PackagePrefixCalculator.packagePrefixOf(directoryRoot))

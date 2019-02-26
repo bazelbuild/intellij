@@ -102,7 +102,7 @@ public final class AarLibrary extends BlazeLibrary {
         ProjectLibraryTable.getInstance(project)
             .getLibraryByName(this.key.getIntelliJLibraryName());
     if (aarLibrary != null) {
-      VirtualFile[] files = aarLibrary.getModifiableModel().getFiles(OrderRootType.CLASSES);
+      VirtualFile[] files = aarLibrary.getFiles(OrderRootType.CLASSES);
       for (VirtualFile file : files) {
         if (file.isDirectory() && SdkConstants.FD_RES.equals(file.getName())) {
           return new PathString(file.getPath());

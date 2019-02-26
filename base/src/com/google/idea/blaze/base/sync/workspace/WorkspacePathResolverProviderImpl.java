@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
@@ -34,6 +35,14 @@ public class WorkspacePathResolverProviderImpl implements WorkspacePathResolverP
   public WorkspacePathResolver getPathResolver() {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    return projectData != null ? projectData.getWorkspacePathResolver() : null;
+    if (projectData != null) {
+      return projectData.getWorkspacePathResolver();
+    }
+    WorkspaceRoot root = WorkspaceRoot.fromProjectSafe(project);
+    if (root != null) {
+      // fallback to a default path resolver until we get more information (e.g. from the next sync)
+      return new WorkspacePathResolverImpl(root);
+    }
+    return null;
   }
 }

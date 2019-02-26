@@ -37,6 +37,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.google.idea.blaze.plugin.IntellijPluginRule;
+import com.google.idea.blaze.plugin.run.BlazeIntellijPluginDeployer.DeployedPluginInfo;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -78,7 +79,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.swing.DefaultComboBoxModel;
@@ -188,7 +188,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     try {
       sandboxHome = new File(sandboxHome).getCanonicalPath();
     } catch (IOException e) {
-      throw new ExecutionException("No sandbox specified for IntelliJ Platform Plugin SDK");
+      throw new ExecutionException("No sandbox specified for IntelliJ Platform Plugin SDK", e);
     }
     String buildNumber = IdeaJdkHelper.getBuildNumber(ideaJdk);
     final BlazeIntellijPluginDeployer deployer =
@@ -201,7 +201,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     return new JavaCommandLineState(env) {
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
-        List<String> pluginIds = deployer.deployNonBlocking();
+        DeployedPluginInfo deployedPluginInfo = deployer.deployNonBlocking();
 
         final JavaParameters params = new JavaParameters();
 
@@ -210,10 +210,12 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
         fillParameterList(vm, vmParameters);
         fillParameterList(params.getProgramParametersList(), programParameters);
 
-        IntellijWithPluginClasspathHelper.addRequiredVmParams(params, ideaJdk);
+        IntellijWithPluginClasspathHelper.addRequiredVmParams(
+            params, ideaJdk, deployedPluginInfo.javaAgents);
 
         vm.defineProperty(
-            JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY, Joiner.on(',').join(pluginIds));
+            JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY,
+            Joiner.on(',').join(deployedPluginInfo.pluginIds));
 
         if (!vm.hasProperty(PlatformUtils.PLATFORM_PREFIX_KEY) && buildNumber != null) {
           String prefix = IdeaJdkHelper.getPlatformPrefix(buildNumber);

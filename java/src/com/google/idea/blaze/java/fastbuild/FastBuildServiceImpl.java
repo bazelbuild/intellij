@@ -101,6 +101,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
   private final ChangeListManager changeListManager;
   private final FastBuildIncrementalCompiler incrementalCompiler;
   private final FastBuildChangedFilesService changedFilesManager;
+  private final Thread shutdownHook;
 
   private final ConcurrentHashMap<Label, FastBuildState> builds;
 
@@ -118,6 +119,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     this.incrementalCompiler = incrementalCompiler;
     this.changedFilesManager = changedFilesManager;
     this.builds = new ConcurrentHashMap<>();
+    this.shutdownHook = new Thread(this::resetBuilds);
   }
 
   @Override
@@ -427,11 +429,16 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
 
   @Override
   public void projectOpened() {
-    Runtime.getRuntime().addShutdownHook(new Thread(this::projectClosed));
+    Runtime.getRuntime().addShutdownHook(shutdownHook);
   }
 
   @Override
   public void projectClosed() {
+    Runtime.getRuntime().removeShutdownHook(shutdownHook);
+    resetBuilds();
+  }
+
+  private void resetBuilds() {
     builds.keySet().forEach(this::resetBuild);
   }
 }

@@ -17,6 +17,7 @@ package com.google.idea.blaze.scala.run.producers;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
 import com.google.idea.blaze.base.run.producers.RunConfigurationContext;
 import com.google.idea.blaze.base.run.producers.TestContext;
@@ -54,9 +55,8 @@ class ScalaTestContextProvider implements TestContextProvider {
     if (target == null) {
       return null;
     }
-    return TestContext.builder()
+    return TestContext.builder(testClass, ExecutorType.DEBUG_SUPPORTED_TYPES)
         .setTarget(target)
-        .setSourceElement(testClass)
         .setTestFilter(getTestFilter(testClass))
         .setDescription(testClass.getName())
         .build();

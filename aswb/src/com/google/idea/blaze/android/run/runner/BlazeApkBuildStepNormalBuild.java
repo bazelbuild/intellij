@@ -126,7 +126,7 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
                                   context)))
                       .build()
                       .run();
-              FileCaches.refresh(project);
+              FileCaches.refresh(project, context);
 
               if (retVal != 0) {
                 context.setHasError();

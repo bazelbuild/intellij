@@ -22,7 +22,6 @@ import com.google.common.io.Files;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JsIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -33,9 +32,8 @@ import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.SyntheticLibrary;
-import com.intellij.openapi.vfs.VirtualFile;
+import java.io.File;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
@@ -65,13 +63,13 @@ class BlazeJavascriptAdditionalLibraryRootsProvider extends AdditionalLibraryRoo
 
   @Nullable
   private static SyntheticLibrary getLibrary(Project project, BlazeProjectData projectData) {
-    ImmutableList<VirtualFile> files = getLibraryFiles(project, projectData);
+    ImmutableList<File> files = getLibraryFiles(project, projectData);
     return files.isEmpty()
         ? null
-        : new BlazeExternalSyntheticLibrary("JavaScript Libraries", files);
+        : new BlazeExternalSyntheticLibrary(project, "JavaScript Libraries", files);
   }
 
-  private static ImmutableList<VirtualFile> getLibraryFiles(
+  private static ImmutableList<File> getLibraryFiles(
       Project project, BlazeProjectData projectData) {
     if (!projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.JAVASCRIPT)) {
       return ImmutableList.of();
@@ -103,8 +101,6 @@ class BlazeJavascriptAdditionalLibraryRootsProvider extends AdditionalLibraryRoo
         .filter(isExternal)
         .distinct()
         .map(projectData.getArtifactLocationDecoder()::decode)
-        .map(VfsUtils::resolveVirtualFile)
-        .filter(Objects::nonNull)
         .collect(toImmutableList());
   }
 }

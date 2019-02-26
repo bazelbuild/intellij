@@ -26,11 +26,10 @@
     <TestContextProvider
         implementation="com.google.idea.blaze.scala.run.producers.ScalaSpecs2TestContextProvider"
         order="before JavaTestContextProvider"/>
+    <BinaryContextProvider implementation="com.google.idea.blaze.scala.run.producers.ScalaBinaryContextProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.scala.run.producers.BlazeScalaMainClassRunConfigurationProducer"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.scala.run.producers.DeployableJarRunConfigurationProducer"/>
     <!-- Need to come before the one in the scala plugin to override the icon. -->

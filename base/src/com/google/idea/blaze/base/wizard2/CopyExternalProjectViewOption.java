@@ -49,6 +49,7 @@ public class CopyExternalProjectViewOption implements BlazeSelectProjectViewOpti
     this.projectViewPathField = new TextFieldWithStoredHistory(LAST_WORKSPACE_PATH);
     projectViewPathField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);
     projectViewPathField.setText(userSettings.get(LAST_WORKSPACE_PATH, ""));
+    projectViewPathField.setMinimumAndPreferredWidth(MINIMUM_FIELD_WIDTH);
 
     JButton button = new JButton("...");
     button.addActionListener(action -> chooseWorkspacePath());

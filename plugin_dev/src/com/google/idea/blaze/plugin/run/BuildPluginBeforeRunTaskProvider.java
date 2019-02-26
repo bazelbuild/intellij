@@ -195,7 +195,7 @@ public final class BuildPluginBeforeRunTaskProvider
                               context,
                               binaryPath,
                               workspaceRoot,
-                              config.getBlazeFlagsState().getExpandedFlags(),
+                              config.getBlazeFlagsState().getFlagsForExternalProcesses(),
                               BlazeInfo.EXECUTION_ROOT_KEY);
 
                   String executionRoot;
@@ -235,8 +235,9 @@ public final class BuildPluginBeforeRunTaskProvider
                                         ExecutorType.fromExecutor(env.getExecutor()),
                                         config.getType(),
                                         true)))
-                            .addBlazeFlags(config.getBlazeFlagsState().getExpandedFlags())
-                            .addExeFlags(config.getExeFlagsState().getExpandedFlags())
+                            .addBlazeFlags(
+                                config.getBlazeFlagsState().getFlagsForExternalProcesses())
+                            .addExeFlags(config.getExeFlagsState().getFlagsForExternalProcesses())
                             .addBlazeFlags(buildResultHelper.getBuildFlags())
                             .build();
                     if (command == null || context.hasErrors() || context.isCancelled()) {
@@ -256,7 +257,7 @@ public final class BuildPluginBeforeRunTaskProvider
                     if (retVal != 0) {
                       context.setHasError();
                     }
-                    FileCaches.refresh(project);
+                    FileCaches.refresh(project, context);
                     try {
                       deployer.reportBuildComplete(new File(executionRoot), buildResultHelper);
                     } catch (GetArtifactsException e) {

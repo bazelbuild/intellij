@@ -12,16 +12,10 @@ load(
     "optional_plugin_xml",
     "stamped_plugin_xml",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 
 java_library(
     name = "golang",
-    srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
-        "intellij-2018.2": [],
-        "intellij-ue-2018.2": [],
-        "intellij-2018.3": glob(["v183/src/**/*.java"]),
-        "intellij-ue-2018.3": glob(["v183/src/**/*.java"]),
-    }),
+    srcs = glob(["src/**/*.java"]),
     visibility = ["//visibility:public"],
     deps = [
         "//base",
@@ -30,7 +24,6 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
-        "//sdkcompat",
         "//third_party/go",
     ],
 )
@@ -50,12 +43,7 @@ optional_plugin_xml(
 
 merged_plugin_xml(
     name = "merged_optional_xml",
-    srcs = ["src/META-INF/go-contents.xml"] + select_for_plugin_api({
-        "intellij-2018.2": [],
-        "intellij-ue-2018.2": [],
-        "intellij-2018.3": ["v183/src/META-INF/go-contents.xml"],
-        "intellij-ue-2018.3": ["v183/src/META-INF/go-contents.xml"],
-    }),
+    srcs = ["src/META-INF/go-contents.xml"],
 )
 
 merged_plugin_xml(
@@ -86,12 +74,7 @@ intellij_plugin(
 
 intellij_unit_test_suite(
     name = "unit_tests",
-    srcs = glob(["tests/unittests/**/*.java"]) + select_for_plugin_api({
-        "intellij-2018.2": [],
-        "intellij-ue-2018.2": [],
-        "intellij-2018.3": glob(["v183/tests/unittests/**/*.java"]),
-        "intellij-ue-2018.3": glob(["v183/tests/unittests/**/*.java"]),
-    }),
+    srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze.golang",
     deps = [
         ":golang",
@@ -99,6 +82,7 @@ intellij_unit_test_suite(
         "//base:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "//third_party/go:go_for_tests",
         "@junit//jar",
     ],
@@ -122,6 +106,7 @@ intellij_integration_test_suite(
         "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "//third_party/go:go_for_tests",
         "@junit//jar",
     ],

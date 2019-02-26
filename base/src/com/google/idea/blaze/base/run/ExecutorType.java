@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -61,4 +62,16 @@ public enum ExecutorType {
   public boolean isFastBuildType() {
     return this.equals(FAST_BUILD_RUN) || this.equals(FAST_BUILD_DEBUG);
   }
+
+  /** Executor types supported for debuggable targets. */
+  public static final ImmutableSet<ExecutorType> DEBUG_SUPPORTED_TYPES =
+      ImmutableSet.of(RUN, DEBUG, COVERAGE);
+
+  /** Executor types supported for non-debuggable targets. */
+  public static final ImmutableSet<ExecutorType> DEBUG_UNSUPPORTED_TYPES =
+      ImmutableSet.of(RUN, COVERAGE);
+
+  /** Executor types supported for targets supporting fast run/debug. */
+  public static final ImmutableSet<ExecutorType> FAST_DEBUG_SUPPORTED_TYPES =
+      ImmutableSet.of(RUN, FAST_BUILD_RUN, DEBUG, FAST_BUILD_DEBUG, COVERAGE);
 }

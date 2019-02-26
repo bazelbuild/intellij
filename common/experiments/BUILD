@@ -34,6 +34,7 @@ intellij_unit_test_suite(
     deps = [
         ":experiments",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "@junit//jar",
     ],
 )

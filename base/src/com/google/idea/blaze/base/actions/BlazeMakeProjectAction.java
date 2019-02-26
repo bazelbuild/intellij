@@ -23,7 +23,7 @@ class BlazeMakeProjectAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    EventLoggingService.getInstance().ifPresent(s -> s.logEvent(getClass(), "make"));
+    EventLoggingService.getInstance().logEvent(getClass(), "make");
     BlazeBuildService.getInstance().buildProject(project);
   }
 }

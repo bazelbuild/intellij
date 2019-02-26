@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.plugin.run;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
@@ -24,7 +25,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PathsList;
 import java.io.File;
 import java.util.List;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Boilerplate for running an IJ application with an additional plugin, copied from
@@ -44,7 +44,7 @@ public class IntellijWithPluginClasspathHelper {
           "idea_rt.jar");
 
   private static void addIntellijLibraries(JavaParameters params, Sdk ideaJdk) {
-    @NonNls String libPath = ideaJdk.getHomePath() + File.separator + "lib";
+    String libPath = ideaJdk.getHomePath() + File.separator + "lib";
     PathsList list = params.getClassPath();
     for (String lib : IJ_LIBRARIES) {
       list.addFirst(libPath + File.separator + lib);
@@ -52,13 +52,14 @@ public class IntellijWithPluginClasspathHelper {
     list.addFirst(((JavaSdkType) ideaJdk.getSdkType()).getToolsPath(ideaJdk));
   }
 
-  public static void addRequiredVmParams(JavaParameters params, Sdk ideaJdk) {
+  public static void addRequiredVmParams(
+      JavaParameters params, Sdk ideaJdk, ImmutableSet<File> javaAgents) {
     String canonicalSandbox = IdeaJdkHelper.getSandboxHome(ideaJdk);
     ParametersList vm = params.getVMParametersList();
 
-    @NonNls String libPath = ideaJdk.getHomePath() + File.separator + "lib";
+    String libPath = ideaJdk.getHomePath() + File.separator + "lib";
     vm.add("-Xbootclasspath/a:" + libPath + File.separator + "boot.jar");
-
+    
     vm.defineProperty("idea.config.path", canonicalSandbox + File.separator + "config");
     vm.defineProperty("idea.system.path", canonicalSandbox + File.separator + "system");
     vm.defineProperty("idea.plugins.path", canonicalSandbox + File.separator + "plugins");
@@ -74,6 +75,9 @@ public class IntellijWithPluginClasspathHelper {
         vm.defineProperty(
             "sun.awt.disablegrab", "true"); // See http://devnet.jetbrains.net/docs/DOC-1142
       }
+    }
+    for (File javaAgent : javaAgents) {
+      vm.add("-javaagent:" + javaAgent.getAbsolutePath());
     }
 
     params.setWorkingDirectory(ideaJdk.getHomePath() + File.separator + "bin" + File.separator);

@@ -87,11 +87,4 @@ class BlazeGoPackageFactory implements GoPackageFactory {
   public GoPackage createPackage(String packageName, PsiDirectory... directories) {
     return null;
   }
-
-  @Nullable
-  @SuppressWarnings("MissingOverride") // #api182: removed in 2018.3
-  public GoPackage createPackage(
-      String packageName, boolean testsOnly, PsiDirectory... directories) {
-    return null;
-  }
 }

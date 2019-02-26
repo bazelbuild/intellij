@@ -26,4 +26,5 @@ message IntellijPluginDeployFile {
 
 message IntellijPluginDeployInfo {
   repeated IntellijPluginDeployFile deploy_files = 1;
+  repeated IntellijPluginDeployFile java_agent_deploy_files = 2;
 }

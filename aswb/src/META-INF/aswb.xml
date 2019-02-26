@@ -21,12 +21,6 @@
   <depends>com.google.gct.test.recorder</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestClassRunConfigurationProducer"
-        order="first"/>
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestMethodRunConfigurationProducer"
-        order="first"/>
     <programRunner implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryProgramRunner" order="first"/>
     <programRunner implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestProgramRunner" order="first"/>
     <executor implementation="com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallRunExecutor" order="last"/>
@@ -35,12 +29,19 @@
                         serviceImplementation="com.google.idea.blaze.android.plugin.AswbPlugin"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.manifest.ManifestParser"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry"/>
+    <projectService serviceImplementation="com.google.idea.blaze.android.projectsystem.ExternalLibraryInterner"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.libraries.UnpackedAars"/>
+    <projectService serviceImplementation="com.google.idea.blaze.android.resources.BlazeLightResourceClassService"/>
+    <projectService serviceImplementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemSyncManager$LastSyncResultCache"/>
     <applicationService serviceImplementation="com.google.idea.blaze.android.settings.BlazeAndroidUserSettings"/>
     <applicationService serviceInterface="com.google.idea.blaze.android.sdk.BlazeSdkProvider"
       serviceImplementation="com.google.idea.blaze.android.sdk.BlazeSdkProviderImpl"
       testServiceImplementation="com.google.idea.blaze.android.sdk.MockBlazeSdkProvider"/>
     <dom.fileDescription implementation="com.google.idea.blaze.android.resources.BlazeResourcesDomFileDescription"/>
+    <moduleService serviceImplementation="com.google.idea.blaze.android.projectsystem.BlazeModuleSystem"/>
+    <runConfigurationProducer
+        implementation="com.google.idea.blaze.android.run.producers.BlazeFilterAndroidTestRunConfigurationProducer"
+        order="first"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.android.actions">
@@ -57,6 +58,7 @@
     <SyncPlugin implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncPlugin"/>
     <SyncListener implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncListener"/>
     <SyncListener implementation="com.google.idea.blaze.android.manifest.ManifestParser$ClearManifestParser"/>
+    <SyncListener implementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemSyncManager$SyncStatusPublisher"/>
     <JavaSyncAugmenter implementation="com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter"/>
     <FileCache implementation="com.google.idea.blaze.android.libraries.UnpackedAars$FileCacheAdapter"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.android.sync.AndroidPrefetchFileSource"/>
@@ -66,14 +68,22 @@
     <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection$AndroidSdkPlatformProjectViewDefaultValueProvider"/>
     <AndroidTestLaunchMethodsProvider implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProviderImpl"/>
     <SyncDataExtractor implementation="com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData$Extractor"/>
+    <TestContextProvider
+        implementation="com.google.idea.blaze.android.run.test.AndroidTestContextProvider"
+        order="first, before JavaTestContextProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">
     <sdkEventListener implementation="com.google.idea.blaze.android.sdk.AndroidSdkListener"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.android.project">
+    <projectsystem implementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemProvider"/>
+  </extensions>
+
   <extensions defaultExtensionNs="com.android.rendering">
     <renderErrorContributor implementation="com.google.idea.blaze.android.rendering.BlazeRenderErrorContributor$BlazeProvider"/>
+    <renderSecurityManagerOverrides implementation="com.google.idea.blaze.android.rendering.BlazeRenderSecurityManagerOverrides"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.gct.testrecorder.run">
@@ -85,5 +95,10 @@
       <implementation-class>com.google.idea.blaze.android.plugin.PluginCompatibilityEnforcer</implementation-class>
     </component>
   </application-components>
+  <project-components>
+    <component>
+      <implementation-class>com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationCollector</implementation-class>
+    </component>
+  </project-components>
 
 </idea-plugin>

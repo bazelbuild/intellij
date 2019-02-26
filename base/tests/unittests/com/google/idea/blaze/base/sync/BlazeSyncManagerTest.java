@@ -99,7 +99,7 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
     assertThat(params.backgroundSync).isFalse();
     assertThat(params.addProjectViewTargets).isFalse();
     assertThat(params.addWorkingSet).isFalse();
-    assertThat(params.targetExpressions).isEqualTo(targets);
+    assertThat(params.targetExpressions).containsExactlyElementsIn(targets);
   }
 
   @Test

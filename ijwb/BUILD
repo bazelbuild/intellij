@@ -163,6 +163,7 @@ intellij_unit_test_suite(
         "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "@junit//jar",
     ],
 )
@@ -182,6 +183,7 @@ intellij_integration_test_suite(
         "//base:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "@junit//jar",
     ],
 )

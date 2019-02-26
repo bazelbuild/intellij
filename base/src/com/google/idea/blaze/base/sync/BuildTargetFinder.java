@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.sync;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
@@ -40,6 +41,10 @@ public class BuildTargetFinder {
     this.buildSystemProvider = Blaze.getBuildSystemProvider(project);
   }
 
+  /**
+   * Finds a BUILD file to sync for the given file. Returns null if no build file is found, or the
+   * build file isn't covered by the .bazelproject directories.
+   */
   @Nullable
   public File findBuildFileForFile(File file) {
     if (fileOperationProvider.isFile(file)) {
@@ -48,7 +53,10 @@ public class BuildTargetFinder {
         return null;
       }
     }
-
+    WorkspacePath path = workspaceRoot.workspacePathForSafe(file);
+    if (path == null || !importRoots.containsWorkspacePath(path)) {
+      return null;
+    }
     final File directory = file;
     File root =
         importRoots
@@ -74,6 +82,10 @@ public class BuildTargetFinder {
     return null;
   }
 
+  /**
+   * Finds a target to sync for the given file. Returns null if no build file is found, or the build
+   * file isn't covered by the .bazelproject directories.
+   */
   @Nullable
   public TargetExpression findTargetForFile(File file) {
     File buildFile = findBuildFileForFile(file);

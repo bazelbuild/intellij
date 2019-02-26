@@ -106,6 +106,11 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
 
     @Override
     public boolean executeBeforeRunTask(ExecutionEnvironment env) {
+      if (!BlazeCommandRunConfigurationRunner.isDebugging(env)
+          || BlazeCommandName.BUILD.equals(
+              BlazeCommandRunConfigurationRunner.getBlazeCommand(env))) {
+        return true;
+      }
       try {
         ClassFileManifestBuilder.buildManifest(env, null);
         return true;

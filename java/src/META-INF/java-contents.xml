@@ -74,19 +74,18 @@
     <JavaLikeLanguage implementation="com.google.idea.blaze.java.sync.source.JavaLikeLanguage$Java"/>
     <JavaLikeLanguage implementation="com.google.idea.blaze.java.sync.source.AndroidJavaLikeLanguage"/>
     <TestContextProvider
-        implementation="com.google.idea.blaze.java.run.producers.MultipleJavaClassesTestContextProvider"/>
-    <TestContextProvider
         implementation="com.google.idea.blaze.java.run.producers.JavaTestContextProvider"
         id="JavaTestContextProvider"/>
+    <TestContextProvider
+        implementation="com.google.idea.blaze.java.run.producers.MultipleJavaClassesTestContextProvider"
+        order="after JavaTestContextProvider"/>
+    <BinaryContextProvider implementation="com.google.idea.blaze.java.run.producers.JavaBinaryContextProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationProducer
         implementation="com.google.idea.blaze.java.run.producers.BlazeJavaAbstractTestCaseConfigurationProducer"
         order="first, before testContextProducer"/>
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.java.run.producers.BlazeJavaMainClassRunConfigurationProducer"
-        order="first"/>
     <applicationService serviceInterface="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"
                         serviceImplementation="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"/>
     <applicationService serviceInterface="com.google.idea.blaze.java.sync.source.PackageManifestReader"

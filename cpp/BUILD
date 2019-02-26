@@ -75,7 +75,8 @@ intellij_unit_test_suite(
         default = [],
     ),
     test_package_root = "com.google.idea.blaze.cpp",
-    runtime_deps = ["//intellij_platform_sdk:plugin_api_for_tests"],
+    # Needed to work around one-version issue
+    runtime_deps = ["//intellij_platform_sdk:test_libs"],
     deps = [
         ":cpp",
         ":unit_test_utils",
@@ -85,6 +86,7 @@ intellij_unit_test_suite(
         "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "//sdkcompat",
         "@junit//jar",
     ],
@@ -128,6 +130,7 @@ java_library(
         "//base:integration_test_utils",
         "//base:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "//sdkcompat",
         "//testing:lib",
         "@junit//jar",
@@ -156,6 +159,7 @@ intellij_integration_test_suite(
         "//base:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "//sdkcompat",
         "@junit//jar",
     ],

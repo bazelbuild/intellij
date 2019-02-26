@@ -31,6 +31,7 @@ import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.ConnectJavaDebuggerTask;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
+import com.google.idea.blaze.android.run.AndroidSessionInfoCompat;
 import com.intellij.debugger.engine.RemoteDebugProcessHandler;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.execution.ExecutionException;
@@ -220,13 +221,8 @@ class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTask {
             ? ((AndroidRunConfigurationBase) runProfile).getUniqueID()
             : -1;
     AndroidSessionInfo value =
-        new AndroidSessionInfo(
-            debugProcessHandler,
-            debugDescriptor,
-            uniqueId,
-            currentLaunchInfo.executor.getId(),
-            currentLaunchInfo.executor.getActionName(),
-            false);
+        AndroidSessionInfoCompat.create(
+            debugProcessHandler, debugDescriptor, uniqueId, currentLaunchInfo.env);
     debugProcessHandler.putUserData(AndroidSessionInfo.KEY, value);
     debugProcessHandler.putUserData(AndroidSessionInfo.ANDROID_DEBUG_CLIENT, client);
     debugProcessHandler.putUserData(

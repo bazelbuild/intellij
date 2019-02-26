@@ -18,6 +18,7 @@ package com.google.idea.blaze.python.run.producers;
 import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
 import com.google.idea.blaze.base.run.producers.RunConfigurationContext;
 import com.google.idea.blaze.base.run.producers.TestContext;
@@ -69,16 +70,12 @@ class PyTestContextProvider implements TestContextProvider {
     if (testTarget == null) {
       return null;
     }
-    String filter = testLocation.testFilter();
-    String description =
-        filter != null
-            ? String.format("%s (%s)", filter, testLocation.testFile.getName())
-            : testLocation.testFile.getName();
-    return TestContext.builder()
+
+    PythonTestFilterInfo filterInfo = testLocation.testFilter();
+    return TestContext.builder(testLocation.sourceElement(), ExecutorType.DEBUG_SUPPORTED_TYPES)
         .setTarget(testTarget)
-        .setSourceElement(testLocation.sourceElement())
-        .setTestFilter(filter)
-        .setDescription(description)
+        .setTestFilter(filterInfo.filter)
+        .setDescription(filterInfo.description)
         .build();
   }
 
@@ -86,6 +83,7 @@ class PyTestContextProvider implements TestContextProvider {
     private final PyFile testFile;
     @Nullable private final PyClass testClass;
     @Nullable private final PyFunction testFunction;
+    private static final String FILTER_DESCRIPTION_FORMAT = "%s (%s)";
 
     private TestLocation(
         PyFile testFile, @Nullable PyClass testClass, @Nullable PyFunction testFunction) {
@@ -163,32 +161,44 @@ class PyTestContextProvider implements TestContextProvider {
       return Joiner.on(" ").join(parameterizedFilters);
     }
 
-    @Nullable
-    private String testFilter() {
+    private String getFilterDescription(@Nullable String filterName) {
+      if (filterName == null) {
+        return testFile.getName();
+      }
+      return String.format(FILTER_DESCRIPTION_FORMAT, filterName, testFile.getName());
+    }
+
+    private PythonTestFilterInfo testFilter() {
       if (testClass == null) {
-        return null;
+        return new PythonTestFilterInfo(null, getFilterDescription(null));
       }
       if (testFunction == null) {
-        return testClass.getName();
+        return new PythonTestFilterInfo(
+            testClass.getName(), getFilterDescription(testClass.getName()));
       }
       String nonParameterizedTest = testClass.getName() + "." + testFunction.getName();
 
       PyDecoratorList decoratorList = testFunction.getDecoratorList();
+      String filterDescription = getFilterDescription(nonParameterizedTest);
       if (decoratorList == null) {
-        return nonParameterizedTest;
+        return new PythonTestFilterInfo(nonParameterizedTest, filterDescription);
       }
 
       PyDecorator parameterizedDecorator = decoratorList.findDecorator("parameterized.parameters");
       if (parameterizedDecorator != null) {
-        return getTestFilterForParameters(nonParameterizedTest, parameterizedDecorator);
+        return new PythonTestFilterInfo(
+            getTestFilterForParameters(nonParameterizedTest, parameterizedDecorator),
+            filterDescription);
       }
 
       PyDecorator namedParameterizedDecorator =
           decoratorList.findDecorator("parameterized.named_parameters");
       if (namedParameterizedDecorator != null) {
-        return getTestFilterForNamedParameters(nonParameterizedTest, namedParameterizedDecorator);
+        return new PythonTestFilterInfo(
+            getTestFilterForNamedParameters(nonParameterizedTest, namedParameterizedDecorator),
+            filterDescription);
       }
-      return nonParameterizedTest;
+      return new PythonTestFilterInfo(nonParameterizedTest, filterDescription);
     }
 
     PsiElement sourceElement() {
@@ -229,5 +239,15 @@ class PyTestContextProvider implements TestContextProvider {
       return new TestLocation((PyFile) file, pyClass, pyFunction);
     }
     return new TestLocation((PyFile) file, pyClass, null);
+  }
+
+  private static class PythonTestFilterInfo {
+    @Nullable public final String filter;
+    public final String description;
+
+    PythonTestFilterInfo(@Nullable String filter, String description) {
+      this.filter = filter;
+      this.description = description;
+    }
   }
 }

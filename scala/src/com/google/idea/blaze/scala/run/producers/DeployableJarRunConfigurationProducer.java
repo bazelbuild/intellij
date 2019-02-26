@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.scala.run.producers;
 
-import static com.google.idea.blaze.scala.run.producers.BlazeScalaMainClassRunConfigurationProducer.getMainObject;
+import static com.google.idea.blaze.scala.run.producers.ScalaBinaryContextProvider.getMainObject;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.dependencies.TargetInfo;

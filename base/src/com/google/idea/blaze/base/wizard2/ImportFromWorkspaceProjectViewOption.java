@@ -53,6 +53,7 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
     projectViewPathField.setName("projectview-file-path-field");
     projectViewPathField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);
     projectViewPathField.setText(userSettings.get(LAST_WORKSPACE_PATH, ""));
+    projectViewPathField.setMinimumAndPreferredWidth(MINIMUM_FIELD_WIDTH);
 
     JButton button = new JButton("...");
     button.addActionListener(action -> chooseWorkspacePath());

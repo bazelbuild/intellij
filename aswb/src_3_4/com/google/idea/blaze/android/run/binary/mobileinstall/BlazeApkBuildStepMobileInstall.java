@@ -30,6 +30,7 @@ import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -129,13 +130,14 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
                   ExternalTask.builder(workspaceRoot)
                       .addBlazeCommand(command.build())
                       .context(context)
+                      .stdout(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)))
                       .stderr(
                           LineProcessingOutputStream.of(
                               BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
                                   context)))
                       .build()
                       .run();
-              FileCaches.refresh(project);
+              FileCaches.refresh(project, context);
 
               if (retVal != 0) {
                 context.setHasError();

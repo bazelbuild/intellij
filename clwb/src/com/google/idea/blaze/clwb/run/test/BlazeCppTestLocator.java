@@ -16,7 +16,7 @@
 package com.google.idea.blaze.clwb.run.test;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.sdkcompat.clion.CidrGoogleTestUtilAdapter;
+import com.google.idea.blaze.clwb.CidrGoogleTestUtilAdapter;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
@@ -58,8 +58,6 @@ public class BlazeCppTestLocator implements SMTestLocator {
     if (testInfo.suite == null) {
       return null;
     }
-    // #api182 change
-    @SuppressWarnings("rawtypes")
     PsiElement testElement = null;
     if (testInfo.method != null) {
       testElement =
@@ -67,7 +65,7 @@ public class BlazeCppTestLocator implements SMTestLocator {
     } else if (testInfo.instantiation != null) {
       testElement =
           CidrGoogleTestUtilAdapter.findGoogleTestInstantiationSymbol(
-              project, testInfo.suite, testInfo.instantiation);
+              project, testInfo.suite, testInfo.instantiation, testInfo.suiteOrder);
     } else {
       testElement =
           CidrGoogleTestUtilAdapter.findAnyGoogleTestSymbolForSuite(project, testInfo.suite);

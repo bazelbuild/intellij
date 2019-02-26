@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.run.testmap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -31,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Future;
 
 /**
@@ -41,21 +43,27 @@ import java.util.concurrent.Future;
 public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
 
   @Override
-  public Future<Collection<TargetInfo>> targetsForSourceFile(
-      Project project, File sourceFile, Optional<RuleType> ruleType) {
+  public Future<Collection<TargetInfo>> targetsForSourceFiles(
+      Project project, Set<File> sourceFiles, Optional<RuleType> ruleType) {
     FilteredTargetMap filteredTargetMap =
         SyncCache.getInstance(project)
             .get(ProjectSourceToTargetFinder.class, ProjectSourceToTargetFinder::computeTargetMap);
     if (filteredTargetMap == null) {
       return Futures.immediateFuture(ImmutableList.of());
     }
-    return Futures.immediateFuture(
-        filteredTargetMap
-            .targetsForSourceFile(sourceFile)
-            .stream()
-            .map(TargetIdeInfo::toTargetInfo)
-            .filter(target -> !ruleType.isPresent() || target.getRuleType().equals(ruleType.get()))
-            .collect(toImmutableSet()));
+    ImmutableSet<TargetInfo> targets =
+        sourceFiles.stream()
+            .flatMap(f -> targetsForSourceFile(filteredTargetMap, f, ruleType).stream())
+            .collect(toImmutableSet());
+    return Futures.immediateFuture(targets);
+  }
+
+  private static ImmutableSet<TargetInfo> targetsForSourceFile(
+      FilteredTargetMap targetMap, File sourceFile, Optional<RuleType> ruleType) {
+    return targetMap.targetsForSourceFile(sourceFile).stream()
+        .map(TargetIdeInfo::toTargetInfo)
+        .filter(target -> !ruleType.isPresent() || target.getRuleType().equals(ruleType.get()))
+        .collect(toImmutableSet());
   }
 
   private static FilteredTargetMap computeTargetMap(Project project, BlazeProjectData projectData) {

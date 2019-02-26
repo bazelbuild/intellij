@@ -65,8 +65,8 @@ public class BlazeModuleSystemTest extends BlazeIntegrationTestCase {
   public void doSetup() {
     module = testFixture.getModule();
     workspaceModule = mock(Module.class, Mockito.CALLS_REAL_METHODS);
-    Mockito.when(workspaceModule.getName()).thenReturn(WORKSPACE_MODULE_NAME);
-    Mockito.when(workspaceModule.getProject()).thenReturn(getProject());
+    Mockito.doReturn(WORKSPACE_MODULE_NAME).when(workspaceModule).getName();
+    Mockito.doReturn(getProject()).when(workspaceModule).getProject();
     context = new BlazeContext();
     MockExperimentService experimentService = new MockExperimentService();
     registerApplicationComponent(ExperimentService.class, experimentService);

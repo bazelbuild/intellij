@@ -45,7 +45,7 @@ final class FastBuildProgramRunner extends DefaultJavaProgramRunner {
   @Override
   protected RunContentDescriptor doExecute(RunProfileState state, ExecutionEnvironment env)
       throws ExecutionException {
-    EventLoggingService.getInstance().ifPresent(s -> s.logEvent(getClass(), "run-fastbuild"));
+    EventLoggingService.getInstance().logEvent(getClass(), "run-fastbuild");
     return super.doExecute(state, env);
   }
 }

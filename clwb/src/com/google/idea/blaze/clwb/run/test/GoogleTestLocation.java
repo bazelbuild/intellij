@@ -15,10 +15,9 @@
  */
 package com.google.idea.blaze.clwb.run.test;
 
-import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.syncstatus.SyncStatusContributor;
+import com.google.idea.blaze.clwb.CidrGoogleTestUtilAdapter;
 import com.google.idea.sdkcompat.cidr.OCSymbolAdapter;
-import com.google.idea.sdkcompat.clion.CidrGoogleTestUtilAdapter;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.project.Project;
@@ -30,8 +29,8 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestFramework;
 import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestUtil;
-import com.jetbrains.cidr.lang.OCFileTypeHelpers;
 import com.jetbrains.cidr.lang.psi.OCCppNamespace;
 import com.jetbrains.cidr.lang.psi.OCFile;
 import com.jetbrains.cidr.lang.psi.OCFunctionDefinition;
@@ -43,8 +42,6 @@ import com.jetbrains.cidr.lang.symbols.OCSymbol;
 import com.jetbrains.cidr.lang.symbols.cpp.OCFunctionSymbol;
 import com.jetbrains.cidr.lang.symbols.cpp.OCStructSymbol;
 import com.jetbrains.cidr.lang.symbols.cpp.OCSymbolWithQualifiedName;
-import com.jetbrains.cidr.lang.symbols.symtable.FileSymbolTablesCache;
-import com.jetbrains.cidr.lang.ui.OCLongActionUtil;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -52,18 +49,15 @@ import javax.annotation.Nullable;
 public class GoogleTestLocation extends PsiLocation<PsiElement> {
 
   public final GoogleTestSpecification gtest;
-  @Nullable public final String testFilter;
 
   GoogleTestLocation(PsiElement psi, GoogleTestSpecification gtest) {
     super(psi);
     this.gtest = gtest;
-    this.testFilter = gtest.testFilter();
   }
 
-  /** The raw test filter string with '--test_filter=' prepended, or null if there is no filter. */
   @Nullable
-  public String getTestFilterFlag() {
-    return testFilter != null ? BlazeFlags.TEST_FILTER + "=" + testFilter : null;
+  public String getTestFilter() {
+    return gtest.testFilter();
   }
 
   @Nullable
@@ -94,12 +88,8 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
     } else if (parent instanceof OCFunctionDefinition) {
       OCFunctionSymbol symbol = ((OCFunctionDefinition) parent).getSymbol();
       if (symbol != null) {
-        // #api182 change
-        @SuppressWarnings("rawtypes")
         OCSymbolWithQualifiedName resolvedOwner = OCSymbolAdapter.getResolvedOwner(symbol, project);
         if (resolvedOwner != null) {
-          // #api182 change
-          @SuppressWarnings("rawtypes")
           OCSymbol owner = OCSymbolAdapter.getDefinitionSymbol(resolvedOwner, project);
           if (owner instanceof OCStructSymbol
               && CidrGoogleTestUtilAdapter.isGoogleTestClass((OCStructSymbol) owner, project)) {
@@ -168,36 +158,11 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
 
   /** Returns true if a file may contain googletest cases. */
   private static boolean mayBeGoogleTestFile(OCFile file) {
-    // googletest files should be cc files since it eventually needs to compile+link into a binary
-    if (OCFileTypeHelpers.isHeaderFile(file.getName())) {
-      return false;
-    }
-    if (!areSymbolsPrecalculated(file.getProject())) {
-      // If symbols are not up to date, fileIncludesGoogleTest might block on our "friend"
-      // ensurePendingFilesProcessed(), which would freeze the AWT, so just say "maybe".
+    if (CidrGoogleTestFramework.getInstance().isAvailable(file)) {
       return true;
     }
-    boolean transitivelyIncludesGtestHeader =
-        CachedValuesManager.getCachedValue(
-            file,
-            () -> {
-              // We're not 100% sure this won't block since we don't have access to
-              // "FileSymbolTablesCache.getInstance(project).isUpToDate()", so wrap in timeout.
-              // Throws ProcessCanceledException if timed out or canceled.
-              Boolean doesInclude =
-                  OCLongActionUtil.execWithTimeoutProgressInDispatch(
-                      "progressbar.long.resolve.description",
-                      OCLongActionUtil.TIMEOUT_PROPERTY,
-                      file.getProject(),
-                      () -> CidrGoogleTestUtilAdapter.fileIncludesGoogleTest(file));
-              return CachedValueProvider.Result.create(
-                  doesInclude, PsiModificationTracker.MODIFICATION_COUNT);
-            });
-    if (transitivelyIncludesGtestHeader) {
-      return true;
-    }
-    // Symbols and the import graph may not be accurate for unsynced files or files outside
-    // of source roots. Just do a heuristic search on the AST for minimal support.
+    // Test scanning from CidrGoogleTestFramework may not be accurate for unsynced files or files
+    // outside of source roots. Just do a heuristic search on the AST for minimal support.
     return unsyncedFileContainsGtestMacroCalls(file);
   }
 
@@ -223,12 +188,6 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
     MacroCallLocator locator = new MacroCallLocator();
     file.accept(locator);
     return locator.foundGtestMacroCall;
-  }
-
-  /** Are symbols ready to be used without blocking? */
-  private static boolean areSymbolsPrecalculated(Project project) {
-    return FileSymbolTablesCache.areSymbolsLoaded(project);
-    // #api182: also check "&& FileSymbolTablesCache.getInstance(project).isUpToDate()";
   }
 
   @Nullable

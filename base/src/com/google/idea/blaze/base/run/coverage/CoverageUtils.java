@@ -22,11 +22,12 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import javax.annotation.Nullable;
 
 /** Helper methods for coverage integration. */
@@ -44,11 +45,6 @@ public class CoverageUtils {
   public static boolean isApplicableTo(RunProfile runProfile) {
     BlazeCommandRunConfiguration config = toBlazeConfig(runProfile);
     if (config == null) {
-      return false;
-    }
-    if (Blaze.getBuildSystem(config.getProject()) != BuildSystem.Blaze) {
-      // temporarily disable coverage for Bazel, until we properly interface with its API and output
-      // file locations
       return false;
     }
     BlazeCommandRunConfigurationCommonState handlerState =
@@ -72,7 +68,18 @@ public class CoverageUtils {
     return BLAZE_FLAGS;
   }
 
-  public static File getOutputFile(WorkspaceRoot root) {
-    return new File(root.directory(), "blaze-out/_coverage/_coverage_report.dat");
+  public static File getOutputFile(BuildSystem buildSystem, WorkspaceRoot root) {
+    Path relPath = Paths.get(blazeOut(buildSystem), "_coverage", "_coverage_report.dat");
+    return new File(root.directory(), relPath.toString());
+  }
+
+  private static String blazeOut(BuildSystem buildSystem) {
+    switch (buildSystem) {
+      case Bazel:
+        return "bazel-out";
+      case Blaze:
+        return "blaze-out";
+    }
+    throw new AssertionError("Unhandled build system: " + buildSystem);
   }
 }

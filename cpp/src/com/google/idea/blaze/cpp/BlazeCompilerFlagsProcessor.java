@@ -36,15 +36,8 @@ public interface BlazeCompilerFlagsProcessor {
     Optional<BlazeCompilerFlagsProcessor> getProcessor(Project project);
   }
 
-  /** Map a flag from one version to another. */
-  String map(String flag);
-
-  /**
-   * Filter flags (return true to keep and false to remove).
-   *
-   * <p>Flag is only kept if all processors agree to keep.
-   */
-  boolean filter(String flag);
+  /** Convert a list of flags to a processed list of flags. */
+  List<String> processFlags(List<String> flags);
 
   static List<String> process(Project project, List<String> compilerFlags) {
     List<BlazeCompilerFlagsProcessor> processors =
@@ -53,20 +46,9 @@ public interface BlazeCompilerFlagsProcessor {
             .filter(Optional::isPresent)
             .map(Optional::get)
             .collect(Collectors.toList());
-    return compilerFlags.stream()
-        .filter(flag -> filterFlag(processors, flag))
-        .map(flag -> mapFlag(processors, flag))
-        .collect(Collectors.toList());
-  }
-
-  static boolean filterFlag(List<BlazeCompilerFlagsProcessor> processors, String flag) {
-    return processors.stream().allMatch(p -> p.filter(flag));
-  }
-
-  static String mapFlag(List<BlazeCompilerFlagsProcessor> processors, String flag) {
     for (BlazeCompilerFlagsProcessor processor : processors) {
-      flag = processor.map(flag);
+      compilerFlags = processor.processFlags(compilerFlags);
     }
-    return flag;
+    return compilerFlags;
   }
 }

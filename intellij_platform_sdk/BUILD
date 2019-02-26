@@ -52,20 +52,6 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-2018.2",
-    values = {
-        "define": "ij_product=intellij-2018.2",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2018.2",
-    values = {
-        "define": "ij_product=intellij-ue-2018.2",
-    },
-)
-
-config_setting(
     name = "android-studio-latest",
     values = {
         "define": "ij_product=android-studio-latest",
@@ -87,6 +73,13 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-3.5",
+    values = {
+        "define": "ij_product=android-studio-3.5",
+    },
+)
+
+config_setting(
     name = "android-studio-3.4",
     values = {
         "define": "ij_product=android-studio-3.4",
@@ -101,13 +94,6 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-3.2",
-    values = {
-        "define": "ij_product=android-studio-3.2",
-    },
-)
-
-config_setting(
     name = "clion-latest",
     values = {
         "define": "ij_product=clion-latest",
@@ -118,13 +104,6 @@ config_setting(
     name = "clion-beta",
     values = {
         "define": "ij_product=clion-beta",
-    },
-)
-
-config_setting(
-    name = "clion-2018.2",
-    values = {
-        "define": "ij_product=clion-2018.2",
     },
 )
 
@@ -165,13 +144,36 @@ java_library(
     exports = [":plugin_api_internal"],
 )
 
-# for tests, we need the IJ API at runtime,
-# so can't use the neverlink rule
+# For tests, we need the IJ API at runtime, so we can't use the neverlink rule.
 java_library(
     name = "plugin_api_for_tests",
     testonly = 1,
+    exports = [":plugin_api_internal"],
+)
+
+package_group(
+    name = "test_libs_visibility",
+    packages = [
+        "//...",
+        "//java/com/google/devtools/intellij/blaze/plugin/...",
+        "//javatests/com/google/assistant/galup/devtools/intellij/...",
+        "//javatests/com/google/dart/intellij/...",
+        "//javatests/com/google/devtools/intellij/blaze/plugin/...",
+        "//javatests/com/google/firebase/rules/plugins/intellij/...",
+        "//third_party/java/jetbrains/dart/...",
+        "//third_party/java_src/intellijprotobufplugin/...",
+        "//third_party/java_src/pytype_pycharm/...",
+    ],
+)
+
+# These libraries should only be used by open-source plugins.
+# Otherwise, prefer using the google3 versions of these libraries. Note that
+# //third_party/java/truth must be repackaged, because it pulls in Guava.
+java_library(
+    name = "test_libs",
+    testonly = 1,
+    visibility = [":test_libs_visibility"],
     exports = [
-        ":plugin_api_internal",
         "@mockito//jar",
         "@objenesis//jar",
         "@truth//jar",
@@ -204,7 +206,6 @@ java_library(
 java_library(
     name = "jsr305",
     exports = select_for_plugin_api({
-        "clion-2018.2": ["@jsr305_annotations//jar"],
         "clion-2018.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2018.3": ["@jsr305_annotations//jar"],
         "default": [":plugin_api"],

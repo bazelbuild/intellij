@@ -27,7 +27,7 @@ import com.intellij.openapi.util.Condition;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 
-/** #api181: {@link DvcsBranchPopup} changed in 2018.2 */
+/** #api182: LightActionGroup added in 182 */
 public abstract class DvcsBranchPopupAdapter<RepoT extends Repository>
     extends DvcsBranchPopup<RepoT> {
 

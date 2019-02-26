@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
@@ -29,6 +30,7 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.CIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
@@ -349,7 +351,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             "//foo/bar:mixed",
             "//foo/baz:test",
             "//foo/baz:binary",
-            "//foo/baz:library");
+            "//foo/baz:library",
+            "//foo:test");
   }
 
   @Test
@@ -562,6 +565,69 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
         "Unable to check compiler version for \"/root/cc\".\n"
             + "injected fault\n"
             + "Check if running the compiler with --version works on the cmdline.");
+  }
+
+  @Test
+  public void multipleToolchainsNoIssue() {
+    // Technically, blaze returns multiple instances of native libs (one for each CPU from
+    // fat APK). However, we just pick the first instance we run into for the target map.
+    // So it may be that we have:
+    //   Main TC: only build target1
+    //   Other TC2: build target1 + target2
+    // After merging the target map it might look like target1 and target2 are built with
+    // inconsistent TCs, even though it was originally consistent.
+    ProjectView projectView = projectView(directories("foo"), targets("//foo:*"));
+
+    CToolchainIdeInfo.Builder aarch32Toolchain =
+        CToolchainIdeInfo.builder()
+            .setTargetName("arm-linux-androideabi")
+            .setCppExecutable(new ExecutionRootPath("bin/arm-linux-androideabi-gcc"));
+    TargetIdeInfo.Builder aarch32ToolchainTarget =
+        TargetIdeInfo.builder()
+            .setLabel("//toolchains:armv7a")
+            .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
+            .setCToolchainInfo(aarch32Toolchain);
+    CToolchainIdeInfo.Builder aarch64Toolchain =
+        CToolchainIdeInfo.builder()
+            .setTargetName("aarch64-linux-android")
+            .setCppExecutable(new ExecutionRootPath("bin/aarch64-linux-android-gcc"));
+    TargetIdeInfo.Builder aarch64ToolchainTarget =
+        TargetIdeInfo.builder()
+            .setLabel("//toolchains:aarch64")
+            .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
+            .setCToolchainInfo(aarch64Toolchain);
+    TargetIdeInfo.Builder targetWith32Dep =
+        TargetIdeInfo.builder()
+            .setLabel("//foo:native_lib")
+            .setKind(CppBlazeRules.RuleTypes.CC_LIBRARY.getKind())
+            .setCInfo(CIdeInfo.builder().addSource(src("foo/native.cc")))
+            .addSource(src("foo/native.cc"))
+            .addDependency("//foo:native_lib2")
+            .addDependency("//toolchains:armv7a");
+    TargetIdeInfo.Builder targetWith64Dep =
+        TargetIdeInfo.builder()
+            .setLabel("//foo:native_lib2")
+            .setKind(CppBlazeRules.RuleTypes.CC_LIBRARY.getKind())
+            .setCInfo(CIdeInfo.builder().addSource(src("foo/native2.cc")))
+            .addSource(src("foo/native2.cc"))
+            .addDependency("//toolchains:aarch64");
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(aarch32ToolchainTarget)
+            .addTarget(aarch64ToolchainTarget)
+            .addTarget(targetWith64Dep)
+            .addTarget(targetWith32Dep)
+            .build();
+
+    computeResolverResult(projectView, targetMap);
+    errorCollector.assertNoIssues();
+
+    ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainMap =
+        BlazeConfigurationToolchainResolver.buildToolchainLookupMap(context, targetMap);
+    assertThat(toolchainMap.get(targetWith32Dep.build().getKey()))
+        .isEqualTo(aarch32Toolchain.build());
+    assertThat(toolchainMap.get(targetWith64Dep.build().getKey()))
+        .isEqualTo(aarch64Toolchain.build());
   }
 
   private static ArtifactLocation src(String path) {

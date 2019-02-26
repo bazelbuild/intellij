@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
 import com.google.idea.blaze.base.run.producers.RunConfigurationContext;
 import com.google.idea.blaze.base.run.producers.TestContext;
@@ -82,9 +83,8 @@ class JavaTestContextProvider implements TestContextProvider {
     if (target == null) {
       return null;
     }
-    return TestContext.builder()
+    return TestContext.builder(testClass, ExecutorType.FAST_DEBUG_SUPPORTED_TYPES)
         .setTarget(target)
-        .setSourceElement(testClass)
         .setTestFilter(testFilter)
         .setDescription(testClass.getName())
         .build();
@@ -124,9 +124,8 @@ class JavaTestContextProvider implements TestContextProvider {
     String methodNames =
         selectedMethods.stream().map(PsiMethod::getName).collect(Collectors.joining(","));
     String description = String.format("%s.%s", containingClass.getName(), methodNames);
-    return TestContext.builder()
+    return TestContext.builder(firstMethod, ExecutorType.FAST_DEBUG_SUPPORTED_TYPES)
         .setTarget(target)
-        .setSourceElement(firstMethod)
         .setTestFilter(testFilter)
         // test sharding disabled when manually selecting methods (typically only 1)
         .addBlazeFlagsModification(

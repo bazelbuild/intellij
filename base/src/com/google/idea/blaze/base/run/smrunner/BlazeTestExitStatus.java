@@ -27,7 +27,9 @@ public enum BlazeTestExitStatus {
   NO_TESTS_FOUND("No Test Found", "Build succeeded but no tests were found.", 4),
   TEST_INTERRUPTED("Test Interrupted", "Test interrupted.", 8),
   KNOWN_ERROR_TEST_PROCESS_RECEIVED_SIGQUIT(
-      "Runtime Error", "Test runtime terminated unexpectedly. Please try re-running the test", 131);
+      "Runtime Error", "Test runtime terminated unexpectedly. Please try re-running the test", 131),
+  INTERNAL_BLAZE_ERROR(
+      "Unhandled Exception / Internal Bazel Error", "Internal Bazel error. No tests were run.", 37);
 
   final String title;
   final String message;

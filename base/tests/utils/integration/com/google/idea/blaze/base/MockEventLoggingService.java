@@ -44,7 +44,7 @@ public class MockEventLoggingService implements EventLoggingService {
   }
 
   @Override
-  public void logEvent(Class<?> loggingClass, String eventType, Map<String, String> keyValues) {}
+  public void logCommand(Class<?> loggingClass, Command command) {}
 
   @Override
   public void logEvent(

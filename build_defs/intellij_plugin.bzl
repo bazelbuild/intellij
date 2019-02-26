@@ -171,7 +171,7 @@ def _filename_for_module_dependency(module):
 
 def _package_meta_inf_files(ctx, final_plugin_xml_file, module_to_merged_xmls):
     jar_name = ctx.attr.jar_name
-    jar_file = ctx.new_file(jar_name)
+    jar_file = ctx.actions.declare_file(jar_name)
 
     args = []
     args.extend(["--deploy_jar", ctx.file.deploy_jar.path])
@@ -180,7 +180,7 @@ def _package_meta_inf_files(ctx, final_plugin_xml_file, module_to_merged_xmls):
     for module, merged_xml in module_to_merged_xmls.items():
         args.append(merged_xml.path)
         args.append(_filename_for_module_dependency(module))
-    ctx.action(
+    ctx.actions.run(
         executable = ctx.executable._package_meta_inf_files,
         arguments = args,
         inputs = [ctx.file.deploy_jar, final_plugin_xml_file] + module_to_merged_xmls.values(),

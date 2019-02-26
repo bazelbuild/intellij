@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.lang.buildfile.search;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.GlobExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
-import com.google.idea.sdkcompat.query.QueryExecutorBaseAdapter;
+import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
@@ -41,15 +41,14 @@ import org.jetbrains.annotations.NotNull;
  *
  * <p>This is always a local search (as glob references can't cross package boundaries).
  */
-public class GlobReferenceSearcher
-    extends QueryExecutorBaseAdapter<PsiReference, SearchParameters> {
+public class GlobReferenceSearcher extends QueryExecutorBase<PsiReference, SearchParameters> {
 
   public GlobReferenceSearcher() {
     super(true);
   }
 
   @Override
-  public void processQueryImpl(
+  public void processQuery(
       SearchParameters queryParameters, Processor<? super PsiReference> consumer) {
     PsiFileSystemItem file =
         ResolveUtil.asFileSystemItemSearch(queryParameters.getElementToSearch());

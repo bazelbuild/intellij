@@ -1,0 +1,170 @@
+#!/bin/bash
+#
+# usage: gdbserver /path/to/real/gdbserver --once localhost:4314 --target \
+#          ./binary arg1 'arg2a arg2b'
+#
+# gdbserver requires arguments to the inferior provided on the command line to
+# be shell-escaped. This script will escape any arguments after the '--target
+# ./binary' part of the commandline. Any exit code or exit signals from the
+# inferior process are propagated.
+#
+# Debugging options:
+#   --verbose: increases the output of this script
+#   --keep_work_directory:
+#     does not delete the temp directory containing four files containing the
+#     stdout/stderr of the gdbserver and inferior processes:
+#      gdbserver.out, gdbserver.err, inferior.out, inferior.err
+#
+
+# disable job control - don't want async msgs about background jobs
+set +m
+
+gdbserver_wrapper::setup() {
+  # create work directory for all temporary files
+  work_directory="$(mktemp --tmpdir --directory "gdbserver_wrapper.XXXXXXXX")"
+
+  if [[ -z "${work_directory}" ]]; then
+    echo >&2 "error: gdbserver_wrapper: could not create work directory"
+    # can't create work directory, not much to do
+    exit 1
+  fi
+
+  gdbserver_stderr="${work_directory}/gdbserver.err"
+  gdbserver_stdout="${work_directory}/gdbserver.out"
+  inferior_stderr="${work_directory}/inferior.err"
+  inferior_stdout="${work_directory}/inferior.out"
+}
+
+gdbserver_wrapper::parse_args() {
+  local inferior
+  inferior=0
+  for old_arg in "${original_args[@]}"; do
+    if [[ $inferior -eq 0 ]]; then
+      if [[ "${old_arg}" == "--keep_work_directory" ]]; then
+        # don't remove work directory after execution
+        keep_work_directory=1
+      elif [[ "${old_arg}" == "--verbose" ]]; then
+        # increase the amount of debug the script outputs
+        verbose=1
+      elif [[ "${old_arg}" == "--target" ]]; then
+        # next param is the target
+        inferior=1
+      else
+        # pass through
+        new_args+=("${old_arg}")
+      fi
+    elif [[ $inferior -eq 1 ]]; then
+      new_args+=("${old_arg}")
+      new_args+=("1>${inferior_stdout}")
+      new_args+=("2>${inferior_stderr}")
+      # the rest are params for inferior
+      inferior=2
+    else
+      # do shell escaping via printf '%q'
+      new_args+=("$(printf "%q" "${old_arg}")")
+    fi
+  done
+}
+
+gdbserver_wrapper::cleanup() {
+  sleep 1
+  pkill -P $$
+  if [[ "${keep_work_directory}" -eq 0 ]]; then
+    rm -r "${work_directory}"
+  else
+    echo "retaining work directory: ${work_directory}"
+  fi
+}
+
+# This gets called in response to a process-ending signal
+gdbserver_wrapper::signal_exit() {
+  # run cleanup manually, as it won't be invoked for SIGKILL
+  trap - EXIT
+  gdbserver_wrapper::cleanup
+  # reissue signal with no handler
+  trap - $1
+  kill -$1 $$
+}
+
+# This gets called after gdbserver exits successfully
+gdbserver_wrapper::parse_gdbserver_logs() {
+  local match match_regex
+
+  # Check log if child exited with an exit code
+  # e.g. "Child exited with status 1" in log
+  match_regex='^Child exited with status [0-9]+$'
+  match="$(grep -Eo "${match_regex}" "${gdbserver_stderr}" | cut -f 5 -d ' ')"
+  if [[ -n "${match}" ]]; then
+    # exit with the child's exit code
+    exit "${match}"
+  fi
+
+  # Check log if child exited with a signal
+  # e.g. "Child exited with signal = 0x2 (SIGINT)"
+  match_regex='^Child terminated with signal = 0x[0-9a-f]+ \([A-Z]+\)$'
+  match="$(grep -Eo "${match_regex}" "${gdbserver_stderr}" | cut -f 6 -d ' ')"
+  if [[ -n "${match}" ]]; then
+    # exit with the same signal as child
+    # $(()) will convert the hex to decimal
+    gdbserver_wrapper::signal_exit $((${match}))
+  fi
+
+  # Not sure how handler would get here
+  echo "error: end of gdbserver_wrapper, killing inferior"
+  gdbserver_wrapper::signal_exit KILL
+}
+
+gdbserver_wrapper::configure_signals() {
+  trap 'gdbserver_wrapper::signal_exit INT' INT
+  trap 'gdbserver_wrapper::signal_exit TERM' TERM
+  trap 'gdbserver_wrapper::signal_exit KILL' KILL
+  trap 'gdbserver_wrapper::cleanup' EXIT
+}
+
+
+gdbserver_wrapper::main() {
+  local original_args new_args work_directory
+  local gdbserver_stderr gdbserver_stdout
+  local inferior_stderr inferior_stdout
+  local keep_work_directory verbose
+  keep_work_directory=0
+  verbose=0
+
+  original_args=("$@")
+
+  gdbserver_wrapper::setup
+
+  gdbserver_wrapper::parse_args
+
+  gdbserver_wrapper::configure_signals
+
+  if [[ "${verbose}" -eq 1 ]]; then
+    echo "gdbserver stdout=${gdbserver_stdout}"
+    echo "gdbserver stderr=${gdbserver_stderr}"
+    echo "inferior stdout=${inferior_stdout}"
+    echo "inferior stderr=${inferior_stderr}"
+  fi
+
+  touch "${gdbserver_stdout}" "${gdbserver_stderr}" "${inferior_stdout}" \
+    "${inferior_stderr}"
+
+  # exec tail stdout to background, but must be killed before exit
+  tail -q -F "${gdbserver_stdout}" "${inferior_stdout}" &
+  # exec tail stderr to background, but must be killed before exit
+  >&2 tail -q -F "${gdbserver_stderr}" "${inferior_stderr}" &
+
+  # exec gdbserver
+  "${new_args[@]}" 1>"${gdbserver_stdout}" 2>"${gdbserver_stderr}"
+
+  # if gdbserver exited strangely, forward that exit code
+  gdbserver_exit_code="$?"
+  if [[ $gdbserver_exit_code -ne 0 ]]; then
+    # leave work directory with logs
+    keep_work_directory=1
+    exit $gdbserver_exit_code
+  fi
+
+  gdbserver_wrapper::parse_gdbserver_logs
+}
+
+gdbserver_wrapper::main "$@"

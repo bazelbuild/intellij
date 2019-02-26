@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import java.util.concurrent.Future;
@@ -51,7 +50,6 @@ public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
 
-    applicationServices.register(UISettings.class, new UISettings());
     projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 

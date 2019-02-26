@@ -28,9 +28,6 @@
 
     <programRunner implementation="com.google.idea.blaze.clwb.run.BlazeCppRunner"/>
 
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.clwb.run.producers.BlazeCidrTestConfigurationProducer"
-        order="first"/>
     <editorNotificationProvider implementation="com.google.idea.blaze.plugin.CMakeNotificationFilter" />
     <moduleType id="BLAZE_CPP_MODULE" implementationClass="com.google.idea.blaze.clwb.BlazeCppModuleType"/>
   </extensions>
@@ -43,6 +40,7 @@
     <SyncPlugin implementation="com.google.idea.blaze.clwb.sync.BlazeCLionSyncPlugin"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.clwb.run.BlazeCidrRunConfigurationHandlerProvider" order="first"/>
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.run.test.BlazeCidrTestEventsHandler"/>
+    <TestContextProvider implementation="com.google.idea.blaze.clwb.run.producers.CppTestContextProvider"/>
   </extensions>
 
   <application-components>

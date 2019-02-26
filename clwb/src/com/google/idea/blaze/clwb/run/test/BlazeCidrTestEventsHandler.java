@@ -15,8 +15,11 @@
  */
 package com.google.idea.blaze.clwb.run.test;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.execution.BlazeParametersListUtil;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
@@ -24,8 +27,8 @@ import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Provides C/C++ specific methods needed by the SM-runner test UI. */
@@ -46,16 +49,17 @@ public class BlazeCidrTestEventsHandler implements BlazeTestEventsHandler {
   @Nullable
   @Override
   public String getTestFilter(Project project, List<Location<?>> testLocations) {
-    List<String> filters = new ArrayList<>();
-    for (Location<?> location : testLocations) {
-      GoogleTestLocation test = GoogleTestLocation.findGoogleTest(location, project);
-      if (test != null && test.testFilter != null) {
-        filters.add(test.testFilter);
-      }
-    }
+    List<String> filters =
+        testLocations.stream()
+            .map(l -> GoogleTestLocation.findGoogleTest(l, project))
+            .map(l -> l != null ? l.getTestFilter() : null)
+            .filter(Objects::nonNull)
+            .collect(toImmutableList());
     if (filters.isEmpty()) {
       return null;
     }
-    return String.format("%s=%s", BlazeFlags.TEST_FILTER, Joiner.on(':').join(filters));
+    return String.format(
+        "%s=%s",
+        BlazeFlags.TEST_FILTER, BlazeParametersListUtil.encodeParam(Joiner.on(':').join(filters)));
   }
 }

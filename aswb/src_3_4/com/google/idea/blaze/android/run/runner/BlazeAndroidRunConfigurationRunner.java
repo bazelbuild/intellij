@@ -32,6 +32,8 @@ import com.android.tools.idea.run.util.LaunchUtils;
 import com.android.tools.idea.stats.RunStats;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.android.run.AndroidSessionInfoCompat;
+import com.google.idea.blaze.android.run.LaunchTaskRunnerCompat;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
@@ -112,7 +114,9 @@ public final class BlazeAndroidRunConfigurationRunner
     runContext.augmentEnvironment(env);
 
     boolean isDebug = executor instanceof DefaultDebugExecutor;
-    AndroidSessionInfo info = AndroidSessionInfo.findOldSession(project, null, runConfigId);
+    AndroidSessionInfo info =
+        AndroidSessionInfoCompat.findOldSession(
+            project, null, runConfigId, env.getExecutionTarget());
 
     BlazeAndroidDeviceSelector deviceSelector = runContext.getDeviceSelector();
     BlazeAndroidDeviceSelector.DeviceSession deviceSession =
@@ -309,7 +313,7 @@ public final class BlazeAndroidRunConfigurationRunner
           new LaunchInfo(executor, runner, env, runContext.getConsoleProvider());
 
       LaunchTaskRunner task =
-          new LaunchTaskRunner(
+          LaunchTaskRunnerCompat.create(
               module.getProject(),
               launchConfigName,
               launchInfo,

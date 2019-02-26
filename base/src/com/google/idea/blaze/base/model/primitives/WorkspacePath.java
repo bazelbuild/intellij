@@ -101,7 +101,7 @@ public class WorkspacePath implements ProtoWrapper<String>, Serializable {
   }
 
   public boolean isWorkspaceRoot() {
-    return relativePath.isEmpty();
+    return relativePath.isEmpty() || relativePath.equals(".");
   }
 
   @Override

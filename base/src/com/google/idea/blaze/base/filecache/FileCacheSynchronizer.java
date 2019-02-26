@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,8 +36,6 @@ import javax.annotation.Nullable;
  * <p>Delegates the actual file naming, updates and deletion to {@link FileCacheSynchronizerTraits}.
  */
 public class FileCacheSynchronizer {
-  private static final Logger logger = Logger.getInstance(FileCacheSynchronizer.class);
-
   private final FileCacheSynchronizerTraits traits;
 
   public FileCacheSynchronizer(FileCacheSynchronizerTraits traits) {
@@ -51,14 +48,11 @@ public class FileCacheSynchronizer {
    * @param context an optional context
    * @param removeMissingFiles true if this should remove any files from the cache that are no
    *     longer at the source location.
-   * @return true if synchronization completed or false if it terminated early
    */
-  public boolean synchronize(@Nullable BlazeContext context, boolean removeMissingFiles) {
+  public void synchronize(@Nullable BlazeContext context, boolean removeMissingFiles)
+      throws InterruptedException, ExecutionException {
     // Discover state of source jars
     ImmutableMap<File, Long> sourceFileTimestamps = FileDiffer.readFileState(traits.sourceFiles());
-    if (sourceFileTimestamps == null) {
-      return false;
-    }
     ImmutableMap.Builder<String, Long> sourceFileCacheKeyToTimestamp = ImmutableMap.builder();
     for (Map.Entry<File, Long> entry : sourceFileTimestamps.entrySet()) {
       String cacheKey = traits.sourceFileToCacheKey(entry.getKey());
@@ -69,9 +63,6 @@ public class FileCacheSynchronizer {
     Collection<File> cacheFiles = traits.enumerateCacheFiles();
     ImmutableMap<File, Long> cacheFileTimestamps =
         FileDiffer.readFileState(new ArrayList<>(cacheFiles));
-    if (cacheFileTimestamps == null) {
-      return false;
-    }
     ImmutableMap.Builder<String, Long> cachedFileCacheKeyToTimestamp = ImmutableMap.builder();
     for (Map.Entry<File, Long> entry : cacheFileTimestamps.entrySet()) {
       String cacheKey = traits.cacheFileToCacheKey(entry.getKey());
@@ -94,22 +85,9 @@ public class FileCacheSynchronizer {
       futures.addAll(traits.removeFiles(removedFiles, executor));
     }
 
-    boolean succeeded = true;
-    try {
-      Futures.allAsList(futures).get();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      logger.warn(e);
-      succeeded = false;
-    } catch (ExecutionException e) {
-      logger.error(e);
-      succeeded = false;
-    }
-
+    Futures.allAsList(futures).get();
     if (context != null) {
       traits.logStats(context, updatedFiles.size(), removedFiles.size(), removeMissingFiles);
     }
-
-    return succeeded;
   }
 }

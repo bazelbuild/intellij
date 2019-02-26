@@ -45,8 +45,7 @@ final class FastBuildDebuggerRunner extends BlazeJavaDebuggerRunner {
   @Override
   protected RunContentDescriptor doExecute(RunProfileState state, ExecutionEnvironment env)
       throws ExecutionException {
-    EventLoggingService.getInstance()
-        .ifPresent(s -> s.logEvent(getClass(), "debugging-java-fastbuild"));
+    EventLoggingService.getInstance().logEvent(getClass(), "debugging-java-fastbuild");
     return super.doExecute(state, env);
   }
 }

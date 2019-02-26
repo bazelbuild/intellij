@@ -20,19 +20,22 @@
         id="Blaze.GoImportResolver"
         order="before default"/>
     <packageFactory implementation="com.google.idea.blaze.golang.resolve.BlazeGoPackageFactory"/>
+    <dlv.positionConverterFactory
+        implementation="com.google.idea.blaze.golang.run.BlazeDlvPositionConverter$Factory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.golang.sync.BlazeGoSyncPlugin"/>
     <SyncListener implementation="com.google.idea.blaze.golang.sync.BlazeGoSdkUpdater"/>
+    <SyncStatusContributor implementation="com.google.idea.blaze.golang.sync.GoSyncStatusContributor"/>
     <BlazeTestEventsHandler
         implementation="com.google.idea.blaze.golang.run.smrunner.BlazeGoTestEventsHandler"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.golang.sync.GoPrefetchFileSource"/>
     <TestContextProvider implementation="com.google.idea.blaze.golang.run.producers.GoTestContextProvider"/>
+    <BinaryContextProvider implementation="com.google.idea.blaze.golang.run.producers.GoBinaryContextProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <runConfigurationProducer implementation="com.google.idea.blaze.golang.run.producers.BlazeGoBinaryConfigurationProducer"/>
     <documentationProvider implementation="com.google.idea.blaze.golang.resolve.BlazeGoImportResolver$GoPackageDocumentationProvider"/>
     <additionalLibraryRootsProvider implementation="com.google.idea.blaze.golang.sync.BlazeGoAdditionalLibraryRootsProvider"/>
   </extensions>

@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /** Reads file attributes from a list files in parallel. */
 public class FileAttributeScanner {
@@ -34,7 +35,7 @@ public class FileAttributeScanner {
 
   public static <T> ImmutableMap<File, T> readAttributes(
       Iterable<File> fileList, AttributeReader<T> attributeReader, BlazeExecutor executor)
-      throws Exception {
+      throws InterruptedException, ExecutionException {
     List<ListenableFuture<FilePair<T>>> futures = Lists.newArrayList();
     for (File file : fileList) {
       futures.add(

@@ -39,6 +39,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
 
 /** Allows importing an existing bazel workspace */
 public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceOption {
@@ -52,6 +53,7 @@ public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceO
     directoryField.setHistory(builder.getWorkspaceHistory(BuildSystem.Bazel));
     directoryField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);
     directoryField.setText(builder.getLastImportedWorkspace(BuildSystem.Bazel));
+    directoryField.setMinimumAndPreferredWidth(MINIMUM_FIELD_WIDTH);
 
     JButton button = new JButton("...");
     button.addActionListener(action -> this.chooseDirectory());
@@ -63,7 +65,9 @@ public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceO
     canvas.add(new JLabel("Select an existing Bazel workspace"));
     canvas.add(new JSeparator());
 
-    JPanel content = new JPanel(new VerticalLayout(12));
+    // Explicitly specify alignment, so preferred widths of children are honored.
+    JPanel content =
+        new JPanel(new VerticalLayout(/* gap= */ 12, /* alignment= */ SwingConstants.LEFT));
     content.setBorder(Borders.empty(20, 20, 0, 0));
 
     JComponent box =

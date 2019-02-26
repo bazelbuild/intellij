@@ -32,11 +32,12 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -61,7 +62,6 @@ public class PackageManifestReader {
 
   /** @return A map from java source absolute file path to declared package string. */
   public Map<TargetKey, Map<ArtifactLocation, String>> readPackageManifestFiles(
-      Project project,
       BlazeContext context,
       ArtifactLocationDecoder decoder,
       Map<TargetKey, ArtifactLocation> javaPackageManifests,
@@ -75,8 +75,17 @@ public class PackageManifestReader {
     }
     List<File> updatedFiles = Lists.newArrayList();
     List<File> removedFiles = Lists.newArrayList();
-    fileDiffState =
-        FileDiffer.updateFiles(fileDiffState, fileToLabelMap.keySet(), updatedFiles, removedFiles);
+    try {
+      fileDiffState =
+          FileDiffer.updateFiles(
+              fileDiffState, fileToLabelMap.keySet(), updatedFiles, removedFiles);
+    } catch (InterruptedException e) {
+      throw new ProcessCanceledException(e);
+    } catch (ExecutionException e) {
+      context.setHasError();
+      IssueOutput.error("Updating package manifest files failed: " + e);
+      throw new AssertionError("Unhandled exception", e);
+    }
 
     ListenableFuture<?> fetchFuture =
         PrefetchService.getInstance().prefetchFiles(updatedFiles, true, false);

@@ -115,8 +115,7 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
     assertThat(buildFile).isNotNull();
     when(psiFile.getVirtualFile()).thenReturn(buildFile);
 
-    service
-        .getModuleSystem(module)
+    BlazeModuleSystem.create(module)
         .registerDependency(GoogleMavenArtifactId.APP_COMPAT_V7.getCoordinate("+"));
 
     ArgumentCaptor<OpenFileDescriptor> descriptorCaptor =
@@ -140,8 +139,7 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
         VirtualFileSystemProvider.getInstance().getSystem().findFileByPath("/foo/BUILD");
     assertThat(buildFile).isNotNull();
 
-    service
-        .getModuleSystem(module)
+    BlazeModuleSystem.create(module)
         .registerDependency(GoogleMavenArtifactId.APP_COMPAT_V7.getCoordinate("+"));
 
     verify(FileEditorManager.getInstance(project)).openFile(buildFile, true);
@@ -152,8 +150,7 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
   public void testGetResolvedDependencyWithoutLocators() throws Exception {
     registerExtensionPoint(MavenArtifactLocator.EP_NAME, MavenArtifactLocator.class);
     assertThat(
-            service
-                .getModuleSystem(module)
+            BlazeModuleSystem.create(module)
                 .getResolvedDependency(GoogleMavenArtifactId.APP_COMPAT_V7.getCoordinate("+")))
         .isNull();
   }

@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -45,19 +44,9 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
       IntellijIdeInfo.GoIdeInfo proto, Label targetLabel, Kind targetKind) {
     return new GoIdeInfo(
         ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto),
-        fixImportPath(Strings.emptyToNull(proto.getImportPath()), targetLabel, targetKind),
+        ImportPathReplacer.fixImportPath(
+            Strings.emptyToNull(proto.getImportPath()), targetLabel, targetKind),
         extractLibraryLabel(Strings.emptyToNull(proto.getLibraryLabel()), targetLabel, targetKind));
-  }
-
-  @Nullable
-  private static String fixImportPath(
-      @Nullable String oldImportPath, Label targetLabel, Kind targetKind) {
-    for (ImportPathReplacer fixer : ImportPathReplacer.EP_NAME.getExtensions()) {
-      if (fixer.shouldReplace(oldImportPath)) {
-        return fixer.getReplacement(targetLabel, targetKind);
-      }
-    }
-    return oldImportPath;
   }
 
   @Nullable
@@ -158,15 +147,5 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
   @Override
   public int hashCode() {
     return Objects.hash(sources, importPath, libraryLabel);
-  }
-
-  /** Replaces import path from the aspect based on target label and kind. */
-  public interface ImportPathReplacer {
-    ExtensionPointName<ImportPathReplacer> EP_NAME =
-        ExtensionPointName.create("com.google.idea.blaze.GoImportPathReplacer");
-
-    boolean shouldReplace(@Nullable String existingImportPath);
-
-    String getReplacement(Label label, Kind kind);
   }
 }

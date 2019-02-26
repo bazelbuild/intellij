@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.sdkcompat.clion.ToolchainUtils;
+import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;

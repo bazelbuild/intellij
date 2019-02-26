@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
-import com.android.tools.idea.fd.InstantRunUtils;
 import com.android.tools.idea.run.AndroidSessionInfo;
+import com.google.idea.blaze.android.run.AndroidSessionInfoCompat;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.android.run.binary.AndroidBinaryLaunchMethodsUtils.AndroidBinaryLaunchMethod;
 import com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallDebugExecutor;
@@ -70,13 +70,7 @@ public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
               ? ((RunConfigurationBase) runProfile).getUniqueID()
               : -1;
       AndroidSessionInfo sessionInfo =
-          new AndroidSessionInfo(
-              processHandler,
-              descriptor,
-              uniqueId,
-              env.getExecutor().getId(),
-              env.getExecutor().getActionName(),
-              InstantRunUtils.isInstantRunEnabled(env));
+          AndroidSessionInfoCompat.create(processHandler, descriptor, uniqueId, env);
       processHandler.putUserData(AndroidSessionInfo.KEY, sessionInfo);
     }
 

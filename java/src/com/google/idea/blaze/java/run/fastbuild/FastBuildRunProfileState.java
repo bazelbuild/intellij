@@ -15,7 +15,10 @@
  */
 package com.google.idea.blaze.java.run.fastbuild;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.logging.EventLoggingService;
+import com.google.idea.blaze.base.logging.EventLoggingService.Command;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
@@ -28,8 +31,12 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaCommandLineStateUtil;
 import com.intellij.execution.filters.TextConsoleBuilderImpl;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -39,6 +46,7 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
+import org.jetbrains.annotations.NotNull;
 
 final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState {
 
@@ -76,13 +84,19 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
     FastBuildTestEnvironmentCreator testEnvironmentCreator =
         FastBuildTestEnvironmentCreatorFactory.getInstance(Blaze.getBuildSystem(project))
             .getTestEnvironmentCreator(project);
-    return JavaCommandLineStateUtil.startProcess(
+
+    GeneralCommandLine commandLine =
         testEnvironmentCreator.createCommandLine(
             getConfiguration().getTargetKind(),
             getFastBuildInfo(),
             outputFile,
             handlerState.getTestFilter(),
-            debugPort));
+            debugPort);
+
+    Stopwatch timer = Stopwatch.createStarted();
+    OSProcessHandler processHandler = JavaCommandLineStateUtil.startProcess(commandLine);
+    processHandler.addProcessListener(new LoggingProcessListener(commandLine, timer));
+    return processHandler;
   }
 
   private File createOutputFile() throws ExecutionException {
@@ -110,10 +124,14 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
     DefaultExecutionResult result = (DefaultExecutionResult) super.execute(executor, runner);
     AbstractRerunFailedTestsAction rerunFailedAction =
         SmRunnerUtils.createRerunFailedTestsAction(result);
-    result.setRestartActions(
-        rerunFailedAction,
+    RerunFastBuildConfigurationWithBlazeAction rerunWithBlazeAction =
         new RerunFastBuildConfigurationWithBlazeAction(
-            getConfiguration().getProject(), getFastBuildInfo().label(), getEnvironment()));
+            getConfiguration().getProject(), getFastBuildInfo().label(), getEnvironment());
+    if (rerunFailedAction != null) {
+      result.setRestartActions(rerunFailedAction, rerunWithBlazeAction);
+    } else {
+      result.setRestartActions(rerunWithBlazeAction);
+    }
     return result;
   }
 
@@ -135,5 +153,30 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
           "No logging data stored in environment; before-run tasks weren't executed?");
     }
     return userData.get();
+  }
+
+  private static class LoggingProcessListener extends ProcessAdapter {
+    private final GeneralCommandLine commandLine;
+    private final Stopwatch timer;
+
+    private LoggingProcessListener(GeneralCommandLine commandLine, Stopwatch timer) {
+      this.commandLine = commandLine;
+      this.timer = timer;
+    }
+
+    @Override
+    public void processTerminated(@NotNull ProcessEvent event) {
+      timer.stop();
+      EventLoggingService.getInstance()
+          .logCommand(
+              FastBuildRunProfileState.class,
+              Command.builder()
+                  .setExecutable(commandLine.getExePath())
+                  .setArguments(commandLine.getParametersList().getList())
+                  .setWorkingDirectory(commandLine.getWorkDirectory().getPath())
+                  .setExitCode(event.getExitCode())
+                  .setDuration(timer.elapsed())
+                  .build());
+    }
   }
 }

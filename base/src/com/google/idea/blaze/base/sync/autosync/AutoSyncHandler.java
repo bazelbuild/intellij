@@ -116,7 +116,7 @@ class AutoSyncHandler implements ProjectComponent {
       return;
     }
     logger.info("Automatic sync queued");
-    EventLoggingService.getInstance().ifPresent(s -> s.logEvent(getClass(), "auto-sync"));
+    EventLoggingService.getInstance().logEvent(getClass(), "auto-sync");
     BlazeSyncManager.getInstance(project).requestProjectSync(autoSyncParams);
   }
 

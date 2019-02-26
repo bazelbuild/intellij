@@ -16,8 +16,8 @@
 package com.google.idea.blaze.plugin;
 
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.clwb.CMakeActionsToManipulate;
 import com.google.idea.common.actions.ReplaceActionHelper;
-import com.google.idea.sdkcompat.clion.CMakeActionsToManipulate;
 import com.intellij.openapi.components.ApplicationComponent;
 
 /** Runs on startup. */

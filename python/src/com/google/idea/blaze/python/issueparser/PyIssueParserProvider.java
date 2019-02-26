@@ -101,7 +101,7 @@ public class PyIssueParserProvider implements BlazeIssueParserProvider {
     @Nullable
     private VirtualFile findFile(String fileName) {
       // error messages can include just the file name, or the full workspace-relative path
-      if (fileName.indexOf(File.pathSeparatorChar) == 0) {
+      if (fileName.indexOf(File.separatorChar) == 0) {
         PsiFile file = findFileFromName(project, fileName);
         if (file != null) {
           return file.getVirtualFile();

@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -26,6 +27,7 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.UIUtil;
 
 /**
@@ -37,9 +39,48 @@ import com.intellij.util.ui.UIUtil;
  */
 public interface PendingRunConfigurationContext extends RunConfigurationContext {
 
+  /** Used to indicate that a pending run configuration couldn't be successfully set up. */
+  class NoRunConfigurationFoundException extends ExecutionException {
+
+    public NoRunConfigurationFoundException(String s) {
+      super(s);
+    }
+  }
+
+  /**
+   * A result from a {@link PendingRunConfigurationContext}, indicating that no run configuration
+   * was found for this context.
+   */
+  class FailedPendingRunConfiguration implements RunConfigurationContext {
+    private final PsiElement psi;
+    final String errorMessage;
+
+    public FailedPendingRunConfiguration(PsiElement psi, String errorMessage) {
+      this.psi = psi;
+      this.errorMessage = errorMessage;
+    }
+
+    @Override
+    public PsiElement getSourceElement() {
+      return psi;
+    }
+
+    @Override
+    public boolean setupRunConfiguration(BlazeCommandRunConfiguration config) {
+      return false;
+    }
+
+    @Override
+    public boolean matchesRunConfiguration(BlazeCommandRunConfiguration config) {
+      return false;
+    }
+  }
+
   ListenableFuture<RunConfigurationContext> getFuture();
 
   String getProgressMessage();
+
+  ImmutableSet<ExecutorType> supportedExecutors();
 
   /**
    * Returns a future with all currently-unknown details of this configuration context resolved.
@@ -104,7 +145,11 @@ public interface PendingRunConfigurationContext extends RunConfigurationContext 
     try {
       RunConfigurationContext result = pendingContext.getFuture().get();
       if (result == null) {
-        throw new ExecutionException("Run configuration setup failed.");
+        throw new NoRunConfigurationFoundException("Run configuration setup failed.");
+      }
+      if (result instanceof FailedPendingRunConfiguration) {
+        throw new NoRunConfigurationFoundException(
+            ((FailedPendingRunConfiguration) result).errorMessage);
       }
       return result;
     } catch (InterruptedException e) {

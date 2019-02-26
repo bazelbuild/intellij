@@ -75,6 +75,7 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -156,10 +157,15 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     Collection<File> fileList = ideInfoResult.files;
     List<File> updatedFiles = Lists.newArrayList();
     List<File> removedFiles = Lists.newArrayList();
-    ImmutableMap<File, Long> fileState =
-        FileDiffer.updateFiles(
-            prevState != null ? prevState.fileState : null, fileList, updatedFiles, removedFiles);
-    if (fileState == null) {
+    ImmutableMap<File, Long> fileState;
+    try {
+      fileState =
+          FileDiffer.updateFiles(
+              prevState != null ? prevState.fileState : null, fileList, updatedFiles, removedFiles);
+    } catch (InterruptedException e) {
+      throw new ProcessCanceledException(e);
+    } catch (ExecutionException e) {
+      IssueOutput.error("Failed to diff aspect output files: " + e).submit(context);
       return new IdeResult(oldTargetMap, BuildResult.FATAL_ERROR);
     }
 

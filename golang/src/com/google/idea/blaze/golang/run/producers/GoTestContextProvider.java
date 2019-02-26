@@ -20,6 +20,7 @@ import com.goide.psi.GoFile;
 import com.goide.psi.GoFunctionOrMethodDeclaration;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
 import com.google.idea.blaze.base.run.producers.RunConfigurationContext;
 import com.google.idea.blaze.base.run.producers.TestContext;
@@ -54,15 +55,13 @@ class GoTestContextProvider implements TestContextProvider {
     }
     GoFunctionOrMethodDeclaration function = GoTestFinder.findTestFunctionInContext(element);
     if (function == null) {
-      return TestContext.builder()
+      return TestContext.builder(/* sourceElement= */ file, ExecutorType.DEBUG_SUPPORTED_TYPES)
           .setTarget(target)
-          .setSourceElement(file)
           .setDescription(file.getName())
           .build();
     }
-    return TestContext.builder()
+    return TestContext.builder(/* sourceElement= */ function, ExecutorType.DEBUG_SUPPORTED_TYPES)
         .setTarget(target)
-        .setSourceElement(function)
         .setTestFilter("^" + function.getName() + "$")
         .setDescription(String.format("%s#%s", file.getName(), function.getName()))
         .build();

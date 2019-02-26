@@ -39,7 +39,10 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtilRt;
+import java.io.File;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Runs a blaze build command associated with a {@link BlazeCommandRunConfiguration configuration},
@@ -52,8 +55,9 @@ public final class BlazeBeforeRunCommandHelper {
 
   private BlazeBeforeRunCommandHelper() {}
 
-  /** Kicks off the blaze build task, returning a corresponding {@link ListenableFuture}. */
-  public static ListenableFuture<BuildResult> runBlazeBuild(
+  /** Kicks off the blaze task, returning a corresponding {@link ListenableFuture}. */
+  public static ListenableFuture<BuildResult> runBlazeCommand(
+      BlazeCommandName commandName,
       BlazeCommandRunConfiguration configuration,
       BuildResultHelper buildResultHelper,
       List<String> requiredExtraBlazeFlags,
@@ -92,13 +96,14 @@ public final class BlazeBeforeRunCommandHelper {
                 context.output(new StatusOutput(progressMessage));
 
                 BlazeCommand.Builder command =
-                    BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
+                    BlazeCommand.builder(binaryPath, commandName)
                         .addTargets(configuration.getTarget())
                         .addBlazeFlags(overridableExtraBlazeFlags)
                         .addBlazeFlags(
                             BlazeFlags.blazeFlags(
                                 project, projectViewSet, BlazeCommandName.BUILD, invocationContext))
-                        .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags())
+                        .addBlazeFlags(
+                            handlerState.getBlazeFlagsState().getFlagsForExternalProcesses())
                         .addBlazeFlags(requiredExtraBlazeFlags)
                         .addBlazeFlags(buildResultHelper.getBuildFlags());
 
@@ -115,5 +120,15 @@ public final class BlazeBeforeRunCommandHelper {
                 return BuildResult.fromExitCode(exitCode);
               }
             });
+  }
+
+  /** Creates a temporary output file to write the shell script to. */
+  public static File createScriptPathFile() {
+    File tempDir = new File(FileUtilRt.getTempDirectory());
+    String suffix = UUID.randomUUID().toString().substring(0, 8);
+    String fileName = "blaze-script-" + suffix;
+    File tempFile = new File(tempDir, fileName);
+    tempFile.deleteOnExit();
+    return tempFile;
   }
 }

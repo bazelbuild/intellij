@@ -17,14 +17,17 @@ package com.google.idea.blaze.base.run.producers;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.execution.BlazeParametersListUtil;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.PendingRunConfigurationContext;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState;
@@ -61,7 +64,9 @@ public abstract class TestContext implements RunConfigurationContext {
   /** Returns true if the run configuration was successfully configured. */
   @Override
   public final boolean setupRunConfiguration(BlazeCommandRunConfiguration config) {
-    setupTarget(config);
+    if (!setupTarget(config)) {
+      return false;
+    }
     BlazeCommandRunConfigurationCommonState commonState =
         config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (commonState == null) {
@@ -100,7 +105,8 @@ public abstract class TestContext implements RunConfigurationContext {
         && blazeFlags.stream().allMatch(m -> m.matchesConfigState(flagsState));
   }
 
-  abstract void setupTarget(BlazeCommandRunConfiguration config);
+  /** Returns true if the target is successfully set up. */
+  abstract boolean setupTarget(BlazeCommandRunConfiguration config);
 
   /** Returns true if the run configuration target matches this {@link TestContext}. */
   abstract boolean matchesTarget(BlazeCommandRunConfiguration config);
@@ -118,8 +124,9 @@ public abstract class TestContext implements RunConfigurationContext {
     }
 
     @Override
-    void setupTarget(BlazeCommandRunConfiguration config) {
+    boolean setupTarget(BlazeCommandRunConfiguration config) {
       config.setTargetInfo(target);
+      return true;
     }
 
     @Override
@@ -139,6 +146,7 @@ public abstract class TestContext implements RunConfigurationContext {
       implements PendingRunConfigurationContext {
 
     private static PendingContextTestContext fromTargetFuture(
+        ImmutableSet<ExecutorType> supportedExecutors,
         ListenableFuture<TargetInfo> target,
         PsiElement sourceElement,
         ImmutableList<BlazeFlagsModification> blazeFlags,
@@ -150,25 +158,29 @@ public abstract class TestContext implements RunConfigurationContext {
               target,
               t -> {
                 if (t == null) {
-                  throw new RuntimeException(String.format("No %s target found.", buildSystem));
+                  return new FailedPendingRunConfiguration(
+                      sourceElement, String.format("No %s target found.", buildSystem));
                 }
                 return new KnownTargetTestContext(t, sourceElement, blazeFlags, description);
               },
               MoreExecutors.directExecutor());
       return new PendingContextTestContext(
-          future, progressMessage, sourceElement, blazeFlags, description);
+          supportedExecutors, future, progressMessage, sourceElement, blazeFlags, description);
     }
 
+    private final ImmutableSet<ExecutorType> supportedExecutors;
     private final ListenableFuture<RunConfigurationContext> future;
     private final String progressMessage;
 
     private PendingContextTestContext(
+        ImmutableSet<ExecutorType> supportedExecutors,
         ListenableFuture<RunConfigurationContext> future,
         String progressMessage,
         PsiElement sourceElement,
         ImmutableList<BlazeFlagsModification> blazeFlags,
         @Nullable String description) {
       super(sourceElement, blazeFlags, description);
+      this.supportedExecutors = supportedExecutors;
       this.future = PendingRunConfigurationContext.recursivelyResolveContext(future);
       this.progressMessage = progressMessage;
     }
@@ -184,8 +196,13 @@ public abstract class TestContext implements RunConfigurationContext {
     }
 
     @Override
-    void setupTarget(BlazeCommandRunConfiguration config) {
-      config.setPendingContext(this);
+    public ImmutableSet<ExecutorType> supportedExecutors() {
+      return supportedExecutors;
+    }
+
+    @Override
+    boolean setupTarget(BlazeCommandRunConfiguration config) {
+      return config.setPendingContext(this);
     }
 
     @Override
@@ -226,31 +243,40 @@ public abstract class TestContext implements RunConfigurationContext {
           // remove old test filter flag if present
           flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
           if (filter != null) {
-            flags.add(BlazeFlags.TEST_FILTER + "=" + filter);
+            flags.add(BlazeFlags.TEST_FILTER + "=" + BlazeParametersListUtil.encodeParam(filter));
           }
         }
 
         @Override
         public boolean matchesConfigState(RunConfigurationFlagsState state) {
-          return state.getRawFlags().contains(BlazeFlags.TEST_FILTER + "=" + filter);
+          return state
+              .getRawFlags()
+              .contains(BlazeFlags.TEST_FILTER + "=" + BlazeParametersListUtil.encodeParam(filter));
         }
       };
     }
   }
 
-  public static Builder builder() {
-    return new Builder();
+  public static Builder builder(
+      PsiElement sourceElement, ImmutableSet<ExecutorType> supportedExecutors) {
+    return new Builder(sourceElement, supportedExecutors);
   }
 
   /** Builder class for {@link TestContext}. */
   public static class Builder {
+    private final PsiElement sourceElement;
+    private final ImmutableSet<ExecutorType> supportedExecutors;
     private ListenableFuture<RunConfigurationContext> contextFuture = null;
     private ListenableFuture<TargetInfo> targetFuture = null;
     private TargetInfo target = null;
-    private PsiElement sourceElement = null;
     private final ImmutableList.Builder<BlazeFlagsModification> blazeFlags =
         ImmutableList.builder();
     private String description = null;
+
+    private Builder(PsiElement sourceElement, ImmutableSet<ExecutorType> supportedExecutors) {
+      this.sourceElement = sourceElement;
+      this.supportedExecutors = supportedExecutors;
+    }
 
     public Builder setContextFuture(ListenableFuture<RunConfigurationContext> contextFuture) {
       this.contextFuture = contextFuture;
@@ -276,11 +302,6 @@ public abstract class TestContext implements RunConfigurationContext {
       return this;
     }
 
-    public Builder setSourceElement(PsiElement sourceElement) {
-      this.sourceElement = sourceElement;
-      return this;
-    }
-
     public Builder setTestFilter(@Nullable String filter) {
       if (filter != null) {
         blazeFlags.add(BlazeFlagsModification.testFilter(filter));
@@ -299,10 +320,10 @@ public abstract class TestContext implements RunConfigurationContext {
     }
 
     public TestContext build() {
-      Preconditions.checkNotNull(sourceElement);
       if (contextFuture != null) {
         Preconditions.checkState(targetFuture == null && target == null);
         return new PendingContextTestContext(
+            supportedExecutors,
             contextFuture,
             "Resolving test context",
             sourceElement,
@@ -314,7 +335,7 @@ public abstract class TestContext implements RunConfigurationContext {
         return new KnownTargetTestContext(target, sourceElement, blazeFlags.build(), description);
       }
       return PendingContextTestContext.fromTargetFuture(
-          targetFuture, sourceElement, blazeFlags.build(), description);
+          supportedExecutors, targetFuture, sourceElement, blazeFlags.build(), description);
     }
   }
 }

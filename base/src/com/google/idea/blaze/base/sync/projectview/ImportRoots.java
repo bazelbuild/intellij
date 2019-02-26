@@ -21,15 +21,19 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
+import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.util.WorkspacePathUtil;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -39,6 +43,9 @@ import javax.annotation.Nullable;
 
 /** The roots to import. Derived from project view. */
 public final class ImportRoots {
+
+  private final BoolExperiment treatProjectTargetsAsSource =
+      new BoolExperiment("blaze.treat.project.targets.as.source", true);
 
   /** Returns the ImportRoots for the project, or null if it's not a blaze project. */
   @Nullable
@@ -57,6 +64,7 @@ public final class ImportRoots {
         ImmutableList.builder();
     private final ImmutableSet.Builder<WorkspacePath> excludeDirectoriesBuilder =
         ImmutableSet.builder();
+    private final ImmutableList.Builder<TargetExpression> projectTargets = ImmutableList.builder();
 
     private final WorkspaceRoot workspaceRoot;
     private final BuildSystem buildSystem;
@@ -70,6 +78,7 @@ public final class ImportRoots {
       for (DirectoryEntry entry : projectViewSet.listItems(DirectorySection.KEY)) {
         add(entry);
       }
+      projectTargets.addAll(projectViewSet.listItems(TargetSection.KEY));
       return this;
     }
 
@@ -85,11 +94,9 @@ public final class ImportRoots {
 
     public ImportRoots build() {
       ImmutableCollection<WorkspacePath> rootDirectories = rootDirectoriesBuilder.build();
-      // for bazel projects, if we're including the workspace root,
-      // we force-exclude the bazel artifact directories
-      // (e.g. bazel-bin, bazel-genfiles).
       if (buildSystem == BuildSystem.Bazel && hasWorkspaceRoot(rootDirectories)) {
         excludeBuildSystemArtifacts();
+        excludeProjectDataSubDirectory();
       }
       ImmutableSet<WorkspacePath> minimalExcludes =
           WorkspacePathUtil.calculateMinimalWorkspacePaths(excludeDirectoriesBuilder.build());
@@ -98,7 +105,10 @@ public final class ImportRoots {
       ImmutableSet<WorkspacePath> minimalRootDirectories =
           WorkspacePathUtil.calculateMinimalWorkspacePaths(rootDirectories, minimalExcludes);
 
-      return new ImportRoots(minimalRootDirectories, minimalExcludes);
+      return new ImportRoots(
+          minimalRootDirectories,
+          minimalExcludes,
+          ProjectTargetsHelper.create(projectTargets.build()));
     }
 
     private void excludeBuildSystemArtifacts() {
@@ -109,6 +119,10 @@ public final class ImportRoots {
       }
     }
 
+    private void excludeProjectDataSubDirectory() {
+      excludeDirectoriesBuilder.add(new WorkspacePath(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY));
+    }
+
     private static boolean hasWorkspaceRoot(ImmutableCollection<WorkspacePath> rootDirectories) {
       return rootDirectories.stream().anyMatch(WorkspacePath::isWorkspaceRoot);
     }
@@ -116,6 +130,7 @@ public final class ImportRoots {
 
   private final ImmutableCollection<WorkspacePath> rootDirectories;
   private final ImmutableSet<WorkspacePath> excludeDirectories;
+  private final ProjectTargetsHelper projectTargets;
 
   public static Builder builder(WorkspaceRoot workspaceRoot, BuildSystem buildSystem) {
     return new Builder(workspaceRoot, buildSystem);
@@ -123,9 +138,11 @@ public final class ImportRoots {
 
   private ImportRoots(
       ImmutableCollection<WorkspacePath> rootDirectories,
-      ImmutableSet<WorkspacePath> excludeDirectories) {
+      ImmutableSet<WorkspacePath> excludeDirectories,
+      ProjectTargetsHelper projectTargets) {
     this.rootDirectories = rootDirectories;
     this.excludeDirectories = excludeDirectories;
+    this.projectTargets = projectTargets;
   }
 
   public Collection<WorkspacePath> rootDirectories() {
@@ -142,7 +159,11 @@ public final class ImportRoots {
   }
 
   private boolean containsLabel(Label label) {
-    return !label.isExternal() && containsWorkspacePath(label.blazePackage());
+    if (label.isExternal()) {
+      return false;
+    }
+    return containsWorkspacePath(label.blazePackage())
+        || (treatProjectTargetsAsSource.getValue() && projectTargets.isInProject(label));
   }
 
   public boolean containsWorkspacePath(WorkspacePath workspacePath) {

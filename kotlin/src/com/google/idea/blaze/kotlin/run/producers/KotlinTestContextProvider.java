@@ -18,6 +18,7 @@ package com.google.idea.blaze.kotlin.run.producers;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
 import com.google.idea.blaze.base.run.producers.RunConfigurationContext;
 import com.google.idea.blaze.base.run.producers.TestContext;
@@ -57,9 +58,8 @@ class KotlinTestContextProvider implements TestContextProvider {
       description += "." + testMethod.getName();
     }
     PsiElement contextElement = testMethod != null ? testMethod : testClass;
-    return TestContext.builder()
+    return TestContext.builder(contextElement, ExecutorType.DEBUG_SUPPORTED_TYPES)
         .setTarget(target)
-        .setSourceElement(contextElement)
         .setTestFilter(filter)
         .setDescription(description)
         .build();

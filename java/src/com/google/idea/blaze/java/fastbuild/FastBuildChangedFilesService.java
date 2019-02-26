@@ -24,6 +24,8 @@ import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.graph.SuccessorsFunction;
+import com.google.common.graph.Traverser;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -31,7 +33,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,8 +48,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.GuardedBy;
 
 /**
@@ -250,58 +251,44 @@ final class FastBuildChangedFilesService implements Disposable {
   }
 
   private ImmutableSet<File> getSourceFiles(Label label, Map<Label, FastBuildBlazeData> blazeData) {
-
     Stopwatch timer = Stopwatch.createStarted();
-
-    Set<File> sourceFiles = new HashSet<>();
-    Set<Label> seenTargets = new HashSet<>();
-    recursivelyAddJavaSources(
-        projectDataManager.getBlazeProjectData().getArtifactLocationDecoder(),
-        label,
-        blazeData,
-        seenTargets,
-        sourceFiles);
-
-    // #api181 convert this to timer.elapsed().toMillis() (and the many other instances of this)
-    long ms = timer.elapsed(TimeUnit.MILLISECONDS);
+    ImmutableSet<File> sourceFiles = getSourceFilesRecursively(label, blazeData);
+    long ms = timer.elapsed().toMillis();
     if (ms > 500) {
       logger.info("Collecting sources for " + label + " took " + ms + "ms");
     }
+    return sourceFiles;
+  }
 
+  private ImmutableSet<File> getSourceFilesRecursively(
+      Label label, Map<Label, FastBuildBlazeData> blazeData) {
+    FastBuildBlazeData data = blazeData.get(label);
+    if (data == null || !data.javaInfo().isPresent()) {
+      return ImmutableSet.of();
+    }
+    Set<File> sourceFiles = new HashSet<>();
+    ArtifactLocationDecoder decoder =
+        projectDataManager.getBlazeProjectData().getArtifactLocationDecoder();
+    SuccessorsFunction<FastBuildBlazeData> graph = l -> getDependencies(blazeData, l);
+    Traverser.forGraph(graph)
+        .breadthFirst(data)
+        .forEach(
+            d -> {
+              d.javaInfo().get().sources().stream()
+                  .map(decoder::decode)
+                  .filter(f -> f.getName().endsWith(".java"))
+                  .forEach(sourceFiles::add);
+            });
     return ImmutableSet.copyOf(sourceFiles);
   }
 
-  // #api181 convert this to Guava's Traverser#forGraph once we are no longer supporting AS 3.2
-  private static void recursivelyAddJavaSources(
-      ArtifactLocationDecoder artifactLocationDecoder,
-      Label label,
-      Map<Label, FastBuildBlazeData> blazeData,
-      Set<Label> seenTargets,
-      Set<File> sourceFiles) {
-    if (seenTargets.contains(label)) {
-      return;
-    }
-
-    seenTargets.add(label);
-
-    FastBuildBlazeData targetIdeInfo = blazeData.get(label);
-    if (targetIdeInfo == null || !targetIdeInfo.javaInfo().isPresent()) {
-      return;
-    }
-
-    JavaInfo javaInfo = targetIdeInfo.javaInfo().get();
-
-    javaInfo.sources().stream()
-        .map(artifactLocationDecoder::decode)
-        .filter(f -> f.getName().endsWith(".java"))
-        .forEach(sourceFiles::add);
-
-    targetIdeInfo
-        .dependencies()
-        .forEach(
-            dep ->
-                recursivelyAddJavaSources(
-                    artifactLocationDecoder, dep, blazeData, seenTargets, sourceFiles));
+  private static ImmutableSet<FastBuildBlazeData> getDependencies(
+      Map<Label, FastBuildBlazeData> map, FastBuildBlazeData labelData) {
+    return labelData.dependencies().stream()
+        .map(map::get)
+        .filter(Objects::nonNull)
+        .filter(data -> data.javaInfo().isPresent())
+        .collect(toImmutableSet());
   }
 
   private enum State {
