@@ -159,7 +159,7 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
     BlazeSyncParams syncParams =
         new BlazeSyncParams.Builder("Full Sync", SyncMode.FULL).addProjectViewTargets(true).build();
     runBlazeSync(syncParams);
-    errorCollector.assertIssues("IntelliJ Ultimate needed for Javascript support.");
+    errorCollector.assertIssues("IntelliJ Ultimate or CLion needed for JavaScript support.");
   }
 
   @Nullable

@@ -136,7 +136,7 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
             sourceFilter.getSourceTargets(),
             syncStateBuilder,
             previousSyncState);
-    if (context.isCancelled()) {
+    if (context.isCancelled() || jdepsMap == null) {
       return;
     }
 

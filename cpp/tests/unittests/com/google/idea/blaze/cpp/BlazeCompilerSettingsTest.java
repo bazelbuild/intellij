@@ -19,6 +19,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
@@ -27,6 +29,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import java.io.File;
@@ -38,11 +41,19 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeCompilerSettingsTest extends BlazeTestCase {
 
+  private BlazeProjectData blazeProjectData;
+  private WorkspaceRoot workspaceRoot;
+
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
+    ExtensionPoint<BuildSystemProvider> extensionPoint =
+        registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
+    extensionPoint.registerExtension(new BazelBuildSystemProvider());
+
     ExtensionPointImpl<BlazeCompilerFlagsProcessor.Provider> ep =
         registerExtensionPoint(
             BlazeCompilerFlagsProcessor.EP_NAME, BlazeCompilerFlagsProcessor.Provider.class);
+    ep.registerExtension(new IncludeRootFlagsProcessor.Provider());
     ep.registerExtension(new SysrootFlagsProcessor.Provider());
 
     BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager();
@@ -51,8 +62,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
     importSettingsManager.setImportSettings(importSettings);
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
 
-    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
-    BlazeProjectData blazeProjectData = MockBlazeProjectDataBuilder.builder(workspaceRoot).build();
+    workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
+    blazeProjectData = MockBlazeProjectDataBuilder.builder(workspaceRoot).build();
     projectServices.register(
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(blazeProjectData));
   }
@@ -87,7 +98,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             "cc version (trunk r123456)");
 
     assertThat(settings.getCompilerSwitches(OCLanguageKind.C, null))
-        .containsExactly("--sysroot=/root/third_party/toolchain");
+        .containsExactly("--sysroot=" + workspaceRoot + "/third_party/toolchain");
   }
 
   @Test
@@ -104,5 +115,44 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
 
     assertThat(settings.getCompilerSwitches(OCLanguageKind.C, null))
         .containsExactly("--sysroot=/usr");
+  }
+
+  @Test
+  public void relativeIsystem_makesAbsolutePathInExecRoot() {
+    ImmutableList<String> cFlags =
+        ImmutableList.of("-isystem", "external/arm_gcc/include", "-DFOO=1", "-Ithird_party/stl");
+    BlazeCompilerSettings settings =
+        new BlazeCompilerSettings(
+            getProject(),
+            new File("bin/c"),
+            new File("bin/c++"),
+            cFlags,
+            cFlags,
+            "cc version (trunk r123456)");
+
+    String execRoot = blazeProjectData.getBlazeInfo().getExecutionRoot().toString();
+    assertThat(settings.getCompilerSwitches(OCLanguageKind.C, null))
+        .containsExactly(
+            "-isystem",
+            execRoot + "/external/arm_gcc/include",
+            "-DFOO=1",
+            "-I",
+            workspaceRoot + "/third_party/stl");
+  }
+
+  @Test
+  public void absoluteISystem_doesNotChange() {
+    ImmutableList<String> cFlags = ImmutableList.of("-isystem", "/usr/include");
+    BlazeCompilerSettings settings =
+        new BlazeCompilerSettings(
+            getProject(),
+            new File("bin/c"),
+            new File("bin/c++"),
+            cFlags,
+            cFlags,
+            "cc version (trunk r123456)");
+
+    assertThat(settings.getCompilerSwitches(OCLanguageKind.C, null))
+        .containsExactly("-isystem", "/usr/include");
   }
 }

@@ -22,8 +22,13 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import java.util.Arrays;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -33,6 +38,8 @@ public class TestContextRunConfigurationProducer
     extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
 
   private final boolean onlyWebTestCompatible;
+  private final Key<CachedValue<RunConfigurationContext>> cacheKey =
+      Key.create(TestContextRunConfigurationProducer.class.getName() + "@" + this.hashCode());
 
   public TestContextRunConfigurationProducer() {
     this(false);
@@ -49,6 +56,19 @@ public class TestContextRunConfigurationProducer
       // handled by a different producer
       return null;
     }
+    PsiElement psi = context.getPsiLocation();
+    return psi == null
+        ? null
+        : CachedValuesManager.getCachedValue(
+            psi,
+            cacheKey,
+            () ->
+                CachedValueProvider.Result.create(
+                    doFindTestContext(context), PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  @Nullable
+  private RunConfigurationContext doFindTestContext(ConfigurationContext context) {
     return Arrays.stream(TestContextProvider.EP_NAME.getExtensions())
         .filter(p -> !onlyWebTestCompatible || p.webTestCompatible())
         .map(p -> p.getTestContext(context))

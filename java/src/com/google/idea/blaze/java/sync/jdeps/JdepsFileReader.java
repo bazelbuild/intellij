@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -78,7 +79,15 @@ public class JdepsFileReader {
             parentContext,
             (context) -> {
               context.push(new TimingScope("LoadJdepsFiles", EventType.Other));
-              return doLoadJdepsFiles(context, artifactLocationDecoder, oldState, targetsToLoad);
+              try {
+                return doLoadJdepsFiles(context, artifactLocationDecoder, oldState, targetsToLoad);
+              } catch (InterruptedException e) {
+                throw new ProcessCanceledException(e);
+              } catch (ExecutionException e) {
+                context.setHasError();
+                logger.error(e);
+              }
+              return null;
             });
     if (jdepsState == null) {
       return null;
@@ -87,11 +96,13 @@ public class JdepsFileReader {
     return jdepsState.targetToJdeps::get;
   }
 
+  @Nullable
   private JdepsState doLoadJdepsFiles(
       BlazeContext context,
       ArtifactLocationDecoder artifactLocationDecoder,
       @Nullable JdepsState oldState,
-      Iterable<TargetIdeInfo> targetsToLoad) {
+      Iterable<TargetIdeInfo> targetsToLoad)
+      throws InterruptedException, ExecutionException {
     JdepsState.Builder state = JdepsState.builder();
     if (oldState != null) {
       state.targetToJdeps = Maps.newHashMap(oldState.targetToJdeps);
@@ -166,7 +177,6 @@ public class JdepsFileReader {
                 return null;
               }));
     }
-    try {
       for (Result result : Futures.allAsList(futures).get()) {
         if (result != null) {
           state.fileToTargetMap.put(result.file, result.targetKey);
@@ -178,10 +188,6 @@ public class JdepsFileReader {
               String.format(
                   "Loaded %d jdeps files, total size %dkB",
                   updatedFiles.size(), totalSizeLoaded.get() / 1024)));
-    } catch (InterruptedException | ExecutionException e) {
-      logger.error(e);
-      return null;
-    }
     return state.build();
   }
 

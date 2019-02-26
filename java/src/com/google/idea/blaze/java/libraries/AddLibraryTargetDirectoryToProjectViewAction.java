@@ -156,7 +156,7 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
               ListSection.Builder<DirectoryEntry> directoryBuilder =
                   ListSection.update(DirectorySection.KEY, existingSection);
               for (WorkspacePath workspacePath : workspacePaths) {
-                directoryBuilder.add(new DirectoryEntry(workspacePath, true));
+                directoryBuilder.add(DirectoryEntry.include(workspacePath));
               }
               builder.replace(existingSection, directoryBuilder);
               return true;

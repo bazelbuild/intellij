@@ -130,7 +130,8 @@ public class BlazeAndroidBinaryRunConfigurationHandler
                 BlazeInvocationContext.runConfigContext(
                     ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), false));
     ImmutableList<String> exeFlags =
-        ImmutableList.copyOf(configState.getCommonState().getExeFlagsState().getExpandedFlags());
+        ImmutableList.copyOf(
+            configState.getCommonState().getExeFlagsState().getFlagsForExternalProcesses());
     BlazeAndroidRunContext runContext = createRunContext(project, facet, env, blazeFlags, exeFlags);
 
     return new BlazeAndroidRunConfigurationRunner(
@@ -259,12 +260,8 @@ public class BlazeAndroidBinaryRunConfigurationHandler
       PropertiesComponent.getInstance(project).setValue(MI_NEVER_ASK_AGAIN, true);
     }
     EventLoggingService.getInstance()
-        .ifPresent(
-            s ->
-                s.logEvent(
-                    getClass(),
-                    "mi_migrate_prompt",
-                    ImmutableMap.of("choice", choiceToString(choice))));
+        .logEvent(
+            getClass(), "mi_migrate_prompt", ImmutableMap.of("choice", choiceToString(choice)));
     return choice == Messages.YES;
   }
 

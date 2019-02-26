@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.io;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import java.io.File;
+import java.util.concurrent.ExecutionException;
 
 /** Reads the last modified times from a list of files. */
 public class ModifiedTimeScanner {
@@ -41,7 +42,8 @@ public class ModifiedTimeScanner {
     }
   }
 
-  public static ImmutableMap<File, Long> readTimestamps(Iterable<File> fileList) throws Exception {
+  public static ImmutableMap<File, Long> readTimestamps(Iterable<File> fileList)
+      throws InterruptedException, ExecutionException {
     final TimestampReader timestampReader =
         new TimestampReader(FileOperationProvider.getInstance());
     return FileAttributeScanner.readAttributes(

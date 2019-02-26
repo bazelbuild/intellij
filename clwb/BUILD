@@ -29,6 +29,7 @@ merged_plugin_xml(
         "//base:plugin_xml",
         "//cpp:plugin_xml",
         "//dart:plugin_xml",
+        "//javascript:plugin_xml",
         "//python:plugin_xml",
         "//skylark:plugin_xml",
     ],
@@ -58,6 +59,7 @@ java_library(
     srcs = glob(["src/**/*.java"]),
     runtime_deps = [
         "//dart",
+        "//javascript",
         "//python",
         "//skylark",
         "//terminal",
@@ -75,6 +77,7 @@ java_library(
 
 OPTIONAL_PLUGIN_XMLS = [
     "//python:optional_xml",
+    "//javascript:optional_xml",
     "//terminal:optional_xml",
 ]
 
@@ -100,10 +103,18 @@ repackaged_files(
     strip_prefix = "/aspect",
 )
 
+repackaged_files(
+    name = "clwb_bazel_gdbserver_wrapper",
+    srcs = ["//clwb:gdbserver_wrapper"],
+    prefix = "clwb/gdb",
+    strip_prefix = "/clwb",
+)
+
 intellij_plugin_debug_target(
     name = "clwb_bazel_dev",
     deps = [
         ":aspect_directory",
+        ":clwb_bazel_gdbserver_wrapper",
         ":plugin_jar",
     ],
 )
@@ -112,6 +123,7 @@ plugin_deploy_zip(
     name = "clwb_bazel_zip",
     srcs = [
         ":aspect_directory",
+        ":clwb_bazel_gdbserver_wrapper",
         ":plugin_jar",
     ],
     zip_filename = "clwb_bazel.zip",
@@ -126,6 +138,12 @@ intellij_unit_test_suite(
         "//base",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "@junit//jar",
     ],
+)
+
+filegroup(
+    name = "gdbserver_wrapper",
+    srcs = ["gdbserver"],
 )

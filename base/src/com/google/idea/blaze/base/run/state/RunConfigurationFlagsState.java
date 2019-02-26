@@ -16,17 +16,18 @@
 package com.google.idea.blaze.base.run.state;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.execution.BlazeParametersListUtil;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.execution.ParametersListUtil;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JTextArea;
@@ -41,6 +42,7 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
   private final String tag;
   private final String fieldLabel;
 
+  /** Unprocessed flags, as the user entered them, tokenised on unquoted whitespace. */
   private ImmutableList<String> flags = ImmutableList.of();
 
   public RunConfigurationFlagsState(String tag, String fieldLabel) {
@@ -48,12 +50,16 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
     this.fieldLabel = fieldLabel;
   }
 
-  /** @return Flags subject to macro expansion. */
-  public List<String> getExpandedFlags() {
-    return BlazeFlags.expandBuildFlags(flags);
+  /** Flags ready to be used directly as args for external processes. */
+  public List<String> getFlagsForExternalProcesses() {
+    List<String> processedFlags =
+        flags.stream()
+            .map(s -> ParametersListUtil.parse(s, false, true).get(0))
+            .collect(Collectors.toList());
+    return BlazeFlags.expandBuildFlags(processedFlags);
   }
 
-  /** @return Raw flags that haven't been macro expanded */
+  /** Unprocessed flags that haven't been macro expanded or processed for escaping/quotes. */
   public List<String> getRawFlags() {
     return flags;
   }
@@ -126,30 +132,6 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
       return field;
     }
 
-    /** Identical to {@link ParametersListUtil#join}, except args are newline-delimited. */
-    private static String makeFlagString(List<String> flags) {
-      StringBuilder builder = new StringBuilder();
-      for (String flag : flags) {
-        if (builder.length() > 0) {
-          builder.append('\n');
-        }
-        builder.append(encode(flag));
-      }
-      return builder.toString();
-    }
-
-    private static String encode(String flag) {
-      StringBuilder builder = new StringBuilder();
-      builder.append(flag);
-      StringUtil.escapeQuotes(builder);
-      if (builder.length() == 0
-          || StringUtil.indexOf(builder, ' ') >= 0
-          || StringUtil.indexOf(builder, '|') >= 0) {
-        StringUtil.quote(builder);
-      }
-      return builder.toString();
-    }
-
     @Override
     public void setComponentEnabled(boolean enabled) {
       flagsField.setEnabled(enabled);
@@ -158,14 +140,16 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
     @Override
     public void resetEditorFrom(RunConfigurationState genericState) {
       RunConfigurationFlagsState state = (RunConfigurationFlagsState) genericState;
-      flagsField.setText(makeFlagString(state.getRawFlags()));
+      // join on newline chars only, otherwise leave unchanged
+      flagsField.setText(Joiner.on('\n').join(state.getRawFlags()));
     }
 
     @Override
     public void applyEditorTo(RunConfigurationState genericState) {
       RunConfigurationFlagsState state = (RunConfigurationFlagsState) genericState;
-      state.setRawFlags(
-          ParametersListUtil.parse(Strings.nullToEmpty(flagsField.getText()), false, true));
+      // split on unescaped whitespace and newlines only. Otherwise leave unchanged.
+      List<String> list = BlazeParametersListUtil.splitParameters(flagsField.getText());
+      state.setRawFlags(list);
     }
 
     private JBScrollPane createScrollPane(JTextArea field) {
@@ -198,7 +182,7 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
     }
 
     @VisibleForTesting
-    public JComponent getInternalComponent() {
+    JComponent getInternalComponent() {
       return flagsField;
     }
   }

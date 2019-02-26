@@ -125,7 +125,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testRootDirectoryWithoutSourcesIsNotMarkedAsSourceRoot() {
+  public void testRootDirectoryWithoutNestedSourcesIsMarkedAsSourceRoot() {
     List<SourceArtifact> sourceArtifacts = ImmutableList.of();
     ImmutableList<BlazeContentEntry> result =
         sourceDirectoryCalculator.calculateContentEntries(
@@ -139,7 +139,13 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             NO_MANIFESTS);
     issues.assertNoIssues();
     assertThat(result)
-        .containsExactly(BlazeContentEntry.builder("/root/some/innocuous/path").build());
+        .containsExactly(
+            BlazeContentEntry.builder("/root/some/innocuous/path")
+                .addSource(
+                    BlazeSourceDirectory.builder("/root/some/innocuous/path")
+                        .setPackagePrefix("some.innocuous.path")
+                        .build())
+                .build());
   }
 
   @Test
@@ -1214,7 +1220,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
       Map<TargetKey, ArtifactLocation> manifests, ArtifactLocationDecoder decoder) {
     return PackageManifestReader.getInstance()
         .readPackageManifestFiles(
-            project, context, decoder, manifests, MoreExecutors.newDirectExecutorService());
+            context, decoder, manifests, MoreExecutors.newDirectExecutorService());
   }
 
   static class MockFileOperationProvider extends FileOperationProvider {

@@ -221,6 +221,7 @@ public interface ExternalTask {
         for (Map.Entry<String, String> entry : environmentVariables.entrySet()) {
           env.put(entry.getKey(), entry.getValue());
         }
+        env.put("PWD", workingDirectory.getPath());
 
         try {
           final Process process = builder.start();

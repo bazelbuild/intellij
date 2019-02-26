@@ -9,6 +9,10 @@ load(
     "struct_omit_none",
     "to_artifact_location",
 )
+load(
+    ":make_variables.bzl",
+    "expand_make_variables",
+)
 
 # Defensive list of features that can appear in the C++ toolchain, but which we
 # definitely don't want to enable (when enabled, they'd contribute command line
@@ -284,10 +288,8 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         library_kind = library_kind,
     )
 
-    # TODO(brendandouglas): remove once enough Bazel users are on a version with the changed name
-    old_compile_files = target.output_group("files_to_compile_INTERNAL_")
-    compile_files = target.output_group("compilation_outputs")
-    compile_files = depset(generated, transitive = [compile_files, old_compile_files])
+    compile_files = target[OutputGroupInfo].compilation_outputs if hasattr(target[OutputGroupInfo], "compilation_outputs") else depset([])
+    compile_files = depset(generated, transitive = [compile_files])
 
     update_set_in_dict(output_groups, "intellij-info-go", depset([ide_info_file]))
     update_set_in_dict(output_groups, "intellij-compile-go", compile_files)
@@ -309,6 +311,8 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     if hasattr(semantics, "cc") and hasattr(semantics.cc, "get_default_copts"):
         target_copts += semantics.cc.get_default_copts(ctx)
 
+    target_copts = [expand_make_variables("copt", copt, ctx) for copt in target_copts]
+
     # Check cc_provider for 'includes' and 'defines' target attribute values.
     cc_provider = target.cc
 
@@ -326,10 +330,7 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     resolve_files = cc_provider.transitive_headers
 
     # TODO(brendandouglas): target to cpp files only
-    # TODO(brendandouglas): remove once enough Bazel users are on a version with the changed name
-    old_compile_files = target.output_group("files_to_compile_INTERNAL_")
-    compile_files = target.output_group("compilation_outputs")
-    compile_files = depset(transitive = [compile_files, old_compile_files])
+    compile_files = target[OutputGroupInfo].compilation_outputs if hasattr(target[OutputGroupInfo], "compilation_outputs") else depset([])
 
     update_set_in_dict(output_groups, "intellij-info-cpp", depset([ide_info_file]))
     update_set_in_dict(output_groups, "intellij-compile-cpp", compile_files)
@@ -514,7 +515,7 @@ def _package_manifest_file_argument(f):
 
 def build_java_package_manifest(ctx, target, source_files, suffix):
     """Builds the java package manifest for the given source files."""
-    output = ctx.new_file(target.label.name + suffix)
+    output = ctx.actions.declare_file(target.label.name + suffix)
 
     args = []
     args += ["--output_manifest", output.path]
@@ -524,9 +525,9 @@ def build_java_package_manifest(ctx, target, source_files, suffix):
         ctx.configuration.bin_dir,
         target.label.name + suffix + ".params",
     )
-    ctx.file_action(output = argfile, content = "\n".join(args))
+    ctx.actions.write(output = argfile, content = "\n".join(args))
 
-    ctx.action(
+    ctx.actions.run(
         inputs = source_files + [argfile],
         outputs = [output],
         executable = ctx.executable._package_parser,
@@ -550,8 +551,8 @@ def build_filtered_gen_jar(ctx, target, java, gen_java_sources, srcjars):
         elif hasattr(jar, "source_jar") and jar.source_jar:
             source_jar_artifacts.append(jar.source_jar)
 
-    filtered_jar = ctx.new_file(target.label.name + "-filtered-gen.jar")
-    filtered_source_jar = ctx.new_file(target.label.name + "-filtered-gen-src.jar")
+    filtered_jar = ctx.actions.declare_file(target.label.name + "-filtered-gen.jar")
+    filtered_source_jar = ctx.actions.declare_file(target.label.name + "-filtered-gen-src.jar")
     args = []
     for jar in jar_artifacts:
         args += ["--filter_jar", jar.path]
@@ -565,7 +566,7 @@ def build_filtered_gen_jar(ctx, target, java, gen_java_sources, srcjars):
     if srcjars:
         for source_jar in srcjars:
             args += ["--keep_source_jar", source_jar.path]
-    ctx.action(
+    ctx.actions.run(
         inputs = jar_artifacts + source_jar_artifacts + gen_java_sources + srcjars,
         outputs = [filtered_jar, filtered_source_jar],
         executable = ctx.executable._jar_filter,
@@ -767,7 +768,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
         aspect_hash = hash(".".join(aspect_ids))
         file_name = file_name + "-" + str(aspect_hash)
     file_name = file_name + ".intellij-info.txt"
-    ide_info_file = ctx.new_file(file_name)
+    ide_info_file = ctx.actions.declare_file(file_name)
 
     target_key = make_target_key(target.label, aspect_ids)
     ide_info = dict(
@@ -803,7 +804,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
     # Output the ide information file.
     info = struct_omit_none(**ide_info)
-    ctx.file_action(ide_info_file, info.to_proto())
+    ctx.actions.write(ide_info_file, info.to_proto())
 
     # Return providers.
     return struct_omit_none(

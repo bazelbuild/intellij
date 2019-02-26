@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.android.run.test;
 
-import com.android.tools.idea.fd.InstantRunUtils;
 import com.android.tools.idea.run.AndroidSessionInfo;
+import com.google.idea.blaze.android.run.AndroidSessionInfoCompat;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.java.AndroidBlazeRules;
@@ -66,13 +66,7 @@ public class BlazeAndroidTestProgramRunner extends DefaultProgramRunner {
               ? ((RunConfigurationBase) runProfile).getUniqueID()
               : -1;
       AndroidSessionInfo sessionInfo =
-          new AndroidSessionInfo(
-              processHandler,
-              descriptor,
-              uniqueId,
-              env.getExecutor().getId(),
-              env.getExecutor().getActionName(),
-              InstantRunUtils.isInstantRunEnabled(env));
+          AndroidSessionInfoCompat.create(processHandler, descriptor, uniqueId, env);
       processHandler.putUserData(AndroidSessionInfo.KEY, sessionInfo);
     }
 

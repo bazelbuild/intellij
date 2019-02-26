@@ -60,6 +60,7 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
       SyncMode syncMode,
       SyncResult syncResult) {
     updateExistingRunConfigurations(project);
+    removeInvalidRunConfigurations(project);
     if (syncMode == SyncMode.STARTUP || syncMode == SyncMode.NO_BUILD) {
       return;
     }
@@ -85,6 +86,23 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
             maybeAddRunConfiguration(project, blazeProjectData, label);
           }
         });
+  }
+
+  private static void removeInvalidRunConfigurations(Project project) {
+    RunManagerImpl manager = RunManagerImpl.getInstanceImpl(project);
+    List<RunnerAndConfigurationSettings> toRemove =
+        manager.getConfigurationSettingsList(BlazeCommandRunConfigurationType.getInstance())
+            .stream()
+            .filter(s -> isInvalidRunConfig(s.getConfiguration()))
+            .collect(Collectors.toList());
+    if (!toRemove.isEmpty()) {
+      manager.removeConfigurations(toRemove);
+    }
+  }
+
+  private static boolean isInvalidRunConfig(RunConfiguration config) {
+    return config instanceof BlazeCommandRunConfiguration
+        && ((BlazeCommandRunConfiguration) config).pendingSetupFailed();
   }
 
   /**

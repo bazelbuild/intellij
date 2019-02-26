@@ -53,6 +53,7 @@ import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -71,6 +72,10 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
   private Module module;
   private SampleDataDirectoryProvider sampleDataDirectoryProvider;
   private BlazeClassFileFinder classFileFinder;
+
+  public static BlazeModuleSystem getInstance(Module module) {
+    return ModuleServiceManager.getService(module, BlazeModuleSystem.class);
+  }
 
   public BlazeModuleSystem(Module module) {
     this.module = module;

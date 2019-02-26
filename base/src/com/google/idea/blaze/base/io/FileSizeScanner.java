@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.io;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import java.io.File;
+import java.util.concurrent.ExecutionException;
 
 /** Reads the file sizes from a list of files. */
 public class FileSizeScanner {
@@ -41,7 +42,8 @@ public class FileSizeScanner {
     }
   }
 
-  public static ImmutableMap<File, Long> readFilesizes(Iterable<File> fileList) throws Exception {
+  public static ImmutableMap<File, Long> readFilesizes(Iterable<File> fileList)
+      throws InterruptedException, ExecutionException {
     final FileSizeReader fileSizeReader = new FileSizeReader(FileOperationProvider.getInstance());
     return FileAttributeScanner.readAttributes(
         fileList, fileSizeReader, BlazeExecutor.getInstance());

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.python.run;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -202,11 +203,14 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     }
 
     private static String getScriptParams(BlazeCommandRunConfigurationCommonState state) {
-      List<String> params = Lists.newArrayList(state.getExeFlagsState().getExpandedFlags());
+      List<String> params =
+          Lists.newArrayList(state.getExeFlagsState().getFlagsForExternalProcesses());
       params.addAll(state.getTestArgs());
       String filterFlag = state.getTestFilterFlag();
       if (filterFlag != null) {
-        params.add(filterFlag.substring((BlazeFlags.TEST_FILTER + "=").length()));
+        String testFilterArg = filterFlag.substring((BlazeFlags.TEST_FILTER + "=").length());
+        // testFilterArg is a space-delimited list of filters
+        params.addAll(Splitter.on(" ").splitToList(testFilterArg));
       }
       return ParametersListUtil.join(params);
     }
@@ -233,7 +237,8 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
 
   @Override
   public boolean executeBeforeRunTask(ExecutionEnvironment env) {
-    if (!BlazeCommandRunConfigurationRunner.isDebugging(env)) {
+    if (!BlazeCommandRunConfigurationRunner.isDebugging(env)
+        || BlazeCommandName.BUILD.equals(BlazeCommandRunConfigurationRunner.getBlazeCommand(env))) {
       return true;
     }
     env.getCopyableUserData(EXECUTABLE_KEY).set(null);
@@ -285,11 +290,13 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       throw new WithBrowserHyperlinkExecutionException(validationError);
     }
 
+    SaveUtil.saveAllFiles();
     try (BuildResultHelper buildResultHelper =
         BuildResultHelperProvider.forFiles(project, file -> true)) {
 
       ListenableFuture<BuildResult> buildOperation =
-          BlazeBeforeRunCommandHelper.runBlazeBuild(
+          BlazeBeforeRunCommandHelper.runBlazeCommand(
+              BlazeCommandName.BUILD,
               configuration,
               buildResultHelper,
               BlazePyDebugHelper.getAllBlazeDebugFlags(
@@ -300,7 +307,6 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
               "Building debug binary");
 
       try {
-        SaveUtil.saveAllFiles();
         BuildResult result = buildOperation.get();
         if (result.status != BuildResult.Status.SUCCESS) {
           throw new ExecutionException("Blaze failure building debug binary");

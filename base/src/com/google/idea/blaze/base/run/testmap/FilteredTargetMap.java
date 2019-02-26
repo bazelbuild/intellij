@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.run.testmap;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
@@ -57,19 +57,26 @@ public class FilteredTargetMap {
     this.filter = filter;
   }
 
-  public Collection<TargetIdeInfo> targetsForSourceFile(File sourceFile) {
+  public ImmutableSet<TargetIdeInfo> targetsForSourceFile(File sourceFile) {
+    return targetsForSourceFiles(ImmutableList.of(sourceFile));
+  }
+
+  public ImmutableSet<TargetIdeInfo> targetsForSourceFiles(List<File> sourceFiles) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData != null) {
-      return targetsForSourceFileImpl(ReverseDependencyMap.get(project), sourceFile);
+      return targetsForSourceFilesImpl(ReverseDependencyMap.get(project), sourceFiles);
     }
-    return ImmutableList.of();
+    return ImmutableSet.of();
   }
 
-  private Collection<TargetIdeInfo> targetsForSourceFileImpl(
-      ImmutableMultimap<TargetKey, TargetKey> rdepsMap, File sourceFile) {
-    List<TargetIdeInfo> result = Lists.newArrayList();
-    Collection<TargetKey> roots = rootsMap.get(sourceFile);
+  private ImmutableSet<TargetIdeInfo> targetsForSourceFilesImpl(
+      ImmutableMultimap<TargetKey, TargetKey> rdepsMap, List<File> sourceFiles) {
+    ImmutableSet.Builder<TargetIdeInfo> result = ImmutableSet.builder();
+    Set<TargetKey> roots =
+        sourceFiles.stream()
+            .flatMap(f -> rootsMap.get(f).stream())
+            .collect(ImmutableSet.toImmutableSet());
 
     Queue<TargetKey> todo = Queues.newArrayDeque();
     todo.addAll(roots);
@@ -86,7 +93,7 @@ public class FilteredTargetMap {
       }
       todo.addAll(rdepsMap.get(targetKey));
     }
-    return result;
+    return result.build();
   }
 
   private static Multimap<File, TargetKey> createRootsMap(

@@ -48,6 +48,7 @@ public class DirectorySection {
       boolean excluded = text.startsWith("-");
       text = excluded ? text.substring(1) : text;
 
+      // removes '.' path sections, traverses ".." without handling symlinks
       text = PathUtil.getCanonicalPath(text);
 
       String error = WorkspacePath.validate(text);
@@ -55,7 +56,8 @@ public class DirectorySection {
         parseContext.addError(error);
         return null;
       }
-      return new DirectoryEntry(new WorkspacePath(text), !excluded);
+      WorkspacePath directory = new WorkspacePath(text);
+      return excluded ? DirectoryEntry.exclude(directory) : DirectoryEntry.include(directory);
     }
 
     @Override

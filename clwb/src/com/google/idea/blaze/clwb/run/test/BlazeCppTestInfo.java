@@ -45,8 +45,8 @@ public class BlazeCppTestInfo {
   final String suite;
   @Nullable final String method;
 
-  private final int suiteOrder;
-  private final int methodOrder;
+  final int suiteOrder;
+  final int methodOrder;
 
   private BlazeCppTestInfo(
       @Nullable String instantiation,

@@ -1,6 +1,18 @@
+v2019.02.13
+===========
+* Mark unsynced python, go files in the project view
+
+v2019.01.28
+===========
+* Bug fixes and internal cleanup.
+
+v2019.01.14
+===========
+* Add coverage support
+* Fix kotlin library rule handling
+
 v2019.01.02
 ===========
-* Fast Run now supports TikTok tests.
 * Compilation errors during Fast Run show up in the Bazel Problems view and can be double-clicked to
   navigate to the error in the source
 * Go: fix some spurious 'unused symbol' warnings

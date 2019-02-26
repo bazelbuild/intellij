@@ -125,9 +125,9 @@ public class ProjectViewParserTest extends BlazeTestCase {
     ProjectView projectView = projectViewFile.projectView;
     assertThat(projectView.getSectionsOfType(DirectorySection.KEY).get(0).items())
         .containsExactly(
-            new DirectoryEntry(new WorkspacePath("java/com/google"), true),
-            new DirectoryEntry(new WorkspacePath("java/com/google/android"), true),
-            new DirectoryEntry(new WorkspacePath("java/com/google/android/notme"), false));
+            DirectoryEntry.include(new WorkspacePath("java/com/google")),
+            DirectoryEntry.include(new WorkspacePath("java/com/google/android")),
+            DirectoryEntry.exclude(new WorkspacePath("java/com/google/android/notme")));
     assertThat(projectView.getSectionsOfType(TargetSection.KEY).get(0).items())
         .containsExactly(
             TargetExpression.fromStringSafe("//java/com/google:all"),
@@ -157,8 +157,8 @@ public class ProjectViewParserTest extends BlazeTestCase {
     ProjectView projectView = projectViewFile.projectView;
     assertThat(projectView.getSectionsOfType(DirectorySection.KEY).get(0).items())
         .containsExactly(
-            new DirectoryEntry(new WorkspacePath(""), true),
-            new DirectoryEntry(new WorkspacePath("java/com/google/android/notme"), false));
+            DirectoryEntry.include(new WorkspacePath("")),
+            DirectoryEntry.exclude(new WorkspacePath("java/com/google/android/notme")));
     assertThat(projectView.getSectionsOfType(TargetSection.KEY).get(0).items())
         .containsExactly(TargetExpression.fromStringSafe("//java/com/google:all"));
 
@@ -218,8 +218,8 @@ public class ProjectViewParserTest extends BlazeTestCase {
     Collection<DirectoryEntry> entries = projectViewSet.listItems(DirectorySection.KEY);
     assertThat(entries)
         .containsExactly(
-            new DirectoryEntry(new WorkspacePath("parent"), true),
-            new DirectoryEntry(new WorkspacePath("child"), true));
+            DirectoryEntry.include(new WorkspacePath("parent")),
+            DirectoryEntry.include(new WorkspacePath("child")));
   }
 
   @Test
@@ -249,11 +249,11 @@ public class ProjectViewParserTest extends BlazeTestCase {
     // All imports' contributions appear before the children, no matter where they appear
     assertThat(entries)
         .containsExactly(
-            new DirectoryEntry(new WorkspacePath("grandparent"), true),
-            new DirectoryEntry(new WorkspacePath("mother"), true),
-            new DirectoryEntry(new WorkspacePath("father"), true),
-            new DirectoryEntry(new WorkspacePath("child1"), true),
-            new DirectoryEntry(new WorkspacePath("child2"), true))
+            DirectoryEntry.include(new WorkspacePath("grandparent")),
+            DirectoryEntry.include(new WorkspacePath("mother")),
+            DirectoryEntry.include(new WorkspacePath("father")),
+            DirectoryEntry.include(new WorkspacePath("child1")),
+            DirectoryEntry.include(new WorkspacePath("child2")))
         .inOrder();
   }
 
@@ -298,7 +298,7 @@ public class ProjectViewParserTest extends BlazeTestCase {
     ProjectView projectView =
         projectViewParser.getResult().getTopLevelProjectViewFile().projectView;
     assertThat(projectView.getSectionsOfType(DirectorySection.KEY).get(0).items())
-        .containsExactly(new DirectoryEntry(new WorkspacePath("java/com/google"), true));
+        .containsExactly(DirectoryEntry.include(new WorkspacePath("java/com/google")));
   }
 
   @Test
@@ -365,8 +365,8 @@ public class ProjectViewParserTest extends BlazeTestCase {
         .isEqualTo(new TextBlock(ImmutableList.of("# comment")));
     assertThat(projectView.getSectionsOfType(DirectorySection.KEY).get(0).items())
         .containsExactly(
-            new DirectoryEntry(new WorkspacePath("java/com/google"), true),
-            new DirectoryEntry(new WorkspacePath("java/com/google/android"), true));
+            DirectoryEntry.include(new WorkspacePath("java/com/google")),
+            DirectoryEntry.include(new WorkspacePath("java/com/google/android")));
   }
 
   @Test
@@ -386,8 +386,8 @@ public class ProjectViewParserTest extends BlazeTestCase {
     ProjectViewSet projectViewSet = projectViewParser.getResult();
     assertThat(projectViewSet.listItems(DirectorySection.KEY))
         .containsExactly(
-            new DirectoryEntry(new WorkspacePath("java/com/google"), true),
-            new DirectoryEntry(new WorkspacePath("java/com/google2"), true));
+            DirectoryEntry.include(new WorkspacePath("java/com/google")),
+            DirectoryEntry.include(new WorkspacePath("java/com/google2")));
     assertThat(projectViewSet.listScalarItems(WorkspaceTypeSection.KEY))
         .containsExactly(WorkspaceType.JAVA, WorkspaceType.ANDROID);
   }

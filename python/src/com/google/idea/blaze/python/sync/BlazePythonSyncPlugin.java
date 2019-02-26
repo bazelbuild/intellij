@@ -17,6 +17,7 @@ package com.google.idea.blaze.python.sync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -36,6 +37,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
+import com.google.idea.blaze.base.sync.RefreshRequestType;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.common.experiments.BoolExperiment;
@@ -43,7 +45,6 @@ import com.google.idea.common.transactions.Transactions;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
@@ -54,7 +55,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.util.PlatformUtils;
@@ -70,8 +70,6 @@ import javax.annotation.Nullable;
 
 /** Allows people to use a python workspace. */
 public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
-
-  private static final Logger logger = Logger.getInstance(BlazePythonSyncPlugin.class);
 
   private static final BoolExperiment refreshExecRoot =
       new BoolExperiment("refresh.exec.root.python", true);
@@ -141,27 +139,23 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
   }
 
   @Override
-  public void refreshVirtualFileSystem(BlazeProjectData blazeProjectData) {
+  public ImmutableSetMultimap<RefreshRequestType, VirtualFile> filesToRefresh(
+      BlazeProjectData blazeProjectData) {
     if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.PYTHON)) {
-      return;
+      return ImmutableSetMultimap.of();
     }
     if (!refreshExecRoot.getValue()) {
-      return;
+      return ImmutableSetMultimap.of();
     }
-    long start = System.currentTimeMillis();
-    refreshExecRoot(blazeProjectData);
-    long end = System.currentTimeMillis();
-    logger.info(String.format("Refreshing execution root took: %d ms", (end - start)));
-  }
-
-  private static void refreshExecRoot(BlazeProjectData blazeProjectData) {
     // recursive refresh of the blaze execution root. This is required because our blaze aspect
     // can't yet tell us exactly which genfiles are required to resolve the project.
     VirtualFile execRoot =
         VfsUtils.resolveVirtualFile(blazeProjectData.getBlazeInfo().getExecutionRoot());
-    if (execRoot != null) {
-      VfsUtil.markDirtyAndRefresh(false, true, true, execRoot);
+    if (execRoot == null) {
+      return ImmutableSetMultimap.of();
     }
+    return ImmutableSetMultimap.of(
+        RefreshRequestType.create(/* recursive= */ true, /* reloadChildren= */ true), execRoot);
   }
 
   private static void updatePythonFacet(

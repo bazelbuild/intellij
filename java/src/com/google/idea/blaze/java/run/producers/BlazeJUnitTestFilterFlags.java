@@ -19,6 +19,7 @@ package com.google.idea.blaze.java.run.producers;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.java.run.producers.JUnitParameterizedClassHeuristic.ParameterizedTestInfo;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit.JUnitUtil;
@@ -69,23 +70,36 @@ public final class BlazeJUnitTestFilterFlags {
   private static List<String> extractMethodFilters(
       PsiClass psiClass, Collection<PsiMethod> methods) {
     // standard org.junit.runners.Parameterized class requires no per-test annotations
-    boolean parameterizedClass = isParameterized(psiClass);
-    return methods
-        .stream()
-        .map((method) -> methodFilter(method, parameterizedClass))
+    String testSuffixRegex = getTestSuffixRegex(psiClass);
+    return methods.stream()
+        .map((method) -> methodFilter(method, testSuffixRegex))
         .sorted()
         .collect(Collectors.toList());
   }
 
-  private static boolean isParameterized(PsiClass testClass) {
-    return PsiMemberParameterizedLocation.getParameterizedLocation(testClass, null) != null
-        || JUnitParameterizedClassHeuristic.isParameterizedTest(testClass);
+  @Nullable
+  private static String getTestSuffixRegex(PsiClass testClass) {
+
+    ParameterizedTestInfo parameterizedTestInfo =
+        JUnitParameterizedClassHeuristic.getParameterizedTestInfo(testClass);
+    if (parameterizedTestInfo != null) {
+      return parameterizedTestInfo.testSuffixRegex();
+    }
+    if (PsiMemberParameterizedLocation.getParameterizedLocation(testClass, null) != null) {
+      return JUnitParameterizedClassHeuristic.STANDARD_JUNIT_TEST_SUFFIX;
+    }
+    return null;
   }
 
-  private static String methodFilter(PsiMethod method, boolean parameterizedClass) {
-    boolean parameterized =
-        parameterizedClass || AnnotationUtil.findAnnotation(method, "Parameters") != null;
-    return parameterized ? method.getName() + "(\\[.+\\])?" : method.getName();
+  private static String methodFilter(PsiMethod method, @Nullable String testSuffixRegex) {
+    if (testSuffixRegex != null) {
+      return method.getName() + testSuffixRegex;
+    } else if (AnnotationUtil.findAnnotation(method, "Parameters") != null) {
+      // Supports @junitparams.Parameters, an annotation that applies to an individual test method
+      return method.getName() + JUnitParameterizedClassHeuristic.STANDARD_JUNIT_TEST_SUFFIX;
+    } else {
+      return method.getName();
+    }
   }
 
   @Nullable
@@ -119,8 +133,7 @@ public final class BlazeJUnitTestFilterFlags {
 
   /** Only runs specified parameterized versions, where relevant. */
   private static List<String> extractMethodFilters(Collection<Location<?>> methods) {
-    return methods
-        .stream()
+    return methods.stream()
         .map(BlazeJUnitTestFilterFlags::testFilterForLocation)
         .sorted()
         .collect(Collectors.toList());

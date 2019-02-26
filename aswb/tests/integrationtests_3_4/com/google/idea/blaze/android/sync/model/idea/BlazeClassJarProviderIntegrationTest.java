@@ -275,8 +275,7 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
     ResourceClassRegistry registry = ResourceClassRegistry.get(getProject());
     AndroidFacet facet = AndroidFacet.getInstance(module);
     assertThat(facet).isNotNull();
-    ResourceRepositoryManager repositoryManager =
-        ResourceRepositoryManager.getOrCreateInstance(facet);
+    ResourceRepositoryManager repositoryManager = ResourceRepositoryManager.getInstance(facet);
     assertThat(repositoryManager).isNotNull();
     assertThat(registry.findClassDefinition("com.google.example.resource.R", repositoryManager))
         .isNotNull();

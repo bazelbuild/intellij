@@ -15,16 +15,19 @@
  */
 package com.google.idea.blaze.base.run.testlogs;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.idea.blaze.base.model.primitives.Label;
+import java.util.Collection;
 
 /** Results from a 'blaze test' invocation. */
 public class BlazeTestResults {
 
-  public static final BlazeTestResults NO_RESULTS = fromFlatList(ImmutableList.of());
+  public static final BlazeTestResults NO_RESULTS = new BlazeTestResults(ImmutableMultimap.of());
 
-  public static BlazeTestResults fromFlatList(Iterable<BlazeTestResult> results) {
+  public static BlazeTestResults fromFlatList(Collection<BlazeTestResult> results) {
+    if (results.isEmpty()) {
+      return NO_RESULTS;
+    }
     ImmutableMultimap.Builder<Label, BlazeTestResult> map = ImmutableMultimap.builder();
     results.forEach(result -> map.put(result.getLabel(), result));
     return new BlazeTestResults(map.build());

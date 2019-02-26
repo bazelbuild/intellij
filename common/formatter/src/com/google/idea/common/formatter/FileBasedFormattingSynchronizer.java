@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.common.formatter.FormatUtils.FileContentsProvider;
 import com.google.idea.common.formatter.FormatUtils.Replacements;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import java.io.File;
@@ -39,7 +38,7 @@ public final class FileBasedFormattingSynchronizer {
   /** A formatter that reads contents from a psi file and computes replacements. */
   public interface Formatter<T> {
     /**
-     * A result from your formatter. The T can be used to communicate aritrary information back to
+     * A result from your formatter. The T can be used to communicate arbitrary information back to
      * the caller.
      */
     class Result<T> {
@@ -52,6 +51,9 @@ public final class FileBasedFormattingSynchronizer {
       }
     }
 
+    /**
+     * Calculate formatting replacements for the given {@link PsiFile}. Not called with a read lock.
+     */
     Result<T> format(PsiFile psiFile);
   }
 
@@ -67,7 +69,7 @@ public final class FileBasedFormattingSynchronizer {
         () -> {
           Object lock = perFileLocks.computeIfAbsent(file, f -> new Object());
           synchronized (lock) {
-            Formatter.Result<T> result = ReadAction.compute(() -> formatter.format(psiFile));
+            Formatter.Result<T> result = formatter.format(psiFile);
             if (result == null) {
               return null;
             }

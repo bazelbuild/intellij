@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -27,11 +28,11 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.base.sync.RefreshRequestType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.util.Set;
 
@@ -73,25 +74,24 @@ final class BlazeCSyncPlugin implements BlazeSyncPlugin {
   }
 
   @Override
-  public void refreshVirtualFileSystem(BlazeProjectData blazeProjectData) {
+  public ImmutableSetMultimap<RefreshRequestType, VirtualFile> filesToRefresh(
+      BlazeProjectData blazeProjectData) {
     if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C)) {
-      return;
+      return ImmutableSetMultimap.of();
     }
     if (!refreshExecRoot.getValue()) {
-      return;
+      return ImmutableSetMultimap.of();
     }
-    refreshExecRoot(blazeProjectData);
-  }
-
-  private static void refreshExecRoot(BlazeProjectData blazeProjectData) {
     // recursive refresh of the blaze execution root. This is required because:
     // <li>Our blaze aspect can't tell us exactly which genfiles are required to resolve the project
     // <li>Cidr caches the directory contents as part of symbol building, so we need to do this work
-    // up front.
+    // up front before incrementally rebuilding symbols.
     VirtualFile execRoot =
         VfsUtils.resolveVirtualFile(blazeProjectData.getBlazeInfo().getExecutionRoot());
-    if (execRoot != null) {
-      VfsUtil.markDirtyAndRefresh(false, true, true, execRoot);
+    if (execRoot == null) {
+      return ImmutableSetMultimap.of();
     }
+    return ImmutableSetMultimap.of(
+        RefreshRequestType.create(/* recursive= */ true, /* reloadChildren= */ true), execRoot);
   }
 }

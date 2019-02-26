@@ -83,11 +83,6 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
     return "Pending target handler";
   }
 
-  private static boolean hasPendingTarget(BlazeCommandRunConfiguration config) {
-    PendingRunConfigurationContext pendingContext = config.getPendingContext();
-    return pendingContext != null && !pendingContext.getFuture().isDone();
-  }
-
   static class PendingTargetProgramRunner extends BaseProgramRunner<RunnerSettings> {
     @Override
     public String getRunnerId() {
@@ -101,10 +96,11 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
       if (config == null) {
         return false;
       }
-      // for now, try enabling every known executor type. At runtime, we'll error if it turns out to
-      // not be appropriate (e.g. fast-run for non-java)
       ExecutorType type = ExecutorType.fromExecutorId(executorId);
-      return !type.equals(ExecutorType.UNKNOWN) && hasPendingTarget(config);
+      PendingRunConfigurationContext pendingContext = config.getPendingContext();
+      return pendingContext != null
+          && !pendingContext.getFuture().isDone()
+          && pendingContext.supportedExecutors().contains(type);
     }
 
     @Override
@@ -130,7 +126,8 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
 
   private static void reRunConfiguration(ExecutionEnvironment env) throws ExecutionException {
     BlazeCommandRunConfiguration config = BlazeCommandRunConfigurationRunner.getConfiguration(env);
-    RunnerAndConfigurationSettings settings = getSettings(config);
+    RunnerAndConfigurationSettings settings =
+        RunManager.getInstance(config.getProject()).findSettings(config);
     if (settings == null) {
       throw new ExecutionException(
           "Can't find runner settings for blaze run configuration " + config.getName());
@@ -139,15 +136,6 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
     // this target
     RunManager.getInstance(env.getProject()).setSelectedConfiguration(settings);
     ExecutionUtil.runConfiguration(settings, env.getExecutor());
-  }
-
-  @Nullable
-  private static RunnerAndConfigurationSettings getSettings(BlazeCommandRunConfiguration config) {
-    // #api181: replace with 'RunManager.getInstance(config.getProject()).findSettings(config)'
-    return RunManager.getInstance(config.getProject()).getAllSettings().stream()
-        .filter(s -> config.equals(s.getConfiguration()))
-        .findFirst()
-        .orElse(null);
   }
 
   /**

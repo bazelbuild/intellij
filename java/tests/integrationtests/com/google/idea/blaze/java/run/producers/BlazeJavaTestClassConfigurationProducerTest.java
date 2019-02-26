@@ -186,7 +186,7 @@ public class BlazeJavaTestClassConfigurationProducerTest
         .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:OuterClass"));
     assertThat(getTestFilterContents(config))
         .isEqualTo(
-            "--test_filter=com.google.test.OuterClass#|com.google.test.OuterClass.InnerClass#");
+            "--test_filter=\"com.google.test.OuterClass#|com.google.test.OuterClass.InnerClass#\"");
     assertThat(config.getName()).isEqualTo("Blaze test OuterClass");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }

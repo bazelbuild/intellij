@@ -18,41 +18,31 @@ package com.google.idea.blaze.base.filecache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.io.ModifiedTimeScanner;
-import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /** Provides a diffing service for a collection of files. */
 public final class FileDiffer {
-  private static Logger logger = Logger.getInstance(FileDiffer.class);
-
   private FileDiffer() {}
 
-  @Nullable
   public static ImmutableMap<File, Long> updateFiles(
       @Nullable ImmutableMap<File, Long> oldState,
       Iterable<File> files,
       Collection<File> updatedFiles,
-      Collection<File> removedFiles) {
+      Collection<File> removedFiles)
+      throws InterruptedException, ExecutionException {
     ImmutableMap<File, Long> newState = readFileState(files);
-    if (newState == null) {
-      return null;
-    }
     diffState(oldState, newState, updatedFiles, removedFiles);
     return newState;
   }
 
-  @Nullable
-  public static ImmutableMap<File, Long> readFileState(Iterable<File> files) {
-    try {
-      return ModifiedTimeScanner.readTimestamps(files);
-    } catch (Exception e) {
-      logger.error(e);
-      return null;
-    }
+  public static ImmutableMap<File, Long> readFileState(Iterable<File> files)
+      throws InterruptedException, ExecutionException {
+    return ModifiedTimeScanner.readTimestamps(files);
   }
 
   public static <K, V> void diffState(

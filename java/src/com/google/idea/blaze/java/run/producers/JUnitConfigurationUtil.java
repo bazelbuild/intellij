@@ -18,12 +18,16 @@ package com.google.idea.blaze.java.run.producers;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit.PatternConfigurationProducer;
+import com.intellij.openapi.application.ApplicationManager;
 
 /** Utility methods for junit test run configuration producers. */
 public class JUnitConfigurationUtil {
 
   /** Delegates to {@link PatternConfigurationProducer#isMultipleElementsSelected}. */
   public static boolean isMultipleElementsSelected(ConfigurationContext context) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return context.containsMultipleSelection();
+    }
     return RunConfigurationProducer.getInstance(PatternConfigurationProducer.class)
         .isMultipleElementsSelected(context);
   }

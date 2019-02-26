@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Bazel Authors. All rights reserved.
+ * Copyright 2019 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,13 @@
  */
 package com.google.idea.blaze.base.logging;
 
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
 import com.intellij.openapi.components.ServiceManager;
+import java.time.Duration;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -28,21 +32,63 @@ import javax.annotation.Nullable;
  */
 public interface EventLoggingService {
 
-  static Optional<EventLoggingService> getInstance() {
-    return Optional.ofNullable(ServiceManager.getService(EventLoggingService.class));
+  static EventLoggingService getInstance() {
+    EventLoggingService service = ServiceManager.getService(EventLoggingService.class);
+    return service != null ? service : new NoopEventLoggingService();
   }
 
   void log(SyncStats syncStats);
 
+  void logCommand(Class<?> loggingClass, Command command);
+
   default void logEvent(Class<?> loggingClass, String eventType) {
-    logEvent(loggingClass, eventType, ImmutableMap.of());
+    logEvent(loggingClass, eventType, /* keyValues= */ ImmutableMap.of());
   }
 
-  void logEvent(Class<?> loggingClass, String eventType, Map<String, String> keyValues);
+  default void logEvent(Class<?> loggingClass, String eventType, Map<String, String> keyValues) {
+    logEvent(loggingClass, eventType, keyValues, /* durationInNanos= */ null);
+  }
 
   void logEvent(
       Class<?> loggingClass,
       String eventType,
       Map<String, String> keyValues,
       @Nullable Long durationInNanos);
+
+  /** Information about an external command that was launched from the IDE. */
+  @AutoValue
+  abstract class Command {
+    public abstract String executable();
+
+    public abstract ImmutableList<String> arguments();
+
+    public abstract Optional<String> subcommandName();
+
+    public abstract Optional<String> workingDirectory();
+
+    public abstract int exitCode();
+
+    public abstract Duration duration();
+
+    public static Builder builder() {
+      return new AutoValue_EventLoggingService_Command.Builder();
+    }
+
+    @AutoValue.Builder
+    public abstract static class Builder {
+      public abstract Builder setExecutable(String executable);
+
+      public abstract Builder setArguments(Collection<String> arguments);
+
+      public abstract Builder setSubcommandName(@Nullable String subcommandName);
+
+      public abstract Builder setWorkingDirectory(@Nullable String workingDirectory);
+
+      public abstract Builder setExitCode(int exitCode);
+
+      public abstract Builder setDuration(Duration duration);
+
+      public abstract Command build();
+    }
+  }
 }

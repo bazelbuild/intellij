@@ -4,14 +4,13 @@ import argparse
 import io
 import re
 import sys
-from xml.dom.minidom import parse  # pylint: disable=g-importing-member
+from xml.dom import minidom
 
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
     "--plugin_xml",
     help="The plugin xml file",
-    required=True,
 )
 parser.add_argument(
     "--api_version_txt",
@@ -26,8 +25,8 @@ parser.add_argument(
 parser.add_argument(
     "--stamp_until_build",
     action="store_true",
-    help="Stamp until-build with the major release component of the build "
-         "number",
+    help=("Stamp until-build with the major release component of the build "
+          "number"),
 )
 parser.add_argument(
     "--plugin_id",
@@ -39,7 +38,8 @@ parser.add_argument(
 )
 parser.add_argument(
     "--version",
-    help="Version to stamp into the plugin.xml",)
+    help="Version to stamp into the plugin.xml",
+)
 parser.add_argument(
     "--version_file",
     help="Version file to stamp into the plugin.xml",
@@ -72,7 +72,7 @@ def _read_description(description_file):
 
 def _read_vendor(vendor_file):
   """Reads vendor data from an .xml file and returns the vendor element."""
-  dom = parse(vendor_file)
+  dom = minidom.parse(vendor_file)
   vendor_elements = dom.getElementsByTagName("vendor")
   if len(vendor_elements) != 1:
     raise ValueError("Ambigious or missing vendor element (%d elements)" %
@@ -110,7 +110,10 @@ def _strip_build_number(api_version):
 def main():
   args = parser.parse_args()
 
-  dom = parse(args.plugin_xml)
+  if args.plugin_xml:
+    dom = minidom.parse(args.plugin_xml)
+  else:
+    dom = minidom.parseString("<idea-plugin/>")
 
   with open(args.api_version_txt) as f:
     api_version = f.readline().strip()

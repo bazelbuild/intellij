@@ -186,8 +186,9 @@ public class BlazeJavascriptSyncPlugin implements BlazeSyncPlugin {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.JAVASCRIPT)) {
       return true;
     }
-    if (!PlatformUtils.isIdeaUltimate()) {
-      IssueOutput.error("IntelliJ Ultimate needed for Javascript support.").submit(context);
+    if (!PlatformUtils.isIdeaUltimate() && !PlatformUtils.isCLion()) {
+      IssueOutput.error("IntelliJ Ultimate or CLion needed for JavaScript support.")
+          .submit(context);
       return false;
     }
     return true;

@@ -15,6 +15,7 @@
  */
 package com.google.idea.sdkcompat.cidr;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +27,7 @@ import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
+import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration.ModifiableModel.Message;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfigurationImpl;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace.ModifiableModel;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceImpl;
@@ -44,13 +46,19 @@ import java.util.concurrent.Future;
 public class OCWorkspaceModifiableModelAdapter {
   private static final Logger logger = Logger.getInstance(OCWorkspaceModifiableModelAdapter.class);
 
-  /** This method bridges SDK differences between CLion 2018.1.3 and Android Studio 3.2 #api181 */
-  public static void commit(
+  /**
+   * Commits the modifiable model and returns any error messages encountered setting up the model
+   * (e.g., while running a compiler for feature detection).
+   *
+   * <p>#api182: model API changed in 2018.3.
+   */
+  public static ImmutableList<String> commit(
       OCWorkspaceImpl.ModifiableModel model,
       int serialVersion,
       CidrToolEnvironment toolEnvironment,
       NullableFunction<File, VirtualFile> fileMapper) {
-    collectCompilerSettingsInParallel(model, toolEnvironment, fileMapper);
+    ImmutableList<String> issues =
+        collectCompilerSettingsInParallel(model, toolEnvironment, fileMapper);
     model.setSourceVersion(serialVersion);
     model.preCommit();
     TransactionGuard.getInstance()
@@ -58,6 +66,7 @@ public class OCWorkspaceModifiableModelAdapter {
             () -> {
               ApplicationManager.getApplication().runWriteAction(model::commit);
             });
+    return issues;
   }
 
   // #api182: In 2018.3, addConfiguration only takes 2 or 4 parameters
@@ -121,26 +130,28 @@ public class OCWorkspaceModifiableModelAdapter {
     }
   }
 
-  private static void collectCompilerSettingsInParallel(
+  private static ImmutableList<String> collectCompilerSettingsInParallel(
       OCWorkspaceImpl.ModifiableModel model,
       CidrToolEnvironment toolEnvironment,
       NullableFunction<File, VirtualFile> fileMapper) {
     CompilerInfoCache compilerInfoCache = new CompilerInfoCache();
-    List<Future<Void>> compilerSettingsTasks = new ArrayList<>();
+    List<Future<List<Message>>> compilerSettingsTasks = new ArrayList<>();
     ExecutorService compilerSettingExecutor =
         AppExecutorUtil.createBoundedApplicationPoolExecutor(
             "Compiler Settings Collector", Runtime.getRuntime().availableProcessors());
     for (OCResolveConfiguration.ModifiableModel config : model.getConfigurations()) {
       compilerSettingsTasks.add(
           compilerSettingExecutor.submit(
-              () -> {
-                config.collectCompilerSettings(toolEnvironment, compilerInfoCache, fileMapper);
-                return null;
-              }));
+              () ->
+                  config.collectCompilerSettings(toolEnvironment, compilerInfoCache, fileMapper)));
     }
-    for (Future<Void> task : compilerSettingsTasks) {
+    ImmutableList.Builder<String> issues = ImmutableList.builder();
+    for (Future<List<Message>> task : compilerSettingsTasks) {
       try {
-        task.get();
+        task.get().stream()
+            .filter(m -> m.getType().equals(Message.Type.ERROR))
+            .map(Message::getText)
+            .forEachOrdered(issues::add);
       } catch (InterruptedException e) {
         task.cancel(true);
         Thread.currentThread().interrupt();
@@ -149,5 +160,6 @@ public class OCWorkspaceModifiableModelAdapter {
         logger.error("Error getting compiler settings, cancelling", e);
       }
     }
+    return issues.build();
   }
 }

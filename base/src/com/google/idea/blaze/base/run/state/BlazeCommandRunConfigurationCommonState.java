@@ -74,7 +74,7 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
   /** Searches through all blaze flags for the first one beginning with '--test_filter' */
   @Nullable
   public String getTestFilterFlag() {
-    for (String flag : getBlazeFlagsState().getExpandedFlags()) {
+    for (String flag : getBlazeFlagsState().getRawFlags()) {
       if (flag.startsWith(BlazeFlags.TEST_FILTER)) {
         return flag;
       }
@@ -94,7 +94,7 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
   }
 
   public ImmutableList<String> getTestArgs() {
-    return getBlazeFlagsState().getExpandedFlags().stream()
+    return getBlazeFlagsState().getRawFlags().stream()
         .filter(f -> f.startsWith(BlazeFlags.TEST_ARG))
         .map(f -> f.substring(BlazeFlags.TEST_ARG.length()))
         .collect(toImmutableList());

@@ -84,7 +84,7 @@ public class BlazeJavaDebuggerRunner extends GenericDebuggerRunner {
   @Override
   protected RunContentDescriptor doExecute(RunProfileState state, ExecutionEnvironment env)
       throws ExecutionException {
-    EventLoggingService.getInstance().ifPresent(s -> s.logEvent(getClass(), "debugging-java"));
+    EventLoggingService.getInstance().logEvent(getClass(), "debugging-java");
     return super.doExecute(state, env);
   }
 }

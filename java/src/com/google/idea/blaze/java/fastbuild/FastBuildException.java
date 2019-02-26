@@ -25,4 +25,8 @@ public class FastBuildException extends Exception {
   FastBuildException(Throwable cause) {
     super(cause);
   }
+
+  public FastBuildException(String s, Throwable throwable) {
+    super(s, throwable);
+  }
 }

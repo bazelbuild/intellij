@@ -19,6 +19,7 @@ import static java.util.Comparator.comparing;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -145,9 +146,12 @@ public final class FormatUtils {
 
   @Nullable
   private static String getCurrentText(PsiFile file) {
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
-    Document document = documentManager.getDocument(file);
-    return document == null ? null : document.getText();
+    return ReadAction.compute(
+        () -> {
+          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
+          Document document = documentManager.getDocument(file);
+          return document == null ? null : document.getText();
+        });
   }
 
   /** Runs a format future under a progress dialog. */

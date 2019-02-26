@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TestFlagsSection;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformUtils;
@@ -30,10 +29,6 @@ import java.util.List;
 
 /** The collection of all the Bazel flag strings we use. */
 public final class BlazeFlags {
-
-  private static final BoolExperiment macroExpandBuildFlags =
-      new BoolExperiment("macro.expand.blaze.flags", true);
-
   // Build the maximum number of possible dependencies of the project and to show all the build
   // errors in single go.
   public static final String KEEP_GOING = "--keep_going";
@@ -113,11 +108,8 @@ public final class BlazeFlags {
 
   /** Expands any macros in the passed build flags. */
   public static List<String> expandBuildFlags(List<String> flags) {
-    if (!macroExpandBuildFlags.getValue()) {
-      return flags;
-    }
     // This built-in IntelliJ class will do macro expansion using
-    // both your enviroment and your Settings > Behavior > Path Variables
+    // both your environment and your Settings > Behavior > Path Variables
     ParametersList parametersList = new ParametersList();
     parametersList.addAll(flags);
     return parametersList.getList();

@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -27,12 +28,15 @@ import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceModifiableModelAdapter;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceModifiableModelAdapter.PerFileCompilerOpts;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceModifiableModelAdapter.PerLanguageCompilerOpts;
+import com.intellij.ide.actions.ShowFilePathAction;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,6 +46,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.NullableFunction;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrSwitchBuilder;
@@ -125,11 +130,15 @@ public final class BlazeCWorkspace implements ProjectComponent {
                   OCWorkspaceImpl.ModifiableModel model =
                       calculateConfigurations(
                           blazeProjectData, workspaceRoot, newResult, indicator, fileMapper);
-                  OCWorkspaceModifiableModelAdapter.commit(
-                      model, SERIALIZATION_VERSION, toolEnvironment, fileMapper);
+                  ImmutableList<String> issues =
+                      OCWorkspaceModifiableModelAdapter.commit(
+                          model, SERIALIZATION_VERSION, toolEnvironment, fileMapper);
                   logger.info(
                       String.format(
                           "Update configurations took %dms", s.elapsed(TimeUnit.MILLISECONDS)));
+                  if (!issues.isEmpty()) {
+                    showSetupIssues(issues, context);
+                  }
                 }
                 resolverResult = newResult;
                 incModificationTrackers();
@@ -334,5 +343,31 @@ public final class BlazeCWorkspace implements ProjectComponent {
     public VirtualFile fun(File file) {
       return cache.computeIfAbsent(file, localFileSystem::findFileByIoFile);
     }
+  }
+
+  private static void showSetupIssues(ImmutableList<String> issues, BlazeContext context) {
+    logger.warn(
+        String.format(
+            "Issues collecting info from C++ compiler. Showing first few out of %d:\n%s",
+            issues.size(), Iterables.limit(issues, 25)));
+    IssueOutput.warn("Issues collecting info from C++ compiler (click to see logs)")
+        .navigatable(
+            new Navigatable() {
+              @Override
+              public void navigate(boolean b) {
+                ShowFilePathAction.openFile(new File(PathManager.getLogPath(), "idea.log"));
+              }
+
+              @Override
+              public boolean canNavigate() {
+                return true;
+              }
+
+              @Override
+              public boolean canNavigateToSource() {
+                return false;
+              }
+            })
+        .submit(context);
   }
 }

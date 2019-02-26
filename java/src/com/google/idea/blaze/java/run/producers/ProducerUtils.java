@@ -21,11 +21,18 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -125,7 +132,7 @@ public class ProducerUtils {
     if (!PsiClassUtil.isRunnableClass(psiClass, true, true)) {
       return false;
     }
-    if (AnnotationUtil.isAnnotated(psiClass, JUnitUtil.RUN_WITH, true)) {
+    if (isJUnit4Class(psiClass)) {
       return true;
     }
     if (isTestCaseInheritor(psiClass)) {
@@ -139,13 +146,65 @@ public class ProducerUtils {
                 PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
   }
 
+  private static boolean isJUnit4Class(PsiClass psiClass) {
+    String qualifiedName = JUnitUtil.RUN_WITH;
+    if (AnnotationUtil.isAnnotated(psiClass, qualifiedName, true)) {
+      return true;
+    }
+    // handle the case where RunWith and/or the current class isn't indexed
+    PsiModifierList modifierList = psiClass.getModifierList();
+    if (modifierList == null) {
+      return false;
+    }
+    if (modifierList.hasAnnotation(qualifiedName)) {
+      return true;
+    }
+    String shortName = StringUtil.getShortName(qualifiedName);
+    return modifierList.hasAnnotation(shortName) && hasImport(psiClass, qualifiedName);
+  }
+
+  private static boolean hasImport(PsiElement element, String qualifiedName) {
+    PsiImportList imports = getImports(element);
+    return imports != null && imports.findSingleClassImportStatement(qualifiedName) != null;
+  }
+
+  @Nullable
+  private static PsiImportList getImports(PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    return file instanceof PsiJavaFile ? ((PsiJavaFile) file).getImportList() : null;
+  }
+
   private static boolean isTestCaseInheritor(PsiClass psiClass) {
     // unlike JUnitUtil#isTestCaseInheritor, works even if the class isn't in the project
     PsiClass testCaseClass =
         JavaPsiFacade.getInstance(psiClass.getProject())
             .findClass(
                 JUnitUtil.TEST_CASE_CLASS, GlobalSearchScope.allScope(psiClass.getProject()));
-    return testCaseClass != null && psiClass.isInheritor(testCaseClass, true);
+    if (testCaseClass != null) {
+      return psiClass.isInheritor(testCaseClass, true);
+    }
+    // TestCase isn't indexed, instead use heuristics to check
+    return extendsTestCase(psiClass, new HashSet<>());
+  }
+
+  private static boolean extendsTestCase(PsiClass psiClass, Set<PsiClass> checkedClasses) {
+    if (!checkedClasses.add(psiClass)) {
+      return false;
+    }
+    PsiReferenceList extendsList = psiClass.getExtendsList();
+    if (extendsList == null) {
+      return false;
+    }
+    for (PsiJavaCodeReferenceElement ref : extendsList.getReferenceElements()) {
+      if (JUnitUtil.TEST_CASE_CLASS.equals(ref.getQualifiedName())) {
+        return true;
+      }
+      PsiElement clazz = ref.resolve();
+      if (clazz instanceof PsiClass && extendsTestCase((PsiClass) clazz, checkedClasses)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean hasTestOrSuiteMethods(PsiClass psiClass) {

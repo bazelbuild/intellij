@@ -17,14 +17,17 @@ package com.google.idea.blaze.clwb.run;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.blaze.base.run.state.DebugPortState;
 import com.google.idea.blaze.base.run.state.EnvironmentVariablesState;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.settings.BuildSystem;
 
 /** A version of the common state allowing environment variables to be set when debugging. */
 final class BlazeCidrRunConfigState extends BlazeCommandRunConfigurationCommonState {
+  private static final int DEFAULT_DEBUG_PORT = 5006;
 
   private final EnvironmentVariablesState envVars = new EnvironmentVariablesState();
+  private final DebugPortState debugPortState = new DebugPortState(DEFAULT_DEBUG_PORT);
 
   BlazeCidrRunConfigState(BuildSystem buildSystem) {
     super(buildSystem);
@@ -32,10 +35,14 @@ final class BlazeCidrRunConfigState extends BlazeCommandRunConfigurationCommonSt
 
   @Override
   protected ImmutableList<RunConfigurationState> initializeStates() {
-    return ImmutableList.of(command, blazeFlags, exeFlags, envVars, blazeBinary);
+    return ImmutableList.of(command, blazeFlags, exeFlags, envVars, debugPortState, blazeBinary);
   }
 
   EnvironmentVariablesState getEnvVarsState() {
     return envVars;
+  }
+
+  DebugPortState getDebugPortState() {
+    return debugPortState;
   }
 }

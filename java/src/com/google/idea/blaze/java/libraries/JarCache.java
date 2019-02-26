@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -55,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -132,11 +134,11 @@ public class JarCache {
   }
 
   /** Refreshes any updated files in the cache. Does not add or removes any files */
-  void refresh() {
-    refresh(null, false);
+  private void refresh(BlazeContext context) {
+    refresh(context, false);
   }
 
-  private void refresh(@Nullable BlazeContext context, boolean removeMissingFiles) {
+  private void refresh(BlazeContext context, boolean removeMissingFiles) {
     if (!enabled || traits == null) {
       return;
     }
@@ -149,22 +151,30 @@ public class JarCache {
       }
     }
     FileCacheSynchronizer synchronizer = new FileCacheSynchronizer(traits);
-    if (!synchronizer.synchronize(context, removeMissingFiles)) {
-      logger.warn("Jar Cache synchronization didn't complete");
+    try {
+      synchronizer.synchronize(context, removeMissingFiles);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      context.setCancelled();
+      return;
+    } catch (ExecutionException e) {
+      logger.warn("Jar Cache synchronization didn't complete", e);
+      IssueOutput.warn("Jar Cache synchronization didn't complete").submit(context);
+      return;
     }
-    if (context != null) {
-      try {
-        Collection<File> finalCacheFiles = traits.enumerateCacheFiles();
-        ImmutableMap<File, Long> cacheFileSizes = FileSizeScanner.readFilesizes(finalCacheFiles);
-        Long total = cacheFileSizes.values().stream().mapToLong(x -> x).sum();
-        context.output(
-            PrintOutput.log(
-                String.format(
-                    "Total Jar Cache size: %d kB (%d files)",
-                    total / 1024, finalCacheFiles.size())));
-      } catch (Exception e) {
-        logger.warn("Could not determine cache size", e);
-      }
+    try {
+      Collection<File> finalCacheFiles = traits.enumerateCacheFiles();
+      ImmutableMap<File, Long> cacheFileSizes = FileSizeScanner.readFilesizes(finalCacheFiles);
+      long total = cacheFileSizes.values().stream().mapToLong(x -> x).sum();
+      context.output(
+          PrintOutput.log(
+              String.format(
+                  "Total Jar Cache size: %d kB (%d files)", total / 1024, finalCacheFiles.size())));
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      context.setCancelled();
+    } catch (ExecutionException e) {
+      logger.warn("Could not determine cache size", e);
     }
   }
 
@@ -239,8 +249,8 @@ public class JarCache {
     }
 
     @Override
-    public void refreshFiles(Project project) {
-      getInstance(project).refresh();
+    public void refreshFiles(Project project, BlazeContext context) {
+      getInstance(project).refresh(context);
     }
   }
 

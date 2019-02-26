@@ -33,7 +33,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.Contract;
 
 /** State specific for the android test configuration. */
-final class BlazeAndroidTestRunConfigurationState implements RunConfigurationState {
+public final class BlazeAndroidTestRunConfigurationState implements RunConfigurationState {
 
   private static final String LAUNCH_METHOD_ATTR = "launch-method";
   @Deprecated private static final String RUN_THROUGH_BLAZE_ATTR = "blaze-run-through-blaze";

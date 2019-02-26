@@ -169,7 +169,7 @@ public class BlazeBuildService {
                                 blazeProjectData.getBlazeVersionData(),
                                 blazeProjectData.getWorkspaceLanguageSettings(),
                                 shardedTargets.shardedTargets);
-                    FileCaches.refresh(project);
+                    FileCaches.refresh(project, context);
 
                     if (buildResult.status != BuildResult.Status.SUCCESS) {
                       context.setHasError();

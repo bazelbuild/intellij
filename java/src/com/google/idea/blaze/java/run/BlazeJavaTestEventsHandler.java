@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
 import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags;
 import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
-import com.google.idea.sdkcompat.run.JavaTestCaseProtocolCompat;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
@@ -44,6 +43,7 @@ import javax.annotation.Nullable;
 public class BlazeJavaTestEventsHandler implements BlazeTestEventsHandler {
 
   private static final ImmutableSet<Kind> HANDLED_KINDS = JavaLikeLanguage.getAllHandledTestKinds();
+  private static final char TEST_CASE_SEPARATOR = '/';
 
   @Override
   public boolean handlesKind(@Nullable Kind kind) {
@@ -88,12 +88,9 @@ public class BlazeJavaTestEventsHandler implements BlazeTestEventsHandler {
     String classComponent = JavaTestLocator.TEST_PROTOCOL + URLUtil.SCHEME_SEPARATOR + classname;
     String parameterComponent = extractParameterComponent(name);
     if (parameterComponent != null) {
-      return classComponent
-          + JavaTestCaseProtocolCompat.TEST_CASE_SEPARATOR
-          + parentSuite
-          + parameterComponent;
+      return classComponent + TEST_CASE_SEPARATOR + parentSuite + parameterComponent;
     }
-    return classComponent + JavaTestCaseProtocolCompat.TEST_CASE_SEPARATOR + name;
+    return classComponent + TEST_CASE_SEPARATOR + name;
   }
 
   @Nullable

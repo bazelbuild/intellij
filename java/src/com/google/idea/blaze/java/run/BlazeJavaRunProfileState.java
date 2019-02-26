@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
@@ -61,7 +62,6 @@ import com.intellij.util.execution.ParametersListUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * A Blaze run configuration set up with a an executor, program runner, and other settings, ready to
@@ -141,20 +141,10 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
 
   /** Appends '--script_path' to blaze flags, then runs 'bash -c blaze build ... && run_script' */
   private static List<String> getBashCommandsToRunScript(BlazeCommand.Builder blazeCommand) {
-    File scriptFile = createTempOutputFile();
+    File scriptFile = BlazeBeforeRunCommandHelper.createScriptPathFile();
     blazeCommand.addBlazeFlags("--script_path=" + scriptFile.getPath());
     String blaze = ParametersListUtil.join(blazeCommand.build().toList());
     return ImmutableList.of("/bin/bash", "-c", blaze + " && " + scriptFile.getPath());
-  }
-
-  /** Creates a temporary output file to write the shell script to. */
-  private static File createTempOutputFile() {
-    File tempDir = new File(System.getProperty("java.io.tmpdir"));
-    String suffix = UUID.randomUUID().toString().substring(0, 8);
-    String fileName = "blaze-script-" + suffix;
-    File tempFile = new File(tempDir, fileName);
-    tempFile.deleteOnExit();
-    return tempFile;
   }
 
   @Override
@@ -211,7 +201,7 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
                     BlazeInvocationContext.runConfigContext(
                         executorType, configuration.getType(), false)))
             .addBlazeFlags(blazeFlags)
-            .addBlazeFlags(handlerState.getBlazeFlagsState().getExpandedFlags());
+            .addBlazeFlags(handlerState.getBlazeFlagsState().getFlagsForExternalProcesses());
 
     if (executorType == ExecutorType.DEBUG) {
       Kind kind = configuration.getTargetKind();
@@ -225,7 +215,7 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
       }
     }
 
-    command.addExeFlags(handlerState.getExeFlagsState().getExpandedFlags());
+    command.addExeFlags(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
     return command;
   }
 

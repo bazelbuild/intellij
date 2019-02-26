@@ -39,5 +39,5 @@ public interface FileCache {
       SyncMode syncMode);
 
   /** Called after a build operation to refresh any updated files. */
-  void refreshFiles(Project project);
+  void refreshFiles(Project project, BlazeContext context);
 }

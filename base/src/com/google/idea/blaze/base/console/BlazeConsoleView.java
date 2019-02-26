@@ -34,7 +34,6 @@ import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -146,6 +145,8 @@ public class BlazeConsoleView implements Disposable {
     return false;
   }
 
+  private static final String TOOLBAR_ACTION_PLACE = "BlazeConsole.Toolbar";
+
   void createToolWindowContent(ToolWindow toolWindow) {
     // Create runner UI layout
     RunnerLayoutUi.Factory factory = RunnerLayoutUi.Factory.getInstance(project);
@@ -159,7 +160,7 @@ public class BlazeConsoleView implements Disposable {
 
     // Adding actions
     DefaultActionGroup group = new DefaultActionGroup();
-    layoutUi.getOptions().setLeftToolbar(group, ActionPlaces.UNKNOWN);
+    layoutUi.getOptions().setLeftToolbar(group, TOOLBAR_ACTION_PLACE);
 
     // Initializing prev and next occurrences actions
     OccurenceNavigator navigator = fromConsoleView(consoleView);

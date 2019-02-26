@@ -63,7 +63,8 @@ public interface RunConfigurationContext {
           return false;
         }
         return Objects.equals(handlerState.getCommandState().getCommand(), command)
-            && Objects.equals(config.getTarget(), target);
+            && Objects.equals(config.getTarget(), target)
+            && handlerState.getTestFilter() == null;
       }
     };
   }

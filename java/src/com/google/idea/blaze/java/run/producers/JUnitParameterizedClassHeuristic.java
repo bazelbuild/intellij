@@ -15,23 +15,45 @@
  */
 package com.google.idea.blaze.java.run.producers;
 
+import com.google.auto.value.AutoValue;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiClass;
+import java.util.Arrays;
+import java.util.Objects;
+import javax.annotation.Nullable;
 
 /** A heuristic to recognize JUnit test runner classes which have parameterized test cases. */
 public interface JUnitParameterizedClassHeuristic {
 
+  String STANDARD_JUNIT_TEST_SUFFIX = "(\\[.+\\])?";
+  String USER_SPECIFIED_TEST_SUFFIX = ".*";
+
+  /** Information about the parameterized test. */
+  @AutoValue
+  abstract class ParameterizedTestInfo {
+    public abstract String parameterizedRunnerClass();
+
+    public abstract String testSuffixRegex();
+
+    public static ParameterizedTestInfo create(
+        String parameterizedRunnerClass, String testSuffixRegex) {
+      return new AutoValue_JUnitParameterizedClassHeuristic_ParameterizedTestInfo(
+          parameterizedRunnerClass, testSuffixRegex);
+    }
+  }
+
   ExtensionPointName<JUnitParameterizedClassHeuristic> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.JUnitParameterizedClassHeuristic");
 
-  static boolean isParameterizedTest(PsiClass psiClass) {
-    for (JUnitParameterizedClassHeuristic heuristic : EP_NAME.getExtensions()) {
-      if (heuristic.isParameterized(psiClass)) {
-        return true;
-      }
-    }
-    return false;
+  @Nullable
+  static ParameterizedTestInfo getParameterizedTestInfo(PsiClass psiClass) {
+    return Arrays.stream(EP_NAME.getExtensions())
+        .map(heuristic -> heuristic.getTestInfo(psiClass))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
   }
 
-  boolean isParameterized(PsiClass psiClass);
+  @Nullable
+  ParameterizedTestInfo getTestInfo(PsiClass psiClass);
 }

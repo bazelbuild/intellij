@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.sync;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import java.util.Collection;
 import javax.annotation.concurrent.Immutable;
@@ -31,7 +31,7 @@ public final class BlazeSyncParams {
     private boolean backgroundSync;
     private boolean addProjectViewTargets;
     private boolean addWorkingSet;
-    private ImmutableList.Builder<TargetExpression> targetExpressions = ImmutableList.builder();
+    private final ImmutableSet.Builder<TargetExpression> targetExpressions = ImmutableSet.builder();
 
     public static Builder copy(BlazeSyncParams params) {
       return new Builder(params.title, params.syncMode)
@@ -97,7 +97,7 @@ public final class BlazeSyncParams {
   public final boolean backgroundSync;
   public final boolean addProjectViewTargets;
   public final boolean addWorkingSet;
-  public final ImmutableList<TargetExpression> targetExpressions;
+  public final ImmutableSet<TargetExpression> targetExpressions;
 
   private BlazeSyncParams(
       String title,
@@ -105,7 +105,7 @@ public final class BlazeSyncParams {
       boolean backgroundSync,
       boolean addProjectViewTargets,
       boolean addWorkingSet,
-      ImmutableList<TargetExpression> targetExpressions) {
+      ImmutableSet<TargetExpression> targetExpressions) {
     this.title = title;
     this.syncMode = syncMode;
     this.backgroundSync = backgroundSync;

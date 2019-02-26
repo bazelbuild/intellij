@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
@@ -93,11 +94,13 @@ public class ClassFileManifestBuilder {
       return null;
     }
 
+    SaveUtil.saveAllFiles();
     try (BuildResultHelper buildResultHelper =
         BuildResultHelperProvider.forFiles(project, file -> true)) {
 
       ListenableFuture<BuildResult> buildOperation =
-          BlazeBeforeRunCommandHelper.runBlazeBuild(
+          BlazeBeforeRunCommandHelper.runBlazeCommand(
+              BlazeCommandName.BUILD,
               configuration,
               buildResultHelper,
               aspectStrategy.getBuildFlags(),
@@ -110,7 +113,6 @@ public class ClassFileManifestBuilder {
         progress.setCancelWorker(() -> buildOperation.cancel(true));
       }
       try {
-        SaveUtil.saveAllFiles();
         BuildResult result = buildOperation.get();
         if (result.status != BuildResult.Status.SUCCESS) {
           throw new ExecutionException("Blaze failure building debug binary");

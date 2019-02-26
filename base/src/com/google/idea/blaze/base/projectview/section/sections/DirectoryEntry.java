@@ -25,17 +25,17 @@ public class DirectoryEntry implements Serializable {
   public final WorkspacePath directory;
   public final boolean included;
 
-  public DirectoryEntry(WorkspacePath directory, boolean included) {
+  private DirectoryEntry(WorkspacePath directory, boolean included) {
     this.directory = directory;
     this.included = included;
   }
 
   public static DirectoryEntry include(WorkspacePath directory) {
-    return new DirectoryEntry(directory, true);
+    return new DirectoryEntry(directory, /* included= */ true);
   }
 
   public static DirectoryEntry exclude(WorkspacePath directory) {
-    return new DirectoryEntry(directory, false);
+    return new DirectoryEntry(directory, /* included= */ false);
   }
 
   @Override

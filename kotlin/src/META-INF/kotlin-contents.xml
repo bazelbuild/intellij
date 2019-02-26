@@ -21,10 +21,6 @@
     <JavaSyncAugmenter implementation="com.google.idea.blaze.kotlin.sync.importer.KotlinSyncAugmenter"/>
     <SyncStatusContributor implementation="com.google.idea.blaze.kotlin.syncstatus.KotlinSyncStatusContributor"/>
     <TestContextProvider implementation="com.google.idea.blaze.kotlin.run.producers.KotlinTestContextProvider"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.kotlin.run.producers.BlazeKotlinRunConfigurationProducer"/>
+    <BinaryContextProvider implementation="com.google.idea.blaze.kotlin.run.producers.KotlinBinaryContextProvider"/>
   </extensions>
 </idea-plugin>

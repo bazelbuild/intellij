@@ -20,20 +20,19 @@ def _impl(ctx):
             inputs = inputs | depset([f for f in v if f.short_path.endswith(".intellij-info.txt")])
 
     output_name = ctx.attr.output
-    output = ctx.new_file(output_name)
+    output = ctx.actions.declare_file(output_name)
 
     args = [output.path]
     args += [":".join([f.path for f in inputs.to_list()])]
     for k, v in output_groups.items():
         args.append(k)
         args.append(":".join([f.short_path for f in v]))
-    argfile = ctx.new_file(
-        ctx.configuration.bin_dir,
+    argfile = ctx.actions.declare_file(
         output_name + ".params",
     )
 
     ctx.file_action(output = argfile, content = "\n".join(args))
-    ctx.action(
+    ctx.actions.run(
         inputs = inputs.to_list() + [argfile],
         outputs = [output],
         executable = ctx.executable._intellij_aspect_test_fixture_builder,

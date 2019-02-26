@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -38,6 +39,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.vfs.VirtualFile;
 import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -132,11 +134,15 @@ public interface BlazeSyncPlugin {
       SyncMode syncMode) {}
 
   /**
-   * Refresh any VFS files which may have changed during sync, and aren't covered by file watchers.
+   * Return any VFS files that should be refreshed: files which may have changed during sync, and
+   * aren't covered by file watchers.
    *
-   * <p>Called prior to updateProjectSdk and updateProjectStructure, from inside a write action.
+   * <p>Called prior to updateProjectSdk and updateProjectStructure.
    */
-  default void refreshVirtualFileSystem(BlazeProjectData blazeProjectData) {}
+  default ImmutableSetMultimap<RefreshRequestType, VirtualFile> filesToRefresh(
+      BlazeProjectData blazeProjectData) {
+    return ImmutableSetMultimap.of();
+  }
 
   /** Updates the sdk for the project. */
   default void updateProjectSdk(

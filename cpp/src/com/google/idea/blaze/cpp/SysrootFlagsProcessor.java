@@ -15,11 +15,13 @@
  */
 package com.google.idea.blaze.cpp;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,7 +51,11 @@ class SysrootFlagsProcessor implements BlazeCompilerFlagsProcessor {
   }
 
   @Override
-  public String map(String flag) {
+  public List<String> processFlags(List<String> flags) {
+    return flags.stream().map(this::map).collect(ImmutableList.toImmutableList());
+  }
+
+  private String map(String flag) {
     // For some reason sysroot needs to be an absolute path for clangd to find the headers,
     // even if clangd's CWD is the workspace root, and the flag is relative to the workspace root.
     // clang by itself seems to work okay with relative path.
@@ -74,10 +80,5 @@ class SysrootFlagsProcessor implements BlazeCompilerFlagsProcessor {
     } else {
       return flag;
     }
-  }
-
-  @Override
-  public boolean filter(String flag) {
-    return true;
   }
 }

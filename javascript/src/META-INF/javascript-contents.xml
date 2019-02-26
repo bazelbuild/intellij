@@ -20,6 +20,12 @@
         implementation="com.google.idea.blaze.typescript.BlazeTypescriptGotoDeclarationHandler"
         id="Blaze.Typescript"
         order="first"/>
+    <additionalLibraryRootsProvider
+        implementation="com.google.idea.blaze.typescript.BlazeTypeScriptAdditionalLibraryRootsProvider"/>
+    <projectService
+        serviceInterface="com.intellij.lang.typescript.tsconfig.TypeScriptConfigLibraryUpdater"
+        serviceImplementation="com.google.idea.blaze.typescript.BlazeTypeScriptConfigLibraryUpdater"
+        overrides="true"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript">

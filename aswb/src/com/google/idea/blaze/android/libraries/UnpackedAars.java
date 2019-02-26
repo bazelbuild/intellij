@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -82,7 +83,7 @@ public class UnpackedAars {
   private static final Logger logger = Logger.getInstance(UnpackedAars.class);
 
   private final File cacheDir;
-  private final boolean enabled;
+  private final boolean isUnitTestMode;
 
   @Nullable private AarTraits aarTraits;
   @Nullable private JarTraits jarTraits;
@@ -95,8 +96,8 @@ public class UnpackedAars {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     this.cacheDir = getCacheDir(importSettings);
-    // We want this to be enabled in normal operation, so there's no user setting.
-    this.enabled = !ApplicationManager.getApplication().isUnitTestMode();
+    // We want this to be isUnitTestMode in normal operation, so there's no user setting.
+    isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
   }
 
   void onSync(
@@ -108,10 +109,10 @@ public class UnpackedAars {
         BlazeLibraryCollector.getLibraries(projectViewSet, projectData);
     boolean fullRefresh = syncMode == SyncMode.FULL;
     boolean removeMissingFiles = syncMode == SyncMode.INCREMENTAL;
-    if (!enabled || fullRefresh) {
+    if (isUnitTestMode || fullRefresh) {
       clearCache();
     }
-    if (!enabled) {
+    if (isUnitTestMode) {
       return;
     }
 
@@ -140,12 +141,12 @@ public class UnpackedAars {
   }
 
   /** Refreshes any updated files in the cache. Does not add or remove any files */
-  void refresh() {
-    refresh(null, false);
+  void refresh(BlazeContext context) {
+    refresh(context, false);
   }
 
-  private void refresh(@Nullable BlazeContext context, boolean removeMissingFiles) {
-    if (!enabled || jarTraits == null || aarTraits == null) {
+  private void refresh(BlazeContext context, boolean removeMissingFiles) {
+    if (isUnitTestMode || jarTraits == null || aarTraits == null) {
       return;
     }
     FileOperationProvider fileOpProvider = FileOperationProvider.getInstance();
@@ -158,20 +159,23 @@ public class UnpackedAars {
       }
     }
 
-    FileCacheSynchronizer aarSynchronizer = new FileCacheSynchronizer(aarTraits);
-    if (!aarSynchronizer.synchronize(context, removeMissingFiles)) {
-      logger.warn("Unpacked AAR synchronization didn't complete");
-    }
-    FileCacheSynchronizer aarJarSynchronizer = new FileCacheSynchronizer(jarTraits);
-    if (!aarJarSynchronizer.synchronize(context, removeMissingFiles)) {
-      logger.warn("Unpacked AAR jar synchronization didn't complete");
+    try {
+      FileCacheSynchronizer aarSynchronizer = new FileCacheSynchronizer(aarTraits);
+      aarSynchronizer.synchronize(context, removeMissingFiles);
+      FileCacheSynchronizer aarJarSynchronizer = new FileCacheSynchronizer(jarTraits);
+      aarJarSynchronizer.synchronize(context, removeMissingFiles);
+    } catch (InterruptedException e) {
+      context.setCancelled();
+      Thread.currentThread().interrupt();
+    } catch (ExecutionException e) {
+      logger.warn("Unpacked AAR synchronization didn't complete", e);
     }
   }
 
   /** Returns the merged jar derived from an AAR, in the unpacked AAR directory. */
   public File getClassJar(ArtifactLocationDecoder decoder, AarLibrary library) {
     File file = decoder.decode(library.libraryArtifact.jarForIntellijLibrary());
-    if (!enabled || jarTraits == null) {
+    if (isUnitTestMode || jarTraits == null) {
       return file;
     }
     String cacheKey = jarTraits.sourceFileToCacheKey(file);
@@ -185,7 +189,11 @@ public class UnpackedAars {
   @Nullable
   public File getResourceDirectory(ArtifactLocationDecoder decoder, AarLibrary library) {
     File aarFile = decoder.decode(library.aarArtifact);
-    if (!enabled || aarTraits == null) {
+    // Provide a resource directory as <aarFile>/res for unit test.
+    if (isUnitTestMode) {
+      return new File(aarFile, SdkConstants.FD_RES);
+    }
+    if (aarTraits == null) {
       return null;
     }
     String cacheKey = aarTraits.sourceFileToCacheKey(aarFile);
@@ -248,8 +256,8 @@ public class UnpackedAars {
     }
 
     @Override
-    public void refreshFiles(Project project) {
-      getInstance(project).refresh();
+    public void refreshFiles(Project project, BlazeContext context) {
+      getInstance(project).refresh(context);
     }
   }
 

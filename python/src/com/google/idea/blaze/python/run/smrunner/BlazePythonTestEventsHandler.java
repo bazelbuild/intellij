@@ -17,6 +17,7 @@ package com.google.idea.blaze.python.run.smrunner;
 
 import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.execution.BlazeParametersListUtil;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -75,7 +76,9 @@ public class BlazePythonTestEventsHandler implements BlazeTestEventsHandler {
     if (filters.isEmpty()) {
       return null;
     }
-    return String.format("%s=%s", BlazeFlags.TEST_FILTER, Joiner.on(' ').join(filters));
+    return String.format(
+        "%s=%s",
+        BlazeFlags.TEST_FILTER, BlazeParametersListUtil.encodeParam(Joiner.on(' ').join(filters)));
   }
 
   @Nullable

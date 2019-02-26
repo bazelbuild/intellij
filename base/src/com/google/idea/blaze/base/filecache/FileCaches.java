@@ -49,14 +49,14 @@ public class FileCaches {
   }
 
   /** Call at the end of build when you want the IDE to pick up any changes. */
-  public static void refresh(Project project) {
+  public static void refresh(Project project, BlazeContext context) {
     ProgressiveTaskWithProgressIndicator.builder(project, "Updating file caches")
         .submitTask(
             indicator -> {
               indicator.setIndeterminate(true);
               for (FileCache fileCache : FileCache.EP_NAME.getExtensions()) {
                 indicator.setText("Updating " + fileCache.getName() + "...");
-                fileCache.refreshFiles(project);
+                fileCache.refreshFiles(project, context);
               }
               LocalFileSystem.getInstance().refresh(true);
             });

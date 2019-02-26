@@ -25,6 +25,7 @@ public interface BlazeWizardOption {
   int VERTICAL_LAYOUT_GAP = 10;
   int HORIZONTAL_LAYOUT_GAP = 10;
   int PREFERRED_COMPONENT_WIDTH = 700;
+  int MINIMUM_FIELD_WIDTH = 120;
 
   /** Used during serialization to remember which option was selected. */
   String getOptionName();

@@ -145,9 +145,12 @@ public class BlazeAndroidTestRunConfigurationHandler
                 BlazeInvocationContext.runConfigContext(
                     ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), false));
     ImmutableList<String> exeFlags =
-        ImmutableList.copyOf(configState.getCommonState().getExeFlagsState().getExpandedFlags());
+        ImmutableList.copyOf(
+            configState.getCommonState().getExeFlagsState().getFlagsForExternalProcesses());
     BlazeAndroidRunContext runContext = createRunContext(project, facet, env, blazeFlags, exeFlags);
 
+    BlazeAndroidTestRunConfigurationCollector.getInstance(project)
+        .logLaunchMethod(configState.getLaunchMethod().name());
     return new BlazeAndroidRunConfigurationRunner(
         module,
         runContext,

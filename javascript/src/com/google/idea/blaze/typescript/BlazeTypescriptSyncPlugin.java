@@ -47,6 +47,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -116,6 +117,11 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
       SyncMode syncMode) {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)
         || !SyncMode.involvesBlazeBuild(syncMode)) {
+      return;
+    }
+
+    if (Blaze.getBuildSystem(project) == BuildSystem.Bazel) {
+      // bazel doesn't need any tsconfig handling
       return;
     }
 
@@ -229,13 +235,15 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
       WorkspaceLanguageSettings workspaceLanguageSettings) {
     boolean typescriptActive = workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT);
 
-    if (typescriptActive && !PlatformUtils.isIdeaUltimate()) {
-      IssueOutput.error("IntelliJ Ultimate needed for Typescript support.").submit(context);
+    if (typescriptActive && !PlatformUtils.isIdeaUltimate() && !PlatformUtils.isCLion()) {
+      IssueOutput.error("IntelliJ Ultimate or CLion needed for TypeScript support.")
+          .submit(context);
       return false;
     }
 
-    // Must have either both typescript and ts_config_rules or neither
-    if (typescriptActive ^ !getTsConfigTargets(projectViewSet).isEmpty()) {
+    // Blaze projects must have either both typescript and ts_config_rules or neither
+    if (Blaze.getBuildSystem(project) == BuildSystem.Blaze
+        && (typescriptActive ^ !getTsConfigTargets(projectViewSet).isEmpty())) {
       invalidProjectViewError(context, Blaze.getBuildSystemProvider(project));
       return false;
     }

@@ -17,8 +17,10 @@ package com.google.idea.blaze.base.run.state;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState.RunConfigurationFlagsStateEditor;
+import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.JTextArea;
 import org.junit.Test;
@@ -28,9 +30,8 @@ import org.junit.runners.JUnit4;
 /** Unit tests for {@link RunConfigurationFlagsState}. */
 @RunWith(JUnit4.class)
 public class RunConfigurationFlagStateTest {
-
   @Test
-  public void testEscapedQuotesRetainedAfterReserialization() {
+  public void testEscapedDoubleQuotesRetainedAfterReserialization() {
     // previously, we were removing escape chars and quotes during ParametersListUtil.parse, then
     // not putting them back when converting back to a string.
     ImmutableList<String> flags = ImmutableList.of("--flag=\\\"Hello_world!\\\"", "--flag2");
@@ -40,8 +41,27 @@ public class RunConfigurationFlagStateTest {
     RunConfigurationStateEditor editor = state.getEditor(null);
     editor.resetEditorFrom(state);
     editor.applyEditorTo(state);
-
     assertThat(state.getRawFlags()).isEqualTo(flags);
+    // test flags generated for commands
+    assertThat(state.getFlagsForExternalProcesses())
+        .containsExactly("--flag=\"Hello_world!\"", "--flag2")
+        .inOrder();
+  }
+
+  @Test
+  public void testEscapedSingleQuotesRetainedAfterReserialization() {
+    ImmutableList<String> flags = ImmutableList.of("--flag=\\'Hello_world!\\'", "--flag2");
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
+    state.setRawFlags(flags);
+
+    RunConfigurationStateEditor editor = state.getEditor(null);
+    editor.resetEditorFrom(state);
+    editor.applyEditorTo(state);
+    assertThat(state.getRawFlags()).isEqualTo(flags);
+    // test flags generated for commands
+    assertThat(state.getFlagsForExternalProcesses())
+        .containsExactly("--flag='Hello_world!'", "--flag2")
+        .inOrder();
   }
 
   @Test
@@ -53,62 +73,122 @@ public class RunConfigurationFlagStateTest {
     RunConfigurationStateEditor editor = state.getEditor(null);
     editor.resetEditorFrom(state);
     editor.applyEditorTo(state);
-
     assertThat(state.getRawFlags()).isEqualTo(flags);
+    // test flags generated for commands
+    assertThat(state.getFlagsForExternalProcesses()).containsExactly("--flag=test");
   }
 
   @Test
   public void testDoubleQuotesInEditor() {
     RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
-
     RunConfigurationStateEditor editor = state.getEditor(null);
-    assertThat(editor).isInstanceOf(RunConfigurationFlagsStateEditor.class);
-    RunConfigurationFlagsStateEditor flagsEditor = (RunConfigurationFlagsStateEditor) editor;
+    JTextArea textArea = getTextField(editor);
 
-    JComponent internalField = flagsEditor.getInternalComponent();
-    assertThat(internalField).isInstanceOf(JTextArea.class);
-    JTextArea internalTextArea = (JTextArea) internalField;
-
-    internalTextArea.setText("\"--flags=a b\"\n\"--flags=\\\"a b\\\"\"");
-    ImmutableList<String> expectedRawFlags = ImmutableList.of("--flags=a b", "--flags=\"a b\"");
-    String expectedText = "\"--flags=a b\"\n\"--flags=\\\"a b\\\"\"";
+    String originalText = "\"--flags=a b\"\n\"--flags=\\\"a b\\\"\"";
+    textArea.setText(originalText);
+    ImmutableList<String> expectedRawFlags =
+        ImmutableList.of("\"--flags=a b\"", "\"--flags=\\\"a b\\\"\"");
 
     editor.applyEditorTo(state);
     assertThat(state.getRawFlags()).isEqualTo(expectedRawFlags);
     editor.resetEditorFrom(state);
-    assertThat(internalTextArea.getText()).isEqualTo(expectedText);
+    assertThat(textArea.getText()).isEqualTo(originalText);
     // test round trip is stable
     editor.applyEditorTo(state);
     assertThat(state.getRawFlags()).isEqualTo(expectedRawFlags);
     editor.resetEditorFrom(state);
-    assertThat(internalTextArea.getText()).isEqualTo(expectedText);
+    assertThat(textArea.getText()).isEqualTo(originalText);
+    // test flags generated for commands
+    assertThat(state.getFlagsForExternalProcesses())
+        .containsExactly("--flags=a b", "--flags=\"a b\"")
+        .inOrder();
   }
 
   @Test
   public void testSingleQuotesInEditor() {
     RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
-
     RunConfigurationStateEditor editor = state.getEditor(null);
-    assertThat(editor).isInstanceOf(RunConfigurationFlagsStateEditor.class);
-    RunConfigurationFlagsStateEditor flagsEditor = (RunConfigurationFlagsStateEditor) editor;
+    JTextArea textArea = getTextField(editor);
 
-    JComponent internalField = flagsEditor.getInternalComponent();
-    assertThat(internalField).isInstanceOf(JTextArea.class);
-    JTextArea internalTextArea = (JTextArea) internalField;
-
-    internalTextArea.setText("'--flags=a b'\n'--flags=\"a b\"'");
-    ImmutableList<String> expectedRawFlags = ImmutableList.of("--flags=a b", "--flags=\"a b\"");
-    String expectedText = "\"--flags=a b\"\n\"--flags=\\\"a b\\\"\"";
+    String originalText = "'--flags=a b'\n'--flags=\"a b\"'";
+    textArea.setText(originalText);
+    ImmutableList<String> expectedRawFlags = ImmutableList.of("'--flags=a b'", "'--flags=\"a b\"'");
 
     editor.applyEditorTo(state);
     assertThat(state.getRawFlags()).isEqualTo(expectedRawFlags);
     editor.resetEditorFrom(state);
-    assertThat(internalTextArea.getText()).isEqualTo(expectedText);
+    assertThat(textArea.getText()).isEqualTo(originalText);
     // test round trip is stable
     editor.applyEditorTo(state);
     assertThat(state.getRawFlags()).isEqualTo(expectedRawFlags);
     editor.resetEditorFrom(state);
-    assertThat(internalTextArea.getText()).isEqualTo(expectedText);
+    assertThat(textArea.getText()).isEqualTo(originalText);
+    // test flags generated for commands
+    assertThat(state.getFlagsForExternalProcesses())
+        .containsExactly("--flags=a b", "--flags=\"a b\"")
+        .inOrder();
+  }
+
+  @Test
+  public void testNestedQuotesRetainedAfterRoundTripSerialization() {
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
+    RunConfigurationStateEditor editor = state.getEditor(null);
+    JTextArea textArea = getTextField(editor);
+
+    String originalText = "--where_clause=\"op = 'addshardreplica' AND purpose = 'rebalancing'\"";
+    textArea.setText(originalText);
+    editor.applyEditorTo(state);
+    assertThat(state.getRawFlags()).containsExactly(originalText);
+    editor.resetEditorFrom(state);
+    assertThat(textArea.getText()).isEqualTo(originalText);
+    // test flags generated for commands
+    assertThat(state.getFlagsForExternalProcesses())
+        .containsExactly("--where_clause=op = 'addshardreplica' AND purpose = 'rebalancing'");
+  }
+
+  @Test
+  public void testSplitOnWhitespaceAndNewlines() {
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
+    RunConfigurationStateEditor editor = state.getEditor(null);
+    JTextArea textArea = getTextField(editor);
+
+    String originalText = "--flag=a --other=b --c='d=e'\n\"--final=f\"";
+    List<String> expectedFlags =
+        ImmutableList.of("--flag=a", "--other=b", "--c='d=e'", "\"--final=f\"");
+
+    textArea.setText(originalText);
+    editor.applyEditorTo(state);
+    assertThat(state.getRawFlags()).isEqualTo(expectedFlags);
+    editor.resetEditorFrom(state);
+    assertThat(textArea.getText()).isEqualTo(Joiner.on("\n").join(expectedFlags));
+    // test round trip is stable
+    editor.applyEditorTo(state);
+    assertThat(state.getRawFlags()).isEqualTo(expectedFlags);
+    // test flags generated for commands
+    assertThat(state.getFlagsForExternalProcesses())
+        .containsExactly("--flag=a", "--other=b", "--c=d=e", "--final=f")
+        .inOrder();
+  }
+
+  @Test
+  public void testFlagsContainingQuotedNewlines() {
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
+    RunConfigurationStateEditor editor = state.getEditor(null);
+    JTextArea textArea = getTextField(editor);
+
+    String originalText = "\"a\nb\nc\"";
+    List<String> expectedFlags = ImmutableList.of("\"a\nb\nc\"");
+
+    textArea.setText(originalText);
+    editor.applyEditorTo(state);
+    assertThat(state.getRawFlags()).isEqualTo(expectedFlags);
+    editor.resetEditorFrom(state);
+    assertThat(textArea.getText()).isEqualTo(originalText);
+    // test round trip is stable
+    editor.applyEditorTo(state);
+    assertThat(state.getRawFlags()).isEqualTo(expectedFlags);
+    // test flags generated for commands
+    assertThat(state.getFlagsForExternalProcesses()).containsExactly("a\nb\nc");
   }
 
   @Test
@@ -128,5 +208,22 @@ public class RunConfigurationFlagStateTest {
     editor.applyEditorTo(state);
 
     assertThat(state.getRawFlags()).isEqualTo(flags);
+    // test flags generated for commands
+    assertThat(state.getFlagsForExternalProcesses())
+        .containsExactly(
+            "--test_sharding_strategy=disabled",
+            "--test_strategy=local",
+            "--experimental_show_artifacts",
+            "--test_filter=com.google.idea.blaze.base.run.state.RunConfigurationFlagStateTest#",
+            "--define=ij_product=intellij-latest")
+        .inOrder();
+  }
+
+  private static JTextArea getTextField(RunConfigurationStateEditor editor) {
+    assertThat(editor).isInstanceOf(RunConfigurationFlagsStateEditor.class);
+    RunConfigurationFlagsStateEditor flagsEditor = (RunConfigurationFlagsStateEditor) editor;
+    JComponent internalField = flagsEditor.getInternalComponent();
+    assertThat(internalField).isInstanceOf(JTextArea.class);
+    return (JTextArea) internalField;
   }
 }

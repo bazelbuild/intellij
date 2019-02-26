@@ -44,7 +44,7 @@ def _generate_test_suite_impl(ctx):
     lines.append("}")
 
     contents = "\n".join(lines)
-    ctx.file_action(
+    ctx.actions.write(
         output = ctx.outputs.out,
         content = contents,
     )

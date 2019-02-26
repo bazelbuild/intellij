@@ -67,6 +67,7 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
     buildFilePathField.setName("build-file-path-field");
     buildFilePathField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);
     buildFilePathField.setText(userSettings.get(LAST_WORKSPACE_PATH, ""));
+    buildFilePathField.setMinimumAndPreferredWidth(MINIMUM_FIELD_WIDTH);
 
     JButton button = new JButton("...");
     button.addActionListener(action -> chooseWorkspacePath());

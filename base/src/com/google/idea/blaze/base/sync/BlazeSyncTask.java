@@ -17,11 +17,14 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.command.BlazeCommandName;
@@ -99,7 +102,9 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.transactions.Transactions;
+import com.google.idea.sdkcompat.openapi.SaveFromInsideWriteAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -112,13 +117,18 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
@@ -127,6 +137,8 @@ import javax.annotation.concurrent.GuardedBy;
 final class BlazeSyncTask implements Progressive {
 
   private static final Logger logger = Logger.getInstance(BlazeSyncTask.class);
+  private static final BoolExperiment saveStateDuringRootsChange =
+      new BoolExperiment("blaze.save.state.during.roots.change", true);
 
   private final Project project;
   private final BlazeImportSettings importSettings;
@@ -262,7 +274,7 @@ final class BlazeSyncTask implements Progressive {
             .setSyncTitle(syncParams.title)
             .setTotalExecTimeMs(System.currentTimeMillis() - syncStartTime)
             .setSyncResult(syncResult);
-        EventLoggingService.getInstance().ifPresent(s -> s.log(buildStats(syncStats)));
+        EventLoggingService.getInstance().log(buildStats(syncStats));
       } catch (Exception e) {
         logSyncError(context, e);
       }
@@ -390,7 +402,7 @@ final class BlazeSyncTask implements Progressive {
 
     List<TargetExpression> targets = Lists.newArrayList();
     if (syncParams.addProjectViewTargets) {
-      Collection<TargetExpression> projectViewTargets = projectViewSet.listItems(TargetSection.KEY);
+      List<TargetExpression> projectViewTargets = projectViewSet.listItems(TargetSection.KEY);
       if (!projectViewTargets.isEmpty()) {
         syncStats.setBlazeProjectTargets(new ArrayList<>(projectViewTargets));
         targets.addAll(projectViewTargets);
@@ -499,6 +511,12 @@ final class BlazeSyncTask implements Progressive {
                 syncParams.syncMode);
           }
         });
+    if (context.isCancelled()) {
+      return SyncResult.CANCELLED;
+    }
+    if (context.hasErrors()) {
+      return SyncResult.FAILURE;
+    }
 
     newBlazeProjectData =
         new BlazeProjectData(
@@ -579,12 +597,42 @@ final class BlazeSyncTask implements Progressive {
         context,
         (childContext) -> {
           childContext.push(new TimingScope("RefreshVirtualFileSystem", EventType.Other));
-          Transactions.submitWriteActionTransactionAndWait(
-              () -> {
-                for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-                  syncPlugin.refreshVirtualFileSystem(blazeProjectData);
-                }
-              });
+          childContext.output(new StatusOutput("Refreshing files"));
+          ImmutableSetMultimap.Builder<RefreshRequestType, VirtualFile> requests =
+              ImmutableSetMultimap.builder();
+          for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
+            requests.putAll(syncPlugin.filesToRefresh(blazeProjectData));
+          }
+          // Like VfsUtil.markDirtyAndRefresh, but with callback for when async refreshes finish.
+          List<ListenableFuture<?>> futures = new ArrayList<>();
+          for (Map.Entry<RefreshRequestType, Collection<VirtualFile>> entry :
+              requests.build().asMap().entrySet()) {
+            RefreshRequestType refreshRequestType = entry.getKey();
+            List<VirtualFile> list =
+                VfsUtil.markDirty(
+                    refreshRequestType.recursive(),
+                    refreshRequestType.reloadChildren(),
+                    entry.getValue().toArray(new VirtualFile[0]));
+            if (list.isEmpty()) {
+              continue;
+            }
+            SettableFuture<Boolean> completion = SettableFuture.create();
+            futures.add(completion);
+            LocalFileSystem.getInstance()
+                .refreshFiles(
+                    list,
+                    /* async= */ true,
+                    refreshRequestType.recursive(),
+                    () -> completion.set(true));
+          }
+          try {
+            Futures.allAsList(futures).get();
+          } catch (InterruptedException e) {
+            throw new ProcessCanceledException(e);
+          } catch (ExecutionException e) {
+            IssueOutput.warn("Failed to refresh file system").submit(childContext);
+            logger.warn("Failed to refresh file system", e);
+          }
         });
   }
 
@@ -805,15 +853,21 @@ final class BlazeSyncTask implements Progressive {
                 () ->
                     ProjectRootManagerEx.getInstanceEx(this.project)
                         .mergeRootsChangesDuring(
-                            () ->
-                                updateProjectStructure(
-                                    context,
-                                    importSettings,
-                                    projectViewSet,
-                                    blazeVersionData,
-                                    directoryStructure,
-                                    newBlazeProjectData,
-                                    oldBlazeProjectData)));
+                            () -> {
+                              updateProjectStructure(
+                                  context,
+                                  importSettings,
+                                  projectViewSet,
+                                  blazeVersionData,
+                                  directoryStructure,
+                                  newBlazeProjectData,
+                                  oldBlazeProjectData);
+                              if (saveStateDuringRootsChange.getValue()) {
+                                // a temporary workaround for IDEA-205934
+                                // #api183: remove when the upstream bug is fixed
+                                SaveFromInsideWriteAction.saveAll();
+                              }
+                            }));
           } catch (ProcessCanceledException e) {
             context.setCancelled();
             throw e;

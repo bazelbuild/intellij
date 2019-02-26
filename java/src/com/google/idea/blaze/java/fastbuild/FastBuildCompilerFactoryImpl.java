@@ -23,6 +23,9 @@ import static java.util.stream.Collectors.toSet;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.Reflection;
+import com.google.idea.blaze.base.logging.EventLoggingService;
+import com.google.idea.blaze.base.logging.EventLoggingService.Command;
+import com.google.idea.blaze.base.logging.NoopEventLoggingService;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -71,14 +74,17 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
       new BoolExperiment("use.new.fast.run.compiler", true);
 
   private final BlazeProjectDataManager projectDataManager;
+  private final Supplier<EventLoggingService> eventLoggerSupplier;
   private final Supplier<Boolean> useNewCompiler;
   private final Supplier<File> fastBuildJavacJarSupplier;
 
   private FastBuildCompilerFactoryImpl(
       BlazeProjectDataManager projectDataManager,
+      Supplier<EventLoggingService> eventLoggerSupplier,
       Supplier<Boolean> useNewCompiler,
       Supplier<File> fastBuildJavacJarSupplier) {
     this.projectDataManager = projectDataManager;
+    this.eventLoggerSupplier = eventLoggerSupplier;
     this.useNewCompiler = useNewCompiler;
     this.fastBuildJavacJarSupplier = fastBuildJavacJarSupplier;
   }
@@ -86,6 +92,7 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
   FastBuildCompilerFactoryImpl(BlazeProjectDataManager projectDataManager) {
     this(
         projectDataManager,
+        EventLoggingService::getInstance,
         useNewCompilerExperiment::getValue,
         FastBuildCompilerFactoryImpl::findFastBuildJavacJar);
   }
@@ -93,7 +100,10 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
   static FastBuildCompilerFactoryImpl createForTest(
       BlazeProjectDataManager projectDataManager, boolean useNewCompiler, File fastBuildJavacJar) {
     return new FastBuildCompilerFactoryImpl(
-        projectDataManager, () -> useNewCompiler, () -> fastBuildJavacJar);
+        projectDataManager,
+        NoopEventLoggingService::new,
+        () -> useNewCompiler,
+        () -> fastBuildJavacJar);
   }
 
   @Override
@@ -123,11 +133,7 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
       throw new FastBuildException(
           "Couldn't find a Java toolchain for target " + targetData.label());
     }
-    if (javaToolchains.size() > 1) {
-      throw new FastBuildException(
-          "Found multiple Java toolchains for target " + targetData.label());
-    }
-
+    // if there are multiple toolchains, just assume they're all equivalent and return the first one
     return javaToolchains.get(0);
   }
 
@@ -157,11 +163,11 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
               (Integer) compileMethod.invoke(javacObject, args.toArray(new String[0]), writer);
           return result == 0;
         } catch (ReflectiveOperationException e) {
-          throw new FastBuildException(e);
+          throw new FastBuildIncrementalCompileException(e);
         }
       };
     } catch (MalformedURLException | ReflectiveOperationException e) {
-      throw new FastBuildException(e);
+      throw new FastBuildIncrementalCompileException(e);
     }
   }
 
@@ -176,10 +182,23 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
       FastBuildJavac javaCompiler =
           Reflection.newProxy(
               FastBuildJavac.class, new MatchingMethodInvocationHandler(javacClass, javacInstance));
-      return (context, javacArgs, files, writer) ->
-          javaCompiler.compile(javacArgs, files, new ProblemsViewDiagnosticListener(context));
+      return (context, javacArgs, files, writer) -> {
+        Stopwatch timer = Stopwatch.createStarted();
+        boolean result =
+            javaCompiler.compile(javacArgs, files, new ProblemsViewDiagnosticListener(context));
+        Command command =
+            Command.builder()
+                .setExecutable(javacJar.getPath())
+                .setArguments(javacArgs)
+                .setExitCode(result ? 0 : 1)
+                .setSubcommandName("javac")
+                .setDuration(timer.elapsed())
+                .build();
+        eventLoggerSupplier.get().logCommand(getClass(), command);
+        return result;
+      };
     } catch (MalformedURLException | ReflectiveOperationException e) {
-      throw new FastBuildException(e);
+      throw new FastBuildIncrementalCompileException(e);
     }
   }
 

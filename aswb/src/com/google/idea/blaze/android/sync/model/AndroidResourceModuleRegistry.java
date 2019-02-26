@@ -22,10 +22,13 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import java.util.HashMap;
+import java.util.Map;
 
 /** Keeps track of which resource modules correspond to which resource target. */
 public class AndroidResourceModuleRegistry {
-  private final BiMap<Module, AndroidResourceModule> moduleMap = HashBiMap.create();
+  private final BiMap<Module, TargetKey> moduleToTarget = HashBiMap.create();
+  private final Map<TargetKey, AndroidResourceModule> targetToResourceModule = new HashMap<>();
 
   public static AndroidResourceModuleRegistry getInstance(Project project) {
     return ServiceManager.getService(project, AndroidResourceModuleRegistry.class);
@@ -37,19 +40,25 @@ public class AndroidResourceModuleRegistry {
   }
 
   public TargetKey getTargetKey(Module module) {
-    AndroidResourceModule resourceModule = get(module);
-    return resourceModule == null ? null : resourceModule.targetKey;
+    return moduleToTarget.get(module);
   }
 
   public AndroidResourceModule get(Module module) {
-    return moduleMap.get(module);
+    TargetKey target = moduleToTarget.get(module);
+    return target == null ? null : targetToResourceModule.get(target);
+  }
+
+  public Module getModule(TargetKey target) {
+    return moduleToTarget.inverse().get(target);
   }
 
   public void put(Module module, AndroidResourceModule resourceModule) {
-    moduleMap.put(module, resourceModule);
+    moduleToTarget.put(module, resourceModule.targetKey);
+    targetToResourceModule.put(resourceModule.targetKey, resourceModule);
   }
 
   public void clear() {
-    moduleMap.clear();
+    moduleToTarget.clear();
+    targetToResourceModule.clear();
   }
 }

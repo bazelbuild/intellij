@@ -15,7 +15,9 @@
  */
 package com.google.idea.blaze.base.run.producers;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
@@ -30,10 +32,12 @@ public interface HeuristicTestIdentifier {
       ExtensionPointName.create("com.google.idea.blaze.HeuristicTestIdentifier");
 
   /**
-   * Returns true if the given file path appears to be a test. A best effort, rough heuristic based
-   * on the file name + path.
+   * Returns the {@link ExecutorType}s relevant for this file path, or an empty set if the file path
+   * doesn't appear to be runnable.
+   *
+   * <p>A best effort, rough heuristic based on the file name + path.
    *
    * <p>This method is run frequently on the EDT, so must be fast.
    */
-  boolean isTestContext(WorkspacePath path);
+  ImmutableSet<ExecutorType> supportedExecutors(WorkspacePath path);
 }

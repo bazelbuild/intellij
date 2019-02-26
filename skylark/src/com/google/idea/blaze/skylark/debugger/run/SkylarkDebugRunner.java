@@ -92,8 +92,7 @@ class SkylarkDebugRunner extends GenericProgramRunner {
             new XDebugProcessStarter() {
               @Override
               public XDebugProcess start(XDebugSession session) {
-                EventLoggingService.getInstance()
-                    .ifPresent(s -> s.logEvent(getClass(), "skylark-debugging"));
+                EventLoggingService.getInstance().logEvent(getClass(), "skylark-debugging");
                 return new SkylarkDebugProcess(
                     session, result, SkylarkDebugBuildFlagsProvider.SERVER_PORT);
               }

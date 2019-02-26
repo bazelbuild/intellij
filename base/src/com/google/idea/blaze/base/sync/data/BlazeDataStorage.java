@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.sync.data;
 import com.google.common.base.Strings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -29,6 +30,9 @@ public class BlazeDataStorage {
   public static final String PROJECT_DATA_SUBDIRECTORY = getProjectDataSubdirectory();
 
   private static String getProjectDataSubdirectory() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return ".ijwb";
+    }
     switch (ApplicationInfo.getInstance().getBuild().getProductCode()) {
       case "CL": // CLion
         return ".clwb";

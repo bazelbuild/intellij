@@ -21,9 +21,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.projectview.ProjectView;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
+import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import java.util.stream.Collectors;
 import org.junit.Test;
@@ -35,15 +41,19 @@ import org.junit.runners.JUnit4;
 public class ImportRootsTest extends BlazeIntegrationTestCase {
 
   @Test
-  public void testBazelArtifactDirectoriesExcluded() {
+  public void testBazelArtifactDirectoriesAndProjectDataDirExcluded() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Bazel)
-            .add(new DirectoryEntry(new WorkspacePath(""), true))
+            .add(DirectoryEntry.include(new WorkspacePath("")))
             .build();
 
     ImmutableList<String> artifactDirs =
-        BuildSystemProvider.getBuildSystemProvider(BuildSystem.Bazel)
-            .buildArtifactDirectories(workspaceRoot);
+        ImmutableList.<String>builder()
+            .addAll(
+                BuildSystemProvider.getBuildSystemProvider(BuildSystem.Bazel)
+                    .buildArtifactDirectories(workspaceRoot))
+            .add(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY)
+            .build();
 
     assertThat(importRoots.rootDirectories()).containsExactly(new WorkspacePath(""));
     assertThat(
@@ -61,7 +71,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   public void testNoAddedExclusionsWithoutWorkspaceRootInclusion() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Bazel)
-            .add(new DirectoryEntry(new WorkspacePath("foo/bar"), true))
+            .add(DirectoryEntry.include(new WorkspacePath("foo/bar")))
             .build();
 
     assertThat(importRoots.rootDirectories()).containsExactly(new WorkspacePath("foo/bar"));
@@ -72,7 +82,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   public void testNoAddedExclusionsForBlaze() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
-            .add(new DirectoryEntry(new WorkspacePath(""), true))
+            .add(DirectoryEntry.include(new WorkspacePath("")))
             .build();
 
     assertThat(importRoots.rootDirectories()).containsExactly(new WorkspacePath(""));
@@ -84,7 +94,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   public void testAllLabelsIncludedUnderWorkspaceRoot() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
-            .add(new DirectoryEntry(new WorkspacePath(""), true))
+            .add(DirectoryEntry.include(new WorkspacePath("")))
             .build();
 
     assertThat(importRoots.importAsSource(Label.create("//:target"))).isTrue();
@@ -95,7 +105,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   public void testExternalWorkspaceLabelsNotIncludedUnderWorkspaceRoot() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
-            .add(new DirectoryEntry(new WorkspacePath(""), true))
+            .add(DirectoryEntry.include(new WorkspacePath("")))
             .build();
 
     assertThat(importRoots.importAsSource(Label.create("@lib//:target"))).isFalse();
@@ -105,9 +115,9 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   public void testNonOverlappingDirectoriesAreNotFilteredOut() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
-            .add(new DirectoryEntry(new WorkspacePath("root0/subdir0"), true))
-            .add(new DirectoryEntry(new WorkspacePath("root0/subdir1"), true))
-            .add(new DirectoryEntry(new WorkspacePath("root1"), true))
+            .add(DirectoryEntry.include(new WorkspacePath("root0/subdir0")))
+            .add(DirectoryEntry.include(new WorkspacePath("root0/subdir1")))
+            .add(DirectoryEntry.include(new WorkspacePath("root1")))
             .build();
     assertThat(importRoots.rootDirectories())
         .containsExactly(
@@ -117,12 +127,35 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   }
 
   @Test
+  public void testProjectTargetsAreTreatedAsSource() {
+    ImportRoots importRoots =
+        ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
+            .add(
+                ProjectViewSet.builder()
+                    .add(
+                        ProjectView.builder()
+                            .add(
+                                ListSection.builder(TargetSection.KEY)
+                                    .add(TargetExpression.fromStringSafe("//foo:all"))
+                                    .add(TargetExpression.fromStringSafe("//bar/..."))
+                                    .add(TargetExpression.fromStringSafe("//baz:target")))
+                            .build())
+                    .build())
+            .build();
+    assertThat(importRoots.importAsSource(Label.create("//foo:some-target"))).isTrue();
+    assertThat(importRoots.importAsSource(Label.create("//bar/subpackage:target"))).isTrue();
+    assertThat(importRoots.importAsSource(Label.create("//baz:target"))).isTrue();
+    assertThat(importRoots.importAsSource(Label.create("//baz:other-target"))).isFalse();
+    assertThat(importRoots.importAsSource(Label.create("//dir:target"))).isFalse();
+  }
+
+  @Test
   public void testOverlappingDirectoriesAreFilteredOut() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
-            .add(new DirectoryEntry(new WorkspacePath("root"), true))
-            .add(new DirectoryEntry(new WorkspacePath("root"), true))
-            .add(new DirectoryEntry(new WorkspacePath("root/subdir"), true))
+            .add(DirectoryEntry.include(new WorkspacePath("root")))
+            .add(DirectoryEntry.include(new WorkspacePath("root")))
+            .add(DirectoryEntry.include(new WorkspacePath("root/subdir")))
             .build();
     assertThat(importRoots.rootDirectories()).containsExactly(new WorkspacePath("root"));
   }
@@ -131,9 +164,9 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   public void testWorkspaceRootIsOnlyDirectoryLeft() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
-            .add(new DirectoryEntry(new WorkspacePath("."), true))
-            .add(new DirectoryEntry(new WorkspacePath("."), true))
-            .add(new DirectoryEntry(new WorkspacePath("root/subdir"), true))
+            .add(DirectoryEntry.include(new WorkspacePath(".")))
+            .add(DirectoryEntry.include(new WorkspacePath(".")))
+            .add(DirectoryEntry.include(new WorkspacePath("root/subdir")))
             .build();
     assertThat(importRoots.rootDirectories()).containsExactly(new WorkspacePath("."));
   }
@@ -142,9 +175,9 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   public void testOverlappingExcludesAreFiltered() {
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
-            .add(new DirectoryEntry(new WorkspacePath("root"), false))
-            .add(new DirectoryEntry(new WorkspacePath("root"), false))
-            .add(new DirectoryEntry(new WorkspacePath("root/subdir"), false))
+            .add(DirectoryEntry.exclude(new WorkspacePath("root")))
+            .add(DirectoryEntry.exclude(new WorkspacePath("root")))
+            .add(DirectoryEntry.exclude(new WorkspacePath("root/subdir")))
             .build();
     assertThat(importRoots.excludeDirectories()).containsExactly(new WorkspacePath("root"));
   }
