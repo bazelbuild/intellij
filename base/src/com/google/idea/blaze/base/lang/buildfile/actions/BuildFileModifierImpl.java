@@ -33,6 +33,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.psi.PsiElement;
 import java.io.File;
 import java.io.IOException;
 
