@@ -54,6 +54,8 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
 
   private final ProblemsViewConfiguration configuration;
   private final AutoScrollToSourceHandler autoScrollToConsoleHandler;
+  private final ShowOnlyErrorsAction showOnlyErrorsAction =
+          (ShowOnlyErrorsAction) ActionManager.getInstance().getAction("Blaze.ShowOnlyErrorsAction");
 
   BlazeProblemsViewPanel(Project project) {
     super(project, "reference.problems.tool.window", false, false, null);
@@ -87,6 +89,7 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
     group.add(new PreviousOccurenceToolbarAction(this)); // NOTYPO
     group.add(new NextOccurenceToolbarAction(this)); // NOTYPO
     fillRightToolbarGroup(group);
+    group.add(showOnlyErrorsAction);
     ActionToolbar toolbar =
         ActionManager.getInstance()
             .createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, group, false);
@@ -123,7 +126,7 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
 
   @Override
   protected boolean canHideWarnings() {
-    return false;
+    return showOnlyErrorsAction == null || showOnlyErrorsAction.isToggled();
   }
 
   private void scrollToSource(Component tree) {

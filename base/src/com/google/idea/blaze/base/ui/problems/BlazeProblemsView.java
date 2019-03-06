@@ -44,8 +44,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.UUID;
@@ -76,15 +77,16 @@ public class BlazeProblemsView {
   private final Project project;
   private final BlazeProblemsViewPanel panel;
 
-  private final Set<Integer> problemHashes = Collections.synchronizedSet(new HashSet<>());
-  private final AtomicInteger problemCount = new AtomicInteger(0);
   private volatile boolean didFocusProblemsView = false;
   private volatile FocusBehavior focusBehavior;
   private volatile UUID currentSessionId = UUID.randomUUID();
 
+  private final BlazeProblemsSink problemsSink = new BlazeProblemsSink();
+
+
   public BlazeProblemsView(Project project, ToolWindowManager wm) {
     this.project = project;
-    panel = new BlazeProblemsViewPanel(project);
+    this.panel = new BlazeProblemsViewPanel(project);
     Disposer.register(project, () -> Disposer.dispose(panel));
     UIUtil.invokeLaterIfNeeded(() -> createToolWindow(project, wm));
   }
@@ -109,27 +111,38 @@ public class BlazeProblemsView {
           for (ErrorTreeElement child : tree.getChildElements(tree.getRootElement())) {
             tree.removeElement(child);
           }
-          problemCount.set(0);
           didFocusProblemsView = false;
           this.focusBehavior = focusBehavior;
-          problemHashes.clear();
+          problemsSink.clear();
           updateIcon();
           panel.reload();
         });
   }
 
   public void addMessage(IssueOutput issue, @Nullable Navigatable openInConsole) {
-    if (!problemHashes.add(issue.hashCode())) {
+    if (problemsSink.tryAdd(issue, openInConsole)) {
+      addMessageToView(issue, openInConsole);
+    }
+  }
+
+  void reload() {
+    viewUpdater.execute(
+            () -> {
+              ErrorViewStructure tree = panel.getErrorViewStructure();
+              for (ErrorTreeElement child : tree.getChildElements(tree.getRootElement())) {
+                tree.removeElement(child);
+              }
+              updateIcon();
+              panel.reload();
+              problemsSink.problems.forEach(p -> addMessageToView(p.issue, p.maybeNavigatable));
+            });
+  }
+
+  private void addMessageToView(IssueOutput issue, @Nullable Navigatable openInConsole) {
+    if (issue.getCategory() != IssueOutput.Category.ERROR && panel.canHideWarnings()) {
       return;
     }
-    int count = problemCount.incrementAndGet();
-    if (count > MAX_ISSUES) {
-      return;
-    }
-    if (count == MAX_ISSUES) {
-      issue =
-          IssueOutput.warn("Too many problems found. Only showing the first " + MAX_ISSUES).build();
-    }
+
     VirtualFile file = issue.getFile() != null ? resolveVirtualFile(issue.getFile()) : null;
     Navigatable navigatable = issue.getNavigatable();
     if (navigatable == null && file != null) {
@@ -140,7 +153,7 @@ public class BlazeProblemsView {
     int type = translateCategory(category);
     String[] text = convertMessage(issue);
     String groupName = file != null ? file.getPresentableUrl() : category.name();
-    addMessage(
+    addMessageToView(
         type,
         text,
         groupName,
@@ -227,7 +240,7 @@ public class BlazeProblemsView {
     return "";
   }
 
-  private void addMessage(
+  private void addMessageToView(
       int type,
       String[] text,
       String groupName,
@@ -296,4 +309,59 @@ public class BlazeProblemsView {
           }
         });
   }
+
+  private static class BlazeProblemsSink {
+    final AtomicInteger problemCount = new AtomicInteger(0);
+    final Set<Problem> problems = Collections.synchronizedSet(new LinkedHashSet<>());
+
+    final boolean tryAdd(IssueOutput issue, @Nullable Navigatable openInConsole) {
+      boolean success = false;
+
+      int count = problemCount.incrementAndGet();
+      if (count == MAX_ISSUES) {
+
+        IssueOutput maxIssuesExceeded =
+                IssueOutput.warn("Too many problems found. Only showing the first " + MAX_ISSUES).build();
+        problems.add(new Problem(maxIssuesExceeded, null));
+
+      } else if (count < MAX_ISSUES) {
+
+        Problem candidate = new Problem(issue, openInConsole);
+        boolean alreadyExists = problems.contains(candidate);
+
+        success = !alreadyExists && problems.add(candidate);
+      }
+
+      return success;
+    }
+
+    final void clear() {
+      problems.clear();
+      problemCount.set(0);
+    }
+
+    private class Problem {
+      final IssueOutput issue;
+      final Navigatable maybeNavigatable;
+
+      private Problem(IssueOutput issue, @Nullable Navigatable navigatable) {
+        this.issue = issue;
+        this.maybeNavigatable = navigatable;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Problem that = (Problem) o;
+        return issue.equals(that.issue);
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hash(issue);
+      }
+    }
+  }
+
 }

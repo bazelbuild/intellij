@@ -99,6 +99,11 @@
       icon="BlazeIcons.Blaze">
       <add-to-group group-id="FileOpenGroup" relative-to-action="OpenFile" anchor="after"/>
     </action>
+    <action id="Blaze.ShowOnlyErrorsAction"
+      class="com.google.idea.blaze.base.ui.problems.ShowOnlyErrorsAction"
+      text="Show Errors Only"
+      icon="BlazeIcons.BlazeFailed">
+    </action>
 
     <group id="Blaze.MainMenuActionGroup" class="com.google.idea.blaze.base.actions.BlazeMenuGroup">
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="HelpMenu"/>
