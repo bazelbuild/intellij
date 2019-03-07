@@ -105,7 +105,7 @@ public class JavaSourceFolderProvider implements SourceFolderProvider {
     if (Strings.isNullOrEmpty(relativePath)) {
       return parentPackagePrefix;
     }
-    relativePath = relativePath.replaceAll(File.separator, ".");
+    relativePath = relativePath.replace(File.separator, ".");
     return Strings.isNullOrEmpty(parentPackagePrefix)
         ? relativePath
         : parentPackagePrefix + "." + relativePath;
