@@ -723,7 +723,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
       public void producesConfigurationsFor(String... expected) {
         List<String> targets =
             resolverResult.getAllConfigurations().stream()
-                .map(configuration -> configuration.getDisplayName(false))
+                .map(configuration -> configuration.getDisplayName())
                 .collect(Collectors.toList());
         assertThat(targets).containsExactly((Object[]) expected);
       }
@@ -750,7 +750,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     configuration ->
                         expectedReused.stream()
                             .noneMatch(configuration::isEquivalentConfigurations))
-                .map(configuration -> configuration.getDisplayName(false))
+                .map(configuration -> configuration.getDisplayName())
                 .collect(Collectors.toList());
         assertThat(notReusedTargets).containsExactly((Object[]) expectedNotReused);
       }

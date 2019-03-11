@@ -19,7 +19,6 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystem;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -35,8 +34,6 @@ import java.util.concurrent.Future;
  * using Blaze to perform the compilation.
  */
 public interface FastBuildService {
-
-  BoolExperiment enabled = new BoolExperiment("fast.build.service.enabled", true);
 
   static FastBuildService getInstance(Project project) {
     return project.getComponent(FastBuildService.class);

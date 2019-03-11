@@ -39,13 +39,16 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
-import com.google.idea.blaze.base.filecache.FileDiffer;
+import com.google.idea.blaze.base.filecache.FilesDiff;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.io.FileAttributeScanner;
 import com.google.idea.blaze.base.lang.AdditionalLanguagesHelper;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
@@ -53,13 +56,13 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Result;
 import com.google.idea.blaze.base.scope.Scope;
-import com.google.idea.blaze.base.scope.ScopedFunction;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
@@ -83,6 +86,7 @@ import com.intellij.pom.NavigatableAdapter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -154,14 +158,17 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       mergeWithOldState = true;
     }
 
-    Collection<File> fileList = ideInfoResult.files;
-    List<File> updatedFiles = Lists.newArrayList();
-    List<File> removedFiles = Lists.newArrayList();
-    ImmutableMap<File, Long> fileState;
+    Collection<OutputArtifact> files = ideInfoResult.files;
+    FilesDiff<OutputArtifact, String> diff;
     try {
-      fileState =
-          FileDiffer.updateFiles(
-              prevState != null ? prevState.fileState : null, fileList, updatedFiles, removedFiles);
+      ImmutableMap<OutputArtifact, Long> fileState =
+          FileAttributeScanner.readAttributes(
+              files, OutputArtifact.TIMESTAMP_READER, FetchExecutor.EXECUTOR);
+      diff =
+          FilesDiff.diffFiles(
+              prevState != null ? prevState.ideInfoFileState : null,
+              fileState,
+              OutputArtifact::getKey);
     } catch (InterruptedException e) {
       throw new ProcessCanceledException(e);
     } catch (ExecutionException e) {
@@ -170,17 +177,20 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     }
 
     // if we're merging with the old state, no files are removed
-    int targetCount = fileList.size() + (mergeWithOldState ? removedFiles.size() : 0);
-    int removedCount = mergeWithOldState ? 0 : removedFiles.size();
+    int targetCount = files.size() + (mergeWithOldState ? diff.getRemovedFiles().size() : 0);
+    int removedCount = mergeWithOldState ? 0 : diff.getRemovedFiles().size();
 
     context.output(
         PrintOutput.log(
             String.format(
                 "Total rules: %d, new/changed: %d, removed: %d",
-                targetCount, updatedFiles.size(), removedCount)));
+                targetCount, diff.getUpdatedFiles().size(), removedCount)));
 
+    // TODO: handle prefetching for arbitrary OutputArtifacts
     ListenableFuture<?> prefetchFuture =
-        PrefetchService.getInstance().prefetchFiles(updatedFiles, true, false);
+        PrefetchService.getInstance()
+            .prefetchFiles(
+                LocalFileOutputArtifact.getLocalOutputFiles(diff.getUpdatedFiles()), true, false);
     if (!FutureUtil.waitForFuture(context, prefetchFuture)
         .timed("FetchAspectOutput", EventType.Prefetching)
         .withProgressMessage("Reading IDE info result...")
@@ -200,13 +210,13 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             project,
             context,
             prevState,
-            fileState,
+            diff.getNewFileState(),
             configHandler,
             workspaceLanguageSettings,
             importRoots,
             aspectStrategy,
-            updatedFiles,
-            removedFiles,
+            diff.getUpdatedFiles(),
+            diff.getRemovedFiles(),
             mergeWithOldState,
             targetMapReference);
     if (state == null) {
@@ -217,10 +227,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   }
 
   private static class IdeInfoResult {
-    final Collection<File> files;
+    final Collection<OutputArtifact> files;
     final BuildResult buildResult;
 
-    IdeInfoResult(Collection<File> files, BuildResult buildResult) {
+    IdeInfoResult(Collection<OutputArtifact> files, BuildResult buildResult) {
       this.files = files;
       this.buildResult = buildResult;
     }
@@ -236,7 +246,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       ShardedTargetList shardedTargets,
       AspectStrategy aspectStrategy) {
 
-    Set<File> ideInfoFiles = new LinkedHashSet<>();
+    Set<OutputArtifact> ideInfoFiles = new LinkedHashSet<>();
     Function<Integer, String> progressMessage =
         count ->
             String.format(
@@ -319,154 +329,147 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   }
 
   private static class TargetFilePair {
-    private final File file;
+    private final OutputArtifact file;
     private final TargetIdeInfo target;
 
-    TargetFilePair(File file, TargetIdeInfo target) {
+    TargetFilePair(OutputArtifact file, TargetIdeInfo target) {
       this.file = file;
       this.target = target;
     }
   }
 
   @Nullable
-  static BlazeIdeInterfaceState updateState(
+  private static BlazeIdeInterfaceState updateState(
       Project project,
       BlazeContext parentContext,
       @Nullable BlazeIdeInterfaceState prevState,
-      ImmutableMap<File, Long> fileState,
+      ImmutableMap<OutputArtifact, Long> fileState,
       BlazeConfigurationHandler configHandler,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       ImportRoots importRoots,
       AspectStrategy aspectStrategy,
-      List<File> newFiles,
-      List<File> removedFiles,
+      List<OutputArtifact> newFiles,
+      Collection<String> removedFiles,
       boolean mergeWithOldState,
       Ref<TargetMap> targetMapReference) {
     Result<BlazeIdeInterfaceState> result =
         Scope.push(
             parentContext,
-            (ScopedFunction<Result<BlazeIdeInterfaceState>>)
-                context -> {
-                  context.push(new TimingScope("UpdateTargetMap", EventType.Other));
+            context -> {
+              context.push(new TimingScope("UpdateTargetMap", EventType.Other));
 
-                  // If we're not removing we have to merge the old state
-                  // into the new one or we'll miss file removes next time
-                  ImmutableMap<File, Long> nextFileState = fileState;
-                  if (mergeWithOldState && prevState != null) {
-                    ImmutableMap.Builder<File, Long> fileStateBuilder =
-                        ImmutableMap.<File, Long>builder().putAll(fileState);
-                    for (Map.Entry<File, Long> entry : prevState.fileState.entrySet()) {
-                      if (!fileState.containsKey(entry.getKey())) {
-                        fileStateBuilder.put(entry);
+              Map<String, Long> nextFileState = new HashMap<>();
+              fileState.forEach((key, value) -> nextFileState.put(key.getKey(), value));
+
+              // If we're not removing we have to merge the old state
+              // into the new one or we'll miss file removes next time
+              if (mergeWithOldState && prevState != null) {
+                prevState.ideInfoFileState.forEach(nextFileState::putIfAbsent);
+              }
+
+              BlazeIdeInterfaceState.Builder state = BlazeIdeInterfaceState.builder();
+              state.ideInfoFileState = ImmutableMap.copyOf(nextFileState);
+              state.workspaceLanguageSettings = workspaceLanguageSettings;
+              state.aspectStrategyName = aspectStrategy.getName();
+
+              Map<TargetKey, TargetIdeInfo> targetMap = Maps.newHashMap();
+              if (prevState != null && !targetMapReference.isNull()) {
+                targetMap.putAll(targetMapReference.get().map());
+                state.ideInfoToTargetKey.putAll(prevState.ideInfoFileToTargetKey);
+              }
+
+              // Update removed unless we're merging with the old state
+              if (!mergeWithOldState) {
+                for (String removedFile : removedFiles) {
+                  TargetKey key = state.ideInfoToTargetKey.remove(removedFile);
+                  if (key != null) {
+                    targetMap.remove(key);
+                  }
+                }
+              }
+
+              AtomicLong totalSizeLoaded = new AtomicLong(0);
+              Set<LanguageClass> ignoredLanguages = Sets.newConcurrentHashSet();
+
+              ListeningExecutorService executor = BlazeExecutor.getInstance().getExecutor();
+
+              // Read protos from any new files
+              List<ListenableFuture<TargetFilePair>> futures = Lists.newArrayList();
+              for (OutputArtifact file : newFiles) {
+                futures.add(
+                    executor.submit(
+                        () -> {
+                          totalSizeLoaded.addAndGet(file.getLength());
+                          IntellijIdeInfo.TargetIdeInfo message =
+                              aspectStrategy.readAspectFile(file);
+                          TargetIdeInfo target =
+                              protoToTarget(
+                                  workspaceLanguageSettings,
+                                  importRoots,
+                                  message,
+                                  ignoredLanguages);
+                          return new TargetFilePair(file, target);
+                        }));
+              }
+
+              Set<TargetKey> newTargets = new HashSet<>();
+              Set<String> configurations = new LinkedHashSet<>();
+              configurations.add(configHandler.defaultConfigurationPathComponent);
+
+              // Update state with result from proto files
+              int duplicateTargetLabels = 0;
+              try {
+                for (TargetFilePair targetFilePair : Futures.allAsList(futures).get()) {
+                  if (targetFilePair.target != null) {
+                    OutputArtifact file = targetFilePair.file;
+                    String config = file.getBlazeConfigurationString(configHandler);
+                    configurations.add(config);
+                    TargetKey key = targetFilePair.target.getKey();
+                    if (targetMap.putIfAbsent(key, targetFilePair.target) == null) {
+                      state.ideInfoToTargetKey.forcePut(file.getKey(), key);
+                    } else {
+                      if (!newTargets.add(key)) {
+                        duplicateTargetLabels++;
+                      }
+                      // prioritize the default configuration over build order
+                      if (Objects.equals(config, configHandler.defaultConfigurationPathComponent)) {
+                        targetMap.put(key, targetFilePair.target);
+                        state.ideInfoToTargetKey.forcePut(file.getKey(), key);
                       }
                     }
-                    nextFileState = fileStateBuilder.build();
                   }
+                }
+              } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return Result.error(null);
+              } catch (ExecutionException e) {
+                return Result.error(e);
+              }
 
-                  BlazeIdeInterfaceState.Builder state = BlazeIdeInterfaceState.builder();
-                  state.fileState = nextFileState;
-                  state.workspaceLanguageSettings = workspaceLanguageSettings;
-                  state.aspectStrategyName = aspectStrategy.getName();
+              context.output(
+                  PrintOutput.log(
+                      String.format(
+                          "Loaded %d aspect files, total size %dkB",
+                          newFiles.size(), totalSizeLoaded.get() / 1024)));
+              if (duplicateTargetLabels > 0) {
+                context.output(
+                    new PerformanceWarning(
+                        String.format(
+                            "There were %d duplicate rules, built with the following "
+                                + "configurations: %s.\nYour IDE sync is slowed down by ~%d%%.",
+                            duplicateTargetLabels,
+                            configurations,
+                            (100 * duplicateTargetLabels / targetMap.size()))));
+              }
 
-                  Map<TargetKey, TargetIdeInfo> targetMap = Maps.newHashMap();
-                  if (prevState != null && !targetMapReference.isNull()) {
-                    targetMap.putAll(targetMapReference.get().map());
-                    state.fileToTargetMapKey.putAll(prevState.fileToTargetMapKey);
-                  }
+              ignoredLanguages.retainAll(
+                  LanguageSupport.availableAdditionalLanguages(
+                      workspaceLanguageSettings.getWorkspaceType()));
+              warnIgnoredLanguages(project, context, ignoredLanguages);
 
-                  // Update removed unless we're merging with the old state
-                  if (!mergeWithOldState) {
-                    for (File removedFile : removedFiles) {
-                      TargetKey key = state.fileToTargetMapKey.remove(removedFile);
-                      if (key != null) {
-                        targetMap.remove(key);
-                      }
-                    }
-                  }
-
-                  AtomicLong totalSizeLoaded = new AtomicLong(0);
-                  Set<LanguageClass> ignoredLanguages = Sets.newConcurrentHashSet();
-
-                  ListeningExecutorService executor = BlazeExecutor.getInstance().getExecutor();
-
-                  // Read protos from any new files
-                  List<ListenableFuture<TargetFilePair>> futures = Lists.newArrayList();
-                  for (File file : newFiles) {
-                    futures.add(
-                        executor.submit(
-                            () -> {
-                              totalSizeLoaded.addAndGet(file.length());
-                              IntellijIdeInfo.TargetIdeInfo message =
-                                  aspectStrategy.readAspectFile(file);
-                              TargetIdeInfo target =
-                                  protoToTarget(
-                                      workspaceLanguageSettings,
-                                      importRoots,
-                                      message,
-                                      ignoredLanguages);
-                              return new TargetFilePair(file, target);
-                            }));
-                  }
-
-                  Set<TargetKey> newTargets = new HashSet<>();
-                  Set<String> configurations = new LinkedHashSet<>();
-                  configurations.add(configHandler.defaultConfigurationPathComponent);
-
-                  // Update state with result from proto files
-                  int duplicateTargetLabels = 0;
-                  try {
-                    for (TargetFilePair targetFilePair : Futures.allAsList(futures).get()) {
-                      if (targetFilePair.target != null) {
-                        File file = targetFilePair.file;
-                        String config = configHandler.getConfigurationPathComponent(file);
-                        configurations.add(config);
-                        TargetKey key = targetFilePair.target.getKey();
-                        if (targetMap.putIfAbsent(key, targetFilePair.target) == null) {
-                          state.fileToTargetMapKey.forcePut(file, key);
-                        } else {
-                          if (!newTargets.add(key)) {
-                            duplicateTargetLabels++;
-                          }
-                          // prioritize the default configuration over build order
-                          if (Objects.equals(
-                              config, configHandler.defaultConfigurationPathComponent)) {
-                            targetMap.put(key, targetFilePair.target);
-                            state.fileToTargetMapKey.forcePut(file, key);
-                          }
-                        }
-                      }
-                    }
-                  } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return Result.error(null);
-                  } catch (ExecutionException e) {
-                    return Result.error(e);
-                  }
-
-                  context.output(
-                      PrintOutput.log(
-                          String.format(
-                              "Loaded %d aspect files, total size %dkB",
-                              newFiles.size(), totalSizeLoaded.get() / 1024)));
-                  if (duplicateTargetLabels > 0) {
-                    context.output(
-                        new PerformanceWarning(
-                            String.format(
-                                "There were %d duplicate rules, built with the following "
-                                    + "configurations: %s.\nYour IDE sync is slowed down by ~%d%%.",
-                                duplicateTargetLabels,
-                                configurations,
-                                (100 * duplicateTargetLabels / targetMap.size()))));
-                  }
-
-                  ignoredLanguages.retainAll(
-                      LanguageSupport.availableAdditionalLanguages(
-                          workspaceLanguageSettings.getWorkspaceType()));
-                  warnIgnoredLanguages(project, context, ignoredLanguages);
-
-                  targetMapReference.set(new TargetMap(ImmutableMap.copyOf(targetMap)));
-                  return Result.of(state.build());
-                });
+              targetMapReference.set(new TargetMap(ImmutableMap.copyOf(targetMap)));
+              return Result.of(state.build());
+            });
 
     if (result.error != null) {
       logger.error(result.error);
@@ -687,9 +690,15 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   }
 
   /** Prefetch a list of blaze output artifacts, blocking until complete. */
-  private static void prefetchGenfiles(BlazeContext context, ImmutableList<File> artifacts) {
+  private static void prefetchGenfiles(
+      BlazeContext context, ImmutableList<OutputArtifact> artifacts) {
+    // TODO: handle prefetching for arbitrary OutputArtifacts
+    ImmutableList<File> files = LocalFileOutputArtifact.getLocalOutputFiles(artifacts);
+    if (files.isEmpty()) {
+      return;
+    }
     ListenableFuture<?> prefetchFuture =
-        PrefetchService.getInstance().prefetchFiles(artifacts, false, false);
+        PrefetchService.getInstance().prefetchFiles(files, false, false);
     FutureUtil.waitForFuture(context, prefetchFuture)
         .timed("PrefetchGenfiles", EventType.Prefetching)
         .withProgressMessage("Prefetching genfiles...")

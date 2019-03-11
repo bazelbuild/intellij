@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.view.proto.Deps;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
-import com.google.idea.blaze.base.filecache.FileDiffer;
+import com.google.idea.blaze.base.filecache.FilesDiff;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -121,17 +121,13 @@ public class JdepsFileReader {
       }
     }
 
-    List<File> updatedFiles = Lists.newArrayList();
-    List<File> removedFiles = Lists.newArrayList();
-    state.fileState =
-        FileDiffer.updateFiles(
-            oldState != null ? oldState.fileState : null,
-            fileToTargetMap.keySet(),
-            updatedFiles,
-            removedFiles);
+    FilesDiff<File, File> diff =
+        FilesDiff.diffFileTimestamps(
+            oldState != null ? oldState.fileState : null, fileToTargetMap.keySet());
+    state.fileState = diff.getNewFileState();
 
     ListenableFuture<?> fetchFuture =
-        PrefetchService.getInstance().prefetchFiles(updatedFiles, true, false);
+        PrefetchService.getInstance().prefetchFiles(diff.getUpdatedFiles(), true, false);
     if (!FutureUtil.waitForFuture(context, fetchFuture)
         .timed("FetchJdeps", EventType.Prefetching)
         .withProgressMessage("Reading jdeps files...")
@@ -140,7 +136,7 @@ public class JdepsFileReader {
       return null;
     }
 
-    for (File removedFile : removedFiles) {
+    for (File removedFile : diff.getRemovedFiles()) {
       TargetKey targetKey = state.fileToTargetMap.remove(removedFile);
       if (targetKey != null) {
         state.targetToJdeps.remove(targetKey);
@@ -150,7 +146,7 @@ public class JdepsFileReader {
     AtomicLong totalSizeLoaded = new AtomicLong(0);
 
     List<ListenableFuture<Result>> futures = Lists.newArrayList();
-    for (File updatedFile : updatedFiles) {
+    for (File updatedFile : diff.getUpdatedFiles()) {
       futures.add(
           submit(
               () -> {
@@ -183,11 +179,11 @@ public class JdepsFileReader {
           state.targetToJdeps.put(result.targetKey, result.dependencies);
         }
       }
-      context.output(
-          PrintOutput.log(
-              String.format(
-                  "Loaded %d jdeps files, total size %dkB",
-                  updatedFiles.size(), totalSizeLoaded.get() / 1024)));
+    context.output(
+        PrintOutput.log(
+            String.format(
+                "Loaded %d jdeps files, total size %dkB",
+                diff.getUpdatedFiles().size(), totalSizeLoaded.get() / 1024)));
     return state.build();
   }
 

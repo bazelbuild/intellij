@@ -37,6 +37,7 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -58,32 +59,21 @@ import com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService.Changed
 import com.google.idea.blaze.java.fastbuild.FastBuildLogDataScope.FastBuildLogOutput;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
 import com.google.idea.common.concurrency.ConcurrencyUtil;
-import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
-
-  private static final BoolExperiment useVfsListenerFiles =
-      new BoolExperiment("fast.build.vfs.listener", true);
 
   private static final ImmutableSetMultimap<BuildSystem, Kind> SUPPORTED_KINDS =
       ImmutableSetMultimap.<BuildSystem, Kind>builder()
@@ -98,7 +88,6 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
   private final Project project;
   private final ProjectViewManager projectViewManager;
   private final BlazeProjectDataManager projectDataManager;
-  private final ChangeListManager changeListManager;
   private final FastBuildIncrementalCompiler incrementalCompiler;
   private final FastBuildChangedFilesService changedFilesManager;
   private final Thread shutdownHook;
@@ -109,13 +98,11 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
       Project project,
       ProjectViewManager projectViewManager,
       BlazeProjectDataManager projectDataManager,
-      ChangeListManager changeListManager,
       FastBuildIncrementalCompiler incrementalCompiler,
       FastBuildChangedFilesService changedFilesManager) {
     this.project = project;
     this.projectViewManager = projectViewManager;
     this.projectDataManager = projectDataManager;
-    this.changeListManager = changeListManager;
     this.incrementalCompiler = incrementalCompiler;
     this.changedFilesManager = changedFilesManager;
     this.builds = new ConcurrentHashMap<>();
@@ -132,6 +119,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     FastBuildState build = builds.remove(label);
     if (build != null) {
       FileUtil.delete(build.compilerOutputDirectory());
+      changedFilesManager.resetBuild(label);
     }
   }
 
@@ -198,39 +186,21 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     }
 
     BuildOutput completedBuildOutput = getCompletedBuild(existingBuildState);
-
-    boolean useVfsListener = useVfsListenerFiles.getValue();
-
-    Set<File> vcsModifiedFiles = ImmutableSet.of();
-    if (!useVfsListener) {
-      Stopwatch timer = Stopwatch.createStarted();
-      vcsModifiedFiles = getVcsModifiedFiles();
-      context.output(FastBuildLogOutput.milliseconds("retrieve_modified_files_time_ms", timer));
+    ChangedSources changedSources = ChangedSources.fullCompile();
+    if (completedBuildOutput != null) {
+      changedSources = changedFilesManager.getAndResetChangedSources(label);
     }
 
-    boolean tooManyVfsModifiedFiles = false;
-    Set<File> vfsModifiedFiles = null;
-    if (completedBuildOutput != null && useVfsListener) {
-      ChangedSources changedSources = changedFilesManager.getAndResetChangedSources(label);
-      vfsModifiedFiles = changedSources.changedSources();
-      if (changedSources.needsFullCompile()) {
-        tooManyVfsModifiedFiles = true;
-      }
-    }
-
-    if (completedBuildOutput == null || tooManyVfsModifiedFiles) {
+    if (changedSources.needsFullCompile()) {
       File compileDirectory = getCompilerOutputDirectory(existingBuildState);
       ListenableFuture<BuildOutput> newBuildOutput =
           buildDeployJar(context, label, buildParameters);
       changedFilesManager.newBuild(label, newBuildOutput);
-      return FastBuildState.create(
-          newBuildOutput, compileDirectory, buildParameters, vcsModifiedFiles);
+      return FastBuildState.create(newBuildOutput, compileDirectory, buildParameters);
     } else {
-      existingBuildState =
-          existingBuildState
-              .withAdditionalModifiedFiles(vcsModifiedFiles)
-              .withCompletedBuildOutput(completedBuildOutput);
-      return performIncrementalCompilation(context, label, existingBuildState, vfsModifiedFiles);
+      existingBuildState = existingBuildState.withCompletedBuildOutput(completedBuildOutput);
+      return performIncrementalCompilation(
+          context, label, existingBuildState, changedSources.changedSources());
     }
   }
 
@@ -247,25 +217,6 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     } catch (IOException e) {
       throw new FastBuildTunnelException(e);
     }
-  }
-
-  private Set<File> getVcsModifiedFiles() {
-    Set<File> modifiedPaths = new HashSet<>();
-    changeListManager.invokeAfterUpdate(
-        () -> addAllModifiedPaths(modifiedPaths),
-        InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
-        "Retrieving list of modified files",
-        ModalityState.NON_MODAL);
-    return modifiedPaths;
-  }
-
-  private void addAllModifiedPaths(Set<File> modifiedPaths) {
-    changeListManager.getAllChanges().stream()
-        .flatMap(change -> Stream.of(change.getBeforeRevision(), change.getAfterRevision()))
-        .filter(Objects::nonNull)
-        .map(ContentRevision::getFile)
-        .filter(filePath -> !filePath.isNonLocal() && !filePath.isDirectory())
-        .forEach(filePath -> modifiedPaths.add(filePath.getIOFile()));
   }
 
   @Nullable
@@ -356,13 +307,15 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
               }
               try {
                 ImmutableList<File> deployJarArtifacts =
-                    buildResultHelper.getBuildArtifactsForTarget(deployJarLabel);
+                    LocalFileOutputArtifact.getLocalOutputFiles(
+                        buildResultHelper.getBuildArtifactsForTarget(deployJarLabel));
                 checkState(deployJarArtifacts.size() == 1);
                 File deployJar = deployJarArtifacts.get(0);
 
                 ImmutableList<File> ideInfoFiles =
-                    buildResultHelper.getArtifactsForOutputGroups(
-                        ImmutableSet.of(aspectStrategy.getAspectOutputGroup()));
+                    LocalFileOutputArtifact.getLocalOutputFiles(
+                        buildResultHelper.getArtifactsForOutputGroups(
+                            ImmutableSet.of(aspectStrategy.getAspectOutputGroup())));
 
                 ImmutableMap<Label, FastBuildBlazeData> blazeData =
                     ideInfoFiles.stream()
@@ -387,10 +340,10 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
       BlazeContext context,
       Label label,
       FastBuildState existingBuildState,
-      Set<File> vfsModifiedFiles) {
+      Set<File> modifiedFiles) {
 
     ListenableFuture<BuildOutput> compilationResult =
-        incrementalCompiler.compile(context, label, existingBuildState, vfsModifiedFiles);
+        incrementalCompiler.compile(context, label, existingBuildState, modifiedFiles);
     Futures.addCallback(
         compilationResult,
         new FutureCallback<BuildOutput>() {
@@ -406,7 +359,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
             // 3. Recompile; compilation fails.
             // 4. Run fast build again immediately. No files have changed, so compilation is
             //    skipped. The tests will run and pass, despite the syntax error.
-            changedFilesManager.addFilesFromFailedCompilation(label, vfsModifiedFiles);
+            changedFilesManager.addFilesFromFailedCompilation(label, modifiedFiles);
           }
         },
         directExecutor());

@@ -113,7 +113,7 @@ public final class SourceDirectoryCalculator {
 
     // Sort artifacts and excludes into their respective workspace paths
     Multimap<WorkspacePath, SourceArtifact> sourcesUnderDirectoryRoot =
-        sortArtifactLocationsByRootDirectory(context, importRoots, nonGeneratedSources);
+        sortArtifactLocationsByRootDirectory(importRoots, nonGeneratedSources);
 
     List<BlazeContentEntry> result = Lists.newArrayList();
     Scope.push(
@@ -145,7 +145,7 @@ public final class SourceDirectoryCalculator {
   }
 
   private static Multimap<WorkspacePath, SourceArtifact> sortArtifactLocationsByRootDirectory(
-      BlazeContext context, ImportRoots importRoots, Collection<SourceArtifact> sources) {
+      ImportRoots importRoots, Collection<SourceArtifact> sources) {
 
     Multimap<WorkspacePath, SourceArtifact> result = ArrayListMultimap.create();
 
@@ -155,23 +155,10 @@ public final class SourceDirectoryCalculator {
           .anyMatch(excluded -> isUnderRootDirectory(excluded, sourcePath))) {
         continue;
       }
-      WorkspacePath foundWorkspacePath =
-          importRoots.rootDirectories().stream()
-              .filter(rootDirectory -> isUnderRootDirectory(rootDirectory, sourcePath))
-              .findFirst()
-              .orElse(null);
-
-      if (foundWorkspacePath != null) {
-        result.put(foundWorkspacePath, sourceArtifact);
-      } else if (sourceArtifact.artifactLocation.isSource()) {
-        ArtifactLocation sourceFile = sourceArtifact.artifactLocation;
-        String message =
-            String.format(
-                "Did not add %s. You're probably using a java file from outside the workspace"
-                    + " that has been exported using export_files. Don't do that.",
-                sourceFile);
-        IssueOutput.warn(message).submit(context);
-      }
+      importRoots.rootDirectories().stream()
+          .filter(rootDirectory -> isUnderRootDirectory(rootDirectory, sourcePath))
+          .findFirst()
+          .ifPresent(foundWorkspacePath -> result.put(foundWorkspacePath, sourceArtifact));
     }
     return result;
   }

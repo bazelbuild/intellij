@@ -127,7 +127,7 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
     return new CapabilitySupported();
   }
 
-  @Override
+  // #api 3.4
   public CapabilityStatus getInstantRunSupport() {
     return new CapabilityNotSupported();
   }

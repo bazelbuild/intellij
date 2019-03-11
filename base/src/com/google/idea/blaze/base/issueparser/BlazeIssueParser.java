@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.Section;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
+import com.google.idea.blaze.base.run.filter.FileResolver;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -57,7 +58,7 @@ public class BlazeIssueParser {
     ImmutableList.Builder<BlazeIssueParser.Parser> parsers =
         ImmutableList.<BlazeIssueParser.Parser>builder()
             .add(
-                new BlazeIssueParser.CompileParser(workspaceRoot),
+                new BlazeIssueParser.CompileParser(project),
                 new BlazeIssueParser.TracebackParser(),
                 new BlazeIssueParser.BuildParser(),
                 new BlazeIssueParser.SkylarkErrorParser(),
@@ -176,23 +177,23 @@ public class BlazeIssueParser {
   }
 
   static class CompileParser extends SingleLineParser {
-    private final WorkspaceRoot workspaceRoot;
+    private final Project project;
 
-    CompileParser(WorkspaceRoot workspaceRoot) {
+    CompileParser(Project project) {
       super(
-          "^([^/][^:]*)" // file path
+          "^([^:]*)" // file path
               + ":([0-9]+)" // line number
               + "(?::([0-9]+))?" // optional column number
               + "(?::| -)? " // colon or hyphen separator
               + "(fatal error|error|warning|note)" // message type
               + "(?: [^:]+)?: " // optional error code
               + "(.*)$"); // message
-      this.workspaceRoot = workspaceRoot;
+      this.project = project;
     }
 
     @Override
     protected IssueOutput createIssue(Matcher matcher) {
-      final File file = fileFromRelativePath(workspaceRoot, matcher.group(1));
+      final File file = FileResolver.resolveToFile(project, matcher.group(1));
       IssueOutput.Category category = messageCategory(matcher.group(4));
       return IssueOutput.issue(category, matcher.group(5))
           .inFile(file)

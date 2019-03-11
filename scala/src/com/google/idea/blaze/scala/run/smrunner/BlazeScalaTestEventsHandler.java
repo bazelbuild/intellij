@@ -39,7 +39,7 @@ public class BlazeScalaTestEventsHandler implements BlazeTestEventsHandler {
   @Override
   public boolean handlesKind(@Nullable Kind kind) {
     return kind != null
-        && kind.getLanguageClass().equals(LanguageClass.KOTLIN)
+        && kind.getLanguageClass().equals(LanguageClass.SCALA)
         && kind.getRuleType().equals(RuleType.TEST);
   }
 

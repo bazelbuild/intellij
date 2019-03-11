@@ -26,12 +26,12 @@ import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.tasks.DebugConnectorTask;
-import com.android.tools.idea.run.tasks.DeployApkTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.android.run.DeployTaskCompat;
 import com.google.idea.blaze.android.run.binary.mobileinstall.BlazeApkBuildStepMobileInstall;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProvider;
@@ -178,7 +178,7 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
         } catch (ApkProvisionException e) {
           throw new ExecutionException(e);
         }
-        return ImmutableList.of(new DeployApkTask(project, launchOptions, apks));
+        return ImmutableList.of(DeployTaskCompat.createDeployTask(project, launchOptions, apks));
       case MOBILE_INSTALL:
         return ImmutableList.of();
     }

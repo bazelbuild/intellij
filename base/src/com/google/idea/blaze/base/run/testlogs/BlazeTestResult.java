@@ -17,9 +17,9 @@ package com.google.idea.blaze.base.run.testlogs;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import java.io.File;
 import javax.annotation.Nullable;
 
 /** The result of a single blaze test action. */
@@ -51,7 +51,7 @@ public abstract class BlazeTestResult {
       Label label,
       @Nullable Kind targetKind,
       TestStatus testStatus,
-      ImmutableSet<File> outputXmlFiles) {
+      ImmutableSet<OutputArtifact> outputXmlFiles) {
     return new AutoValue_BlazeTestResult(label, targetKind, testStatus, outputXmlFiles);
   }
 
@@ -62,5 +62,5 @@ public abstract class BlazeTestResult {
 
   public abstract TestStatus getTestStatus();
 
-  public abstract ImmutableSet<File> getOutputXmlFiles();
+  public abstract ImmutableSet<OutputArtifact> getOutputXmlFiles();
 }

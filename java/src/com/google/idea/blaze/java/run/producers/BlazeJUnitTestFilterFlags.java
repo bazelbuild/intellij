@@ -63,14 +63,22 @@ public final class BlazeJUnitTestFilterFlags {
       PsiClass psiClass, Collection<PsiMethod> methods) {
     JUnitVersion version =
         JUnitUtil.isJUnit4TestClass(psiClass) ? JUnitVersion.JUNIT_4 : JUnitVersion.JUNIT_3;
-    return testFilterForClassAndMethods(psiClass, version, extractMethodFilters(psiClass, methods));
+    ParameterizedTestInfo parameterizedTestInfo =
+        JUnitParameterizedClassHeuristic.getParameterizedTestInfo(psiClass);
+    return testFilterForClassAndMethods(
+        psiClass,
+        version,
+        extractMethodFilters(psiClass, methods, parameterizedTestInfo),
+        parameterizedTestInfo);
   }
 
   /** Runs all parameterized versions of methods. */
   private static List<String> extractMethodFilters(
-      PsiClass psiClass, Collection<PsiMethod> methods) {
+      PsiClass psiClass,
+      Collection<PsiMethod> methods,
+      ParameterizedTestInfo parameterizedTestInfo) {
     // standard org.junit.runners.Parameterized class requires no per-test annotations
-    String testSuffixRegex = getTestSuffixRegex(psiClass);
+    String testSuffixRegex = getTestSuffixRegex(psiClass, parameterizedTestInfo);
     return methods.stream()
         .map((method) -> methodFilter(method, testSuffixRegex))
         .sorted()
@@ -78,12 +86,11 @@ public final class BlazeJUnitTestFilterFlags {
   }
 
   @Nullable
-  private static String getTestSuffixRegex(PsiClass testClass) {
+  private static String getTestSuffixRegex(
+      PsiClass testClass, ParameterizedTestInfo parameterizedTestInfo) {
 
-    ParameterizedTestInfo parameterizedTestInfo =
-        JUnitParameterizedClassHeuristic.getParameterizedTestInfo(testClass);
     if (parameterizedTestInfo != null) {
-      return parameterizedTestInfo.testSuffixRegex();
+      return parameterizedTestInfo.testMethodSuffixRegex();
     }
     if (PsiMemberParameterizedLocation.getParameterizedLocation(testClass, null) != null) {
       return JUnitParameterizedClassHeuristic.STANDARD_JUNIT_TEST_SUFFIX;
@@ -117,9 +124,14 @@ public final class BlazeJUnitTestFilterFlags {
       Map<PsiClass, Collection<Location<?>>> methodsPerClass, JUnitVersion version) {
     List<String> classFilters = new ArrayList<>();
     for (Entry<PsiClass, Collection<Location<?>>> entry : methodsPerClass.entrySet()) {
+      ParameterizedTestInfo parameterizedTestInfo =
+          JUnitParameterizedClassHeuristic.getParameterizedTestInfo(entry.getKey());
       String filter =
           testFilterForClassAndMethods(
-              entry.getKey(), version, extractMethodFilters(entry.getValue()));
+              entry.getKey(),
+              version,
+              extractMethodFilters(entry.getValue()),
+              parameterizedTestInfo);
       if (filter == null) {
         return null;
       }
@@ -166,12 +178,15 @@ public final class BlazeJUnitTestFilterFlags {
    */
   @Nullable
   private static String testFilterForClassAndMethods(
-      PsiClass psiClass, JUnitVersion version, List<String> methodFilters) {
+      PsiClass psiClass,
+      JUnitVersion version,
+      List<String> methodFilters,
+      ParameterizedTestInfo parameterizedTestInfo) {
     String className = psiClass.getQualifiedName();
     if (className == null) {
       return null;
     }
-    return testFilterForClassAndMethods(className, version, methodFilters);
+    return testFilterForClassAndMethods(className, version, methodFilters, parameterizedTestInfo);
   }
 
   /**
@@ -180,9 +195,15 @@ public final class BlazeJUnitTestFilterFlags {
    */
   @VisibleForTesting
   static String testFilterForClassAndMethods(
-      String className, JUnitVersion jUnitVersion, List<String> methodNames) {
+      String className,
+      JUnitVersion jUnitVersion,
+      List<String> methodFilters,
+      ParameterizedTestInfo parameterizedTestInfo) {
     StringBuilder output = new StringBuilder(className);
-    String methodNamePattern = concatenateMethodNames(methodNames, jUnitVersion);
+    if (parameterizedTestInfo != null && parameterizedTestInfo.testClassSuffixRegex() != null) {
+      output.append(parameterizedTestInfo.testClassSuffixRegex());
+    }
+    String methodNamePattern = concatenateMethodNames(methodFilters, jUnitVersion);
     if (Strings.isNullOrEmpty(methodNamePattern)) {
       if (jUnitVersion == JUnitVersion.JUNIT_4) {
         output.append('#');

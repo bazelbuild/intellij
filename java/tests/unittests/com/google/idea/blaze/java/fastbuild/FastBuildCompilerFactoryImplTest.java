@@ -46,11 +46,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.runners.JUnit4;
 
 /** Unit tests for {@link FastBuildCompilerFactoryImpl}. */
-@RunWith(Parameterized.class)
+@RunWith(JUnit4.class)
 public final class FastBuildCompilerFactoryImplTest {
 
   private static final String AUTO_VALUE_PROCESSOR =
@@ -73,16 +72,6 @@ public final class FastBuildCompilerFactoryImplTest {
   private static final JavaInfo JAVA_LIBRARY_WITHOUT_SOURCES = JavaInfo.builder().build();
 
   private FastBuildCompilerFactory compilerFactory;
-  private final boolean useNewCompiler;
-
-  public FastBuildCompilerFactoryImplTest(boolean useNewCompiler) {
-    this.useNewCompiler = useNewCompiler;
-  }
-
-  @Parameters(name = "useNewCompiler: {0}")
-  public static Iterable<Boolean[]> data() {
-    return ImmutableSet.of(new Boolean[] {true}, new Boolean[] {false});
-  }
 
   @BeforeClass
   public static void verifyJars() {
@@ -102,8 +91,7 @@ public final class FastBuildCompilerFactoryImplTest {
             .build();
     BlazeProjectDataManager projectDataManager = new MockBlazeProjectDataManager(projectData);
     compilerFactory =
-        FastBuildCompilerFactoryImpl.createForTest(
-            projectDataManager, useNewCompiler, FAST_BUILD_JAVAC_JAR);
+        FastBuildCompilerFactoryImpl.createForTest(projectDataManager, FAST_BUILD_JAVAC_JAR);
   }
 
   @Test
@@ -131,12 +119,12 @@ public final class FastBuildCompilerFactoryImplTest {
       compilerFactory.getCompilerFor(targetLabel, blazeData);
       fail("Should have thrown FastBuildException");
     } catch (FastBuildException e) {
-      assertThat(e.getMessage()).contains("Java toolchain");
+      assertThat(e.getMessage()).contains("Couldn't find a Java toolchain");
     }
   }
 
   @Test
-  public void testMultipleJavaToolchains() {
+  public void testMultipleDifferentJavaToolchains() {
     Map<Label, FastBuildBlazeData> blazeData = new HashMap<>();
     Label targetLabel = Label.create("//our/build:target");
     Label jdkOneLabel = Label.create("//some/jdk:langtools");
@@ -153,12 +141,18 @@ public final class FastBuildCompilerFactoryImplTest {
             .setLabel(jdkOneLabel)
             .setWorkspaceName(WORKSPACE_NAME)
             .setJavaInfo(JAVA_LIBRARY_WITHOUT_SOURCES)
+            .setJavaToolchainInfo(JAVA_TOOLCHAIN)
             .build();
     FastBuildBlazeData jdkTwoData =
         FastBuildBlazeData.builder()
             .setLabel(jdkTwoLabel)
             .setWorkspaceName(WORKSPACE_NAME)
             .setJavaInfo(JAVA_LIBRARY_WITHOUT_SOURCES)
+            .setJavaToolchainInfo(
+                JavaToolchainInfo.create(
+                    ArtifactLocation.builder().setRelativePath(JDK_TOOLS_JAR.getPath()).build(),
+                    /* sourceVersion= */ "12345",
+                    /* targetVersion= */ "9876"))
             .build();
     blazeData.put(targetLabel, targetData);
     blazeData.put(jdkOneLabel, jdkOneData);
@@ -168,8 +162,43 @@ public final class FastBuildCompilerFactoryImplTest {
       compilerFactory.getCompilerFor(targetLabel, blazeData);
       fail("Should have thrown FastBuildException");
     } catch (FastBuildException e) {
-      assertThat(e.getMessage()).contains("Java toolchain");
+      assertThat(e.getMessage()).contains("Found multiple Java toolchains");
     }
+  }
+
+  @Test
+  public void testMultipleIdenticalJavaToolchains() throws FastBuildException {
+    Map<Label, FastBuildBlazeData> blazeData = new HashMap<>();
+    Label targetLabel = Label.create("//our/build:target");
+    Label jdkOneLabel = Label.create("//some/jdk:langtools");
+    Label jdkTwoLabel = Label.create("//other/jdk:langtools");
+    FastBuildBlazeData targetData =
+        FastBuildBlazeData.builder()
+            .setLabel(targetLabel)
+            .setWorkspaceName(WORKSPACE_NAME)
+            .setDependencies(ImmutableSet.of(jdkOneLabel, jdkTwoLabel))
+            .setJavaInfo(JAVA_LIBRARY_WITHOUT_SOURCES)
+            .build();
+    FastBuildBlazeData jdkOneData =
+        FastBuildBlazeData.builder()
+            .setLabel(jdkOneLabel)
+            .setWorkspaceName(WORKSPACE_NAME)
+            .setJavaInfo(JAVA_LIBRARY_WITHOUT_SOURCES)
+            .setJavaToolchainInfo(JAVA_TOOLCHAIN)
+            .build();
+    FastBuildBlazeData jdkTwoData =
+        FastBuildBlazeData.builder()
+            .setLabel(jdkTwoLabel)
+            .setWorkspaceName(WORKSPACE_NAME)
+            .setJavaInfo(JAVA_LIBRARY_WITHOUT_SOURCES)
+            .setJavaToolchainInfo(JAVA_TOOLCHAIN)
+            .build();
+    blazeData.put(targetLabel, targetData);
+    blazeData.put(jdkOneLabel, jdkOneData);
+    blazeData.put(jdkTwoLabel, jdkTwoData);
+
+    // If this doesn't throw, the test passes.
+    compilerFactory.getCompilerFor(targetLabel, blazeData);
   }
 
   @Test

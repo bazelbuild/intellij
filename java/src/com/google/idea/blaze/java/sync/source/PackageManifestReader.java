@@ -26,7 +26,7 @@ import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.JavaSourcePackage;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PackageManifest;
 import com.google.idea.blaze.base.async.FutureUtil;
-import com.google.idea.blaze.base.filecache.FileDiffer;
+import com.google.idea.blaze.base.filecache.FilesDiff;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.InputStreamProvider;
@@ -73,12 +73,10 @@ public class PackageManifestReader {
       File file = decoder.decode(entry.getValue());
       fileToLabelMap.put(file, key);
     }
-    List<File> updatedFiles = Lists.newArrayList();
-    List<File> removedFiles = Lists.newArrayList();
+    FilesDiff<File, File> diff;
     try {
-      fileDiffState =
-          FileDiffer.updateFiles(
-              fileDiffState, fileToLabelMap.keySet(), updatedFiles, removedFiles);
+      diff = FilesDiff.diffFileTimestamps(fileDiffState, fileToLabelMap.keySet());
+      fileDiffState = diff.getNewFileState();
     } catch (InterruptedException e) {
       throw new ProcessCanceledException(e);
     } catch (ExecutionException e) {
@@ -88,7 +86,7 @@ public class PackageManifestReader {
     }
 
     ListenableFuture<?> fetchFuture =
-        PrefetchService.getInstance().prefetchFiles(updatedFiles, true, false);
+        PrefetchService.getInstance().prefetchFiles(diff.getUpdatedFiles(), true, false);
     if (!FutureUtil.waitForFuture(context, fetchFuture)
         .timed("FetchPackageManifests", EventType.Prefetching)
         .withProgressMessage("Reading package manifests...")
@@ -98,7 +96,7 @@ public class PackageManifestReader {
     }
 
     List<ListenableFuture<Void>> futures = Lists.newArrayList();
-    for (File file : updatedFiles) {
+    for (File file : diff.getUpdatedFiles()) {
       futures.add(
           executorService.submit(
               () -> {
@@ -107,7 +105,7 @@ public class PackageManifestReader {
                 return null;
               }));
     }
-    for (File file : removedFiles) {
+    for (File file : diff.getRemovedFiles()) {
       TargetKey key = this.fileToLabelMap.get(file);
       if (key != null) {
         manifestMap.remove(key);

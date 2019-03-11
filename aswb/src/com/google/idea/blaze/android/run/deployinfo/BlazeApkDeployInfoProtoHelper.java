@@ -22,6 +22,7 @@ import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoO
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -54,7 +55,10 @@ public class BlazeApkDeployInfoProtoHelper {
   @Nullable
   public BlazeAndroidDeployInfo readDeployInfo(
       BlazeContext context, BuildResultHelper buildResultHelper) throws GetArtifactsException {
-    File deployInfoFile = Iterables.getOnlyElement(buildResultHelper.getBuildArtifacts(), null);
+    File deployInfoFile =
+        Iterables.getOnlyElement(
+            LocalFileOutputArtifact.getLocalOutputFiles(buildResultHelper.getBuildArtifacts()),
+            null);
     if (deployInfoFile == null) {
       return null;
     }

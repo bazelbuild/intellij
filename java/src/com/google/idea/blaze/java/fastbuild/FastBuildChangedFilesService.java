@@ -121,6 +121,10 @@ final class FastBuildChangedFilesService implements Disposable {
     Futures.addCallback(buildFuture, new DeployJarFinishedCallback(label), executor);
   }
 
+  synchronized void resetBuild(Label label) {
+    labelData.remove(label);
+  }
+
   @AutoValue
   abstract static class ChangedSources {
 
@@ -128,7 +132,7 @@ final class FastBuildChangedFilesService implements Disposable {
 
     abstract ImmutableSet<File> changedSources();
 
-    private static ChangedSources fullCompile() {
+    static ChangedSources fullCompile() {
       return new AutoValue_FastBuildChangedFilesService_ChangedSources(true, ImmutableSet.of());
     }
 
@@ -195,7 +199,7 @@ final class FastBuildChangedFilesService implements Disposable {
     @Override
     public void onFailure(Throwable t) {
       synchronized (FastBuildChangedFilesService.this) {
-        labelData.remove(label);
+        resetBuild(label);
       }
     }
   }

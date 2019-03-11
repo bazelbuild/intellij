@@ -16,9 +16,9 @@ syntax = "proto3";
 
 package blaze;
 
-option java_package = "com.google.devtools.intellij.aspect";
-
 import "proto/common.proto";
+
+option java_package = "com.google.devtools.intellij.aspect";
 
 message FastBuildBlazeData {
   string label = 1;
@@ -45,9 +45,10 @@ message JavaInfo {
   repeated ArtifactLocation sources = 1;
   string test_class = 2;
   string test_size = 3;
-  repeated string annotation_processor_class_names = 4;
-  repeated ArtifactLocation annotation_processor_classpath = 5;
-  repeated string jvm_flags = 6;
+  string launcher = 4;
+  repeated string annotation_processor_class_names = 5;
+  repeated ArtifactLocation annotation_processor_classpath = 6;
+  repeated string jvm_flags = 7;
 }
 
 message JavaToolchainInfo {

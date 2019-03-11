@@ -92,7 +92,7 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
     return "";
   }
 
-  @Override
+  // #api 3.4
   public boolean upgradeProjectToSupportInstantRun() {
     return false;
   }

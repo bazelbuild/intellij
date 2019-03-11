@@ -20,12 +20,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
+import com.google.idea.sdkcompat.cidr.CLanguageKindCompat;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.OCFileTypeHelpers;
@@ -33,19 +34,12 @@ import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.preprocessor.OCImportGraph;
 import com.jetbrains.cidr.lang.workspace.OCLanguageKindCalculator;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
-import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
-/**
- * Blaze implementation of {@link OCResolveConfiguration}.
- *
- * <p>TODO(jvoung): BlazeResolveConfiguration are not used as a real OCResolveConfiguration so we
- * could simplify the interface and setup.
- */
+/** A clustering of "equivalent" Blaze targets for creating {@link OCResolveConfiguration}. */
 final class BlazeResolveConfiguration {
 
   private final Project project;
@@ -96,7 +90,7 @@ final class BlazeResolveConfiguration {
     }
   }
 
-  public String getDisplayName(boolean shorten) {
+  public String getDisplayName() {
     return displayNameIdentifier;
   }
 
@@ -140,41 +134,21 @@ final class BlazeResolveConfiguration {
   }
 
   private static OCLanguageKind getMaximumLanguageKind() {
-    return OCLanguageKind.CPP;
-  }
-
-  // TODO(jvoung): simplify the tests so that we don't need these Internal methods.
-  @VisibleForTesting
-  List<HeadersSearchRoot> getProjectHeadersRootsInternal() {
-    // OCFileReferenceHelper checks if the virtual files in getLibraryHeadersRoots() are valid
-    // before passing them along, but it does not check if getProjectHeadersRoots()
-    // are valid first. Check https://youtrack.jetbrains.com/issue/CPP-11126 to see if upstream
-    // code will start filtering at a higher level.
-    List<HeadersSearchRoot> roots = configurationData.projectIncludeRoots;
-    if (roots.stream().anyMatch(root -> !root.isValid())) {
-      return roots.stream().filter(HeadersSearchRoot::isValid).collect(Collectors.toList());
-    }
-    return configurationData.projectIncludeRoots;
+    return CLanguageKindCompat.cpp();
   }
 
   @VisibleForTesting
-  List<HeadersSearchRoot> getLibraryHeadersRootsInternal(
-      OCLanguageKind languageKind, @Nullable VirtualFile sourceFile) {
-    if (languageKind == null) {
-      languageKind = getLanguageKind(sourceFile);
-    }
-    ImmutableSet.Builder<HeadersSearchRoot> roots = ImmutableSet.builder();
-    if (languageKind == OCLanguageKind.C) {
-      roots.addAll(configurationData.cLibraryIncludeRoots);
-    } else {
-      roots.addAll(configurationData.cppLibraryIncludeRoots);
-    }
-    return roots.build().asList();
+  List<ExecutionRootPath> getLibraryHeadersRootsInternal() {
+    ImmutableList.Builder<ExecutionRootPath> roots = ImmutableList.builder();
+    roots.addAll(configurationData.transitiveQuoteIncludeDirectories);
+    roots.addAll(configurationData.transitiveIncludeDirectories);
+    roots.addAll(configurationData.transitiveSystemIncludeDirectories);
+    return roots.build();
   }
 
   @VisibleForTesting
   ImmutableCollection<String> getTargetCopts() {
-    return configurationData.targetCopts;
+    return configurationData.localCopts;
   }
 
   BlazeCompilerSettings getCompilerSettings() {

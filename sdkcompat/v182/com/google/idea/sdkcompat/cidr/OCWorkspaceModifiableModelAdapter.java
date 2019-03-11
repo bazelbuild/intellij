@@ -48,7 +48,7 @@ public class OCWorkspaceModifiableModelAdapter {
       ModifiableModel model,
       int serialVersion,
       CidrToolEnvironment toolEnvironment,
-      NullableFunction<File, VirtualFile> fileMapper) {
+      WorkspaceFileMapper fileMapper) {
     model.commit(serialVersion);
     return model.getMessages().stream()
         .filter(m -> m.getType().equals(MessageType.ERROR))
@@ -66,7 +66,7 @@ public class OCWorkspaceModifiableModelAdapter {
       Map<OCLanguageKind, PerLanguageCompilerOpts> configLanguages,
       Map<VirtualFile, PerFileCompilerOpts> configSourceFiles,
       CidrToolEnvironment toolEnvironment,
-      NullableFunction<File, VirtualFile> fileMapper) {
+      WorkspaceFileMapper fileMapper) {
     Map<OCLanguageKind, Trinity<OCCompilerKind, File, CidrCompilerSwitches>> compatConfigLanguages =
         new HashMap<>();
     configLanguages.forEach(
@@ -81,6 +81,7 @@ public class OCWorkspaceModifiableModelAdapter {
           compatConfigFiles.put(vf, perFileCompilerOpts.toPair());
         });
 
+    NullableFunction<File, VirtualFile> mapperFunction = fileMapper::map;
     workspaceModifiable.addConfiguration(
         id,
         displayName,
@@ -89,7 +90,7 @@ public class OCWorkspaceModifiableModelAdapter {
         compatConfigLanguages,
         compatConfigFiles,
         toolEnvironment,
-        fileMapper);
+        mapperFunction);
   }
 
   public static ModifiableModel getClearedModifiableModel(Project project) {

@@ -147,6 +147,8 @@ public abstract class FastBuildBlazeData {
 
     public abstract Optional<String> testSize();
 
+    public abstract Optional<Label> launcher();
+
     public abstract ImmutableList<String> annotationProcessorClassNames();
 
     public abstract ImmutableList<ArtifactLocation> annotationProcessorClasspath();
@@ -156,6 +158,7 @@ public abstract class FastBuildBlazeData {
     public static JavaInfo fromProto(FastBuildInfo.JavaInfo proto) {
       Set<ArtifactLocation> sources =
           proto.getSourcesList().stream().map(ArtifactLocation::fromProto).collect(toSet());
+      Label launcher = proto.getLauncher().isEmpty() ? null : Label.fromProto(proto.getLauncher());
       Set<ArtifactLocation> annotationProcessorClasspath =
           proto.getAnnotationProcessorClasspathList().stream()
               .map(ArtifactLocation::fromProto)
@@ -164,6 +167,7 @@ public abstract class FastBuildBlazeData {
           .setSources(sources)
           .setTestClass(emptyToNull(proto.getTestClass()))
           .setTestSize(emptyToNull(proto.getTestSize()))
+          .setLauncher(launcher)
           .setAnnotationProcessorClassNames(proto.getAnnotationProcessorClassNamesList())
           .setAnnotationProcessorClasspath(annotationProcessorClasspath)
           .setJvmFlags(proto.getJvmFlagsList())
@@ -187,6 +191,8 @@ public abstract class FastBuildBlazeData {
       public abstract Builder setTestClass(@Nullable String testClass);
 
       public abstract Builder setTestSize(@Nullable String testSize);
+
+      public abstract Builder setLauncher(@Nullable Label label);
 
       public abstract Builder setAnnotationProcessorClassNames(
           Collection<String> annotationProcessorClassNames);

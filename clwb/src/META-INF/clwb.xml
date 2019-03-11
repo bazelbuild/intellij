@@ -21,8 +21,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"
                         serviceImplementation="com.google.idea.blaze.plugin.ClwbPluginId"/>
-    <projectService serviceInterface="com.google.idea.sdkcompat.cidr.OCWorkspaceManagerAdapter"
-        serviceImplementation="com.google.idea.blaze.clwb.cworkspace.BlazeCWorkspaceManager"/>
 
     <consoleFilterProvider implementation="com.google.idea.blaze.clwb.run.BlazeCppPathConsoleFilter$Provider"/>
 

@@ -42,7 +42,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nullable;
 
 final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalCompiler {
 
@@ -61,10 +60,7 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
 
   @Override
   public ListenableFuture<BuildOutput> compile(
-      BlazeContext context,
-      Label label,
-      FastBuildState buildState,
-      @Nullable Set<File> vfsModifiedFiles) {
+      BlazeContext context, Label label, FastBuildState buildState, Set<File> modifiedFiles) {
     checkState(buildState.completedBuildOutput().isPresent());
     BuildOutput buildOutput = buildState.completedBuildOutput().get();
     checkState(buildOutput.blazeData().containsKey(label));
@@ -74,8 +70,6 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
             () -> {
               BlazeConsoleWriter writer = new BlazeConsoleWriter(blazeConsoleService);
 
-              Set<File> modifiedFiles =
-                  vfsModifiedFiles != null ? vfsModifiedFiles : buildState.modifiedFiles();
               ChangedSourceInfo changedSourceInfo =
                   getPathsToCompile(context, label, buildOutput.blazeData(), modifiedFiles);
 

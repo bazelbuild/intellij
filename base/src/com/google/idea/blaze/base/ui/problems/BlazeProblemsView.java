@@ -19,7 +19,6 @@ import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.GroupingElement;
@@ -105,10 +104,7 @@ public class BlazeProblemsView {
     viewUpdater.execute(
         () -> {
           currentSessionId = UUID.randomUUID();
-          ErrorViewStructure tree = panel.getErrorViewStructure();
-          for (ErrorTreeElement child : tree.getChildElements(tree.getRootElement())) {
-            tree.removeElement(child);
-          }
+          panel.getErrorViewStructure().clear();
           problemCount.set(0);
           didFocusProblemsView = false;
           this.focusBehavior = focusBehavior;

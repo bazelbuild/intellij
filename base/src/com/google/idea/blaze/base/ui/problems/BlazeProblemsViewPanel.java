@@ -15,13 +15,16 @@
  */
 package com.google.idea.blaze.base.ui.problems;
 
+import com.google.idea.sdkcompat.openapi.IconsCompat;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.NextOccurenceToolbarAction; // NOTYPO
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction; // NOTYPO
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
+import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -97,6 +100,7 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
   protected void fillRightToolbarGroup(DefaultActionGroup group) {
     super.fillRightToolbarGroup(group);
     group.add(new AutoscrollToConsoleAction());
+    group.add(new ShowWarningsAction());
   }
 
   @Override
@@ -123,7 +127,7 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
 
   @Override
   protected boolean canHideWarnings() {
-    return false;
+    return true;
   }
 
   private void scrollToSource(Component tree) {
@@ -180,6 +184,28 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
     protected Navigatable[] getNavigatables(DataContext context) {
       Navigatable nav = BLAZE_CONSOLE_NAVIGATABLE_DATA_KEY.getData(context);
       return nav != null ? new Navigatable[] {nav} : null;
+    }
+  }
+
+  private class ShowWarningsAction extends ToggleAction implements DumbAware {
+    private final ErrorTreeViewConfiguration configuration;
+
+    ShowWarningsAction() {
+      super(IdeBundle.message("action.show.warnings"), null, IconsCompat.SHOW_WARNINGS);
+      configuration = ErrorTreeViewConfiguration.getInstance(myProject);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent event) {
+      return !configuration.isHideWarnings();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent event, boolean showWarnings) {
+      if (showWarnings == isHideWarnings()) {
+        configuration.setHideWarnings(!showWarnings);
+        reload();
+      }
     }
   }
 }

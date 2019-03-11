@@ -16,6 +16,7 @@
 package com.google.idea.blaze.typescript;
 
 import com.google.idea.blaze.base.settings.Blaze;
+import com.intellij.lang.javascript.library.JSLibraryMappings;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigLibraryUpdater;
 import com.intellij.openapi.project.Project;
 
@@ -24,19 +25,25 @@ import com.intellij.openapi.project.Project;
  * being created.
  */
 class BlazeTypeScriptConfigLibraryUpdater extends TypeScriptConfigLibraryUpdater {
+  private final Project project;
   private final boolean isBlaze;
 
   public BlazeTypeScriptConfigLibraryUpdater(Project project) {
     super(project);
-    isBlaze = Blaze.isBlazeProject(project);
+    this.project = project;
+    this.isBlaze = Blaze.isBlazeProject(project);
   }
 
   @Override
   public void queueToUpdate() {
-    if (!isBlaze
-        || !BlazeTypeScriptAdditionalLibraryRootsProvider
-            .useTypeScriptAdditionalLibraryRootsProvider
+    if (isBlaze
+        && BlazeTypeScriptAdditionalLibraryRootsProvider.useTypeScriptAdditionalLibraryRootsProvider
             .getValue()) {
+      JSLibraryMappings mappings = JSLibraryMappings.getInstance(project);
+      if (mappings.isAssociatedWithProject(TypeScriptConfigLibraryUpdater.TSCONFIG_PATHS_LIBRARY)) {
+        mappings.disassociateWithProject(TypeScriptConfigLibraryUpdater.TSCONFIG_PATHS_LIBRARY);
+      }
+    } else {
       super.queueToUpdate();
     }
   }

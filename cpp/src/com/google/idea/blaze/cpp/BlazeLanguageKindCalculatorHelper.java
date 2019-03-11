@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.cidr.CLanguageKindCompat;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,13 +37,13 @@ final class BlazeLanguageKindCalculatorHelper implements OCLanguageKindCalculato
     if (Blaze.isBlazeProject(project)) {
       String extension = FileUtilRt.getExtension(name);
       if (CFileExtensions.C_FILE_EXTENSIONS.contains(extension)) {
-        return OCLanguageKind.C;
+        return CLanguageKindCompat.c();
       }
       if (CFileExtensions.CXX_FILE_EXTENSIONS.contains(extension)) {
-        return OCLanguageKind.CPP;
+        return CLanguageKindCompat.cpp();
       }
       if (CFileExtensions.CXX_ONLY_HEADER_EXTENSIONS.contains(extension)) {
-        return OCLanguageKind.CPP;
+        return CLanguageKindCompat.cpp();
       }
     }
     return null;

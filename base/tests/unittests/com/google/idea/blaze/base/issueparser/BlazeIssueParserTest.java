@@ -21,6 +21,9 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectView;
@@ -28,8 +31,11 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
+import com.google.idea.blaze.base.run.filter.FileResolver;
+import com.google.idea.blaze.base.run.filter.StandardFileResolver;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.util.TextRange;
@@ -42,18 +48,21 @@ import org.junit.runners.JUnit4;
 /** Tests for {@link BlazeIssueParser}. */
 @RunWith(JUnit4.class)
 public class BlazeIssueParserTest extends BlazeTestCase {
-
-  private ProjectViewManager projectViewManager;
-  private WorkspaceRoot workspaceRoot;
   private ImmutableList<BlazeIssueParser.Parser> parsers;
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
 
+    WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
     applicationServices.register(ExperimentService.class, new MockExperimentService());
+    BlazeProjectData blazeProjectData = MockBlazeProjectDataBuilder.builder(workspaceRoot).build();
+    projectServices.register(
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(blazeProjectData));
+    registerExtensionPoint(FileResolver.EP_NAME, FileResolver.class)
+        .registerExtension(new StandardFileResolver());
 
-    projectViewManager = mock(ProjectViewManager.class);
+    ProjectViewManager projectViewManager = mock(ProjectViewManager.class);
     projectServices.register(ProjectViewManager.class, projectViewManager);
 
     ProjectViewSet projectViewSet =
@@ -71,11 +80,9 @@ public class BlazeIssueParserTest extends BlazeTestCase {
             .build();
     when(projectViewManager.getProjectViewSet()).thenReturn(projectViewSet);
 
-    workspaceRoot = new WorkspaceRoot(new File("/root"));
-
     parsers =
         ImmutableList.of(
-            new BlazeIssueParser.CompileParser(workspaceRoot),
+            new BlazeIssueParser.CompileParser(project),
             new BlazeIssueParser.TracebackParser(),
             new BlazeIssueParser.BuildParser(),
             new BlazeIssueParser.SkylarkErrorParser(),
@@ -103,6 +110,27 @@ public class BlazeIssueParserTest extends BlazeTestCase {
                 + "package name component contains only '.' characters.");
     assertThat(issue).isNotNull();
     assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+  }
+
+  @Test
+  public void testParseCompileErrorWithAbsolutePath() {
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    IssueOutput issue =
+        blazeIssueParser.parseIssue(
+            "/absolute/location/google3/java/com/google/android/SomeKotlin.kt:17: error: "
+                + "non-static variable this cannot be referenced from a static context");
+    assertThat(issue).isNotNull();
+    assertThat(issue.getFile().getPath())
+        .isEqualTo("/absolute/location/google3/java/com/google/android/SomeKotlin.kt");
+    assertThat(issue.getLine()).isEqualTo(17);
+    assertThat(issue.getColumn()).isEqualTo(-1);
+    assertThat(issue.getMessage())
+        .isEqualTo("non-static variable this cannot be referenced from a static context");
+    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(
+            TextRange.create(
+                0, "/absolute/location/google3/java/com/google/android/SomeKotlin.kt:17".length()));
   }
 
   @Test

@@ -18,17 +18,13 @@ package com.google.idea.blaze.base.prefetch;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.common.concurrency.ConcurrencyUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import java.util.concurrent.Executors;
 
 /** Shared executors for any prefetch/copy operations. */
 public class FetchExecutor {
-  private static final int THREAD_COUNT = 32;
+  private static final int THREAD_COUNT = 64;
   public static final ListeningExecutorService EXECUTOR =
       MoreExecutors.listeningDecorator(
-          AppExecutorUtil.createBoundedApplicationPoolExecutor(
-              FetchExecutor.class.getSimpleName(),
-              Executors.newFixedThreadPool(
-                  THREAD_COUNT, ConcurrencyUtil.namedDaemonThreadPoolFactory(FetchExecutor.class)),
-              THREAD_COUNT));
+          Executors.newFixedThreadPool(
+              THREAD_COUNT, ConcurrencyUtil.namedDaemonThreadPoolFactory(FetchExecutor.class)));
 }

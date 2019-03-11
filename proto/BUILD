@@ -26,11 +26,13 @@ java_proto_library(
 proto_library(
     name = "fast_build_info_proto",
     srcs = ["fast_build_info.proto"],
+    visibility = ["//visibility:public"],
     deps = [":common_proto"],
 )
 
 java_proto_library(
     name = "fast_build_info_java_proto",
+    visibility = ["//visibility:public"],
     deps = [":fast_build_info_proto"],
 )
 

@@ -61,7 +61,7 @@ def _intellij_plugin_debug_target_aspect_impl(target, ctx):
 
         # TODO(brendandouglas): Remove when migrating to Bazel 0.5, when DefaultInfo
         # provider can be populated by '_repackaged_files' directly
-        files = files | data.files
+        files = depset(transitive = [files, data.files])
     else:
         aspect_intellij_plugin_deploy_info = struct(
             deploy_files = [_flat_deploy_file(f) for f in target.files],
@@ -87,7 +87,7 @@ def _intellij_plugin_debug_target_impl(ctx):
     deploy_files = []
     java_agent_deploy_files = []
     for target in ctx.attr.deps:
-        files = files | target.input_files
+        files = depset(transitive = [files, target.input_files])
         deploy_files.extend(target.aspect_intellij_plugin_deploy_info.deploy_files)
         java_agent_deploy_files.extend(target.aspect_intellij_plugin_deploy_info.java_agent_deploy_files)
     for target in ctx.attr.javaagents:
@@ -104,7 +104,7 @@ def _intellij_plugin_debug_target_impl(ctx):
     # We've already consumed any dependent intellij_plugin_debug_targets into our own,
     # do not build or report these
     files = depset([f for f in files.to_list() if not f.path.endswith(SUFFIX)])
-    files = files | depset([output])
+    files = depset([output], transitive = [files])
 
     return struct(
         files = files,

@@ -15,107 +15,47 @@
  */
 package com.google.idea.blaze.cpp;
 
-import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.CIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
-import com.jetbrains.cidr.lang.workspace.headerRoots.IncludedHeadersRoot;
-import java.io.File;
 import java.util.Objects;
 
-/** Data used by a {@link BlazeResolveConfiguration}. */
+/** Data for clustering {@link BlazeResolveConfiguration} by "equivalence". */
 final class BlazeResolveConfigurationData {
 
   final BlazeCompilerSettings compilerSettings;
-
-  final ImmutableList<HeadersSearchRoot> cLibraryIncludeRoots;
-  final ImmutableList<HeadersSearchRoot> cppLibraryIncludeRoots;
-  final ImmutableList<HeadersSearchRoot> projectIncludeRoots;
-  final ImmutableCollection<String> defines;
-  final ImmutableList<String> targetCopts;
   private final CToolchainIdeInfo toolchainIdeInfo;
 
+  // Everything from CIdeInfo except for sources, headers, etc.
+  // That is parts that influence the flags, but not the actual input files.
+  final ImmutableList<String> localCopts;
+  // From the cpp compilation context provider.
+  // These should all be for the entire transitive closure.
+  final ImmutableList<ExecutionRootPath> transitiveIncludeDirectories;
+  final ImmutableList<ExecutionRootPath> transitiveQuoteIncludeDirectories;
+  private final ImmutableList<String> transitiveDefines;
+  final ImmutableList<ExecutionRootPath> transitiveSystemIncludeDirectories;
+
   static BlazeResolveConfigurationData create(
-      Project project,
-      ExecutionRootPathResolver executionRootPathResolver,
-      ImmutableMap<File, VirtualFile> headerRoots,
       CIdeInfo cIdeInfo,
       CToolchainIdeInfo toolchainIdeInfo,
       BlazeCompilerSettings compilerSettings) {
-    ImmutableSet.Builder<ExecutionRootPath> systemIncludesBuilder = ImmutableSet.builder();
-    systemIncludesBuilder.addAll(cIdeInfo.getTransitiveSystemIncludeDirectories());
-    systemIncludesBuilder.addAll(toolchainIdeInfo.getBuiltInIncludeDirectories());
-
-    ImmutableSet.Builder<ExecutionRootPath> userIncludesBuilder = ImmutableSet.builder();
-    userIncludesBuilder.addAll(cIdeInfo.getTransitiveIncludeDirectories());
-
-    ImmutableSet.Builder<ExecutionRootPath> userQuoteIncludesBuilder = ImmutableSet.builder();
-    userQuoteIncludesBuilder.addAll(cIdeInfo.getTransitiveQuoteIncludeDirectories());
-
-    ImmutableList.Builder<String> defines = ImmutableList.builder();
-    defines.addAll(cIdeInfo.getTransitiveDefines());
-
-    return new BlazeResolveConfigurationData(
-        project,
-        executionRootPathResolver,
-        headerRoots,
-        systemIncludesBuilder.build(),
-        systemIncludesBuilder.build(),
-        userQuoteIncludesBuilder.build(),
-        userIncludesBuilder.build(),
-        userIncludesBuilder.build(),
-        defines.build(),
-        compilerSettings,
-        cIdeInfo.getLocalCopts(),
-        toolchainIdeInfo);
+    return new BlazeResolveConfigurationData(compilerSettings, cIdeInfo, toolchainIdeInfo);
   }
 
   private BlazeResolveConfigurationData(
-      Project project,
-      ExecutionRootPathResolver executionRootPathResolver,
-      ImmutableMap<File, VirtualFile> headerRoots,
-      ImmutableCollection<ExecutionRootPath> cSystemIncludeDirs,
-      ImmutableCollection<ExecutionRootPath> cppSystemIncludeDirs,
-      ImmutableCollection<ExecutionRootPath> quoteIncludeDirs,
-      ImmutableCollection<ExecutionRootPath> cIncludeDirs,
-      ImmutableCollection<ExecutionRootPath> cppIncludeDirs,
-      ImmutableCollection<String> defines,
       BlazeCompilerSettings compilerSettings,
-      ImmutableList<String> targetCopts,
+      CIdeInfo cIdeInfo,
       CToolchainIdeInfo toolchainIdeInfo) {
     this.toolchainIdeInfo = toolchainIdeInfo;
-
-    HeaderRootsCollector headerRootsCollector =
-        new HeaderRootsCollector(project, executionRootPathResolver, headerRoots);
-    ImmutableList.Builder<HeadersSearchRoot> cIncludeRootsBuilder = ImmutableList.builder();
-    headerRootsCollector.collectHeaderRoots(
-        cIncludeRootsBuilder, cIncludeDirs, true /* isUserHeader */);
-    headerRootsCollector.collectHeaderRoots(
-        cIncludeRootsBuilder, cSystemIncludeDirs, false /* isUserHeader */);
-    this.cLibraryIncludeRoots = cIncludeRootsBuilder.build();
-
-    ImmutableList.Builder<HeadersSearchRoot> cppIncludeRootsBuilder = ImmutableList.builder();
-    headerRootsCollector.collectHeaderRoots(
-        cppIncludeRootsBuilder, cppIncludeDirs, true /* isUserHeader */);
-    headerRootsCollector.collectHeaderRoots(
-        cppIncludeRootsBuilder, cppSystemIncludeDirs, false /* isUserHeader */);
-    this.cppLibraryIncludeRoots = cppIncludeRootsBuilder.build();
-
-    ImmutableList.Builder<HeadersSearchRoot> quoteIncludeRootsBuilder = ImmutableList.builder();
-    headerRootsCollector.collectHeaderRoots(
-        quoteIncludeRootsBuilder, quoteIncludeDirs, true /* isUserHeader */);
-    this.projectIncludeRoots = quoteIncludeRootsBuilder.build();
-
     this.compilerSettings = compilerSettings;
-    this.defines = defines;
-    this.targetCopts = targetCopts;
+
+    this.transitiveIncludeDirectories = cIdeInfo.getTransitiveIncludeDirectories();
+    this.transitiveSystemIncludeDirectories = cIdeInfo.getTransitiveSystemIncludeDirectories();
+    this.transitiveQuoteIncludeDirectories = cIdeInfo.getTransitiveQuoteIncludeDirectories();
+    this.transitiveDefines = cIdeInfo.getTransitiveDefines();
+    this.localCopts = cIdeInfo.getLocalCopts();
   }
 
   @Override
@@ -127,11 +67,13 @@ final class BlazeResolveConfigurationData {
       return false;
     }
     BlazeResolveConfigurationData otherData = (BlazeResolveConfigurationData) other;
-    return this.cLibraryIncludeRoots.equals(otherData.cLibraryIncludeRoots)
-        && this.cppLibraryIncludeRoots.equals(otherData.cppLibraryIncludeRoots)
-        && this.projectIncludeRoots.equals(otherData.projectIncludeRoots)
-        && this.targetCopts.equals(otherData.targetCopts)
-        && this.defines.equals(otherData.defines)
+    return this.transitiveIncludeDirectories.equals(otherData.transitiveIncludeDirectories)
+        && this.transitiveSystemIncludeDirectories.equals(
+            otherData.transitiveSystemIncludeDirectories)
+        && this.transitiveQuoteIncludeDirectories.equals(
+            otherData.transitiveQuoteIncludeDirectories)
+        && this.localCopts.equals(otherData.localCopts)
+        && this.transitiveDefines.equals(otherData.transitiveDefines)
         && this.toolchainIdeInfo.equals(otherData.toolchainIdeInfo)
         && this.compilerSettings
             .getCompilerVersion()
@@ -141,43 +83,12 @@ final class BlazeResolveConfigurationData {
   @Override
   public int hashCode() {
     return Objects.hash(
-        cLibraryIncludeRoots,
-        cppLibraryIncludeRoots,
-        projectIncludeRoots,
-        targetCopts,
-        defines,
+        transitiveIncludeDirectories,
+        transitiveSystemIncludeDirectories,
+        transitiveQuoteIncludeDirectories,
+        localCopts,
+        transitiveDefines,
         toolchainIdeInfo,
         compilerSettings.getCompilerVersion());
-  }
-
-  private static class HeaderRootsCollector {
-    private final Project project;
-    private final ExecutionRootPathResolver executionRootPathResolver;
-    private final ImmutableMap<File, VirtualFile> virtualFileCache;
-
-    HeaderRootsCollector(
-        Project project,
-        ExecutionRootPathResolver executionRootPathResolver,
-        ImmutableMap<File, VirtualFile> virtualFileCache) {
-      this.project = project;
-      this.executionRootPathResolver = executionRootPathResolver;
-      this.virtualFileCache = virtualFileCache;
-    }
-
-    void collectHeaderRoots(
-        ImmutableList.Builder<HeadersSearchRoot> roots,
-        ImmutableCollection<ExecutionRootPath> paths,
-        boolean isUserHeader) {
-      for (ExecutionRootPath executionRootPath : paths) {
-        ImmutableList<File> possibleDirectories =
-            executionRootPathResolver.resolveToIncludeDirectories(executionRootPath);
-        for (File f : possibleDirectories) {
-          VirtualFile vf = virtualFileCache.get(f);
-          if (vf != null) {
-            roots.add(new IncludedHeadersRoot(project, vf, false /* recursive */, isUserHeader));
-          }
-        }
-      }
-    }
   }
 }

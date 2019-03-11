@@ -197,7 +197,7 @@ def make_dep_from_label(label, dependency_type):
 
 def update_set_in_dict(input_dict, key, other_set):
     """Updates depset in dict, merging it with another depset."""
-    input_dict[key] = input_dict.get(key, depset()) | other_set
+    input_dict[key] = depset(transitive = [input_dict.get(key, depset()), other_set])
 
 ##### Builders for individual parts of the aspect output
 
@@ -298,7 +298,12 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
 
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates C++-specific output groups, returns false if not a C++ target."""
-    if not hasattr(target, "cc") or _is_language_specific_proto_library(ctx, target):
+
+    if CcInfo not in target or _is_language_specific_proto_library(ctx, target):
+        return False
+
+    # Go targets always provide CcInfo. Usually it's empty, but even if it isn't we don't handle it
+    if ctx.rule.kind.startswith("go_"):
         return False
 
     sources = artifacts_from_target_list_attr(ctx, "srcs")
@@ -313,21 +318,20 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
 
     target_copts = [expand_make_variables("copt", copt, ctx) for copt in target_copts]
 
-    # Check cc_provider for 'includes' and 'defines' target attribute values.
-    cc_provider = target.cc
+    compilation_context = target[CcInfo].compilation_context
 
     c_info = struct_omit_none(
         source = sources,
         header = headers,
         textual_header = textual_headers,
         target_copt = target_copts,
-        transitive_include_directory = cc_provider.include_directories,
-        transitive_quote_include_directory = cc_provider.quote_include_directories,
-        transitive_define = cc_provider.defines,
-        transitive_system_include_directory = cc_provider.system_include_directories,
+        transitive_include_directory = compilation_context.includes.to_list(),
+        transitive_quote_include_directory = compilation_context.quote_includes.to_list(),
+        transitive_define = compilation_context.defines.to_list(),
+        transitive_system_include_directory = compilation_context.system_includes.to_list(),
     )
     ide_info["c_ide_info"] = c_info
-    resolve_files = cc_provider.transitive_headers
+    resolve_files = compilation_context.headers
 
     # TODO(brendandouglas): target to cpp files only
     compile_files = target[OutputGroupInfo].compilation_outputs if hasattr(target[OutputGroupInfo], "compilation_outputs") else depset([])
@@ -437,37 +441,37 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     if java_semantics and java_semantics.skip_target(target, ctx):
         return False
 
-    ide_info_files = depset()
+    ide_info_files = []
     sources = sources_from_target(ctx)
     jars = [library_artifact(output) for output in java.outputs.jars]
     class_jars = [output.class_jar for output in java.outputs.jars if output and output.class_jar]
     output_jars = [jar for output in java.outputs.jars for jar in jars_from_output(output)]
-    resolve_files = depset(output_jars)
-    compile_files = depset(class_jars)
+    resolve_files = output_jars
+    compile_files = class_jars
 
     gen_jars = []
     if (hasattr(java, "annotation_processing") and
         java.annotation_processing and
         java.annotation_processing.enabled):
         gen_jars = [annotation_processing_jars(java.annotation_processing)]
-        resolve_files = resolve_files | depset([
+        resolve_files += [
             jar
             for jar in [
                 java.annotation_processing.class_jar,
                 java.annotation_processing.source_jar,
             ]
             if jar != None and not jar.is_source
-        ])
-        compile_files = compile_files | depset([
+        ]
+        compile_files += [
             jar
             for jar in [java.annotation_processing.class_jar]
             if jar != None and not jar.is_source
-        ])
+        ]
 
     jdeps = None
     if hasattr(java.outputs, "jdeps") and java.outputs.jdeps:
         jdeps = artifact_location(java.outputs.jdeps)
-        resolve_files = depset([java.outputs.jdeps], transitive = [resolve_files])
+        resolve_files += [java.outputs.jdeps]
 
     java_sources, gen_java_sources, srcjars = divide_java_sources(ctx)
 
@@ -477,7 +481,7 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     package_manifest = None
     if java_sources:
         package_manifest = build_java_package_manifest(ctx, target, java_sources, ".java-manifest")
-        ide_info_files = ide_info_files | depset([package_manifest])
+        ide_info_files += [package_manifest]
 
     filtered_gen_jar = None
     if java_sources and (gen_java_sources or srcjars):
@@ -488,7 +492,7 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
             gen_java_sources,
             srcjars,
         )
-        resolve_files = resolve_files | filtered_gen_resolve_files
+        resolve_files += filtered_gen_resolve_files
 
     java_info = struct_omit_none(
         sources = sources,
@@ -502,10 +506,10 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     )
 
     ide_info["java_ide_info"] = java_info
-    ide_info_files += depset([ide_info_file])
-    update_set_in_dict(output_groups, "intellij-info-java", ide_info_files)
-    update_set_in_dict(output_groups, "intellij-compile-java", compile_files)
-    update_set_in_dict(output_groups, "intellij-resolve-java", resolve_files)
+    ide_info_files += [ide_info_file]
+    update_set_in_dict(output_groups, "intellij-info-java", depset(ide_info_files))
+    update_set_in_dict(output_groups, "intellij-compile-java", depset(compile_files))
+    update_set_in_dict(output_groups, "intellij-resolve-java", depset(resolve_files))
     return True
 
 def _package_manifest_file_argument(f):
@@ -517,21 +521,23 @@ def build_java_package_manifest(ctx, target, source_files, suffix):
     """Builds the java package manifest for the given source files."""
     output = ctx.actions.declare_file(target.label.name + suffix)
 
-    args = []
-    args += ["--output_manifest", output.path]
-    args += ["--sources"]
-    args += [":".join([_package_manifest_file_argument(f) for f in source_files])]
-    argfile = ctx.new_file(
-        ctx.configuration.bin_dir,
-        target.label.name + suffix + ".params",
+    args = ctx.actions.args()
+    args.add("--output_manifest")
+    args.add(output.path)
+    args.add_joined(
+        "--sources",
+        source_files,
+        join_with = ":",
+        map_each = _package_manifest_file_argument,
     )
-    ctx.actions.write(output = argfile, content = "\n".join(args))
+    args.use_param_file("@%s")
+    args.set_param_file_format("multiline")
 
     ctx.actions.run(
-        inputs = source_files + [argfile],
+        inputs = source_files,
         outputs = [output],
         executable = ctx.executable._package_parser,
-        arguments = ["@" + argfile.path],
+        arguments = [args],
         mnemonic = "JavaPackageManifest",
         progress_message = "Parsing java package strings for " + str(target.label),
     )
@@ -578,7 +584,7 @@ def build_filtered_gen_jar(ctx, target, java, gen_java_sources, srcjars):
         jar = artifact_location(filtered_jar),
         source_jar = artifact_location(filtered_source_jar),
     )
-    intellij_resolve_files = depset([filtered_jar, filtered_source_jar])
+    intellij_resolve_files = [filtered_jar, filtered_source_jar]
     return output_jar, intellij_resolve_files
 
 def divide_java_sources(ctx):
@@ -635,14 +641,14 @@ def collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output
         resource_jar = library_artifact(android.resource_jar),
         **extra_ide_info
     )
-    resolve_files = depset(jars_from_output(android.idl.output))
+    resolve_files = jars_from_output(android.idl.output)
 
     if android.manifest and not android.manifest.is_source:
-        resolve_files = resolve_files | depset([android.manifest])
+        resolve_files += [android.manifest]
 
     ide_info["android_ide_info"] = android_info
     update_set_in_dict(output_groups, "intellij-info-android", depset([ide_info_file]))
-    update_set_in_dict(output_groups, "intellij-resolve-android", resolve_files)
+    update_set_in_dict(output_groups, "intellij-resolve-android", depset(resolve_files))
     return True
 
 def collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups):

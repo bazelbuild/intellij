@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.run;
 
-import com.android.tools.idea.fd.InstantRunUtils;
 import com.android.tools.idea.run.AndroidSessionInfo;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.Executor;
@@ -39,8 +38,7 @@ public class AndroidSessionInfoCompat {
         uniqueId,
         env.getExecutor().getId(),
         env.getExecutor().getActionName(),
-        env.getExecutionTarget(),
-        InstantRunUtils.isInstantRunEnabled(env));
+        env.getExecutionTarget());
   }
 
   // #api3.5

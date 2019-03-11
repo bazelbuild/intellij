@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
@@ -64,8 +63,6 @@ public final class FastBuildSuggestion
   private static final NotificationGroup NOTIFICATION_GROUP =
       new NotificationGroup(NOTIFICATION_TITLE, NotificationDisplayType.STICKY_BALLOON, true);
 
-  private static final BoolExperiment enabled = new BoolExperiment("fast.build.suggestions", false);
-
   private State state = new State();
 
   public static FastBuildSuggestion getInstance() {
@@ -75,8 +72,7 @@ public final class FastBuildSuggestion
   public void displayNotification(BlazeCommandRunConfiguration runProfile) {
     long msSinceLastDisplay = System.currentTimeMillis() - state.lastDisplayedTimeMs;
 
-    if (!enabled.getValue()
-        || state.triedFastBuild
+    if (state.triedFastBuild
         || state.timesDisplayed >= MAX_TIMES_TO_DISPLAY
         || msSinceLastDisplay < MINIMUM_TIME_BETWEEN_DISPLAY.toMillis()) {
       return;

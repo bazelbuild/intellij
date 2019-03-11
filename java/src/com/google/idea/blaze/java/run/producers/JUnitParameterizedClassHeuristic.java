@@ -31,14 +31,33 @@ public interface JUnitParameterizedClassHeuristic {
   /** Information about the parameterized test. */
   @AutoValue
   abstract class ParameterizedTestInfo {
-    public abstract String parameterizedRunnerClass();
+    public abstract String runnerClass();
 
-    public abstract String testSuffixRegex();
+    @Nullable
+    public abstract String testClassSuffixRegex();
 
-    public static ParameterizedTestInfo create(
-        String parameterizedRunnerClass, String testSuffixRegex) {
-      return new AutoValue_JUnitParameterizedClassHeuristic_ParameterizedTestInfo(
-          parameterizedRunnerClass, testSuffixRegex);
+    public abstract String testMethodSuffixRegex();
+
+    public static ParameterizedTestInfo create(String runnerClass, String testMethodSuffixRegex) {
+      return builder()
+          .runnerClass(runnerClass)
+          .testMethodSuffixRegex(testMethodSuffixRegex)
+          .build();
+    }
+
+    public static Builder builder() {
+      return new AutoValue_JUnitParameterizedClassHeuristic_ParameterizedTestInfo.Builder();
+    }
+
+    @AutoValue.Builder
+    public abstract static class Builder {
+      public abstract Builder runnerClass(String runnerClass);
+
+      public abstract Builder testClassSuffixRegex(@Nullable String testClassSuffixRegex);
+
+      public abstract Builder testMethodSuffixRegex(String testMethodSuffixRegex);
+
+      public abstract ParameterizedTestInfo build();
     }
   }
 

@@ -25,7 +25,7 @@ final class BazelTestEnvironmentVariables implements FastBuildTestEnvironmentMod
 
   @Override
   public void modify(
-      JavaCommandBuilder commandBuilder,
+      ModifiableJavaCommand commandBuilder,
       Kind kind,
       FastBuildInfo fastBuildInfo,
       BlazeInfo blazeInfo) {

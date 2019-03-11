@@ -139,7 +139,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
           "--fission=yes",
           "--test_timeout=3600",
           BlazeFlags.NO_CACHE_TEST_RESULTS,
-          BlazeFlags.LOCAL_TEST_EXECUTION,
+          BlazeFlags.EXCLUSIVE_TEST_EXECUTION,
           BlazeFlags.DISABLE_TEST_SHARDING);
 
   BlazeCidrLauncher(

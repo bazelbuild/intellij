@@ -23,8 +23,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.google.idea.blaze.android.cppapi.BlazeNativeDebuggerIdProvider"
                         serviceImplementation="com.google.idea.blaze.android.cppimpl.debug.BlazeNativeAndroidDebuggerIdProviderImpl"/>
-    <projectService serviceInterface="com.google.idea.sdkcompat.cidr.OCWorkspaceManagerAdapter"
-                    serviceImplementation="com.google.idea.blaze.android.cppimpl.BlazeCWorkspaceManager"/>
   </extensions>
 
   <extensions defaultExtensionNs="cidr.debugger">
