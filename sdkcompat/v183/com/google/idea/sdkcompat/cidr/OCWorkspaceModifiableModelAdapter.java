@@ -56,7 +56,7 @@ public class OCWorkspaceModifiableModelAdapter {
       OCWorkspaceImpl.ModifiableModel model,
       int serialVersion,
       CidrToolEnvironment toolEnvironment,
-      NullableFunction<File, VirtualFile> fileMapper) {
+      WorkspaceFileMapper fileMapper) {
     ImmutableList<String> issues =
         collectCompilerSettingsInParallel(model, toolEnvironment, fileMapper);
     model.setSourceVersion(serialVersion);
@@ -79,7 +79,7 @@ public class OCWorkspaceModifiableModelAdapter {
       Map<OCLanguageKind, PerLanguageCompilerOpts> configLanguages,
       Map<VirtualFile, PerFileCompilerOpts> configSourceFiles,
       CidrToolEnvironment toolEnvironment, // #api182
-      NullableFunction<File, VirtualFile> fileMapper // #api182
+      WorkspaceFileMapper fileMapper // #api182
       ) {
     OCResolveConfigurationImpl.ModifiableModel config =
         workspaceModifiable.addConfiguration(
@@ -133,17 +133,17 @@ public class OCWorkspaceModifiableModelAdapter {
   private static ImmutableList<String> collectCompilerSettingsInParallel(
       OCWorkspaceImpl.ModifiableModel model,
       CidrToolEnvironment toolEnvironment,
-      NullableFunction<File, VirtualFile> fileMapper) {
+      WorkspaceFileMapper fileMapper) {
     CompilerInfoCache compilerInfoCache = new CompilerInfoCache();
     List<Future<List<Message>>> compilerSettingsTasks = new ArrayList<>();
     ExecutorService compilerSettingExecutor =
         AppExecutorUtil.createBoundedApplicationPoolExecutor(
             "Compiler Settings Collector", Runtime.getRuntime().availableProcessors());
+    NullableFunction<File, VirtualFile> mapper = fileMapper::map;
     for (OCResolveConfiguration.ModifiableModel config : model.getConfigurations()) {
       compilerSettingsTasks.add(
           compilerSettingExecutor.submit(
-              () ->
-                  config.collectCompilerSettings(toolEnvironment, compilerInfoCache, fileMapper)));
+              () -> config.collectCompilerSettings(toolEnvironment, compilerInfoCache, mapper)));
     }
     ImmutableList.Builder<String> issues = ImmutableList.builder();
     for (Future<List<Message>> task : compilerSettingsTasks) {

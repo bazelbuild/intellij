@@ -21,14 +21,12 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.command.BlazeCommand;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
 import com.google.protobuf.repackaged.TextFormat;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -37,7 +35,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
-import java.util.zip.GZIPInputStream;
 
 /** Aspect strategy for Skylark. */
 public abstract class AspectStrategy implements BuildSystemExtensionPoint {
@@ -46,7 +43,7 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
       ExtensionPointName.create("com.google.idea.blaze.AspectStrategy");
 
   private static final Predicate<String> ASPECT_OUTPUT_FILE_PREDICATE =
-      str -> str.endsWith(".intellij-info.txt") || str.endsWith(".intellij-info.txt.gz");
+      str -> str.endsWith(".intellij-info.txt");
 
   /** A Blaze output group created by the aspect. */
   public enum OutputGroup {
@@ -114,20 +111,13 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
     return ASPECT_OUTPUT_FILE_PREDICATE;
   }
 
-  public final IntellijIdeInfo.TargetIdeInfo readAspectFile(File file) throws IOException {
-    try (InputStream inputStream = getAspectInputStream(file)) {
+  public final IntellijIdeInfo.TargetIdeInfo readAspectFile(OutputArtifact file)
+      throws IOException {
+    try (InputStream inputStream = file.getInputStream()) {
       IntellijIdeInfo.TargetIdeInfo.Builder builder = IntellijIdeInfo.TargetIdeInfo.newBuilder();
       TextFormat.Parser parser = TextFormat.Parser.newBuilder().setAllowUnknownFields(true).build();
       parser.merge(new InputStreamReader(inputStream, UTF_8), builder);
       return builder.build();
     }
-  }
-
-  private static InputStream getAspectInputStream(File file) throws IOException {
-    InputStream inputStream = new BufferedInputStream(new FileInputStream(file));
-    if (file.getName().endsWith(".gz")) {
-      inputStream = new GZIPInputStream(inputStream);
-    }
-    return inputStream;
   }
 }

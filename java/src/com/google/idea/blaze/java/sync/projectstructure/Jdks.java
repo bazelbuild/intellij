@@ -22,18 +22,19 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.sync.sdk.DefaultSdkProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.SystemProperties;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -69,14 +70,21 @@ public class Jdks {
   @Nullable
   @VisibleForTesting
   static Sdk findClosestMatch(LanguageLevel langLevel) {
-    return Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
+    return ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()).stream()
         .filter(
             sdk -> {
               LanguageLevel level = getJavaLanguageLevel(sdk);
               return level != null && level.isAtLeast(langLevel);
             })
+        .filter(Jdks::isValid)
         .min(Comparator.comparing(Jdks::getJavaLanguageLevel))
         .orElse(null);
+  }
+
+  private static boolean isValid(Sdk jdk) {
+    // detect the case of JDKs with no-longer-valid roots
+    return ApplicationManager.getApplication().isUnitTestMode()
+        || jdk.getSdkModificator().getRoots(OrderRootType.CLASSES).length != 0;
   }
 
   /**

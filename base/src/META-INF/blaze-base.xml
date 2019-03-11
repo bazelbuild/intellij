@@ -148,6 +148,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.google.idea.blaze.base.sync.BlazeSyncStartupActivity"/>
+    <postStartupActivity implementation="com.google.idea.blaze.base.project.DisableAndroidFrameworkActivity"/>
 
     <toolWindow id="Blaze Console"
                       anchor="bottom"
@@ -357,6 +358,9 @@
     </component>
     <component>
       <implementation-class>com.google.idea.blaze.base.sync.autosync.AutoSyncHandler</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.google.idea.blaze.base.sync.libraries.ExternalLibraryUpdater</implementation-class>
     </component>
   </project-components>
 

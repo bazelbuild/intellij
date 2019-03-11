@@ -17,6 +17,7 @@ package com.google.idea.sdkcompat.cidr;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.project.Project;
+import com.jetbrains.cidr.lang.psi.OCFile;
 import com.jetbrains.cidr.lang.symbols.symtable.FileSymbolTablesCache;
 import com.jetbrains.cidr.lang.symbols.symtable.FileSymbolTablesCache.SymbolsProperties.SymbolsKind;
 import com.jetbrains.cidr.lang.symbols.symtable.OCSymbolTablesBuildingActivity;
@@ -46,5 +47,11 @@ public class FileSymbolTablesCacheAdapter {
   @VisibleForTesting
   public static void disableSymbolTableBuildingInTests() {
     FileSymbolTablesCache.setShouldBuildTablesInTests(null);
+  }
+
+  // #api183
+  @VisibleForTesting
+  public static void handleOutOfCodeBlockChange(Project project, OCFile file) {
+    FileSymbolTablesCache.getInstance(project).handleFileChange(file, true);
   }
 }

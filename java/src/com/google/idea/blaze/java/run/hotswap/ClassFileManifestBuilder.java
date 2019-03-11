@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -126,9 +127,9 @@ public class ClassFileManifestBuilder {
       ImmutableList<File> jars;
       try {
         jars =
-            buildResultHelper
-                .getArtifactsForOutputGroups(
-                    ImmutableSet.of(JavaClasspathAspectStrategy.OUTPUT_GROUP))
+            LocalFileOutputArtifact.getLocalOutputFiles(
+                    buildResultHelper.getArtifactsForOutputGroups(
+                        ImmutableSet.of(JavaClasspathAspectStrategy.OUTPUT_GROUP)))
                 .stream()
                 .filter(f -> f.getName().endsWith(".jar"))
                 .collect(toImmutableList());

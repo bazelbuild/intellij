@@ -18,10 +18,11 @@ package com.google.idea.blaze.base.run.filter;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.run.filter.GenericFileMessageFilter.CustomOpenFileHyperlinkInfo;
 import com.intellij.execution.filters.Filter.Result;
-import com.intellij.mock.MockVirtualFile;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.mock.MockLocalFileSystem;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -34,41 +35,42 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class GenericFileMessageFilterTest extends BlazeTestCase {
 
-  private static final VirtualFile mockFile = MockVirtualFile.file("filename");
-  private static final Map<String, VirtualFile> filePathToVirtualFile = new HashMap<>();
+  private static final File mockFile = new File("filename");
+  private static final Map<String, File> filePathToFile = new HashMap<>();
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
     registerExtensionPoint(FileResolver.EP_NAME, FileResolver.class)
-        .registerExtension((project, path) -> filePathToVirtualFile.get(path));
+        .registerExtension((project, path) -> filePathToFile.get(path));
+    applicationServices.register(VirtualFileSystemProvider.class, MockLocalFileSystem::new);
   }
 
   @After
   public final void doTearDown() {
-    filePathToVirtualFile.clear();
+    filePathToFile.clear();
   }
 
   @Test
   public void testAbsoluteFilePath() {
-    filePathToVirtualFile.put("/absolute/file/path.go", mockFile);
+    filePathToFile.put("/absolute/file/path.go", mockFile);
     assertHasMatch("/absolute/file/path.go:10:50: error", 10, 50);
   }
 
   @Test
   public void testRelativeFilePath() {
-    filePathToVirtualFile.put("relative/file/p-a_th.go", mockFile);
+    filePathToFile.put("relative/file/p-a_th.go", mockFile);
     assertHasMatch("relative/file/p-a_th.go:10:50: some other message", 10, 50);
   }
 
   @Test
   public void testIgnoreLinesWithLeadingWhitespace() {
-    filePathToVirtualFile.put("/absolute/file/path.go", mockFile);
+    filePathToFile.put("/absolute/file/path.go", mockFile);
     assertThat(findMatch(" /absolute/file/path.go:10:50: string")).isNull();
   }
 
   @Test
   public void testIgnoreLineNumberWithoutColumnNumber() {
-    filePathToVirtualFile.put("file/path.go", mockFile);
+    filePathToFile.put("file/path.go", mockFile);
     assertThat(findMatch("file/path.go:10: string")).isNull();
   }
 
@@ -78,7 +80,7 @@ public class GenericFileMessageFilterTest extends BlazeTestCase {
     assertThat(result.getFirstHyperlinkInfo()).isInstanceOf(CustomOpenFileHyperlinkInfo.class);
 
     CustomOpenFileHyperlinkInfo link = (CustomOpenFileHyperlinkInfo) result.getFirstHyperlinkInfo();
-    assertThat(link.vf).isEqualTo(mockFile);
+    assertThat(link.vf).isNotNull();
     assertThat(link.line).isEqualTo(line - 1);
     assertThat(link.column).isEqualTo(column - 1);
   }

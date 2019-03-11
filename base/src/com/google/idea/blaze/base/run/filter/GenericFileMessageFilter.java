@@ -48,7 +48,7 @@ class GenericFileMessageFilter implements Filter {
     if (filePath == null) {
       return null;
     }
-    VirtualFile file = FileResolver.resolve(project, filePath);
+    VirtualFile file = FileResolver.resolveToVirtualFile(project, filePath);
     if (file == null) {
       return null;
     }

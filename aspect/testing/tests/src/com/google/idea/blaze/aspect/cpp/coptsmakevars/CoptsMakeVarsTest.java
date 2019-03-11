@@ -39,12 +39,10 @@ public class CoptsMakeVarsTest extends BazelIntellijAspectTest {
     assertThat(target.hasAndroidIdeInfo()).isFalse();
     CIdeInfo cTargetIdeInfo = target.getCIdeInfo();
 
-    assertThat(cTargetIdeInfo.getTargetCoptList()).hasSize(3);
+    assertThat(cTargetIdeInfo.getTargetCoptList()).hasSize(2);
     // These predefined variables' values are dependent on build system and configuration.
     assertThat(cTargetIdeInfo.getTargetCoptList().get(0))
-        .containsMatch("^-DPREFINED_GENDIR=(blaze|bazel)-out/[-0-9a-z]+/genfiles$");
-    assertThat(cTargetIdeInfo.getTargetCoptList().get(1))
         .containsMatch("^-DPREFINED_BINDIR=(blaze|bazel)-out/[-0-9a-z]+/bin$");
-    assertThat(cTargetIdeInfo.getTargetCoptList().get(2)).isEqualTo("-DPREFINED_BINDIR2=$(BINDIR)");
+    assertThat(cTargetIdeInfo.getTargetCoptList().get(1)).isEqualTo("-DPREFINED_BINDIR2=$(BINDIR)");
   }
 }

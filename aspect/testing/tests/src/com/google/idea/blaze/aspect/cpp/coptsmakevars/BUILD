@@ -9,7 +9,6 @@ cc_binary(
     name = "simple_prefined",
     srcs = ["simple/simple.cc"],
     copts = [
-        "-DPREFINED_GENDIR=$(GENDIR)",
         "-DPREFINED_BINDIR=$(BINDIR)",
         "-DPREFINED_BINDIR2=$$(BINDIR)",
     ],

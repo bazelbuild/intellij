@@ -29,9 +29,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-final class JavaCommandBuilder {
+final class JavaCommandBuilder implements ModifiableJavaCommand {
 
-  private String javaBinary;
+  private File javaBinary;
   private File workingDirectory;
   private String mainClass;
   private final List<String> jvmArgs = new ArrayList<>();
@@ -40,7 +40,7 @@ final class JavaCommandBuilder {
   private final Map<String, String> systemProperties = new HashMap<>();
   private final Map<String, String> environmentVariables = new HashMap<>();
 
-  JavaCommandBuilder setJavaBinary(String javaBinary) {
+  JavaCommandBuilder setJavaBinary(File javaBinary) {
     checkNotNull(javaBinary);
     checkArgument(this.javaBinary == null, "javaBinary was previously set");
     this.javaBinary = javaBinary;
@@ -54,7 +54,8 @@ final class JavaCommandBuilder {
     return this;
   }
 
-  File getWorkingDirectory() {
+  @Override
+  public File getWorkingDirectory() {
     return workingDirectory;
   }
 
@@ -65,19 +66,22 @@ final class JavaCommandBuilder {
     return this;
   }
 
-  JavaCommandBuilder addJvmArgument(String jvmArgument) {
+  @Override
+  public JavaCommandBuilder addJvmArgument(String jvmArgument) {
     checkNotNull(jvmArgument);
     this.jvmArgs.add(jvmArgument);
     return this;
   }
 
-  JavaCommandBuilder addClasspathElement(File classpath) {
+  @Override
+  public JavaCommandBuilder addClasspathElement(File classpath) {
     checkNotNull(classpath);
     this.classpaths.add(classpath);
     return this;
   }
 
-  JavaCommandBuilder addProgramArgument(String programArgument) {
+  @Override
+  public JavaCommandBuilder addProgramArgument(String programArgument) {
     checkNotNull(programArgument);
     this.programArgs.add(programArgument);
     return this;
@@ -87,21 +91,24 @@ final class JavaCommandBuilder {
     return ImmutableList.copyOf(programArgs);
   }
 
-  JavaCommandBuilder addSystemProperty(String property, String value) {
+  @Override
+  public JavaCommandBuilder addSystemProperty(String property, String value) {
     checkNotNull(property);
     checkNotNull(value);
     this.systemProperties.put(property, value);
     return this;
   }
 
-  JavaCommandBuilder addEnvironmentVariable(String variable, String value) {
+  @Override
+  public JavaCommandBuilder addEnvironmentVariable(String variable, String value) {
     checkNotNull(variable);
     checkNotNull(value);
     this.environmentVariables.put(variable, value);
     return this;
   }
 
-  String getEnvironmentVariable(String variable) {
+  @Override
+  public String getEnvironmentVariable(String variable) {
     String value = environmentVariables.get(variable);
     checkArgument(value != null, "JavaCommandBuilder doesn't have '%s' environment variable set");
     return value;
@@ -110,7 +117,7 @@ final class JavaCommandBuilder {
   GeneralCommandLine build() {
     checkArgument(javaBinary != null, "javaBinary was not set");
     checkArgument(mainClass != null, "mainClass was not set");
-    GeneralCommandLine commandLine = new GeneralCommandLine(javaBinary);
+    GeneralCommandLine commandLine = new GeneralCommandLine(javaBinary.getPath());
     commandLine.addParameters("-cp", classpaths.stream().map(File::getPath).collect(joining(":")));
     commandLine.addParameters(jvmArgs);
     commandLine.addParameters(

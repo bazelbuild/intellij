@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.Label;
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
@@ -37,18 +36,19 @@ public interface BuildResultHelper extends AutoCloseable {
    *
    * @return The build artifacts from the build operation.
    */
-  ImmutableList<File> getBuildArtifacts() throws GetArtifactsException;
+  ImmutableList<OutputArtifact> getBuildArtifacts() throws GetArtifactsException;
 
   /**
-   * Returns the build artifacts, attempting to filter out all artifacts not directly produced by
-   * the specified target. Some implementations may return artifacts produced by other targets.
+   * Returns the build artifacts, filtering out all artifacts not directly produced by the specified
+   * target.
    *
    * <p>May only be called once the build is complete, or no artifacts will be returned.
    */
-  ImmutableList<File> getBuildArtifactsForTarget(Label target) throws GetArtifactsException;
+  ImmutableList<OutputArtifact> getBuildArtifactsForTarget(Label target)
+      throws GetArtifactsException;
 
   /** Returns all build artifacts belonging to the given output groups. */
-  ImmutableList<File> getArtifactsForOutputGroups(Collection<String> outputGroups)
+  ImmutableList<OutputArtifact> getArtifactsForOutputGroups(Collection<String> outputGroups)
       throws GetArtifactsException;
 
   @Override

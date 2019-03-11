@@ -98,10 +98,8 @@ public final class BuildEventProtocolOutputReader {
 
   private static BlazeTestResult parseTestResult(
       String label, @Nullable Kind kind, BuildEventStreamProtos.TestResult testResult) {
-    ImmutableSet<File> files =
-        testResult
-            .getTestActionOutputList()
-            .stream()
+    ImmutableSet<OutputArtifact> files =
+        testResult.getTestActionOutputList().stream()
             .map(file -> parseFile(file, path -> path.endsWith(".xml")))
             .filter(Objects::nonNull)
             .collect(toImmutableSet());
@@ -122,9 +120,9 @@ public final class BuildEventProtocolOutputReader {
    *
    * @throws IOException if the BEP output file is incorrectly formatted
    */
-  public static ImmutableList<File> parseAllOutputFilenames(
+  public static ImmutableList<OutputArtifact> parseAllOutputFilenames(
       InputStream inputStream, Predicate<String> fileFilter) throws IOException {
-    ImmutableSet.Builder<File> files = ImmutableSet.builder();
+    ImmutableSet.Builder<OutputArtifact> files = ImmutableSet.builder();
     BuildEventStreamProtos.BuildEvent event;
     while ((event = BuildEventStreamProtos.BuildEvent.parseDelimitedFrom(inputStream)) != null) {
       files.addAll(parseFilenames(event, fileFilter));
@@ -137,7 +135,7 @@ public final class BuildEventProtocolOutputReader {
    *
    * @throws IOException if the BEP output file is incorrectly formatted
    */
-  public static ImmutableList<File> parseArtifactsForTarget(
+  public static ImmutableList<OutputArtifact> parseArtifactsForTarget(
       InputStream inputStream, Label label, Predicate<String> fileFilter) throws IOException {
     Map<String, List<BuildEventStreamProtos.File>> fileSets = new HashMap<>();
     List<String> fileSetsForLabel = new ArrayList<>();
@@ -164,7 +162,7 @@ public final class BuildEventProtocolOutputReader {
    *
    * @throws IOException if the BEP output file is incorrectly formatted
    */
-  public static ImmutableList<File> parseAllOutputGroupFilenames(
+  public static ImmutableList<OutputArtifact> parseAllOutputGroupFilenames(
       InputStream inputStream, Collection<String> outputGroups, Predicate<String> fileFilter)
       throws IOException {
     Map<String, BuildEventStreamProtos.NamedSetOfFiles> fileSets = new HashMap<>();
@@ -195,12 +193,12 @@ public final class BuildEventProtocolOutputReader {
    * Finds transitive closure of all files in the given file sets (traversing child filesets
    * transitively).
    */
-  private static ImmutableList<File> traverseFileSetsTransitively(
+  private static ImmutableList<OutputArtifact> traverseFileSetsTransitively(
       Map<String, BuildEventStreamProtos.NamedSetOfFiles> fileSets,
       Set<String> fileSetsToVisit,
       Predicate<String> fileFilter) {
     Queue<String> toVisit = Queues.newArrayDeque();
-    Set<File> allFiles = new HashSet<>();
+    Set<OutputArtifact> allFiles = new HashSet<>();
     Set<String> visited = new HashSet<>();
     toVisit.addAll(fileSetsToVisit);
     visited.addAll(fileSetsToVisit);
@@ -251,7 +249,7 @@ public final class BuildEventProtocolOutputReader {
    * If this is a NamedSetOfFiles event, reads all associated output files. Otherwise returns an
    * empty list.
    */
-  private static ImmutableList<File> parseFilenames(
+  private static ImmutableList<OutputArtifact> parseFilenames(
       BuildEventStreamProtos.BuildEvent event, Predicate<String> fileFilter) {
     if (!event.hasNamedSetOfFiles()) {
       return ImmutableList.of();
@@ -266,14 +264,15 @@ public final class BuildEventProtocolOutputReader {
   }
 
   @Nullable
-  private static File parseFile(BuildEventStreamProtos.File file, Predicate<String> fileFilter) {
+  private static OutputArtifact parseFile(
+      BuildEventStreamProtos.File file, Predicate<String> fileFilter) {
     String uri = file.getUri();
     if (uri == null || !uri.startsWith(URLUtil.FILE_PROTOCOL)) {
       return null;
     }
     try {
       File f = new File(new URI(uri));
-      return fileFilter.test(f.getPath()) ? f : null;
+      return fileFilter.test(f.getPath()) ? new LocalFileOutputArtifact(f) : null;
     } catch (URISyntaxException | IllegalArgumentException e) {
       return null;
     }

@@ -15,9 +15,13 @@
  */
 package com.google.idea.blaze.base.run.filter;
 
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Parses file strings in blaze/bazel output. */
@@ -29,16 +33,29 @@ public interface FileResolver {
   /**
    * Iterates through all available {@link FileResolver}s, returning the first successful result.
    */
-  static VirtualFile resolve(Project project, String fileString) {
-    for (FileResolver parser : EP_NAME.getExtensions()) {
-      VirtualFile result = parser.resolveToFile(project, fileString);
-      if (result != null) {
-        return result;
-      }
-    }
-    return null;
+  @Nullable
+  static VirtualFile resolveToVirtualFile(Project project, String fileString) {
+    return Arrays.stream(EP_NAME.getExtensions())
+        .map(r -> r.resolve(project, fileString))
+        .filter(Objects::nonNull)
+        .map(f -> VirtualFileSystemProvider.getInstance().getSystem().findFileByPath(f.getPath()))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+  }
+
+  /**
+   * Iterates through all available {@link FileResolver}s, returning the first successful result.
+   */
+  @Nullable
+  static File resolveToFile(Project project, String fileString) {
+    return Arrays.stream(EP_NAME.getExtensions())
+        .map(r -> r.resolve(project, fileString))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
   }
 
   @Nullable
-  VirtualFile resolveToFile(Project project, String fileString);
+  File resolve(Project project, String fileString);
 }

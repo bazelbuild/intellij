@@ -90,7 +90,7 @@ class ProjectModuleMocker implements Disposable {
       // don't commit module changes,
       // and make sure they're properly disposed when the test is finished
       for (ModifiableRootModel model : modules.values()) {
-        Disposer.register(ProjectModuleMocker.this, model::dispose);
+        Disposer.register(ProjectModuleMocker.this, model.getModule());
         if (model.getModule().getName().equals(BlazeDataStorage.WORKSPACE_MODULE_NAME)) {
           workspaceContentEntries = ImmutableList.copyOf(model.getContentEntries());
         }

@@ -208,7 +208,7 @@ def _repackaged_files_impl(ctx):
         fail("'prefix' must be a relative path")
     input_files = depset()
     for target in ctx.attr.srcs:
-        input_files = input_files | target.files
+        input_files = depset(transitive = [input_files, target.files])
 
     return [
         # TODO(brendandouglas): Only valid for Bazel 0.5 onwards. Uncomment when
@@ -281,7 +281,7 @@ def _plugin_deploy_zip_impl(ctx):
     exec_path_to_zip_path = {}
     for target in ctx.attr.srcs:
         data = target[repackaged_files_data]
-        input_files = input_files | data.files
+        input_files = depset(transitive = [input_files, data.files])
         for f in data.files:
             exec_path_to_zip_path[f.path] = output_path(f, data)
 

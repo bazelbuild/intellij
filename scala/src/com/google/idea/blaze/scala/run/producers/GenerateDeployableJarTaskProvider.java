@@ -16,7 +16,6 @@
 package com.google.idea.blaze.scala.run.producers;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.async.process.ExternalTask;
@@ -28,6 +27,7 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -58,6 +58,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import icons.BlazeIcons;
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
@@ -181,7 +182,13 @@ class GenerateDeployableJarTaskProvider
         throw new ExecutionException(e);
       }
 
-      return Iterables.getFirst(buildResultHelper.getBuildArtifacts(), null);
+      List<File> outputs =
+          LocalFileOutputArtifact.getLocalOutputFiles(buildResultHelper.getBuildArtifacts());
+      if (outputs.isEmpty()) {
+        throw new ExecutionException(
+            String.format("Failed to find deployable jar when building %s", target));
+      }
+      return outputs.get(0);
     } catch (GetArtifactsException e) {
       throw new ExecutionException(
           String.format(

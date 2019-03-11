@@ -24,16 +24,11 @@ import com.google.common.collect.Streams;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.io.VfsUtils;
-import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.ide.FrameStateListener;
-import com.intellij.ide.FrameStateManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.SyntheticLibrary;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import icons.BlazeIcons;
 import java.io.File;
@@ -56,7 +51,6 @@ public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
     implements ItemPresentation {
   private static final Logger logger = Logger.getInstance(BlazeExternalSyntheticLibrary.class);
 
-  private final Project project;
   private final String presentableText;
   private volatile ImmutableList<File> files;
   private volatile ImmutableSet<VirtualFile> validFiles = ImmutableSet.of();
@@ -64,9 +58,6 @@ public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
   private final AtomicBoolean inProgress = new AtomicBoolean();
   private volatile Instant lastUpdateTime;
   private volatile Future<?> validFilesUpdate = CompletableFuture.completedFuture(null);
-
-  private static final BoolExperiment updateExternalSyntheticLibraryOnFrameActivation =
-      new BoolExperiment("update.external.synthetic.library.on.frame.activation", true);
 
   /**
    * @param presentableText user-facing text used to name the library. It's also used to implement
@@ -78,38 +69,14 @@ public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
       String presentableText,
       ImmutableList<File> files,
       @Nullable ListenableFuture<Collection<File>> futureFiles) {
-    this.project = project;
     this.presentableText = presentableText;
     this.files = files;
     if (futureFiles != null) {
       futureFiles.addListener(
-          () -> {
-            try {
-              this.files =
-                  Streams.concat(files.stream(), futureFiles.get().stream())
-                      .collect(toImmutableList());
-              updateValidFiles();
-            } catch (InterruptedException ignored) {
-              // ignored
-            } catch (ExecutionException e) {
-              logger.warn(e);
-            }
-          },
-          MoreExecutors.directExecutor());
+          () -> addFutureFiles(project, futureFiles), MoreExecutors.directExecutor());
     }
     updateValidFiles();
-    FrameStateManager.getInstance()
-        .addListener(
-            new FrameStateListener() {
-              @Override
-              public void onFrameActivated() {
-                if (!updateExternalSyntheticLibraryOnFrameActivation.getValue()) {
-                  return;
-                }
-                ApplicationManager.getApplication()
-                    .executeOnPooledThread(BlazeExternalSyntheticLibrary.this::updateValidFiles);
-              }
-            });
+    ExternalLibraryUpdater.getInstance(project).addExternalLibrary(this);
   }
 
   public BlazeExternalSyntheticLibrary(
@@ -117,15 +84,36 @@ public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
     this(project, presentableText, files, null);
   }
 
-  private void updateValidFiles() {
+  private void addFutureFiles(Project project, ListenableFuture<Collection<File>> futureFiles) {
+    Collection<File> computedFiles = ImmutableList.of();
+    try {
+      computedFiles = futureFiles.get();
+    } catch (InterruptedException ignored) {
+      // ignored
+    } catch (ExecutionException e) {
+      logger.warn(e);
+    }
+    if (computedFiles.isEmpty()) {
+      return;
+    }
+    ImmutableList<File> oldFiles = files;
+    this.files =
+        Streams.concat(oldFiles.stream(), computedFiles.stream()).collect(toImmutableList());
+    if (updateValidFiles()) {
+      ExternalLibraryUpdater.getInstance(project).reindexRoots(project);
+    }
+  }
+
+  /** Returns true if files were updated. */
+  boolean updateValidFiles() {
+    ImmutableSet<VirtualFile> oldFiles = this.validFiles;
     this.validFiles =
         this.files.stream()
             .map(VfsUtils::resolveVirtualFile)
             .filter(Objects::nonNull)
             .filter(VirtualFile::isValid)
             .collect(toImmutableSet());
-    ProjectRootManagerEx.getInstanceEx(project)
-        .makeRootsChange(EmptyRunnable.INSTANCE, false, true);
+    return !validFiles.equals(oldFiles);
   }
 
   @Nullable
@@ -137,7 +125,7 @@ public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
   @Override
   public ImmutableSet<VirtualFile> getSourceRoots() {
     // Rebuild valid files set in the background if we haven't updated in the last hour.
-    if (!updateExternalSyntheticLibraryOnFrameActivation.getValue()
+    if (!ExternalLibraryUpdater.updateExternalSyntheticLibraryOnFrameActivation.getValue()
         && validFilesUpdate.isDone()
         && Duration.between(lastUpdateTime, Instant.now()).toHours() >= 1
         && inProgress.compareAndSet(false, true)) {

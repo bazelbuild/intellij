@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -50,8 +51,6 @@ import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEv
 import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -123,13 +122,13 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   private static class ParsedTargetResults {
     private final Label label;
     private final Collection<BlazeTestResult> results;
-    private final List<File> outputFiles;
+    private final List<OutputArtifact> outputFiles;
     private final List<TestSuite> targetSuites;
 
     ParsedTargetResults(
         Label label,
         Collection<BlazeTestResult> results,
-        List<File> outputFiles,
+        List<OutputArtifact> outputFiles,
         List<TestSuite> targetSuites) {
       this.label = label;
       this.results = results;
@@ -141,11 +140,11 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   /** Parse all test XML files from a single test target. */
   private static ParsedTargetResults parseTestXml(
       Label label, Collection<BlazeTestResult> results) {
-    List<File> outputFiles = new ArrayList<>();
+    List<OutputArtifact> outputFiles = new ArrayList<>();
     results.forEach(result -> outputFiles.addAll(result.getOutputXmlFiles()));
     List<TestSuite> targetSuites = new ArrayList<>();
-    for (File file : outputFiles) {
-      try (InputStream input = new FileInputStream(file)) {
+    for (OutputArtifact file : outputFiles) {
+      try (InputStream input = file.getInputStream()) {
         targetSuites.add(BlazeXmlSchema.parse(input));
       } catch (Exception e) {
         // ignore parsing errors -- most common cause is user cancellation, which we can't easily
@@ -192,7 +191,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
 
   /** Return false if there's output XML which should be parsed. */
   private static boolean noUsefulOutput(
-      Collection<BlazeTestResult> results, List<File> outputFiles) {
+      Collection<BlazeTestResult> results, List<OutputArtifact> outputFiles) {
     if (outputFiles.isEmpty()) {
       return true;
     }

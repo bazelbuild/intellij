@@ -15,11 +15,9 @@
  */
 package com.google.idea.blaze.base.run.filter;
 
-import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -29,20 +27,17 @@ public class StandardFileResolver implements FileResolver {
 
   @Nullable
   @Override
-  public VirtualFile resolveToFile(Project project, String fileString) {
+  public File resolve(Project project, String fileString) {
     File file = new File(fileString);
     if (file.isAbsolute()) {
-      return VirtualFileSystemProvider.getInstance()
-          .getSystem()
-          .findFileByPath(getCanonicalPathSafe(file));
+      return new File(getCanonicalPathSafe(file));
     }
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null) {
       return null;
     }
-    file = projectData.getWorkspacePathResolver().resolveToFile(fileString);
-    return VirtualFileSystemProvider.getInstance().getSystem().findFileByPath(file.getPath());
+    return projectData.getWorkspacePathResolver().resolveToFile(fileString);
   }
 
   /**

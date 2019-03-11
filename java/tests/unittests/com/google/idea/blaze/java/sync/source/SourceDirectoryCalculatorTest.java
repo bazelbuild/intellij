@@ -665,31 +665,6 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSourcesToSourceDirectories_sourcesOutsideOfModuleGeneratesIssue() {
-    mockInputStreamProvider.addFile(
-        "/root/java/com/facebook/Bla.java", "package com.facebook;\n public class Bla {}");
-    List<SourceArtifact> sourceArtifacts =
-        ImmutableList.of(
-            SourceArtifact.builder(TargetKey.forPlainTarget(LABEL))
-                .setArtifactLocation(
-                    ArtifactLocation.builder()
-                        .setRelativePath("java/com/facebook/Bla.java")
-                        .setIsSource(true))
-                .build());
-    sourceDirectoryCalculator.calculateContentEntries(
-        project,
-        context,
-        workspaceRoot,
-        decoder,
-        buildImportRoots(
-            ImmutableList.of(new WorkspacePath("java/com/google")), ImmutableList.of()),
-        sourceArtifacts,
-        NO_MANIFESTS);
-
-    issues.assertIssueContaining("Did not add");
-  }
-
-  @Test
   public void testSourcesToSourceDirectories_generatedSourcesOutsideOfModuleGeneratesNoIssue() {
     mockInputStreamProvider.addFile(
         "/root/java/com/facebook/Bla.java", "package com.facebook;\n public class Bla {}");

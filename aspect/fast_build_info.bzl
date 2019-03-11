@@ -43,12 +43,15 @@ def _fast_build_info_impl(target, ctx):
         )
     if JavaInfo in target:
         write_output = True
-        jvm_flags = getattr(ctx.rule.attr, "jvm_flags", [])
+        launcher = None
+        if hasattr(ctx.rule.attr, "_java_launcher") and ctx.rule.attr._java_launcher:
+            launcher = str(ctx.rule.attr._java_launcher.label)
         java_info = {
-            "jvm_flags": jvm_flags,
-            "test_size": getattr(ctx.rule.attr, "size", None),
             "sources": sources_from_target(ctx),
             "test_class": getattr(ctx.rule.attr, "test_class", None),
+            "test_size": getattr(ctx.rule.attr, "size", None),
+            "launcher": launcher,
+            "jvm_flags": getattr(ctx.rule.attr, "jvm_flags", []),
         }
         annotation_processing = target[JavaInfo].annotation_processing
         if annotation_processing:

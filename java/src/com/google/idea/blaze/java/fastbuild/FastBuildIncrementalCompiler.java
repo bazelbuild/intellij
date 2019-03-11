@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
 import java.io.File;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Given a base deploy jar and some target, perform a series of javac compilations that allows an
@@ -34,8 +33,5 @@ interface FastBuildIncrementalCompiler {
    * {@code buildState} must be present.
    */
   ListenableFuture<BuildOutput> compile(
-      BlazeContext context,
-      Label label,
-      FastBuildState buildState,
-      @Nullable Set<File> vfsModifiedFiles);
+      BlazeContext context, Label label, FastBuildState buildState, Set<File> modifiedFiles);
 }

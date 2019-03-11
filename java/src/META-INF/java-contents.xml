@@ -65,7 +65,7 @@
     <JavaClasspathAspectStrategy implementation="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy$BazelStrategy"/>
     <TestComparisonFailureParser implementation="com.google.idea.blaze.java.run.smrunner.JunitTestComparisonFailureParser"/>
     <FastBuildAspectStrategy implementation="com.google.idea.blaze.java.fastbuild.BazelFastBuildAspectStrategy"/>
-    <FastBuildTestEnvironmentCreatorFactory implementation="com.google.idea.blaze.java.run.fastbuild.BazelFastBuildTestEnvironmentCreatorFactory"/>
+    <FastBuildTestEnvironmentCreator implementation="com.google.idea.blaze.java.run.fastbuild.BazelFastBuildTestEnvironmentCreator"/>
     <FastBuildTestEnvironmentModifier implementation="com.google.idea.blaze.java.run.fastbuild.BazelTestEnvironmentVariables"/>
     <SyncStatusContributor implementation="com.google.idea.blaze.java.syncstatus.JavaSyncStatusContributor"/>
     <SyncDataExtractor implementation="com.google.idea.blaze.java.sync.model.BlazeJavaSyncData$Extractor"/>
@@ -150,8 +150,8 @@
                     interface="com.google.idea.blaze.java.run.producers.JUnitParameterizedClassHeuristic"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.JavaClasspathAspectStrategy"
                     interface="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildTestEnvironmentCreatorFactory"
-                    interface="com.google.idea.blaze.java.run.fastbuild.FastBuildTestEnvironmentCreatorFactory"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildTestEnvironmentCreator"
+                    interface="com.google.idea.blaze.java.run.fastbuild.FastBuildTestEnvironmentCreator"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildAspectStrategy"
                     interface="com.google.idea.blaze.java.fastbuild.FastBuildAspectStrategy"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildTestEnvironmentModifier"

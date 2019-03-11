@@ -23,7 +23,8 @@ import java.util.concurrent.ExecutionException;
 /** Reads the file sizes from a list of files. */
 public class FileSizeScanner {
 
-  private static final class FileSizeReader implements FileAttributeScanner.AttributeReader<Long> {
+  private static final class FileSizeReader
+      implements FileAttributeScanner.AttributeReader<File, Long> {
 
     private final FileOperationProvider fileOperationProvider;
 
@@ -46,6 +47,6 @@ public class FileSizeScanner {
       throws InterruptedException, ExecutionException {
     final FileSizeReader fileSizeReader = new FileSizeReader(FileOperationProvider.getInstance());
     return FileAttributeScanner.readAttributes(
-        fileList, fileSizeReader, BlazeExecutor.getInstance());
+        fileList, fileSizeReader, BlazeExecutor.getInstance().getExecutor());
   }
 }

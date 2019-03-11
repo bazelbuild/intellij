@@ -65,9 +65,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.psi.PsiManager;
-import com.jetbrains.cidr.lang.OCLanguageKind;
-import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
-import com.jetbrains.cidr.lang.workspace.headerRoots.IncludedHeadersRoot;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -162,8 +159,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     assertThat(configurations).hasSize(1);
     assertThat(get(configurations, "//foo/bar:one and 2 other target(s)")).isNotNull();
     for (BlazeResolveConfiguration configuration : configurations) {
-      assertThat(configuration.getProjectHeadersRootsInternal()).isEmpty();
-      assertThat(getHeaders(configuration, OCLanguageKind.CPP)).isEmpty();
+      assertThat(getHeaders(configuration)).isEmpty();
       assertThat(configuration.getTargetCopts()).isEmpty();
     }
   }
@@ -205,8 +201,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     assertThat(get(configurations, "//foo/bar:three").getTargetCopts())
         .isEqualTo(ImmutableList.of("-DDIFFERENT=1"));
     for (BlazeResolveConfiguration configuration : configurations) {
-      assertThat(configuration.getProjectHeadersRootsInternal()).isEmpty();
-      assertThat(getHeaders(configuration, OCLanguageKind.CPP)).isEmpty();
+      assertThat(getHeaders(configuration)).isEmpty();
     }
   }
 
@@ -240,18 +235,16 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
                     copts(),
                     includes("foo/different")))
             .build();
-    VirtualFile includeSame = createVirtualFile("/root/foo/same");
-    VirtualFile includeDifferent = createVirtualFile("/root/foo/different");
+    createVirtualFile("/root/foo/same");
+    createVirtualFile("/root/foo/different");
+
     List<BlazeResolveConfiguration> configurations = resolve(projectView, targetMap);
     assertThat(configurations).hasSize(2);
-    assertThat(
-            getHeaders(
-                get(configurations, "//foo/bar:one and 1 other target(s)"), OCLanguageKind.CPP))
-        .containsExactly(header(includeSame));
-    assertThat(getHeaders(get(configurations, "//foo/bar:three"), OCLanguageKind.CPP))
-        .containsExactly(header(includeDifferent));
+    assertThat(getHeaders(get(configurations, "//foo/bar:one and 1 other target(s)")))
+        .containsExactly(header("foo/same"));
+    assertThat(getHeaders(get(configurations, "//foo/bar:three")))
+        .containsExactly(header("foo/different"));
     for (BlazeResolveConfiguration configuration : configurations) {
-      assertThat(configuration.getProjectHeadersRootsInternal()).isEmpty();
       assertThat(configuration.getTargetCopts()).isEmpty();
     }
   }
@@ -594,13 +587,13 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
       List<BlazeResolveConfiguration> configurations, String name) {
     List<BlazeResolveConfiguration> filteredConfigurations =
         configurations.stream()
-            .filter(c -> c.getDisplayName(false).equals(name))
+            .filter(c -> c.getDisplayName().equals(name))
             .collect(Collectors.toList());
     assertWithMessage(
             String.format(
                 "%s contains %s",
                 configurations.stream()
-                    .map(c -> c.getDisplayName(false))
+                    .map(BlazeResolveConfiguration::getDisplayName)
                     .collect(Collectors.toList()),
                 name))
         .that(filteredConfigurations)
@@ -608,16 +601,15 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     return filteredConfigurations.get(0);
   }
 
-  private HeadersSearchRoot header(VirtualFile include) {
-    return new IncludedHeadersRoot(project, include, false, true);
+  private ExecutionRootPath header(String path) {
+    return new ExecutionRootPath(path);
   }
 
-  private static List<HeadersSearchRoot> getHeaders(
-      BlazeResolveConfiguration configuration, OCLanguageKind languageKind) {
-    return configuration.getLibraryHeadersRootsInternal(languageKind, null);
+  private static List<ExecutionRootPath> getHeaders(BlazeResolveConfiguration configuration) {
+    return configuration.getLibraryHeadersRootsInternal();
   }
 
-  private VirtualFile createVirtualFile(String path) {
+  private void createVirtualFile(String path) {
     VirtualFile stub =
         new StubVirtualFile() {
           @Override
@@ -626,7 +618,6 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
           }
         };
     when(mockFileSystem.findFileByIoFile(new File(path))).thenReturn(stub);
-    return stub;
   }
 
   private static void assertReusedConfigs(

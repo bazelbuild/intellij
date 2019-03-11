@@ -25,8 +25,15 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public class FeatureRolloutExperiment extends Experiment {
 
+  private final int defaultRollout;
+
   public FeatureRolloutExperiment(String key) {
+    this(key, 0);
+  }
+
+  public FeatureRolloutExperiment(String key, int defaultRollout) {
     super(key);
+    this.defaultRollout = defaultRollout;
   }
 
   /** Returns true if the feature should be enabled for this user. */
@@ -46,7 +53,7 @@ public class FeatureRolloutExperiment extends Experiment {
    */
   @VisibleForTesting
   int getRolloutPercentage() {
-    int percentage = ExperimentService.getInstance().getExperimentInt(getKey(), 0);
+    int percentage = ExperimentService.getInstance().getExperimentInt(getKey(), defaultRollout);
     return percentage < 0 || percentage > 100 ? 0 : percentage;
   }
 
@@ -67,6 +74,4 @@ public class FeatureRolloutExperiment extends Experiment {
     int hash = (userName + key).hashCode();
     return Math.abs(hash) % 100;
   }
-
-
 }

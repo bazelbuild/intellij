@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.idea.blaze.base.io.ModifiedTimeScanner;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import java.io.File;
@@ -52,7 +53,8 @@ public class FileCacheSynchronizer {
   public void synchronize(@Nullable BlazeContext context, boolean removeMissingFiles)
       throws InterruptedException, ExecutionException {
     // Discover state of source jars
-    ImmutableMap<File, Long> sourceFileTimestamps = FileDiffer.readFileState(traits.sourceFiles());
+    ImmutableMap<File, Long> sourceFileTimestamps =
+        ModifiedTimeScanner.readTimestamps(traits.sourceFiles());
     ImmutableMap.Builder<String, Long> sourceFileCacheKeyToTimestamp = ImmutableMap.builder();
     for (Map.Entry<File, Long> entry : sourceFileTimestamps.entrySet()) {
       String cacheKey = traits.sourceFileToCacheKey(entry.getKey());
@@ -62,32 +64,32 @@ public class FileCacheSynchronizer {
     // Discover current on-disk cache state
     Collection<File> cacheFiles = traits.enumerateCacheFiles();
     ImmutableMap<File, Long> cacheFileTimestamps =
-        FileDiffer.readFileState(new ArrayList<>(cacheFiles));
+        ModifiedTimeScanner.readTimestamps(new ArrayList<>(cacheFiles));
     ImmutableMap.Builder<String, Long> cachedFileCacheKeyToTimestamp = ImmutableMap.builder();
     for (Map.Entry<File, Long> entry : cacheFileTimestamps.entrySet()) {
       String cacheKey = traits.cacheFileToCacheKey(entry.getKey());
       cachedFileCacheKeyToTimestamp.put(cacheKey, entry.getValue());
     }
 
-    List<String> updatedFiles = new ArrayList<>();
-    List<String> removedFiles = new ArrayList<>();
-    FileDiffer.diffState(
-        cachedFileCacheKeyToTimestamp.build(),
-        sourceFileCacheKeyToTimestamp.build(),
-        updatedFiles,
-        removedFiles);
+    FilesDiff<String, String> diff =
+        FilesDiff.diffFiles(
+            cachedFileCacheKeyToTimestamp.build(), sourceFileCacheKeyToTimestamp.build());
 
     // Update cache files, and remove files if required.
     ListeningExecutorService executor = FetchExecutor.EXECUTOR;
-    List<ListenableFuture<?>> futures = new ArrayList<>();
-    futures.addAll(traits.updateFiles(updatedFiles, executor));
+    List<ListenableFuture<?>> futures =
+        new ArrayList<>(traits.updateFiles(diff.getUpdatedFiles(), executor));
     if (removeMissingFiles) {
-      futures.addAll(traits.removeFiles(removedFiles, executor));
+      futures.addAll(traits.removeFiles(diff.getRemovedFiles(), executor));
     }
 
     Futures.allAsList(futures).get();
     if (context != null) {
-      traits.logStats(context, updatedFiles.size(), removedFiles.size(), removeMissingFiles);
+      traits.logStats(
+          context,
+          diff.getUpdatedFiles().size(),
+          diff.getRemovedFiles().size(),
+          removeMissingFiles);
     }
   }
 }

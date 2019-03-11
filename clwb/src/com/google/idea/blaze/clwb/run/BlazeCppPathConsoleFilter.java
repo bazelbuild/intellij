@@ -82,7 +82,7 @@ public class BlazeCppPathConsoleFilter implements Filter, DumbAware {
   @Nullable
   private VirtualFile resolveFile(String relativePath) {
     try {
-      return FileResolver.resolve(project, relativePath);
+      return FileResolver.resolveToVirtualFile(project, relativePath);
     } catch (IndexNotReadyException e) {
       // Filter was called in dumb mode.
       // Not a problem since the console will re-run the filters after exiting dumb mode.

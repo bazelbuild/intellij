@@ -16,12 +16,9 @@
 package com.google.idea.blaze.base.io;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
-import java.util.Collection;
 import javax.annotation.Nullable;
 
 /** A helper class */
@@ -44,27 +41,5 @@ public final class VfsUtils {
     }
     boolean shouldRefresh = ApplicationManager.getApplication().isDispatchThread();
     return shouldRefresh ? fileSystem.refreshAndFindFileByIoFile(file) : null;
-  }
-
-  /**
-   * Attempts to asynchronously resolve the given files to {@link VirtualFile}. Calls the given
-   * {@link Runnable} when finished.
-   */
-  public static void asyncRefreshIoFiles(
-      Collection<File> files, boolean recursive, Runnable onFinish) {
-    Runnable refresh =
-        () ->
-            VirtualFileSystemProvider.getInstance()
-                .getSystem()
-                .refreshIoFiles(files, /* async= */ true, recursive, onFinish);
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    if (app.holdsReadLock()) {
-      // THE async IS A LIE!
-      // The VirtualFiles are still found synchronously,
-      // they're just refreshed asynchronously after that.
-      app.executeOnPooledThread(refresh);
-    } else {
-      refresh.run();
-    }
   }
 }

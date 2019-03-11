@@ -17,7 +17,10 @@ def _impl(ctx):
     for dep in deps:
         for k, v in dep.intellij_info.output_groups.items():
             update_set_in_dict(output_groups, k, v)
-            inputs = inputs | depset([f for f in v if f.short_path.endswith(".intellij-info.txt")])
+            inputs = depset(
+                [f for f in v.to_list() if f.short_path.endswith(".intellij-info.txt")],
+                transitive = [inputs],
+            )
 
     output_name = ctx.attr.output
     output = ctx.actions.declare_file(output_name)
@@ -26,12 +29,12 @@ def _impl(ctx):
     args += [":".join([f.path for f in inputs.to_list()])]
     for k, v in output_groups.items():
         args.append(k)
-        args.append(":".join([f.short_path for f in v]))
+        args.append(":".join([f.short_path for f in v.to_list()]))
     argfile = ctx.actions.declare_file(
         output_name + ".params",
     )
 
-    ctx.file_action(output = argfile, content = "\n".join(args))
+    ctx.actions.write(output = argfile, content = "\n".join(args))
     ctx.actions.run(
         inputs = inputs.to_list() + [argfile],
         outputs = [output],

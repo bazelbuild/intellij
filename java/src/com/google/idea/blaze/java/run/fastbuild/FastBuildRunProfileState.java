@@ -82,11 +82,11 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
     }
 
     FastBuildTestEnvironmentCreator testEnvironmentCreator =
-        FastBuildTestEnvironmentCreatorFactory.getInstance(Blaze.getBuildSystem(project))
-            .getTestEnvironmentCreator(project);
+        FastBuildTestEnvironmentCreator.getInstance(Blaze.getBuildSystem(project));
 
     GeneralCommandLine commandLine =
         testEnvironmentCreator.createCommandLine(
+            project,
             getConfiguration().getTargetKind(),
             getFastBuildInfo(),
             outputFile,

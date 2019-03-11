@@ -36,14 +36,17 @@ public final class BlazeFlags {
   // It expands to: --test_arg=--wrapper_script_flag=--debug --test_output=streamed
   //   --test_strategy=exclusive --test_timeout=9999 --nocache_test_results
   public static final String JAVA_TEST_DEBUG = "--java_debug";
-  // Runs tests locally, in sequence (rather than parallel), and streams their results to stdout.
+  // Streams stdout/stderr output from each test in real-time.
+  // Implies --test_strategy=exclusive and --test_sharding_strategy=disabled
   public static final String TEST_OUTPUT_STREAMED = "--test_output=streamed";
+  // Runs tests locally, in sequence (rather than parallel).
+  public static final String EXCLUSIVE_TEST_EXECUTION = "--test_strategy=exclusive";
+  // No sharding of tests
   public static final String DISABLE_TEST_SHARDING = "--test_sharding_strategy=disabled";
   // Filters the unit tests that are run (used with regexp for Java/Robolectric tests).
   public static final String TEST_FILTER = "--test_filter";
   // Re-run the test even if the results are cached.
   public static final String NO_CACHE_TEST_RESULTS = "--nocache_test_results";
-  public static final String LOCAL_TEST_EXECUTION = "--test_strategy=local";
 
   public static final String EXPERIMENTAL_SHOW_ARTIFACTS = "--experimental_show_artifacts";
 

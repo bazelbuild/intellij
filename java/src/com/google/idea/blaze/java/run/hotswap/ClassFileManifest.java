@@ -23,20 +23,17 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
-import com.google.idea.blaze.base.filecache.FileDiffer;
+import com.google.idea.blaze.base.filecache.FilesDiff;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -90,28 +87,21 @@ public class ClassFileManifest {
       Collection<File> jars, @Nullable ClassFileManifest previousManifest)
       throws ExecutionException {
     try {
-      Set<File> updatedFiles = new HashSet<>();
-      ImmutableMap<File, Long> newFileState =
-          FileDiffer.updateFiles(
-              previousManifest != null ? previousManifest.jarFileState : null,
-              jars,
-              updatedFiles,
-              new ArrayList<>());
-      if (newFileState == null) {
-        throw new ExecutionException("Couldn't read jar file state");
-      }
+      FilesDiff<File, File> diff =
+          FilesDiff.diffFileTimestamps(
+              previousManifest != null ? previousManifest.jarFileState : null, jars);
+
       ImmutableMap.Builder<File, JarManifest> jarManifests = ImmutableMap.builder();
       jars.forEach(
           f -> {
-            if (!updatedFiles.contains(f) && previousManifest != null) {
+            if (!diff.getUpdatedFiles().contains(f) && previousManifest != null) {
               jarManifests.put(f, previousManifest.jarManifests.get(f));
             }
           });
-      buildJarManifests(updatedFiles)
-          .stream()
+      buildJarManifests(diff.getUpdatedFiles()).stream()
           .filter(Objects::nonNull)
           .forEach(m -> jarManifests.put(m.jar, m));
-      return new ClassFileManifest(newFileState, jarManifests.build());
+      return new ClassFileManifest(diff.getNewFileState(), jarManifests.build());
     } catch (InterruptedException e) {
       throw new RunCanceledByUserException();
     } catch (java.util.concurrent.ExecutionException e) {

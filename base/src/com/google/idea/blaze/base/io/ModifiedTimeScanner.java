@@ -16,14 +16,16 @@
 package com.google.idea.blaze.base.io;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import java.io.File;
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 /** Reads the last modified times from a list of files. */
 public class ModifiedTimeScanner {
 
-  private static final class TimestampReader implements FileAttributeScanner.AttributeReader<Long> {
+  private static final class TimestampReader
+      implements FileAttributeScanner.AttributeReader<File, Long> {
 
     private final FileOperationProvider fileOperationProvider;
 
@@ -42,11 +44,13 @@ public class ModifiedTimeScanner {
     }
   }
 
-  public static ImmutableMap<File, Long> readTimestamps(Iterable<File> fileList)
+  public static ImmutableMap<File, Long> readTimestamps(Collection<File> files)
       throws InterruptedException, ExecutionException {
+    if (files.isEmpty()) {
+      return ImmutableMap.of();
+    }
     final TimestampReader timestampReader =
         new TimestampReader(FileOperationProvider.getInstance());
-    return FileAttributeScanner.readAttributes(
-        fileList, timestampReader, BlazeExecutor.getInstance());
+    return FileAttributeScanner.readAttributes(files, timestampReader, FetchExecutor.EXECUTOR);
   }
 }

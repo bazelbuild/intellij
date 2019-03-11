@@ -16,11 +16,9 @@
 package com.google.idea.blaze.java.fastbuild;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.File;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.CheckReturnValue;
@@ -56,34 +54,12 @@ abstract class FastBuildState {
 
   abstract FastBuildParameters buildParameters();
 
-  @Deprecated
-  abstract ImmutableSet<File> modifiedFiles();
-
   static FastBuildState create(
       ListenableFuture<BuildOutput> newBuildOutput,
       File compilerOutputDirectory,
-      FastBuildParameters buildParameters,
-      Collection<File> modifiedFiles) {
+      FastBuildParameters buildParameters) {
     return new AutoValue_FastBuildState(
-        Optional.empty(),
-        newBuildOutput,
-        compilerOutputDirectory,
-        buildParameters,
-        ImmutableSet.copyOf(modifiedFiles));
-  }
-
-  @Deprecated
-  @CheckReturnValue
-  FastBuildState withAdditionalModifiedFiles(Collection<File> additionalModifiedFiles) {
-    return new AutoValue_FastBuildState(
-        completedBuildOutput(),
-        newBuildOutput(),
-        compilerOutputDirectory(),
-        buildParameters(),
-        new ImmutableSet.Builder<File>()
-            .addAll(modifiedFiles())
-            .addAll(additionalModifiedFiles)
-            .build());
+        Optional.empty(), newBuildOutput, compilerOutputDirectory, buildParameters);
   }
 
   @CheckReturnValue
@@ -92,17 +68,12 @@ abstract class FastBuildState {
         Optional.of(completedBuildOutput),
         newBuildOutput(),
         compilerOutputDirectory(),
-        buildParameters(),
-        modifiedFiles());
+        buildParameters());
   }
 
   @CheckReturnValue
   FastBuildState withNewBuildOutput(ListenableFuture<BuildOutput> newBuildOutput) {
     return new AutoValue_FastBuildState(
-        completedBuildOutput(),
-        newBuildOutput,
-        compilerOutputDirectory(),
-        buildParameters(),
-        modifiedFiles());
+        completedBuildOutput(), newBuildOutput, compilerOutputDirectory(), buildParameters());
   }
 }

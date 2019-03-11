@@ -18,7 +18,6 @@ java_library(
     srcs = glob(["src/**/*.java"]) +
            select_for_ide(
                android_studio = glob(["studio/**/*.java"]),
-               clion = glob(["cidr/src/**/*.java"]),
                default = [],
            ) + select_for_plugin_api({
         "android-studio-3.3": glob(["cidr/v182/**/*.java"]),

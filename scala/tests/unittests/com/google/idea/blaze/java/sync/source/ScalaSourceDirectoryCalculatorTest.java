@@ -56,8 +56,7 @@ public class ScalaSourceDirectoryCalculatorTest extends BlazeTestCase {
   private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
 
   private final ArtifactLocationDecoder decoder =
-      (ArtifactLocationDecoder)
-          artifactLocation -> new File("/root", artifactLocation.getRelativePath());
+      artifactLocation -> new File("/root", artifactLocation.getRelativePath());
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
