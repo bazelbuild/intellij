@@ -42,8 +42,12 @@ public class BlazeConfigurationHandler {
     if (!artifact.getPath().startsWith(blazeOutPath)) {
       return null;
     }
-    String relativePath = artifact.getPath().substring(blazeOutPath.length());
-    int endIndex = relativePath.indexOf(File.separatorChar);
-    return endIndex == -1 ? relativePath : relativePath.substring(0, endIndex);
+    return getConfigurationPathComponent(artifact.getPath().substring(blazeOutPath.length()));
+  }
+
+  @Nullable
+  public String getConfigurationPathComponent(String blazeOutRelativePath) {
+    int endIndex = blazeOutRelativePath.indexOf(File.separatorChar);
+    return endIndex == -1 ? blazeOutRelativePath : blazeOutRelativePath.substring(0, endIndex);
   }
 }
