@@ -391,6 +391,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
               AtomicLong totalSizeLoaded = new AtomicLong(0);
               Set<LanguageClass> ignoredLanguages = Sets.newConcurrentHashSet();
 
+              // TODO(brendandouglas): if reading from objfs, use an executor with more threads
               ListeningExecutorService executor = BlazeExecutor.getInstance().getExecutor();
 
               // Read protos from any new files

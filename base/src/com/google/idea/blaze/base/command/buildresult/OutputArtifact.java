@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
+import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.io.FileAttributeScanner;
 import java.io.IOException;
@@ -54,6 +55,7 @@ public interface OutputArtifact {
   String getBlazeConfigurationString(BlazeConfigurationHandler handler);
 
   /** An input stream providing the contents of this artifact. */
+  @MustBeClosed
   InputStream getInputStream() throws IOException;
 
   /**

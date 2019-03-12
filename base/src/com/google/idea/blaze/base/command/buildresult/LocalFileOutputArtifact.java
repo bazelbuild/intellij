@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.intellij.openapi.util.io.FileUtil;
@@ -72,6 +73,7 @@ public class LocalFileOutputArtifact implements OutputArtifact {
   }
 
   @Override
+  @MustBeClosed
   public InputStream getInputStream() throws IOException {
     return new BufferedInputStream(new FileInputStream(file));
   }
