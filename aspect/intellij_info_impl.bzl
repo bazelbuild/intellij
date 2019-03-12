@@ -203,7 +203,7 @@ def update_set_in_dict(input_dict, key, other_set):
 
 def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates Python-specific output groups, returns false if not a Python target."""
-    if not hasattr(target, "py") or _is_language_specific_proto_library(ctx, target):
+    if not PyInfo in target or _is_language_specific_proto_library(ctx, target):
         return False
 
     py_semantics = getattr(semantics, "py", None)
@@ -216,7 +216,7 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         sources = sources_from_target(ctx),
         launcher = py_launcher,
     )
-    transitive_sources = target.py.transitive_sources
+    transitive_sources = target[PyInfo].transitive_sources
 
     update_set_in_dict(output_groups, "intellij-info-py", depset([ide_info_file]))
     update_set_in_dict(output_groups, "intellij-compile-py", transitive_sources)
