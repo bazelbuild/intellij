@@ -54,8 +54,7 @@ class BuildResultHelperBep implements BuildResultHelper {
 
   @Override
   public ImmutableList<OutputArtifact> getBuildArtifacts() throws GetArtifactsException {
-    return readResult(
-        input -> BuildEventProtocolOutputReader.parseAllOutputFilenames(input, fileFilter));
+    return readResult(input -> BuildEventProtocolOutputReader.parseAllOutputs(input, fileFilter));
   }
 
   @Override
@@ -70,7 +69,7 @@ class BuildResultHelperBep implements BuildResultHelper {
       throws GetArtifactsException {
     return readResult(
         input ->
-            BuildEventProtocolOutputReader.parseAllOutputGroupFilenames(
+            BuildEventProtocolOutputReader.parseAllArtifactsInOutputGroups(
                 input, outputGroups, fileFilter));
   }
 
