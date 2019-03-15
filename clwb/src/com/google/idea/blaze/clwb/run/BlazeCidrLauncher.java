@@ -114,7 +114,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
   private static final String DISABLE_BAZEL_GOOGLETEST_FILTER_WARNING =
       "bazel.test_filter.googletest_update";
 
-  static final BoolExperiment useRemoteDebugging = new BoolExperiment("cc.remote.debugging", true);
+  private static final BoolExperiment useRemoteDebugging =
+      new BoolExperiment("cc.remote.debugging", true);
 
   private static final BoolExperiment useRemoteDebuggingWrapper =
       new BoolExperiment("cc.remote.debugging.wrapper", true);
@@ -275,6 +276,18 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     return ImmutableList.of();
   }
 
+  static boolean shouldUseGdbserver() {
+    // Mac does not have gdbserver, so use the old gdb method for debugging
+    if (SystemInfo.isMac) {
+      return false;
+    }
+    // gdbserver wrapper is in shell script
+    if (SystemInfo.isWindows) {
+      return false;
+    }
+    return useRemoteDebugging.getValue();
+  }
+
   @Override
   public CidrDebugProcess createDebugProcess(CommandLineState state, XDebugSession session)
       throws ExecutionException {
@@ -290,8 +303,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     File workspaceRootDirectory = workspaceRoot.directory();
 
-    // Mac does not have gdbserver, so use the old gdb method for debugging
-    if (!useRemoteDebugging.getValue() || SystemInfo.isMac) {
+    if (!shouldUseGdbserver()) {
 
       File workingDir =
           new File(runner.executableToDebug + ".runfiles", workspaceRootDirectory.getName());

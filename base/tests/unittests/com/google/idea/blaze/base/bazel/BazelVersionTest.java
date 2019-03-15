@@ -28,7 +28,7 @@ public class BazelVersionTest {
   @Test
   public void testParseOldVersionFormat() {
     BazelVersion version = BazelVersion.parseVersion("release 0.4.1");
-    assertThat(version).isNotNull();
+    assertThat(version).isNull();
     assertThat(version.getMajor()).isEqualTo(0);
     assertThat(version.getMinor()).isEqualTo(4);
     assertThat(version.getBugfix()).isEqualTo(1);

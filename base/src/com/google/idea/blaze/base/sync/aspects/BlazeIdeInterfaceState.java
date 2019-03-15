@@ -37,17 +37,14 @@ final class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInter
 
   final ImmutableBiMap<String, TargetKey> ideInfoFileToTargetKey;
   final WorkspaceLanguageSettings workspaceLanguageSettings;
-  final String aspectStrategyName;
 
   private BlazeIdeInterfaceState(
       ImmutableMap<String, Long> ideInfoFileState,
       BiMap<String, TargetKey> ideInfoFileToTargetKey,
-      WorkspaceLanguageSettings workspaceLanguageSettings,
-      String aspectStrategyName) {
+      WorkspaceLanguageSettings workspaceLanguageSettings) {
     this.ideInfoFileState = ideInfoFileState;
     this.ideInfoFileToTargetKey = ImmutableBiMap.copyOf(ideInfoFileToTargetKey);
     this.workspaceLanguageSettings = workspaceLanguageSettings;
-    this.aspectStrategyName = aspectStrategyName;
   }
 
   private static BlazeIdeInterfaceState fromProto(ProjectData.BlazeIdeInterfaceState proto) {
@@ -56,8 +53,7 @@ final class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInter
         ImmutableBiMap.copyOf(
             ProtoWrapper.map(
                 proto.getFileToTargetMap(), Functions.identity(), TargetKey::fromProto)),
-        WorkspaceLanguageSettings.fromProto(proto.getWorkspaceLanguageSettings()),
-        proto.getAspectStrategyName());
+        WorkspaceLanguageSettings.fromProto(proto.getWorkspaceLanguageSettings()));
   }
 
   @Override
@@ -67,7 +63,6 @@ final class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInter
         .putAllFileToTarget(
             ProtoWrapper.map(ideInfoFileToTargetKey, Functions.identity(), TargetKey::toProto))
         .setWorkspaceLanguageSettings(workspaceLanguageSettings.toProto())
-        .setAspectStrategyName(aspectStrategyName)
         .build();
   }
 
@@ -82,14 +77,12 @@ final class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInter
     BlazeIdeInterfaceState that = (BlazeIdeInterfaceState) o;
     return Objects.equals(ideInfoFileState, that.ideInfoFileState)
         && Objects.equals(ideInfoFileToTargetKey, that.ideInfoFileToTargetKey)
-        && Objects.equals(workspaceLanguageSettings, that.workspaceLanguageSettings)
-        && Objects.equals(aspectStrategyName, that.aspectStrategyName);
+        && Objects.equals(workspaceLanguageSettings, that.workspaceLanguageSettings);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(
-        ideInfoFileState, ideInfoFileToTargetKey, workspaceLanguageSettings, aspectStrategyName);
+    return Objects.hash(ideInfoFileState, ideInfoFileToTargetKey, workspaceLanguageSettings);
   }
 
   static Builder builder() {
@@ -100,11 +93,10 @@ final class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInter
     ImmutableMap<String, Long> ideInfoFileState = null;
     BiMap<String, TargetKey> ideInfoToTargetKey = HashBiMap.create();
     WorkspaceLanguageSettings workspaceLanguageSettings;
-    String aspectStrategyName;
 
     BlazeIdeInterfaceState build() {
       return new BlazeIdeInterfaceState(
-          ideInfoFileState, ideInfoToTargetKey, workspaceLanguageSettings, aspectStrategyName);
+          ideInfoFileState, ideInfoToTargetKey, workspaceLanguageSettings);
     }
   }
 

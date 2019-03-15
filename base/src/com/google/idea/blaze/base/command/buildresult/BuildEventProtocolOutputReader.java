@@ -15,15 +15,11 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Queues;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
-import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.NamedSetOfFilesId;
-import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.OutputGroup;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
@@ -35,17 +31,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Queue;
-import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Utility methods for reading Blaze's build event procotol output, in proto form. */
@@ -54,7 +44,41 @@ public final class BuildEventProtocolOutputReader {
   private BuildEventProtocolOutputReader() {}
 
   /**
-   * Reads all test results from a BEP-formatted {@link InputStream}.
+   * Returns all output artifacts listed in the BEP output that satisfy the specified predicate.
+   *
+   * @throws IOException if the BEP output file is incorrectly formatted
+   */
+  public static ImmutableList<OutputArtifact> parseAllOutputs(
+      InputStream inputStream, Predicate<String> fileFilter) throws IOException {
+    ParsedBepOutput output = ParsedBepOutput.parseBepArtifacts(inputStream);
+    return output.getAllOutputArtifacts(fileFilter).asList();
+  }
+
+  /**
+   * Returns all artifacts associated with the given target that satisfy the specified predicate.
+   *
+   * @throws IOException if the BEP output file is incorrectly formatted
+   */
+  public static ImmutableList<OutputArtifact> parseArtifactsForTarget(
+      InputStream inputStream, Label label, Predicate<String> fileFilter) throws IOException {
+    ParsedBepOutput output = ParsedBepOutput.parseBepArtifacts(inputStream);
+    return output.getArtifactsForTarget(label, fileFilter).asList();
+  }
+
+  /**
+   * Returns all output artifacts belonging to the given output group(s).
+   *
+   * @throws IOException if the BEP output file is incorrectly formatted
+   */
+  public static ImmutableList<OutputArtifact> parseAllArtifactsInOutputGroups(
+      InputStream inputStream, Collection<String> outputGroups, Predicate<String> fileFilter)
+      throws IOException {
+    ParsedBepOutput output = ParsedBepOutput.parseBepArtifacts(inputStream);
+    return output.getArtifactsForOutputGroups(outputGroups, fileFilter).asList();
+  }
+
+  /**
+   * Returns all test results from a BEP-formatted {@link InputStream}.
    *
    * @throws IOException if the BEP {@link InputStream} is incorrectly formatted
    */
@@ -100,7 +124,7 @@ public final class BuildEventProtocolOutputReader {
       String label, @Nullable Kind kind, BuildEventStreamProtos.TestResult testResult) {
     ImmutableSet<OutputArtifact> files =
         testResult.getTestActionOutputList().stream()
-            .map(file -> parseFile(file, path -> path.endsWith(".xml")))
+            .map(file -> parseTestFile(file, path -> path.endsWith(".xml")))
             .filter(Objects::nonNull)
             .collect(toImmutableSet());
     return BlazeTestResult.create(
@@ -115,156 +139,9 @@ public final class BuildEventProtocolOutputReader {
     return TestStatus.valueOf(protoStatus.name());
   }
 
-  /**
-   * Reads all output files listed in the BEP output that satisfy the specified predicate.
-   *
-   * @throws IOException if the BEP output file is incorrectly formatted
-   */
-  public static ImmutableList<OutputArtifact> parseAllOutputFilenames(
-      InputStream inputStream, Predicate<String> fileFilter) throws IOException {
-    ImmutableSet.Builder<OutputArtifact> files = ImmutableSet.builder();
-    BuildEventStreamProtos.BuildEvent event;
-    while ((event = BuildEventStreamProtos.BuildEvent.parseDelimitedFrom(inputStream)) != null) {
-      files.addAll(parseFilenames(event, fileFilter));
-    }
-    return files.build().asList();
-  }
-
-  /**
-   * Reads all artifacts associated with the given target that satisfy the specified predicate.
-   *
-   * @throws IOException if the BEP output file is incorrectly formatted
-   */
-  public static ImmutableList<OutputArtifact> parseArtifactsForTarget(
-      InputStream inputStream, Label label, Predicate<String> fileFilter) throws IOException {
-    Map<String, List<BuildEventStreamProtos.File>> fileSets = new HashMap<>();
-    List<String> fileSetsForLabel = new ArrayList<>();
-    BuildEventStreamProtos.BuildEvent event;
-    while ((event = BuildEventStreamProtos.BuildEvent.parseDelimitedFrom(inputStream)) != null) {
-      if (event.getId().hasNamedSet() && event.hasNamedSetOfFiles()) {
-        fileSets.put(
-            event.getId().getNamedSet().getId(), event.getNamedSetOfFiles().getFilesList());
-      } else if (isTargetCompletedEvent(event, label)) {
-        fileSetsForLabel.addAll(getTargetFileSets(event));
-      }
-    }
-    return fileSetsForLabel.stream()
-        .map(fileSets::get)
-        .flatMap(List::stream)
-        .map(file -> parseFile(file, fileFilter))
-        .filter(Objects::nonNull)
-        .distinct()
-        .collect(toImmutableList());
-  }
-
-  /**
-   * Reads all output files belonging to the given output group(s).
-   *
-   * @throws IOException if the BEP output file is incorrectly formatted
-   */
-  public static ImmutableList<OutputArtifact> parseAllOutputGroupFilenames(
-      InputStream inputStream, Collection<String> outputGroups, Predicate<String> fileFilter)
-      throws IOException {
-    Map<String, BuildEventStreamProtos.NamedSetOfFiles> fileSets = new HashMap<>();
-    Set<String> fileSetsForOutputGroups = new HashSet<>();
-    BuildEventStreamProtos.BuildEvent event;
-    // optimize for #contains()
-    ImmutableSet<String> outputGroupsSet = ImmutableSet.copyOf(outputGroups);
-    while ((event = BuildEventStreamProtos.BuildEvent.parseDelimitedFrom(inputStream)) != null) {
-      if (event.getId().hasNamedSet() && event.hasNamedSetOfFiles()) {
-        fileSets.put(event.getId().getNamedSet().getId(), event.getNamedSetOfFiles());
-      } else if (event.hasCompleted()) {
-        fileSetsForOutputGroups.addAll(
-            event
-                .getCompleted()
-                .getOutputGroupList()
-                .stream()
-                .filter(o -> outputGroupsSet.contains(o.getName()))
-                .map(OutputGroup::getFileSetsList)
-                .flatMap(List::stream)
-                .map(NamedSetOfFilesId::getId)
-                .collect(Collectors.toList()));
-      }
-    }
-    return traverseFileSetsTransitively(fileSets, fileSetsForOutputGroups, fileFilter);
-  }
-
-  /**
-   * Finds transitive closure of all files in the given file sets (traversing child filesets
-   * transitively).
-   */
-  private static ImmutableList<OutputArtifact> traverseFileSetsTransitively(
-      Map<String, BuildEventStreamProtos.NamedSetOfFiles> fileSets,
-      Set<String> fileSetsToVisit,
-      Predicate<String> fileFilter) {
-    Queue<String> toVisit = Queues.newArrayDeque();
-    Set<OutputArtifact> allFiles = new HashSet<>();
-    Set<String> visited = new HashSet<>();
-    toVisit.addAll(fileSetsToVisit);
-    visited.addAll(fileSetsToVisit);
-    while (!toVisit.isEmpty()) {
-      String name = toVisit.remove();
-      BuildEventStreamProtos.NamedSetOfFiles fs = fileSets.get(name);
-      allFiles.addAll(
-          fs.getFilesList()
-              .stream()
-              .map(f -> parseFile(f, fileFilter))
-              .filter(Objects::nonNull)
-              .collect(toImmutableList()));
-      Set<String> children =
-          fs.getFileSetsList()
-              .stream()
-              .map(NamedSetOfFilesId::getId)
-              .filter(s -> !visited.contains(s))
-              .collect(toImmutableSet());
-      visited.addAll(children);
-      toVisit.addAll(children);
-    }
-    return ImmutableList.copyOf(allFiles);
-  }
-
-  private static boolean isTargetCompletedEvent(
-      BuildEventStreamProtos.BuildEvent event, Label label) {
-    return event.getId().hasTargetCompleted()
-        && event.hasCompleted()
-        && label.toString().equals(event.getId().getTargetCompleted().getLabel());
-  }
-
-  /** Returns all file set IDs associated with the given target completed event. */
-  private static ImmutableList<String> getTargetFileSets(BuildEventStreamProtos.BuildEvent event) {
-    if (!event.hasCompleted()) {
-      return ImmutableList.of();
-    }
-    return event
-        .getCompleted()
-        .getOutputGroupList()
-        .stream()
-        .map(OutputGroup::getFileSetsList)
-        .flatMap(List::stream)
-        .map(NamedSetOfFilesId::getId)
-        .collect(toImmutableList());
-  }
-
-  /**
-   * If this is a NamedSetOfFiles event, reads all associated output files. Otherwise returns an
-   * empty list.
-   */
-  private static ImmutableList<OutputArtifact> parseFilenames(
-      BuildEventStreamProtos.BuildEvent event, Predicate<String> fileFilter) {
-    if (!event.hasNamedSetOfFiles()) {
-      return ImmutableList.of();
-    }
-    return event
-        .getNamedSetOfFiles()
-        .getFilesList()
-        .stream()
-        .map(f -> parseFile(f, fileFilter))
-        .filter(Objects::nonNull)
-        .collect(toImmutableList());
-  }
-
+  /** TODO(b/118636150): don't assume test outputs are local files. */
   @Nullable
-  private static OutputArtifact parseFile(
+  private static OutputArtifact parseTestFile(
       BuildEventStreamProtos.File file, Predicate<String> fileFilter) {
     String uri = file.getUri();
     if (uri == null || !uri.startsWith(URLUtil.FILE_PROTOCOL)) {
