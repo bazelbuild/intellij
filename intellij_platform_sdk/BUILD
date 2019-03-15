@@ -45,9 +45,23 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-2019.1",
+    values = {
+        "define": "ij_product=intellij-2019.1",
+    },
+)
+
+config_setting(
     name = "intellij-ue-2018.3",
     values = {
         "define": "ij_product=intellij-ue-2018.3",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2019.1",
+    values = {
+        "define": "ij_product=intellij-ue-2019.1",
     },
 )
 
@@ -61,6 +75,14 @@ config_setting(
 config_setting(
     name = "android-studio-beta",
     values = {
+        "define": "ij_product=android-studio-beta",
+    },
+)
+
+config_setting(
+    name = "android-studio-beta-mac",
+    values = {
+        "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-beta",
     },
 )
@@ -82,6 +104,14 @@ config_setting(
 config_setting(
     name = "android-studio-3.4",
     values = {
+        "define": "ij_product=android-studio-3.4",
+    },
+)
+
+config_setting(
+    name = "android-studio-3.4-mac",
+    values = {
+        "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-3.4",
     },
 )
@@ -208,6 +238,7 @@ java_library(
     exports = select_for_plugin_api({
         "clion-2018.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2018.3": ["@jsr305_annotations//jar"],
+        "intellij-ue-2019.1": ["@jsr305_annotations//jar"],
         "default": [":plugin_api"],
     }),
 )

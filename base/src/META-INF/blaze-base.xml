@@ -333,6 +333,8 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.SyncStatusContributor" interface="com.google.idea.blaze.base.syncstatus.SyncStatusContributor"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildResultHelperProvider"
                     interface="com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.OutputArtifactParser"
+                    interface="com.google.idea.blaze.base.command.buildresult.OutputArtifactParser"/>
   </extensionPoints>
 
   <application-components>
@@ -455,6 +457,7 @@
     <LoggedSettingsProvider implementation="com.google.idea.blaze.base.settings.BlazeUserSettings$SettingsLogger"/>
     <TargetKindProvider implementation="com.google.idea.blaze.base.model.primitives.GenericBlazeRules"/>
     <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.OutsideProjectTestContextProvider"/>
+    <OutputArtifactParser implementation="com.google.idea.blaze.base.command.buildresult.OutputArtifactParser$LocalFileParser"/>
   </extensions>
 
 </idea-plugin>

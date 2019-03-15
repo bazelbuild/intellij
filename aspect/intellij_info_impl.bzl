@@ -54,6 +54,10 @@ PREREQUISITE_DEPS = []
 COMPILE_TIME = 0
 RUNTIME = 1
 
+# PythonVersion enum; must match PyIdeInfo.PythonVersion
+PY2 = 1
+PY3 = 2
+
 ##### Helpers
 
 def source_directory_tuple(resource_file):
@@ -199,6 +203,22 @@ def update_set_in_dict(input_dict, key, other_set):
     """Updates depset in dict, merging it with another depset."""
     input_dict[key] = depset(transitive = [input_dict.get(key, depset()), other_set])
 
+def _get_output_mnemonic(ctx):
+    """Gives the output directory mnemonic for some target context."""
+    return ctx.configuration.bin_dir.path.split("/")[1]
+
+def _get_python_version(ctx):
+    if _get_output_mnemonic(ctx).find("-py3-") != -1:
+        return PY3
+    if _get_output_mnemonic(ctx).find("-py2-") != -1:
+        return PY2
+
+    # Currently, lack of "-py?-" in the output directory mnemonic indicates PY2, but this will
+    # change with PY3-as-default in bazel. Currently set by:
+    # https://github.com/bazelbuild/bazel/blob/558b717e906156477b1c6bd29d049a0fb8e18b27/src/main/java/com/google/devtools/build/lib/rules/python/PythonConfiguration.java#L50
+    # https://github.com/bazelbuild/bazel/blob/558b717e906156477b1c6bd29d049a0fb8e18b27/src/main/java/com/google/devtools/build/lib/rules/python/PythonConfiguration.java#L106-L123
+    return PY2
+
 ##### Builders for individual parts of the aspect output
 
 def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
@@ -215,6 +235,7 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     ide_info["py_ide_info"] = struct_omit_none(
         sources = sources_from_target(ctx),
         launcher = py_launcher,
+        python_version = _get_python_version(ctx),
     )
     transitive_sources = target[PyInfo].transitive_sources
 

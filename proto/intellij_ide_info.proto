@@ -16,10 +16,9 @@ syntax = "proto3";
 
 package blaze;
 
+import "proto/common.proto";
 
 option java_package = "com.google.devtools.intellij.ideinfo";
-
-import "proto/common.proto";
 
 message JavaSourcePackage {
   string package_string = 2;
@@ -97,14 +96,20 @@ message AndroidAarIdeInfo {
 }
 
 message PyIdeInfo {
+  enum PythonVersion {
+    UNKNOWN = 0;
+    PY2 = 1;
+    PY3 = 2;
+  }
   repeated ArtifactLocation sources = 1;
   string launcher = 2;
+  PythonVersion python_version = 3;
 }
 
 message GoIdeInfo {
   repeated ArtifactLocation sources = 1;
   string import_path = 2;
-  string library_label = 3; // only for go_test / go_appengine_test
+  string library_label = 3;  // only for go_test / go_appengine_test
   string library_kind = 4 [deprecated = true];
 }
 
