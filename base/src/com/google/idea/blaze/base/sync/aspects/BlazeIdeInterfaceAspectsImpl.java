@@ -130,14 +130,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       oldTargetMap = null;
     }
 
-    // If the aspect strategy has changed, redo everything from scratch
     AspectStrategy aspectStrategy = AspectStrategy.getInstance(blazeVersionData.buildSystem());
-    if (prevState != null
-        && !Objects.equals(prevState.aspectStrategyName, aspectStrategy.getName())) {
-      prevState = null;
-      oldTargetMap = null;
-    }
-
     IdeInfoResult ideInfoResult =
         getIdeInfo(
             project,
@@ -370,7 +363,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
               BlazeIdeInterfaceState.Builder state = BlazeIdeInterfaceState.builder();
               state.ideInfoFileState = ImmutableMap.copyOf(nextFileState);
               state.workspaceLanguageSettings = workspaceLanguageSettings;
-              state.aspectStrategyName = aspectStrategy.getName();
 
               Map<TargetKey, TargetIdeInfo> targetMap = Maps.newHashMap();
               if (prevState != null && !targetMapReference.isNull()) {

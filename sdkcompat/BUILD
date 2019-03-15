@@ -25,7 +25,9 @@ java_library(
         "android-studio-3.4": ["//sdkcompat/v183"],
         "android-studio-3.5": ["//sdkcompat/v183"],
         "intellij-2018.3": ["//sdkcompat/v183"],
+        "intellij-2019.1": ["//sdkcompat/v191"],
         "intellij-ue-2018.3": ["//sdkcompat/v183"],
+        "intellij-ue-2019.1": ["//sdkcompat/v191"],
         "clion-2018.3": ["//sdkcompat/v183"],
     }),
 )
