@@ -18,6 +18,7 @@ package com.google.idea.blaze.aspect.python.pybinary;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.IntellijAspectTestFixture;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo.PythonVersion;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
 import com.google.idea.blaze.BazelIntellijAspectTest;
 import org.junit.Test;
@@ -34,9 +35,38 @@ public class PyBinaryTest extends BazelIntellijAspectTest {
     assertThat(target.getKindString()).isEqualTo("py_binary");
     assertThat(relativePathsForArtifacts(target.getPyIdeInfo().getSourcesList()))
         .containsExactly(testRelative("simple.py"));
+    assertThat(target.getPyIdeInfo().getPythonVersion()).isEqualTo(PythonVersion.PY2);
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-py"))
         .containsExactly(testRelative(intellijInfoFileName("simple")));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
+  }
+
+  @Test
+  public void testPy2Binary() throws Exception {
+    IntellijAspectTestFixture testFixture = loadTestFixture(":simple2_fixture");
+    TargetIdeInfo target = findTarget(testFixture, ":simple2");
+    assertThat(target.getKindString()).isEqualTo("py_binary");
+    assertThat(relativePathsForArtifacts(target.getPyIdeInfo().getSourcesList()))
+        .containsExactly(testRelative("simple.py"));
+    assertThat(target.getPyIdeInfo().getPythonVersion()).isEqualTo(PythonVersion.PY2);
+
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-py"))
+        .containsExactly(testRelative(intellijInfoFileName("simple2")));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
+  }
+
+  @Test
+  public void testPy3Binary() throws Exception {
+    IntellijAspectTestFixture testFixture = loadTestFixture(":simple3_fixture");
+    TargetIdeInfo target = findTarget(testFixture, ":simple3");
+    assertThat(target.getKindString()).isEqualTo("py_binary");
+    assertThat(relativePathsForArtifacts(target.getPyIdeInfo().getSourcesList()))
+        .containsExactly(testRelative("simple.py"));
+    assertThat(target.getPyIdeInfo().getPythonVersion()).isEqualTo(PythonVersion.PY3);
+
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-py"))
+        .containsExactly(testRelative(intellijInfoFileName("simple3")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
   }
 }
