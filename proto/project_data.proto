@@ -20,12 +20,11 @@ syntax = "proto3";
 
 package blaze;
 
-
-option java_package = "com.google.devtools.intellij.model";
-
 import "third_party/bazel/src/main/protobuf/build.proto";
 import "proto/common.proto";
 import "proto/intellij_ide_info.proto";
+
+option java_package = "com.google.devtools.intellij.model";
 
 message TargetMap {
   repeated TargetIdeInfo targets = 1;
@@ -81,7 +80,7 @@ message BlazeJavaImportResult {
 message BlazeJavaSyncData {
   BlazeJavaImportResult import_result = 1;
   repeated string excluded_libraries = 2;
-};
+}
 
 message TargetToJdepsMap {
   message Entry {
@@ -106,7 +105,7 @@ message BlazeIdeInterfaceState {
   map<string, int64> file_state = 1;
   map<string, TargetKey> file_to_target = 2;
   WorkspaceLanguageSettings workspace_language_settings = 3;
-  string aspect_strategy_name = 4;
+  reserved 4;
 }
 
 message AndroidResourceModule {

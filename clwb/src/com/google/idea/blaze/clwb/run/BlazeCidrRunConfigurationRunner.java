@@ -37,7 +37,6 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
@@ -99,7 +98,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
         BuildResultHelperProvider.forFiles(env.getProject(), file -> true)) {
 
       List<String> extraDebugFlags;
-      if (!BlazeCidrLauncher.useRemoteDebugging.getValue() || SystemInfo.isMac) {
+      if (!BlazeCidrLauncher.shouldUseGdbserver()) {
         extraDebugFlags =
             ImmutableList.of(
                 "--compilation_mode=dbg",
