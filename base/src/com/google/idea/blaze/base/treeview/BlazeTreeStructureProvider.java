@@ -122,11 +122,17 @@ public class BlazeTreeStructureProvider implements TreeStructureProvider, DumbAw
 
       @Override
       public boolean isFlattenPackages() {
+        if (original instanceof ProjectViewSettings) {
+          return ((ProjectViewSettings) original).isFlattenPackages();
+        }
         return false;
       }
 
       @Override
       public boolean isAbbreviatePackageNames() {
+        if (original instanceof ProjectViewSettings) {
+          return ((ProjectViewSettings) original).isAbbreviatePackageNames();
+        }
         return false;
       }
 
