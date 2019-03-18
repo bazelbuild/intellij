@@ -1,4 +1,8 @@
-v2019.03.04
+v2019.03.18
+===========
+* Bazel problems view: allow filtering based on severity
+
+v2019.03.05
 ===========
 * Fix escaping of quoted run configuration flags
 
