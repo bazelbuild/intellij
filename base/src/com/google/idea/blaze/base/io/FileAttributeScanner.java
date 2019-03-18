@@ -22,12 +22,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /** Reads file attributes from a list files in parallel. */
 public class FileAttributeScanner {
 
   /** Reads an attribute from a file. */
   public interface AttributeReader<F, T> {
+    @Nullable
     T getAttribute(F file);
 
     boolean isValid(T attribute);
@@ -42,7 +44,7 @@ public class FileAttributeScanner {
           executor.submit(
               () -> {
                 T attribute = attributeReader.getAttribute(file);
-                if (attributeReader.isValid(attribute)) {
+                if (attribute != null && attributeReader.isValid(attribute)) {
                   return new FilePair<>(file, attribute);
                 }
                 return null;

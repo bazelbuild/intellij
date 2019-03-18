@@ -44,11 +44,11 @@ import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
-import com.google.idea.blaze.base.filecache.FilesDiff;
+import com.google.idea.blaze.base.filecache.ArtifactState;
+import com.google.idea.blaze.base.filecache.ArtifactsDiff;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.io.FileAttributeScanner;
 import com.google.idea.blaze.base.lang.AdditionalLanguagesHelper;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
@@ -56,7 +56,6 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -152,16 +151,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     }
 
     Collection<OutputArtifact> files = ideInfoResult.files;
-    FilesDiff<OutputArtifact, String> diff;
+    ArtifactsDiff diff;
     try {
-      ImmutableMap<OutputArtifact, Long> fileState =
-          FileAttributeScanner.readAttributes(
-              files, OutputArtifact.TIMESTAMP_READER, FetchExecutor.EXECUTOR);
       diff =
-          FilesDiff.diffFiles(
-              prevState != null ? prevState.ideInfoFileState : null,
-              fileState,
-              OutputArtifact::getKey);
+          ArtifactsDiff.diffArtifacts(prevState != null ? prevState.ideInfoFileState : null, files);
     } catch (InterruptedException e) {
       throw new ProcessCanceledException(e);
     } catch (ExecutionException e) {
@@ -170,20 +163,20 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     }
 
     // if we're merging with the old state, no files are removed
-    int targetCount = files.size() + (mergeWithOldState ? diff.getRemovedFiles().size() : 0);
-    int removedCount = mergeWithOldState ? 0 : diff.getRemovedFiles().size();
+    int targetCount = files.size() + (mergeWithOldState ? diff.getRemovedOutputs().size() : 0);
+    int removedCount = mergeWithOldState ? 0 : diff.getRemovedOutputs().size();
 
     context.output(
         PrintOutput.log(
             String.format(
                 "Total rules: %d, new/changed: %d, removed: %d",
-                targetCount, diff.getUpdatedFiles().size(), removedCount)));
+                targetCount, diff.getUpdatedOutputs().size(), removedCount)));
 
     // TODO: handle prefetching for arbitrary OutputArtifacts
     ListenableFuture<?> prefetchFuture =
         PrefetchService.getInstance()
             .prefetchFiles(
-                LocalFileOutputArtifact.getLocalOutputFiles(diff.getUpdatedFiles()), true, false);
+                LocalFileOutputArtifact.getLocalOutputFiles(diff.getUpdatedOutputs()), true, false);
     if (!FutureUtil.waitForFuture(context, prefetchFuture)
         .timed("FetchAspectOutput", EventType.Prefetching)
         .withProgressMessage("Reading IDE info result...")
@@ -203,13 +196,13 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             project,
             context,
             prevState,
-            diff.getNewFileState(),
+            diff.getNewState(),
             configHandler,
             workspaceLanguageSettings,
             importRoots,
             aspectStrategy,
-            diff.getUpdatedFiles(),
-            diff.getRemovedFiles(),
+            diff.getUpdatedOutputs(),
+            diff.getRemovedOutputs(),
             mergeWithOldState,
             targetMapReference);
     if (state == null) {
@@ -336,13 +329,13 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       Project project,
       BlazeContext parentContext,
       @Nullable BlazeIdeInterfaceState prevState,
-      ImmutableMap<OutputArtifact, Long> fileState,
+      ImmutableMap<String, ArtifactState> fileState,
       BlazeConfigurationHandler configHandler,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       ImportRoots importRoots,
       AspectStrategy aspectStrategy,
       List<OutputArtifact> newFiles,
-      Collection<String> removedFiles,
+      Collection<ArtifactState> removedFiles,
       boolean mergeWithOldState,
       Ref<TargetMap> targetMapReference) {
     Result<BlazeIdeInterfaceState> result =
@@ -351,8 +344,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             context -> {
               context.push(new TimingScope("UpdateTargetMap", EventType.Other));
 
-              Map<String, Long> nextFileState = new HashMap<>();
-              fileState.forEach((key, value) -> nextFileState.put(key.getKey(), value));
+              Map<String, ArtifactState> nextFileState = new HashMap<>(fileState);
 
               // If we're not removing we have to merge the old state
               // into the new one or we'll miss file removes next time
@@ -372,8 +364,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
               // Update removed unless we're merging with the old state
               if (!mergeWithOldState) {
-                for (String removedFile : removedFiles) {
-                  TargetKey key = state.ideInfoToTargetKey.remove(removedFile);
+                for (ArtifactState removed : removedFiles) {
+                  TargetKey key = state.ideInfoToTargetKey.remove(removed.getKey());
                   if (key != null) {
                     targetMap.remove(key);
                   }

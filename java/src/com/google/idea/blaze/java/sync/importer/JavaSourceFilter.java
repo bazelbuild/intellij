@@ -90,7 +90,7 @@ public class JavaSourceFilter {
     }
   }
 
-  public Iterable<TargetIdeInfo> getSourceTargets() {
+  public Collection<TargetIdeInfo> getSourceTargets() {
     return sourceTargets;
   }
 

@@ -49,6 +49,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.google.idea.blaze.java.AndroidBlazeRules;
@@ -704,7 +705,12 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
 
     public void setTargetMap(TargetMap targetMap) {
       ArtifactLocationDecoder decoder =
-          (location) -> new File("/src", location.getExecutionRootRelativePath());
+          new MockArtifactLocationDecoder() {
+            @Override
+            public File decode(ArtifactLocation location) {
+              return new File("/src", location.getExecutionRootRelativePath());
+            }
+          };
       this.blazeProjectData =
           MockBlazeProjectDataBuilder.builder(workspaceRoot)
               .setTargetMap(targetMap)

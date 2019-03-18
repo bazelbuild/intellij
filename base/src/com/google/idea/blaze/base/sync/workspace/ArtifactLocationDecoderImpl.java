@@ -15,12 +15,15 @@
  */
 package com.google.idea.blaze.base.sync.workspace;
 
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /** Decodes intellij_ide_info.proto ArtifactLocation file paths */
 public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecoder {
@@ -32,6 +35,16 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
   public ArtifactLocationDecoderImpl(BlazeInfo blazeInfo, WorkspacePathResolver pathResolver) {
     this.blazeInfo = blazeInfo;
     this.pathResolver = pathResolver;
+  }
+
+  @Nullable
+  @Override
+  public OutputArtifact resolveOutput(ArtifactLocation artifact) {
+    if (artifact.isSource()) {
+      return null;
+    }
+    // TODO(brendandouglas): support non-local output artifacts
+    return new LocalFileOutputArtifact(decode(artifact));
   }
 
   @Override

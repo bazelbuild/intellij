@@ -162,20 +162,6 @@ public class JarCache {
       IssueOutput.warn("Jar Cache synchronization didn't complete").submit(context);
       return;
     }
-    try {
-      Collection<File> finalCacheFiles = traits.enumerateCacheFiles();
-      ImmutableMap<File, Long> cacheFileSizes = FileSizeScanner.readFilesizes(finalCacheFiles);
-      long total = cacheFileSizes.values().stream().mapToLong(x -> x).sum();
-      context.output(
-          PrintOutput.log(
-              String.format(
-                  "Total Jar Cache size: %d kB (%d files)", total / 1024, finalCacheFiles.size())));
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      context.setCancelled();
-    } catch (ExecutionException e) {
-      logger.warn("Could not determine cache size", e);
-    }
   }
 
   private void clearCache() {
@@ -348,6 +334,21 @@ public class JarCache {
       }
       if (numRemovedFiles > 0 && removeMissingFiles) {
         context.output(PrintOutput.log(String.format("Removed %d jars", numRemovedFiles)));
+      }
+      try {
+        Collection<File> finalCacheFiles = enumerateCacheFiles();
+        ImmutableMap<File, Long> cacheFileSizes = FileSizeScanner.readFilesizes(finalCacheFiles);
+        long total = cacheFileSizes.values().stream().mapToLong(x -> x).sum();
+        context.output(
+            PrintOutput.log(
+                String.format(
+                    "Total Jar Cache size: %d kB (%d files)",
+                    total / 1024, finalCacheFiles.size())));
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        context.setCancelled();
+      } catch (ExecutionException e) {
+        logger.warn("Could not determine cache size", e);
       }
     }
   }

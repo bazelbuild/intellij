@@ -22,8 +22,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.view.proto.Deps;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
-import com.google.idea.blaze.base.filecache.FilesDiff;
-import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.filecache.ArtifactState;
+import com.google.idea.blaze.base.filecache.ArtifactsDiff;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -37,10 +39,9 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -53,12 +54,12 @@ public class JdepsFileReader {
   private static final Logger logger = Logger.getInstance(JdepsFileReader.class);
 
   private static class Result {
-    File file;
+    OutputArtifact output;
     TargetKey targetKey;
     List<String> dependencies;
 
-    public Result(File file, TargetKey targetKey, List<String> dependencies) {
-      this.file = file;
+    Result(OutputArtifact output, TargetKey targetKey, List<String> dependencies) {
+      this.output = output;
       this.targetKey = targetKey;
       this.dependencies = dependencies;
     }
@@ -69,7 +70,7 @@ public class JdepsFileReader {
   public JdepsMap loadJdepsFiles(
       BlazeContext parentContext,
       ArtifactLocationDecoder artifactLocationDecoder,
-      Iterable<TargetIdeInfo> targetsToLoad,
+      Collection<TargetIdeInfo> targetsToLoad,
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState) {
     JdepsState oldState =
@@ -99,35 +100,34 @@ public class JdepsFileReader {
   @Nullable
   private JdepsState doLoadJdepsFiles(
       BlazeContext context,
-      ArtifactLocationDecoder artifactLocationDecoder,
+      ArtifactLocationDecoder decoder,
       @Nullable JdepsState oldState,
-      Iterable<TargetIdeInfo> targetsToLoad)
+      Collection<TargetIdeInfo> targetsToLoad)
       throws InterruptedException, ExecutionException {
     JdepsState.Builder state = JdepsState.builder();
     if (oldState != null) {
       state.targetToJdeps = Maps.newHashMap(oldState.targetToJdeps);
-      state.fileToTargetMap = Maps.newHashMap(oldState.fileToTargetMap);
+      state.artifactToTargetMap = Maps.newHashMap(oldState.artifactToTargetMap);
     }
 
-    Map<File, TargetKey> fileToTargetMap = Maps.newHashMap();
+    Map<OutputArtifact, TargetKey> fileToTargetMap = Maps.newHashMap();
     for (TargetIdeInfo target : targetsToLoad) {
-      assert target != null;
-      JavaIdeInfo javaIdeInfo = target.getJavaIdeInfo();
-      if (javaIdeInfo != null) {
-        ArtifactLocation jdepsFile = javaIdeInfo.getJdepsFile();
-        if (jdepsFile != null) {
-          fileToTargetMap.put(artifactLocationDecoder.decode(jdepsFile), target.getKey());
-        }
+      OutputArtifact output = resolveJdepsOutput(decoder, target);
+      if (output != null) {
+        fileToTargetMap.put(output, target.getKey());
       }
     }
 
-    FilesDiff<File, File> diff =
-        FilesDiff.diffFileTimestamps(
-            oldState != null ? oldState.fileState : null, fileToTargetMap.keySet());
-    state.fileState = diff.getNewFileState();
+    ArtifactsDiff diff =
+        ArtifactsDiff.diffArtifacts(
+            oldState != null ? oldState.artifactState : null, fileToTargetMap.keySet());
+    state.artifactState = diff.getNewState();
 
+    // TODO: handle prefetching for arbitrary OutputArtifacts
     ListenableFuture<?> fetchFuture =
-        PrefetchService.getInstance().prefetchFiles(diff.getUpdatedFiles(), true, false);
+        PrefetchService.getInstance()
+            .prefetchFiles(
+                LocalFileOutputArtifact.getLocalOutputFiles(diff.getUpdatedOutputs()), true, false);
     if (!FutureUtil.waitForFuture(context, fetchFuture)
         .timed("FetchJdeps", EventType.Prefetching)
         .withProgressMessage("Reading jdeps files...")
@@ -136,8 +136,8 @@ public class JdepsFileReader {
       return null;
     }
 
-    for (File removedFile : diff.getRemovedFiles()) {
-      TargetKey targetKey = state.fileToTargetMap.remove(removedFile);
+    for (ArtifactState removedFile : diff.getRemovedOutputs()) {
+      TargetKey targetKey = state.artifactToTargetMap.remove(removedFile.getKey());
       if (targetKey != null) {
         state.targetToJdeps.remove(targetKey);
       }
@@ -146,12 +146,12 @@ public class JdepsFileReader {
     AtomicLong totalSizeLoaded = new AtomicLong(0);
 
     List<ListenableFuture<Result>> futures = Lists.newArrayList();
-    for (File updatedFile : diff.getUpdatedFiles()) {
+    for (OutputArtifact updatedFile : diff.getUpdatedOutputs()) {
       futures.add(
           submit(
               () -> {
-                totalSizeLoaded.addAndGet(updatedFile.length());
-                try (InputStream inputStream = new FileInputStream(updatedFile)) {
+                totalSizeLoaded.addAndGet(updatedFile.getLength());
+                try (InputStream inputStream = updatedFile.getInputStream()) {
                   Deps.Dependencies dependencies = Deps.Dependencies.parseFrom(inputStream);
                   if (dependencies != null) {
                     List<String> dependencyStringList = Lists.newArrayList();
@@ -175,7 +175,7 @@ public class JdepsFileReader {
     }
       for (Result result : Futures.allAsList(futures).get()) {
         if (result != null) {
-          state.fileToTargetMap.put(result.file, result.targetKey);
+        state.artifactToTargetMap.put(result.output.getKey(), result.targetKey);
           state.targetToJdeps.put(result.targetKey, result.dependencies);
         }
       }
@@ -183,8 +183,18 @@ public class JdepsFileReader {
         PrintOutput.log(
             String.format(
                 "Loaded %d jdeps files, total size %dkB",
-                diff.getUpdatedFiles().size(), totalSizeLoaded.get() / 1024)));
+                diff.getUpdatedOutputs().size(), totalSizeLoaded.get() / 1024)));
     return state.build();
+  }
+
+  @Nullable
+  private static OutputArtifact resolveJdepsOutput(
+      ArtifactLocationDecoder decoder, TargetIdeInfo target) {
+    JavaIdeInfo javaIdeInfo = target.getJavaIdeInfo();
+    if (javaIdeInfo == null || javaIdeInfo.getJdepsFile() == null) {
+      return null;
+    }
+    return decoder.resolveOutput(javaIdeInfo.getJdepsFile());
   }
 
   private static <T> ListenableFuture<T> submit(Callable<T> callable) {

@@ -17,36 +17,13 @@ package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
-import com.google.idea.blaze.base.io.FileAttributeScanner;
+import com.google.idea.blaze.base.filecache.ArtifactState;
 import java.io.IOException;
 import java.io.InputStream;
+import javax.annotation.Nullable;
 
 /** An output artifact from a blaze build. */
 public interface OutputArtifact {
-
-  TimestampReader TIMESTAMP_READER = new TimestampReader();
-
-  /** An {@link AttributeReader} for OutputArtifacts returning last modified time. */
-  final class TimestampReader
-      implements FileAttributeScanner.AttributeReader<OutputArtifact, Long> {
-    private TimestampReader() {}
-
-    @Override
-    public Long getAttribute(OutputArtifact artifact) {
-      return artifact.getLastModifiedTime();
-    }
-
-    @Override
-    public boolean isValid(Long attribute) {
-      return attribute != 0;
-    }
-  }
-
-  /**
-   * Returns the last modified time of this artifact, in milliseconds from the epoch, or 0 if this
-   * can't be determined.
-   */
-  long getLastModifiedTime();
 
   /** Returns the length of the underlying file in bytes, or 0 if this can't be determined. */
   long getLength();
@@ -59,8 +36,17 @@ public interface OutputArtifact {
   InputStream getInputStream() throws IOException;
 
   /**
-   * A unique key used for serialization, derived from the artifact's file path. This is a 1-way
-   * mapping; it's not intended to be mappable back to an OutputArtifact.
+   * A key uniquely identifying an artifact between builds. Different versions of an artifact
+   * produced from different blaze builds will have the same key.
+   *
+   * <p>TODO(brendandouglas): remove this in favor of ArtifactState#getKey
    */
   String getKey();
+
+  /**
+   * Returns the {@link ArtifactState} for this output, used for serialization/diffing purposes. Can
+   * require file system operations.
+   */
+  @Nullable
+  ArtifactState toArtifactState();
 }

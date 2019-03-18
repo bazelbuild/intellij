@@ -70,6 +70,7 @@ import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.JavaBlazeRules;
@@ -106,8 +107,12 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
       "bazel-out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
 
   private static final ArtifactLocationDecoder FAKE_ARTIFACT_DECODER =
-      (ArtifactLocationDecoder)
-          artifactLocation -> new File("/", artifactLocation.getRelativePath());
+      new MockArtifactLocationDecoder() {
+        @Override
+        public File decode(ArtifactLocation artifactLocation) {
+          return new File("/", artifactLocation.getRelativePath());
+        }
+      };
 
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
       new BlazeImportSettings("", "", "", "", BuildSystem.Bazel);

@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
@@ -76,7 +77,12 @@ public class PsiBasedClassFileFinderTest extends BlazeIntegrationTestCase {
 
   private void setTargetMap(TargetMap targetMap) {
     ArtifactLocationDecoder decoder =
-        (location) -> new File("/src", location.getExecutionRootRelativePath());
+        new MockArtifactLocationDecoder() {
+          @Override
+          public File decode(ArtifactLocation artifactLocation) {
+            return new File("/src", artifactLocation.getExecutionRootRelativePath());
+          }
+        };
 
     BlazeProjectData blazeProjectData =
         MockBlazeProjectDataBuilder.builder(workspaceRoot)

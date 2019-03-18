@@ -21,6 +21,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
+import com.google.idea.blaze.base.filecache.ArtifactState;
+import com.google.idea.blaze.base.filecache.ArtifactState.LocalFileState;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.BufferedInputStream;
@@ -29,6 +31,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import javax.annotation.Nullable;
 
 /** A blaze output artifact which exists on the local file system. */
 public class LocalFileOutputArtifact implements OutputArtifact {
@@ -52,8 +55,7 @@ public class LocalFileOutputArtifact implements OutputArtifact {
     this.file = file;
   }
 
-  @Override
-  public long getLastModifiedTime() {
+  private long getLastModifiedTime() {
     return FileOperationProvider.getInstance().getFileModifiedTime(file);
   }
 
@@ -65,6 +67,12 @@ public class LocalFileOutputArtifact implements OutputArtifact {
   @Override
   public String getKey() {
     return file.getPath();
+  }
+
+  @Override
+  @Nullable
+  public ArtifactState toArtifactState() {
+    return new LocalFileState(getKey(), getLastModifiedTime());
   }
 
   @Override

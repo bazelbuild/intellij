@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaToolchainInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildCompiler.CompileInstructions;
@@ -87,7 +88,7 @@ public final class FastBuildCompilerFactoryImplTest {
   public void setUp() {
     BlazeProjectData projectData =
         MockBlazeProjectDataBuilder.builder()
-            .setArtifactLocationDecoder(artifact -> new File(artifact.getRelativePath()))
+            .setArtifactLocationDecoder(new MockArtifactLocationDecoder())
             .build();
     BlazeProjectDataManager projectDataManager = new MockBlazeProjectDataManager(projectData);
     compilerFactory =

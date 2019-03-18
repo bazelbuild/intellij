@@ -50,6 +50,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.common.experiments.ExperimentService;
@@ -193,7 +194,13 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
                     .setBuildFile(ArtifactLocation.builder().setRelativePath("foo/BUILD").build())
                     .build())
             .build();
-    ArtifactLocationDecoder decoder = (location) -> new File("/", location.getRelativePath());
+    ArtifactLocationDecoder decoder =
+        new MockArtifactLocationDecoder() {
+          @Override
+          public File decode(ArtifactLocation artifactLocation) {
+            return new File("/", artifactLocation.getRelativePath());
+          }
+        };
     return MockBlazeProjectDataBuilder.builder(workspaceRoot)
         .setTargetMap(targetMap)
         .setArtifactLocationDecoder(decoder)

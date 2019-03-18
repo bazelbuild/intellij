@@ -48,6 +48,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.sync.importer.BlazeJavaWorkspaceImporter;
@@ -155,7 +156,12 @@ public final class BlazeImportFixture {
   }
 
   public static ArtifactLocationDecoder getDecoder() {
-    return BlazeImportFixture::decodePath;
+    return new MockArtifactLocationDecoder() {
+      @Override
+      public File decode(ArtifactLocation location) {
+        return new File("/src", location.getExecutionRootRelativePath());
+      }
+    };
   }
 
   public static File decodePath(ArtifactLocation location) {

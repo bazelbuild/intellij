@@ -43,6 +43,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.facet.FacetManager;
@@ -85,7 +86,12 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
     module = testFixture.getModule();
 
     ArtifactLocationDecoder decoder =
-        (location) -> new File("/src", location.getExecutionRootRelativePath());
+        new MockArtifactLocationDecoder() {
+          @Override
+          public File decode(ArtifactLocation artifactLocation) {
+            return new File("/src", artifactLocation.getExecutionRootRelativePath());
+          }
+        };
 
     BlazeProjectData blazeProjectData =
         MockBlazeProjectDataBuilder.builder(workspaceRoot)

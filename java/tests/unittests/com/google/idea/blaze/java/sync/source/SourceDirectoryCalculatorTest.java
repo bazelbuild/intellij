@@ -45,6 +45,7 @@ import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
+import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
@@ -73,7 +74,12 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
 
   private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
   private final ArtifactLocationDecoder decoder =
-      artifactLocation -> new File("/root", artifactLocation.getRelativePath());
+      new MockArtifactLocationDecoder() {
+        @Override
+        public File decode(ArtifactLocation artifactLocation) {
+          return new File("/root", artifactLocation.getRelativePath());
+        }
+      };
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
