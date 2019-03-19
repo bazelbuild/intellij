@@ -299,7 +299,6 @@ final class BlazeSyncTask implements Progressive {
   /** @return true if sync successfully completed */
   private SyncResult doSyncProject(
       BlazeContext context, @Nullable BlazeProjectData oldBlazeProjectData) {
-    long syncStartTime = System.currentTimeMillis();
 
     if (!FileOperationProvider.getInstance().exists(workspaceRoot.directory())) {
       IssueOutput.error(String.format("Workspace '%s' doesn't exist.", workspaceRoot.directory()))
@@ -520,7 +519,6 @@ final class BlazeSyncTask implements Progressive {
 
     newBlazeProjectData =
         new BlazeProjectData(
-            syncStartTime,
             targetMap,
             blazeInfo,
             blazeVersionData,

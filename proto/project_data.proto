@@ -200,7 +200,7 @@ message SyncState {
 }
 
 message BlazeProjectData {
-  int64 sync_time = 1;
+  reserved 1;
   TargetMap target_map = 2;
   BlazeInfo blaze_info = 3;
   BlazeVersionData blaze_version_data = 4;

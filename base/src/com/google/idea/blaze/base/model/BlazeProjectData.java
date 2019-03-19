@@ -39,7 +39,6 @@ import javax.annotation.concurrent.Immutable;
 /** The top-level object serialized to cache. */
 @Immutable
 public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazeProjectData> {
-  private final long syncTime;
   private final TargetMap targetMap;
   private final BlazeInfo blazeInfo;
   private final BlazeVersionData blazeVersionData;
@@ -49,7 +48,6 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
   private final SyncState syncState;
 
   public BlazeProjectData(
-      long syncTime,
       TargetMap targetMap,
       BlazeInfo blazeInfo,
       BlazeVersionData blazeVersionData,
@@ -57,7 +55,6 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
       ArtifactLocationDecoder artifactLocationDecoder,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       SyncState syncState) {
-    this.syncTime = syncTime;
     this.targetMap = targetMap;
     this.blazeInfo = blazeInfo;
     this.blazeVersionData = blazeVersionData;
@@ -74,7 +71,6 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
     WorkspacePathResolver workspacePathResolver =
         WorkspacePathResolver.fromProto(proto.getWorkspacePathResolver());
     return new BlazeProjectData(
-        proto.getSyncTime(),
         TargetMap.fromProto(proto.getTargetMap()),
         blazeInfo,
         BlazeVersionData.fromProto(proto.getBlazeVersionData()),
@@ -87,7 +83,6 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
   @Override
   public ProjectData.BlazeProjectData toProto() {
     return ProjectData.BlazeProjectData.newBuilder()
-        .setSyncTime(syncTime)
         .setTargetMap(targetMap.toProto())
         .setBlazeInfo(blazeInfo.toProto())
         .setBlazeVersionData(blazeVersionData.toProto())
@@ -95,10 +90,6 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
         .setWorkspaceLanguageSettings(workspaceLanguageSettings.toProto())
         .setSyncState(syncState.toProto())
         .build();
-  }
-
-  public long getSyncTime() {
-    return syncTime;
   }
 
   public TargetMap getTargetMap() {
@@ -152,8 +143,7 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
       return false;
     }
     BlazeProjectData other = (BlazeProjectData) o;
-    return syncTime == other.syncTime
-        && Objects.equals(targetMap, other.targetMap)
+    return Objects.equals(targetMap, other.targetMap)
         && Objects.equals(blazeInfo, other.blazeInfo)
         && Objects.equals(blazeVersionData, other.blazeVersionData)
         && Objects.equals(workspacePathResolver, other.workspacePathResolver)
@@ -165,7 +155,6 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
   @Override
   public int hashCode() {
     return Objects.hash(
-        syncTime,
         targetMap,
         blazeInfo,
         blazeVersionData,

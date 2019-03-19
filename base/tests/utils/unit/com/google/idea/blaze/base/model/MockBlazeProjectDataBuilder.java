@@ -37,7 +37,6 @@ import java.io.File;
 public class MockBlazeProjectDataBuilder {
   private final WorkspaceRoot workspaceRoot;
 
-  private long syncTime = 0;
   private TargetMap targetMap;
   private String outputBase;
   private BlazeInfo blazeInfo;
@@ -57,11 +56,6 @@ public class MockBlazeProjectDataBuilder {
 
   public static MockBlazeProjectDataBuilder builder(WorkspaceRoot workspaceRoot) {
     return new MockBlazeProjectDataBuilder(workspaceRoot);
-  }
-
-  public MockBlazeProjectDataBuilder setSyncTime(long syncTime) {
-    this.syncTime = syncTime;
-    return this;
   }
 
   public MockBlazeProjectDataBuilder setTargetMap(TargetMap targetMap) {
@@ -139,7 +133,6 @@ public class MockBlazeProjectDataBuilder {
         this.syncState != null ? this.syncState : new SyncState(ImmutableMap.of());
 
     return new BlazeProjectData(
-        syncTime,
         targetMap,
         blazeInfo,
         blazeVersionData,
