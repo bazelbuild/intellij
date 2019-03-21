@@ -124,7 +124,8 @@ public class MockBlazeProjectDataBuilder {
     ArtifactLocationDecoder artifactLocationDecoder =
         this.artifactLocationDecoder != null
             ? this.artifactLocationDecoder
-            : new ArtifactLocationDecoderImpl(blazeInfo, workspacePathResolver);
+            : new ArtifactLocationDecoderImpl(
+                blazeInfo, workspacePathResolver, RemoteOutputArtifacts.EMPTY);
     WorkspaceLanguageSettings workspaceLanguageSettings =
         this.workspaceLanguageSettings != null
             ? this.workspaceLanguageSettings

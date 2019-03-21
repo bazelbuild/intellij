@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.nio.file.Paths;
@@ -27,23 +28,30 @@ import javax.annotation.Nullable;
 
 /** Decodes intellij_ide_info.proto ArtifactLocation file paths */
 public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecoder {
-  private static final long serialVersionUID = 1L;
-
   private final BlazeInfo blazeInfo;
   private final WorkspacePathResolver pathResolver;
+  private final RemoteOutputArtifacts remoteOutputs;
 
-  public ArtifactLocationDecoderImpl(BlazeInfo blazeInfo, WorkspacePathResolver pathResolver) {
+  public ArtifactLocationDecoderImpl(
+      BlazeInfo blazeInfo,
+      WorkspacePathResolver pathResolver,
+      RemoteOutputArtifacts remoteOutputs) {
     this.blazeInfo = blazeInfo;
     this.pathResolver = pathResolver;
+    this.remoteOutputs = remoteOutputs;
   }
 
   @Nullable
   @Override
   public OutputArtifact resolveOutput(ArtifactLocation artifact) {
     if (artifact.isSource()) {
+      // not an output artifact
       return null;
     }
-    // TODO(brendandouglas): support non-local output artifacts
+    OutputArtifact remoteOutput = remoteOutputs.findRemoteOutput(artifact);
+    if (remoteOutput != null) {
+      return remoteOutput;
+    }
     return new LocalFileOutputArtifact(decode(artifact));
   }
 

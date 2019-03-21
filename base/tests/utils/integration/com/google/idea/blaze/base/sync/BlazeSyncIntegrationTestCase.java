@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -48,7 +49,6 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
@@ -247,7 +247,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     private TargetMap targetMap = new TargetMap(ImmutableMap.of());
 
     @Override
-    public IdeResult updateTargetMap(
+    public BuildResultIdeInfo updateTargetMap(
         Project project,
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
@@ -257,16 +257,15 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BlazeConfigurationHandler configHandler,
         ShardedTargetList shardedTargets,
         WorkspaceLanguageSettings workspaceLanguageSettings,
-        ArtifactLocationDecoder artifactLocationDecoder,
         SyncState.Builder syncStateBuilder,
         @Nullable SyncState previousSyncState,
         boolean mergeWithOldState,
         @Nullable TargetMap oldTargetMap) {
-      return new IdeResult(targetMap, BuildResult.SUCCESS);
+      return new BuildResultIdeInfo(targetMap, ImmutableSet.of(), BuildResult.SUCCESS);
     }
 
     @Override
-    public BuildResult resolveIdeArtifacts(
+    public BuildResultIdeResolve resolveIdeArtifacts(
         Project project,
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
@@ -275,7 +274,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BlazeVersionData blazeVersionData,
         WorkspaceLanguageSettings workspaceLanguageSettings,
         ShardedTargetList shardedTargets) {
-      return BuildResult.SUCCESS;
+      return new BuildResultIdeResolve(ImmutableSet.of(), BuildResult.SUCCESS);
     }
 
     @Override

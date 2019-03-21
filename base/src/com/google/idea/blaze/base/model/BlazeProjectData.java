@@ -70,14 +70,17 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
     BlazeInfo blazeInfo = BlazeInfo.fromProto(buildSystem, proto.getBlazeInfo());
     WorkspacePathResolver workspacePathResolver =
         WorkspacePathResolver.fromProto(proto.getWorkspacePathResolver());
+    SyncState syncState = SyncState.fromProto(proto.getSyncState());
+    RemoteOutputArtifacts remoteOutputs =
+        syncState.getOptional(RemoteOutputArtifacts.class).orElse(RemoteOutputArtifacts.EMPTY);
     return new BlazeProjectData(
         TargetMap.fromProto(proto.getTargetMap()),
         blazeInfo,
         BlazeVersionData.fromProto(proto.getBlazeVersionData()),
         workspacePathResolver,
-        new ArtifactLocationDecoderImpl(blazeInfo, workspacePathResolver),
+        new ArtifactLocationDecoderImpl(blazeInfo, workspacePathResolver, remoteOutputs),
         WorkspaceLanguageSettings.fromProto(proto.getWorkspaceLanguageSettings()),
-        SyncState.fromProto(proto.getSyncState()));
+        syncState);
   }
 
   @Override
@@ -114,6 +117,10 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
 
   public WorkspaceLanguageSettings getWorkspaceLanguageSettings() {
     return workspaceLanguageSettings;
+  }
+
+  public RemoteOutputArtifacts getRemoteOutputs() {
+    return syncState.getOptional(RemoteOutputArtifacts.class).orElse(RemoteOutputArtifacts.EMPTY);
   }
 
   public SyncState getSyncState() {

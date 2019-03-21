@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.io.MockInputStreamProvider;
+import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -1194,7 +1195,8 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             "/root/out/crosstool/bin",
             "/root/out/crosstool/gen",
             "/root/out/crosstool/testlogs");
-    return new ArtifactLocationDecoderImpl(roots, new WorkspacePathResolverImpl(workspaceRoot));
+    return new ArtifactLocationDecoderImpl(
+        roots, new WorkspacePathResolverImpl(workspaceRoot), RemoteOutputArtifacts.EMPTY);
   }
 
   private Map<TargetKey, Map<ArtifactLocation, String>> readPackageManifestFiles(

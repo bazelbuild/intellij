@@ -189,6 +189,10 @@ message BlazeAndroidSyncData {
   AndroidSdkPlatform android_sdk_platform = 2;
 }
 
+message RemoteOutputArtifacts {
+  repeated OutputArtifact artifacts = 1;
+}
+
 message SyncState {
   BlazeJavaSyncData blaze_java_sync_data = 1;
   BlazeAndroidSyncData blaze_android_sync_data = 2;
@@ -197,6 +201,7 @@ message SyncState {
   LanguageSpecResult language_spec_result = 4;
   JdepsState jdeps_state = 5;
   BlazeIdeInterfaceState blaze_ide_interface_state = 6;
+  RemoteOutputArtifacts remote_output_artifacts = 7;
 }
 
 message BlazeProjectData {

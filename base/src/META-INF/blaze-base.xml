@@ -335,6 +335,8 @@
                     interface="com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.OutputArtifactParser"
                     interface="com.google.idea.blaze.base.command.buildresult.OutputArtifactParser"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.RemoteOutputArtifactParser"
+                    interface="com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact$Parser"/>
   </extensionPoints>
 
   <application-components>
@@ -454,6 +456,7 @@
     <WorkspacePathResolverExtractor implementation="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl$Extractor"/>
     <SyncDataExtractor implementation="com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceState$Extractor"/>
     <SyncDataExtractor implementation="com.google.idea.blaze.base.lang.buildfile.sync.LanguageSpecResult$Extractor"/>
+    <SyncDataExtractor implementation="com.google.idea.blaze.base.model.RemoteOutputArtifacts$Extractor"/>
     <LoggedSettingsProvider implementation="com.google.idea.blaze.base.settings.BlazeUserSettings$SettingsLogger"/>
     <TargetKindProvider implementation="com.google.idea.blaze.base.model.primitives.GenericBlazeRules"/>
     <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.OutsideProjectTestContextProvider"/>

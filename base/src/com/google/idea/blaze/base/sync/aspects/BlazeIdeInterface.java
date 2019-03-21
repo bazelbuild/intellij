@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.sync.aspects;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -25,9 +27,9 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import java.util.Collection;
 import javax.annotation.Nullable;
 
 /** Indirection between ide_build_info and aspect style IDE info. */
@@ -37,13 +39,30 @@ public interface BlazeIdeInterface {
     return ServiceManager.getService(BlazeIdeInterface.class);
   }
 
-  /** The result of the ide operation */
-  class IdeResult {
+  /** The result of the ide-info build step. */
+  class BuildResultIdeInfo {
     @Nullable public final TargetMap targetMap;
+    public final ImmutableSet<RemoteOutputArtifact> remoteOutputs;
     public final BuildResult buildResult;
 
-    public IdeResult(@Nullable TargetMap targetMap, BuildResult buildResult) {
+    public BuildResultIdeInfo(
+        @Nullable TargetMap targetMap,
+        ImmutableSet<RemoteOutputArtifact> remoteOutputs,
+        BuildResult buildResult) {
       this.targetMap = targetMap;
+      this.remoteOutputs = remoteOutputs;
+      this.buildResult = buildResult;
+    }
+  }
+
+  /** The result of the ide-resolve build step. */
+  class BuildResultIdeResolve {
+    public final Collection<RemoteOutputArtifact> remoteOutputs;
+    public final BuildResult buildResult;
+
+    public BuildResultIdeResolve(
+        Collection<RemoteOutputArtifact> remoteOutputs, BuildResult buildResult) {
+      this.remoteOutputs = remoteOutputs;
       this.buildResult = buildResult;
     }
   }
@@ -54,7 +73,7 @@ public interface BlazeIdeInterface {
    * @param mergeWithOldState If true, we overlay the given targets to the current rule map.
    * @return A tuple of the latest updated rule map and the result of the operation.
    */
-  IdeResult updateTargetMap(
+  BuildResultIdeInfo updateTargetMap(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
@@ -64,7 +83,6 @@ public interface BlazeIdeInterface {
       BlazeConfigurationHandler configHandler,
       ShardedTargetList shardedTargets,
       WorkspaceLanguageSettings workspaceLanguageSettings,
-      ArtifactLocationDecoder artifactLocationDecoder,
       SyncState.Builder syncStateBuilder,
       @Nullable SyncState previousSyncState,
       boolean mergeWithOldState,
@@ -75,7 +93,7 @@ public interface BlazeIdeInterface {
    *
    * <p>Amounts to a build of the ide-resolve output group.
    */
-  BuildResult resolveIdeArtifacts(
+  BuildResultIdeResolve resolveIdeArtifacts(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,

@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import java.util.Objects;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Used to save arbitrary state with the sync task. */
@@ -29,6 +30,10 @@ public final class SyncState implements ProtoWrapper<ProjectData.SyncState> {
   @Nullable
   public <T extends SyncData<?>> T get(Class<T> klass) {
     return (T) syncStateMap.get(klass);
+  }
+
+  public <T extends SyncData<?>> Optional<T> getOptional(Class<T> klass) {
+    return Optional.ofNullable(get(klass));
   }
 
   /** Builder for a sync state */
