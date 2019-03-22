@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -48,6 +49,8 @@ import org.jetbrains.ide.PooledThreadExecutor;
 class BlazeTypeScriptAdditionalLibraryRootsProvider extends AdditionalLibraryRootsProvider {
   static final BoolExperiment useTypeScriptAdditionalLibraryRootsProvider =
       new BoolExperiment("use.typescript.additional.library.roots.provider4", true);
+  static final BoolExperiment moveTsconfigFilesToAdditionalLibrary =
+      new BoolExperiment("move.tsconfig.files.to.additional.library", false);
 
   @Override
   public Collection<SyntheticLibrary> getAdditionalProjectLibraries(Project project) {
@@ -108,6 +111,9 @@ class BlazeTypeScriptAdditionalLibraryRootsProvider extends AdditionalLibraryRoo
 
   private static ListenableFuture<Collection<File>> getFutureLibraryFiles(
       Project project, BlazeProjectData projectData) {
+    if (!moveTsconfigFilesToAdditionalLibrary.getValue()) {
+      return Futures.immediateFuture(ImmutableList.of());
+    }
     return MoreExecutors.listeningDecorator(PooledThreadExecutor.INSTANCE)
         .submit(() -> TypeScriptPrefetchFileSource.getFilesFromTsConfigs(project, projectData));
   }

@@ -17,6 +17,7 @@ package com.intellij.webcore.libraries;
 
 import com.intellij.lang.LanguagePerFileMappings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /** Fake {@link ScriptingLibraryMappings}, so that we can compile against IntelliJ CE. */
 public abstract class ScriptingLibraryMappings
@@ -28,6 +29,8 @@ public abstract class ScriptingLibraryMappings
   public boolean isAssociatedWithProject(String libName) {
     return false;
   }
+
+  public void associate(VirtualFile file, String libName, boolean isPredefined) {}
 
   public void disassociateWithProject(String libraryName) {}
 }

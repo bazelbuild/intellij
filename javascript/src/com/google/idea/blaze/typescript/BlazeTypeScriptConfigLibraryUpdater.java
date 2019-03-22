@@ -17,6 +17,7 @@ package com.google.idea.blaze.typescript;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.lang.javascript.library.JSLibraryMappings;
+import com.intellij.lang.typescript.TypeScriptSettings;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigLibraryUpdater;
 import com.intellij.openapi.project.Project;
 
@@ -27,11 +28,13 @@ import com.intellij.openapi.project.Project;
 class BlazeTypeScriptConfigLibraryUpdater extends TypeScriptConfigLibraryUpdater {
   private final Project project;
   private final boolean isBlaze;
+  private boolean initialized;
 
   public BlazeTypeScriptConfigLibraryUpdater(Project project) {
     super(project);
     this.project = project;
     this.isBlaze = Blaze.isBlazeProject(project);
+    this.initialized = false;
   }
 
   @Override
@@ -39,9 +42,29 @@ class BlazeTypeScriptConfigLibraryUpdater extends TypeScriptConfigLibraryUpdater
     if (isBlaze
         && BlazeTypeScriptAdditionalLibraryRootsProvider.useTypeScriptAdditionalLibraryRootsProvider
             .getValue()) {
+      if (initialized) {
+        return;
+      }
+      initialized = true;
       JSLibraryMappings mappings = JSLibraryMappings.getInstance(project);
-      if (mappings.isAssociatedWithProject(TypeScriptConfigLibraryUpdater.TSCONFIG_PATHS_LIBRARY)) {
-        mappings.disassociateWithProject(TypeScriptConfigLibraryUpdater.TSCONFIG_PATHS_LIBRARY);
+      if (BlazeTypeScriptAdditionalLibraryRootsProvider.moveTsconfigFilesToAdditionalLibrary
+          .getValue()) {
+        if (mappings.isAssociatedWithProject(
+            TypeScriptConfigLibraryUpdater.TSCONFIG_PATHS_LIBRARY)) {
+          mappings.disassociateWithProject(TypeScriptConfigLibraryUpdater.TSCONFIG_PATHS_LIBRARY);
+        }
+      } else {
+        if (!mappings.isAssociatedWithProject(
+            TypeScriptConfigLibraryUpdater.TSCONFIG_PATHS_LIBRARY)) {
+          mappings.associate(null, TypeScriptConfigLibraryUpdater.TSCONFIG_PATHS_LIBRARY, true);
+        }
+
+        TypeScriptSettings settings = TypeScriptSettings.getSettings(project);
+        if (settings != null) {
+          settings.setAutoIncludeConfigPaths(true);
+          super.queueToUpdate();
+          settings.setAutoIncludeConfigPaths(false);
+        }
       }
     } else {
       super.queueToUpdate();
