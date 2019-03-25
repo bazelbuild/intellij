@@ -46,23 +46,29 @@ import org.jetbrains.ide.PooledThreadExecutor;
  * The tsconfig library only contains .d.ts files under tsconfig.runfiles. We need this to provide
  * the source .ts files so we can resolve to them.
  */
-class BlazeTypeScriptAdditionalLibraryRootsProvider extends AdditionalLibraryRootsProvider {
+public class BlazeTypeScriptAdditionalLibraryRootsProvider extends AdditionalLibraryRootsProvider {
   static final BoolExperiment useTypeScriptAdditionalLibraryRootsProvider =
       new BoolExperiment("use.typescript.additional.library.roots.provider4", true);
   static final BoolExperiment moveTsconfigFilesToAdditionalLibrary =
-      new BoolExperiment("move.tsconfig.files.to.additional.library", false);
+      new BoolExperiment("move.tsconfig.files.to.additional.library", true);
 
   @Override
   public Collection<SyntheticLibrary> getAdditionalProjectLibraries(Project project) {
-    if (!useTypeScriptAdditionalLibraryRootsProvider.getValue()) {
-      return ImmutableList.of();
-    }
-    SyntheticLibrary library =
-        SyncCache.getInstance(project)
-            .get(getClass(), BlazeTypeScriptAdditionalLibraryRootsProvider::getLibrary);
+    SyntheticLibrary library = getLibrary(project);
     return library != null && !library.getSourceRoots().isEmpty()
         ? ImmutableList.of(library)
         : ImmutableList.of();
+  }
+
+  @Nullable
+  public static SyntheticLibrary getLibrary(Project project) {
+    if (!useTypeScriptAdditionalLibraryRootsProvider.getValue()) {
+      return null;
+    }
+    return SyncCache.getInstance(project)
+        .get(
+            BlazeTypeScriptAdditionalLibraryRootsProvider.class,
+            BlazeTypeScriptAdditionalLibraryRootsProvider::getLibrary);
   }
 
   @Nullable

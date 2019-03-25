@@ -16,6 +16,7 @@
 package com.google.idea.blaze.javascript;
 
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.typescript.BlazeTypeScriptAdditionalLibraryRootsProvider;
 import com.intellij.lang.javascript.psi.resolve.JSElementResolveScopeProvider;
 import com.intellij.lang.javascript.psi.resolve.JSResolveScopeProvider;
 import com.intellij.lang.javascript.psi.resolve.JSResolveUtil;
@@ -41,8 +42,10 @@ class BlazeJavascriptResolveScopeProvider implements JSElementResolveScopeProvid
     if (!Blaze.isBlazeProject(project)) {
       return null;
     }
-    SyntheticLibrary library = BlazeJavascriptAdditionalLibraryRootsProvider.getLibrary(project);
-    if (library == null || library.getSourceRoots().isEmpty()) {
+    SyntheticLibrary jsLibrary = BlazeJavascriptAdditionalLibraryRootsProvider.getLibrary(project);
+    SyntheticLibrary tsLibrary = BlazeTypeScriptAdditionalLibraryRootsProvider.getLibrary(project);
+    if ((jsLibrary == null || jsLibrary.getSourceRoots().isEmpty())
+        && (tsLibrary == null || tsLibrary.getSourceRoots().isEmpty())) {
       return null;
     }
     GlobalSearchScope baseScope = getBaseScope(element);
@@ -52,7 +55,9 @@ class BlazeJavascriptResolveScopeProvider implements JSElementResolveScopeProvid
     return new DelegatingGlobalSearchScope(baseScope) {
       @Override
       public boolean contains(VirtualFile file) {
-        return super.contains(file) || library.contains(file);
+        return super.contains(file)
+            || (jsLibrary != null && jsLibrary.contains(file))
+            || (tsLibrary != null && tsLibrary.contains(file));
       }
     };
   }
