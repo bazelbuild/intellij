@@ -28,14 +28,10 @@ import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.util.SystemProperties;
 import java.io.File;
 import java.io.IOException;
@@ -54,10 +50,7 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
   private static final String TEST_FILTER_VARIABLE = "TESTBRIDGE_TEST_ONLY";
   private static final String WORKSPACE_VARIABLE = "TEST_WORKSPACE";
 
-  private static final BoolExperiment javaLauncherDetection =
-      new BoolExperiment("fast.build.find.java.launcher", true);
-
-  static final ExtensionPointName<FastBuildTestEnvironmentCreator> EP_NAME =
+  private static final ExtensionPointName<FastBuildTestEnvironmentCreator> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.FastBuildTestEnvironmentCreator");
 
   static FastBuildTestEnvironmentCreator getInstance(BuildSystem buildSystem) {
@@ -99,12 +92,8 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
     JavaCommandBuilder commandBuilder = new JavaCommandBuilder();
     commandBuilder.setWorkingDirectory(workingDir.toFile());
 
-    if (javaLauncherDetection.getValue()) {
-      commandBuilder.setJavaBinary(
-          getJavaBinFromLauncher(target, getLauncher(fastBuildInfo).orElse(null)));
-    } else {
-      commandBuilder.setJavaBinary(getJavaBinFromProjectSdk(project));
-    }
+    commandBuilder.setJavaBinary(
+        getJavaBinFromLauncher(target, getLauncher(fastBuildInfo).orElse(null)));
 
     if (debugPort > 0) {
       commandBuilder.addJvmArgument(
@@ -159,17 +148,6 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
     checkState(targetData.javaInfo().isPresent(), "Couldn't find Java info for target %s", label);
     JavaInfo javaInfo = targetData.javaInfo().get();
     return javaInfo.launcher();
-  }
-
-  private static File getJavaBinFromProjectSdk(Project project) throws ExecutionException {
-    Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    if (projectSdk == null) {
-      throw new ExecutionException("No project SDK is configured.");
-    }
-    if (!(projectSdk.getSdkType() instanceof JavaSdkType)) {
-      throw new ExecutionException("Project SDK isn't a Java SDK.");
-    }
-    return new File(((JavaSdkType) projectSdk.getSdkType()).getVMExecutablePath(projectSdk));
   }
 
   // Bazel uses '/' for separators on Windows too (I haven't tested that, but see
