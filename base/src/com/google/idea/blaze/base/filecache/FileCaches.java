@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import javax.annotation.Nullable;
 
 /** Static helper methods to update file caches. */
 public class FileCaches {
@@ -33,8 +34,9 @@ public class FileCaches {
   public static void onSync(
       Project project,
       BlazeContext context,
-      ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData,
+      ProjectViewSet projectView,
+      BlazeProjectData projectData,
+      @Nullable BlazeProjectData oldProjectData,
       SyncMode syncMode) {
     for (FileCache fileCache : FileCache.EP_NAME.getExtensions()) {
       Scope.push(
@@ -42,13 +44,13 @@ public class FileCaches {
           childContext -> {
             childContext.push(new TimingScope(fileCache.getName(), EventType.Other));
             childContext.output(new StatusOutput("Updating " + fileCache.getName() + "..."));
-            fileCache.onSync(project, context, projectViewSet, blazeProjectData, syncMode);
+            fileCache.onSync(project, context, projectView, projectData, oldProjectData, syncMode);
           });
     }
     LocalFileSystem.getInstance().refresh(true);
   }
 
-  /** Call at the end of build when you want the IDE to pick up any changes. */
+  /** Call at the end of a blaze build when you want the IDE to pick up any changes. */
   public static void refresh(Project project, BlazeContext context) {
     ProgressiveTaskWithProgressIndicator.builder(project, "Updating file caches")
         .submitTask(

@@ -302,7 +302,7 @@ final class BlazeSyncTask implements Progressive {
 
   /** @return true if sync successfully completed */
   private SyncResult doSyncProject(
-      BlazeContext context, @Nullable BlazeProjectData oldBlazeProjectData) {
+      BlazeContext context, @Nullable BlazeProjectData oldProjectData) {
 
     if (!FileOperationProvider.getInstance().exists(workspaceRoot.directory())) {
       IssueOutput.error(String.format("Workspace '%s' doesn't exist.", workspaceRoot.directory()))
@@ -376,7 +376,7 @@ final class BlazeSyncTask implements Progressive {
       return SyncResult.FAILURE;
     }
 
-    final BlazeProjectData newBlazeProjectData;
+    final BlazeProjectData newProjectData;
 
     WorkingSet workingSet =
         FutureUtil.waitForFuture(context, workingSetFuture)
@@ -397,8 +397,7 @@ final class BlazeSyncTask implements Progressive {
     }
 
     SyncState.Builder syncStateBuilder = new SyncState.Builder();
-    SyncState previousSyncState =
-        oldBlazeProjectData != null ? oldBlazeProjectData.getSyncState() : null;
+    SyncState previousSyncState = oldProjectData != null ? oldProjectData.getSyncState() : null;
 
     List<TargetExpression> targets = Lists.newArrayList();
     if (syncParams.addProjectViewTargets) {
@@ -448,7 +447,7 @@ final class BlazeSyncTask implements Progressive {
             syncStateBuilder,
             previousSyncState,
             mergeWithOldState,
-            oldBlazeProjectData != null ? oldBlazeProjectData.getTargetMap() : null);
+            oldProjectData != null ? oldProjectData.getTargetMap() : null);
     if (context.isCancelled()) {
       return SyncResult.CANCELLED;
     }
@@ -485,10 +484,7 @@ final class BlazeSyncTask implements Progressive {
     if (context.isCancelled()) {
       return SyncResult.CANCELLED;
     }
-    RemoteOutputArtifacts oldRemoteState =
-        oldBlazeProjectData != null
-            ? oldBlazeProjectData.getRemoteOutputs()
-            : RemoteOutputArtifacts.EMPTY;
+    RemoteOutputArtifacts oldRemoteState = RemoteOutputArtifacts.fromProjectData(oldProjectData);
     Set<RemoteOutputArtifact> newOutputs =
         ImmutableSet.<RemoteOutputArtifact>builder()
             .addAll(ideInfoResult.remoteOutputs)
@@ -528,7 +524,7 @@ final class BlazeSyncTask implements Progressive {
       return SyncResult.FAILURE;
     }
 
-    newBlazeProjectData =
+    newProjectData =
         new BlazeProjectData(
             targetMap,
             blazeInfo,
@@ -538,10 +534,10 @@ final class BlazeSyncTask implements Progressive {
             workspaceLanguageSettings,
             syncStateBuilder.build());
 
-    FileCaches.onSync(project, context, projectViewSet, newBlazeProjectData, syncParams.syncMode);
+    FileCaches.onSync(
+        project, context, projectViewSet, newProjectData, oldProjectData, syncParams.syncMode);
     ListenableFuture<?> prefetch =
-        PrefetchService.getInstance()
-            .prefetchProjectFiles(project, projectViewSet, newBlazeProjectData);
+        PrefetchService.getInstance().prefetchProjectFiles(project, projectViewSet, newProjectData);
     FutureUtil.waitForFuture(context, prefetch)
         .withProgressMessage("Prefetching files...")
         .timed("PrefetchFiles", EventType.Prefetching)
@@ -551,7 +547,7 @@ final class BlazeSyncTask implements Progressive {
     ListenableFuture<DirectoryStructure> directoryStructureFuture =
         DirectoryStructure.getRootDirectoryStructure(project, workspaceRoot, projectViewSet);
 
-    refreshVirtualFileSystem(context, newBlazeProjectData);
+    refreshVirtualFileSystem(context, newProjectData);
 
     DirectoryStructure directoryStructure =
         FutureUtil.waitForFuture(context, directoryStructureFuture)
@@ -570,8 +566,8 @@ final class BlazeSyncTask implements Progressive {
             projectViewSet,
             blazeVersionData,
             directoryStructure,
-            oldBlazeProjectData,
-            newBlazeProjectData);
+            oldProjectData,
+            newProjectData);
     if (!success) {
       return SyncResult.FAILURE;
     }

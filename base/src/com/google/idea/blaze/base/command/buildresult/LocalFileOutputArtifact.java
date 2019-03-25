@@ -72,7 +72,8 @@ public class LocalFileOutputArtifact implements OutputArtifact {
   @Override
   @Nullable
   public ArtifactState toArtifactState() {
-    return new LocalFileState(getKey(), getLastModifiedTime());
+    long lastModifiedTime = getLastModifiedTime();
+    return lastModifiedTime == 0 ? null : new LocalFileState(getKey(), lastModifiedTime);
   }
 
   @Override

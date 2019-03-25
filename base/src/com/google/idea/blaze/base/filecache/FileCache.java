@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import javax.annotation.Nullable;
 
 /** A cache of files from the build output. */
 public interface FileCache {
@@ -30,12 +31,13 @@ public interface FileCache {
   /** Name of cache. Used for status messages. */
   String getName();
 
-  /** Called on sync to fully refresh the file cache. */
+  /** Called during sync to fully refresh the file cache. */
   void onSync(
       Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
       BlazeProjectData projectData,
+      @Nullable BlazeProjectData oldProjectData,
       SyncMode syncMode);
 
   /** Called after a build operation to refresh any updated files. */

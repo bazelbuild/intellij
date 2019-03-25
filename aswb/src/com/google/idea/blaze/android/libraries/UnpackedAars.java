@@ -251,6 +251,7 @@ public class UnpackedAars {
         BlazeContext context,
         ProjectViewSet projectViewSet,
         BlazeProjectData projectData,
+        @Nullable BlazeProjectData oldProjectData,
         SyncMode syncMode) {
       getInstance(project).onSync(context, projectViewSet, projectData, syncMode);
     }
