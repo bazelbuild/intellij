@@ -19,14 +19,44 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiQualifiedNamedElement;
 import java.util.Objects;
+import java.util.Optional;
 
 /** A context used to configure a blaze run configuration, possibly asynchronously. */
 public interface RunConfigurationContext {
 
   /** The {@link PsiElement} most relevant to this context (e.g. a method, class, file, etc.). */
   PsiElement getSourceElement();
+
+  /** Convert a {@link #getSourceElement()} into an uniquely identifiable string. */
+  default String getSourceElementString() {
+    PsiElement element = getSourceElement();
+    if (element instanceof PsiFile) {
+      return Optional.of((PsiFile) element)
+          .map(PsiFile::getVirtualFile)
+          .map(VirtualFile::getPath)
+          .orElse(element.toString());
+    }
+    String path =
+        Optional.of(element)
+                .map(PsiElement::getContainingFile)
+                .map(PsiFile::getVirtualFile)
+                .map(VirtualFile::getPath)
+                .orElse("")
+            + '#';
+    if (element instanceof PsiQualifiedNamedElement) {
+      return path + ((PsiQualifiedNamedElement) element).getQualifiedName();
+    } else if (element instanceof PsiNamedElement) {
+      return path + ((PsiNamedElement) element).getName();
+    } else {
+      return path + element.toString();
+    }
+  }
 
   /** Returns true if the run configuration was successfully configured. */
   boolean setupRunConfiguration(BlazeCommandRunConfiguration config);

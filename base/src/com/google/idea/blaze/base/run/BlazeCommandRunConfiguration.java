@@ -138,7 +138,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     this.pendingContext = pendingContext;
     this.targetPattern = null;
     this.targetKindString = null;
-    this.contextElementString = pendingContext.getSourceElement().toString();
+    this.contextElementString = pendingContext.getSourceElementString();
     updateHandler();
     EventLoggingService.getInstance().logEvent(getClass(), "async-run-config");
     if (pendingContext.getFuture().isDone()) {
