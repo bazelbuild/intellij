@@ -219,6 +219,7 @@
     <projectService serviceImplementation="com.google.idea.blaze.base.sync.SyncCache"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.BlazeProblemsView"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.ProblemsViewConfiguration"/>
+    <projectService serviceImplementation="com.google.idea.blaze.base.sync.BlazeSyncModificationTracker"/>
     <configurationType implementation="com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.base.run.producers.BlazeBuildFileRunConfigurationProducer"
@@ -423,6 +424,7 @@
     <SyncListener implementation="com.google.idea.blaze.base.sync.autosync.AutoSyncHandler$Listener"/>
     <SyncListener implementation="com.google.idea.blaze.base.ideinfo.ProjectDataInterner$Updater"/>
     <SyncListener implementation="com.google.idea.blaze.base.sync.SimpleSyncListenerService"/>
+    <SyncListener implementation="com.google.idea.blaze.base.sync.BlazeSyncModificationTracker$Updater"/>
     <SyncPlugin implementation="com.google.idea.blaze.base.lang.buildfile.sync.BuildLangSyncPlugin"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.command.BuildFlagsProviderImpl"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.run.coverage.CoverageBuildFlagsProvider"/>

@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.producers.BinaryContextProvider.BinaryRunContext;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -53,7 +54,9 @@ public class BinaryContextRunConfigurationProducer
             psi,
             () ->
                 CachedValueProvider.Result.create(
-                    doFindRunContext(context), PsiModificationTracker.MODIFICATION_COUNT));
+                    doFindRunContext(context),
+                    PsiModificationTracker.MODIFICATION_COUNT,
+                    BlazeSyncModificationTracker.getInstance(context.getProject())));
   }
 
   @Nullable
