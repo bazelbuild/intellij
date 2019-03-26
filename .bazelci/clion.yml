@@ -20,13 +20,3 @@ platforms:
     - --test_output=errors
     test_targets:
     - //:clwb_tests
-  macos:
-    build_flags:
-    - --define=ij_product=clion-beta
-    build_targets:
-    - //clwb:clwb_bazel
-    test_flags:
-    - --define=ij_product=clion-beta
-    - --test_output=errors
-    test_targets:
-    - //:clwb_tests
