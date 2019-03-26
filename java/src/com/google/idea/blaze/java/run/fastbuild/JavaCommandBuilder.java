@@ -73,6 +73,10 @@ final class JavaCommandBuilder implements ModifiableJavaCommand {
     return this;
   }
 
+  ImmutableList<String> getJvmArgs() {
+    return ImmutableList.copyOf(jvmArgs);
+  }
+
   @Override
   public JavaCommandBuilder addClasspathElement(File classpath) {
     checkNotNull(classpath);

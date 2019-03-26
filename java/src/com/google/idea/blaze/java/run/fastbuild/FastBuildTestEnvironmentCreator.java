@@ -17,10 +17,12 @@ package com.google.idea.blaze.java.run.fastbuild;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -28,6 +30,7 @@ import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
+import com.google.idea.blaze.java.run.BlazeJavaRunConfigState;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -37,6 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -65,7 +69,7 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
 
   GeneralCommandLine createCommandLine(
       Project project,
-      Kind kind,
+      BlazeCommandRunConfiguration config,
       FastBuildInfo fastBuildInfo,
       File outputFile,
       @Nullable String testFilter,
@@ -99,6 +103,8 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
       commandBuilder.addJvmArgument(
           "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
     }
+
+    addJvmOptsFromBlazeFlags(config, commandBuilder);
 
     for (String flag : targetJavaInfo.jvmFlags()) {
       commandBuilder.addJvmArgument(
@@ -135,7 +141,7 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
 
     for (FastBuildTestEnvironmentModifier modifier :
         FastBuildTestEnvironmentModifier.getModifiers(Blaze.getBuildSystem(project))) {
-      modifier.modify(commandBuilder, kind, fastBuildInfo, blazeInfo);
+      modifier.modify(commandBuilder, config.getTargetKind(), fastBuildInfo, blazeInfo);
     }
 
     return commandBuilder.build();
@@ -237,6 +243,30 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
 
       commandBuilder.addEnvironmentVariable(
           "TEST_DIAGNOSTICS_OUTPUT_DIR", testDiagnosticsDir.toString());
+    }
+  }
+
+  private static void addJvmOptsFromBlazeFlags(
+      BlazeCommandRunConfiguration configuration, JavaCommandBuilder commandBuilder) {
+    RunConfigurationState state = configuration.getHandler().getState();
+    if (!(state instanceof BlazeJavaRunConfigState)) {
+      return;
+    }
+    List<String> blazeFlags =
+        ((BlazeJavaRunConfigState) state).getBlazeFlagsState().getFlagsForExternalProcesses();
+    addJvmOptsFromBlazeFlags(blazeFlags, commandBuilder);
+  }
+
+  @VisibleForTesting
+  static void addJvmOptsFromBlazeFlags(List<String> blazeFlags, JavaCommandBuilder commandBuilder) {
+    for (int i = 0; i < blazeFlags.size(); ++i) {
+      String flag = blazeFlags.get(i);
+      if (flag.equals("--jvmopt") && i + 1 < blazeFlags.size()) {
+        commandBuilder.addJvmArgument(blazeFlags.get(i + 1));
+        i++;
+      } else if (flag.startsWith("--jvmopt=")) {
+        commandBuilder.addJvmArgument(flag.substring("--jvmopt=".length()));
+      }
     }
   }
 
