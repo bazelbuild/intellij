@@ -20,13 +20,3 @@ platforms:
     - --test_output=errors
     test_targets:
     - //:aswb_tests
-  macos:
-    build_flags:
-    - --define=ij_product=android-studio-latest
-    build_targets:
-    - //aswb:aswb_bazel
-    test_flags:
-    - --define=ij_product=android-studio-latest
-    - --test_output=errors
-    test_targets:
-    - //:aswb_tests
