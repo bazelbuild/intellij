@@ -35,6 +35,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -107,10 +108,7 @@ public class BlazeGoPackage extends GoPackage {
       Project project, BlazeProjectData projectData, TargetKey targetKey) {
     TargetMap targetMap = projectData.getTargetMap();
     TargetIdeInfo target = targetMap.get(targetKey);
-    if (target == null
-        || target.getKind()
-            != com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes.PROTO_LIBRARY
-                .getKind()) {
+    if (target == null || target.getKind() != GenericBlazeRules.RuleTypes.PROTO_LIBRARY.getKind()) {
       return targetKey;
     }
     return ReverseDependencyMap.get(project).get(targetKey).stream()
