@@ -58,6 +58,39 @@ RUNTIME = 1
 PY2 = 1
 PY3 = 2
 
+##### Begin bazel-flag-hack
+# The flag hack stuff below is a way to detect flags that bazel has been invoked with from the
+# aspect. Once PY3-as-default is stable, it can be removed. When removing, also remove the
+# define_flag_hack() call in BUILD and the "_flag_hack" attr on the aspect below. See
+# "PY3-as-default" in:
+# https://github.com/bazelbuild/bazel/blob/master/src/main/java/com/google/devtools/build/lib/rules/python/PythonConfiguration.java
+
+FlagHackInfo = provider(fields = ["incompatible_py2_outputs_are_suffixed"])
+
+def _flag_hack_impl(ctx):
+    return [FlagHackInfo(incompatible_py2_outputs_are_suffixed = ctx.attr.incompatible_py2_outputs_are_suffixed)]
+
+_flag_hack_rule = rule(
+    implementation = _flag_hack_impl,
+    attrs = {"incompatible_py2_outputs_are_suffixed": attr.bool()},
+)
+
+def define_flag_hack():
+    native.config_setting(
+        name = "incompatible_py2_outputs_are_suffixed_setting",
+        values = {"incompatible_py2_outputs_are_suffixed": "true"},
+    )
+    _flag_hack_rule(
+        name = "flag_hack",
+        incompatible_py2_outputs_are_suffixed = select({
+            ":incompatible_py2_outputs_are_suffixed_setting": True,
+            "//conditions:default": False,
+        }),
+        visibility = ["//visibility:public"],
+    )
+
+##### End bazel-flag-hack
+
 ##### Helpers
 
 def source_directory_tuple(resource_file):
@@ -208,16 +241,14 @@ def _get_output_mnemonic(ctx):
     return ctx.configuration.bin_dir.path.split("/")[1]
 
 def _get_python_version(ctx):
-    if _get_output_mnemonic(ctx).find("-py3-") != -1:
+    if ctx.attr._flag_hack[FlagHackInfo].incompatible_py2_outputs_are_suffixed:
+        if _get_output_mnemonic(ctx).find("-py2-") != -1:
+            return PY2
         return PY3
-    if _get_output_mnemonic(ctx).find("-py2-") != -1:
+    else:
+        if _get_output_mnemonic(ctx).find("-py3-") != -1:
+            return PY3
         return PY2
-
-    # Currently, lack of "-py?-" in the output directory mnemonic indicates PY2, but this will
-    # change with PY3-as-default in bazel. Currently set by:
-    # https://github.com/bazelbuild/bazel/blob/558b717e906156477b1c6bd29d049a0fb8e18b27/src/main/java/com/google/devtools/build/lib/rules/python/PythonConfiguration.java#L50
-    # https://github.com/bazelbuild/bazel/blob/558b717e906156477b1c6bd29d049a0fb8e18b27/src/main/java/com/google/devtools/build/lib/rules/python/PythonConfiguration.java#L106-L123
-    return PY2
 
 ##### Builders for individual parts of the aspect output
 
@@ -872,6 +903,9 @@ def make_intellij_info_aspect(aspect_impl, semantics):
                 cfg = "host",
                 executable = True,
                 allow_files = True,
+            ),
+            "_flag_hack": attr.label(
+                default = "//aspect:flag_hack",
             ),
         },
         attr_aspects = attr_aspects,
