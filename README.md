@@ -37,9 +37,12 @@ found in `intellij_platform_sdk/build_defs.bzl`.
 
 ## Contributions
 
-We welcome contributions! Some caveats:
+We may be able to accept contributions in some circumstances. Some caveats:
 
-  * Please consider filing an issue, and discussing potential changes
-    with the devs, prior to investing a lot of time in a patch.
-  * In general, we prefer contributions that fix bugs or add features
-    (as opposed to stylistic, refactoring, or "cleanup" changes).
+  * Before opening a pull request, first file an issue and discuss potential
+    changes with the devs. This will often save you time you would otherwise
+    have invested in a patch which can't be applied.
+  * We can't accept sylistic, refactoring, or "cleanup" changes.
+  * We have very limited bandwidth, and applying patches upstream is a
+    time-consuming process. Large patches generally can't be accepted unless
+    there's clear value for all our users.
