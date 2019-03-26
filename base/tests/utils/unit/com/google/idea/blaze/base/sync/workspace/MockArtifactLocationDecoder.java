@@ -19,7 +19,6 @@ import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import java.io.File;
-import javax.annotation.Nullable;
 
 /** Resolves all artifacts to local source files. */
 public class MockArtifactLocationDecoder implements ArtifactLocationDecoder {
@@ -29,7 +28,6 @@ public class MockArtifactLocationDecoder implements ArtifactLocationDecoder {
     return new File(artifactLocation.getRelativePath());
   }
 
-  @Nullable
   @Override
   public OutputArtifact resolveOutput(ArtifactLocation artifact) {
     return new LocalFileOutputArtifact(decode(artifact));

@@ -51,6 +51,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.PathUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -137,7 +138,6 @@ public class JarCache {
     boolean enabled = updateEnabled();
     if (!enabled || fullRefresh) {
       clearCache();
-      inMemoryState = null;
     }
     if (!enabled) {
       return;
@@ -172,7 +172,7 @@ public class JarCache {
       InMemoryState inMemoryState,
       RemoteOutputArtifacts previousOutputs,
       boolean removeMissingFiles) {
-    if (!enabled || inMemoryState == null) {
+    if (!enabled) {
       return;
     }
     // Ensure the cache dir exists
@@ -204,13 +204,12 @@ public class JarCache {
       }
 
       Futures.allAsList(futures).get();
-      if (updated.size() > 0) {
+      if (!updated.isEmpty()) {
         context.output(PrintOutput.log(String.format("Copied %d jars", updated.size())));
       }
-      if (removed.size() > 0) {
+      if (!removed.isEmpty()) {
         context.output(PrintOutput.log(String.format("Removed %d jars", removed.size())));
       }
-      logStats(context, updated.size(), removed.size(), removeMissingFiles);
 
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -249,17 +248,28 @@ public class JarCache {
             futures.add(
                 FetchExecutor.EXECUTOR.submit(
                     () -> {
-                      try (InputStream stream = artifact.getInputStream()) {
-                        Files.copy(
-                            stream,
-                            Paths.get(cacheFileForKey(key).getPath()),
-                            StandardCopyOption.REPLACE_EXISTING,
-                            StandardCopyOption.COPY_ATTRIBUTES);
+                      try {
+                        copyLocally(artifact, cacheFileForKey(key));
                       } catch (IOException e) {
                         logger.warn(e);
                       }
                     })));
     return futures;
+  }
+
+  private static void copyLocally(OutputArtifact output, File destination) throws IOException {
+    if (output instanceof LocalFileOutputArtifact) {
+      File source = ((LocalFileOutputArtifact) output).getFile();
+      Files.copy(
+          Paths.get(source.getPath()),
+          Paths.get(destination.getPath()),
+          StandardCopyOption.REPLACE_EXISTING,
+          StandardCopyOption.COPY_ATTRIBUTES);
+      return;
+    }
+    try (InputStream stream = output.getInputStream()) {
+      Files.copy(stream, Paths.get(destination.getPath()), StandardCopyOption.REPLACE_EXISTING);
+    }
   }
 
   private Collection<ListenableFuture<?>> deleteCacheFiles(Collection<File> files) {
@@ -277,16 +287,6 @@ public class JarCache {
         .collect(toImmutableList());
   }
 
-  private void logStats(
-      BlazeContext context, int numUpdatedFiles, int numRemovedFiles, boolean removeMissingFiles) {
-    if (numUpdatedFiles > 0) {
-      context.output(PrintOutput.log(String.format("Copied %d jars", numUpdatedFiles)));
-    }
-    if (numRemovedFiles > 0 && removeMissingFiles) {
-      context.output(PrintOutput.log(String.format("Removed %d jars", numRemovedFiles)));
-    }
-  }
-
   private File cacheFileForKey(String key) {
     return new File(cacheDir, key);
   }
@@ -299,6 +299,7 @@ public class JarCache {
         Future<?> possiblyIgnoredError = FileUtil.asyncDelete(Lists.newArrayList(cacheFiles));
       }
     }
+    inMemoryState = null;
   }
 
   /** Gets the cached file for a jar. If it doesn't exist, we return the file from the library. */
@@ -340,7 +341,8 @@ public class JarCache {
 
   private static String cacheKeyInternal(OutputArtifact output) {
     String key = output.getKey();
-    return FileUtil.getNameWithoutExtension(key) + "_" + Integer.toHexString(key.hashCode());
+    String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(key));
+    return name + "_" + Integer.toHexString(key.hashCode());
   }
 
   private static String cacheKeyForJar(OutputArtifact jar) {

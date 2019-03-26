@@ -246,6 +246,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     return keepInSync;
   }
 
+  @Nullable
   public String getContextElementString() {
     return contextElementString;
   }

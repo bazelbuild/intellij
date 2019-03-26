@@ -24,7 +24,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /** Decodes intellij_ide_info.proto ArtifactLocation file paths */
 public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecoder {
@@ -41,12 +40,10 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
     this.remoteOutputs = remoteOutputs;
   }
 
-  @Nullable
   @Override
   public OutputArtifact resolveOutput(ArtifactLocation artifact) {
     if (artifact.isSource()) {
-      // not an output artifact
-      return null;
+      return new LocalFileOutputArtifact(decode(artifact));
     }
     OutputArtifact remoteOutput = remoteOutputs.findRemoteOutput(artifact);
     if (remoteOutput != null) {
