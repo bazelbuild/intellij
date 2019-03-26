@@ -20,13 +20,3 @@ platforms:
     - --test_output=errors
     test_targets:
     - //:ijwb_tests
-  macos:
-    build_flags:
-    - --define=ij_product=intellij-beta
-    build_targets:
-    - //ijwb:ijwb_bazel
-    test_flags:
-    - --define=ij_product=intellij-beta
-    - --test_output=errors
-    test_targets:
-    - //:ijwb_tests
