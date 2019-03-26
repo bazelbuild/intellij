@@ -29,7 +29,6 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collection;
 import javax.annotation.Nullable;
 
@@ -83,7 +82,7 @@ public class LocalFileOutputArtifact implements OutputArtifact {
 
   @Override
   @MustBeClosed
-  public InputStream getInputStream() throws IOException {
+  public BufferedInputStream getInputStream() throws IOException {
     return new BufferedInputStream(new FileInputStream(file));
   }
 

@@ -18,8 +18,8 @@ package com.google.idea.blaze.base.command.buildresult;
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.filecache.ArtifactState;
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import javax.annotation.Nullable;
 
 /** An output artifact from a blaze build. */
@@ -31,9 +31,9 @@ public interface OutputArtifact {
   /** The path component related to the build configuration. */
   String getBlazeConfigurationString(BlazeConfigurationHandler handler);
 
-  /** An input stream providing the contents of this artifact. */
+  /** A buffered input stream providing the contents of this artifact. */
   @MustBeClosed
-  InputStream getInputStream() throws IOException;
+  BufferedInputStream getInputStream() throws IOException;
 
   /**
    * A key uniquely identifying an artifact between builds. Different versions of an artifact

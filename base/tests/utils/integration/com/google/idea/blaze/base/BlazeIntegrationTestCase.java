@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base;
 
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
@@ -45,8 +47,11 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -113,12 +118,23 @@ public abstract class BlazeIntegrationTestCase {
 
     registerApplicationService(
         InputStreamProvider.class,
-        file -> {
-          VirtualFile vf = fileSystem.findFile(file.getPath());
-          if (vf == null) {
-            throw new FileNotFoundException();
+        new InputStreamProvider() {
+          @Override
+          public InputStream forFile(File file) throws IOException {
+            VirtualFile vf = fileSystem.findFile(file.getPath());
+            if (vf == null) {
+              throw new FileNotFoundException();
+            }
+            return vf.getInputStream();
           }
-          return vf.getInputStream();
+
+          @Override
+          public BufferedInputStream forOutputArtifact(OutputArtifact output) throws IOException {
+            if (output instanceof LocalFileOutputArtifact) {
+              return new BufferedInputStream(forFile(((LocalFileOutputArtifact) output).getFile()));
+            }
+            throw new RuntimeException("Can't handle output artifact type: " + output.getClass());
+          }
         });
 
     if (isLightTestCase()) {

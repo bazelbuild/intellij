@@ -29,6 +29,11 @@ public class MockArtifactLocationDecoder implements ArtifactLocationDecoder {
   }
 
   @Override
+  public File resolveSource(ArtifactLocation artifact) {
+    return decode(artifact);
+  }
+
+  @Override
   public OutputArtifact resolveOutput(ArtifactLocation artifact) {
     return new LocalFileOutputArtifact(decode(artifact));
   }

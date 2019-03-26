@@ -33,7 +33,7 @@ final class ProjectViewStorageManagerImpl extends ProjectViewStorageManager {
   @Override
   public String loadProjectView(File projectViewFile) throws IOException {
     try (InputStreamReader reader =
-        new InputStreamReader(InputStreamProvider.getInstance().getFile(projectViewFile), UTF_8)) {
+        new InputStreamReader(InputStreamProvider.getInstance().forFile(projectViewFile), UTF_8)) {
       return CharStreams.toString(reader);
     }
   }

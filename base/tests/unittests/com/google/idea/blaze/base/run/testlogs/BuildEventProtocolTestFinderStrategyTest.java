@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -82,8 +83,10 @@ public class BuildEventProtocolTestFinderStrategyTest extends BlazeTestCase {
     BuildEventProtocolTestFinderStrategy strategy =
         new BuildEventProtocolTestFinderStrategy(bepOutputFile);
 
-    BlazeTestResults results =
-        BuildEventProtocolOutputReader.parseTestResults(inputStreamProvider.getFile(bepOutputFile));
+    BlazeTestResults results;
+    try (InputStream inputStream = inputStreamProvider.forFile(bepOutputFile)) {
+      results = BuildEventProtocolOutputReader.parseTestResults(inputStream);
+    }
     BlazeTestResults finderStrategyResults = strategy.findTestResults();
 
     assertThat(finderStrategyResults.perTargetResults).isEqualTo(results.perTargetResults);

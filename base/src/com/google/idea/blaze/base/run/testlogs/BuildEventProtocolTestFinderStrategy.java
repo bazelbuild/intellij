@@ -42,7 +42,7 @@ public final class BuildEventProtocolTestFinderStrategy implements BlazeTestResu
   @Override
   public BlazeTestResults findTestResults() {
     try (InputStream inputStream =
-        new BufferedInputStream(InputStreamProvider.getInstance().getFile(outputFile))) {
+        new BufferedInputStream(InputStreamProvider.getInstance().forFile(outputFile))) {
       return BuildEventProtocolOutputReader.parseTestResults(inputStream);
     } catch (IOException e) {
       logger.warn(e);

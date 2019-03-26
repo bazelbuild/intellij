@@ -989,7 +989,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             TargetKey.forPlainTarget(LABEL),
             ArtifactLocation.builder()
                 .setRelativePath("java/com/test.manifest")
-                .setIsSource(true)
+                .setIsSource(false)
                 .build());
     Map<TargetKey, Map<ArtifactLocation, String>> manifestMap =
         readPackageManifestFiles(manifests, getDecoder());
@@ -1014,7 +1014,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             TargetKey.forPlainTarget(LABEL),
             ArtifactLocation.builder()
                 .setRelativePath("java/com/test.manifest")
-                .setIsSource(true)
+                .setIsSource(false)
                 .build());
     Map<TargetKey, Map<ArtifactLocation, String>> manifestMap =
         readPackageManifestFiles(manifests, getDecoder());
@@ -1044,13 +1044,13 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
                 TargetKey.forPlainTarget(Label.create("//a:a")),
                 ArtifactLocation.builder()
                     .setRelativePath("java/com/test.manifest")
-                    .setIsSource(true)
+                    .setIsSource(false)
                     .build())
             .put(
                 TargetKey.forPlainTarget(Label.create("//b:b")),
                 ArtifactLocation.builder()
                     .setRelativePath("java/com/test2.manifest")
-                    .setIsSource(true)
+                    .setIsSource(false)
                     .build())
             .build();
     Map<TargetKey, Map<ArtifactLocation, String>> manifestMap =
@@ -1097,7 +1097,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
             TargetKey.forPlainTarget(LABEL),
             ArtifactLocation.builder()
                 .setRelativePath("java/com/test.manifest")
-                .setIsSource(true)
+                .setIsSource(false)
                 .build());
 
     List<SourceArtifact> sourceArtifacts =

@@ -15,7 +15,10 @@
  */
 package com.google.idea.blaze.java.sync.source;
 
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -26,7 +29,10 @@ import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.JavaSourcePackage;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PackageManifest;
 import com.google.idea.blaze.base.async.FutureUtil;
-import com.google.idea.blaze.base.filecache.FilesDiff;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.filecache.ArtifactState;
+import com.google.idea.blaze.base.filecache.ArtifactsDiff;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.InputStreamProvider;
@@ -39,10 +45,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
-import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -55,9 +60,8 @@ public class PackageManifestReader {
     return ServiceManager.getService(PackageManifestReader.class);
   }
 
-  private ImmutableMap<File, Long> fileDiffState;
-
-  private Map<File, TargetKey> fileToLabelMap = Maps.newHashMap();
+  private ImmutableMap<String, ArtifactState> artifactState;
+  private Map<ArtifactState, TargetKey> fileToLabelMap = new HashMap<>();
   private final Map<TargetKey, Map<ArtifactLocation, String>> manifestMap = Maps.newConcurrentMap();
 
   /** @return A map from java source absolute file path to declared package string. */
@@ -67,16 +71,16 @@ public class PackageManifestReader {
       Map<TargetKey, ArtifactLocation> javaPackageManifests,
       ListeningExecutorService executorService) {
 
-    Map<File, TargetKey> fileToLabelMap = Maps.newHashMap();
+    Map<OutputArtifact, TargetKey> fileToLabelMap = Maps.newHashMap();
     for (Map.Entry<TargetKey, ArtifactLocation> entry : javaPackageManifests.entrySet()) {
       TargetKey key = entry.getKey();
-      File file = decoder.decode(entry.getValue());
-      fileToLabelMap.put(file, key);
+      OutputArtifact artifact = decoder.resolveOutput(entry.getValue());
+      fileToLabelMap.put(Preconditions.checkNotNull(artifact), key);
     }
-    FilesDiff<File, File> diff;
+    ArtifactsDiff diff;
     try {
-      diff = FilesDiff.diffFileTimestamps(fileDiffState, fileToLabelMap.keySet());
-      fileDiffState = diff.getNewFileState();
+      diff = ArtifactsDiff.diffArtifacts(artifactState, fileToLabelMap.keySet());
+      artifactState = diff.getNewState();
     } catch (InterruptedException e) {
       throw new ProcessCanceledException(e);
     } catch (ExecutionException e) {
@@ -86,7 +90,9 @@ public class PackageManifestReader {
     }
 
     ListenableFuture<?> fetchFuture =
-        PrefetchService.getInstance().prefetchFiles(diff.getUpdatedFiles(), true, false);
+        PrefetchService.getInstance()
+            .prefetchFiles(
+                LocalFileOutputArtifact.getLocalOutputFiles(diff.getUpdatedOutputs()), true, false);
     if (!FutureUtil.waitForFuture(context, fetchFuture)
         .timed("FetchPackageManifests", EventType.Prefetching)
         .withProgressMessage("Reading package manifests...")
@@ -96,7 +102,7 @@ public class PackageManifestReader {
     }
 
     List<ListenableFuture<Void>> futures = Lists.newArrayList();
-    for (File file : diff.getUpdatedFiles()) {
+    for (OutputArtifact file : diff.getUpdatedOutputs()) {
       futures.add(
           executorService.submit(
               () -> {
@@ -105,13 +111,15 @@ public class PackageManifestReader {
                 return null;
               }));
     }
-    for (File file : diff.getRemovedFiles()) {
+    for (ArtifactState file : diff.getRemovedOutputs()) {
       TargetKey key = this.fileToLabelMap.get(file);
       if (key != null) {
         manifestMap.remove(key);
       }
     }
-    this.fileToLabelMap = fileToLabelMap;
+    this.fileToLabelMap =
+        fileToLabelMap.entrySet().stream()
+            .collect(toImmutableMap(e -> e.getKey().toArtifactState(), Map.Entry::getValue));
 
     try {
       Futures.allAsList(futures).get();
@@ -122,16 +130,14 @@ public class PackageManifestReader {
     return manifestMap;
   }
 
-  private static Map<ArtifactLocation, String> parseManifestFile(File packageManifest) {
+  private static Map<ArtifactLocation, String> parseManifestFile(OutputArtifact packageManifest) {
     Map<ArtifactLocation, String> outputMap = Maps.newHashMap();
     InputStreamProvider inputStreamProvider = InputStreamProvider.getInstance();
 
-    try (InputStream input = inputStreamProvider.getFile(packageManifest)) {
-      try (BufferedInputStream bufferedInputStream = new BufferedInputStream(input)) {
-        PackageManifest proto = PackageManifest.parseFrom(bufferedInputStream);
-        for (JavaSourcePackage source : proto.getSourcesList()) {
-          outputMap.put(fromProto(source.getArtifactLocation()), source.getPackageString());
-        }
+    try (InputStream input = inputStreamProvider.forOutputArtifact(packageManifest)) {
+      PackageManifest proto = PackageManifest.parseFrom(input);
+      for (JavaSourcePackage source : proto.getSourcesList()) {
+        outputMap.put(fromProto(source.getArtifactLocation()), source.getPackageString());
       }
       return outputMap;
     } catch (IOException e) {

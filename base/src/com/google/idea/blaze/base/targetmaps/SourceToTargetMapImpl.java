@@ -77,12 +77,15 @@ public class SourceToTargetMapImpl implements SourceToTargetMap {
   @SuppressWarnings("unused")
   private static ImmutableMultimap<File, TargetKey> computeSourceToTargetMap(
       Project project, BlazeProjectData blazeProjectData) {
-    ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
+    ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
     ImmutableMultimap.Builder<File, TargetKey> sourceToTargetMap = ImmutableMultimap.builder();
     for (TargetIdeInfo target : blazeProjectData.getTargetMap().targets()) {
       TargetKey key = target.getKey();
       for (ArtifactLocation sourceArtifact : target.getSources()) {
-        sourceToTargetMap.put(artifactLocationDecoder.decode(sourceArtifact), key);
+        File file = decoder.resolveSource(sourceArtifact);
+        if (file != null) {
+          sourceToTargetMap.put(file, key);
+        }
       }
     }
     return sourceToTargetMap.build();

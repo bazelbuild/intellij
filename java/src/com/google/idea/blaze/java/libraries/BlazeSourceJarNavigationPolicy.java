@@ -115,14 +115,8 @@ final class BlazeSourceJarNavigationPolicy extends ClsCustomNavigationPolicyEx {
 
   @Nullable
   private static VirtualFile getSourceJarRoot(
-      Project project,
-      ArtifactLocationDecoder artifactLocationDecoder,
-      ArtifactLocation sourceJar) {
-    File sourceJarFile =
-        JarCache.getInstance(project).getCachedSourceJar(artifactLocationDecoder, sourceJar);
-    if (sourceJarFile == null) {
-      sourceJarFile = artifactLocationDecoder.decode(sourceJar);
-    }
+      Project project, ArtifactLocationDecoder decoder, ArtifactLocation sourceJar) {
+    File sourceJarFile = JarCache.getInstance(project).getCachedSourceJar(decoder, sourceJar);
     if (sourceJar == null) {
       return null;
     }

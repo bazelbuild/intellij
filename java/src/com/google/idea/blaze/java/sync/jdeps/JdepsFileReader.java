@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.view.proto.Deps;
 import com.google.idea.blaze.base.async.FutureUtil;
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
@@ -30,6 +29,7 @@ import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.SyncState;
+import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
@@ -44,7 +44,6 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
@@ -148,7 +147,7 @@ public class JdepsFileReader {
     List<ListenableFuture<Result>> futures = Lists.newArrayList();
     for (OutputArtifact updatedFile : diff.getUpdatedOutputs()) {
       futures.add(
-          submit(
+          FetchExecutor.EXECUTOR.submit(
               () -> {
                 totalSizeLoaded.addAndGet(updatedFile.getLength());
                 try (InputStream inputStream = updatedFile.getInputStream()) {
@@ -195,9 +194,5 @@ public class JdepsFileReader {
       return null;
     }
     return decoder.resolveOutput(javaIdeInfo.getJdepsFile());
-  }
-
-  private static <T> ListenableFuture<T> submit(Callable<T> callable) {
-    return BlazeExecutor.getInstance().submit(callable);
   }
 }

@@ -15,17 +15,27 @@
  */
 package com.google.idea.blaze.base.io;
 
+import com.google.errorprone.annotations.MustBeClosed;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
-import org.jetbrains.annotations.NotNull;
 
 /** Default implementation of InputStreamProvider. */
 final class InputStreamProviderImpl implements InputStreamProvider {
 
   @Override
-  public InputStream getFile(@NotNull File file) throws FileNotFoundException {
+  @MustBeClosed
+  public InputStream forFile(File file) throws FileNotFoundException {
     return new FileInputStream(file);
+  }
+
+  @Override
+  @MustBeClosed
+  public BufferedInputStream forOutputArtifact(OutputArtifact output) throws IOException {
+    return output.getInputStream();
   }
 }

@@ -42,7 +42,7 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
 
   @Override
   public OutputArtifact resolveOutput(ArtifactLocation artifact) {
-    if (artifact.isSource()) {
+    if (artifact.isMainWorkspaceSourceArtifact()) {
       return new LocalFileOutputArtifact(decode(artifact));
     }
     OutputArtifact remoteOutput = remoteOutputs.findRemoteOutput(artifact);
@@ -50,6 +50,13 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
       return remoteOutput;
     }
     return new LocalFileOutputArtifact(decode(artifact));
+  }
+
+  @Override
+  public File resolveSource(ArtifactLocation artifact) {
+    return artifact.isMainWorkspaceSourceArtifact()
+        ? pathResolver.resolveToFile(artifact.getRelativePath())
+        : null;
   }
 
   @Override

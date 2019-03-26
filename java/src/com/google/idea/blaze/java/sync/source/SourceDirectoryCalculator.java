@@ -31,11 +31,11 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.idea.blaze.base.async.executor.TransientExecutor;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -76,8 +76,6 @@ public final class SourceDirectoryCalculator {
   private static final JavaPackageReader generatedFileJavaPackageReader =
       new FilePathJavaPackageReader();
   private final ListeningExecutorService executorService = MoreExecutors.newDirectExecutorService();
-  private final ListeningExecutorService packageReaderExecutorService =
-      MoreExecutors.listeningDecorator(new TransientExecutor(16));
 
   public ImmutableList<BlazeContentEntry> calculateContentEntries(
       Project project,
@@ -99,7 +97,7 @@ public final class SourceDirectoryCalculator {
                           childContext,
                           artifactLocationDecoder,
                           javaPackageManifests,
-                          packageReaderExecutorService);
+                          FetchExecutor.EXECUTOR);
               return new ManifestFilePackageReader(manifestMap);
             });
 

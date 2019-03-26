@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /** Decodes intellij_ide_info.proto ArtifactLocation file paths */
 public interface ArtifactLocationDecoder {
@@ -29,6 +30,13 @@ public interface ArtifactLocationDecoder {
   /** @deprecated use {@link OutputArtifact} instead of {@link File}. */
   @Deprecated
   File decode(ArtifactLocation artifactLocation);
+
+  /**
+   * Returns the local file associated with this {@link ArtifactLocation}, or null if it's not a
+   * main workspace source artifact.
+   */
+  @Nullable
+  File resolveSource(ArtifactLocation artifact);
 
   /**
    * Returns a {@link LocalFileOutputArtifact} for source or locally-available output artifacts.

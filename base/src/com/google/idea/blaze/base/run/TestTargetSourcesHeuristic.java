@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import java.io.File;
+import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -53,7 +54,7 @@ public class TestTargetSourcesHeuristic implements TestTargetHeuristic {
 
     ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
     for (ArtifactLocation src : sources.get()) {
-      if (decoder.decode(src).equals(sourceFile)) {
+      if (Objects.equals(decoder.resolveSource(src), sourceFile)) {
         return true;
       }
     }

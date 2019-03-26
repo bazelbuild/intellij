@@ -47,6 +47,7 @@ import com.intellij.psi.search.GlobalSearchScope.FilesScope;
 import com.intellij.psi.stubs.StubIndex;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -159,7 +160,8 @@ public final class BlazeGoTestLocator implements SMTestLocator {
       return ImmutableList.of();
     }
     return target.getGoIdeInfo().getSources().stream()
-        .map(projectData.getArtifactLocationDecoder()::decode)
+        .map(projectData.getArtifactLocationDecoder()::resolveSource)
+        .filter(Objects::nonNull)
         .map(lfs::findFileByIoFile)
         .collect(Collectors.toList());
   }
