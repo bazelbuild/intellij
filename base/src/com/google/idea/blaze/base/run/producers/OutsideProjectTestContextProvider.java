@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.ExecutorType;
+import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.intellij.execution.Location;
@@ -83,7 +84,8 @@ class OutsideProjectTestContextProvider implements TestContextProvider {
         () ->
             CachedValueProvider.Result.create(
                 doFindTestContext(context, vf, psi, path),
-                PsiModificationTracker.MODIFICATION_COUNT));
+                PsiModificationTracker.MODIFICATION_COUNT,
+                BlazeSyncModificationTracker.getInstance(context.getProject())));
   }
 
   @Nullable
