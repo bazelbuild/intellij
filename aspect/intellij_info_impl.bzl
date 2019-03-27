@@ -905,7 +905,7 @@ def make_intellij_info_aspect(aspect_impl, semantics):
                 allow_files = True,
             ),
             "_flag_hack": attr.label(
-                default = "//aspect:flag_hack",
+                default = "//:flag_hack",
             ),
         },
         attr_aspects = attr_aspects,
