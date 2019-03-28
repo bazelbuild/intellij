@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
-import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -33,7 +32,7 @@ import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -48,11 +47,11 @@ public class FilteredTargetMap {
 
   public FilteredTargetMap(
       Project project,
-      ArtifactLocationDecoder artifactLocationDecoder,
+      ArtifactLocationDecoder decoder,
       TargetMap targetMap,
       Predicate<TargetIdeInfo> filter) {
     this.project = project;
-    this.rootsMap = createRootsMap(artifactLocationDecoder, targetMap.targets());
+    this.rootsMap = createRootsMap(decoder, targetMap.targets());
     this.targetMap = targetMap;
     this.filter = filter;
   }
@@ -61,7 +60,7 @@ public class FilteredTargetMap {
     return targetsForSourceFiles(ImmutableList.of(sourceFile));
   }
 
-  public ImmutableSet<TargetIdeInfo> targetsForSourceFiles(List<File> sourceFiles) {
+  public ImmutableSet<TargetIdeInfo> targetsForSourceFiles(Collection<File> sourceFiles) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData != null) {
@@ -71,7 +70,7 @@ public class FilteredTargetMap {
   }
 
   private ImmutableSet<TargetIdeInfo> targetsForSourceFilesImpl(
-      ImmutableMultimap<TargetKey, TargetKey> rdepsMap, List<File> sourceFiles) {
+      ImmutableMultimap<TargetKey, TargetKey> rdepsMap, Collection<File> sourceFiles) {
     ImmutableSet.Builder<TargetIdeInfo> result = ImmutableSet.builder();
     Set<TargetKey> roots =
         sourceFiles.stream()
@@ -97,12 +96,13 @@ public class FilteredTargetMap {
   }
 
   private static Multimap<File, TargetKey> createRootsMap(
-      ArtifactLocationDecoder artifactLocationDecoder, Collection<TargetIdeInfo> targets) {
+      ArtifactLocationDecoder decoder, Collection<TargetIdeInfo> targets) {
     Multimap<File, TargetKey> result = ArrayListMultimap.create();
     for (TargetIdeInfo target : targets) {
-      for (ArtifactLocation source : target.getSources()) {
-        result.put(artifactLocationDecoder.decode(source), target.getKey());
-      }
+      target.getSources().stream()
+          .map(decoder::resolveSource)
+          .filter(Objects::nonNull)
+          .forEach(f -> result.put(f, target.getKey()));
     }
     return result;
   }

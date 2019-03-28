@@ -45,25 +45,18 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
   @Override
   public Future<Collection<TargetInfo>> targetsForSourceFiles(
       Project project, Set<File> sourceFiles, Optional<RuleType> ruleType) {
-    FilteredTargetMap filteredTargetMap =
+    FilteredTargetMap targetMap =
         SyncCache.getInstance(project)
             .get(ProjectSourceToTargetFinder.class, ProjectSourceToTargetFinder::computeTargetMap);
-    if (filteredTargetMap == null) {
+    if (targetMap == null) {
       return Futures.immediateFuture(ImmutableList.of());
     }
     ImmutableSet<TargetInfo> targets =
-        sourceFiles.stream()
-            .flatMap(f -> targetsForSourceFile(filteredTargetMap, f, ruleType).stream())
+        targetMap.targetsForSourceFiles(sourceFiles).stream()
+            .map(TargetIdeInfo::toTargetInfo)
+            .filter(target -> !ruleType.isPresent() || target.getRuleType().equals(ruleType.get()))
             .collect(toImmutableSet());
     return Futures.immediateFuture(targets);
-  }
-
-  private static ImmutableSet<TargetInfo> targetsForSourceFile(
-      FilteredTargetMap targetMap, File sourceFile, Optional<RuleType> ruleType) {
-    return targetMap.targetsForSourceFile(sourceFile).stream()
-        .map(TargetIdeInfo::toTargetInfo)
-        .filter(target -> !ruleType.isPresent() || target.getRuleType().equals(ruleType.get()))
-        .collect(toImmutableSet());
   }
 
   private static FilteredTargetMap computeTargetMap(Project project, BlazeProjectData projectData) {
