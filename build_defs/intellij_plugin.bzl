@@ -69,7 +69,7 @@ def _intellij_plugin_library_impl(ctx):
 
     return [
         _IntellijPluginLibraryInfo(
-            plugin_xmls = depset(plugin_xmls),
+            plugin_xmls = depset(plugin_xmls, order = "preorder"),
             optional_plugin_xmls = [
                 dep[_OptionalPluginXmlInfo]
                 for dep in ctx.attr.optional_plugin_xmls
@@ -92,7 +92,7 @@ def _merge_plugin_xmls(ctx):
     for dep in ctx.attr.deps:
         if _IntellijPluginLibraryInfo in dep:
             dep_plugin_xmls.append(dep[_IntellijPluginLibraryInfo].plugin_xmls)
-    plugin_xmls = depset([ctx.file.plugin_xml], transitive = dep_plugin_xmls)
+    plugin_xmls = depset([ctx.file.plugin_xml], transitive = dep_plugin_xmls, order = "preorder")
 
     if len(plugin_xmls.to_list()) == 1:
         return plugin_xmls.to_list()[0]

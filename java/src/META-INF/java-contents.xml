@@ -60,7 +60,6 @@
     <TestTargetHeuristic implementation="com.google.idea.blaze.java.run.JUnitTestHeuristic" order="before TestSizeHeuristic"/>
     <TestTargetHeuristic implementation="com.google.idea.blaze.java.run.ClassPackagePathHeuristic" id="ClassPackagePathHeuristic" order="before TargetNameHeuristic"/>
     <TestTargetHeuristic implementation="com.google.idea.blaze.java.run.QualifiedClassNameHeuristic" order="before ClassPackagePathHeuristic"/>
-    <SyncListener implementation="com.google.idea.blaze.java.libraries.BlazeSyncModificationTracker$SyncTrackerUpdater"/>
     <SyncListener implementation="com.google.idea.blaze.java.libraries.DetachAllSourceJarsAction$DetachAllOnSync"/>
     <JavaClasspathAspectStrategy implementation="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy$BazelStrategy"/>
     <TestComparisonFailureParser implementation="com.google.idea.blaze.java.run.smrunner.JunitTestComparisonFailureParser"/>
@@ -108,7 +107,6 @@
     <useScopeEnlarger implementation="com.google.idea.blaze.java.psi.DaggerUseScopeEnlarger"/>
     <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.DaggerImplicitUsageProvider"/>
     <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.GuiceImplicitUsageProvider"/>
-    <projectService serviceImplementation="com.google.idea.blaze.java.libraries.BlazeSyncModificationTracker"/>
     <psi.clsCustomNavigationPolicy implementation="com.google.idea.blaze.java.libraries.BlazeSourceJarNavigationPolicy"/>
     <!-- Need to come first to prevent overriding other position managers. -->
     <debugger.positionManagerFactory implementation="com.google.idea.blaze.java.run.ExternalFilePositionManager$Factory" order="first"/>
