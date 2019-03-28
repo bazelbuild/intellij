@@ -47,6 +47,7 @@ semantics = struct(
     py = struct(
         get_launcher = get_py_launcher,
     ),
+    flag_hack_label = "//aspect:flag_hack",
 )
 
 def _aspect_impl(target, ctx):

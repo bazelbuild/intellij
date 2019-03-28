@@ -52,16 +52,20 @@ genrule(
     cmd = "cp $< $@",
 )
 
-_dev_tools_path = "//aspect/tools"
+_dev_aspect_path = native.package_name()
 
-# Aspect tools have different label paths in development vs. when bundled with the plugin.
+# Aspect references have different label paths in development vs. when bundled with the plugin.
 # This genrule is required for the aspect to be valid in all three repositories in which it's used.
+# Changes:
+#   //.../aspect/tools:tool_name -> //:tool_name_bin
+#   //.../aspect:flag_hack -> //:flag_hack
 genrule(
     name = "modify_tools_path",
     srcs = ["intellij_info.bzl"],
     outs = ["intellij_info_bundled.bzl"],
     cmd = "cat $(SRCS) >$@ && " +
-          "sed -i -e 's,%s:\" + tool_name,//:\" + tool_name + \"_bin\",g' $@" % _dev_tools_path,
+          "sed -i -e 's,//%s/tools:\" + tool_name,//:\" + tool_name + \"_bin\",g' $@ && " % _dev_aspect_path +
+          "sed -i -e 's,//%s:flag_hack,//:flag_hack,g' $@" % _dev_aspect_path,
 )
 
 define_flag_hack()

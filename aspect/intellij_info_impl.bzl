@@ -884,6 +884,7 @@ def semantics_extra_deps(base, semantics, name):
 def make_intellij_info_aspect(aspect_impl, semantics):
     """Creates the aspect given the semantics."""
     tool_label = semantics.tool_label
+    flag_hack_label = semantics.flag_hack_label
     deps = semantics_extra_deps(DEPS, semantics, "extra_deps")
     runtime_deps = semantics_extra_deps(RUNTIME_DEPS, semantics, "extra_runtime_deps")
     prerequisite_deps = semantics_extra_deps(PREREQUISITE_DEPS, semantics, "extra_prerequisites")
@@ -905,7 +906,7 @@ def make_intellij_info_aspect(aspect_impl, semantics):
                 allow_files = True,
             ),
             "_flag_hack": attr.label(
-                default = "//aspect:flag_hack",
+                default = flag_hack_label,
             ),
         },
         attr_aspects = attr_aspects,
