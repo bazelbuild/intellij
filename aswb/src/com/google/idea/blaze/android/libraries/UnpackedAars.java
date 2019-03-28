@@ -120,12 +120,9 @@ public class UnpackedAars {
   /** In-memory state representing the currently-cached files their corresponding artifacts. */
   private static class InMemoryState {
     private final ImmutableMap<String, AarAndJar> projectOutputs;
-    private final ImmutableMap<String, File> cacheFiles;
 
-    InMemoryState(
-        ImmutableMap<String, AarAndJar> projectOutputs, ImmutableMap<String, File> cacheFiles) {
+    InMemoryState(ImmutableMap<String, AarAndJar> projectOutputs) {
       this.projectOutputs = projectOutputs;
-      this.cacheFiles = cacheFiles;
     }
 
     ImmutableMap<String, OutputArtifact> getAarOutputs() {
@@ -189,16 +186,17 @@ public class UnpackedAars {
       }
     }
 
+    ImmutableMap<String, File> cacheFiles = readCachedFiles();
     try {
       Set<String> updatedKeys =
           FileCacheDiffer.findUpdatedOutputs(
-                  inMemoryState.getAarOutputs(), inMemoryState.cacheFiles, previousOutputs)
+                  inMemoryState.getAarOutputs(), cacheFiles, previousOutputs)
               .keySet();
 
       Set<String> removedKeys = new HashSet<>();
       if (removeMissingFiles) {
         removedKeys =
-            inMemoryState.cacheFiles.entrySet().stream()
+            cacheFiles.entrySet().stream()
                 .filter(e -> !inMemoryState.projectOutputs.containsKey(e.getKey()))
                 .map(Map.Entry::getKey)
                 .collect(toImmutableSet());
@@ -236,7 +234,7 @@ public class UnpackedAars {
     }
     String cacheKey = cacheKeyForAar(decoder.resolveOutput(library.aarArtifact));
     // check if it was actually cached
-    if (!inMemoryState.cacheFiles.containsKey(cacheKey)) {
+    if (!inMemoryState.projectOutputs.containsKey(cacheKey)) {
       return getFallbackFile(artifact);
     }
     return jarFileForKey(cacheKey);
@@ -255,7 +253,7 @@ public class UnpackedAars {
       return null;
     }
     String cacheKey = cacheKeyForAar(artifact);
-    if (!inMemoryState.cacheFiles.containsKey(cacheKey)) {
+    if (!inMemoryState.projectOutputs.containsKey(cacheKey)) {
       return null;
     }
     return new File(aarDirForKey(cacheKey), SdkConstants.FD_RES);
@@ -357,7 +355,7 @@ public class UnpackedAars {
       }
       outputs.put(cacheKeyForAar(aar), new AarAndJar(aar, jar));
     }
-    return new InMemoryState(ImmutableMap.copyOf(outputs), readCachedFiles());
+    return new InMemoryState(ImmutableMap.copyOf(outputs));
   }
 
   private static final String STAMP_FILE_NAME = "aar.timestamp";

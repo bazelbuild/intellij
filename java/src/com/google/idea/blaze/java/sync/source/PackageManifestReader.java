@@ -119,6 +119,7 @@ public class PackageManifestReader {
     }
     this.fileToLabelMap =
         fileToLabelMap.entrySet().stream()
+            .filter(e -> diff.getNewState().containsKey(e.getKey().getKey()))
             .collect(toImmutableMap(e -> e.getKey().toArtifactState(), Map.Entry::getValue));
 
     try {
