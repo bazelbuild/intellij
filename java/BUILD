@@ -186,7 +186,7 @@ java_binary(
 
 java_import(
     name = "jdk_tools_jar",
-    jars = ["@local_jdk//:langtools"],
+    jars = ["@bazel_tools//tools/jdk:langtools"],
 )
 
 java_binary(
