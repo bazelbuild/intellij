@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /**
  * A helper class to find which output artifacts have been modified since they were locally cached.
@@ -44,9 +45,6 @@ public final class FileCacheDiffer {
       Map<String, File> cachedFiles,
       RemoteOutputArtifacts previousOutputs)
       throws InterruptedException, ExecutionException {
-    if (cachedFiles.isEmpty()) {
-      return newOutputs;
-    }
     ImmutableMap<File, Long> timestamps = readTimestamps(newOutputs, cachedFiles);
     return newOutputs.entrySet().stream()
         .filter(
@@ -64,15 +62,15 @@ public final class FileCacheDiffer {
     }
     Set<File> relevantFiles = new HashSet<>();
     for (Map.Entry<String, OutputArtifact> entry : newOutputs.entrySet()) {
-      String key = entry.getKey();
       OutputArtifact newOutput = entry.getValue();
-      boolean needsTimestamp =
-          key != null
-              && newOutput instanceof LocalFileOutputArtifact
-              && cachedFiles.containsKey(key);
-      if (needsTimestamp) {
-        relevantFiles.add(((LocalFileOutputArtifact) newOutput).getFile());
-        relevantFiles.add(cachedFiles.get(key));
+      boolean needsTimestamp = newOutput instanceof LocalFileOutputArtifact;
+      if (!needsTimestamp) {
+        continue;
+      }
+      relevantFiles.add(((LocalFileOutputArtifact) newOutput).getFile());
+      File cached = cachedFiles.get(entry.getKey());
+      if (cached != null) {
+        relevantFiles.add(cached);
       }
     }
     return ModifiedTimeScanner.readTimestamps(relevantFiles);
@@ -84,12 +82,9 @@ public final class FileCacheDiffer {
       RemoteOutputArtifacts previousOutputs,
       Map<File, Long> timestamps,
       Map<String, File> cachedFiles) {
-    File oldFile = cachedFiles.get(key);
-    if (oldFile == null) {
-      return true;
-    }
     if (newOutput instanceof LocalFileOutputArtifact) {
-      return shouldUpdateLocal((LocalFileOutputArtifact) newOutput, oldFile, timestamps);
+      return shouldUpdateLocal(
+          (LocalFileOutputArtifact) newOutput, cachedFiles.get(key), timestamps);
     }
     return shouldUpdateRemote((RemoteOutputArtifact) newOutput, previousOutputs);
   }
@@ -106,8 +101,8 @@ public final class FileCacheDiffer {
   }
 
   private static boolean shouldUpdateLocal(
-      LocalFileOutputArtifact newOutput, File localFile, Map<File, Long> timestamps) {
-    Long oldTimestamp = timestamps.get(localFile);
+      LocalFileOutputArtifact newOutput, @Nullable File localFile, Map<File, Long> timestamps) {
+    Long oldTimestamp = localFile != null ? timestamps.get(localFile) : null;
     Long newTimestamp = timestamps.get(newOutput.getFile());
     // we should be comparing sync start time, not artifact creation time. For now, keep the
     // behavior unchanged
