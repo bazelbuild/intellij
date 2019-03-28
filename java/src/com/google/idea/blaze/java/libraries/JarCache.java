@@ -86,13 +86,9 @@ public class JarCache {
   /** In-memory state representing the currently-cached files their corresponding artifacts. */
   private static class InMemoryState {
     private final ImmutableMap<String, OutputArtifact> projectOutputs;
-    private final ImmutableMap<String, File> cachedFiles;
 
-    InMemoryState(
-        ImmutableMap<String, OutputArtifact> projectOutputs,
-        ImmutableMap<String, File> cachedFiles) {
+    InMemoryState(ImmutableMap<String, OutputArtifact> projectOutputs) {
       this.projectOutputs = projectOutputs;
-      this.cachedFiles = cachedFiles;
     }
   }
 
@@ -183,15 +179,16 @@ public class JarCache {
       }
     }
 
+    ImmutableMap<String, File> cachedFiles = readCachedFiles();
     try {
       Map<String, OutputArtifact> updated =
           FileCacheDiffer.findUpdatedOutputs(
-              inMemoryState.projectOutputs, inMemoryState.cachedFiles, previousOutputs);
+              inMemoryState.projectOutputs, cachedFiles, previousOutputs);
 
       List<File> removed = new ArrayList<>();
       if (removeMissingFiles) {
         removed =
-            inMemoryState.cachedFiles.entrySet().stream()
+            cachedFiles.entrySet().stream()
                 .filter(e -> !inMemoryState.projectOutputs.containsKey(e.getKey()))
                 .map(Map.Entry::getValue)
                 .collect(toImmutableList());
@@ -238,7 +235,7 @@ public class JarCache {
         newOutputs.put(cacheKeyForSourceJar(srcJar), srcJar);
       }
     }
-    return new InMemoryState(ImmutableMap.copyOf(newOutputs), readCachedFiles());
+    return new InMemoryState(ImmutableMap.copyOf(newOutputs));
   }
 
   private Collection<ListenableFuture<?>> copyLocally(Map<String, OutputArtifact> updated) {
@@ -327,7 +324,10 @@ public class JarCache {
 
   private Optional<File> getCacheFile(String cacheKey) {
     InMemoryState state = inMemoryState;
-    return Optional.ofNullable(state == null ? null : state.cachedFiles.get(cacheKey));
+    if (state == null || !state.projectOutputs.containsKey(cacheKey)) {
+      return Optional.empty();
+    }
+    return Optional.of(cacheFileForKey(cacheKey));
   }
 
   /** The file to return if there's no locally cached version. */

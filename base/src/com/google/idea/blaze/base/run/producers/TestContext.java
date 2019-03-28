@@ -37,6 +37,7 @@ import com.intellij.psi.PsiElement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /** A context related to a blaze test target, used to configure a run configuration. */
@@ -91,7 +92,7 @@ public abstract class TestContext implements RunConfigurationContext {
 
   /** Returns true if the run configuration matches this {@link TestContext}. */
   @Override
-  public final boolean matchesRunConfiguration(BlazeCommandRunConfiguration config) {
+  public boolean matchesRunConfiguration(BlazeCommandRunConfiguration config) {
     BlazeCommandRunConfigurationCommonState commonState =
         config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (commonState == null) {
@@ -203,6 +204,19 @@ public abstract class TestContext implements RunConfigurationContext {
     @Override
     boolean setupTarget(BlazeCommandRunConfiguration config) {
       return config.setPendingContext(this);
+    }
+
+    @Override
+    public boolean matchesRunConfiguration(BlazeCommandRunConfiguration config) {
+      if (!future.isDone()) {
+        return super.matchesRunConfiguration(config);
+      }
+      try {
+        RunConfigurationContext context = future.get();
+        return context.matchesRunConfiguration(config);
+      } catch (ExecutionException | InterruptedException e) {
+        return false;
+      }
     }
 
     @Override
