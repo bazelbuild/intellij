@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.filecache.FileCacheDiffer;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.io.FileOperationProvider;
+import com.google.idea.blaze.base.io.FileSizeScanner;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
@@ -207,6 +208,11 @@ public class JarCache {
       if (!removed.isEmpty()) {
         context.output(PrintOutput.log(String.format("Removed %d jars", removed.size())));
       }
+      ImmutableMap<File, Long> cacheFileSizes = FileSizeScanner.readFilesizes(cachedFiles.values());
+      long total = cacheFileSizes.values().stream().mapToLong(x -> x).sum();
+      String msg =
+          String.format("Total Jar Cache size: %d kB (%d files)", total / 1024, cachedFiles.size());
+      context.output(PrintOutput.log(msg));
 
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();

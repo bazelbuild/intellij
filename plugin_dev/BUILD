@@ -40,7 +40,6 @@ OPTIONAL_PLUGIN_XMLS = [
 filegroup(
     name = "plugin_xml",
     srcs = ["src/META-INF/blaze-plugin-dev.xml"],
-    visibility = ["//visibility:public"],
 )
 
 merged_plugin_xml(
