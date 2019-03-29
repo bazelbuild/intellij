@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.prefetch;
 
 import com.google.idea.blaze.base.async.FutureUtil;
+import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -68,6 +69,7 @@ public class PrefetchProjectInitializer implements ApplicationComponent {
         ApplicationManager.getApplication()
             .executeOnPooledThread(
                 () -> {
+                  RemoteOutputsCache.getInstance(project).initialize();
                   BlazeProjectData projectData = getBlazeProjectData(project);
                   ProjectViewSet projectViewSet = getProjectViewSet(project);
                   if (projectViewSet == null) {

@@ -18,6 +18,7 @@ package com.google.idea.blaze.python.resolve.provider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -101,7 +102,7 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
           continue;
         }
         shortNames.put(name.getLastComponent(), name);
-        PsiElementProvider psiProvider = psiProviderFromArtifact(decoder, source);
+        PsiElementProvider psiProvider = psiProviderFromArtifact(project, decoder, source);
         map.put(name, psiProvider);
         if (includeParentDirectory(source)) {
           map.put(name.removeTail(1), PsiElementProvider.getParent(psiProvider));
@@ -112,9 +113,12 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
   }
 
   private static PsiElementProvider psiProviderFromArtifact(
-      ArtifactLocationDecoder decoder, ArtifactLocation source) {
+      Project project, ArtifactLocationDecoder decoder, ArtifactLocation source) {
     return (manager) -> {
-      File file = decoder.decode(source);
+      File file = OutputArtifactResolver.resolve(project, decoder, source);
+      if (file == null) {
+        return null;
+      }
       if (PyNames.INIT_DOT_PY.equals(file.getName())) {
         file = file.getParentFile();
       }

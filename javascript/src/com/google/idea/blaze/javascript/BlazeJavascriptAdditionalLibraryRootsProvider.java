@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JsIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -28,12 +29,14 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.libraries.BlazeExternalSyntheticLibrary;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import java.io.File;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
@@ -92,6 +95,7 @@ class BlazeJavascriptAdditionalLibraryRootsProvider extends AdditionalLibraryRoo
           WorkspacePath workspacePath = WorkspacePath.createIfValid(location.getRelativePath());
           return workspacePath == null || !importRoots.containsWorkspacePath(workspacePath);
         };
+    ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
     return projectData.getTargetMap().targets().stream()
         .filter(t -> t.getJsIdeInfo() != null)
         .map(TargetIdeInfo::getJsIdeInfo)
@@ -100,7 +104,8 @@ class BlazeJavascriptAdditionalLibraryRootsProvider extends AdditionalLibraryRoo
         .filter(isJs)
         .filter(isExternal)
         .distinct()
-        .map(projectData.getArtifactLocationDecoder()::decode)
+        .map(a -> OutputArtifactResolver.resolve(project, decoder, a))
+        .filter(Objects::nonNull)
         .collect(toImmutableList());
   }
 }

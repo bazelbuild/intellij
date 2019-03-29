@@ -432,14 +432,13 @@ public final class SourceDirectoryCalculator {
   @Nullable
   private SourceRoot sourceRootForJavaSource(
       BlazeContext context,
-      ArtifactLocationDecoder artifactLocationDecoder,
+      ArtifactLocationDecoder decoder,
       SourceArtifact sourceArtifact,
       Collection<JavaPackageReader> javaPackageReaders) {
 
     String declaredPackage = null;
     for (JavaPackageReader reader : javaPackageReaders) {
-      declaredPackage =
-          reader.getDeclaredPackageOfJavaFile(context, artifactLocationDecoder, sourceArtifact);
+      declaredPackage = reader.getDeclaredPackageOfJavaFile(context, decoder, sourceArtifact);
       if (declaredPackage != null) {
         break;
       }
@@ -448,7 +447,7 @@ public final class SourceDirectoryCalculator {
       IssueOutput.warn(
               "Failed to inspect the package name of java source file: "
                   + sourceArtifact.artifactLocation)
-          .inFile(artifactLocationDecoder.decode(sourceArtifact.artifactLocation))
+          .inFile(decoder.resolveSource(sourceArtifact.artifactLocation))
           .submit(context);
       return null;
     }

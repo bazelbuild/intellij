@@ -22,6 +22,7 @@ import com.google.common.io.Files;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TsIdeInfo;
@@ -31,12 +32,14 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.libraries.BlazeExternalSyntheticLibrary;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import java.io.File;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
@@ -103,6 +106,7 @@ public class BlazeTypeScriptAdditionalLibraryRootsProvider extends AdditionalLib
           WorkspacePath workspacePath = WorkspacePath.createIfValid(location.getRelativePath());
           return workspacePath == null || !importRoots.containsWorkspacePath(workspacePath);
         };
+    ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
     return projectData.getTargetMap().targets().stream()
         .filter(t -> t.getTsIdeInfo() != null)
         .map(TargetIdeInfo::getTsIdeInfo)
@@ -111,7 +115,8 @@ public class BlazeTypeScriptAdditionalLibraryRootsProvider extends AdditionalLib
         .filter(isTs)
         .filter(isExternal)
         .distinct()
-        .map(projectData.getArtifactLocationDecoder()::decode)
+        .map(a -> OutputArtifactResolver.resolve(project, decoder, a))
+        .filter(Objects::nonNull)
         .collect(toImmutableList());
   }
 

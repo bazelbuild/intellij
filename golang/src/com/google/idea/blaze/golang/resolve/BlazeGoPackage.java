@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.GoIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -41,6 +42,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.sync.SyncCache;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.golang.GoBlazeRules.RuleTypes;
@@ -131,12 +133,14 @@ public class BlazeGoPackage extends GoPackage {
     }
     Multimap<Label, GoIdeInfo> libraryToTestMap =
         Preconditions.checkNotNull(getLibraryToTestMap(project));
+    ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
     return Stream.concat(
             Stream.of(target.getGoIdeInfo()),
             libraryToTestMap.get(target.getKey().getLabel()).stream())
         .map(GoIdeInfo::getSources)
         .flatMap(Collection::stream)
-        .map(projectData.getArtifactLocationDecoder()::decode)
+        .map(a -> OutputArtifactResolver.resolve(project, decoder, a))
+        .filter(Objects::nonNull)
         .collect(Collectors.toSet());
   }
 

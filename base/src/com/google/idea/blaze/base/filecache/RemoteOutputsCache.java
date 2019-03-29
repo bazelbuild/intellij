@@ -97,6 +97,14 @@ public final class RemoteOutputsCache {
     this.cacheDir = getCacheDir(project);
   }
 
+  /**
+   * Reads the current state of the cache on disk, updating the in-memory view used to resolve
+   * cached outputs.
+   */
+  public void initialize() {
+    cachedFiles = readCachedFiles();
+  }
+
   /** Finds the locally-cached version of this file, or null if it isn't in the cache. */
   @Nullable
   public File resolveOutput(RemoteOutputArtifact output) {
@@ -241,5 +249,6 @@ public final class RemoteOutputsCache {
         Future<?> possiblyIgnoredError = FileUtil.asyncDelete(Lists.newArrayList(cacheFiles));
       }
     }
+    cachedFiles = ImmutableMap.of();
   }
 }

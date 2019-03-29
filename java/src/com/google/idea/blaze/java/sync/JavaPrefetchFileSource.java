@@ -15,7 +15,10 @@
  */
 package com.google.idea.blaze.java.sync;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
@@ -50,15 +53,22 @@ public class JavaPrefetchFileSource implements PrefetchFileSource {
     }
     Collection<BlazeLibrary> libraries =
         BlazeLibraryCollector.getLibraries(projectViewSet, blazeProjectData);
-    ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
+    ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
     for (BlazeLibrary library : libraries) {
       if (!(library instanceof BlazeJarLibrary)) {
         continue;
       }
-      BlazeJarLibrary jarLibrary = (BlazeJarLibrary) library;
-      files.add(artifactLocationDecoder.decode(jarLibrary.libraryArtifact.jarForIntellijLibrary()));
-      files.addAll(artifactLocationDecoder.decodeAll(jarLibrary.libraryArtifact.getSourceJars()));
+      files.addAll(
+          OutputArtifactResolver.resolveAll(
+              project, decoder, jarArtifacts((BlazeJarLibrary) library)));
     }
+  }
+
+  private static Collection<ArtifactLocation> jarArtifacts(BlazeJarLibrary library) {
+    return ImmutableList.<ArtifactLocation>builder()
+        .add(library.libraryArtifact.jarForIntellijLibrary())
+        .addAll(library.libraryArtifact.getSourceJars())
+        .build();
   }
 
   @Override

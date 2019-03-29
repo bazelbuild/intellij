@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
@@ -32,6 +33,7 @@ import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -43,6 +45,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -82,11 +85,13 @@ public class TypeScriptPrefetchFileSource implements PrefetchFileSource {
             String extension = FileUtil.getExtension(path.relativePath());
             return prefetchFileExtensions().contains(extension);
           };
+      ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
       blazeProjectData.getTargetMap().targets().stream()
           .map(TypeScriptPrefetchFileSource::getJsSources)
           .flatMap(Collection::stream)
           .filter(shouldPrefetch)
-          .map(blazeProjectData.getArtifactLocationDecoder()::decode)
+          .map(a -> OutputArtifactResolver.resolve(project, decoder, a))
+          .filter(Objects::nonNull)
           .forEach(files::add);
     }
 

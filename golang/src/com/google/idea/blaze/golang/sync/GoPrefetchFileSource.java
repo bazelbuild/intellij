@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.GoIdeInfo;
@@ -32,11 +33,13 @@ import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -85,6 +88,7 @@ public class GoPrefetchFileSource
           WorkspacePath path = WorkspacePath.createIfValid(location.getRelativePath());
           return path != null && !importRoots.containsWorkspacePath(path);
         };
+    ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
     List<File> sourceFiles =
         blazeProjectData.getTargetMap().targets().stream()
             .filter(t -> t.getGoIdeInfo() != null)
@@ -92,7 +96,8 @@ public class GoPrefetchFileSource
             .map(GoIdeInfo::getSources)
             .flatMap(Collection::stream)
             .filter(shouldPrefetch)
-            .map(blazeProjectData.getArtifactLocationDecoder()::decode)
+            .map(a -> OutputArtifactResolver.resolve(project, decoder, a))
+            .filter(Objects::nonNull)
             .collect(Collectors.toList());
     files.addAll(sourceFiles);
   }
