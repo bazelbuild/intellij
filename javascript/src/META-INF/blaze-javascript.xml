@@ -26,5 +26,6 @@
     <PrefetchFileSource implementation="com.google.idea.blaze.typescript.TypeScriptPrefetchFileSource"/>
     <TargetKindProvider implementation="com.google.idea.blaze.javascript.JavascriptBlazeRules"/>
     <TargetKindProvider implementation="com.google.idea.blaze.typescript.TypeScriptBlazeRules"/>
+    <RemoteOutputsCacheProvider implementation="com.google.idea.blaze.javascript.JavascriptPrefetchFileSource"/>
   </extensions>
 </idea-plugin>

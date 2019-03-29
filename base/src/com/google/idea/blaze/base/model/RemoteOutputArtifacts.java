@@ -34,7 +34,7 @@ public final class RemoteOutputArtifacts implements SyncData<ProjectData.RemoteO
 
   public static RemoteOutputArtifacts EMPTY = new RemoteOutputArtifacts(ImmutableMap.of());
 
-  private final ImmutableMap<String, RemoteOutputArtifact> remoteOutputArtifacts;
+  public final ImmutableMap<String, RemoteOutputArtifact> remoteOutputArtifacts;
 
   private RemoteOutputArtifacts(ImmutableMap<String, RemoteOutputArtifact> remoteOutputArtifacts) {
     this.remoteOutputArtifacts = remoteOutputArtifacts;

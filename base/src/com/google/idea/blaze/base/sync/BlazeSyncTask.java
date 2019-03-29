@@ -38,6 +38,7 @@ import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
+import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
@@ -504,6 +505,20 @@ final class BlazeSyncTask implements Progressive {
     syncStateBuilder.put(newRemoteState);
     ArtifactLocationDecoder artifactLocationDecoder =
         new ArtifactLocationDecoderImpl(blazeInfo, workspacePathResolver, newRemoteState);
+
+    Scope.push(
+        context,
+        childContext -> {
+          childContext.push(new TimingScope("UpdateRemoteOutputsCache", EventType.Prefetching));
+          RemoteOutputsCache.getInstance(project)
+              .updateCache(
+                  context,
+                  targetMap,
+                  workspaceLanguageSettings,
+                  newRemoteState,
+                  oldRemoteState,
+                  /* clearCache= */ syncParams.syncMode == SyncMode.FULL);
+        });
 
     return BlazeSyncBuildResult.builder()
         .setOldProjectData(oldProjectData)

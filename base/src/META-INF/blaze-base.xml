@@ -220,6 +220,7 @@
     <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.BlazeProblemsView"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.ProblemsViewConfiguration"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.sync.BlazeSyncModificationTracker"/>
+    <projectService serviceImplementation="com.google.idea.blaze.base.filecache.RemoteOutputsCache"/>
     <configurationType implementation="com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.base.run.producers.BlazeBuildFileRunConfigurationProducer"
@@ -414,6 +415,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.TestContextProvider" interface="com.google.idea.blaze.base.run.producers.TestContextProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BinaryContextProvider" interface="com.google.idea.blaze.base.run.producers.BinaryContextProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.HeuristicTestIdentifier" interface="com.google.idea.blaze.base.run.producers.HeuristicTestIdentifier"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.RemoteOutputsCacheProvider" interface="com.google.idea.blaze.base.filecache.RemoteOutputsCache$OutputsProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">

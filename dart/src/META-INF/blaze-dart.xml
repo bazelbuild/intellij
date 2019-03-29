@@ -17,6 +17,7 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.dart.BlazeDartSyncPlugin"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.dart.DartPrefetchFileSource"/>
+    <RemoteOutputsCacheProvider implementation="com.google.idea.blaze.dart.DartPrefetchFileSource"/>
     <TargetKindProvider implementation="com.google.idea.blaze.dart.DartBlazeRules"/>
   </extensions>
 </idea-plugin>

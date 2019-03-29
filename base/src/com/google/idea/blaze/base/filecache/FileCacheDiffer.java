@@ -40,8 +40,8 @@ public final class FileCacheDiffer {
    * Returns a map from cache key to OutputArtifact, containing only those outputs which need to be
    * updated in the cache.
    */
-  public static Map<String, OutputArtifact> findUpdatedOutputs(
-      Map<String, OutputArtifact> newOutputs,
+  public static <O extends OutputArtifact> Map<String, O> findUpdatedOutputs(
+      Map<String, O> newOutputs,
       Map<String, File> cachedFiles,
       RemoteOutputArtifacts previousOutputs)
       throws InterruptedException, ExecutionException {
@@ -53,7 +53,7 @@ public final class FileCacheDiffer {
   }
 
   private static ImmutableMap<File, Long> readTimestamps(
-      Map<String, OutputArtifact> newOutputs, Map<String, File> cachedFiles)
+      Map<String, ? extends OutputArtifact> newOutputs, Map<String, File> cachedFiles)
       throws InterruptedException, ExecutionException {
     boolean timestampsRequired =
         newOutputs.values().stream().anyMatch(a -> a instanceof LocalFileOutputArtifact);
@@ -61,7 +61,7 @@ public final class FileCacheDiffer {
       return ImmutableMap.of();
     }
     Set<File> relevantFiles = new HashSet<>();
-    for (Map.Entry<String, OutputArtifact> entry : newOutputs.entrySet()) {
+    for (Map.Entry<String, ? extends OutputArtifact> entry : newOutputs.entrySet()) {
       OutputArtifact newOutput = entry.getValue();
       boolean needsTimestamp = newOutput instanceof LocalFileOutputArtifact;
       if (!needsTimestamp) {

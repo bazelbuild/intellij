@@ -15,16 +15,22 @@
  */
 package com.google.idea.blaze.dart;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -35,12 +41,28 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /** Declare that dart files should be prefetched. */
-public class DartPrefetchFileSource implements PrefetchFileSource {
+public class DartPrefetchFileSource
+    implements PrefetchFileSource, RemoteOutputsCache.OutputsProvider {
 
   private static final BoolExperiment prefetchAllDartSources =
       new BoolExperiment("prefetch.all.dart.sources", true);
 
   private static final ImmutableSet<String> FILE_EXTENSIONS = ImmutableSet.of("dart");
+
+  @Override
+  public List<ArtifactLocation> selectOutputsToCache(
+      RemoteOutputArtifacts outputs,
+      TargetMap targetMap,
+      WorkspaceLanguageSettings languageSettings) {
+    if (!languageSettings.isLanguageActive(LanguageClass.DART)) {
+      return ImmutableList.of();
+    }
+    return targetMap.targets().stream()
+        .map(DartPrefetchFileSource::getDartSources)
+        .flatMap(Collection::stream)
+        .filter(ArtifactLocation::isGenerated)
+        .collect(toImmutableList());
+  }
 
   @Override
   public void addFilesToPrefetch(

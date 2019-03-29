@@ -31,6 +31,7 @@
     <BlazeTestEventsHandler
         implementation="com.google.idea.blaze.golang.run.smrunner.BlazeGoTestEventsHandler"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.golang.sync.GoPrefetchFileSource"/>
+    <RemoteOutputsCacheProvider implementation="com.google.idea.blaze.golang.sync.GoPrefetchFileSource"/>
     <TestContextProvider implementation="com.google.idea.blaze.golang.run.producers.GoTestContextProvider"/>
     <BinaryContextProvider implementation="com.google.idea.blaze.golang.run.producers.GoBinaryContextProvider"/>
   </extensions>

@@ -15,16 +15,22 @@
  */
 package com.google.idea.blaze.javascript;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,10 +42,24 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /** Declare that js files should be prefetched. */
-public class JavascriptPrefetchFileSource implements PrefetchFileSource {
+public class JavascriptPrefetchFileSource
+    implements PrefetchFileSource, RemoteOutputsCache.OutputsProvider {
 
   private static final BoolExperiment prefetchAllJsSources =
       new BoolExperiment("prefetch.all.js.sources", true);
+
+  @Override
+  public List<ArtifactLocation> selectOutputsToCache(
+      RemoteOutputArtifacts outputs,
+      TargetMap targetMap,
+      WorkspaceLanguageSettings languageSettings) {
+    if (!languageActive(languageSettings)) {
+      return ImmutableList.of();
+    }
+    return targetMap.targets().stream()
+        .flatMap(t -> getJsSources(t).stream())
+        .collect(toImmutableList());
+  }
 
   @Override
   public void addFilesToPrefetch(
@@ -48,20 +68,15 @@ public class JavascriptPrefetchFileSource implements PrefetchFileSource {
       ImportRoots importRoots,
       BlazeProjectData blazeProjectData,
       Set<File> files) {
-    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.JAVASCRIPT)
-        || !blazeProjectData
-            .getWorkspaceLanguageSettings()
-            .isLanguageActive(LanguageClass.TYPESCRIPT)) {
-      return;
-    }
-    if (!prefetchAllJsSources.getValue()) {
+    if (!languageActive(blazeProjectData.getWorkspaceLanguageSettings())
+        || !prefetchAllJsSources.getValue()) {
       return;
     }
     // Prefetch all non-project js source files found during sync
     Predicate<ArtifactLocation> shouldPrefetch =
         location -> {
-          if (!location.isSource()) {
-            return false;
+          if (location.isGenerated()) {
+            return true;
           }
           WorkspacePath path = WorkspacePath.createIfValid(location.getRelativePath());
           if (path == null || importRoots.containsWorkspacePath(path)) {
@@ -97,5 +112,10 @@ public class JavascriptPrefetchFileSource implements PrefetchFileSource {
       return target.getSources();
     }
     return ImmutableList.of();
+  }
+
+  private static boolean languageActive(WorkspaceLanguageSettings settings) {
+    return settings.isLanguageActive(LanguageClass.JAVASCRIPT)
+        || settings.isLanguageActive(LanguageClass.TYPESCRIPT);
   }
 }
