@@ -35,13 +35,13 @@ import java.util.concurrent.Future;
 /** Manages syncing and its listeners. */
 public class BlazeSyncManager {
 
-  // a per-project single-threaded executor to run syncs. Ensures only one sync can be run at a time
-  private final ListeningExecutorService syncExecutor;
+  // a per-project single-threaded executor to run the build phase of syncs
+  private final ListeningExecutorService syncBuildExecutor;
   private final Project project;
 
   public BlazeSyncManager(Project project) {
     this.project = project;
-    syncExecutor =
+    syncBuildExecutor =
         MoreExecutors.listeningDecorator(
             Executors.newSingleThreadExecutor(
                 ConcurrencyUtil.namedDaemonThreadPoolFactory(BlazeSyncManager.class)));
@@ -83,7 +83,7 @@ public class BlazeSyncManager {
     @SuppressWarnings("unused") // go/futurereturn-lsc
     Future<?> possiblyIgnoredError =
         ProgressiveTaskWithProgressIndicator.builder(project, "Syncing Project")
-            .setExecutor(syncExecutor)
+            .setExecutor(syncBuildExecutor)
             .submitTask(task);
   }
 

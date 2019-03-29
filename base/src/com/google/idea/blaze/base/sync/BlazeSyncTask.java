@@ -300,27 +300,63 @@ final class BlazeSyncTask implements Progressive {
     IssueOutput.error("Internal error: " + e.getMessage()).submit(context);
   }
 
+  private static class SyncFailedException extends Exception {}
+
+  private static class SyncCanceledException extends Exception {}
+
   /** @return true if sync successfully completed */
   private SyncResult doSyncProject(
       BlazeContext context, @Nullable BlazeProjectData oldProjectData) {
+    try {
+      BlazeSyncBuildResult buildResult = runBuildPhase(context, oldProjectData);
+      if (context.isCancelled()) {
+        return SyncResult.CANCELLED;
+      }
+      runProjectUpdatePhase(context, buildResult);
 
+      if (buildResult.getBuildResult().status == BuildResult.Status.BUILD_ERROR) {
+        String buildSystem = importSettings.getBuildSystem().getName();
+        String message =
+            String.format(
+                "Sync was successful, but there were %1$s build errors. "
+                    + "The project may not be fully updated or resolve until fixed. "
+                    + "If the errors are from your working set, please uncheck "
+                    + "'%1$s > Sync > Expand Sync to Working Set' and try again.",
+                buildSystem);
+        context.output(PrintOutput.error(message));
+        IssueOutput.warn(message).submit(context);
+        return SyncResult.PARTIAL_SUCCESS;
+      }
+      return SyncResult.SUCCESS;
+
+    } catch (SyncCanceledException e) {
+      return SyncResult.CANCELLED;
+    } catch (SyncFailedException e) {
+      return SyncResult.FAILURE;
+    }
+  }
+
+  /** Runs the blaze build phase of sync. */
+  private BlazeSyncBuildResult runBuildPhase(
+      BlazeContext context, @Nullable BlazeProjectData oldProjectData)
+      throws SyncFailedException, SyncCanceledException {
     if (!FileOperationProvider.getInstance().exists(workspaceRoot.directory())) {
       IssueOutput.error(String.format("Workspace '%s' doesn't exist.", workspaceRoot.directory()))
           .submit(context);
-      return SyncResult.FAILURE;
+      throw new SyncFailedException();
     }
 
     BlazeVcsHandler vcsHandler = BlazeVcsHandler.vcsHandlerForProject(project);
     if (vcsHandler == null) {
       IssueOutput.error("Could not find a VCS handler").submit(context);
-      return SyncResult.FAILURE;
+      throw new SyncFailedException();
     }
 
     ListeningExecutorService executor = BlazeExecutor.getInstance().getExecutor();
     WorkspacePathResolverAndProjectView workspacePathResolverAndProjectView =
         computeWorkspacePathResolverAndProjectView(context, vcsHandler, executor);
     if (workspacePathResolverAndProjectView == null) {
-      return SyncResult.FAILURE;
+      throw new SyncFailedException();
     }
     ProjectViewSet projectViewSet = workspacePathResolverAndProjectView.projectViewSet;
 
@@ -350,13 +386,13 @@ final class BlazeSyncTask implements Progressive {
             .run()
             .result();
     if (blazeInfo == null) {
-      return SyncResult.FAILURE;
+      throw new SyncFailedException();
     }
     BlazeVersionData blazeVersionData =
         BlazeVersionData.build(importSettings.getBuildSystem(), workspaceRoot, blazeInfo);
 
     if (!BuildSystemVersionChecker.verifyVersionSupported(context, blazeVersionData)) {
-      return SyncResult.FAILURE;
+      throw new SyncFailedException();
     }
 
     WorkspacePathResolver workspacePathResolver =
@@ -373,10 +409,8 @@ final class BlazeSyncTask implements Progressive {
 
     if (!ProjectViewVerifier.verifyProjectView(
         project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings)) {
-      return SyncResult.FAILURE;
+      throw new SyncFailedException();
     }
-
-    final BlazeProjectData newProjectData;
 
     WorkingSet workingSet =
         FutureUtil.waitForFuture(context, workingSetFuture)
@@ -386,10 +420,10 @@ final class BlazeSyncTask implements Progressive {
             .run()
             .result();
     if (context.isCancelled()) {
-      return SyncResult.CANCELLED;
+      throw new SyncCanceledException();
     }
     if (context.hasErrors()) {
-      return SyncResult.FAILURE;
+      throw new SyncFailedException();
     }
 
     if (workingSet != null) {
@@ -426,7 +460,7 @@ final class BlazeSyncTask implements Progressive {
         BlazeBuildTargetSharder.expandAndShardTargets(
             project, context, workspaceRoot, projectViewSet, workspacePathResolver, targets);
     if (shardedTargetsResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
-      return SyncResult.FAILURE;
+      throw new SyncFailedException();
     }
     ShardedTargetList shardedTargets = shardedTargetsResult.shardedTargets;
 
@@ -449,7 +483,7 @@ final class BlazeSyncTask implements Progressive {
             mergeWithOldState,
             oldProjectData != null ? oldProjectData.getTargetMap() : null);
     if (context.isCancelled()) {
-      return SyncResult.CANCELLED;
+      throw new SyncCanceledException();
     }
     context.output(PrintOutput.log("ide-info result: " + ideInfoResult.buildResult.status));
     if (ideInfoResult.targetMap == null
@@ -458,7 +492,7 @@ final class BlazeSyncTask implements Progressive {
       if (ideInfoResult.buildResult.outOfMemory()) {
         SuggestBuildShardingNotification.syncOutOfMemoryError(project, context);
       }
-      return SyncResult.FAILURE;
+      throw new SyncFailedException();
     }
 
     TargetMap targetMap = ideInfoResult.targetMap;
@@ -479,10 +513,7 @@ final class BlazeSyncTask implements Progressive {
       if (ideResolveResult.buildResult.outOfMemory()) {
         SuggestBuildShardingNotification.syncOutOfMemoryError(project, context);
       }
-      return SyncResult.FAILURE;
-    }
-    if (context.isCancelled()) {
-      return SyncResult.CANCELLED;
+      throw new SyncFailedException();
     }
     RemoteOutputArtifacts oldRemoteState = RemoteOutputArtifacts.fromProjectData(oldProjectData);
     Set<RemoteOutputArtifact> newOutputs =
@@ -495,6 +526,25 @@ final class BlazeSyncTask implements Progressive {
     ArtifactLocationDecoder artifactLocationDecoder =
         new ArtifactLocationDecoderImpl(blazeInfo, workspacePathResolver, newRemoteState);
 
+    return BlazeSyncBuildResult.builder()
+        .setOldProjectData(oldProjectData)
+        .setProjectViewSet(projectViewSet)
+        .setLanguageSettings(workspaceLanguageSettings)
+        .setBlazeInfo(blazeInfo)
+        .setBlazeVersionData(blazeVersionData)
+        .setWorkingSet(workingSet)
+        .setWorkspacePathResolver(workspacePathResolver)
+        .setArtifactLocationDecoder(artifactLocationDecoder)
+        .setTargetMap(targetMap)
+        .setSyncStateBuilder(syncStateBuilder)
+        .setBuildResult(
+            BuildResult.combine(ideInfoResult.buildResult, ideResolveResult.buildResult))
+        .build();
+  }
+
+  private void runProjectUpdatePhase(BlazeContext context, BlazeSyncBuildResult buildResult)
+      throws SyncFailedException, SyncCanceledException {
+    SyncState.Builder syncStateBuilder = buildResult.getSyncStateBuilder();
     Scope.push(
         context,
         (childContext) -> {
@@ -504,40 +554,46 @@ final class BlazeSyncTask implements Progressive {
                 project,
                 childContext,
                 workspaceRoot,
-                projectViewSet,
-                workspaceLanguageSettings,
-                blazeInfo,
-                blazeVersionData,
-                workingSet,
-                workspacePathResolver,
-                artifactLocationDecoder,
-                targetMap,
+                buildResult.getProjectViewSet(),
+                buildResult.getLanguageSettings(),
+                buildResult.getBlazeInfo(),
+                buildResult.getBlazeVersionData(),
+                buildResult.getWorkingSet(),
+                buildResult.getWorkspacePathResolver(),
+                buildResult.getArtifactLocationDecoder(),
+                buildResult.getTargetMap(),
                 syncStateBuilder,
-                previousSyncState,
+                buildResult.getOldSyncState(),
                 syncParams.syncMode);
           }
         });
     if (context.isCancelled()) {
-      return SyncResult.CANCELLED;
+      throw new SyncCanceledException();
     }
     if (context.hasErrors()) {
-      return SyncResult.FAILURE;
+      throw new SyncFailedException();
     }
 
-    newProjectData =
+    BlazeProjectData newProjectData =
         new BlazeProjectData(
-            targetMap,
-            blazeInfo,
-            blazeVersionData,
-            workspacePathResolver,
-            artifactLocationDecoder,
-            workspaceLanguageSettings,
+            buildResult.getTargetMap(),
+            buildResult.getBlazeInfo(),
+            buildResult.getBlazeVersionData(),
+            buildResult.getWorkspacePathResolver(),
+            buildResult.getArtifactLocationDecoder(),
+            buildResult.getLanguageSettings(),
             syncStateBuilder.build());
 
     FileCaches.onSync(
-        project, context, projectViewSet, newProjectData, oldProjectData, syncParams.syncMode);
+        project,
+        context,
+        buildResult.getProjectViewSet(),
+        newProjectData,
+        buildResult.getOldProjectData(),
+        syncParams.syncMode);
     ListenableFuture<?> prefetch =
-        PrefetchService.getInstance().prefetchProjectFiles(project, projectViewSet, newProjectData);
+        PrefetchService.getInstance()
+            .prefetchProjectFiles(project, buildResult.getProjectViewSet(), newProjectData);
     FutureUtil.waitForFuture(context, prefetch)
         .withProgressMessage("Prefetching files...")
         .timed("PrefetchFiles", EventType.Prefetching)
@@ -545,7 +601,8 @@ final class BlazeSyncTask implements Progressive {
         .run();
 
     ListenableFuture<DirectoryStructure> directoryStructureFuture =
-        DirectoryStructure.getRootDirectoryStructure(project, workspaceRoot, projectViewSet);
+        DirectoryStructure.getRootDirectoryStructure(
+            project, workspaceRoot, buildResult.getProjectViewSet());
 
     refreshVirtualFileSystem(context, newProjectData);
 
@@ -557,43 +614,20 @@ final class BlazeSyncTask implements Progressive {
             .run()
             .result();
     if (directoryStructure == null) {
-      return SyncResult.FAILURE;
+      throw new SyncFailedException();
     }
 
     boolean success =
         updateProject(
             context,
-            projectViewSet,
-            blazeVersionData,
+            buildResult.getProjectViewSet(),
+            buildResult.getBlazeVersionData(),
             directoryStructure,
-            oldProjectData,
+            buildResult.getOldProjectData(),
             newProjectData);
     if (!success) {
-      return SyncResult.FAILURE;
+      throw new SyncFailedException();
     }
-
-    SyncResult syncResult = SyncResult.SUCCESS;
-
-    if (ideInfoResult.buildResult.status == BuildResult.Status.BUILD_ERROR
-        || ideResolveResult.buildResult.status == BuildResult.Status.BUILD_ERROR) {
-      final String errorType =
-          ideInfoResult.buildResult.status == BuildResult.Status.BUILD_ERROR
-              ? "BUILD file errors"
-              : "compilation errors";
-
-      String message =
-          String.format(
-              "Sync was successful, but there were %s. "
-                  + "The project may not be fully updated or resolve until fixed. "
-                  + "If the errors are from your working set, please uncheck "
-                  + "'Blaze > Sync > Expand Sync to Working Set' and try again.",
-              errorType);
-      context.output(PrintOutput.error(message));
-      IssueOutput.warn(message).submit(context);
-      syncResult = SyncResult.PARTIAL_SUCCESS;
-    }
-
-    return syncResult;
   }
 
   private static void refreshVirtualFileSystem(
