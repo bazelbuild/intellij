@@ -35,9 +35,6 @@ public interface TimingScopeListener {
     }
   }
 
-  /** Called when the scope begins */
-  void onScopeBegin(String name, EventType eventType);
-
   /** Called once the scope ends */
   void onScopeEnd(TimedEvent event);
 }

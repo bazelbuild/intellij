@@ -49,8 +49,6 @@ public class TimingScope implements BlazeScope {
 
   private final List<TimingScopeListener> scopeListeners = Lists.newArrayList();
 
-  private final List<TimingScopeListener> propagatedScopeListeners = Lists.newArrayList();
-
   @Nullable private TimingScope parentScope;
 
   private final List<TimingScope> children = Lists.newArrayList();
@@ -67,15 +65,7 @@ public class TimingScope implements BlazeScope {
 
     if (parentScope != null) {
       parentScope.children.add(this);
-      propagatedScopeListeners.addAll(parentScope.propagatedScopeListeners);
-    }
-
-    for (TimingScopeListener listener : scopeListeners) {
-      listener.onScopeBegin(name, eventType);
-    }
-
-    for (TimingScopeListener listener : propagatedScopeListeners) {
-      listener.onScopeBegin(name, eventType);
+      scopeListeners.addAll(parentScope.scopeListeners);
     }
   }
 
@@ -91,26 +81,15 @@ public class TimingScope implements BlazeScope {
 
     TimedEvent event = new TimedEvent(name, eventType, elapsedTime, children.isEmpty());
     scopeListeners.forEach(listener -> listener.onScopeEnd(event));
-    propagatedScopeListeners.forEach(listener -> listener.onScopeEnd(event));
 
     if (parentScope == null) {
       outputReport(context);
     }
   }
 
-  /**
-   * Adds a TimingScope listener to its list of listeners. Adds the listener to its children if
-   * propagateToChildren flag is set.
-   *
-   * @param listener TimingScopeListener
-   * @param propagateToChildren flag to specify whether its children should add this listener.
-   */
-  public void addScopeListener(TimingScopeListener listener, boolean propagateToChildren) {
-    if (propagateToChildren) {
-      propagatedScopeListeners.add(listener);
-    } else {
-      scopeListeners.add(listener);
-    }
+  /** Adds a TimingScope listener to its list of listeners, and those of its children. */
+  public void addScopeListener(TimingScopeListener listener) {
+    scopeListeners.add(listener);
   }
 
   private void outputReport(BlazeContext context) {
