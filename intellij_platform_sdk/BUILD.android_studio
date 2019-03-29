@@ -7,8 +7,8 @@ package(default_visibility = ["//visibility:public"])
 java_import(
     name = "sdk",
     jars = glob(["android-studio/lib/*.jar"]),
-    deps = ["@error_prone_annotations//jar"],
     tags = ["intellij-provided-by-sdk"],
+    deps = ["@error_prone_annotations//jar"],
 )
 
 java_import(
@@ -57,12 +57,17 @@ java_import(
     jars = [
         "android-studio/plugins/tasks/lib/tasks-api.jar",
         "android-studio/plugins/tasks/lib/tasks-core.jar",
-    ]
+    ],
 )
 
 java_import(
     name = "terminal",
     jars = ["android-studio/plugins/terminal/lib/terminal.jar"],
+)
+
+java_import(
+    name = "forms_rt",
+    jars = ["android-studio/lib/forms_rt.jar"],
 )
 
 # The plugins required by ASwB. We need to include them

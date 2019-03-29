@@ -71,6 +71,11 @@ java_import(
     jars = glob(["plugins/terminal/lib/terminal.jar"]),
 )
 
+java_import(
+    name = "forms_rt",
+    jars = ["lib/forms_rt.jar"],
+)
+
 # The plugins required by IJwB. We need to include them
 # when running integration tests.
 java_import(

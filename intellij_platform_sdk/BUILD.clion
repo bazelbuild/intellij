@@ -7,8 +7,8 @@ package(default_visibility = ["//visibility:public"])
 java_import(
     name = "sdk",
     jars = glob(["clion-*/lib/*.jar"]),
-    deps = ["@error_prone_annotations//jar"],
     tags = ["intellij-provided-by-sdk"],
+    deps = ["@error_prone_annotations//jar"],
 )
 
 java_import(
@@ -54,6 +54,11 @@ java_import(
 java_import(
     name = "python",
     jars = glob(["clion-*/plugins/python/lib/python.jar"]),
+)
+
+java_import(
+    name = "forms_rt",
+    jars = ["clion-*/lib/forms_rt.jar"],
 )
 
 # The plugins required by CLwB. Presumably there will be some, when we write

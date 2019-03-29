@@ -210,6 +210,16 @@ java_library(
     ],
 )
 
+# The UI designer requires forms_rt.jar in the classpath.
+java_library(
+    name = "forms_rt",
+    exports = select_from_plugin_api_directory(
+        android_studio = [":forms_rt"],
+        clion = [":forms_rt"],
+        intellij = [":forms_rt"],
+    ),
+)
+
 # The version of guava bundled with the IntelliJ plugin API.
 java_library(
     name = "guava",
