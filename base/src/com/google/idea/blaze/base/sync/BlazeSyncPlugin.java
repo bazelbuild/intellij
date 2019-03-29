@@ -113,9 +113,6 @@ public interface BlazeSyncPlugin {
     return ImmutableSet.of();
   }
 
-  /** Installs any global SDKs */
-  default void installSdks(BlazeContext context) {}
-
   /** Given the rule map, update the sync state for this plugin. Should not have side effects. */
   default void updateSyncState(
       Project project,

@@ -403,10 +403,6 @@ final class BlazeSyncTask implements Progressive {
     syncStats.setLanguagesActive(new ArrayList<>(workspaceLanguageSettings.getActiveLanguages()));
     syncStats.setWorkspaceType(workspaceLanguageSettings.getWorkspaceType());
 
-    for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-      syncPlugin.installSdks(context);
-    }
-
     if (!ProjectViewVerifier.verifyProjectView(
         project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings)) {
       throw new SyncFailedException();

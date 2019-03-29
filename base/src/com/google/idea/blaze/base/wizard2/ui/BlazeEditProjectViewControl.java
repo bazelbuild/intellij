@@ -45,7 +45,6 @@ import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.settings.ui.JPanelProvidingProject;
 import com.google.idea.blaze.base.settings.ui.ProjectViewUi;
-import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -537,9 +536,6 @@ public final class BlazeEditProjectViewControl {
             }
             return Propagation.Continue;
           });
-      for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-        syncPlugin.installSdks(context);
-      }
       WorkspaceLanguageSettings workspaceLanguageSettings =
           LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
       return ProjectViewVerifier.verifyProjectView(

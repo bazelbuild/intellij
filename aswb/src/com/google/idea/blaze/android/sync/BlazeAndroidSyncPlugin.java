@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.sync;
 
-import com.android.tools.idea.sdk.IdeSdks;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.cppapi.NdkSupport;
@@ -43,7 +42,6 @@ import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
@@ -58,7 +56,6 @@ import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -70,7 +67,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ui.UIUtil;
-import java.io.File;
 import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -108,24 +104,6 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
       return ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA, LanguageClass.C);
     } else {
       return ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA);
-    }
-  }
-
-  @Override
-  public void installSdks(BlazeContext context) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-
-    File path = IdeSdks.getInstance().getAndroidSdkPath();
-    if (path != null) {
-      context.output(new StatusOutput("Installing SDK platforms..."));
-      ApplicationManager.getApplication()
-          .invokeAndWait(
-              () -> {
-                IdeSdks.getInstance().createAndroidSdkPerAndroidTarget(path);
-              },
-              ModalityState.defaultModalityState());
     }
   }
 
