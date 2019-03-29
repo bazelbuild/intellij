@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent;
@@ -366,8 +367,9 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
             .collect(toImmutableList());
 
     ImmutableList<OutputArtifact> parsedFilenames =
-        BuildEventProtocolOutputReader.parseAllArtifactsInOutputGroups(
-            asInputStream(events), ImmutableList.of("group-name"), path -> true);
+        BuildEventProtocolOutputReader.parsePerOutputGroupArtifacts(
+                asInputStream(events), path -> true)
+            .get("group-name");
 
     assertThat(parsedFilenames).containsExactlyElementsIn(allFiles).inOrder();
   }
@@ -406,8 +408,9 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
             .collect(toImmutableList());
 
     ImmutableList<OutputArtifact> parsedFilenames =
-        BuildEventProtocolOutputReader.parseAllArtifactsInOutputGroups(
-            asInputStream(events), ImmutableList.of("group-1"), path -> true);
+        BuildEventProtocolOutputReader.parsePerOutputGroupArtifacts(
+                asInputStream(events), path -> true)
+            .get("group-1");
 
     assertThat(parsedFilenames).containsExactlyElementsIn(allFiles).inOrder();
   }
@@ -438,23 +441,24 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
                 "config-id",
                 ImmutableList.of(outputGroup("group-2", ImmutableList.of("set-2")))));
 
-    ImmutableList<OutputArtifact> allFiles =
-        ImmutableSet.of(
-                "/usr/out/genfiles/foo.pb.h",
-                "/usr/out/genfiles/foo.proto.h",
-                "/usr/local/lib/File.py",
-                "/usr/bin/python2.7",
-                "/usr/local/home/script.sh")
-            .stream()
+    ImmutableList<OutputArtifact> files1 =
+        fileSet1.stream()
             .map(File::new)
             .map(LocalFileOutputArtifact::new)
             .collect(toImmutableList());
 
-    ImmutableList<OutputArtifact> parsedFilenames =
-        BuildEventProtocolOutputReader.parseAllArtifactsInOutputGroups(
-            asInputStream(events), ImmutableList.of("group-1", "group-2"), path -> true);
+    ImmutableList<OutputArtifact> files2 =
+        fileSet2.stream()
+            .map(File::new)
+            .map(LocalFileOutputArtifact::new)
+            .collect(toImmutableList());
 
-    assertThat(parsedFilenames).containsExactlyElementsIn(allFiles).inOrder();
+    ImmutableListMultimap<String, OutputArtifact> parsedFilenames =
+        BuildEventProtocolOutputReader.parsePerOutputGroupArtifacts(
+            asInputStream(events), path -> true);
+
+    assertThat(parsedFilenames.get("group-1")).containsExactlyElementsIn(files1).inOrder();
+    assertThat(parsedFilenames.get("group-2")).containsExactlyElementsIn(files2).inOrder();
   }
 
   @Test

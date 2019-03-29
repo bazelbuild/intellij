@@ -18,7 +18,6 @@ package com.google.idea.blaze.java.run.hotswap;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -128,8 +127,8 @@ public class ClassFileManifestBuilder {
       try {
         jars =
             LocalFileOutputArtifact.getLocalOutputFiles(
-                    buildResultHelper.getArtifactsForOutputGroups(
-                        ImmutableSet.of(JavaClasspathAspectStrategy.OUTPUT_GROUP)))
+                    buildResultHelper.getArtifactsForOutputGroup(
+                        JavaClasspathAspectStrategy.OUTPUT_GROUP))
                 .stream()
                 .filter(f -> f.getName().endsWith(".jar"))
                 .collect(toImmutableList());

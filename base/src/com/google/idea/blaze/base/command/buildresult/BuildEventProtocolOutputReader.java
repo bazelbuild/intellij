@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.command.buildresult;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -31,7 +32,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -70,11 +70,10 @@ public final class BuildEventProtocolOutputReader {
    *
    * @throws IOException if the BEP output file is incorrectly formatted
    */
-  public static ImmutableList<OutputArtifact> parseAllArtifactsInOutputGroups(
-      InputStream inputStream, Collection<String> outputGroups, Predicate<String> fileFilter)
-      throws IOException {
+  public static ImmutableListMultimap<String, OutputArtifact> parsePerOutputGroupArtifacts(
+      InputStream inputStream, Predicate<String> fileFilter) throws IOException {
     ParsedBepOutput output = ParsedBepOutput.parseBepArtifacts(inputStream);
-    return output.getArtifactsForOutputGroups(outputGroups, fileFilter).asList();
+    return output.getPerOutputGroupArtifacts(fileFilter);
   }
 
   /**

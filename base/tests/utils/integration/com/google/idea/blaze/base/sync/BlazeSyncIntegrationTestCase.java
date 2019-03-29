@@ -247,7 +247,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     private TargetMap targetMap = new TargetMap(ImmutableMap.of());
 
     @Override
-    public BuildResultIdeInfo updateTargetMap(
+    public BlazeBuildOutputs buildIdeArtifacts(
         Project project,
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
@@ -261,20 +261,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         @Nullable SyncState previousSyncState,
         boolean mergeWithOldState,
         @Nullable TargetMap oldTargetMap) {
-      return new BuildResultIdeInfo(targetMap, ImmutableSet.of(), BuildResult.SUCCESS);
-    }
-
-    @Override
-    public BuildResultIdeResolve resolveIdeArtifacts(
-        Project project,
-        BlazeContext context,
-        WorkspaceRoot workspaceRoot,
-        ProjectViewSet projectViewSet,
-        BlazeInfo blazeInfo,
-        BlazeVersionData blazeVersionData,
-        WorkspaceLanguageSettings workspaceLanguageSettings,
-        ShardedTargetList shardedTargets) {
-      return new BuildResultIdeResolve(ImmutableSet.of(), BuildResult.SUCCESS);
+      return new BlazeBuildOutputs(targetMap, ImmutableSet.of(), BuildResult.SUCCESS);
     }
 
     @Override

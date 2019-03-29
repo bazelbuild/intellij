@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import java.util.Collection;
 import javax.annotation.Nullable;
 
 /** Indirection between ide_build_info and aspect style IDE info. */
@@ -39,13 +38,13 @@ public interface BlazeIdeInterface {
     return ServiceManager.getService(BlazeIdeInterface.class);
   }
 
-  /** The result of the ide-info build step. */
-  class BuildResultIdeInfo {
+  /** The result of the blaze build sync step. */
+  class BlazeBuildOutputs {
     @Nullable public final TargetMap targetMap;
     public final ImmutableSet<RemoteOutputArtifact> remoteOutputs;
     public final BuildResult buildResult;
 
-    public BuildResultIdeInfo(
+    public BlazeBuildOutputs(
         @Nullable TargetMap targetMap,
         ImmutableSet<RemoteOutputArtifact> remoteOutputs,
         BuildResult buildResult) {
@@ -55,25 +54,14 @@ public interface BlazeIdeInterface {
     }
   }
 
-  /** The result of the ide-resolve build step. */
-  class BuildResultIdeResolve {
-    public final Collection<RemoteOutputArtifact> remoteOutputs;
-    public final BuildResult buildResult;
-
-    public BuildResultIdeResolve(
-        Collection<RemoteOutputArtifact> remoteOutputs, BuildResult buildResult) {
-      this.remoteOutputs = remoteOutputs;
-      this.buildResult = buildResult;
-    }
-  }
-
   /**
-   * Queries blaze to update the rule map for the given targets.
+   * The blaze build phase of sync.
+   *
+   * <p>Builds the 'ide-info-*' and 'ide-resolve-*' output groups, and updates the target map.
    *
    * @param mergeWithOldState If true, we overlay the given targets to the current rule map.
-   * @return A tuple of the latest updated rule map and the result of the operation.
    */
-  BuildResultIdeInfo updateTargetMap(
+  BlazeBuildOutputs buildIdeArtifacts(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
@@ -87,21 +75,6 @@ public interface BlazeIdeInterface {
       @Nullable SyncState previousSyncState,
       boolean mergeWithOldState,
       @Nullable TargetMap oldTargetMap);
-
-  /**
-   * Attempts to resolve the requested ide artifacts.
-   *
-   * <p>Amounts to a build of the ide-resolve output group.
-   */
-  BuildResultIdeResolve resolveIdeArtifacts(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ProjectViewSet projectViewSet,
-      BlazeInfo blazeInfo,
-      BlazeVersionData blazeVersionData,
-      WorkspaceLanguageSettings workspaceLanguageSettings,
-      ShardedTargetList shardedTargets);
 
   /**
    * Attempts to compile the requested ide artifacts.

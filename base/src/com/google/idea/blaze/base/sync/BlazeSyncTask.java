@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -32,7 +31,6 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
-import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
@@ -79,8 +77,7 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin.ModuleEditor;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
-import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface.BuildResultIdeInfo;
-import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface.BuildResultIdeResolve;
+import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -448,8 +445,8 @@ final class BlazeSyncTask implements Progressive {
 
     BlazeConfigurationHandler configHandler = new BlazeConfigurationHandler(blazeInfo);
     boolean mergeWithOldState = !syncParams.addProjectViewTargets;
-    BuildResultIdeInfo ideInfoResult =
-        getIdeQueryResult(
+    BlazeBuildOutputs blazeBuildResult =
+        getBlazeBuildResult(
             project,
             context,
             projectViewSet,
@@ -465,43 +462,24 @@ final class BlazeSyncTask implements Progressive {
     if (context.isCancelled()) {
       throw new SyncCanceledException();
     }
-    context.output(PrintOutput.log("ide-info result: " + ideInfoResult.buildResult.status));
-    if (ideInfoResult.targetMap == null
-        || ideInfoResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
+    context.output(
+        PrintOutput.log("build invocation result: " + blazeBuildResult.buildResult.status));
+    if (blazeBuildResult.targetMap == null
+        || blazeBuildResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
       context.setHasError();
-      if (ideInfoResult.buildResult.outOfMemory()) {
+      if (blazeBuildResult.buildResult.outOfMemory()) {
         SuggestBuildShardingNotification.syncOutOfMemoryError(project, context);
       }
       throw new SyncFailedException();
     }
 
-    TargetMap targetMap = ideInfoResult.targetMap;
-    context.output(PrintOutput.log("Target map size: " + ideInfoResult.targetMap.targets().size()));
+    TargetMap targetMap = blazeBuildResult.targetMap;
+    context.output(
+        PrintOutput.log("Target map size: " + blazeBuildResult.targetMap.targets().size()));
 
-    BuildResultIdeResolve ideResolveResult =
-        resolveIdeArtifacts(
-            project,
-            context,
-            workspaceRoot,
-            projectViewSet,
-            blazeInfo,
-            blazeVersionData,
-            workspaceLanguageSettings,
-            shardedTargets);
-    if (ideResolveResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
-      context.setHasError();
-      if (ideResolveResult.buildResult.outOfMemory()) {
-        SuggestBuildShardingNotification.syncOutOfMemoryError(project, context);
-      }
-      throw new SyncFailedException();
-    }
     RemoteOutputArtifacts oldRemoteState = RemoteOutputArtifacts.fromProjectData(oldProjectData);
-    Set<RemoteOutputArtifact> newOutputs =
-        ImmutableSet.<RemoteOutputArtifact>builder()
-            .addAll(ideInfoResult.remoteOutputs)
-            .addAll(ideResolveResult.remoteOutputs)
-            .build();
-    RemoteOutputArtifacts newRemoteState = oldRemoteState.appendNewOutputs(newOutputs);
+    RemoteOutputArtifacts newRemoteState =
+        oldRemoteState.appendNewOutputs(blazeBuildResult.remoteOutputs);
     syncStateBuilder.put(newRemoteState);
     ArtifactLocationDecoder artifactLocationDecoder =
         new ArtifactLocationDecoderImpl(blazeInfo, workspacePathResolver, newRemoteState);
@@ -531,8 +509,7 @@ final class BlazeSyncTask implements Progressive {
         .setArtifactLocationDecoder(artifactLocationDecoder)
         .setTargetMap(targetMap)
         .setSyncStateBuilder(syncStateBuilder)
-        .setBuildResult(
-            BuildResult.combine(ideInfoResult.buildResult, ideResolveResult.buildResult))
+        .setBuildResult(blazeBuildResult.buildResult)
         .build();
   }
 
@@ -792,7 +769,7 @@ final class BlazeSyncTask implements Progressive {
     return result;
   }
 
-  private BuildResultIdeInfo getIdeQueryResult(
+  private BlazeBuildOutputs getBlazeBuildResult(
       Project project,
       BlazeContext parentContext,
       ProjectViewSet projectViewSet,
@@ -809,12 +786,13 @@ final class BlazeSyncTask implements Progressive {
     return Scope.push(
         parentContext,
         context -> {
-          context.push(new TimingScope("IdeQuery", EventType.BlazeInvocation));
-          context.output(new StatusOutput("Building IDE info files..."));
+          context.push(new TimingScope("BlazeBuild", EventType.BlazeInvocation));
+          context.output(new StatusOutput("Building blaze targets..."));
+          // We don't want blaze build errors to fail the whole sync
           context.setPropagatesErrors(false);
 
           BlazeIdeInterface blazeIdeInterface = BlazeIdeInterface.getInstance();
-          return blazeIdeInterface.updateTargetMap(
+          return blazeIdeInterface.buildIdeArtifacts(
               project,
               context,
               workspaceRoot,
@@ -828,41 +806,6 @@ final class BlazeSyncTask implements Progressive {
               previousSyncState,
               mergeWithOldState,
               oldTargetMap);
-        });
-  }
-
-  private static BuildResultIdeResolve resolveIdeArtifacts(
-      Project project,
-      BlazeContext parentContext,
-      WorkspaceRoot workspaceRoot,
-      ProjectViewSet projectViewSet,
-      BlazeInfo blazeInfo,
-      BlazeVersionData blazeVersionData,
-      WorkspaceLanguageSettings workspaceLanguageSettings,
-      ShardedTargetList shardedTargets) {
-    return Scope.push(
-        parentContext,
-        context -> {
-          context.push(
-              new TimingScope(Blaze.buildSystemName(project) + "Build", EventType.BlazeInvocation));
-          context.output(new StatusOutput("Building IDE resolve files..."));
-
-          // We don't want IDE resolve errors to fail the whole sync
-          context.setPropagatesErrors(false);
-
-          if (shardedTargets.isEmpty()) {
-            return new BuildResultIdeResolve(ImmutableSet.of(), BuildResult.SUCCESS);
-          }
-          BlazeIdeInterface blazeIdeInterface = BlazeIdeInterface.getInstance();
-          return blazeIdeInterface.resolveIdeArtifacts(
-              project,
-              context,
-              workspaceRoot,
-              projectViewSet,
-              blazeInfo,
-              blazeVersionData,
-              workspaceLanguageSettings,
-              shardedTargets);
         });
   }
 

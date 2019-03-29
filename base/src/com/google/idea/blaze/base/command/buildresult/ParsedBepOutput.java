@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Queues;
@@ -28,7 +29,6 @@ import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.Bui
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -147,11 +147,14 @@ final class ParsedBepOutput {
   }
 
   /** Returns the set of artifacts in the given output groups. */
-  ImmutableSet<OutputArtifact> getArtifactsForOutputGroups(
-      Collection<String> groups, Predicate<String> pathFilter) {
-    ImmutableSet<String> directSetIds =
-        groups.stream().flatMap(g -> outputGroupFileSets.get(g).stream()).collect(toImmutableSet());
-    return traverseFileSetsTransitively(directSetIds, pathFilter);
+  ImmutableListMultimap<String, OutputArtifact> getPerOutputGroupArtifacts(
+      Predicate<String> pathFilter) {
+    ImmutableListMultimap.Builder<String, OutputArtifact> builder = ImmutableListMultimap.builder();
+    for (String group : outputGroupFileSets.keySet()) {
+      Set<String> directSetIds = outputGroupFileSets.get(group);
+      builder.putAll(group, traverseFileSetsTransitively(directSetIds, pathFilter));
+    }
+    return builder.build();
   }
 
   /**

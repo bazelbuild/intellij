@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +26,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -65,12 +65,10 @@ class BuildResultHelperBep implements BuildResultHelper {
   }
 
   @Override
-  public ImmutableList<OutputArtifact> getArtifactsForOutputGroups(Collection<String> outputGroups)
+  public ImmutableListMultimap<String, OutputArtifact> getPerOutputGroupArtifacts()
       throws GetArtifactsException {
     return readResult(
-        input ->
-            BuildEventProtocolOutputReader.parseAllArtifactsInOutputGroups(
-                input, outputGroups, fileFilter));
+        input -> BuildEventProtocolOutputReader.parsePerOutputGroupArtifacts(input, fileFilter));
   }
 
   private <V> V readResult(BepReader<V> readAction) throws GetArtifactsException {

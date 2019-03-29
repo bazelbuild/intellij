@@ -51,7 +51,7 @@ public class AspectStrategyTest extends BlazeTestCase {
     Set<LanguageClass> activeLanguages = ImmutableSet.of();
 
     BlazeCommand.Builder builder = emptyBuilder();
-    strategy.addAspectAndOutputGroups(builder, OutputGroup.INFO, activeLanguages);
+    strategy.addAspectAndOutputGroups(builder, ImmutableList.of(OutputGroup.INFO), activeLanguages);
     assertThat(getOutputGroups(builder)).containsExactly("intellij-info-generic");
   }
 
@@ -60,11 +60,13 @@ public class AspectStrategyTest extends BlazeTestCase {
     Set<LanguageClass> activeLanguages = ImmutableSet.of(LanguageClass.JAVA);
 
     BlazeCommand.Builder builder = emptyBuilder();
-    strategy.addAspectAndOutputGroups(builder, OutputGroup.RESOLVE, activeLanguages);
+    strategy.addAspectAndOutputGroups(
+        builder, ImmutableList.of(OutputGroup.RESOLVE), activeLanguages);
     assertThat(getOutputGroups(builder)).containsExactly("intellij-resolve-java");
 
     builder = emptyBuilder();
-    strategy.addAspectAndOutputGroups(builder, OutputGroup.COMPILE, activeLanguages);
+    strategy.addAspectAndOutputGroups(
+        builder, ImmutableList.of(OutputGroup.COMPILE), activeLanguages);
     assertThat(getOutputGroups(builder)).containsExactly("intellij-compile-java");
   }
 
@@ -76,7 +78,7 @@ public class AspectStrategyTest extends BlazeTestCase {
             .collect(Collectors.toSet());
 
     BlazeCommand.Builder builder = emptyBuilder();
-    strategy.addAspectAndOutputGroups(builder, OutputGroup.INFO, activeLanguages);
+    strategy.addAspectAndOutputGroups(builder, ImmutableList.of(OutputGroup.INFO), activeLanguages);
     assertThat(getOutputGroups(builder))
         .containsExactly(
             "intellij-info-generic",
@@ -91,7 +93,8 @@ public class AspectStrategyTest extends BlazeTestCase {
             "intellij-info-dart");
 
     builder = emptyBuilder();
-    strategy.addAspectAndOutputGroups(builder, OutputGroup.RESOLVE, activeLanguages);
+    strategy.addAspectAndOutputGroups(
+        builder, ImmutableList.of(OutputGroup.RESOLVE), activeLanguages);
     assertThat(getOutputGroups(builder))
         .containsExactly(
             "intellij-resolve-java",
@@ -105,7 +108,8 @@ public class AspectStrategyTest extends BlazeTestCase {
             "intellij-resolve-dart");
 
     builder = emptyBuilder();
-    strategy.addAspectAndOutputGroups(builder, OutputGroup.COMPILE, activeLanguages);
+    strategy.addAspectAndOutputGroups(
+        builder, ImmutableList.of(OutputGroup.COMPILE), activeLanguages);
     assertThat(getOutputGroups(builder))
         .containsExactly(
             "intellij-compile-java",

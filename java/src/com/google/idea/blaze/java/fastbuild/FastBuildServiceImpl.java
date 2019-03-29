@@ -22,7 +22,6 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -314,8 +313,8 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
 
                 ImmutableList<File> ideInfoFiles =
                     LocalFileOutputArtifact.getLocalOutputFiles(
-                        buildResultHelper.getArtifactsForOutputGroups(
-                            ImmutableSet.of(aspectStrategy.getAspectOutputGroup())));
+                        buildResultHelper.getArtifactsForOutputGroup(
+                            aspectStrategy.getAspectOutputGroup()));
 
                 ImmutableMap<Label, FastBuildBlazeData> blazeData =
                     ideInfoFiles.stream()

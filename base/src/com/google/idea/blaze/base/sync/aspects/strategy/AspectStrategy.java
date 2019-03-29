@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.aspects.strategy;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.base.Joiner;
@@ -51,7 +52,7 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
     RESOLVE("intellij-resolve-"),
     COMPILE("intellij-compile-");
 
-    private final String prefix;
+    public final String prefix;
 
     OutputGroup(String prefix) {
       this.prefix = prefix;
@@ -67,21 +68,25 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
   protected abstract List<String> getAspectFlags();
 
   /**
-   * Add the aspect to the build and request the given {@code OutputGroup}. This method should only
+   * Add the aspect to the build and request the given {@code OutputGroup}s. This method should only
    * be called once.
    */
   public final void addAspectAndOutputGroups(
       BlazeCommand.Builder blazeCommandBuilder,
-      OutputGroup outputGroup,
+      Collection<OutputGroup> outputGroups,
       Set<LanguageClass> activeLanguages) {
-    addAspectAndOutputGroups(blazeCommandBuilder, getOutputGroups(outputGroup, activeLanguages));
+    List<String> groups =
+        outputGroups.stream()
+            .flatMap(g -> getOutputGroups(g, activeLanguages).stream())
+            .collect(toImmutableList());
+    addAspectAndOutputGroups(blazeCommandBuilder, groups);
   }
 
   /**
    * Add the aspect to the build and request the given {@code outputGroups}. This method should only
    * be called once.
    */
-  public final void addAspectAndOutputGroups(
+  private void addAspectAndOutputGroups(
       BlazeCommand.Builder blazeCommandBuilder, Collection<String> outputGroups) {
     blazeCommandBuilder
         .addBlazeFlags(getAspectFlags())
@@ -92,7 +97,7 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
    * Get the names of the output groups created by the aspect for the given {@link OutputGroup} and
    * languages.
    */
-  public final ImmutableList<String> getOutputGroups(
+  private ImmutableList<String> getOutputGroups(
       OutputGroup outputGroup, Set<LanguageClass> activeLanguages) {
     TreeSet<String> outputGroups = new TreeSet<>();
     if (outputGroup.equals(OutputGroup.INFO)) {
