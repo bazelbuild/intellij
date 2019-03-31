@@ -228,7 +228,7 @@ _intellij_plugin_jar = rule(
         "optional_plugin_xmls": attr.label_list(providers = [_OptionalPluginXmlInfo]),
         "jar_name": attr.string(mandatory = True),
         # TODO(b/117574372): make this not accept JavaInfo (only intellij_plugin_libraries allowed)
-        "deps": attr.label_list(providers = [[JavaInfo], [_IntellijPluginLibraryInfo]]),
+        "deps": attr.label_list(providers = [[_IntellijPluginLibraryInfo]]),
         "_merge_xml_binary": attr.label(
             default = Label("//build_defs:merge_xml"),
             executable = True,

@@ -3,7 +3,8 @@ licenses(["notice"])  # Apache 2.0
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
-    "merged_plugin_xml",
+    "intellij_plugin_library",
+    "optional_plugin_xml",
     "stamped_plugin_xml",
 )
 load(
@@ -28,10 +29,24 @@ java_library(
     ],
 )
 
-filegroup(
-    name = "plugin_xml",
-    srcs = ["src/META-INF/blaze-cpp.xml"],
+optional_plugin_xml(
+    name = "aswb_cpp_xml",
+    module = "com.intellij.modules.cidr.lang",
+    plugin_xml = "src/META-INF/blaze-cpp.xml",
+)
+
+intellij_plugin_library(
+    name = "aswb_plugin_library",
+    optional_plugin_xmls = [":aswb_cpp_xml"],
     visibility = ["//visibility:public"],
+    deps = [":cpp"],
+)
+
+intellij_plugin_library(
+    name = "clwb_plugin_library",
+    plugin_xmls = ["src/META-INF/blaze-cpp.xml"],
+    visibility = ["//visibility:public"],
+    deps = [":cpp"],
 )
 
 java_library(
@@ -99,20 +114,10 @@ intellij_unit_test_suite(
     ],
 )
 
-merged_plugin_xml(
-    name = "merged_plugin_xml",
-    srcs = [
-        "//base:plugin_xml",
-    ] + [
-        ":plugin_xml",
-    ],
-)
-
 stamped_plugin_xml(
     name = "cpp_plugin_xml",
     plugin_id = "com.google.idea.bazel.cpp",
     plugin_name = "com.google.idea.bazel.cpp",
-    plugin_xml = ":merged_plugin_xml",
 )
 
 intellij_plugin(
@@ -120,7 +125,8 @@ intellij_plugin(
     testonly = 1,
     plugin_xml = ":cpp_plugin_xml",
     deps = [
-        ":cpp",
+        ":clwb_plugin_library",
+        "//base:plugin_library",
     ],
 )
 
