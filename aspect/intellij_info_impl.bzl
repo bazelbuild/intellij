@@ -522,8 +522,19 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
 
     jdeps = None
     if hasattr(java.outputs, "jdeps") and java.outputs.jdeps:
-        jdeps = artifact_location(java.outputs.jdeps)
-        resolve_files += [java.outputs.jdeps]
+        # TODO(b/129011477): The starlark version of android_local_test includes
+        # the _resources.jar in jdeps, which is unwanted for indexing. Filter it
+        # out until it is updated to exclude the resources jar.
+        if ctx.rule.kind == "android_local_test":
+            filtered_jdeps = ctx.actions.declare_file(target.label.name + ".filtered.jdeps")
+            print("11111")
+            print(filtered_jdeps)
+            _filter_jdeps(target, ctx, java.outputs.jdeps, filtered_jdeps)
+            jdeps = artifact_location(filtered_jdeps)
+            resolve_files += [filtered_jdeps]
+        else:
+            jdeps = artifact_location(java.outputs.jdeps)
+            resolve_files += [java.outputs.jdeps]
 
     java_sources, gen_java_sources, srcjars = divide_java_sources(ctx)
 
@@ -563,6 +574,24 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     update_set_in_dict(output_groups, "intellij-compile-java", depset(compile_files))
     update_set_in_dict(output_groups, "intellij-resolve-java", depset(resolve_files))
     return True
+
+def _filter_jdeps(target, ctx, in_jdeps, out_jdeps):
+    res = "%s/%s_resources.jar" % (target.label.package, target.label.name)
+    args = ctx.actions.args()
+    args.add("--in")
+    args.add(in_jdeps.path)
+    args.add("--target")
+    args.add(res)
+    args.add("--out")
+    args.add(out_jdeps.path)
+    ctx.actions.run(
+        inputs = [in_jdeps],
+        outputs = [out_jdeps],
+        executable = ctx.executable._jdeps_filter,
+        arguments = [args],
+        mnemonic = "JdepsFilter",
+        progress_message = "Filtering jdeps for " + str(target.label),
+    )
 
 def _package_manifest_file_argument(f):
     artifact = artifact_location(f)
@@ -901,6 +930,12 @@ def make_intellij_info_aspect(aspect_impl, semantics):
             ),
             "_jar_filter": attr.label(
                 default = tool_label("JarFilter"),
+                cfg = "host",
+                executable = True,
+                allow_files = True,
+            ),
+            "_jdeps_filter": attr.label(
+                default = "//third_party/bazel_rules/rules_android/src/tools/jdeps:jdeps",
                 cfg = "host",
                 executable = True,
                 allow_files = True,
