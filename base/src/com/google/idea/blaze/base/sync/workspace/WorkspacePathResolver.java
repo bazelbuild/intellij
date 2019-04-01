@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -57,6 +58,9 @@ public interface WorkspacePathResolver extends ProtoWrapper<ProjectData.Workspac
    */
   @Nullable
   WorkspaceRoot findWorkspaceRoot(File absoluteFile);
+
+  /** Finds all potential workspace roots that this resolver may use. */
+  Collection<WorkspaceRoot> findAllWorkspaceRoots();
 
   /**
    * Given a resolved, absolute file, returns the corresponding {@link WorkspacePath}. Returns null

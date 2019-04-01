@@ -20,6 +20,7 @@ import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import java.io.File;
+import java.util.Collection;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -58,6 +59,11 @@ public final class WorkspacePathResolverImpl implements WorkspacePathResolver {
   @Override
   public WorkspaceRoot findWorkspaceRoot(File absoluteFile) {
     return workspaceRoot.isInWorkspace(absoluteFile) ? workspaceRoot : null;
+  }
+
+  @Override
+  public Collection<WorkspaceRoot> findAllWorkspaceRoots() {
+    return ImmutableList.of(workspaceRoot);
   }
 
   @Override
