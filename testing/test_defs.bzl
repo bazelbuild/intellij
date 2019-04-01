@@ -62,7 +62,7 @@ _generate_test_suite = rule(
     outputs = {"out": "%{name}.java"},
 )
 
-def intellij_unit_test_suite(name, srcs, test_package_root, class_rules = [], **kwargs):
+def intellij_unit_test_suite(name, srcs, test_package_root, class_rules = [], runtime_deps = [], **kwargs):
     """Creates a java_test rule comprising all valid test classes in the specified srcs.
 
     Only classes ending in "Test.java" will be recognized.
@@ -80,6 +80,12 @@ def intellij_unit_test_suite(name, srcs, test_package_root, class_rules = [], **
     api_version_txt(name = api_version_txt_name)
     data = kwargs.pop("data", [])
     data.append(api_version_txt_name)
+
+    runtime_deps = list(runtime_deps)
+    runtime_deps.extend([
+        # Needed to work around one-version issue
+        "@cglib//jar",
+    ])
 
     jvm_flags = list(kwargs.pop("jvm_flags", []))
     jvm_flags.extend([
@@ -101,6 +107,7 @@ def intellij_unit_test_suite(name, srcs, test_package_root, class_rules = [], **
         data = data,
         jvm_flags = jvm_flags,
         test_class = suite_class,
+        runtime_deps = runtime_deps,
         **kwargs
     )
 
@@ -160,6 +167,8 @@ def intellij_integration_test_suite(
     runtime_deps.extend([
         "//intellij_platform_sdk:bundled_plugins",
         "//third_party:jpda-jdi",
+        # Needed to work around one-version issue
+        "@cglib//jar",
     ])
 
     jvm_flags = list(jvm_flags)

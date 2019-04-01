@@ -205,7 +205,6 @@ java_library(
     visibility = [":test_libs_visibility"],
     exports = [
         "@mockito//jar",
-        "@objenesis//jar",
         "@truth//jar",
     ],
 )

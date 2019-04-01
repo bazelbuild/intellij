@@ -179,8 +179,6 @@ intellij_integration_test_suite(
     test_package_root = "com.google.idea.blaze.android",
     runtime_deps = [
         ":aswb_bazel",
-        # Needed to work around one-version issue
-        "//intellij_platform_sdk:test_libs",
     ],
     deps = [
         ":aswb_lib",
