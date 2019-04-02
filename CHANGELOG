@@ -1,3 +1,7 @@
+v2019.04.01
+===========
+* Bug fixes and internal cleanup.
+
 v2019.03.18
 ===========
 * Bazel problems view: allow filtering based on severity
