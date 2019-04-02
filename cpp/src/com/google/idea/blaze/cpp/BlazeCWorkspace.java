@@ -61,6 +61,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /** Main entry point for C/CPP configuration data. */
@@ -197,17 +198,19 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 .map(s -> "-D" + s)
                 .collect(toImmutableList());
 
-        // localIncludes are sourced from -I options in a target's "copts" attribute
+        Function<ExecutionRootPath, Stream<File>> resolver =
+            executionRootPath ->
+                executionRootPathResolver.resolveToIncludeDirectories(executionRootPath).stream();
+        // localIncludes are sourced from -I options in a target's "copts" attribute. They  can be
+        // arbitrarily declared and may not exist in configResolveData.
         // transitiveIncludeDirectories are sourced from CcSkylarkApiProvider.include_directories
+
         ImmutableList<String> iOptionIncludeDirectories =
             Stream.concat(
-                    localIncludes.stream(),
-                    targetIdeInfo.getcIdeInfo().getTransitiveIncludeDirectories().stream())
-                .flatMap(
-                    executionRootPath ->
-                        executionRootPathResolver.resolveToIncludeDirectories(executionRootPath)
-                            .stream())
-                .filter(configResolveData::isValidHeaderRoot)
+                    localIncludes.stream().flatMap(resolver),
+                    targetIdeInfo.getcIdeInfo().getTransitiveIncludeDirectories().stream()
+                        .flatMap(resolver)
+                        .filter(configResolveData::isValidHeaderRoot))
                 .map(file -> "-I" + file.getAbsolutePath())
                 .collect(toImmutableList());
 
@@ -215,10 +218,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // CcSkylarkApiProvider.quote_include_directories
         ImmutableList<String> iquoteOptionIncludeDirectories =
             targetIdeInfo.getcIdeInfo().getTransitiveQuoteIncludeDirectories().stream()
-                .flatMap(
-                    executionRootPath ->
-                        executionRootPathResolver.resolveToIncludeDirectories(executionRootPath)
-                            .stream())
+                .flatMap(resolver)
                 .filter(configResolveData::isValidHeaderRoot)
                 .map(file -> "-iquote" + file.getAbsolutePath())
                 .collect(toImmutableList());
@@ -228,10 +228,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // that get built by ClangUtils::addIncludeDirectories (it uses -I for system libraries).
         ImmutableList<String> isystemOptionIncludeDirectories =
             targetIdeInfo.getcIdeInfo().getTransitiveSystemIncludeDirectories().stream()
-                .flatMap(
-                    executionRootPath ->
-                        executionRootPathResolver.resolveToIncludeDirectories(executionRootPath)
-                            .stream())
+                .flatMap(resolver)
                 .filter(configResolveData::isValidHeaderRoot)
                 .map(file -> "-I" + file.getAbsolutePath())
                 .collect(toImmutableList());
