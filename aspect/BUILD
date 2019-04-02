@@ -52,7 +52,7 @@ genrule(
     cmd = "cp $< $@",
 )
 
-_dev_aspect_path = native.package_name()
+_dev_aspect_path = package_name()
 
 # Aspect references have different label paths in development vs. when bundled with the plugin.
 # This genrule is required for the aspect to be valid in all three repositories in which it's used.
