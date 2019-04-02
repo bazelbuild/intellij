@@ -522,8 +522,13 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
 
     jdeps = None
     if hasattr(java.outputs, "jdeps") and java.outputs.jdeps:
-        jdeps = artifact_location(java.outputs.jdeps)
-        resolve_files += [java.outputs.jdeps]
+        if java_semantics and hasattr(java_semantics, "filter_jdeps") and ctx.rule.kind == "android_local_test":
+            filtered_jdeps = java_semantics.filter_jdeps(ctx, target, java)
+            jdeps = artifact_location(filtered_jdeps)
+            resolve_files += [filtered_jdeps]
+        else:
+            jdeps = artifact_location(java.outputs.jdeps)
+            resolve_files += [java.outputs.jdeps]
 
     java_sources, gen_java_sources, srcjars = divide_java_sources(ctx)
 
@@ -891,24 +896,28 @@ def make_intellij_info_aspect(aspect_impl, semantics):
 
     attr_aspects = deps + runtime_deps + prerequisite_deps
 
+    attrs = {
+        "_package_parser": attr.label(
+            default = tool_label("PackageParser"),
+            cfg = "host",
+            executable = True,
+            allow_files = True,
+        ),
+        "_jar_filter": attr.label(
+            default = tool_label("JarFilter"),
+            cfg = "host",
+            executable = True,
+            allow_files = True,
+        ),
+        "_flag_hack": attr.label(
+            default = flag_hack_label,
+        ),
+    }
+    if hasattr(semantics, "jdeps_tool"):
+        attrs["_jdeps_tool"] = semantics.jdeps_tool
+
     return aspect(
-        attrs = {
-            "_package_parser": attr.label(
-                default = tool_label("PackageParser"),
-                cfg = "host",
-                executable = True,
-                allow_files = True,
-            ),
-            "_jar_filter": attr.label(
-                default = tool_label("JarFilter"),
-                cfg = "host",
-                executable = True,
-                allow_files = True,
-            ),
-            "_flag_hack": attr.label(
-                default = flag_hack_label,
-            ),
-        },
+        attrs = attrs,
         attr_aspects = attr_aspects,
         fragments = ["cpp"],
         implementation = aspect_impl,
