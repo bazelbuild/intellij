@@ -225,7 +225,7 @@ public final class BlazeConfigurationToolchainResolver {
     } catch (VersionCheckException e) {
       switch (e.kind) {
         case MISSING_EXEC_ROOT:
-          IssueOutput.error(
+          IssueOutput.warn(
                   String.format(
                       "Missing execution root %s (checking compiler).\n"
                           + "Double-click to run sync and create the execution root.",
@@ -240,7 +240,7 @@ public final class BlazeConfigurationToolchainResolver {
               .submit(context);
           return null;
         case MISSING_COMPILER:
-          IssueOutput.error(
+          IssueOutput.warn(
                   String.format(
                       "Unable to access compiler executable \"%s\".\n"
                           + "Check if it is accessible from the cmdline.",
@@ -248,7 +248,7 @@ public final class BlazeConfigurationToolchainResolver {
               .submit(context);
           return null;
         case GENERIC_FAILURE:
-          IssueOutput.error(
+          IssueOutput.warn(
                   String.format(
                       "Unable to check compiler version for \"%s\".\n%s\n"
                           + "Check if running the compiler with --version works on the cmdline.",
