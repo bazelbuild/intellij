@@ -577,7 +577,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     return outputs.values().stream()
         .filter(a -> a instanceof RemoteOutputArtifact)
         .map(a -> (RemoteOutputArtifact) a)
-        .filter(a -> !pathFilter.test(a.getRelativePath()))
+        .filter(a -> pathFilter.test(a.getRelativePath()))
         .collect(toImmutableSet());
   }
 
