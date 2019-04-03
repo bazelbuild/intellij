@@ -1,5 +1,7 @@
 licenses(["notice"])  # Apache 2.0
 
+load("//build_defs:build_defs.bzl", "intellij_plugin_library")
+
 java_library(
     name = "base",
     srcs = glob(["src/**/*.java"]),
@@ -20,6 +22,13 @@ java_library(
         "//third_party/auto_value",
         "@error_prone_annotations//jar",
     ],
+)
+
+intellij_plugin_library(
+    name = "plugin_library",
+    plugin_xmls = ["src/META-INF/blaze-base.xml"],
+    visibility = ["//visibility:public"],
+    deps = [":base"],
 )
 
 java_library(
@@ -190,12 +199,6 @@ java_library(
     ],
 )
 
-filegroup(
-    name = "plugin_xml",
-    srcs = ["src/META-INF/blaze-base.xml"],
-    visibility = ["//visibility:public"],
-)
-
 java_library(
     name = "unit_test_utils",
     testonly = 1,
@@ -238,16 +241,13 @@ stamped_plugin_xml(
     name = "base_plugin_xml",
     plugin_id = "com.google.idea.blaze.base",
     plugin_name = "com.google.idea.blaze.base",
-    plugin_xml = "plugin_xml",
 )
 
 intellij_plugin(
     name = "base_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":base_plugin_xml",
-    deps = [
-        ":base",
-    ],
+    deps = [":plugin_library"],
 )
 
 load(

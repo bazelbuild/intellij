@@ -2,9 +2,9 @@ licenses(["notice"])  # Apache 2.0
 
 load(
     "//build_defs:build_defs.bzl",
-    "merged_plugin_xml",
     "stamped_plugin_xml",
     "intellij_plugin",
+    "intellij_plugin_library",
     "optional_plugin_xml",
 )
 load(
@@ -13,44 +13,9 @@ load(
     "intellij_integration_test_suite",
 )
 
-filegroup(
-    name = "plugin_xml",
-    srcs = ["src/META-INF/blaze-scala.xml"],
-    visibility = ["//visibility:public"],
-)
-
-optional_plugin_xml(
-    name = "optional_xml",
-    module = "org.intellij.scala",
-    plugin_xml = "src/META-INF/scala-contents.xml",
-    visibility = ["//visibility:public"],
-)
-
-OPTIONAL_PLUGIN_XMLS = [
-    ":optional_xml",
-    "//java:optional_java",
-]
-
-merged_plugin_xml(
-    name = "merged_plugin_xml",
-    srcs = [
-        ":plugin_xml",
-        "//base:plugin_xml",
-        "//java:plugin_xml",
-    ],
-)
-
-stamped_plugin_xml(
-    name = "scala_plugin_xml",
-    plugin_id = "com.google.idea.blaze.scala",
-    plugin_name = "com.google.idea.blaze.scala",
-    plugin_xml = "merged_plugin_xml",
-)
-
 java_library(
     name = "scala",
     srcs = glob(["src/**/*.java"]),
-    visibility = ["//visibility:public"],
     deps = [
         "//base",
         "//intellij_platform_sdk:jsr305",
@@ -62,12 +27,35 @@ java_library(
     ],
 )
 
+optional_plugin_xml(
+    name = "optional_xml",
+    module = "org.intellij.scala",
+    plugin_xml = "src/META-INF/scala-contents.xml",
+)
+
+intellij_plugin_library(
+    name = "plugin_library",
+    optional_plugin_xmls = [":optional_xml"],
+    plugin_xmls = ["src/META-INF/blaze-scala.xml"],
+    visibility = ["//visibility:public"],
+    deps = [":scala"],
+)
+
+stamped_plugin_xml(
+    name = "scala_plugin_xml",
+    plugin_id = "com.google.idea.blaze.scala",
+    plugin_name = "com.google.idea.blaze.scala",
+)
+
 intellij_plugin(
     name = "scala_integration_test_plugin",
     testonly = 1,
-    optional_plugin_xmls = OPTIONAL_PLUGIN_XMLS,
     plugin_xml = ":scala_plugin_xml",
-    deps = [":scala"],
+    deps = [
+        ":plugin_library",
+        "//base:plugin_library",
+        "//java:plugin_library",
+    ],
 )
 
 intellij_unit_test_suite(
