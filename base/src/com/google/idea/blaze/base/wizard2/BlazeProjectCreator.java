@@ -43,7 +43,7 @@ import javax.annotation.Nullable;
 import javax.swing.SwingUtilities;
 
 class BlazeProjectCreator {
-  private static final Logger LOG = Logger.getInstance(BlazeProjectCreator.class);
+  private static final Logger logger = Logger.getInstance(BlazeProjectCreator.class);
 
   private final WizardContext wizardContext;
   private final ProjectBuilder projectBuilder;
@@ -71,7 +71,7 @@ class BlazeProjectCreator {
 
     try {
       File projectDir = new File(projectFilePath).getParentFile();
-      LOG.assertTrue(
+      logger.assertTrue(
           projectDir != null,
           "Cannot create project in '" + projectFilePath + "': no parent file exists");
       FileUtil.ensureExists(projectDir);
