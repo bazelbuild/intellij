@@ -15,23 +15,24 @@
  */
 package com.google.idea.blaze.base.sync.aspects;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
-import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.sync.BlazeSyncBuildResult;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
-/** Indirection between ide_build_info and aspect style IDE info. */
+/** A blaze build interface used for mocking out the blaze layer in tests. */
 public interface BlazeIdeInterface {
 
   static BlazeIdeInterface getInstance() {
@@ -40,26 +41,39 @@ public interface BlazeIdeInterface {
 
   /** The result of the blaze build sync step. */
   class BlazeBuildOutputs {
-    @Nullable public final TargetMap targetMap;
-    public final ImmutableSet<RemoteOutputArtifact> remoteOutputs;
+    /** All output artifacts from the blaze build step. */
+    public final ImmutableListMultimap<String, OutputArtifact> perOutputGroupArtifacts;
+
     public final BuildResult buildResult;
 
     public BlazeBuildOutputs(
-        @Nullable TargetMap targetMap,
-        ImmutableSet<RemoteOutputArtifact> remoteOutputs,
+        ImmutableListMultimap<String, OutputArtifact> perOutputGroupArtifacts,
         BuildResult buildResult) {
-      this.targetMap = targetMap;
-      this.remoteOutputs = remoteOutputs;
+      this.perOutputGroupArtifacts = perOutputGroupArtifacts;
       this.buildResult = buildResult;
     }
   }
 
   /**
-   * The blaze build phase of sync.
-   *
-   * <p>Builds the 'ide-info-*' and 'ide-resolve-*' output groups, and updates the target map.
+   * Parses the output intellij-info.txt files, updating the project's {@link TargetMap} and
+   * BlazeIdeInterfaceState accordingly.
    *
    * @param mergeWithOldState If true, we overlay the given targets to the current rule map.
+   */
+  @Nullable
+  TargetMap updateTargetMap(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      BlazeSyncBuildResult buildResult,
+      SyncState.Builder syncStateBuilder,
+      boolean mergeWithOldState,
+      @Nullable BlazeProjectData oldProjectData);
+
+  /**
+   * The blaze build phase of sync.
+   *
+   * <p>Builds the 'ide-info-*' and 'ide-resolve-*' output groups.
    */
   BlazeBuildOutputs buildIdeArtifacts(
       Project project,
@@ -67,14 +81,8 @@ public interface BlazeIdeInterface {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeInfo blazeInfo,
-      BlazeVersionData blazeVersionData,
-      BlazeConfigurationHandler configHandler,
       ShardedTargetList shardedTargets,
-      WorkspaceLanguageSettings workspaceLanguageSettings,
-      SyncState.Builder syncStateBuilder,
-      @Nullable SyncState previousSyncState,
-      boolean mergeWithOldState,
-      @Nullable TargetMap oldTargetMap);
+      WorkspaceLanguageSettings workspaceLanguageSettings);
 
   /**
    * Attempts to compile the requested ide artifacts.

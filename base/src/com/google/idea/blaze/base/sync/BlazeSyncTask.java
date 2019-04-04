@@ -15,8 +15,11 @@
  */
 package com.google.idea.blaze.base.sync;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -31,7 +34,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
-import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
+import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
@@ -79,6 +82,7 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin.ModuleEditor;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
@@ -130,6 +134,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -289,13 +294,13 @@ final class BlazeSyncTask implements Progressive {
   private SyncResult doSyncProject(
       BlazeContext context, @Nullable BlazeProjectData oldProjectData) {
     try {
-      BlazeSyncBuildResult buildResult = runBuildPhase(context, oldProjectData);
+      BlazeSyncBuildResult buildResult = runBuildPhase(context);
       if (context.isCancelled()) {
         return SyncResult.CANCELLED;
       }
-      runProjectUpdatePhase(context, buildResult);
+      runProjectUpdatePhase(context, buildResult, oldProjectData);
 
-      if (buildResult.getBuildResult().status == BuildResult.Status.BUILD_ERROR) {
+      if (buildResult.getBuildResult().buildResult.status == BuildResult.Status.BUILD_ERROR) {
         String buildSystem = importSettings.getBuildSystem().getName();
         String message =
             String.format(
@@ -318,8 +323,7 @@ final class BlazeSyncTask implements Progressive {
   }
 
   /** Runs the blaze build phase of sync. */
-  private BlazeSyncBuildResult runBuildPhase(
-      BlazeContext context, @Nullable BlazeProjectData oldProjectData)
+  private BlazeSyncBuildResult runBuildPhase(BlazeContext context)
       throws SyncFailedException, SyncCanceledException {
     if (!FileOperationProvider.getInstance().exists(workspaceRoot.directory())) {
       IssueOutput.error(String.format("Workspace '%s' doesn't exist.", workspaceRoot.directory()))
@@ -407,9 +411,6 @@ final class BlazeSyncTask implements Progressive {
       printWorkingSet(context, workingSet);
     }
 
-    SyncState.Builder syncStateBuilder = new SyncState.Builder();
-    SyncState previousSyncState = oldProjectData != null ? oldProjectData.getSyncState() : null;
-
     List<TargetExpression> targets = Lists.newArrayList();
     if (syncParams.addProjectViewTargets) {
       List<TargetExpression> projectViewTargets = projectViewSet.listItems(TargetSection.KEY);
@@ -443,46 +444,54 @@ final class BlazeSyncTask implements Progressive {
 
     syncStats.setSyncSharded(shardedTargets.shardedTargets.size() > 1);
 
-    BlazeConfigurationHandler configHandler = new BlazeConfigurationHandler(blazeInfo);
-    boolean mergeWithOldState = !syncParams.addProjectViewTargets;
     BlazeBuildOutputs blazeBuildResult =
         getBlazeBuildResult(
-            project,
-            context,
-            projectViewSet,
-            blazeInfo,
-            blazeVersionData,
-            configHandler,
-            shardedTargets,
-            workspaceLanguageSettings,
-            syncStateBuilder,
-            previousSyncState,
-            mergeWithOldState,
-            oldProjectData != null ? oldProjectData.getTargetMap() : null);
+            project, context, projectViewSet, blazeInfo, shardedTargets, workspaceLanguageSettings);
     if (context.isCancelled()) {
       throw new SyncCanceledException();
     }
     context.output(
         PrintOutput.log("build invocation result: " + blazeBuildResult.buildResult.status));
-    if (blazeBuildResult.targetMap == null
-        || blazeBuildResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
+    if (blazeBuildResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
       context.setHasError();
       if (blazeBuildResult.buildResult.outOfMemory()) {
         SuggestBuildShardingNotification.syncOutOfMemoryError(project, context);
       }
       throw new SyncFailedException();
     }
+    return BlazeSyncBuildResult.builder()
+        .setProjectViewSet(projectViewSet)
+        .setLanguageSettings(workspaceLanguageSettings)
+        .setBlazeInfo(blazeInfo)
+        .setBlazeVersionData(blazeVersionData)
+        .setWorkingSet(workingSet)
+        .setWorkspacePathResolver(workspacePathResolver)
+        .setBuildResult(blazeBuildResult)
+        .build();
+  }
 
-    TargetMap targetMap = blazeBuildResult.targetMap;
-    context.output(
-        PrintOutput.log("Target map size: " + blazeBuildResult.targetMap.targets().size()));
+  private void runProjectUpdatePhase(
+      BlazeContext context,
+      BlazeSyncBuildResult buildResult,
+      @Nullable BlazeProjectData oldProjectData)
+      throws SyncFailedException, SyncCanceledException {
+
+    SyncState.Builder syncStateBuilder = new SyncState.Builder();
+
+    TargetMap targetMap = updateTargetMap(context, buildResult, oldProjectData, syncStateBuilder);
+    if (targetMap == null) {
+      context.setHasError();
+      throw new SyncFailedException();
+    }
+    context.output(PrintOutput.log("Target map size: " + targetMap.targets().size()));
 
     RemoteOutputArtifacts oldRemoteState = RemoteOutputArtifacts.fromProjectData(oldProjectData);
     RemoteOutputArtifacts newRemoteState =
-        oldRemoteState.appendNewOutputs(blazeBuildResult.remoteOutputs);
+        oldRemoteState.appendNewOutputs(getTrackedRemoteOutputs(buildResult.getBuildResult()));
     syncStateBuilder.put(newRemoteState);
     ArtifactLocationDecoder artifactLocationDecoder =
-        new ArtifactLocationDecoderImpl(blazeInfo, workspacePathResolver, newRemoteState);
+        new ArtifactLocationDecoderImpl(
+            buildResult.getBlazeInfo(), buildResult.getWorkspacePathResolver(), newRemoteState);
 
     Scope.push(
         context,
@@ -492,33 +501,15 @@ final class BlazeSyncTask implements Progressive {
               .updateCache(
                   context,
                   targetMap,
-                  workspaceLanguageSettings,
+                  buildResult.getLanguageSettings(),
                   newRemoteState,
                   oldRemoteState,
                   /* clearCache= */ syncParams.syncMode == SyncMode.FULL);
         });
 
-    return BlazeSyncBuildResult.builder()
-        .setOldProjectData(oldProjectData)
-        .setProjectViewSet(projectViewSet)
-        .setLanguageSettings(workspaceLanguageSettings)
-        .setBlazeInfo(blazeInfo)
-        .setBlazeVersionData(blazeVersionData)
-        .setWorkingSet(workingSet)
-        .setWorkspacePathResolver(workspacePathResolver)
-        .setArtifactLocationDecoder(artifactLocationDecoder)
-        .setTargetMap(targetMap)
-        .setSyncStateBuilder(syncStateBuilder)
-        .setBuildResult(blazeBuildResult.buildResult)
-        .build();
-  }
-
-  private void runProjectUpdatePhase(BlazeContext context, BlazeSyncBuildResult buildResult)
-      throws SyncFailedException, SyncCanceledException {
-    SyncState.Builder syncStateBuilder = buildResult.getSyncStateBuilder();
     Scope.push(
         context,
-        (childContext) -> {
+        childContext -> {
           childContext.push(new TimingScope("UpdateSyncState", EventType.Other));
           for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
             syncPlugin.updateSyncState(
@@ -531,10 +522,10 @@ final class BlazeSyncTask implements Progressive {
                 buildResult.getBlazeVersionData(),
                 buildResult.getWorkingSet(),
                 buildResult.getWorkspacePathResolver(),
-                buildResult.getArtifactLocationDecoder(),
-                buildResult.getTargetMap(),
+                artifactLocationDecoder,
+                targetMap,
                 syncStateBuilder,
-                buildResult.getOldSyncState(),
+                oldProjectData != null ? oldProjectData.getSyncState() : null,
                 syncParams.syncMode);
           }
         });
@@ -547,11 +538,11 @@ final class BlazeSyncTask implements Progressive {
 
     BlazeProjectData newProjectData =
         new BlazeProjectData(
-            buildResult.getTargetMap(),
+            targetMap,
             buildResult.getBlazeInfo(),
             buildResult.getBlazeVersionData(),
             buildResult.getWorkspacePathResolver(),
-            buildResult.getArtifactLocationDecoder(),
+            artifactLocationDecoder,
             buildResult.getLanguageSettings(),
             syncStateBuilder.build());
 
@@ -560,7 +551,7 @@ final class BlazeSyncTask implements Progressive {
         context,
         buildResult.getProjectViewSet(),
         newProjectData,
-        buildResult.getOldProjectData(),
+        oldProjectData,
         syncParams.syncMode);
     ListenableFuture<?> prefetch =
         PrefetchService.getInstance()
@@ -594,11 +585,24 @@ final class BlazeSyncTask implements Progressive {
             buildResult.getProjectViewSet(),
             buildResult.getBlazeVersionData(),
             directoryStructure,
-            buildResult.getOldProjectData(),
+            oldProjectData,
             newProjectData);
     if (!success) {
       throw new SyncFailedException();
     }
+  }
+
+  /** Returns the {@link RemoteOutputArtifact}s we want to track between syncs. */
+  private static ImmutableSet<RemoteOutputArtifact> getTrackedRemoteOutputs(
+      BlazeBuildOutputs buildOutput) {
+    // don't track remote intellij-info.txt outputs -- they're already tracked in
+    // BlazeIdeInterfaceState
+    Predicate<String> pathFilter = AspectStrategy.ASPECT_OUTPUT_FILE_PREDICATE.negate();
+    return buildOutput.perOutputGroupArtifacts.values().stream()
+        .filter(a -> a instanceof RemoteOutputArtifact)
+        .map(a -> (RemoteOutputArtifact) a)
+        .filter(a -> pathFilter.test(a.getRelativePath()))
+        .collect(toImmutableSet());
   }
 
   private static void refreshVirtualFileSystem(
@@ -774,14 +778,8 @@ final class BlazeSyncTask implements Progressive {
       BlazeContext parentContext,
       ProjectViewSet projectViewSet,
       BlazeInfo blazeInfo,
-      BlazeVersionData blazeVersionData,
-      BlazeConfigurationHandler configHandler,
       ShardedTargetList shardedTargets,
-      WorkspaceLanguageSettings workspaceLanguageSettings,
-      SyncState.Builder syncStateBuilder,
-      @Nullable SyncState previousSyncState,
-      boolean mergeWithOldState,
-      @Nullable TargetMap oldTargetMap) {
+      WorkspaceLanguageSettings workspaceLanguageSettings) {
 
     return Scope.push(
         parentContext,
@@ -798,14 +796,32 @@ final class BlazeSyncTask implements Progressive {
               workspaceRoot,
               projectViewSet,
               blazeInfo,
-              blazeVersionData,
-              configHandler,
               shardedTargets,
-              workspaceLanguageSettings,
+              workspaceLanguageSettings);
+        });
+  }
+
+  @Nullable
+  private TargetMap updateTargetMap(
+      BlazeContext parentContext,
+      BlazeSyncBuildResult buildResult,
+      @Nullable BlazeProjectData oldProjectData,
+      SyncState.Builder syncStateBuilder) {
+    boolean mergeWithOldState = !syncParams.addProjectViewTargets;
+    return Scope.push(
+        parentContext,
+        context -> {
+          context.push(new TimingScope("ReadBuildOutputs", EventType.BlazeInvocation));
+          context.output(new StatusOutput("Parsing build outputs..."));
+          BlazeIdeInterface blazeIdeInterface = BlazeIdeInterface.getInstance();
+          return blazeIdeInterface.updateTargetMap(
+              project,
+              context,
+              workspaceRoot,
+              buildResult,
               syncStateBuilder,
-              previousSyncState,
               mergeWithOldState,
-              oldTargetMap);
+              oldProjectData);
         });
   }
 

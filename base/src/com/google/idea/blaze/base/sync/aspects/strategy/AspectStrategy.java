@@ -43,7 +43,7 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
   private static final ExtensionPointName<AspectStrategy> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.AspectStrategy");
 
-  private static final Predicate<String> ASPECT_OUTPUT_FILE_PREDICATE =
+  public static final Predicate<String> ASPECT_OUTPUT_FILE_PREDICATE =
       str -> str.endsWith(".intellij-info.txt");
 
   /** A Blaze output group created by the aspect. */
@@ -110,10 +110,6 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
       }
     }
     return ImmutableList.copyOf(outputGroups);
-  }
-
-  public final Predicate<String> getAspectOutputFilePredicate() {
-    return ASPECT_OUTPUT_FILE_PREDICATE;
   }
 
   public final IntellijIdeInfo.TargetIdeInfo readAspectFile(OutputArtifact file)

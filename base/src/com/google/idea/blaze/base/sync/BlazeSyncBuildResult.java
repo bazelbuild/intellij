@@ -17,17 +17,12 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.auto.value.AutoValue;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
-import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import javax.annotation.Nullable;
 
 /**
  * All the information gathered during the build phase of sync, used as input to the project update
@@ -35,8 +30,6 @@ import javax.annotation.Nullable;
  */
 @AutoValue
 public abstract class BlazeSyncBuildResult {
-
-  public abstract BuildResult getBuildResult();
 
   public abstract ProjectViewSet getProjectViewSet();
 
@@ -50,19 +43,7 @@ public abstract class BlazeSyncBuildResult {
 
   public abstract WorkspacePathResolver getWorkspacePathResolver();
 
-  public abstract ArtifactLocationDecoder getArtifactLocationDecoder();
-
-  public abstract TargetMap getTargetMap();
-
-  public abstract SyncState.Builder getSyncStateBuilder();
-
-  @Nullable
-  public abstract BlazeProjectData getOldProjectData();
-
-  public SyncState getOldSyncState() {
-    BlazeProjectData oldProjectData = getOldProjectData();
-    return oldProjectData != null ? oldProjectData.getSyncState() : null;
-  }
+  public abstract BlazeBuildOutputs getBuildResult();
 
   public static Builder builder() {
     return new AutoValue_BlazeSyncBuildResult.Builder();
@@ -83,15 +64,7 @@ public abstract class BlazeSyncBuildResult {
 
     public abstract Builder setWorkspacePathResolver(WorkspacePathResolver pathResolver);
 
-    public abstract Builder setArtifactLocationDecoder(ArtifactLocationDecoder decoder);
-
-    public abstract Builder setTargetMap(TargetMap targetMap);
-
-    public abstract Builder setSyncStateBuilder(SyncState.Builder syncStateBuilder);
-
-    public abstract Builder setOldProjectData(@Nullable BlazeProjectData oldProjectData);
-
-    public abstract Builder setBuildResult(BuildResult buildResult);
+    public abstract Builder setBuildResult(BlazeBuildOutputs buildResult);
 
     public abstract BlazeSyncBuildResult build();
   }

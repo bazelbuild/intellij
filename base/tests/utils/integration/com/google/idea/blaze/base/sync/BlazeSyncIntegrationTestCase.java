@@ -19,20 +19,20 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.MockEventLoggingService;
 import com.google.idea.blaze.base.MockProjectViewManager;
-import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -253,15 +253,21 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         WorkspaceRoot workspaceRoot,
         ProjectViewSet projectViewSet,
         BlazeInfo blazeInfo,
-        BlazeVersionData blazeVersionData,
-        BlazeConfigurationHandler configHandler,
         ShardedTargetList shardedTargets,
-        WorkspaceLanguageSettings workspaceLanguageSettings,
+        WorkspaceLanguageSettings workspaceLanguageSettings) {
+      return new BlazeBuildOutputs(ImmutableListMultimap.of(), BuildResult.SUCCESS);
+    }
+
+    @Override
+    public TargetMap updateTargetMap(
+        Project project,
+        BlazeContext context,
+        WorkspaceRoot workspaceRoot,
+        BlazeSyncBuildResult buildResult,
         SyncState.Builder syncStateBuilder,
-        @Nullable SyncState previousSyncState,
         boolean mergeWithOldState,
-        @Nullable TargetMap oldTargetMap) {
-      return new BlazeBuildOutputs(targetMap, ImmutableSet.of(), BuildResult.SUCCESS);
+        @Nullable BlazeProjectData oldProjectData) {
+      return targetMap;
     }
 
     @Override

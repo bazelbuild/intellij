@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.sync.aspects;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -45,7 +44,6 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtif
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
@@ -55,6 +53,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.lang.AdditionalLanguagesHelper;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -73,6 +72,7 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.BlazeSyncBuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
@@ -114,60 +114,50 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       BlazeInfo blazeInfo,
-      BlazeVersionData blazeVersionData,
-      BlazeConfigurationHandler configHandler,
       ShardedTargetList shardedTargets,
-      WorkspaceLanguageSettings workspaceLanguageSettings,
+      WorkspaceLanguageSettings workspaceLanguageSettings) {
+    AspectStrategy aspectStrategy = AspectStrategy.getInstance(Blaze.getBuildSystem(project));
+    return runBlazeBuild(
+        project,
+        context,
+        workspaceRoot,
+        projectViewSet,
+        blazeInfo,
+        workspaceLanguageSettings.getActiveLanguages(),
+        shardedTargets,
+        aspectStrategy);
+  }
+
+  @Nullable
+  @Override
+  public TargetMap updateTargetMap(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      BlazeSyncBuildResult buildResult,
       SyncState.Builder syncStateBuilder,
-      @Nullable SyncState previousSyncState,
       boolean mergeWithOldState,
-      @Nullable TargetMap oldTargetMap) {
-    BlazeIdeInterfaceState prevState =
-        previousSyncState != null ? previousSyncState.get(BlazeIdeInterfaceState.class) : null;
-
-    // If the language filter has changed, redo everything from scratch
-    if (prevState != null
-        && !prevState.workspaceLanguageSettings.equals(workspaceLanguageSettings)) {
-      prevState = null;
-      oldTargetMap = null;
-    }
-
-    AspectStrategy aspectStrategy = AspectStrategy.getInstance(blazeVersionData.buildSystem());
-    BlazeBuildResult ideInfoResult =
-        runBlazeBuild(
-            project,
-            context,
-            workspaceRoot,
-            projectViewSet,
-            blazeInfo,
-            workspaceLanguageSettings.getActiveLanguages(),
-            shardedTargets,
-            aspectStrategy);
-
-    Predicate<String> ideInfoPredicate = aspectStrategy.getAspectOutputFilePredicate();
-    // don't track remote intellij-info.txt outputs -- they're already tracked in
-    // BlazeIdeInterfaceState
-    ImmutableSet<RemoteOutputArtifact> remoteOutputs =
-        getRemoteOutputs(ideInfoResult.perGroupOutputs, ideInfoPredicate.negate());
-
-    context.output(PrintOutput.log("blaze build result: " + ideInfoResult.buildResult.status));
-    if (ideInfoResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
-      return new BlazeBuildOutputs(oldTargetMap, remoteOutputs, ideInfoResult.buildResult);
-    }
+      @Nullable BlazeProjectData oldProjectData) {
     // If there was a partial error, make a best-effort attempt to sync. Retain
     // any old state that we have in an attempt not to lose too much code.
-    if (ideInfoResult.buildResult.status == BuildResult.Status.BUILD_ERROR) {
+    if (buildResult.getBuildResult().buildResult.status == BuildResult.Status.BUILD_ERROR) {
       mergeWithOldState = true;
     }
 
+    Predicate<String> ideInfoPredicate = AspectStrategy.ASPECT_OUTPUT_FILE_PREDICATE;
     Collection<OutputArtifact> files =
-        ideInfoResult.perGroupOutputs.entries().stream()
+        buildResult.getBuildResult().perOutputGroupArtifacts.entries().stream()
             .filter(e -> e.getKey().startsWith(OutputGroup.INFO.prefix))
             .map(Map.Entry::getValue)
             .filter(f -> ideInfoPredicate.test(f.getKey()))
             .distinct()
             .collect(toImmutableList());
 
+    TargetMap oldTargetMap = oldProjectData != null ? oldProjectData.getTargetMap() : null;
+    BlazeIdeInterfaceState prevState =
+        oldProjectData != null
+            ? oldProjectData.getSyncState().get(BlazeIdeInterfaceState.class)
+            : null;
     ArtifactsDiff diff;
     try {
       diff =
@@ -176,7 +166,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       throw new ProcessCanceledException(e);
     } catch (ExecutionException e) {
       IssueOutput.error("Failed to diff aspect output files: " + e).submit(context);
-      return new BlazeBuildOutputs(oldTargetMap, remoteOutputs, BuildResult.FATAL_ERROR);
+      return oldTargetMap;
     }
 
     // if we're merging with the old state, no files are removed
@@ -199,14 +189,16 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         .withProgressMessage("Reading IDE info result...")
         .run()
         .success()) {
-      return new BlazeBuildOutputs(oldTargetMap, remoteOutputs, BuildResult.FATAL_ERROR);
+      return oldTargetMap;
     }
 
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, Blaze.getBuildSystem(project))
-            .add(projectViewSet)
+            .add(buildResult.getProjectViewSet())
             .build();
 
+    BlazeConfigurationHandler configHandler =
+        new BlazeConfigurationHandler(buildResult.getBlazeInfo());
     Ref<TargetMap> targetMapReference = Ref.create(oldTargetMap);
     BlazeIdeInterfaceState state =
         updateState(
@@ -215,15 +207,14 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             prevState,
             diff.getNewState(),
             configHandler,
-            workspaceLanguageSettings,
+            buildResult.getLanguageSettings(),
             importRoots,
-            aspectStrategy,
             diff.getUpdatedOutputs(),
             diff.getRemovedOutputs(),
             mergeWithOldState,
             targetMapReference);
     if (state == null) {
-      return new BlazeBuildOutputs(oldTargetMap, remoteOutputs, BuildResult.FATAL_ERROR);
+      return oldTargetMap;
     }
     // prefetch ide-resolve genfiles
     Scope.push(
@@ -231,7 +222,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         childContext -> {
           childContext.push(new TimingScope("GenfilesPrefetchBuildArtifacts", EventType.Other));
           ImmutableList<OutputArtifact> resolveOutputs =
-              ideInfoResult.perGroupOutputs.entries().stream()
+              buildResult.getBuildResult().perOutputGroupArtifacts.entries().stream()
                   .filter(e -> e.getKey().startsWith(OutputGroup.RESOLVE.prefix))
                   .map(Map.Entry::getValue)
                   .distinct()
@@ -239,24 +230,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
           prefetchGenfiles(context, resolveOutputs);
         });
     syncStateBuilder.put(state);
-    return new BlazeBuildOutputs(
-        targetMapReference.get(), remoteOutputs, ideInfoResult.buildResult);
+    return targetMapReference.get();
   }
 
-  private static class BlazeBuildResult {
-    /** All output artifacts from the blaze build step. */
-    final ImmutableListMultimap<String, OutputArtifact> perGroupOutputs;
-
-    final BuildResult buildResult;
-
-    BlazeBuildResult(
-        ImmutableListMultimap<String, OutputArtifact> perGroupOutputs, BuildResult buildResult) {
-      this.perGroupOutputs = perGroupOutputs;
-      this.buildResult = buildResult;
-    }
-  }
-
-  private static BlazeBuildResult runBlazeBuild(
+  private static BlazeBuildOutputs runBlazeBuild(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
@@ -274,7 +251,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 count, shardedTargets.shardedTargets.size());
     Function<List<TargetExpression>, BuildResult> invocation =
         targets -> {
-          BlazeBuildResult result =
+          BlazeBuildOutputs result =
               runBuildForTargets(
                   project,
                   context,
@@ -284,19 +261,19 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   activeLanguages,
                   targets,
                   aspectStrategy);
-          outputs.putAll(result.perGroupOutputs);
+          outputs.putAll(result.perOutputGroupArtifacts);
           return result.buildResult;
         };
     BuildResult result =
         shardedTargets.runShardedCommand(project, context, progressMessage, invocation);
-    return new BlazeBuildResult(outputs.build(), result);
+    return new BlazeBuildOutputs(outputs.build(), result);
   }
 
   /**
    * Runs blaze build with the aspect's ide-info and ide-resolve output groups for a given set of
    * targets
    */
-  private static BlazeBuildResult runBuildForTargets(
+  private static BlazeBuildOutputs runBuildForTargets(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
@@ -335,18 +312,18 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
       BuildResult buildResult = BuildResult.fromExitCode(retVal);
       if (buildResult.status == Status.FATAL_ERROR) {
-        return new BlazeBuildResult(ImmutableListMultimap.of(), buildResult);
+        return new BlazeBuildOutputs(ImmutableListMultimap.of(), buildResult);
       }
       return Scope.push(
           context,
           childContext -> {
             try {
               childContext.push(new TimingScope("CombinedBlazeBuild", EventType.Other));
-              return new BlazeBuildResult(
+              return new BlazeBuildOutputs(
                   buildResultHelper.getPerOutputGroupArtifacts(), buildResult);
             } catch (GetArtifactsException e) {
               IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
-              return new BlazeBuildResult(ImmutableListMultimap.of(), buildResult);
+              return new BlazeBuildOutputs(ImmutableListMultimap.of(), buildResult);
             }
           });
     }
@@ -371,11 +348,11 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       BlazeConfigurationHandler configHandler,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       ImportRoots importRoots,
-      AspectStrategy aspectStrategy,
       List<OutputArtifact> newFiles,
       Collection<ArtifactState> removedFiles,
       boolean mergeWithOldState,
       Ref<TargetMap> targetMapReference) {
+    AspectStrategy aspectStrategy = AspectStrategy.getInstance(Blaze.getBuildSystem(project));
     Result<BlazeIdeInterfaceState> result =
         Scope.push(
             parentContext,
@@ -569,16 +546,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 workspaceLanguageSettings,
                 targets);
     return shardedTargets.runShardedCommand(project, context, progressMessage, invocation);
-  }
-
-  private static ImmutableSet<RemoteOutputArtifact> getRemoteOutputs(
-      ImmutableListMultimap<String, OutputArtifact> outputs, Predicate<String> pathFilter) {
-    // TODO(brendandouglas): filter the list of tracked remote outputs
-    return outputs.values().stream()
-        .filter(a -> a instanceof RemoteOutputArtifact)
-        .map(a -> (RemoteOutputArtifact) a)
-        .filter(a -> pathFilter.test(a.getRelativePath()))
-        .collect(toImmutableSet());
   }
 
   /** Blaze build invocation requesting the 'intellij-compile' aspect output group. */
