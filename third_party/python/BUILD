@@ -13,6 +13,7 @@ java_library(
         "intellij-ue-2018.3": ["@python_2018_3//:python"],
         "intellij-ue-2019.1": ["@python_2019_1//:python"],
         "clion-2018.3": ["@clion_2018_3//:python"],
+        "clion-2019.1": ["@clion_2019_1//:python"],
         "android-studio-3.3": ["@python_2018_2//:python"],
         "android-studio-3.4": ["@python_2018_3//:python"],
         "android-studio-3.5": ["@python_2018_3//:python"],
