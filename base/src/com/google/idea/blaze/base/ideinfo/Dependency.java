@@ -67,4 +67,9 @@ public final class Dependency implements ProtoWrapper<IntellijIdeInfo.Dependency
   public int hashCode() {
     return Objects.hashCode(getTargetKey(), getDependencyType());
   }
+
+  @Override
+  public String toString() {
+    return String.format("Dependency{%s, %s}", targetKey, dependencyType);
+  }
 }
