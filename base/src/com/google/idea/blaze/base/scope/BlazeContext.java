@@ -21,26 +21,20 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /** Scoped operation context. */
 public class BlazeContext {
   @Nullable private BlazeContext parentContext;
 
-  @NotNull private final List<BlazeScope> scopes = Lists.newArrayList();
+  private final List<BlazeScope> scopes = Lists.newArrayList();
 
-  @NotNull
   private final ListMultimap<Class<? extends Output>, OutputSink<?>> outputSinks =
       ArrayListMultimap.create();
 
-  boolean isEnding;
-
-  boolean isCancelled;
-
+  private boolean isEnding;
+  private boolean isCancelled;
   private int holdCount;
-
   private boolean hasErrors;
-
   private boolean propagatesErrors = true;
 
   public BlazeContext() {
@@ -51,7 +45,7 @@ public class BlazeContext {
     this.parentContext = parentContext;
   }
 
-  public BlazeContext push(@NotNull BlazeScope scope) {
+  public BlazeContext push(BlazeScope scope) {
     scopes.add(scope);
     scope.onScopeBegin(this);
     return this;
@@ -74,8 +68,6 @@ public class BlazeContext {
 
   /**
    * Requests cancellation of the operation.
-   *
-   * <p>
    *
    * <p>Each context holder must handle cancellation individually.
    */
@@ -110,12 +102,12 @@ public class BlazeContext {
   }
 
   @Nullable
-  public <T extends BlazeScope> T getScope(@NotNull Class<T> scopeClass) {
+  public <T extends BlazeScope> T getScope(Class<T> scopeClass) {
     return getScope(scopeClass, scopes.size());
   }
 
   @Nullable
-  private <T extends BlazeScope> T getScope(@NotNull Class<T> scopeClass, int endIndex) {
+  private <T extends BlazeScope> T getScope(Class<T> scopeClass, int endIndex) {
     for (int i = endIndex - 1; i >= 0; i--) {
       if (scopes.get(i).getClass() == scopeClass) {
         return scopeClass.cast(scopes.get(i));
@@ -128,7 +120,7 @@ public class BlazeContext {
   }
 
   @Nullable
-  public <T extends BlazeScope> T getParentScope(@NotNull T scope) {
+  public <T extends BlazeScope> T getParentScope(T scope) {
     int index = scopes.indexOf(scope);
     if (index == -1) {
       throw new IllegalArgumentException("Scope does not belong to this context.");
@@ -146,8 +138,8 @@ public class BlazeContext {
    * @return The ordered list of all scopes of type {@param scopeClass}, ordered from {@param
    *     startingScope} to the root.
    */
-  @NotNull
-  public <T extends BlazeScope> List<T> getScopes(@NotNull Class<T> scopeClass) {
+  @VisibleForTesting
+  <T extends BlazeScope> List<T> getScopes(Class<T> scopeClass) {
     List<T> scopesCollector = Lists.newArrayList();
     getScopes(scopesCollector, scopeClass, scopes.size());
     return scopesCollector;
@@ -164,9 +156,8 @@ public class BlazeContext {
    *     {@param scopeClass}, ordered from {@param startingScope} to the root. Otherwise, an empty
    *     list.
    */
-  @NotNull
-  public <T extends BlazeScope> List<T> getScopes(
-      @NotNull Class<T> scopeClass, @NotNull BlazeScope startingScope) {
+  @VisibleForTesting
+  <T extends BlazeScope> List<T> getScopes(Class<T> scopeClass, BlazeScope startingScope) {
     List<T> scopesCollector = Lists.newArrayList();
     int index = scopes.indexOf(startingScope);
     if (index == -1) {
@@ -181,7 +172,7 @@ public class BlazeContext {
   /** Add matching scopes to {@param scopesCollector}. Search from {@param maxIndex} - 1 to 0. */
   @VisibleForTesting
   <T extends BlazeScope> void getScopes(
-      @NotNull List<T> scopesCollector, @NotNull Class<T> scopeClass, int maxIndex) {
+      List<T> scopesCollector, Class<T> scopeClass, int maxIndex) {
     for (int i = maxIndex - 1; i >= 0; --i) {
       BlazeScope scope = scopes.get(i);
       if (scope.getClass() == scopeClass) {
@@ -194,14 +185,14 @@ public class BlazeContext {
   }
 
   public <T extends Output> BlazeContext addOutputSink(
-      @NotNull Class<T> outputClass, @NotNull OutputSink<T> outputSink) {
+      Class<T> outputClass, OutputSink<T> outputSink) {
     outputSinks.put(outputClass, outputSink);
     return this;
   }
 
   /** Produces output by sending it to any registered sinks. */
   @SuppressWarnings("unchecked")
-  public synchronized <T extends Output> void output(@NotNull T output) {
+  public synchronized <T extends Output> void output(T output) {
     Class<? extends Output> outputClass = output.getClass();
     List<OutputSink<?>> outputSinks = this.outputSinks.get(outputClass);
 
@@ -221,8 +212,6 @@ public class BlazeContext {
 
   /**
    * Sets the error state.
-   *
-   * <p>
    *
    * <p>The error state will be propagated to any parents.
    */
