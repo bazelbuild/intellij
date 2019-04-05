@@ -19,7 +19,7 @@ import com.google.auto.value.AutoValue;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface.BlazeBuildOutputs;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -30,6 +30,17 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
  */
 @AutoValue
 public abstract class BlazeSyncBuildResult {
+
+  /**
+   * Merges this {@link BlazeSyncBuildResult} with the results of a more recent build, prior to the
+   * project update phase.
+   */
+  public BlazeSyncBuildResult updateResult(BlazeSyncBuildResult nextResult) {
+    // take the most recent version of the project data, and combine the blaze build outputs
+    return nextResult.toBuilder()
+        .setBuildResult(getBuildResult().updateOutputs(nextResult.getBuildResult()))
+        .build();
+  }
 
   public abstract ProjectViewSet getProjectViewSet();
 
@@ -47,6 +58,17 @@ public abstract class BlazeSyncBuildResult {
 
   public static Builder builder() {
     return new AutoValue_BlazeSyncBuildResult.Builder();
+  }
+
+  private Builder toBuilder() {
+    return builder()
+        .setProjectViewSet(getProjectViewSet())
+        .setLanguageSettings(getLanguageSettings())
+        .setBlazeInfo(getBlazeInfo())
+        .setBlazeVersionData(getBlazeVersionData())
+        .setWorkingSet(getWorkingSet())
+        .setWorkspacePathResolver(getWorkspacePathResolver())
+        .setBuildResult(getBuildResult());
   }
 
   /** A builder for {@link BlazeSyncBuildResult} objects. */

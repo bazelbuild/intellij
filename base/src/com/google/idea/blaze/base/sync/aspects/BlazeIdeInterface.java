@@ -15,8 +15,6 @@
  */
 package com.google.idea.blaze.base.sync.aspects;
 
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -37,21 +35,6 @@ public interface BlazeIdeInterface {
 
   static BlazeIdeInterface getInstance() {
     return ServiceManager.getService(BlazeIdeInterface.class);
-  }
-
-  /** The result of the blaze build sync step. */
-  class BlazeBuildOutputs {
-    /** All output artifacts from the blaze build step. */
-    public final ImmutableListMultimap<String, OutputArtifact> perOutputGroupArtifacts;
-
-    public final BuildResult buildResult;
-
-    public BlazeBuildOutputs(
-        ImmutableListMultimap<String, OutputArtifact> perOutputGroupArtifacts,
-        BuildResult buildResult) {
-      this.perOutputGroupArtifacts = perOutputGroupArtifacts;
-      this.buildResult = buildResult;
-    }
   }
 
   /**
