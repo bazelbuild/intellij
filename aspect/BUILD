@@ -4,10 +4,7 @@
 
 licenses(["notice"])  # Apache 2.0
 
-load(
-    ":intellij_info_impl.bzl",
-    "define_flag_hack",
-)
+# load(":intellij_info_impl.bzl")
 
 # Files needed at runtime for blaze-invoking integration tests
 filegroup(
@@ -64,8 +61,6 @@ genrule(
     srcs = ["intellij_info.bzl"],
     outs = ["intellij_info_bundled.bzl"],
     cmd = "cat $(SRCS) >$@ && " +
-          "sed -i -e 's,//%s/tools:\" + tool_name,//:\" + tool_name + \"_bin\",g' $@ && " % _dev_aspect_path +
-          "sed -i -e 's,//%s:flag_hack,//:flag_hack,g' $@" % _dev_aspect_path,
+          "sed -i -e 's,//%s/tools:\" + tool_name,//:\" + tool_name + \"_bin\",g' $@ " % _dev_aspect_path
 )
 
-define_flag_hack()

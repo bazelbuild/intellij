@@ -58,39 +58,6 @@ RUNTIME = 1
 PY2 = 1
 PY3 = 2
 
-##### Begin bazel-flag-hack
-# The flag hack stuff below is a way to detect flags that bazel has been invoked with from the
-# aspect. Once PY3-as-default is stable, it can be removed. When removing, also remove the
-# define_flag_hack() call in BUILD and the "_flag_hack" attr on the aspect below. See
-# "PY3-as-default" in:
-# https://github.com/bazelbuild/bazel/blob/master/src/main/java/com/google/devtools/build/lib/rules/python/PythonConfiguration.java
-
-FlagHackInfo = provider(fields = ["incompatible_py2_outputs_are_suffixed"])
-
-def _flag_hack_impl(ctx):
-    return [FlagHackInfo(incompatible_py2_outputs_are_suffixed = ctx.attr.incompatible_py2_outputs_are_suffixed)]
-
-_flag_hack_rule = rule(
-    implementation = _flag_hack_impl,
-    attrs = {"incompatible_py2_outputs_are_suffixed": attr.bool()},
-)
-
-def define_flag_hack():
-    native.config_setting(
-        name = "incompatible_py2_outputs_are_suffixed_setting",
-        values = {"incompatible_py2_outputs_are_suffixed": "true"},
-    )
-    _flag_hack_rule(
-        name = "flag_hack",
-        incompatible_py2_outputs_are_suffixed = select({
-            ":incompatible_py2_outputs_are_suffixed_setting": True,
-            "//conditions:default": False,
-        }),
-        visibility = ["//visibility:public"],
-    )
-
-##### End bazel-flag-hack
-
 ##### Helpers
 
 def source_directory_tuple(resource_file):
@@ -241,14 +208,11 @@ def _get_output_mnemonic(ctx):
     return ctx.configuration.bin_dir.path.split("/")[1]
 
 def _get_python_version(ctx):
-    if ctx.attr._flag_hack[FlagHackInfo].incompatible_py2_outputs_are_suffixed:
-        if _get_output_mnemonic(ctx).find("-py2-") != -1:
-            return PY2
-        return PY3
-    else:
-        if _get_output_mnemonic(ctx).find("-py3-") != -1:
-            return PY3
+    if _get_output_mnemonic(ctx).find("-py2-") != -1:
         return PY2
+    elif _get_output_mnemonic(ctx).find("-py3-") != -1:
+            return PY3
+    return PY2
 
 ##### Builders for individual parts of the aspect output
 
@@ -889,7 +853,6 @@ def semantics_extra_deps(base, semantics, name):
 def make_intellij_info_aspect(aspect_impl, semantics):
     """Creates the aspect given the semantics."""
     tool_label = semantics.tool_label
-    flag_hack_label = semantics.flag_hack_label
     deps = semantics_extra_deps(DEPS, semantics, "extra_deps")
     runtime_deps = semantics_extra_deps(RUNTIME_DEPS, semantics, "extra_runtime_deps")
     prerequisite_deps = semantics_extra_deps(PREREQUISITE_DEPS, semantics, "extra_prerequisites")
@@ -908,9 +871,6 @@ def make_intellij_info_aspect(aspect_impl, semantics):
             cfg = "host",
             executable = True,
             allow_files = True,
-        ),
-        "_flag_hack": attr.label(
-            default = flag_hack_label,
         ),
     }
     if hasattr(semantics, "jdeps_tool"):
