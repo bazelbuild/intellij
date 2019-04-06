@@ -2,21 +2,21 @@
 platforms:
   ubuntu1404:
     build_flags:
-    - --define=ij_product=android-studio-latest
+    - --define=ij_product=android-studio-beta
     build_targets:
     - //aswb:aswb_bazel
     test_flags:
-    - --define=ij_product=android-studio-latest
+    - --define=ij_product=android-studio-beta
     - --test_output=errors
     test_targets:
     - //:aswb_tests
   ubuntu1604:
     build_flags:
-    - --define=ij_product=android-studio-latest
+    - --define=ij_product=android-studio-beta
     build_targets:
     - //aswb:aswb_bazel
     test_flags:
-    - --define=ij_product=android-studio-latest
+    - --define=ij_product=android-studio-beta
     - --test_output=errors
     test_targets:
     - //:aswb_tests
