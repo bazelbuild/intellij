@@ -42,17 +42,17 @@ public class BlazePyPositionConverter implements PyPositionConverter {
 
   private static final Logger logger = Logger.getInstance(BlazePyPositionConverter.class);
 
-  // @Override
+  @SuppressWarnings("MissingOverride") // required for idea, not in clion
   public PySourcePosition create(String filePath, int line) {
     return new PySourcePosition(convertFilePath(filePath), line) {};
   }
 
-  @Override
+  @SuppressWarnings("MissingOverride") // required for clion, not in idea
   public PySourcePosition convertPythonToFrame(final String file, final int line) {
     return create(file, line);
   }
 
-  @Override
+  @SuppressWarnings("MissingOverride") // required for clion, not in idea
   public PySourcePosition convertFrameToPython(PySourcePosition position) {
     return position;
   }
