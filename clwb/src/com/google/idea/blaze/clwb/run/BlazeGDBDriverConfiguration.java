@@ -25,13 +25,13 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.jetbrains.cidr.cpp.execution.debugger.backend.GDBDriverConfiguration;
+import com.jetbrains.cidr.cpp.execution.debugger.backend.CLionGDBDriverConfiguration;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
 import java.io.File;
 import java.io.IOException;
 import javax.annotation.Nullable;
 
-final class BlazeGDBDriverConfiguration extends GDBDriverConfiguration {
+final class BlazeGDBDriverConfiguration extends CLionGDBDriverConfiguration {
   private static final Logger LOG = Logger.getInstance(BlazeGDBDriverConfiguration.class);
 
   private final ImmutableList<String> startupCommands;

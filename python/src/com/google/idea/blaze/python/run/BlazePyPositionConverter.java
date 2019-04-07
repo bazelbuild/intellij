@@ -42,9 +42,19 @@ public class BlazePyPositionConverter implements PyPositionConverter {
 
   private static final Logger logger = Logger.getInstance(BlazePyPositionConverter.class);
 
-  @Override
+  // @Override
   public PySourcePosition create(String filePath, int line) {
     return new PySourcePosition(convertFilePath(filePath), line) {};
+  }
+
+  @Override
+  public PySourcePosition convertPythonToFrame(final String file, final int line) {
+    return create(file, line);
+  }
+
+  @Override
+  public PySourcePosition convertFrameToPython(PySourcePosition position) {
+    return position;
   }
 
   @Override

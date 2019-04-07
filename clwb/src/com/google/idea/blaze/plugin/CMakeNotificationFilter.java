@@ -17,6 +17,7 @@ package com.google.idea.blaze.plugin;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.DumbAware;
@@ -52,7 +53,7 @@ public class CMakeNotificationFilter extends EditorNotifications.Provider<JCompo
 
   public static void overrideProjectExtension(Project project) {
     ExtensionPoint<EditorNotifications.Provider> ep =
-        Extensions.getArea(project).getExtensionPoint(EditorNotifications.EXTENSION_POINT_NAME);
+        Extensions.getArea(project).getExtensionPoint(new ExtensionPointName<EditorNotifications.Provider>("com.intellij.editorNotificationProvider"));
     for (EditorNotifications.Provider<?> editorNotificationsProvider : ep.getExtensions()) {
       if (editorNotificationsProvider instanceof CMakeNotificationProvider) {
         ep.unregisterExtension(editorNotificationsProvider);

@@ -66,7 +66,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PathUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.cidr.cpp.execution.CLionRunParameters;
-import com.jetbrains.cidr.cpp.execution.debugger.backend.GDBDriverConfiguration;
+import com.jetbrains.cidr.cpp.execution.debugger.backend.CLionGDBDriverConfiguration;
 import com.jetbrains.cidr.cpp.toolchains.CPPDebugger;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolSet;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolSetWithHome;
@@ -367,7 +367,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     ToolchainUtils.setDebuggerToDefault(toolchainForDebugger);
 
     DebuggerDriverConfiguration debuggerDriverConfiguration =
-        new GDBDriverConfiguration(project, toolchainForDebugger);
+        new CLionGDBDriverConfiguration(project, toolchainForDebugger);
 
     return new BlazeCidrRemoteDebugProcess(
         targetProcess, debuggerDriverConfiguration, parameters, session, state.getConsoleBuilder());
@@ -379,7 +379,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
    * launches. See https://youtrack.jetbrains.com/issue/CPP-8362
    */
   private static class BlazeToolSet extends CPPToolSetWithHome {
-    private static final char[] separators = {'/'};
+    // private static final char[] separators = {'/'};
+    private static final String separators = "/";
 
     private BlazeToolSet(File workingDirectory) {
       super(Kind.MINGW, workingDirectory);
@@ -396,7 +397,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     }
 
     @Override
-    public char[] getSupportedFileSeparators() {
+    public String getSupportedFileSeparators() {
       return separators;
     }
 
