@@ -205,12 +205,6 @@ public class BlazeContextTest extends BlazeTestCase {
     public StringScope(String s) {
       this.str = s;
     }
-
-    @Override
-    public void onScopeBegin(BlazeContext context) {}
-
-    @Override
-    public void onScopeEnd(BlazeContext context) {}
   }
 
   private static class CollectorScope implements BlazeScope {
@@ -220,9 +214,6 @@ public class BlazeContextTest extends BlazeTestCase {
     public CollectorScope(List<String> output) {
       this.output = output;
     }
-
-    @Override
-    public void onScopeBegin(BlazeContext context) {}
 
     @Override
     public void onScopeEnd(BlazeContext context) {

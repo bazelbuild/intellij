@@ -62,6 +62,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewVerifier;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
+import com.google.idea.blaze.base.scope.ScopedFunction;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
@@ -151,8 +152,6 @@ final class BlazeSyncTask implements Progressive {
   private final boolean showPerformanceWarnings;
   private final SyncStats.Builder syncStats = SyncStats.builder();
 
-  private final List<TimedEvent> timedEvents = Collections.synchronizedList(new ArrayList<>());
-
   private BlazeSyncParams syncParams;
 
   BlazeSyncTask(Project project, BlazeImportSettings importSettings, BlazeSyncParams syncParams) {
@@ -166,7 +165,7 @@ final class BlazeSyncTask implements Progressive {
   @Override
   public void run(final ProgressIndicator indicator) {
     Scope.root(
-        (BlazeContext context) -> {
+        context -> {
           context.push(new ExperimentScope());
           if (showPerformanceWarnings) {
             context.push(new PerformanceWarningScope());
@@ -216,14 +215,30 @@ final class BlazeSyncTask implements Progressive {
 
   /** Returns true if sync successfully completed */
   @VisibleForTesting
-  boolean syncProject(BlazeContext context) {
+  boolean syncProject(BlazeContext parentContext) {
+    long syncStartTime = System.currentTimeMillis();
+    syncStats.setStartTimeInEpochTime(syncStartTime);
+    SyncResult syncResult =
+        Scope.push(parentContext, (ScopedFunction<SyncResult>) this::doSyncProject);
+    try {
+      syncStats
+          .setSyncTitle(syncParams.title)
+          .setTotalExecTimeMs(System.currentTimeMillis() - syncStartTime)
+          .setSyncResult(syncResult);
+      EventLoggingService.getInstance().log(syncStats.build());
+    } catch (Exception e) {
+      logSyncError(parentContext, e);
+    }
+    afterSync(project, parentContext, syncResult);
+    return syncResult == SyncResult.SUCCESS || syncResult == SyncResult.PARTIAL_SUCCESS;
+  }
+
+  private SyncResult doSyncProject(BlazeContext context) {
     TimingScope timingScope = new TimingScope("Sync", EventType.Other);
-    timingScope.addScopeListener(timedEvents::add);
+    timingScope.addScopeListener(events -> setTimingStats(syncStats, events));
     context.push(timingScope);
 
-    long syncStartTime = System.currentTimeMillis();
     SyncResult syncResult = SyncResult.FAILURE;
-    syncStats.setStartTimeInEpochTime(System.currentTimeMillis());
     try {
       SaveUtil.saveAllFiles();
       BlazeProjectData oldBlazeProjectData =
@@ -258,19 +273,8 @@ final class BlazeSyncTask implements Progressive {
       }
     } catch (Throwable e) {
       logSyncError(context, e);
-    } finally {
-      try {
-        syncStats
-            .setSyncTitle(syncParams.title)
-            .setTotalExecTimeMs(System.currentTimeMillis() - syncStartTime)
-            .setSyncResult(syncResult);
-        EventLoggingService.getInstance().log(buildStats(syncStats));
-      } catch (Exception e) {
-        logSyncError(context, e);
-      }
-      afterSync(project, context, syncResult);
     }
-    return syncResult == SyncResult.SUCCESS || syncResult == SyncResult.PARTIAL_SUCCESS;
+    return syncResult;
   }
 
   private void logSyncError(BlazeContext context, Throwable e) {
@@ -1038,18 +1042,13 @@ final class BlazeSyncTask implements Progressive {
     }
   }
 
-  private SyncStats buildStats(SyncStats.Builder stats) {
-    ImmutableList<TimedEvent> eventsCopy;
-    synchronized (timedEvents) {
-      eventsCopy = ImmutableList.copyOf(timedEvents);
-    }
+  private static void setTimingStats(SyncStats.Builder stats, ImmutableList<TimedEvent> events) {
     long blazeExecTime =
-        eventsCopy.stream()
+        events.stream()
             .filter(e -> e.isLeafEvent && e.type == EventType.BlazeInvocation)
             .mapToLong(e -> e.durationMillis)
             .sum();
     stats.setBlazeExecTimeMs(blazeExecTime);
-    stats.setTimedEvents(eventsCopy);
-    return stats.build();
+    stats.addTimedEvents(events);
   }
 }

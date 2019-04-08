@@ -21,31 +21,30 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SystemNotifications;
-import org.jetbrains.annotations.NotNull;
 
 /** Notifies the user with a system notification when the scope ends. */
 public class NotificationScope implements BlazeScope {
 
   private static final long NOTIFICATION_THRESHOLD_MS = 0;
 
-  @NotNull private Project project;
+  private Project project;
 
-  @NotNull private final String notificationName;
+  private final String notificationName;
 
-  @NotNull private final String notificationTitle;
+  private final String notificationTitle;
 
-  @NotNull private final String notificationText;
+  private final String notificationText;
 
-  @NotNull private final String notificationErrorText;
+  private final String notificationErrorText;
 
   private long startTime;
 
   public NotificationScope(
-      @NotNull Project project,
-      @NotNull String notificationName,
-      @NotNull String notificationTitle,
-      @NotNull String notificationText,
-      @NotNull String notificationErrorText) {
+      Project project,
+      String notificationName,
+      String notificationTitle,
+      String notificationText,
+      String notificationErrorText) {
     this.project = project;
     this.notificationName = notificationName;
     this.notificationTitle = notificationTitle;
@@ -54,12 +53,12 @@ public class NotificationScope implements BlazeScope {
   }
 
   @Override
-  public void onScopeBegin(@NotNull BlazeContext context) {
+  public void onScopeBegin(BlazeContext context) {
     startTime = System.currentTimeMillis();
   }
 
   @Override
-  public void onScopeEnd(@NotNull BlazeContext context) {
+  public void onScopeEnd(BlazeContext context) {
     if (project.isDisposed()) {
       return;
     }

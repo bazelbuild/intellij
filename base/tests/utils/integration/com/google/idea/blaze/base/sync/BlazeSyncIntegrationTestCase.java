@@ -190,7 +190,12 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     // Because the sync task itself wants to run occasional EDT tasks, we'll have
     // to keep flushing the event queue.
     Future<?> future =
-        Executors.newSingleThreadExecutor().submit(() -> syncTask.syncProject(context));
+        Executors.newSingleThreadExecutor()
+            .submit(
+                () -> {
+                  syncTask.syncProject(context);
+                  context.endScope();
+                });
     while (!future.isDone()) {
       IdeEventQueue.getInstance().flushQueue();
       try {

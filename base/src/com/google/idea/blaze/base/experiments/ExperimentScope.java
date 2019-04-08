@@ -18,17 +18,16 @@ package com.google.idea.blaze.base.experiments;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.common.experiments.ExperimentService;
-import org.jetbrains.annotations.NotNull;
 
 /** Reloads experiments at the start of the scope. */
 public class ExperimentScope implements BlazeScope {
   @Override
-  public void onScopeBegin(@NotNull BlazeContext context) {
+  public void onScopeBegin(BlazeContext context) {
     ExperimentService.getInstance().startExperimentScope();
   }
 
   @Override
-  public void onScopeEnd(@NotNull BlazeContext context) {
+  public void onScopeEnd(BlazeContext context) {
     ExperimentService.getInstance().endExperimentScope();
   }
 }

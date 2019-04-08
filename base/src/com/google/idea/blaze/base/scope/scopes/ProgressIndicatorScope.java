@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Progress indicator scope.
@@ -39,7 +38,7 @@ public class ProgressIndicatorScope extends AbstractProgressIndicatorExBase
   private final ProgressIndicator progressIndicator;
   private BlazeContext context;
 
-  public ProgressIndicatorScope(@NotNull ProgressIndicator progressIndicator) {
+  public ProgressIndicatorScope(ProgressIndicator progressIndicator) {
     this.progressIndicator = progressIndicator;
 
     if (progressIndicator instanceof ProgressIndicatorEx) {
@@ -48,13 +47,10 @@ public class ProgressIndicatorScope extends AbstractProgressIndicatorExBase
   }
 
   @Override
-  public void onScopeBegin(@NotNull BlazeContext context) {
+  public void onScopeBegin(BlazeContext context) {
     this.context = context;
     context.addOutputSink(StatusOutput.class, this);
   }
-
-  @Override
-  public void onScopeEnd(@NotNull BlazeContext context) {}
 
   @Override
   public void cancel() {
@@ -62,7 +58,7 @@ public class ProgressIndicatorScope extends AbstractProgressIndicatorExBase
   }
 
   @Override
-  public Propagation onOutput(@NotNull StatusOutput output) {
+  public Propagation onOutput(StatusOutput output) {
     progressIndicator.setText(output.getStatus());
     return Propagation.Continue;
   }

@@ -15,9 +15,10 @@
  */
 package com.google.idea.blaze.base.scope.scopes;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 
-/** Called once the scope ends, with the timing information of the scope. */
+/** Called once the scope ends, with the timing information of this scope and all its children. */
 public interface TimingScopeListener {
 
   /** Timing information for a scoped event. */
@@ -36,5 +37,5 @@ public interface TimingScopeListener {
   }
 
   /** Called once the scope ends */
-  void onScopeEnd(TimedEvent event);
+  void onScopeEnd(ImmutableList<TimedEvent> event);
 }

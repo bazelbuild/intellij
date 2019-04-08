@@ -15,19 +15,15 @@
  */
 package com.google.idea.blaze.base.scope;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * A scoped facet of a scoped operation.
- *
- * <p>
  *
  * <p>Attaches to a blaze context and starts and ends with it.
  */
 public interface BlazeScope {
   /** Called when the scope is added to the context. */
-  void onScopeBegin(@NotNull BlazeContext context);
+  default void onScopeBegin(BlazeContext context) {}
 
   /** Called when the context scope is ending. */
-  void onScopeEnd(@NotNull BlazeContext context);
+  default void onScopeEnd(BlazeContext context) {}
 }

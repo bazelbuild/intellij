@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.logging.utils;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -30,17 +31,17 @@ import java.util.List;
 @AutoValue
 public abstract class SyncStats {
 
-  public abstract List<TargetExpression> workingSetTargets();
+  public abstract ImmutableList<TargetExpression> workingSetTargets();
 
-  public abstract List<LanguageClass> languagesActive();
+  public abstract ImmutableList<LanguageClass> languagesActive();
 
-  public abstract List<TargetExpression> blazeProjectTargets();
+  public abstract ImmutableList<TargetExpression> blazeProjectTargets();
 
   public abstract BuildBinaryType syncBinaryType();
 
-  public abstract List<String> syncFlags();
+  public abstract ImmutableList<String> syncFlags();
 
-  public abstract List<TimedEvent> timedEvents();
+  public abstract ImmutableList<TimedEvent> timedEvents();
 
   public abstract long totalExecTimeMs();
 
@@ -66,7 +67,6 @@ public abstract class SyncStats {
         .setWorkspaceType(WorkspaceType.JAVA)
         .setSyncMode(SyncMode.STARTUP)
         .setSyncBinaryType(BuildBinaryType.BLAZE_CUSTOM)
-        .setTimedEvents(new ArrayList<>())
         .setSyncSharded(false)
         .setSyncFlags(new ArrayList<>())
         .setLanguagesActive(new ArrayList<>())
@@ -92,7 +92,12 @@ public abstract class SyncStats {
 
     public abstract Builder setStartTimeInEpochTime(long startTimeInEpochTime);
 
-    public abstract Builder setTimedEvents(List<TimedEvent> timingStats);
+    abstract ImmutableList.Builder<TimedEvent> timedEventsBuilder();
+
+    public Builder addTimedEvents(List<TimedEvent> timedEvents) {
+      timedEventsBuilder().addAll(timedEvents);
+      return this;
+    }
 
     public abstract Builder setSyncMode(SyncMode syncMode);
 

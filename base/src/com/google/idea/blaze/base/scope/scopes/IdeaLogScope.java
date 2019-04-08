@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.NotNull;
 
 /** Scope that captures relevant output to the IntelliJ log file. */
 public class IdeaLogScope implements BlazeScope {
@@ -57,14 +56,11 @@ public class IdeaLogScope implements BlazeScope {
       };
 
   @Override
-  public void onScopeBegin(@NotNull BlazeContext context) {
+  public void onScopeBegin(BlazeContext context) {
     context.addOutputSink(IssueOutput.class, issueSink);
     context.addOutputSink(PrintOutput.class, printSink);
     context.addOutputSink(StatusOutput.class, statusSink);
   }
-
-  @Override
-  public void onScopeEnd(@NotNull BlazeContext context) {}
 
   public static void info(String line) {
     logger.info(line);

@@ -41,9 +41,6 @@ public class IssuesScope implements BlazeScope, OutputSink<IssueOutput> {
   }
 
   @Override
-  public void onScopeEnd(BlazeContext context) {}
-
-  @Override
   public Propagation onOutput(IssueOutput output) {
     BlazeProblemsView.getInstance(project).addMessage(output, null);
     return Propagation.Continue;

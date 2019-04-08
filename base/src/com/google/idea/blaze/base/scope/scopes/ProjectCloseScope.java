@@ -22,27 +22,26 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.VetoableProjectManagerListener;
 import com.intellij.openapi.ui.Messages;
-import org.jetbrains.annotations.NotNull;
 
 /** Prevents the user from closing the project while the scope is open. */
 public class ProjectCloseScope implements VetoableProjectManagerListener, BlazeScope {
 
-  @NotNull private final Project project;
+  private final Project project;
 
   private boolean isApplicationExitingOrProjectClosing;
 
-  public ProjectCloseScope(@NotNull Project project) {
+  public ProjectCloseScope(Project project) {
     this.project = project;
   }
 
   @Override
-  public void onScopeBegin(@NotNull BlazeContext context) {
+  public void onScopeBegin(BlazeContext context) {
     ProjectManager projectManager = ProjectManager.getInstance();
     projectManager.addProjectManagerListener(project, this);
   }
 
   @Override
-  public void onScopeEnd(@NotNull BlazeContext context) {
+  public void onScopeEnd(BlazeContext context) {
     ProjectManager projectManager = ProjectManager.getInstance();
     projectManager.removeProjectManagerListener(project, this);
   }
