@@ -15,20 +15,23 @@
  */
 package com.google.idea.blaze.base.scope.scopes;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
-/** Prints timing information as output. */
+/** Collects and logs timing information. */
 public class TimingScope implements BlazeScope {
 
   private static final Logger logger = Logger.getInstance(TimingScope.class);
@@ -45,7 +48,7 @@ public class TimingScope implements BlazeScope {
 
   private long startTime;
 
-  private Optional<Double> duration = Optional.empty();
+  private Optional<Long> durationMillis = Optional.empty();
 
   private final List<TimingScopeListener> scopeListeners = Lists.newArrayList();
 
@@ -72,19 +75,21 @@ public class TimingScope implements BlazeScope {
   @Override
   public void onScopeEnd(BlazeContext context) {
     if (context.isCancelled()) {
-      duration = Optional.of(0.0);
+      durationMillis = Optional.of(0L);
       return;
     }
 
     long elapsedTime = System.currentTimeMillis() - startTime;
-    duration = Optional.of((double) elapsedTime / 1000.0);
-
-    TimedEvent event = new TimedEvent(name, eventType, elapsedTime, children.isEmpty());
-    scopeListeners.forEach(listener -> listener.onScopeEnd(event));
+    durationMillis = Optional.of(elapsedTime);
+    scopeListeners.forEach(listener -> listener.onScopeEnd(getTimedEvent()));
 
     if (parentScope == null) {
       outputReport(context);
     }
+  }
+
+  private TimedEvent getTimedEvent() {
+    return new TimedEvent(name, eventType, durationMillis.orElse(0L), children.isEmpty());
   }
 
   /** Adds a TimingScope listener to its list of listeners, and those of its children. */
@@ -93,8 +98,9 @@ public class TimingScope implements BlazeScope {
   }
 
   private void outputReport(BlazeContext context) {
-    context.output(PrintOutput.log("\n==== TIMING REPORT ====\n"));
-    outputReport(context, this, new TimingReportData(), 0);
+    logger.info("==== TIMING REPORT ====");
+    TimingReportData data = new TimingReportData();
+    outputReport(context, this, data, 0);
   }
 
   private static void outputReport(
@@ -104,39 +110,38 @@ public class TimingScope implements BlazeScope {
     // Self time trivially 100% if no children
     if (timingScope.children.size() > 0) {
       // Calculate self time as <my duration> - <sum child duration>
-      double selfTime = timingScope.getDuration();
+      long selfTime = timingScope.getDurationMillis();
       for (TimingScope child : timingScope.children) {
-        selfTime -= child.getDuration();
+        selfTime -= child.getDurationMillis();
       }
 
       selfString = selfTime > 0.1 ? String.format(" (%s)", durationStr(selfTime)) : "";
     }
 
-    context.output(
-        PrintOutput.log(
-            String.format(
-                "%s%s: %s%s",
-                getIndentation(depth),
-                timingScope.name,
-                durationStr(timingScope.getDuration()),
-                selfString)));
+    // TODO(brendandouglas): combine repeated child events with the same name (e.g. sharded builds)
+    logger.info(
+        String.format(
+            "%s%s: %s%s",
+            getIndentation(depth),
+            timingScope.name,
+            durationStr(timingScope.getDurationMillis()),
+            selfString));
+
+    TimedEvent event = timingScope.getTimedEvent();
+    data.addTimedEvent(event);
 
     for (TimingScope child : timingScope.children) {
       outputReport(context, child, data, depth + 1);
     }
 
-    if (timingScope.children.isEmpty()) {
-      // sum times for leaf nodes
-      data.addEventTiming(timingScope.eventType, timingScope.getDuration());
-    }
     if (depth == 0) {
-      data.outputReport(context);
+      data.outputSummary(context);
     }
   }
 
-  private double getDuration() {
-    if (duration.isPresent()) {
-      return duration.get();
+  private long getDurationMillis() {
+    if (durationMillis.isPresent()) {
+      return durationMillis.get();
     }
     // Could happen if a TimingScope outlives the root context (e.g., from BlazeSyncTask), so the
     // actual duration is not yet known.
@@ -144,8 +149,10 @@ public class TimingScope implements BlazeScope {
     return 0;
   }
 
-  private static String durationStr(double time) {
-    return time >= 1.0 ? String.format("%.1fs", time) : String.format("%dms", (int) (time * 1000));
+  private static String durationStr(long timeMillis) {
+    return timeMillis >= 1000
+        ? String.format("%.1fs", timeMillis / 1000d)
+        : String.format("%sms", timeMillis);
   }
 
   private static String getIndentation(int depth) {
@@ -157,24 +164,32 @@ public class TimingScope implements BlazeScope {
   }
 
   private static class TimingReportData {
-    final Map<EventType, Double> timingPerEvent = new LinkedHashMap<>();
+    final List<TimedEvent> timedEvents = new ArrayList<>();
 
-    {
-      Arrays.stream(EventType.values()).forEach(t -> timingPerEvent.put(t, 0d));
+    void addTimedEvent(TimedEvent event) {
+      timedEvents.add(event);
     }
 
-    void addEventTiming(EventType type, double duration) {
-      timingPerEvent.put(type, duration + timingPerEvent.get(type));
-    }
-
-    void outputReport(BlazeContext context) {
-      context.output(PrintOutput.log("\nTiming summary:\n"));
-      for (EventType type : timingPerEvent.keySet()) {
-        double duration = timingPerEvent.get(type);
-        if (duration > 0) {
-          context.output(PrintOutput.log(String.format("%s: %s", type, durationStr(duration))));
-        }
+    void outputSummary(BlazeContext context) {
+      Map<EventType, Long> totalTimes = new LinkedHashMap<>();
+      for (EventType type : EventType.values()) {
+        long totalTime =
+            timedEvents.stream()
+                .filter(e -> e.isLeafEvent && e.type == type)
+                .mapToLong(e -> e.durationMillis)
+                .sum();
+        totalTimes.put(type, totalTime);
       }
+      if (totalTimes.values().stream().mapToLong(l -> l).sum() < 1000) {
+        return;
+      }
+
+      List<String> summaries =
+          totalTimes.entrySet().stream()
+              .map(e -> String.format("%s: %s", e.getKey(), durationStr(e.getValue())))
+              .collect(toImmutableList());
+
+      context.output(PrintOutput.log("\nTiming summary:\n" + Joiner.on(", ").join(summaries)));
     }
   }
 }
