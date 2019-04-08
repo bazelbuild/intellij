@@ -24,8 +24,9 @@ import com.google.idea.blaze.base.settings.BuildSystem;
 /** Verifies that the available Bazel version is supported by this plugin. */
 public class BazelVersionChecker implements BuildSystemVersionChecker {
 
-  // version 0.18 introduced a backwards-incompatible change to the depset API
-  private static final BazelVersion OLDEST_SUPPORTED_VERSION = new BazelVersion(0, 18, 0);
+  // version 0.23 introduced a backwards-incompatible change to the Py struct providers.
+  // See: https://github.com/bazelbuild/bazel/issues/7298
+  private static final BazelVersion OLDEST_SUPPORTED_VERSION = new BazelVersion(0, 23, 0);
 
   @Override
   public boolean versionSupported(BlazeContext context, BlazeVersionData version) {
