@@ -26,141 +26,146 @@ import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 
-/** Utility class to intern frequently duplicated objects in the project data. */
-public abstract class ProjectDataInterner {
+/**
+ * Utility class to intern frequently duplicated objects in the project data.
+ *
+ * <p>The underlying interners are application-wide, not specific to a project.
+ */
+public final class ProjectDataInterner {
   private static final BoolExperiment internProjectData =
       new BoolExperiment("intern.project.data", true);
 
-  private static ProjectDataInterner instance =
-      ApplicationManager.getApplication() == null
-              || ApplicationManager.getApplication().isUnitTestMode()
-              || internProjectData.getValue()
-          ? new Impl()
-          : new NoOp();
+  private static volatile State state = useInterner() ? new Impl() : new NoOp();
+
+  private static boolean useInterner() {
+    return ApplicationManager.getApplication() == null
+        || ApplicationManager.getApplication().isUnitTestMode()
+        || internProjectData.getValue();
+  }
 
   public static Label intern(Label label) {
-    return instance.doIntern(label);
+    return state.doIntern(label);
   }
 
   static String intern(String string) {
-    return instance.doIntern(string);
+    return state.doIntern(string);
   }
 
   static TargetKey intern(TargetKey targetKey) {
-    return instance.doIntern(targetKey);
+    return state.doIntern(targetKey);
   }
 
   static Dependency intern(Dependency dependency) {
-    return instance.doIntern(dependency);
+    return state.doIntern(dependency);
   }
 
   static ArtifactLocation intern(ArtifactLocation artifactLocation) {
-    return instance.doIntern(artifactLocation);
+    return state.doIntern(artifactLocation);
   }
 
   static AndroidResFolder intern(AndroidResFolder androidResFolder) {
-    return instance.doIntern(androidResFolder);
+    return state.doIntern(androidResFolder);
   }
 
   public static ExecutionRootPath intern(ExecutionRootPath executionRootPath) {
-    return instance.doIntern(executionRootPath);
+    return state.doIntern(executionRootPath);
   }
 
-  abstract Label doIntern(Label label);
+  private interface State {
+    Label doIntern(Label label);
 
-  abstract String doIntern(String string);
+    String doIntern(String string);
 
-  abstract TargetKey doIntern(TargetKey targetKey);
+    TargetKey doIntern(TargetKey targetKey);
 
-  abstract Dependency doIntern(Dependency dependency);
+    Dependency doIntern(Dependency dependency);
 
-  abstract ArtifactLocation doIntern(ArtifactLocation artifactLocation);
+    ArtifactLocation doIntern(ArtifactLocation artifactLocation);
 
-  abstract AndroidResFolder doIntern(AndroidResFolder androidResFolder);
+    AndroidResFolder doIntern(AndroidResFolder androidResFolder);
 
-  abstract ExecutionRootPath doIntern(ExecutionRootPath executionRootPath);
+    ExecutionRootPath doIntern(ExecutionRootPath executionRootPath);
+  }
 
-  private static class NoOp extends ProjectDataInterner {
+  private static class NoOp implements State {
     @Override
-    Label doIntern(Label label) {
+    public Label doIntern(Label label) {
       return label;
     }
 
     @Override
-    String doIntern(String string) {
+    public String doIntern(String string) {
       return string;
     }
 
     @Override
-    TargetKey doIntern(TargetKey targetKey) {
+    public TargetKey doIntern(TargetKey targetKey) {
       return targetKey;
     }
 
     @Override
-    Dependency doIntern(Dependency dependency) {
+    public Dependency doIntern(Dependency dependency) {
       return dependency;
     }
 
     @Override
-    ArtifactLocation doIntern(ArtifactLocation artifactLocation) {
+    public ArtifactLocation doIntern(ArtifactLocation artifactLocation) {
       return artifactLocation;
     }
 
     @Override
-    AndroidResFolder doIntern(AndroidResFolder androidResFolder) {
+    public AndroidResFolder doIntern(AndroidResFolder androidResFolder) {
       return androidResFolder;
     }
 
     @Override
-    ExecutionRootPath doIntern(ExecutionRootPath executionRootPath) {
+    public ExecutionRootPath doIntern(ExecutionRootPath executionRootPath) {
       return executionRootPath;
     }
   }
 
-  private static class Impl extends ProjectDataInterner {
-    private static final Interner<Label> labelInterner = Interners.newWeakInterner();
-    private static final Interner<String> stringInterner = Interners.newWeakInterner();
-    private static final Interner<TargetKey> targetKeyInterner = Interners.newWeakInterner();
-    private static final Interner<Dependency> dependencyInterner = Interners.newWeakInterner();
-    private static final Interner<ArtifactLocation> artifactLocationInterner =
-        Interners.newWeakInterner();
-    private static final Interner<AndroidResFolder> androidResFolderInterner =
-        Interners.newWeakInterner();
-    private static final Interner<ExecutionRootPath> executionRootPathInterner =
+  private static class Impl implements State {
+    private final Interner<Label> labelInterner = Interners.newWeakInterner();
+    private final Interner<String> stringInterner = Interners.newWeakInterner();
+    private final Interner<TargetKey> targetKeyInterner = Interners.newWeakInterner();
+    private final Interner<Dependency> dependencyInterner = Interners.newWeakInterner();
+    private final Interner<ArtifactLocation> artifactLocationInterner = Interners.newWeakInterner();
+    private final Interner<AndroidResFolder> androidResFolderInterner = Interners.newWeakInterner();
+    private final Interner<ExecutionRootPath> executionRootPathInterner =
         Interners.newWeakInterner();
 
     @Override
-    Label doIntern(Label label) {
+    public Label doIntern(Label label) {
       return labelInterner.intern(label);
     }
 
     @Override
-    String doIntern(String string) {
+    public String doIntern(String string) {
       return stringInterner.intern(string);
     }
 
     @Override
-    TargetKey doIntern(TargetKey targetKey) {
+    public TargetKey doIntern(TargetKey targetKey) {
       return targetKeyInterner.intern(targetKey);
     }
 
     @Override
-    Dependency doIntern(Dependency dependency) {
+    public Dependency doIntern(Dependency dependency) {
       return dependencyInterner.intern(dependency);
     }
 
     @Override
-    ArtifactLocation doIntern(ArtifactLocation artifactLocation) {
+    public ArtifactLocation doIntern(ArtifactLocation artifactLocation) {
       return artifactLocationInterner.intern(artifactLocation);
     }
 
     @Override
-    AndroidResFolder doIntern(AndroidResFolder androidResFolder) {
+    public AndroidResFolder doIntern(AndroidResFolder androidResFolder) {
       return androidResFolderInterner.intern(androidResFolder);
     }
 
     @Override
-    ExecutionRootPath doIntern(ExecutionRootPath executionRootPath) {
+    public ExecutionRootPath doIntern(ExecutionRootPath executionRootPath) {
       return executionRootPathInterner.intern(executionRootPath);
     }
   }
@@ -168,7 +173,11 @@ public abstract class ProjectDataInterner {
   static class Updater implements SyncListener {
     @Override
     public void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {
-      instance = internProjectData.getValue() ? new Impl() : new NoOp();
+      boolean useInterner = useInterner();
+      boolean usingInterner = state instanceof Impl;
+      if (useInterner != usingInterner) {
+        state = useInterner ? new Impl() : new NoOp();
+      }
     }
   }
 }
