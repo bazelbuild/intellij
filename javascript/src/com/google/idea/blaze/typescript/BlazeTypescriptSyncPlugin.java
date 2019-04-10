@@ -17,7 +17,6 @@ package com.google.idea.blaze.typescript;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Streams;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
@@ -29,7 +28,6 @@ import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.io.FileOperationProvider;
-import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.SyncState;
@@ -56,18 +54,12 @@ import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.ide.browsers.BrowserLauncher;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.util.PlatformUtils;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -137,8 +129,6 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
           childContext.push(new TimingScope("TsConfig", EventType.BlazeInvocation));
           childContext.output(new StatusOutput("Updating tsconfig..."));
 
-          List<File> tsconfigs = new ArrayList<>();
-          List<File> runfiles = new ArrayList<>();
           for (Label target : tsConfigTargets) {
             File tsconfig =
                 new File(workspaceRoot.fileForPath(target.blazePackage()), "tsconfig.json");
@@ -148,22 +138,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
               childContext.setHasError();
               // continue running any remaining targets
             }
-            // tsconfig may have changed even if the build failed
-            tsconfigs.add(tsconfig);
-            File blazeBin =
-                new File(blazeInfo.getBlazeBinDirectory(), target.blazePackage().relativePath());
-            tsconfigs.add(new File(blazeBin, "tsconfig_editor.json"));
-            runfiles.add(new File(blazeBin, target.targetName() + ".runfiles"));
           }
-          LocalFileSystem lfs = VirtualFileSystemProvider.getInstance().getSystem();
-          VfsUtil.markDirtyAndRefresh(
-              /* async= */ true,
-              /* recursive= */ true,
-              /* reloadChildren= */ false,
-              Streams.concat(tsconfigs.stream(), runfiles.stream())
-                  .map(lfs::findFileByIoFile)
-                  .filter(Objects::nonNull)
-                  .toArray(VirtualFile[]::new));
         });
   }
 

@@ -34,9 +34,12 @@ import com.google.idea.blaze.base.sync.libraries.BlazeExternalSyntheticLibrary;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
+import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.SyntheticLibrary;
+import com.intellij.openapi.vfs.VfsUtil;
 import java.io.File;
 import java.util.Collection;
 import java.util.Objects;
@@ -77,7 +80,7 @@ public class BlazeTypeScriptAdditionalLibraryRootsProvider extends AdditionalLib
   @Nullable
   private static SyntheticLibrary getLibrary(Project project, BlazeProjectData projectData) {
     ImmutableList<File> files = getLibraryFiles(project, projectData);
-    ListenableFuture<Collection<File>> futureFiles = getFutureLibraryFiles(project, projectData);
+    ListenableFuture<Collection<File>> futureFiles = getFutureLibraryFiles(project);
     return files.isEmpty()
         ? null
         : new BlazeExternalSyntheticLibrary(project, "TypeScript Libraries", files, futureFiles);
@@ -120,12 +123,17 @@ public class BlazeTypeScriptAdditionalLibraryRootsProvider extends AdditionalLib
         .collect(toImmutableList());
   }
 
-  private static ListenableFuture<Collection<File>> getFutureLibraryFiles(
-      Project project, BlazeProjectData projectData) {
+  private static ListenableFuture<Collection<File>> getFutureLibraryFiles(Project project) {
     if (!moveTsconfigFilesToAdditionalLibrary.getValue()) {
       return Futures.immediateFuture(ImmutableList.of());
     }
     return MoreExecutors.listeningDecorator(PooledThreadExecutor.INSTANCE)
-        .submit(() -> TypeScriptPrefetchFileSource.getFilesFromTsConfigs(project, projectData));
+        .submit(
+            () ->
+                TypeScriptConfigService.Provider.get(project).getConfigFiles().stream()
+                    .map(TypeScriptConfig::getFileList)
+                    .flatMap(Collection::stream)
+                    .map(VfsUtil::virtualToIoFile)
+                    .collect(ImmutableList.toImmutableList()));
   }
 }
