@@ -320,7 +320,8 @@ public final class BlazeAndroidRunConfigurationRunner
               processHandler,
               deviceSession.deviceFutures,
               launchTasksProvider,
-              RunStats.from(env));
+              RunStats.from(env),
+              console::printHyperlink);
       ProgressManager.getInstance().run(task);
 
       return console == null ? null : new DefaultExecutionResult(console, processHandler);

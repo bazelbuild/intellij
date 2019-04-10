@@ -20,8 +20,10 @@ import com.android.tools.idea.run.LaunchInfo;
 import com.android.tools.idea.run.LaunchTaskRunner;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.stats.RunStats;
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.project.Project;
+import java.util.function.BiConsumer;
 
 /** Compat utilities for {@link LaunchTaskRunner}. */
 public class LaunchTaskRunnerCompat {
@@ -33,7 +35,8 @@ public class LaunchTaskRunnerCompat {
       ProcessHandler processHandler,
       DeviceFutures deviceFutures,
       LaunchTasksProvider launchTasksProvider,
-      RunStats from) {
+      RunStats from,
+      BiConsumer<String, HyperlinkInfo> consoleConsumer) {
     return new LaunchTaskRunner(
         project,
         launchConfigName,
@@ -42,6 +45,7 @@ public class LaunchTaskRunnerCompat {
         processHandler,
         deviceFutures,
         launchTasksProvider,
-        from);
+        from,
+        consoleConsumer);
   }
 }

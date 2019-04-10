@@ -113,7 +113,7 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
     return myFinders;
   }
 
-  @Override
+  // #api AS3.4
   public boolean getAugmentRClasses() {
     return ENABLE_PSI_AUGMENT.getValue();
   }
