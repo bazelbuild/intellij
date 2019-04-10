@@ -265,13 +265,6 @@ http_archive(
     urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.6.1.3.zip"],
 )
 
-http_archive(
-    name = "android_studio_3_4",
-    build_file = "@//intellij_platform_sdk:BUILD.android_studio",
-    sha256 = "d99718ad7090329712042c2725dafccf7f0be56e2c7017db9727f129b1576757",
-    url = "https://dl.google.com/android/studio/ide-zips/3.4.0.11/android-studio-ide-183.5240537-linux.zip",
-)
-
 # BEGIN-EXTERNAL-SCALA
 # LICENSE: The Apache Software License, Version 2.0
 git_repository(
