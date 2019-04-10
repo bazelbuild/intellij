@@ -24,6 +24,7 @@ import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerSettingsKey;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerFeatures;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
+import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoots;
 import java.io.File;
 import java.util.Collections;
@@ -35,6 +36,7 @@ import javax.annotation.Nullable;
 /** #api182: Stub {@link OCCompilerSettings} for testing. */
 class StubOCCompilerSettings implements OCCompilerSettings {
   private final Project project;
+  private HeadersSearchRoots roots;
 
   StubOCCompilerSettings(Project project) {
     this.project = project;
@@ -65,7 +67,7 @@ class StubOCCompilerSettings implements OCCompilerSettings {
 
   @Override
   public HeadersSearchRoots getHeadersSearchRoots() {
-    return HeadersSearchRoots.EMPTY;
+    return roots;
   }
 
   @Override
@@ -93,5 +95,9 @@ class StubOCCompilerSettings implements OCCompilerSettings {
   @Override
   public CompilerSettingsKey getCachingKey() {
     return null;
+  }
+
+  public void setLibraryIncludeRoots(List<HeadersSearchRoot> roots) {
+    this.roots = HeadersSearchRoots.create(roots);
   }
 }

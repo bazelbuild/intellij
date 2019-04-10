@@ -15,7 +15,6 @@
  */
 package com.google.idea.testing.cidr;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.sdkcompat.cidr.OCResolveConfigurationCompat;
 import com.intellij.openapi.project.Project;
@@ -42,17 +41,15 @@ public class StubOCResolveConfiguration extends UserDataHolderBase
     implements OCResolveConfiguration {
 
   private final Project project;
-  private List<HeadersSearchRoot> libraryIncludeRoots;
-  private final OCCompilerSettings compilerSettings;
+  private final StubOCCompilerSettings compilerSettings;
 
   StubOCResolveConfiguration(Project project) {
     this.project = project;
-    this.libraryIncludeRoots = ImmutableList.of();
     this.compilerSettings = new StubOCCompilerSettings(project);
   }
 
   public void setLibraryIncludeRoots(List<HeadersSearchRoot> searchRoots) {
-    this.libraryIncludeRoots = searchRoots;
+    compilerSettings.setLibraryIncludeRoots(searchRoots);
   }
 
   @Override
