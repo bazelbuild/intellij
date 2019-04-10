@@ -26,9 +26,19 @@
         serviceInterface="com.intellij.lang.typescript.tsconfig.TypeScriptConfigLibraryUpdater"
         serviceImplementation="com.google.idea.blaze.typescript.BlazeTypeScriptConfigLibraryUpdater"
         overrides="true"/>
+    <projectService serviceInterface="com.intellij.lang.typescript.tsconfig.TypeScriptConfigService"
+        serviceImplementation="com.google.idea.blaze.typescript.DelegatingTypeScriptConfigService"
+        overrides="true"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.google.idea.blaze">
+    <SyncListener
+        implementation="com.google.idea.blaze.typescript.BlazeTypeScriptConfigServiceImpl$Updater"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript">
-    <elementScopeProvider implementation="com.google.idea.blaze.javascript.BlazeJavascriptResolveScopeProvider" order="first"/>
+    <elementScopeProvider
+        implementation="com.google.idea.blaze.javascript.BlazeJavascriptResolveScopeProvider"
+        order="first"/>
   </extensions>
 </idea-plugin>
