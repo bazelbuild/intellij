@@ -521,14 +521,14 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
         ]
 
     jdeps = None
-    if hasattr(java.outputs, "jdeps") and java.outputs.jdeps:
-        if java_semantics and hasattr(java_semantics, "filter_jdeps") and ctx.rule.kind == "android_local_test":
-            filtered_jdeps = java_semantics.filter_jdeps(ctx, target, java)
-            jdeps = artifact_location(filtered_jdeps)
-            resolve_files += [filtered_jdeps]
-        else:
-            jdeps = artifact_location(java.outputs.jdeps)
-            resolve_files += [java.outputs.jdeps]
+    jdeps_file = None
+    if java_semantics and hasattr(java_semantics, "get_filtered_jdeps"):
+        jdeps_file = java_semantics.get_filtered_jdeps(target)
+    if jdeps_file == None and hasattr(java.outputs, "jdeps") and java.outputs.jdeps:
+        jdeps_file = java.outputs.jdeps
+    if jdeps_file:
+        jdeps = artifact_location(jdeps_file)
+        resolve_files.append(jdeps_file)
 
     java_sources, gen_java_sources, srcjars = divide_java_sources(ctx)
 
@@ -913,8 +913,6 @@ def make_intellij_info_aspect(aspect_impl, semantics):
             default = flag_hack_label,
         ),
     }
-    if hasattr(semantics, "jdeps_tool"):
-        attrs["_jdeps_tool"] = semantics.jdeps_tool
 
     return aspect(
         attrs = attrs,
