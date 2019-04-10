@@ -47,6 +47,8 @@ import com.google.idea.blaze.clwb.CidrGoogleTestUtilAdapter;
 import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.google.idea.blaze.cpp.CppBlazeRules;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.sdkcompat.clion.CPPToolSetWithHomeAndSeparators;
+import com.google.idea.sdkcompat.clion.GDBDriverConfigurationAdapter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.CommandLineState;
@@ -66,10 +68,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PathUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.cidr.cpp.execution.CLionRunParameters;
-import com.jetbrains.cidr.cpp.execution.debugger.backend.GDBDriverConfiguration;
 import com.jetbrains.cidr.cpp.toolchains.CPPDebugger;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolSet;
-import com.jetbrains.cidr.cpp.toolchains.CPPToolSetWithHome;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains.Toolchain;
 import com.jetbrains.cidr.execution.CidrConsoleBuilder;
@@ -369,7 +369,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     ToolchainUtils.setDebuggerToDefault(toolchainForDebugger);
 
     DebuggerDriverConfiguration debuggerDriverConfiguration =
-        new GDBDriverConfiguration(project, toolchainForDebugger);
+        new GDBDriverConfigurationAdapter(project, toolchainForDebugger);
 
     return new BlazeCidrRemoteDebugProcess(
         targetProcess, debuggerDriverConfiguration, parameters, session, state.getConsoleBuilder());
@@ -380,9 +380,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
    * create it. By creating a CPPToolSet, we have an opportunity to alter the commandline before it
    * launches. See https://youtrack.jetbrains.com/issue/CPP-8362
    */
-  private static class BlazeToolSet extends CPPToolSetWithHome {
-    private static final char[] separators = {'/'};
-
+  private static class BlazeToolSet extends CPPToolSetWithHomeAndSeparators {
     private BlazeToolSet(File workingDirectory) {
       super(Kind.MINGW, workingDirectory);
     }
@@ -395,11 +393,6 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     @Override
     public String checkVersion(String s) {
       return null;
-    }
-
-    @Override
-    public char[] getSupportedFileSeparators() {
-      return separators;
     }
 
     @Override

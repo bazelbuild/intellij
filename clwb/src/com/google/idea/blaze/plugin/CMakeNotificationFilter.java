@@ -31,6 +31,9 @@ import javax.swing.JComponent;
 /** Need to filter out CMake messages if we are a Blaze project. */
 public class CMakeNotificationFilter extends EditorNotifications.Provider<JComponent>
     implements DumbAware {
+  // #api191: use EditorNotificationsImpl.EP_PROJECT (private, but we can just use the same string)
+  private static final String EDITOR_NOTIFICATIONS_EPNAME =
+      "com.intellij.editorNotificationProvider";
   private final EditorNotifications.Provider<?> delegate;
 
   private static final Key<JComponent> KEY = Key.create("CMakeNotificationFilter");
@@ -52,7 +55,7 @@ public class CMakeNotificationFilter extends EditorNotifications.Provider<JCompo
 
   public static void overrideProjectExtension(Project project) {
     ExtensionPoint<EditorNotifications.Provider> ep =
-        Extensions.getArea(project).getExtensionPoint(EditorNotifications.EXTENSION_POINT_NAME);
+        Extensions.getArea(project).getExtensionPoint(EDITOR_NOTIFICATIONS_EPNAME);
     for (EditorNotifications.Provider<?> editorNotificationsProvider : ep.getExtensions()) {
       if (editorNotificationsProvider instanceof CMakeNotificationProvider) {
         ep.unregisterExtension(editorNotificationsProvider);
