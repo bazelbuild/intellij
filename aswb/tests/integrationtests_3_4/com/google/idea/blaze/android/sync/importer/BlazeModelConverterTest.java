@@ -17,7 +17,6 @@ package com.google.idea.blaze.android.sync.importer;
 
 import static com.android.projectmodel.VariantUtil.ARTIFACT_NAME_MAIN;
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.idea.blaze.android.sync.importer.BlazeImportInput.createLooksLikeAarLibrary;
 
 import com.android.ide.common.util.PathString;
 import com.android.projectmodel.AndroidModel;
@@ -64,7 +63,6 @@ public class BlazeModelConverterTest extends BlazeIntegrationTestCase {
     context = new BlazeContext();
     MockExperimentService experimentService = new MockExperimentService();
     registerApplicationComponent(ExperimentService.class, experimentService);
-    experimentService.setExperiment(createLooksLikeAarLibrary, true);
 
     importFixture = new BlazeImportFixture(getProject(), fileSystem, workspaceRoot, context);
     converter =

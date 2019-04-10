@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 import com.google.idea.blaze.android.sync.importer.aggregators.TransitiveResourceMap;
 import com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceWarnings;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
@@ -101,11 +100,6 @@ public final class BlazeAndroidWorkspaceImporter {
     ImmutableList<AndroidResourceModule> androidResourceModules =
         buildAndroidResourceModules(resourceModules.build());
 
-    if (!input.createFakeAarLibrariesExperiment) {
-      addImportAarLibraries(input.createSourceFilter().getLibraryTargets(), libraries);
-      addResourceModuleResourceLibrary(androidResourceModules, libraries);
-    }
-
     return new BlazeAndroidImportResult(
         androidResourceModules,
         libraries.getBlazeResourceLibs(),
@@ -175,13 +169,11 @@ public final class BlazeAndroidWorkspaceImporter {
         if (!resourceDependency.equals(target.getKey())) {
           builder.addTransitiveResourceDependency(resourceDependency);
           TargetIdeInfo dependencyTarget = input.targetMap.get(resourceDependency);
-          if (input.createFakeAarLibrariesExperiment) {
-            String libraryKey = libraryFactory.createAarLibrary(dependencyTarget);
-            if (libraryKey != null) {
-              ArtifactLocation artifactLocation = dependencyTarget.getAndroidAarIdeInfo().getAar();
-              if (isSourceOrWhitelistedGenPath(artifactLocation, whitelistTester)) {
-                builder.addResourceLibraryKey(libraryKey);
-              }
+          String libraryKey = libraryFactory.createAarLibrary(dependencyTarget);
+          if (libraryKey != null) {
+            ArtifactLocation artifactLocation = dependencyTarget.getAndroidAarIdeInfo().getAar();
+            if (isSourceOrWhitelistedGenPath(artifactLocation, whitelistTester)) {
+              builder.addResourceLibraryKey(libraryKey);
             }
           }
         }
@@ -210,27 +202,6 @@ public final class BlazeAndroidWorkspaceImporter {
   public static boolean isSourceOrWhitelistedGenPath(
       ArtifactLocation artifactLocation, Predicate<ArtifactLocation> tester) {
     return artifactLocation.isSource() || tester.test(artifactLocation);
-  }
-
-  private void addResourceModuleResourceLibrary(
-      Collection<AndroidResourceModule> androidResourceModules, LibraryFactory libraryFactory) {
-    Set<ArtifactLocation> result = Sets.newHashSet();
-    for (AndroidResourceModule androidResourceModule : androidResourceModules) {
-      result.addAll(androidResourceModule.transitiveResources);
-    }
-    for (AndroidResourceModule androidResourceModule : androidResourceModules) {
-      result.removeAll(androidResourceModule.resources);
-    }
-    for (ArtifactLocation artifactLocation : result) {
-      libraryFactory.createBlazeResourceLibrary(artifactLocation, null);
-    }
-  }
-
-  private void addImportAarLibraries(
-      Iterable<TargetIdeInfo> libraryTargets, LibraryFactory libraryFactory) {
-    for (TargetIdeInfo target : libraryTargets) {
-      libraryFactory.createAarLibrary(target);
-    }
   }
 
   private ImmutableList<AndroidResourceModule> buildAndroidResourceModules(

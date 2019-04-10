@@ -25,35 +25,29 @@ import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /** Inputs used for importing an Android project. */
 public final class BlazeImportInput {
-  public static final BoolExperiment createLooksLikeAarLibrary =
-      new BoolExperiment("create.resource.lookslikeaarlibrary", true);
 
   public final @NonNull WorkspaceRoot workspaceRoot;
   public final @NonNull ProjectViewSet projectViewSet;
   public final @NonNull TargetMap targetMap;
   public final @NonNull ArtifactLocationDecoder artifactLocationDecoder;
   public final @NonNull BuildSystem buildSystem;
-  public final boolean createFakeAarLibrariesExperiment;
 
   public BlazeImportInput(
       @NonNull WorkspaceRoot workspaceRoot,
       @NonNull ProjectViewSet projectViewSet,
       @NonNull TargetMap targetMap,
       @NonNull ArtifactLocationDecoder artifactLocationDecoder,
-      @NonNull BuildSystem buildSystem,
-      boolean createFakeAarLibrariesExperiment) {
+      @NonNull BuildSystem buildSystem) {
     this.workspaceRoot = workspaceRoot;
     this.projectViewSet = projectViewSet;
     this.targetMap = targetMap;
     this.artifactLocationDecoder = artifactLocationDecoder;
     this.buildSystem = buildSystem;
-    this.createFakeAarLibrariesExperiment = createFakeAarLibrariesExperiment;
   }
 
   public static BlazeImportInput forProject(
@@ -80,8 +74,7 @@ public final class BlazeImportInput {
         projectViewSet,
         targetMap,
         artifactLocationDecoder,
-        Blaze.getBuildSystem(project),
-        createLooksLikeAarLibrary.getValue());
+        Blaze.getBuildSystem(project));
   }
 
   @NotNull

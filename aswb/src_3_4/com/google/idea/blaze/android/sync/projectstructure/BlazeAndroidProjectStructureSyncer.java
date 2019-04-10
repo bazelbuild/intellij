@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.sync.projectstructure;
 
-import static com.google.idea.blaze.android.sync.importer.BlazeImportInput.createLooksLikeAarLibrary;
 import static java.util.stream.Collectors.toSet;
 
 import com.android.annotations.VisibleForTesting;
@@ -58,7 +57,6 @@ import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.AndroidBlazeRules;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
@@ -76,18 +74,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Updates the IDE's project structure. */
 public class BlazeAndroidProjectStructureSyncer {
   private static final Logger logger = Logger.getInstance(BlazeAndroidProjectStructureSyncer.class);
-  private static final BoolExperiment useCyclicResourceDependency =
-      new BoolExperiment("cyclic.resource.dependency", true);
-  private static final BoolExperiment useLibraryResourcesModule =
-      new BoolExperiment("library.resources.module", true);
-  public static final String LIBRARY_RESOURCES_MODULE_NAME = ".android-resources";
 
   public static void updateProjectStructure(
       Project project,
@@ -148,50 +140,23 @@ public class BlazeAndroidProjectStructureSyncer {
 
       Collection<File> resources =
           blazeProjectData.getArtifactLocationDecoder().decodeAll(androidResourceModule.resources);
-      if (useCyclicResourceDependency.getValue()) {
-        // Remove existing resource roots to silence the duplicate content root error.
-        // We can only do this if we have cyclic resource dependencies, since otherwise we risk
-        // breaking dependencies within this resource module.
-        resources.removeAll(existingRoots);
-        existingRoots.addAll(resources);
-      }
+      // Remove existing resource roots to silence the duplicate content root error.
+      // We can only do this if we have cyclic resource dependencies, since otherwise we risk
+      // breaking dependencies within this resource module.
+      resources.removeAll(existingRoots);
+      existingRoots.addAll(resources);
       ResourceModuleContentRootCustomizer.setupContentRoots(modifiableRootModel, resources);
 
-      if (useCyclicResourceDependency.getValue()) {
-        modifiableRootModel.addModuleOrderEntry(workspaceModule);
-        ++totalOrderEntries;
-      } else {
-        for (TargetKey resourceDependency : androidResourceModule.transitiveResourceDependencies) {
-          if (!targetToAndroidResourceModule.containsKey(resourceDependency)) {
-            continue;
-          }
-          String dependencyModuleName = moduleNameForAndroidModule(resourceDependency);
-          Module dependency = moduleEditor.findModule(dependencyModuleName);
-          if (dependency == null) {
-            continue;
-          }
-          modifiableRootModel.addModuleOrderEntry(dependency);
-          ++totalOrderEntries;
-        }
-      }
+      modifiableRootModel.addModuleOrderEntry(workspaceModule);
+      ++totalOrderEntries;
 
-      if (createLooksLikeAarLibrary.getValue()) {
-        for (String libraryName : androidResourceModule.resourceLibraryKeys) {
-          modifiableRootModel.addLibraryEntry(libraryTable.getLibraryByName(libraryName));
-        }
-      } else if (useLibraryResourcesModule.getValue()) {
-        Module libraryResourcesModule =
-            moduleEditor.createModule(LIBRARY_RESOURCES_MODULE_NAME, StdModuleTypes.JAVA);
-        AndroidFacetModuleCustomizer.createAndroidFacet(libraryResourcesModule, false);
-        modifiableRootModel.addModuleOrderEntry(libraryResourcesModule);
-        ++totalOrderEntries;
+      for (String libraryName : androidResourceModule.resourceLibraryKeys) {
+        modifiableRootModel.addLibraryEntry(libraryTable.getLibraryByName(libraryName));
       }
       // Add a dependency from the workspace to the resource module
       ModuleOrderEntry orderEntry = workspaceModifiableModel.addModuleOrderEntry(module);
       ++totalOrderEntries;
-      if (useCyclicResourceDependency.getValue()) {
-        orderEntry.setExported(true);
-      }
+      orderEntry.setExported(true);
     }
 
     List<TargetIdeInfo> runConfigurationTargets =
@@ -384,26 +349,6 @@ public class BlazeAndroidProjectStructureSyncer {
     ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
     ModuleFinder moduleFinder = ModuleFinder.getInstance(project);
 
-    if (!createLooksLikeAarLibrary.getValue()) {
-      Module libraryResourcesModule = moduleFinder.findModuleByName(LIBRARY_RESOURCES_MODULE_NAME);
-      if (libraryResourcesModule != null) {
-        updateLibraryResourcesModuleFacetInMemoryState(
-            project,
-            workspaceRoot,
-            libraryResourcesModule,
-            androidSdkPlatform,
-            syncData.importResult.resourceLibraries == null
-                ? ImmutableList.of()
-                : ImmutableList.copyOf(
-                    syncData.importResult.resourceLibraries.values().stream()
-                        .map(library -> artifactLocationDecoder.decode(library.root))
-                        .collect(Collectors.toList())),
-            configAndroidJava8Libs);
-      } else if (useLibraryResourcesModule.getValue()) {
-        logger.warn("Library resources module missing.");
-      }
-    }
-
     for (AndroidResourceModule androidResourceModule :
         syncData.importResult.androidResourceModules) {
       TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
@@ -418,11 +363,7 @@ public class BlazeAndroidProjectStructureSyncer {
       AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
       assert androidIdeInfo != null;
 
-      List<File> resources =
-          artifactLocationDecoder.decodeAll(
-              useLibraryResourcesModule.getValue()
-                  ? androidResourceModule.resources
-                  : androidResourceModule.transitiveResources);
+      List<File> resources = artifactLocationDecoder.decodeAll(androidResourceModule.resources);
       updateModuleFacetInMemoryState(
           project,
           androidSdkPlatform,

@@ -179,13 +179,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   private BlazeAndroidImportResult importWorkspace(
-      WorkspaceRoot workspaceRoot,
-      TargetMapBuilder targetMapBuilder,
-      ProjectView projectView,
-      boolean createAarLibrary) {
-    ((MockExperimentService) ExperimentService.getInstance())
-        .setExperiment(BlazeImportInput.createLooksLikeAarLibrary, createAarLibrary);
-
+      WorkspaceRoot workspaceRoot, TargetMapBuilder targetMapBuilder, ProjectView projectView) {
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
     TargetMap targetMap = targetMapBuilder.build();
     BlazeAndroidWorkspaceImporter workspaceImporter =
@@ -221,8 +215,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     return blazeWorkspaceImporter.importWorkspace(context);
   }
 
-  private BlazeAndroidImportResult getBlazeAndroidImportResult_testResourceInheritance(
-      boolean createAarLibrary) {
+  private BlazeAndroidImportResult getBlazeAndroidImportResult_testResourceInheritance() {
     // if experiment variable is set to create AarLibrary
     ProjectView projectView =
         ProjectView.builder()
@@ -312,7 +305,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                                 LibraryArtifact.builder()
                                     .setInterfaceJar(gen("java/libraries/shared.jar"))
                                     .setClassJar(gen("java/libraries/shared.jar")))));
-    return importWorkspace(workspaceRoot, targetMapBuilder, projectView, createAarLibrary);
+    return importWorkspace(workspaceRoot, targetMapBuilder, projectView);
   }
 
   @Test
@@ -364,8 +357,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                             .addResource(source("aarLibrary/res"))
                             .setGenerateResourceClass(true)
                             .setResourceJavaPackage("aarLibrary")));
-    BlazeAndroidImportResult result =
-        importWorkspace(workspaceRoot, targetMapBuilder, projectView, true);
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     AndroidResourceModule expectedAndroidResourceModule1 =
         AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//example:lib")))
             .addResourceLibraryKey(
@@ -425,46 +417,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     source("java/libraries/shared/res")))
             .addTransitiveResourceDependency("//java/libraries/shared:shared")
             .build();
-    BlazeAndroidImportResult result = getBlazeAndroidImportResult_testResourceInheritance(true);
-    errorCollector.assertNoIssues();
-    assertThat(result.androidResourceModules)
-        .containsExactly(
-            expectedAndroidResourceModule1,
-            expectedAndroidResourceModule2,
-            expectedAndroidResourceModule3);
-  }
-
-  /** Test that a two packages use the same un-imported android_library */
-  @Test
-  public void testResourceInheritance_createExteranlResourceModule() {
-    AndroidResourceModule expectedAndroidResourceModule1 =
-        AndroidResourceModule.builder(
-                TargetKey.forPlainTarget(Label.create("//java/apps/example:example_debug")))
-            .addResourceAndTransitiveResource(source("java/apps/example/res"))
-            .addTransitiveResource(source("java/apps/example/lib0/res"))
-            .addTransitiveResource(source("java/apps/example/lib1/res"))
-            .addTransitiveResource(source("java/libraries/shared/res"))
-            .addTransitiveResourceDependency("//java/apps/example/lib0:lib0")
-            .addTransitiveResourceDependency("//java/apps/example/lib1:lib1")
-            .addTransitiveResourceDependency("//java/libraries/shared:shared")
-            .build();
-    AndroidResourceModule expectedAndroidResourceModule2 =
-        AndroidResourceModule.builder(
-                TargetKey.forPlainTarget(Label.create("//java/apps/example/lib0:lib0")))
-            .addResourceAndTransitiveResource(source("java/apps/example/lib0/res"))
-            .addTransitiveResource(source("java/apps/example/lib1/res"))
-            .addTransitiveResource(source("java/libraries/shared/res"))
-            .addTransitiveResourceDependency("//java/apps/example/lib1:lib1")
-            .addTransitiveResourceDependency("//java/libraries/shared:shared")
-            .build();
-    AndroidResourceModule expectedAndroidResourceModule3 =
-        AndroidResourceModule.builder(
-                TargetKey.forPlainTarget(Label.create("//java/apps/example/lib1:lib1")))
-            .addResourceAndTransitiveResource(source("java/apps/example/lib1/res"))
-            .addTransitiveResource(source("java/libraries/shared/res"))
-            .addTransitiveResourceDependency("//java/libraries/shared:shared")
-            .build();
-    BlazeAndroidImportResult result = getBlazeAndroidImportResult_testResourceInheritance(false);
+    BlazeAndroidImportResult result = getBlazeAndroidImportResult_testResourceInheritance();
     errorCollector.assertNoIssues();
     assertThat(result.androidResourceModules)
         .containsExactly(
@@ -709,8 +662,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                             .setResourceJavaPackage("com.google.android.example"))
                     .build());
 
-    BlazeAndroidImportResult result =
-        importWorkspace(workspaceRoot, targetMapBuilder, projectView, true);
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     errorCollector.assertNoIssues();
     assertThat(result.androidResourceModules)
         .containsExactly(
@@ -766,8 +718,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .addDependency("//java/com/google/android/assets/quantum:values")
                     .build());
 
-    BlazeAndroidImportResult result =
-        importWorkspace(workspaceRoot, targetMapBuilder, projectView, true);
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     errorCollector.assertNoIssues();
     assertThat(result.androidResourceModules)
         .containsExactly(
@@ -791,8 +742,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   private BlazeAndroidImportResult
-      getBlazeAndroidImportResult_testResourceImportOutsideSourceFilterIsAddedToResourceLibrary(
-          boolean createAarLibrary) {
+      getBlazeAndroidImportResult_testResourceImportOutsideSourceFilterIsAddedToResourceLibrary() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -828,14 +778,13 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                             .setResourceJavaPackage("com.google.android.example2"))
                     .build());
 
-    return importWorkspace(workspaceRoot, targetMapBuilder, projectView, createAarLibrary);
+    return importWorkspace(workspaceRoot, targetMapBuilder, projectView);
   }
 
   @Test
   public void testResourceImportOutsideSourceFilterIsAddedToResourceLibrary_createAarLibrary() {
     BlazeAndroidImportResult result =
-        getBlazeAndroidImportResult_testResourceImportOutsideSourceFilterIsAddedToResourceLibrary(
-            true);
+        getBlazeAndroidImportResult_testResourceImportOutsideSourceFilterIsAddedToResourceLibrary();
     errorCollector.assertNoIssues();
     ImmutableCollection<BlazeResourceLibrary> library = result.resourceLibraries.values();
     assertSameElements(
@@ -844,22 +793,6 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
             .setRoot(source("java/example2/res"))
             .setManifest(source("java/example2/AndroidManifest.xml"))
             .build());
-  }
-
-  @Test
-  public void
-      testResourceImportOutsideSourceFilterIsAddedToResourceLibrary_createExteranlResourceModule() {
-    BlazeAndroidImportResult result =
-        getBlazeAndroidImportResult_testResourceImportOutsideSourceFilterIsAddedToResourceLibrary(
-            true);
-    errorCollector.assertNoIssues();
-    ImmutableCollection<BlazeResourceLibrary> library = result.resourceLibraries.values();
-    assertThat(library)
-        .containsExactly(
-            new BlazeResourceLibrary.Builder()
-                .setRoot(source("java/example2/res"))
-                .setManifest(source("java/example2/AndroidManifest.xml"))
-                .build());
   }
 
   @Test
@@ -903,13 +836,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//java/example:lib")))
             .addResourceAndTransitiveResource(source("java/example/res"))
             .build();
-    BlazeAndroidImportResult result =
-        importWorkspace(workspaceRoot, targetMapBuilder, projectView, true);
-    errorCollector.assertIssueContaining("Multiple R classes generated");
-
-    assertThat(result.androidResourceModules).containsExactly(expectedAndroidResourceModule);
-
-    result = importWorkspace(workspaceRoot, targetMapBuilder, projectView, false);
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     errorCollector.assertIssueContaining("Multiple R classes generated");
 
     assertThat(result.androidResourceModules).containsExactly(expectedAndroidResourceModule);
@@ -940,9 +867,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                             .setResourceJavaPackage("com.google.android.example"))
                     .build());
 
-    importWorkspace(workspaceRoot, targetMapBuilder, projectView, true);
-    errorCollector.assertIssueContaining("Dropping 1 generated resource");
-    importWorkspace(workspaceRoot, targetMapBuilder, projectView, false);
+    importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     errorCollector.assertIssueContaining("Dropping 1 generated resource");
   }
 
@@ -980,19 +905,13 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
             .addResourceAndTransitiveResource(gen("java/example/res"))
             .build();
 
-    BlazeAndroidImportResult result =
-        importWorkspace(workspaceRoot, targetMapBuilder, projectView, true);
-    errorCollector.assertNoIssues();
-    assertThat(result.androidResourceModules).containsExactly(expectedAndroidResourceModule);
-
-    result = importWorkspace(workspaceRoot, targetMapBuilder, projectView, false);
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     errorCollector.assertNoIssues();
     assertThat(result.androidResourceModules).containsExactly(expectedAndroidResourceModule);
   }
 
   private BlazeAndroidImportResult
-      getBlazeAndroidImportResult_testMixingGeneratedAndNonGeneratedSourcesPartlyWhitelisted(
-          boolean createAarLibrary) {
+      getBlazeAndroidImportResult_testMixingGeneratedAndNonGeneratedSourcesPartlyWhitelisted() {
 
     ProjectView projectView =
         ProjectView.builder()
@@ -1048,7 +967,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                             .setGenerateResourceClass(true)
                             .setResourceJavaPackage("com.google.android.uninterestingdir"))
                     .build());
-    return importWorkspace(workspaceRoot, targetMapBuilder, projectView, createAarLibrary);
+    return importWorkspace(workspaceRoot, targetMapBuilder, projectView);
   }
 
   @Test
@@ -1065,26 +984,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         "1 unused entries in project view section \"generated_android_resource_directories\":\n"
             + "unused/whitelisted/path/res";
 
-    getBlazeAndroidImportResult_testMixingGeneratedAndNonGeneratedSourcesPartlyWhitelisted(true);
-    errorCollector.assertIssues(expectedString1, expectedString2, expectedString3);
-  }
-
-  @Test
-  public void
-      testMixingGeneratedAndNonGeneratedSourcesPartlyWhitelisted_createExternalResourceModule() {
-    String expectedString1 =
-        "Dropping 1 generated resource directories.\n"
-            + "R classes will not contain resources from these directories.\n"
-            + "Double-click to add to project view if needed to resolve references.";
-    String expectedString2 =
-        "Dropping generated resource directory "
-            + String.format("'%s/java/example2/res'", FAKE_GEN_ROOT_EXECUTION_PATH_FRAGMENT)
-            + " w/ 2 subdirs";
-    String expectedString3 =
-        "1 unused entries in project view section \"generated_android_resource_directories\":\n"
-            + "unused/whitelisted/path/res";
-
-    getBlazeAndroidImportResult_testMixingGeneratedAndNonGeneratedSourcesPartlyWhitelisted(false);
+    getBlazeAndroidImportResult_testMixingGeneratedAndNonGeneratedSourcesPartlyWhitelisted();
     errorCollector.assertIssues(expectedString1, expectedString2, expectedString3);
   }
 
@@ -1119,11 +1019,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
             .addResourceAndTransitiveResource(source("java/uninterestingdir/res"))
             .build();
 
-    BlazeAndroidImportResult result =
-        importWorkspace(workspaceRoot, targetMapBuilder, projectView, true);
-    errorCollector.assertNoIssues();
-    assertThat(result.androidResourceModules).containsExactly(expectedAndroidResourceModule);
-    result = importWorkspace(workspaceRoot, targetMapBuilder, projectView, false);
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     errorCollector.assertNoIssues();
     assertThat(result.androidResourceModules).containsExactly(expectedAndroidResourceModule);
   }
@@ -1175,7 +1071,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     BlazeJavaImportResult javaResult =
         importJavaWorkspace(workspaceRoot, targetMapBuilder, projectView);
     BlazeAndroidImportResult androidResult =
-        importWorkspace(workspaceRoot, targetMapBuilder, projectView, true);
+        importWorkspace(workspaceRoot, targetMapBuilder, projectView);
 
     errorCollector.assertNoIssues();
 
@@ -1196,26 +1092,6 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     // android version takes effect.
     BlazeAndroidLibrarySource.AarJarFilter aarFilter =
         new BlazeAndroidLibrarySource.AarJarFilter(androidResult.aarLibraries.values());
-    assertThat(aarFilter.test(javaResult.libraries.values().asList().get(0))).isFalse();
-
-    androidResult = importWorkspace(workspaceRoot, targetMapBuilder, projectView, false);
-    errorCollector.assertNoIssues();
-    // We get 2 libraries representing the AAR. One from java and one from android.
-    assertThat(javaResult.libraries).hasSize(1);
-    assertThat(androidResult.aarLibraries).hasSize(1);
-    assertThat(
-            androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarJarName)
-                .collect(Collectors.toList()))
-        .containsExactly("classes_and_libs_merged.jar");
-    assertThat(
-            androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarName)
-                .collect(Collectors.toList()))
-        .containsExactly("lib_aar.aar");
-    // Check that BlazeAndroidLibrarySource can filter out the java one, so that only the
-    // android version takes effect.
-    aarFilter = new BlazeAndroidLibrarySource.AarJarFilter(androidResult.aarLibraries.values());
     assertThat(aarFilter.test(javaResult.libraries.values().asList().get(0))).isFalse();
   }
 
@@ -1263,18 +1139,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     BlazeJavaImportResult javaResult =
         importJavaWorkspace(workspaceRoot, targetMapBuilder, projectView);
     BlazeAndroidImportResult androidResult =
-        importWorkspace(workspaceRoot, targetMapBuilder, projectView, true);
-
-    errorCollector.assertNoIssues();
-
-    // The java importer performs jdeps optimization, but the android one does not.
-    assertThat(javaResult.libraries).isEmpty();
-    assertThat(
-            androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarName)
-                .collect(Collectors.toList()))
-        .containsExactly("lib_aar.aar");
-    androidResult = importWorkspace(workspaceRoot, targetMapBuilder, projectView, false);
+        importWorkspace(workspaceRoot, targetMapBuilder, projectView);
 
     errorCollector.assertNoIssues();
 
@@ -1335,7 +1200,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     BlazeJavaImportResult javaResult =
         importJavaWorkspace(workspaceRoot, targetMapBuilder, projectView);
     BlazeAndroidImportResult androidResult =
-        importWorkspace(workspaceRoot, targetMapBuilder, projectView, true);
+        importWorkspace(workspaceRoot, targetMapBuilder, projectView);
 
     errorCollector.assertNoIssues();
 
@@ -1354,7 +1219,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         new BlazeAndroidLibrarySource.AarJarFilter(androidResult.aarLibraries.values());
     assertThat(aarFilter.test(javaResult.libraries.values().asList().get(0))).isFalse();
 
-    androidResult = importWorkspace(workspaceRoot, targetMapBuilder, projectView, true);
+    androidResult = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
 
     errorCollector.assertNoIssues();
 
@@ -1418,7 +1283,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     BlazeJavaImportResult javaResult =
         importJavaWorkspace(workspaceRoot, targetMapBuilder, projectView);
     BlazeAndroidImportResult androidResult =
-        importWorkspace(workspaceRoot, targetMapBuilder, projectView, true);
+        importWorkspace(workspaceRoot, targetMapBuilder, projectView);
 
     errorCollector.assertNoIssues();
 
@@ -1428,7 +1293,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                 .map(BlazeAndroidWorkspaceImporterTest::aarName)
                 .collect(Collectors.toList()))
         .containsExactly("an_aar.aar");
-    androidResult = importWorkspace(workspaceRoot, targetMapBuilder, projectView, true);
+    androidResult = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
 
     errorCollector.assertNoIssues();
 
@@ -1527,7 +1392,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     BlazeJavaImportResult javaResult =
         importJavaWorkspace(workspaceRoot, targetMapBuilder, projectView);
     BlazeAndroidImportResult androidResult =
-        importWorkspace(workspaceRoot, targetMapBuilder, projectView, true);
+        importWorkspace(workspaceRoot, targetMapBuilder, projectView);
 
     errorCollector.assertNoIssues();
 
@@ -1546,31 +1411,6 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     BlazeAndroidLibrarySource.AarJarFilter aarFilter =
         new BlazeAndroidLibrarySource.AarJarFilter(androidResult.aarLibraries.values());
     ImmutableList<BlazeJarLibrary> blazeJarLibraries = javaResult.libraries.values().asList();
-    for (BlazeJarLibrary jarLibrary : blazeJarLibraries) {
-      if (libraryJarName(jarLibrary).equals("dep_library.jar")) {
-        assertThat(aarFilter.test(jarLibrary)).isTrue();
-      } else {
-        assertThat(aarFilter.test(jarLibrary)).isFalse();
-      }
-    }
-
-    androidResult = importWorkspace(workspaceRoot, targetMapBuilder, projectView, false);
-
-    errorCollector.assertNoIssues();
-
-    assertThat(androidResult.aarLibraries).hasSize(2);
-    assertThat(
-            androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarJarName)
-                .collect(Collectors.toList()))
-        .containsExactly("classes_and_libs_merged.jar", "classes_and_libs_merged.jar");
-    assertThat(
-            androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarName)
-                .collect(Collectors.toList()))
-        .containsExactly("lib1_aar.aar", "lib2_aar.aar");
-    aarFilter = new BlazeAndroidLibrarySource.AarJarFilter(androidResult.aarLibraries.values());
-    blazeJarLibraries = javaResult.libraries.values().asList();
     for (BlazeJarLibrary jarLibrary : blazeJarLibraries) {
       if (libraryJarName(jarLibrary).equals("dep_library.jar")) {
         assertThat(aarFilter.test(jarLibrary)).isTrue();

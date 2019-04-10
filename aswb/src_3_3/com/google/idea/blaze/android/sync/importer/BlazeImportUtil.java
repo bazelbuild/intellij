@@ -101,14 +101,9 @@ public class BlazeImportUtil {
 
   /**
    * Returns a predicate that returns true if a fake AAR should be created for the given resource
-   * folder. That is, it returns true if fake aars are enabled and the folder is outside the project
-   * view.
+   * folder. That is, it returns true if the folder is outside the project view.
    */
   public static Predicate<ArtifactLocation> getShouldCreateFakeAarFilter(BlazeImportInput input) {
-    if (!input.createFakeAarLibrariesExperiment) {
-      return (it) -> Boolean.FALSE;
-    }
-
     ImportRoots importRoots =
         ImportRoots.builder(input.workspaceRoot, input.buildSystem)
             .add(input.projectViewSet)
