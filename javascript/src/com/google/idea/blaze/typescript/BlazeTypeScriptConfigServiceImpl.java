@@ -15,7 +15,9 @@
  */
 package com.google.idea.blaze.typescript;
 
+import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -28,9 +30,9 @@ import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
+import com.google.idea.sdkcompat.typescript.TypeScriptConfigServiceCompat;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
-import com.intellij.lang.typescript.tsconfig.TypeScriptConfigUtil;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigsChangedListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -43,26 +45,29 @@ import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
+class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat {
   private final Project project;
   private final List<TypeScriptConfigsChangedListener> listeners;
 
-  private ImmutableList<TypeScriptConfig> configs;
+  private ImmutableMap<VirtualFile, TypeScriptConfig> configs;
 
   BlazeTypeScriptConfigServiceImpl(Project project) {
     this.project = project;
     this.listeners = new ArrayList<>();
-    this.configs = parseConfigs(project);
+    update();
   }
 
   void clear() {
-    configs = ImmutableList.of();
+    configs = ImmutableMap.of();
   }
 
   void update() {
-    configs = parseConfigs(project);
+    configs =
+        parseConfigs(project).stream()
+            .collect(
+                ImmutableMap.toImmutableMap(TypeScriptConfig::getConfigFile, Functions.identity()));
     for (TypeScriptConfigsChangedListener listener : listeners) {
-      listener.afterUpdate(configs);
+      TypeScriptConfigServiceCompat.fireListener(listener, configs);
     }
   }
 
@@ -101,7 +106,7 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
   @Nullable
   @Override
   public TypeScriptConfig getPreferableConfig(VirtualFile scopeFile) {
-    return TypeScriptConfigUtil.getNearestParentConfig(scopeFile, configs);
+    return TypeScriptConfigServiceCompat.getPreferableConfig(scopeFile, configs);
   }
 
   @Nullable
@@ -111,8 +116,13 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
   }
 
   @Override
-  public List<TypeScriptConfig> getConfigFiles() {
-    return configs;
+  public List<TypeScriptConfig> getConfigs() {
+    return configs.values().asList();
+  }
+
+  @Override
+  public List<VirtualFile> doGetConfigFiles() {
+    return configs.keySet().asList();
   }
 
   @Override
@@ -123,6 +133,11 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
   @Override
   public boolean hasConfigs() {
     return !configs.isEmpty();
+  }
+
+  @Override
+  public ModificationTracker getConfigTracker(@Nullable VirtualFile file) {
+    return BlazeSyncModificationTracker.getInstance(project);
   }
 
   @Override

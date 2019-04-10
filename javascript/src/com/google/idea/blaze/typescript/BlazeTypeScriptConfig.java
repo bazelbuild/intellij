@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.sdkcompat.typescript.TypeScriptConfigCompat;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
 import com.intellij.lang.javascript.library.JSLibraryUtil;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
@@ -72,7 +73,7 @@ import javax.annotation.Nullable;
  * <p>Resolves all the symlinks under tsconfig.runfiles, and adds all of their roots to the paths
  * substitutions.
  */
-class BlazeTypeScriptConfig implements TypeScriptConfig {
+class BlazeTypeScriptConfig implements TypeScriptConfigCompat {
   private static final Logger logger = Logger.getInstance(BlazeTypeScriptConfig.class);
 
   private final Project project;
@@ -101,6 +102,7 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
   private boolean noImplicitThis = true;
   private boolean noLib = true;
   private final List<JSModulePathSubstitution> paths = new ArrayList<>();
+  private final List<String> plugins = new ArrayList<>();
   private final List<String> rootDirs = new ArrayList<>();
   private final NotNullLazyValue<ImmutableList<VirtualFile>> rootDirsFiles;
   private final NotNullLazyValue<List<PsiFileSystemItem>> rootDirsPsiElements;
@@ -294,6 +296,11 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
           break;
         case "paths":
           parsePaths(value.getAsJsonObject());
+          break;
+        case "plugins":
+          for (JsonElement plugin : value.getAsJsonArray()) {
+            plugins.add(plugin.getAsJsonObject().get("name").getAsString());
+          }
           break;
         case "rootDirs":
           for (JsonElement rootDir : value.getAsJsonArray()) {
@@ -663,6 +670,16 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
   @Override
   public TypeScriptFileImportsResolver getImportResolver() {
     return importResolver.getValue();
+  }
+
+  @Override
+  public List<String> getPlugins() {
+    return plugins;
+  }
+
+  @Override
+  public boolean keyofStringsOnly() {
+    return false;
   }
 
   static class PathSubstitution implements JSModulePathSubstitution {

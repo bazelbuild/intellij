@@ -130,7 +130,7 @@ public class BlazeTypeScriptAdditionalLibraryRootsProvider extends AdditionalLib
     return MoreExecutors.listeningDecorator(PooledThreadExecutor.INSTANCE)
         .submit(
             () ->
-                TypeScriptConfigService.Provider.get(project).getConfigFiles().stream()
+                TypeScriptConfigService.Provider.getConfigFiles(project).stream()
                     .map(TypeScriptConfig::getFileList)
                     .flatMap(Collection::stream)
                     .map(VfsUtil::virtualToIoFile)

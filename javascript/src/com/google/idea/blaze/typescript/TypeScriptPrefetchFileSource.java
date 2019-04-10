@@ -86,7 +86,7 @@ public class TypeScriptPrefetchFileSource implements PrefetchFileSource {
     if (prefetchTsConfigFilesList.getValue()) {
       // Prefetch all .d.ts files from the tsconfig
       files.addAll(
-          TypeScriptConfigService.Provider.get(project).getConfigFiles().stream()
+          TypeScriptConfigService.Provider.getConfigFiles(project).stream()
               .map(TypeScriptConfig::getFileList)
               .flatMap(Collection::stream)
               .map(VfsUtil::virtualToIoFile)

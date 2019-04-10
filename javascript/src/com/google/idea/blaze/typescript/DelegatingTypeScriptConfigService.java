@@ -17,6 +17,8 @@ package com.google.idea.blaze.typescript;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.sdkcompat.typescript.TypeScriptConfigServiceCompat;
+import com.intellij.lang.typescript.library.TypeScriptLibraryProvider;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigLibraryUpdater;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
@@ -27,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiManager;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -35,7 +38,7 @@ import javax.annotation.Nullable;
  * Switches between {@link BlazeTypeScriptConfigServiceImpl} if the project is an applicable blaze
  * project, or {@link TypeScriptConfigServiceImpl} if it isn't.
  */
-class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
+class DelegatingTypeScriptConfigService implements TypeScriptConfigServiceCompat {
   private final TypeScriptConfigService impl;
 
   private static final BoolExperiment useBlazeTypeScriptConfig =
@@ -48,7 +51,13 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
     if (useBlazeTypeScriptConfig.getValue() && Blaze.isBlazeProject(project)) {
       this.impl = new BlazeTypeScriptConfigServiceImpl(project);
     } else {
-      this.impl = new TypeScriptConfigServiceImpl(project, updater, configGraphCache);
+      this.impl =
+          TypeScriptConfigServiceCompat.newImpl(
+              project,
+              updater,
+              PsiManager.getInstance(project),
+              TypeScriptLibraryProvider.getService(project),
+              configGraphCache);
     }
   }
 
@@ -92,8 +101,13 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
   }
 
   @Override
-  public List<TypeScriptConfig> getConfigFiles() {
-    return impl.getConfigFiles();
+  public List<TypeScriptConfig> getConfigs() {
+    return TypeScriptConfigServiceCompat.getConfigs(impl);
+  }
+
+  @Override
+  public List<VirtualFile> doGetConfigFiles() {
+    return TypeScriptConfigServiceCompat.getConfigFiles(impl);
   }
 
   @Override
@@ -104,6 +118,11 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
   @Override
   public boolean hasConfigs() {
     return impl.hasConfigs();
+  }
+
+  @Override
+  public ModificationTracker getConfigTracker(@Nullable VirtualFile file) {
+    return TypeScriptConfigServiceCompat.getConfigTracker(impl, file);
   }
 
   @Override

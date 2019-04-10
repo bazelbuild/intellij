@@ -112,6 +112,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//java",
+        "//sdkcompat",
         "//third_party/javascript:javascript_for_tests",
         "@junit//jar",
     ],

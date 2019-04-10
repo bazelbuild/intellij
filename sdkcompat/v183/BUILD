@@ -19,9 +19,11 @@ java_library(
             "com/google/idea/sdkcompat/cidr/**",
             "com/google/idea/sdkcompat/clion/**",
             "com/google/idea/sdkcompat/javascript/**",
+            "com/google/idea/sdkcompat/typescript/**",
         ]),
         intellij = glob([
             "com/google/idea/sdkcompat/javascript/**",
+            "com/google/idea/sdkcompat/typescript/**",
             "com/google/idea/sdkcompat/golang/**",
             "com/google/idea/sdkcompat/scala/**",
         ]),
