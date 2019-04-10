@@ -70,6 +70,13 @@ public class BlazeCommandRunConfigurationRunManagerImplTest extends BlazeIntegra
   @After
   public final void doTeardown() {
     runManager.clearAll();
+
+    // Workaround to force commit pending scheme file deletions.  Without this, uncommitted
+    // file deletions can occur during later tests and cause unexpected behaviour.
+    // This works because runManager.getState() triggers a save operation on SchemeManagerImpl,
+    // which commits any pending file operations. (b/127677541)
+    runManager.getState();
+
     // We don't need to do this at setup, because it is handled by RunManagerImpl's constructor.
     // However, clearAll() clears the configuration types, so we need to reinitialize them.
     RunManagerCompat.initializeConfigurationTypes(
