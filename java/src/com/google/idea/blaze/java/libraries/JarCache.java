@@ -314,7 +314,7 @@ public class JarCache {
       return getFallbackFile(artifact);
     }
     String cacheKey = cacheKeyForJar(artifact);
-    return getCacheFile(cacheKey).orElse(getFallbackFile(artifact));
+    return getCacheFile(cacheKey).orElseGet(() -> getFallbackFile(artifact));
   }
 
   /** Gets the cached file for a source jar. */
@@ -325,7 +325,7 @@ public class JarCache {
       return getFallbackFile(artifact);
     }
     String cacheKey = cacheKeyForSourceJar(artifact);
-    return getCacheFile(cacheKey).orElse(getFallbackFile(artifact));
+    return getCacheFile(cacheKey).orElseGet(() -> getFallbackFile(artifact));
   }
 
   private Optional<File> getCacheFile(String cacheKey) {
