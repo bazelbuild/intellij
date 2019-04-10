@@ -346,11 +346,13 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
     targetProcess.startNotify();
 
+    // CidrRemoteDebugParameters can't be constructed with a null sysroot, so pass in the default
+    // value "target:". Causes paths/files to be resolved in the context of the target.
     CidrRemoteDebugParameters parameters =
         new CidrRemoteDebugParameters(
             "tcp:localhost:" + handlerState.getDebugPortState().port,
             runner.executableToDebug.getPath(),
-            workspaceRootDirectory.getPath(),
+            "target:",
             ImmutableList.of(
                 new CidrRemotePathMapping("/proc/self/cwd", workspaceRootDirectory.getParent())));
 
