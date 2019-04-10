@@ -15,7 +15,6 @@
  */
 package com.google.idea.common.formatter;
 
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -27,10 +26,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.util.IncorrectOperationException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -88,6 +90,15 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
     }
   }
 
+  @Override
+  public void reformatTextWithContext(PsiFile file, ChangedRangesInfo info) {
+    if (overrideFormatterForFile(file)) {
+      formatInternal(file, info);
+    } else {
+      super.reformatTextWithContext(file, info);
+    }
+  }
+
   private void formatInternal(PsiFile file, Collection<TextRange> ranges) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
@@ -106,6 +117,15 @@ public abstract class ExternalFormatterCodeStyleManager extends DelegatingCodeSt
     }
 
     format(file, document, ranges);
+  }
+
+  private void formatInternal(PsiFile file, ChangedRangesInfo info) {
+    List<TextRange> ranges = new ArrayList<>();
+    if (info.insertedRanges != null) {
+      ranges.addAll(info.insertedRanges);
+    }
+    ranges.addAll(info.allChangedRanges);
+    formatInternal(file, ranges);
   }
 
   protected void performReplacements(Document document, Replacements replacements) {

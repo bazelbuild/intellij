@@ -30,9 +30,7 @@ import com.intellij.psi.codeStyle.FormattingModeAwareIndentAdjuster;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /** A delegating {@link CodeStyleManager}. */
@@ -48,12 +46,7 @@ public abstract class DelegatingCodeStyleManager extends CodeStyleManager
   @Override
   public void reformatTextWithContext(PsiFile file, ChangedRangesInfo info)
       throws IncorrectOperationException {
-    List<TextRange> ranges = new ArrayList<>();
-    if (info.insertedRanges != null) {
-      ranges.addAll(info.insertedRanges);
-    }
-    ranges.addAll(info.allChangedRanges);
-    this.reformatTextWithContext(file, ranges);
+    delegate.reformatTextWithContext(file, info);
   }
 
   @Override
