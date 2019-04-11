@@ -6,7 +6,7 @@ load("//:version.bzl", "VERSION")
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
-    "merged_plugin_xml",
+    "intellij_plugin_library",
     "plugin_deploy_zip",
     "repackaged_files",
     "stamped_plugin_xml",
@@ -22,33 +22,18 @@ load(
 
 licenses(["notice"])  # Apache 2.0
 
-merged_plugin_xml(
-    name = "merged_plugin_xml_common",
-    srcs = [
-        "src/META-INF/clwb.xml",
-        "//base:plugin_xml",
-        "//cpp:plugin_xml",
-        "//dart:plugin_xml",
-        "//javascript:plugin_xml",
-        "//python:plugin_xml",
-        "//skylark:plugin_xml",
-    ],
-)
-
-merged_plugin_xml(
-    name = "merged_plugin_xml",
-    srcs = [
-        "src/META-INF/clwb_bazel.xml",
-        ":merged_plugin_xml_common",
-    ],
+intellij_plugin_library(
+    name = "plugin_library",
+    plugin_xmls = ["src/META-INF/clwb.xml"],
+    deps = [":clwb_lib"],
 )
 
 stamped_plugin_xml(
     name = "stamped_plugin_xml",
     changelog_file = "//:changelog",
+    description_file = "src/META-INF/description.html",
     plugin_id = "com.google.idea.bazel.clwb",
     plugin_name = "Bazel",
-    plugin_xml = ":merged_plugin_xml",
     stamp_since_build = True,
     stamp_until_build = True,
     version = VERSION,
@@ -57,13 +42,6 @@ stamped_plugin_xml(
 java_library(
     name = "clwb_lib",
     srcs = glob(["src/**/*.java"]),
-    runtime_deps = [
-        "//dart",
-        "//javascript",
-        "//python",
-        "//skylark",
-        "//terminal",
-    ],
     deps = [
         "//base",
         "//common/actions",
@@ -75,18 +53,18 @@ java_library(
     ],
 )
 
-OPTIONAL_PLUGIN_XMLS = [
-    "//python:optional_xml",
-    "//javascript:optional_xml",
-    "//terminal:optional_xml",
-]
-
 intellij_plugin(
     name = "clwb_bazel",
-    optional_plugin_xmls = OPTIONAL_PLUGIN_XMLS,
     plugin_xml = ":stamped_plugin_xml",
     deps = [
-        ":clwb_lib",
+        ":plugin_library",
+        "//base:plugin_library",
+        "//cpp:plugin_library",
+        "//dart:plugin_library",
+        "//javascript:plugin_library",
+        "//python:plugin_library",
+        "//skylark:plugin_library",
+        "//terminal:plugin_library",
     ],
 )
 

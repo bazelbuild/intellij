@@ -3,7 +3,7 @@ licenses(["notice"])  # Apache 2.0
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
-    "merged_plugin_xml",
+    "intellij_plugin_library",
     "optional_plugin_xml",
     "stamped_plugin_xml",
 )
@@ -17,7 +17,7 @@ load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 java_library(
     name = "javascript",
     srcs = glob(["src/**/*.java"]),
-    visibility = ["//visibility:public"],
+    visibility = ["//java/com/google/devtools/intellij/blaze/plugin/javascript:__pkg__"],
     deps = [
         "//base",
         "//common/experiments",
@@ -38,45 +38,35 @@ java_library(
     deps = ["//intellij_platform_sdk:plugin_api"],
 )
 
-filegroup(
-    name = "plugin_xml",
-    srcs = ["src/META-INF/blaze-javascript.xml"],
-    visibility = ["//visibility:public"],
-)
-
 optional_plugin_xml(
     name = "optional_xml",
     module = "JavaScript",
     plugin_xml = "src/META-INF/javascript-contents.xml",
-    visibility = ["//visibility:public"],
 )
 
-merged_plugin_xml(
-    name = "merged_plugin_xml",
-    srcs = [
-        "//base:plugin_xml",
-        "//java:plugin_xml",
-    ] + [
-        ":plugin_xml",
-    ],
+intellij_plugin_library(
+    name = "plugin_library",
+    optional_plugin_xmls = [":optional_xml"],
+    plugin_xmls = ["src/META-INF/blaze-javascript.xml"],
+    visibility = ["//visibility:public"],
+    deps = [":javascript"],
 )
 
 stamped_plugin_xml(
     name = "javascript_plugin_xml",
     plugin_id = "com.google.idea.blaze.javascript",
     plugin_name = "com.google.idea.blaze.javascript",
-    plugin_xml = ":merged_plugin_xml",
 )
 
 intellij_plugin(
     name = "javascript_integration_test_plugin",
     testonly = 1,
-    optional_plugin_xmls = [
-        ":optional_xml",
-        "//java:optional_java",  # needed for default workspace
-    ],
     plugin_xml = ":javascript_plugin_xml",
-    deps = [":javascript"],
+    deps = [
+        ":plugin_library",
+        "//base:plugin_library",
+        "//java:plugin_library",
+    ],
 )
 
 intellij_unit_test_suite(

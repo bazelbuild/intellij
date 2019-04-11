@@ -2,9 +2,9 @@ licenses(["notice"])  # Apache 2.0
 
 load(
     "//build_defs:build_defs.bzl",
-    "merged_plugin_xml",
     "stamped_plugin_xml",
     "intellij_plugin",
+    "intellij_plugin_library",
     "optional_plugin_xml",
 )
 load(
@@ -13,39 +13,9 @@ load(
     "intellij_integration_test_suite",
 )
 
-filegroup(
-    name = "plugin_xml",
-    srcs = ["src/META-INF/blaze-kotlin.xml"],
-    visibility = ["//visibility:public"],
-)
-
-optional_plugin_xml(
-    name = "optional_xml",
-    module = "org.jetbrains.kotlin",
-    plugin_xml = "src/META-INF/kotlin-contents.xml",
-    visibility = ["//visibility:public"],
-)
-
-merged_plugin_xml(
-    name = "merged_plugin_xml",
-    srcs = [
-        ":plugin_xml",
-        "//base:plugin_xml",
-        "//java:plugin_xml",
-    ],
-)
-
-stamped_plugin_xml(
-    name = "kotlin_plugin_xml",
-    plugin_id = "com.google.idea.blaze.kotlin",
-    plugin_name = "com.google.idea.blaze.kotlin",
-    plugin_xml = "merged_plugin_xml",
-)
-
 java_library(
     name = "kotlin",
     srcs = glob(["src/**/*.java"]),
-    visibility = ["//visibility:public"],
     deps = [
         "//base",
         "//common/experiments",
@@ -58,15 +28,37 @@ java_library(
     ],
 )
 
+optional_plugin_xml(
+    name = "optional_xml",
+    module = "org.jetbrains.kotlin",
+    plugin_xml = "src/META-INF/kotlin-contents.xml",
+)
+
+intellij_plugin_library(
+    name = "plugin_library",
+    optional_plugin_xmls = [":optional_xml"],
+    plugin_xmls = ["src/META-INF/blaze-kotlin.xml"],
+    visibility = ["//visibility:public"],
+    deps = [":kotlin"],
+)
+
+stamped_plugin_xml(
+    name = "kotlin_plugin_xml",
+    plugin_id = "com.google.idea.blaze.kotlin",
+    plugin_name = "com.google.idea.blaze.kotlin",
+    plugin_xml = "src/META-INF/blaze-kotlin.xml",
+)
+
 intellij_plugin(
     name = "kotlin_integration_test_plugin",
     testonly = 1,
-    optional_plugin_xmls = [
-        ":optional_xml",
-        "//java:optional_java",
-    ],
+    optional_plugin_xmls = [":optional_xml"],
     plugin_xml = ":kotlin_plugin_xml",
-    deps = [":kotlin"],
+    deps = [
+        ":plugin_library",
+        "//base:plugin_library",
+        "//java:plugin_library",
+    ],
 )
 
 intellij_unit_test_suite(

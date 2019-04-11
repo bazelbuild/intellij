@@ -40,6 +40,7 @@ def main():
     depends_element.setAttribute("config-file", optional_xml)
     depends_element.appendChild(dom.createTextNode(module))
     plugin_xml.appendChild(depends_element)
+    plugin_xml.appendChild(dom.createTextNode("\n"))
 
   if args.output:
     with open(args.output, "wb") as f:

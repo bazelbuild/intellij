@@ -67,7 +67,7 @@ def _read_changelog(changelog_file):
 def _read_description(description_file):
   """Reads the description and transforms it into trivial HTML."""
   with open(description_file) as f:
-    return "\n".join("<p>" + line + "</p>" for line in f.readlines())
+    return f.read()
 
 
 def _read_vendor(vendor_file):

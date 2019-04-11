@@ -3,7 +3,7 @@ licenses(["notice"])  # Apache 2.0
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
-    "merged_plugin_xml",
+    "intellij_plugin_library",
     "optional_plugin_xml",
     "stamped_plugin_xml",
 )
@@ -73,52 +73,42 @@ java_library(
     exports = ["//third_party:jpda-jdi"],
 )
 
-filegroup(
-    name = "plugin_xml",
-    srcs = ["src/META-INF/blaze-java.xml"],
-    visibility = ["//visibility:public"],
-)
-
-merged_plugin_xml(
-    name = "merged_plugin_xml",
-    srcs = [
-        "//base:plugin_xml",
-    ] + [
-        ":plugin_xml",
-    ],
-)
-
 stamped_plugin_xml(
     name = "java_plugin_xml",
     plugin_id = "com.google.idea.blaze.java",
     plugin_name = "com.google.idea.blaze.java",
-    plugin_xml = "merged_plugin_xml",
 )
 
 optional_plugin_xml(
     name = "optional_java",
     module = "JUnit",
     plugin_xml = "src/META-INF/java-contents.xml",
-    visibility = ["//visibility:public"],
 )
 
 optional_plugin_xml(
     name = "optional_coverage",
     module = "com.intellij.modules.coverage",
     plugin_xml = "src/META-INF/coverage-contents.xml",
+)
+
+intellij_plugin_library(
+    name = "plugin_library",
+    optional_plugin_xmls = [
+        ":optional_java",
+        ":optional_coverage",
+    ],
+    plugin_xmls = ["src/META-INF/blaze-java.xml"],
     visibility = ["//visibility:public"],
+    deps = [":java"],
 )
 
 intellij_plugin(
     name = "java_integration_test_plugin",
     testonly = 1,
-    optional_plugin_xmls = [
-        ":optional_java",
-        ":optional_coverage",
-    ],
     plugin_xml = ":java_plugin_xml",
     deps = [
-        ":java",
+        ":plugin_library",
+        "//base:plugin_library",
     ],
 )
 

@@ -4,13 +4,13 @@
 
 licenses(["notice"])  # Apache 2.0
 
+load("//build_defs:build_defs.bzl", "intellij_plugin_library")
+
 java_library(
     name = "skylark",
     srcs = glob(["src/**/*.java"]),
-    visibility = ["//visibility:public"],
     deps = [
         "//base",
-        "//common/actions",
         "//common/experiments",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
@@ -20,8 +20,9 @@ java_library(
     ],
 )
 
-filegroup(
-    name = "plugin_xml",
-    srcs = ["src/META-INF/blaze-skylark.xml"],
+intellij_plugin_library(
+    name = "plugin_library",
+    plugin_xmls = ["src/META-INF/blaze-skylark.xml"],
     visibility = ["//visibility:public"],
+    deps = [":skylark"],
 )

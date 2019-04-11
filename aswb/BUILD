@@ -7,7 +7,7 @@ licenses(["notice"])  # Apache 2.0
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
-    "merged_plugin_xml",
+    "intellij_plugin_library",
     "optional_plugin_xml",
     "plugin_deploy_zip",
     "repackaged_files",
@@ -25,54 +25,25 @@ load(
     "intellij_unit_test_suite",
 )
 
-merged_plugin_xml(
-    name = "merged_plugin_xml_common",
-    srcs = [
-        "src/META-INF/aswb.xml",
-        "//base:plugin_xml",
-        "//dart:plugin_xml",
-        "//java:plugin_xml",
-        "//kotlin:plugin_xml",
-        "//python:plugin_xml",
-        "//skylark:plugin_xml",
-    ],
-)
-
-optional_plugin_xml(
-    name = "optional_cpp_xml",
-    module = "com.intellij.modules.cidr.lang",
-    plugin_xml = "//cpp:plugin_xml",
-)
-
 optional_plugin_xml(
     name = "optional_ndk_xml",
     module = "com.android.tools.ndk",
     plugin_xml = "src/META-INF/ndk_contents.xml",
 )
 
-OPTIONAL_PLUGIN_XMLS = [
-    ":optional_cpp_xml",
-    ":optional_ndk_xml",
-    "//java:optional_java",
-    "//java:optional_coverage",
-    "//kotlin:optional_xml",
-    "//python:optional_xml",
-]
-
-merged_plugin_xml(
-    name = "merged_plugin_xml",
-    srcs = [
-        "src/META-INF/aswb_bazel.xml",
-        ":merged_plugin_xml_common",
-    ],
+intellij_plugin_library(
+    name = "plugin_library",
+    optional_plugin_xmls = [":optional_ndk_xml"],
+    plugin_xmls = ["src/META-INF/aswb.xml"],
+    deps = [":aswb_lib"],
 )
 
 stamped_plugin_xml(
     name = "stamped_plugin_xml",
     changelog_file = "//:changelog",
+    description_file = "src/META-INF/description.html",
     plugin_id = "com.google.idea.bazel.aswb",
     plugin_name = "Bazel",
-    plugin_xml = ":merged_plugin_xml",
     stamp_since_build = True,
     stamp_until_build = True,
     version = VERSION,
@@ -114,12 +85,6 @@ java_library(
         ]),
     }),
     resources = glob(["resources/**/*"]),
-    runtime_deps = [
-        "//dart",
-        "//kotlin",
-        "//python",
-        "//skylark",
-    ],
     deps = [
         "//base",
         "//common/concurrency",
@@ -226,10 +191,17 @@ intellij_integration_test_suite(
 
 intellij_plugin(
     name = "aswb_bazel",
-    optional_plugin_xmls = OPTIONAL_PLUGIN_XMLS,
     plugin_xml = ":stamped_plugin_xml",
     deps = [
-        ":aswb_lib",
+        ":plugin_library",
+        "//base:plugin_library",
+        "//cpp:plugin_library",
+        "//dart:plugin_library",
+        "//java:plugin_library",
+        "//kotlin:plugin_library",
+        "//python:plugin_library",
+        "//skylark:plugin_library",
+        "//terminal:plugin_library",
     ],
 )
 

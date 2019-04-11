@@ -1,12 +1,12 @@
 licenses(["notice"])  # Apache 2.0
 
+load("//build_defs:build_defs.bzl", "intellij_plugin_library")
 load("//testing:test_defs.bzl", "intellij_unit_test_suite")
 
 java_library(
     name = "dart",
     srcs = glob(["src/**/*.java"]),
     resources = glob(["resources/**/*"]),
-    visibility = ["//visibility:public"],
     deps = [
         "//base",
         "//common/experiments",
@@ -16,10 +16,11 @@ java_library(
     ],
 )
 
-filegroup(
-    name = "plugin_xml",
-    srcs = ["src/META-INF/blaze-dart.xml"],
+intellij_plugin_library(
+    name = "plugin_library",
+    plugin_xmls = ["src/META-INF/blaze-dart.xml"],
     visibility = ["//visibility:public"],
+    deps = [":dart"],
 )
 
 intellij_unit_test_suite(

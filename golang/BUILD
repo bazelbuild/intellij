@@ -8,7 +8,7 @@ load(
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
-    "merged_plugin_xml",
+    "intellij_plugin_library",
     "optional_plugin_xml",
     "stamped_plugin_xml",
 )
@@ -16,7 +16,10 @@ load(
 java_library(
     name = "golang",
     srcs = glob(["src/**/*.java"]),
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//java/com/google/devtools/intellij/blaze/plugin/golang:__pkg__",
+        "//javatests/com/google/devtools/intellij/blaze/plugin/golang:__pkg__",
+    ],
     deps = [
         "//base",
         "//common/experiments",
@@ -28,47 +31,33 @@ java_library(
     ],
 )
 
-filegroup(
-    name = "plugin_xml",
-    srcs = ["src/META-INF/blaze-go.xml"],
-    visibility = ["//visibility:public"],
-)
-
 optional_plugin_xml(
     name = "optional_xml",
     module = "org.jetbrains.plugins.go",
-    plugin_xml = ":merged_optional_xml",
+    plugin_xml = "src/META-INF/go-contents.xml",
+)
+
+intellij_plugin_library(
+    name = "plugin_library",
+    optional_plugin_xmls = [":optional_xml"],
+    plugin_xmls = ["src/META-INF/blaze-go.xml"],
     visibility = ["//visibility:public"],
-)
-
-merged_plugin_xml(
-    name = "merged_optional_xml",
-    srcs = ["src/META-INF/go-contents.xml"],
-)
-
-merged_plugin_xml(
-    name = "merged_plugin_xml",
-    srcs = [
-        "//base:plugin_xml",
-    ] + [
-        ":plugin_xml",
-    ],
+    deps = [":golang"],
 )
 
 stamped_plugin_xml(
     name = "golang_plugin_xml",
     plugin_id = "com.google.idea.blaze.golang",
     plugin_name = "com.google.idea.blaze.golang",
-    plugin_xml = "merged_plugin_xml",
 )
 
 intellij_plugin(
     name = "golang_integration_test_plugin",
     testonly = 1,
-    optional_plugin_xmls = [":optional_xml"],
     plugin_xml = ":golang_plugin_xml",
     deps = [
-        ":golang",
+        ":plugin_library",
+        "//base:plugin_library",
     ],
 )
 
