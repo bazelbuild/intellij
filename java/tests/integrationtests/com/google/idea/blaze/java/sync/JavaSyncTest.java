@@ -195,7 +195,6 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
     assertThat(syncStats.syncMode()).isEqualTo(SyncMode.FULL);
     assertThat(syncStats.syncResult()).isEqualTo(SyncResult.SUCCESS);
     assertThat(syncStats.syncBinaryType()).isSameAs(BuildBinaryType.BAZEL);
-    assertThat(syncStats.startTimeInEpochTime()).isNotEqualTo(0);
     assertThat(syncStats.timedEvents()).isNotEmpty();
     assertThat(syncStats.buildPhaseStats()).hasSize(1);
     assertThat(syncStats.buildPhaseStats().get(0).targets())

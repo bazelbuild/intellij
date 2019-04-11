@@ -60,6 +60,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.project.Project;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -140,7 +142,7 @@ final class BlazeSyncTask implements Progressive {
   /** Returns true if sync successfully completed */
   @VisibleForTesting
   void syncProject(BlazeContext context) {
-    long startTimeMillis = System.currentTimeMillis();
+    Instant startTime = Instant.now();
     SyncResult syncResult = SyncResult.FAILURE;
     SyncStats.Builder stats = SyncStats.builder();
     try {
@@ -169,7 +171,7 @@ final class BlazeSyncTask implements Progressive {
     } catch (Throwable e) {
       logSyncError(context, e);
     } finally {
-      finishSync(project, syncParams, context, syncResult, stats, startTimeMillis);
+      finishSync(project, syncParams, context, syncResult, stats, startTime);
     }
   }
 
@@ -179,7 +181,7 @@ final class BlazeSyncTask implements Progressive {
       BlazeContext context,
       SyncResult syncResult,
       SyncStats.Builder stats,
-      long startTimeMillis) {
+      Instant startTime) {
     try {
       if (syncResult.successful()) {
         ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
@@ -197,8 +199,8 @@ final class BlazeSyncTask implements Progressive {
           .setSyncTitle(syncParams.title)
           .setSyncBinaryType(Blaze.getBuildSystemProvider(project).getSyncBinaryType())
           .setSyncResult(syncResult)
-          .setStartTimeInEpochTime(startTimeMillis)
-          .setTotalClockTimeMillis(System.currentTimeMillis() - startTimeMillis);
+          .setStartTime(startTime)
+          .setTotalClockTime(Duration.between(startTime, Instant.now()));
       EventLoggingService.getInstance().log(stats.build());
       outputTimingSummary(context, stats.getCurrentTimedEvents());
 
@@ -350,12 +352,12 @@ final class BlazeSyncTask implements Progressive {
       BlazeContext context, ImmutableList<TimedEvent> timedEvents) {
     Map<EventType, Long> totalTimes = new LinkedHashMap<>();
     for (EventType type : EventType.values()) {
-      long totalTime =
+      long totalTimeMillis =
           timedEvents.stream()
               .filter(e -> e.isLeafEvent && e.type == type)
-              .mapToLong(e -> e.durationMillis)
+              .mapToLong(e -> e.duration.toMillis())
               .sum();
-      totalTimes.put(type, totalTime);
+      totalTimes.put(type, totalTimeMillis);
     }
     if (totalTimes.values().stream().mapToLong(l -> l).sum() < 1000) {
       return;

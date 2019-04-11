@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.scope.scopes;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
+import java.time.Duration;
 
 /** Called once the scope ends, with the timing information of the scope and all its children. */
 public interface TimingScopeListener {
@@ -25,17 +26,17 @@ public interface TimingScopeListener {
   class TimedEvent {
     public final String name;
     public final EventType type;
-    public final long durationMillis;
+    public final Duration duration;
     public final boolean isLeafEvent;
 
-    public TimedEvent(String name, EventType type, long durationMillis, boolean isLeafEvent) {
+    public TimedEvent(String name, EventType type, Duration duration, boolean isLeafEvent) {
       this.name = name;
       this.type = type;
-      this.durationMillis = durationMillis;
+      this.duration = duration;
       this.isLeafEvent = isLeafEvent;
     }
   }
 
   /** Called once the scope ends */
-  void onScopeEnd(ImmutableList<TimedEvent> events, long totalTimeMillis);
+  void onScopeEnd(ImmutableList<TimedEvent> events, Duration totalTime);
 }

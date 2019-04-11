@@ -109,8 +109,7 @@ final class BuildPhaseSyncTask {
         context -> {
           TimingScope timingScope = new TimingScope("Build phase", EventType.Other);
           timingScope.addScopeListener(
-              (events, totalTime) ->
-                  buildStats.setTimedEvents(events).setTotalTimeMillis(totalTime));
+              (events, totalTime) -> buildStats.setTimedEvents(events).setTotalTime(totalTime));
           context.push(timingScope);
           doRun(context);
         });

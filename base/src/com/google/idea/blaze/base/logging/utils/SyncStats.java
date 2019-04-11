@@ -23,6 +23,8 @@ import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 /** Sync stats covering all phases of sync. */
@@ -38,11 +40,11 @@ public abstract class SyncStats {
 
   public abstract ImmutableList<TimedEvent> timedEvents();
 
-  public abstract long startTimeInEpochTime();
+  public abstract Instant startTime();
 
-  public abstract long totalClockTimeMillis();
+  public abstract Duration totalClockTime();
 
-  public abstract long blazeExecTimeMillis();
+  public abstract Duration blazeExecTime();
 
   public abstract WorkspaceType workspaceType();
 
@@ -52,7 +54,7 @@ public abstract class SyncStats {
 
   public static Builder builder() {
     return new AutoValue_SyncStats.Builder()
-        .setBlazeExecTimeMillis(0)
+        .setBlazeExecTime(Duration.ZERO)
         .setWorkspaceType(WorkspaceType.JAVA)
         .setLanguagesActive(ImmutableList.of());
   }
@@ -79,11 +81,11 @@ public abstract class SyncStats {
       return timedEventsBuilder().build();
     }
 
-    public abstract Builder setStartTimeInEpochTime(long startTimeInEpochTime);
+    public abstract Builder setStartTime(Instant instant);
 
-    public abstract Builder setTotalClockTimeMillis(long totalExecTimeMs);
+    public abstract Builder setTotalClockTime(Duration totalTime);
 
-    public abstract Builder setBlazeExecTimeMillis(long blazeExecTimeMs);
+    public abstract Builder setBlazeExecTime(Duration blazeExecTime);
 
     public abstract Builder setWorkspaceType(WorkspaceType workspaceType);
 

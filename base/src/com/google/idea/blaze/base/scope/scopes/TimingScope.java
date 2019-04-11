@@ -22,6 +22,8 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,9 +44,9 @@ public class TimingScope implements BlazeScope {
   private final String name;
   private final EventType eventType;
 
-  private long startTime;
+  private Instant startTime;
 
-  private Optional<Long> durationMillis = Optional.empty();
+  private Optional<Duration> duration = Optional.empty();
 
   private final List<TimingScopeListener> scopeListeners = Lists.newArrayList();
 
@@ -59,7 +61,7 @@ public class TimingScope implements BlazeScope {
 
   @Override
   public void onScopeBegin(BlazeContext context) {
-    startTime = System.currentTimeMillis();
+    startTime = Instant.now();
     parentScope = context.getParentScope(this);
 
     if (parentScope != null) {
@@ -70,24 +72,24 @@ public class TimingScope implements BlazeScope {
   @Override
   public void onScopeEnd(BlazeContext context) {
     if (context.isCancelled()) {
-      durationMillis = Optional.of(0L);
+      duration = Optional.of(Duration.ZERO);
       return;
     }
 
-    long elapsedTimeMillis = System.currentTimeMillis() - startTime;
-    durationMillis = Optional.of(elapsedTimeMillis);
+    Duration elapsedTime = Duration.between(startTime, Instant.now());
+    duration = Optional.of(elapsedTime);
 
     if (!scopeListeners.isEmpty()) {
       ImmutableList<TimedEvent> output = collectTimedEvents();
-      scopeListeners.forEach(l -> l.onScopeEnd(output, elapsedTimeMillis));
+      scopeListeners.forEach(l -> l.onScopeEnd(output, elapsedTime));
     }
-    if (parentScope == null && elapsedTimeMillis > 100) {
+    if (parentScope == null && elapsedTime.toMillis() > 100) {
       logTimingData();
     }
   }
 
   private TimedEvent getTimedEvent() {
-    return new TimedEvent(name, eventType, durationMillis.orElse(0L), children.isEmpty());
+    return new TimedEvent(name, eventType, duration.orElse(Duration.ZERO), children.isEmpty());
   }
 
   /** Adds a TimingScope listener to its list of listeners. */
@@ -121,11 +123,11 @@ public class TimingScope implements BlazeScope {
     // Self time trivially 100% if no children
     if (timingScope.children.size() > 0) {
       // Calculate self time as <my duration> - <sum child duration>
-      long selfTime = timingScope.getDurationMillis();
+      Duration selfTime = timingScope.getDuration();
       for (TimingScope child : timingScope.children) {
-        selfTime -= child.getDurationMillis();
+        selfTime = selfTime.plus(child.getDuration());
       }
-      if (selfTime > 100) {
+      if (selfTime.toMillis() > 100) {
         selfString = String.format(" (%s)", durationStr(selfTime));
       }
     }
@@ -136,7 +138,7 @@ public class TimingScope implements BlazeScope {
             "%s%s: %s%s",
             getIndentation(depth),
             timingScope.name,
-            durationStr(timingScope.getDurationMillis()),
+            durationStr(timingScope.getDuration()),
             selfString));
 
     for (TimingScope child : timingScope.children) {
@@ -144,17 +146,18 @@ public class TimingScope implements BlazeScope {
     }
   }
 
-  private long getDurationMillis() {
-    if (durationMillis.isPresent()) {
-      return durationMillis.get();
+  private Duration getDuration() {
+    if (duration.isPresent()) {
+      return duration.get();
     }
     // Could happen if a TimingScope outlives the root context (e.g., from BlazeSyncTask), so the
     // actual duration is not yet known.
     logger.warn(String.format("Duration not computed for TimingScope %s", name));
-    return 0;
+    return Duration.ZERO;
   }
 
-  private static String durationStr(long timeMillis) {
+  private static String durationStr(Duration duration) {
+    long timeMillis = duration.toMillis();
     return timeMillis >= 1000
         ? String.format("%.1fs", timeMillis / 1000d)
         : String.format("%sms", timeMillis);

@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,7 +38,7 @@ public abstract class BuildPhaseSyncStats {
 
   public abstract ImmutableList<TimedEvent> timedEvents();
 
-  public abstract long totalTimeMillis();
+  public abstract Duration totalTime();
 
   public static Builder builder() {
     return new AutoValue_BuildPhaseSyncStats.Builder()
@@ -46,7 +47,7 @@ public abstract class BuildPhaseSyncStats {
         .setSyncSharded(false)
         .setBuildResult(BuildResult.FATAL_ERROR)
         .setTimedEvents(ImmutableList.of())
-        .setTotalTimeMillis(0);
+        .setTotalTime(Duration.ZERO);
   }
   /** Auto value builder for SyncStats. */
   @AutoValue.Builder
@@ -61,7 +62,7 @@ public abstract class BuildPhaseSyncStats {
 
     public abstract Builder setTimedEvents(ImmutableList<TimedEvent> timedEvents);
 
-    public abstract Builder setTotalTimeMillis(long totalTimeMillis);
+    public abstract Builder setTotalTime(Duration totalTime);
 
     public abstract BuildPhaseSyncStats build();
   }
