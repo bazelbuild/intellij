@@ -258,23 +258,6 @@ public class BlazeGoImportResolverTest extends BlazeIntegrationTestCase {
   }
 
   @Test
-  public void testResolvePrivateLibrarySymbolsFromBinary() {
-    configureGoFile(
-        "binary/main.go",
-        "package main",
-        "import \"github.com/user/library/foo\"",
-        "import \"github.com/user/library/bar\"",
-        "",
-        "func main() {",
-        "\tfo<caret>o.Fo<caret>o{privat<caret>e: 0}.ru<caret>n()",
-        "}");
-    assertThatResolveCaret(0).typeIs(FuncallExpression.class).nameIs("foo");
-    assertThatResolveCaret(1).typeIs(GoTypeSpec.class).nameIs("Foo").inFile("foo.go");
-    assertThatResolveCaret(2).isNull(); // private: 0
-    assertThatResolveCaret(3).isNull(); // .run()
-  }
-
-  @Test
   public void testResolvePrivateLibrarySymbolsFromSameLibrary() {
     configureGoFile(
         "library/foo2.go",
@@ -375,24 +358,6 @@ public class BlazeGoImportResolverTest extends BlazeIntegrationTestCase {
     assertThatResolveCaret(1).typeIs(GoTypeSpec.class).nameIs("Foo").inFile("foo.go");
     assertThatResolveCaret(2).typeIs(GoFieldDefinition.class).nameIs("Public").inFile("foo.go");
     assertThatResolveCaret(3).typeIs(GoMethodDeclaration.class).nameIs("Run").inFile("foo.go");
-  }
-
-  @Test
-  public void testResolvePrivateLibrarySymbolsFromPublicTest() {
-    configureGoFile(
-        "library/foo_public_test.go",
-        "package foo_test",
-        "import \"github.com/user/library/foo\"",
-        "import \"testing\"",
-        "",
-        "func Test(t *testing.T) {",
-        "\tf := fo<caret>o.Fo<caret>o{privat<caret>e: 0}",
-        "\tf.ru<caret>n()",
-        "}");
-    assertThatResolveCaret(0).typeIs(FuncallExpression.class).nameIs("foo");
-    assertThatResolveCaret(1).typeIs(GoTypeSpec.class).nameIs("Foo").inFile("foo.go");
-    assertThatResolveCaret(2).isNull(); // private: 0
-    assertThatResolveCaret(3).isNull(); // .run()
   }
 
   @Test
