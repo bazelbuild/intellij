@@ -15,9 +15,7 @@
  */
 package com.google.idea.blaze.base.scope;
 
-import org.jetbrains.annotations.NotNull;
-
 /** A scoped operation that can return a result to its caller. */
 public interface ScopedFunction<T> {
-  T execute(@NotNull BlazeContext context);
+  T execute(BlazeContext context);
 }

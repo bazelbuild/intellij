@@ -72,7 +72,7 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.BlazeSyncBuildResult;
+import com.google.idea.blaze.base.sync.SyncProjectState;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
@@ -134,19 +134,20 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
-      BlazeSyncBuildResult buildResult,
+      SyncProjectState projectState,
+      BlazeBuildOutputs buildResult,
       SyncState.Builder syncStateBuilder,
       boolean mergeWithOldState,
       @Nullable BlazeProjectData oldProjectData) {
     // If there was a partial error, make a best-effort attempt to sync. Retain
     // any old state that we have in an attempt not to lose too much code.
-    if (buildResult.getBuildResult().buildResult.status == BuildResult.Status.BUILD_ERROR) {
+    if (buildResult.buildResult.status == BuildResult.Status.BUILD_ERROR) {
       mergeWithOldState = true;
     }
 
     Predicate<String> ideInfoPredicate = AspectStrategy.ASPECT_OUTPUT_FILE_PREDICATE;
     Collection<OutputArtifact> files =
-        buildResult.getBuildResult().perOutputGroupArtifacts.entries().stream()
+        buildResult.perOutputGroupArtifacts.entries().stream()
             .filter(e -> e.getKey().startsWith(OutputGroup.INFO.prefix))
             .map(Map.Entry::getValue)
             .filter(f -> ideInfoPredicate.test(f.getKey()))
@@ -194,11 +195,11 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, Blaze.getBuildSystem(project))
-            .add(buildResult.getProjectViewSet())
+            .add(projectState.getProjectViewSet())
             .build();
 
     BlazeConfigurationHandler configHandler =
-        new BlazeConfigurationHandler(buildResult.getBlazeInfo());
+        new BlazeConfigurationHandler(projectState.getBlazeInfo());
     Ref<TargetMap> targetMapReference = Ref.create(oldTargetMap);
     BlazeIdeInterfaceState state =
         updateState(
@@ -207,7 +208,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             prevState,
             diff.getNewState(),
             configHandler,
-            buildResult.getLanguageSettings(),
+            projectState.getLanguageSettings(),
             importRoots,
             diff.getUpdatedOutputs(),
             diff.getRemovedOutputs(),
@@ -222,7 +223,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         childContext -> {
           childContext.push(new TimingScope("GenfilesPrefetchBuildArtifacts", EventType.Other));
           ImmutableList<OutputArtifact> resolveOutputs =
-              buildResult.getBuildResult().perOutputGroupArtifacts.entries().stream()
+              buildResult.perOutputGroupArtifacts.entries().stream()
                   .filter(e -> e.getKey().startsWith(OutputGroup.RESOLVE.prefix))
                   .map(Map.Entry::getValue)
                   .distinct()
@@ -318,7 +319,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
           context,
           childContext -> {
             try {
-              childContext.push(new TimingScope("CombinedBlazeBuild", EventType.Other));
+              childContext.push(new TimingScope("ReadingBuildOutputs", EventType.Other));
               return new BlazeBuildOutputs(
                   buildResultHelper.getPerOutputGroupArtifacts(), buildResult);
             } catch (GetArtifactsException e) {

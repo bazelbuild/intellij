@@ -57,7 +57,7 @@ public class BuildResult {
     return fromExitCode(combineExitCode(first.exitCode, second.exitCode));
   }
 
-  private final int exitCode;
+  public final int exitCode;
   public final Status status;
 
   private BuildResult(int exitCode) {

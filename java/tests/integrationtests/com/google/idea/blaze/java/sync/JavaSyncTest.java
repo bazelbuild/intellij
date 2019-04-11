@@ -191,15 +191,15 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
     assertThat(syncStatsList).hasSize(2);
 
     SyncStats syncStats = syncStatsList.get(0);
-    assertThat(syncStats).isNotNull();
     assertThat(syncStats.workspaceType()).isEqualTo(WorkspaceType.JAVA);
-    assertThat(syncStats.blazeProjectTargets())
-        .containsExactly(TargetExpression.fromString("//java/com/google:lib"));
     assertThat(syncStats.syncMode()).isEqualTo(SyncMode.FULL);
     assertThat(syncStats.syncResult()).isEqualTo(SyncResult.SUCCESS);
     assertThat(syncStats.syncBinaryType()).isSameAs(BuildBinaryType.BAZEL);
     assertThat(syncStats.startTimeInEpochTime()).isNotEqualTo(0);
     assertThat(syncStats.timedEvents()).isNotEmpty();
+    assertThat(syncStats.buildPhaseStats()).hasSize(1);
+    assertThat(syncStats.buildPhaseStats().get(0).targets())
+        .containsExactly(TargetExpression.fromString("//java/com/google:lib"));
 
     SyncStats secondSyncStats = syncStatsList.get(1);
     assertThat(secondSyncStats.syncMode()).isEqualTo(SyncMode.INCREMENTAL);

@@ -15,9 +15,7 @@
  */
 package com.google.idea.blaze.base.scope;
 
-import org.jetbrains.annotations.NotNull;
-
 /** A scoped operation. */
 public interface ScopedOperation {
-  void execute(@NotNull BlazeContext context);
+  void execute(BlazeContext context);
 }

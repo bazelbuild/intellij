@@ -18,79 +18,55 @@ package com.google.idea.blaze.base.logging.utils;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
-import java.util.ArrayList;
 import java.util.List;
 
-/** A class to bundle the sync timing statistics for logging. */
+/** Sync stats covering all phases of sync. */
 @AutoValue
 public abstract class SyncStats {
-
-  public abstract ImmutableList<TargetExpression> workingSetTargets();
-
-  public abstract ImmutableList<LanguageClass> languagesActive();
-
-  public abstract ImmutableList<TargetExpression> blazeProjectTargets();
-
-  public abstract BuildBinaryType syncBinaryType();
-
-  public abstract ImmutableList<String> syncFlags();
-
-  public abstract ImmutableList<TimedEvent> timedEvents();
-
-  public abstract long totalExecTimeMs();
-
-  public abstract long blazeExecTimeMs();
-
-  public abstract long startTimeInEpochTime();
-
   public abstract SyncMode syncMode();
 
   public abstract String syncTitle();
 
+  public abstract BuildBinaryType syncBinaryType();
+
   public abstract SyncResult syncResult();
 
-  public abstract boolean syncSharded();
+  public abstract ImmutableList<TimedEvent> timedEvents();
+
+  public abstract long startTimeInEpochTime();
+
+  public abstract long totalClockTimeMillis();
+
+  public abstract long blazeExecTimeMillis();
 
   public abstract WorkspaceType workspaceType();
 
+  public abstract ImmutableList<LanguageClass> languagesActive();
+
+  public abstract ImmutableList<BuildPhaseSyncStats> buildPhaseStats();
+
   public static Builder builder() {
     return new AutoValue_SyncStats.Builder()
-        .setTotalExecTimeMs(0L)
-        .setBlazeExecTimeMs(0L)
-        .setStartTimeInEpochTime(System.currentTimeMillis())
+        .setBlazeExecTimeMillis(0)
         .setWorkspaceType(WorkspaceType.JAVA)
-        .setSyncMode(SyncMode.STARTUP)
-        .setSyncBinaryType(BuildBinaryType.BLAZE_CUSTOM)
-        .setSyncSharded(false)
-        .setSyncFlags(new ArrayList<>())
-        .setLanguagesActive(new ArrayList<>())
-        .setBlazeProjectTargets(new ArrayList<>())
-        .setWorkingSetTargets(new ArrayList<>());
+        .setLanguagesActive(ImmutableList.of());
   }
+
   /** Auto value builder for SyncStats. */
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract Builder setWorkingSetTargets(List<TargetExpression> workingSetTargets);
+    public abstract Builder setSyncMode(SyncMode syncMode);
 
-    public abstract Builder setLanguagesActive(List<LanguageClass> languagesActive);
-
-    public abstract Builder setBlazeProjectTargets(List<TargetExpression> blazeProjectTargets);
+    public abstract Builder setSyncTitle(String syncTitle);
 
     public abstract Builder setSyncBinaryType(BuildBinaryType binaryType);
 
-    public abstract Builder setSyncFlags(List<String> syncFlags);
-
-    public abstract Builder setTotalExecTimeMs(long totalExecTimeMs);
-
-    public abstract Builder setBlazeExecTimeMs(long blazeExecTimeMs);
-
-    public abstract Builder setStartTimeInEpochTime(long startTimeInEpochTime);
+    public abstract Builder setSyncResult(SyncResult syncResult);
 
     abstract ImmutableList.Builder<TimedEvent> timedEventsBuilder();
 
@@ -99,15 +75,31 @@ public abstract class SyncStats {
       return this;
     }
 
-    public abstract Builder setSyncMode(SyncMode syncMode);
+    public ImmutableList<TimedEvent> getCurrentTimedEvents() {
+      return timedEventsBuilder().build();
+    }
 
-    public abstract Builder setSyncTitle(String syncTitle);
+    public abstract Builder setStartTimeInEpochTime(long startTimeInEpochTime);
 
-    public abstract Builder setSyncResult(SyncResult syncResult);
+    public abstract Builder setTotalClockTimeMillis(long totalExecTimeMs);
 
-    public abstract Builder setSyncSharded(boolean syncSharded);
+    public abstract Builder setBlazeExecTimeMillis(long blazeExecTimeMs);
 
     public abstract Builder setWorkspaceType(WorkspaceType workspaceType);
+
+    public abstract Builder setLanguagesActive(Iterable<LanguageClass> languagesActive);
+
+    abstract ImmutableList.Builder<BuildPhaseSyncStats> buildPhaseStatsBuilder();
+
+    public Builder addBuildPhaseStats(BuildPhaseSyncStats buildPhaseStats) {
+      buildPhaseStatsBuilder().add(buildPhaseStats);
+      return this;
+    }
+
+    public Builder addAllBuildPhaseStats(Iterable<BuildPhaseSyncStats> buildPhaseStats) {
+      buildPhaseStatsBuilder().addAll(buildPhaseStats);
+      return this;
+    }
 
     public abstract SyncStats build();
   }

@@ -15,19 +15,15 @@
  */
 package com.google.idea.blaze.base.scope.scopes;
 
-import static java.util.stream.Collectors.joining;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -78,11 +74,15 @@ public class TimingScope implements BlazeScope {
       return;
     }
 
-    long elapsedTime = System.currentTimeMillis() - startTime;
-    durationMillis = Optional.of(elapsedTime);
+    long elapsedTimeMillis = System.currentTimeMillis() - startTime;
+    durationMillis = Optional.of(elapsedTimeMillis);
 
-    if (parentScope == null) {
-      collectAndLogTimingData(context);
+    if (!scopeListeners.isEmpty()) {
+      ImmutableList<TimedEvent> output = collectTimedEvents();
+      scopeListeners.forEach(l -> l.onScopeEnd(output, elapsedTimeMillis));
+    }
+    if (parentScope == null && elapsedTimeMillis > 100) {
+      logTimingData();
     }
   }
 
@@ -91,20 +91,31 @@ public class TimingScope implements BlazeScope {
   }
 
   /** Adds a TimingScope listener to its list of listeners. */
-  public void addScopeListener(TimingScopeListener listener) {
+  public TimingScope addScopeListener(TimingScopeListener listener) {
     scopeListeners.add(listener);
+    return this;
   }
 
-  private void collectAndLogTimingData(BlazeContext context) {
+  private ImmutableList<TimedEvent> collectTimedEvents() {
+    List<TimedEvent> output = new ArrayList<>();
+    collectTimedEvents(this, output);
+    return ImmutableList.copyOf(output);
+  }
+
+  /** Recursively walk the scopes tree, collecting timing info. */
+  private static void collectTimedEvents(TimingScope timingScope, List<TimedEvent> data) {
+    data.add(timingScope.getTimedEvent());
+    for (TimingScope child : timingScope.children) {
+      collectTimedEvents(child, data);
+    }
+  }
+
+  private void logTimingData() {
     logger.info("==== TIMING REPORT ====");
-    TimingReportData data = new TimingReportData();
-    collectAndLogTimingData(context, this, data, 0);
-    data.outputSummary(context);
-    scopeListeners.forEach(l -> l.onScopeEnd(ImmutableList.copyOf(data.timedEvents)));
+    logTimingData(this, /* depth= */ 0);
   }
 
-  private static void collectAndLogTimingData(
-      BlazeContext context, TimingScope timingScope, TimingReportData data, int depth) {
+  private static void logTimingData(TimingScope timingScope, int depth) {
     String selfString = "";
 
     // Self time trivially 100% if no children
@@ -128,11 +139,8 @@ public class TimingScope implements BlazeScope {
             durationStr(timingScope.getDurationMillis()),
             selfString));
 
-    TimedEvent event = timingScope.getTimedEvent();
-    data.addTimedEvent(event);
-
     for (TimingScope child : timingScope.children) {
-      collectAndLogTimingData(context, child, data, depth + 1);
+      logTimingData(child, depth + 1);
     }
   }
 
@@ -158,35 +166,5 @@ public class TimingScope implements BlazeScope {
       sb.append("    ");
     }
     return sb.toString();
-  }
-
-  private static class TimingReportData {
-    final List<TimedEvent> timedEvents = new ArrayList<>();
-
-    void addTimedEvent(TimedEvent event) {
-      timedEvents.add(event);
-    }
-
-    void outputSummary(BlazeContext context) {
-      Map<EventType, Long> totalTimes = new LinkedHashMap<>();
-      for (EventType type : EventType.values()) {
-        long totalTime =
-            timedEvents.stream()
-                .filter(e -> e.isLeafEvent && e.type == type)
-                .mapToLong(e -> e.durationMillis)
-                .sum();
-        totalTimes.put(type, totalTime);
-      }
-      if (totalTimes.values().stream().mapToLong(l -> l).sum() < 1000) {
-        return;
-      }
-
-      String summary =
-          totalTimes.entrySet().stream()
-              .map(e -> String.format("%s: %s", e.getKey(), durationStr(e.getValue())))
-              .collect(joining(", "));
-
-      context.output(PrintOutput.log("\nTiming summary:\n" + summary));
-    }
   }
 }

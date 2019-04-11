@@ -16,9 +16,11 @@
 package com.google.idea.blaze.base.sync.autosync;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncListener;
@@ -56,13 +58,19 @@ class AutoSyncHandler implements ProjectComponent {
       new PendingChangesHandler<VirtualFile>(/* delayMillis= */ 2000) {
         @Override
         boolean runTask(ImmutableSet<VirtualFile> changes) {
-          if (BlazeSyncStatus.getInstance(project).syncInProgress()) {
+          if (!syncRemotely(project) && BlazeSyncStatus.getInstance(project).syncInProgress()) {
             return false;
           }
           queueAutomaticSync(changes);
           return true;
         }
       };
+
+  private static boolean syncRemotely(Project project) {
+    BuildSystemProvider provider = Blaze.getBuildSystemProvider(project);
+    // TODO(brendandouglas): expose the 'remote' boolean state explicitly
+    return provider != null && provider.getSyncBinaryType() == BuildBinaryType.RABBIT;
+  }
 
   private final Project project;
 
@@ -165,7 +173,8 @@ class AutoSyncHandler implements ProjectComponent {
     @Override
     public void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {
       // cancel any pending auto-syncs if we're doing a project-wide sync
-      if (syncMode == SyncMode.INCREMENTAL || syncMode == SyncMode.FULL) {
+      if (!syncRemotely(project)
+          && (syncMode == SyncMode.INCREMENTAL || syncMode == SyncMode.FULL)) {
         project.getComponent(AutoSyncHandler.class).pendingChangesHandler.clearQueue();
       }
     }

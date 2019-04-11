@@ -269,7 +269,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         Project project,
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
-        BlazeSyncBuildResult buildResult,
+        SyncProjectState projectState,
+        BlazeBuildOutputs buildResult,
         SyncState.Builder syncStateBuilder,
         boolean mergeWithOldState,
         @Nullable BlazeProjectData oldProjectData) {

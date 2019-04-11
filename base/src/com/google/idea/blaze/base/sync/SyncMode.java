@@ -17,16 +17,17 @@ package com.google.idea.blaze.base.sync;
 
 /** The kind of sync. */
 public enum SyncMode {
+  // DO NOT REORDER: ordinal is used to merge sync modes from multiple builds
   /** Happens on startup, restores in-memory state */
   STARTUP,
+  /** A partial sync, without any blaze build (i.e. updates directories / in-memory state only) */
+  NO_BUILD,
   /** Partial / working set sync */
   PARTIAL,
   /** This is the standard incremental sync */
   INCREMENTAL,
   /** Full sync, can invalidate/redo work that an incremental sync does not */
-  FULL,
-  /** A partial sync, without any blaze build (i.e. updates directories / in-memory state only) */
-  NO_BUILD;
+  FULL;
 
   public static boolean involvesBlazeBuild(SyncMode mode) {
     switch (mode) {

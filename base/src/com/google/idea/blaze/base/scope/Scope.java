@@ -18,20 +18,23 @@ package com.google.idea.blaze.base.scope;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /** Helper methods to run scoped functions and operations in a scoped context. */
 public final class Scope {
   private static final Logger logger = Logger.getInstance(Scope.class);
 
   /** Runs a scoped function in a new root scope. */
-  public static <T> T root(@NotNull ScopedFunction<T> scopedFunction) {
+  public static <T> T root(ScopedFunction<T> scopedFunction) {
     return push(null, scopedFunction);
   }
 
+  /** Runs a scoped operation in a new root scope. */
+  public static void root(ScopedOperation scopedOperation) {
+    push(null, scopedOperation);
+  }
+
   /** Runs a scoped function in a new nested scope. */
-  public static <T> T push(
-      @Nullable BlazeContext parentContext, @NotNull ScopedFunction<T> scopedFunction) {
+  public static <T> T push(@Nullable BlazeContext parentContext, ScopedFunction<T> scopedFunction) {
     BlazeContext context = new BlazeContext(parentContext);
     try {
       return scopedFunction.execute(context);
@@ -47,14 +50,8 @@ public final class Scope {
     }
   }
 
-  /** Runs a scoped operation in a new root scope. */
-  public static void root(@NotNull ScopedOperation scopedOperation) {
-    push(null, scopedOperation);
-  }
-
   /** Runs a scoped operation in a new nested scope. */
-  public static void push(
-      @Nullable BlazeContext parentContext, @NotNull ScopedOperation scopedOperation) {
+  public static void push(@Nullable BlazeContext parentContext, ScopedOperation scopedOperation) {
     BlazeContext context = new BlazeContext(parentContext);
     try {
       scopedOperation.execute(context);

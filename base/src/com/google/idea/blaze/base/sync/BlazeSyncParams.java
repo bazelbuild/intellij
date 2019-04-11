@@ -114,6 +114,18 @@ public final class BlazeSyncParams {
     this.targetExpressions = targetExpressions;
   }
 
+  /** Combine {@link BlazeSyncParams} from multiple build phases. */
+  public static BlazeSyncParams combine(BlazeSyncParams first, BlazeSyncParams second) {
+    BlazeSyncParams base = first.syncMode.ordinal() > second.syncMode.ordinal() ? first : second;
+    return new Builder(base.title, base.syncMode)
+        .setBackgroundSync(first.backgroundSync && second.backgroundSync)
+        .addTargetExpressions(first.targetExpressions)
+        .addTargetExpressions(second.targetExpressions)
+        .addProjectViewTargets(first.addProjectViewTargets || second.addProjectViewTargets)
+        .addWorkingSet(first.addWorkingSet || second.addWorkingSet)
+        .build();
+  }
+
   @Override
   public String toString() {
     return String.format("%s (%s)", title, syncMode.name().toLowerCase());

@@ -16,13 +16,11 @@
 package com.google.idea.blaze.base.sync;
 
 import com.google.auto.value.AutoValue;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.model.BlazeVersionData;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.logging.utils.BuildPhaseSyncStats;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
-import com.google.idea.blaze.base.sync.workspace.WorkingSet;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
+import javax.annotation.Nullable;
 
 /**
  * All the information gathered during the build phase of sync, used as input to the project update
@@ -37,56 +35,53 @@ public abstract class BlazeSyncBuildResult {
    */
   public BlazeSyncBuildResult updateResult(BlazeSyncBuildResult nextResult) {
     // take the most recent version of the project data, and combine the blaze build outputs
+    // TODO(brendandouglas): properly combine failed and successful builds (don't throw away results
+    // entirely)
     return nextResult.toBuilder()
+        .setProjectState(getProjectState().updateState(nextResult.getProjectState()))
         .setBuildResult(getBuildResult().updateOutputs(nextResult.getBuildResult()))
+        .setBuildPhaseStats(
+            ImmutableList.<BuildPhaseSyncStats>builder()
+                .addAll(getBuildPhaseStats())
+                .addAll(nextResult.getBuildPhaseStats())
+                .build())
         .build();
   }
 
-  public abstract ProjectViewSet getProjectViewSet();
+  /** Returns false if this build result is incomplete or invalid. */
+  public boolean isValid() {
+    return getProjectState() != null
+        && getBuildResult() != null
+        && getBuildResult().buildResult.status != Status.FATAL_ERROR;
+  }
 
-  public abstract WorkspaceLanguageSettings getLanguageSettings();
+  @Nullable
+  public abstract SyncProjectState getProjectState();
 
-  public abstract BlazeInfo getBlazeInfo();
-
-  public abstract BlazeVersionData getBlazeVersionData();
-
-  public abstract WorkingSet getWorkingSet();
-
-  public abstract WorkspacePathResolver getWorkspacePathResolver();
-
+  @Nullable
   public abstract BlazeBuildOutputs getBuildResult();
 
+  public abstract ImmutableList<BuildPhaseSyncStats> getBuildPhaseStats();
+
   public static Builder builder() {
-    return new AutoValue_BlazeSyncBuildResult.Builder();
+    return new AutoValue_BlazeSyncBuildResult.Builder().setBuildPhaseStats(ImmutableList.of());
   }
 
   private Builder toBuilder() {
     return builder()
-        .setProjectViewSet(getProjectViewSet())
-        .setLanguageSettings(getLanguageSettings())
-        .setBlazeInfo(getBlazeInfo())
-        .setBlazeVersionData(getBlazeVersionData())
-        .setWorkingSet(getWorkingSet())
-        .setWorkspacePathResolver(getWorkspacePathResolver())
+        .setProjectState(getProjectState())
+        .setBuildPhaseStats(getBuildPhaseStats())
         .setBuildResult(getBuildResult());
   }
 
   /** A builder for {@link BlazeSyncBuildResult} objects. */
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract Builder setProjectViewSet(ProjectViewSet projectViewSet);
-
-    public abstract Builder setLanguageSettings(WorkspaceLanguageSettings languageSettings);
-
-    public abstract Builder setBlazeInfo(BlazeInfo blazeInfo);
-
-    public abstract Builder setBlazeVersionData(BlazeVersionData blazeVersionData);
-
-    public abstract Builder setWorkingSet(WorkingSet workingSet);
-
-    public abstract Builder setWorkspacePathResolver(WorkspacePathResolver pathResolver);
+    public abstract Builder setProjectState(SyncProjectState projectState);
 
     public abstract Builder setBuildResult(BlazeBuildOutputs buildResult);
+
+    public abstract Builder setBuildPhaseStats(Iterable<BuildPhaseSyncStats> stats);
 
     public abstract BlazeSyncBuildResult build();
   }
