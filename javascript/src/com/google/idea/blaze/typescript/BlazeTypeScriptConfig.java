@@ -626,6 +626,11 @@ class BlazeTypeScriptConfig implements TypeScriptConfigCompat {
   }
 
   @Override
+  public boolean hasCompilerOption(String name) {
+    return compilerOptions.has(name);
+  }
+
+  @Override
   public boolean strictBindCallApply() {
     return false;
   }

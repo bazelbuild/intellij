@@ -16,11 +16,13 @@
 package com.google.idea.sdkcompat.typescript;
 
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
-import java.util.Collection;
+import java.util.List;
 
 /** Compatibility layer for {@link TypeScriptConfig}. #api183 */
 public interface TypeScriptConfigCompat extends TypeScriptConfig {
-  Collection<String> getPlugins();
+  boolean hasCompilerOption(String name);
+
+  List<String> getPlugins();
 
   boolean keyofStringsOnly();
 }
