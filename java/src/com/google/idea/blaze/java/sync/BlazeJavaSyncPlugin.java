@@ -17,7 +17,6 @@ package com.google.idea.blaze.java.sync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -45,7 +44,6 @@ import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.java.projectview.ExcludeLibrarySection;
 import com.google.idea.blaze.java.projectview.ExcludedLibrarySection;
 import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
@@ -110,10 +108,8 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings,
-      BlazeInfo blazeInfo,
       BlazeVersionData blazeVersionData,
       @Nullable WorkingSet workingSet,
-      WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
       TargetMap targetMap,
       SyncState.Builder syncStateBuilder,
