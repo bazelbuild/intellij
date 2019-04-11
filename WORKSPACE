@@ -11,8 +11,8 @@ load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
 http_archive(
     name = "intellij_ce_2018_3",
     build_file = "@//intellij_platform_sdk:BUILD.idea",
-    sha256 = "8eb5a2a2544607b2b052c5961475528a3f981333b301e0e17ad0e76eec8ac6a8",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2018.3.5/ideaIC-2018.3.5.zip",
+    sha256 = "b2390d64269ca4d4a7fcd856a29e5b2d1a81f40451f135b092f9f97f046b8f35",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2018.3.6/ideaIC-2018.3.6.zip",
 )
 
 # The plugin api for IntelliJ 2019.1. This is required to build IJwB,
