@@ -2,6 +2,7 @@
 # Description: Blaze plugin for various IntelliJ products.
 #
 
+
 licenses(["notice"])  # Apache 2.0
 
 # Changelog file
