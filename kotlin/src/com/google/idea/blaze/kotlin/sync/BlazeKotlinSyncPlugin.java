@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.kotlin.sync;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.KotlinToolchainIdeInfo;
@@ -26,6 +28,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -37,23 +40,30 @@ import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import java.util.ArrayList;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.jetbrains.kotlin.android.synthetic.AndroidCommandLineProcessor;
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
+import org.jetbrains.kotlin.config.KotlinFacetSettings;
 import org.jetbrains.kotlin.config.LanguageVersion;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator;
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector;
+import org.jetbrains.kotlin.idea.facet.KotlinFacet;
+import org.jetbrains.kotlin.idea.facet.KotlinFacetType;
 
 /** Supports Kotlin. */
 public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
@@ -147,12 +157,13 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     return version != null ? version : DEFAULT_VERSION;
   }
 
-  private static List<BlazeJarLibrary> findKotlinSdkLibraries(BlazeProjectData blazeProjectData) {
+  private static ImmutableList<BlazeJarLibrary> findKotlinSdkLibraries(
+      BlazeProjectData blazeProjectData) {
     KotlinToolchainIdeInfo toolchain = findToolchain(blazeProjectData.getTargetMap());
     if (toolchain == null) {
       return ImmutableList.of();
     }
-    List<BlazeJarLibrary> libraries = new ArrayList<>();
+    ImmutableList.Builder<BlazeJarLibrary> libraries = ImmutableList.builder();
     for (Label label : toolchain.getSdkTargets()) {
       TargetIdeInfo target = blazeProjectData.getTargetMap().get(TargetKey.forPlainTarget(label));
       if (target == null || target.getJavaIdeInfo() == null) {
@@ -163,7 +174,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
               .map(BlazeJarLibrary::new)
               .collect(Collectors.toList()));
     }
-    return libraries;
+    return libraries.build();
   }
 
   @Nullable
@@ -225,5 +236,82 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
           null,
           new NotificationMessageCollector(project, "Configuring Kotlin", "Configuring Kotlin"));
     }
+  }
+
+  @Override
+  public void updateProjectStructure(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      @org.jetbrains.annotations.Nullable BlazeProjectData oldBlazeProjectData,
+      ModuleEditor moduleEditor,
+      Module workspaceModule,
+      ModifiableRootModel workspaceModifiableModel) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.KOTLIN)) {
+      return;
+    }
+    configKotlinFacet(
+        workspaceModule,
+        Arrays.stream(KotlinPluginOptionsProvider.EP_NAME.getExtensions())
+            .map(
+                provider ->
+                    provider.collectKotlinPluginOptions(blazeProjectData.getTargetMap().targets()))
+            .flatMap(Collection::stream)
+            .collect(Collectors.toList()));
+  }
+
+  private static KotlinFacet getOrCreateKotlinFacet(Module module) {
+    KotlinFacet facet = KotlinFacet.Companion.get(module);
+    if (facet != null) {
+      return facet;
+    }
+    FacetManager facetManager = FacetManager.getInstance(module);
+    ModifiableFacetModel model = facetManager.createModifiableModel();
+    try {
+      facet =
+          facetManager.createFacet(
+              KotlinFacetType.Companion.getINSTANCE(), KotlinFacetType.NAME, null);
+      model.addFacet(facet);
+    } finally {
+      model.commit();
+    }
+    return facet;
+  }
+
+  /**
+   * This method takes the options that are present on the {@link KotlinPluginOptionsProvider} and
+   * adds them as plugin options to the {@link KotlinFacet}. Old options are removed from the facet
+   * before configuration of the new options from the extension.
+   *
+   * @param module the module that its KotlinFacet to be configured
+   * @param newPluginOptions new plugin options to be updated to KotlinFacet settings
+   */
+  private static void configKotlinFacet(Module module, List<String> newPluginOptions) {
+    KotlinFacetSettings facetSettings =
+        getOrCreateKotlinFacet(module).getConfiguration().getSettings();
+    // TODO: Unify this part with {@link
+    // org.jetbrains.kotlin.android.sync.ng.KotlinSyncModels#setupKotlinAndroidExtensionAsFacetPluginOptions}?
+    CommonCompilerArguments commonArguments = facetSettings.getCompilerArguments();
+    if (commonArguments == null) {
+      commonArguments = new CommonCompilerArguments.DummyImpl();
+    }
+
+    String[] oldPluginOptions = commonArguments.getPluginOptions();
+    if (oldPluginOptions == null) {
+      oldPluginOptions = new String[0];
+    }
+    newPluginOptions.addAll(
+        Arrays.stream(oldPluginOptions)
+            .filter(option -> !isCompilerOption(option))
+            .collect(toImmutableList()));
+    commonArguments.setPluginOptions(newPluginOptions.toArray(new String[0]));
+    facetSettings.setCompilerArguments(commonArguments);
+  }
+
+  private static boolean isCompilerOption(String option) {
+    return option.startsWith(
+        "plugin:" + AndroidCommandLineProcessor.Companion.getANDROID_COMPILER_PLUGIN_ID() + ":");
   }
 }

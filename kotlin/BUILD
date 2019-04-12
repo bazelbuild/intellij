@@ -16,6 +16,7 @@ load(
 java_library(
     name = "kotlin",
     srcs = glob(["src/**/*.java"]),
+    visibility = ["//java/com/google/devtools/intellij/blaze/plugin/aswb:__subpackages__"],
     deps = [
         "//base",
         "//common/experiments",
@@ -37,7 +38,6 @@ optional_plugin_xml(
 intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_xml"],
-    plugin_xmls = ["src/META-INF/blaze-kotlin.xml"],
     visibility = ["//visibility:public"],
     deps = [":kotlin"],
 )

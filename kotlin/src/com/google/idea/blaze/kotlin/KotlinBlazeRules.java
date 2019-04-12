@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 /** Contributes kotlin rules to {@link Kind}. */
-final class KotlinBlazeRules implements Kind.Provider {
+public final class KotlinBlazeRules implements Kind.Provider {
 
   /** Kotlin-specific blaze rule types. */
   public enum RuleTypes {
