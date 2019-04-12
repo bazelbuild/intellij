@@ -15,8 +15,13 @@
  */
 package com.google.idea.blaze.android.sdk;
 
+import com.android.repository.api.ProgressIndicator;
+import com.android.tools.idea.gradle.project.sync.setup.module.android.SdkModuleSetupStep;
 import com.android.tools.idea.sdk.AndroidSdks;
+import com.android.tools.idea.sdk.IdeSdks;
+import com.android.tools.idea.sdk.progress.StudioLoggerProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.util.ui.UIUtil;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
@@ -29,8 +34,20 @@ public class BlazeSdkProviderImpl implements BlazeSdkProvider {
   }
 
   @Override
+  @Nullable
   public Sdk findSdk(String targetHash) {
-    return AndroidSdks.getInstance().findSuitableAndroidSdk(targetHash);
+    AndroidSdks androidSdks = AndroidSdks.getInstance();
+    Sdk sdk = androidSdks.findSuitableAndroidSdk(targetHash);
+    if (sdk != null) {
+      return sdk;
+    }
+    // We may have an android platform downloaded, but not created an IntelliJ SDK out of it.
+    // If so, trigger the construction of an SDK
+    ProgressIndicator progress = new StudioLoggerProgressIndicator(SdkModuleSetupStep.class);
+    androidSdks.tryToChooseSdkHandler().getSdkManager(progress).reloadLocalIfNeeded(progress);
+
+    return UIUtil.invokeAndWaitIfNeeded(
+        () -> androidSdks.tryToCreate(IdeSdks.getInstance().getAndroidSdkPath(), targetHash));
   }
 
   @Override

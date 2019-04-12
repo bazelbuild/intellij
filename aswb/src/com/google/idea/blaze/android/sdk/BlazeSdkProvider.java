@@ -28,6 +28,7 @@ public interface BlazeSdkProvider {
 
   List<Sdk> getAllAndroidSdks();
 
+  @Nullable
   Sdk findSdk(String targetHash);
 
   @Nullable
