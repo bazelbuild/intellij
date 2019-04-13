@@ -50,6 +50,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -64,6 +65,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class BlazeAndroidBinaryRunConfigurationHandler
     implements BlazeAndroidRunConfigurationHandler {
+  private static final Logger LOG =
+      Logger.getInstance(BlazeAndroidBinaryRunConfigurationHandler.class);
 
   private final BlazeCommandRunConfiguration configuration;
   private final BlazeAndroidBinaryRunConfigurationState configState;
@@ -150,7 +153,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
       ImmutableList<String> exeFlags) {
     switch (configState.getLaunchMethod()) {
       case NON_BLAZE:
-        if (!maybeShowMobileInstallOptIn(project)) {
+        if (!maybeShowMobileInstallOptIn(project, configuration)) {
           return new BlazeAndroidBinaryNormalBuildRunContext(
               project, facet, configuration, env, configState, getLabel(), blazeFlags);
         }
@@ -227,13 +230,25 @@ public class BlazeAndroidBinaryRunConfigurationHandler
    *
    * @return true if dialog was shown and user migrated, otherwise false
    */
-  private boolean maybeShowMobileInstallOptIn(Project project) {
+  private boolean maybeShowMobileInstallOptIn(
+      Project project, BlazeCommandRunConfiguration configuration) {
     long lastPrompt = PropertiesComponent.getInstance(project).getOrInitLong(MI_LAST_PROMPT, 0L);
     boolean neverAsk =
         PropertiesComponent.getInstance(project).getBoolean(MI_NEVER_ASK_AGAIN, false);
     if (neverAsk || (System.currentTimeMillis() - lastPrompt) < MI_TIMEOUT_MS) {
       return false;
     }
+    // Add more logging on why the MI opt-in dialog is shown.  There exists a bug there a user
+    // is shown the mobile-install opt-in dialog every time they switch clients. The only way for
+    // this to happen is if a new target is created or if the timeouts are not behaving as expected.
+    // TODO Remove once b/130327673 is resolved.
+    LOG.info(
+        "Showing mobile install opt-in dialog.\n"
+            + "Run target: "
+            + configuration.getTarget()
+            + "\n"
+            + "Time since last prompt: "
+            + (System.currentTimeMillis() - lastPrompt));
     PropertiesComponent.getInstance(project)
         .setValue(MI_LAST_PROMPT, String.valueOf(System.currentTimeMillis()));
     int choice =
