@@ -147,6 +147,10 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
+    // Android run configurations don't use the blaze-command attribute and can lead to confusing
+    // run config XMLs.  Always remove the attribute just in case it's in the element.
+    element.removeAttribute("blaze-command");
+
     blazeFlags.writeExternal(element);
     exeFlags.writeExternal(element);
     element.setAttribute(NATIVE_DEBUG_ATTR, Boolean.toString(nativeDebuggingEnabled));
