@@ -260,7 +260,10 @@ class MultipleJavaClassesTestContextProvider implements TestContextProvider {
    */
   @Nullable
   private static TargetInfo findUniqueRelevantTestTarget(
-      Project project, Set<PsiClass> classes, Collection<TargetInfo> targets) {
+      Project project, Set<PsiClass> classes, @Nullable Collection<TargetInfo> targets) {
+    if (targets == null || targets.isEmpty()) {
+      return null;
+    }
     Set<TargetInfo> set =
         classes.stream()
             .map(c -> findTestTargetForClass(project, c, targets))
