@@ -21,7 +21,6 @@ java_library(
     name = "sdkcompat",
     visibility = ["//visibility:public"],
     exports = select_for_plugin_api({
-        "android-studio-3.3": ["//sdkcompat/v182"],
         "android-studio-3.4": ["//sdkcompat/v183"],
         "android-studio-3.5": ["//sdkcompat/v191"],
         "intellij-2018.3": ["//sdkcompat/v183"],

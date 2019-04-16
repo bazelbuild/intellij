@@ -71,10 +71,6 @@ java_library(
 java_library(
     name = "aswb_lib",
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
-        "android-studio-3.3": glob([
-            "src_3_3/**/*.java",
-            "sdkcompat/as33/**/*.java",
-        ]),
         "android-studio-3.4": glob([
             "src_3_4/**/*.java",
             "sdkcompat/as34/**/*.java",
@@ -101,7 +97,6 @@ java_library(
 intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]) + select_for_plugin_api({
-        "android-studio-3.3": glob(["tests/unittests_3_3/**/*.java"]),
         "android-studio-3.4": glob(["tests/unittests_3_4/**/*.java"]),
         "android-studio-3.5": glob(["tests/unittests_3_4/**/*.java"]),
     }),
@@ -135,7 +130,6 @@ intellij_integration_test_suite(
         ["tests/integrationtests/**/*.java"],
         exclude = ["tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java"],
     ) + select_for_plugin_api({
-        "android-studio-3.3": glob(["tests/integrationtests_3_3/**/*.java"]),
         "android-studio-3.4": glob(["tests/integrationtests_3_4/**/*.java"]),
         "android-studio-3.5": glob(["tests/integrationtests_3_4/**/*.java"]),
     }),

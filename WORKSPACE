@@ -60,20 +60,6 @@ http_archive(
     url = "https://download.jetbrains.com/cpp/CLion-2019.1.tar.gz",
 )
 
-# Python plugin for Android Studio 3.3. Required at compile-time for python-specific features.
-http_archive(
-    name = "python_2018_2",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'python',",
-        "    jars = ['python-ce/lib/python-ce.jar'],",
-        "    visibility = ['//visibility:public'],",
-        ")",
-    ]),
-    sha256 = "863d8da8a6e1d2589178ed2ff657d935ed2536d26bde5ebd7785ca16ce0b3093",
-    url = "https://plugins.jetbrains.com/files/7322/48707/python-ce-2018.2.182.3911.36.zip",
-)
-
 # Python plugin for IntelliJ CE 2018.3. Required at compile-time for python-specific features.
 http_archive(
     name = "python_2018_3",
@@ -156,13 +142,6 @@ http_archive(
     ]),
     sha256 = "e26f00ff697f30defb1d1968805cc3c95a31d0b1bef428cfc202ebd3e0c1076c",
     url = "https://plugins.jetbrains.com/files/1347/59108/scala-intellij-bin-2019.1.2.zip",
-)
-
-http_archive(
-    name = "android_studio_3_3",
-    build_file = "@//intellij_platform_sdk:BUILD.android_studio",
-    sha256 = "82603100f772baf5b6b54532375ada756b4b2dc11854cabae267cd8bd8c4f039",
-    url = "https://dl.google.com/android/studio/ide-zips/3.3.1.0/android-studio-ide-182.5264788-linux.zip",
 )
 
 http_archive(

@@ -20,7 +20,6 @@ java_library(
                android_studio = glob(["studio/**/*.java"]),
                default = [],
            ) + select_for_plugin_api({
-        "android-studio-3.3": glob(["cidr/v182/**/*.java"]),
         "android-studio-3.4": glob(["cidr/v183/**/*.java"]),
         "android-studio-3.5": glob(["cidr/v191/**/*.java"]),
         "default": [],
