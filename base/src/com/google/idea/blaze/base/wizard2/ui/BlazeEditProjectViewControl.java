@@ -98,6 +98,8 @@ public final class BlazeEditProjectViewControl {
       new BoolExperiment("allow.add.project.view.default.values", true);
   private static final String LAST_WORKSPACE_MODE_PROPERTY =
       "blaze.edit.project.view.control.last.workspace.mode";
+  private static final String LAST_PROJECT_LOCATION_PROPERTY =
+      "blaze.edit.project.view.control.last.project.location";
 
   private static final String EMPTY_DIRECTORIES_QUESTION =
       "Are you sure you want to create a project with no source directories?";
@@ -388,7 +390,12 @@ public final class BlazeEditProjectViewControl {
       return canonicalProjectDataLocation.getPath();
     }
     String lastProjectLocation =
-        RecentProjectsManager.getInstance().getLastProjectCreationLocation();
+        PropertiesComponent.getInstance().getValue(LAST_PROJECT_LOCATION_PROPERTY);
+    if (lastProjectLocation == null) {
+      // TODO(brendandouglas): remove this temporary fall-back once LAST_PROJECT_LOCATION_PROPERTY
+      // is populated
+      lastProjectLocation = RecentProjectsManager.getInstance().getLastProjectCreationLocation();
+    }
     if (lastProjectLocation == null) {
       return newUniquePath(new File(getDefaultProjectsDirectory(), projectName));
     }
@@ -611,5 +618,7 @@ public final class BlazeEditProjectViewControl {
       PropertiesComponent.getInstance()
           .setValue(LAST_WORKSPACE_MODE_PROPERTY, inferDefaultNameMode.toString());
     }
+    PropertiesComponent.getInstance()
+        .setValue(LAST_PROJECT_LOCATION_PROPERTY, projectDataDirField.getText().trim());
   }
 }
