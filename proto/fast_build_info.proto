@@ -52,7 +52,8 @@ message JavaInfo {
 }
 
 message JavaToolchainInfo {
-  ArtifactLocation javac_jar = 1;
+  ArtifactLocation javac_jar = 1 [deprecated = true];
   string source_version = 2;
   string target_version = 3;
+  repeated ArtifactLocation javac_jars = 4;
 }

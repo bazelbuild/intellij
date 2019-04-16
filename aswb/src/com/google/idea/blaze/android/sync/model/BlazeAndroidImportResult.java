@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.android.sync.model;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -22,7 +24,6 @@ import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.LibraryKey;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /** The result of a blaze import operation. */
@@ -32,24 +33,36 @@ public final class BlazeAndroidImportResult
   public final ImmutableList<AndroidResourceModule> androidResourceModules;
   // map from library key to BlazeResourceLibrary.
   // Key is generated according to ArtifactLocation of resource directory
-  @Nullable public final ImmutableMap<String, BlazeResourceLibrary> resourceLibraries;
+  public final ImmutableMap<String, BlazeResourceLibrary> resourceLibraries;
   // map from library key to AarLibrary.
   // Key is generated according to ArtifactLocation of aar file location
-  @Nullable public final ImmutableMap<String, AarLibrary> aarLibraries;
-  @Nullable public final ArtifactLocation javacJar;
+  public final ImmutableMap<String, AarLibrary> aarLibraries;
+  public final ImmutableList<ArtifactLocation> javacJars;
 
   public BlazeAndroidImportResult(
       ImmutableList<AndroidResourceModule> androidResourceModules,
       ImmutableMap<String, BlazeResourceLibrary> resourceLibraries,
       ImmutableMap<String, AarLibrary> aarLibraries,
-      @Nullable ArtifactLocation javacJar) {
+      ImmutableList<ArtifactLocation> javacJars) {
     this.androidResourceModules = androidResourceModules;
     this.resourceLibraries = resourceLibraries;
     this.aarLibraries = aarLibraries;
-    this.javacJar = javacJar;
+    this.javacJars = javacJars;
   }
 
   static BlazeAndroidImportResult fromProto(ProjectData.BlazeAndroidImportResult proto) {
+    ImmutableList<ArtifactLocation> javacJars;
+    if (proto.getJavacJarsCount() > 0) {
+      javacJars =
+          proto.getJavacJarsList().stream()
+              .map(ArtifactLocation::fromProto)
+              .collect(toImmutableList());
+    } else {
+      javacJars =
+          proto.hasJavacJar()
+              ? ImmutableList.of(ArtifactLocation.fromProto(proto.getJavacJar()))
+              : ImmutableList.of();
+    }
     return new BlazeAndroidImportResult(
         ProtoWrapper.map(proto.getAndroidResourceModulesList(), AndroidResourceModule::fromProto),
         proto.getResourceLibrariesList().stream()
@@ -64,17 +77,16 @@ public final class BlazeAndroidImportResult
                 ImmutableMap.toImmutableMap(
                     library -> LibraryKey.libraryNameFromArtifactLocation(library.aarArtifact),
                     Functions.identity())),
-        proto.hasJavacJar() ? ArtifactLocation.fromProto(proto.getJavacJar()) : null);
+        javacJars);
   }
 
   @Override
   public ProjectData.BlazeAndroidImportResult toProto() {
-    ProjectData.BlazeAndroidImportResult.Builder builder =
-        ProjectData.BlazeAndroidImportResult.newBuilder()
-            .addAllAndroidResourceModules(ProtoWrapper.mapToProtos(androidResourceModules))
-            .addAllResourceLibraries(ProtoWrapper.mapToProtos(resourceLibraries.values()))
-            .addAllAarLibraries(ProtoWrapper.mapToProtos(aarLibraries.values()));
-    ProtoWrapper.unwrapAndSetIfNotNull(builder::setJavacJar, javacJar);
-    return builder.build();
+    return ProjectData.BlazeAndroidImportResult.newBuilder()
+        .addAllAndroidResourceModules(ProtoWrapper.mapToProtos(androidResourceModules))
+        .addAllResourceLibraries(ProtoWrapper.mapToProtos(resourceLibraries.values()))
+        .addAllAarLibraries(ProtoWrapper.mapToProtos(aarLibraries.values()))
+        .addAllJavacJars(ProtoWrapper.mapToProtos(javacJars))
+        .build();
   }
 }

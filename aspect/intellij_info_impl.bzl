@@ -748,12 +748,16 @@ def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
     """Updates java_toolchain-relevant output groups, returns false if not a java_toolchain target."""
     if not hasattr(target, "java_toolchain"):
         return False
-    toolchain_info = target.java_toolchain
-    javac_jar_file = toolchain_info.javac_jar if hasattr(toolchain_info, "javac_jar") else None
+    toolchain = target.java_toolchain
+    javac_jar_file = toolchain.javac_jar if hasattr(toolchain, "javac_jar") else None
+    javac_jars = []
+    if hasattr(toolchain, "tools"):
+        javac_jars = [artifact_location(f) for f in toolchain.tools.to_list()]
     ide_info["java_toolchain_ide_info"] = struct_omit_none(
-        source_version = toolchain_info.source_version,
-        target_version = toolchain_info.target_version,
+        source_version = toolchain.source_version,
+        target_version = toolchain.target_version,
         javac_jar = artifact_location(javac_jar_file),
+        javac_jars = javac_jars,
     )
     update_set_in_dict(output_groups, "intellij-info-java", depset([ide_info_file]))
     return True

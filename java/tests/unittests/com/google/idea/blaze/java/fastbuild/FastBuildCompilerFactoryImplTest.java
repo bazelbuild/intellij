@@ -65,11 +65,13 @@ public final class FastBuildCompilerFactoryImplTest {
   private static final File TRUTH_JAR = new File(System.getProperty("truth.jar"));
   private static final String WORKSPACE_NAME = "io_bazel";
 
+  private static ImmutableList<ArtifactLocation> getJavacJars() {
+    return ImmutableList.of(
+        ArtifactLocation.builder().setRelativePath(JDK_TOOLS_JAR.getPath()).build());
+  }
+
   private static final JavaToolchainInfo JAVA_TOOLCHAIN =
-      JavaToolchainInfo.create(
-          ArtifactLocation.builder().setRelativePath(JDK_TOOLS_JAR.getPath()).build(),
-          /* sourceVersion= */ "8",
-          /* targetVersion= */ "8");
+      JavaToolchainInfo.create(getJavacJars(), /* sourceVersion= */ "8", /* targetVersion= */ "8");
   private static final JavaInfo JAVA_LIBRARY_WITHOUT_SOURCES = JavaInfo.builder().build();
 
   private FastBuildCompilerFactory compilerFactory;
@@ -151,9 +153,7 @@ public final class FastBuildCompilerFactoryImplTest {
             .setJavaInfo(JAVA_LIBRARY_WITHOUT_SOURCES)
             .setJavaToolchainInfo(
                 JavaToolchainInfo.create(
-                    ArtifactLocation.builder().setRelativePath(JDK_TOOLS_JAR.getPath()).build(),
-                    /* sourceVersion= */ "12345",
-                    /* targetVersion= */ "9876"))
+                    getJavacJars(), /* sourceVersion= */ "12345", /* targetVersion= */ "9876"))
             .build();
     blazeData.put(targetLabel, targetData);
     blazeData.put(jdkOneLabel, jdkOneData);
@@ -284,9 +284,7 @@ public final class FastBuildCompilerFactoryImplTest {
     try {
       getCompiler(
               JavaToolchainInfo.create(
-                  ArtifactLocation.builder().setRelativePath(JDK_TOOLS_JAR.getPath()).build(),
-                  /* sourceVersion= */ "7",
-                  /* targetVersion= */ "8"))
+                  getJavacJars(), /* sourceVersion= */ "7", /* targetVersion= */ "8"))
           .compile(
               createBlazeContext(javacOutput),
               createCompileInstructions(java, javacOutput).build());

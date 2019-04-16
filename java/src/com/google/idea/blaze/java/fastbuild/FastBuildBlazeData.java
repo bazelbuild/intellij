@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.fastbuild;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Strings.emptyToNull;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.util.stream.Collectors.toSet;
@@ -209,23 +210,30 @@ public abstract class FastBuildBlazeData {
   /** Data about a java_toolchain rule. */
   @AutoValue
   abstract static class JavaToolchainInfo {
-    public abstract ArtifactLocation javacJar();
+    public abstract ImmutableList<ArtifactLocation> javacJars();
 
     public abstract String sourceVersion();
 
     public abstract String targetVersion();
 
     static JavaToolchainInfo create(
-        ArtifactLocation javacJar, String sourceVersion, String targetVersion) {
+        ImmutableList<ArtifactLocation> javacJars, String sourceVersion, String targetVersion) {
       return new AutoValue_FastBuildBlazeData_JavaToolchainInfo(
-          javacJar, sourceVersion, targetVersion);
+          javacJars, sourceVersion, targetVersion);
     }
 
     static JavaToolchainInfo fromProto(FastBuildInfo.JavaToolchainInfo javaToolchainInfo) {
+      ImmutableList<ArtifactLocation> javacJars;
+      if (javaToolchainInfo.getJavacJarsCount() > 0) {
+        javacJars =
+            javaToolchainInfo.getJavacJarsList().stream()
+                .map(ArtifactLocation::fromProto)
+                .collect(toImmutableList());
+      } else {
+        javacJars = ImmutableList.of(ArtifactLocation.fromProto(javaToolchainInfo.getJavacJar()));
+      }
       return create(
-          ArtifactLocation.fromProto(javaToolchainInfo.getJavacJar()),
-          javaToolchainInfo.getSourceVersion(),
-          javaToolchainInfo.getTargetVersion());
+          javacJars, javaToolchainInfo.getSourceVersion(), javaToolchainInfo.getTargetVersion());
     }
   }
 }

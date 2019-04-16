@@ -64,7 +64,6 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
 
   private static final Logger logger = Logger.getInstance(FastBuildCompilerFactoryImpl.class);
 
-  private static final String JAVAC_CLASS = "com.sun.tools.javac.Main";
   private static final String FAST_BUILD_JAVAC_CLASS =
       "com.google.idea.blaze.java.fastbuild.FastBuildJavacImpl";
   private static final Path FAST_BUILD_JAVAC_JAR = Paths.get("lib", "libfast_build_javac.jar");
@@ -103,8 +102,9 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
 
     BlazeProjectData projectData = projectDataManager.getBlazeProjectData();
     checkState(projectData != null, "not a blaze project");
-    File javacJar = projectData.getArtifactLocationDecoder().decode(javaToolchain.javacJar());
-    Javac javac = createCompiler(javacJar);
+    List<File> javacJars =
+        projectData.getArtifactLocationDecoder().decodeAll(javaToolchain.javacJars());
+    Javac javac = createCompiler(javacJars);
     return new JavacRunner(javac, javaToolchain.sourceVersion(), javaToolchain.targetVersion());
   }
 
@@ -139,10 +139,16 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
         throws FastBuildException;
   }
 
-  private Javac createCompiler(File javacJar) throws FastBuildException {
+  private Javac createCompiler(List<File> javacJars) throws FastBuildException {
     try {
+
       Class<?> javacClass =
-          loadJavacClass(FAST_BUILD_JAVAC_CLASS, javacJar, fastBuildJavacJarSupplier.get());
+          loadJavacClass(
+              FAST_BUILD_JAVAC_CLASS,
+              ImmutableList.<File>builder()
+                  .addAll(javacJars)
+                  .add(fastBuildJavacJarSupplier.get())
+                  .build());
 
       Constructor<?> createMethod = javacClass.getConstructor();
       Object javacInstance = createMethod.newInstance();
@@ -156,7 +162,7 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
             javaCompiler.compile(javacArgs, files, new ProblemsViewDiagnosticListener(context));
         Command command =
             Command.builder()
-                .setExecutable(javacJar.getPath())
+                .setExecutable(javacJars.get(0).getPath())
                 .setArguments(javacArgs)
                 .setExitCode(result ? 0 : 1)
                 .setSubcommandName("javac")
@@ -179,11 +185,11 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
         .toFile();
   }
 
-  private Class<?> loadJavacClass(String javaCompilerClass, File... jars)
+  private Class<?> loadJavacClass(String javaCompilerClass, List<File> jars)
       throws MalformedURLException, ClassNotFoundException {
-    URL[] urls = new URL[jars.length];
-    for (int i = 0; i < jars.length; ++i) {
-      urls[i] = jars[i].toURI().toURL();
+    URL[] urls = new URL[jars.size()];
+    for (int i = 0; i < jars.size(); ++i) {
+      urls[i] = jars.get(i).toURI().toURL();
     }
     URLClassLoader urlClassLoader = new URLClassLoader(urls, /* parent= */ null);
     return urlClassLoader.loadClass(javaCompilerClass);

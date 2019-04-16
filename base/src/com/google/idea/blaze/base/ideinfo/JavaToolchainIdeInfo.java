@@ -15,39 +15,49 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
+import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /** Represents the java_toolchain class */
 public final class JavaToolchainIdeInfo
     implements ProtoWrapper<IntellijIdeInfo.JavaToolchainIdeInfo> {
   private final String sourceVersion;
   private final String targetVersion;
-  @Nullable private final ArtifactLocation javacJar;
+  private final ImmutableList<ArtifactLocation> javacJars;
 
   private JavaToolchainIdeInfo(
-      String sourceVersion, String targetVersion, @Nullable ArtifactLocation javacJar) {
+      String sourceVersion, String targetVersion, ImmutableList<ArtifactLocation> javacJars) {
     this.sourceVersion = sourceVersion;
     this.targetVersion = targetVersion;
-    this.javacJar = javacJar;
+    this.javacJars = javacJars;
   }
 
   static JavaToolchainIdeInfo fromProto(IntellijIdeInfo.JavaToolchainIdeInfo proto) {
-    return new JavaToolchainIdeInfo(
-        proto.getSourceVersion(),
-        proto.getTargetVersion(),
-        proto.hasJavacJar() ? ArtifactLocation.fromProto(proto.getJavacJar()) : null);
+    ImmutableList<ArtifactLocation> javacJars;
+    if (proto.getJavacJarsCount() > 0) {
+      javacJars =
+          proto.getJavacJarsList().stream()
+              .map(ArtifactLocation::fromProto)
+              .collect(toImmutableList());
+    } else {
+      javacJars =
+          proto.hasJavacJar()
+              ? ImmutableList.of(ArtifactLocation.fromProto(proto.getJavacJar()))
+              : ImmutableList.of();
+    }
+    return new JavaToolchainIdeInfo(proto.getSourceVersion(), proto.getTargetVersion(), javacJars);
   }
 
   @Override
   public IntellijIdeInfo.JavaToolchainIdeInfo toProto() {
-    IntellijIdeInfo.JavaToolchainIdeInfo.Builder builder =
-        IntellijIdeInfo.JavaToolchainIdeInfo.newBuilder()
-            .setSourceVersion(sourceVersion)
-            .setTargetVersion(targetVersion);
-    ProtoWrapper.unwrapAndSetIfNotNull(builder::setJavacJar, javacJar);
-    return builder.build();
+    return IntellijIdeInfo.JavaToolchainIdeInfo.newBuilder()
+        .setSourceVersion(sourceVersion)
+        .setTargetVersion(targetVersion)
+        .addAllJavacJars(ProtoWrapper.mapToProtos(javacJars))
+        .build();
   }
 
   public String getSourceVersion() {
@@ -58,9 +68,8 @@ public final class JavaToolchainIdeInfo
     return targetVersion;
   }
 
-  @Nullable
-  public ArtifactLocation getJavacJar() {
-    return javacJar;
+  public ImmutableList<ArtifactLocation> getJavacJars() {
+    return javacJars;
   }
 
   @Override
@@ -73,8 +82,8 @@ public final class JavaToolchainIdeInfo
         + "  targetVersion="
         + getTargetVersion()
         + "\n"
-        + "  javacJar="
-        + getJavacJar()
+        + "  javacJars="
+        + getJavacJars()
         + "\n"
         + '}';
   }
@@ -90,12 +99,12 @@ public final class JavaToolchainIdeInfo
     JavaToolchainIdeInfo that = (JavaToolchainIdeInfo) o;
     return Objects.equals(sourceVersion, that.sourceVersion)
         && Objects.equals(targetVersion, that.targetVersion)
-        && Objects.equals(javacJar, that.javacJar);
+        && Objects.equals(javacJars, that.javacJars);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceVersion, targetVersion, javacJar);
+    return Objects.hash(sourceVersion, targetVersion, javacJars);
   }
 
   public static Builder builder() {
@@ -106,7 +115,7 @@ public final class JavaToolchainIdeInfo
   public static class Builder {
     String sourceVersion;
     String targetVersion;
-    ArtifactLocation javacJar;
+    ImmutableList<ArtifactLocation> javacJars;
 
     public Builder setSourceVersion(String sourceVersion) {
       this.sourceVersion = sourceVersion;
@@ -118,13 +127,13 @@ public final class JavaToolchainIdeInfo
       return this;
     }
 
-    public Builder setJavacJar(ArtifactLocation javacJar) {
-      this.javacJar = javacJar;
+    public Builder setJavacJars(ImmutableList<ArtifactLocation> javacJars) {
+      this.javacJars = javacJars;
       return this;
     }
 
     public JavaToolchainIdeInfo build() {
-      return new JavaToolchainIdeInfo(sourceVersion, targetVersion, javacJar);
+      return new JavaToolchainIdeInfo(sourceVersion, targetVersion, javacJars);
     }
   }
 }

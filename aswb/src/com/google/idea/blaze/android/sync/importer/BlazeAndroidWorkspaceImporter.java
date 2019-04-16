@@ -104,7 +104,7 @@ public final class BlazeAndroidWorkspaceImporter {
         androidResourceModules,
         libraries.getBlazeResourceLibs(),
         libraries.getAarLibs(),
-        BlazeImportUtil.getJavacJar(input.targetMap.targets()));
+        BlazeImportUtil.getJavacJars(input.targetMap.targets()));
   }
 
   /** Returns the list of {@link AndroidResourceModule} to be created. */

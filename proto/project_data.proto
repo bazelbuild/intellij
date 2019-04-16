@@ -175,8 +175,9 @@ message BlazeLibrary {
 message BlazeAndroidImportResult {
   repeated AndroidResourceModule android_resource_modules = 1;
   repeated BlazeLibrary resource_libraries = 2;  // single in 3.2
-  ArtifactLocation javac_jar = 3;
+  ArtifactLocation javac_jar = 3 [deprecated = true];
   repeated BlazeLibrary aar_libraries = 4;
+  repeated ArtifactLocation javac_jars = 5;
 }
 
 message AndroidSdkPlatform {

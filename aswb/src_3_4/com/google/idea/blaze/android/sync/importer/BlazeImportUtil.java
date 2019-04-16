@@ -18,11 +18,11 @@ package com.google.idea.blaze.android.sync.importer;
 import com.android.ide.common.util.PathHashMapKt;
 import com.android.ide.common.util.PathMap;
 import com.android.ide.common.util.PathString;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.JavaToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -39,7 +39,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -105,16 +104,13 @@ public class BlazeImportUtil {
     return getSourceTargetsStream(input).collect(Collectors.toList());
   }
 
-  /** Returns the javac jar if it can be found in the given list of targets, otherwise null. */
-  static ArtifactLocation getJavacJar(Collection<TargetIdeInfo> targets) {
+  /** Returns the javac jars if they can be found in the given list of targets. */
+  static ImmutableList<ArtifactLocation> getJavacJars(Collection<TargetIdeInfo> targets) {
     return targets.stream()
         .filter(target -> target.getJavaToolchainIdeInfo() != null)
-        .map(TargetIdeInfo::getJavaToolchainIdeInfo)
-        .filter(Objects::nonNull)
-        .map(JavaToolchainIdeInfo::getJavacJar)
-        .filter(Objects::nonNull)
         .findFirst()
-        .orElse(null);
+        .map(t -> t.getJavaToolchainIdeInfo().getJavacJars())
+        .orElse(ImmutableList.of());
   }
 
   /** Returns the set of relative generated resource paths for the given {@link ProjectViewSet}. */
