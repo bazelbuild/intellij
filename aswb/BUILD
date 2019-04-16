@@ -71,14 +71,8 @@ java_library(
 java_library(
     name = "aswb_lib",
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
-        "android-studio-3.4": glob([
-            "src_3_4/**/*.java",
-            "sdkcompat/as34/**/*.java",
-        ]),
-        "android-studio-3.5": glob([
-            "src_3_4/**/*.java",
-            "sdkcompat/as35/**/*.java",
-        ]),
+        "android-studio-3.4": glob(["sdkcompat/as34/**/*.java"]),
+        "android-studio-3.5": glob(["sdkcompat/as35/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     deps = [
