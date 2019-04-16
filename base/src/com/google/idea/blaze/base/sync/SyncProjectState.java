@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import javax.annotation.Nullable;
 
 /** Project and sync state shared between multiple phases of sync. */
 @AutoValue
@@ -48,6 +49,7 @@ public abstract class SyncProjectState {
 
   public abstract BlazeVersionData getBlazeVersionData();
 
+  @Nullable
   public abstract WorkingSet getWorkingSet();
 
   public abstract WorkspacePathResolver getWorkspacePathResolver();
@@ -80,7 +82,7 @@ public abstract class SyncProjectState {
 
     public abstract Builder setBlazeVersionData(BlazeVersionData blazeVersionData);
 
-    public abstract Builder setWorkingSet(WorkingSet workingSet);
+    public abstract Builder setWorkingSet(@Nullable WorkingSet workingSet);
 
     public abstract Builder setWorkspacePathResolver(WorkspacePathResolver pathResolver);
 
