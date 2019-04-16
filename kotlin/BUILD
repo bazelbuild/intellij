@@ -2,15 +2,15 @@ licenses(["notice"])  # Apache 2.0
 
 load(
     "//build_defs:build_defs.bzl",
-    "stamped_plugin_xml",
     "intellij_plugin",
     "intellij_plugin_library",
     "optional_plugin_xml",
+    "stamped_plugin_xml",
 )
 load(
     "//testing:test_defs.bzl",
-    "intellij_unit_test_suite",
     "intellij_integration_test_suite",
+    "intellij_unit_test_suite",
 )
 
 java_library(
@@ -38,6 +38,7 @@ optional_plugin_xml(
 intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_xml"],
+    plugin_xmls = ["src/META-INF/blaze-kotlin.xml"],
     visibility = ["//visibility:public"],
     deps = [":kotlin"],
 )
@@ -46,7 +47,6 @@ stamped_plugin_xml(
     name = "kotlin_plugin_xml",
     plugin_id = "com.google.idea.blaze.kotlin",
     plugin_name = "com.google.idea.blaze.kotlin",
-    plugin_xml = "src/META-INF/blaze-kotlin.xml",
 )
 
 intellij_plugin(
