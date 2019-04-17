@@ -56,8 +56,8 @@ http_archive(
 http_archive(
     name = "clion_2019_1",
     build_file = "@//intellij_platform_sdk:BUILD.clion",
-    sha256 = "f2779475f33ad922019673d66824ba9c6adbe349ed8711350a8f9e65b6b598e6",
-    url = "https://download.jetbrains.com/cpp/CLion-2019.1.tar.gz",
+    sha256 = "5fc3000e5534facfc651f9d93ce8115cfeadd9280127701bbd9f91b2f1e55649",
+    url = "https://download.jetbrains.com/cpp/CLion-2019.1.1.tar.gz",
 )
 
 # Python plugin for IntelliJ CE 2018.3. Required at compile-time for python-specific features.
