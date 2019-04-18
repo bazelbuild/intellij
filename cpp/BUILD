@@ -12,7 +12,7 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide", "select_for_plugin_api")
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 
 java_library(
     name = "cpp",
@@ -79,16 +79,7 @@ java_library(
 
 intellij_unit_test_suite(
     name = "unit_tests",
-    srcs = select_for_plugin_api({
-        "android-studio-3.5": glob(
-            ["tests/unittests/**/*.java"],
-            exclude = [
-                # b/126905301: does not work with truth 0.42
-                "tests/unittests/com/google/idea/blaze/cpp/BlazeResolveConfigurationEquivalenceTest.java",
-            ],
-        ),
-        "default": glob(["tests/unittests/**/*.java"]),
-    }),
+    srcs = glob(["tests/unittests/**/*.java"]),
     class_rules = select_for_ide(
         clion = ["com.google.idea.blaze.cpp.ClionUnitTestSystemPropertiesRule"],
         default = [],
