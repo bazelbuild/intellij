@@ -26,18 +26,13 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
-import org.jdom.Element;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Manages deploy target state for run configurations. */
-public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExternalizable {
+public class BlazeAndroidRunConfigurationDeployTargetManager {
   private static final String TARGET_SELECTION_MODE = TargetSelectionMode.SHOW_DIALOG.name();
 
   private final boolean isAndroidTest;
@@ -117,19 +112,5 @@ public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExte
 
   DeviceCount getDeviceCount() {
     return DeviceCount.SINGLE;
-  }
-
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    for (DeployTargetState state : deployTargetStates.values()) {
-      DefaultJDOMExternalizer.readExternal(state, element);
-    }
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    for (DeployTargetState state : deployTargetStates.values()) {
-      DefaultJDOMExternalizer.writeExternal(state, element);
-    }
   }
 }

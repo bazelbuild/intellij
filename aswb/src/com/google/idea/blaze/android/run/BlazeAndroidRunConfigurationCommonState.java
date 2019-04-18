@@ -44,7 +44,6 @@ import org.jetbrains.android.facet.AndroidFacet;
 
 /** A shared state class for run configurations targeting Blaze Android rules. */
 public class BlazeAndroidRunConfigurationCommonState implements RunConfigurationState {
-  private static final String DEPLOY_TARGET_STATES_TAG = "android-deploy-target-states";
   private static final String DEBUGGER_STATES_TAG = "android-debugger-states";
   private static final String USER_BLAZE_FLAG_TAG = "blaze-user-flag";
   private static final String USER_EXE_FLAG_TAG = "blaze-user-exe-flag";
@@ -134,11 +133,6 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     exeFlags.readExternal(element);
     setNativeDebuggingEnabled(Boolean.parseBoolean(element.getAttributeValue(NATIVE_DEBUG_ATTR)));
 
-    Element deployTargetStatesElement = element.getChild(DEPLOY_TARGET_STATES_TAG);
-    if (deployTargetStatesElement != null) {
-      deployTargetManager.readExternal(deployTargetStatesElement);
-    }
-
     Element debuggerStatesElement = element.getChild(DEBUGGER_STATES_TAG);
     if (debuggerStatesElement != null) {
       debuggerManager.readExternal(debuggerStatesElement);
@@ -150,12 +144,6 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     blazeFlags.writeExternal(element);
     exeFlags.writeExternal(element);
     element.setAttribute(NATIVE_DEBUG_ATTR, Boolean.toString(nativeDebuggingEnabled));
-
-    element.removeChildren(DEPLOY_TARGET_STATES_TAG);
-    Element deployTargetStatesElement = new Element(DEPLOY_TARGET_STATES_TAG);
-    deployTargetManager.writeExternal(deployTargetStatesElement);
-    element.addContent(deployTargetStatesElement);
-
     element.removeChildren(DEBUGGER_STATES_TAG);
     Element debuggerStatesElement = new Element(DEBUGGER_STATES_TAG);
     debuggerManager.writeExternal(debuggerStatesElement);
