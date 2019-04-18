@@ -309,7 +309,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
               configuration,
               buildResultHelper,
               flags.build(),
-              ImmutableList.of("--dynamic_mode=off"),
+              ImmutableList.of("--dynamic_mode=off", "--test_sharding_strategy=disabled"),
               BlazeInvocationContext.runConfigContext(
                   ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
               "Building debug binary");
