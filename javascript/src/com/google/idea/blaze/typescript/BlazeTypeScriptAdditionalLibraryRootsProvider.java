@@ -77,13 +77,12 @@ public class BlazeTypeScriptAdditionalLibraryRootsProvider extends AdditionalLib
             BlazeTypeScriptAdditionalLibraryRootsProvider::getLibrary);
   }
 
-  @Nullable
   private static SyntheticLibrary getLibrary(Project project, BlazeProjectData projectData) {
-    ImmutableList<File> files = getLibraryFiles(project, projectData);
-    ListenableFuture<Collection<File>> futureFiles = getFutureLibraryFiles(project);
-    return files.isEmpty()
-        ? null
-        : new BlazeExternalSyntheticLibrary(project, "TypeScript Libraries", files, futureFiles);
+    return new BlazeExternalSyntheticLibrary(
+        project,
+        "TypeScript Libraries",
+        getLibraryFiles(project, projectData),
+        getFutureLibraryFiles(project));
   }
 
   private static ImmutableList<File> getLibraryFiles(

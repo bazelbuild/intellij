@@ -31,6 +31,7 @@ import javax.annotation.Nullable;
 public class SyncCache {
   /** Computes a value based on the sync project data. */
   public interface SyncCacheComputable<T> {
+    @Nullable
     T compute(Project project, BlazeProjectData projectData);
   }
 
@@ -49,15 +50,16 @@ public class SyncCache {
   @Nullable
   @SuppressWarnings("unchecked")
   public synchronized <T> T get(Object key, SyncCacheComputable<T> computable) {
-    T value = (T) cache.get(key);
-    if (value == null) {
-      BlazeProjectData blazeProjectData =
-          BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-      if (blazeProjectData != null) {
-        value = computable.compute(project, blazeProjectData);
-        cache.put(key, value);
-      }
+    if (cache.containsKey(key)) {
+      return (T) cache.get(key);
     }
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (blazeProjectData == null) {
+      return null;
+    }
+    T value = computable.compute(project, blazeProjectData);
+    cache.put(key, value);
     return value;
   }
 
