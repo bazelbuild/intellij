@@ -20,9 +20,9 @@ import static com.google.idea.blaze.android.cppapi.NdkSupport.NDK_SUPPORT;
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.android.cppapi.NdkSupport;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDeployTargetManager;
+import com.google.idea.blaze.android.run.state.DebuggerSettingsState;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -37,7 +37,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import java.awt.Component;
 import java.util.List;
 import javax.annotation.Nullable;
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import org.jdom.Element;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -48,7 +47,6 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
   private static final String DEBUGGER_STATES_TAG = "android-debugger-states";
   private static final String USER_BLAZE_FLAG_TAG = "blaze-user-flag";
   private static final String USER_EXE_FLAG_TAG = "blaze-user-exe-flag";
-  private static final String NATIVE_DEBUG_ATTR = "blaze-native-debug";
 
   // We need to split "-c dbg" into two flags because we pass flags
   // as a list of strings to the command line executor and we need blaze
@@ -61,7 +59,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
 
   private final RunConfigurationFlagsState blazeFlags;
   private final RunConfigurationFlagsState exeFlags;
-  private boolean nativeDebuggingEnabled = false;
+  private final DebuggerSettingsState debuggerSettings;
 
   public BlazeAndroidRunConfigurationCommonState(String buildSystemName, boolean isAndroidTest) {
     this.deployTargetManager = new BlazeAndroidRunConfigurationDeployTargetManager(isAndroidTest);
@@ -71,6 +69,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     this.exeFlags =
         new RunConfigurationFlagsState(
             USER_EXE_FLAG_TAG, "Executable flags (mobile-install only):");
+    this.debuggerSettings = new DebuggerSettingsState(false);
   }
 
   public BlazeAndroidRunConfigurationDeployTargetManager getDeployTargetManager() {
@@ -90,11 +89,11 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
   }
 
   public boolean isNativeDebuggingEnabled() {
-    return nativeDebuggingEnabled && NDK_SUPPORT.getValue();
+    return debuggerSettings.isNativeDebuggingEnabled() && NDK_SUPPORT.getValue();
   }
 
   public void setNativeDebuggingEnabled(boolean nativeDebuggingEnabled) {
-    this.nativeDebuggingEnabled = nativeDebuggingEnabled;
+    debuggerSettings.setNativeDebuggingEnabled(nativeDebuggingEnabled);
   }
 
   public ImmutableList<String> getExpandedBuildFlags(
@@ -132,7 +131,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
   public void readExternal(Element element) throws InvalidDataException {
     blazeFlags.readExternal(element);
     exeFlags.readExternal(element);
-    setNativeDebuggingEnabled(Boolean.parseBoolean(element.getAttributeValue(NATIVE_DEBUG_ATTR)));
+    debuggerSettings.readExternal(element);
 
     Element deployTargetStatesElement = element.getChild(DEPLOY_TARGET_STATES_TAG);
     if (deployTargetStatesElement != null) {
@@ -149,7 +148,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
   public void writeExternal(Element element) throws WriteExternalException {
     blazeFlags.writeExternal(element);
     exeFlags.writeExternal(element);
-    element.setAttribute(NATIVE_DEBUG_ATTR, Boolean.toString(nativeDebuggingEnabled));
+    debuggerSettings.writeExternal(element);
 
     element.removeChildren(DEPLOY_TARGET_STATES_TAG);
     Element deployTargetStatesElement = new Element(DEPLOY_TARGET_STATES_TAG);
@@ -172,13 +171,13 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
 
     private final RunConfigurationStateEditor blazeFlagsEditor;
     private final RunConfigurationStateEditor exeFlagsEditor;
-    private final JCheckBox enableNativeDebuggingCheckBox;
+    private final RunConfigurationStateEditor debuggerSettingsEditor;
 
     BlazeAndroidRunConfigurationCommonStateEditor(
         BlazeAndroidRunConfigurationCommonState state, Project project) {
       blazeFlagsEditor = state.blazeFlags.getEditor(project);
       exeFlagsEditor = state.exeFlags.getEditor(project);
-      enableNativeDebuggingCheckBox = new JCheckBox("Enable native debugging", false);
+      debuggerSettingsEditor = state.debuggerSettings.getEditor(project);
     }
 
     @Override
@@ -187,7 +186,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
           (BlazeAndroidRunConfigurationCommonState) genericState;
       blazeFlagsEditor.resetEditorFrom(state.blazeFlags);
       exeFlagsEditor.resetEditorFrom(state.exeFlags);
-      enableNativeDebuggingCheckBox.setSelected(state.isNativeDebuggingEnabled());
+      debuggerSettingsEditor.resetEditorFrom(state.debuggerSettings);
     }
 
     @Override
@@ -196,16 +195,16 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
           (BlazeAndroidRunConfigurationCommonState) genericState;
       blazeFlagsEditor.applyEditorTo(state.blazeFlags);
       exeFlagsEditor.applyEditorTo(state.exeFlags);
-      state.setNativeDebuggingEnabled(enableNativeDebuggingCheckBox.isSelected());
+      debuggerSettingsEditor.applyEditorTo(state.debuggerSettings);
     }
 
     @Override
     public JComponent createComponent() {
       List<Component> result =
-          Lists.newArrayList(blazeFlagsEditor.createComponent(), exeFlagsEditor.createComponent());
-      if (NdkSupport.NDK_SUPPORT.getValue()) {
-        result.add(enableNativeDebuggingCheckBox);
-      }
+          Lists.newArrayList(
+              blazeFlagsEditor.createComponent(),
+              exeFlagsEditor.createComponent(),
+              debuggerSettingsEditor.createComponent());
       return UiUtil.createBox(result);
     }
 
@@ -213,7 +212,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     public void setComponentEnabled(boolean enabled) {
       blazeFlagsEditor.setComponentEnabled(enabled);
       exeFlagsEditor.setComponentEnabled(enabled);
-      enableNativeDebuggingCheckBox.setEnabled(enabled);
+      debuggerSettingsEditor.setComponentEnabled(enabled);
     }
   }
 }
