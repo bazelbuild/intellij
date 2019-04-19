@@ -14,12 +14,14 @@ java_library(
     ]) + select_for_ide(
         android_studio = glob([
             "com/google/idea/sdkcompat/cidr/**",
+            "studio/**",
         ]),
         clion = glob([
             "com/google/idea/sdkcompat/cidr/**",
             "com/google/idea/sdkcompat/clion/**",
             "com/google/idea/sdkcompat/javascript/**",
             "com/google/idea/sdkcompat/typescript/**",
+            "clion/**",
         ]),
         intellij = glob([
             "com/google/idea/sdkcompat/javascript/**",
