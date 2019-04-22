@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# usage: gdbserver /path/to/real/gdbserver --once localhost:4314 --target \
-#          ./binary arg1 'arg2a arg2b'
+# usage: gdbserver /path/to/real/gdbserver [gdbserver-options] \
+#            --target ./binary arg1 'arg2a arg2b'
 #
 # gdbserver requires arguments to the inferior provided on the command line to
 # be shell-escaped. This script will escape any arguments after the '--target
@@ -18,6 +18,9 @@
 
 # disable job control - don't want async msgs about background jobs
 set +m
+
+# inject extra parameters into the gdbserver commandline (e.g. --remote-debug)
+EXTRA_GDBSERVER_ARGS=""
 
 gdbserver_wrapper::setup() {
   # create work directory for all temporary files
@@ -39,6 +42,10 @@ gdbserver_wrapper::parse_args() {
   local inferior
   inferior=0
   for old_arg in "${original_args[@]}"; do
+    # first arg is path to gdbserver, but inject extra args after it
+    if [[ ${#new_args[@]} -eq 1 && -n "${EXTRA_GDBSERVER_ARGS}" ]]; then
+      new_args+=(${EXTRA_GDBSERVER_ARGS})
+    fi
     if [[ $inferior -eq 0 ]]; then
       if [[ "${old_arg}" == "--keep_work_directory" ]]; then
         # don't remove work directory after execution
