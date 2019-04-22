@@ -20,7 +20,7 @@ http_archive(
 http_archive(
     name = "intellij_ce_2019_1",
     build_file = "@//intellij_platform_sdk:BUILD.idea",
-    sha256 = "d05abcfd50673c542558bcbd2c4853386e1e45b72759b8ed9bd374b87dc3a391",
+    sha256 = "600bfa4e334d7a03162a04deb9849be210cd34318efd76d83473171f221a8d27",
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2019.1.1/ideaIC-2019.1.1.zip",
 )
 
@@ -38,7 +38,7 @@ http_archive(
 http_archive(
     name = "intellij_ue_2019_1",
     build_file = "@//intellij_platform_sdk:BUILD.ue",
-    sha256 = "ef1d578bdbcc0a61607c096057822bd2d1a00319daa5ef4550934c7ca7f6ba4d",
+    sha256 = "388fb1b31e0a22ac3acf7dcf9cfee76aa63bee2b1e0aa68dee52fac30c4196b4",
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2019.1.1/ideaIU-2019.1.1.zip",
 )
 
