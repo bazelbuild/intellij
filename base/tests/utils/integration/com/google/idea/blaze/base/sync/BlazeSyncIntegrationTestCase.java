@@ -92,7 +92,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   protected ErrorCollector errorCollector;
 
   @Before
-  public void doSetup() throws Exception {
+  public void doSetup() {
     thisClassDisposable = Disposer.newDisposable();
     projectViewManager = new MockProjectViewManager(getProject(), thisClassDisposable);
     new MockBlazeVcsHandler(thisClassDisposable);
