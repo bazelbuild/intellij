@@ -48,15 +48,15 @@ public class JavaTestTest extends BazelIntellijAspectTest {
             jarString(testRelative("FooTest.jar"), null, testRelative("FooTest-src.jar")));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("FooTest.java-manifest"), testRelative(intellijInfoFileName("FooTest")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
-        .containsAllOf(testRelative("FooTest.jar"), testRelative("FooTest-src.jar"));
+        .containsAtLeast(testRelative("FooTest.jar"), testRelative("FooTest-src.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
         .contains(testRelative("FooTest.jar"));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("FooTest.java-manifest"), testRelative(intellijInfoFileName("FooTest")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
 
