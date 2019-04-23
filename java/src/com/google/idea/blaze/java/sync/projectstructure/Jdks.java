@@ -16,12 +16,11 @@
 package com.google.idea.blaze.java.sync.projectstructure;
 
 import static com.intellij.openapi.util.io.FileUtil.notNullize;
-import static java.util.Collections.emptyList;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.sync.sdk.DefaultSdkProvider;
+import com.google.idea.blaze.java.sync.sdk.DefaultJdkProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -53,8 +52,8 @@ public class Jdks {
       return existing;
     }
     String jdkHomePath = null;
-    for (DefaultSdkProvider defaultSdkProvider : DefaultSdkProvider.EP_NAME.getExtensions()) {
-      File sdkRoot = defaultSdkProvider.provideSdkForLanguage(LanguageClass.JAVA);
+    for (DefaultJdkProvider defaultSdkProvider : DefaultJdkProvider.EP_NAME.getExtensions()) {
+      File sdkRoot = defaultSdkProvider.provideJdkForLanguageLevel(langLevel);
       if (sdkRoot != null) {
         jdkHomePath = sdkRoot.getPath();
         break;
@@ -137,10 +136,10 @@ public class Jdks {
     return getBestJdk(roots, langLevel);
   }
 
-  private static List<String> getChildrenPaths(String dirPath) {
+  private static ImmutableList<String> getChildrenPaths(String dirPath) {
     File dir = new File(dirPath);
     if (!dir.isDirectory()) {
-      return emptyList();
+      return ImmutableList.of();
     }
     List<String> childrenPaths = Lists.newArrayList();
     for (File child : notNullize(dir.listFiles())) {
@@ -149,7 +148,7 @@ public class Jdks {
         childrenPaths.add(child.getAbsolutePath());
       }
     }
-    return childrenPaths;
+    return ImmutableList.copyOf(childrenPaths);
   }
 
   @Nullable

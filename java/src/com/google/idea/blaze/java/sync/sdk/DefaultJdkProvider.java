@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.sync.sdk;
+package com.google.idea.blaze.java.sync.sdk;
 
-import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.pom.java.LanguageLevel;
 import java.io.File;
 import javax.annotation.Nullable;
 
 /** May download or otherwise provide default sdk locations for languages. */
-public interface DefaultSdkProvider {
-  ExtensionPointName<DefaultSdkProvider> EP_NAME =
-      ExtensionPointName.create("com.google.idea.blaze.DefaultSdkProvider");
+public interface DefaultJdkProvider {
+  ExtensionPointName<DefaultJdkProvider> EP_NAME =
+      ExtensionPointName.create("com.google.idea.blaze.DefaultJdkProvider");
 
   @Nullable
-  File provideSdkForLanguage(LanguageClass language);
+  File provideJdkForLanguageLevel(LanguageLevel level);
 }
