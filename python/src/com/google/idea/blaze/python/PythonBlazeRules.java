@@ -20,7 +20,8 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 
-final class PythonBlazeRules implements Kind.Provider {
+/** Contributes python rules to {@link Kind}. */
+public final class PythonBlazeRules implements Kind.Provider {
 
   @Override
   public ImmutableSet<Kind> getTargetKinds() {

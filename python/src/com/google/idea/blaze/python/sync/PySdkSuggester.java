@@ -15,9 +15,12 @@
  */
 package com.google.idea.blaze.python.sync;
 
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo.PythonVersion;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.jetbrains.python.sdk.PythonSdkType;
+import javax.annotation.Nullable;
 
 /** Extension to allow suggestion of Python SDK to use for a particular project */
 public interface PySdkSuggester {
@@ -30,9 +33,10 @@ public interface PySdkSuggester {
    * use, return null.
    *
    * @param project the project to suggest the SDK for
+   * @param version the python version to suggest an SDK for
    * @return an SDK appropriate for the project, or null
    */
-  Sdk suggestSdk(Project project);
+  Sdk suggestSdk(Project project, PythonVersion version);
 
   /**
    * This is a mechanism allowing the plugin to migrate the suggested SDK. If a project/facet's
@@ -42,4 +46,13 @@ public interface PySdkSuggester {
    * @return a boolean indicated whether sdk is considered deprecated
    */
   boolean isDeprecatedSdk(Sdk sdk);
+
+  /** Utility method for PySdkSuggester to resolve a homepath to a registered SDK. */
+  @Nullable
+  static Sdk findPythonSdk(String homePath) {
+    return PythonSdkType.getAllSdks().stream()
+        .filter(sdk -> homePath.equals(sdk.getHomePath()))
+        .findAny()
+        .orElse(null);
+  }
 }

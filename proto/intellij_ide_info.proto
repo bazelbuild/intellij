@@ -101,9 +101,20 @@ message PyIdeInfo {
     PY2 = 1;
     PY3 = 2;
   }
+  enum PythonSrcsVersion {
+    SRC_UNKNOWN = 0;
+    SRC_PY2 = 1;
+    SRC_PY3 = 2;
+    SRC_PY2AND3 = 3;
+    SRC_PY2ONLY = 4;
+    SRC_PY3ONLY = 5;
+  }
   repeated ArtifactLocation sources = 1;
   string launcher = 2;
+  // the python version this target has been configured for
   PythonVersion python_version = 3;
+  // the python versions this target is compatible with
+  PythonSrcsVersion srcs_version = 4;
 }
 
 message GoIdeInfo {

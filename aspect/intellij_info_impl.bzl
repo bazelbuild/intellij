@@ -91,6 +91,13 @@ def define_flag_hack():
 
 ##### End bazel-flag-hack
 
+# PythonCompatVersion enum; must match PyIdeInfo.PythonSrcsVersion
+SRC_PY2 = 1
+SRC_PY3 = 2
+SRC_PY2AND3 = 3
+SRC_PY2ONLY = 4
+SRC_PY3ONLY = 5
+
 ##### Helpers
 
 def source_directory_tuple(resource_file):
@@ -250,6 +257,18 @@ def _get_python_version(ctx):
             return PY3
         return PY2
 
+_SRCS_VERSION_MAPPING = {
+    "PY2": SRC_PY2,
+    "PY3": SRC_PY3,
+    "PY2AND3": SRC_PY2AND3,
+    "PY2ONLY": SRC_PY2ONLY,
+    "PY3ONLY": SRC_PY3ONLY,
+}
+
+def _get_python_srcs_version(ctx):
+    srcs_version = getattr(ctx.rule.attr, "srcs_version", default = "PY2AND3")
+    return _SRCS_VERSION_MAPPING.get(srcs_version, default = SRC_PY2AND3)
+
 ##### Builders for individual parts of the aspect output
 
 def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
@@ -267,6 +286,7 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         sources = sources_from_target(ctx),
         launcher = py_launcher,
         python_version = _get_python_version(ctx),
+        srcs_version = _get_python_srcs_version(ctx),
     )
     transitive_sources = target[PyInfo].transitive_sources
 

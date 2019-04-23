@@ -30,6 +30,8 @@
     <!-- check genfiles before non-genfiles -->
     <PyImportResolverStrategy implementation="com.google.idea.blaze.python.resolve.provider.BazelPyGenfilesImportResolverStrategy"/>
     <PyImportResolverStrategy implementation="com.google.idea.blaze.python.resolve.provider.BazelPyImportResolverStrategy"/>
+
+    <PySdkSuggester implementation="com.google.idea.blaze.python.sdk.FallbackPythonSdkSuggester" order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
