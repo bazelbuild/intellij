@@ -1,6 +1,6 @@
 ---
 platforms:
-  ubuntu1404:
+  ubuntu1604:
     build_flags:
     - --define=ij_product=android-studio-beta
     build_targets:
@@ -10,7 +10,7 @@ platforms:
     - --test_output=errors
     test_targets:
     - //:aswb_tests
-  ubuntu1604:
+  ubuntu1804:
     build_flags:
     - --define=ij_product=android-studio-beta
     build_targets:
