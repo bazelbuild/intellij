@@ -68,8 +68,8 @@ public class BlazeAndroidRunConfigurationDebuggerManager implements JDOMExternal
   }
 
   @Nullable
-  final <T extends AndroidDebuggerState> T getAndroidDebuggerState(Project project) {
-    T androidDebuggerState = getAndroidDebuggerState(getDebuggerID());
+  final AndroidDebuggerState getAndroidDebuggerState(Project project) {
+    AndroidDebuggerState androidDebuggerState = androidDebuggerStates.get(getDebuggerID());
     // Set our working directory to our workspace root for native debugging.
     if (androidDebuggerState instanceof NativeAndroidDebuggerState) {
       NativeAndroidDebuggerState nativeState = (NativeAndroidDebuggerState) androidDebuggerState;
@@ -90,13 +90,6 @@ public class BlazeAndroidRunConfigurationDebuggerManager implements JDOMExternal
     return (blazeNativeDebuggerIdProvider != null && commonState.isNativeDebuggingEnabled())
         ? blazeNativeDebuggerIdProvider.getDebuggerId()
         : AndroidJavaDebugger.ID;
-  }
-
-  @Nullable
-  private final <T extends AndroidDebuggerState> T getAndroidDebuggerState(
-      String androidDebuggerId) {
-    AndroidDebuggerState state = androidDebuggerStates.get(androidDebuggerId);
-    return (state != null) ? (T) state : null;
   }
 
   @Override
