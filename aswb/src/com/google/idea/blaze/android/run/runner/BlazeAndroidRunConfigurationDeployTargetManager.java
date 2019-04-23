@@ -22,37 +22,28 @@ import com.android.tools.idea.run.ValidationError;
 import com.android.tools.idea.run.editor.DeployTarget;
 import com.android.tools.idea.run.editor.DeployTargetProvider;
 import com.android.tools.idea.run.editor.DeployTargetState;
-import com.google.common.collect.ImmutableMap;
-import com.intellij.execution.ExecutionException;
+import com.google.idea.blaze.android.run.state.DeployTargetSettingsState;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import java.util.List;
-import java.util.Map;
 import javax.annotation.Nullable;
-import org.jdom.Element;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Manages deploy target state for run configurations. */
-public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExternalizable {
+public class BlazeAndroidRunConfigurationDeployTargetManager {
   private static final String TARGET_SELECTION_MODE = TargetSelectionMode.SHOW_DIALOG.name();
 
   private final boolean isAndroidTest;
   private final List<DeployTargetProvider> deployTargetProviders;
-  private final Map<String, DeployTargetState> deployTargetStates;
+  private final DeployTargetSettingsState deployTargetSettings;
 
-  public BlazeAndroidRunConfigurationDeployTargetManager(boolean isAndroidTest) {
+  public BlazeAndroidRunConfigurationDeployTargetManager(
+      boolean isAndroidTest,
+      List<DeployTargetProvider> deployTargetProviders,
+      DeployTargetSettingsState deployTargetSettings) {
     this.isAndroidTest = isAndroidTest;
-    this.deployTargetProviders = DeployTargetProvider.getProviders();
-
-    ImmutableMap.Builder<String, DeployTargetState> builder = ImmutableMap.builder();
-    for (DeployTargetProvider provider : deployTargetProviders) {
-      builder.put(provider.getId(), provider.createState());
-    }
-    this.deployTargetStates = builder.build();
+    this.deployTargetProviders = deployTargetProviders;
+    this.deployTargetSettings = deployTargetSettings;
   }
 
   public List<ValidationError> validate(AndroidFacet facet) {
@@ -61,8 +52,7 @@ public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExte
 
   @Nullable
   DeployTarget getDeployTarget(
-      Executor executor, ExecutionEnvironment env, AndroidFacet facet, int runConfigId)
-      throws ExecutionException {
+      Executor executor, ExecutionEnvironment env, AndroidFacet facet, int runConfigId) {
     DeployTargetProvider currentTargetProvider = getCurrentDeployTargetProvider();
 
     DeployTarget deployTarget;
@@ -74,7 +64,7 @@ public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExte
               facet,
               getDeviceCount(),
               isAndroidTest,
-              deployTargetStates,
+              deployTargetSettings.getTargetStatesByProviderId(),
               runConfigId,
               (device) -> LaunchCompatibility.YES);
       if (deployTarget == null) {
@@ -88,15 +78,17 @@ public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExte
   }
 
   DeployTargetState getCurrentDeployTargetState() {
-    DeployTargetProvider currentTarget = getCurrentDeployTargetProvider();
-    return deployTargetStates.get(currentTarget.getId());
+    DeployTargetProvider<? extends DeployTargetState> currentTargetProvider =
+        getCurrentDeployTargetProvider();
+    return deployTargetSettings.getTargetStateByProviderId(currentTargetProvider.getId());
   }
 
   // TODO(salguarnieri) Currently the target selection mode is always SHOW_DIALOG.
   // This code is here for future use.
   // If this code still isn't used after ASwB supports native, then we should delete this logic.
-  private DeployTargetProvider getCurrentDeployTargetProvider() {
-    DeployTargetProvider target = getDeployTargetProvider(TARGET_SELECTION_MODE);
+  private DeployTargetProvider<? extends DeployTargetState> getCurrentDeployTargetProvider() {
+    DeployTargetProvider<? extends DeployTargetState> target =
+        getDeployTargetProvider(TARGET_SELECTION_MODE);
     if (target == null) {
       target = getDeployTargetProvider(TargetSelectionMode.SHOW_DIALOG.name());
     }
@@ -106,8 +98,12 @@ public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExte
   }
 
   @Nullable
-  private DeployTargetProvider getDeployTargetProvider(String id) {
-    for (DeployTargetProvider target : deployTargetProviders) {
+  private DeployTargetProvider<? extends DeployTargetState> getDeployTargetProvider(String id) {
+    // Need to suppress unchecked conversion warnings due to third party code
+    // not returning DeployTargetProviders with properly attached generic arguments.
+    // @see DeployTargetProvider#getProviders()
+    for (@SuppressWarnings("unchecked")
+    DeployTargetProvider<? extends DeployTargetState> target : deployTargetProviders) {
       if (target.getId().equals(id)) {
         return target;
       }
@@ -117,19 +113,5 @@ public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExte
 
   DeviceCount getDeviceCount() {
     return DeviceCount.SINGLE;
-  }
-
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    for (DeployTargetState state : deployTargetStates.values()) {
-      DefaultJDOMExternalizer.readExternal(state, element);
-    }
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    for (DeployTargetState state : deployTargetStates.values()) {
-      DefaultJDOMExternalizer.writeExternal(state, element);
-    }
   }
 }

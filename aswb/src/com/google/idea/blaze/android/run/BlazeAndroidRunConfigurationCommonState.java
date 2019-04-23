@@ -18,11 +18,13 @@ package com.google.idea.blaze.android.run;
 import static com.google.idea.blaze.android.cppapi.NdkSupport.NDK_SUPPORT;
 
 import com.android.tools.idea.run.ValidationError;
+import com.android.tools.idea.run.editor.DeployTargetProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDeployTargetManager;
 import com.google.idea.blaze.android.run.state.DebuggerSettingsState;
+import com.google.idea.blaze.android.run.state.DeployTargetSettingsState;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -43,7 +45,6 @@ import org.jetbrains.android.facet.AndroidFacet;
 
 /** A shared state class for run configurations targeting Blaze Android rules. */
 public class BlazeAndroidRunConfigurationCommonState implements RunConfigurationState {
-  private static final String DEPLOY_TARGET_STATES_TAG = "android-deploy-target-states";
   private static final String DEBUGGER_STATES_TAG = "android-debugger-states";
   private static final String USER_BLAZE_FLAG_TAG = "blaze-user-flag";
   private static final String USER_EXE_FLAG_TAG = "blaze-user-exe-flag";
@@ -60,16 +61,22 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
   private final RunConfigurationFlagsState blazeFlags;
   private final RunConfigurationFlagsState exeFlags;
   private final DebuggerSettingsState debuggerSettings;
+  private final DeployTargetSettingsState deployTargetSettingsState;
 
   public BlazeAndroidRunConfigurationCommonState(String buildSystemName, boolean isAndroidTest) {
-    this.deployTargetManager = new BlazeAndroidRunConfigurationDeployTargetManager(isAndroidTest);
-    this.debuggerManager = new BlazeAndroidRunConfigurationDebuggerManager(this);
     this.blazeFlags =
         new RunConfigurationFlagsState(USER_BLAZE_FLAG_TAG, buildSystemName + " flags:");
     this.exeFlags =
         new RunConfigurationFlagsState(
             USER_EXE_FLAG_TAG, "Executable flags (mobile-install only):");
     this.debuggerSettings = new DebuggerSettingsState(false);
+    this.deployTargetSettingsState =
+        new DeployTargetSettingsState(DeployTargetProvider.getProviders());
+
+    this.deployTargetManager =
+        new BlazeAndroidRunConfigurationDeployTargetManager(
+            isAndroidTest, DeployTargetProvider.getProviders(), deployTargetSettingsState);
+    this.debuggerManager = new BlazeAndroidRunConfigurationDebuggerManager(this);
   }
 
   public BlazeAndroidRunConfigurationDeployTargetManager getDeployTargetManager() {
@@ -132,11 +139,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     blazeFlags.readExternal(element);
     exeFlags.readExternal(element);
     debuggerSettings.readExternal(element);
-
-    Element deployTargetStatesElement = element.getChild(DEPLOY_TARGET_STATES_TAG);
-    if (deployTargetStatesElement != null) {
-      deployTargetManager.readExternal(deployTargetStatesElement);
-    }
+    deployTargetSettingsState.readExternal(element);
 
     Element debuggerStatesElement = element.getChild(DEBUGGER_STATES_TAG);
     if (debuggerStatesElement != null) {
@@ -149,11 +152,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     blazeFlags.writeExternal(element);
     exeFlags.writeExternal(element);
     debuggerSettings.writeExternal(element);
-
-    element.removeChildren(DEPLOY_TARGET_STATES_TAG);
-    Element deployTargetStatesElement = new Element(DEPLOY_TARGET_STATES_TAG);
-    deployTargetManager.writeExternal(deployTargetStatesElement);
-    element.addContent(deployTargetStatesElement);
+    deployTargetSettingsState.writeExternal(element);
 
     element.removeChildren(DEBUGGER_STATES_TAG);
     Element debuggerStatesElement = new Element(DEBUGGER_STATES_TAG);
