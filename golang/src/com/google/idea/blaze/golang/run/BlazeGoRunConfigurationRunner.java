@@ -49,6 +49,7 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
@@ -315,7 +316,16 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
               "Building debug binary");
 
       try {
-        buildOperation.get();
+        BuildResult result = buildOperation.get();
+        if (result.outOfMemory()) {
+          throw new ExecutionException("Out of memory while trying to build debug target");
+        } else if (result.status == Status.BUILD_ERROR) {
+          throw new ExecutionException("Build error while trying to build debug target");
+        } else if (result.status == Status.FATAL_ERROR) {
+          throw new ExecutionException(
+              String.format(
+                  "Fatal error (%d) while trying to build debug target", result.exitCode));
+        }
       } catch (InterruptedException | CancellationException e) {
         buildOperation.cancel(true);
         throw new RunCanceledByUserException();
