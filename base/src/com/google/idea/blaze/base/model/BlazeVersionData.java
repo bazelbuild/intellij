@@ -127,16 +127,16 @@ public final class BlazeVersionData implements ProtoWrapper<ProjectData.BlazeVer
 
   /** Builder class for constructing the blaze version data */
   public static class Builder {
-    private Long blazeCl;
-    private Long clientCl;
-    private BazelVersion bazelVersion;
+    @Nullable private Long blazeCl;
+    @Nullable private Long clientCl;
+    @Nullable private BazelVersion bazelVersion;
 
-    public Builder setBlazeCl(Long blazeCl) {
+    public Builder setBlazeCl(@Nullable Long blazeCl) {
       this.blazeCl = blazeCl;
       return this;
     }
 
-    public Builder setClientCl(Long clientCl) {
+    public Builder setClientCl(@Nullable Long clientCl) {
       this.clientCl = clientCl;
       return this;
     }
