@@ -16,6 +16,7 @@
 package com.google.idea.common.experiments;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
@@ -67,8 +68,8 @@ public class FeatureRolloutExperimentTest {
 
     for (String userName : userNames) {
       int percentage = FeatureRolloutExperiment.getUserHash(userName);
-      assertThat(percentage).named(userName).isLessThan(100);
-      assertThat(percentage).named(userName).isAtLeast(0);
+      assertWithMessage(userName).that(percentage).isLessThan(100);
+      assertWithMessage(userName).that(percentage).isAtLeast(0);
     }
   }
 
