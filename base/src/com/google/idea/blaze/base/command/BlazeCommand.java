@@ -75,14 +75,18 @@ public final class BlazeCommand {
     public BlazeCommand build() {
       ImmutableList.Builder<String> arguments = ImmutableList.builder();
       arguments.addAll(blazeFlags.build());
-      arguments.add("--");
 
       // Trust the user's ordering of the targets since order matters to blaze
       for (TargetExpression targetExpression : targets.build()) {
         arguments.add(targetExpression.toString());
       }
 
-      arguments.addAll(exeFlags.build());
+      ImmutableList<String> exeFlagList = exeFlags.build();
+      if (!exeFlagList.isEmpty()) {
+        arguments.add("--");
+        arguments.addAll(exeFlagList);
+      }
+
       return new BlazeCommand(binaryPath, name, arguments.build());
     }
 

@@ -57,7 +57,7 @@ public class BlazeCommandTest extends BlazeTestCase {
   }
 
   @Test
-  public void targetsShouldGoAfterBlazeFlagsAndDoubleHyphen() {
+  public void targetsShouldGoAfterBlazeFlags() {
     List<String> command =
         BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN)
             .addTargets(Label.create("//a:b"), Label.create("//c:d"))
@@ -65,14 +65,13 @@ public class BlazeCommandTest extends BlazeTestCase {
             .addExeFlags("--exeFlag1", "--exeFlag2")
             .build()
             .toList();
-    // First six strings should be 'blaze run --tool_tag=ijwb:IDEA:ultimate --flag1 --flag2 --'
-    assertThat(command.indexOf("--")).isEqualTo(5);
+    // First five strings should be 'blaze run --tool_tag=ijwb:IDEA:ultimate --flag1 --flag2'
     assertThat(Collections.indexOfSubList(command, ImmutableList.of("//a:b", "//c:d")))
-        .isEqualTo(6);
+        .isEqualTo(5);
   }
 
   @Test
-  public void exeFlagsShouldGoLast() {
+  public void exeFlagsShouldGoAfterDoubleHyphen() {
     List<String> command =
         BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN)
             .addTargets(Label.create("//a:b"), Label.create("//c:d"))
@@ -80,8 +79,19 @@ public class BlazeCommandTest extends BlazeTestCase {
             .addExeFlags("--exeFlag1", "--exeFlag2")
             .build()
             .toList();
-    List<String> finalTwoFlags = command.subList(command.size() - 2, command.size());
-    assertThat(finalTwoFlags).containsExactly("--exeFlag1", "--exeFlag2");
+    List<String> finalThreeFlags = command.subList(command.size() - 3, command.size());
+    assertThat(finalThreeFlags).containsExactly("--", "--exeFlag1", "--exeFlag2");
+  }
+
+  @Test
+  public void withoutExeFlagsDoubleHyphenShouldBeOmitted() {
+    List<String> command =
+        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN)
+            .addTargets(Label.create("//a:b"), Label.create("//c:d"))
+            .addBlazeFlags("--flag1", "--flag2")
+            .build()
+            .toList();
+    assertThat(command).doesNotContain("--");
   }
 
   @Test
@@ -104,10 +114,10 @@ public class BlazeCommandTest extends BlazeTestCase {
             .add(BlazeFlags.getToolTagFlag())
             .add("--flag1")
             .add("--flag2")
-            .add("--")
             .add("//a:b")
             .add("-//e:f")
             .add("//c:d")
+            .add("--")
             .add("--exeFlag1")
             .add("--exeFlag2")
             .build();
