@@ -98,7 +98,8 @@ public final class FormatUtils {
   /** Checks whether the {@link Document} is still writable. */
   static boolean canApplyChanges(Project project, @Nullable Document document) {
     return document != null
-        && !PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document);
+        && !ReadAction.compute(
+            () -> PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document));
   }
 
   /** Calls the runnable inside a write action iff the document's text hasn't changed. */
