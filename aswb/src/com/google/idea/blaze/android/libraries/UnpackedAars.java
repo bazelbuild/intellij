@@ -55,6 +55,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -414,10 +415,9 @@ public class UnpackedAars {
 
       // copy merged jar
       try (InputStream stream = aarAndJar.jar.getInputStream()) {
-        Files.copy(
-            stream,
-            Paths.get(jarFileForKey(cacheKey).getPath()),
-            StandardCopyOption.REPLACE_EXISTING);
+        Path destination = Paths.get(jarFileForKey(cacheKey).getPath());
+        ops.mkdirs(destination.getParent().toFile());
+        Files.copy(stream, destination, StandardCopyOption.REPLACE_EXISTING);
       }
 
     } catch (IOException e) {
