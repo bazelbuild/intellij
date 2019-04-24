@@ -8,6 +8,7 @@ load(
 py_binary(
     name = "simple",
     srcs = ["simple.py"],
+    python_version = "PY2",
 )
 
 py_binary(

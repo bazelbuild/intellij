@@ -8,6 +8,7 @@ load(
 py_test(
     name = "simple",
     srcs = ["simple.py"],
+    python_version = "PY2",
 )
 
 intellij_aspect_test_fixture(
