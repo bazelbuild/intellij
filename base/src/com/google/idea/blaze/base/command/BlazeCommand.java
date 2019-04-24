@@ -75,6 +75,8 @@ public final class BlazeCommand {
     public BlazeCommand build() {
       ImmutableList.Builder<String> arguments = ImmutableList.builder();
       arguments.addAll(blazeFlags.build());
+
+      // Need to add '--' before targets, to support subtracted/excluded targets.
       arguments.add("--");
 
       // Trust the user's ordering of the targets since order matters to blaze
