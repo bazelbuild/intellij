@@ -57,6 +57,7 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     assertThat(parse("x -= 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x *= 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x /= 1")).isEqualTo("aug_assign(reference, int)");
+    assertThat(parse("x //= 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x %= 1")).isEqualTo("aug_assign(reference, int)");
     assertNoErrors();
   }
@@ -103,6 +104,12 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
   public void testSecondary() throws Exception {
     assertThat(parse("f(1 % 2)"))
         .isEqualTo("function_call(reference, arg_list(positional(binary_op(int, int))))");
+    assertNoErrors();
+  }
+
+  @Test
+  public void testSlashSlashOperator() {
+    assertThat(parse("6 // 1")).isEqualTo("binary_op(int, int)");
     assertNoErrors();
   }
 

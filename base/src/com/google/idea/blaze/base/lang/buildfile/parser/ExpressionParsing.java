@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildElementType;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildElementTypes;
 import com.intellij.lang.PsiBuilder;
 import java.util.EnumSet;
-import java.util.List;
 
 /** For parsing expressions in BUILD files. */
 public class ExpressionParsing extends Parsing {
@@ -63,7 +62,7 @@ public class ExpressionParsing extends Parsing {
    * Highest precedence goes last. Based on:
    * http://docs.python.org/2/reference/expressions.html#operator-precedence
    */
-  private static final List<EnumSet<TokenKind>> OPERATOR_PRECEDENCE =
+  private static final ImmutableList<EnumSet<TokenKind>> OPERATOR_PRECEDENCE =
       ImmutableList.of(
           EnumSet.of(TokenKind.OR),
           EnumSet.of(TokenKind.AND),
@@ -79,7 +78,7 @@ public class ExpressionParsing extends Parsing {
               TokenKind.NOT_IN),
           EnumSet.of(TokenKind.PIPE),
           EnumSet.of(TokenKind.MINUS, TokenKind.PLUS),
-          EnumSet.of(TokenKind.SLASH, TokenKind.STAR, TokenKind.PERCENT));
+          EnumSet.of(TokenKind.SLASH, TokenKind.SLASH_SLASH, TokenKind.STAR, TokenKind.PERCENT));
 
   public ExpressionParsing(ParsingContext context) {
     super(context);

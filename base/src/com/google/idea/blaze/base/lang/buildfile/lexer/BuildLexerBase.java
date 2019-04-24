@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.lang.buildfile.lexer;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import java.util.List;
-import java.util.Map;
 import java.util.Stack;
 import javax.annotation.Nullable;
 
@@ -43,7 +42,7 @@ public class BuildLexerBase {
 
   // Characters that can come immediately prior to an '=' character to generate
   // a different token
-  private static final Map<Character, TokenKind> EQUAL_TOKENS =
+  private static final ImmutableMap<Character, TokenKind> EQUAL_TOKENS =
       ImmutableMap.<Character, TokenKind>builder()
           .put('=', TokenKind.EQUALS_EQUALS)
           .put('!', TokenKind.NOT_EQUALS)
@@ -404,8 +403,8 @@ public class BuildLexerBase {
    * Scans a string literal delimited by 'quot'.
    *
    * <ul>
-   * <li> ON ENTRY: 'pos' is 1 + the index of the first delimiter
-   * <li> ON EXIT: 'pos' is 1 + the index of the last delimiter.
+   *   <li>ON ENTRY: 'pos' is 1 + the index of the first delimiter
+   *   <li>ON EXIT: 'pos' is 1 + the index of the last delimiter.
    * </ul>
    *
    * @param isRaw if true, do not escape the string.
@@ -655,6 +654,11 @@ public class BuildLexerBase {
     return true;
   }
 
+  /** Test if the character at pos+p is c. */
+  private boolean lookaheadIs(int p, char c) {
+    return pos + p < buffer.length && buffer[pos + p] == c;
+  }
+
   /** Performs tokenization of the character buffer of file contents provided to the constructor. */
   private void tokenize() {
     while (pos < buffer.length) {
@@ -666,172 +670,131 @@ public class BuildLexerBase {
       pos++;
       switch (c) {
         case '{':
-          {
-            addToken(TokenKind.LBRACE, pos - 1, pos);
-            openParenStackDepth++;
-            break;
-          }
+          addToken(TokenKind.LBRACE, pos - 1, pos);
+          openParenStackDepth++;
+          break;
         case '}':
-          {
-            addToken(TokenKind.RBRACE, pos - 1, pos);
-            popParen();
-            break;
-          }
+          addToken(TokenKind.RBRACE, pos - 1, pos);
+          popParen();
+          break;
         case '(':
-          {
-            addToken(TokenKind.LPAREN, pos - 1, pos);
-            openParenStackDepth++;
-            break;
-          }
+          addToken(TokenKind.LPAREN, pos - 1, pos);
+          openParenStackDepth++;
+          break;
         case ')':
-          {
-            addToken(TokenKind.RPAREN, pos - 1, pos);
-            popParen();
-            break;
-          }
+          addToken(TokenKind.RPAREN, pos - 1, pos);
+          popParen();
+          break;
         case '[':
-          {
-            addToken(TokenKind.LBRACKET, pos - 1, pos);
-            openParenStackDepth++;
-            break;
-          }
+          addToken(TokenKind.LBRACKET, pos - 1, pos);
+          openParenStackDepth++;
+          break;
         case ']':
-          {
-            addToken(TokenKind.RBRACKET, pos - 1, pos);
-            popParen();
-            break;
-          }
+          addToken(TokenKind.RBRACKET, pos - 1, pos);
+          popParen();
+          break;
         case '>':
-          {
-            addToken(TokenKind.GREATER, pos - 1, pos);
-            break;
-          }
+          addToken(TokenKind.GREATER, pos - 1, pos);
+          break;
         case '<':
-          {
-            addToken(TokenKind.LESS, pos - 1, pos);
-            break;
-          }
+          addToken(TokenKind.LESS, pos - 1, pos);
+          break;
         case ':':
-          {
-            addToken(TokenKind.COLON, pos - 1, pos);
-            break;
-          }
+          addToken(TokenKind.COLON, pos - 1, pos);
+          break;
         case ',':
-          {
-            addToken(TokenKind.COMMA, pos - 1, pos);
-            break;
-          }
+          addToken(TokenKind.COMMA, pos - 1, pos);
+          break;
         case '+':
-          {
-            addToken(TokenKind.PLUS, pos - 1, pos);
-            break;
-          }
+          addToken(TokenKind.PLUS, pos - 1, pos);
+          break;
         case '-':
-          {
-            addToken(TokenKind.MINUS, pos - 1, pos);
-            break;
-          }
+          addToken(TokenKind.MINUS, pos - 1, pos);
+          break;
         case '|':
-          {
-            addToken(TokenKind.PIPE, pos - 1, pos);
-            break;
-          }
+          addToken(TokenKind.PIPE, pos - 1, pos);
+          break;
         case '=':
-          {
-            addToken(TokenKind.EQUALS, pos - 1, pos);
-            break;
-          }
+          addToken(TokenKind.EQUALS, pos - 1, pos);
+          break;
         case '%':
-          {
-            addToken(TokenKind.PERCENT, pos - 1, pos);
-            break;
-          }
+          addToken(TokenKind.PERCENT, pos - 1, pos);
+          break;
         case '/':
-          {
+          if (lookaheadIs(0, '/') && lookaheadIs(1, '=')) {
+            addToken(TokenKind.SLASH_SLASH_EQUALS, pos - 1, pos + 2);
+            pos += 2;
+          } else if (lookaheadIs(0, '/')) {
+            addToken(TokenKind.SLASH_SLASH, pos - 1, pos + 1);
+            pos++;
+          } else {
+            // /= is handled by tokenizeTwoChars.
             addToken(TokenKind.SLASH, pos - 1, pos);
-            break;
           }
+          break;
         case ';':
-          {
-            addToken(TokenKind.SEMI, pos - 1, pos);
-            break;
-          }
+          addToken(TokenKind.SEMI, pos - 1, pos);
+          break;
         case '.':
-          {
-            addToken(TokenKind.DOT, pos - 1, pos);
-            break;
-          }
+          addToken(TokenKind.DOT, pos - 1, pos);
+          break;
         case '*':
-          {
-            addToken(TokenKind.STAR, pos - 1, pos);
-            break;
-          }
+          addToken(TokenKind.STAR, pos - 1, pos);
+          break;
         case ' ':
         case '\t':
         case '\r':
-          {
-            addWhitespace();
-            break;
-          }
+          addWhitespace();
+          break;
         case '\\':
-          {
-            // Backslash character is valid only at the end of a line (or in a string)
-            if (pos + 1 < buffer.length && buffer[pos] == '\n') {
-              // treat end of line backslash and newline char as whitespace
-              // (they're ignored by the parser)
-              pos++;
-              addToken(TokenKind.WHITESPACE, pos - 2, pos, Character.toString(c));
-            } else {
-              addToken(TokenKind.ILLEGAL, pos - 1, pos, Character.toString(c));
-            }
-            break;
+          // Backslash character is valid only at the end of a line (or in a string)
+          if (lookaheadIs(0, '\n')) {
+            // treat end of line backslash and newline char as whitespace
+            // (they're ignored by the parser)
+            pos++;
+            addToken(TokenKind.WHITESPACE, pos - 2, pos, Character.toString(c));
+          } else {
+            addToken(TokenKind.ILLEGAL, pos - 1, pos, Character.toString(c));
           }
+          break;
         case '\n':
-          {
-            newline();
-            break;
-          }
+          newline();
+          break;
         case '#':
-          {
-            int oldPos = pos - 1;
-            while (pos < buffer.length) {
-              c = buffer[pos];
-              if (c == '\n') {
-                break;
-              } else {
-                pos++;
-              }
+          int oldPos = pos - 1;
+          while (pos < buffer.length) {
+            c = buffer[pos];
+            if (c == '\n') {
+              break;
+            } else {
+              pos++;
             }
-            addToken(TokenKind.COMMENT, oldPos, pos, bufferSlice(oldPos, pos));
-            break;
           }
+          addToken(TokenKind.COMMENT, oldPos, pos, bufferSlice(oldPos, pos));
+          break;
         case '\'':
         case '\"':
-          {
-            addStringLiteral(c, false);
+          addStringLiteral(c, false);
+          break;
+        default:
+          // detect raw strings, e.g. r"str"
+          if (c == 'r' && (lookaheadIs(0, '\'') || lookaheadIs(0, '\"'))) {
+            c = buffer[pos];
+            pos++;
+            addStringLiteral(c, true);
             break;
           }
-        default:
-          {
-            // detect raw strings, e.g. r"str"
-            if (c == 'r' && pos < buffer.length && (buffer[pos] == '\'' || buffer[pos] == '\"')) {
-              c = buffer[pos];
-              pos++;
-              addStringLiteral(c, true);
-              break;
-            }
 
-            if (Character.isDigit(c)) {
-              addInteger();
-            } else if (Character.isJavaIdentifierStart(c) && c != '$') {
-              addIdentifierOrKeyword();
-            } else {
-              // Some characters in Python are not recognized in Blaze syntax (e.g. '!')
-              addToken(TokenKind.ILLEGAL, pos - 1, pos, Character.toString(c));
-              error("invalid character: '" + c + "'");
-            }
-            break;
-          } // default
+          if (Character.isDigit(c)) {
+            addInteger();
+          } else if (Character.isJavaIdentifierStart(c) && c != '$') {
+            addIdentifierOrKeyword();
+          } else {
+            // Some characters in Python are not recognized in Blaze syntax (e.g. '!')
+            addToken(TokenKind.ILLEGAL, pos - 1, pos, Character.toString(c));
+            error("invalid character: '" + c + "'");
+          }
+          break;
       } // switch
     } // while
   }
