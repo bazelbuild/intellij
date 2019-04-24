@@ -125,7 +125,7 @@ public class TimingScope implements BlazeScope {
       // Calculate self time as <my duration> - <sum child duration>
       Duration selfTime = timingScope.getDuration();
       for (TimingScope child : timingScope.children) {
-        selfTime = selfTime.plus(child.getDuration());
+        selfTime = selfTime.minus(child.getDuration());
       }
       if (selfTime.toMillis() > 100) {
         selfString = String.format(" (%s)", durationStr(selfTime));
