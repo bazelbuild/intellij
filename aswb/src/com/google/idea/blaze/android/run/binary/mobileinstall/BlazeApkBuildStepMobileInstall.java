@@ -46,6 +46,7 @@ import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
@@ -113,11 +114,19 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
 
             WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
+            // Use the correct DeployInfo file suffix for mobile-install classic (bazel).
+            // This should be removed once mobile-install v2 is open sourced, at which point
+            // the internal and external versions will both use _mi.deployinfo.pb
+            final String deployInfoSuffix =
+                Blaze.getBuildSystem(project) == BuildSystem.Bazel
+                    ? "_incremental.deployinfo.pb"
+                    : "_mi.deployinfo.pb";
+
             BlazeApkDeployInfoProtoHelper deployInfoHelper =
                 new BlazeApkDeployInfoProtoHelper(project, blazeFlags);
             try (BuildResultHelper buildResultHelper =
                 BuildResultHelperProvider.forFiles(
-                    project, fileName -> fileName.endsWith("_mi.deployinfo.pb"))) {
+                    project, fileName -> fileName.endsWith(deployInfoSuffix))) {
 
               command
                   .addTargets(label)
