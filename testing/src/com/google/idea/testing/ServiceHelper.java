@@ -23,12 +23,22 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.defaults.UnsatisfiableDependenciesException;
 
 /** Utility class for registering project services, application services and extensions. */
 public class ServiceHelper {
+
+  public static <T> void registerExtensionPoint(
+      ExtensionPointName<T> name, Class<T> clazz, Disposable parentDisposable) {
+    ExtensionsArea area = Extensions.getRootArea();
+    String epName = name.getName();
+    area.registerExtensionPoint(epName, clazz.getName());
+    Disposer.register(parentDisposable, () -> area.unregisterExtensionPoint(epName));
+  }
 
   public static <T> void registerExtension(
       ExtensionPointName<T> name, T instance, Disposable parentDisposable) {
@@ -94,15 +104,21 @@ public class ServiceHelper {
 
   private static <T> void registerComponentInstance(
       MutablePicoContainer container, Class<T> key, T implementation, Disposable parentDisposable) {
-    Object old = container.getComponentInstance(key);
+    Object old;
+    try {
+      old = container.getComponentInstance(key);
+    } catch (UnsatisfiableDependenciesException e) {
+      old = null;
+    }
     container.unregisterComponent(key.getName());
     container.registerComponentInstance(key.getName(), implementation);
+    Object finalOld = old;
     Disposer.register(
         parentDisposable,
         () -> {
           container.unregisterComponent(key.getName());
-          if (old != null) {
-            container.registerComponentInstance(key.getName(), old);
+          if (finalOld != null) {
+            container.registerComponentInstance(key.getName(), finalOld);
           }
         });
   }
