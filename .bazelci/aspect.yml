@@ -2,15 +2,8 @@
 platforms:
   ubuntu1604:
     build_targets:
-    - //aspect:aspect_files
+      - //aspect:aspect_files
     test_flags:
-    - --test_output=errors
+      - --test_output=errors
     test_targets:
-    - //aspect/testing/...
-  ubuntu1804:
-    build_targets:
-    - //aspect:aspect_files
-    test_flags:
-    - --test_output=errors
-    test_targets:
-    - //aspect/testing/...
+      - //aspect/testing/...
