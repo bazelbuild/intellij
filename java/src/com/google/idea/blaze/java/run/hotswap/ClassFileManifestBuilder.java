@@ -128,7 +128,7 @@ public class ClassFileManifestBuilder {
         jars =
             LocalFileOutputArtifact.getLocalOutputFiles(
                     buildResultHelper.getArtifactsForOutputGroup(
-                        JavaClasspathAspectStrategy.OUTPUT_GROUP))
+                        null, JavaClasspathAspectStrategy.OUTPUT_GROUP))
                 .stream()
                 .filter(f -> f.getName().endsWith(".jar"))
                 .collect(toImmutableList());

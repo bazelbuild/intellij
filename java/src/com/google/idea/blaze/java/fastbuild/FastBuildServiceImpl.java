@@ -314,7 +314,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
                 ImmutableList<File> ideInfoFiles =
                     LocalFileOutputArtifact.getLocalOutputFiles(
                         buildResultHelper.getArtifactsForOutputGroup(
-                            aspectStrategy.getAspectOutputGroup()));
+                            context, aspectStrategy.getAspectOutputGroup()));
 
                 ImmutableMap<Label, FastBuildBlazeData> blazeData =
                     ideInfoFiles.stream()

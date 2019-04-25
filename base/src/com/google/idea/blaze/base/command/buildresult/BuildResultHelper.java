@@ -18,7 +18,9 @@ package com.google.idea.blaze.base.command.buildresult;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /** Assists in getting build artifacts from a build operation. */
 public interface BuildResultHelper extends AutoCloseable {
@@ -51,18 +53,20 @@ public interface BuildResultHelper extends AutoCloseable {
    * Returns all build artifacts belonging to the given output groups. May only be called once,
    * after the build is complete, or no artifacts will be returned.
    */
-  default ImmutableList<OutputArtifact> getArtifactsForOutputGroup(String outputGroup)
-      throws GetArtifactsException {
-    return getPerOutputGroupArtifacts().get(outputGroup);
+  default ImmutableList<OutputArtifact> getArtifactsForOutputGroup(
+      @Nullable BlazeContext context, String outputGroup) throws GetArtifactsException {
+    return getPerOutputGroupArtifacts(context).get(outputGroup);
   }
 
   /**
    * Returns all build artifacts split by output group (note artifacts may belong to multiple output
    * groups). May only be called once, after the build is complete, or no artifacts will be
    * returned.
+   *
+   * @param context
    */
-  ImmutableListMultimap<String, OutputArtifact> getPerOutputGroupArtifacts()
-      throws GetArtifactsException;
+  ImmutableListMultimap<String, OutputArtifact> getPerOutputGroupArtifacts(
+      @Nullable BlazeContext context) throws GetArtifactsException;
 
   @Override
   void close();

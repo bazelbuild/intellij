@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.BufferedInputStream;
@@ -29,6 +30,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import javax.annotation.Nullable;
 
 /**
  * Build event protocol implementation to get build results.
@@ -65,8 +67,8 @@ class BuildResultHelperBep implements BuildResultHelper {
   }
 
   @Override
-  public ImmutableListMultimap<String, OutputArtifact> getPerOutputGroupArtifacts()
-      throws GetArtifactsException {
+  public ImmutableListMultimap<String, OutputArtifact> getPerOutputGroupArtifacts(
+      @Nullable BlazeContext context) throws GetArtifactsException {
     return readResult(
         input -> BuildEventProtocolOutputReader.parsePerOutputGroupArtifacts(input, fileFilter));
   }

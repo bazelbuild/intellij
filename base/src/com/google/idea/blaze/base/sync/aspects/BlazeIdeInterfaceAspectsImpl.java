@@ -69,6 +69,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -319,9 +320,11 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
           context,
           childContext -> {
             try {
-              childContext.push(new TimingScope("ReadingBuildOutputs", EventType.Other));
+              childContext
+                  .push(new TimingScope("ReadingBuildOutputs", EventType.Other))
+                  .output(new StatusOutput("Reading build outputs"));
               return new BlazeBuildOutputs(
-                  buildResultHelper.getPerOutputGroupArtifacts(), buildResult);
+                  buildResultHelper.getPerOutputGroupArtifacts(childContext), buildResult);
             } catch (GetArtifactsException e) {
               IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
               return new BlazeBuildOutputs(ImmutableListMultimap.of(), buildResult);
