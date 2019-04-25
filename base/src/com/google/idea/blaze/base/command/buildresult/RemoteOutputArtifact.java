@@ -59,6 +59,9 @@ public interface RemoteOutputArtifact
   /** The blaze-out-relative path. */
   String getRelativePath();
 
+  /** Reads the artifact contents into memory, using a soft reference. */
+  void prefetch();
+
   /**
    * A string uniquely identifying this artifact. Instances of this artifact with different contents
    * will have different IDs.

@@ -44,6 +44,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtif
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
@@ -60,6 +61,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -69,6 +71,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -180,7 +183,22 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 "Total rules: %d, new/changed: %d, removed: %d",
                 targetCount, diff.getUpdatedOutputs().size(), removedCount)));
 
-    // TODO: handle prefetching for arbitrary OutputArtifacts
+    // prefetch remote outputs
+    List<ListenableFuture<?>> futures = new ArrayList<>();
+    for (OutputArtifact file : diff.getUpdatedOutputs()) {
+      if (file instanceof RemoteOutputArtifact) {
+        futures.add(FetchExecutor.EXECUTOR.submit(((RemoteOutputArtifact) file)::prefetch));
+      }
+    }
+    if (!futures.isEmpty()
+        && !FutureUtil.waitForFuture(context, Futures.allAsList(futures))
+            .timed("PrefetchRemoteAspectOutput", EventType.Prefetching)
+            .withProgressMessage("Reading IDE info result...")
+            .run()
+            .success()) {
+      return oldTargetMap;
+    }
+
     ListenableFuture<?> prefetchFuture =
         PrefetchService.getInstance()
             .prefetchFiles(
@@ -359,6 +377,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             parentContext,
             context -> {
               context.push(new TimingScope("UpdateTargetMap", EventType.Other));
+              context.output(new StatusOutput("Updating target map"));
 
               Map<String, ArtifactState> nextFileState = new HashMap<>(fileState);
 
@@ -391,7 +410,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
               AtomicLong totalSizeLoaded = new AtomicLong(0);
               Set<LanguageClass> ignoredLanguages = Sets.newConcurrentHashSet();
 
-              // TODO(brendandouglas): if reading from objfs, use an executor with more threads
               ListeningExecutorService executor = BlazeExecutor.getInstance().getExecutor();
 
               // Read protos from any new files
