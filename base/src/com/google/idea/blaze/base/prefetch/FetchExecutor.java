@@ -17,14 +17,12 @@ package com.google.idea.blaze.base.prefetch;
 
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.idea.common.concurrency.ConcurrencyUtil;
-import java.util.concurrent.Executors;
+import com.intellij.util.concurrency.AppExecutorUtil;
 
 /** Shared executors for any prefetch/copy operations. */
 public class FetchExecutor {
-  private static final int THREAD_COUNT = 64;
+  private static final int MAX_THREADS = 128;
   public static final ListeningExecutorService EXECUTOR =
       MoreExecutors.listeningDecorator(
-          Executors.newFixedThreadPool(
-              THREAD_COUNT, ConcurrencyUtil.namedDaemonThreadPoolFactory(FetchExecutor.class)));
+          AppExecutorUtil.createBoundedApplicationPoolExecutor("FetchExecutor", MAX_THREADS));
 }

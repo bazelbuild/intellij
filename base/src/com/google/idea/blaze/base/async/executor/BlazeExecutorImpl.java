@@ -18,17 +18,15 @@ package com.google.idea.blaze.base.async.executor;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.idea.common.concurrency.ConcurrencyUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
 
 /** Executes blaze tasks on the an executor. */
 public class BlazeExecutorImpl extends BlazeExecutor {
 
   private final ListeningExecutorService executorService =
       MoreExecutors.listeningDecorator(
-          Executors.newFixedThreadPool(
-              16, ConcurrencyUtil.namedDaemonThreadPoolFactory(BlazeExecutorImpl.class)));
+          AppExecutorUtil.createBoundedApplicationPoolExecutor("BlazeExecutor", 16));
 
   @Override
   public <T> ListenableFuture<T> submit(Callable<T> callable) {
