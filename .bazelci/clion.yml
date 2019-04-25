@@ -2,21 +2,11 @@
 platforms:
   ubuntu1604:
     build_flags:
-    - --define=ij_product=clion-beta
+      - --define=ij_product=clion-beta
     build_targets:
-    - //clwb:clwb_bazel
+      - //clwb:clwb_bazel
     test_flags:
-    - --define=ij_product=clion-beta
-    - --test_output=errors
+      - --define=ij_product=clion-beta
+      - --test_output=errors
     test_targets:
-    - //:clwb_tests
-  ubuntu1804:
-    build_flags:
-    - --define=ij_product=clion-beta
-    build_targets:
-    - //clwb:clwb_bazel
-    test_flags:
-    - --define=ij_product=clion-beta
-    - --test_output=errors
-    test_targets:
-    - //:clwb_tests
+      - //:clwb_tests
