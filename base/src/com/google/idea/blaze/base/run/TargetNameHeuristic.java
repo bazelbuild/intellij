@@ -35,6 +35,10 @@ public class TargetNameHeuristic implements TestTargetHeuristic {
       @Nullable TestSize testSize) {
     String filePathWithoutExtension = FileUtil.getNameWithoutExtension(sourceFile.getPath());
     String targetName = target.label.targetName().toString();
+    return matches(filePathWithoutExtension, targetName);
+  }
+
+  protected boolean matches(String filePathWithoutExtension, String targetName) {
     if (!filePathWithoutExtension.endsWith(targetName)) {
       return false;
     }
