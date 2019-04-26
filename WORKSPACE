@@ -1,6 +1,5 @@
 workspace(name = "intellij_with_bazel")
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
 
@@ -246,10 +245,12 @@ http_archive(
 
 # BEGIN-EXTERNAL-SCALA
 # LICENSE: The Apache Software License, Version 2.0
-git_repository(
+http_archive(
     name = "io_bazel_rules_scala",
-    commit = "7bc18d07001cbfd425c6761c8384c4e982d25a2b",
-    remote = "https://github.com/bazelbuild/rules_scala.git",
+    strip_prefix = "rules_scala-7bc18d07001cbfd425c6761c8384c4e982d25a2b",
+    type = "zip",
+    sha256 = "ce767b0dc892fc6a15e008a76ac540e848ae2e080242f0f8b2de940f7d047e7b",
+    url = "https://github.com/bazelbuild/rules_scala/archive/7bc18d07001cbfd425c6761c8384c4e982d25a2b.zip",
 )
 
 load("@io_bazel_rules_scala//scala:scala.bzl", "scala_repositories")
@@ -263,10 +264,12 @@ scala_register_toolchains()
 
 # BEGIN-EXTERNAL-KOTLIN
 # LICENSE: The Apache Software License, Version 2.0
-git_repository(
+http_archive(
     name = "io_bazel_rules_kotlin",
-    commit = "cab5eaffc2012dfe46260c03d6419c0d2fa10be0",
-    remote = "https://github.com/bazelbuild/rules_kotlin.git",
+    url = "https://github.com/bazelbuild/rules_kotlin/archive/cab5eaffc2012dfe46260c03d6419c0d2fa10be0.zip",
+    type = "zip",
+    sha256 = "f1293902a15397a10957e866f133dcd027a0a6d21eae8c4fb7557f010add8a09",
+    strip_prefix = "rules_kotlin-cab5eaffc2012dfe46260c03d6419c0d2fa10be0",
 )
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
