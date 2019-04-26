@@ -31,7 +31,6 @@ import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.tasks.ApplyChangesTask;
 import com.android.tools.idea.run.tasks.ApplyCodeChangesTask;
 import com.android.tools.idea.run.tasks.DebugConnectorTask;
-import com.android.tools.idea.run.tasks.DeployTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.ui.ApplyChangesAction;
@@ -160,14 +159,9 @@ public class BlazeAndroidBinaryNormalBuildRunContext implements BlazeAndroidRunC
         return ImmutableList.of(new ApplyChangesTask(project, packages.build()));
       } else if (Boolean.TRUE.equals(env.getCopyableUserData(CodeSwapAction.KEY))) {
         return ImmutableList.of(new ApplyCodeChangesTask(project, packages.build()));
-      } else {
-        return ImmutableList.of(
-            new DeployTask(project, packages.build(), launchOptions.getPmInstallOptions()));
       }
-    } else {
-      return ImmutableList.of(DeployTaskCompat.createDeployTask(project, launchOptions, apks));
-      // return ImmutableList.of(new DeployApkTask(project, launchOptions, apks));
     }
+    return ImmutableList.of(DeployTaskCompat.createDeployTask(project, launchOptions, apks));
   }
 
   @Override

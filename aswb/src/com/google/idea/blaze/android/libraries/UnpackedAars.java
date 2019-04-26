@@ -44,7 +44,6 @@ import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -80,8 +79,8 @@ import javax.annotation.Nullable;
  * <ul>
  *   <li>the res/ folder
  *   <li>the R.txt file adjacent to the res/ folder
- *   <li>See {@link com.android.tools.idea.res.aar.AarSourceResourceRepository} for the dependency
- *       on R.txt.
+ *   <li>See {@link com.android.tools.idea.resources.aar.AarSourceResourceRepository} for the
+ *       dependency on R.txt.
  *   <li>jars: we use the merged output jar from Bazel instead of taking jars from the AAR. It
  *       should be placed in a jars/ folder adjacent to the res/ folder. See {@link
  *       org.jetbrains.android.uipreview.ModuleClassLoader}, for that possible assumption.
@@ -92,7 +91,6 @@ public class UnpackedAars {
   private static final Logger logger = Logger.getInstance(UnpackedAars.class);
 
   private final File cacheDir;
-  private final boolean isUnitTestMode;
 
   @Nullable private volatile InMemoryState inMemoryState = null;
 
@@ -104,8 +102,6 @@ public class UnpackedAars {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     this.cacheDir = getCacheDir(importSettings);
-    // We want this to be isUnitTestMode in normal operation, so there's no user setting.
-    isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
   }
 
   private static class AarAndJar {
@@ -139,15 +135,12 @@ public class UnpackedAars {
       @Nullable BlazeProjectData oldProjectData,
       SyncMode syncMode) {
     boolean fullRefresh = syncMode == SyncMode.FULL;
-    if (isUnitTestMode || fullRefresh) {
+    if (fullRefresh) {
       clearCache();
     }
-    if (isUnitTestMode) {
-      return;
-    }
+
     // TODO(brendandouglas): add a mechanism for removing missing files for partial syncs
     boolean removeMissingFiles = syncMode == SyncMode.INCREMENTAL;
-
     InMemoryState inMemoryState = readState(projectViewSet, projectData);
     this.inMemoryState = inMemoryState;
 
@@ -174,9 +167,6 @@ public class UnpackedAars {
       InMemoryState inMemoryState,
       RemoteOutputArtifacts previousOutputs,
       boolean removeMissingFiles) {
-    if (isUnitTestMode) {
-      return;
-    }
     FileOperationProvider fileOpProvider = FileOperationProvider.getInstance();
 
     // Ensure the cache dir exists
@@ -230,7 +220,7 @@ public class UnpackedAars {
     InMemoryState inMemoryState = this.inMemoryState;
     OutputArtifact artifact =
         decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
-    if (isUnitTestMode || inMemoryState == null) {
+    if (inMemoryState == null) {
       return getFallbackFile(artifact);
     }
     String cacheKey = cacheKeyForAar(decoder.resolveOutput(library.aarArtifact));
@@ -246,10 +236,6 @@ public class UnpackedAars {
   public File getResourceDirectory(ArtifactLocationDecoder decoder, AarLibrary library) {
     InMemoryState inMemoryState = this.inMemoryState;
     OutputArtifact artifact = decoder.resolveOutput(library.aarArtifact);
-    // Provide a resource directory as <aarFile>/res for unit test.
-    if (isUnitTestMode) {
-      return new File(getFallbackFile(artifact), SdkConstants.FD_RES);
-    }
     if (inMemoryState == null) {
       return null;
     }

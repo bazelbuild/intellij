@@ -36,6 +36,7 @@ import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -64,6 +65,8 @@ import org.jetbrains.annotations.Nullable;
  * then it is in experimental status under the blaze.class.file.finder.name flag.
  */
 public class PsiBasedClassFileFinder implements BlazeClassFileFinder {
+  private static final Logger LOG = Logger.getInstance(PsiBasedClassFileFinder.class);
+
   private final Module module;
   private final Project project;
 
@@ -182,7 +185,7 @@ public class PsiBasedClassFileFinder implements BlazeClassFileFinder {
     }
 
     Library intellijLibrary = ((LibraryOrderEntry) orderEntry).getLibrary();
-    if (intellijLibrary == null) {
+    if (intellijLibrary == null || intellijLibrary.getName() == null) {
       return null;
     }
 
@@ -193,11 +196,26 @@ public class PsiBasedClassFileFinder implements BlazeClassFileFinder {
 
     LibraryKey libraryKey = LibraryKey.fromIntelliJLibraryName(intellijLibrary.getName());
     BlazeJarLibrary blazeLibrary = syncData.getImportResult().libraries.get(libraryKey);
+    if (blazeLibrary == null) {
+      LOG.warn(
+          "Couldn't find BlazeJarLibrary corresponding to IJar for library "
+              + intellijLibrary.getName());
+      return null;
+    }
+    if (blazeLibrary.libraryArtifact.getClassJar() == null) {
+      LOG.warn(
+          "No class jar specified in BlazeJarLibrary for library " + intellijLibrary.getName());
+      return null;
+    }
 
     File classJarFile =
         projectData.getArtifactLocationDecoder().decode(blazeLibrary.libraryArtifact.getClassJar());
     VirtualFile classJar =
         VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(classJarFile);
+    if (classJar == null) {
+      LOG.warn("Missing class jar: " + classJarFile);
+      return null;
+    }
 
     return findClassInJar(classJar, fqcn);
   }

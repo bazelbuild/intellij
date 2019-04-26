@@ -32,6 +32,7 @@ import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.ConnectJavaDebuggerTask;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.idea.blaze.android.run.AndroidSessionInfoCompat;
+import com.google.idea.blaze.android.run.LaunchStatusCompat;
 import com.intellij.debugger.engine.RemoteDebugProcessHandler;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.execution.ExecutionException;
@@ -123,7 +124,7 @@ class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTask {
     runContext.addLaunchTaskCompleteListener(
         () -> {
           AndroidDebugBridge.removeClientChangeListener(reattachingListener);
-          launchStatus.terminateLaunch("Test run completed.\n");
+          LaunchStatusCompat.terminateLaunch(launchStatus, "Test run completed.\n", true);
         });
   }
 

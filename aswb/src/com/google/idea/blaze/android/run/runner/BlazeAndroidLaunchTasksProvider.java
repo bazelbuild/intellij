@@ -35,6 +35,7 @@ import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.idea.blaze.android.run.LaunchStatusCompat;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -119,10 +120,11 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       }
     } catch (ApkProvisionException e) {
       LOG.error(e);
-      launchStatus.terminateLaunch("Unable to determine application id: " + e);
+      LaunchStatusCompat.terminateLaunch(
+          launchStatus, "Unable to determine application id: " + e, true);
       return ImmutableList.of();
     } catch (ExecutionException e) {
-      launchStatus.terminateLaunch(e.getMessage());
+      LaunchStatusCompat.terminateLaunch(launchStatus, e.getMessage(), true);
       return ImmutableList.of();
     }
 
@@ -172,12 +174,12 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       return runContext.getDebuggerTask(
           androidDebugger, androidDebuggerState, packageIds, monitorRemoteProcess());
     } catch (ExecutionException e) {
-      launchStatus.terminateLaunch(e.getMessage());
+      LaunchStatusCompat.terminateLaunch(launchStatus, e.getMessage(), true);
       return null;
     }
   }
 
-  @Override
+  // #api 3.4
   public boolean createsNewProcess() {
     return true;
   }

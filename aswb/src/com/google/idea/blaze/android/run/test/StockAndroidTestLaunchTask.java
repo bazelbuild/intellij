@@ -24,6 +24,7 @@ import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.android.tools.idea.testartifacts.instrumented.AndroidTestListener;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.android.run.LaunchStatusCompat;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -66,17 +67,20 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
     try {
       testPackage = applicationIdProvider.getTestPackageName();
       if (testPackage == null) {
-        launchStatus.terminateLaunch("Unable to determine test package name");
+        LaunchStatusCompat.terminateLaunch(
+            launchStatus, "Unable to determine test package name", true);
         return null;
       }
     } catch (ApkProvisionException e) {
-      launchStatus.terminateLaunch("Unable to determine test package name");
+      LaunchStatusCompat.terminateLaunch(
+          launchStatus, "Unable to determine test package name", true);
       return null;
     }
 
     List<String> availableRunners = getRunnersFromManifest(deployInfo);
     if (availableRunners.isEmpty()) {
-      launchStatus.terminateLaunch(
+      LaunchStatusCompat.terminateLaunch(
+          launchStatus,
           String.format(
               "No instrumentation test runner is defined in the manifest.\n"
                   + "At least one instrumentation tag must be defined for the\n"
@@ -92,7 +96,8 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
                   + "    </instrumentation>\n"
                   + "\n"
                   + "</manifest>",
-              testPackage));
+              testPackage),
+          true);
       // Note: Gradle users will never see the above message, so don't mention Gradle here.
       // Even if no runners are defined in build.gradle, Gradle will add a default to the manifest.
       return null;
@@ -100,7 +105,8 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
     String runner = configState.getInstrumentationRunnerClass();
     if (!StringUtil.isEmpty(runner)) {
       if (!availableRunners.contains(runner)) {
-        launchStatus.terminateLaunch(
+        LaunchStatusCompat.terminateLaunch(
+            launchStatus,
             String.format(
                 "Instrumentation test runner \"%2$s\"\n"
                     + "is not defined for the \"%1$s\" package in the manifest.\n"
@@ -118,7 +124,8 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
                     + "    </instrumentation>\n"
                     + "\n"
                     + "</manifest>",
-                testPackage, runner, availableRunners.get(0)));
+                testPackage, runner, availableRunners.get(0)),
+            true);
         return null;
       }
     } else {
@@ -140,9 +147,7 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
     Manifest manifest = deployInfo.getMergedManifest();
     if (manifest != null) {
       return ImmutableList.copyOf(
-          manifest
-              .getInstrumentations()
-              .stream()
+          manifest.getInstrumentations().stream()
               .map(instrumentation -> instrumentation.getInstrumentationClass().getStringValue())
               .filter(Objects::nonNull)
               .collect(Collectors.toList()));

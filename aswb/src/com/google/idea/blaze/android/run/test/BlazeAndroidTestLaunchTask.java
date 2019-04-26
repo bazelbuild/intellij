@@ -22,6 +22,7 @@ import com.android.tools.idea.run.tasks.LaunchTaskDurations;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.android.run.LaunchStatusCompat;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
@@ -205,30 +206,32 @@ class BlazeAndroidTestLaunchTask implements LaunchTask {
    * from launch() (this matches the behavior of the stock ddmlib runner).
    */
   private void waitAndSetUpForKillingBlazeOnStop(
-      @NotNull final ProcessHandler processHandler, @NotNull LaunchStatus launchStatus) {
+      @NotNull final ProcessHandler processHandler, @NotNull final LaunchStatus launchStatus) {
     processHandler.addProcessListener(
         new ProcessAdapter() {
           @Override
           public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
             blazeResult.cancel(true /* mayInterruptIfRunning */);
-            launchStatus.terminateLaunch("Test run stopped.\n");
+            LaunchStatusCompat.terminateLaunch(launchStatus, "Test run stopped.\n", true);
           }
         });
 
     try {
       blazeResult.get();
-      launchStatus.terminateLaunch("Tests ran to completion.\n");
+      LaunchStatusCompat.terminateLaunch(launchStatus, "Tests ran to completion.\n", true);
     } catch (CancellationException e) {
       // The user has canceled the test.
-      launchStatus.terminateLaunch("Test run stopped.\n");
+      LaunchStatusCompat.terminateLaunch(launchStatus, "Test run stopped.\n", true);
     } catch (InterruptedException e) {
       // We've been interrupted - cancel the underlying Blaze process.
       blazeResult.cancel(true /* mayInterruptIfRunning */);
-      launchStatus.terminateLaunch("Test run stopped.\n");
+      LaunchStatusCompat.terminateLaunch(launchStatus, "Test run stopped.\n", true);
     } catch (ExecutionException e) {
       LOG.error(e);
-      launchStatus.terminateLaunch(
-          "Test run stopped due to internal exception. Please file a bug report.\n");
+      LaunchStatusCompat.terminateLaunch(
+          launchStatus,
+          "Test run stopped due to internal exception. Please file a bug report.\n",
+          true);
     }
   }
 
