@@ -54,7 +54,6 @@ java_proto_library(
 proto_library(
     name = "project_data_proto",
     srcs = ["project_data.proto"],
-    visibility = ["//visibility:public"],
     deps = [
         ":common_proto",
         ":intellij_ide_info_proto",
@@ -64,7 +63,6 @@ proto_library(
 
 java_proto_library(
     name = "project_data_java_proto",
-    visibility = ["//visibility:public"],
     deps = [":project_data_proto"],
 )
 
