@@ -56,7 +56,7 @@ public class SuggestBuildShardingNotification {
     String buildSystem = Blaze.buildSystemName(project);
     String message =
         String.format(
-            "The %1$s server ran out of memory during sync. You can workaround this by "
+            "The %1$s server ran out of memory during sync. You can work around this by "
                 + "<a href='fix'>reducing the shard size</a> in the project view file, "
                 + "or alternatively allocate more memory to %1$s",
             buildSystem);
@@ -79,7 +79,7 @@ public class SuggestBuildShardingNotification {
     String message =
         String.format(
             "The %1$s server ran out of memory during sync. This can occur for large projects. You "
-                + "can workaround this by <a href='fix'>sharding the %1$s build during sync</a>, "
+                + "can work around this by <a href='fix'>sharding the %1$s build during sync</a>, "
                 + "or alternatively allocate more memory to %1$s",
             buildSystem);
     IssueOutput.error(StringUtil.stripHtml(message, true) + ". Click here to set up sync sharding.")
