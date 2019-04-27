@@ -68,8 +68,6 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
   public static final Key<BlazeAndroidBinaryRunConfigurationStateEditor>
       ACTIVITY_CLASS_TEXT_FIELD_KEY = Key.create("BlazeActivityClassTextField");
 
-  private final RunConfigurationStateEditor commonStateEditor;
-
   private JPanel panel;
   private ComponentWithBrowseButton<EditorTextField> activityField;
   private JRadioButton launchNothingButton;
@@ -83,9 +81,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
 
   private boolean componentEnabled = true;
 
-  BlazeAndroidBinaryRunConfigurationStateEditor(
-      RunConfigurationStateEditor commonStateEditor, Project project) {
-    this.commonStateEditor = commonStateEditor;
+  BlazeAndroidBinaryRunConfigurationStateEditor(Project project) {
     setupUI(project);
     userIdField.setMinValue(0);
 
@@ -145,7 +141,6 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
   public void resetEditorFrom(RunConfigurationState genericState) {
     BlazeAndroidBinaryRunConfigurationState state =
         (BlazeAndroidBinaryRunConfigurationState) genericState;
-    commonStateEditor.resetEditorFrom(state.getCommonState());
     boolean launchSpecificActivity =
         state.getMode().equals(BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY);
     if (state.getMode().equals(BlazeAndroidBinaryRunConfigurationState.LAUNCH_DEFAULT_ACTIVITY)) {
@@ -174,7 +169,6 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
   public void applyEditorTo(RunConfigurationState genericState) {
     BlazeAndroidBinaryRunConfigurationState state =
         (BlazeAndroidBinaryRunConfigurationState) genericState;
-    commonStateEditor.applyEditorTo(state.getCommonState());
 
     state.setUserId((Integer) userIdField.getValue());
     if (launchDefaultButton.isSelected()) {
@@ -193,14 +187,13 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
 
   @Override
   public JComponent createComponent() {
-    return UiUtil.createBox(commonStateEditor.createComponent(), panel);
+    return UiUtil.createBox(panel);
   }
 
   private void updateEnabledState() {
     boolean useWorkProfile = useWorkProfileIfPresentCheckBox.isSelected();
     userIdLabel.setEnabled(componentEnabled && !useWorkProfile);
     userIdField.setEnabled(componentEnabled && !useWorkProfile);
-    commonStateEditor.setComponentEnabled(componentEnabled);
     activityField.setEnabled(componentEnabled && launchCustomButton.isSelected());
     launchNothingButton.setEnabled(componentEnabled);
     launchDefaultButton.setEnabled(componentEnabled);

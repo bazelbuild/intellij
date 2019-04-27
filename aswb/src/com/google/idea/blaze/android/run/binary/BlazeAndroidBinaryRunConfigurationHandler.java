@@ -91,7 +91,8 @@ public class BlazeAndroidBinaryRunConfigurationHandler
 
   @Override
   public BlazeAndroidRunConfigurationCommonState getCommonState() {
-    return configState.getCommonState();
+    // TODO (b/130681673) This can be removed once getCommonState() is removed from the handler.
+    return configState;
   }
 
   @Override
@@ -125,7 +126,6 @@ public class BlazeAndroidBinaryRunConfigurationHandler
 
     ImmutableList<String> blazeFlags =
         configState
-            .getCommonState()
             .getExpandedBuildFlags(
                 project,
                 projectViewSet,
@@ -133,8 +133,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
                 BlazeInvocationContext.runConfigContext(
                     ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), false));
     ImmutableList<String> exeFlags =
-        ImmutableList.copyOf(
-            configState.getCommonState().getExeFlagsState().getFlagsForExternalProcesses());
+        ImmutableList.copyOf(configState.getExeFlagsState().getFlagsForExternalProcesses());
     BlazeAndroidRunContext runContext = createRunContext(project, facet, env, blazeFlags, exeFlags);
 
     return new BlazeAndroidRunConfigurationRunner(

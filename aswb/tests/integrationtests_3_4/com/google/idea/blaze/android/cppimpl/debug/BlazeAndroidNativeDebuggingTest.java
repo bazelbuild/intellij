@@ -55,7 +55,7 @@ public class BlazeAndroidNativeDebuggingTest extends BlazeIntegrationTestCase {
     BlazeAndroidBinaryRunConfigurationState state =
         runProfile.getHandlerStateIfType(BlazeAndroidBinaryRunConfigurationState.class);
     assertThat(state).isNotNull();
-    state.getCommonState().setNativeDebuggingEnabled(true);
+    state.setNativeDebuggingEnabled(true);
 
     try {
       CidrDebuggerLanguageSupportManager.createEditor(runProfile);
