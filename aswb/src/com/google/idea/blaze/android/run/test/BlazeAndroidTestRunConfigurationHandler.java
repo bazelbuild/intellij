@@ -23,6 +23,7 @@ import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationValidationUtil;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunner;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
+import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -221,7 +222,12 @@ public class BlazeAndroidTestRunConfigurationHandler
         if (isMethodTest) {
           targetString += "#" + configState.getMethodName();
         }
-        return nameBuilder.setTargetString(targetString).build();
+
+        if (getState().getLaunchMethod().equals(AndroidTestLaunchMethod.NON_BLAZE)) {
+          return targetString;
+        } else {
+          return nameBuilder.setTargetString(targetString).build();
+        }
       }
     }
     return nameBuilder.build();
@@ -230,7 +236,12 @@ public class BlazeAndroidTestRunConfigurationHandler
   @Override
   @Nullable
   public BlazeCommandName getCommandName() {
-    return BlazeCommandName.TEST;
+    if (getState().getLaunchMethod().equals(AndroidTestLaunchMethod.BLAZE_TEST)) {
+      return BlazeCommandName.TEST;
+    } else if (getState().getLaunchMethod().equals(AndroidTestLaunchMethod.MOBILE_INSTALL)) {
+      return BlazeCommandName.MOBILE_INSTALL;
+    }
+    return null;
   }
 
   @Override

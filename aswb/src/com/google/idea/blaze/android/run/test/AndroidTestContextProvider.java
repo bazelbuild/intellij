@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
 import com.google.idea.blaze.base.run.producers.RunConfigurationContext;
 import com.google.idea.blaze.base.run.producers.TestContextProvider;
-import com.google.idea.blaze.java.AndroidBlazeRules;
+import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import com.google.idea.blaze.java.run.producers.JUnitConfigurationUtil;
 import com.google.idea.blaze.java.run.producers.ProducerUtils;
 import com.intellij.execution.Location;
@@ -64,11 +64,16 @@ class AndroidTestContextProvider implements TestContextProvider {
     @Nullable
     static AndroidTestContext fromClassAndMethod(PsiClass clazz, @Nullable PsiMethod method) {
       TargetInfo target = TestTargetHeuristic.testTargetForPsiElement(clazz, null);
-      if (target == null
-          || !AndroidBlazeRules.RuleTypes.ANDROID_TEST.getKind().equals(target.getKind())) {
+      if (target == null) {
         return null;
       }
-      return new AndroidTestContext(clazz, method, target);
+
+      if (RuleTypes.ANDROID_TEST.getKind().equals(target.getKind())
+          || RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind().equals(target.getKind())) {
+        return new AndroidTestContext(clazz, method, target);
+      }
+
+      return null;
     }
 
     private final PsiClass psiClass;
