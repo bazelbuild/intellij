@@ -182,7 +182,9 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
                   .createTemplateConfiguration(project, RunManager.getInstance(project));
       nativeConfig.setKind(Kind.PACKAGE);
       nativeConfig.setPackage(importPath);
-      nativeConfig.setOutputDirectory(null);
+      // prevents binary from being deleted by
+      // GoBuildingRunningState$ProcessHandler#processTerminated
+      nativeConfig.setOutputDirectory(executable.binary.getParent());
       nativeConfig.setParams(ParametersListUtil.join(getParameters(executable)));
       nativeConfig.setWorkingDirectory(executable.workingDir.getPath());
 
