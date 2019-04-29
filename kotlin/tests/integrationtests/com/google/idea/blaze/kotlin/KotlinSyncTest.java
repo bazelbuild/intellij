@@ -29,12 +29,21 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
+import com.intellij.openapi.module.Module;
+import com.intellij.pom.java.LanguageLevel;
 import java.util.List;
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
+import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder;
+import org.jetbrains.kotlin.idea.facet.KotlinFacet;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -155,6 +164,11 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
 
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
+    assertLanguageLevel(
+        ModuleFinder.getInstance(getProject())
+            .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME),
+        JavaLanguageLevelHelper.getJavaLanguageLevel(
+            getProjectViewSet(), blazeProjectData, LanguageLevel.JDK_1_8));
     assertThat(blazeProjectData).isNotNull();
     assertThat(blazeProjectData.getTargetMap()).isEqualTo(targetMap);
     assertThat(blazeProjectData.getWorkspaceLanguageSettings())
@@ -162,5 +176,19 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
             new WorkspaceLanguageSettings(
                 WorkspaceType.JAVA,
                 ImmutableSet.of(LanguageClass.GENERIC, LanguageClass.KOTLIN, LanguageClass.JAVA)));
+  }
+
+  private void assertLanguageLevel(Module module, LanguageLevel languageLevel) {
+    String javaVersion = languageLevel.toJavaVersion().toString();
+    assertThat(
+            Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(getProject())
+                .getSettings()
+                .getJvmTarget())
+        .isEqualTo(javaVersion);
+    CommonCompilerArguments commonArguments =
+        KotlinFacet.Companion.get(module).getConfiguration().getSettings().getCompilerArguments();
+    if (commonArguments instanceof K2JVMCompilerArguments) {
+      assertThat(((K2JVMCompilerArguments) commonArguments).getJvmTarget()).isEqualTo(javaVersion);
+    }
   }
 }

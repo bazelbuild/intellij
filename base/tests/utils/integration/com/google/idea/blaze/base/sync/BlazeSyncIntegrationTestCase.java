@@ -172,6 +172,10 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     projectViewManager.setProjectView(projectViewSet);
   }
 
+  protected ProjectViewSet getProjectViewSet() {
+    return projectViewManager.getProjectViewSet();
+  }
+
   protected void setTargetMap(TargetMap targetMap) {
     blazeIdeInterface.targetMap = targetMap;
   }

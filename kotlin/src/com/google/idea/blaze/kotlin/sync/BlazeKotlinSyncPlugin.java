@@ -39,6 +39,7 @@ import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
+import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
@@ -48,6 +49,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.pom.java.LanguageLevel;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -57,8 +59,10 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.kotlin.android.synthetic.AndroidCommandLineProcessor;
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
 import org.jetbrains.kotlin.config.KotlinFacetSettings;
 import org.jetbrains.kotlin.config.LanguageVersion;
+import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator;
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector;
@@ -186,6 +190,114 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
         .orElse(null);
   }
 
+  @Nullable
+  private static Module getWorkspaceModule(Project project) {
+    return ReadAction.compute(
+        () ->
+            ModuleManager.getInstance(project)
+                .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME));
+  }
+
+  private static KotlinFacet getOrCreateKotlinFacet(Module module) {
+    KotlinFacet facet = KotlinFacet.Companion.get(module);
+    if (facet != null) {
+      return facet;
+    }
+    FacetManager facetManager = FacetManager.getInstance(module);
+    ModifiableFacetModel model = facetManager.createModifiableModel();
+    try {
+      facet =
+          facetManager.createFacet(
+              KotlinFacetType.Companion.getINSTANCE(), KotlinFacetType.NAME, null);
+      model.addFacet(facet);
+    } finally {
+      model.commit();
+    }
+    return facet;
+  }
+
+  private static boolean isCompilerOption(String option) {
+    return option.startsWith(
+        "plugin:" + AndroidCommandLineProcessor.Companion.getANDROID_COMPILER_PLUGIN_ID() + ":");
+  }
+
+  @Override
+  public void updateProjectStructure(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      @Nullable BlazeProjectData oldBlazeProjectData,
+      ModuleEditor moduleEditor,
+      Module workspaceModule,
+      ModifiableRootModel workspaceModifiableModel) {
+    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.KOTLIN)) {
+      return;
+    }
+
+    KotlinFacet kotlinFacet = getOrCreateKotlinFacet(workspaceModule);
+    updatePluginOptions(
+        kotlinFacet,
+        Arrays.stream(KotlinPluginOptionsProvider.EP_NAME.getExtensions())
+            .map(
+                provider ->
+                    provider.collectKotlinPluginOptions(blazeProjectData.getTargetMap().targets()))
+            .flatMap(Collection::stream)
+            .collect(Collectors.toList()));
+    setJavaLanguageLevel(
+        kotlinFacet,
+        JavaLanguageLevelHelper.getJavaLanguageLevel(
+            projectViewSet, blazeProjectData, LanguageLevel.JDK_1_8));
+  }
+
+  /**
+   * This method takes the options that are present on the {@link KotlinPluginOptionsProvider} and
+   * adds them as plugin options to the {@link KotlinFacet}. Old options are removed from the facet
+   * before configuration of the new options from the extension.
+   *
+   * @param newPluginOptions new plugin options to be updated to KotlinFacet settings
+   */
+  private static void updatePluginOptions(KotlinFacet kotlinFacet, List<String> newPluginOptions) {
+    KotlinFacetSettings facetSettings = kotlinFacet.getConfiguration().getSettings();
+    // TODO: Unify this part with {@link
+    // org.jetbrains.kotlin.android.sync.ng.KotlinSyncModels#setupKotlinAndroidExtensionAsFacetPluginOptions}?
+    CommonCompilerArguments commonArguments = facetSettings.getCompilerArguments();
+    if (commonArguments == null) {
+      commonArguments = new CommonCompilerArguments.DummyImpl();
+    }
+
+    String[] oldPluginOptions = commonArguments.getPluginOptions();
+    if (oldPluginOptions == null) {
+      oldPluginOptions = new String[0];
+    }
+    newPluginOptions.addAll(
+        Arrays.stream(oldPluginOptions)
+            .filter(option -> !isCompilerOption(option))
+            .collect(toImmutableList()));
+    commonArguments.setPluginOptions(newPluginOptions.toArray(new String[0]));
+    facetSettings.setCompilerArguments(commonArguments);
+  }
+
+  private static void setJavaLanguageLevel(KotlinFacet kotlinFacet, LanguageLevel languageLevel) {
+    Project project = kotlinFacet.getModule().getProject();
+    K2JVMCompilerArguments k2JVMCompilerArguments =
+        (K2JVMCompilerArguments)
+            Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project)
+                .getSettings()
+                .unfrozen();
+    String javaVersion = languageLevel.toJavaVersion().toString();
+    k2JVMCompilerArguments.setJvmTarget(javaVersion);
+    Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project)
+        .setSettings(k2JVMCompilerArguments);
+
+    CommonCompilerArguments commonArguments =
+        kotlinFacet.getConfiguration().getSettings().getCompilerArguments();
+    if (commonArguments instanceof K2JVMCompilerArguments) {
+      ((K2JVMCompilerArguments) commonArguments).setJvmTarget(javaVersion);
+    }
+  }
+
   static class Listener implements SyncListener {
     @Override
     public void afterSync(
@@ -208,14 +320,6 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     }
   }
 
-  @Nullable
-  private static Module getWorkspaceModule(Project project) {
-    return ReadAction.compute(
-        () ->
-            ModuleManager.getInstance(project)
-                .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME));
-  }
-
   /**
    * We want to configure only a single module, without a user-facing dialog (the configuration
    * process takes O(seconds) per module, on the EDT, and there can be 100s of modules for Android
@@ -236,82 +340,5 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
           null,
           new NotificationMessageCollector(project, "Configuring Kotlin", "Configuring Kotlin"));
     }
-  }
-
-  @Override
-  public void updateProjectStructure(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData,
-      @org.jetbrains.annotations.Nullable BlazeProjectData oldBlazeProjectData,
-      ModuleEditor moduleEditor,
-      Module workspaceModule,
-      ModifiableRootModel workspaceModifiableModel) {
-    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.KOTLIN)) {
-      return;
-    }
-    configKotlinFacet(
-        workspaceModule,
-        Arrays.stream(KotlinPluginOptionsProvider.EP_NAME.getExtensions())
-            .map(
-                provider ->
-                    provider.collectKotlinPluginOptions(blazeProjectData.getTargetMap().targets()))
-            .flatMap(Collection::stream)
-            .collect(Collectors.toList()));
-  }
-
-  private static KotlinFacet getOrCreateKotlinFacet(Module module) {
-    KotlinFacet facet = KotlinFacet.Companion.get(module);
-    if (facet != null) {
-      return facet;
-    }
-    FacetManager facetManager = FacetManager.getInstance(module);
-    ModifiableFacetModel model = facetManager.createModifiableModel();
-    try {
-      facet =
-          facetManager.createFacet(
-              KotlinFacetType.Companion.getINSTANCE(), KotlinFacetType.NAME, null);
-      model.addFacet(facet);
-    } finally {
-      model.commit();
-    }
-    return facet;
-  }
-
-  /**
-   * This method takes the options that are present on the {@link KotlinPluginOptionsProvider} and
-   * adds them as plugin options to the {@link KotlinFacet}. Old options are removed from the facet
-   * before configuration of the new options from the extension.
-   *
-   * @param module the module that its KotlinFacet to be configured
-   * @param newPluginOptions new plugin options to be updated to KotlinFacet settings
-   */
-  private static void configKotlinFacet(Module module, List<String> newPluginOptions) {
-    KotlinFacetSettings facetSettings =
-        getOrCreateKotlinFacet(module).getConfiguration().getSettings();
-    // TODO: Unify this part with {@link
-    // org.jetbrains.kotlin.android.sync.ng.KotlinSyncModels#setupKotlinAndroidExtensionAsFacetPluginOptions}?
-    CommonCompilerArguments commonArguments = facetSettings.getCompilerArguments();
-    if (commonArguments == null) {
-      commonArguments = new CommonCompilerArguments.DummyImpl();
-    }
-
-    String[] oldPluginOptions = commonArguments.getPluginOptions();
-    if (oldPluginOptions == null) {
-      oldPluginOptions = new String[0];
-    }
-    newPluginOptions.addAll(
-        Arrays.stream(oldPluginOptions)
-            .filter(option -> !isCompilerOption(option))
-            .collect(toImmutableList()));
-    commonArguments.setPluginOptions(newPluginOptions.toArray(new String[0]));
-    facetSettings.setCompilerArguments(commonArguments);
-  }
-
-  private static boolean isCompilerOption(String option) {
-    return option.startsWith(
-        "plugin:" + AndroidCommandLineProcessor.Companion.getANDROID_COMPILER_PLUGIN_ID() + ":");
   }
 }
