@@ -191,21 +191,15 @@ def _package_meta_inf_files(ctx, final_plugin_xml_file, module_to_merged_xmls):
     return jar_file
 
 def _intellij_plugin_java_deps_impl(ctx):
-    java_infos = []
-    for dep in ctx.attr.deps:
-        if JavaInfo in dep:
-            java_infos.append(dep[JavaInfo])
-        elif _IntellijPluginLibraryInfo in dep:
-            java_infos.append(dep[_IntellijPluginLibraryInfo].java_info)
+    java_infos = [dep[_IntellijPluginLibraryInfo].java_info for dep in ctx.attr.deps]
     return [java_common.merge(java_infos)]
 
 _intellij_plugin_java_deps = rule(
     implementation = _intellij_plugin_java_deps_impl,
     attrs = {
-        # TODO(b/117574372): make this not accept JavaInfo (only intellij_plugin_libraries allowed)
         "deps": attr.label_list(
             mandatory = True,
-            providers = [[JavaInfo], [_IntellijPluginLibraryInfo]],
+            providers = [[_IntellijPluginLibraryInfo]],
         ),
     },
 )
@@ -227,8 +221,7 @@ _intellij_plugin_jar = rule(
         "plugin_xml": attr.label(mandatory = True, allow_single_file = [".xml"]),
         "optional_plugin_xmls": attr.label_list(providers = [_OptionalPluginXmlInfo]),
         "jar_name": attr.string(mandatory = True),
-        # TODO(b/117574372): make this not accept JavaInfo (only intellij_plugin_libraries allowed)
-        "deps": attr.label_list(providers = [[JavaInfo], [_IntellijPluginLibraryInfo]]),
+        "deps": attr.label_list(providers = [[_IntellijPluginLibraryInfo]]),
         "_merge_xml_binary": attr.label(
             default = Label("//build_defs:merge_xml"),
             executable = True,
