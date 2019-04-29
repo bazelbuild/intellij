@@ -122,6 +122,9 @@
     <programRunner implementation="com.google.idea.blaze.java.run.fastbuild.FastBuildDebuggerRunner"/>
     <applicationService serviceImplementation="com.google.idea.blaze.java.run.fastbuild.FastBuildSuggestion"/>
     <projectService serviceImplementation="com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService"/>
+    <projectService serviceInterface="com.intellij.openapi.compiler.CompilerManager"
+        serviceImplementation="com.google.idea.blaze.java.run.BlazeCompilerManager"
+        overrides="true"/>
   </extensions>
 
   <application-components>
