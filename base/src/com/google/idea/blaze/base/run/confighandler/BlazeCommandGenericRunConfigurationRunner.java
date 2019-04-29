@@ -38,7 +38,7 @@ import com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
-import com.google.idea.blaze.base.scope.scopes.IssuesScope;
+import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -158,7 +158,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
             public void onBlazeContextStart(BlazeContext context) {
               context
                   .push(
-                      new IssuesScope(
+                      new ProblemsViewScope(
                           project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))
                   .push(new IdeaLogScope());
             }

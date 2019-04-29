@@ -24,12 +24,12 @@ import com.google.idea.blaze.base.ui.problems.BlazeProblemsView;
 import com.intellij.openapi.project.Project;
 
 /** Shows the compiler output. */
-public class IssuesScope implements BlazeScope, OutputSink<IssueOutput> {
+public class ProblemsViewScope implements BlazeScope, OutputSink<IssueOutput> {
 
   private final Project project;
   private final FocusBehavior problemsViewFocusBehavior;
 
-  public IssuesScope(Project project, FocusBehavior problemsViewFocusBehavior) {
+  public ProblemsViewScope(Project project, FocusBehavior problemsViewFocusBehavior) {
     this.project = project;
     this.problemsViewFocusBehavior = problemsViewFocusBehavior;
   }

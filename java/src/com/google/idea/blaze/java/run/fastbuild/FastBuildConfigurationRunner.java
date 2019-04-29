@@ -30,7 +30,7 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
-import com.google.idea.blaze.base.scope.scopes.IssuesScope;
+import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
@@ -118,7 +118,7 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
     FocusBehavior problemsViewFocus = BlazeUserSettings.getInstance().getShowProblemsViewOnRun();
     BlazeContext context =
         new BlazeContext()
-            .push(new IssuesScope(project, problemsViewFocus))
+            .push(new ProblemsViewScope(project, problemsViewFocus))
             .push(
                 new BlazeConsoleScope.Builder(project)
                     .setPopupBehavior(consolePopupBehavior)

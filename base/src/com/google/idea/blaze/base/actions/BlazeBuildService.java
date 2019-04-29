@@ -34,8 +34,8 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
-import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.scope.scopes.NotificationScope;
+import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -140,7 +140,7 @@ public class BlazeBuildService {
                                         BlazeInvocationContext.ContextType.Sync,
                                         true))
                                 .build())
-                        .push(new IssuesScope(project, problemsViewFocus))
+                        .push(new ProblemsViewScope(project, problemsViewFocus))
                         .push(new IdeaLogScope())
                         .push(new TimingScope("Make", EventType.BlazeInvocation))
                         .push(notificationScope);

@@ -39,7 +39,7 @@ import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.scopes.IssuesScope;
+import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystem;
@@ -231,7 +231,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
           @Override
           public void onBlazeContextStart(BlazeContext context) {
             context.push(
-                new IssuesScope(
+                new ProblemsViewScope(
                     project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()));
           }
 

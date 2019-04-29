@@ -36,7 +36,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
-import com.google.idea.blaze.base.scope.scopes.IssuesScope;
+import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -178,7 +178,7 @@ public final class BlazeAndroidRunConfigurationRunner
     return Scope.root(
         context -> {
           context
-              .push(new IssuesScope(project, settings.getShowProblemsViewOnRun()))
+              .push(new ProblemsViewScope(project, settings.getShowProblemsViewOnRun()))
               .push(new ExperimentScope())
               .push(
                   new BlazeConsoleScope.Builder(project)

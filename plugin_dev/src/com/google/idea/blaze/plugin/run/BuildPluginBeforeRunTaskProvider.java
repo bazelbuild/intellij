@@ -45,7 +45,7 @@ import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
-import com.google.idea.blaze.base.scope.scopes.IssuesScope;
+import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -156,7 +156,7 @@ public final class BuildPluginBeforeRunTaskProvider
           WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
           context
               .push(new ExperimentScope())
-              .push(new IssuesScope(project, userSettings.getShowProblemsViewOnRun()))
+              .push(new ProblemsViewScope(project, userSettings.getShowProblemsViewOnRun()))
               .push(
                   new BlazeConsoleScope.Builder(project)
                       .setPopupBehavior(userSettings.getShowBlazeConsoleOnRun())

@@ -35,9 +35,9 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
-import com.google.idea.blaze.base.scope.scopes.IssuesScope;
 import com.google.idea.blaze.base.scope.scopes.NotificationScope;
 import com.google.idea.blaze.base.scope.scopes.PerformanceWarningScope;
+import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
@@ -110,7 +110,7 @@ final class BlazeSyncTask implements Progressive {
                           new IssueOutputFilter(project, workspaceRoot, ContextType.Sync, true))
                       .build())
               .push(
-                  new IssuesScope(
+                  new ProblemsViewScope(
                       project,
                       syncParams.backgroundSync
                           ? FocusBehavior.NEVER

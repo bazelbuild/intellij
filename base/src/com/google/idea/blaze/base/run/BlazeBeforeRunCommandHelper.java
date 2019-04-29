@@ -34,7 +34,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
-import com.google.idea.blaze.base.scope.scopes.IssuesScope;
+import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
@@ -82,7 +82,7 @@ public final class BlazeBeforeRunCommandHelper {
               protected BuildResult execute(BlazeContext context) {
                 context
                     .push(
-                        new IssuesScope(
+                        new ProblemsViewScope(
                             project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))
                     .push(
                         new BlazeConsoleScope.Builder(project)
