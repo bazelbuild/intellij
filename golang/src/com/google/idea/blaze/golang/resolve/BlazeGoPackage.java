@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.golang.resolve;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.goide.psi.GoFile;
 import com.goide.psi.impl.GoPackage;
 import com.google.common.annotations.VisibleForTesting;
@@ -26,7 +28,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.GoIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -37,12 +39,10 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.sync.SyncCache;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.golang.GoBlazeRules.RuleTypes;
@@ -59,7 +59,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -122,26 +121,24 @@ public class BlazeGoPackage extends GoPackage {
         .orElse(targetKey);
   }
 
-  public static Set<File> getSourceFiles(
+  public static ImmutableSet<File> getSourceFiles(
       TargetIdeInfo target, Project project, BlazeProjectData projectData) {
     if (target.getGoIdeInfo() == null) {
       return ImmutableSet.of();
     }
-    Kind kind = target.getKind();
-    if (kind == RuleTypes.GO_WRAP_CC.getKind()) {
-      return ImmutableSet.of(getWrapCcGoFile(target, projectData.getBlazeInfo()));
+    if (target.getKind() == RuleTypes.GO_WRAP_CC.getKind()) {
+      return getWrapCcGoFiles(project, projectData, target);
     }
     Multimap<Label, GoIdeInfo> libraryToTestMap =
         Preconditions.checkNotNull(getLibraryToTestMap(project));
-    ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
     return Stream.concat(
             Stream.of(target.getGoIdeInfo()),
             libraryToTestMap.get(target.getKey().getLabel()).stream())
         .map(GoIdeInfo::getSources)
         .flatMap(Collection::stream)
-        .map(a -> OutputArtifactResolver.resolve(project, decoder, a))
+        .map(a -> resolveArtifact(project, projectData, a))
         .filter(Objects::nonNull)
-        .collect(Collectors.toSet());
+        .collect(toImmutableSet());
   }
 
   @Nullable
@@ -162,13 +159,28 @@ public class BlazeGoPackage extends GoPackage {
     return builder.build();
   }
 
-  private static File getWrapCcGoFile(TargetIdeInfo target, BlazeInfo blazeInfo) {
+  @Nullable
+  private static File resolveArtifact(
+      Project project, BlazeProjectData data, ArtifactLocation artifact) {
+    return OutputArtifactResolver.resolve(project, data.getArtifactLocationDecoder(), artifact);
+  }
+
+  private static ImmutableSet<File> getWrapCcGoFiles(
+      Project project, BlazeProjectData projectData, TargetIdeInfo target) {
+    if (!target.getGoIdeInfo().getSources().isEmpty()) {
+      return target.getGoIdeInfo().getSources().stream()
+          .map(a -> resolveArtifact(project, projectData, a))
+          .filter(Objects::nonNull)
+          .collect(toImmutableSet());
+    }
+    // older versions of blaze don't expose the .go genfile
+    // in that case, look directly in blaze-out
     String blazePackage = target.getKey().getLabel().blazePackage().relativePath();
-    File directory = new File(blazeInfo.getGenfilesDirectory(), blazePackage);
+    File directory = new File(projectData.getBlazeInfo().getGenfilesDirectory(), blazePackage);
     String filename = blazePackage + '/' + target.getKey().getLabel().targetName() + ".go";
     filename = filename.replace("_", "__");
     filename = filename.replace('/', '_');
-    return new File(directory, filename);
+    return ImmutableSet.of(new File(directory, filename));
   }
 
   private BlazeGoPackage(

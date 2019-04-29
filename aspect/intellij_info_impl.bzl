@@ -327,20 +327,23 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         "go_appengine_library",
         "go_appengine_test",
     ]:
-        sources += [f for src in getattr(ctx.rule.attr, "srcs", []) for f in src.files]
-        generated += [f for f in sources if not f.is_source]
+        sources = [f for src in getattr(ctx.rule.attr, "srcs", []) for f in src.files]
+        generated = [f for f in sources if not f.is_source]
     elif ctx.rule.kind == "go_wrap_cc":
-        # we want the .go file, but the rule only provides .a and .x files
-        # add those to the output group to make sure the .go file gets built,
-        # then manually construct the .go file in the sync plugin
-        # TODO(chaorenl): change this if we ever get the .go file from a provider
-        generated += target.files.to_list()
+        genfiles = target.files.to_list()
+        go_genfiles = [f for f in genfiles if f.basename.endswith(".go")]
+        if go_genfiles:
+            sources = go_genfiles
+            generated = go_genfiles
+        else:
+            # if the .go file isn't in 'files', build the .a and .x files instead
+            generated = genfiles
     else:
         proto_sources = _collect_generated_proto_go_sources(target)
         if not proto_sources:
             return False
-        sources += proto_sources
-        generated += proto_sources
+        sources = proto_sources
+        generated = proto_sources
 
     import_path = None
     go_semantics = getattr(semantics, "go", None)
@@ -793,6 +796,7 @@ def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
 
 def intellij_info_aspect_impl(target, ctx, semantics):
     """Aspect implementation function."""
+
     tags = ctx.rule.attr.tags
     if "no-ide" in tags:
         return struct()
