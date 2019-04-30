@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.fastbuild;
 
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
@@ -39,6 +40,7 @@ import com.google.idea.blaze.java.fastbuild.FastBuildLogDataScope.FastBuildLogOu
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
@@ -240,7 +242,17 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
       }
       List<String> args = argsBuilder.build();
       writeCompilationStartedMessage(context, instructions);
-      logger.info("Running javac with options: " + args);
+
+      // don't log the full classpath
+      List<String> trimmedArgs =
+          args.stream()
+              .map(
+                  a ->
+                      StringUtil.shortenTextWithEllipsis(
+                          a, /* maxLength= */ 500, /* suffixLength= */ 0))
+              .collect(toImmutableList());
+      logger.info("Running javac with options: " + trimmedArgs);
+
       Stopwatch timer = Stopwatch.createStarted();
       boolean success =
           javac.compile(context, args, instructions.filesToCompile(), instructions.outputWriter());

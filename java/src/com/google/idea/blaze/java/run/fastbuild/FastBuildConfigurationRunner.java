@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
+import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
@@ -119,6 +120,7 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
     BlazeContext context =
         new BlazeContext()
             .push(new ProblemsViewScope(project, problemsViewFocus))
+            .push(new IdeaLogScope())
             .push(
                 new BlazeConsoleScope.Builder(project)
                     .setPopupBehavior(consolePopupBehavior)
