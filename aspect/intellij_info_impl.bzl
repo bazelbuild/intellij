@@ -282,17 +282,24 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     else:
         py_launcher = None
 
+    sources = sources_from_target(ctx)
+    to_build = target[PyInfo].transitive_sources
+    if ctx.rule.kind == "py_wrap_cc":
+        # track the generated .py output
+        py_genfiles = [f for f in target.files.to_list() if f.basename.endswith(".py")]
+        sources = [artifact_location(f) for f in py_genfiles]
+        to_build += py_genfiles
+
     ide_info["py_ide_info"] = struct_omit_none(
-        sources = sources_from_target(ctx),
+        sources = sources,
         launcher = py_launcher,
         python_version = _get_python_version(ctx),
         srcs_version = _get_python_srcs_version(ctx),
     )
-    transitive_sources = target[PyInfo].transitive_sources
 
     update_set_in_dict(output_groups, "intellij-info-py", depset([ide_info_file]))
-    update_set_in_dict(output_groups, "intellij-compile-py", transitive_sources)
-    update_set_in_dict(output_groups, "intellij-resolve-py", transitive_sources)
+    update_set_in_dict(output_groups, "intellij-compile-py", to_build)
+    update_set_in_dict(output_groups, "intellij-resolve-py", to_build)
     return True
 
 def _collect_generated_proto_go_sources(target):
