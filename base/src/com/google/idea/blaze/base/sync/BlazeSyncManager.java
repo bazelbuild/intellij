@@ -15,36 +15,23 @@
  */
 package com.google.idea.blaze.base.sync;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.projectview.SyncDirectoriesWarning;
-import com.google.idea.common.concurrency.ConcurrencyUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import java.util.Collection;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /** Manages syncing and its listeners. */
 public class BlazeSyncManager {
 
-  // a per-project single-threaded executor to run the build phase of syncs
-  private final ListeningExecutorService syncBuildExecutor;
   private final Project project;
 
   public BlazeSyncManager(Project project) {
     this.project = project;
-    syncBuildExecutor =
-        MoreExecutors.listeningDecorator(
-            Executors.newSingleThreadExecutor(
-                ConcurrencyUtil.namedDaemonThreadPoolFactory(BlazeSyncManager.class)));
   }
 
   public static BlazeSyncManager getInstance(Project project) {
@@ -61,9 +48,7 @@ public class BlazeSyncManager {
     StartupManager.getInstance(project)
         .runWhenProjectIsInitialized(
             () -> {
-              BlazeImportSettings importSettings =
-                  BlazeImportSettingsManager.getInstance(project).getImportSettings();
-              if (importSettings == null) {
+              if (BlazeImportSettingsManager.getInstance(project).getImportSettings() == null) {
                 throw new IllegalStateException(
                     String.format(
                         "Attempt to sync non-%s project.", Blaze.buildSystemName(project)));
@@ -73,18 +58,14 @@ public class BlazeSyncManager {
                     new BlazeSyncParams.Builder("Initial directory update", SyncMode.NO_BUILD)
                         .setBackgroundSync(true)
                         .build();
-                submitTask(new BlazeSyncTask(project, importSettings, params));
+                submitTask(project, params);
               }
-              submitTask(new BlazeSyncTask(project, importSettings, syncParams));
+              submitTask(project, syncParams);
             });
   }
 
-  private void submitTask(BlazeSyncTask task) {
-    @SuppressWarnings("unused") // go/futurereturn-lsc
-    Future<?> possiblyIgnoredError =
-        ProgressiveTaskWithProgressIndicator.builder(project, "Syncing Project")
-            .setExecutor(syncBuildExecutor)
-            .submitTask(task);
+  private void submitTask(Project project, BlazeSyncParams params) {
+    SyncPhaseCoordinator.getInstance(project).syncProject(params);
   }
 
   private static boolean runInitialDirectoryOnlySync(BlazeSyncParams syncParams) {

@@ -28,19 +28,6 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class SyncProjectState {
 
-  /**
-   * Merges this {@link SyncProjectState} with the state associated with a more recently started
-   * build phase.
-   */
-  public SyncProjectState updateState(SyncProjectState nextResult) {
-    // take the most recent version of the project data
-    return nextResult.toBuilder()
-        .setSyncParams(BlazeSyncParams.combine(getSyncParams(), nextResult.getSyncParams()))
-        .build();
-  }
-
-  public abstract BlazeSyncParams getSyncParams();
-
   public abstract ProjectViewSet getProjectViewSet();
 
   public abstract WorkspaceLanguageSettings getLanguageSettings();
@@ -58,22 +45,9 @@ public abstract class SyncProjectState {
     return new AutoValue_SyncProjectState.Builder();
   }
 
-  private Builder toBuilder() {
-    return builder()
-        .setSyncParams(getSyncParams())
-        .setProjectViewSet(getProjectViewSet())
-        .setLanguageSettings(getLanguageSettings())
-        .setBlazeInfo(getBlazeInfo())
-        .setBlazeVersionData(getBlazeVersionData())
-        .setWorkingSet(getWorkingSet())
-        .setWorkspacePathResolver(getWorkspacePathResolver());
-  }
-
   /** A builder for {@link SyncProjectState} objects. */
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract Builder setSyncParams(BlazeSyncParams params);
-
     public abstract Builder setProjectViewSet(ProjectViewSet projectViewSet);
 
     public abstract Builder setLanguageSettings(WorkspaceLanguageSettings languageSettings);

@@ -42,7 +42,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
@@ -181,12 +180,6 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   }
 
   protected void runBlazeSync(BlazeSyncParams syncParams) {
-    Project project = getProject();
-    final BlazeSyncTask syncTask =
-        new BlazeSyncTask(
-            project,
-            BlazeImportSettingsManager.getInstance(project).getImportSettings(),
-            syncParams);
     BlazeContext context = new BlazeContext();
     context.addOutputSink(IssueOutput.class, errorCollector);
 
@@ -197,7 +190,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         Executors.newSingleThreadExecutor()
             .submit(
                 () -> {
-                  syncTask.syncProject(context);
+                  SyncPhaseCoordinator.getInstance(getProject()).runSync(syncParams, true, context);
                   context.endScope();
                 });
     while (!future.isDone()) {

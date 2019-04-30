@@ -87,6 +87,13 @@ public interface BuildSystemProvider {
   /** @return The type of the blaze/bazel binary to use for syncing */
   BuildBinaryType getSyncBinaryType();
 
+  /** Returns true if syncing is done off the user's local machine. */
+  default boolean syncingRemotely() {
+    // TODO(brendandouglas): make this configurable based on context, move somewhere more
+    // appropriate
+    return getSyncBinaryType() == BuildBinaryType.RABBIT;
+  }
+
   WorkspaceRootProvider getWorkspaceRootProvider();
 
   /** Directories containing artifacts produced during the build process. */

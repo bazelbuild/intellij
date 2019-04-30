@@ -73,7 +73,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/** Runs the 'project update' phase of sync, after the blaze build phase has completed. */
+/** Runs the 'blaze build' phase of sync. */
 final class BuildPhaseSyncTask {
 
   /**
@@ -116,8 +116,7 @@ final class BuildPhaseSyncTask {
     return resultBuilder.setBuildPhaseStats(ImmutableList.of(buildStats.build())).build();
   }
 
-  private BlazeSyncBuildResult.Builder doRun(BlazeContext context)
-      throws SyncFailedException, SyncCanceledException {
+  private void doRun(BlazeContext context) throws SyncFailedException, SyncCanceledException {
     SyncProjectState projectState = getProjectState(context);
     resultBuilder.setProjectState(projectState);
 
@@ -181,9 +180,6 @@ final class BuildPhaseSyncTask {
       }
       throw new SyncFailedException();
     }
-    return BlazeSyncBuildResult.builder()
-        .setProjectState(projectState)
-        .setBuildResult(blazeBuildResult);
   }
 
   private SyncProjectState getProjectState(BlazeContext context)
@@ -270,7 +266,6 @@ final class BuildPhaseSyncTask {
       printWorkingSet(context, workingSet);
     }
     return SyncProjectState.builder()
-        .setSyncParams(syncParams)
         .setProjectViewSet(projectViewSet)
         .setLanguageSettings(workspaceLanguageSettings)
         .setBlazeInfo(blazeInfo)

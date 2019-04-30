@@ -35,10 +35,8 @@ public abstract class BlazeSyncBuildResult {
    */
   public BlazeSyncBuildResult updateResult(BlazeSyncBuildResult nextResult) {
     // take the most recent version of the project data, and combine the blaze build outputs
-    // TODO(brendandouglas): properly combine failed and successful builds (don't throw away results
-    // entirely)
     return nextResult.toBuilder()
-        .setProjectState(getProjectState().updateState(nextResult.getProjectState()))
+        .setProjectState(nextResult.getProjectState())
         .setBuildResult(getBuildResult().updateOutputs(nextResult.getBuildResult()))
         .setBuildPhaseStats(
             ImmutableList.<BuildPhaseSyncStats>builder()

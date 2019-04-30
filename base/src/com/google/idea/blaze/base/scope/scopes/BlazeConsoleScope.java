@@ -39,6 +39,7 @@ public class BlazeConsoleScope implements BlazeScope {
     private Project project;
     private ProgressIndicator progressIndicator;
     private FocusBehavior popupBehavior = FocusBehavior.ON_ERROR;
+    private boolean clearPreviousState = true;
     private final ImmutableList.Builder<Filter> filters = ImmutableList.builder();
 
     public Builder(Project project) {
@@ -55,19 +56,26 @@ public class BlazeConsoleScope implements BlazeScope {
       return this;
     }
 
+    public Builder setClearPreviousState(boolean clearPreviousState) {
+      this.clearPreviousState = clearPreviousState;
+      return this;
+    }
+
     public Builder addConsoleFilters(Filter... filters) {
       this.filters.add(filters);
       return this;
     }
 
     public BlazeConsoleScope build() {
-      return new BlazeConsoleScope(project, progressIndicator, popupBehavior, filters.build());
+      return new BlazeConsoleScope(
+          project, progressIndicator, popupBehavior, clearPreviousState, filters.build());
     }
   }
 
   private final BlazeConsoleService blazeConsoleService;
   @Nullable private final ProgressIndicator progressIndicator;
   private final FocusBehavior popupBehavior;
+  private final boolean clearPreviousState;
   private final ImmutableList<Filter> customFilters;
 
   private boolean activated;
@@ -96,10 +104,12 @@ public class BlazeConsoleScope implements BlazeScope {
       Project project,
       @Nullable ProgressIndicator progressIndicator,
       FocusBehavior popupBehavior,
+      boolean clearPreviousState,
       ImmutableList<Filter> customFilters) {
     this.blazeConsoleService = BlazeConsoleService.getInstance(project);
     this.progressIndicator = progressIndicator;
     this.popupBehavior = popupBehavior;
+    this.clearPreviousState = clearPreviousState;
     this.customFilters = customFilters;
   }
 
@@ -124,8 +134,10 @@ public class BlazeConsoleScope implements BlazeScope {
   public void onScopeBegin(final BlazeContext context) {
     context.addOutputSink(PrintOutput.class, printSink);
     context.addOutputSink(StatusOutput.class, statusSink);
-    blazeConsoleService.clear();
-    blazeConsoleService.setCustomFilters(customFilters);
+    if (clearPreviousState) {
+      blazeConsoleService.clear();
+      blazeConsoleService.setCustomFilters(customFilters);
+    }
     blazeConsoleService.setStopHandler(
         () -> {
           if (progressIndicator != null) {

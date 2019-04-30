@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.async.executor;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Progressive;
@@ -25,6 +26,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
+import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
 /**
@@ -76,6 +78,20 @@ public class ProgressiveTaskWithProgressIndicator {
           progressive.run(indicator);
           return null;
         });
+  }
+
+  public void submitTaskLater(Progressive progressive) {
+    ApplicationManager.getApplication()
+        .invokeLater(
+            () -> {
+              @SuppressWarnings("unused") // go/futurereturn-lsc
+              Future<?> possiblyIgnoredError =
+                  submitTaskWithResult(
+                      indicator -> {
+                        progressive.run(indicator);
+                        return null;
+                      });
+            });
   }
 
   /**

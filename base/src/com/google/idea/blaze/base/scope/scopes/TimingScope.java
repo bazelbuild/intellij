@@ -150,8 +150,8 @@ public class TimingScope implements BlazeScope {
     if (duration.isPresent()) {
       return duration.get();
     }
-    // Could happen if a TimingScope outlives the root context (e.g., from BlazeSyncTask), so the
-    // actual duration is not yet known.
+    // Could happen if a TimingScope outlives the root context, so the actual duration is not yet
+    // known.
     logger.warn(String.format("Duration not computed for TimingScope %s", name));
     return Duration.ZERO;
   }

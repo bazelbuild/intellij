@@ -35,4 +35,14 @@ public enum SyncResult {
   public boolean successful() {
     return success;
   }
+
+  public static SyncResult combine(SyncResult first, SyncResult second) {
+    if (first == CANCELLED || second == CANCELLED) {
+      return CANCELLED;
+    }
+    if (first == FAILURE || second == FAILURE) {
+      return FAILURE;
+    }
+    return first == PARTIAL_SUCCESS || second == PARTIAL_SUCCESS ? PARTIAL_SUCCESS : SUCCESS;
+  }
 }

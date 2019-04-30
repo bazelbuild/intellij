@@ -54,6 +54,7 @@ import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.libraries.LibraryEditor;
@@ -100,8 +101,8 @@ final class ProjectUpdateSyncTask {
   /** Runs the project update phase of sync, returning timing information for logging purposes. */
   static List<TimedEvent> runProjectUpdatePhase(
       Project project,
+      BlazeSyncParams params,
       BlazeSyncBuildResult buildPhaseResult,
-      @Nullable BlazeProjectData oldProjectData,
       BlazeContext context) {
     if (!buildPhaseResult.isValid()) {
       return ImmutableList.of();
@@ -109,8 +110,8 @@ final class ProjectUpdateSyncTask {
     SaveUtil.saveAllFiles();
     ProjectUpdateSyncTask task =
         new ProjectUpdateSyncTask(
-            project, buildPhaseResult.getProjectState(), buildPhaseResult.getBuildResult());
-    return task.runWithTiming(oldProjectData, context);
+            project, params, buildPhaseResult.getProjectState(), buildPhaseResult.getBuildResult());
+    return task.runWithTiming(context);
   }
 
   private final Project project;
@@ -119,19 +120,26 @@ final class ProjectUpdateSyncTask {
   private final BlazeSyncParams syncParams;
   private final SyncProjectState projectState;
   private final BlazeBuildOutputs buildResult;
+  @Nullable private final BlazeProjectData oldProjectData;
 
   private ProjectUpdateSyncTask(
-      Project project, SyncProjectState projectState, BlazeBuildOutputs buildResult) {
+      Project project,
+      BlazeSyncParams params,
+      SyncProjectState projectState,
+      BlazeBuildOutputs buildResult) {
     this.project = project;
     this.importSettings = BlazeImportSettingsManager.getInstance(project).getImportSettings();
     this.workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
     this.projectState = projectState;
-    this.syncParams = projectState.getSyncParams();
+    this.syncParams = params;
     this.buildResult = buildResult;
+    this.oldProjectData =
+        syncParams.syncMode == SyncMode.FULL
+            ? null
+            : BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
   }
 
-  private List<TimedEvent> runWithTiming(
-      @Nullable BlazeProjectData oldProjectData, BlazeContext context) {
+  private List<TimedEvent> runWithTiming(BlazeContext context) {
     // run under a child context to capture all timing information before finalizing the stats
     List<TimedEvent> timedEvents = new ArrayList<>();
     SyncScope.push(
@@ -140,13 +148,12 @@ final class ProjectUpdateSyncTask {
           TimingScope timingScope = new TimingScope("Project update phase", EventType.Other);
           timingScope.addScopeListener((events, totalTime) -> timedEvents.addAll(events));
           childContext.push(timingScope);
-          run(oldProjectData, childContext);
+          run(childContext);
         });
     return timedEvents;
   }
 
-  private void run(@Nullable BlazeProjectData oldProjectData, BlazeContext context)
-      throws SyncCanceledException, SyncFailedException {
+  private void run(BlazeContext context) throws SyncCanceledException, SyncFailedException {
     SyncState.Builder syncStateBuilder = new SyncState.Builder();
 
     TargetMap targetMap = updateTargetMap(context, oldProjectData, syncStateBuilder);

@@ -28,16 +28,25 @@ public class ProblemsViewScope implements BlazeScope, OutputSink<IssueOutput> {
 
   private final Project project;
   private final FocusBehavior problemsViewFocusBehavior;
+  private final boolean resetProblemsContext;
 
   public ProblemsViewScope(Project project, FocusBehavior problemsViewFocusBehavior) {
+    this(project, problemsViewFocusBehavior, true);
+  }
+
+  public ProblemsViewScope(
+      Project project, FocusBehavior problemsViewFocusBehavior, boolean resetProblemsContext) {
     this.project = project;
     this.problemsViewFocusBehavior = problemsViewFocusBehavior;
+    this.resetProblemsContext = resetProblemsContext;
   }
 
   @Override
   public void onScopeBegin(BlazeContext context) {
     context.addOutputSink(IssueOutput.class, this);
-    BlazeProblemsView.getInstance(project).newProblemsContext(problemsViewFocusBehavior);
+    if (resetProblemsContext) {
+      BlazeProblemsView.getInstance(project).newProblemsContext(problemsViewFocusBehavior);
+    }
   }
 
   @Override
