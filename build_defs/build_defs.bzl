@@ -1,6 +1,8 @@
 """Custom build macros for IntelliJ plugin handling.
 """
 
+# Some change to public code
+
 load(
     ":intellij_plugin.bzl",
     _intellij_plugin = "intellij_plugin",
