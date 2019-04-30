@@ -29,7 +29,7 @@ public interface OutputArtifact {
   long getLength();
 
   /** The path component related to the build configuration. */
-  String getBlazeConfigurationString(BlazeConfigurationHandler handler);
+  String getBlazeConfigurationMnemonic(BlazeConfigurationHandler handler);
 
   /** A buffered input stream providing the contents of this artifact. */
   @MustBeClosed

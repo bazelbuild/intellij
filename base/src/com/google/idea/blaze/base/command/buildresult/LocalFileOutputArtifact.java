@@ -76,8 +76,8 @@ public class LocalFileOutputArtifact implements OutputArtifact {
   }
 
   @Override
-  public String getBlazeConfigurationString(BlazeConfigurationHandler handler) {
-    return handler.getConfigurationPathComponent(file);
+  public String getBlazeConfigurationMnemonic(BlazeConfigurationHandler handler) {
+    return handler.getConfigurationMnemonic(file);
   }
 
   @Override

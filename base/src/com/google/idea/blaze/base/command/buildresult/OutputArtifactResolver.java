@@ -50,7 +50,11 @@ public final class OutputArtifactResolver {
   @Nullable
   public static File resolve(
       Project project, ArtifactLocationDecoder decoder, ArtifactLocation artifact) {
-    OutputArtifact output = decoder.resolveOutput(artifact);
+    return resolve(project, decoder.resolveOutput(artifact));
+  }
+
+  @Nullable
+  public static File resolve(Project project, OutputArtifact output) {
     if (output instanceof LocalFileOutputArtifact) {
       return ((LocalFileOutputArtifact) output).getFile();
     }

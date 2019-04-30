@@ -441,7 +441,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 for (TargetFilePair targetFilePair : Futures.allAsList(futures).get()) {
                   if (targetFilePair.target != null) {
                     OutputArtifact file = targetFilePair.file;
-                    String config = file.getBlazeConfigurationString(configHandler);
+                    String config = file.getBlazeConfigurationMnemonic(configHandler);
                     configurations.add(config);
                     TargetKey key = targetFilePair.target.getKey();
                     if (targetMap.putIfAbsent(key, targetFilePair.target) == null) {

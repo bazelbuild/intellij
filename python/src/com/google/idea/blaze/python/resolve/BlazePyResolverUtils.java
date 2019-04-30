@@ -15,16 +15,21 @@
  */
 package com.google.idea.blaze.python.resolve;
 
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
+import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import java.io.File;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Utility methods for {@link com.jetbrains.python.psi.impl.PyImportResolver}s */
@@ -37,13 +42,29 @@ public class BlazePyResolverUtils {
   @Nullable
   public static PsiElement resolveGenfilesPath(
       PyQualifiedNameResolveContext context, String relativePath) {
+    return resolveGenfilesPath(context.getProject(), relativePath)
+        .map(f -> resolveFile(context.getPsiManager(), f))
+        .orElse(null);
+  }
+
+  /** Resolves a genfiles-relative path to a locally-accessible file. */
+  private static Optional<File> resolveGenfilesPath(Project project, String relativePath) {
     BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(context.getProject()).getBlazeProjectData();
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null) {
-      return null;
+      return Optional.empty();
     }
-    File genfiles = projectData.getBlazeInfo().getGenfilesDirectory();
-    return resolveFile(context.getPsiManager(), new File(genfiles, relativePath));
+    // first look for remote output artifacts
+    // TODO(brendandouglas): add a common solution handling both remote and local outputs
+    RemoteOutputArtifacts remotes = RemoteOutputArtifacts.fromProjectData(projectData);
+    RemoteOutputArtifact artifact = remotes.resolveGenfilesPath(relativePath);
+    if (artifact == null) {
+      artifact = remotes.resolveGenfilesPath(relativePath + ".py");
+    }
+    if (artifact != null) {
+      return Optional.ofNullable(OutputArtifactResolver.resolve(project, artifact));
+    }
+    return Optional.of(new File(projectData.getBlazeInfo().getGenfilesDirectory(), relativePath));
   }
 
   /**

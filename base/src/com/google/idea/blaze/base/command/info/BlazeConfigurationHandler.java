@@ -30,23 +30,22 @@ public class BlazeConfigurationHandler {
   public BlazeConfigurationHandler(BlazeInfo blazeInfo) {
     // Would be simpler to use 'output_path' instead, but there's a Bazel-side bug causing that to
     // point to the wrong place. Instead derive 'output_path' from 'blaze-out'.
+    // TODO: check whether github.com/bazelbuild/bazel/issues/3055 has actually been fixed
     File blazeOutDir = blazeInfo.getBlazeBinDirectory().getParentFile().getParentFile();
     blazeOutPath = blazeOutDir + File.separator;
-    defaultConfigurationPathComponent =
-        getConfigurationPathComponent(blazeInfo.getBlazeBinDirectory());
+    defaultConfigurationPathComponent = getConfigurationMnemonic(blazeInfo.getBlazeBinDirectory());
     assert (defaultConfigurationPathComponent != null);
   }
 
   @Nullable
-  public String getConfigurationPathComponent(File artifact) {
+  public String getConfigurationMnemonic(File artifact) {
     if (!artifact.getPath().startsWith(blazeOutPath)) {
       return null;
     }
-    return getConfigurationPathComponent(artifact.getPath().substring(blazeOutPath.length()));
+    return getConfigurationMnemonic(artifact.getPath().substring(blazeOutPath.length()));
   }
 
-  @Nullable
-  public String getConfigurationPathComponent(String blazeOutRelativePath) {
+  public static String getConfigurationMnemonic(String blazeOutRelativePath) {
     int endIndex = blazeOutRelativePath.indexOf(File.separatorChar);
     return endIndex == -1 ? blazeOutRelativePath : blazeOutRelativePath.substring(0, endIndex);
   }

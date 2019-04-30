@@ -15,10 +15,13 @@
  */
 package com.google.idea.blaze.base.model;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
+import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import java.util.HashMap;
 import java.util.Objects;
@@ -35,9 +38,14 @@ public final class RemoteOutputArtifacts implements SyncData<ProjectData.RemoteO
   public static RemoteOutputArtifacts EMPTY = new RemoteOutputArtifacts(ImmutableMap.of());
 
   public final ImmutableMap<String, RemoteOutputArtifact> remoteOutputArtifacts;
+  private final ImmutableSet<String> configurationMnemonics;
 
   private RemoteOutputArtifacts(ImmutableMap<String, RemoteOutputArtifact> remoteOutputArtifacts) {
     this.remoteOutputArtifacts = remoteOutputArtifacts;
+    this.configurationMnemonics =
+        remoteOutputArtifacts.values().stream()
+            .map(RemoteOutputArtifacts::parseConfigurationMnemonic)
+            .collect(toImmutableSet());
   }
 
   @Override
@@ -69,6 +77,19 @@ public final class RemoteOutputArtifacts implements SyncData<ProjectData.RemoteO
           }
         });
     return new RemoteOutputArtifacts(ImmutableMap.copyOf(map));
+  }
+
+  /**
+   * Looks for a {@link RemoteOutputArtifact} with a given genfiles-relative path, returning the
+   * first such match, or null if none can be found.
+   */
+  @Nullable
+  public RemoteOutputArtifact resolveGenfilesPath(String genfilesRelativePath) {
+    return configurationMnemonics.stream()
+        .map(m -> findRemoteOutput(String.format("%s/genfiles/%s", m, genfilesRelativePath)))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
   }
 
   @Nullable
@@ -111,6 +132,10 @@ public final class RemoteOutputArtifacts implements SyncData<ProjectData.RemoteO
     String alternatePath =
         String.format("%s%s", path.substring(0, index), path.substring(nextIndex));
     return remoteOutputArtifacts.get(alternatePath);
+  }
+
+  private static String parseConfigurationMnemonic(RemoteOutputArtifact output) {
+    return BlazeConfigurationHandler.getConfigurationMnemonic(output.getRelativePath());
   }
 
   @Override
