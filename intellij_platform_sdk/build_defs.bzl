@@ -91,9 +91,12 @@ def select_for_plugin_api(params):
     #
     # {"intellij-2016.3.1": "foo"} ->
     # {"intellij-2016.3.1": "foo", "intellij-latest": "foo"}
+    fallback_value = None
     for indirect_ij_product, resolved_plugin_api in INDIRECT_IJ_PRODUCTS.items():
         if resolved_plugin_api in params:
             expanded_params[indirect_ij_product] = params[resolved_plugin_api]
+            if not fallback_value:
+                fallback_value = params[resolved_plugin_api]
 
     # Map the shorthand ij_products to full config_setting targets.
     # This makes it more convenient so the user doesn't have to
@@ -168,8 +171,5 @@ def select_from_plugin_api_directory(intellij, android_studio, clion, intellij_u
     params = dict()
     for ij_product, value in DIRECT_IJ_PRODUCTS.items():
         params[ij_product] = [_plugin_api_directory(value) + item for item in ide_to_value[value.ide]]
-
-    # No ij_product == intellij-latest
-    params["default"] = params[INDIRECT_IJ_PRODUCTS["intellij-latest"]]
 
     return select_for_plugin_api(params)
