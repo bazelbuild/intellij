@@ -75,8 +75,14 @@ public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
       futureFiles.addListener(
           () -> addFutureFiles(project, futureFiles), MoreExecutors.directExecutor());
     }
-    updateValidFiles();
-    ExternalLibraryUpdater.getInstance(project).addExternalLibrary(this);
+    this.validFilesUpdate =
+        ApplicationManager.getApplication()
+            .executeOnPooledThread(
+                () -> {
+                  updateValidFiles();
+                  this.lastUpdateTime = Instant.now();
+                  ExternalLibraryUpdater.getInstance(project).addExternalLibrary(this);
+                });
   }
 
   public BlazeExternalSyntheticLibrary(
