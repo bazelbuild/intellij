@@ -70,6 +70,7 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -619,6 +620,8 @@ public final class BlazeEditProjectViewControl {
           .setValue(LAST_WORKSPACE_MODE_PROPERTY, inferDefaultNameMode.toString());
     }
     PropertiesComponent.getInstance()
-        .setValue(LAST_PROJECT_LOCATION_PROPERTY, projectDataDirField.getText().trim());
+        .setValue(
+            LAST_PROJECT_LOCATION_PROPERTY,
+            PathUtil.getParentPath(projectDataDirField.getText().trim()));
   }
 }
