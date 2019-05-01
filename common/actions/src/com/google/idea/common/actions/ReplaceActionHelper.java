@@ -15,6 +15,7 @@
  */
 package com.google.idea.common.actions;
 
+import com.google.idea.sdkcompat.openapi.ActionManagerCompat;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -57,9 +58,10 @@ public class ReplaceActionHelper {
     AnAction oldAction = actionManager.getAction(actionId);
     if (oldAction != null) {
       newAction.getTemplatePresentation().setIcon(oldAction.getTemplatePresentation().getIcon());
-      actionManager.unregisterAction(actionId);
+      ActionManagerCompat.replaceAction(actionId, newAction);
+    } else {
+      actionManager.registerAction(actionId, newAction);
     }
-    actionManager.registerAction(actionId, newAction);
   }
 
   /** Wraps an action and makes it conditionally invisible. */
