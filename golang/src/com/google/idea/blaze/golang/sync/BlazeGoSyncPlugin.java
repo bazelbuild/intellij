@@ -31,7 +31,6 @@ import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
 import com.google.idea.blaze.base.sync.RefreshRequestType;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
-import com.google.idea.blaze.golang.resolve.BlazeGoRootsProvider;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.module.Module;
@@ -111,7 +110,6 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
         workspaceModifiableModel.addLibraryEntry(lib);
       }
     }
-    BlazeGoRootsProvider.handleGoSymlinks(context, project, blazeProjectData);
     PropertiesComponent.getInstance().setValue(DO_NOT_SHOW_NOTIFICATION_ABOUT_EMPTY_GOPATH, true);
   }
 
