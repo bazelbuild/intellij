@@ -17,23 +17,28 @@ package com.google.idea.blaze.android.sync.importer.aggregators;
 
 import static java.util.stream.Collectors.toList;
 
+import com.google.common.collect.Lists;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.Dependency.DependencyType;
+import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
-/** Transitive aggregator for TargetIdeInfo. */
-public abstract class TargetIdeInfoTransitiveAggregator<T> extends TransitiveAggregator<T> {
-  protected TargetIdeInfoTransitiveAggregator(TargetMap targetMap) {
-    super(targetMap);
-  }
+/** Util class provide helper function to get dependencies of target. */
+public class DependencyUtil {
+  @NotNull
+  public static List<TargetKey> getResourceDependencies(TargetIdeInfo target) {
+    List<TargetKey> regularDependencies = getCompileDependencies(target);
 
-  @Override
-  protected Iterable<TargetKey> getDependencies(TargetIdeInfo target) {
-    return getCompileDependencies(target);
+    AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
+    if (androidIdeInfo != null && androidIdeInfo.getLegacyResources() != null) {
+      List<TargetKey> result = Lists.newArrayList(regularDependencies);
+      result.add(TargetKey.forPlainTarget(androidIdeInfo.getLegacyResources()));
+      return result;
+    }
+    return regularDependencies;
   }
 
   @NotNull

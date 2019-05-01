@@ -40,7 +40,7 @@ import com.android.projectmodel.SourceSet;
 import com.android.sdklib.AndroidVersion;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.projectsystem.TransitiveClosureClassFileFinder;
-import com.google.idea.blaze.android.sync.importer.aggregators.TransitiveResourceMap;
+import com.google.idea.blaze.android.sync.importer.aggregators.DependencyUtil;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
@@ -72,10 +72,8 @@ import org.jetbrains.annotations.Nullable;
 
 /** Converts the data structures produced by blaze sync into a project model data types. */
 public final class BlazeModelConverter {
-  private final BlazeJavaSyncData javaSyncData;
   private final ModelCache cache = new ModelCache();
   private final BlazeImportInput importInput;
-  private final BlazeInfo blazeInfo;
   private final PathMap<BlazeContentEntry> sourceDirectoryForPath;
   private final ManifestAttributes defaultManifestValues;
   private final WhitelistFilter whitelistTester;
@@ -104,9 +102,7 @@ public final class BlazeModelConverter {
       BlazeJavaSyncData javaSyncData,
       BlazeImportInput importInput,
       BlazeInfo blazeInfo) {
-    this.javaSyncData = javaSyncData;
     this.importInput = importInput;
-    this.blazeInfo = blazeInfo;
 
     sourceDirectoryForPath =
         BlazeImportUtil.getContentEntryForPath(javaSyncData.getImportResult().contentEntries);
@@ -321,7 +317,7 @@ public final class BlazeModelConverter {
             return Collections.emptyList();
           }
 
-          return TransitiveResourceMap.getResourceDependencies(info).stream()
+          return DependencyUtil.getResourceDependencies(info).stream()
               .map(this::convertTargetToArtifactDependency)
               .filter(Objects::nonNull)
               .collect(Collectors.toList());
@@ -438,7 +434,7 @@ public final class BlazeModelConverter {
       if (this == o) {
         return true;
       }
-      if (o == null || getClass() != o.getClass()) {
+      if (!(o instanceof CacheKey)) {
         return false;
       }
       CacheKey<?> key1 = (CacheKey<?>) o;

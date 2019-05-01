@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.Label;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
@@ -151,9 +152,22 @@ public final class AndroidResourceModule
       return this;
     }
 
+    public boolean hasResources() {
+      return !this.resources.isEmpty();
+    }
+
     public Builder addResourceLibraryKey(String aarLibraryKey) {
       this.resourceLibraryKeys.add(aarLibraryKey);
       return this;
+    }
+
+    public Builder addResourceLibraryKeys(Collection<String> aarLibraryKeys) {
+      this.resourceLibraryKeys.addAll(aarLibraryKeys);
+      return this;
+    }
+
+    public Set<String> getResourceLibraryKeys() {
+      return this.resourceLibraryKeys;
     }
 
     public Builder addResourceAndTransitiveResource(ArtifactLocation resource) {
@@ -167,8 +181,22 @@ public final class AndroidResourceModule
       return this;
     }
 
+    public Builder addTransitiveResources(Collection<ArtifactLocation> resources) {
+      this.transitiveResources.addAll(resources);
+      return this;
+    }
+
+    public Set<ArtifactLocation> getTransitiveResources() {
+      return this.transitiveResources;
+    }
+
     public Builder addTransitiveResourceDependency(TargetKey dependency) {
       this.transitiveResourceDependencies.add(dependency);
+      return this;
+    }
+
+    public Builder addTransitiveResourceDependencies(Collection<TargetKey> dependencies) {
+      this.transitiveResourceDependencies.addAll(dependencies);
       return this;
     }
 
@@ -179,6 +207,10 @@ public final class AndroidResourceModule
 
     public Builder addTransitiveResourceDependency(String dependency) {
       return addTransitiveResourceDependency(Label.create(dependency));
+    }
+
+    public Set<TargetKey> getTransitiveResourceDependencies() {
+      return this.transitiveResourceDependencies;
     }
 
     @NotNull

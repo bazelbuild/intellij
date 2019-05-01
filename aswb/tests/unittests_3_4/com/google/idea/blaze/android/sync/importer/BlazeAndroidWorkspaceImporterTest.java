@@ -88,8 +88,10 @@ import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -1421,6 +1423,243 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   /**
+   * Check androidResourceModules are created correct even targetMap contains cyclic dependency
+   * b/70781962
+   */
+  @Test
+  public void testCyclicDependencyTerminates() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("foo")))
+                    .add(DirectoryEntry.include(new WorkspacePath("bar"))))
+            .build();
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//foo:lib")
+                    .setBuildFile(source("foo/BUILD"))
+                    .setKind("android_binary")
+                    .addSource(source("foo/MainActivity.java"))
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("foo/AndroidManifest.xml"))
+                            .addResource(source("foo/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("foo"))
+                    .addDependency("//bar:lib"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//bar:lib")
+                    .setBuildFile(source("bar/BUILD"))
+                    .setKind("android_binary")
+                    .addSource(source("bar/MainActivity.java"))
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("bar/AndroidManifest.xml"))
+                            .addResource(source("bar/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("bar"))
+                    .addDependency("//foo:lib"));
+    BlazeAndroidImportResult blazeAndroidImportResult =
+        importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    errorCollector.assertNoIssues();
+    AndroidResourceModule expectedAndroidResourceModule1 =
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//foo:lib")))
+            .addResourceAndTransitiveResource(source("foo/res"))
+            .addTransitiveResource(source("bar/res"))
+            .addTransitiveResourceDependency("//bar:lib")
+            .build();
+    AndroidResourceModule expectedAndroidResourceModule2 =
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//bar:lib")))
+            .addResourceAndTransitiveResource(source("bar/res"))
+            .addTransitiveResource(source("foo/res"))
+            .addTransitiveResourceDependency("//foo:lib")
+            .build();
+    assertThat(blazeAndroidImportResult.androidResourceModules)
+        .containsExactly(expectedAndroidResourceModule1, expectedAndroidResourceModule2);
+  }
+
+  /**
+   * Check androidResourceModules are created correct even targetMap does not contain every
+   * dependency b/72431530
+   */
+  @Test
+  public void testMissingDependencyTerminates() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("foo")))
+                    .add(DirectoryEntry.include(new WorkspacePath("bar"))))
+            .build();
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//foo:lib")
+                    .setBuildFile(source("foo/BUILD"))
+                    .setKind("android_binary")
+                    .addSource(source("foo/MainActivity.java"))
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("foo/AndroidManifest.xml"))
+                            .addResource(source("foo/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("foo"))
+                    .addDependency("//bar:lib"));
+    BlazeAndroidImportResult blazeAndroidImportResult =
+        importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    errorCollector.assertNoIssues();
+    AndroidResourceModule expectedAndroidResourceModule1 =
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//foo:lib")))
+            .addResourceAndTransitiveResource(source("foo/res"))
+            .build();
+    assertThat(blazeAndroidImportResult.androidResourceModules)
+        .containsExactly(expectedAndroidResourceModule1);
+  }
+
+  /**
+   * Check resource module are generated correct with chain dependencies. And there's no duplicate/
+   * unnecessary create and reduce operations during creation.
+   */
+  @Test
+  public void testAndroidResourceModuleGeneration() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("foo")))
+                    .add(DirectoryEntry.include(new WorkspacePath("bar")))
+                    .add(DirectoryEntry.include(new WorkspacePath("baz")))
+                    .add(DirectoryEntry.include(new WorkspacePath("unrelated"))))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//foo:lib")
+                    .setBuildFile(source("foo/BUILD"))
+                    .setKind("android_binary")
+                    .addSource(source("foo/MainActivity.java"))
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("foo/AndroidManifest.xml"))
+                            .addResource(source("foo/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("foo"))
+                    .addDependency("//bar:lib")
+                    .addDependency("//baz:lib")
+                    .addDependency("//qux:lib"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//bar:lib")
+                    .setBuildFile(source("bar/BUILD"))
+                    .setKind("android_library")
+                    .addSource(source("bar/MainActivity.java"))
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("bar/AndroidManifest.xml"))
+                            .addResource(source("bar/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("bar"))
+                    .addDependency("//baz:lib"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//baz:lib")
+                    .setBuildFile(source("baz/BUILD"))
+                    .setKind("android_library")
+                    .addSource(source("baz/MainActivity.java"))
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("baz/AndroidManifest.xml"))
+                            .addResource(source("baz/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("baz"))
+                    .addDependency("//qux:lib"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//qux:lib")
+                    .setBuildFile(source("qux/BUILD"))
+                    .setKind("android_library")
+                    .addSource(source("qux/MainActivity.java"))
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("qux/AndroidManifest.xml"))
+                            .addResource(source("qux/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("qux")))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//unrelated:lib")
+                    .setBuildFile(source("unrelated/BUILD"))
+                    .setKind("android_library")
+                    .addSource(source("unrelated/MainActivity.java"))
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("unrelated/AndroidManifest.xml"))
+                            .addResource(source("unrelated/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("unrelated"))
+                    .addDependency("//qux:lib"));
+    ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
+    TargetMap targetMap = targetMapBuilder.build();
+    MockBlazeAndroidWorkspaceImporter mockBlazeAndroidWorkspaceImporter =
+        new MockBlazeAndroidWorkspaceImporter(
+            project,
+            context,
+            BlazeImportInput.forProject(
+                project, workspaceRoot, projectViewSet, targetMap, FAKE_ARTIFACT_DECODER));
+    AndroidResourceModule expectedAndroidResourceModule1 =
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//foo:lib")))
+            .addResourceAndTransitiveResource(source("foo/res"))
+            .addTransitiveResource(source("bar/res"))
+            .addTransitiveResource(source("baz/res"))
+            .addResourceLibraryKey(
+                BlazeResourceLibrary.libraryNameFromArtifactLocation(source("qux/res")))
+            .addTransitiveResourceDependency("//bar:lib")
+            .addTransitiveResourceDependency("//baz:lib")
+            .addTransitiveResourceDependency("//qux:lib")
+            .build();
+    AndroidResourceModule expectedAndroidResourceModule2 =
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//bar:lib")))
+            .addResourceAndTransitiveResource(source("bar/res"))
+            .addTransitiveResource(source("baz/res"))
+            .addResourceLibraryKey(
+                BlazeResourceLibrary.libraryNameFromArtifactLocation(source("qux/res")))
+            .addTransitiveResourceDependency("//baz:lib")
+            .addTransitiveResourceDependency("//qux:lib")
+            .build();
+    AndroidResourceModule expectedAndroidResourceModule3 =
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//baz:lib")))
+            .addResourceAndTransitiveResource(source("baz/res"))
+            .addResourceLibraryKey(
+                BlazeResourceLibrary.libraryNameFromArtifactLocation(source("qux/res")))
+            .addTransitiveResourceDependency("//qux:lib")
+            .build();
+    AndroidResourceModule expectedAndroidResourceModule4 =
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//unrelated:lib")))
+            .addResourceAndTransitiveResource(source("unrelated/res"))
+            .addResourceLibraryKey(
+                BlazeResourceLibrary.libraryNameFromArtifactLocation(source("qux/res")))
+            .addTransitiveResourceDependency("//qux:lib")
+            .build();
+    BlazeAndroidImportResult importResult = mockBlazeAndroidWorkspaceImporter.importWorkspace();
+    assertThat(importResult.androidResourceModules)
+        .containsExactly(
+            expectedAndroidResourceModule1,
+            expectedAndroidResourceModule2,
+            expectedAndroidResourceModule3,
+            expectedAndroidResourceModule4);
+    assertThat(mockBlazeAndroidWorkspaceImporter.getCreateCount()).isEqualTo(5);
+    // One reduce per direct dependency: 3 + 1 + 1 + 0 + 1
+    assertThat(mockBlazeAndroidWorkspaceImporter.getReduce()).isEqualTo(6);
+  }
+
+  /**
    * Mock provider to satisfy directory listing queries from {@link
    * com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceClassifier}.
    */
@@ -1481,5 +1720,54 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
   private static String jdepsPath(String relativePath) {
     return FAKE_GEN_ROOT_EXECUTION_PATH_FRAGMENT + "/" + relativePath;
+  }
+
+  /**
+   * Mock BlazeAndroidWorkspaceImporter and count number of create and reduce operations used to
+   * generate AndroidResourceModule
+   */
+  private static class MockBlazeAndroidWorkspaceImporter extends BlazeAndroidWorkspaceImporter {
+    private int createCount = 0;
+    private int reduce = 0;
+
+    public MockBlazeAndroidWorkspaceImporter(
+        Project project, BlazeContext context, BlazeImportInput input) {
+      super(project, context, input);
+    }
+
+    @Override
+    protected AndroidResourceModule.Builder createResourceModuleBuilder(
+        TargetIdeInfo target, LibraryFactory libraryFactory) {
+      ++createCount;
+      return super.createResourceModuleBuilder(target, libraryFactory);
+    }
+
+    @Override
+    protected void reduce(
+        TargetKey targetKey,
+        AndroidResourceModule.Builder targetResourceModule,
+        TargetKey depKey,
+        TargetIdeInfo depIdeInfo,
+        LibraryFactory libraryFactory,
+        Map<TargetKey, AndroidResourceModule.Builder> resourceModuleBuilderCache) {
+      if (depIdeInfo != null) {
+        ++reduce;
+      }
+      super.reduce(
+          targetKey,
+          targetResourceModule,
+          depKey,
+          depIdeInfo,
+          libraryFactory,
+          resourceModuleBuilderCache);
+    }
+
+    public int getCreateCount() {
+      return createCount;
+    }
+
+    public int getReduce() {
+      return reduce;
+    }
   }
 }

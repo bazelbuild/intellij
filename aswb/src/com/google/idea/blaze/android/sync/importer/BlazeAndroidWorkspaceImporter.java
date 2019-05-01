@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.idea.blaze.android.sync.importer.aggregators.TransitiveResourceMap;
+import com.google.idea.blaze.android.sync.importer.aggregators.DependencyUtil;
 import com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceWarnings;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -53,13 +54,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** Builds a BlazeWorkspace. */
-public final class BlazeAndroidWorkspaceImporter {
+public class BlazeAndroidWorkspaceImporter {
 
   private final Project project;
   private final Consumer<Output> context;
   private final BlazeImportInput input;
   // filter used to get all ArtifactLocation that under project view resource directories
   private final Predicate<ArtifactLocation> shouldCreateFakeAar;
+  ImmutableSet<String> whitelistedGenResourcePaths;
+  private final WhitelistFilter whitelistFilter;
 
   public BlazeAndroidWorkspaceImporter(
       Project project, BlazeContext context, BlazeImportInput input) {
@@ -73,20 +76,27 @@ public final class BlazeAndroidWorkspaceImporter {
     this.input = input;
     this.project = project;
     this.shouldCreateFakeAar = BlazeImportUtil.getShouldCreateFakeAarFilter(input);
+    whitelistedGenResourcePaths =
+        BlazeImportUtil.getWhitelistedGenResourcePaths(input.projectViewSet);
+    whitelistFilter = new WhitelistFilter(whitelistedGenResourcePaths);
   }
 
   public BlazeAndroidImportResult importWorkspace() {
     List<TargetIdeInfo> sourceTargets = BlazeImportUtil.getSourceTargets(input);
-    TransitiveResourceMap transitiveResourceMap = new TransitiveResourceMap(input.targetMap);
-
     LibraryFactory libraries = new LibraryFactory();
+    ImmutableList.Builder<AndroidResourceModule> resourceModules = new ImmutableList.Builder<>();
+    Map<TargetKey, AndroidResourceModule.Builder> targetKeyToAndroidResourceModuleBuilder =
+        new HashMap<>();
+
     ImmutableSet<String> whitelistedGenResourcePaths =
         BlazeImportUtil.getWhitelistedGenResourcePaths(input.projectViewSet);
-    WhitelistFilter tester = new WhitelistFilter(whitelistedGenResourcePaths);
-
-    ImmutableList.Builder<AndroidResourceModule> resourceModules = new ImmutableList.Builder<>();
     for (TargetIdeInfo target : sourceTargets) {
-      resourceModules.addAll(addSourceTarget(transitiveResourceMap, target, libraries, tester));
+      if (shouldCreateModule(target.getAndroidIdeInfo())) {
+        AndroidResourceModule.Builder androidResourceModuleBuilder =
+            getOrCreateResourceModuleBuilder(
+                target, libraries, targetKeyToAndroidResourceModuleBuilder);
+        resourceModules.add(androidResourceModuleBuilder.build());
+      }
     }
 
     GeneratedResourceWarnings.submit(
@@ -94,12 +104,11 @@ public final class BlazeAndroidWorkspaceImporter {
         project,
         input.projectViewSet,
         input.artifactLocationDecoder,
-        tester.testedAgainstWhitelist,
+        whitelistFilter.testedAgainstWhitelist,
         whitelistedGenResourcePaths);
 
     ImmutableList<AndroidResourceModule> androidResourceModules =
         buildAndroidResourceModules(resourceModules.build());
-
     return new BlazeAndroidImportResult(
         androidResourceModules,
         libraries.getBlazeResourceLibs(),
@@ -107,80 +116,109 @@ public final class BlazeAndroidWorkspaceImporter {
         BlazeImportUtil.getJavacJars(input.targetMap.targets()));
   }
 
-  /** Returns the list of {@link AndroidResourceModule} to be created. */
-  private List<AndroidResourceModule> addSourceTarget(
-      TransitiveResourceMap transitiveResourceMap,
+  /**
+   * Creates and populates an AndroidResourceModule.Builder for the given target by recursively
+   * aggregating the AndroidResourceModule.Builders of its transitive dependencies, or reuses an
+   * existing builder if it's cached in resourceModuleBuilderCache.
+   */
+  private AndroidResourceModule.Builder getOrCreateResourceModuleBuilder(
       TargetIdeInfo target,
       LibraryFactory libraryFactory,
-      Predicate<ArtifactLocation> whitelistTester) {
-    ImmutableList.Builder<AndroidResourceModule> result = new ImmutableList.Builder<>();
+      Map<TargetKey, AndroidResourceModule.Builder> resourceModuleBuilderCache) {
+    TargetKey targetKey = target.getKey();
+    if (resourceModuleBuilderCache.containsKey(targetKey)) {
+      return resourceModuleBuilderCache.get(targetKey);
+    }
+    AndroidResourceModule.Builder targetResourceModule =
+        createResourceModuleBuilder(target, libraryFactory);
+    resourceModuleBuilderCache.put(targetKey, targetResourceModule);
+    for (TargetKey dep : DependencyUtil.getResourceDependencies(target)) {
+      TargetIdeInfo depIdeInfo = input.targetMap.get(dep);
+      reduce(
+          targetKey,
+          targetResourceModule,
+          dep,
+          depIdeInfo,
+          libraryFactory,
+          resourceModuleBuilderCache);
+    }
+    return targetResourceModule;
+  }
+
+  protected void reduce(
+      TargetKey targetKey,
+      AndroidResourceModule.Builder targetResourceModule,
+      TargetKey depKey,
+      TargetIdeInfo depIdeInfo,
+      LibraryFactory libraryFactory,
+      Map<TargetKey, AndroidResourceModule.Builder> resourceModuleBuilderCache) {
+    if (depIdeInfo != null) {
+      AndroidResourceModule.Builder depTargetResourceModule =
+          getOrCreateResourceModuleBuilder(depIdeInfo, libraryFactory, resourceModuleBuilderCache);
+      targetResourceModule.addTransitiveResources(depTargetResourceModule.getTransitiveResources());
+      targetResourceModule.addResourceLibraryKeys(depTargetResourceModule.getResourceLibraryKeys());
+      targetResourceModule.addTransitiveResourceDependencies(
+          depTargetResourceModule.getTransitiveResourceDependencies().stream()
+              .filter(key -> !targetKey.equals(key))
+              .collect(Collectors.toList()));
+      if (shouldCreateModule(depIdeInfo.getAndroidIdeInfo()) && !depKey.equals(targetKey)) {
+        targetResourceModule.addTransitiveResourceDependency(depKey);
+      }
+    }
+  }
+
+  private boolean shouldCreateModule(@Nullable AndroidIdeInfo androidIdeInfo) {
+    if (androidIdeInfo == null) {
+      return false;
+    }
+    return shouldGenerateResources(androidIdeInfo)
+        && shouldGenerateResourceModule(androidIdeInfo, whitelistFilter);
+  }
+
+  /**
+   * Helper function to create an AndroidResourceModule.Builder with initial resource information.
+   * The builder is incomplete since it doesn't contain information about dependencies. {@link
+   * getOrCreateResourceModuleBuilder} will aggregate AndroidResourceModule.Builder over its
+   * transitive dependencies.
+   */
+  protected AndroidResourceModule.Builder createResourceModuleBuilder(
+      TargetIdeInfo target, LibraryFactory libraryFactory) {
     AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
-    assert androidIdeInfo != null;
-    if (shouldGenerateResources(androidIdeInfo)
-        && shouldGenerateResourceModule(androidIdeInfo, whitelistTester)) {
-      AndroidResourceModule.Builder builder = new AndroidResourceModule.Builder(target.getKey());
+    TargetKey targetKey = target.getKey();
+    AndroidResourceModule.Builder androidResourceModule =
+        new AndroidResourceModule.Builder(targetKey);
+    if (androidIdeInfo == null) {
+      String libraryKey = libraryFactory.createAarLibrary(target);
+      if (libraryKey != null) {
+        ArtifactLocation artifactLocation = target.getAndroidAarIdeInfo().getAar();
+        if (isSourceOrWhitelistedGenPath(artifactLocation, whitelistFilter)) {
+          androidResourceModule.addResourceLibraryKey(libraryKey);
+        }
+      }
+      return androidResourceModule;
+    }
 
-      // Only resources within project view directory is local resources of a module.
-
-      // We should include the resource as part of the module if we're not going to create a fake
-      // AAR for it and it's either a source
-      // target or included in the whitelist.
-      for (AndroidResFolder androidResFolder : androidIdeInfo.getResFolders()) {
-        ArtifactLocation artifactLocation = androidResFolder.getRoot();
+    for (AndroidResFolder androidResFolder : androidIdeInfo.getResFolders()) {
+      ArtifactLocation artifactLocation = androidResFolder.getRoot();
+      if (isSourceOrWhitelistedGenPath(artifactLocation, whitelistFilter)) {
         if (shouldCreateFakeAar.test(artifactLocation)) {
           // we are creating aar libraries, and this resource isn't inside the project view
           // so we can skip adding it to the module
-          continue;
-        }
-        if (isSourceOrWhitelistedGenPath(artifactLocation, whitelistTester)) {
-          builder.addResource(artifactLocation);
-        }
-      }
-
-      TransitiveResourceMap.TransitiveResourceInfo transitiveResourceInfo =
-          transitiveResourceMap.get(target.getKey());
-      for (AndroidResFolder androidResFolder : transitiveResourceInfo.transitiveResources) {
-        ArtifactLocation artifactLocation = androidResFolder.getRoot();
-        if (shouldCreateFakeAar.test(artifactLocation)) {
-          // All out of project view directory resources will be treated as resources of some aar
-          // library.
-          // We will create a BlazeResourceLibrary for each resource artifactLocation if it has not
-          // yet been created.
-          // And this library key will be added to module's library key list.
-          // Since {@link TransitiveResourceMap#createForTarget} has already added local resource
-          // into transitive resources,
-          // transitiveResourceInfo.transitiveResources includes androidIdeInfo.resources.
-          // We only need add aarLibraryKey when loop over transitiveResources.
-          ArtifactLocation manifest = transitiveResourceMap.getManifestFile(artifactLocation);
           String libraryKey =
               libraryFactory.createBlazeResourceLibrary(
-                  androidResFolder, manifest == null ? androidIdeInfo.getManifest() : manifest);
-          if (isSourceOrWhitelistedGenPath(artifactLocation, whitelistTester)) {
-            builder.addResourceLibraryKey(libraryKey);
-          }
+                  androidResFolder,
+                  androidIdeInfo.getManifest(),
+                  target.getBuildFile().getRelativePath());
+          androidResourceModule.addResourceLibraryKey(libraryKey);
         } else {
-          // Only resources within project view directory is transitive resources of a module.
-          if (isSourceOrWhitelistedGenPath(artifactLocation, whitelistTester)) {
-            builder.addTransitiveResource(artifactLocation);
+          if (shouldCreateModule(androidIdeInfo)) {
+            androidResourceModule.addResource(artifactLocation);
           }
+          androidResourceModule.addTransitiveResource(artifactLocation);
         }
       }
-      for (TargetKey resourceDependency : transitiveResourceInfo.transitiveResourceTargets) {
-        if (!resourceDependency.equals(target.getKey())) {
-          builder.addTransitiveResourceDependency(resourceDependency);
-          TargetIdeInfo dependencyTarget = input.targetMap.get(resourceDependency);
-          String libraryKey = libraryFactory.createAarLibrary(dependencyTarget);
-          if (libraryKey != null) {
-            ArtifactLocation artifactLocation = dependencyTarget.getAndroidAarIdeInfo().getAar();
-            if (isSourceOrWhitelistedGenPath(artifactLocation, whitelistTester)) {
-              builder.addResourceLibraryKey(libraryKey);
-            }
-          }
-        }
-      }
-      result.add(builder.build());
     }
-    return result.build();
+    return androidResourceModule;
   }
 
   public static boolean shouldGenerateResources(AndroidIdeInfo androidIdeInfo) {
@@ -277,7 +315,7 @@ public final class BlazeAndroidWorkspaceImporter {
         .get();
   }
 
-  private static class LibraryFactory {
+  static class LibraryFactory {
     private Map<String, AarLibrary> aarLibraries = new HashMap<>();
     private Map<String, BlazeResourceLibrary.Builder> resourceLibraries = new HashMap<>();
 
@@ -301,27 +339,50 @@ public final class BlazeAndroidWorkspaceImporter {
     private String createBlazeResourceLibrary(
         @NotNull ArtifactLocation root,
         @NotNull Set<String> resources,
-        @Nullable ArtifactLocation manifestLocation) {
+        @Nullable ArtifactLocation manifestLocation,
+        @Nullable String buildFile) {
       String libraryKey = BlazeResourceLibrary.libraryNameFromArtifactLocation(root);
-      resourceLibraries
-          .computeIfAbsent(
-              libraryKey,
-              key -> new BlazeResourceLibrary.Builder().setRoot(root).setManifest(manifestLocation))
-          .addResources(resources);
+      BlazeResourceLibrary.Builder library = resourceLibraries.get(libraryKey);
+      ArtifactLocation existedManifestLocation = library == null ? null : library.getManifest();
+      if (!Objects.equals(existedManifestLocation, manifestLocation)) {
+        if (buildFile == null || manifestLocation == null) {
+          manifestLocation = existedManifestLocation;
+        } else {
+          String buildFileParent = buildFile.split("/BUILD", -1)[0];
+          if (!root.getRelativePath().startsWith(buildFileParent)) {
+            manifestLocation = existedManifestLocation;
+          } else if (library != null
+              && library.getManifest() != null
+              && library.getManifest().getRelativePath().length()
+                  > manifestLocation.getRelativePath().length()) {
+            manifestLocation = existedManifestLocation;
+          }
+        }
+      }
+      if (library == null) {
+        library = new BlazeResourceLibrary.Builder().setRoot(root).setManifest(manifestLocation);
+        resourceLibraries.put(libraryKey, library);
+      }
+      library.addResources(resources);
+      library.setManifest(manifestLocation);
       return libraryKey;
     }
 
     @NotNull
     public String createBlazeResourceLibrary(
-        @NotNull ArtifactLocation root, @Nullable ArtifactLocation manifestLocation) {
-      return createBlazeResourceLibrary(root, ImmutableSet.of(), manifestLocation);
+        @NotNull ArtifactLocation root,
+        @Nullable ArtifactLocation manifestLocation,
+        @Nullable String buildFile) {
+      return createBlazeResourceLibrary(root, ImmutableSet.of(), manifestLocation, buildFile);
     }
 
     @NotNull
     public String createBlazeResourceLibrary(
-        @NotNull AndroidResFolder androidResFolder, @Nullable ArtifactLocation manifestLocation) {
+        @NotNull AndroidResFolder androidResFolder,
+        @Nullable ArtifactLocation manifestLocation,
+        @Nullable String buildFile) {
       return createBlazeResourceLibrary(
-          androidResFolder.getRoot(), androidResFolder.getResources(), manifestLocation);
+          androidResFolder.getRoot(), androidResFolder.getResources(), manifestLocation, buildFile);
     }
 
     /**

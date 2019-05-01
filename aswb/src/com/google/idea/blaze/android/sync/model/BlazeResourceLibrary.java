@@ -86,6 +86,10 @@ public final class BlazeResourceLibrary extends BlazeLibrary {
       return this;
     }
 
+    public ArtifactLocation getManifest() {
+      return this.manifest;
+    }
+
     public BlazeResourceLibrary.Builder addResource(String resource) {
       resources.add(resource);
       return this;
