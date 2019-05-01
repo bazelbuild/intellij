@@ -39,6 +39,8 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
+// Test comment
+//
 final class Repackager {
 
   @Option(name = "--input")
