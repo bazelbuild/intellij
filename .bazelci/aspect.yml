@@ -1,9 +1,13 @@
 ---
 platforms:
   ubuntu1604:
+    build_flags:
+      - --define=ij_product=intellij-beta
     build_targets:
       - //aspect:aspect_files
     test_flags:
       - --test_output=errors
     test_targets:
       - //aspect/testing/...
+    test_flags:
+      - --define=ij_product=intellij-beta
