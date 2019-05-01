@@ -19,7 +19,9 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Functions;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -41,7 +43,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtil;
 import java.io.File;
 import java.io.IOException;
@@ -195,11 +196,20 @@ public final class RemoteOutputsCache {
    * The cache key used to disambiguate output artifacts. This is also the file name in the local
    * cache.
    */
-  private static String getCacheKey(RemoteOutputArtifact output) {
+  @VisibleForTesting
+  static String getCacheKey(RemoteOutputArtifact output) {
     String key = output.getKey();
-    String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(key));
-    String ext = FileUtilRt.getExtension(key);
-    return name + "_" + Integer.toHexString(key.hashCode()) + "." + ext;
+    String fileName = PathUtil.getFileName(key);
+    List<String> components = Splitter.on('.').limit(2).splitToList(fileName);
+    StringBuilder builder =
+        new StringBuilder(components.get(0))
+            .append('_')
+            .append(Integer.toHexString(key.hashCode()));
+    if (components.size() > 1) {
+      // file extension(s)
+      builder.append('.').append(components.get(1));
+    }
+    return builder.toString();
   }
 
   private static File getCacheDir(Project project) {
