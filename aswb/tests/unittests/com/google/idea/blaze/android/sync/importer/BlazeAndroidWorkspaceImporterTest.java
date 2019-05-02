@@ -146,7 +146,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     applicationServices.register(FileOperationProvider.class, mockFileOperationProvider);
 
     ExtensionPointImpl<Provider> targetKindEp =
-        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+        registerExtensionPoint(Provider.EP_NAME, Provider.class);
     targetKindEp.registerExtension(new AndroidBlazeRules());
     targetKindEp.registerExtension(new JavaBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
@@ -793,6 +793,111 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         library,
         new BlazeResourceLibrary.Builder()
             .setRoot(source("java/example2/res"))
+            .setManifest(source("java/example2/AndroidManifest.xml"))
+            .build());
+  }
+
+  /**
+   * Check BlazeResourceLibrary is created correctly while importing workspace.
+   * If a target uses one resource out of project view and there's no target contains BUILD file
+   * under same directory with that resources, there's no best match manifest file.
+   * BlazeResourceLibrary should pick manifest file of first target in such case.
+   */
+  @Test
+  public void testBlazeResourceLibrary_noBestMatchManifest() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example:lib")
+                    .setBuildFile(source("java/example/BUILD"))
+                    .setKind("android_library")
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/example/AndroidManifest.xml"))
+                            .addResource(source("third_party/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("com.google.android.example"))
+                    .addDependency("//java/example2:resources")
+                    .build())
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example2:resources")
+                    .setBuildFile(source("java/example2/BUILD"))
+                    .setKind("android_library")
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/example2/AndroidManifest.xml"))
+                            .addResource(source("third_party/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("com.google.android.example2"))
+                    .build());
+
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    errorCollector.assertNoIssues();
+    assertSameElements(
+        result.resourceLibraries.values(),
+        new BlazeResourceLibrary.Builder()
+            .setRoot(source("third_party/res"))
+            .setManifest(source("java/example/AndroidManifest.xml"))
+            .build());
+  }
+
+  /**
+   * Check BlazeResourceLibrary is created correctly while importing workspace.
+   * If a target uses one resource out of project view but there's one target contains BUILD file
+   * under same directory with that resources, BlazeResourceLibrary should pick manifest file of
+   * that target since it's best match one.
+   */
+  @Test
+  public void testBlazeResourceLibrary_hasBestMatchManifest() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
+            .build();
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example:lib")
+                    .setBuildFile(source("java/example/BUILD"))
+                    .setKind("android_library")
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/example/AndroidManifest.xml"))
+                            .addResource(source("third_party/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("com.google.android.example"))
+                    .addDependency("//third_party:resources")
+                    .build())
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//third_party:resources")
+                    .setBuildFile(source("third_party/BUILD"))
+                    .setKind("android_library")
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/example2/AndroidManifest.xml"))
+                            .addResource(source("third_party/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("com.google.android.third_party"))
+                    .build());
+
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    errorCollector.assertNoIssues();
+    assertSameElements(
+        result.resourceLibraries.values(),
+        new BlazeResourceLibrary.Builder()
+            .setRoot(source("third_party/res"))
             .setManifest(source("java/example2/AndroidManifest.xml"))
             .build());
   }
