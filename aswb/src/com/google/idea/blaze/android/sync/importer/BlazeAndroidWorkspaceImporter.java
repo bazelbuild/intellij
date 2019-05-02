@@ -318,6 +318,7 @@ public class BlazeAndroidWorkspaceImporter {
   static class LibraryFactory {
     private Map<String, AarLibrary> aarLibraries = new HashMap<>();
     private Map<String, BlazeResourceLibrary.Builder> resourceLibraries = new HashMap<>();
+    private final Map<ArtifactLocation, String> resFolderToBuildFile = new HashMap<>();
 
     public ImmutableMap<String, AarLibrary> getAarLibs() {
       return ImmutableMap.copyOf(aarLibraries);
@@ -345,15 +346,21 @@ public class BlazeAndroidWorkspaceImporter {
       BlazeResourceLibrary.Builder library = resourceLibraries.get(libraryKey);
       ArtifactLocation existedManifestLocation = library == null ? null : library.getManifest();
       if (!Objects.equals(existedManifestLocation, manifestLocation)) {
+        // For each target, it's hard to tell whether a manifest file is specific for a resource
+        // since targets are allowed have same resource directory but different manifest files.
+        // So for a target, we have the following assumption
+        // 1. A target's manifest file may be specific for its resource when its resource folder and
+        // its BUILD file are under same directory
+        // 2. If multiple targets meet requirement 1, the closest to resource folder wins
         if (buildFile == null || manifestLocation == null) {
           manifestLocation = existedManifestLocation;
-        } else if (existedManifestLocation != null) {
+        } else {
           String buildFileParent = buildFile.split("/BUILD", -1)[0];
-          if (!root.getRelativePath().startsWith(buildFileParent)) {
-            manifestLocation = existedManifestLocation;
-          } else if (library != null
-              && existedManifestLocation.getRelativePath().length()
-                  > manifestLocation.getRelativePath().length()) {
+          if (root.getRelativePath().startsWith(buildFileParent)
+              && buildFileParent.startsWith(
+                  resFolderToBuildFile.getOrDefault(root, buildFileParent))) {
+            resFolderToBuildFile.put(root, buildFileParent);
+          } else if (existedManifestLocation != null) {
             manifestLocation = existedManifestLocation;
           }
         }
