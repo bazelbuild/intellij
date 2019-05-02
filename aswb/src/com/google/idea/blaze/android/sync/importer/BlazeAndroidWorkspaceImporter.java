@@ -347,13 +347,12 @@ public class BlazeAndroidWorkspaceImporter {
       if (!Objects.equals(existedManifestLocation, manifestLocation)) {
         if (buildFile == null || manifestLocation == null) {
           manifestLocation = existedManifestLocation;
-        } else {
+        } else if (existedManifestLocation != null) {
           String buildFileParent = buildFile.split("/BUILD", -1)[0];
           if (!root.getRelativePath().startsWith(buildFileParent)) {
             manifestLocation = existedManifestLocation;
           } else if (library != null
-              && library.getManifest() != null
-              && library.getManifest().getRelativePath().length()
+              && existedManifestLocation.getRelativePath().length()
                   > manifestLocation.getRelativePath().length()) {
             manifestLocation = existedManifestLocation;
           }
