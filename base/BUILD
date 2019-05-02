@@ -1,6 +1,16 @@
 licenses(["notice"])  # Apache 2.0
 
-load("//build_defs:build_defs.bzl", "intellij_plugin_library")
+load(
+    "//build_defs:build_defs.bzl",
+    "intellij_plugin",
+    "intellij_plugin_library",
+    "stamped_plugin_xml",
+)
+load(
+    "//testing:test_defs.bzl",
+    "intellij_integration_test_suite",
+    "intellij_unit_test_suite",
+)
 
 java_library(
     name = "base",
@@ -186,6 +196,20 @@ java_library(
     ],
 )
 
+# neverlink library exposed so other plugins can provide dependency information
+java_library(
+    name = "build_batching_service_api",
+    srcs = [
+        "src/com/google/idea/blaze/base/sync/sharding/BuildBatchingService.java",
+    ],
+    neverlink = 1,
+    deps = [
+        ":label_api",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
 # neverlink library exposed so other plugins can optionally depend on it
 java_library(
     name = "buildifier_binary_provider_api",
@@ -231,12 +255,6 @@ java_library(
     ],
 )
 
-load(
-    "//build_defs:build_defs.bzl",
-    "stamped_plugin_xml",
-    "intellij_plugin",
-)
-
 stamped_plugin_xml(
     name = "base_plugin_xml",
     plugin_id = "com.google.idea.blaze.base",
@@ -248,12 +266,6 @@ intellij_plugin(
     testonly = 1,
     plugin_xml = ":base_plugin_xml",
     deps = [":plugin_library"],
-)
-
-load(
-    "//testing:test_defs.bzl",
-    "intellij_integration_test_suite",
-    "intellij_unit_test_suite",
 )
 
 intellij_unit_test_suite(

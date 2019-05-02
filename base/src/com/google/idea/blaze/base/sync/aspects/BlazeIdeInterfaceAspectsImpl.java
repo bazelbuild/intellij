@@ -266,8 +266,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     Function<Integer, String> progressMessage =
         count ->
             String.format(
-                "Building targets for shard %s of %s...",
-                count, shardedTargets.shardedTargets.size());
+                "Building targets for shard %s of %s...", count, shardedTargets.shardCount());
     Function<List<TargetExpression>, BuildResult> invocation =
         targets -> {
           BlazeBuildOutputs result =
@@ -553,7 +552,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         count ->
             String.format(
                 "Building IDE resolve files for shard %s of %s...",
-                count, shardedTargets.shardedTargets.size());
+                count, shardedTargets.shardCount());
     Function<List<TargetExpression>, BuildResult> invocation =
         targets ->
             doCompileIdeArtifacts(

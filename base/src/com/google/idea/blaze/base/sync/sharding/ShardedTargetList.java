@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.sync.sharding;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -28,14 +30,18 @@ import java.util.function.Function;
 /** Partitioned list of blaze targets. */
 public class ShardedTargetList {
 
-  public final List<List<TargetExpression>> shardedTargets;
+  @VisibleForTesting final ImmutableList<ImmutableList<TargetExpression>> shardedTargets;
 
-  public ShardedTargetList(List<List<TargetExpression>> shardedTargets) {
+  public ShardedTargetList(ImmutableList<ImmutableList<TargetExpression>> shardedTargets) {
     this.shardedTargets = shardedTargets;
   }
 
   public boolean isEmpty() {
     return shardedTargets.stream().flatMap(List::stream).findFirst().orElse(null) == null;
+  }
+
+  public int shardCount() {
+    return shardedTargets.size();
   }
 
   /**

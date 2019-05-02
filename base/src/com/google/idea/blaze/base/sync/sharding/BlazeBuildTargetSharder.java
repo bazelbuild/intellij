@@ -15,7 +15,14 @@
  */
 package com.google.idea.blaze.base.sync.sharding;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -34,9 +41,12 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.common.experiments.IntExperiment;
 import com.intellij.openapi.project.Project;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /** Utility methods for sharding blaze build invocations. */
@@ -87,13 +97,15 @@ public class BlazeBuildTargetSharder {
       List<TargetExpression> targets) {
     if (!shardingEnabled(projectViewSet)) {
       return new ShardedTargetsResult(
-          new ShardedTargetList(ImmutableList.of(targets)), BuildResult.SUCCESS);
+          new ShardedTargetList(ImmutableList.of(ImmutableList.copyOf(targets))),
+          BuildResult.SUCCESS);
     }
 
     List<WildcardTargetPattern> wildcardIncludes = getWildcardPatterns(targets);
     if (wildcardIncludes.isEmpty()) {
       return new ShardedTargetsResult(
-          new ShardedTargetList(ImmutableList.of(targets)), BuildResult.SUCCESS);
+          new ShardedTargetList(ImmutableList.of(ImmutableList.copyOf(targets))),
+          BuildResult.SUCCESS);
     }
     ExpandedTargetsResult expandedTargets =
         expandWildcardTargets(
@@ -102,6 +114,7 @@ public class BlazeBuildTargetSharder {
       return new ShardedTargetsResult(
           new ShardedTargetList(ImmutableList.of()), expandedTargets.buildResult);
     }
+
     return new ShardedTargetsResult(
         shardTargets(expandedTargets.singleTargets, getTargetShardSize(projectViewSet)),
         expandedTargets.buildResult);
@@ -158,37 +171,49 @@ public class BlazeBuildTargetSharder {
         project, context, workspaceRoot, projectViewSet, fullList);
   }
 
-  /**
-   * Partition targets list. Because order is important with respect to excluded targets, each shard
-   * has all subsequent excluded targets appended to it.
-   */
+  @SuppressWarnings("unchecked")
+  @VisibleForTesting
   static ShardedTargetList shardTargets(List<TargetExpression> targets, int shardSize) {
-    if (targets.size() <= shardSize) {
-      return new ShardedTargetList(ImmutableList.of(targets));
-    }
-    List<List<TargetExpression>> output = new ArrayList<>();
-    for (int index = 0; index < targets.size(); index += shardSize) {
-      int endIndex = Math.min(targets.size(), index + shardSize);
-      List<TargetExpression> shard = new ArrayList<>(targets.subList(index, endIndex));
-      if (shard.stream().filter(TargetExpression::isExcluded).count() == shard.size()) {
-        continue;
+    ImmutableList<ImmutableList<Label>> batches =
+        BuildBatchingService.batchTargets(canonicalizeTargets(targets), shardSize);
+    return new ShardedTargetList((ImmutableList) batches);
+  }
+
+  /**
+   * Given an ordered list of individual blaze targets (with no wildcard expressions), removes
+   * duplicates and excluded targets, returning an unordered set.
+   */
+  private static ImmutableSet<Label> canonicalizeTargets(List<TargetExpression> targets) {
+    Set<String> set = new HashSet<>();
+    for (TargetExpression target : targets) {
+      if (target.isExcluded()) {
+        set.remove(target.toString().substring(1));
+      } else {
+        set.add(target.toString());
       }
-      List<TargetExpression> remainingExcludes =
-          targets
-              .subList(endIndex, targets.size())
-              .stream()
-              .filter(TargetExpression::isExcluded)
-              .collect(Collectors.toList());
-      shard.addAll(remainingExcludes);
-      output.add(shard);
     }
-    return new ShardedTargetList(output);
+    return set.stream().map(Label::create).collect(toImmutableSet());
+  }
+
+  /**
+   * A simple target batcher splitting based on the target strings. This will tend to split by
+   * package, so is better than random batching.
+   */
+  static class LexicographicTargetSharder implements BuildBatchingService {
+    @Override
+    public ImmutableList<ImmutableList<Label>> calculateTargetBatches(
+        Set<Label> targets, int suggestedShardSize) {
+      List<Label> sorted =
+          ImmutableList.sortedCopyOf(Comparator.comparing(Label::toString), targets);
+      return Lists.partition(sorted, suggestedShardSize).stream()
+          .map(ImmutableList::copyOf)
+          .collect(toImmutableList());
+    }
   }
 
   /** Returns the wildcard target patterns, ignoring exclude patterns (those starting with '-') */
   private static List<WildcardTargetPattern> getWildcardPatterns(List<TargetExpression> targets) {
-    return targets
-        .stream()
+    return targets.stream()
         .filter(t -> !t.isExcluded())
         .map(WildcardTargetPattern::fromExpression)
         .filter(Objects::nonNull)

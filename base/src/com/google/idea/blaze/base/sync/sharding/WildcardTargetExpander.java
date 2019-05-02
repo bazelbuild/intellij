@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.sharding;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
@@ -95,8 +96,7 @@ public class WildcardTargetExpander {
       List<WildcardTargetPattern> wildcardPatterns) {
 
     Set<WildcardTargetPattern> excludes =
-        wildcardPatterns
-            .stream()
+        wildcardPatterns.stream()
             .filter(WildcardTargetPattern::isExcluded)
             .collect(Collectors.toSet());
 
@@ -148,18 +148,16 @@ public class WildcardTargetExpander {
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       List<TargetExpression> allTargets) {
-    ShardedTargetList shards =
-        BlazeBuildTargetSharder.shardTargets(
-            allTargets, BlazeBuildTargetSharder.PACKAGE_SHARD_SIZE);
+    ImmutableList<ImmutableList<TargetExpression>> shards =
+        shardTargets(allTargets, BlazeBuildTargetSharder.PACKAGE_SHARD_SIZE);
     Predicate<String> handledRulesPredicate = handledRuleTypes(projectViewSet);
     ExpandedTargetsResult output = null;
-    for (int i = 0; i < shards.shardedTargets.size(); i++) {
-      List<TargetExpression> shard = shards.shardedTargets.get(i);
+    for (int i = 0; i < shards.size(); i++) {
+      List<TargetExpression> shard = shards.get(i);
       context.output(
           new StatusOutput(
               String.format(
-                  "Expanding wildcard target patterns, shard %s of %s",
-                  i + 1, shards.shardedTargets.size())));
+                  "Expanding wildcard target patterns, shard %s of %s", i + 1, shards.size())));
       ExpandedTargetsResult result =
           queryIndividualTargets(project, context, workspaceRoot, handledRulesPredicate, shard);
       output = output == null ? result : ExpandedTargetsResult.merge(output, result);
@@ -168,6 +166,33 @@ public class WildcardTargetExpander {
       }
     }
     return output;
+  }
+
+  /**
+   * Partition targets list. Because order is important with respect to excluded targets, each shard
+   * has all subsequent excluded targets appended to it.
+   */
+  @VisibleForTesting
+  static ImmutableList<ImmutableList<TargetExpression>> shardTargets(
+      List<TargetExpression> targets, int shardSize) {
+    if (targets.size() <= shardSize) {
+      return ImmutableList.of(ImmutableList.copyOf(targets));
+    }
+    List<ImmutableList<TargetExpression>> output = new ArrayList<>();
+    for (int index = 0; index < targets.size(); index += shardSize) {
+      int endIndex = Math.min(targets.size(), index + shardSize);
+      List<TargetExpression> shard = new ArrayList<>(targets.subList(index, endIndex));
+      if (shard.stream().filter(TargetExpression::isExcluded).count() == shard.size()) {
+        continue;
+      }
+      List<TargetExpression> remainingExcludes =
+          targets.subList(endIndex, targets.size()).stream()
+              .filter(TargetExpression::isExcluded)
+              .collect(Collectors.toList());
+      shard.addAll(remainingExcludes);
+      output.add(ImmutableList.copyOf(shard));
+    }
+    return ImmutableList.copyOf(output);
   }
 
   /** Runs a blaze query to expand the input target patterns to individual blaze targets. */

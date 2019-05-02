@@ -156,7 +156,7 @@ final class BuildPhaseSyncTask {
     }
     ShardedTargetList shardedTargets = shardedTargetsResult.shardedTargets;
 
-    buildStats.setSyncSharded(shardedTargets.shardedTargets.size() > 1);
+    buildStats.setSyncSharded(shardedTargets.shardCount() > 1);
 
     BlazeBuildOutputs blazeBuildResult =
         getBlazeBuildResult(
