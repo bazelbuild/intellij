@@ -343,8 +343,7 @@ public final class BlazeModelConverter {
                     if (shouldCreateFakeAarFilter.test(it)) {
                       fakeLibraries.add(
                           dependencyFor(fakeLibraryFor(null, packageName, decode(it))));
-                    } else if (BlazeAndroidWorkspaceImporter.isSourceOrWhitelistedGenPath(
-                        it, whitelistTester)) {
+                    } else if (ModuleTester.isSourceOrWhitelistedGenPath(it, whitelistTester)) {
                       localResources.add(decode(it));
                     }
                   });

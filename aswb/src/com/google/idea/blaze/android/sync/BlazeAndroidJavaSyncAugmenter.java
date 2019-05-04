@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.android.sync;
 
-import com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter;
 import com.google.idea.blaze.android.sync.importer.BlazeImportUtil;
+import com.google.idea.blaze.android.sync.importer.ModuleTester;
 import com.google.idea.blaze.android.sync.importer.WhitelistFilter;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
@@ -49,8 +49,8 @@ public class BlazeAndroidJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
     if (idlJar != null) {
       genJars.add(new BlazeJarLibrary(idlJar));
     }
-    if (BlazeAndroidWorkspaceImporter.shouldGenerateResources(androidIdeInfo)
-        && !BlazeAndroidWorkspaceImporter.shouldGenerateResourceModule(
+    if (ModuleTester.shouldGenerateResources(androidIdeInfo)
+        && !ModuleTester.shouldGenerateResourceModule(
             androidIdeInfo,
             new WhitelistFilter(BlazeImportUtil.getWhitelistedGenResourcePaths(projectViewSet)))) {
       // Add blaze's output unless it's a top level rule.

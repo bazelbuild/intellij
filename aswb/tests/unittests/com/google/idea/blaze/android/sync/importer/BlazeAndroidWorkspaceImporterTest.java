@@ -26,6 +26,7 @@ import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSectio
 import com.google.idea.blaze.android.projectview.GenfilesPath;
 import com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter;
 import com.google.idea.blaze.android.sync.BlazeAndroidLibrarySource;
+import com.google.idea.blaze.android.sync.importer.aggregators.AndroidResourceModuleFactory;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
@@ -88,7 +89,6 @@ import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -182,6 +182,14 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
   private BlazeAndroidImportResult importWorkspace(
       WorkspaceRoot workspaceRoot, TargetMapBuilder targetMapBuilder, ProjectView projectView) {
+    return importWorkspace(workspaceRoot, targetMapBuilder, projectView, null);
+  }
+
+  private BlazeAndroidImportResult importWorkspace(
+      WorkspaceRoot workspaceRoot,
+      TargetMapBuilder targetMapBuilder,
+      ProjectView projectView,
+      @Nullable AndroidResourceModuleFactory androidResourceModuleFactory) {
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
     TargetMap targetMap = targetMapBuilder.build();
     BlazeAndroidWorkspaceImporter workspaceImporter =
@@ -190,7 +198,9 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
             context,
             BlazeImportInput.forProject(
                 project, workspaceRoot, projectViewSet, targetMap, FAKE_ARTIFACT_DECODER));
-
+    if (androidResourceModuleFactory != null) {
+      return workspaceImporter.importWorkspace(androidResourceModuleFactory);
+    }
     return workspaceImporter.importWorkspace();
   }
 
@@ -798,10 +808,10 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   /**
-   * Check BlazeResourceLibrary is created correctly while importing workspace.
-   * If a target uses one resource out of project view and there's no target contains BUILD file
-   * under same directory with that resources, there's no best match manifest file.
-   * BlazeResourceLibrary should pick manifest file of first target in such case.
+   * Check BlazeResourceLibrary is created correctly while importing workspace. If a target uses one
+   * resource out of project view and there's no target contains BUILD file under same directory
+   * with that resources, there's no best match manifest file. BlazeResourceLibrary should pick
+   * manifest file of first target in such case.
    */
   @Test
   public void testBlazeResourceLibrary_noBestMatchManifest() {
@@ -851,10 +861,10 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   /**
-   * Check BlazeResourceLibrary is created correctly while importing workspace.
-   * If a target uses one resource out of project view but there's one target contains BUILD file
-   * under same directory with that resources, BlazeResourceLibrary should pick manifest file of
-   * that target since it's best match one.
+   * Check BlazeResourceLibrary is created correctly while importing workspace. If a target uses one
+   * resource out of project view but there's one target contains BUILD file under same directory
+   * with that resources, BlazeResourceLibrary should pick manifest file of that target since it's
+   * best match one.
    */
   @Test
   public void testBlazeResourceLibrary_hasBestMatchManifest() {
@@ -1628,7 +1638,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
   /**
    * Check resource module are generated correct with chain dependencies. And there's no duplicate/
-   * unnecessary create and reduce operations during creation.
+   * unnecessary create and reduceCount operations during creation.
    */
   @Test
   public void testAndroidResourceModuleGeneration() {
@@ -1712,9 +1722,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .addDependency("//qux:lib"));
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
     TargetMap targetMap = targetMapBuilder.build();
-    MockBlazeAndroidWorkspaceImporter mockBlazeAndroidWorkspaceImporter =
-        new MockBlazeAndroidWorkspaceImporter(
-            project,
+    MockAndroidResourceModuleFactory mockAndroidResourceModuleFactory =
+        new MockAndroidResourceModuleFactory(
             context,
             BlazeImportInput.forProject(
                 project, workspaceRoot, projectViewSet, targetMap, FAKE_ARTIFACT_DECODER));
@@ -1752,16 +1761,18 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                 BlazeResourceLibrary.libraryNameFromArtifactLocation(source("qux/res")))
             .addTransitiveResourceDependency("//qux:lib")
             .build();
-    BlazeAndroidImportResult importResult = mockBlazeAndroidWorkspaceImporter.importWorkspace();
+    BlazeAndroidImportResult importResult =
+        importWorkspace(
+            workspaceRoot, targetMapBuilder, projectView, mockAndroidResourceModuleFactory);
     assertThat(importResult.androidResourceModules)
         .containsExactly(
             expectedAndroidResourceModule1,
             expectedAndroidResourceModule2,
             expectedAndroidResourceModule3,
             expectedAndroidResourceModule4);
-    assertThat(mockBlazeAndroidWorkspaceImporter.getCreateCount()).isEqualTo(5);
-    // One reduce per direct dependency: 3 + 1 + 1 + 0 + 1
-    assertThat(mockBlazeAndroidWorkspaceImporter.getReduce()).isEqualTo(6);
+    assertThat(mockAndroidResourceModuleFactory.getCreateCount()).isEqualTo(5);
+    // One reduceCount per direct dependency: 3 + 1 + 1 + 0 + 1
+    assertThat(mockAndroidResourceModuleFactory.getReduceCount()).isEqualTo(6);
   }
 
   /**
@@ -1828,16 +1839,18 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   /**
-   * Mock BlazeAndroidWorkspaceImporter and count number of create and reduce operations used to
-   * generate AndroidResourceModule
+   * Mock BlazeAndroidWorkspaceImporter and count number of create and reduceCount operations used
+   * to generate AndroidResourceModule
    */
-  private static class MockBlazeAndroidWorkspaceImporter extends BlazeAndroidWorkspaceImporter {
+  private static class MockAndroidResourceModuleFactory extends AndroidResourceModuleFactory {
     private int createCount = 0;
-    private int reduce = 0;
+    private int reduceCount = 0;
 
-    public MockBlazeAndroidWorkspaceImporter(
-        Project project, BlazeContext context, BlazeImportInput input) {
-      super(project, context, input);
+    public MockAndroidResourceModuleFactory(BlazeContext context, BlazeImportInput input) {
+      super(
+          BlazeImportUtil.asConsumer(context),
+          new WhitelistFilter(BlazeImportUtil.getWhitelistedGenResourcePaths(input.projectViewSet)),
+          input);
     }
 
     @Override
@@ -1856,7 +1869,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         LibraryFactory libraryFactory,
         Map<TargetKey, AndroidResourceModule.Builder> resourceModuleBuilderCache) {
       if (depIdeInfo != null) {
-        ++reduce;
+        ++reduceCount;
       }
       super.reduce(
           targetKey,
@@ -1871,8 +1884,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
       return createCount;
     }
 
-    public int getReduce() {
-      return reduce;
+    public int getReduceCount() {
+      return reduceCount;
     }
   }
 }
