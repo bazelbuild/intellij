@@ -117,6 +117,23 @@ public class BlazeXmlSchemaTest {
   }
 
   @Test
+  public void testTestRunnerTerminatedWithError() {
+    TestSuite parsed =
+        parseXml(
+            "<?xml version='1.0' encoding='UTF-8'?>",
+            "<testsuites>",
+            "  <testsuite name='com.google.ConfigTest' tests='1' failures='0' errors='1'>",
+            "    <testcase name='testCase1' status='run' duration='55' time='55'>",
+                    "<error message='exited with error code 1'></error>",
+            "    </testcase>",
+            "  </testsuite>",
+            "</testsuites>");
+
+    TestCase testCase = parsed.testSuites.get(0).testCases.get(0);
+    assertThat(BlazeXmlSchema.getErrorContent(testCase.errors.get(0))).isEqualTo("exited with error code 1");
+  }
+
+  @Test
   public void testMergeShardedTests() {
     TestSuite shard1 =
         parseXml(

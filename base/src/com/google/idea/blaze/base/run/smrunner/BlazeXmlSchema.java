@@ -18,6 +18,8 @@ package com.google.idea.blaze.base.run.smrunner;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.collect.Lists;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -160,7 +162,11 @@ public class BlazeXmlSchema {
     public ErrorOrFailureOrSkipped skipped;
   }
 
+  @Nullable
   static String getErrorContent(ErrorOrFailureOrSkipped err) {
+    if (err.content == null)
+      return err.message;
+
     return err.content.stream()
         .filter(Objects::nonNull)
         .map(Object::toString)
