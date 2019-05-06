@@ -32,16 +32,19 @@ public class TargetInfo {
   public final Label label;
   public final String kindString;
   @Nullable public final TestSize testSize;
+  @Nullable public final String testClass;
   @Nullable private final ImmutableList<ArtifactLocation> sources;
 
   private TargetInfo(
       Label label,
       String kindString,
       @Nullable TestSize testSize,
+      @Nullable String testClass,
       @Nullable ImmutableList<ArtifactLocation> sources) {
     this.label = label;
     this.kindString = kindString;
     this.testSize = testSize;
+    this.testClass = testClass;
     this.sources = sources;
   }
 
@@ -115,6 +118,7 @@ public class TargetInfo {
     private final Label label;
     private final String kindString;
     @Nullable private TestSize testSize;
+    @Nullable private String testClass;
     @Nullable private ImmutableList<ArtifactLocation> sources;
 
     private Builder(Label label, String kindString) {
@@ -122,8 +126,13 @@ public class TargetInfo {
       this.kindString = kindString;
     }
 
-    public Builder setTestSize(TestSize testSize) {
+    public Builder setTestSize(@Nullable TestSize testSize) {
       this.testSize = testSize;
+      return this;
+    }
+
+    public Builder setTestClass(@Nullable String testClass) {
+      this.testClass = testClass;
       return this;
     }
 
@@ -133,7 +142,7 @@ public class TargetInfo {
     }
 
     public TargetInfo build() {
-      return new TargetInfo(label, kindString, testSize, sources);
+      return new TargetInfo(label, kindString, testSize, testClass, sources);
     }
   }
 }
